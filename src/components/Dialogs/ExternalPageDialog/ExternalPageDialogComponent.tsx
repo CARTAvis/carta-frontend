@@ -22,7 +22,7 @@ export class ExternalPageDialogComponent extends React.Component {
         const className = classNames("iframe-dialog", {"bp3-dark": appStore.darkTheme});
 
         const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        let zIndex = floatingObjzIndexManager.findIndex(DialogId.ExternalPage, appStore.floatingObjs);
+        let zIndex = floatingObjzIndexManager.findIndex(DialogId.ExternalPage);
 
         const dialogProps: IDialogProps = {
             icon: "info-sign",
@@ -44,8 +44,8 @@ export class ExternalPageDialogComponent extends React.Component {
                 minHeight={ExternalPageDialogComponent.MinHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.ExternalPage, appStore.floatingObjs)}
-                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.ExternalPage, appStore.floatingObjs)}
+                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.ExternalPage)}
+                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.ExternalPage)}
             >
                 <div className="bp3-dialog-body">
                     <Iframe url={appStore.dialogStore.externalPageDialogUrl} />

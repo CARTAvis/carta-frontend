@@ -1474,18 +1474,17 @@ export class WidgetsStore {
         this.floatingWidgets.push(widget);
 
         const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        floatingObjzIndexManager.assignIndex(widget.id, AppStore.Instance.floatingObjs);
+        floatingObjzIndexManager.assignIndex(widget.id);
     };
 
     // Removes a widget from the floating widget array, optionally removing the widget's associated store
     @action removeFloatingWidget = (id: string, preserveStore: boolean = false) => {
         const widget = this.floatingWidgets.find(w => w.id === id);
-        const appStore = AppStore.Instance;
         const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
 
         if (widget) {
-            floatingObjzIndexManager.updateIndexOnRemove(id, appStore.floatingObjs);
-            appStore.floatingObjs = floatingObjzIndexManager.removeIndex(id, appStore.floatingObjs);
+            floatingObjzIndexManager.updateIndexOnRemove(id);
+            floatingObjzIndexManager.removeIndex(id);
             this.floatingWidgets = this.floatingWidgets.filter(w => w.id !== id);
             if (preserveStore) {
                 return;
@@ -1499,12 +1498,11 @@ export class WidgetsStore {
     // remove a widget component by componentId
     @action removeFloatingWidgetComponent = (componentId: string) => {
         const widget = this.floatingWidgets.find(w => w.componentId === componentId);
-        const appStore = AppStore.Instance;
         const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
 
         if (widget) {
-            floatingObjzIndexManager.updateIndexOnRemove(componentId, appStore.floatingObjs);
-            appStore.floatingObjs = floatingObjzIndexManager.removeIndex(componentId, appStore.floatingObjs);
+            floatingObjzIndexManager.updateIndexOnRemove(componentId);
+            floatingObjzIndexManager.removeIndex(componentId);
             this.floatingWidgets = this.floatingWidgets.filter(w => w.componentId !== componentId);
             this.removeAssociatedFloatingSetting(componentId);
         }

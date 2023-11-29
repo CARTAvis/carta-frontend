@@ -143,7 +143,7 @@ export const WorkspaceDialogComponent = observer(() => {
     const className = classNames("workspace-dialog", {"bp3-dark": appStore.darkTheme});
 
     const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-    let zIndex = floatingObjzIndexManager.findIndex(DialogId.Workspace, appStore.floatingObjs);
+    let zIndex = floatingObjzIndexManager.findIndex(DialogId.Workspace);
 
     const dialogProps: IDialogProps = {
         icon: "control",
@@ -269,8 +269,8 @@ export const WorkspaceDialogComponent = observer(() => {
             minHeight={550}
             enableResizing={true}
             zIndex={zIndex}
-            onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Workspace, appStore.floatingObjs)}
-            onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Workspace, appStore.floatingObjs)}
+            onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Workspace)}
+            onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Workspace)}
         >
             <div className={Classes.DIALOG_BODY}>
                 <div className="workspace-container">

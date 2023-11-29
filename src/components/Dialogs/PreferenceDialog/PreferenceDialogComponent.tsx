@@ -177,7 +177,7 @@ export class PreferenceDialogComponent extends React.Component {
         const layoutStore = appStore.layoutStore;
 
         const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Preference, appStore.floatingObjs);
+        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Preference);
 
         const globalPanel = (
             <React.Fragment>
@@ -917,8 +917,8 @@ export class PreferenceDialogComponent extends React.Component {
                 defaultHeight={PreferenceDialogComponent.DefaultHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Preference, appStore.floatingObjs)}
-                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Preference, appStore.floatingObjs)}
+                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Preference)}
+                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Preference)}
             >
                 <div className="bp3-dialog-body">
                     <Tabs id="preferenceTabs" vertical={true} selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>

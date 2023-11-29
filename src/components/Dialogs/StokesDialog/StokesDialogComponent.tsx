@@ -138,7 +138,7 @@ export class StokesDialogComponent extends React.Component {
         );
 
         const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Stokes, appStore.floatingObjs);
+        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Stokes);
 
         const dialogProps: IDialogProps = {
             icon: "git-merge",
@@ -161,8 +161,8 @@ export class StokesDialogComponent extends React.Component {
                 defaultHeight={StokesDialogComponent.DefaultHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Stokes, appStore.floatingObjs)}
-                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Stokes, appStore.floatingObjs)}
+                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Stokes)}
+                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Stokes)}
             >
                 <div className="bp3-dialog-body">
                     <Table

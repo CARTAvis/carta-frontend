@@ -40,7 +40,7 @@ export class FloatingWidgetManagerComponent extends React.Component {
     onFloatingWidgetSelected = (widget: WidgetConfig) => {
         // rearrange will cause a bug of empty table, change to zIndex
         const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        floatingObjzIndexManager.updateIndexOnSelect(widget.id, AppStore.Instance.floatingObjs);
+        floatingObjzIndexManager.updateIndexOnSelect(widget.id);
     };
 
     onFloatingWidgetClosed = (widget: WidgetConfig) => {
@@ -177,13 +177,14 @@ export class FloatingWidgetManagerComponent extends React.Component {
                     const showPinButton = this.showPin(w);
                     const id = w.componentId ? w.componentId : w.id;
 
-                    const selectedFloatingObj = appStore.floatingObjs.find(w => w.id === id);
-                    let zIndex = selectedFloatingObj ? selectedFloatingObj.zIndex : 0;
+                    const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
+                    let zIndex = floatingObjzIndexManager.findIndex(id);
+                    const numFloatingObjs = appStore.getFloatingObjs().length;
 
                     return (
                         <div key={id}>
                             <FloatingWidgetComponent
-                                isSelected={zIndex === appStore.floatingObjs.length}
+                                isSelected={zIndex === numFloatingObjs}
                                 key={id}
                                 widgetConfig={w}
                                 zIndex={zIndex}

@@ -137,7 +137,7 @@ export class DistanceMeasuringDialog extends React.Component {
         const dialogStore = DialogStore.Instance;
 
         const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        let zIndex = floatingObjzIndexManager.findIndex(DialogId.DistanceMeasure, appStore.floatingObjs);
+        let zIndex = floatingObjzIndexManager.findIndex(DialogId.DistanceMeasure);
 
         const dialogProps: IDialogProps = {
             icon: <CustomIcon icon="distanceMeasuring" />,
@@ -198,8 +198,8 @@ export class DistanceMeasuringDialog extends React.Component {
                 minHeight={DistanceMeasuringDialog.MinHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.DistanceMeasure, appStore.floatingObjs)}
-                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.DistanceMeasure, appStore.floatingObjs)}
+                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.DistanceMeasure)}
+                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.DistanceMeasure)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     {appStore.activeLayer === ImageViewLayer.DistanceMeasuring ? (

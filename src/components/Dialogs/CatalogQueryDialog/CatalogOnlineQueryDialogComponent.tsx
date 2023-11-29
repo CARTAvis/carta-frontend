@@ -73,7 +73,7 @@ export class CatalogQueryDialogComponent extends React.Component {
         }
 
         const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        let zIndex = floatingObjzIndexManager.findIndex(DialogId.CatalogQuery, appStore.floatingObjs);
+        let zIndex = floatingObjzIndexManager.findIndex(DialogId.CatalogQuery);
 
         const dialogProps: IDialogProps = {
             icon: "geosearch",
@@ -266,8 +266,8 @@ export class CatalogQueryDialogComponent extends React.Component {
                 defaultHeight={CatalogQueryDialogComponent.DefaultHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.CatalogQuery, appStore.floatingObjs)}
-                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.CatalogQuery, appStore.floatingObjs)}
+                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.CatalogQuery)}
+                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.CatalogQuery)}
             >
                 <div className="bp3-dialog-body">{configBoard}</div>
                 <Overlay autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={disable} usePortal={false}>

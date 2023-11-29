@@ -61,7 +61,7 @@ export class RegionDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
 
         const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Region, appStore.floatingObjs);
+        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Region);
 
         const dialogProps: IDialogProps = {
             icon: "info-sign",
@@ -156,8 +156,8 @@ export class RegionDialogComponent extends React.Component {
                 minWidth={RegionDialogComponent.MinWidth}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Region, appStore.floatingObjs)}
-                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Region, appStore.floatingObjs)}
+                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Region)}
+                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Region)}
             >
                 <div className={Classes.DIALOG_BODY}>{bodyContent}</div>
                 <div className={Classes.DIALOG_FOOTER}>

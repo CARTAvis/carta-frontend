@@ -245,7 +245,7 @@ export class VectorOverlayDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
 
         const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Vector, appStore.floatingObjs);
+        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Vector);
 
         const dialogProps: DialogProps = {
             icon: <CustomIcon icon="vectorOverlay" size={CustomIcon.SIZE_LARGE} />,
@@ -400,8 +400,8 @@ export class VectorOverlayDialogComponent extends React.Component {
                 minHeight={VectorOverlayDialogComponent.MinHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Vector, appStore.floatingObjs)}
-                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Vector, appStore.floatingObjs)}
+                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Vector)}
+                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Vector)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Data source">

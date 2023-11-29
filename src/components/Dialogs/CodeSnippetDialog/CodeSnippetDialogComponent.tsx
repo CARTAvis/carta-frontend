@@ -117,7 +117,7 @@ export class CodeSnippetDialogComponent extends React.Component {
         const className = classNames("code-snippet-dialog", {"bp3-dark": appStore.darkTheme});
 
         const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Snippet, appStore.floatingObjs);
+        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Snippet);
 
         const dialogProps: IDialogProps = {
             icon: "console",
@@ -158,8 +158,8 @@ export class CodeSnippetDialogComponent extends React.Component {
                 minHeight={CodeSnippetDialogComponent.MinHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Snippet, appStore.floatingObjs)}
-                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Snippet, appStore.floatingObjs)}
+                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Snippet)}
+                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Snippet)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <ThemeProvider darkTheme={appStore.darkTheme} children={editor} />

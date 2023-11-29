@@ -279,7 +279,7 @@ export class ContourDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
 
         const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Contour, appStore.floatingObjs);
+        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Contour);
 
         const dialogProps: IDialogProps = {
             icon: <CustomIcon icon="contour" size={CustomIcon.SIZE_LARGE} />,
@@ -304,8 +304,8 @@ export class ContourDialogComponent extends React.Component {
                     minHeight={ContourDialogComponent.MinHeight}
                     enableResizing={true}
                     zIndex={zIndex}
-                    onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Contour, appStore.floatingObjs)}
-                    onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Contour, appStore.floatingObjs)}
+                    onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Contour)}
+                    onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Contour)}
                 >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </DraggableDialogComponent>
@@ -491,8 +491,8 @@ export class ContourDialogComponent extends React.Component {
                 minHeight={ContourDialogComponent.MinHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Contour, appStore.floatingObjs)}
-                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Contour, appStore.floatingObjs)}
+                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Contour)}
+                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Contour)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Data source">

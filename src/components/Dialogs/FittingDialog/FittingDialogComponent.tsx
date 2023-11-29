@@ -102,7 +102,7 @@ export class FittingDialogComponent extends React.Component {
         let component = fittingStore.components[fittingStore.selectedComponentIndex];
 
         const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Fitting, appStore.floatingObjs);
+        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Fitting);
 
         const dialogProps: IDialogProps = {
             icon: <CustomIcon icon="imageFitting" size={CustomIcon.SIZE_LARGE} />,
@@ -170,8 +170,8 @@ export class FittingDialogComponent extends React.Component {
                 minHeight={FittingDialogComponent.MinHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Fitting, appStore.floatingObjs)}
-                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Fitting, appStore.floatingObjs)}
+                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Fitting)}
+                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Fitting)}
             >
                 <div className={classNames(Classes.DIALOG_BODY, "pinned-input-panel")}>
                     <FormGroup label="Data source" inline={true}>

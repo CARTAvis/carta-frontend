@@ -81,7 +81,7 @@ export class SaveLayoutDialogComponent extends React.Component {
         const isSave = appStore.layoutStore.isSave;
 
         const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Layout, appStore.floatingObjs);
+        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Layout);
 
         const dialogProps: IDialogProps = {
             icon: "layout-grid",
@@ -104,8 +104,8 @@ export class SaveLayoutDialogComponent extends React.Component {
                 minHeight={SaveLayoutDialogComponent.MinHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Layout, appStore.floatingObjs)}
-                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Layout, appStore.floatingObjs)}
+                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Layout)}
+                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Layout)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label={isSave ? "Save current layout as:" : `Rename ${appStore.layoutStore.oldLayoutName} to:`}>

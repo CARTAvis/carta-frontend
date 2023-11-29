@@ -3224,5 +3224,13 @@ export class AppStore {
     }
 
     // dynamic zIndex
-    @observable floatingObjs: ZIndexUpdate[] = [];
+    @observable private floatingObjs: ZIndexUpdate[] = [];
+
+    public getFloatingObjs = () => {
+        return this.floatingObjs;
+    };
+
+    public setFloatingObjs = (newFloatingObjs: ZIndexUpdate[]) => {
+        this.floatingObjs = newFloatingObjs;
+    };
 }
