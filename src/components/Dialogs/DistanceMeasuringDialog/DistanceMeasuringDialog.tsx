@@ -44,6 +44,11 @@ export class DistanceMeasuringDialog extends React.Component {
         this.setWCSMode(WCSMode);
     };
 
+    private static readonly DefaultWidth = 450;
+    private static readonly DefaultHeight = 350;
+    private static readonly MinWidth = 450;
+    private static readonly MinHeight = 300;
+
     private static HandleValueChange = (distanceMeasuringStore: DistanceMeasuringStore, wcsInfo: AST.FrameSet, WCSStart: WCSPoint2D, WCSFinish: WCSPoint2D, isX: boolean, finish?: boolean, pixel?: boolean) => {
         if (pixel) {
             return (value: number): boolean => {
@@ -181,7 +186,15 @@ export class DistanceMeasuringDialog extends React.Component {
         );
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.DISTANCE_MEASUREMENT} defaultWidth={525} defaultHeight={350} minHeight={300} minWidth={450} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                helpType={HelpType.DISTANCE_MEASUREMENT}
+                minWidth={DistanceMeasuringDialog.MinWidth}
+                minHeight={DistanceMeasuringDialog.MinHeight}
+                defaultWidth={DistanceMeasuringDialog.DefaultWidth}
+                defaultHeight={DistanceMeasuringDialog.DefaultHeight}
+                enableResizing={true}
+            >
                 <div className={Classes.DIALOG_BODY}>
                     {appStore.activeLayer === ImageViewLayer.DistanceMeasuring ? (
                         <Tabs id="regionDialogTabs" selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
