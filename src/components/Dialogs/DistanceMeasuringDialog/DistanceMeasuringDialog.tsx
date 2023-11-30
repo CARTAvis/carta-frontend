@@ -23,10 +23,6 @@ enum DistanceMeasuringDialogTabs {
 
 @observer
 export class DistanceMeasuringDialog extends React.Component {
-    private static readonly DefaultWidth = 525;
-    private static readonly DefaultHeight = 350;
-    private static readonly MinWidth = 300;
-    private static readonly MinHeight = 450;
 
     constructor(props: any) {
         super(props);

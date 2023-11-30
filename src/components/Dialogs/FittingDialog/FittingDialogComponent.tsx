@@ -27,11 +27,6 @@ export class FittingDialogComponent extends React.Component {
     @observable private fittingResultTabId: FittingResultTabs = FittingResultTabs.RESULT;
     @observable private isMouseEntered: boolean = false;
 
-    private static readonly DefaultWidth = 600;
-    private static readonly DefaultHeight = 660;
-    private static readonly MinWidth = 350;
-    private static readonly MinHeight = 265;
-
     @action private setCoord = (coord: CoordinateMode) => {
         this.coord = coord;
     };

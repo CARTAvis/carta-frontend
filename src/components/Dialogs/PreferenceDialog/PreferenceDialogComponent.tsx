@@ -49,11 +49,6 @@ const PV_PREVIEW_CUBE_SIZE_LIMIT = 1000000000; //need to be removed and replaced
 
 @observer
 export class PreferenceDialogComponent extends React.Component {
-    private static readonly DefaultWidth = 775;
-    private static readonly DefaultHeight = 500;
-    private static readonly MinWidth = 450;
-    private static readonly MinHeight = 300;
-
     @observable selectedTab: PreferenceDialogTabs = PreferenceDialogTabs.GLOBAL;
     @action private setSelectedTab = (tab: PreferenceDialogTabs) => {
         this.selectedTab = tab;
