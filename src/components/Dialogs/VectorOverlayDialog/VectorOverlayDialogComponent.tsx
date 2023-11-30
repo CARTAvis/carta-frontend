@@ -37,8 +37,8 @@ export class VectorOverlayDialogComponent extends React.Component {
 
     private static readonly DefaultWidth = 500;
     private static readonly DefaultHeight = 720;
-    private static readonly MinWidth = 400;
-    private static readonly MinHeight = 600;
+    private static readonly MinWidth = 425;
+    private static readonly MinHeight = 265;
 
     private cachedFrame: FrameStore;
 
@@ -263,6 +263,8 @@ export class VectorOverlayDialogComponent extends React.Component {
                 <DraggableDialogComponent
                     dialogProps={dialogProps}
                     helpType={HelpType.VECTOR_OVERLAY}
+                    minWidth={VectorOverlayDialogComponent.MinWidth}
+                    minHeight={VectorOverlayDialogComponent.MinHeight}
                     defaultWidth={VectorOverlayDialogComponent.DefaultWidth}
                     defaultHeight={VectorOverlayDialogComponent.DefaultHeight}
                     enableResizing={true}

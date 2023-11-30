@@ -37,10 +37,10 @@ export class ContourDialogComponent extends React.Component {
     @observable smoothingMode: CARTA.SmoothingMode;
     @observable smoothingFactor: number;
 
-    private static readonly DefaultWidth = 600;
+    private static readonly DefaultWidth = 500;
     private static readonly DefaultHeight = 660;
-    private static readonly MinWidth = 500;
-    private static readonly MinHeight = 560;
+    private static readonly MinWidth = 425;
+    private static readonly MinHeight = 450;
 
     private readonly widgetStore: RenderConfigWidgetStore;
     private cachedFrame: FrameStore;
@@ -225,7 +225,7 @@ export class ContourDialogComponent extends React.Component {
 
     private handleGraphClicked = (x: number) => {
         this.levels.push(x);
-        this.levels.sort();
+        this.levels.sort((a, b) => a - b);
     };
 
     private handleGraphRightClicked = (x: number) => {
@@ -253,7 +253,7 @@ export class ContourDialogComponent extends React.Component {
                 const val = parseFloat(valueString);
                 if (isFinite(val)) {
                     this.levels.push(val);
-                    this.levels.sort();
+                    this.levels.sort((a, b) => a - b);
                 }
             }
         } catch (e) {
@@ -495,7 +495,7 @@ export class ContourDialogComponent extends React.Component {
                 onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.Contour)}
             >
                 <div className={Classes.DIALOG_BODY}>
-                    <FormGroup inline={true} label="Data source">
+                    <FormGroup className={"source-menu"} inline={true} label="Data source">
                         <DataSourceSelect
                             activeItem={dataSource}
                             onItemSelect={appStore.setContourDataSource}

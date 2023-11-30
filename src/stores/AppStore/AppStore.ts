@@ -599,14 +599,14 @@ export class AppStore {
             fileInfoExtended: new CARTA.FileInfoExtended(ack.imageInfo),
             fileFeatureFlags: ack.fileFeatureFlags,
             renderMode: CARTA.RenderMode.RASTER,
-            beamTable: ack.beamTable
+            beamTable: ack.beamTable,
+            preview: true
         };
 
         const newFrame = new FrameStore(frameInfo);
 
         if (newFrame) {
             this.previewFrames.set(ack.previewId, newFrame);
-            newFrame.setIsPreview(true);
             newFrame.updatePreviewDataGenerator = newFrame.updatePreviewData(ack);
             // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
             newFrame.updatePreviewDataGenerator.next();
