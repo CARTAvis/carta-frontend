@@ -30,7 +30,6 @@ import {
     StokesAnalysisComponent,
     StokesAnalysisSettingsPanelComponent
 } from "components";
-import {FloatingObjzIndexManager} from "models";
 import {AppStore, CatalogStore, WidgetConfig, WidgetsStore} from "stores";
 
 @observer
@@ -39,8 +38,8 @@ export class FloatingWidgetManagerComponent extends React.Component {
 
     onFloatingWidgetSelected = (widget: WidgetConfig) => {
         // rearrange will cause a bug of empty table, change to zIndex
-        const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        floatingObjzIndexManager.updateIndexOnSelect(widget.id);
+        const zIndexManager = AppStore.Instance.zIndexManager;
+        zIndexManager.updateIndexOnSelect(widget.id);
     };
 
     onFloatingWidgetClosed = (widget: WidgetConfig) => {
@@ -170,16 +169,16 @@ export class FloatingWidgetManagerComponent extends React.Component {
 
     public render() {
         const widgetConfigs = WidgetsStore.Instance.floatingWidgets;
-        const appStore = AppStore.Instance;
+        const zIndexManager = AppStore.Instance.zIndexManager;
+
         return (
             <div>
                 {widgetConfigs.map(w => {
                     const showPinButton = this.showPin(w);
                     const id = w.componentId ? w.componentId : w.id;
 
-                    const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-                    let zIndex = floatingObjzIndexManager.findIndex(id);
-                    const numFloatingObjs = appStore.getFloatingObjs().length;
+                    let zIndex = zIndexManager.findIndex(id);
+                    const numFloatingObjs = zIndexManager.getFloatingObjs().length;
 
                     return (
                         <div key={id}>

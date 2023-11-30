@@ -8,7 +8,7 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {FloatingObjzIndexManager, POLARIZATION_LABELS} from "models";
+import {POLARIZATION_LABELS} from "models";
 import {AppStore, BrowserMode, DialogId, HelpType} from "stores";
 
 import "./StokesDialogComponent.scss";
@@ -137,8 +137,8 @@ export class StokesDialogComponent extends React.Component {
             />
         );
 
-        const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Stokes);
+        const zIndexManager = AppStore.Instance.zIndexManager;
+        let zIndex = zIndexManager.findIndex(DialogId.Stokes);
 
         const dialogProps: IDialogProps = {
             icon: "git-merge",
@@ -161,8 +161,8 @@ export class StokesDialogComponent extends React.Component {
                 defaultHeight={StokesDialogComponent.DefaultHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Stokes)}
-                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Stokes)}
+                onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Stokes)}
+                onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.Stokes)}
             >
                 <div className="bp3-dialog-body">
                     <Table

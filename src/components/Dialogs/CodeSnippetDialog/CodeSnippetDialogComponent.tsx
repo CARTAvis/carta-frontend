@@ -8,7 +8,7 @@ import * as prism from "prismjs";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppToaster, WarningToast} from "components/Shared";
-import {FloatingObjzIndexManager, Snippet} from "models";
+import {Snippet} from "models";
 import {AppStore, DialogId, SnippetStore} from "stores";
 
 import {SaveSnippetDialogComponent} from "./SaveSnippetDialog/SaveSnippetDialogComponent";
@@ -116,8 +116,8 @@ export class CodeSnippetDialogComponent extends React.Component {
         const snippetStore = appStore.snippetStore;
         const className = classNames("code-snippet-dialog", {"bp3-dark": appStore.darkTheme});
 
-        const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Snippet);
+        const zIndexManager = AppStore.Instance.zIndexManager;
+        let zIndex = zIndexManager.findIndex(DialogId.Snippet);
 
         const dialogProps: IDialogProps = {
             icon: "console",
@@ -158,8 +158,8 @@ export class CodeSnippetDialogComponent extends React.Component {
                 minHeight={CodeSnippetDialogComponent.MinHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Snippet)}
-                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Snippet)}
+                onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Snippet)}
+                onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.Snippet)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <ThemeProvider darkTheme={appStore.darkTheme} children={editor} />

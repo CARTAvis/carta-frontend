@@ -5,7 +5,6 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
-import {FloatingObjzIndexManager} from "models";
 import {AppStore, DialogId, HelpType} from "stores";
 
 import "./FileInfoDialogComponent.scss";
@@ -21,8 +20,8 @@ export class FileInfoDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const className = classNames("file-info-dialog", {"bp3-dark": appStore.darkTheme});
 
-        const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        let zIndex = floatingObjzIndexManager.findIndex(DialogId.FileInfo);
+        const zIndexManager = AppStore.Instance.zIndexManager;
+        let zIndex = zIndexManager.findIndex(DialogId.FileInfo);
 
         const dialogProps: IDialogProps = {
             icon: "app-header",
@@ -45,8 +44,8 @@ export class FileInfoDialogComponent extends React.Component {
                 minHeight={FileInfoDialogComponent.MinHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.FileInfo)}
-                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.FileInfo)}
+                onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.FileInfo)}
+                onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.FileInfo)}
             >
                 <div className="bp3-dialog-body">
                     <FileInfoComponent

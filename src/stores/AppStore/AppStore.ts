@@ -17,6 +17,7 @@ import {
     CatalogType,
     COMPUTED_POLARIZATIONS,
     FileId,
+    FloatingObjzIndexManager,
     FrameView,
     ImagePanelMode,
     Point2D,
@@ -28,8 +29,7 @@ import {
     ToFileListFilterMode,
     WCSMatchingType,
     Workspace,
-    WorkspaceFile,
-    ZIndexUpdate
+    WorkspaceFile
 } from "models";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryAction, TelemetryService, TileService, TileStreamDetails} from "services";
 import {
@@ -3224,13 +3224,5 @@ export class AppStore {
     }
 
     // dynamic zIndex
-    @observable private floatingObjs: ZIndexUpdate[] = [];
-
-    public getFloatingObjs = () => {
-        return this.floatingObjs;
-    };
-
-    public setFloatingObjs = (newFloatingObjs: ZIndexUpdate[]) => {
-        this.floatingObjs = newFloatingObjs;
-    };
+    zIndexManager = new FloatingObjzIndexManager();
 }

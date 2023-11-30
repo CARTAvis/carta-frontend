@@ -10,7 +10,6 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {SimpleTableComponentProps} from "components/Shared";
-import {FloatingObjzIndexManager} from "models";
 import {AppStore, BrowserMode, CatalogProfileStore, DialogId, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
@@ -613,8 +612,8 @@ export class FileBrowserDialogComponent extends React.Component {
         const fileBrowserStore = appStore.fileBrowserStore;
         const className = classNames("file-browser-dialog", {"bp3-dark": appStore.darkTheme});
 
-        const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        let zIndex = floatingObjzIndexManager.findIndex(DialogId.FileBrowser);
+        const zIndexManager = AppStore.Instance.zIndexManager;
+        let zIndex = zIndexManager.findIndex(DialogId.FileBrowser);
 
         const dialogProps: IDialogProps = {
             icon: "folder-open",
@@ -673,8 +672,8 @@ export class FileBrowserDialogComponent extends React.Component {
                 enableResizing={true}
                 // onResizeStop={this.updateDefaultSize}
                 zIndex={zIndex}
-                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.FileBrowser)}
-                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.FileBrowser)}
+                onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.FileBrowser)}
+                onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.FileBrowser)}
             >
                 <div className="file-path">
                     {this.pathItems && (

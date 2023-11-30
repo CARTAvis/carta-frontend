@@ -12,23 +12,7 @@ import tinycolor from "tinycolor2";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, SuccessToast} from "components/Shared";
-import {
-    CompressionQuality,
-    CursorInfoVisibility,
-    CursorPosition,
-    Event,
-    FileFilterMode,
-    FloatingObjzIndexManager,
-    RegionCreationMode,
-    SPECTRAL_MATCHING_TYPES,
-    SPECTRAL_TYPE_STRING,
-    Theme,
-    TileCache,
-    WCSMatchingType,
-    WCSType,
-    Zoom,
-    ZoomPoint
-} from "models";
+import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {TelemetryMode} from "services";
 import {AppStore, BeamType, DialogId, HelpType, PreferenceKeys, PreferenceStore} from "stores";
 import {ContourGeneratorType, FrameScaling, RegionStore, RenderConfigStore} from "stores/Frame";
@@ -176,8 +160,8 @@ export class PreferenceDialogComponent extends React.Component {
         const preference = appStore.preferenceStore;
         const layoutStore = appStore.layoutStore;
 
-        const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Preference);
+        const zIndexManager = AppStore.Instance.zIndexManager;
+        let zIndex = zIndexManager.findIndex(DialogId.Preference);
 
         const globalPanel = (
             <React.Fragment>
@@ -917,8 +901,8 @@ export class PreferenceDialogComponent extends React.Component {
                 defaultHeight={PreferenceDialogComponent.DefaultHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Preference)}
-                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Preference)}
+                onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Preference)}
+                onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.Preference)}
             >
                 <div className="bp3-dialog-body">
                     <Tabs id="preferenceTabs" vertical={true} selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>

@@ -6,7 +6,7 @@ import {computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {FloatingObjzIndexManager, PresetLayout} from "models";
+import {PresetLayout} from "models";
 import {AppStore, DialogId, HelpType} from "stores";
 
 import "./SaveLayoutDialogComponent.scss";
@@ -80,8 +80,8 @@ export class SaveLayoutDialogComponent extends React.Component {
         const className = classNames("preference-dialog", {"bp3-dark": appStore.darkTheme});
         const isSave = appStore.layoutStore.isSave;
 
-        const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Layout);
+        const zIndexManager = AppStore.Instance.zIndexManager;
+        let zIndex = zIndexManager.findIndex(DialogId.Layout);
 
         const dialogProps: IDialogProps = {
             icon: "layout-grid",
@@ -104,8 +104,8 @@ export class SaveLayoutDialogComponent extends React.Component {
                 minHeight={SaveLayoutDialogComponent.MinHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Layout)}
-                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Layout)}
+                onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Layout)}
+                onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.Layout)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label={isSave ? "Save current layout as:" : `Rename ${appStore.layoutStore.oldLayoutName} to:`}>

@@ -9,7 +9,7 @@ import {ImageViewLayer} from "components";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ColorPickerComponent, CoordinateComponent, CoordNumericInput, InputType, SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
-import {FloatingObjzIndexManager, Point2D, WCSPoint2D} from "models";
+import {Point2D, WCSPoint2D} from "models";
 import {AppStore, DialogId, DialogStore, HelpType} from "stores";
 import {CoordinateMode, DistanceMeasuringStore} from "stores/Frame";
 import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid, SWATCH_COLORS} from "utilities";
@@ -136,8 +136,8 @@ export class DistanceMeasuringDialog extends React.Component {
         const WCSFinish = getFormattedWCSPoint(wcsInfo, distanceMeasuringStore?.finish);
         const dialogStore = DialogStore.Instance;
 
-        const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        let zIndex = floatingObjzIndexManager.findIndex(DialogId.DistanceMeasure);
+        const zIndexManager = AppStore.Instance.zIndexManager;
+        let zIndex = zIndexManager.findIndex(DialogId.DistanceMeasure);
 
         const dialogProps: IDialogProps = {
             icon: <CustomIcon icon="distanceMeasuring" />,
@@ -198,8 +198,8 @@ export class DistanceMeasuringDialog extends React.Component {
                 minHeight={DistanceMeasuringDialog.MinHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.DistanceMeasure)}
-                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.DistanceMeasure)}
+                onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.DistanceMeasure)}
+                onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.DistanceMeasure)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     {appStore.activeLayer === ImageViewLayer.DistanceMeasuring ? (

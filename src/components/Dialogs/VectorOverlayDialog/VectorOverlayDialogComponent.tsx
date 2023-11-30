@@ -8,7 +8,6 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
-import {FloatingObjzIndexManager} from "models";
 import {AppStore, DialogId, HelpType} from "stores";
 import {FrameStore, VectorOverlaySource} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
@@ -244,8 +243,8 @@ export class VectorOverlayDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
 
-        const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Vector);
+        const zIndexManager = AppStore.Instance.zIndexManager;
+        let zIndex = zIndexManager.findIndex(DialogId.Vector);
 
         const dialogProps: DialogProps = {
             icon: <CustomIcon icon="vectorOverlay" size={CustomIcon.SIZE_LARGE} />,
@@ -400,8 +399,8 @@ export class VectorOverlayDialogComponent extends React.Component {
                 minHeight={VectorOverlayDialogComponent.MinHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Vector)}
-                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Vector)}
+                onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Vector)}
+                onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.Vector)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Data source">

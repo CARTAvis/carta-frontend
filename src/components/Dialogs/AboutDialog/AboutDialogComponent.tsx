@@ -3,8 +3,8 @@ import {Classes, IDialogProps} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {CARTA_INFO, FloatingObjzIndexManager} from "models";
-import {DialogId, DialogStore} from "stores";
+import {CARTA_INFO} from "models";
+import {AppStore, DialogId, DialogStore} from "stores";
 
 import "./AboutDialogComponent.scss";
 
@@ -18,8 +18,8 @@ export class AboutDialogComponent extends React.Component {
     public render() {
         const dialogStore = DialogStore.Instance;
 
-        const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        let zIndex = floatingObjzIndexManager.findIndex(DialogId.About);
+        const zIndexManager = AppStore.Instance.zIndexManager;
+        let zIndex = zIndexManager.findIndex(DialogId.About);
 
         const dialogProps: IDialogProps = {
             icon: "info-sign",
@@ -42,8 +42,8 @@ export class AboutDialogComponent extends React.Component {
                 minHeight={AboutDialogComponent.MinHeight}
                 enableResizing={false}
                 zIndex={zIndex}
-                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.About)}
-                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.About)}
+                onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.About)}
+                onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.About)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>

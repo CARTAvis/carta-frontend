@@ -3,7 +3,7 @@ import {action, makeObservable, observable} from "mobx";
 
 import {FileInfoType} from "components";
 import {WorkspaceDialogMode} from "components/Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
-import {FloatingObjzIndexManager, Snippet} from "models";
+import {Snippet} from "models";
 import {AppStore, SnippetStore} from "stores";
 
 export enum DialogId {
@@ -39,17 +39,17 @@ export class DialogStore {
         return DialogStore.staticInstance;
     }
 
-    floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
+    zIndexManager = AppStore.Instance.zIndexManager;
 
     // Region
     @observable regionDialogVisible: boolean;
     @action showRegionDialog = () => {
         this.regionDialogVisible = true;
-        this.floatingObjzIndexManager.assignIndex(DialogId.Region);
+        this.zIndexManager.assignIndex(DialogId.Region);
     };
     @action hideRegionDialog = () => {
         this.regionDialogVisible = false;
-        this.floatingObjzIndexManager.removeIndex(DialogId.Region);
+        this.zIndexManager.removeIndex(DialogId.Region);
     };
 
     // Hotkey
@@ -65,22 +65,22 @@ export class DialogStore {
     @observable aboutDialogVisible: boolean;
     @action showAboutDialog = () => {
         this.aboutDialogVisible = true;
-        this.floatingObjzIndexManager.assignIndex(DialogId.About);
+        this.zIndexManager.assignIndex(DialogId.About);
     };
     @action hideAboutDialog = () => {
         this.aboutDialogVisible = false;
-        this.floatingObjzIndexManager.removeIndex(DialogId.About);
+        this.zIndexManager.removeIndex(DialogId.About);
     };
 
     // Preference
     @observable preferenceDialogVisible: boolean;
     @action showPreferenceDialog = () => {
         this.preferenceDialogVisible = true;
-        this.floatingObjzIndexManager.assignIndex(DialogId.Preference);
+        this.zIndexManager.assignIndex(DialogId.Preference);
     };
     @action hidePreferenceDialog = () => {
         this.preferenceDialogVisible = false;
-        this.floatingObjzIndexManager.removeIndex(DialogId.Preference);
+        this.zIndexManager.removeIndex(DialogId.Preference);
     };
 
     // Layout
@@ -88,11 +88,11 @@ export class DialogStore {
     @action showSaveLayoutDialog = (oldLayoutName?: string) => {
         this.saveLayoutDialogVisible = true;
         AppStore.Instance.layoutStore.setOldLayoutName(oldLayoutName);
-        this.floatingObjzIndexManager.assignIndex(DialogId.Layout);
+        this.zIndexManager.assignIndex(DialogId.Layout);
     };
     @action hideSaveLayoutDialog = () => {
         this.saveLayoutDialogVisible = false;
-        this.floatingObjzIndexManager.removeIndex(DialogId.Layout);
+        this.zIndexManager.removeIndex(DialogId.Layout);
     };
 
     // Workspace
@@ -100,22 +100,22 @@ export class DialogStore {
     @action showWorkspaceDialog = (mode = WorkspaceDialogMode.Save) => {
         this.fileBrowserDialogVisible = false;
         this.workspaceDialogMode = mode;
-        this.floatingObjzIndexManager.assignIndex(DialogId.Workspace);
+        this.zIndexManager.assignIndex(DialogId.Workspace);
     };
     @action hideWorkspaceDialog = () => {
         this.workspaceDialogMode = WorkspaceDialogMode.Hidden;
-        this.floatingObjzIndexManager.removeIndex(DialogId.Workspace);
+        this.zIndexManager.removeIndex(DialogId.Workspace);
     };
 
     // Workspace sharing
     @observable shareWorkspaceDialogVisible: boolean;
     @action showShareWorkspaceDialog = () => {
         this.shareWorkspaceDialogVisible = true;
-        this.floatingObjzIndexManager.assignIndex(DialogId.ShareWorkspace);
+        this.zIndexManager.assignIndex(DialogId.ShareWorkspace);
     };
     @action hideShareWorkspaceDialog = () => {
         this.shareWorkspaceDialogVisible = false;
-        this.floatingObjzIndexManager.removeIndex(DialogId.ShareWorkspace);
+        this.zIndexManager.removeIndex(DialogId.ShareWorkspace);
     };
 
     // File Browser
@@ -123,11 +123,11 @@ export class DialogStore {
     @action showFileBrowserDialog = () => {
         this.workspaceDialogMode = WorkspaceDialogMode.Hidden;
         this.fileBrowserDialogVisible = true;
-        this.floatingObjzIndexManager.assignIndex(DialogId.FileBrowser);
+        this.zIndexManager.assignIndex(DialogId.FileBrowser);
     };
     @action hideFileBrowserDialog = () => {
         this.fileBrowserDialogVisible = false;
-        this.floatingObjzIndexManager.removeIndex(DialogId.FileBrowser);
+        this.zIndexManager.removeIndex(DialogId.FileBrowser);
     };
 
     // File Info
@@ -135,11 +135,11 @@ export class DialogStore {
     @observable selectedFileInfoDialogTab: TabId = FileInfoType.IMAGE_HEADER;
     @action showFileInfoDialog = () => {
         this.fileInfoDialogVisible = true;
-        this.floatingObjzIndexManager.assignIndex(DialogId.FileInfo);
+        this.zIndexManager.assignIndex(DialogId.FileInfo);
     };
     @action hideFileInfoDialog = () => {
         this.fileInfoDialogVisible = false;
-        this.floatingObjzIndexManager.removeIndex(DialogId.FileInfo);
+        this.zIndexManager.removeIndex(DialogId.FileInfo);
     };
     @action setSelectedFileInfoDialogTab = (newId: TabId) => {
         this.selectedFileInfoDialogTab = newId;
@@ -149,22 +149,22 @@ export class DialogStore {
     @observable contourDialogVisible: boolean = false;
     @action showContourDialog = () => {
         this.contourDialogVisible = true;
-        this.floatingObjzIndexManager.assignIndex(DialogId.Contour);
+        this.zIndexManager.assignIndex(DialogId.Contour);
     };
     @action hideContourDialog = () => {
         this.contourDialogVisible = false;
-        this.floatingObjzIndexManager.removeIndex(DialogId.Contour);
+        this.zIndexManager.removeIndex(DialogId.Contour);
     };
 
     // Vector overlay dialog
     @observable vectorOverlayDialogVisible: boolean = false;
     @action showVectorOverlayDialog = () => {
         this.vectorOverlayDialogVisible = true;
-        this.floatingObjzIndexManager.assignIndex(DialogId.Vector);
+        this.zIndexManager.assignIndex(DialogId.Vector);
     };
     @action hideVectorOverlayDialog = () => {
         this.vectorOverlayDialogVisible = false;
-        this.floatingObjzIndexManager.removeIndex(DialogId.Vector);
+        this.zIndexManager.removeIndex(DialogId.Vector);
     };
 
     // Code snippet dialog
@@ -174,22 +174,22 @@ export class DialogStore {
             SnippetStore.Instance.setActiveSnippet(snippet, name);
         }
         this.codeSnippetDialogVisible = true;
-        this.floatingObjzIndexManager.assignIndex(DialogId.Snippet);
+        this.zIndexManager.assignIndex(DialogId.Snippet);
     };
 
     @action showNewCodeSnippet = () => {
         SnippetStore.Instance.clearActiveSnippet();
         this.codeSnippetDialogVisible = true;
-        this.floatingObjzIndexManager.assignIndex(DialogId.Snippet);
+        this.zIndexManager.assignIndex(DialogId.Snippet);
     };
 
     @action showCodeSnippetDialog = () => {
         this.codeSnippetDialogVisible = true;
-        this.floatingObjzIndexManager.assignIndex(DialogId.Snippet);
+        this.zIndexManager.assignIndex(DialogId.Snippet);
     };
     @action hideCodeSnippetDialog = () => {
         this.codeSnippetDialogVisible = false;
-        this.floatingObjzIndexManager.removeIndex(DialogId.Snippet);
+        this.zIndexManager.removeIndex(DialogId.Snippet);
     };
 
     // External page dialog
@@ -200,54 +200,54 @@ export class DialogStore {
         this.externalPageDialogUrl = url;
         this.externalPageDialogTitle = title;
         this.externalPageDialogVisible = true;
-        this.floatingObjzIndexManager.assignIndex(DialogId.ExternalPage);
+        this.zIndexManager.assignIndex(DialogId.ExternalPage);
     };
     @action hideExternalPageDialog = () => {
         this.externalPageDialogVisible = false;
-        this.floatingObjzIndexManager.removeIndex(DialogId.ExternalPage);
+        this.zIndexManager.removeIndex(DialogId.ExternalPage);
     };
 
     // Stokes dialog
     @observable stokesDialogVisible: boolean = false;
     @action showStokesDialog = () => {
         this.stokesDialogVisible = true;
-        this.floatingObjzIndexManager.assignIndex(DialogId.Stokes);
+        this.zIndexManager.assignIndex(DialogId.Stokes);
     };
     @action hideStokesDialog = () => {
         this.stokesDialogVisible = false;
-        this.floatingObjzIndexManager.removeIndex(DialogId.Stokes);
+        this.zIndexManager.removeIndex(DialogId.Stokes);
     };
 
     // Catalog query dialog
     @observable catalogQueryDialogVisible: boolean = false;
     @action showCatalogQueryDialog = () => {
         this.catalogQueryDialogVisible = true;
-        this.floatingObjzIndexManager.assignIndex(DialogId.CatalogQuery);
+        this.zIndexManager.assignIndex(DialogId.CatalogQuery);
     };
     @action hideCatalogQueryDialog = () => {
         this.catalogQueryDialogVisible = false;
-        this.floatingObjzIndexManager.removeIndex(DialogId.CatalogQuery);
+        this.zIndexManager.removeIndex(DialogId.CatalogQuery);
     };
 
     // Fitting dialog
     @observable fittingDialogVisible: boolean = false;
     @action showFittingDialog = () => {
         this.fittingDialogVisible = true;
-        this.floatingObjzIndexManager.assignIndex(DialogId.Fitting);
+        this.zIndexManager.assignIndex(DialogId.Fitting);
     };
     @action hideFittingDialog = () => {
         this.fittingDialogVisible = false;
-        this.floatingObjzIndexManager.removeIndex(DialogId.Fitting);
+        this.zIndexManager.removeIndex(DialogId.Fitting);
     };
 
     // Distance Measuring dialog
     @observable distanceMeasuringDialogVisible: boolean = false;
     @action showDistanceMeasuringDialog = () => {
         this.distanceMeasuringDialogVisible = true;
-        this.floatingObjzIndexManager.assignIndex(DialogId.DistanceMeasure);
+        this.zIndexManager.assignIndex(DialogId.DistanceMeasure);
     };
     @action hideDistanceMeasuringDialog = () => {
         this.distanceMeasuringDialogVisible = false;
-        this.floatingObjzIndexManager.removeIndex(DialogId.DistanceMeasure);
+        this.zIndexManager.removeIndex(DialogId.DistanceMeasure);
     };
 }

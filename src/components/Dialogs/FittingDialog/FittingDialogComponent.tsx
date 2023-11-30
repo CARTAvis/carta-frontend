@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, CoordinateComponent, CoordNumericInput, ImageCoordNumericInput, InputType, SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
-import {FloatingObjzIndexManager, Point2D, WCSPoint2D} from "models";
+import {Point2D, WCSPoint2D} from "models";
 import {AppStore, DialogId, HelpType} from "stores";
 import {CoordinateMode} from "stores/Frame";
 import {exportTxtFile, getTimestamp} from "utilities";
@@ -101,8 +101,8 @@ export class FittingDialogComponent extends React.Component {
         const fittingStore = appStore.imageFittingStore;
         let component = fittingStore.components[fittingStore.selectedComponentIndex];
 
-        const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Fitting);
+        const zIndexManager = AppStore.Instance.zIndexManager;
+        let zIndex = zIndexManager.findIndex(DialogId.Fitting);
 
         const dialogProps: IDialogProps = {
             icon: <CustomIcon icon="imageFitting" size={CustomIcon.SIZE_LARGE} />,
@@ -170,8 +170,8 @@ export class FittingDialogComponent extends React.Component {
                 minHeight={FittingDialogComponent.MinHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Fitting)}
-                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Fitting)}
+                onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Fitting)}
+                onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.Fitting)}
             >
                 <div className={classNames(Classes.DIALOG_BODY, "pinned-input-panel")}>
                     <FormGroup label="Data source" inline={true}>

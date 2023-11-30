@@ -31,7 +31,7 @@ import {
     // setting Panel
     StokesAnalysisSettingsPanelComponent
 } from "components";
-import {FloatingObjzIndexManager, ImagePanelMode} from "models";
+import {ImagePanelMode} from "models";
 import {AppStore, CatalogStore, HelpStore, HelpType, LayoutStore, PreferenceKeys, PreferenceStore} from "stores";
 import {
     ACTIVE_FILE_ID,
@@ -101,7 +101,6 @@ export class WidgetConfig implements DefaultWidgetConfig {
     parentType?: string;
     helpType?: HelpType | HelpType[];
     componentId?: string;
-    @observable zIndex?: number = 0;
 
     @action setDefaultPosition = (x: number, y: number) => {
         this.defaultX = x;
@@ -1473,18 +1472,18 @@ export class WidgetsStore {
         }
         this.floatingWidgets.push(widget);
 
-        const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-        floatingObjzIndexManager.assignIndex(widget.id);
+        const zIndexManager = AppStore.Instance.zIndexManager;
+        zIndexManager.assignIndex(widget.id);
     };
 
     // Removes a widget from the floating widget array, optionally removing the widget's associated store
     @action removeFloatingWidget = (id: string, preserveStore: boolean = false) => {
         const widget = this.floatingWidgets.find(w => w.id === id);
-        const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
+        const zIndexManager = AppStore.Instance.zIndexManager;
 
         if (widget) {
-            floatingObjzIndexManager.updateIndexOnRemove(id);
-            floatingObjzIndexManager.removeIndex(id);
+            zIndexManager.updateIndexOnRemove(id);
+            zIndexManager.removeIndex(id);
             this.floatingWidgets = this.floatingWidgets.filter(w => w.id !== id);
             if (preserveStore) {
                 return;
@@ -1498,11 +1497,11 @@ export class WidgetsStore {
     // remove a widget component by componentId
     @action removeFloatingWidgetComponent = (componentId: string) => {
         const widget = this.floatingWidgets.find(w => w.componentId === componentId);
-        const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
+        const zIndexManager = AppStore.Instance.zIndexManager;
 
         if (widget) {
-            floatingObjzIndexManager.updateIndexOnRemove(componentId);
-            floatingObjzIndexManager.removeIndex(componentId);
+            zIndexManager.updateIndexOnRemove(componentId);
+            zIndexManager.removeIndex(componentId);
             this.floatingWidgets = this.floatingWidgets.filter(w => w.componentId !== componentId);
             this.removeAssociatedFloatingSetting(componentId);
         }

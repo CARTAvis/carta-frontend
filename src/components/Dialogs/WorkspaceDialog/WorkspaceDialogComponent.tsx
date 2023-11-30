@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 import moment from "moment/moment";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {FloatingObjzIndexManager, WorkspaceListItem} from "models";
+import {WorkspaceListItem} from "models";
 import {AppStore, DialogId, HelpType} from "stores";
 
 import {AppToaster, ErrorToast, SuccessToast} from "../../Shared";
@@ -142,8 +142,8 @@ export const WorkspaceDialogComponent = observer(() => {
 
     const className = classNames("workspace-dialog", {"bp3-dark": appStore.darkTheme});
 
-    const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
-    let zIndex = floatingObjzIndexManager.findIndex(DialogId.Workspace);
+    const zIndexManager = AppStore.Instance.zIndexManager;
+    let zIndex = zIndexManager.findIndex(DialogId.Workspace);
 
     const dialogProps: IDialogProps = {
         icon: "control",
@@ -269,8 +269,8 @@ export const WorkspaceDialogComponent = observer(() => {
             minHeight={550}
             enableResizing={true}
             zIndex={zIndex}
-            onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Workspace)}
-            onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Workspace)}
+            onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Workspace)}
+            onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.Workspace)}
         >
             <div className={Classes.DIALOG_BODY}>
                 <div className="workspace-container">

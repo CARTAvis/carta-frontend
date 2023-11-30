@@ -1,4 +1,4 @@
-import {AppStore} from "stores";
+import {makeObservable, observable} from "mobx";
 
 export interface ZIndexUpdate {
     id: string;
@@ -6,70 +6,60 @@ export interface ZIndexUpdate {
 }
 
 export class FloatingObjzIndexManager {
-    private static staticInstance: FloatingObjzIndexManager;
+    @observable private floatingObjs: ZIndexUpdate[];
 
-    static get Instance() {
-        return FloatingObjzIndexManager.staticInstance || new FloatingObjzIndexManager();
+    constructor() {
+        makeObservable(this);
+        this.floatingObjs = [];
     }
 
+    public getFloatingObjs = () => {
+        return this.floatingObjs;
+    };
+
     public assignIndex = (id: string) => {
-        const appStore = AppStore.Instance;
-        let floatingObjs = appStore.getFloatingObjs();
-        let zIndex = floatingObjs.length + 1;
-        let zIndexUpdate: ZIndexUpdate = {id: id, zIndex: zIndex};
-        floatingObjs.push(zIndexUpdate);
-        appStore.setFloatingObjs(floatingObjs);
+        const zIndex = this.floatingObjs.length + 1;
+        const zIndexUpdate: ZIndexUpdate = {id: id, zIndex: zIndex};
+        this.floatingObjs.push(zIndexUpdate);
     };
 
     public removeIndex = (id: string) => {
-        const appStore = AppStore.Instance;
-        let floatingObjs = appStore.getFloatingObjs();
-        let newFloatingObjs = floatingObjs.filter(w => w.id !== id);
-        appStore.setFloatingObjs(newFloatingObjs);
+        this.floatingObjs = this.floatingObjs.filter(w => w.id !== id);
     };
 
     public updateIndexOnSelect = (id: string) => {
-        const appStore = AppStore.Instance;
-        let floatingObjs = appStore.getFloatingObjs();
-        const selectedObjIndex = floatingObjs.findIndex(w => w.id === id);
-        const selectedObj = floatingObjs[selectedObjIndex];
-        const NFloatingObj = floatingObjs.length;
+        const selectedObjIndex = this.floatingObjs.findIndex(w => w.id === id);
+        const selectedObj = this.floatingObjs[selectedObjIndex];
+        const NFloatingObj = this.floatingObjs.length;
 
         if (NFloatingObj > 1 && selectedObjIndex >= 0 && selectedObj.zIndex < NFloatingObj) {
             for (let i = 0; i < NFloatingObj; i++) {
-                let currentObjzIndex = floatingObjs[i].zIndex;
+                let currentObjzIndex = this.floatingObjs[i].zIndex;
                 if (currentObjzIndex >= selectedObj.zIndex) {
-                    floatingObjs[i].zIndex = currentObjzIndex - 1;
+                    this.floatingObjs[i].zIndex = currentObjzIndex - 1;
                 }
             }
-            floatingObjs[selectedObjIndex].zIndex = floatingObjs.length;
+            this.floatingObjs[selectedObjIndex].zIndex = this.floatingObjs.length;
         }
-        appStore.setFloatingObjs(floatingObjs);
     };
 
     public updateIndexOnRemove = (id: string) => {
-        const appStore = AppStore.Instance;
-        let floatingObjs = appStore.getFloatingObjs();
-        const NFloatingObj = floatingObjs.length;
-        const selectedObj = floatingObjs.find(w => w.id === id);
+        const NFloatingObj = this.floatingObjs.length;
+        const selectedObj = this.floatingObjs.find(w => w.id === id);
         const selectedObjzIndex = selectedObj.zIndex;
 
         if (selectedObjzIndex < NFloatingObj) {
             for (let index = 0; index < NFloatingObj; index++) {
-                const zIndex = floatingObjs[index].zIndex;
+                let zIndex = this.floatingObjs[index].zIndex;
                 if (zIndex > selectedObjzIndex) {
-                    floatingObjs[index].zIndex = zIndex - 1;
+                    this.floatingObjs[index].zIndex = zIndex - 1;
                 }
             }
         }
-        appStore.setFloatingObjs(floatingObjs);
     };
 
     public findIndex = (id: string) => {
-        const appStore = AppStore.Instance;
-        let floatingObjs = appStore.getFloatingObjs();
-        const selectDialog = floatingObjs.find(w => w.id === id);
-        let zIndex = selectDialog ? selectDialog.zIndex : 0;
-        return zIndex;
+        const selectFloatingObj = this.floatingObjs.find(w => w.id === id);
+        return selectFloatingObj ? selectFloatingObj.zIndex : 0;
     };
 }
