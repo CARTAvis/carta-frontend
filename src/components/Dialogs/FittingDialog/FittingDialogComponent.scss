@@ -67,7 +67,8 @@
 
     .bp3-label {
         display: flex;
-        min-width: 10em;
+        justify-content: flex-end;
+        min-width: 11em;
         user-select: none;
 
         .bp3-text-muted {
@@ -122,6 +123,7 @@
         font-size: x-small;
         font-family: monospace;
         user-select: text;
+        white-space: nowrap;
     }
 
     .bp3-divider {
@@ -147,16 +149,19 @@
 
     .fitting-result-panel {
         .bp3-tabs {
+            display: flex;
             width: 100%;
             height: 100%;
+            text-align: left;
 
             .bp3-tab-list {
-                width: 125px;
+                min-width: 10em;
             }
 
             .bp3-tab-panel {
                 width: calc(100% - 125px);
                 height: 100%;
+                padding-left: 10px;
 
                 .fitting-result-pre {
                     overflow: auto;
