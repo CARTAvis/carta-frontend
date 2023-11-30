@@ -161,31 +161,7 @@ export class ImageSaveComponent extends React.Component {
                         {numChannels > 1 && (
                             <React.Fragment>
                                 <div className="coordinate-select">
-                                    {activeFrame?.spectralSystemsSupported.length > 0 && (
-                                        <SpectralSettingsComponent
-                                            frame={activeFrame}
-                                            onSpectralCoordinateChange={coord => {
-                                                this.updateSpectralCoordinate(coord);
-                                            }}
-                                            onSpectralSystemChange={sys => {
-                                                this.updateSpectralSystem(sys as SpectralSystem);
-                                            }}
-                                            disable={false}
-                                            customLabel="Range Unit"
-                                        />
-                                    )}
-                                    {activeFrame?.spectralSystemsSupported.length === 0 && (
-                                        <FormGroup label={"Range unit"} inline={true}>
-                                            <HTMLSelect
-                                                value={fileBrowser.saveIsNativeValue?.toString()}
-                                                options={[
-                                                    {label: "Native value", value: "true"},
-                                                    {label: "Channel", value: "false"}
-                                                ]}
-                                                onChange={(event: React.FormEvent<HTMLSelectElement>) => fileBrowser.setSaveIsNativeValue(event.currentTarget.value === "true")}
-                                            />
-                                        </FormGroup>
-                                    )}
+                                    <SpectralSettingsComponent frame={activeFrame} onSpectralCoordinateChange={this.updateSpectralCoordinate} onSpectralSystemChange={this.updateSpectralSystem} disable={false} customLabel="Range Unit" />
                                 </div>
                                 <div className="range-select">
                                     <FormGroup label={"Range from"} inline={true}>

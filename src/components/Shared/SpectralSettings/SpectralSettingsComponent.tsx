@@ -2,7 +2,7 @@ import * as React from "react";
 import {FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
-import {SpectralSystem} from "models";
+import {SPECTRAL_TYPE_STRING, SpectralSystem, SpectralType} from "models";
 import {FrameStore} from "stores/Frame";
 
 @observer
@@ -22,14 +22,18 @@ export class SpectralSettingsComponent extends React.Component<{
         const spectralTypes = frame?.spectralCoordsSupported ? Array.from(frame.spectralCoordsSupported.keys()) : [];
         const filteredSpectralTypes = this.props.disableChannelOption ? spectralTypes.filter(type => type !== "Channel") : spectralTypes;
         const spectralCoordinateOptions: IOptionProps[] = filteredSpectralTypes.map((coord: string) => {
+            if (coord === SPECTRAL_TYPE_STRING.get(SpectralType.NATIVE)) {
+                return {value: coord, label: frame.nativeSpectralCoordinate};
+            }
             return {value: coord, label: coord === nativeSpectralCoordinate ? coord + " (Native WCS)" : coord};
         });
-        const spectralSystemOptions: IOptionProps[] = frame?.spectralSystemsSupported
-            ? frame.spectralSystemsSupported.map(system => {
-                  return {value: system, label: system};
-              })
-            : [];
-        const hasFrameCoordinateSetting = frame && (frame.isSpectralCoordinateConvertible || (frame.spectralAxis && !frame.spectralAxis.valid));
+        const spectralSystemOptions: IOptionProps[] =
+            frame?.spectralSystemsSupported.length > 0
+                ? frame.spectralSystemsSupported.map(system => {
+                      return {value: system, label: system};
+                  })
+                : [{value: frame.spectralAxis.specsys, label: frame.spectralAxis.specsys}];
+        const hasFrameCoordinateSetting = frame?.isSpectralChannel;
         const disableCoordinateSetting = this.props.disable || !hasFrameCoordinateSetting;
         const disableSystemSetting = this.props.disable || !frame || !frame.isSpectralSystemConvertible;
 
