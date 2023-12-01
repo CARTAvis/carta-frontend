@@ -59,7 +59,7 @@ In the description section, please provide details about your changes, including
 
 Each check item in the checklist section is explained below:
 
-For linked issues (if there are):
+For linked issues (if there are): this section is for checking the status of the issues that are linked in the above description.
 
 -   assignee and label added:
 
@@ -69,7 +69,7 @@ For linked issues (if there are):
 
     Connect the issue to the pull request in ZenHub. ZenHub automatically updates the issue status from "In Progress" to "Review/QA" by default. Also, provide an estimate for the time required to complete the issue. This estimation is useful for future development planning.
 
-For the pull request:
+For the pull request: this section is for checking the status of the PR and reviewing the code changes.
 
 -   reviewers and assignee added:
 
@@ -79,19 +79,33 @@ For the pull request:
 
     Provide an estimate for the time required to review the pull request.
 
+-   changelog updated / no changelog update needed:
+
+    Updating the changelog is required when the issue exists in the latest release and the changes have an impact on users. It is recommended to update the changelog when sending the pull request and to resolve changelog merge conflicts using the GitHub UI.
+
+-   unit test added (for functions with no dependenies):
+
+    It is recommended to add unit tests for functions that are related to the code changes.
+
+-   API documentation added (for public variables and methods in stores):
+
+    It is recommended to add API documentation for public variables and methods in stores that are related to the code changes. Check [here](./documentation-guidelines.md/#writing-api-documentation) for adding API documentation.
+
+For dependencies: this section is for checking repositories that have dependencies on carta-frontend or are dependencies of carta-frontend.
+
 -   e2e test passing / corresponding fix added:
 
     Check if the end-to-end tests are passing. This will be checked during the review.
 
--   changelog updated / no changelog update needed:
+-   protobuf version bumped / no protobuf version bumped needed:
 
-    Updating the changelog is required when the issue exists in the latest release and the changes have an impact on users. It can be updated when the pull request is ready for merge to prevent frequent merge conflicts.
+    Updating the protobuf version is required when the behavior of the protobuf messages is changed.
 
 -   protobuf updated to the latest dev commit / no protobuf update needed:
 
-    Updating the protobuf is required when there are changes in the carta-protobuf submodule. This can be done when the pull request is ready for merge.
+    Updating the protobuf is required when there are changes in the carta-protobuf submodule. This can be done when the pull request is ready for merge. Check [here](#merging-a-pull-request-with-protobuf-changes-required) for the steps.
 
--   `BackendService` unchanged / `BackendService` changed and corresponding ICD test fix added:
+-   corresponding ICD test fix added (`BackendService` changed) / no ICD test fix needed (`BackendService` unchanged):
 
     Updating ICD tests is required when there are changes in `BackendService`.
 
