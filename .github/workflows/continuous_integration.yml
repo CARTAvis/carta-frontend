@@ -86,7 +86,7 @@ jobs:
         run: |
           source /emsdk/emsdk_env.sh
           ./protobuf/build_proto.sh
-      
+
       - name: Production build with node 16
         shell: bash        
         run: |

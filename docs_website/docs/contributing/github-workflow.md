@@ -109,6 +109,8 @@ For dependencies: this section is for checking repositories that have dependenci
 
     Updating ICD tests is required when there are changes in `BackendService`.
 
+To apply other [pull request templates](https://github.com/CARTAvis/carta-frontend/blob/dev/.github/PULL_REQUEST_TEMPLATE), please add a query parameter `&template=[template md file].md` to the URL.
+
 #### CI checks
 
 Please ensure that the CI passes successfully when making the pull request. The CI checks various items:
