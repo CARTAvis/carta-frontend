@@ -86,6 +86,10 @@ jobs:
         run: |
           source /emsdk/emsdk_env.sh
           ./protobuf/build_proto.sh
+      
+      - name: Run unit tests
+        shell: bash
+        run: n exec 16 npm test
 
       - name: Production build with node 16
         shell: bash        
@@ -133,6 +137,10 @@ jobs:
         run: |
           source /emsdk/emsdk_env.sh
           ./protobuf/build_proto.sh
+      
+      - name: Run unit tests
+        shell: bash
+        run: n exec 18 npm test
 
       - name: Production build with node 18
         shell: bash
