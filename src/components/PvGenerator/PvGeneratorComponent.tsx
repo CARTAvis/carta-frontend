@@ -323,7 +323,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                 <FormGroup
                     className="label-info-group"
                     inline={true}
-                    label="Image"
+                    label="Data source"
                     labelInfo={
                         <span className="label-info" title={fileInfo}>
                             {fileInfo ? `(${fileInfo})` : ""}

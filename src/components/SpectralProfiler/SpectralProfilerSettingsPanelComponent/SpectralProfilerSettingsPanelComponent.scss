@@ -10,13 +10,13 @@
 
     .bp3-form-group .bp3-label {
         text-align: right;
-        min-width: 10em;
-        width: 10em;
+        min-width: 11em;
+        width: 11em;
     }
 
     .conversion-tab-panel {
         .bp3-form-group .bp3-label {
-            min-width: 10em;
+            min-width: 11em;
         }
     }
 
@@ -37,9 +37,7 @@
     .bp3-select select {
         width: 100%;
         min-width: 7em;
-    }
-
-    span.bp3-popover2-target {
-        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 }

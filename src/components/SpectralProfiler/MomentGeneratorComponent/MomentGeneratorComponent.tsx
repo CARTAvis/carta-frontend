@@ -108,7 +108,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
             <React.Fragment>
                 <FormGroup
                     className={"image-region-select"}
-                    label={"Image"}
+                    label={"Data source"}
                     inline={true}
                     labelInfo={
                         fileInfo ? (

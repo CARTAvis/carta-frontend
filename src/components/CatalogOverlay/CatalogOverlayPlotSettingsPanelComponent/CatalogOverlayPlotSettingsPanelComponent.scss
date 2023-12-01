@@ -58,16 +58,20 @@
 
     .bp3-button:not([class*="bp3-intent-"]) {
         white-space: nowrap;
-        width: 100%;
 
         .bp3-button-text {
             overflow: hidden;
+            text-overflow: ellipsis;
         }
+    }
+
+    .file-menu .bp3-button {
+        width: 100%;
     }
 
     .bp3-form-content {
         display: inline-flex;
-        width: calc(100% - 3em);
+        width: calc(100% - 3em); // because of the popover, the subtraction is required
         max-width: fit-content;
     }
 }
