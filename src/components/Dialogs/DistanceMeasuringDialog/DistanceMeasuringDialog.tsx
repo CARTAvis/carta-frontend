@@ -23,7 +23,6 @@ enum DistanceMeasuringDialogTabs {
 
 @observer
 export class DistanceMeasuringDialog extends React.Component {
-
     constructor(props: any) {
         super(props);
         makeObservable(this);
