@@ -143,7 +143,7 @@ jobs:
         run: |
           source /emsdk/emsdk_env.sh
           n exec 18 npm run build
-      
+
       - name: Run unit tests
         shell: bash
         run: n exec 18 npm test
