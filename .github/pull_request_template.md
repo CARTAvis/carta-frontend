@@ -20,3 +20,4 @@ For dependencies:
 - [ ] protobuf version bumped / no protobuf version bumped needed
 - [ ] protobuf updated to the latest dev commit / no protobuf update needed
 - [ ] corresponding ICD test fix added (`BackendService` changed) / no ICD test fix needed (`BackendService` unchanged)
+- [ ] user manual prepared (for large new features)

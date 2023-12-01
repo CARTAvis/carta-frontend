@@ -87,6 +87,8 @@ For dependencies: this section is for checking repositories that have dependenci
 
 -   corresponding ICD test fix added (`BackendService` changed) / no ICD test fix needed (`BackendService` unchanged): updating ICD tests is required when there are changes in `BackendService`.
 
+-   user manual prepared (for large new features): preparing user manual updates in advance is required for large new features.
+
 To apply other [pull request templates](https://github.com/CARTAvis/carta-frontend/blob/dev/.github/PULL_REQUEST_TEMPLATE), please add a query parameter `&template=[template md file].md` to the URL.
 
 #### CI checks
