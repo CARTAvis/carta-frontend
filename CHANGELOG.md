@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed distance measurement tool render from PV preview frames ([#2267](https://github.com/CARTAvis/carta-frontend/issues/2267)).
 * Fixed bug that the frontend crashes when deleting annotations if the export window is opened ([#2278](https://github.com/CARTAvis/carta-frontend/issues/2278)).
 * Fixed the performance issue when panning images ([#2291](https://github.com/CARTAvis/carta-frontend/issues/2291)).
+* Improved the dragging performance of 'Export Region' widget when the list of region/annotation to be exported is large. ([#1867](https://github.com/CARTAvis/carta-frontend/issues/1867)).
 
 ## [4.0.0]
 
