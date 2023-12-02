@@ -73,6 +73,11 @@ export class PreferenceDialogComponent extends React.Component {
         makeObservable(this);
     }
 
+    private static readonly DefaultWidth = 775;
+    private static readonly DefaultHeight = 500;
+    private static readonly MinWidth = 650;
+    private static readonly MinHeight = 300;
+
     private renderPercentileSelectItem = (percentile: string, {handleClick, modifiers, query}) => {
         return <MenuItem text={percentile + "%"} onClick={handleClick} key={percentile} />;
     };
@@ -884,7 +889,15 @@ export class PreferenceDialogComponent extends React.Component {
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.PREFERENCES} minWidth={450} minHeight={300} defaultWidth={775} defaultHeight={500} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                helpType={HelpType.PREFERENCES}
+                minWidth={PreferenceDialogComponent.MinWidth}
+                minHeight={PreferenceDialogComponent.MinHeight}
+                defaultWidth={PreferenceDialogComponent.DefaultWidth}
+                defaultHeight={PreferenceDialogComponent.DefaultHeight}
+                enableResizing={true}
+            >
                 <div className="bp3-dialog-body">
                     <Tabs id="preferenceTabs" vertical={true} selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
                         <Tab id={PreferenceDialogTabs.GLOBAL} title="Global" panel={globalPanel} />
@@ -906,7 +919,6 @@ export class PreferenceDialogComponent extends React.Component {
                         <Tooltip2 content="Apply to current tab only." position={Position.TOP}>
                             <AnchorButton intent={Intent.WARNING} icon={"refresh"} onClick={this.reset} text="Restore defaults" />
                         </Tooltip2>
-                        <Button intent={Intent.NONE} onClick={appStore.dialogStore.hidePreferenceDialog} text="Close" />
                     </div>
                 </div>
             </DraggableDialogComponent>

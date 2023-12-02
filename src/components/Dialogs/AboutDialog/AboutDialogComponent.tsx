@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Classes, IDialogProps, Intent} from "@blueprintjs/core";
+import {Classes, IDialogProps} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
@@ -10,6 +10,11 @@ import "./AboutDialogComponent.scss";
 
 @observer
 export class AboutDialogComponent extends React.Component {
+    private static readonly DefaultWidth = 610;
+    private static readonly DefaultHeight = 675;
+    private static readonly MinWidth = 610;
+    private static readonly MinHeight = 675;
+
     public render() {
         const dialogStore = DialogStore.Instance;
 
@@ -26,7 +31,14 @@ export class AboutDialogComponent extends React.Component {
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={620} defaultHeight={705} enableResizing={false}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                defaultWidth={AboutDialogComponent.DefaultWidth}
+                defaultHeight={AboutDialogComponent.DefaultHeight}
+                minWidth={AboutDialogComponent.MinWidth}
+                minHeight={AboutDialogComponent.MinHeight}
+                enableResizing={false}
+            >
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>
                         <img src="carta_logo.png" width={80} />
@@ -99,11 +111,6 @@ export class AboutDialogComponent extends React.Component {
                         </a>
                         &#160; as published by the Free Software Foundation.
                     </p>
-                </div>
-                <div className={Classes.DIALOG_FOOTER}>
-                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton intent={Intent.NONE} onClick={dialogStore.hideAboutDialog} text="Close" />
-                    </div>
                 </div>
             </DraggableDialogComponent>
         );

@@ -37,6 +37,8 @@ export class VectorOverlayDialogComponent extends React.Component {
 
     private static readonly DefaultWidth = 500;
     private static readonly DefaultHeight = 720;
+    private static readonly MinWidth = 425;
+    private static readonly MinHeight = 265;
 
     private cachedFrame: FrameStore;
 
@@ -258,6 +260,8 @@ export class VectorOverlayDialogComponent extends React.Component {
                 <DraggableDialogComponent
                     dialogProps={dialogProps}
                     helpType={HelpType.VECTOR_OVERLAY}
+                    minWidth={VectorOverlayDialogComponent.MinWidth}
+                    minHeight={VectorOverlayDialogComponent.MinHeight}
                     defaultWidth={VectorOverlayDialogComponent.DefaultWidth}
                     defaultHeight={VectorOverlayDialogComponent.DefaultHeight}
                     enableResizing={true}
@@ -385,7 +389,15 @@ export class VectorOverlayDialogComponent extends React.Component {
         );
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.VECTOR_OVERLAY} defaultWidth={VectorOverlayDialogComponent.DefaultWidth} defaultHeight={VectorOverlayDialogComponent.DefaultHeight} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                helpType={HelpType.VECTOR_OVERLAY}
+                minWidth={VectorOverlayDialogComponent.MinWidth}
+                minHeight={VectorOverlayDialogComponent.MinHeight}
+                defaultWidth={VectorOverlayDialogComponent.DefaultWidth}
+                defaultHeight={VectorOverlayDialogComponent.DefaultHeight}
+                enableResizing={true}
+            >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Data source">
                         <DataSourceSelect
@@ -414,7 +426,6 @@ export class VectorOverlayDialogComponent extends React.Component {
                             disabled={(this.angularSource === VectorOverlaySource.None && this.intensitySource === VectorOverlaySource.None) || (!this.configChanged && dataSource.vectorOverlayConfig.enabled)}
                             text="Apply"
                         />
-                        <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideVectorOverlayDialog} text="Close" />
                     </div>
                 </div>
             </DraggableDialogComponent>

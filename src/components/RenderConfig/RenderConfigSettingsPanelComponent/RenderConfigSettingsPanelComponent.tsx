@@ -20,7 +20,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
             type: "floating-settings",
             minWidth: 280,
             minHeight: 225,
-            defaultWidth: 350,
+            defaultWidth: 375,
             defaultHeight: 375,
             title: "render-config-settings",
             isCloseable: true,

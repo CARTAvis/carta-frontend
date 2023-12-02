@@ -43,6 +43,11 @@ export class FittingDialogComponent extends React.Component {
         this.isMouseEntered = false;
     };
 
+    private static readonly DefaultWidth = 600;
+    private static readonly DefaultHeight = 660;
+    private static readonly MinWidth = 575;
+    private static readonly MinHeight = 500;
+
     constructor(props: any) {
         super(props);
         makeObservable(this);
@@ -109,7 +114,15 @@ export class FittingDialogComponent extends React.Component {
 
         if (!appStore || appStore.frameNum <= 0 || !fittingStore.effectiveFrame) {
             return (
-                <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.IMAGE_FITTING} minWidth={350} minHeight={265} defaultWidth={600} defaultHeight={660} enableResizing={true}>
+                <DraggableDialogComponent
+                    dialogProps={dialogProps}
+                    helpType={HelpType.IMAGE_FITTING}
+                    minWidth={FittingDialogComponent.MinWidth}
+                    minHeight={FittingDialogComponent.MinHeight}
+                    defaultWidth={FittingDialogComponent.DefaultWidth}
+                    defaultHeight={FittingDialogComponent.DefaultHeight}
+                    enableResizing={true}
+                >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </DraggableDialogComponent>
             );
@@ -153,7 +166,15 @@ export class FittingDialogComponent extends React.Component {
         const imageUnitString = fittingStore.effectiveFrame?.requiredUnit ? `(${fittingStore.effectiveFrame?.requiredUnit})` : "";
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.IMAGE_FITTING} minWidth={350} minHeight={265} defaultWidth={600} defaultHeight={660} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                helpType={HelpType.IMAGE_FITTING}
+                minWidth={FittingDialogComponent.MinWidth}
+                minHeight={FittingDialogComponent.MinHeight}
+                defaultWidth={FittingDialogComponent.DefaultWidth}
+                defaultHeight={FittingDialogComponent.DefaultHeight}
+                enableResizing={true}
+            >
                 <div className={classNames(Classes.DIALOG_BODY, "pinned-input-panel")}>
                     <FormGroup label="Data source" inline={true}>
                         <HTMLSelect value={fittingStore.selectedFileId} options={fittingStore.frameOptions} onChange={ev => fittingStore.setSelectedFileId(parseInt(ev.target.value))} />

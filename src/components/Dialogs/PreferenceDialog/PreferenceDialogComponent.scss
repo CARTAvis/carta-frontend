@@ -12,11 +12,13 @@
     }
 
     .bp3-form-group {
+        white-space: nowrap;
+
         &:first-of-type {
             margin-left: 0px;
         }
         .bp3-label {
-            width: 15em;
+            min-width: 16em;
             text-align: right;
         }
     }
@@ -74,6 +76,11 @@
         select {
             margin-left: 5%;
         }
+    }
+
+    .bp3-html-select select,
+    .bp3-select select {
+        width: auto;
     }
 
     user-select: none !important;
