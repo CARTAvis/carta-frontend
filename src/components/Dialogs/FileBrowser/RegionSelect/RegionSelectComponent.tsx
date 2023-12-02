@@ -12,8 +12,6 @@ import "./RegionSelectComponent.scss";
 
 @observer
 export class RegionSelectComponent extends React.Component {
-    private reference: HTMLDivElement;
-
     @computed private get isSelectAll(): boolean {
         const fileBrowserStore = FileBrowserStore.Instance;
         return fileBrowserStore.exportRegionNum === fileBrowserStore.regionOptionNum && fileBrowserStore.regionOptionNum > 0;
@@ -166,7 +164,7 @@ export class RegionSelectComponent extends React.Component {
         const regionNum = optionNum - annotationNum;
 
         return (
-            <div ref={ref => (this.reference = ref)} className="select-region">
+            <div className="select-region">
                 {optionNum > 0 ? (
                     <React.Fragment>
                         {this.renderSelectStatus()}

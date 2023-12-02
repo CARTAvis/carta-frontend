@@ -536,8 +536,7 @@ export class FileBrowserStore {
 
     @action addExportRegionIndex = (regionIndex: number) => {
         if (!this.exportRegionIndexes.includes(regionIndex)) {
-            this.exportRegionIndexes = [...this.exportRegionIndexes, regionIndex];
-            this.exportRegionIndexes = [...this.exportRegionIndexes].sort();
+            this.exportRegionIndexes = [...this.exportRegionIndexes, regionIndex].sort((a, b) => a - b);
         }
     };
 
