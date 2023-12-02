@@ -3,7 +3,7 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {ContourWebGLService} from "services";
-import {AppStore} from "stores";
+import {AnimatorStore, AppStore} from "stores";
 import {ContourDashMode, FrameStore, RenderConfigStore} from "stores/Frame";
 import {ceilToPower, GL2, rotate2D, scale2D, subtract2D} from "utilities";
 
@@ -28,8 +28,11 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         const contourStream = AppStore.Instance.backendService.contourStream;
         if (this.canvas) {
             contourStream.subscribe(() => {
+                const animatorStore = AnimatorStore.Instance;
                 const receivedContourStores = Array.from(this.props.frame.contourStores.values());
-                if (receivedContourStores.every(contourImageData => contourImageData.progress === 1) && receivedContourStores.length === this.props.frame.contourConfig.levels.length) {
+                if (receivedContourStores.every(contourImageData => contourImageData.progress === 1) && receivedContourStores.length === this.props.frame.contourConfig.levels.length && animatorStore.serverAnimationActive) {
+                    requestAnimationFrame(this.updateCanvas);
+                } else if (!animatorStore.serverAnimationActive) {
                     requestAnimationFrame(this.updateCanvas);
                 }
             });
@@ -38,8 +41,11 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
     componentDidUpdate() {
         AppStore.Instance.resetImageRatio();
+        const animatorStore = AnimatorStore.Instance;
         const receivedContourStores = Array.from(this.props.frame.contourStores.values());
-        if (receivedContourStores.every(contourImageData => contourImageData.progress === 1) && receivedContourStores.length === this.props.frame.contourConfig.levels.length) {
+        if (receivedContourStores.every(contourImageData => contourImageData.progress === 1) && receivedContourStores.length === this.props.frame.contourConfig.levels.length && animatorStore.serverAnimationActive) {
+            requestAnimationFrame(this.updateCanvas);
+        } else if (!animatorStore.serverAnimationActive) {
             requestAnimationFrame(this.updateCanvas);
         }
     }
