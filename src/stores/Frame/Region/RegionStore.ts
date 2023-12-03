@@ -482,8 +482,13 @@ export class RegionStore {
 
     @action setSize = (p: Point2D, skipUpdate = false) => {
         if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR || this.regionType === CARTA.RegionType.ANNRULER) {
-            const newStart = {x: this.center.x - p.x / 2, y: this.center.y - p.y / 2};
-            const newEnd = {x: this.center.x + p.x / 2, y: this.center.y + p.y / 2};
+            const rotation = (this.rotation * Math.PI) / 180.0;
+            const x = Math.abs(p.x);
+            const y = Math.abs(p.y);
+            const _x = x * Math.sign(Math.sin(rotation));
+            const _y = y * -Math.sign(Math.cos(rotation));
+            const newStart = {x: this.center.x - _x / 2, y: this.center.y - _y / 2};
+            const newEnd = {x: this.center.x + _x / 2, y: this.center.y + _y / 2};
             this.setControlPoints([newStart, newEnd]);
         } else {
             this.setControlPoint(SIZE_POINT_INDEX, p, skipUpdate);
