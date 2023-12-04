@@ -22,8 +22,6 @@ export class FileBrowserDialogComponent extends React.Component {
     @observable overwriteExistingFileAlertVisible: boolean;
     @observable fileFilterString: string = "";
     @observable debouncedFilterString: string = "";
-    // @observable defaultWidth: number;
-    // @observable defaultHeight: number;
     @observable enableImageArithmetic: boolean = false;
     @observable imageArithmeticString: string = "";
     @observable inputPathString: string = "";
@@ -602,11 +600,6 @@ export class FileBrowserDialogComponent extends React.Component {
         }
     };
 
-    // @action private updateDefaultSize = (newWidth: number, newHeight: number) => {
-    //     this.defaultWidth = newWidth;
-    //     this.defaultHeight = newHeight;
-    // };
-
     public render() {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
@@ -670,7 +663,6 @@ export class FileBrowserDialogComponent extends React.Component {
                 defaultWidth={FileBrowserDialogComponent.DefaultWidth}
                 defaultHeight={FileBrowserDialogComponent.DefaultHeight}
                 enableResizing={true}
-                // onResizeStop={this.updateDefaultSize}
                 zIndex={zIndex}
                 onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.FileBrowser)}
                 onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.FileBrowser)}
