@@ -15,7 +15,7 @@
             }
 
             .label-info {
-                max-width: calc(100% - 92px);
+                max-width: calc(100% - 92px); // because of the popover, we need the subtraction
                 text-overflow: ellipsis;
                 overflow: hidden;
                 white-space: nowrap;

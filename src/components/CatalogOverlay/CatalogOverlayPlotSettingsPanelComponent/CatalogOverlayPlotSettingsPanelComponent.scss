@@ -3,6 +3,7 @@
 
     .file-menu .bp3-button {
         white-space: nowrap;
+        width: 100%;
     }
     .bp3-form-group {
         &:first-of-type {
@@ -50,7 +51,7 @@
 
             .bp3-form-content {
                 display: inline-flex;
-                width: calc(100% - 5em);
+                width: calc(100% - 5em); // because of the popover, the subtraction is needed.
                 max-width: fit-content;
             }
         }
@@ -63,10 +64,6 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-    }
-
-    .file-menu .bp3-button {
-        width: 100%;
     }
 
     .bp3-form-content {
