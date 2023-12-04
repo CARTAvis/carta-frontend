@@ -49,7 +49,6 @@ export class DialogStore {
     };
     @action hideRegionDialog = () => {
         this.regionDialogVisible = false;
-        this.zIndexManager.removeIndex(DialogId.Region);
     };
 
     // Hotkey
@@ -69,7 +68,6 @@ export class DialogStore {
     };
     @action hideAboutDialog = () => {
         this.aboutDialogVisible = false;
-        this.zIndexManager.removeIndex(DialogId.About);
     };
 
     // Preference
@@ -80,7 +78,6 @@ export class DialogStore {
     };
     @action hidePreferenceDialog = () => {
         this.preferenceDialogVisible = false;
-        this.zIndexManager.removeIndex(DialogId.Preference);
     };
 
     // Layout
@@ -92,7 +89,6 @@ export class DialogStore {
     };
     @action hideSaveLayoutDialog = () => {
         this.saveLayoutDialogVisible = false;
-        this.zIndexManager.removeIndex(DialogId.Layout);
     };
 
     // Workspace
@@ -104,7 +100,6 @@ export class DialogStore {
     };
     @action hideWorkspaceDialog = () => {
         this.workspaceDialogMode = WorkspaceDialogMode.Hidden;
-        this.zIndexManager.removeIndex(DialogId.Workspace);
     };
 
     // Workspace sharing
@@ -115,7 +110,6 @@ export class DialogStore {
     };
     @action hideShareWorkspaceDialog = () => {
         this.shareWorkspaceDialogVisible = false;
-        this.zIndexManager.removeIndex(DialogId.ShareWorkspace);
     };
 
     // File Browser
@@ -127,7 +121,6 @@ export class DialogStore {
     };
     @action hideFileBrowserDialog = () => {
         this.fileBrowserDialogVisible = false;
-        this.zIndexManager.removeIndex(DialogId.FileBrowser);
     };
 
     // File Info
@@ -139,7 +132,6 @@ export class DialogStore {
     };
     @action hideFileInfoDialog = () => {
         this.fileInfoDialogVisible = false;
-        this.zIndexManager.removeIndex(DialogId.FileInfo);
     };
     @action setSelectedFileInfoDialogTab = (newId: TabId) => {
         this.selectedFileInfoDialogTab = newId;
@@ -153,7 +145,6 @@ export class DialogStore {
     };
     @action hideContourDialog = () => {
         this.contourDialogVisible = false;
-        this.zIndexManager.removeIndex(DialogId.Contour);
     };
 
     // Vector overlay dialog
@@ -164,7 +155,6 @@ export class DialogStore {
     };
     @action hideVectorOverlayDialog = () => {
         this.vectorOverlayDialogVisible = false;
-        this.zIndexManager.removeIndex(DialogId.Vector);
     };
 
     // Code snippet dialog
@@ -189,7 +179,6 @@ export class DialogStore {
     };
     @action hideCodeSnippetDialog = () => {
         this.codeSnippetDialogVisible = false;
-        this.zIndexManager.removeIndex(DialogId.Snippet);
     };
 
     // External page dialog
@@ -204,7 +193,6 @@ export class DialogStore {
     };
     @action hideExternalPageDialog = () => {
         this.externalPageDialogVisible = false;
-        this.zIndexManager.removeIndex(DialogId.ExternalPage);
     };
 
     // Stokes dialog
@@ -215,7 +203,6 @@ export class DialogStore {
     };
     @action hideStokesDialog = () => {
         this.stokesDialogVisible = false;
-        this.zIndexManager.removeIndex(DialogId.Stokes);
     };
 
     // Catalog query dialog
@@ -226,7 +213,6 @@ export class DialogStore {
     };
     @action hideCatalogQueryDialog = () => {
         this.catalogQueryDialogVisible = false;
-        this.zIndexManager.removeIndex(DialogId.CatalogQuery);
     };
 
     // Fitting dialog
@@ -237,7 +223,6 @@ export class DialogStore {
     };
     @action hideFittingDialog = () => {
         this.fittingDialogVisible = false;
-        this.zIndexManager.removeIndex(DialogId.Fitting);
     };
 
     // Distance Measuring dialog
@@ -248,6 +233,5 @@ export class DialogStore {
     };
     @action hideDistanceMeasuringDialog = () => {
         this.distanceMeasuringDialogVisible = false;
-        this.zIndexManager.removeIndex(DialogId.DistanceMeasure);
     };
 }

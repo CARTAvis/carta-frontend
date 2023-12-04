@@ -23,7 +23,12 @@ export class FloatingObjzIndexManager {
         this.floatingObjs.push(zIndexUpdate);
     };
 
-    public removeIndex = (id: string) => {
+    public findIndex = (id: string) => {
+        const selectFloatingObj = this.floatingObjs.find(w => w.id === id);
+        return selectFloatingObj ? selectFloatingObj.zIndex : 0;
+    };
+
+    removeIndex = (id: string) => {
         this.floatingObjs = this.floatingObjs.filter(w => w.id !== id);
     };
 
@@ -56,10 +61,6 @@ export class FloatingObjzIndexManager {
                 }
             }
         }
-    };
-
-    public findIndex = (id: string) => {
-        const selectFloatingObj = this.floatingObjs.find(w => w.id === id);
-        return selectFloatingObj ? selectFloatingObj.zIndex : 0;
+        this.removeIndex(id);
     };
 }
