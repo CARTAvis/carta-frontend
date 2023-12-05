@@ -198,6 +198,10 @@ export class RegionStore {
         }
     }
 
+    /**
+     * Getter for the sizes of regions and annotations
+     * @returns A Point2D object with x and y size components.
+     */
     @computed get size(): Point2D {
         switch (this.regionType) {
             case CARTA.RegionType.RECTANGLE:
@@ -480,16 +484,23 @@ export class RegionStore {
         }
     };
 
+    /**
+     * Sets the size for regions and annotations
+     *
+     * @param p - Specifies the x and y size components.
+     *            For line region and annotation, vector annotation, and ruler annotation, the function sets the individual new x and y components of the linear segment.
+     * @param skipUpdate - Whether to update the changes with the backend.
+     */
     @action setSize = (p: Point2D, skipUpdate = false) => {
         if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR || this.regionType === CARTA.RegionType.ANNRULER) {
             const rotation = (this.rotation * Math.PI) / 180.0;
             const x = Math.abs(p.x);
             const y = Math.abs(p.y);
-            const _x = x * Math.sign(Math.sin(rotation));
-            const _y = y * -Math.sign(Math.cos(rotation));
-            const newStart = {x: this.center.x - _x / 2, y: this.center.y - _y / 2};
-            const newEnd = {x: this.center.x + _x / 2, y: this.center.y + _y / 2};
-            this.setControlPoints([newStart, newEnd]);
+            const dx = x * Math.sign(Math.sin(rotation) || 1);
+            const dy = y * -Math.sign(Math.cos(rotation) || 1);
+            const newStart = {x: this.center.x - dx / 2, y: this.center.y - dy / 2};
+            const newEnd = {x: this.center.x + dx / 2, y: this.center.y + dy / 2};
+            this.setControlPoints([newStart, newEnd], skipUpdate);
         } else {
             this.setControlPoint(SIZE_POINT_INDEX, p, skipUpdate);
         }
