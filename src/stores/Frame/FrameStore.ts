@@ -1448,7 +1448,7 @@ export class FrameStore {
             /* eslint-enable @typescript-eslint/no-unused-vars */
             if (this.channelInfo) {
                 if (!type && !unit) {
-                    this.isCoordChannel ? this.setChannelValues(this.channelInfo.indexes) : this.setChannelValues(this.channelInfo.values);
+                    this.setChannelValues(this.channelInfo.values);
                 } else if (this.isCoordChannel) {
                     this.setChannelValues(this.channelInfo.indexes);
                 } else {

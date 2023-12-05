@@ -87,7 +87,6 @@ export class FileBrowserStore {
     @observable saveRegionId: number;
     @observable saveRestFreq: Freq = {value: 0, unit: FrequencyUnit.MHZ};
     @observable shouldDropDegenerateAxes: boolean;
-    @observable saveIsNativeValue: boolean = true;
 
     private extendedDelayHandle: any;
 
@@ -308,18 +307,8 @@ export class FileBrowserStore {
     @action initialSaveSpectralRange = () => {
         const activeFrame = AppStore.Instance.activeFrame;
         if (activeFrame && activeFrame.numChannels > 1 && activeFrame.isSpectralChannel) {
-            if (activeFrame.spectralSystemsSupported.length > 0) {
-                this.setSaveSpectralStart(Math.min(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min).toString());
-                this.setSaveSpectralEnd(Math.max(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min).toString());
-            } else {
-                if (this.saveIsNativeValue) {
-                    this.setSaveSpectralStart(Math.min(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min).toString());
-                    this.setSaveSpectralEnd(Math.max(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min).toString());
-                } else {
-                    this.setSaveSpectralStart("0");
-                    this.setSaveSpectralEnd((activeFrame.numChannels - 1).toString());
-                }
-            }
+            this.setSaveSpectralStart(Math.min(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min).toString());
+            this.setSaveSpectralEnd(Math.max(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min).toString());
         }
     };
 
@@ -649,11 +638,6 @@ export class FileBrowserStore {
         if (restFreqStore) {
             this.setSaveRestFreq(restFreqStore.headerRestFreq);
         }
-    };
-
-    @action setSaveIsNativeValue = (val: boolean) => {
-        this.saveIsNativeValue = val;
-        this.initialSaveSpectralRange();
     };
 
     @computed get saveRestFreqInHz(): number {

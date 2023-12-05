@@ -58,7 +58,7 @@ export class SpectralSettingsComponent extends React.Component<{
                     </FormGroup>
                 )}
 
-                <FormGroup label="System" inline={true} disabled={disableSystemSetting}>
+                <FormGroup label={"System"} inline={true} disabled={disableSystemSetting}>
                     <HTMLSelect
                         disabled={disableSystemSetting}
                         value={frame && frame.spectralSystem ? frame.spectralSystem : ""}

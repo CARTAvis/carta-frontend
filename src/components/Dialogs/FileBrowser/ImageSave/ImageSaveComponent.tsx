@@ -28,20 +28,12 @@ export class ImageSaveComponent extends React.Component {
 
     @computed get validSaveSpectralRangeStart() {
         const fileBrowser = FileBrowserStore.Instance;
-        const activeFrame = AppStore.Instance.activeFrame;
-        if (activeFrame?.spectralSystemsSupported.length === 0 && !fileBrowser.saveIsNativeValue && parseFloat(fileBrowser.saveSpectralStart) < 0) {
-            return false;
-        }
-        return activeFrame?.channelValueBounds?.min <= parseFloat(fileBrowser.saveSpectralStart) && parseFloat(fileBrowser.saveSpectralStart) <= parseFloat(fileBrowser.saveSpectralEnd);
+        return AppStore.Instance.activeFrame?.channelValueBounds?.min <= parseFloat(fileBrowser.saveSpectralStart) && parseFloat(fileBrowser.saveSpectralStart) <= parseFloat(fileBrowser.saveSpectralEnd);
     }
 
     @computed get validSaveSpectralRangeEnd() {
         const fileBrowser = FileBrowserStore.Instance;
-        const activeFrame = AppStore.Instance.activeFrame;
-        if (activeFrame?.spectralSystemsSupported.length === 0 && !fileBrowser.saveIsNativeValue && parseFloat(fileBrowser.saveSpectralEnd) > activeFrame?.numChannels - 1) {
-            return false;
-        }
-        return parseFloat(fileBrowser.saveSpectralStart) <= parseFloat(fileBrowser.saveSpectralEnd) && parseFloat(fileBrowser.saveSpectralEnd) <= activeFrame?.channelValueBounds?.max;
+        return parseFloat(fileBrowser.saveSpectralStart) <= parseFloat(fileBrowser.saveSpectralEnd) && parseFloat(fileBrowser.saveSpectralEnd) <= AppStore.Instance.activeFrame?.channelValueBounds?.max;
     }
 
     private onChangeShouldDropDegenerateAxes = () => {
