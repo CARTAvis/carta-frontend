@@ -2,6 +2,11 @@
     .bp3-dialog-body {
         user-select: none;
 
+        .bp3-label {
+            min-width: 8em;
+            text-align: right;
+        }
+
         .bp3-form-group {
             &:first-of-type {
                 margin-left: 0px;
@@ -9,13 +14,11 @@
         }
 
         .contour-level-panel-levels .bp3-form-group .bp3-label {
-            width: 6em;
-            text-align: left;
+            min-width: 8em;
         }
 
         .contour-config-panel .bp3-form-group .bp3-label {
-            width: 10em;
-            text-align: left;
+            min-width: 8em;
         }
 
         .bp3-tabs {
@@ -27,8 +30,29 @@
             position: relative;
         }
 
+        .bp3-form-group.bp3-inline {
+            .bp3-form-content {
+                display: inline-flex;
+            }
+        }
+
+        .bp3-button {
+            white-space: pre;
+        }
+
         .lock-button {
             margin-left: 5px;
+        }
+
+        .bp3-form-group.bp3-inline.source-menu {
+            .bp3-label {
+                min-width: 6em;
+                text-align: right;
+            }
+        }
+
+        .parameter-container .parameter-line .bp3-form-group .bp3-label {
+            min-width: 5em;
         }
     }
 }
