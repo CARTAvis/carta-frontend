@@ -27,28 +27,25 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         this.gl = this.contourWebGLService.gl;
         const contourStream = AppStore.Instance.backendService.contourStream;
         if (this.canvas) {
-            contourStream.subscribe(() => {
-                const animatorStore = AnimatorStore.Instance;
-                const receivedContourStores = Array.from(this.props.frame.contourStores.values());
-                if (receivedContourStores.every(contourImageData => contourImageData.progress === 1) && receivedContourStores.length === this.props.frame.contourConfig.levels.length && animatorStore.serverAnimationActive) {
-                    requestAnimationFrame(this.updateCanvas);
-                } else if (!animatorStore.serverAnimationActive) {
-                    requestAnimationFrame(this.updateCanvas);
-                }
-            });
+            contourStream.subscribe(this.initializeUpdate);
         }
     }
 
     componentDidUpdate() {
         AppStore.Instance.resetImageRatio();
+        this.initializeUpdate();
+    }
+
+    private initializeUpdate = () => {
         const animatorStore = AnimatorStore.Instance;
         const receivedContourStores = Array.from(this.props.frame.contourStores.values());
-        if (receivedContourStores.every(contourImageData => contourImageData.progress === 1) && receivedContourStores.length === this.props.frame.contourConfig.levels.length && animatorStore.serverAnimationActive) {
+        const contourFrames = Array.from(AppStore.Instance.contourFrames.values());
+        if (contourFrames.every(frame => frame[0]?.contourProgress === 1) && receivedContourStores.length === this.props.frame.contourConfig.levels.length && animatorStore.serverAnimationActive) {
             requestAnimationFrame(this.updateCanvas);
         } else if (!animatorStore.serverAnimationActive) {
             requestAnimationFrame(this.updateCanvas);
         }
-    }
+    };
 
     private resizeAndClearCanvas() {
         const frame = this.props.frame;
