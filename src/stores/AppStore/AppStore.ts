@@ -569,11 +569,14 @@ export class AppStore {
         }
 
         if (this.frames.length > 1) {
-            if (this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL && this.spatialReference !== newFrame) {
+            if (this.preferenceStore.autoWCSMatching.includes(WCSMatchingType.SPATIAL) && this.spatialReference !== newFrame) {
                 this.setSpatialMatchingEnabled(newFrame, true);
             }
-            if (this.preferenceStore.autoWCSMatching & WCSMatchingType.SPECTRAL && this.spectralReference !== newFrame && newFrame.frameInfo.fileInfoExtended.depth > 1) {
+            if (this.preferenceStore.autoWCSMatching.includes(WCSMatchingType.SPECTRAL) && this.spectralReference !== newFrame && newFrame.frameInfo.fileInfoExtended.depth > 1) {
                 this.setSpectralMatchingEnabled(newFrame, true);
+            }
+            if (this.preferenceStore.autoWCSMatching.includes(WCSMatchingType.RASTER) && this.spatialReference !== newFrame) {
+                this.setRasterScalingMatchingEnabled(newFrame, true);
             }
         }
 

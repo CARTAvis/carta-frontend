@@ -3,7 +3,25 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {MemoryUnit} from "components/Dialogs";
-import {CARTA_INFO, CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, ImagePanelMode, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
+import {
+    CARTA_INFO,
+    CompressionQuality,
+    CursorInfoVisibility,
+    CursorPosition,
+    Event,
+    FileFilterMode,
+    ImagePanelMode,
+    PresetLayout,
+    RegionCreationMode,
+    SpectralType,
+    Theme,
+    TileCache,
+    WCSMatchingClass,
+    WCSMatchingType,
+    WCSType,
+    Zoom,
+    ZoomPoint
+} from "models";
 import {ApiService} from "services";
 import {TelemetryMode} from "services/TelemetryService";
 import {BeamType, FileFilteringType} from "stores";
@@ -311,7 +329,7 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE) ?? DEFAULTS.GLOBAL.spectralMatchingType;
     }
 
-    @computed get autoWCSMatching(): WCSMatchingType {
+    @computed get autoWCSMatching(): WCSMatchingType[] {
         return this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING) ?? DEFAULTS.GLOBAL.autoWCSMatching;
     }
 
@@ -605,6 +623,16 @@ export class PreferenceStore {
         return false;
     };
 
+    public isWCSMatchingEnabled = (matchingType: WCSMatchingType): boolean => {
+        if (WCSMatchingClass.isMatchingTypeValid(matchingType)) {
+            const matchingTypes = this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING);
+            if (matchingTypes && Array.isArray(matchingTypes)) {
+                return matchingTypes.includes(matchingType);
+            }
+        }
+        return false;
+    };
+
     @computed get isZoomRAWMode(): boolean {
         return this.zoomMode === Zoom.FULL;
     }
@@ -717,6 +745,21 @@ export class PreferenceStore {
             }
             this.preferences.set(PreferenceKeys.LOG_EVENT, eventList);
             return yield ApiService.Instance.setPreference(PreferenceKeys.LOG_EVENT, eventList);
+        } else if (key === PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING) {
+            if (!Event.isEventTypeValid(value)) {
+                return false;
+            }
+            let matchingList = this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING);
+            if (!matchingList || !Array.isArray(matchingList)) {
+                matchingList = [];
+            }
+            if (matchingList.includes(value)) {
+                matchingList = matchingList.filter(e => e !== value);
+            } else {
+                matchingList.push(value);
+            }
+            this.preferences.set(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, matchingList);
+            return yield ApiService.Instance.setPreference(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, matchingList);
         } else {
             this.preferences.set(key, value);
         }
