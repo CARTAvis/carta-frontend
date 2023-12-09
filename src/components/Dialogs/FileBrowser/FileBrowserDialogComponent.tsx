@@ -328,7 +328,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 </Tooltip2>
                                 {!this.enableImageArithmetic && fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length < 5 && (
                                     <Tooltip2 content={"Append this image while keeping other images open"}>
-                                        <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={appStore.dialogStore.showStokesDialog} text={"Load as hypercube"} />
+                                        <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Stokes)} text={"Load as hypercube"} />
                                     </Tooltip2>
                                 )}
                             </div>
@@ -368,7 +368,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 </Tooltip2>
                                 {!this.enableImageArithmetic && fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length < 5 && (
                                     <Tooltip2 content={"Close any existing images and load this image"}>
-                                        <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={appStore.dialogStore.showStokesDialog} text={"Load as hypercube"} />
+                                        <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Stokes)} text={"Load as hypercube"} />
                                     </Tooltip2>
                                 )}
                             </div>
@@ -614,7 +614,7 @@ export class FileBrowserDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.fileBrowserDialogVisible,
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.FileBrowser),
             onClose: this.closeFileBrowser,
             onOpened: this.refreshFileList,
             title: "File Browser"
@@ -665,7 +665,6 @@ export class FileBrowserDialogComponent extends React.Component {
                 enableResizing={true}
                 zIndex={zIndex}
                 onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.FileBrowser)}
-                onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.FileBrowser)}
             >
                 <div className="file-path">
                     {this.pathItems && (
@@ -764,8 +763,8 @@ export class FileBrowserDialogComponent extends React.Component {
     private closeFileBrowser = () => {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
-        if (appStore.dialogStore.stokesDialogVisible) {
-            appStore.dialogStore.hideStokesDialog();
+        if (appStore.dialogStore.dialogVisible.get(DialogId.Stokes)) {
+            appStore.dialogStore.hideDialog(DialogId.Hotkey);
         }
         fileBrowserStore.hideFileBrowser();
     };

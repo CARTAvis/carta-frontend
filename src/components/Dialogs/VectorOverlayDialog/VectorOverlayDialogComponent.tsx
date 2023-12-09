@@ -251,8 +251,8 @@ export class VectorOverlayDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.vectorOverlayDialogVisible,
-            onClose: appStore.dialogStore.hideVectorOverlayDialog,
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Vector),
+            onClose: () => appStore.dialogStore.hideDialog(DialogId.Vector),
             className: "vector-overlay-dialog",
             canEscapeKeyClose: true,
             title: "Vector Overlay Configuration"
@@ -268,6 +268,8 @@ export class VectorOverlayDialogComponent extends React.Component {
                     defaultWidth={VectorOverlayDialogComponent.DefaultWidth}
                     defaultHeight={VectorOverlayDialogComponent.DefaultHeight}
                     enableResizing={true}
+                    zIndex={zIndex}
+                    onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Vector)}
                 >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </DraggableDialogComponent>
@@ -402,7 +404,6 @@ export class VectorOverlayDialogComponent extends React.Component {
                 enableResizing={true}
                 zIndex={zIndex}
                 onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Vector)}
-                onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.Vector)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Data source">

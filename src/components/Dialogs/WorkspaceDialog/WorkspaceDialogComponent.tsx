@@ -56,7 +56,7 @@ export const WorkspaceDialogComponent = observer(() => {
     };
 
     const handleCloseClicked = useCallback(() => {
-        appStore.dialogStore.hideWorkspaceDialog();
+        appStore.dialogStore.hideDialog(DialogId.Workspace);
         setWorkspaceName("");
         setWorkspaceList(undefined);
     }, [appStore]);
@@ -152,7 +152,7 @@ export const WorkspaceDialogComponent = observer(() => {
         canOutsideClickClose: false,
         lazy: true,
         isOpen: mode !== WorkspaceDialogMode.Hidden,
-        onClose: appStore.dialogStore.hideWorkspaceDialog,
+        onClose: () => appStore.dialogStore.hideDialog(DialogId.Workspace),
         title: mode === WorkspaceDialogMode.Save ? "Save Workspace" : "Open Workspace"
     };
 
@@ -270,7 +270,6 @@ export const WorkspaceDialogComponent = observer(() => {
             enableResizing={true}
             zIndex={zIndex}
             onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Workspace)}
-            onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.Workspace)}
         >
             <div className={Classes.DIALOG_BODY}>
                 <div className="workspace-container">

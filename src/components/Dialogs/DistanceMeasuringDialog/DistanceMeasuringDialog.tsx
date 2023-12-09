@@ -145,8 +145,8 @@ export class DistanceMeasuringDialog extends React.Component {
             className: "distance-measurement-dialog",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: dialogStore.distanceMeasuringDialogVisible,
-            onClose: dialogStore.hideDistanceMeasuringDialog,
+            isOpen: dialogStore.dialogVisible.get(DialogId.DistanceMeasure),
+            onClose: () => dialogStore.hideDialog(DialogId.DistanceMeasure),
             title: `Distance Measurement (${frame?.filename})`
         };
 
@@ -199,7 +199,6 @@ export class DistanceMeasuringDialog extends React.Component {
                 enableResizing={true}
                 zIndex={zIndex}
                 onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.DistanceMeasure)}
-                onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.DistanceMeasure)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     {appStore.activeLayer === ImageViewLayer.DistanceMeasuring ? (

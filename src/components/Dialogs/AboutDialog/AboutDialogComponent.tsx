@@ -26,8 +26,8 @@ export class AboutDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: true,
             lazy: true,
-            isOpen: dialogStore.aboutDialogVisible,
-            onClose: dialogStore.hideAboutDialog,
+            isOpen: dialogStore.dialogVisible.get(DialogId.About),
+            onClose: () => dialogStore.hideDialog(DialogId.About),
             className: "about-dialog",
             canEscapeKeyClose: true,
             title: "About CARTA"
@@ -43,7 +43,6 @@ export class AboutDialogComponent extends React.Component {
                 enableResizing={false}
                 zIndex={zIndex}
                 onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.About)}
-                onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.About)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>

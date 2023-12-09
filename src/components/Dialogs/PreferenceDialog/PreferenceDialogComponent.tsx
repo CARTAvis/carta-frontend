@@ -886,8 +886,8 @@ export class PreferenceDialogComponent extends React.Component {
             className: className,
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.preferenceDialogVisible,
-            onClose: appStore.dialogStore.hidePreferenceDialog,
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Preference),
+            onClose: () => appStore.dialogStore.hideDialog(DialogId.Preference),
             title: "Preferences"
         };
 
@@ -902,7 +902,6 @@ export class PreferenceDialogComponent extends React.Component {
                 enableResizing={true}
                 zIndex={zIndex}
                 onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Preference)}
-                onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.Preference)}
             >
                 <div className="bp3-dialog-body">
                     <Tabs id="preferenceTabs" vertical={true} selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>

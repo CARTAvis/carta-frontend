@@ -286,8 +286,8 @@ export class ContourDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.contourDialogVisible,
-            onClose: appStore.dialogStore.hideContourDialog,
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Contour),
+            onClose: () => appStore.dialogStore.hideDialog(DialogId.Contour),
             className: "contour-dialog",
             canEscapeKeyClose: true,
             title: "Contour Configuration"
@@ -305,7 +305,6 @@ export class ContourDialogComponent extends React.Component {
                     enableResizing={true}
                     zIndex={zIndex}
                     onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Contour)}
-                    onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.Contour)}
                 >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </DraggableDialogComponent>
@@ -492,7 +491,6 @@ export class ContourDialogComponent extends React.Component {
                 enableResizing={true}
                 zIndex={zIndex}
                 onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Contour)}
-                onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.Contour)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup className={"source-menu"} inline={true} label="Data source">

@@ -3,7 +3,7 @@ import {AnchorButton, Checkbox, Classes, Dialog, DialogProps, InputGroup, Intent
 import {Tooltip2} from "@blueprintjs/popover2";
 import {observer} from "mobx-react";
 
-import {AppStore} from "stores";
+import {AppStore, DialogId} from "stores";
 import {copyToClipboard} from "utilities";
 
 import {AppToaster, WarningToast} from "../../Shared";
@@ -15,9 +15,10 @@ export const ShareWorkspaceDialogComponent = observer(() => {
     const [isGeneratingLink, setIsGeneratingLink] = useState<boolean>(false);
     const [saveBeforeShare, setSaveBeforeShare] = useState<boolean>(false);
     const appStore = AppStore.Instance;
-    const {shareWorkspaceDialogVisible, hideShareWorkspaceDialog} = appStore.dialogStore;
+    // const {shareWorkspaceDialogVisible, hideDialog(DialogId.ShareWorkspace)} = appStore.dialogStore;
 
     // Reset the dialog when the active workspace changes
+    let shareWorkspaceDialogVisible = appStore.dialogStore.dialogVisible.get(DialogId.ShareWorkspace);
     useEffect(() => {
         setShareKey("");
         setIsGeneratingLink(false);
@@ -33,7 +34,7 @@ export const ShareWorkspaceDialogComponent = observer(() => {
         lazy: true,
         canEscapeKeyClose: true,
         isOpen: shareWorkspaceDialogVisible,
-        onClose: hideShareWorkspaceDialog,
+        onClose: () => appStore.dialogStore.hideDialog(DialogId.ShareWorkspace),
         title: `Share Workspace: ${activeWorkspace?.name ?? ""}`
     };
 

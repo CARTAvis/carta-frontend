@@ -11,7 +11,7 @@ import {AppToaster, ExportImageMenuComponent, SuccessToast} from "components/Sha
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import {CARTA_INFO, PresetLayout, Snippet} from "models";
 import {ApiService, ConnectionStatus} from "services";
-import {AppStore, BrowserMode, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
+import {AppStore, BrowserMode, DialogId, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
 import {FrameStore} from "stores/Frame";
 import {copyToClipboard, toFixed} from "utilities";
 
@@ -137,7 +137,7 @@ export class RootMenuComponent extends React.Component {
                 <Button className="snippet-run-button" small={true} minimal={true} icon={"play"} intent="success" disabled={appStore.snippetStore.isExecuting} onClick={ev => this.handleWidgetExecuteClicked(ev, snippet, name)} />
             );
 
-            const menuItem = <Menu.Item key={name} text={name} icon={labelElement} onClick={() => appStore.dialogStore.showExistingCodeSnippet(snippet, name)} />;
+            const menuItem = <Menu.Item key={name} text={name} icon={labelElement} onClick={() => appStore.dialogStore.showDialog(DialogId.ExistingSnippet, {snippet: snippet, name: name})} />;
 
             if (snippet.categories?.length) {
                 for (const category of snippet.categories) {
@@ -161,7 +161,7 @@ export class RootMenuComponent extends React.Component {
             <Menu>
                 {snippetEntries}
                 {snippetEntries.length > 0 && <Menu.Divider />}
-                <Menu.Item text="Create New Snippet" icon="add" onClick={appStore.dialogStore.showNewCodeSnippet} />
+                <Menu.Item text="Create New Snippet" icon="add" onClick={() => appStore.dialogStore.showDialog(DialogId.NewSnippet)} />
                 <Menu.Item text="Online Tutorial" icon={"manual"} onClick={() => this.handleDocumentationClicked("https://cartavis.org/carta-frontend/docs/category/code-snippet-tutorial")} />
             </Menu>
         );
@@ -261,10 +261,10 @@ export class RootMenuComponent extends React.Component {
                     <ExportImageMenuComponent />
                 </Menu.Item>
                 <MenuDivider />
-                <Menu.Item text="Open Workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showWorkspaceDialog(WorkspaceDialogMode.Open)} />
-                <Menu.Item text="Save Workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showWorkspaceDialog(WorkspaceDialogMode.Save)} />
+                <Menu.Item text="Open Workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Workspace, {mode: WorkspaceDialogMode.Open})} />
+                <Menu.Item text="Save Workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Workspace, {mode: WorkspaceDialogMode.Save})} />
                 <Menu.Divider />
-                <Menu.Item text="Preferences" onClick={appStore.dialogStore.showPreferenceDialog} disabled={appStore.preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE} />
+                <Menu.Item text="Preferences" onClick={() => appStore.dialogStore.showDialog(DialogId.Preference)} disabled={appStore.preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE} />
                 {serverSubMenu}
             </Menu>
         );
@@ -298,11 +298,11 @@ export class RootMenuComponent extends React.Component {
                             </React.Fragment>
                         )}
                     </Menu.Item>
-                    <Menu.Item text="Save Layout" onClick={() => appStore.dialogStore.showSaveLayoutDialog()} />
+                    <Menu.Item text="Save Layout" onClick={() => appStore.dialogStore.showDialog(DialogId.Layout)} />
                     <Menu.Item text="Rename Layout" disabled={!userLayouts || userLayouts.length <= 0}>
                         {userLayouts &&
                             userLayouts.length > 0 &&
-                            userLayouts.map(value => <Menu.Item key={value} text={value} active={value === appStore.layoutStore.currentLayoutName} onClick={() => appStore.dialogStore.showSaveLayoutDialog(value)} />)}
+                            userLayouts.map(value => <Menu.Item key={value} text={value} active={value === appStore.layoutStore.currentLayoutName} onClick={() => appStore.dialogStore.showDialog(DialogId.Layout, {oldLayoutName: value})} />)}
                     </Menu.Item>
                     <Menu.Item text="Delete Layout" disabled={!userLayouts || userLayouts.length <= 0}>
                         {userLayouts &&
@@ -330,20 +330,20 @@ export class RootMenuComponent extends React.Component {
                         <Menu.Item text="Next Image" icon={"step-forward"} disabled={layerItems.length < 2} onClick={appStore.nextFrame} />
                     </Menu.Item>
                 )}
-                <Menu.Item text="File Header" icon={"app-header"} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showFileInfoDialog} />
-                <Menu.Item text="Contours" icon={<CustomIcon icon="contour" />} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showContourDialog} />
-                <Menu.Item text="Vector Overlay" icon={<CustomIcon icon="vectorOverlay" />} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showVectorOverlayDialog} />
-                <Menu.Item text="Image Fitting" icon={<CustomIcon icon="imageFitting" />} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showFittingDialog} />
-                <Menu.Item text="Online Catalog Query" icon="geosearch" disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showCatalogQueryDialog} />
-                {appStore.preferenceStore.codeSnippetsEnabled && <Menu.Item text="Code Snippets" icon={"console"} onClick={appStore.dialogStore.showCodeSnippetDialog} />}
+                <Menu.Item text="File Header" icon={"app-header"} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.FileInfo)} />
+                <Menu.Item text="Contours" icon={<CustomIcon icon="contour" />} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.Contour)} />
+                <Menu.Item text="Vector Overlay" icon={<CustomIcon icon="vectorOverlay" />} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.Vector)} />
+                <Menu.Item text="Image Fitting" icon={<CustomIcon icon="imageFitting" />} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.Fitting)} />
+                <Menu.Item text="Online Catalog Query" icon="geosearch" disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.CatalogQuery)} />
+                {appStore.preferenceStore.codeSnippetsEnabled && <Menu.Item text="Code Snippets" icon={"console"} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet)} />}
             </Menu>
         );
 
         const helpMenu = (
             <Menu>
                 <Menu.Item text="Online Manual" icon={"manual"} onClick={() => this.handleDocumentationClicked("https://carta.readthedocs.io/en/4.0")} />
-                <Menu.Item text="Controls and Shortcuts" icon={"key-control"} label={"Shift + ?"} onClick={appStore.dialogStore.showHotkeyDialog} />
-                <Menu.Item text="About" icon={"info-sign"} onClick={appStore.dialogStore.showAboutDialog} />
+                <Menu.Item text="Controls and Shortcuts" icon={"key-control"} label={"Shift + ?"} onClick={() => appStore.dialogStore.showDialog(DialogId.Hotkey)} />
+                <Menu.Item text="About" icon={"info-sign"} onClick={() => appStore.dialogStore.showDialog(DialogId.About)} />
             </Menu>
         );
 
@@ -515,7 +515,7 @@ export class RootMenuComponent extends React.Component {
                             </span>
                         }
                     >
-                        <AnchorButton icon="share" minimal={true} onClick={appStore.dialogStore.showShareWorkspaceDialog} />
+                        <AnchorButton icon="share" minimal={true} onClick={() => appStore.dialogStore.showDialog(DialogId.ShareWorkspace)} />
                     </Tooltip2>
                 )}
                 {showLoadingIndicator && loadingIndicator}

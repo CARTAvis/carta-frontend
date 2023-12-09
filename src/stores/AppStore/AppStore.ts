@@ -40,6 +40,7 @@ import {
     CatalogProfileStore,
     CatalogStore,
     CatalogUpdateMode,
+    DialogId,
     DialogStore,
     FileBrowserStore,
     HelpStore,
@@ -691,7 +692,7 @@ export class AppStore {
             }
             this.endFileLoading();
             this.fileBrowserStore.hideFileBrowser();
-            AppStore.Instance.dialogStore.hideStokesDialog();
+            AppStore.Instance.dialogStore.hideDialog(DialogId.Hotkey);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);

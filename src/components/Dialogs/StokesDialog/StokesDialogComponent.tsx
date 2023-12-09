@@ -58,7 +58,7 @@ export class StokesDialogComponent extends React.Component {
     }
 
     @computed get stokesDialogVisible(): boolean {
-        return AppStore.Instance.dialogStore.stokesDialogVisible;
+        return AppStore.Instance.dialogStore.dialogVisible.get(DialogId.Stokes);
     }
 
     @computed get noneType(): boolean {
@@ -146,8 +146,8 @@ export class StokesDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.stokesDialogVisible,
-            onClose: appStore.dialogStore.hideStokesDialog,
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Stokes),
+            onClose: () => appStore.dialogStore.hideDialog(DialogId.Hotkey),
             title: "Merging polarization hypercube"
         };
 
@@ -162,7 +162,6 @@ export class StokesDialogComponent extends React.Component {
                 enableResizing={true}
                 zIndex={zIndex}
                 onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Stokes)}
-                onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.Stokes)}
             >
                 <div className="bp3-dialog-body">
                     <Table
@@ -185,7 +184,7 @@ export class StokesDialogComponent extends React.Component {
                         <AnchorButton
                             intent={Intent.NONE}
                             disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                            onClick={AppStore.Instance.dialogStore?.hideStokesDialog}
+                            onClick={() => AppStore.Instance.dialogStore?.hideDialog(DialogId.Hotkey)}
                             text={"Cancel"}
                         />
                         <AnchorButton

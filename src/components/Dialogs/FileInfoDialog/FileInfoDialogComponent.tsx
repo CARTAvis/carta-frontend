@@ -29,8 +29,8 @@ export class FileInfoDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.fileInfoDialogVisible,
-            onClose: appStore.dialogStore.hideFileInfoDialog,
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.FileInfo),
+            onClose: () => appStore.dialogStore.hideDialog(DialogId.FileInfo),
             title: "File Header"
         };
 
@@ -45,7 +45,6 @@ export class FileInfoDialogComponent extends React.Component {
                 enableResizing={true}
                 zIndex={zIndex}
                 onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.FileInfo)}
-                onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.FileInfo)}
             >
                 <div className="bp3-dialog-body">
                     <FileInfoComponent

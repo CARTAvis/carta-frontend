@@ -6,7 +6,7 @@ import {FileInfoType} from "components";
 import {AppToaster, ErrorToast} from "components/Shared";
 import {Freq, FrequencyUnit, LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
 import {BackendService} from "services";
-import {AppStore, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, DialogId, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
 import {RegionStore} from "stores/Frame";
 import {RegionId} from "stores/Widgets";
 import {getDataTypeString, getHeaderNumericValue, ProcessedColumnData} from "utilities";
@@ -142,7 +142,7 @@ export class FileBrowserStore {
         }
         this.appendingFrame = append;
         this.browserMode = mode;
-        DialogStore.Instance.showFileBrowserDialog();
+        DialogStore.Instance.showDialog(DialogId.FileBrowser);
         this.fileList = null;
         this.selectedTab = this.getBrowserMode;
         this.responseErrorMessage = "";
@@ -158,7 +158,7 @@ export class FileBrowserStore {
     };
 
     @action hideFileBrowser = () => {
-        DialogStore.Instance.hideFileBrowserDialog();
+        DialogStore.Instance.hideDialog(DialogId.FileBrowser);
     };
 
     @action setFileList = (list: CARTA.IFileListResponse) => {

@@ -1,16 +1,11 @@
 import {makeObservable, observable} from "mobx";
 
-export interface ZIndexUpdate {
-    id: string;
-    zIndex: number;
-}
-
 export class FloatingObjzIndexManager {
-    @observable private floatingObjs: ZIndexUpdate[];
+    @observable private floatingObjs;
 
     constructor() {
         makeObservable(this);
-        this.floatingObjs = [];
+        this.floatingObjs = new Map<string, number>();
     }
 
     public getFloatingObjs = () => {
@@ -18,49 +13,50 @@ export class FloatingObjzIndexManager {
     };
 
     public assignIndex = (id: string) => {
-        const zIndex = this.floatingObjs.length + 1;
-        const zIndexUpdate: ZIndexUpdate = {id: id, zIndex: zIndex};
-        this.floatingObjs.push(zIndexUpdate);
+        const zIndex = this.floatingObjs.size + 1;
+        this.floatingObjs.set(id, zIndex);
     };
 
     public findIndex = (id: string) => {
-        const selectFloatingObj = this.floatingObjs.find(w => w.id === id);
-        return selectFloatingObj ? selectFloatingObj.zIndex : 0;
+        return this.floatingObjs.has(id) ? this.floatingObjs.get(id) : 0;
     };
 
-    removeIndex = (id: string) => {
-        this.floatingObjs = this.floatingObjs.filter(w => w.id !== id);
+    public removeIndex = (id: string) => {
+        this.floatingObjs.delete(id);
     };
 
     public updateIndexOnSelect = (id: string) => {
-        const selectedObjIndex = this.floatingObjs.findIndex(w => w.id === id);
-        const selectedObj = this.floatingObjs[selectedObjIndex];
-        const NFloatingObj = this.floatingObjs.length;
+        const selectedObj = this.floatingObjs.has(id);
+        if (selectedObj) {
+            const selectedzIndex = this.floatingObjs.get(id);
+            const NFloatingObj = this.floatingObjs.size;
 
-        if (NFloatingObj > 1 && selectedObjIndex >= 0 && selectedObj.zIndex < NFloatingObj) {
-            for (let i = 0; i < NFloatingObj; i++) {
-                let currentObjzIndex = this.floatingObjs[i].zIndex;
-                if (currentObjzIndex >= selectedObj.zIndex) {
-                    this.floatingObjs[i].zIndex = currentObjzIndex - 1;
+            if (NFloatingObj > 1 && selectedzIndex < NFloatingObj) {
+                for (let key of this.floatingObjs.keys()) {
+                    let currentObjzIndex = this.floatingObjs.get(key);
+                    if (currentObjzIndex >= selectedzIndex) {
+                        this.floatingObjs.set(key, currentObjzIndex - 1);
+                    }
                 }
+                this.floatingObjs.set(id, NFloatingObj);
             }
-            this.floatingObjs[selectedObjIndex].zIndex = this.floatingObjs.length;
         }
     };
 
     public updateIndexOnRemove = (id: string) => {
-        const NFloatingObj = this.floatingObjs.length;
-        const selectedObj = this.floatingObjs.find(w => w.id === id);
-        const selectedObjzIndex = selectedObj.zIndex;
+        const selectedObj = this.floatingObjs.has(id);
+        if (selectedObj) {
+            const selectedzIndex = this.floatingObjs.get(id);
+            const NFloatingObj = this.floatingObjs.size;
 
-        if (selectedObjzIndex < NFloatingObj) {
-            for (let index = 0; index < NFloatingObj; index++) {
-                let zIndex = this.floatingObjs[index].zIndex;
-                if (zIndex > selectedObjzIndex) {
-                    this.floatingObjs[index].zIndex = zIndex - 1;
+            if (selectedzIndex < NFloatingObj) {
+                for (let key of this.floatingObjs.keys()) {
+                    let currentObjzIndex = this.floatingObjs.get(key);
+                    if (currentObjzIndex > selectedzIndex) {
+                        this.floatingObjs.set(key, currentObjzIndex - 1);
+                    }
                 }
             }
         }
-        this.removeIndex(id);
     };
 }

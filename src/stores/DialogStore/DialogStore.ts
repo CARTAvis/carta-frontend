@@ -9,10 +9,12 @@ import {AppStore, SnippetStore} from "stores";
 export enum DialogId {
     About = "about-dialog",
     CatalogQuery = "catalogQuery-dialog",
-    Snippet = "code-snippet-dialog",
+    Snippet = "snippet-dialog",
+    ExistingSnippet = "existing-snippet-dialog",
+    NewSnippet = "new-snippet-dialog",
     Contour = "contour-dialog",
     DistanceMeasure = "distanceMeasure-dialog",
-    ExternalPage = "externalPage-dialog",
+    ExternalPage = "externalPage-dialog", // no one call this ??
     FileBrowser = "fileBrowser-dialog",
     FileInfo = "fileInfo-dialog",
     Fitting = "fitting-dialog",
@@ -22,7 +24,17 @@ export enum DialogId {
     Stokes = "stokes-dialog",
     Vector = "vector-dialog",
     Workspace = "workspace-dialog",
-    ShareWorkspace = "shareWork-dialog"
+    ShareWorkspace = "shareWork-dialog",
+    Hotkey = "hotkey-dialog"
+}
+
+interface showDialogProps {
+    oldLayoutName?: string;
+    mode?: WorkspaceDialogMode;
+    url?: string; // no one call this ??
+    title?: string; // no one call this ??
+    snippet?: Snippet;
+    name?: string;
 }
 
 export class DialogStore {
@@ -41,197 +53,71 @@ export class DialogStore {
 
     zIndexManager = AppStore.Instance.zIndexManager;
 
-    // Region
-    @observable regionDialogVisible: boolean;
-    @action showRegionDialog = () => {
-        this.regionDialogVisible = true;
-        this.zIndexManager.assignIndex(DialogId.Region);
-    };
-    @action hideRegionDialog = () => {
-        this.regionDialogVisible = false;
-    };
-
-    // Hotkey
-    @observable hotkeyDialogVisible: boolean;
-    @action showHotkeyDialog = () => {
-        this.hotkeyDialogVisible = true;
-    };
-    @action hideHotkeyDialog = () => {
-        this.hotkeyDialogVisible = false;
-    };
-
-    // About
-    @observable aboutDialogVisible: boolean;
-    @action showAboutDialog = () => {
-        this.aboutDialogVisible = true;
-        this.zIndexManager.assignIndex(DialogId.About);
-    };
-    @action hideAboutDialog = () => {
-        this.aboutDialogVisible = false;
-    };
-
-    // Preference
-    @observable preferenceDialogVisible: boolean;
-    @action showPreferenceDialog = () => {
-        this.preferenceDialogVisible = true;
-        this.zIndexManager.assignIndex(DialogId.Preference);
-    };
-    @action hidePreferenceDialog = () => {
-        this.preferenceDialogVisible = false;
-    };
-
-    // Layout
-    @observable saveLayoutDialogVisible: boolean;
-    @action showSaveLayoutDialog = (oldLayoutName?: string) => {
-        this.saveLayoutDialogVisible = true;
-        AppStore.Instance.layoutStore.setOldLayoutName(oldLayoutName);
-        this.zIndexManager.assignIndex(DialogId.Layout);
-    };
-    @action hideSaveLayoutDialog = () => {
-        this.saveLayoutDialogVisible = false;
-    };
-
-    // Workspace
     @observable workspaceDialogMode = WorkspaceDialogMode.Hidden;
-    @action showWorkspaceDialog = (mode = WorkspaceDialogMode.Save) => {
-        this.fileBrowserDialogVisible = false;
-        this.workspaceDialogMode = mode;
-        this.zIndexManager.assignIndex(DialogId.Workspace);
-    };
-    @action hideWorkspaceDialog = () => {
-        this.workspaceDialogMode = WorkspaceDialogMode.Hidden;
+    @observable selectedFileInfoDialogTab: TabId = FileInfoType.IMAGE_HEADER;
+    @observable externalPageDialogUrl: string;
+    @observable externalPageDialogTitle: string;
+    @observable dialogVisible = new Map<string, boolean>();
+
+    @action showDialog = (id: string, props?: showDialogProps) => {
+        switch (id) {
+            case DialogId.Layout:
+                this.dialogVisible.set(DialogId.Layout, true);
+                AppStore.Instance.layoutStore.setOldLayoutName(props.oldLayoutName);
+                this.zIndexManager.assignIndex(DialogId.Layout);
+                break;
+
+            case DialogId.Workspace:
+                this.dialogVisible.set(DialogId.FileBrowser, false);
+                this.workspaceDialogMode = props.mode;
+                this.zIndexManager.assignIndex(DialogId.Workspace);
+                break;
+
+            case DialogId.FileBrowser:
+                this.workspaceDialogMode = WorkspaceDialogMode.Hidden;
+                this.dialogVisible.set(DialogId.FileBrowser, true);
+                this.zIndexManager.assignIndex(DialogId.FileBrowser);
+                break;
+
+            case DialogId.ExistingSnippet:
+                if (props.snippet) {
+                    SnippetStore.Instance.setActiveSnippet(props.snippet, props.name);
+                }
+                this.dialogVisible.set(DialogId.Snippet, true);
+                this.zIndexManager.assignIndex(DialogId.Snippet);
+                break;
+
+            case DialogId.NewSnippet:
+                SnippetStore.Instance.clearActiveSnippet();
+                this.dialogVisible.set(DialogId.Snippet, true);
+                this.zIndexManager.assignIndex(DialogId.Snippet);
+                break;
+
+            case DialogId.ExternalPage: // no one call this ??
+                this.externalPageDialogUrl = props.url;
+                this.externalPageDialogTitle = props.title;
+                this.dialogVisible.set(DialogId.ExternalPage, true);
+                this.zIndexManager.assignIndex(DialogId.ExternalPage);
+                break;
+
+            default:
+                this.dialogVisible.set(id, true);
+                this.zIndexManager.assignIndex(id);
+        }
     };
 
-    // Workspace sharing
-    @observable shareWorkspaceDialogVisible: boolean;
-    @action showShareWorkspaceDialog = () => {
-        this.shareWorkspaceDialogVisible = true;
-        this.zIndexManager.assignIndex(DialogId.ShareWorkspace);
-    };
-    @action hideShareWorkspaceDialog = () => {
-        this.shareWorkspaceDialogVisible = false;
-    };
-
-    // File Browser
-    @observable fileBrowserDialogVisible: boolean = false;
-    @action showFileBrowserDialog = () => {
-        this.workspaceDialogMode = WorkspaceDialogMode.Hidden;
-        this.fileBrowserDialogVisible = true;
-        this.zIndexManager.assignIndex(DialogId.FileBrowser);
-    };
-    @action hideFileBrowserDialog = () => {
-        this.fileBrowserDialogVisible = false;
+    @action hideDialog = (id: string) => {
+        if (id === DialogId.Workspace) {
+            this.workspaceDialogMode = WorkspaceDialogMode.Hidden;
+            this.zIndexManager.removeIndex(DialogId.Workspace);
+        } else {
+            this.dialogVisible.set(id, false);
+            this.zIndexManager.removeIndex(id);
+        }
     };
 
     // File Info
-    @observable fileInfoDialogVisible: boolean = false;
-    @observable selectedFileInfoDialogTab: TabId = FileInfoType.IMAGE_HEADER;
-    @action showFileInfoDialog = () => {
-        this.fileInfoDialogVisible = true;
-        this.zIndexManager.assignIndex(DialogId.FileInfo);
-    };
-    @action hideFileInfoDialog = () => {
-        this.fileInfoDialogVisible = false;
-    };
     @action setSelectedFileInfoDialogTab = (newId: TabId) => {
         this.selectedFileInfoDialogTab = newId;
-    };
-
-    // Contour dialog
-    @observable contourDialogVisible: boolean = false;
-    @action showContourDialog = () => {
-        this.contourDialogVisible = true;
-        this.zIndexManager.assignIndex(DialogId.Contour);
-    };
-    @action hideContourDialog = () => {
-        this.contourDialogVisible = false;
-    };
-
-    // Vector overlay dialog
-    @observable vectorOverlayDialogVisible: boolean = false;
-    @action showVectorOverlayDialog = () => {
-        this.vectorOverlayDialogVisible = true;
-        this.zIndexManager.assignIndex(DialogId.Vector);
-    };
-    @action hideVectorOverlayDialog = () => {
-        this.vectorOverlayDialogVisible = false;
-    };
-
-    // Code snippet dialog
-    @observable codeSnippetDialogVisible: boolean = false;
-    @action showExistingCodeSnippet = (snippet: Snippet, name: string) => {
-        if (snippet) {
-            SnippetStore.Instance.setActiveSnippet(snippet, name);
-        }
-        this.codeSnippetDialogVisible = true;
-        this.zIndexManager.assignIndex(DialogId.Snippet);
-    };
-
-    @action showNewCodeSnippet = () => {
-        SnippetStore.Instance.clearActiveSnippet();
-        this.codeSnippetDialogVisible = true;
-        this.zIndexManager.assignIndex(DialogId.Snippet);
-    };
-
-    @action showCodeSnippetDialog = () => {
-        this.codeSnippetDialogVisible = true;
-        this.zIndexManager.assignIndex(DialogId.Snippet);
-    };
-    @action hideCodeSnippetDialog = () => {
-        this.codeSnippetDialogVisible = false;
-    };
-
-    // External page dialog
-    @observable externalPageDialogVisible: boolean = false;
-    @observable externalPageDialogUrl: string;
-    @observable externalPageDialogTitle: string;
-    @action showExternalPageDialog = (url: string, title: string) => {
-        this.externalPageDialogUrl = url;
-        this.externalPageDialogTitle = title;
-        this.externalPageDialogVisible = true;
-        this.zIndexManager.assignIndex(DialogId.ExternalPage);
-    };
-    @action hideExternalPageDialog = () => {
-        this.externalPageDialogVisible = false;
-    };
-
-    // Stokes dialog
-    @observable stokesDialogVisible: boolean = false;
-    @action showStokesDialog = () => {
-        this.stokesDialogVisible = true;
-        this.zIndexManager.assignIndex(DialogId.Stokes);
-    };
-    @action hideStokesDialog = () => {
-        this.stokesDialogVisible = false;
-    };
-
-    // Catalog query dialog
-    @observable catalogQueryDialogVisible: boolean = false;
-    @action showCatalogQueryDialog = () => {
-        this.catalogQueryDialogVisible = true;
-        this.zIndexManager.assignIndex(DialogId.CatalogQuery);
-    };
-    @action hideCatalogQueryDialog = () => {
-        this.catalogQueryDialogVisible = false;
-    };
-
-    // Fitting dialog
-    @observable fittingDialogVisible: boolean = false;
-    @action showFittingDialog = () => {
-        this.fittingDialogVisible = true;
-        this.zIndexManager.assignIndex(DialogId.Fitting);
-    };
-    @action hideFittingDialog = () => {
-        this.fittingDialogVisible = false;
-    };
-
-    // Distance Measuring dialog
-    @observable distanceMeasuringDialogVisible: boolean = false;
-    @action showDistanceMeasuringDialog = () => {
-        this.distanceMeasuringDialogVisible = true;
-        this.zIndexManager.assignIndex(DialogId.DistanceMeasure);
-    };
-    @action hideDistanceMeasuringDialog = () => {
-        this.distanceMeasuringDialogVisible = false;
     };
 }

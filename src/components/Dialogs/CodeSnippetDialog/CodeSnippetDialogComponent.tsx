@@ -124,8 +124,8 @@ export class CodeSnippetDialogComponent extends React.Component {
             className: className,
             canEscapeKeyClose: !this.saveDialogOpen,
             canOutsideClickClose: false,
-            isOpen: appStore.dialogStore.codeSnippetDialogVisible,
-            onClose: appStore.dialogStore.hideCodeSnippetDialog,
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Snippet),
+            onClose: () => appStore.dialogStore.hideDialog(DialogId.Snippet),
             isCloseButtonShown: true,
             title: "Edit Code Snippet"
         };
@@ -159,7 +159,6 @@ export class CodeSnippetDialogComponent extends React.Component {
                 enableResizing={true}
                 zIndex={zIndex}
                 onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Snippet)}
-                onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.Snippet)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <ThemeProvider darkTheme={appStore.darkTheme} children={editor} />

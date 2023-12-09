@@ -44,7 +44,7 @@ export class SaveLayoutDialogComponent extends React.Component {
     private saveLayout = async () => {
         const appStore = AppStore.Instance;
 
-        appStore.dialogStore.hideSaveLayoutDialog();
+        appStore.dialogStore.hideDialog(DialogId.Layout);
         appStore.layoutStore.setLayoutToBeSaved(this.layoutName.trim());
         if (appStore.layoutStore.layoutExists(this.layoutName)) {
             if (PresetLayout.isPreset(this.layoutName)) {
@@ -89,8 +89,8 @@ export class SaveLayoutDialogComponent extends React.Component {
             className: className,
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.saveLayoutDialogVisible,
-            onClose: appStore.dialogStore.hideSaveLayoutDialog,
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Layout),
+            onClose: () => appStore.dialogStore.hideDialog(DialogId.Layout),
             title: isSave ? "Save Layout" : `Rename Layout`
         };
 
@@ -105,7 +105,6 @@ export class SaveLayoutDialogComponent extends React.Component {
                 enableResizing={true}
                 zIndex={zIndex}
                 onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Layout)}
-                onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.Layout)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label={isSave ? "Save current layout as:" : `Rename ${appStore.layoutStore.oldLayoutName} to:`}>

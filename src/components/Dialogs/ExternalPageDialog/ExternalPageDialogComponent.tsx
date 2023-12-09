@@ -29,8 +29,8 @@ export class ExternalPageDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.externalPageDialogVisible,
-            onClose: appStore.dialogStore.hideExternalPageDialog,
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.ExternalPage),
+            onClose: () => appStore.dialogStore.hideDialog(DialogId.ExternalPage),
             title: appStore.dialogStore.externalPageDialogTitle
         };
 
@@ -44,7 +44,6 @@ export class ExternalPageDialogComponent extends React.Component {
                 enableResizing={true}
                 zIndex={zIndex}
                 onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.ExternalPage)}
-                onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.ExternalPage)}
             >
                 <div className="bp3-dialog-body">
                     <Iframe url={appStore.dialogStore.externalPageDialogUrl} />

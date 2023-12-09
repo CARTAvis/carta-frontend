@@ -19,7 +19,7 @@ export class ResizableDialogComponentProps {
     onResizeStop?: (newWidth: number, newHeight: number) => void;
     zIndex?: number;
     onSelected?: () => void;
-    onClosed?: () => void;
+    // onClosed?: () => void;
 }
 
 export class DraggableDialogComponent extends React.Component<ResizableDialogComponentProps> {

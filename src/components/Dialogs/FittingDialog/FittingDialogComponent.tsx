@@ -110,8 +110,8 @@ export class FittingDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.fittingDialogVisible,
-            onClose: appStore.dialogStore.hideFittingDialog,
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Fitting),
+            onClose: () => appStore.dialogStore.hideDialog(DialogId.Fitting),
             title: "Image Fitting"
         };
 
@@ -125,6 +125,8 @@ export class FittingDialogComponent extends React.Component {
                     defaultWidth={FittingDialogComponent.DefaultWidth}
                     defaultHeight={FittingDialogComponent.DefaultHeight}
                     enableResizing={true}
+                    zIndex={zIndex}
+                    onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Fitting)}
                 >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </DraggableDialogComponent>
@@ -179,7 +181,6 @@ export class FittingDialogComponent extends React.Component {
                 enableResizing={true}
                 zIndex={zIndex}
                 onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Fitting)}
-                onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.Fitting)}
             >
                 <div className={classNames(Classes.DIALOG_BODY, "pinned-input-panel")}>
                     <FormGroup label="Data source" inline={true}>

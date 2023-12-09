@@ -48,7 +48,7 @@ export class RegionDialogComponent extends React.Component {
 
     private handleDeleteClicked = () => {
         const appStore = AppStore.Instance;
-        appStore.dialogStore.hideRegionDialog();
+        appStore.dialogStore.hideDialog(DialogId.Region);
         if (appStore.activeFrame && appStore.activeFrame.regionSet.selectedRegion) {
             appStore.deleteRegion(appStore.activeFrame.regionSet.selectedRegion);
         }
@@ -67,8 +67,8 @@ export class RegionDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: true,
             lazy: true,
-            isOpen: appStore.dialogStore.regionDialogVisible,
-            onClose: appStore.dialogStore.hideRegionDialog,
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Region),
+            onClose: () => appStore.dialogStore.hideDialog(DialogId.Region),
             className: "region-dialog",
             canEscapeKeyClose: true,
             title: "No region selected"
@@ -156,7 +156,6 @@ export class RegionDialogComponent extends React.Component {
                 enableResizing={true}
                 zIndex={zIndex}
                 onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Region)}
-                onClosed={() => zIndexManager.updateIndexOnRemove(DialogId.Region)}
             >
                 <div className={Classes.DIALOG_BODY}>{bodyContent}</div>
                 <div className={Classes.DIALOG_FOOTER}>
