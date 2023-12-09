@@ -27,20 +27,19 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         this.gl = this.contourWebGLService.gl;
         const contourStream = AppStore.Instance.backendService.contourStream;
         if (this.canvas) {
-            contourStream.subscribe(this.initializeUpdate);
+            contourStream.subscribe(this.triggerUpdate);
         }
     }
 
     componentDidUpdate() {
         AppStore.Instance.resetImageRatio();
-        this.initializeUpdate();
+        this.triggerUpdate();
     }
 
-    private initializeUpdate = () => {
+    private triggerUpdate = () => {
         const animatorStore = AnimatorStore.Instance;
-        const receivedContourStores = Array.from(this.props.frame.contourStores.values());
-        const contourFrames = Array.from(AppStore.Instance.contourFrames.values());
-        if (contourFrames.every(frame => frame[0]?.contourProgress === 1) && receivedContourStores.length === this.props.frame.contourConfig.levels.length && animatorStore.serverAnimationActive) {
+        const contourFrames = AppStore.Instance.contourFrames.get(this.props.frame);
+        if (contourFrames.every(frame => frame?.contourProgress === 1) && animatorStore.serverAnimationActive) {
             requestAnimationFrame(this.updateCanvas);
         } else if (!animatorStore.serverAnimationActive) {
             requestAnimationFrame(this.updateCanvas);
