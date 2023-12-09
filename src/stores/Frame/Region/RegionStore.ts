@@ -199,8 +199,8 @@ export class RegionStore {
     }
 
     /**
-     * Getter for the sizes of regions and annotations
-     * @returns A Point2D object with x and y size components.
+     * Returns the sizes of regions and annotations. For line regions and annotations, vector annotations, and ruler annotations, returns x and y absolute displacements.
+     * @returns The x and y size components.
      */
     @computed get size(): Point2D {
         switch (this.regionType) {
@@ -488,7 +488,7 @@ export class RegionStore {
      * Sets the size for regions and annotations
      *
      * @param p - Specifies the x and y size components.
-     *            For line region and annotation, vector annotation, and ruler annotation, the function sets the individual new x and y components of the linear segment.
+     *            For line regions and annotations, vector annotations, and ruler annotations, the function sets the new start and end positions while keeping the rotation within the same quadrant.
      * @param skipUpdate - Whether to update the changes with the backend.
      */
     @action setSize = (p: Point2D, skipUpdate = false) => {
