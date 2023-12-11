@@ -233,10 +233,14 @@ export class TileService {
             const encodedCoordinate = tile.encode();
             const pendingRequestsMap = this.pendingRequests?.get(key);
             if (!(pendingRequestsMap && pendingRequestsMap.has(encodedCoordinate))) {
-                const compressedTile = !channelsChanged && this.getCompressedCache(fileId).get(encodedCoordinate);
+                const compressedTile = this.getCompressedCache(fileId).get(encodedCoordinate);
                 const pendingCompressionMap = this.pendingDecompressions.get(key);
                 const tileIsQueuedForDecompression = pendingCompressionMap && pendingCompressionMap.has(encodedCoordinate);
-                if (compressedTile && !tileIsQueuedForDecompression) {
+
+                const gpuCacheCoordinate = TileCoordinate.AddFileId(encodedCoordinate, fileId);
+                const tileCached = !channelsChanged && this.cachedTiles?.has(gpuCacheCoordinate);
+
+                if (!tileCached && compressedTile && !tileIsQueuedForDecompression) {
                     if (!pendingCompressionMap) {
                         this.pendingDecompressions.set(key, new Map<number, Map<number, boolean>>().set(0, new Map<number, boolean>()));
                     } else if (!pendingCompressionMap.has(0)) {

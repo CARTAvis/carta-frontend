@@ -1,7 +1,9 @@
 import * as React from "react";
+import AutoSizer from "react-virtualized-auto-sizer";
+import {FixedSizeList as List} from "react-window";
 import {Checkbox, Icon, IconName} from "@blueprintjs/core";
 import {computed, makeObservable} from "mobx";
-import {observer} from "mobx-react";
+import {Observer, observer} from "mobx-react";
 
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import {FileBrowserStore, SelectionMode} from "stores";
@@ -113,22 +115,45 @@ export class RegionSelectComponent extends React.Component {
         );
     };
 
-    private renderRegionOptions = () => {
+    private renderRegionOptions = ({index, style}: {index: number; style: React.CSSProperties}) => {
+        return (
+            <Observer>
+                {() => {
+                    const fileBrowserStore = FileBrowserStore.Instance;
+                    const item = fileBrowserStore.exportRegionOptions[index];
+
+                    return (
+                        <Checkbox
+                            style={style}
+                            checked={fileBrowserStore.exportRegionIndexes?.includes(item.value as number)}
+                            labelElement={
+                                <React.Fragment>
+                                    {item.isCustomIcon ? <CustomIcon icon={item.icon as CustomIconName} /> : <Icon icon={item.icon as IconName} />}
+                                    <span>&ensp;</span>
+                                    {item.active ? <b>{item.label} (Active)</b> : item.label}
+                                </React.Fragment>
+                            }
+                            onChange={() => this.handleSelectRegionChanged(item.value as number)}
+                        />
+                    );
+                }}
+            </Observer>
+        );
+    };
+
+    private renderVirtualizedRegions = () => {
         const fileBrowserStore = FileBrowserStore.Instance;
-        return fileBrowserStore.exportRegionOptions.map(item => (
-            <Checkbox
-                key={item.value}
-                checked={fileBrowserStore.exportRegionIndexes?.includes(item.value as number)}
-                labelElement={
-                    <React.Fragment>
-                        {item.isCustomIcon ? <CustomIcon icon={item.icon as CustomIconName} /> : <Icon icon={item.icon as IconName} />}
-                        <span>&ensp;</span>
-                        {item.active ? <b>{item.label} (Active)</b> : item.label}
-                    </React.Fragment>
-                }
-                onChange={() => this.handleSelectRegionChanged(item.value as number)}
-            />
-        ));
+        return (
+            <div className="region-list">
+                <AutoSizer>
+                    {({height, width}) => (
+                        <List itemSize={24} itemCount={fileBrowserStore.exportRegionOptions.length} width={width} height={height}>
+                            {this.renderRegionOptions}
+                        </List>
+                    )}
+                </AutoSizer>
+            </div>
+        );
     };
 
     render() {
@@ -146,7 +171,7 @@ export class RegionSelectComponent extends React.Component {
                         {optionNum > 1 && this.renderSelectAll(SelectionMode.All)}
                         {includesRegion && includesAnnotation && regionNum > 1 && this.renderSelectAll(SelectionMode.Region)}
                         {includesAnnotation && includesRegion && annotationNum > 1 && this.renderSelectAll(SelectionMode.Annotation)}
-                        {this.renderRegionOptions()}
+                        {this.renderVirtualizedRegions()}
                     </React.Fragment>
                 ) : (
                     <pre className="select-status">No regions in the active image.</pre>
