@@ -8,9 +8,9 @@ export class FloatingObjzIndexManager {
         this.floatingObjs = new Map<string, number>();
     }
 
-    public getFloatingObjs = () => {
-        return this.floatingObjs;
-    };
+    public get floatingObjsNum() {
+        return this.floatingObjs.size;
+    }
 
     public assignIndex = (id: string) => {
         const zIndex = this.floatingObjs.size + 1;

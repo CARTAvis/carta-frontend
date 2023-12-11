@@ -178,7 +178,7 @@ export class FloatingWidgetManagerComponent extends React.Component {
                     const id = w.componentId ? w.componentId : w.id;
 
                     let zIndex = zIndexManager.findIndex(id);
-                    const numFloatingObjs = zIndexManager.getFloatingObjs().size;
+                    const numFloatingObjs = zIndexManager.floatingObjsNum;
 
                     return (
                         <div key={id}>

@@ -148,6 +148,9 @@ export class AppStore {
     @observable isExportingImage: boolean;
     @observable private isCanvasUpdated: boolean;
 
+    // dynamic zIndex
+    public zIndexManager = new FloatingObjzIndexManager();
+
     private appContainer: HTMLElement;
     private fileCounter = 0;
     private previousConnectionStatus: ConnectionStatus;
@@ -3223,7 +3226,4 @@ export class AppStore {
     get pixelRatio() {
         return devicePixelRatio;
     }
-
-    // dynamic zIndex
-    zIndexManager = new FloatingObjzIndexManager();
 }

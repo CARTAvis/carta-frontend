@@ -63,7 +63,9 @@ export class DialogStore {
         switch (id) {
             case DialogId.Layout:
                 this.dialogVisible.set(DialogId.Layout, true);
-                AppStore.Instance.layoutStore.setOldLayoutName(props.oldLayoutName);
+                if (props && props.oldLayoutName) {
+                    AppStore.Instance.layoutStore.setOldLayoutName(props.oldLayoutName);
+                }
                 this.zIndexManager.assignIndex(DialogId.Layout);
                 break;
 
@@ -103,6 +105,7 @@ export class DialogStore {
             default:
                 this.dialogVisible.set(id, true);
                 this.zIndexManager.assignIndex(id);
+                break;
         }
     };
 
