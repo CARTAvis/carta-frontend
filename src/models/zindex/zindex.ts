@@ -1,4 +1,4 @@
-import {makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 
 export class FloatingObjzIndexManager {
     @observable private floatingObjs;
@@ -8,11 +8,11 @@ export class FloatingObjzIndexManager {
         this.floatingObjs = new Map<string, number>();
     }
 
-    public get floatingObjsNum() {
+    @computed public get floatingObjsNum() {
         return this.floatingObjs.size;
     }
 
-    public assignIndex = (id: string) => {
+    @action public assignIndex = (id: string) => {
         const zIndex = this.floatingObjs.size + 1;
         this.floatingObjs.set(id, zIndex);
     };
@@ -21,11 +21,11 @@ export class FloatingObjzIndexManager {
         return this.floatingObjs.has(id) ? this.floatingObjs.get(id) : 0;
     };
 
-    public removeIndex = (id: string) => {
+    @action public removeIndex = (id: string) => {
         this.floatingObjs.delete(id);
     };
 
-    public updateIndexOnSelect = (id: string) => {
+    @action public updateIndexOnSelect = (id: string) => {
         const selectedObj = this.floatingObjs.has(id);
         if (selectedObj) {
             const selectedzIndex = this.floatingObjs.get(id);
@@ -43,7 +43,7 @@ export class FloatingObjzIndexManager {
         }
     };
 
-    public updateIndexOnRemove = (id: string) => {
+    @action public updateIndexOnRemove = (id: string) => {
         const selectedObj = this.floatingObjs.has(id);
         if (selectedObj) {
             const selectedzIndex = this.floatingObjs.get(id);

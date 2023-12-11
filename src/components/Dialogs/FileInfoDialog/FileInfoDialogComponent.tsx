@@ -20,9 +20,6 @@ export class FileInfoDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const className = classNames("file-info-dialog", {"bp3-dark": appStore.darkTheme});
 
-        const zIndexManager = AppStore.Instance.zIndexManager;
-        let zIndex = zIndexManager.findIndex(DialogId.FileInfo);
-
         const dialogProps: IDialogProps = {
             icon: "app-header",
             className: className,
@@ -30,7 +27,6 @@ export class FileInfoDialogComponent extends React.Component {
             canOutsideClickClose: false,
             lazy: true,
             isOpen: appStore.dialogStore.dialogVisible.get(DialogId.FileInfo),
-            onClose: () => appStore.dialogStore.hideDialog(DialogId.FileInfo),
             title: "File Header"
         };
 
@@ -43,8 +39,7 @@ export class FileInfoDialogComponent extends React.Component {
                 minWidth={FileInfoDialogComponent.MinWidth}
                 minHeight={FileInfoDialogComponent.MinHeight}
                 enableResizing={true}
-                zIndex={zIndex}
-                onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.FileInfo)}
+                dialogId={DialogId.FileInfo}
             >
                 <div className="bp3-dialog-body">
                     <FileInfoComponent

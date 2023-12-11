@@ -142,9 +142,6 @@ export const WorkspaceDialogComponent = observer(() => {
 
     const className = classNames("workspace-dialog", {"bp3-dark": appStore.darkTheme});
 
-    const zIndexManager = AppStore.Instance.zIndexManager;
-    let zIndex = zIndexManager.findIndex(DialogId.Workspace);
-
     const dialogProps: IDialogProps = {
         icon: "control",
         backdropClassName: "minimal-dialog-backdrop",
@@ -152,7 +149,6 @@ export const WorkspaceDialogComponent = observer(() => {
         canOutsideClickClose: false,
         lazy: true,
         isOpen: mode !== WorkspaceDialogMode.Hidden,
-        onClose: () => appStore.dialogStore.hideDialog(DialogId.Workspace),
         title: mode === WorkspaceDialogMode.Save ? "Save Workspace" : "Open Workspace"
     };
 
@@ -260,17 +256,7 @@ export const WorkspaceDialogComponent = observer(() => {
     }
 
     return (
-        <DraggableDialogComponent
-            dialogProps={dialogProps}
-            helpType={HelpType.WORKSPACE}
-            defaultWidth={750}
-            defaultHeight={550}
-            minWidth={750}
-            minHeight={550}
-            enableResizing={true}
-            zIndex={zIndex}
-            onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Workspace)}
-        >
+        <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.WORKSPACE} defaultWidth={750} defaultHeight={550} minWidth={750} minHeight={550} enableResizing={true} dialogId={DialogId.Workspace}>
             <div className={Classes.DIALOG_BODY}>
                 <div className="workspace-container">
                     <div className="workspace-table-container">{tableContent}</div>

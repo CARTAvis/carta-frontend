@@ -71,9 +71,6 @@ export class CatalogQueryDialogComponent extends React.Component {
             className += " bp3-dark";
         }
 
-        const zIndexManager = AppStore.Instance.zIndexManager;
-        let zIndex = zIndexManager.findIndex(DialogId.CatalogQuery);
-
         const dialogProps: IDialogProps = {
             icon: "geosearch",
             className: className,
@@ -81,7 +78,6 @@ export class CatalogQueryDialogComponent extends React.Component {
             canOutsideClickClose: false,
             lazy: true,
             isOpen: appStore.dialogStore.dialogVisible.get(DialogId.CatalogQuery),
-            onClose: () => appStore.dialogStore.hideDialog(DialogId.CatalogQuery),
             title: "Online Catalog Query"
         };
 
@@ -95,8 +91,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                     minWidth={CatalogQueryDialogComponent.MinWidth}
                     minHeight={CatalogQueryDialogComponent.MinHeight}
                     enableResizing={true}
-                    zIndex={zIndex}
-                    onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.CatalogQuery)}
+                    dialogId={DialogId.CatalogQuery}
                 >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </DraggableDialogComponent>
@@ -266,8 +261,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                 defaultWidth={CatalogQueryDialogComponent.DefaultWidth}
                 defaultHeight={CatalogQueryDialogComponent.DefaultHeight}
                 enableResizing={true}
-                zIndex={zIndex}
-                onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.CatalogQuery)}
+                dialogId={DialogId.CatalogQuery}
             >
                 <div className="bp3-dialog-body">{configBoard}</div>
                 <Overlay autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={disable} usePortal={false}>

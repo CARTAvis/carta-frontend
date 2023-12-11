@@ -3,8 +3,9 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import {ResizeEnable, Rnd} from "react-rnd";
 import {Button, Dialog, IDialogProps} from "@blueprintjs/core";
+import {observer} from "mobx-react";
 
-import {HelpStore, HelpType} from "stores";
+import {AppStore, HelpStore, HelpType} from "stores";
 
 import "./DraggableDialogComponent.scss";
 
@@ -17,10 +18,10 @@ export class ResizableDialogComponentProps {
     enableResizing: boolean;
     helpType?: HelpType;
     onResizeStop?: (newWidth: number, newHeight: number) => void;
-    zIndex: number;
-    onSelected: () => void;
+    dialogId: string;
 }
 
+@observer
 export class DraggableDialogComponent extends React.Component<ResizableDialogComponentProps> {
     private dd: HTMLDivElement;
     private rnd: Rnd;
@@ -72,6 +73,9 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
             bottomRight: resizeEnabled
         };
 
+        const appStore = AppStore.Instance;
+        const zIndexManager = appStore.zIndexManager;
+
         return (
             <div className={"draggable-dialog"} ref={ref => (this.dd = ref)}>
                 {this.props.dialogProps.isOpen && (
@@ -93,10 +97,19 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
                             this.rnd = c;
                         }}
                         onResizeStop={this.onResizeStop}
-                        style={{zIndex: this.props.zIndex}}
-                        onMouseDown={this.props.onSelected}
+                        style={{zIndex: zIndexManager.findIndex(this.props.dialogId)}}
+                        onMouseDown={() => zIndexManager.updateIndexOnSelect(this.props.dialogId)}
                     >
-                        <Dialog portalClassName="dialog-portal" hasBackdrop={false} usePortal={false} enforceFocus={false} autoFocus={true} {...this.props.dialogProps} children={this.props.children} />
+                        <Dialog
+                            portalClassName="dialog-portal"
+                            hasBackdrop={false}
+                            usePortal={false}
+                            enforceFocus={false}
+                            autoFocus={true}
+                            {...this.props.dialogProps}
+                            children={this.props.children}
+                            onClose={() => appStore.dialogStore.hideDialog(this.props.dialogId)}
+                        />
                     </Rnd>
                 )}
             </div>

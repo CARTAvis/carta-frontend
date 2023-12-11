@@ -59,16 +59,12 @@ export class RegionDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
 
-        const zIndexManager = AppStore.Instance.zIndexManager;
-        let zIndex = zIndexManager.findIndex(DialogId.Region);
-
         const dialogProps: IDialogProps = {
             icon: "info-sign",
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: true,
             lazy: true,
             isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Region),
-            onClose: () => appStore.dialogStore.hideDialog(DialogId.Region),
             className: "region-dialog",
             canEscapeKeyClose: true,
             title: "No region selected"
@@ -154,8 +150,7 @@ export class RegionDialogComponent extends React.Component {
                 minHeight={RegionDialogComponent.MinHeight}
                 minWidth={RegionDialogComponent.MinWidth}
                 enableResizing={true}
-                zIndex={zIndex}
-                onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Region)}
+                dialogId={DialogId.Region}
             >
                 <div className={Classes.DIALOG_BODY}>{bodyContent}</div>
                 <div className={Classes.DIALOG_FOOTER}>

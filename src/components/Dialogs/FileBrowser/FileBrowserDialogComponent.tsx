@@ -605,9 +605,6 @@ export class FileBrowserDialogComponent extends React.Component {
         const fileBrowserStore = appStore.fileBrowserStore;
         const className = classNames("file-browser-dialog", {"bp3-dark": appStore.darkTheme});
 
-        const zIndexManager = AppStore.Instance.zIndexManager;
-        let zIndex = zIndexManager.findIndex(DialogId.FileBrowser);
-
         const dialogProps: IDialogProps = {
             icon: "folder-open",
             className: className,
@@ -663,8 +660,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 defaultWidth={FileBrowserDialogComponent.DefaultWidth}
                 defaultHeight={FileBrowserDialogComponent.DefaultHeight}
                 enableResizing={true}
-                zIndex={zIndex}
-                onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.FileBrowser)}
+                dialogId={DialogId.FileBrowser}
             >
                 <div className="file-path">
                     {this.pathItems && (

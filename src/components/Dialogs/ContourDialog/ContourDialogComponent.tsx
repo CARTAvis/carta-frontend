@@ -278,16 +278,12 @@ export class ContourDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
 
-        const zIndexManager = AppStore.Instance.zIndexManager;
-        let zIndex = zIndexManager.findIndex(DialogId.Contour);
-
         const dialogProps: IDialogProps = {
             icon: <CustomIcon icon="contour" size={CustomIcon.SIZE_LARGE} />,
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
             isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Contour),
-            onClose: () => appStore.dialogStore.hideDialog(DialogId.Contour),
             className: "contour-dialog",
             canEscapeKeyClose: true,
             title: "Contour Configuration"
@@ -303,8 +299,7 @@ export class ContourDialogComponent extends React.Component {
                     minWidth={ContourDialogComponent.MinWidth}
                     minHeight={ContourDialogComponent.MinHeight}
                     enableResizing={true}
-                    zIndex={zIndex}
-                    onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Contour)}
+                    dialogId={DialogId.Contour}
                 >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </DraggableDialogComponent>
@@ -489,8 +484,7 @@ export class ContourDialogComponent extends React.Component {
                 minWidth={ContourDialogComponent.MinWidth}
                 minHeight={ContourDialogComponent.MinHeight}
                 enableResizing={true}
-                zIndex={zIndex}
-                onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Contour)}
+                dialogId={DialogId.Contour}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup className={"source-menu"} inline={true} label="Data source">

@@ -160,9 +160,6 @@ export class PreferenceDialogComponent extends React.Component {
         const preference = appStore.preferenceStore;
         const layoutStore = appStore.layoutStore;
 
-        const zIndexManager = AppStore.Instance.zIndexManager;
-        let zIndex = zIndexManager.findIndex(DialogId.Preference);
-
         const globalPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Theme">
@@ -887,7 +884,6 @@ export class PreferenceDialogComponent extends React.Component {
             canOutsideClickClose: false,
             lazy: true,
             isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Preference),
-            onClose: () => appStore.dialogStore.hideDialog(DialogId.Preference),
             title: "Preferences"
         };
 
@@ -900,8 +896,7 @@ export class PreferenceDialogComponent extends React.Component {
                 defaultWidth={PreferenceDialogComponent.DefaultWidth}
                 defaultHeight={PreferenceDialogComponent.DefaultHeight}
                 enableResizing={true}
-                zIndex={zIndex}
-                onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Preference)}
+                dialogId={DialogId.Preference}
             >
                 <div className="bp3-dialog-body">
                     <Tabs id="preferenceTabs" vertical={true} selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>

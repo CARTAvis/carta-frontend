@@ -137,9 +137,6 @@ export class StokesDialogComponent extends React.Component {
             />
         );
 
-        const zIndexManager = AppStore.Instance.zIndexManager;
-        let zIndex = zIndexManager.findIndex(DialogId.Stokes);
-
         const dialogProps: IDialogProps = {
             icon: "git-merge",
             className: className,
@@ -147,7 +144,6 @@ export class StokesDialogComponent extends React.Component {
             canOutsideClickClose: false,
             lazy: true,
             isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Stokes),
-            onClose: () => appStore.dialogStore.hideDialog(DialogId.Hotkey),
             title: "Merging polarization hypercube"
         };
 
@@ -160,8 +156,7 @@ export class StokesDialogComponent extends React.Component {
                 defaultWidth={StokesDialogComponent.DefaultWidth}
                 defaultHeight={StokesDialogComponent.DefaultHeight}
                 enableResizing={true}
-                zIndex={zIndex}
-                onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Stokes)}
+                dialogId={DialogId.Stokes}
             >
                 <div className="bp3-dialog-body">
                     <Table

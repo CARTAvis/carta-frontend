@@ -15,7 +15,6 @@ export const ShareWorkspaceDialogComponent = observer(() => {
     const [isGeneratingLink, setIsGeneratingLink] = useState<boolean>(false);
     const [saveBeforeShare, setSaveBeforeShare] = useState<boolean>(false);
     const appStore = AppStore.Instance;
-    // const {shareWorkspaceDialogVisible, hideDialog(DialogId.ShareWorkspace)} = appStore.dialogStore;
 
     // Reset the dialog when the active workspace changes
     let shareWorkspaceDialogVisible = appStore.dialogStore.dialogVisible.get(DialogId.ShareWorkspace);
@@ -34,7 +33,6 @@ export const ShareWorkspaceDialogComponent = observer(() => {
         lazy: true,
         canEscapeKeyClose: true,
         isOpen: shareWorkspaceDialogVisible,
-        onClose: () => appStore.dialogStore.hideDialog(DialogId.ShareWorkspace),
         title: `Share Workspace: ${activeWorkspace?.name ?? ""}`
     };
 

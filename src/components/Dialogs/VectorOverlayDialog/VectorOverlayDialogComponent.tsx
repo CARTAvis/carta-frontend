@@ -243,16 +243,12 @@ export class VectorOverlayDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
 
-        const zIndexManager = AppStore.Instance.zIndexManager;
-        let zIndex = zIndexManager.findIndex(DialogId.Vector);
-
         const dialogProps: DialogProps = {
             icon: <CustomIcon icon="vectorOverlay" size={CustomIcon.SIZE_LARGE} />,
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
             isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Vector),
-            onClose: () => appStore.dialogStore.hideDialog(DialogId.Vector),
             className: "vector-overlay-dialog",
             canEscapeKeyClose: true,
             title: "Vector Overlay Configuration"
@@ -268,8 +264,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                     defaultWidth={VectorOverlayDialogComponent.DefaultWidth}
                     defaultHeight={VectorOverlayDialogComponent.DefaultHeight}
                     enableResizing={true}
-                    zIndex={zIndex}
-                    onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Vector)}
+                    dialogId={DialogId.Vector}
                 >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </DraggableDialogComponent>
@@ -402,8 +397,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                 minWidth={VectorOverlayDialogComponent.MinWidth}
                 minHeight={VectorOverlayDialogComponent.MinHeight}
                 enableResizing={true}
-                zIndex={zIndex}
-                onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Vector)}
+                dialogId={DialogId.Vector}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Data source">

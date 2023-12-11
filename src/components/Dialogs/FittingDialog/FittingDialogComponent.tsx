@@ -101,9 +101,6 @@ export class FittingDialogComponent extends React.Component {
         const fittingStore = appStore.imageFittingStore;
         let component = fittingStore.components[fittingStore.selectedComponentIndex];
 
-        const zIndexManager = AppStore.Instance.zIndexManager;
-        let zIndex = zIndexManager.findIndex(DialogId.Fitting);
-
         const dialogProps: IDialogProps = {
             icon: <CustomIcon icon="imageFitting" size={CustomIcon.SIZE_LARGE} />,
             className: "fitting-dialog",
@@ -111,7 +108,6 @@ export class FittingDialogComponent extends React.Component {
             canOutsideClickClose: false,
             lazy: true,
             isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Fitting),
-            onClose: () => appStore.dialogStore.hideDialog(DialogId.Fitting),
             title: "Image Fitting"
         };
 
@@ -125,8 +121,7 @@ export class FittingDialogComponent extends React.Component {
                     defaultWidth={FittingDialogComponent.DefaultWidth}
                     defaultHeight={FittingDialogComponent.DefaultHeight}
                     enableResizing={true}
-                    zIndex={zIndex}
-                    onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Fitting)}
+                    dialogId={DialogId.Fitting}
                 >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </DraggableDialogComponent>
@@ -179,8 +174,7 @@ export class FittingDialogComponent extends React.Component {
                 minWidth={FittingDialogComponent.MinWidth}
                 minHeight={FittingDialogComponent.MinHeight}
                 enableResizing={true}
-                zIndex={zIndex}
-                onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Fitting)}
+                dialogId={DialogId.Fitting}
             >
                 <div className={classNames(Classes.DIALOG_BODY, "pinned-input-panel")}>
                     <FormGroup label="Data source" inline={true}>

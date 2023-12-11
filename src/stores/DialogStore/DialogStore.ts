@@ -1,5 +1,5 @@
 import {TabId} from "@blueprintjs/core";
-import {action, makeObservable, observable} from "mobx";
+import {action, autorun, makeObservable, observable} from "mobx";
 
 import {FileInfoType} from "components";
 import {WorkspaceDialogMode} from "components/Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
@@ -14,7 +14,7 @@ export enum DialogId {
     NewSnippet = "new-snippet-dialog",
     Contour = "contour-dialog",
     DistanceMeasure = "distanceMeasure-dialog",
-    ExternalPage = "externalPage-dialog", // no one call this ??
+    ExternalPage = "externalPage-dialog",
     FileBrowser = "fileBrowser-dialog",
     FileInfo = "fileInfo-dialog",
     Fitting = "fitting-dialog",
@@ -31,8 +31,8 @@ export enum DialogId {
 interface showDialogProps {
     oldLayoutName?: string;
     mode?: WorkspaceDialogMode;
-    url?: string; // no one call this ??
-    title?: string; // no one call this ??
+    url?: string;
+    title?: string;
     snippet?: Snippet;
     name?: string;
 }
@@ -40,8 +40,19 @@ interface showDialogProps {
 export class DialogStore {
     private static staticInstance: DialogStore;
 
+    @observable workspaceDialogMode = WorkspaceDialogMode.Hidden;
+    @observable selectedFileInfoDialogTab: TabId = FileInfoType.IMAGE_HEADER;
+    @observable externalPageDialogUrl: string;
+    @observable externalPageDialogTitle: string;
+    @observable dialogVisible = new Map<string, boolean>();
+
     constructor() {
         makeObservable(this);
+        autorun(() => {
+            Object.values(DialogId).forEach(w => {
+                this.dialogVisible.set(w, false);
+            });
+        });
     }
 
     static get Instance() {
@@ -52,12 +63,6 @@ export class DialogStore {
     }
 
     zIndexManager = AppStore.Instance.zIndexManager;
-
-    @observable workspaceDialogMode = WorkspaceDialogMode.Hidden;
-    @observable selectedFileInfoDialogTab: TabId = FileInfoType.IMAGE_HEADER;
-    @observable externalPageDialogUrl: string;
-    @observable externalPageDialogTitle: string;
-    @observable dialogVisible = new Map<string, boolean>();
 
     @action showDialog = (id: string, props?: showDialogProps) => {
         switch (id) {
@@ -95,7 +100,7 @@ export class DialogStore {
                 this.zIndexManager.assignIndex(DialogId.Snippet);
                 break;
 
-            case DialogId.ExternalPage: // no one call this ??
+            case DialogId.ExternalPage:
                 this.externalPageDialogUrl = props.url;
                 this.externalPageDialogTitle = props.title;
                 this.dialogVisible.set(DialogId.ExternalPage, true);

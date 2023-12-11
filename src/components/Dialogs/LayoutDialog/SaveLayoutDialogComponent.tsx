@@ -80,9 +80,6 @@ export class SaveLayoutDialogComponent extends React.Component {
         const className = classNames("preference-dialog", {"bp3-dark": appStore.darkTheme});
         const isSave = appStore.layoutStore.isSave;
 
-        const zIndexManager = AppStore.Instance.zIndexManager;
-        let zIndex = zIndexManager.findIndex(DialogId.Layout);
-
         const dialogProps: IDialogProps = {
             icon: "layout-grid",
             backdropClassName: "minimal-dialog-backdrop",
@@ -90,7 +87,6 @@ export class SaveLayoutDialogComponent extends React.Component {
             canOutsideClickClose: false,
             lazy: true,
             isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Layout),
-            onClose: () => appStore.dialogStore.hideDialog(DialogId.Layout),
             title: isSave ? "Save Layout" : `Rename Layout`
         };
 
@@ -103,8 +99,7 @@ export class SaveLayoutDialogComponent extends React.Component {
                 minWidth={SaveLayoutDialogComponent.MinWidth}
                 minHeight={SaveLayoutDialogComponent.MinHeight}
                 enableResizing={true}
-                zIndex={zIndex}
-                onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.Layout)}
+                dialogId={DialogId.Layout}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label={isSave ? "Save current layout as:" : `Rename ${appStore.layoutStore.oldLayoutName} to:`}>

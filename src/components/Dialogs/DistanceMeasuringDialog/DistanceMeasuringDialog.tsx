@@ -136,9 +136,6 @@ export class DistanceMeasuringDialog extends React.Component {
         const WCSFinish = getFormattedWCSPoint(wcsInfo, distanceMeasuringStore?.finish);
         const dialogStore = DialogStore.Instance;
 
-        const zIndexManager = AppStore.Instance.zIndexManager;
-        let zIndex = zIndexManager.findIndex(DialogId.DistanceMeasure);
-
         const dialogProps: IDialogProps = {
             icon: <CustomIcon icon="distanceMeasuring" />,
             backdropClassName: "minimal-dialog-backdrop",
@@ -146,7 +143,6 @@ export class DistanceMeasuringDialog extends React.Component {
             canOutsideClickClose: false,
             lazy: true,
             isOpen: dialogStore.dialogVisible.get(DialogId.DistanceMeasure),
-            onClose: () => dialogStore.hideDialog(DialogId.DistanceMeasure),
             title: `Distance Measurement (${frame?.filename})`
         };
 
@@ -197,8 +193,7 @@ export class DistanceMeasuringDialog extends React.Component {
                 minWidth={DistanceMeasuringDialog.MinWidth}
                 minHeight={DistanceMeasuringDialog.MinHeight}
                 enableResizing={true}
-                zIndex={zIndex}
-                onSelected={() => zIndexManager.updateIndexOnSelect(DialogId.DistanceMeasure)}
+                dialogId={DialogId.DistanceMeasure}
             >
                 <div className={Classes.DIALOG_BODY}>
                     {appStore.activeLayer === ImageViewLayer.DistanceMeasuring ? (
