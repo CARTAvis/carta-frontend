@@ -59,8 +59,11 @@
             }
         }
 
-        .parameter-container .parameter-line .bp3-form-group .bp3-label {
-            min-width: 5em;
+        .parameter-container .parameter-line {
+            flex-wrap: nowrap;
+            .bp3-form-group .bp3-label {
+                min-width: 5em;
+            }
         }
     }
 }
