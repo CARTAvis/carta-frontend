@@ -978,7 +978,7 @@ export class FrameStore {
             siblings.push(...this.rasterScalingReference.secondaryRasterScalingImages.slice().filter(f => f !== this));
             return siblings;
         } else {
-            return this.secondaryRasterScalingImages.slice();
+            return this.secondaryRasterScalingImages?.slice();
         }
     }
 
