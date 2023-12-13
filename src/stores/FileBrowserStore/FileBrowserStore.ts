@@ -80,8 +80,8 @@ export class FileBrowserStore {
     // Save image
     @observable saveFilename: string = "";
     @observable saveFileType: CARTA.FileType = CARTA.FileType.CASA;
-    @observable saveSpectralStart: string;
-    @observable saveSpectralEnd: string;
+    @observable saveSpectralStart: string = "0";
+    @observable saveSpectralEnd: string = "0";
     @observable saveSpectralStride: number = 1;
     @observable saveStokesOption: number;
     @observable saveRegionId: number;

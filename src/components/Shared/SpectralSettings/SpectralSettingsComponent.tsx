@@ -23,16 +23,16 @@ export class SpectralSettingsComponent extends React.Component<{
         const filteredSpectralTypes = this.props.disableChannelOption ? spectralTypes.filter(type => type !== "Channel") : spectralTypes;
         const spectralCoordinateOptions: IOptionProps[] = filteredSpectralTypes.map((coord: string) => {
             if (coord === SPECTRAL_TYPE_STRING.get(SpectralType.NATIVE)) {
-                return {value: coord, label: frame.nativeSpectralCoordinate};
+                return {value: coord, label: nativeSpectralCoordinate + " (Native WCS)"};
             }
             return {value: coord, label: coord === nativeSpectralCoordinate ? coord + " (Native WCS)" : coord};
         });
         const spectralSystemOptions: IOptionProps[] =
-            frame?.spectralSystemsSupported.length > 0
+            frame?.spectralSystemsSupported?.length > 0
                 ? frame.spectralSystemsSupported.map(system => {
                       return {value: system, label: system};
                   })
-                : [{value: frame.spectralAxis.specsys, label: frame.spectralAxis.specsys}];
+                : [{value: frame?.spectralAxis?.specsys, label: frame?.spectralAxis?.specsys}];
         const hasFrameCoordinateSetting = frame?.isSpectralChannel;
         const disableCoordinateSetting = this.props.disable || !hasFrameCoordinateSetting;
         const disableSystemSetting = this.props.disable || !frame || !frame.isSpectralSystemConvertible;

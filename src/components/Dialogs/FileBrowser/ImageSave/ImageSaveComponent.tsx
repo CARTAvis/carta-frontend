@@ -153,7 +153,7 @@ export class ImageSaveComponent extends React.Component {
                         {numChannels > 1 && (
                             <React.Fragment>
                                 <div className="coordinate-select">
-                                    <SpectralSettingsComponent frame={activeFrame} onSpectralCoordinateChange={this.updateSpectralCoordinate} onSpectralSystemChange={this.updateSpectralSystem} disable={false} customLabel="Range Unit" />
+                                    <SpectralSettingsComponent frame={activeFrame} onSpectralCoordinateChange={this.updateSpectralCoordinate} onSpectralSystemChange={this.updateSpectralSystem} disable={false} customLabel="Range unit" />
                                 </div>
                                 <div className="range-select">
                                     <FormGroup label={"Range from"} inline={true}>
