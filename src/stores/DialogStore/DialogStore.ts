@@ -111,7 +111,7 @@ export class DialogStore {
                     this.dialogVisible.set(DialogId.ExternalPage, true);
                     this.zIndexManager.assignIndex(DialogId.ExternalPage);
                     break;
-                
+
                 default:
                     this.dialogVisible.set(id, true);
                     this.zIndexManager.assignIndex(id);

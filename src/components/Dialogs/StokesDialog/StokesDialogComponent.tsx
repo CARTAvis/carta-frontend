@@ -195,13 +195,12 @@ export class StokesDialogComponent extends React.Component {
         });
         await this.loadFile(stokeFiles)
             .then(() => {
-                AppStore.Instance.activeFrame?.setStokesFiles(stokeFiles)
+                AppStore.Instance.activeFrame?.setStokesFiles(stokeFiles);
                 AppStore.Instance.dialogStore?.hideDialog(DialogId.Stokes);
             })
             .catch(() => {
                 AppStore.Instance.activeFrame?.setStokesFiles([]);
             });
-            
     };
 
     private loadFile = async (files: CARTA.StokesFile[]) => {
