@@ -244,8 +244,8 @@ const DEFAULTS = {
         statsPanelMode: 0
     },
     TELEMETRY: {
-        telemetryConsentShown: false,
-        telemetryMode: TelemetryMode.Usage,
+        telemetryConsentShown: true,
+        telemetryMode: TelemetryMode.None,
         telemetryLogging: false
     },
     COMPATIBILITY: {
