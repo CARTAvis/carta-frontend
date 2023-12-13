@@ -73,7 +73,7 @@ export class PreferenceDialogComponent extends React.Component {
         makeObservable(this);
     }
 
-    private static readonly DefaultWidth = 775;
+    private static readonly DefaultWidth = 800;
     private static readonly DefaultHeight = 500;
     private static readonly MinWidth = 650;
     private static readonly MinHeight = 300;

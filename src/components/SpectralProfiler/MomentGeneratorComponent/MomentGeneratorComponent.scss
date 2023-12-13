@@ -1,5 +1,5 @@
 .moment-generator {
-    display: flex;
+    display: block;
     flex-direction: row;
 
     .bp3-numeric-input {
@@ -11,11 +11,11 @@
     .moment-panel {
         .image-region-select {
             .bp3-html-select {
-                width: 120px;
+                width: 100%;
             }
 
             .label-info {
-                max-width: calc(100% - 55px);
+                max-width: calc(100% - 92px); // because of the popover, we need the subtraction
                 text-overflow: ellipsis;
                 overflow: hidden;
                 white-space: nowrap;

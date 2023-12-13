@@ -37,8 +37,8 @@ export class ContourDialogComponent extends React.Component {
     @observable smoothingMode: CARTA.SmoothingMode;
     @observable smoothingFactor: number;
 
-    private static readonly DefaultWidth = 500;
-    private static readonly DefaultHeight = 660;
+    private static readonly DefaultWidth = 600;
+    private static readonly DefaultHeight = 700;
     private static readonly MinWidth = 425;
     private static readonly MinHeight = 450;
 
@@ -491,7 +491,7 @@ export class ContourDialogComponent extends React.Component {
                         <DataSourceSelect
                             activeItem={dataSource}
                             onItemSelect={appStore.setContourDataSource}
-                            popoverProps={{minimal: true, position: "bottom"}}
+                            popoverProps={{minimal: true, position: "bottom", fill: true}}
                             filterable={false}
                             items={appStore.frames}
                             itemRenderer={this.renderDataSourceSelectItem}

@@ -55,45 +55,41 @@ git push
 
 When making a pull request from you branch, please use the [pull request template](https://github.com/CARTAvis/carta-frontend/blob/dev/.github/pull_request_template.md).
 
-In the description section, please provide details about your changes, including linked issues and companion PRs (if there are), what is implemented or fixed, and how to test it.
+In the description section, please provide details about your changes, including linked issues and companion pull requests (if there are), what is implemented or fixed, and how to test it.
 
 Each check item in the checklist section is explained below:
 
-For linked issues (if there are):
+For linked issues (if there are): this section is for checking the status of the issues that are linked in the above description.
 
--   assignee and label added:
+-   assignee and label added: assign yourself to the issue you are working on. Add labels to the issue.
 
-    Assign yourself to the issue you are working on. Add labels to the issue.
+-   ZenHub issue connection, board status, and estimate updated: connect the issue to the pull request in ZenHub. ZenHub automatically updates the issue status from "In Progress" to "Review/QA" by default. Also, provide an estimate for the time required to complete the issue. This estimation is useful for future development planning.
 
--   ZenHub issue connection, board status, and estimate updated:
+For the pull request: this section is for checking the status of the pull request and reviewing the code changes.
 
-    Connect the issue to the pull request in ZenHub. ZenHub automatically updates the issue status from "In Progress" to "Review/QA" by default. Also, provide an estimate for the time required to complete the issue. This estimation is useful for future development planning.
+-   reviewers and assignee added: assign reviewers and an assignee to the pull request. The assignee will be responsible for merging the pull request.
 
-For the pull request:
+-   ZenHub estimate, milestone, and release (if needed) added: provide an estimate for the time required to review the pull request.
 
--   reviewers and assignee added:
+-   changelog updated / no changelog update needed: updating the changelog is required when the issue exists in the latest release and the changes have an impact on users. It is recommended to update the changelog when sending the pull request and to resolve changelog merge conflicts using the GitHub UI.
 
-    Assign reviewers and an assignee to the pull request. The assignee will be responsible for merging the pull request.
+-   unit test added (for functions with no dependenies): it is recommended to add unit tests for functions that are related to the code changes.
 
--   ZenHub estimate, milestone, and release (if needed) added:
+-   API documentation added (for public variables and methods in stores): it is recommended to add API documentation for public variables and methods in stores that are related to the code changes. Check [here](./documentation-guidelines/#writing-api-documentation) for adding API documentation.
 
-    Provide an estimate for the time required to review the pull request.
+For dependencies: this section is for checking repositories that have dependencies on carta-frontend or are dependencies of carta-frontend.
 
--   e2e test passing / corresponding fix added:
+-   e2e test passing / corresponding fix added: check if the end-to-end tests are passing. This will be checked during the review.
 
-    Check if the end-to-end tests are passing. This will be checked during the review.
+-   protobuf version bumped / no protobuf version bumped needed: updating the protobuf version is required when the behavior of the protobuf messages is changed.
 
--   changelog updated / no changelog update needed:
+-   protobuf updated to the latest dev commit / no protobuf update needed: updating the protobuf is required when there are changes in the carta-protobuf submodule. This can be done when the pull request is ready for merge. Check [here](#merging-a-pull-request-with-protobuf-changes-required) for the steps.
 
-    Updating the changelog is required when the issue exists in the latest release and the changes have an impact on users. It can be updated when the pull request is ready for merge to prevent frequent merge conflicts.
+-   corresponding ICD test fix added (`BackendService` changed) / no ICD test fix needed (`BackendService` unchanged): updating ICD tests is required when there are changes in `BackendService`.
 
--   protobuf updated to the latest dev commit / no protobuf update needed:
+-   user manual prepared (for large new features): preparing user manual updates in advance is required for large new features.
 
-    Updating the protobuf is required when there are changes in the carta-protobuf submodule. This can be done when the pull request is ready for merge.
-
--   `BackendService` unchanged / `BackendService` changed and corresponding ICD test fix added:
-
-    Updating ICD tests is required when there are changes in `BackendService`.
+To apply other [pull request templates](https://github.com/CARTAvis/carta-frontend/blob/dev/.github/PULL_REQUEST_TEMPLATE), please add a query parameter `&template=[template md file].md` to the URL.
 
 #### CI checks
 
