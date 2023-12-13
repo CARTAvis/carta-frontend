@@ -8,7 +8,7 @@ describe("FloatingObjzIndexManager returns expected z indexes", () => {
         const mockObjsId = ["testId1", "testId2", "testId3", "testId4"];
         mockObjsId.forEach(w => zIndexManager.assignIndex(w));
 
-        expect(zIndexManager.floatingObjsNum()).toBe(mockObjsId.length);
+        expect(zIndexManager.floatingObjsNum).toBe(mockObjsId.length);
         let expectzIndex = [1, 2, 3, 4];
         for (let i = 0; i < mockObjsId.length; i++) {
             expect(zIndexManager.findIndex(mockObjsId[i])).toBe(expectzIndex[i]);
@@ -30,7 +30,7 @@ describe("FloatingObjzIndexManager returns expected z indexes", () => {
         // test removing object
         zIndexManager.updateIndexOnRemove("testId4");
         zIndexManager.removeIndex("testId4");
-        expect(zIndexManager.floatingObjsNum()).toBe(mockObjsId.length - 1);
+        expect(zIndexManager.floatingObjsNum).toBe(mockObjsId.length - 1);
         expect(zIndexManager.findIndex("testId1")).toBe(1);
         expect(zIndexManager.findIndex("testId2")).toBe(3);
         expect(zIndexManager.findIndex("testId3")).toBe(2);

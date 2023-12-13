@@ -1196,7 +1196,7 @@ export class WidgetsStore {
 
     // add catalog widget store
     @action addCatalogWidget(catalogFileId: number, id: string = null, widgetSettings: object = null) {
-        // return widget id if store already exsit
+        // return widget id if store already exist
         const catalogStore = CatalogStore.Instance;
         const catalogWidgetId = catalogStore.catalogWidgets.get(catalogFileId);
         if (catalogWidgetId) {
