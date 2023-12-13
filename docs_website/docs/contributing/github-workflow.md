@@ -75,7 +75,7 @@ For the pull request: this section is for checking the status of the pull reques
 
 -   unit test added (for functions with no dependenies): it is recommended to add unit tests for functions that are related to the code changes.
 
--   API documentation added (for public variables and methods in stores): it is recommended to add API documentation for public variables and methods in stores that are related to the code changes. Check [here](./documentation-guidelines.md/#writing-api-documentation) for adding API documentation.
+-   API documentation added (for public variables and methods in stores): it is recommended to add API documentation for public variables and methods in stores that are related to the code changes. Check [here](./documentation-guidelines/#writing-api-documentation) for adding API documentation.
 
 For dependencies: this section is for checking repositories that have dependencies on carta-frontend or are dependencies of carta-frontend.
 
