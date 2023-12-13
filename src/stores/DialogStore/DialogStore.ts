@@ -65,63 +65,71 @@ export class DialogStore {
     zIndexManager = AppStore.Instance.zIndexManager;
 
     @action showDialog = (id: string, props?: showDialogProps) => {
-        switch (id) {
-            case DialogId.Layout:
-                this.dialogVisible.set(DialogId.Layout, true);
-                if (props && props.oldLayoutName) {
-                    AppStore.Instance.layoutStore.setOldLayoutName(props.oldLayoutName);
-                }
-                this.zIndexManager.assignIndex(DialogId.Layout);
-                break;
+        if (!this.dialogVisible.get(id)) {
+            switch (id) {
+                case DialogId.Layout:
+                    this.dialogVisible.set(DialogId.Layout, true);
+                    if (props && props.oldLayoutName) {
+                        AppStore.Instance.layoutStore.setOldLayoutName(props.oldLayoutName);
+                    }
+                    this.zIndexManager.assignIndex(DialogId.Layout);
+                    break;
 
-            case DialogId.Workspace:
-                this.dialogVisible.set(DialogId.FileBrowser, false);
-                this.workspaceDialogMode = props.mode;
-                this.zIndexManager.assignIndex(DialogId.Workspace);
-                break;
+                case DialogId.Workspace:
+                    this.dialogVisible.set(DialogId.FileBrowser, false);
+                    this.workspaceDialogMode = props.mode;
+                    this.zIndexManager.assignIndex(DialogId.Workspace);
+                    break;
 
-            case DialogId.FileBrowser:
-                this.workspaceDialogMode = WorkspaceDialogMode.Hidden;
-                this.dialogVisible.set(DialogId.FileBrowser, true);
-                this.zIndexManager.assignIndex(DialogId.FileBrowser);
-                break;
+                case DialogId.FileBrowser:
+                    this.workspaceDialogMode = WorkspaceDialogMode.Hidden;
+                    this.dialogVisible.set(DialogId.FileBrowser, true);
+                    this.zIndexManager.assignIndex(DialogId.FileBrowser);
+                    break;
 
-            case DialogId.ExistingSnippet:
-                if (props.snippet) {
-                    SnippetStore.Instance.setActiveSnippet(props.snippet, props.name);
-                }
-                this.dialogVisible.set(DialogId.Snippet, true);
-                this.zIndexManager.assignIndex(DialogId.Snippet);
-                break;
+                case DialogId.ExistingSnippet:
+                    if (props.snippet) {
+                        SnippetStore.Instance.setActiveSnippet(props.snippet, props.name);
+                    }
+                    if (!this.dialogVisible.get(DialogId.Snippet)) {
+                        this.dialogVisible.set(DialogId.Snippet, true);
+                        this.zIndexManager.assignIndex(DialogId.Snippet);
+                    }
+                    break;
 
-            case DialogId.NewSnippet:
-                SnippetStore.Instance.clearActiveSnippet();
-                this.dialogVisible.set(DialogId.Snippet, true);
-                this.zIndexManager.assignIndex(DialogId.Snippet);
-                break;
+                case DialogId.NewSnippet:
+                    SnippetStore.Instance.clearActiveSnippet();
+                    if (!this.dialogVisible.get(DialogId.Snippet)) {
+                        this.dialogVisible.set(DialogId.Snippet, true);
+                        this.zIndexManager.assignIndex(DialogId.Snippet);
+                    }
+                    break;
 
-            case DialogId.ExternalPage:
-                this.externalPageDialogUrl = props.url;
-                this.externalPageDialogTitle = props.title;
-                this.dialogVisible.set(DialogId.ExternalPage, true);
-                this.zIndexManager.assignIndex(DialogId.ExternalPage);
-                break;
-
-            default:
-                this.dialogVisible.set(id, true);
-                this.zIndexManager.assignIndex(id);
-                break;
+                case DialogId.ExternalPage:
+                    this.externalPageDialogUrl = props.url;
+                    this.externalPageDialogTitle = props.title;
+                    this.dialogVisible.set(DialogId.ExternalPage, true);
+                    this.zIndexManager.assignIndex(DialogId.ExternalPage);
+                    break;
+                
+                default:
+                    this.dialogVisible.set(id, true);
+                    this.zIndexManager.assignIndex(id);
+                    break;
+            }
+        } else {
+            this.zIndexManager.updateIndexOnSelect(id);
         }
     };
 
     @action hideDialog = (id: string) => {
         if (id === DialogId.Workspace) {
             this.workspaceDialogMode = WorkspaceDialogMode.Hidden;
-            this.zIndexManager.removeIndex(DialogId.Workspace);
         } else {
             this.dialogVisible.set(id, false);
-            this.zIndexManager.removeIndex(id);
         }
+        this.zIndexManager.updateIndexOnRemove(id);
+        this.zIndexManager.removeIndex(id);
     };
 
     // File Info

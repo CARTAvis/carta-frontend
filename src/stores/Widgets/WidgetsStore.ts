@@ -1277,6 +1277,9 @@ export class WidgetsStore {
         config.parentType = parentType;
         if (config.id) {
             this.addFloatingWidget(config);
+        } else {
+            const settingWidgetId = parentId + "-floating-settings-0";
+            AppStore.Instance.zIndexManager.updateIndexOnSelect(settingWidgetId);
         }
     };
 
@@ -1473,7 +1476,8 @@ export class WidgetsStore {
         this.floatingWidgets.push(widget);
 
         const zIndexManager = AppStore.Instance.zIndexManager;
-        zIndexManager.assignIndex(widget.id);
+        const id = widget.componentId ? widget.componentId : widget.id;
+        zIndexManager.assignIndex(id);
     };
 
     // Removes a widget from the floating widget array, optionally removing the widget's associated store

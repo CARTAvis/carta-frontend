@@ -177,12 +177,6 @@ export class StokesDialogComponent extends React.Component {
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
                         <AnchorButton
-                            intent={Intent.NONE}
-                            disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                            onClick={() => AppStore.Instance.dialogStore?.hideDialog(DialogId.Hotkey)}
-                            text={"Cancel"}
-                        />
-                        <AnchorButton
                             intent={Intent.PRIMARY}
                             disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !this.noneType}
                             onClick={this.loadSelectedFiles}
@@ -200,10 +194,14 @@ export class StokesDialogComponent extends React.Component {
             stokeFiles.push(file);
         });
         await this.loadFile(stokeFiles)
-            .then(() => AppStore.Instance.activeFrame?.setStokesFiles(stokeFiles))
+            .then(() => {
+                AppStore.Instance.activeFrame?.setStokesFiles(stokeFiles)
+                AppStore.Instance.dialogStore?.hideDialog(DialogId.Stokes);
+            })
             .catch(() => {
                 AppStore.Instance.activeFrame?.setStokesFiles([]);
             });
+            
     };
 
     private loadFile = async (files: CARTA.StokesFile[]) => {

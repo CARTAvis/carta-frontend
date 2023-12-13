@@ -183,7 +183,7 @@ export class ToolbarMenuComponent extends React.Component {
                         <AnchorButton icon="geosearch" disabled={!appStore.activeFrame} onClick={() => dialogStore.showDialog(DialogId.CatalogQuery)} active={dialogStore.dialogVisible.get(DialogId.CatalogQuery)} />
                     </Tooltip2>
                     <Tooltip2 content={<span>Distance measurement</span>} position={Position.BOTTOM}>
-                        <AnchorButton icon={<CustomIcon icon="distanceMeasuring" />} active={dialogStore.dialogVisible.get(DialogId.DistanceMeasure)} onClick={this.handleDistanceMeasuringClicked} />
+                        <AnchorButton icon={<CustomIcon icon="distanceMeasuring" />} disabled={!appStore.activeFrame} onClick={this.handleDistanceMeasuringClicked} active={dialogStore.dialogVisible.get(DialogId.DistanceMeasure)} />
                     </Tooltip2>
                     {appStore.preferenceStore.codeSnippetsEnabled && (
                         <Tooltip2

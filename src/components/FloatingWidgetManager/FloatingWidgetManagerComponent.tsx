@@ -39,7 +39,8 @@ export class FloatingWidgetManagerComponent extends React.Component {
     onFloatingWidgetSelected = (widget: WidgetConfig) => {
         // rearrange will cause a bug of empty table, change to zIndex
         const zIndexManager = AppStore.Instance.zIndexManager;
-        zIndexManager.updateIndexOnSelect(widget.id);
+        const id = widget.componentId ? widget.componentId : widget.id;
+        zIndexManager.updateIndexOnSelect(id);
     };
 
     onFloatingWidgetClosed = (widget: WidgetConfig) => {
