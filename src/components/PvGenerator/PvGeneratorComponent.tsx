@@ -24,9 +24,9 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         return {
             id: "pv-generator",
             type: "pv-generator",
-            minWidth: 350,
-            minHeight: 500,
-            defaultWidth: 520,
+            minWidth: 525,
+            minHeight: 300,
+            defaultWidth: 550,
             defaultHeight: 620,
             title: "PV Generator",
             isCloseable: true,
@@ -323,7 +323,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                 <FormGroup
                     className="label-info-group"
                     inline={true}
-                    label="Image"
+                    label="Data source"
                     labelInfo={
                         <span className="label-info" title={fileInfo}>
                             {fileInfo ? `(${fileInfo})` : ""}

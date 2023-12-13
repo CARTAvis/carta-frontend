@@ -536,15 +536,16 @@ export class FileBrowserStore {
 
     @action addExportRegionIndex = (regionIndex: number) => {
         if (!this.exportRegionIndexes.includes(regionIndex)) {
-            this.exportRegionIndexes.push(regionIndex);
-            this.exportRegionIndexes.sort();
+            this.exportRegionIndexes = [...this.exportRegionIndexes, regionIndex].sort((a, b) => a - b);
         }
     };
 
     @action deleteExportRegionIndex = (regionIndex: number) => {
         const index = this.exportRegionIndexes.indexOf(regionIndex);
+        const copy = [...this.exportRegionIndexes];
         if (index > -1) {
-            this.exportRegionIndexes.splice(index, 1);
+            copy.splice(index, 1);
+            this.exportRegionIndexes = copy;
         }
     };
 
@@ -817,6 +818,6 @@ export class FileBrowserStore {
     }
 
     @computed get exportAnnotationNum(): number {
-        return this.exportRegionIndexes?.reduce((accum, exportIndex, i) => accum + (AppStore.Instance.activeFrame.regionSet.regions[exportIndex].isAnnotation ? 1 : 0), 0);
+        return this.exportRegionIndexes?.reduce((accum, exportIndex, i) => accum + (AppStore.Instance.activeFrame.regionSet.regions[exportIndex]?.isAnnotation ? 1 : 0), 0);
     }
 }

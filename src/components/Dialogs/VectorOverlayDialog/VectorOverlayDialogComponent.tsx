@@ -37,6 +37,8 @@ export class VectorOverlayDialogComponent extends React.Component {
 
     private static readonly DefaultWidth = 500;
     private static readonly DefaultHeight = 720;
+    private static readonly MinWidth = 425;
+    private static readonly MinHeight = 400;
 
     private cachedFrame: FrameStore;
 
@@ -258,6 +260,8 @@ export class VectorOverlayDialogComponent extends React.Component {
                 <DraggableDialogComponent
                     dialogProps={dialogProps}
                     helpType={HelpType.VECTOR_OVERLAY}
+                    minWidth={VectorOverlayDialogComponent.MinWidth}
+                    minHeight={VectorOverlayDialogComponent.MinHeight}
                     defaultWidth={VectorOverlayDialogComponent.DefaultWidth}
                     defaultHeight={VectorOverlayDialogComponent.DefaultHeight}
                     enableResizing={true}
@@ -385,13 +389,21 @@ export class VectorOverlayDialogComponent extends React.Component {
         );
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.VECTOR_OVERLAY} defaultWidth={VectorOverlayDialogComponent.DefaultWidth} defaultHeight={VectorOverlayDialogComponent.DefaultHeight} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                helpType={HelpType.VECTOR_OVERLAY}
+                minWidth={VectorOverlayDialogComponent.MinWidth}
+                minHeight={VectorOverlayDialogComponent.MinHeight}
+                defaultWidth={VectorOverlayDialogComponent.DefaultWidth}
+                defaultHeight={VectorOverlayDialogComponent.DefaultHeight}
+                enableResizing={true}
+            >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Data source">
                         <DataSourceSelect
                             activeItem={dataSource}
                             onItemSelect={appStore.setActiveFrame}
-                            popoverProps={{minimal: true, position: "bottom"}}
+                            popoverProps={{minimal: true, position: "bottom", fill: true}}
                             filterable={false}
                             items={appStore.frames}
                             itemRenderer={this.renderDataSourceSelectItem}

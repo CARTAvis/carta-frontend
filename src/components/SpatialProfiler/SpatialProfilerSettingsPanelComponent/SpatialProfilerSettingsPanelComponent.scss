@@ -11,7 +11,11 @@
     }
 
     .bp3-form-group .bp3-label {
-        width: 10em;
-        text-align: left;
+        min-width: 11em;
+        text-align: right;
+    }
+
+    .bp3-form-group .bp3-form-helper-text {
+        white-space: nowrap;
     }
 }

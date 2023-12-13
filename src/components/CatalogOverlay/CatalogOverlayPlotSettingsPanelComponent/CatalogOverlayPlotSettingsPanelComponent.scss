@@ -3,7 +3,7 @@
 
     .file-menu .bp3-button {
         white-space: nowrap;
-        display: inline-block;
+        width: 100%;
     }
     .bp3-form-group {
         &:first-of-type {
@@ -11,9 +11,16 @@
         }
     }
 
-    .bp3-form-group .bp3-label {
-        width: 9em;
-        text-align: left;
+    .bp3-form-group.bp3-inline.file-menu .bp3-label {
+        width: 3em;
+        min-width: 3em;
+        text-align: right;
+    }
+
+    .bp3-form-group.bp3-inline .bp3-label {
+        width: 8em;
+        min-width: 8em;
+        text-align: right;
     }
 
     .bp3-numeric-input {
@@ -30,9 +37,38 @@
 
     .numeric-input-lock {
         display: inline-flex;
-        width: 100%;
         .lock-button {
             margin-bottom: 20px;
         }
+    }
+
+    .parameter-container {
+        .bp3-form-group.bp3-inline {
+            .bp3-label {
+                min-width: 2em;
+                width: 3em;
+            }
+
+            .bp3-form-content {
+                display: inline-flex;
+                width: calc(100% - 5em); // because of the popover, the subtraction is needed.
+                max-width: fit-content;
+            }
+        }
+    }
+
+    .bp3-button:not([class*="bp3-intent-"]) {
+        white-space: nowrap;
+
+        .bp3-button-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+
+    .bp3-form-content {
+        display: inline-flex;
+        width: calc(100% - 3em); // because of the popover, the subtraction is required
+        max-width: fit-content;
     }
 }

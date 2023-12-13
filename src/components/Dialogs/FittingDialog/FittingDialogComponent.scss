@@ -6,6 +6,14 @@
         margin-bottom: 0px;
     }
 
+    .bp3-html-select select,
+    .bp3-select select {
+        width: 100%;
+        min-width: 7em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
     .SplitPane {
         position: inherit !important;
         height: calc(100% - 40px - 65px) !important; // dialog h - heading h - pinned inputs h
@@ -67,7 +75,8 @@
 
     .bp3-label {
         display: flex;
-        min-width: 10em;
+        justify-content: flex-end;
+        min-width: 11em;
         user-select: none;
 
         .bp3-text-muted {
@@ -122,6 +131,7 @@
         font-size: x-small;
         font-family: monospace;
         user-select: text;
+        white-space: nowrap;
     }
 
     .bp3-divider {
@@ -147,16 +157,19 @@
 
     .fitting-result-panel {
         .bp3-tabs {
+            display: flex;
             width: 100%;
             height: 100%;
+            text-align: left;
 
             .bp3-tab-list {
-                width: 125px;
+                min-width: 10em;
             }
 
             .bp3-tab-panel {
                 width: calc(100% - 125px);
                 height: 100%;
+                padding-left: 10px;
 
                 .fitting-result-pre {
                     overflow: auto;

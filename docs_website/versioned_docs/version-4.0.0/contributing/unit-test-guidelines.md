@@ -47,15 +47,15 @@ Guidelines for running and writing unit tests.
     ```
     .
     └── src
-    └── components
-        └── AComponent
-        ├── AComponent.tsx
-        ├── AComponent.scss
-        └── AComponent.test.tsx
-    └── utilities
-        └── math
-        ├── math.ts
-        └── math.test.ts
+        └── components
+            └── AComponent
+                ├── AComponent.tsx
+                ├── AComponent.scss
+                └── AComponent.test.tsx
+        └── utilities
+            └── math
+                ├── math.ts
+                └── math.test.ts
     ```
 -   Test code structure: use `describe` to structure the tests. For example,
 
@@ -65,8 +65,8 @@ Guidelines for running and writing unit tests.
 
         describe("[sub unit]", () => {
             test("[expected behavior]", () => {});
-        }
-    }
+        });
+    });
     ```
 
 -   Make sure to implement low-level tests that focus on a certain class or function. Mock imported classes and functions with Jest when necessary.
