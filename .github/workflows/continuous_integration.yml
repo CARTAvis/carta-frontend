@@ -1,5 +1,5 @@
 name: CI
-on: [push, pull_request]
+on: [push]
 jobs:
 
   format-check:
@@ -93,6 +93,10 @@ jobs:
           source /emsdk/emsdk_env.sh
           n exec 16 npm run build
 
+      - name: Run unit tests
+        shell: bash
+        run: n exec 16 npm test
+
   node-v18:
     runs-on: [self-hosted, Linux, X64, Docker]
     needs: format-check
@@ -139,6 +143,10 @@ jobs:
         run: |
           source /emsdk/emsdk_env.sh
           n exec 18 npm run build
+
+      - name: Run unit tests
+        shell: bash
+        run: n exec 18 npm test
 
   Notify:
     name: Send notifications
