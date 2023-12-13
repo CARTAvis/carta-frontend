@@ -18,9 +18,9 @@ const KEYCODE_ENTER = 13;
 
 @observer
 export class CatalogQueryDialogComponent extends React.Component {
-    private static readonly DefaultWidth = 550;
+    private static readonly DefaultWidth = 600;
     private static readonly DefaultHeight = 550;
-    private static readonly MinWidth = 450;
+    private static readonly MinWidth = 550;
     private static readonly MinHeight = 450;
 
     @observable resultSize: number;
@@ -256,10 +256,10 @@ export class CatalogQueryDialogComponent extends React.Component {
             <DraggableDialogComponent
                 dialogProps={dialogProps}
                 helpType={HelpType.ONLINE_CATALOG_QUERY}
-                minWidth={CatalogQueryDialogComponent.DefaultWidth}
-                minHeight={CatalogQueryDialogComponent.DefaultHeight}
                 defaultWidth={CatalogQueryDialogComponent.DefaultWidth}
                 defaultHeight={CatalogQueryDialogComponent.DefaultHeight}
+                minWidth={CatalogQueryDialogComponent.MinWidth}
+                minHeight={CatalogQueryDialogComponent.MinHeight}
                 enableResizing={true}
                 dialogId={DialogId.CatalogQuery}
             >
