@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.0.1">
 <title data-rh="true">Github workflow | CARTA Frontend Documentation</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://cartavis.org/carta-frontend/docs/contributing/github-workflow"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="4.0.0"><meta data-rh="true" name="docusaurus_tag" content="docs-default-4.0.0"><meta data-rh="true" name="docsearch:version" content="4.0.0"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-4.0.0"><meta data-rh="true" property="og:title" content="Github workflow | CARTA Frontend Documentation"><meta data-rh="true" name="description" content="The workflow for contributing to the codebase."><meta data-rh="true" property="og:description" content="The workflow for contributing to the codebase."><link data-rh="true" rel="icon" href="/carta-frontend/img/carta_icon_128px.png"><link data-rh="true" rel="canonical" href="https://cartavis.org/carta-frontend/docs/contributing/github-workflow"><link data-rh="true" rel="alternate" href="https://cartavis.org/carta-frontend/docs/contributing/github-workflow" hreflang="en"><link data-rh="true" rel="alternate" href="https://cartavis.org/carta-frontend/docs/contributing/github-workflow" hreflang="x-default"><link rel="stylesheet" href="/carta-frontend/assets/css/styles.11edb850.css">
-<script src="/carta-frontend/assets/js/runtime~main.aa077601.js" defer="defer"></script>
-<script src="/carta-frontend/assets/js/main.eb6f3ada.js" defer="defer"></script>
+<script src="/carta-frontend/assets/js/runtime~main.a7274c3c.js" defer="defer"></script>
+<script src="/carta-frontend/assets/js/main.09c8e3d8.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
 <script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return localStorage.getItem("theme")}catch(t){}}();t(null!==e?e:"light")}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/carta-frontend/"><div class="navbar__logo"><img src="/carta-frontend/img/carta_icon_128px.png" alt="CARTA Logo" class="themedComponent_mlkZ themedComponent--light_NVdE"><img src="/carta-frontend/img/carta_icon_128px.png" alt="CARTA Logo" class="themedComponent_mlkZ themedComponent--dark_xIcU"></div><b class="navbar__title text--truncate">CARTA Frontend Documentation</b></a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/carta-frontend/docs">Docs</a><div class="navbar__item navbar__link">
@@ -32,46 +32,54 @@
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="making-a-pull-request">Making a pull request<a href="#making-a-pull-request" class="hash-link" aria-label="Direct link to Making a pull request" title="Direct link to Making a pull request">​</a></h3>
 <h4 class="anchor anchorWithStickyNavbar_LWe7" id="pull-request-template">Pull request template<a href="#pull-request-template" class="hash-link" aria-label="Direct link to Pull request template" title="Direct link to Pull request template">​</a></h4>
 <p>When making a pull request from you branch, please use the <a href="https://github.com/CARTAvis/carta-frontend/blob/dev/.github/pull_request_template.md" target="_blank" rel="noopener noreferrer">pull request template</a>.</p>
-<p>In the description section, please provide details about your changes, including linked issues and companion PRs (if there are), what is implemented or fixed, and how to test it.</p>
+<p>In the description section, please provide details about your changes, including linked issues and companion pull requests (if there are), what is implemented or fixed, and how to test it.</p>
 <p>Each check item in the checklist section is explained below:</p>
-<p>For linked issues (if there are):</p>
+<p>For linked issues (if there are): this section is for checking the status of the issues that are linked in the above description.</p>
 <ul>
 <li>
-<p>assignee and label added:</p>
-<p>Assign yourself to the issue you are working on. Add labels to the issue.</p>
+<p>assignee and label added: assign yourself to the issue you are working on. Add labels to the issue.</p>
 </li>
 <li>
-<p>ZenHub issue connection, board status, and estimate updated:</p>
-<p>Connect the issue to the pull request in ZenHub. ZenHub automatically updates the issue status from &quot;In Progress&quot; to &quot;Review/QA&quot; by default. Also, provide an estimate for the time required to complete the issue. This estimation is useful for future development planning.</p>
+<p>ZenHub issue connection, board status, and estimate updated: connect the issue to the pull request in ZenHub. ZenHub automatically updates the issue status from &quot;In Progress&quot; to &quot;Review/QA&quot; by default. Also, provide an estimate for the time required to complete the issue. This estimation is useful for future development planning.</p>
 </li>
 </ul>
-<p>For the pull request:</p>
+<p>For the pull request: this section is for checking the status of the pull request and reviewing the code changes.</p>
 <ul>
 <li>
-<p>reviewers and assignee added:</p>
-<p>Assign reviewers and an assignee to the pull request. The assignee will be responsible for merging the pull request.</p>
+<p>reviewers and assignee added: assign reviewers and an assignee to the pull request. The assignee will be responsible for merging the pull request.</p>
 </li>
 <li>
-<p>ZenHub estimate, milestone, and release (if needed) added:</p>
-<p>Provide an estimate for the time required to review the pull request.</p>
+<p>ZenHub estimate, milestone, and release (if needed) added: provide an estimate for the time required to review the pull request.</p>
 </li>
 <li>
-<p>e2e test passing / corresponding fix added:</p>
-<p>Check if the end-to-end tests are passing. This will be checked during the review.</p>
+<p>changelog updated / no changelog update needed: updating the changelog is required when the issue exists in the latest release and the changes have an impact on users. It is recommended to update the changelog when sending the pull request and to resolve changelog merge conflicts using the GitHub UI.</p>
 </li>
 <li>
-<p>changelog updated / no changelog update needed:</p>
-<p>Updating the changelog is required when the issue exists in the latest release and the changes have an impact on users. It can be updated when the pull request is ready for merge to prevent frequent merge conflicts.</p>
+<p>unit test added (for functions with no dependenies): it is recommended to add unit tests for functions that are related to the code changes.</p>
 </li>
 <li>
-<p>protobuf updated to the latest dev commit / no protobuf update needed:</p>
-<p>Updating the protobuf is required when there are changes in the carta-protobuf submodule. This can be done when the pull request is ready for merge.</p>
-</li>
-<li>
-<p><code>BackendService</code> unchanged / <code>BackendService</code> changed and corresponding ICD test fix added:</p>
-<p>Updating ICD tests is required when there are changes in <code>BackendService</code>.</p>
+<p>API documentation added (for public variables and methods in stores): it is recommended to add API documentation for public variables and methods in stores that are related to the code changes. Check <a href="/carta-frontend/docs/contributing/documentation-guidelines#writing-api-documentation">here</a> for adding API documentation.</p>
 </li>
 </ul>
+<p>For dependencies: this section is for checking repositories that have dependencies on carta-frontend or are dependencies of carta-frontend.</p>
+<ul>
+<li>
+<p>e2e test passing / corresponding fix added: check if the end-to-end tests are passing. This will be checked during the review.</p>
+</li>
+<li>
+<p>protobuf version bumped / no protobuf version bumped needed: updating the protobuf version is required when the behavior of the protobuf messages is changed.</p>
+</li>
+<li>
+<p>protobuf updated to the latest dev commit / no protobuf update needed: updating the protobuf is required when there are changes in the carta-protobuf submodule. This can be done when the pull request is ready for merge. Check <a href="#merging-a-pull-request-with-protobuf-changes-required">here</a> for the steps.</p>
+</li>
+<li>
+<p>corresponding ICD test fix added (<code>BackendService</code> changed) / no ICD test fix needed (<code>BackendService</code> unchanged): updating ICD tests is required when there are changes in <code>BackendService</code>.</p>
+</li>
+<li>
+<p>user manual prepared (for large new features): preparing user manual updates in advance is required for large new features.</p>
+</li>
+</ul>
+<p>To apply other <a href="https://github.com/CARTAvis/carta-frontend/blob/dev/.github/PULL_REQUEST_TEMPLATE" target="_blank" rel="noopener noreferrer">pull request templates</a>, please add a query parameter <code>&amp;template=[template md file].md</code> to the URL.</p>
 <h4 class="anchor anchorWithStickyNavbar_LWe7" id="ci-checks">CI checks<a href="#ci-checks" class="hash-link" aria-label="Direct link to CI checks" title="Direct link to CI checks">​</a></h4>
 <p>Please ensure that the CI passes successfully when making the pull request. The CI checks various items:</p>
 <ul>
