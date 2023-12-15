@@ -101,7 +101,7 @@ export class TelemetryService {
         setInterval(this.flushTelemetry, TelemetryService.SubmissionIntervalSeconds * 1000);
     }
 
-    @flow.bound *checkAndGenerateId(forceNewId: boolean = false) {
+    @flow.bound *checkAndGenerateId(flush: boolean = false, forceNewId: boolean = false) {
         const url = new URL(window.location.href);
         const skipTelemetry = url.searchParams.get("skipTelemetry");
         // Check for URL query parameter or build-time flag for skipping telemetry
@@ -148,6 +148,11 @@ export class TelemetryService {
         }
 
         this.axiosInstance.defaults.headers.common = {Authorization: `Bearer ${token}`};
+
+        if (flush) {
+            yield this.flushTelemetry();
+        }
+
         return true;
     }
 
