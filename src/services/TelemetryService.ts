@@ -265,14 +265,14 @@ export class TelemetryService {
     addSpectralProfileEntry(profileLength: number, regionType: CARTA.RegionType, regionId: number, width: number, height: number, depth: number) {
         switch (regionType) {
             case CARTA.RegionType.POINT:
-                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.SpectralProfileGeneration, {profileLength, regionId: regionId, depth});
+                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.SpectralProfileGeneration, {profileLength, regionId: regionId, regionType, depth});
                 break;
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.POLYGON:
-                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.SpectralProfileGeneration, {profileLength, regionId: regionId, width, height, depth});
+                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.SpectralProfileGeneration, {profileLength, regionId: regionId, regionType, width, height, depth});
                 break;
             case CARTA.RegionType.ELLIPSE:
-                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.SpectralProfileGeneration, {profileLength, regionId: regionId, semi_major: width, semi_minor: height, depth});
+                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.SpectralProfileGeneration, {profileLength, regionId: regionId, regionType, semi_major: width, semi_minor: height, depth});
                 break;
             default:
                 break;
