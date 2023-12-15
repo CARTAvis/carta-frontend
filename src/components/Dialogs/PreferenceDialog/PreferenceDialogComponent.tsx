@@ -212,7 +212,7 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Enable drag-to-pan">
                     <Switch checked={preference.dragPanning} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_DRAG_PANNING, ev.currentTarget.checked)} />
                 </FormGroup>
-                <FormGroup inline={true} label="WCS matching on append">
+                <FormGroup inline={true} label="Matching on append">
                     {WCSMatchingClass.MATCHING_TYPES.map(matchingType => (
                         <Checkbox
                             className="log-event-list"
