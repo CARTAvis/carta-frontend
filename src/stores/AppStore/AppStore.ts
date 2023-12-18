@@ -30,7 +30,7 @@ import {
     Workspace,
     WorkspaceFile
 } from "models";
-import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
+import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryAction, TelemetryService, TileService, TileStreamDetails} from "services";
 import {
     AlertStore,
     AnimationMode,
@@ -71,6 +71,7 @@ interface ViewUpdate {
     channel: number;
     stokes: number;
     focusPoint: Point2D;
+    headerUnit: string;
 }
 
 interface ChannelUpdate {
@@ -116,13 +117,14 @@ export class AppStore {
     @observable astReady: boolean;
     @observable cartaComputeReady: boolean;
     // Frames
-    @observable frames: FrameStore[];
-    @observable previewFrames: ObservableMap<number, FrameStore>;
-    @observable activeFrame: FrameStore;
-    @observable hoveredFrame: FrameStore;
-    @observable contourDataSource: FrameStore;
-    @observable syncContourToFrame: boolean;
-    @observable syncFrameToContour: boolean;
+    @observable frames: FrameStore[] = [];
+    @observable previewFrames = new ObservableMap<number, FrameStore>();
+    @observable activeFrame: FrameStore = null;
+    @observable hoveredFrame: FrameStore = null;
+    @observable contourDataSource: FrameStore = null;
+    @observable syncContourToFrame = true;
+    @observable syncFrameToContour = true;
+    @observable activeWorkspace: Workspace;
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
@@ -136,12 +138,12 @@ export class AppStore {
     @observable rasterScalingReference: FrameStore;
 
     // ImageViewer
-    @observable activeLayer: ImageViewLayer;
+    @observable activeLayer = ImageViewLayer.RegionMoving;
     @observable cursorFrozen: boolean;
-    @observable cursorMirror: boolean = false;
-    @observable toolbarExpanded: boolean;
-    @observable imageRatio: number;
-    @observable isExportingImage: boolean;
+    @observable cursorMirror = false;
+    @observable toolbarExpanded = true;
+    @observable imageRatio = 1;
+    @observable isExportingImage = false;
     @observable private isCanvasUpdated: boolean;
 
     private appContainer: HTMLElement;
@@ -229,12 +231,14 @@ export class AppStore {
     *loadDefaultFiles() {
         const url = new URL(window.location.href);
         const folderSearchParam = url.searchParams.get("folder");
-        const workspaceSearchParam = url.searchParams.get("workspace");
+        const workspaceKeyParam = url.searchParams.get("key");
+        const workspaceNameParam = url.searchParams.get("workspace");
+        const hasWorkspaceParam = workspaceKeyParam || workspaceNameParam;
 
         // Load workspace first if it exists
-        if (workspaceSearchParam) {
+        if (hasWorkspaceParam) {
             try {
-                yield this.loadWorkspace(workspaceSearchParam);
+                yield this.loadWorkspace(workspaceKeyParam ?? workspaceNameParam, !!workspaceKeyParam);
             } catch (err) {
                 console.error(err);
             }
@@ -259,7 +263,7 @@ export class AppStore {
                     yield this.loadFile(folderSearchParam, file, "", false);
                 }
                 this.setLoadingMultipleFiles(false);
-            } else if (this.preferenceStore.autoLaunch && !workspaceSearchParam) {
+            } else if (this.preferenceStore.autoLaunch && !hasWorkspaceParam) {
                 if (folderSearchParam) {
                     this.fileBrowserStore.setStartingDirectory(folderSearchParam);
                 }
@@ -343,6 +347,12 @@ export class AppStore {
             return this.preferenceStore.theme === Theme.DARK;
         }
     }
+
+    // Spectral matching type, initialized by global preferences, modified by the Image List Settings
+    @observable spectralMatchingType: SpectralType;
+
+    // Match generated moment image(s) to the spatial reference image
+    @observable momentToMatch: boolean;
 
     @computed get openFileDisabled(): boolean {
         return this.backendService?.connectionStatus !== ConnectionStatus.ACTIVE || this.fileLoading;
@@ -441,22 +451,25 @@ export class AppStore {
 
     @computed get spatialAndSpectalMatchedFileIds(): number[] {
         let matchedIds = [];
-        if (this.spatialReference) {
-            matchedIds.push(this.spatialReference.frameInfo.fileId);
-        }
+        const spatialReferenceId = this.spatialReference?.frameInfo?.fileId;
+        const spectralReferenceId = this.spectralReference?.frameInfo?.fileId;
 
         const spatialMatchedFileIds = this.spatialReference?.spatialSiblings?.map(matchedFrame => {
             return matchedFrame.frameInfo.fileId;
         });
-        const spectralMatchedFileIds = this.spatialReference?.spectralSiblings?.map(matchedFrame => {
+        spatialMatchedFileIds?.unshift(spatialReferenceId);
+        const spectralMatchedFileIds = this.spectralReference?.spectralSiblings?.map(matchedFrame => {
             return matchedFrame.frameInfo.fileId;
         });
+        spectralMatchedFileIds?.unshift(spectralReferenceId);
+
         spatialMatchedFileIds?.forEach(spatialMatchedFileId => {
             if (spectralMatchedFileIds?.includes(spatialMatchedFileId)) {
                 matchedIds.push(spatialMatchedFileId);
             }
         });
-        return matchedIds;
+
+        return [...new Set(matchedIds)]; //Remove duplicate
     }
 
     // Calculates which frames have a contour visible as a function of each visible frame
@@ -479,7 +492,19 @@ export class AppStore {
         return frameMap;
     }
 
-    @action addFrame = (ack: CARTA.IOpenFileAck, directory: string, lelExpr: boolean, hdu: string, generated: boolean = false, setAsActive: boolean = true): boolean => {
+    /**
+     * Adds a frame to the frame array based on the provided parameters.
+     *
+     * @param ack - The ack message received after opening a file.
+     * @param directory - The path to the parent directory of the file.
+     * @param lelExpr - Whether the file is opened with an image arithmetic (CASA lattice expression) string.
+     * @param hdu - The Header Data Unit (HDU) identifier of the file.
+     * @param generated - Whether the frame is a generated in-memory image. Used for the telemetry message.
+     * @param setAsActive - Whether the frame should be set as the active frame.
+     * @param updateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
+     * @returns Whether the frame was successfully added.
+     */
+    @action addFrame = (ack: CARTA.IOpenFileAck, directory: string, lelExpr: boolean, hdu: string, generated: boolean = false, setAsActive: boolean = true, updateStartingDirectory: boolean = true): boolean => {
         if (!ack) {
             return false;
         }
@@ -503,7 +528,7 @@ export class AppStore {
             renderMode: CARTA.RenderMode.RASTER,
             beamTable: ack.beamTable
         };
-        this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes, generated);
+        this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfo.type, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes, generated);
 
         let newFrame = new FrameStore(frameInfo);
 
@@ -551,7 +576,10 @@ export class AppStore {
                 this.setSpectralMatchingEnabled(newFrame, true);
             }
         }
-        this.fileBrowserStore.saveStartingDirectory(newFrame.frameInfo.directory);
+
+        if (updateStartingDirectory) {
+            this.fileBrowserStore.saveStartingDirectory(newFrame.frameInfo.directory);
+        }
 
         return true;
     };
@@ -570,14 +598,14 @@ export class AppStore {
             fileInfoExtended: new CARTA.FileInfoExtended(ack.imageInfo),
             fileFeatureFlags: ack.fileFeatureFlags,
             renderMode: CARTA.RenderMode.RASTER,
-            beamTable: ack.beamTable
+            beamTable: ack.beamTable,
+            preview: true
         };
 
         const newFrame = new FrameStore(frameInfo);
 
         if (newFrame) {
             this.previewFrames.set(ack.previewId, newFrame);
-            newFrame.setIsPreview(true);
             newFrame.updatePreviewDataGenerator = newFrame.updatePreviewData(ack);
             // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
             newFrame.updatePreviewDataGenerator.next();
@@ -587,8 +615,21 @@ export class AppStore {
         return newFrame;
     };
 
+    /**
+     * Loads a file at the given path and adds it as a frame to the application.
+     *
+     * @param path - The path to the parent directory of the file to load, or of the file itself.
+     * @param filename - The filename of the file to load.
+     * @param hdu - The Header Data Unit (HDU) to load. If left blank, the first image HDU will be loaded.
+     * @param imageArithmetic - Whether to treat the file as an image arithmetic (CASA lattice expression) string.
+     * @param setAsActive - Whether the loaded frame should be set as the active frame.
+     * @param updateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
+     * @returns The added frame.
+     *
+     * @throws If there is an error loading the file.
+     */
     @flow.bound
-    *loadFile(path: string, filename: string, hdu: string, imageArithmetic: boolean, setAsActive: boolean = true) {
+    *loadFile(path: string, filename: string, hdu: string, imageArithmetic: boolean, setAsActive: boolean = true, updateStartingDirectory: boolean = true) {
         this.startFileLoading();
 
         if (imageArithmetic) {
@@ -608,7 +649,7 @@ export class AppStore {
         }
 
         // Separate HDU and filename if no HDU is specified
-        if (!hdu?.length) {
+        if (!hdu?.length && !imageArithmetic) {
             const hduRegex = /^(.*)\[(\S+)]$/;
             const matches = hduRegex.exec(filename);
             // Three matching groups. Second is filename, third is HDU
@@ -621,7 +662,7 @@ export class AppStore {
         try {
             const ack = yield this.backendService.loadFile(path, filename, hdu, this.fileCounter, imageArithmetic);
             this.fileCounter++;
-            if (!this.addFrame(ack, path, imageArithmetic, hdu, setAsActive)) {
+            if (!this.addFrame(ack, path, imageArithmetic, hdu, false, setAsActive, updateStartingDirectory)) {
                 AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
             }
             this.endFileLoading();
@@ -674,34 +715,45 @@ export class AppStore {
     };
 
     /**
-     * Appends a file at the given path to the list of existing open files
-     * @access public
-     * @async
-     * @param path - path to the parent directory of the file to open, or of the file itself
-     * @param {string=} filename - filename of the file to open
-     * @param {string=} hdu - HDU to open. If left blank, the first image HDU will be opened
-     * @param {boolean=} imageArithmetic - Whether to treat the filename as an image arithmetic (CASA lattice expression) string
-     * @return {Promise<FrameStore>} [async] the FrameStore the opened file
+     * Appends a file at the given path to the list of existing open files.
+     *
+     * @param path - The path to the parent directory of the file to open, or of the file itself.
+     * @param filename - The filename of the file to open.
+     * @param hdu - The Header Data Unit (HDU) to open. If left blank, the first image HDU will be opened.
+     * @param imageArithmetic - Whether to treat the filename as an image arithmetic (CASA lattice expression) string.
+     * @param setAsActive - Whether to set the appended file as the active frame.
+     * @param updateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
+     * @returns A promise that resolves to the FrameStore of the opened file.
+     *
+     * @example
+     * // Append a file with the given path and filename
+     * const file = await appendFile("/path/to/directory", "example.fits");
      */
     @flow.bound
-    *appendFile(path: string, filename?: string, hdu?: string, imageArithmetic: boolean = false, setAsActive: boolean = true) {
+    *appendFile(path: string, filename?: string, hdu?: string, imageArithmetic: boolean = false, setAsActive: boolean = true, updateStartingDirectory: boolean = true) {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
-        return yield this.loadFile(path, filename, hdu, imageArithmetic, setAsActive);
+        return yield this.loadFile(path, filename, hdu, imageArithmetic, setAsActive, updateStartingDirectory);
     }
 
     /**
-     * Closes all existing files and opens a file at the given path
-     * @param path - path to the parent directory of the file to open, or of the file itself
-     * @param {string=} filename - filename of the file to open
-     * @param {string=} hdu - HDU to open. If left blank, the first image HDU will be opened
-     * @param {boolean=} imageArithmetic - Whether to treat the filename as an image arithmetic (CASA lattice expression) string
-     * @return {Promise<FrameStore>} [async] the FrameStore of the opened file
+     * Closes all existing files and opens a file at the given path.
+     *
+     * @param path - The path to the parent directory of the file to open, or of the file itself.
+     * @param filename - The filename of the file to open.
+     * @param hdu - The Header Data Unit (HDU) to open. If left blank, the first image HDU will be opened.
+     * @param imageArithmetic - Whether to treat the filename as an image arithmetic (CASA lattice expression) string.
+     * @param updateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
+     * @returns A promise that resolves to the FrameStore of the opened file.
+     *
+     * @example
+     * // Open a file with the given path and filename
+     * const openedFile = await openFile("/path/to/directory", "example.fits");
      */
     @flow.bound
-    *openFile(path: string, filename?: string, hdu?: string, imageArithmetic?: boolean) {
+    *openFile(path: string, filename?: string, hdu?: string, imageArithmetic?: boolean, updateStartingDirectory: boolean = true) {
         this.removeAllFrames();
-        return yield this.loadFile(path, filename, hdu, imageArithmetic);
+        return yield this.loadFile(path, filename, hdu, imageArithmetic, true, updateStartingDirectory);
     }
 
     @flow.bound
@@ -747,8 +799,9 @@ export class AppStore {
     }
 
     /**
-     * Closes the currently active image
-     * @param confirmClose [boolean=] - Flag indicating whether to display a confirmation dialog before closing
+     * Closes the currently active image.
+     *
+     * @param confirmClose - Flag indicating whether to display a confirmation dialog before closing.
      */
     @action closeCurrentFile = (confirmClose: boolean = false) => {
         if (!this.appendFileDisabled) {
@@ -854,6 +907,10 @@ export class AppStore {
                     }
                 }
 
+                if (!this.frames?.length) {
+                    this.activeWorkspace = undefined;
+                }
+
                 // TODO: check this
                 this.tileService.handleFileClosed(fileId);
                 // Clean up if frame has associated catalog files
@@ -873,6 +930,7 @@ export class AppStore {
         this.clearSpectralReference();
         this.clearSpatialReference();
         this.clearRasterScalingReference();
+        this.activeWorkspace = undefined;
         if (this.backendService.closeFile(-1)) {
             this.activeFrame = null;
             this.tileService.clearCompressedCache(-1);
@@ -944,6 +1002,7 @@ export class AppStore {
             const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
             let catalogWidgetId = this.updateCatalogProfile(fileId, frame);
             if (catalogWidgetId) {
+                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: ack.headers.length, row: ack.dataSize, remote: false});
                 this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
                 this.catalogStore.addCatalog(fileId, ack.dataSize);
                 this.fileBrowserStore.hideFileBrowser();
@@ -1033,15 +1092,35 @@ export class AppStore {
     };
 
     // Region file actions
+
+    /**
+     * Imports a region file to the active frame or a specified frame.
+     * Supported file types are CRTF and DS9.
+     *
+     * @param directory - The directory containing the region file.
+     * @param file - The filename of the region file.
+     * @param type - The {@link https://carta-protobuf.readthedocs.io/en/latest/enums.html#filetype | type} of the region file (`CRTF` or `DS9_REG`).
+     * @param targetFrame - The frame to which the regions should be imported. If not provided, the active frame is used. If the frame is spatially matched, the reference frame is used.
+     */
     @flow.bound
-    *importRegion(directory: string, file: string, type: CARTA.FileType | CARTA.CatalogFileType) {
-        if (!this.activeFrame || !(type === CARTA.FileType.CRTF || type === CARTA.FileType.DS9_REG)) {
+    *importRegion(directory: string, file: string, type: CARTA.FileType | CARTA.CatalogFileType, targetFrame?: FrameStore) {
+        if (!(type === CARTA.FileType.CRTF || type === CARTA.FileType.DS9_REG)) {
             AppToaster.show(ErrorToast("Region type not supported"));
             return;
         }
 
-        // ensure that the same frame is used in the callback, to prevent issues when the active frame changes while the region is being imported
-        const frame = this.activeFrame.spatialReference ?? this.activeFrame;
+        let frame: FrameStore;
+        if (targetFrame) {
+            frame = targetFrame.spatialReference ?? targetFrame;
+        } else if (this.activeFrame) {
+            frame = this.activeFrame.spatialReference ?? this.activeFrame;
+        }
+
+        if (!frame) {
+            AppToaster.show(ErrorToast("No image file"));
+            return;
+        }
+
         try {
             const ack = yield this.backendService.importRegion(directory, file, type, frame.frameInfo.fileId);
             if (frame && ack.success && ack.regions) {
@@ -1090,11 +1169,21 @@ export class AppStore {
         this.fileBrowserStore.updateLoadingState(batchEnd / regions.length, batchEnd, regions.length);
     };
 
+    /**
+     * Exports specified regions and saves a region file to the provided directory.
+     *
+     * @param directory - The directory where the region file will be saved.
+     * @param file - The filename of the region file.
+     * @param coordType - The coordinate system used in the exported region file.
+     * @param fileType - The type of the exported region file.
+     * @param exportRegions - The indices of the regions to be exported.
+     * @param targetFrame - The target frame containing the regions. If not provided, the active frame is used.
+     */
     @flow.bound
-    *exportRegions(directory: string, file: string, coordType: CARTA.CoordinateType, fileType: RegionFileType, exportRegions: number[]) {
-        const frame = this.activeFrame;
+    *exportRegions(directory: string, file: string, coordType: CARTA.CoordinateType, fileType: RegionFileType, exportRegions: number[], targetFrame?: FrameStore) {
+        const frame = targetFrame ?? this.activeFrame;
         // Prevent exporting if only the cursor region exists
-        if (!frame.regionSet?.regions || frame.regionSet.regions.length <= 1 || exportRegions?.length < 1) {
+        if (!frame?.regionSet?.regions || frame.regionSet.regions.length <= 1 || exportRegions?.length < 1) {
             return;
         }
 
@@ -1178,7 +1267,11 @@ export class AppStore {
                 for (const openFileAck of ack.openFileAcks) {
                     if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), this.fileBrowserStore.startingDirectory, false, "", true)) {
                         this.fileCounter++;
-                        frame.addMomentImage(this.frames.find(f => f.frameInfo.fileId === openFileAck.fileId));
+                        const newMomentImage = this.frames.find(f => f.frameInfo.fileId === openFileAck.fileId);
+                        frame.addMomentImage(newMomentImage);
+                        if (frame === this.spatialReference && this.momentToMatch) {
+                            newMomentImage.setSpatialReference(this.spatialReference);
+                        }
                     } else {
                         AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
                     }
@@ -1306,7 +1399,18 @@ export class AppStore {
         try {
             const ack = yield this.backendService.requestFitting(message);
             if (ack.success) {
-                this.imageFittingStore.setResultString(message.regionId, message.fovInfo, message.fixedParams, ack.resultValues, ack.resultErrors, ack.offsetValue, ack.offsetError, ack.log);
+                this.imageFittingStore.setResultString(
+                    message.regionId,
+                    message.fovInfo,
+                    message.fixedParams,
+                    ack.resultValues,
+                    ack.resultErrors,
+                    ack.offsetValue,
+                    ack.offsetError,
+                    ack.integratedFluxValues,
+                    ack.integratedFluxErrors,
+                    ack.log
+                );
                 if (ack.modelImage) {
                     if (this.addFrame(CARTA.OpenFileAck.create(ack.modelImage), this.fileBrowserStore.startingDirectory, false, "", true)) {
                         this.fileCounter++;
@@ -1477,7 +1581,11 @@ export class AppStore {
                 // TODO: dynamic tile size
                 const tileSizeFullRes = reqView.mip * 256;
                 const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
-                this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, this.preferenceStore.imageCompressionQuality, true);
+
+                // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
+                const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
+                const compressionQuality = bunitVariant.includes(frame.headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
+                this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, compressionQuality, true);
             } else {
                 this.tileService.updateHiddenFileChannels(frame.frameInfo.fileId, frame.channel, frame.stokes);
             }
@@ -1512,11 +1620,11 @@ export class AppStore {
 
     private updateViews = (updates: ViewUpdate[]) => {
         for (const update of updates) {
-            this.updateView(update.tiles, update.fileId, update.channel, update.stokes, update.focusPoint);
+            this.updateView(update.tiles, update.fileId, update.channel, update.stokes, update.focusPoint, update.headerUnit);
         }
     };
 
-    private updateView = (tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D) => {
+    private updateView = (tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, headerUnit: string) => {
         const isAnimating = this.animatorStore.serverAnimationActive;
         if (isAnimating) {
             this.backendService.addRequiredTiles(
@@ -1525,7 +1633,10 @@ export class AppStore {
                 this.preferenceStore.animationCompressionQuality
             );
         } else {
-            this.tileService.requestTiles(tiles, fileId, channel, stokes, focusPoint, this.preferenceStore.imageCompressionQuality);
+            // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
+            const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
+            const compressionQuality = bunitVariant.includes(headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
+            this.tileService.requestTiles(tiles, fileId, channel, stokes, focusPoint, compressionQuality);
         }
     };
 
@@ -1549,6 +1660,7 @@ export class AppStore {
                 await this.loadDefaultFiles();
                 this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
                 this.updateASTColors();
+                this.setSpectralMatchingType(this.preferenceStore.spectralMatchingType);
                 if (this.preferenceStore.checkNewRelease) {
                     await this.checkNewRelease();
                 }
@@ -1607,19 +1719,8 @@ export class AppStore {
         this.regionStats = new Map<number, ObservableMap<number, ObservableMap<number, CARTA.RegionStatsData>>>();
         this.regionHistograms = new Map<number, ObservableMap<number, ObservableMap<number, CARTA.IRegionHistogramData>>>();
         this.pendingChannelHistograms = new Map<string, CARTA.IRegionHistogramData>();
-
-        this.frames = [];
-        this.previewFrames = new ObservableMap<number, FrameStore>();
-        this.activeFrame = null;
-        this.hoveredFrame = null;
-        this.contourDataSource = null;
-        this.syncFrameToContour = true;
-        this.syncContourToFrame = true;
         this.initRequirements();
-        this.activeLayer = ImageViewLayer.RegionMoving;
-        this.toolbarExpanded = true;
-        this.imageRatio = 1;
-        this.isExportingImage = false;
+        this.momentToMatch = true;
 
         AST.onReady.then(
             action(() => {
@@ -1658,6 +1759,15 @@ export class AppStore {
             }
         }
         this.handleThemeChange(mediaQuery.matches);
+
+        // Add spellcheck="false" in input elements with no spellcheck attribute
+        document.addEventListener("input", (ev: Event) => {
+            const target = ev.target;
+            const isInput = target && target instanceof HTMLInputElement;
+            if (isInput && !target.getAttribute("spellcheck")) {
+                target.setAttribute("spellcheck", "false");
+            }
+        });
 
         // Display toasts when connection status changes
         autorun(() => {
@@ -1720,9 +1830,19 @@ export class AppStore {
                     const tileSizeFullRes = reqView.mip * 256;
                     const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
                     if (tiles.length) {
-                        viewUpdates.push({tiles, fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: midPointTileCoords});
+                        viewUpdates.push({tiles, fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: midPointTileCoords, headerUnit: frame.headerUnit});
                     }
                 }
+
+                // Clear tiles of invisible matched images during animation
+                if (this.animatorStore?.serverAnimationActive) {
+                    for (const frame of this.activeFrame.spectralSiblings) {
+                        if (!this.visibleFrames.includes(frame)) {
+                            viewUpdates.push({tiles: [], fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: null, headerUnit: frame.headerUnit});
+                        }
+                    }
+                }
+
                 throttledSetViews(viewUpdates);
             }
         });
@@ -1730,26 +1850,30 @@ export class AppStore {
         // TODO: Move setChannels actions to AppStore and remove this autorun
         // Update channels when manually changed
         autorun(() => {
-            if (this.activeFrame) {
-                const updates: ChannelUpdate[] = [];
-                // Calculate if new data is required for the active channel
-                const updateRequiredChannels = this.activeFrame.requiredChannel !== this.activeFrame.channel || this.activeFrame.requiredStokes !== this.activeFrame.stokes;
-                // Don't auto-update when animation is playing
-                if (!this.animatorStore.animationActive && updateRequiredChannels) {
-                    updates.push({frame: this.activeFrame, channel: this.activeFrame.requiredChannel, stokes: this.activeFrame.requiredStokes});
-                }
+            const updates: ChannelUpdate[] = [];
 
-                // Update any sibling channels
-                this.activeFrame.spectralSiblings.forEach(frame => {
-                    const siblingUpdateRequired = frame.requiredChannel !== frame.channel || frame.requiredStokes !== frame.stokes;
-                    if (siblingUpdateRequired) {
-                        updates.push({frame, channel: frame.requiredChannel, stokes: frame.requiredStokes});
+            for (const visibleFrame of this.visibleFrames) {
+                if (visibleFrame) {
+                    // Calculate if new data is required for the active channel
+                    const updateRequiredChannels = visibleFrame.requiredChannel !== visibleFrame?.channel || visibleFrame.requiredStokes !== visibleFrame.stokes;
+                    // Don't auto-update when animation is playing
+                    if (!this.animatorStore.animationActive && updateRequiredChannels) {
+                        updates.push({frame: visibleFrame, channel: visibleFrame.requiredChannel, stokes: visibleFrame.requiredStokes});
                     }
-                });
 
-                if (updates.length) {
-                    throttledSetChannels(updates);
+                    // Update any sibling channels
+                    visibleFrame.spectralSiblings.forEach(frame => {
+                        const isVisible = this.visibleFrames.includes(frame);
+                        const siblingUpdateRequired = frame.requiredChannel !== frame.channel || frame.requiredStokes !== frame.stokes;
+                        if (!isVisible && siblingUpdateRequired) {
+                            updates.push({frame, channel: frame.requiredChannel, stokes: frame.requiredStokes});
+                        }
+                    });
                 }
+            }
+
+            if (updates.length) {
+                throttledSetChannels(updates);
             }
         });
 
@@ -1844,7 +1968,8 @@ export class AppStore {
     };
 
     handleSpectralProfileStream = (spectralProfileData: CARTA.SpectralProfileData) => {
-        if (this.frames.find(frame => frame.frameInfo.fileId === spectralProfileData.fileId)) {
+        const frame = this.frames.find(frame => frame.frameInfo.fileId === spectralProfileData.fileId);
+        if (frame) {
             let frameMap = this.spectralProfiles.get(spectralProfileData.fileId);
             if (!frameMap) {
                 frameMap = new ObservableMap<number, SpectralProfileStore>();
@@ -1854,6 +1979,11 @@ export class AppStore {
             if (!profileStore) {
                 profileStore = new SpectralProfileStore(spectralProfileData.fileId, spectralProfileData.regionId);
                 frameMap.set(spectralProfileData.regionId, profileStore);
+            }
+
+            if (spectralProfileData.progress >= 1 && spectralProfileData.regionId !== CURSOR_REGION_ID && !this.animatorStore.animationActive) {
+                const region = frame.getRegion(spectralProfileData.regionId);
+                TelemetryService.Instance.addSpectralProfileEntry(spectralProfileData.profiles.length, region.regionType, region.regionId, region.size.x, region.size.y, frame.frameInfo.fileInfoExtended.depth);
             }
 
             for (let profile of spectralProfileData.profiles) {
@@ -1901,15 +2031,22 @@ export class AppStore {
     };
 
     @action handleTileStream = (tileStreamDetails: TileStreamDetails) => {
-        if (this.animatorStore.serverAnimationActive) {
+        if (this.animatorStore.serverAnimationActive && tileStreamDetails?.fileId === this.activeFrameFileId) {
             const frame = this.getFrame(tileStreamDetails.fileId);
+
+            // Get stokes from the backend tile stream message
+            const stokes = tileStreamDetails.stokes;
+
+            // Set stokes index in the animation flow control message
+            const stokesIndex = COMPUTED_POLARIZATIONS.has(stokes) ? frame.polarizations.indexOf(stokes) : stokes;
+
             // Flow control
             const flowControlMessage: CARTA.IAnimationFlowControl = {
                 fileId: tileStreamDetails.fileId,
                 animationId: 0,
                 receivedFrame: {
                     channel: tileStreamDetails.channel,
-                    stokes: frame?.requiredPolarizationIndex ?? tileStreamDetails.stokes
+                    stokes: stokesIndex
                 },
                 timestamp: Long.fromNumber(Date.now())
             };
@@ -2090,9 +2227,11 @@ export class AppStore {
             if (ack.sessionType === CARTA.SessionType.RESUMED) {
                 console.log(`Reconnected with session ID ${ack.sessionId}`);
                 this.logStore.addInfo(`Reconnected to server with session ID ${ack.sessionId}`, ["network"]);
+                this.telemetryService.addTelemetryEntry(TelemetryAction.RetryConnection, {status: "success"});
                 this.resumeSession();
             }
         } catch (err) {
+            this.telemetryService.addTelemetryEntry(TelemetryAction.RetryConnection, {status: "failed"});
             console.log(err);
         }
     };
@@ -2148,7 +2287,8 @@ export class AppStore {
                 stokes: frame.requiredStokes,
                 regions: mapToObject(regions),
                 contourSettings,
-                stokesFiles: frame.stokesFiles
+                stokesFiles: frame.stokesFiles,
+                supportAipsBeam: AppStore.Instance.preferenceStore.aipsBeamSupport
             };
         });
 
@@ -2188,11 +2328,11 @@ export class AppStore {
     };
 
     @flow.bound
-    public *loadWorkspace(name: string) {
+    public *loadWorkspace(name: string, isKey = false) {
         this.loadingWorkspace = true;
 
         try {
-            const workspace: Workspace = yield this.apiService.getWorkspace(name);
+            const workspace: Workspace = yield this.apiService.getWorkspace(name, isKey);
             if (!workspace) {
                 this.loadingWorkspace = false;
                 AppToaster.show({icon: "warning-sign", message: `Could not load workspace "${name}"`, intent: "danger", timeout: 3000});
@@ -2311,6 +2451,7 @@ export class AppStore {
             }
 
             this.loadingWorkspace = false;
+            this.activeWorkspace = workspace;
             return true;
         } catch (err) {
             console.error(err);
@@ -2440,8 +2581,12 @@ export class AppStore {
         if (this.activeFrame) {
             workspace.selectedFile = this.activeFrameFileId;
         }
-
-        return this.apiService.setWorkspace(name, workspace);
+        const savedWorkspace = yield this.apiService.setWorkspace(name, workspace);
+        if (savedWorkspace) {
+            this.activeWorkspace = savedWorkspace;
+            return true;
+        }
+        return false;
     }
 
     async deleteWorkspace(name: string) {
@@ -2693,8 +2838,8 @@ export class AppStore {
         this.setSpectralMatchingEnabled(frame, !frame.spectralReference);
     };
 
-    setSpectralMatchingType = (spectralMatchingType: SpectralType) => {
-        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, spectralMatchingType);
+    @action setSpectralMatchingType = (spectralMatchingType: SpectralType) => {
+        this.spectralMatchingType = spectralMatchingType;
         for (const f of this.frames) {
             if (f.spectralReference) {
                 this.setSpectralMatchingEnabled(f, true);
@@ -2755,6 +2900,10 @@ export class AppStore {
     @action setMatchingEnabled = (spatial: boolean, spectral: boolean) => {
         this.setSpatialMatchingEnabled(this.activeFrame, spatial);
         this.setSpectralMatchingEnabled(this.activeFrame, spectral);
+    };
+
+    @action toggleMomentToMatch = () => {
+        this.momentToMatch = !this.momentToMatch;
     };
 
     @computed get numImagePages() {

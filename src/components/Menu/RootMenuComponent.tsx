@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Alert, Button, Classes, Icon, Intent, Menu, MenuDivider, Position, Switch} from "@blueprintjs/core";
+import {Alert, AnchorButton, Button, Classes, Icon, Intent, Menu, MenuDivider, Position, Switch} from "@blueprintjs/core";
 import {IconName} from "@blueprintjs/icons";
 import {MenuItem2, Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
@@ -13,7 +13,7 @@ import {CARTA_INFO, PresetLayout, Snippet} from "models";
 import {ApiService, ConnectionStatus} from "services";
 import {AppStore, BrowserMode, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
 import {FrameStore} from "stores/Frame";
-import {toFixed} from "utilities";
+import {copyToClipboard, toFixed} from "utilities";
 
 import {WorkspaceDialogMode} from "../Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
 
@@ -161,7 +161,8 @@ export class RootMenuComponent extends React.Component {
             <Menu>
                 {snippetEntries}
                 {snippetEntries.length > 0 && <MenuDivider />}
-                <MenuItem2 text="Create new snippet" icon="add" onClick={appStore.dialogStore.showNewCodeSnippet} />
+                <MenuItem2 text="Create New Snippet" icon="add" onClick={appStore.dialogStore.showNewCodeSnippet} />
+                <MenuItem2 text="Online Tutorial" icon={"manual"} onClick={() => this.handleDocumentationClicked("https://cartavis.org/carta-frontend/docs/category/code-snippet-tutorial")} />
             </Menu>
         );
     }
@@ -189,17 +190,7 @@ export class RootMenuComponent extends React.Component {
                 text="Copy session ID to clipboard"
                 onClick={async () => {
                     try {
-                        if (navigator.clipboard) {
-                            await navigator.clipboard?.writeText(appStore.backendService.sessionId.toString());
-                        } else {
-                            const copyText = document.createElement("textarea");
-                            copyText.value = appStore.backendService.sessionId.toString();
-                            document.body.appendChild(copyText);
-                            copyText.focus();
-                            copyText.select();
-                            document.execCommand("copy");
-                            document.body.removeChild(copyText);
-                        }
+                        await copyToClipboard(appStore.backendService.sessionId.toString());
                         AppToaster.show(SuccessToast("clipboard", "Session ID copied!"));
                     } catch (err) {
                         console.log(err);
@@ -219,29 +210,9 @@ export class RootMenuComponent extends React.Component {
                             const token = url.searchParams.get("token");
                             const httpUrl = socketUrl.replace("ws", "http");
                             const finalUrl = `${httpUrl}?token=${token}`;
-                            if (navigator.clipboard) {
-                                await navigator.clipboard.writeText(finalUrl);
-                            } else {
-                                const copyText = document.createElement("textarea");
-                                copyText.value = finalUrl;
-                                document.body.appendChild(copyText);
-                                copyText.focus();
-                                copyText.select();
-                                document.execCommand("copy");
-                                document.body.removeChild(copyText);
-                            }
+                            await copyToClipboard(finalUrl);
                         } else {
-                            if (navigator.clipboard) {
-                                await navigator.clipboard.writeText(document.URL);
-                            } else {
-                                const copyText = document.createElement("textarea");
-                                copyText.value = document.URL;
-                                document.body.appendChild(copyText);
-                                copyText.focus();
-                                copyText.select();
-                                document.execCommand("copy");
-                                document.body.removeChild(copyText);
-                            }
+                            await copyToClipboard(document.URL);
                         }
                         AppToaster.show(SuccessToast("clipboard", "Session URL copied!"));
                     } catch (err) {
@@ -370,7 +341,7 @@ export class RootMenuComponent extends React.Component {
 
         const helpMenu = (
             <Menu>
-                <MenuItem2 text="Online Manual" icon={"manual"} onClick={this.handleDocumentationClicked} />
+                <MenuItem2 text="Online Manual" icon={"manual"} onClick={() => this.handleDocumentationClicked("https://carta.readthedocs.io/en/4.0")} />
                 <MenuItem2 text="Controls and Shortcuts" icon={"key-control"} label={"Shift + ?"} onClick={appStore.dialogStore.showHotkeyDialog} />
                 <MenuItem2 text="About" icon={"info-sign"} onClick={appStore.dialogStore.showAboutDialog} />
             </Menu>
@@ -532,6 +503,21 @@ export class RootMenuComponent extends React.Component {
                         </Tooltip2>
                     </Popover2>
                 )}
+                {ApiService.RuntimeConfig.apiAddress && appStore.activeWorkspace?.id && (
+                    <Tooltip2
+                        content={
+                            <span>
+                                Share workspace (experimental)
+                                <br />
+                                <i>
+                                    <small>Generate a URL to share workspace with other users</small>
+                                </i>
+                            </span>
+                        }
+                    >
+                        <AnchorButton icon="share" minimal={true} onClick={appStore.dialogStore.showShareWorkspaceDialog} />
+                    </Tooltip2>
+                )}
                 {showLoadingIndicator && loadingIndicator}
                 {appStore.preferenceStore.lowBandwidthMode && (
                     <Tooltip2
@@ -563,8 +549,8 @@ export class RootMenuComponent extends React.Component {
         );
     }
 
-    handleDocumentationClicked = () => {
-        window.open("https://carta.readthedocs.io/en/3.0", "_blank", "width=1024");
+    private handleDocumentationClicked = (url: string) => {
+        window.open(url, "_blank", "width=1024");
         if (process.env.REACT_APP_TARGET !== "linux" && process.env.REACT_APP_TARGET !== "darwin") {
             this.documentationAlertVisible = true;
             clearTimeout(this.documentationAlertTimeoutHandle);

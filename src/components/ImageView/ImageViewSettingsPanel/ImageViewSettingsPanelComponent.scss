@@ -27,7 +27,9 @@
         &:first-of-type {
             margin-left: 0px;
         }
+
         .bp4-label {
+            min-width: 10em;
             width: 10em;
             text-align: right;
         }

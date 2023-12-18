@@ -97,7 +97,7 @@ export class AnimatorStore {
         // Calculate matched frames for the animation range
         const matchedFrames = new Map<number, CARTA.IMatchedFrameList>();
         for (const sibling of frame.spectralSiblings) {
-            const frameNumbers = getTransformedChannelList(frame.wcsInfo3D, sibling.wcsInfo3D, preferenceStore.spectralMatchingType, animationFrames.firstFrame.channel, animationFrames.lastFrame.channel);
+            const frameNumbers = getTransformedChannelList(frame.wcsInfo3D, sibling.wcsInfo3D, appStore.spectralMatchingType, animationFrames.firstFrame.channel, animationFrames.lastFrame.channel);
             matchedFrames.set(sibling.frameInfo.fileId, {frameNumbers});
         }
 

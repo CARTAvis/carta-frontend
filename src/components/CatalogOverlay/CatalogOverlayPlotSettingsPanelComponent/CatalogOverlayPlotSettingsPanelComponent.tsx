@@ -448,29 +448,33 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 <FormGroup label={"Scaling"} inline={true} disabled={disableOrientationMap}>
                     <ScalingSelectComponent selectedItem={widgetStore.orientationScalingType} onItemSelect={type => widgetStore.setOrientationScalingType(type)} disabled={disableOrientationMap} />
                 </FormGroup>
-                <FormGroup inline={true} label="Orientation min" labelInfo="(degree)" disabled={disableOrientationMap}>
-                    <SafeNumericInput
-                        allowNumericCharactersOnly={true}
-                        asyncControl={true}
-                        placeholder="Min"
-                        disabled={disableOrientationMap}
-                        buttonPosition={"none"}
-                        value={widgetStore.angleMin}
-                        onBlur={ev => this.handleChange(ev, "angle-min")}
-                        onKeyDown={ev => this.handleChange(ev, "angle-min")}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Orientation max" labelInfo="(degree)" disabled={disableOrientationMap}>
-                    <SafeNumericInput
-                        allowNumericCharactersOnly={true}
-                        asyncControl={true}
-                        placeholder="Max"
-                        disabled={disableOrientationMap}
-                        buttonPosition={"none"}
-                        value={widgetStore.angleMax}
-                        onBlur={ev => this.handleChange(ev, "angle-max")}
-                        onKeyDown={ev => this.handleChange(ev, "angle-max")}
-                    />
+                <FormGroup inline={true} label="Orientation" labelInfo="(degree)" disabled={disableOrientationMap}>
+                    <div className="parameter-container">
+                        <FormGroup inline={true} label="Min">
+                            <SafeNumericInput
+                                allowNumericCharactersOnly={true}
+                                asyncControl={true}
+                                placeholder="Min"
+                                disabled={disableOrientationMap}
+                                buttonPosition={"none"}
+                                value={widgetStore.angleMin}
+                                onBlur={ev => this.handleChange(ev, "angle-min")}
+                                onKeyDown={ev => this.handleChange(ev, "angle-min")}
+                            />
+                        </FormGroup>
+                        <FormGroup inline={true} label="Max">
+                            <SafeNumericInput
+                                allowNumericCharactersOnly={true}
+                                asyncControl={true}
+                                placeholder="Max"
+                                disabled={disableOrientationMap}
+                                buttonPosition={"none"}
+                                value={widgetStore.angleMax}
+                                onBlur={ev => this.handleChange(ev, "angle-max")}
+                                onKeyDown={ev => this.handleChange(ev, "angle-max")}
+                            />
+                        </FormGroup>
+                    </div>
                 </FormGroup>
                 <ClearableNumericInputComponent
                     label="Clip min"
@@ -507,12 +511,12 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         activeItem={this.catalogFileId}
                         onItemSelect={this.handleCatalogFileChange}
                         itemRenderer={this.renderFileIdPopOver}
-                        popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
+                        popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END, fill: true}}
                     >
                         <Button text={activeFileName} rightIcon="double-caret-vertical" disabled={disabledOverlayPanel} />
                     </Select2>
                 </FormGroup>
-                <FormGroup inline={true} label="Shape" disabled={disabledOverlayPanel}>
+                <FormGroup className={"file-menu"} inline={true} label="Shape" disabled={disabledOverlayPanel}>
                     <Select2
                         className="bp4-fill"
                         disabled={disabledOverlayPanel}

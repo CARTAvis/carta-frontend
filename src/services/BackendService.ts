@@ -225,6 +225,7 @@ export class BackendService {
         this.connection.onerror = ev => {
             AppStore.Instance.logStore.addInfo(`Connecting to server ${url} failed.`, ["network"]);
             console.log(ev);
+            return deferredResponse.reject(ev);
         };
 
         return await deferredResponse.promise;
@@ -296,7 +297,8 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
-            const message = CARTA.FileInfoRequest.create({directory, file, hdu});
+            const supportAipsBeam = AppStore.Instance.preferenceStore.aipsBeamSupport;
+            const message = CARTA.FileInfoRequest.create({directory, file, hdu, supportAipsBeam});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.FILE_INFO_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.FILE_INFO_REQUEST, CARTA.FileInfoRequest.encode(message).finish())) {
@@ -387,7 +389,8 @@ export class BackendService {
                 hdu,
                 fileId,
                 lelExpr: imageArithmetic,
-                renderMode: CARTA.RenderMode.RASTER
+                renderMode: CARTA.RenderMode.RASTER,
+                supportAipsBeam: AppStore.Instance.preferenceStore.aipsBeamSupport
             });
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.OPEN_FILE, requestId, message, false);

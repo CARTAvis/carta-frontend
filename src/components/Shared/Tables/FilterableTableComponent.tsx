@@ -24,6 +24,8 @@ enum RowSelectionType {
     All
 }
 
+const KEYCODE_ENTER = 13;
+
 export class FilterableTableComponentProps {
     dataset: Map<number, ProcessedColumnData>;
     filter?: Map<string, ControlHeader>;
@@ -47,6 +49,7 @@ export class FilterableTableComponentProps {
     sortedIndices?: Array<number>;
     onCompleteRender?: () => void;
     catalogType?: CatalogType;
+    applyFilterWithEnter?: () => void;
 }
 
 @observer
@@ -264,11 +267,24 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 <ColumnHeaderCell2 className={"column-name"} nameRenderer={nameRenderer} />
                 <ColumnHeaderCell2 isActive={controlheader?.filter !== ""}>
                     <Tooltip2 hoverOpenDelay={250} hoverCloseDelay={0} content={filterSyntax} position={Position.BOTTOM}>
-                        <InputGroup key={"column-popover-" + columnIndex} small={true} placeholder="Click to filter" value={controlheader?.filter ?? ""} onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, column.name)} />
+                        <InputGroup
+                            key={"column-popover-" + columnIndex}
+                            small={true}
+                            placeholder="Click to filter"
+                            value={controlheader?.filter ?? ""}
+                            onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, column.name)}
+                            onKeyDown={this.handleKeyDown}
+                        />
                     </Tooltip2>
                 </ColumnHeaderCell2>
             </ColumnHeaderCell2>
         );
+    };
+
+    private handleKeyDown = (ev: React.KeyboardEvent<HTMLInputElement>) => {
+        if (ev.type === "keydown" && ev.keyCode === KEYCODE_ENTER && this.props.applyFilterWithEnter) {
+            this.props.applyFilterWithEnter();
+        }
     };
 
     private isLoading(rowIndex: number): boolean {

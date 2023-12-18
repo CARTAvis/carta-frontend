@@ -405,6 +405,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private handleFilterRequest = () => {
         const profileStore = this.profileStore;
+        if (profileStore.loadOntoImage || !profileStore.updateTableView || !profileStore.hasFilter) {
+            return;
+        }
         const catalogWidgetStore = this.widgetStore;
         const appStore = AppStore.Instance;
         if (profileStore && appStore) {
@@ -652,7 +655,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             disableSort: profileStore.loadOntoImage,
             tableHeaders: profileStore.catalogHeader,
             onCompleteRender: this.onCompleteRender,
-            catalogType: profileStore.catalogType
+            catalogType: profileStore.catalogType,
+            applyFilterWithEnter: this.handleFilterRequest
         };
 
         if (!profileStore.isFileBasedCatalog) {
@@ -836,9 +840,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     </div>
                     <div className="bp4-dialog-footer">
                         <div className="bp4-dialog-footer-actions">
-                            <AnchorButton intent={Intent.PRIMARY} text="Filter" onClick={this.handleFilterRequest} disabled={disable || !profileStore.updateTableView || !profileStore.hasFilter} />
-                            <AnchorButton intent={Intent.PRIMARY} text="Reset" onClick={this.handleResetClick} disabled={disable} />
-                            <AnchorButton intent={Intent.PRIMARY} text="Close" onClick={this.handleFileCloseClick} disabled={disable} />
+                            <AnchorButton intent={Intent.SUCCESS} text="Apply filter" onClick={this.handleFilterRequest} disabled={disable || !profileStore.updateTableView || !profileStore.hasFilter} />
+                            <AnchorButton intent={Intent.WARNING} text="Reset filter" onClick={this.handleResetClick} disabled={disable} />
+                            <AnchorButton text="Close catalog" onClick={this.handleFileCloseClick} disabled={disable} />
                             <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={!this.enablePlotButton} />
                         </div>
                     </div>

@@ -118,7 +118,6 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     render() {
         const appStore = AppStore.Instance;
-        const preferenceStore = appStore.preferenceStore;
         const overlay = appStore.overlayStore;
         const dialogStore = appStore.dialogStore;
         const frame = this.props.frame;
@@ -193,7 +192,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const wcsButtonSuperscript = (spatialMatchingEnabled ? "x" : "") + (spectralMatchingEnabled ? "z" : "");
         const wcsButtonTooltipEntries = [];
         if (spectralMatchingEnabled) {
-            wcsButtonTooltipEntries.push(`Spectral (${preferenceStore.spectralMatchingType})`);
+            wcsButtonTooltipEntries.push(`Spectral (${appStore.spectralMatchingType})`);
         }
         if (spatialMatchingEnabled) {
             wcsButtonTooltipEntries.push("Spatial");
@@ -203,13 +202,13 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const wcsMatchingMenu = (
             <Menu>
                 <MenuItem2
-                    text={`Spectral (${preferenceStore.spectralMatchingType}) and spatial`}
+                    text={`Spectral (${appStore.spectralMatchingType}) and spatial`}
                     disabled={!canEnableSpatialMatching || !canEnableSpectralMatching}
                     active={spectralMatchingEnabled && spatialMatchingEnabled}
                     onClick={() => appStore.setMatchingEnabled(true, true)}
                 />
                 <MenuItem2
-                    text={`Spectral (${preferenceStore.spectralMatchingType})  only`}
+                    text={`Spectral (${appStore.spectralMatchingType})  only`}
                     disabled={!canEnableSpectralMatching}
                     active={spectralMatchingEnabled && !spatialMatchingEnabled}
                     onClick={() => appStore.setMatchingEnabled(false, true)}

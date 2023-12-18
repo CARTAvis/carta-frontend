@@ -561,10 +561,10 @@ export class ApiService {
         }
     };
 
-    public getWorkspace = async (name: string): Promise<Workspace | undefined> => {
+    public getWorkspace = async (name: string, isKey = false): Promise<Workspace | undefined> => {
         if (ApiService.RuntimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/workspace/${name}`;
+                const url = `${ApiService.RuntimeConfig.apiAddress}/database/workspace/${isKey ? "key/" : ""}${name}`;
                 const response = await this.axiosInstance.get<{workspace: Workspace; success: boolean}>(url);
                 if (response?.data?.success) {
                     return response.data.workspace;
@@ -572,7 +572,7 @@ export class ApiService {
             } catch (err) {
                 console.log(err);
             }
-        } else {
+        } else if (!isKey) {
             try {
                 const existingWorkspaces = JSON.parse(localStorage.getItem("savedWorkspaces")) ?? {};
                 const workspace = existingWorkspaces?.[name];
@@ -591,25 +591,43 @@ export class ApiService {
         return undefined;
     };
 
-    public setWorkspace = async (workspaceName: string, workspace: Workspace): Promise<boolean> => {
+    public setWorkspace = async (workspaceName: string, workspace: Workspace): Promise<Workspace | undefined> => {
         if (ApiService.RuntimeConfig.apiAddress) {
             try {
                 const url = `${ApiService.RuntimeConfig.apiAddress}/database/workspace`;
-                const response = await this.axiosInstance.put(url, {workspaceName, workspace});
-                return response?.data?.success;
+                const res = await this.axiosInstance.put(url, {workspaceName, workspace});
+                if (res.data?.workspace?.id) {
+                    workspace.id = res.data?.workspace?.id;
+                }
+                return {...workspace, editable: res.data?.workspace?.editable, name: workspaceName};
             } catch (err) {
                 console.log(err);
-                return false;
+                return undefined;
             }
         } else {
             try {
                 const obj = JSON.parse(localStorage.getItem("savedWorkspaces")) ?? {};
                 obj[workspaceName] = workspace;
                 localStorage.setItem("savedWorkspaces", JSON.stringify(obj));
-                return true;
+                return workspace;
             } catch (err) {
-                return false;
+                return undefined;
             }
+        }
+    };
+
+    public getSharedWorkspaceKey = async (workspaceId: string): Promise<string | undefined> => {
+        if (ApiService.RuntimeConfig.apiAddress) {
+            try {
+                const url = `${ApiService.RuntimeConfig.apiAddress}/database/share/workspace/${workspaceId}`;
+                const response = await this.axiosInstance.post(url);
+                return response?.data?.success ? response.data.shareKey : undefined;
+            } catch (err) {
+                console.log(err);
+                return undefined;
+            }
+        } else {
+            return undefined;
         }
     };
 

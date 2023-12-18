@@ -198,6 +198,10 @@ export class RegionStore {
         }
     }
 
+    /**
+     * Returns the sizes of regions and annotations. For line regions and annotations, vector annotations, and ruler annotations, returns x and y absolute displacements.
+     * @returns The x and y size components.
+     */
     @computed get size(): Point2D {
         switch (this.regionType) {
             case CARTA.RegionType.RECTANGLE:
@@ -216,7 +220,8 @@ export class RegionStore {
             case CARTA.RegionType.ANNLINE:
             case CARTA.RegionType.ANNVECTOR:
             case CARTA.RegionType.ANNRULER:
-                return subtract2D(this.controlPoints[0], this.controlPoints[1]);
+                const size = subtract2D(this.controlPoints[0], this.controlPoints[1]);
+                return {x: Math.abs(size.x), y: Math.abs(size.y)};
             default:
                 return {x: undefined, y: undefined};
         }
@@ -374,9 +379,7 @@ export class RegionStore {
         }
     };
 
-    public getRegionApproximation(
-        astTransform: AST.FrameSet
-    ): Point2D[] | {northApproximatePoints: number[]; eastApproximatePoints: number[]} | {xApproximatePoints: number[]; yApproximatePoints: number[]; hypotenuseApproximatePoints: number[]} {
+    public getRegionApproximation(astTransform: AST.Mapping): Point2D[] {
         let approximatePoints = this.regionApproximationMap.get(astTransform);
         if (!approximatePoints) {
             if (this.regionType === CARTA.RegionType.POINT) {
@@ -421,11 +424,11 @@ export class RegionStore {
         controlPoints: Point2D[],
         regionType: CARTA.RegionType,
         regionId: number = -1,
+        rotation: number = 0,
+        name: string = "",
         color: string = Colors.TURQUOISE5,
         lineWidth: number = 2,
-        dashLength: number = 0,
-        rotation: number = 0,
-        name: string = ""
+        dashLength: number = 0
     ) {
         makeObservable(this);
         this.fileId = fileId;
@@ -455,7 +458,7 @@ export class RegionStore {
         if (this.regionType === CARTA.RegionType.POLYGON || this.regionType === CARTA.RegionType.ANNPOLYGON) {
             this.simplePolygonTest();
         }
-        if ((this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR) && controlPoints.length === 2) {
+        if ((this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR || this.regionType === CARTA.RegionType.ANNRULER) && controlPoints.length === 2) {
             this.rotation = this.controlPoints.length === 2 ? this.getLineAngle(this.controlPoints[0], this.controlPoints[1]) : 0;
         }
         this.modifiedTimestamp = performance.now();
@@ -466,7 +469,7 @@ export class RegionStore {
     };
 
     @action setCenter = (p: Point2D, skipUpdate = false) => {
-        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR) {
+        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR || this.regionType === CARTA.RegionType.ANNRULER) {
             const rotation = (this.rotation * Math.PI) / 180.0;
             // the rotation angle is defined to be 0 at North (mostly in +y axis) and increases counter-clockwisely. This is
             // different from the usual definition in math where 0 degree is in the +x axis. The extra 90-degree offset swaps
@@ -481,11 +484,23 @@ export class RegionStore {
         }
     };
 
+    /**
+     * Sets the size for regions and annotations
+     *
+     * @param p - Specifies the x and y size components.
+     *            For line regions and annotations, vector annotations, and ruler annotations, the function sets the new start and end positions while keeping the rotation within the same quadrant.
+     * @param skipUpdate - Whether to update the changes with the backend.
+     */
     @action setSize = (p: Point2D, skipUpdate = false) => {
-        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR) {
-            const newStart = {x: this.center.x - p.x / 2, y: this.center.y - p.y / 2};
-            const newEnd = {x: this.center.x + p.x / 2, y: this.center.y + p.y / 2};
-            this.setControlPoints([newStart, newEnd]);
+        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR || this.regionType === CARTA.RegionType.ANNRULER) {
+            const rotation = (this.rotation * Math.PI) / 180.0;
+            const x = Math.abs(p.x);
+            const y = Math.abs(p.y);
+            const dx = x * Math.sign(Math.sin(rotation) || 1);
+            const dy = y * -Math.sign(Math.cos(rotation) || 1);
+            const newStart = {x: this.center.x - dx / 2, y: this.center.y - dy / 2};
+            const newEnd = {x: this.center.x + dx / 2, y: this.center.y + dy / 2};
+            this.setControlPoints([newStart, newEnd], skipUpdate);
         } else {
             this.setControlPoint(SIZE_POINT_INDEX, p, skipUpdate);
         }
@@ -506,7 +521,7 @@ export class RegionStore {
                 this.simplePolygonTest(index);
             }
 
-            if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR) {
+            if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR || this.regionType === CARTA.RegionType.ANNRULER) {
                 this.rotation = this.controlPoints.length === 2 ? this.getLineAngle(this.controlPoints[0], this.controlPoints[1]) : 0;
             }
         }
@@ -531,7 +546,7 @@ export class RegionStore {
             this.simplePolygonTest();
         }
 
-        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR) {
+        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR || this.regionType === CARTA.RegionType.ANNRULER) {
             this.rotation = points.length === 2 ? this.getLineAngle(points[0], points[1]) : 0;
         }
 
@@ -557,7 +572,7 @@ export class RegionStore {
         if (!this.activeFrame?.hasSquarePixels) {
             return;
         }
-        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR) {
+        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR || this.regionType === CARTA.RegionType.ANNRULER) {
             const rotation = (((angle + 360) % 360) * Math.PI) / 180.0;
             // the rotation angle is defined to be 0 at North (mostly in +y axis) and increases counter-clockwisely. This is
             // different from the usual definition in math where 0 degree is in the +x axis. The extra 90-degree offset swaps

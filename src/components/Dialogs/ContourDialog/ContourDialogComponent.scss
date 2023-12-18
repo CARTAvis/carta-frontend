@@ -2,6 +2,11 @@
     .bp4-dialog-body {
         user-select: none;
 
+        .bp4-label {
+            min-width: 8em;
+            text-align: right;
+        }
+
         .bp4-form-group {
             &:first-of-type {
                 margin-left: 0px;
@@ -12,13 +17,11 @@
         }
 
         .contour-level-panel-levels .bp4-form-group .bp4-label {
-            width: 6em;
-            text-align: left;
+            min-width: 8em;
         }
 
         .contour-config-panel .bp4-form-group .bp4-label {
-            width: 10em;
-            text-align: left;
+            min-width: 8em;
         }
 
         .bp4-tabs {
@@ -30,8 +33,40 @@
             position: relative;
         }
 
+        .bp3-form-group.bp3-inline {
+            .bp3-form-content {
+                display: inline-flex;
+                width: calc(100% - 8em - 15px); // because of the popover, we need the subtractions
+                max-width: fit-content;
+            }
+        }
+
+        .bp3-button:not([class*="bp3-intent-"]).bp3-align-right {
+            white-space: nowrap;
+            width: 100%;
+
+            .bp3-button-text {
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+
         .lock-button {
             margin-left: 5px;
+        }
+
+        .bp3-form-group.bp3-inline.source-menu {
+            .bp3-label {
+                min-width: 6em;
+                text-align: right;
+            }
+        }
+
+        .parameter-container .parameter-line {
+            flex-wrap: nowrap;
+            .bp3-form-group .bp3-label {
+                min-width: 5em;
+            }
         }
     }
 }

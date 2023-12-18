@@ -12,27 +12,11 @@ import tinycolor from "tinycolor2";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, SuccessToast} from "components/Shared";
-import {
-    CompressionQuality,
-    CursorInfoVisibility,
-    CursorPosition,
-    Event,
-    FileFilterMode,
-    RegionCreationMode,
-    SPECTRAL_MATCHING_TYPES,
-    SPECTRAL_TYPE_STRING,
-    SpectralType,
-    Theme,
-    TileCache,
-    WCSMatchingType,
-    WCSType,
-    Zoom,
-    ZoomPoint
-} from "models";
+import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {TelemetryMode} from "services";
 import {AppStore, BeamType, HelpType, PreferenceKeys, PreferenceStore} from "stores";
 import {ContourGeneratorType, FrameScaling, RegionStore, RenderConfigStore} from "stores/Frame";
-import {SWATCH_COLORS} from "utilities";
+import {copyToClipboard, SWATCH_COLORS} from "utilities";
 
 import "./PreferenceDialogComponent.scss";
 
@@ -47,7 +31,8 @@ enum PreferenceDialogTabs {
     PERFORMANCE,
     LOG_EVENT,
     CATALOG,
-    TELEMETRY
+    TELEMETRY,
+    COMPATIBILITY
 }
 
 export enum MemoryUnit {
@@ -87,6 +72,11 @@ export class PreferenceDialogComponent extends React.Component {
         super(props);
         makeObservable(this);
     }
+
+    private static readonly DefaultWidth = 800;
+    private static readonly DefaultHeight = 500;
+    private static readonly MinWidth = 650;
+    private static readonly MinHeight = 300;
 
     private renderPercentileSelectItem = (percentile: string, {handleClick, modifiers, query}) => {
         return <MenuItem2 text={percentile + "%"} onClick={handleClick} key={percentile} />;
@@ -145,6 +135,9 @@ export class PreferenceDialogComponent extends React.Component {
             case PreferenceDialogTabs.TELEMETRY:
                 preference.resetTelemetrySettings();
                 break;
+            case PreferenceDialogTabs.COMPATIBILITY:
+                preference.resetCompatibilitySettings();
+                break;
             case PreferenceDialogTabs.GLOBAL:
             default:
                 preference.resetGlobalSettings();
@@ -155,7 +148,7 @@ export class PreferenceDialogComponent extends React.Component {
     private handleUserIdCopied = async () => {
         const appStore = AppStore.Instance;
         try {
-            await navigator.clipboard?.writeText(appStore.telemetryService.decodedUserId);
+            await copyToClipboard(appStore.telemetryService.decodedUserId);
             AppToaster.show(SuccessToast("clipboard", "Copied user ID to clipboard."));
         } catch (err) {
             console.log(err);
@@ -228,7 +221,7 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Spectral matching">
-                    <HTMLSelect value={preference.spectralMatchingType} onChange={ev => appStore.setSpectralMatchingType(ev.currentTarget.value as SpectralType)}>
+                    <HTMLSelect value={preference.spectralMatchingType} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, ev.currentTarget.value)}>
                         {SPECTRAL_MATCHING_TYPES.map(type => (
                             <option key={type} value={type}>
                                 {SPECTRAL_TYPE_STRING.get(type)}
@@ -874,6 +867,14 @@ export class PreferenceDialogComponent extends React.Component {
             </div>
         );
 
+        const compatibilityPanel = (
+            <div className="panel-container">
+                <FormGroup inline={true} label="AIPS cube beam support">
+                    <Switch checked={preference.aipsBeamSupport} onChange={ev => preference.setPreference(PreferenceKeys.COMPATIBILITY_AIPS_BEAM_SUPPORT, ev.currentTarget.checked)} />
+                </FormGroup>
+            </div>
+        );
+
         const className = classNames("preference-dialog", {"bp4-dark": appStore.darkTheme});
 
         const dialogProps: DialogProps = {
@@ -888,7 +889,15 @@ export class PreferenceDialogComponent extends React.Component {
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.PREFERENCES} minWidth={450} minHeight={300} defaultWidth={775} defaultHeight={500} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                helpType={HelpType.PREFERENCES}
+                minWidth={PreferenceDialogComponent.MinWidth}
+                minHeight={PreferenceDialogComponent.MinHeight}
+                defaultWidth={PreferenceDialogComponent.DefaultWidth}
+                defaultHeight={PreferenceDialogComponent.DefaultHeight}
+                enableResizing={true}
+            >
                 <div className="bp4-dialog-body">
                     <Tabs id="preferenceTabs" vertical={true} selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
                         <Tab id={PreferenceDialogTabs.GLOBAL} title="Global" panel={globalPanel} />
@@ -901,6 +910,7 @@ export class PreferenceDialogComponent extends React.Component {
                         <Tab id={PreferenceDialogTabs.ANNOTATION} title="Annotation" panel={annotationSettingsPanel} />
                         <Tab id={PreferenceDialogTabs.PERFORMANCE} title="Performance" panel={performancePanel} />
                         {process.env.REACT_APP_SKIP_TELEMETRY !== "true" && <Tab id={PreferenceDialogTabs.TELEMETRY} title="Telemetry" panel={telemetryPanel} />}
+                        <Tab id={PreferenceDialogTabs.COMPATIBILITY} title="Compatibility" panel={compatibilityPanel} />
                         <Tab id={PreferenceDialogTabs.LOG_EVENT} title="Log Events" panel={logEventsPanel} />
                     </Tabs>
                 </div>
@@ -909,7 +919,6 @@ export class PreferenceDialogComponent extends React.Component {
                         <Tooltip2 content="Apply to current tab only." position={Position.TOP}>
                             <AnchorButton intent={Intent.WARNING} icon={"refresh"} onClick={this.reset} text="Restore defaults" />
                         </Tooltip2>
-                        <Button intent={Intent.NONE} onClick={appStore.dialogStore.hidePreferenceDialog} text="Close" />
                     </div>
                 </div>
             </DraggableDialogComponent>

@@ -101,10 +101,13 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
     };
 
     render() {
-        const appStore = AppStore.Instance;
         // dummy variables related to wcs to trigger re-render
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const system = appStore.overlayStore.global.explicitSystem;
+        /* eslint-disable @typescript-eslint/no-unused-vars */
+        const system = AppStore.Instance.overlayStore.global.explicitSystem;
+        const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
+        const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
+        /* eslint-enable @typescript-eslint/no-unused-vars */
+
         const region = this.props.region;
         const wcsInfo = this.props.wcsInfo;
         const isWCS = region.coordinate === CoordinateMode.World;
@@ -115,7 +118,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
         return (
             <div className="region-form">
                 <FormGroup label="Annotation name" inline={true}>
-                    <InputGroup placeholder="Enter an annotation name" value={region.name} onChange={this.handleNameChange} spellCheck={false} />
+                    <InputGroup placeholder="Enter an annotation name" value={region.name} onChange={this.handleNameChange} />
                 </FormGroup>
                 {region.regionType === CARTA.RegionType.ANNCOMPASS && (
                     <>

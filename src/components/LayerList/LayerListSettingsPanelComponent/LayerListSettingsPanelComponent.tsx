@@ -88,7 +88,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
         const matchingPanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Spectral matching type">
-                    <HTMLSelect value={appStore.preferenceStore.spectralMatchingType} onChange={ev => appStore.setSpectralMatchingType(ev.currentTarget.value as SpectralType)}>
+                    <HTMLSelect value={appStore.spectralMatchingType} onChange={ev => appStore.setSpectralMatchingType(ev.currentTarget.value as SpectralType)}>
                         {SPECTRAL_MATCHING_TYPES.map(type => (
                             <option key={type} value={type}>
                                 {SPECTRAL_TYPE_STRING.get(type)}

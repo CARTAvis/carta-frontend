@@ -1,5 +1,5 @@
 name: CI
-on: [push, pull_request]
+on: [push]
 jobs:
 
   format-check:
@@ -12,6 +12,39 @@ jobs:
           cache: 'npm'
       - run: npm install --legacy-peer-deps
       - run: npm run checkformat
+
+  doc-format-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./docs_website
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: npm
+      - run: npm ci
+      - run: npm run checkformat
+
+  test-doc:
+    name: Test deployment of the documentation website
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./docs_website
+    needs: doc-format-check
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+      - name: Test build website
+        run: npm run build
 
   node-v16:
     runs-on: [self-hosted, Linux, X64, Docker]
@@ -60,6 +93,10 @@ jobs:
           source /emsdk/emsdk_env.sh
           n exec 16 npm run build
 
+      - name: Run unit tests
+        shell: bash
+        run: n exec 16 npm test
+
   node-v18:
     runs-on: [self-hosted, Linux, X64, Docker]
     needs: format-check
@@ -106,6 +143,10 @@ jobs:
         run: |
           source /emsdk/emsdk_env.sh
           n exec 18 npm run build
+
+      - name: Run unit tests
+        shell: bash
+        run: n exec 18 npm test
 
   Notify:
     name: Send notifications

@@ -9,12 +9,12 @@ export enum HelpType {
     FILE_BROWSER = "File Browser",
     FILE_INFO = "File Header",
     SAVE_LAYOUT = "Save Layout",
-    SAVE_WORKSPACE = "Save Workspace",
     REGION_DIALOG = "Region Dialog",
     STOKES = "Stokes Hypercube Dialog",
     ONLINE_CATALOG_QUERY = "Online Catalog Query",
     VECTOR_OVERLAY = "Vector Overlay Configuration",
     IMAGE_FITTING = "Image Fitting",
+    WORKSPACE = "Workspace Management",
 
     // Widgets
     ANIMATOR = "Animator",

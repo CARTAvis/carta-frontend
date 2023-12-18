@@ -11,7 +11,13 @@ For linked issues (if there are):
 For the pull request:
 - [ ] reviewers and assignee added
 - [ ] ZenHub estimate, milestone, and release (if needed) added
-- [ ] e2e test passing / corresponding fix added
 - [ ] changelog updated / no changelog update needed
+- [ ] unit test added (for functions with no dependenies)
+- [ ] API documentation added (for public variables and methods in stores)
+
+For dependencies:
+- [ ] e2e test passing / corresponding fix added / new e2e test created
+- [ ] protobuf version bumped / no protobuf version bumped needed
 - [ ] protobuf updated to the latest dev commit / no protobuf update needed
-- [ ] `BackendService` unchanged / `BackendService` changed and corresponding ICD test fix added
+- [ ] corresponding ICD test fix added (`BackendService` changed) / no ICD test fix needed (`BackendService` unchanged)
+- [ ] user manual prepared (for large new features)

@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {SpectralProfileWidgetStore} from "stores/Widgets";
+import {MultiProfileCategory, SpectralProfileWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 
 import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGeneratorComponent";
@@ -29,9 +29,9 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         return {
             id: "spectral-profiler-floating-settings",
             type: "floating-settings",
-            minWidth: 280,
-            minHeight: 225,
-            defaultWidth: 550,
+            minWidth: 450,
+            minHeight: 400,
+            defaultWidth: 575,
             defaultHeight: 650,
             title: "spectral-profiler-settings",
             isCloseable: true,
@@ -175,6 +175,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             handleYMaxChange: this.handleYMaxChange
         };
 
+        const isMultiProfileActive = widgetStore.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
         return (
             <div className="spectral-settings">
                 <Tabs id="spectralSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
@@ -193,7 +194,11 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                     disable={widgetStore.effectiveFrame?.isPVImage}
                                 />
                                 <FormGroup label={"Intensity unit"} inline={true}>
-                                    <HTMLSelect disabled={!widgetStore.isIntensityConvertible} value={widgetStore.intensityUnit} options={widgetStore.intensityOptions} onChange={ev => widgetStore.setIntensityUnit(ev.currentTarget.value)} />
+                                    <HTMLSelect
+                                        value={isMultiProfileActive ? widgetStore.intensityUnit : widgetStore.effectiveFrame?.intensityUnit}
+                                        options={widgetStore.isIntensityConvertible ? widgetStore.intensityOptions : [widgetStore.effectiveFrame?.headerUnit]}
+                                        onChange={ev => (isMultiProfileActive ? widgetStore.setMultiProfileIntensityUnit(ev.currentTarget.value) : widgetStore.effectiveFrame.setIntensityUnit(ev.currentTarget.value))}
+                                    />
                                 </FormGroup>
                                 <FormGroup inline={true} label={"Secondary info"}>
                                     <Switch checked={widgetStore.secondaryAxisCursorInfoVisible} onChange={event => widgetStore.setSecondaryAxisCursorInfoVisible(event.currentTarget.checked as boolean)} />

@@ -5,10 +5,24 @@ import tinycolor from "tinycolor2";
 
 import {SpectralProfilerSettingsTabs} from "components";
 import {LineSettings, PlotType, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
-import {FindIntensityUnitType, GetFreqInGHz, GetIntensityConversion, GetIntensityOptions, IntensityConfig, IntensityConversion, IntensityUnitType, IsIntensitySupported, LineKey, Point2D, POLARIZATIONS, SpectralSystem} from "models";
+import {
+    FindIntensityUnitType,
+    GetCommonIntensityOptions,
+    GetIntensityConversion,
+    GetIntensityOptions,
+    IntensityConfig,
+    IntensityConversion,
+    IntensityUnitType,
+    IsIntensitySupported,
+    LineKey,
+    Point2D,
+    POLARIZATIONS,
+    SpectralSystem
+} from "models";
+import {TelemetryAction, TelemetryService} from "services";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
-import {RegionId, RegionsType, RegionWidgetStore, SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
-import {clamp, getAngleInRad, getColorForTheme, isAutoColor} from "utilities";
+import {MultiProfileCategory, RegionId, RegionsType, RegionWidgetStore, SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
+import {clamp, getColorForTheme, isAutoColor} from "utilities";
 
 export enum MomentSelectingMode {
     NONE = 1,
@@ -52,7 +66,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable isHighlighted: boolean;
     @observable private spectralLinesMHz: SpectralLine[];
     @observable intensityUnit: string;
-    @observable intensityConversion: IntensityConversion;
 
     // style settings
     @observable plotType: PlotType;
@@ -106,11 +119,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
-    @action setIntensityUnit = (intensityUnitStr: string) => {
-        if (IsIntensitySupported(intensityUnitStr)) {
-            this.intensityUnit = intensityUnitStr;
-            this.intensityConversion = GetIntensityConversion(this.intensityConfig, this.intensityUnit);
-        }
+    @action setMultiProfileIntensityUnit = (intensityUnitStr: string) => {
+        this.intensityUnit = intensityUnitStr;
     };
 
     @action selectMomentRegion = (regionId: number) => {
@@ -207,6 +217,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 frame.resetMomentRequestState();
                 frame.setIsRequestingMoments(true);
                 AppStore.Instance.requestMoment(requestMessage, frame);
+                const width = this.effectiveRegion.size.x;
+                const height = this.effectiveRegion.size.y;
+                const depth = Math.abs(channelIndex1 - channelIndex2) + 1;
+                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.MomentGeneration, {regionId: this.effectiveRegion.regionId, width, height, depth});
             }
         }
     };
@@ -336,15 +350,24 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.settingsTabId = SpectralProfilerSettingsTabs.CONVERSION;
         this.keep = false;
 
-        this.intensityConversion = undefined;
-        this.setIntensityUnit(this.effectiveFrame?.headerUnit);
+        this.setMultiProfileIntensityUnit(this.effectiveFrame?.headerUnit);
 
         reaction(
             () => this.effectiveFrame,
             frame => {
                 if (frame) {
-                    this.setIntensityUnit(frame.headerUnit);
+                    const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
+                    if (isMultiProfileActive) {
+                        this.setMultiProfileIntensityUnit(GetIntensityConversion(frame.intensityConfig, this.intensityUnit) ? this.intensityUnit : frame.headerUnit);
+                    }
                 }
+            }
+        );
+
+        reaction(
+            () => this.profileSelectionStore.activeProfileCategory,
+            () => {
+                this.setMultiProfileIntensityUnit(this.intensityOptions[0]);
             }
         );
 
@@ -352,7 +375,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             () => this.effectiveFrame?.requiredPolarization,
             polarization => {
                 if (this.effectiveFrame && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear, POLARIZATIONS.Pangle].includes(polarization)) {
-                    this.setIntensityUnit(this.effectiveFrame.headerUnit);
+                    this.setMultiProfileIntensityUnit(this.effectiveFrame.headerUnit);
                 }
             }
         );
@@ -369,7 +392,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         autorun(() => {
             if (this.effectiveFrame) {
                 this.updateRanges();
-                this.selectMomentRegion(RegionId.ACTIVE);
+                this.selectMomentRegion(RegionId.IMAGE);
             }
         });
 
@@ -385,21 +408,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @computed private get intensityConfig(): IntensityConfig {
         const frame = this.effectiveFrame;
         if (frame) {
-            let config: IntensityConfig = {nativeIntensityUnit: frame.headerUnit};
-            const beams = frame.beamAllChannels;
-            if (beams?.length) {
-                config["bmaj"] = beams.map(b => b?.majorAxis);
-                config["bmin"] = beams.map(b => b?.minorAxis);
-                if (frame.spectralAxis?.type?.code === "FREQ") {
-                    config["freqGHz"] = frame.channelInfo?.values.map(x => GetFreqInGHz(frame.spectralAxis.type.unit, x));
-                }
-            }
-
-            if (isFinite(frame.pixelUnitSizeArcsec?.x) && isFinite(frame.pixelUnitSizeArcsec?.y)) {
-                config["cdelta1"] = getAngleInRad(frame.pixelUnitSizeArcsec.x);
-                config["cdelta2"] = getAngleInRad(frame.pixelUnitSizeArcsec.y);
-            }
-            return config;
+            return frame.intensityConfig;
         }
         return undefined;
     }
@@ -409,7 +418,18 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     @computed get intensityOptions(): string[] {
-        return GetIntensityOptions(this.intensityConfig);
+        const frame = this.effectiveFrame;
+        const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
+
+        const profiles = this.profileSelectionStore.profiles;
+        const displayedFramesIntensityConfig = profiles.map(profile => profile.intensityConfig);
+
+        if (frame?.spectralReference && isMultiProfileActive && profiles.length) {
+            const intensityConfigArray = [frame?.intensityConfig, ...displayedFramesIntensityConfig];
+            return GetCommonIntensityOptions(intensityConfigArray);
+        } else {
+            return GetIntensityOptions(this.intensityConfig);
+        }
     }
 
     @computed get profileNum(): number {
@@ -444,6 +464,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         let dataIndexes: {startIndex: number; endIndex: number}[] = [];
         const wantMeanRms = profiles.length === 1;
         const profileColorMap = this.lineColorMap;
+        const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
 
         profiles.forEach(profile => {
             if (profile?.data) {
@@ -452,7 +473,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 labels.push(profile.label);
                 comments.push(profile.comments);
 
-                const intensityValues = this.intensityConversion ? this.intensityConversion(profile.data.values) : profile.data.values;
+                const intensityConversion: IntensityConversion = GetIntensityConversion(profile.intensityConfig, isMultiProfileActive ? this.intensityUnit : profile.intensityUnit);
+                const intensityValues = intensityConversion ? intensityConversion(profile.data.values) : profile.data.values;
                 const pointsAndProperties = this.getDataPointsAndProperties(profile.channelValues, intensityValues, wantMeanRms);
 
                 data.push(pointsAndProperties?.points ?? []);
@@ -490,7 +512,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         let fittingData: {x: number[]; y: Float32Array | Float64Array};
         if (profiles.length === 1 && dataIndexes.length === 1) {
             let x = profiles[0].channelValues.slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
-            const intensityValues = this.intensityConversion ? this.intensityConversion(profiles[0].data.values) : profiles[0].data.values;
+            const intensityConversion: IntensityConversion = GetIntensityConversion(profiles[0].intensityConfig, isMultiProfileActive ? this.intensityUnit : profiles[0].intensityUnit);
+            const intensityValues = intensityConversion ? intensityConversion(profiles[0].data.values) : profiles[0].data.values;
             let y = intensityValues.slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
             if (this.smoothingStore.type !== SmoothingType.NONE) {
                 const smoothedData = this.smoothingStore.getSmoothingValues(x, y);
@@ -641,7 +664,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     @computed get yUnit(): string {
-        if (this.intensityUnit) {
+        const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
+        if (this.intensityUnit || this.effectiveFrame?.intensityUnit) {
             if (this.profileSelectionStore.isSameStatsTypeUnit && this.profileSelectionStore.isSameCoordinatesUnit) {
                 let unitString: string;
                 if (this.profileSelectionStore.isCoordinatesPFtotalPFlinearOnly) {
@@ -649,7 +673,11 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 } else if (this.profileSelectionStore.isCoordinatesPangleOnly) {
                     unitString = "degree";
                 } else {
-                    unitString = this.intensityUnit;
+                    unitString = isMultiProfileActive
+                        ? GetIntensityConversion(this.effectiveFrame?.intensityConfig, this.intensityUnit) && this.intensityUnit
+                            ? this.intensityUnit
+                            : this.effectiveFrame?.headerUnit
+                        : this.effectiveFrame?.intensityUnit;
                 }
 
                 if (this.profileSelectionStore.isStatsTypeFluxDensityOnly && this.profileSelectionStore.isCoordinatesPangleOnly) {

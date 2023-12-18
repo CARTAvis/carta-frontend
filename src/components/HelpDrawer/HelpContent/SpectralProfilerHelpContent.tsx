@@ -9,78 +9,76 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
             <ImageComponent light={widgetButtonSpectralProfiler} dark={widgetButtonSpectralProfiler_d} width="90%" />
         </p>
         <p>
-            The spectral profiler widget provides two different modes of viewing spectral profiles, depending on the states of the <code>Image</code> checkbox, the <code>Region</code> checkbox, the <code>Statistic</code> checkbox, and the{" "}
-            <code>Stokes</code> checkbox.{" "}
+            The Spectral Profiler Widget provides two different modes of viewing spectral profiles, depending on the states of the <b>Image</b> checkbox, the <b>Region</b> checkbox, the <b>Statistic</b> checkbox, and the <b>Polarization</b>{" "}
+            checkbox.{" "}
         </p>
+        <h3>Single-profile mode</h3>
         <p>
-            When none of the checkboxes is selected, the spectral profiler widget displays only one spectrum at a time. You can view a region spectral profile (via the <code>Region</code> dropdown menu) of an image cube (via the{" "}
-            <code>Image</code> dropdown menu) with a specific statistic (via the <code>Statistic</code> dropdown menu; the default is mean). If the polarization axis exists, you may view a specific polarization component via the{" "}
-            <code>Polarization</code> dropdown menu. You may have multiple widgets to view spectra side by side.
+            When no checkboxes are selected, the Spectral Profiler Widget displays only one spectrum at a time. You can view a region spectral profile (via the <b>Region</b> dropdown menu) of an image cube (via the <b>Image</b> dropdown
+            menu) with a specific statistic (via the <b>Statistic</b> dropdown menu; the default is mean). If the polarization axis exists, you may view a specific polarization component via the <b>Polarization</b> dropdown menu. You may
+            have multiple widgets to view spectra side by side.
         </p>
+        <h3>Multi-profile mode</h3>
         <p>
-            When one of the checkboxes (Image/Region/Statistic/Polarization) is selected, the spectral profiler widget can display multiple spectra in one plot, depending on the selection in the dropdown menu of the selected checkbox. You
-            can compare different spectra with the same x and y ranges directly.
+            When one of the checkboxes (<b>Image</b>/<b>Region</b>/<b>Statistic</b>/<b>Polarization</b>) is selected, the Spectral Profiler Widget can display multiple spectra in one plot, depending on the selection in the dropdown menu of
+            the selected checkbox. You can compare different spectra with the same x and y ranges directly.
         </p>
-        <p>The spectral profiler widget supports four modes of multi-profile plot:</p>
+        <p>The Spectral Profiler Widget supports four modes of multi-profile plot:</p>
         <ul>
             <li>
-                When the <code>Image</code> checkbox is selected: spectra from <em>different spatially and spectrally matched images</em>, from the selected region with the selected statistic, and the selected polarization (if applicable),
-                are displayed.
+                When the <b>Image</b> checkbox is selected: spectra from <em>different spatially and spectrally matched images</em>, from the selected region with the selected statistic, and the selected polarization (if applicable), are
+                displayed.
             </li>
             <li>
-                When the <code>Region</code> checkbox is selected: spectra from <em>different regions</em> of the selected image (and the selected polarization if applicable) are displayed. The region spectra are computed with the selected
+                When the <b>Region</b> checkbox is selected: spectra from <em>different regions</em> of the selected image (and the selected polarization if applicable) are displayed. The region spectra are computed with the selected
                 statistic.
             </li>
             <li>
-                When the <code>Statistic</code> checkbox is selected: spectra with <em>different statistical quantities</em> from the selected region of the selected image (and the selected polarization if applicable) are displayed.
+                When the <b>Statistic</b> checkbox is selected: spectra with <em>different statistical quantities</em> from the selected region of the selected image (and the selected polarization if applicable) are displayed.
             </li>
             <li>
-                When the <code>Polarization</code> checkbox is selected: spectra with <em>different polarization components</em> from the selected image, the selected region and the selected statistic are displayed.
+                When the <b>Polarization</b> checkbox is selected: spectra with <em>different polarization components</em> from the selected image, the selected region and the selected statistic are displayed.
             </li>
         </ul>
-        <p>In short, if multiple spectra are plotted, only one option (Image, Region, Statistic or Polarization) can be varied at a time. All other options are fixed to a single value.</p>
-        <p>The cursor information of each profile is displayed at the bottom-left corner. The cursor information box can be resized.</p>
-
-        <h4>LIMITATION</h4>
         <p>
-            If the intensity units of different matched cubes are different (e.g., Jy/beam vs Kelvin), <em>no</em> unit conversion is applied in the multi-profile plot. Intensity unit conversion is only available with a <em>single</em>{" "}
-            profile with the <code>Conversion</code> tab of the spectral profiler settings dialog (the <code>cog</code> button at the top right corner of the widget).
+            In short, if multiple spectra are plotted, only one option (<b>Image</b>, <b>Region</b>, <b>Statistic</b> or <b>Polarization</b>) can be varied at a time. All other options are fixed to a single value.
         </p>
+        <p>The cursor information of each profile is displayed in the bottom-left corner. The cursor information field can be resized.</p>
 
         <h3 id="images">Image dropdown menu</h3>
         <p>
-            The image dropdown menu defaults to &quot;Active&quot; image which means the current image in the image viewer if it is in single-panel mode. If it is in multi-panel mode, the active image is highlighted with a red box. You may
-            use the animator widget or the image list widget to change the active image.
+            The <b>Image</b> dropdown menu defaults to "Active", which means the currently selected image. This is the image which is visible in the Image Viewer (if it is in the single-panel mode). If the viewer is in the multi-panel mode,
+            the active image is highlighted with a red box. You may use the Animator Widget or the Image List Widget to change the active image.
         </p>
         <p>
-            When the <code>Image</code> checkbox is selected and if there are spatially and spectrally matched images (apply matching via the image list widget), the dropdown menu will display an image list with information about the
-            matching state. You can select one of the images to view its spectral profile. If the selected image is matched to other images, spectra from those images will be displayed in the spectral profiler widget too, allowing a direct
+            When the <b>Image</b> checkbox is selected and if there are spatially and spectrally matched images (apply matching via the Image List Widget), the dropdown menu will display an image list with information about the matching
+            state. You can select one of the images to view its spectral profile. If the selected image is matched to other images, spectra from those images will be displayed in the Spectral Profiler Widget too, allowing a direct
             comparison of spectra from different image cubes.
         </p>
         <h3 id="regions">Region dropdown menu</h3>
         <p>
-            The region dropdown menu defaults to &quot;Active&quot; region which means the selected region in the image viewer. You can select an active region by clicking one on the image viewer, or by clicking a region entry in the region
-            list widget. The spectral profile plot of the selected active region will be updated accordingly. If no region is selected, the region defaults to cursor.
+            The <b>Region</b> dropdown menu defaults to "Active", which means the region currently selected in the Image Viewer. You can select an active region by clicking one in the Image Viewer, or by clicking a region entry in the
+            Region List Widget. The spectral profile plot of the selected active region will be updated accordingly. If no region is selected, the region defaults to cursor.
         </p>
         <p>
-            When the <code>Region</code> checkbox is selected, the dropdown menu allows multiple selection. You can select different regions for profile calculations.{" "}
+            When the <b>Region</b> checkbox is selected, the dropdown menu allows multiple selection. You can select different regions for profile calculations.{" "}
         </p>
         <h3>Statistic dropdown menu</h3>
         <p>
-            The statistic dropdown menu defaults to &quot;Mean&quot;. When the <code>Statistic</code> checkbox is selected, the dropdown menu allows multiple selection. You can select different statistical quantities for region spectral
+            The <b>Statistic</b> dropdown menu defaults to &quot;Mean&quot;. When the <b>Statistic</b> checkbox is selected, the dropdown menu allows multiple selection. You can select different statistical quantities for region spectral
             profile calculations.
         </p>
         <h3>Polarization dropdown menu</h3>
         <p>
-            When the image in the view contains multiple polarization components, you can use this dropdown menu to view profiles from different Stokes as well as computed polarization components such as polarization intensity or
-            polarization angle, etc.. The dropdown menu defaults to &quot;Current&quot;, meaning the polarization component selected via the animator.
+            When the image in the view contains multiple polarization components, you can use the <b>Polarization</b> dropdown menu to view profiles from different Stokes as well as computed polarization components such as polarization
+            intensity or polarization angle, etc.. The dropdown menu defaults to &quot;Current&quot;, meaning the polarization component selected via the Animator.
         </p>
         <p>
-            When the <code>Polarization</code> checkbox is selected, the dropdown menu allows multiple selection. You can select different polarization components for region spectral profile calculations.
+            When the <b>Polarization</b> checkbox is selected, the dropdown menu allows multiple selection. You can select different polarization components for region spectral profile calculations.
         </p>
-        <h3 id="spectral-conventions-and-reference-frame">Spectral conventions and reference frame</h3>
+        <h3 id="spectral-conventions-and-reference-frame">Spectral conventions, reference frame, and intensity conversion</h3>
         <p>
-            With the <code>Conversion</code> tab of the spectral profiler settings dialog, you can change the spectral convention, including:
+            With the <b>Conversion</b> tab of the Spectral Profiler Settings Dialog, you can change the spectral convention or display a secondary convention in the cursor information field, including:
         </p>
         <ul>
             <li>Radio velocity (km/s, m/s)</li>
@@ -101,29 +99,21 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
         <p>Note that depending on the integrity of image headers, some conversions may not be possible.</p>
         <h3 id="profile-smoothing">Profile smoothing</h3>
         <p>
-            The displayed profile can be smoothed via the <code>Smoothing</code> tab of the spectral profiler settings dialog (the <code>cog</code> button). A shortcut button to the <code>Smoothing</code> tab can be found at the top-right
-            corner of the widget.
+            The displayed profile can be smoothed via the <b>Smoothing</b> tab of the Spectral Profiler Settings Dialog (the cog button). A shortcut button to the <b>Smoothing</b> tab can be found in the top-right corner of the widget.
         </p>
         <h3 id="moment-image-generator">Moment image generator</h3>
         <p>
-            Moment images can be generated via the <code>Moments</code> tab of the spectral profiler settings dialog (the <code>cog</code> button). A shortcut button to the <code>Moments</code> tab can be found at the top-right corner of
-            the widget.
+            Moment images can be generated via the <b>Moments</b> tab of the Spectral Profiler Settings Dialog (the cog button). A shortcut button to the <b>Moments</b> tab can be found in the top-right corner of the widget.
         </p>
         <h3>Profile fitting</h3>
         <p>
-            You can fit a model profile to a spectrum in the view via the <code>Fitting</code> tab of the spectral profiler settings dialog (the <code>cog</code> button). You can find a shortcut button to the <code>Fitting</code> tab at the
-            top-right corner of the widget. Note that profile fitting is not allowed when there are multiple profiles in the plot.
-        </p>
-        <h3 id="responsive-and-progressive-profile-update">Responsive and progressive profile update</h3>
-        <p>
-            When a region spectral profile is requested, depending on the performance of the server, you may see profiles are updated piece by piece with a regular interval. This feature provides a visual progress update for better user
-            experience. In addition, if you move a region while its spectral profile is updating, the old calculations will be terminated immediately and calculations of the new region spectral profile will start. You will see a partial
-            profile in seconds.
+            You can fit a model profile to a spectrum in the view via the <b>Fitting</b> tab of the Spectral Profiler Settings Dialog (the cog button). You can find a shortcut button to the <b>Fitting</b> tab in the top-right corner of the
+            widget. Note that profile fitting is not allowed when there are multiple profiles in the plot.
         </p>
         <h3 id="profile-mean-and-rms">Profile mean and RMS</h3>
         <p>
-            As an option in the <code>Styling</code> tab of the spectral profiler settings dialog, mean and RMS values of a single profile can be visualized as a green dashed line and a shaded area in the profile plot. Numerical values are
-            displayed at the bottom-left corner. Note that CARTA includes all data in the current zoom level of the profile plot to perform the calculations. If the zoom level changes, mean and RMS values will be updated too.
+            As an option in the <b>Styling</b> tab of the Spectral Profiler Settings Dialog, mean and RMS values of a single profile can be visualized as a green dashed line and a shaded area in the profile plot. Numeric values are
+            displayed in the bottom-left corner. Note that CARTA includes all data in the current zoom level of the profile plot to perform the calculations. If the zoom level changes, mean and RMS values will be updated accordingly.
         </p>
         <h3 id="interactivity-zoom-pan-changing-channel">Interactivity: zoom, pan, changing channel</h3>
         <p>The x and y ranges of the spectral profile plot can be modified by</p>
@@ -148,17 +138,17 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
             </li>
         </ul>
         <p>
-            In addition, the x and y ranges can be explicitly set in the <code>Styling</code> tab of the spectral profile settings dialog.
+            In addition, the x and y ranges can be explicitly set in the <b>Styling</b> tab of the Spectral Profiler Settings Dialog.
         </p>
         <p>
-            You may click on the spectral profile plot to switch to a channel (as indicated by a red vertical line) and view the image in the image viewer. The red line is draggable and acts equivalently like the channel slider in the
-            animator widget.
+            You may click on the spectral profile plot to switch to a channel (as indicated by a red vertical line) and view the image in the Image Viewer. The red line is draggable and acts equivalently like the <b>Channel</b> slider in
+            the Animator Widget.
         </p>
         <h3 id="exports">Profile export</h3>
-        <p>The spectral profile plot can be exported as a png file or a text file in tsv format via the buttons at the bottom-right corner (shown when hovering over the plot).</p>
+        <p>The spectral profile plot can be exported as a PNG file or a text file in TSV format via the buttons in the bottom-right corner (shown when hovering over the plot).</p>
         <h3 id="plot-cosmetics">Plot cosmetics</h3>
         <p>
-            The appearance of the spectral profile plot is customizable via the <code>Styling</code> tab of the spectral profile settings dialog (the <code>cog</code> button). Supported options are:
+            The appearance of the spectral profile plot is customizable via the <b>Styling</b> tab of the Spectral Profiler Settings Dialog (the cog button). Supported options are:
         </p>
         <ul>
             <li>color of the plot</li>
@@ -166,15 +156,16 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
             <li>line width for steps or lines</li>
             <li>point size for dots</li>
             <li>display mean and RMS</li>
-            <li>x and y ranges</li>
+            <li>plot x and y ranges</li>
         </ul>
         <br />
 
         <h4 id="note">NOTE</h4>
         <p>
-            For performance concerns, a profile is decimated before rendering if the number of points of the profile is greater than the screen resolution of the spectral profiler widget. The kernel size of profile decimation is dynamically
-            adjusted so that profile features are mostly preserved. When decimation is applied, the line style of the profile plot is switched to &quot;line&quot;, regardless of the setting in the spectral profiler settings dialog. When no
-            decimation is applied (e.g., at higher profile zoom level, or profile has fewer points than the screen resolution), the line style becomes &quot;step&quot; (as default in the <code>Styling</code> tab of the settings dialog).
+            For performance concerns, a profile is decimated before rendering if the number of points of the profile is greater than the screen resolution of the Spectral Profiler Widget. The kernel size of profile decimation is dynamically
+            adjusted so that profile features are mostly preserved. When decimation is applied, the line style of the profile plot is switched to &quot;line&quot;, regardless of the setting in the Spectral Profiler Settings Dialog. When no
+            decimation is applied (e.g., at higher profile zoom level, or profile has fewer points than the screen resolution), the line style becomes &quot;step&quot; (as default in the <b>Styling</b> tab of the Spectral Profiler Settings
+            Dialog).
         </p>
     </div>
 );

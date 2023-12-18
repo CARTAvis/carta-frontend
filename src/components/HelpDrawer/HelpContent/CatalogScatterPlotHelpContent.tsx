@@ -1,25 +1,30 @@
 export const CATALOG_SCATTER_PLOT_HELP_CONTENT = (
     <div>
         <p>
-            The Catalog 2D scatter plot widget shows a 2D scatter plot of two numeric columns from a catalog file. The available numeric columns in the dropdown menus at the bottom of the widget are determined by the <code>Display</code>{" "}
-            column of the upper table in the Catalog widget.
+            The Catalog 2D Scatter Plot Widget can be used to generate a scatter plot from two numeric columns selected from a catalog file. These columns can be configured with the dropdown menus at the bottom of the Catalog Widget. The
+            "Display" column in the upper table of the Catalog Widget determines which columns are available for selection.
         </p>
         <p>
-            The data used for rendering a 2D scatter plot is determined by the lower table in the Catalog widget. The table may not show all the entries because of the progressive loading feature. When you scroll down the catalog table, new
-            catalog entries will be streamed for visualization. Thus, the 2D scatter plot may not include all entries (even after filtering) when the widget is initialized. The <code>Plot</code> button will request a full download of all
-            entries and the 2D scatter plot will then include all data (after filtering).
+            The data used to render the 2D scatter plot is determined by the lower table in the Catalog Widget. The catalog table may not immediately display the full list of entries, which are loaded progressively as needed. The 2D scatter
+            plot may thus not include all entries when the widget is initialized. The <b>Plot</b> button in the Catalog 2D Scatter Plot Widget allows you to request a full download of all the entries, which ensures that all data (after
+            filtering) is included in the 2D scatter plot.
         </p>
         <p>
-            You may use the <code>Statistic Source</code> dropdown menu to select a numeric column from a catalog to show basic statistical quantities, including data count, mean, rms, standard deviation, min, and max.
+            You can use the <b>File</b> dropdown menu to select a target catalog (if multiple catalog files are loaded), and use the <b>X</b> and <b>Y</b> dropdown menus to select two numeric columns for the 2D scatter plot visualization.
         </p>
         <p>
-            You can click on a point or use the selection tools (Box Select or Lasso Select) at the top-right corner of the plot to highlight selected sources in the source catalog table, in the histogram plot (if exists), and in the image
-            viewer (if the catalog overlay is enabled). Points on the plot will be highlighted if sources are selected in the source catalog table, in the histogram plot (if it exists), or in the image viewer (if the catalog overlay is
-            enabled). The <code>Selected only</code> toggle will update the source catalog table to show only the selected sources.
+            You can use the <b>Statistic source</b> dropdown menu to select a numeric column from a catalog and show basic statistical quantities for that column. This includes data count, mean, root mean square (rms), standard deviation,
+            minimum, and maximum values.
         </p>
         <p>
-            The <code>Linear Fit</code> button allows you to fit a straight line (1st-order polynomial) to the data. Fitting results are summarized at the top-left corner of the scatter plot. You may use the selection tools (Box Select or
-            Lasso Select) at the top-right corner of the scatter plot to select a subset of data to be fitted. If no data is selected, all data will be used in the linear fit.
+            The plot is interactive. When you click on individual points or use the selection tools (<b>Box select</b> or <b>Lasso select</b>) in the top-right corner of the plot, the corresponding source entries will be highlighted in
+            multiple linked components: the source catalog table, the histogram plot (if applicable), and the Image Viewer (when the catalog overlay feature is enabled). Conversely, if source entries are selected in the source catalog
+            table, histogram plot, or Image Viewer (with the catalog overlay enabled), the corresponding points on the plot will be highlighted. The <b>Selected only</b> toggle simplifies the source catalog table by showing only the
+            selected sources.
+        </p>
+        <p>
+            The <b>Linear fit</b> button, allows you to perform a linear regression (1st-order polynomial fit) on the data. The results of the fit are summarized in the top-left corner of the scatter plot. You can use the selection tools
+            (e.g., <b>Box select</b>) in the top-right corner of the scatter plot to select a specific subset of data for the linear fit. If no specific data subset is chosen, the entire dataset is used.
         </p>
     </div>
 );

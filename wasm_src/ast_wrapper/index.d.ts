@@ -37,6 +37,7 @@ export function putFits(fitsChan: FitsChan, card: string): void;
 export function getFrameFromFitsChan(fitsChan: FitsChan, checkSkyDomain: boolean): FrameSet;
 export function getSpectralFrame(frameSet: FrameSet): SpecFrame;
 export function getSkyFrameSet(frameSet: FrameSet): FrameSet;
+export function getSpatialMapping(src: FrameSet, dest: FrameSet): Mapping;
 export function initDummyFrame(): FrameSet;
 export function set(obj: AstObject, settings: string): number;
 export function clear(obj: AstObject, attrib: string): number;
@@ -76,5 +77,6 @@ export function transformSpectralPoint(specFrame: SpecFrame, specType: string, s
 export function transformSpectralPointArray(specFrame: SpecFrame, specType: string, specUnit: string, specSys: string, zIn: Float64Array | Array<number>, forward?: boolean): Float64Array;
 export function normalizeCoordinates(frameSet: FrameSet, x: number, y: number): {x: number; y: number};
 export function getTransformGrid(transformFrameSet: FrameSet, xMin: number, xMax: number, numX: number, yMin: number, yMax: number, numY: number, forward: boolean);
+export function transform3DPointArrays(frameSet: FrameSet, xIn: Float64Array, yIn: Float64Array, zIn: Float64Array, forward?: boolean): {x: Float64Array, y: Float64Array, z: Float64Array};
 
 export const onReady: Promise<void>;

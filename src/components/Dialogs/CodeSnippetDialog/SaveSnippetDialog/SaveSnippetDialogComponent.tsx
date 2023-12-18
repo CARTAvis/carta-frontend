@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Button, Classes, Dialog, FormGroup, InputGroup, Intent, TagInput} from "@blueprintjs/core";
+import {AnchorButton, Classes, Dialog, FormGroup, InputGroup, Intent, TagInput} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
@@ -107,7 +107,6 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <AnchorButton intent={Intent.PRIMARY} onClick={this.saveSnippet} text="Save" disabled={!this.validInput} />
-                        <Button intent={Intent.NONE} text="Close" onClick={this.props.onCancelClicked} />
                     </div>
                 </div>
             </Dialog>

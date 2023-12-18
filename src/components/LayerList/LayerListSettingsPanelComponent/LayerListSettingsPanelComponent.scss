@@ -9,6 +9,12 @@
         }
     }
 
+    .bp4-form-group .bp4-label {
+        min-width: 12em;
+        width: 12em;
+        text-align: right;
+    }
+
     .bp4-button-text {
         display: block;
         white-space: nowrap;
@@ -18,6 +24,7 @@
 
     .name-text {
         .bp4-label {
+            min-width: 110px;
             width: 110px;
         }
 
@@ -49,6 +56,7 @@
         display: flex;
 
         .bp4-label {
+            min-width: 110px;
             width: 110px;
         }
 
@@ -56,6 +64,7 @@
             margin-right: 7px;
 
             .bp4-input-group {
+                min-width: 130px;
                 width: 130px;
             }
         }

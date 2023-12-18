@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Classes, DialogProps, Intent} from "@blueprintjs/core";
+import {Classes, DialogProps} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
@@ -10,6 +10,11 @@ import "./AboutDialogComponent.scss";
 
 @observer
 export class AboutDialogComponent extends React.Component {
+    private static readonly DefaultWidth = 610;
+    private static readonly DefaultHeight = 675;
+    private static readonly MinWidth = 610;
+    private static readonly MinHeight = 675;
+
     public render() {
         const dialogStore = DialogStore.Instance;
 
@@ -26,7 +31,14 @@ export class AboutDialogComponent extends React.Component {
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={620} defaultHeight={705} enableResizing={false}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                defaultWidth={AboutDialogComponent.DefaultWidth}
+                defaultHeight={AboutDialogComponent.DefaultHeight}
+                minWidth={AboutDialogComponent.MinWidth}
+                minHeight={AboutDialogComponent.MinHeight}
+                enableResizing={false}
+            >
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>
                         <img src="carta_logo.png" width={80} />
@@ -80,7 +92,7 @@ export class AboutDialogComponent extends React.Component {
                         </li>
                         <li>
                             Documentation is available{" "}
-                            <a href="https://carta.readthedocs.io/en/3.0" rel="noopener noreferrer" target="_blank">
+                            <a href="https://carta.readthedocs.io/en/4.0" rel="noopener noreferrer" target="_blank">
                                 online
                             </a>
                         </li>
@@ -93,17 +105,12 @@ export class AboutDialogComponent extends React.Component {
                     </ul>
                     <h3>License</h3>
                     <p className={Classes.TEXT_SMALL}>
-                        Copyright (C) 2018-2022 ASIAA, IDIA, NRAO, and Department of Physics, University of Alberta. This program is free software; you can redistribute it and/or modify it under the terms of the&#160;
+                        Copyright (C) 2018-{CARTA_INFO.year} ASIAA, IDIA, NRAO, and Department of Physics, University of Alberta. This program is free software; you can redistribute it and/or modify it under the terms of the&#160;
                         <a href="http://www.gnu.org/copyleft/gpl.html" rel="noopener noreferrer" target="_blank">
                             GNU General Public License version 3
                         </a>
                         &#160; as published by the Free Software Foundation.
                     </p>
-                </div>
-                <div className={Classes.DIALOG_FOOTER}>
-                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton intent={Intent.NONE} onClick={dialogStore.hideAboutDialog} text="Close" />
-                    </div>
                 </div>
             </DraggableDialogComponent>
         );

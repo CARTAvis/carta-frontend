@@ -13,8 +13,11 @@ export const CATALOG_OVERLAY_HELP_CONTENT = (
             <ImageComponent light={widgetButtonCatalog} dark={widgetButtonCatalog_d} width="90%" />
         </p>
         <p>
-            Source catalog files in VOTable or FITS format can be loaded in CARTA (via <code>File</code>-&gt; <code>Import catalog</code>) for visualization as an image overlay, or a 2D scatter plot, or a histogram. Alternatively, catalogs
-            can be retrieved from{" "}
+            Source catalog files in VOTable or FITS format can be loaded in CARTA via <b>File -&gt; Import Catalog</b>. Once loaded, catalogs can be used for various visualization purposes, including image overlays, 2D scatter plots, and
+            histograms.
+        </p>
+        <p>
+            Alternatively, catalogs can be retrieved from{" "}
             <a href="http://simbad.u-strasbg.fr" target="_blank" rel="noreferrer">
                 SIMBAD
             </a>{" "}
@@ -22,17 +25,16 @@ export const CATALOG_OVERLAY_HELP_CONTENT = (
             <a href="https://vizier.u-strasbg.fr/viz-bin/VizieR" target="_blank" rel="noreferrer">
                 VizieR
             </a>{" "}
-            with the Online Catalog Query dialog.
+            with the Online Catalog Query Dialog.
         </p>
         <p>
-            <ImageComponent light={dialogButtonCatalogQuery} dark={dialogButtonCatalogQuery_d} width="30%" />
+            <ImageComponent light={dialogButtonCatalogQuery} dark={dialogButtonCatalogQuery_d} width="39%" />
         </p>
         <p>
-            Once a source catalog file is loaded, the information of each column will be shown in the upper table, while the actual catalog entries are displayed in the lower table. By default, only the first 10 columns are enabled and
-            displayed. You may configure it to show or hide certain columns to be displayed in the lower table. Catalog entries displayed in the lower table are displayed progressively. When you scroll down the table, more entries will be
-            streamed and displayed.
+            When a source catalog file is loaded, the column descriptions are shown in the upper table, while the catalog entries are displayed in the lower table. By default, only the first 10 columns are enabled and displayed - you can
+            configure which columns to include and exclude. Catalog entries are displayed progressively: as you scroll down the table, more entries will be streamed and displayed.
         </p>
-        <p>The source catalog table accepts sub-filters such as partial string match or value range. For numeric columns, supported operators are:</p>
+        <p>More refined filtering is possible with sub-filters, such as partial string matching or value ranges. For numeric columns, the following operators are supported:</p>
         <ul>
             <li>
                 <code>&gt;</code> greater than
@@ -62,45 +64,56 @@ export const CATALOG_OVERLAY_HELP_CONTENT = (
         <p>Examples:</p>
         <ul>
             <li>
-                <code>&lt; 10</code> (everything less than 10)
+                <code>&lt; 10</code> (values less than 10)
             </li>
             <li>
-                <code>== 1.23</code> (entries equal to 1.23)
+                <code>== 1.23</code> (values equal to 1.23)
             </li>
             <li>
-                <code>10..50</code> (everything between 10 and 50, exclusive)
+                <code>10..50</code> (values between 10 and 50, with both endpoints excluded)
             </li>
             <li>
-                <code>10...50</code> (everything between 10 and 50, inclusive)
+                <code>10...50</code> (values between 10 and 50, with both endpoints included)
             </li>
         </ul>
         <p>
-            For string columns, partial match is adopted. For example, <code>gal</code> (no quotation) will return entries containing the &quot;gal&quot; string.
+            For string columns, partial string matches are available. For example, entering <code>gal</code> (without quotation marks) will yield entries that include the substring &quot;gal&quot;.
         </p>
         <p>
-            Once filters are set, when the <code>Update</code> button is clicked, the filters will be applied and a filtered source catalog will be displayed up to a number of entries defined in the <code>Max Rows</code> text input field.
-            When the <code>Reset</code> button is clicked, all filters will be removed and the image overlay (if exists) will be removed too. For the histogram plot or the 2D scatter plot, the plot will be reset so that only the first 50
-            entries are rendered.
+            Click the <b>Apply filter</b> button or hit the <code>return</code> key to apply the configured filters. The entries in the catalog table will then be refined according to the set criteria. The number of displayed entries will
+            be limited to the value set in the <b>Max rows</b> input field.
         </p>
         <p>
-            To visualize a source catalog, use the dropdown menu at the bottom of the widget to select a rendering type. CARTA supports three catalog rendering types including 1) image overlay, 2) 2D scatter plot, and 3) histogram plot. For
-            image overlay, you need to identify two columns as the coordinates. Two numeric columns are needed to render a 2D scatter plot, and one numeric column is required to compute a histogram.
+            To clear all filters from the catalog, click the <b>Reset filter</b> button. This also removes any existing image overlay. Both the histogram and the 2D scatter plots will be restored to their initial state, and will render only
+            the first 50 entries.
         </p>
+        <p>To configure the visualization of a source catalog, use the dropdown menu at the bottom of the widget to select one of the supported rendering options:</p>
+        <ul>
+            <li>
+                <b>Image overlay</b>: superimpose the catalog data onto an image. Two columns must be selected as coordinates.
+            </li>
+            <li>
+                <b>2D scatter</b>: select two numeric columns to construct a two-dimensional scatter plot.
+            </li>
+            <li>
+                <b>Histogram</b>: select one numeric column to generate a histogram.
+            </li>
+        </ul>
         <p>
-            CARTA supports marker-based image overlay. You may render the marker with variable size, color, or orientation by mapping data columns to these rendering options. To set up the column mapping, please use the buttons at the
-            top-right corner of the widget to launch the dialog.
+            CARTA supports the rendering of marker-based image overlays. You can map data columns onto marker attributes such as <b>Size</b>, <b>Color</b>, and <b>Orientation</b>. To customize this mapping, use the buttons in the top-right
+            corner of the widget to launch the configuration dialog.
         </p>
         <p>
             <ImageComponent light={demoCatalogMarkerMapping} dark={demoCatalogMarkerMapping_d} width="100%" />
         </p>
         <p>
-            The source catalog table, the image overlay, the 2D scatter plot, and the histogram plot are inter-linked or cross-referenced. This means, for example, selecting a source or a set of sources in the catalog table will trigger
-            source highlights in other places. Or, selecting a source or a set of sources in the 2D scatter plot will trigger source highlights in other plots and in the catalog table.
+            The source catalog table, image overlay, 2D scatter plot, and histogram plot are interlinked, and interact with one another. Whenever a source or a set of sources is selected in the catalog table, the corresponding sources will
+            be highlighted in the other components, and vice versa.
         </p>
         <p>
-            Multiple catalog files can be loaded and you may use the <code>File</code> dropdown at the top of the widget to switch in between. Multiple catalog widgets may be launched to display different catalog files. The{" "}
-            <code>Close</code> button at the bottom of the widget will close the selected catalog file in the <code>File</code> dropdown. If there are spatially matched images, catalog image overlays are shared between matched images with
-            proper coordinate transformations.
+            CARTA supports the loading of multiple catalog files. The <b>File</b> dropdown at the top of the widget can be used to switch between loaded files. It's also possible to launch multiple catalog widgets concurrently, each
+            displaying a different file. The <b>System</b> dropdown menu can be used to configure the coordinate system used by the currently selected file, and the <b>Close catalog</b> button at the bottom of the widget closes it. If there
+            are spatially matched images, catalog image overlays are shared between them, with the appropriate coordinate transformations applied.
         </p>
     </div>
 );

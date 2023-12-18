@@ -6,11 +6,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+* Fixed the blank screen when clicking X/Y profile setting button without images opened ([#2247](https://github.com/CARTAvis/carta-frontend/issues/2247)).
+* Fixed ruler annotation matching bug ([#2242](https://github.com/CARTAvis/carta-frontend/issues/2242)).
+* Removed unused help button for PV preview widget ([#2248](https://github.com/CARTAvis/carta-frontend/issues/2248)).
+* Fixed PV preview bug where no PV preview shows up after closing a docked PV preview widget ([#2249](https://github.com/CARTAvis/carta-frontend/issues/2249)).
+* Fixed the incorrect deletion of contour levels ([#2251](https://github.com/CARTAvis/carta-frontend/issues/2251)).
+* Fixed compass and ruler annotations update bug in the spatially matched image when changing the coordinate ([#2270](https://github.com/CARTAvis/carta-frontend/issues/2270)).
+* Removed distance measurement tool render from PV preview frames ([#2267](https://github.com/CARTAvis/carta-frontend/issues/2267)).
+* Fixed bug that the frontend crashes when deleting annotations if the export window is opened ([#2278](https://github.com/CARTAvis/carta-frontend/issues/2278)).
+* Fixed the performance issue when panning images ([#2291](https://github.com/CARTAvis/carta-frontend/issues/2291)).
+* Improved the dragging performance of 'Export Region' widget when the list of region/annotation to be exported is large. ([#1867](https://github.com/CARTAvis/carta-frontend/issues/1867)).
+
+## [4.0.0]
+
 ### Added
-* Added a shortcut button for image annotation ([#2167](https://github.com/CARTAvis/carta-frontend/issues/2167))
+* Added a shortcut button for image annotation ([#2167](https://github.com/CARTAvis/carta-frontend/issues/2167)).
+* Added support for AIPS beam images ([#2164](https://github.com/CARTAvis/carta-frontend/issues/2164)).
+* Added telemetry data for spectral profile, PV, moment, and catalog creation. ([#2208](https://github.com/CARTAvis/carta-frontend/issues/2208)).
+* Added an increase to the default compression ratio to 32 when the header unit of the image is km/s ([#1223](https://github.com/CARTAvis/carta-frontend/issues/1223)).
+* Added a toggle in the moment generator to match generated image(s) ([#2121](https://github.com/CARTAvis/carta-frontend/issues/2121)).
+* Added automatically generated documentation website.
+* Added the ability to share a workspace via URL when using the frontend via the controller.
 ### Changed
 * Changed the default title string in the image viewer ([#2168](https://github.com/CARTAvis/carta-frontend/issues/2168)).
 * Modified text annotation textbox to stay the same dimension as user zoom the image ([#2162](https://github.com/CARTAvis/carta-frontend/issues/2162)).
+* Disabled spell check in text input ([#2138](https://github.com/CARTAvis/carta-frontend/issues/2138)).
+* Support animation playback with matched images in multi-panel view ([#1860](https://github.com/CARTAvis/carta-frontend/issues/1860)).
+* Modified spectral matching type selector in Image List Settings won't affect global preferences ([#2098](https://github.com/CARTAvis/carta-frontend/issues/2098)).
+* Enabled enter key to trigger filtering in the filter fields, and modified the buttons in the spectral line query widget and catalog widget ([#2046](https://github.com/CARTAvis/carta-frontend/issues/2046)).
+* Switched the Splatalogue URL from test to production ([#2238](https://github.com/CARTAvis/carta-frontend/issues/2238)).
+* Changed image fitting center position error unit from arcsecond to second when the format is H:M:S; added integrated flux information in the fitting result.
 ### Fixed
 * Fixed bug where line region computation width cannot be changed in spatial profile setting widget ([#2000](https://github.com/CARTAvis/carta-frontend/issues/2000)).
 * Fixed when multiple images are open, PV generator can only produce PV preview with live update for one of the images ([#2171](https://github.com/CARTAvis/carta-frontend/issues/2171)).
@@ -19,6 +45,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed the blank screen when using layout with histogram widget ([#2178](https://github.com/CARTAvis/carta-frontend/issues/2178)).
 * Fixed the problem of resuming LEL images ([#1226](https://github.com/CARTAvis/carta-backend/issues/1226)).
 * Fixed tsv and txt file export naming ([#1987](https://github.com/CARTAvis/carta-frontend/issues/1987)).
+* Fixed the spectral line offset by correcting the redshift factor calculation ([#1327](https://github.com/CARTAvis/carta-frontend/issues/1327)).
+* Fixed the alignment in workspace dialog ([#2155](https://github.com/CARTAvis/carta-frontend/issues/2155)).
+* Fixed the spectral axis for images with headers in `CDi_j` format ([#2144](https://github.com/CARTAvis/carta-frontend/issues/2144)).
+* Fixed spatial matching error in sub-milliarcsecond scale ([#1734](https://github.com/CARTAvis/carta-frontend/issues/1734)).
+* Fixed inconsistent region coordinate format when images are spatially matched ([#2189](https://github.com/CARTAvis/carta-frontend/issues/2189)).
+* Fixed the right ascension label in the image view ([#2192](https://github.com/CARTAvis/carta-frontend/issues/2192)).
+* Fixed the multi-spectral-profile intensity unit conversion ([#1758](https://github.com/CARTAvis/carta-frontend/issues/1758)).
+* Fixed the Jy/beam to K intensity unit conversion ([#1907](https://github.com/CARTAvis/carta-frontend/issues/1907)).
+* Fixed the blinking toolbar in the image view during animating images ([#2163](https://github.com/CARTAvis/carta-frontend/issues/2163)).
+* Fixed image arithmetic bug when there are square brackets in the expression ([#2220](https://github.com/CARTAvis/carta-frontend/issues/2220)).
+* Fixed missing tiles and distorted tiles during and after animation. ([#1988](https://github.com/CARTAvis/carta-frontend/issues/1988)).
+* Fixed the stuck of stokes animation at low frame rates ([#1293](https://github.com/CARTAvis/carta-backend/issues/1293)).
 
 ## [4.0.0-beta.1]
 

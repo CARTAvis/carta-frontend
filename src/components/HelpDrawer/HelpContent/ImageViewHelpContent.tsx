@@ -28,29 +28,31 @@ import {ImageComponent} from "../ImageComponent";
 export const IMAGE_VIEW_HELP_CONTENT = (
     <div>
         <p>
-            The image viewer widget serves as the core component of CARTA. It allows you to visualize images as rasters, contours, or vector fields. Regions of interest can be defined interactively with the image viewer and subsequent image
-            analysis can be performed with other widgets. Catalog files can be loaded and visualized in the image viewer as catalog overlays with the catalog widget.
+            The Image Viewer Widget serves as the core component of CARTA. It allows you to visualize images as rasters, contours, or vector fields. Regions of interest can be defined interactively with the Image Viewer and subsequent image
+            analysis can be performed collaboratively with other widgets. Catalog files can be loaded and visualized in the Image Viewer as catalog overlays via the Catalog Widget.
         </p>
         <p>
-            Images can be loaded via <strong>File</strong> -&gt; <strong>Open image</strong> (will close all loaded images first). You may append more images via <strong>File</strong> -&gt; <strong>Append image</strong>. All images are
-            loaded and rendered as raster by default. Contour layers can be generated via the contour configuration dialog. Vector field layers can be produced via the vector overlay dialog.
+            Images can be loaded via <b>File -&gt; Open Image</b> (will close all loaded images first). You may append more images via <b>File -&gt; Append Image</b>. All images are loaded and rendered as raster by default. Contour layers
+            can be generated via the Contour Configuration Dialog. Vector field layers can be produced via the Vector Overlay Dialog.
         </p>
-        <p>The preferences dialog provides many options related to the image viewer widget that you can adjust to fit your tastes and workflow.</p>
+        <p>
+            The Preferences Dialog (<b>File -&gt; Preferences</b>) provides many options related to the Image Viewer Widget that you can adjust to fit your tastes and workflow.
+        </p>
         <h3>Image view mode</h3>
         <p>
-            There are two modes of the image viewer: single-panel view and multi-panel view (default). You can use the panel mode button at the top right corner of the widget to switch to the other mode. When the current view mode cannot
-            show all the loaded images in the view, you can also use the page buttons at the top-right corner of the widget to switch to other pages to view images. The grid layout of the multi-panel view mode can be configured in the{" "}
-            <code>Global</code> tab of the image view settings dialog. The active image is highlighted with a red box in the multi-panel view mode. In the multi-panel view mode, the loaded images are rendered in order from left to right and
-            then from top to bottom. The image order can be rearranged with the image list widget by <code>drag-and-drop</code>.
+            The Image Viewer has two modes: single-panel view and multi-panel view (default). You can use the <b>Panel mode</b> button at the top right corner of the widget to switch to the other mode. When the current view mode cannot
+            display all the loaded images at once, you can also use the <b>Page</b> buttons at the top-right corner of the widget to navigate through pages of images. The grid layout of the multi-panel view mode can be configured in the{" "}
+            <b>Global</b> tab of the Image Viewer Settings Dialog. The active image is highlighted with a red box in the multi-panel view mode. With the multi-panel view mode, the loaded images are rendered in order from left to right and
+            then from top to bottom. To rearrange the images, use the Image List Widget to <code>drag-and-drop</code> image rows to the desired positions.
         </p>
         <h3>Cursor information</h3>
         <p>
-            Information about the world coordinates and image coordinates at the cursor position is shown at the top of the image viewer. Pixel value, spectral information, and polarization information are also displayed. To freeze/unfreeze
-            the cursor position, press the <code>F</code> key. Different modes to display the cursor information are available in the <code>WCS and Image Overlay</code> tab of the preferences dialog (<strong>File</strong> -&gt;{" "}
-            <strong>Preferences</strong>). Alternatively, you can use the cursor information widget to view cursor information from multiple images in one place.
+            Information about the world coordinates and image coordinates at the cursor position is shown at the top of the Image Viewer. Pixel value, spectral information, and polarization information are also displayed. To freeze/unfreeze
+            the cursor position, press the <code>F</code> key. To mirror cursor position on spatially matched images, press the <code>G</code> button. Different modes to display the cursor information are available in the{" "}
+            <b>WCS and Image Overlay</b> tab of the Preferences Dialog (<b>File -&gt; Preferences</b>). Alternatively, you can use the Cursor Information Widget to view cursor data from multiple images in one centralized place.
         </p>
         <h3 id="image-tool-buttons">Image toolbar</h3>
-        <p>A set of tool buttons is provided at the bottom-right corner when hovering over the image viewer. You may use these buttons to</p>
+        <p>A set of tool buttons appears in the bottom-right corner when you hover over the Image Viewer. You may use these buttons to</p>
         <ul>
             <li>Measure angular distance on image</li>
             <li>Select a source from catalog overlay</li>
@@ -67,31 +69,31 @@ export const IMAGE_VIEW_HELP_CONTENT = (
         </p>
         <h3 id="zoom-and-pan">Zoom and pan</h3>
         <p>
-            The zoom action can be triggered in different ways. You can use the mouse scroll wheel: scroll up to zoom in, and scroll down to zoom out. Alternatively, you may use the tool buttons at the bottom-right corner of the image
+            The zoom action can be triggered in different ways. You can use the mouse scroll wheel: scroll up to zoom in, and scroll down to zoom out. Alternatively, you may use the tool buttons in the bottom-right corner of the Image
             viewer to zoom in, zoom out, zoom to fit screen resolution, or zoom to fit image view.
         </p>
         <p>
             <ImageComponent light={zoomButton} dark={zoomButton_d} width="80%" />
         </p>
         <p>
-            The pan action is achieved by <code>drag-and-drop</code> as default. This default can be changed via the <code>Global</code> tab of the preferences dialog (<strong>File</strong> -&gt; <strong>Preferences</strong>). The
-            alternative mode is <code>click</code>, which causes the clicked pixel to be centered in the image viewer. When the <code>drag-and-drop</code> pan mode is enabled, you can temporarily switch to the alternative mode with{" "}
-            <code>CMD/CTRL + click</code>.
+            The pan action is achieved by <code>drag-and-drop</code> as default. This default can be changed via the <b>Global</b> tab of the Preferences Dialog (<b>File -&gt; Preferences</b>). The alternative mode is <code>click</code>,
+            which causes the clicked pixel to be centered in the Image Viewer. When the <code>drag-and-drop</code> pan mode is enabled, you can temporarily switch to the alternative mode with <code>ctrl/cmd + click</code>. Double-click the{" "}
+            <b>Pan</b> button to open the <b>Pan and Zoom</b> tab of the Image Viewer Settings Dialog, which provides fine-grained controls for pan and zoom actions.
         </p>
         <h3 id="matching-image-spatially-and-spectrally">Match image spatially and spectrally</h3>
         <p>
-            Different images may be matched in world coordinates spatially and/or spectrally. This can be triggered by the <code>WCS matching</code> button. Matching WCS on image appending can be enabled in the preferences dialog.
-            Alternatively, you can use the image list widget to see all loaded images and apply spatial and/or spectral matching.
+            Different images may be matched in world coordinates spatially and/or spectrally. This can be triggered with the <b>WCS matching</b> button. Matching WCS on image appending can be enabled in the Preferences Dialog.
+            Alternatively, you can use the Image List Widget to see all loaded images and apply spatial and/or spectral matching.
         </p>
         <p>
             <ImageComponent light={WCSMatchButton} dark={WCSMatchButton_d} width="80%" />
         </p>
         <p>CARTA supports the following matching schemes:</p>
         <ul>
-            <li>None: zoom levels of different images are independent. No matching in the spectral domain.</li>
-            <li>Spatial only: images are matched to the reference image in the spatial domain by translation, rotation, and scaling.</li>
-            <li>Spectral only: images are matched to the reference image in the spectral domain with nearest interpolation.</li>
-            <li>Spatial and spectral: images are matched to the reference image both in the spatial domain and spectral domain.</li>
+            <li>None: Zoom levels of different images are independent. No matching in the spectral domain.</li>
+            <li>Spatial only: Images are matched to the reference image in the spatial domain by translation, rotation, and scaling.</li>
+            <li>Spectral only: Images are matched to the reference image in the spectral domain with nearest interpolation.</li>
+            <li>Spatial and spectral: Images are matched to the reference image both in the spatial domain and spectral domain.</li>
         </ul>
         <p>
             Note that images are spatially matched through application of translation, rotation, and scaling. You may see prominent inconsistencies if you attempt to match wide field images or images with different projection schemes.
@@ -99,75 +101,90 @@ export const IMAGE_VIEW_HELP_CONTENT = (
             performed with nearest interpolation.
         </p>
         <h3 id="contour-layers">Contour layer</h3>
-        <p>A contour layer can be generated via the contour configuration dialog. Contours of spatially matched images are re-projected precisely to other spatially matched raster images.</p>
+        <p>A contour layer can be generated via the Contour Configuration Dialog. Contours of spatially matched images are re-projected precisely on other spatially matched raster images.</p>
         <p>
-            <ImageComponent light={contourButton} dark={contourButton_d} width="34%" />
+            <ImageComponent light={contourButton} dark={contourButton_d} width="38%" />
         </p>
         <h3>Vector field overlay layer</h3>
-        <p>The vector field overlay layer can be generated via the vector overlay configuration dialog. Vector field overlay of spatially matched images is re-projected precisely to other spatially matched raster images.</p>
+        <p>A vector field overlay layer can be generated via the Vector Overlay Configuration Dialog. Vector field overlay of spatially matched images is re-projected precisely on other spatially matched raster images.</p>
         <p>
-            <ImageComponent light={vectorOverlayButton} dark={vectorOverlayButton_d} width="34%" />
+            <ImageComponent light={vectorOverlayButton} dark={vectorOverlayButton_d} width="38%" />
         </p>
 
         <h3 id="catalog-layers">Catalog overlay layer</h3>
-        <p>A catalog overlay can be generated via the catalog widget.</p>
+        <p>A catalog overlay can be generated via the Catalog Widget.</p>
         <p>
             <ImageComponent light={widgetButtonCatalog} dark={widgetButtonCatalog_d} width="80%" />
         </p>
         <p>
-            To select a source on the catalog overlay layer, use the <code>Catalog selection</code> button. The selected source will be highlighted in the table of the catalog widget.
+            To select a source on the catalog overlay layer, use the <b>Catalog selection</b> button. The selected source will be highlighted in the lower table of the Catalog Widget.
         </p>
         <p>
             <ImageComponent light={catalogSelectionButton} dark={catalogSelectionButton_d} width="80%" />
         </p>
-        <h3 id="region-of-interest">Region of interest</h3>
-        <p>Six types of region of interest are supported, including:</p>
-        <ul>
-            <li>Point</li>
-            <li>Rectangle (rotatable)</li>
-            <li>Ellipse (rotatable)</li>
-            <li>Polygon</li>
-            <li>Line (rotatable)</li>
-            <li>Polyline</li>
-        </ul>
+        <h3 id="region-of-interest">Regions of interest and image annotation</h3>
+        <p>
+            Six types of regions of interest are supported, including:
+            <ul>
+                <li>Point</li>
+                <li>Rectangle (rotatable)</li>
+                <li>Ellipse (rotatable)</li>
+                <li>Polygon</li>
+                <li>Line (rotatable)</li>
+                <li>Polyline</li>
+            </ul>
+            and ten kinds of image annotation elements are provided, including:
+            <ul>
+                <li>Point</li>
+                <li>Line</li>
+                <li>Rectangle</li>
+                <li>Ellipse</li>
+                <li>Polygon</li>
+                <li>Polyline</li>
+                <li>Vector</li>
+                <li>Text</li>
+                <li>Compass</li>
+                <li>Ruler</li>
+            </ul>
+        </p>
         <p>
             <ImageComponent light={regionButton} dark={regionButton_d} width="80%" />
         </p>
         <p>
-            The default region type and the default region creation mode are customizable in the preferences dialog. Region shortcut buttons are available at the top of the CARTA GUI. The tooltip of a region shortcut button provides
-            instructions to create a region.
+            The default region type and the default region creation mode are customizable in the Preferences Dialog. Region shortcut buttons are available at the top of the CARTA GUI. The tooltip of a region shortcut button provides
+            instructions on how to create a region.
         </p>
         <p>
-            <ImageComponent light={regionButtonSet} dark={regionButtonSet_d} width="33%" />
+            <ImageComponent light={regionButtonSet} dark={regionButtonSet_d} width="38%" />
         </p>
         <h3 id="customizing-the-image-plot">Image plot cosmetics</h3>
-        <p>
-            {" "}
-            Elements of the image plot such as grid line style, label style, colorbar style, etc., can be customized via the image viewer settings dialog (the <code>cog</code> button at the top-right corner of the widget).
-        </p>
+        <p> Elements of the image plot such as grid line style, label style, colorbar style, etc., can be customized via the Image Viewer Settings Dialog (the cog button at the top-right corner of the widget).</p>
 
         <h3 id="exports">Image plot export</h3>
         <p>
-            What you see in the current image view can be exported as a PNG file with the <code>Export image</code> button in the image toolbar. With the 100% mode, the image resolution of the PNG is identical to the screen resolution. For
+            What you see in the current image view can be exported as a PNG file with the <b>Export image</b> button in the image toolbar. With the 100% mode, the image resolution of the PNG is identical to the screen resolution. For
             presentation or publication purposes, you can request a higher resolution mode as 200% or 400%.
         </p>
         <p>
             <ImageComponent light={exportPNGButton} dark={exportPNGButton_d} width="80%" />
         </p>
         <h3>Distance measure</h3>
-        <p>This tool allows you to measure a geodesic distance between two locations on an image with mouse clicks. The geodesic line between the two clicks as well as the iso-latitude and iso-longitude lines are visualized.</p>
+        <p>
+            This tool allows you to measure a geodesic distance between two locations on an image with mouse clicks. The geodesic line between the two clicks as well as the iso-latitude and iso-longitude lines are visualized. A shortcut
+            button, which brings up the Distance Measurement Dialog, is available in the dialog bar. In the dialog, you can manually provide two coordinates for the calculation and configure the styling.
+        </p>
         <p>
             <ImageComponent light={distanceMeasureButton} dark={distanceMeasureButton_d} width="80%" />
         </p>
         <h3>Interactive colorbar</h3>
         <p>
-            When you hover over the colorbar, a cutoff value is applied to the raster image temporarily. Pixel values below the cutoff are rendered in grayscale. You may disable this feature in the <code>Colorbar</code> tab of the image
-            view settings dialog.
+            When you hover over the colorbar, a cutoff value is applied to the raster image temporarily. Pixel values below the cutoff are rendered in grayscale. You may disable this feature in the <b>Colorbar</b> tab of the Image Viewer
+            Settings Dialog.
         </p>
         <h3 id="image-information-and-header">Image information and header</h3>
-        <p>Basic image information and full image headers are displayed in the file header dialog.</p>
+        <p>Basic image information and full image headers are displayed in the File Header Dialog.</p>
         <p>
-            <ImageComponent light={imageInfoButton} dark={imageInfoButton_d} width="34%" />
+            <ImageComponent light={imageInfoButton} dark={imageInfoButton_d} width="38%" />
         </p>
     </div>
 );
