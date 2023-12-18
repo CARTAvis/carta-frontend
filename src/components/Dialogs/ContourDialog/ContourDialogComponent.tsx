@@ -490,7 +490,7 @@ export class ContourDialogComponent extends React.Component {
                         <DataSourceSelect
                             activeItem={dataSource}
                             onItemSelect={appStore.setContourDataSource}
-                            popoverProps={{minimal: true, position: "bottom", fill: true}}
+                            popoverProps={{minimal: true, position: "bottom"}}
                             filterable={false}
                             items={appStore.frames}
                             itemRenderer={this.renderDataSourceSelectItem}
