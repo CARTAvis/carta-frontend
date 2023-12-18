@@ -102,7 +102,7 @@ export class FrameStore {
     private static readonly ZoomInertiaDuration = 250;
     private static readonly CursorMovementDuration = 250;
 
-    public spectralFrame: AST.SpecFrame;
+    private spectralFrame: AST.SpecFrame;
     private readonly controlMaps: Map<FrameStore, ControlMap>;
     private readonly catalogControlMaps: Map<FrameStore, CatalogControlMap>;
     private readonly framePixelRatio: number;
