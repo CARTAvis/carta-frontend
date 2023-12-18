@@ -6,7 +6,7 @@ sidebar_position: 4
 
 Guidelines for building and writing this website.
 
-## Building documentaiton
+## Building documentation
 
 The website is hosted on Github Pages, and whenever the `dev` branch is updated, the website is automatically updated using Github Actions.
 
@@ -44,12 +44,6 @@ Please note that the search feature is only available in production builds.
 The "Docs" pages and the "API/Overview" page are generated from markdown files in the `docs/` and `api/` directories. Simply edit these directories to modify the content or add new pages.
 
 For links to the "Docs" index pages and "API" subpages, it is required to use the `DocsIndexLink` and `ApiLink` MDX components to ensure the corresponding version is linked. If the file contains MDX components, it is recommended to use the `.mdx` extension.
-
-:::note
-
-There is a [known issue](https://docusaurus.io/docs/markdown-features/react#markdown-and-jsx-interoperability) when the MDX component is placed at the start of the paragraph, the Markdown syntax parsing fails. As a workaround, zero-width spaces `&#8203;` are placed at the start of the paragraph in such cases.
-
-:::
 
 ### Formatting
 

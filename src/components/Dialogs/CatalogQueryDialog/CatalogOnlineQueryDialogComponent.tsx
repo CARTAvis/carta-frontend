@@ -18,8 +18,10 @@ const KEYCODE_ENTER = 13;
 
 @observer
 export class CatalogQueryDialogComponent extends React.Component {
-    private static readonly DefaultWidth = 550;
+    private static readonly DefaultWidth = 600;
     private static readonly DefaultHeight = 550;
+    private static readonly MinWidth = 550;
+    private static readonly MinHeight = 450;
 
     @observable resultSize: number;
     @observable objectSize: number;
@@ -87,6 +89,8 @@ export class CatalogQueryDialogComponent extends React.Component {
                     helpType={HelpType.ONLINE_CATALOG_QUERY}
                     defaultWidth={CatalogQueryDialogComponent.DefaultWidth}
                     defaultHeight={CatalogQueryDialogComponent.DefaultHeight}
+                    minWidth={CatalogQueryDialogComponent.MinWidth}
+                    minHeight={CatalogQueryDialogComponent.MinHeight}
                     enableResizing={true}
                 >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
@@ -252,10 +256,10 @@ export class CatalogQueryDialogComponent extends React.Component {
             <DraggableDialogComponent
                 dialogProps={dialogProps}
                 helpType={HelpType.ONLINE_CATALOG_QUERY}
-                minWidth={CatalogQueryDialogComponent.DefaultWidth}
-                minHeight={CatalogQueryDialogComponent.DefaultHeight}
                 defaultWidth={CatalogQueryDialogComponent.DefaultWidth}
                 defaultHeight={CatalogQueryDialogComponent.DefaultHeight}
+                minWidth={CatalogQueryDialogComponent.MinWidth}
+                minHeight={CatalogQueryDialogComponent.MinHeight}
                 enableResizing={true}
             >
                 <div className="bp3-dialog-body">{configBoard}</div>

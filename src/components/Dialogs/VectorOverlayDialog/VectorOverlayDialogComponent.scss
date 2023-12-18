@@ -8,8 +8,14 @@
             text-align: right;
         }
 
-        .bp3-button {
-            white-space: pre;
+        .bp3-button:not([class*="bp3-intent-"]).bp3-align-right {
+            white-space: nowrap;
+            width: 100%;
+
+            .bp3-button-text {
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
         }
 
         .bp3-form-group {
@@ -51,6 +57,12 @@
                     width: 3em;
                 }
             }
+        }
+
+        .bp3-form-content {
+            display: inline-flex;
+            width: calc(100% - 7em); // because of popover component, the subtraction of the text label width is required
+            max-width: fit-content;
         }
     }
 }
