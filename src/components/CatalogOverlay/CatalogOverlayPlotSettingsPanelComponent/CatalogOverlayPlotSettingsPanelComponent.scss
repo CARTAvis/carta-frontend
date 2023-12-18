@@ -43,13 +43,13 @@
     }
 
     .parameter-container {
-        .bp3-form-group.bp3-inline {
-            .bp3-label {
+        .bp4-form-group.bp4-inline {
+            .bp4-label {
                 min-width: 2em;
                 width: 3em;
             }
 
-            .bp3-form-content {
+            .bp4-form-content {
                 display: inline-flex;
                 width: calc(100% - 5em); // because of the popover, the subtraction is needed.
                 max-width: fit-content;
@@ -57,16 +57,16 @@
         }
     }
 
-    .bp3-button:not([class*="bp3-intent-"]) {
+    .bp4-button:not([class*="bp4-intent-"]) {
         white-space: nowrap;
 
-        .bp3-button-text {
+        .bp4-button-text {
             overflow: hidden;
             text-overflow: ellipsis;
         }
     }
 
-    .bp3-form-content {
+    .bp4-form-content {
         display: inline-flex;
         width: calc(100% - 3em); // because of the popover, the subtraction is required
         max-width: fit-content;

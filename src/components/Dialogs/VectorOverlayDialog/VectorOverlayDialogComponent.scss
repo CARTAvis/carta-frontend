@@ -51,15 +51,15 @@
         }
 
         .parameter-container {
-            .bp3-form-group.bp3-inline {
-                .bp3-label {
+            .bp4-form-group.bp4-inline {
+                .bp4-label {
                     min-width: 2em;
                     width: 3em;
                 }
             }
         }
 
-        .bp3-form-content {
+        .bp4-form-content {
             display: inline-flex;
             width: calc(100% - 7em); // because of popover component, the subtraction of the text label width is required
             max-width: fit-content;
