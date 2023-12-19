@@ -166,7 +166,7 @@ const DEFAULTS = {
         zoomPoint: ZoomPoint.CURSOR,
         dragPanning: true,
         spectralMatchingType: SpectralType.VRAD,
-        autoWCSMatching: WCSMatchingType.NONE,
+        autoWCSMatching: [],
         transparentImageBackground: false,
         codeSnippetsEnabled: false,
         keepLastUsedFolder: false,

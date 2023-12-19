@@ -1,5 +1,4 @@
 export enum WCSMatchingType {
-    NONE = 0,
     SPATIAL = 1,
     SPECTRAL = 2,
     RASTER = 3
