@@ -33,6 +33,7 @@ export const ShareWorkspaceDialogComponent = observer(() => {
         lazy: true,
         canEscapeKeyClose: true,
         isOpen: shareWorkspaceDialogVisible,
+        onClose: () => appStore.dialogStore.hideDialog(DialogId.ShareWorkspace),
         title: `Share Workspace: ${activeWorkspace?.name ?? ""}`
     };
 
