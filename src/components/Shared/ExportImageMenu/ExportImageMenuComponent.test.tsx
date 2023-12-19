@@ -17,7 +17,7 @@ describe("ExportImageMenuComponent", () => {
 
     test("renders four list items", () => {
         render(<ExportImageMenuComponent />);
-        const listitems = screen.getAllByRole("listitem");
+        const listitems = screen.getAllByRole("none");
 
         expect(listitems?.length).toEqual(4);
         expect(listitems?.[0]).toHaveTextContent(/^Resolution$/);
