@@ -137,7 +137,7 @@ export class RootMenuComponent extends React.Component {
                 <Button className="snippet-run-button" small={true} minimal={true} icon={"play"} intent="success" disabled={appStore.snippetStore.isExecuting} onClick={ev => this.handleWidgetExecuteClicked(ev, snippet, name)} />
             );
 
-            const menuItem = <Menu.Item key={name} text={name} icon={labelElement} onClick={() => appStore.dialogStore.showDialog(DialogId.ExistingSnippet, {snippet: snippet, name: name})} />;
+            const menuItem = <Menu.Item key={name} text={name} icon={labelElement} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet, {snippet: snippet, name: name, newSnippet: false})} />;
 
             if (snippet.categories?.length) {
                 for (const category of snippet.categories) {
@@ -161,7 +161,7 @@ export class RootMenuComponent extends React.Component {
             <Menu>
                 {snippetEntries}
                 {snippetEntries.length > 0 && <Menu.Divider />}
-                <Menu.Item text="Create New Snippet" icon="add" onClick={() => appStore.dialogStore.showDialog(DialogId.NewSnippet)} />
+                <Menu.Item text="Create New Snippet" icon="add" onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet, {newSnippet: true})} />
                 <Menu.Item text="Online Tutorial" icon={"manual"} onClick={() => this.handleDocumentationClicked("https://cartavis.org/carta-frontend/docs/category/code-snippet-tutorial")} />
             </Menu>
         );

@@ -760,7 +760,7 @@ export class FileBrowserDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
         if (appStore.dialogStore.dialogVisible.get(DialogId.Stokes)) {
-            appStore.dialogStore.hideDialog(DialogId.Hotkey);
+            appStore.dialogStore.hideDialog(DialogId.Stokes);
         }
         fileBrowserStore.hideFileBrowser();
     };

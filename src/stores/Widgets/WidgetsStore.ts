@@ -1487,7 +1487,6 @@ export class WidgetsStore {
 
         if (widget) {
             zIndexManager.updateIndexOnRemove(id);
-            zIndexManager.removeIndex(id);
             this.floatingWidgets = this.floatingWidgets.filter(w => w.id !== id);
             if (preserveStore) {
                 return;
@@ -1505,7 +1504,6 @@ export class WidgetsStore {
 
         if (widget) {
             zIndexManager.updateIndexOnRemove(componentId);
-            zIndexManager.removeIndex(componentId);
             this.floatingWidgets = this.floatingWidgets.filter(w => w.componentId !== componentId);
             this.removeAssociatedFloatingSetting(componentId);
         }

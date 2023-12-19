@@ -25,8 +25,8 @@ export class CodeSnippetDialogComponent extends React.Component {
 
     private static readonly DefaultWidth = 700;
     private static readonly DefaultHeight = 400;
-    private static readonly MinWidth = 450;
-    private static readonly MinHeight = 450;
+    private static readonly MinWidth = 475;
+    private static readonly MinHeight = 300;
 
     constructor(props: any) {
         super(props);

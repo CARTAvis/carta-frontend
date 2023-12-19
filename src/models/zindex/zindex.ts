@@ -21,35 +21,35 @@ export class FloatingObjzIndexManager {
         return this.floatingObjs.has(id) ? this.floatingObjs.get(id) : 0;
     };
 
-    @action public removeIndex = (id: string) => {
-        this.floatingObjs.delete(id);
-    };
+    // @action public removeIndex = (id: string) => {
+    //     this.floatingObjs.delete(id);
+    // };
 
     @action public updateIndexOnSelect = (id: string) => {
-        const selectedObj = this.floatingObjs.has(id);
-        if (selectedObj) {
+        const isValidId = this.floatingObjs.has(id);
+        if (isValidId) {
             const selectedzIndex = this.floatingObjs.get(id);
-            const NFloatingObj = this.floatingObjs.size;
+            const numFloatingObj = this.floatingObjs.size;
 
-            if (NFloatingObj > 1 && selectedzIndex < NFloatingObj) {
+            if (numFloatingObj > 1 && selectedzIndex < numFloatingObj) {
                 for (let key of this.floatingObjs.keys()) {
                     let currentObjzIndex = this.floatingObjs.get(key);
                     if (currentObjzIndex >= selectedzIndex) {
                         this.floatingObjs.set(key, currentObjzIndex - 1);
                     }
                 }
-                this.floatingObjs.set(id, NFloatingObj);
+                this.floatingObjs.set(id, numFloatingObj);
             }
         }
     };
 
     @action public updateIndexOnRemove = (id: string) => {
-        const selectedObj = this.floatingObjs.has(id);
-        if (selectedObj) {
+        const isValidId = this.floatingObjs.has(id);
+        if (isValidId) {
             const selectedzIndex = this.floatingObjs.get(id);
-            const NFloatingObj = this.floatingObjs.size;
+            const numFloatingObj = this.floatingObjs.size;
 
-            if (selectedzIndex < NFloatingObj) {
+            if (selectedzIndex < numFloatingObj) {
                 for (let key of this.floatingObjs.keys()) {
                     let currentObjzIndex = this.floatingObjs.get(key);
                     if (currentObjzIndex > selectedzIndex) {
@@ -57,6 +57,7 @@ export class FloatingObjzIndexManager {
                     }
                 }
             }
+            this.floatingObjs.delete(id);
         }
     };
 }

@@ -1,5 +1,5 @@
 import {TabId} from "@blueprintjs/core";
-import {action, autorun, makeObservable, observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 
 import {FileInfoType} from "components";
 import {WorkspaceDialogMode} from "components/Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
@@ -10,8 +10,6 @@ export enum DialogId {
     About = "about-dialog",
     CatalogQuery = "catalogQuery-dialog",
     Snippet = "snippet-dialog",
-    ExistingSnippet = "existing-snippet-dialog",
-    NewSnippet = "new-snippet-dialog",
     Contour = "contour-dialog",
     DistanceMeasure = "distanceMeasure-dialog",
     ExternalPage = "externalPage-dialog",
@@ -28,13 +26,14 @@ export enum DialogId {
     Hotkey = "hotkey-dialog"
 }
 
-interface showDialogProps {
+interface showDialogOptions {
     oldLayoutName?: string;
     mode?: WorkspaceDialogMode;
     url?: string;
     title?: string;
     snippet?: Snippet;
     name?: string;
+    newSnippet?: boolean;
 }
 
 export class DialogStore {
@@ -48,10 +47,8 @@ export class DialogStore {
 
     constructor() {
         makeObservable(this);
-        autorun(() => {
-            Object.values(DialogId).forEach(w => {
-                this.dialogVisible.set(w, false);
-            });
+        Object.values(DialogId).forEach(w => {
+            this.dialogVisible.set(w, false);
         });
     }
 
@@ -64,20 +61,35 @@ export class DialogStore {
 
     zIndexManager = AppStore.Instance.zIndexManager;
 
-    @action showDialog = (id: string, props?: showDialogProps) => {
-        if (!this.dialogVisible.get(id)) {
+    @action showDialog = (id: string, options?: showDialogOptions) => {
+        if (id === DialogId.Snippet) {
+            if (options?.newSnippet) {
+                SnippetStore.Instance.clearActiveSnippet();
+            } else if (options?.snippet) {
+                SnippetStore.Instance.setActiveSnippet(options.snippet, options.name);
+            }
+
+            if (!this.dialogVisible.get(DialogId.Snippet)) {
+                this.dialogVisible.set(DialogId.Snippet, true);
+                this.zIndexManager.assignIndex(DialogId.Snippet);
+            }
+
+            this.zIndexManager.updateIndexOnSelect(id);
+        } else if (!this.dialogVisible.get(id)) {
             switch (id) {
                 case DialogId.Layout:
                     this.dialogVisible.set(DialogId.Layout, true);
-                    if (props && props.oldLayoutName) {
-                        AppStore.Instance.layoutStore.setOldLayoutName(props.oldLayoutName);
+                    if (options?.oldLayoutName) {
+                        AppStore.Instance.layoutStore.setOldLayoutName(options.oldLayoutName);
                     }
                     this.zIndexManager.assignIndex(DialogId.Layout);
                     break;
 
                 case DialogId.Workspace:
                     this.dialogVisible.set(DialogId.FileBrowser, false);
-                    this.workspaceDialogMode = props.mode;
+                    if (options?.mode) {
+                        this.workspaceDialogMode = options.mode;
+                    }
                     this.zIndexManager.assignIndex(DialogId.Workspace);
                     break;
 
@@ -87,27 +99,9 @@ export class DialogStore {
                     this.zIndexManager.assignIndex(DialogId.FileBrowser);
                     break;
 
-                case DialogId.ExistingSnippet:
-                    if (props.snippet) {
-                        SnippetStore.Instance.setActiveSnippet(props.snippet, props.name);
-                    }
-                    if (!this.dialogVisible.get(DialogId.Snippet)) {
-                        this.dialogVisible.set(DialogId.Snippet, true);
-                        this.zIndexManager.assignIndex(DialogId.Snippet);
-                    }
-                    break;
-
-                case DialogId.NewSnippet:
-                    SnippetStore.Instance.clearActiveSnippet();
-                    if (!this.dialogVisible.get(DialogId.Snippet)) {
-                        this.dialogVisible.set(DialogId.Snippet, true);
-                        this.zIndexManager.assignIndex(DialogId.Snippet);
-                    }
-                    break;
-
                 case DialogId.ExternalPage:
-                    this.externalPageDialogUrl = props.url;
-                    this.externalPageDialogTitle = props.title;
+                    this.externalPageDialogUrl = options.url;
+                    this.externalPageDialogTitle = options.title;
                     this.dialogVisible.set(DialogId.ExternalPage, true);
                     this.zIndexManager.assignIndex(DialogId.ExternalPage);
                     break;
@@ -129,7 +123,6 @@ export class DialogStore {
             this.dialogVisible.set(id, false);
         }
         this.zIndexManager.updateIndexOnRemove(id);
-        this.zIndexManager.removeIndex(id);
     };
 
     // File Info

@@ -1,7 +1,7 @@
 import {FloatingObjzIndexManager} from "./zindex";
 
-describe("FloatingObjzIndexManager returns expected z indexes", () => {
-    test("zIndex", () => {
+describe("FloatingObjzIndexManager", () => {
+    test("returns expected z indexes", () => {
         let zIndexManager = new FloatingObjzIndexManager();
 
         // test methods assignIndex, floatingObjsNum and findIndex by adding four objects
@@ -29,7 +29,6 @@ describe("FloatingObjzIndexManager returns expected z indexes", () => {
 
         // test removing object
         zIndexManager.updateIndexOnRemove("testId4");
-        zIndexManager.removeIndex("testId4");
         expect(zIndexManager.floatingObjsNum).toBe(mockObjsId.length - 1);
         expect(zIndexManager.findIndex("testId1")).toBe(1);
         expect(zIndexManager.findIndex("testId2")).toBe(3);

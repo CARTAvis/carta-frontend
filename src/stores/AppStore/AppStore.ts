@@ -695,7 +695,7 @@ export class AppStore {
             }
             this.endFileLoading();
             this.fileBrowserStore.hideFileBrowser();
-            AppStore.Instance.dialogStore.hideDialog(DialogId.Hotkey);
+            AppStore.Instance.dialogStore.hideDialog(DialogId.Stokes);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
