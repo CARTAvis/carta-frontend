@@ -15,15 +15,15 @@ describe("ExportImageMenuComponent", () => {
         mockExportImage = jest.spyOn(AppStore.Instance, "exportImage");
     });
 
-    test("renders four list items", () => {
+    test("renders one menu divider and three menu items", () => {
         render(<ExportImageMenuComponent />);
-        const listitems = screen.getAllByRole("none");
+        expect(screen.getAllByRole("none")?.[0]).toHaveTextContent(/^Resolution$/);
 
-        expect(listitems?.length).toEqual(4);
-        expect(listitems?.[0]).toHaveTextContent(/^Resolution$/);
-        expect(listitems?.[1]).toHaveTextContent(/^Normal \(100%\)ctrl \+ E$/);
-        expect(listitems?.[2]).toHaveTextContent(/^High \(200%\)$/);
-        expect(listitems?.[3]).toHaveTextContent(/^Highest \(400%\)$/);
+        const menuitems = screen.getAllByRole("menuitem");
+        expect(menuitems?.length).toEqual(3);
+        expect(menuitems?.[0]).toHaveTextContent(/^Normal \(100%\)ctrl \+ E$/);
+        expect(menuitems?.[1]).toHaveTextContent(/^High \(200%\)$/);
+        expect(menuitems?.[2]).toHaveTextContent(/^Highest \(400%\)$/);
     });
 
     test("calls exportImage() with required image ratio when clicked", () => {
