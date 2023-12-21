@@ -1,5 +1,6 @@
 import {CARTA} from "carta-protobuf";
 
+import * as SpectralDefinition from "models/Spectral/SpectralDefinition.ts";
 import {FrameInfo, FrameStore} from "stores";
 
 const stokesCubeframeInfo: FrameInfo = {
@@ -49,6 +50,17 @@ const stokesCubeframeInfo: FrameInfo = {
     ]
 };
 
+const emptyframeInfo = {
+    fileId: 0,
+    directory: "",
+    hdu: "",
+    fileInfo: new CARTA.FileInfo(),
+    fileInfoExtended: new CARTA.FileInfoExtended(),
+    fileFeatureFlags: 0,
+    renderMode: 0,
+    beamTable: []
+};
+
 describe("FrameStore", () => {
     describe("beamProperties", () => {
         test("returns the beam of the current channel and stokes", () => {
@@ -75,6 +87,40 @@ describe("FrameStore", () => {
             expect(beams[2]).toHaveProperty("majorAxis", 0.9315447807312012);
             expect(beams[2]).toHaveProperty("minorAxis", 0.8433027863502502);
             expect(beams[2]).toHaveProperty("pa", 42.58256912231445);
+        });
+    });
+
+    describe("intensityConfig", () => {
+        let mockBeamAllChannels: jest.SpyInstance;
+        let mockSpectralAxis: jest.SpyInstance;
+        let mockChannelInfo: jest.SpyInstance;
+        let mockGetFreqInGHz: jest.SpyInstance;
+        beforeAll(() => {
+            mockBeamAllChannels = jest.spyOn(FrameStore.prototype, "beamAllChannels", "get");
+            mockSpectralAxis = jest.spyOn(FrameStore.prototype, "spectralAxis", "get");
+            mockChannelInfo = jest.spyOn(FrameStore.prototype, "channelInfo", "get");
+            mockGetFreqInGHz = jest.spyOn(SpectralDefinition, "GetFreqInGHz");
+        });
+
+        test("returns correct beam config", () => {
+            mockBeamAllChannels.mockImplementation(() => [
+                {majorAxis: 0.9315811991691589, minorAxis: 0.8433393239974976, pa: 42.576087951660156},
+                {channel: 1, majorAxis: 0.9315744042396545, minorAxis: 0.8433324098587036, pa: 42.5771484375},
+                {channel: 2, majorAxis: 0.9315680265426636, minorAxis: 0.843326985836029, pa: 42.57808303833008}
+            ]);
+            mockSpectralAxis.mockImplementation(() => {
+                return {type: {code: "FREQ"}};
+            });
+            mockChannelInfo.mockImplementation(() => {
+                return {values: [90.73634849111, 90.73631797353188, 90.73628745595375]};
+            });
+            mockGetFreqInGHz.mockImplementation((a, b) => b);
+
+            const frame = new FrameStore(emptyframeInfo);
+            const config = frame.intensityConfig;
+            expect(config["bmaj"]).toEqual([0.9315811991691589, 0.9315744042396545, 0.9315680265426636]);
+            expect(config["bmin"]).toEqual([0.8433393239974976, 0.8433324098587036, 0.843326985836029]);
+            expect(config["freqGHz"]).toEqual([90.73634849111, 90.73631797353188, 90.73628745595375]);
         });
     });
 });
