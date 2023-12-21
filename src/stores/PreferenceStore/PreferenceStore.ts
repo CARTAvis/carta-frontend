@@ -265,6 +265,11 @@ export class PreferenceStore {
 
     @observable preferences: Map<PreferenceKeys, any>;
 
+    /**
+     * Whether the preference data is initialized from the preference file or localStorage.
+     */
+    @observable preferenceReady: boolean = false;
+
     // getters for global settings
     @computed get theme(): string {
         return this.preferences.get(PreferenceKeys.GLOBAL_THEME) ?? DEFAULTS.GLOBAL.theme;
@@ -889,6 +894,7 @@ export class PreferenceStore {
                 this.preferences.set(key as PreferenceKeys, val);
             }
         }
+        this.preferenceReady = true;
     }
 
     private upgradePreferences = async () => {
