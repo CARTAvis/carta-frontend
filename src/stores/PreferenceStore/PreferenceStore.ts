@@ -264,7 +264,6 @@ export class PreferenceStore {
     }
 
     @observable preferences: Map<PreferenceKeys, any>;
-    @observable supportsServer: boolean;
 
     // getters for global settings
     @computed get theme(): string {
