@@ -871,7 +871,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             const scatter = this.scatterData;
             data = scatter.data;
             data[catalogDataIndex].marker.size = 5 * ratio;
-            let border;
+            let border: Border;
             if (widgetStore.isScatterAutoScaled) {
                 border = scatter.border;
             } else {
@@ -880,11 +880,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             layout.xaxis.range = [border.xMin, border.xMax];
             layout.yaxis.range = [border.yMin, border.yMax];
             layout.yaxis.title = widgetStore.yColumnName;
-            layout.yaxis.tickformat = this.formatTickValues(layout.yaxis.range);
             layout.xaxis.tickformat = this.formatTickValues(layout.xaxis.range);
+            layout.yaxis.tickformat = this.formatTickValues(layout.yaxis.range);
         } else {
             data = this.histogramData.data;
-            let border;
+            let border: XBorder;
             if (widgetStore.isHistogramAutoScaledX) {
                 border = this.histogramData.border;
             } else {
