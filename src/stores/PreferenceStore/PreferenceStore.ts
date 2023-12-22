@@ -42,6 +42,7 @@ export enum PreferenceKeys {
     GLOBAL_DRAG_PANNING = "dragPanning",
     GLOBAL_SPECTRAL_MATCHING_TYPE = "spectralMatchingType",
     GLOBAL_AUTO_WCS_MATCHING = "autoWCSMatching",
+    GLOBAL_AUTO_WCS_MATCHING_LIST = "autoWCSMatchingList",
     GLOBAL_TRANSPARENT_IMAGE_BACKGROUND = "transparentImageBackground",
     GLOBAL_CODE_SNIPPETS_ENABLED = "codeSnippetsEnabled",
     GLOBAL_KEEP_LAST_USED_FOLDER = "keepLastUsedFolder",
@@ -166,7 +167,7 @@ const DEFAULTS = {
         zoomPoint: ZoomPoint.CURSOR,
         dragPanning: true,
         spectralMatchingType: SpectralType.VRAD,
-        autoWCSMatching: [],
+        autoWCSMatching: WCSMatchingType.NONE,
         transparentImageBackground: false,
         codeSnippetsEnabled: false,
         keepLastUsedFolder: false,
@@ -329,9 +330,19 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE) ?? DEFAULTS.GLOBAL.spectralMatchingType;
     }
 
-    @computed get autoWCSMatching(): WCSMatchingType[] {
-        return this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING) ?? DEFAULTS.GLOBAL.autoWCSMatching;
+    @computed get autoWCSMatching(): WCSMatchingType {
+        return this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING_LIST).reduce((a: number, b: number) => a | b, 0) ?? DEFAULTS.GLOBAL.autoWCSMatching;
     }
+
+    public isWCSMatchingEnabled = (matchingType: WCSMatchingType): boolean => {
+        if (WCSMatchingClass.isMatchingTypeValid(matchingType)) {
+            const matchingTypes = this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING_LIST);
+            if (matchingTypes && Array.isArray(matchingTypes)) {
+                return matchingTypes.includes(matchingType);
+            }
+        }
+        return false;
+    };
 
     @computed get transparentImageBackground(): boolean {
         return this.preferences.get(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND) ?? DEFAULTS.GLOBAL.transparentImageBackground;
@@ -623,16 +634,6 @@ export class PreferenceStore {
         return false;
     };
 
-    public isWCSMatchingEnabled = (matchingType: WCSMatchingType): boolean => {
-        if (WCSMatchingClass.isMatchingTypeValid(matchingType)) {
-            const matchingTypes = this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING);
-            if (matchingTypes && Array.isArray(matchingTypes)) {
-                return matchingTypes.includes(matchingType);
-            }
-        }
-        return false;
-    };
-
     @computed get isZoomRAWMode(): boolean {
         return this.zoomMode === Zoom.FULL;
     }
@@ -745,11 +746,11 @@ export class PreferenceStore {
             }
             this.preferences.set(PreferenceKeys.LOG_EVENT, eventList);
             return yield ApiService.Instance.setPreference(PreferenceKeys.LOG_EVENT, eventList);
-        } else if (key === PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING) {
-            if (!Event.isEventTypeValid(value)) {
+        } else if (key === PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING_LIST) {
+            if (!WCSMatchingClass.isMatchingTypeValid(value)) {
                 return false;
             }
-            let matchingList = this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING);
+            let matchingList = this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING_LIST);
             if (!matchingList || !Array.isArray(matchingList)) {
                 matchingList = [];
             }
@@ -758,8 +759,8 @@ export class PreferenceStore {
             } else {
                 matchingList.push(value);
             }
-            this.preferences.set(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, matchingList);
-            return yield ApiService.Instance.setPreference(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, matchingList);
+            this.preferences.set(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING_LIST, matchingList);
+            return yield ApiService.Instance.setPreference(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, this.autoWCSMatching);
         } else {
             this.preferences.set(key, value);
         }
@@ -932,6 +933,10 @@ export class PreferenceStore {
                 const val = preferences[key];
                 this.preferences.set(key as PreferenceKeys, val);
             }
+
+            if (preferences[PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING]) {
+                this.preferences.set(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING_LIST, this.getBits(preferences[PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING]));
+            }
         }
     }
 
@@ -1070,6 +1075,8 @@ export class PreferenceStore {
                 this.preferences.set(key as PreferenceKeys, preferenceObject[key]);
             }
 
+            // preferenceObject[PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING_LIST] = preferenceObject[PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING] ? this.getBits(preferenceObject[PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING]) : [];
+
             preferenceObject["version"] = 1;
             await ApiService.Instance.setPreferences(preferenceObject);
         }
@@ -1078,5 +1085,15 @@ export class PreferenceStore {
     private constructor() {
         makeObservable(this);
         this.preferences = new Map<PreferenceKeys, any>();
+    }
+
+    private getBits(value: number) {
+        let b = 1;
+        let powerOfTwo = [];
+        while (b <= value) {
+            if (b & value) powerOfTwo.push(b);
+            b <<= 1;
+        }
+        return powerOfTwo;
     }
 }

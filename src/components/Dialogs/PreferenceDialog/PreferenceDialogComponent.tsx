@@ -219,7 +219,7 @@ export class PreferenceDialogComponent extends React.Component {
                             key={matchingType}
                             checked={preference.isWCSMatchingEnabled(matchingType)}
                             label={WCSMatchingClass.getMatchingNameFromType(matchingType)}
-                            onChange={() => preference.setPreference(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, matchingType)}
+                            onChange={() => preference.setPreference(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING_LIST, matchingType)}
                         />
                     ))}
                 </FormGroup>

@@ -1,12 +1,13 @@
 export enum WCSMatchingType {
+    NONE = 0,
     SPATIAL = 1,
     SPECTRAL = 2,
-    RASTER = 3
+    RASTER = 4
 }
 
 export function IsWCSMatchingTypeValid(type: string) {
     const enumVal = parseInt(type);
-    return type && enumVal >= 0 && enumVal <= 3;
+    return type && enumVal >= 0 && enumVal <= 7;
 }
 
 export class WCSMatchingClass {
