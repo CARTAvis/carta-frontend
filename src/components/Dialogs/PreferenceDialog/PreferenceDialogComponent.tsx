@@ -218,7 +218,7 @@ export class PreferenceDialogComponent extends React.Component {
                             className="log-event-list"
                             key={matchingType}
                             checked={preference.isWCSMatchingEnabled(matchingType)}
-                            label={WCSMatchingClass.getMatchingNameFromType(matchingType)}
+                            label={WCSMatchingClass.getNameFromType(matchingType)}
                             onChange={() => preference.setPreference(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING_LIST, matchingType)}
                         />
                     ))}
@@ -806,7 +806,7 @@ export class PreferenceDialogComponent extends React.Component {
                             className="log-event-checkbox"
                             key={eventType}
                             checked={preference.isEventLoggingEnabled(eventType)}
-                            label={Event.getEventNameFromType(eventType)}
+                            label={Event.getNameFromType(eventType)}
                             onChange={() => preference.setPreference(PreferenceKeys.LOG_EVENT, eventType)}
                         />
                     ))}

@@ -335,7 +335,7 @@ export class PreferenceStore {
     }
 
     public isWCSMatchingEnabled = (matchingType: WCSMatchingType): boolean => {
-        if (WCSMatchingClass.isMatchingTypeValid(matchingType)) {
+        if (WCSMatchingClass.isTypeValid(matchingType)) {
             const matchingTypes = this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING_LIST);
             if (matchingTypes && Array.isArray(matchingTypes)) {
                 return matchingTypes.includes(matchingType);
@@ -625,7 +625,7 @@ export class PreferenceStore {
     }
 
     public isEventLoggingEnabled = (eventType: CARTA.EventType): boolean => {
-        if (Event.isEventTypeValid(eventType)) {
+        if (Event.isTypeValid(eventType)) {
             const logEvents = this.preferences.get(PreferenceKeys.LOG_EVENT);
             if (logEvents && Array.isArray(logEvents)) {
                 return logEvents.includes(eventType);
@@ -732,40 +732,21 @@ export class PreferenceStore {
 
         // set preference in variable
         if (key === PreferenceKeys.LOG_EVENT) {
-            if (!Event.isEventTypeValid(value)) {
+            if (!Event.isTypeValid(value)) {
                 return false;
             }
-            let eventList = this.preferences.get(PreferenceKeys.LOG_EVENT);
-            if (!eventList || !Array.isArray(eventList)) {
-                eventList = [];
-            }
-            if (eventList.includes(value)) {
-                eventList = eventList.filter(e => e !== value);
-            } else {
-                eventList.push(value);
-            }
-            this.preferences.set(PreferenceKeys.LOG_EVENT, eventList);
+            let eventList = this.setCheckBoxList(key, value);
             return yield ApiService.Instance.setPreference(PreferenceKeys.LOG_EVENT, eventList);
         } else if (key === PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING_LIST) {
-            if (!WCSMatchingClass.isMatchingTypeValid(value)) {
+            if (!WCSMatchingClass.isTypeValid(value)) {
                 return false;
             }
-            let matchingList = this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING_LIST);
-            if (!matchingList || !Array.isArray(matchingList)) {
-                matchingList = [];
-            }
-            if (matchingList.includes(value)) {
-                matchingList = matchingList.filter(e => e !== value);
-            } else {
-                matchingList.push(value);
-            }
-            this.preferences.set(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING_LIST, matchingList);
+            this.setCheckBoxList(key, value);
             return yield ApiService.Instance.setPreference(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, this.autoWCSMatching);
         } else {
             this.preferences.set(key, value);
+            return yield ApiService.Instance.setPreference(key, value);
         }
-
-        return yield ApiService.Instance.setPreference(key, value);
     }
 
     @flow.bound *clearPreferences(keys: PreferenceKeys[]) {
@@ -934,8 +915,9 @@ export class PreferenceStore {
                 this.preferences.set(key as PreferenceKeys, val);
             }
 
+            // converting existing spatial and spectral matching in preference.json to the matching type list used in preference dialog
             if (preferences[PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING]) {
-                this.preferences.set(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING_LIST, this.getBits(preferences[PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING]));
+                this.preferences.set(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING_LIST, WCSMatchingClass.getBits(preferences[PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING]));
             }
         }
     }
@@ -1075,8 +1057,6 @@ export class PreferenceStore {
                 this.preferences.set(key as PreferenceKeys, preferenceObject[key]);
             }
 
-            // preferenceObject[PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING_LIST] = preferenceObject[PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING] ? this.getBits(preferenceObject[PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING]) : [];
-
             preferenceObject["version"] = 1;
             await ApiService.Instance.setPreferences(preferenceObject);
         }
@@ -1087,13 +1067,18 @@ export class PreferenceStore {
         this.preferences = new Map<PreferenceKeys, any>();
     }
 
-    private getBits(value: number) {
-        let b = 1;
-        let powerOfTwo = [];
-        while (b <= value) {
-            if (b & value) powerOfTwo.push(b);
-            b <<= 1;
+    private setCheckBoxList(key: PreferenceKeys, value: number): number[] {
+        let list = this.preferences.get(key);
+        if (!list || !Array.isArray(list)) {
+            list = [];
         }
-        return powerOfTwo;
+        if (list.includes(value)) {
+            list = list.filter(e => e !== value);
+        } else {
+            list.push(value);
+        }
+        this.preferences.set(key, list);
+
+        return list;
     }
 }
