@@ -880,8 +880,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             layout.xaxis.range = [border.xMin, border.xMax];
             layout.yaxis.range = [border.yMin, border.yMax];
             layout.yaxis.title = widgetStore.yColumnName;
-            // layout.xaxis.tickformat = this.formatTickValues(layout.xaxis.range);
-            layout.xaxis.tickformat = this.formatTickValues([border.xMin, border.xMax]);
+            layout.xaxis.tickformat = this.formatTickValues(layout.xaxis.range);
             layout.yaxis.tickformat = this.formatTickValues(layout.yaxis.range);
         } else {
             data = this.histogramData.data;
