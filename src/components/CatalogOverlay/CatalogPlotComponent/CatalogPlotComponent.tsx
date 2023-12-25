@@ -604,8 +604,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const difference = range[1] - range[0];
         const exponential = difference.toExponential(2);
         const power = parseFloat(exponential.split("e")[1]);
-        const maxPower = parseFloat(Number(range[1]).toExponential(1).split("e")[1]);
-        const minPower = parseFloat(Number(range[0]).toExponential(1).split("e")[1]);
+        const maxPower = parseFloat(range[1].toExponential(1).split("e")[1]);
+        const minPower = parseFloat(range[0].toExponential(1).split("e")[1]);
         if (maxPower >= 5) {
             return `e`;
         } else if (minPower <= -5) {
@@ -880,7 +880,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             layout.xaxis.range = [border.xMin, border.xMax];
             layout.yaxis.range = [border.yMin, border.yMax];
             layout.yaxis.title = widgetStore.yColumnName;
-            layout.xaxis.tickformat = this.formatTickValues(layout.xaxis.range);
+            // layout.xaxis.tickformat = this.formatTickValues(layout.xaxis.range);
+            layout.xaxis.tickformat = this.formatTickValues([border.xMin, border.xMax]);
             layout.yaxis.tickformat = this.formatTickValues(layout.yaxis.range);
         } else {
             data = this.histogramData.data;
