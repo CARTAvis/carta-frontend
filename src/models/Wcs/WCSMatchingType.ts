@@ -26,7 +26,7 @@ export class WCSMatchingClass {
         return WCSMatchingType[matchingType];
     };
 
-    public static getBits = (value: number) => {
+    public static getList = (value: number) => {
         let b = 1;
         let powerOfTwo = [];
         while (b <= value) {

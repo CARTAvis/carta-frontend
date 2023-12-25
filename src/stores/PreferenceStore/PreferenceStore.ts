@@ -42,7 +42,6 @@ export enum PreferenceKeys {
     GLOBAL_DRAG_PANNING = "dragPanning",
     GLOBAL_SPECTRAL_MATCHING_TYPE = "spectralMatchingType",
     GLOBAL_AUTO_WCS_MATCHING = "autoWCSMatching",
-    GLOBAL_AUTO_WCS_MATCHING_LIST = "autoWCSMatchingList",
     GLOBAL_TRANSPARENT_IMAGE_BACKGROUND = "transparentImageBackground",
     GLOBAL_CODE_SNIPPETS_ENABLED = "codeSnippetsEnabled",
     GLOBAL_KEEP_LAST_USED_FOLDER = "keepLastUsedFolder",
@@ -331,12 +330,12 @@ export class PreferenceStore {
     }
 
     @computed get autoWCSMatching(): WCSMatchingType {
-        return this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING_LIST).reduce((a: number, b: number) => a | b, 0) ?? DEFAULTS.GLOBAL.autoWCSMatching;
+        return this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING) ?? DEFAULTS.GLOBAL.autoWCSMatching;
     }
 
     public isWCSMatchingEnabled = (matchingType: WCSMatchingType): boolean => {
         if (WCSMatchingClass.isTypeValid(matchingType)) {
-            const matchingTypes = this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING_LIST);
+            const matchingTypes = WCSMatchingClass.getList(this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING));
             if (matchingTypes && Array.isArray(matchingTypes)) {
                 return matchingTypes.includes(matchingType);
             }
@@ -735,14 +734,9 @@ export class PreferenceStore {
             if (!Event.isTypeValid(value)) {
                 return false;
             }
-            let eventList = this.setCheckBoxList(key, value);
+            let eventList = this.setCheckBoxList(this.preferences.get(PreferenceKeys.LOG_EVENT), value);
+            this.preferences.set(PreferenceKeys.LOG_EVENT, eventList);
             return yield ApiService.Instance.setPreference(PreferenceKeys.LOG_EVENT, eventList);
-        } else if (key === PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING_LIST) {
-            if (!WCSMatchingClass.isTypeValid(value)) {
-                return false;
-            }
-            this.setCheckBoxList(key, value);
-            return yield ApiService.Instance.setPreference(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, this.autoWCSMatching);
         } else {
             this.preferences.set(key, value);
             return yield ApiService.Instance.setPreference(key, value);
@@ -914,11 +908,6 @@ export class PreferenceStore {
                 const val = preferences[key];
                 this.preferences.set(key as PreferenceKeys, val);
             }
-
-            // converting existing spatial and spectral matching in preference.json to the matching type list used in preference dialog
-            if (preferences[PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING]) {
-                this.preferences.set(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING_LIST, WCSMatchingClass.getBits(preferences[PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING]));
-            }
         }
     }
 
@@ -1067,8 +1056,7 @@ export class PreferenceStore {
         this.preferences = new Map<PreferenceKeys, any>();
     }
 
-    private setCheckBoxList(key: PreferenceKeys, value: number): number[] {
-        let list = this.preferences.get(key);
+    public setCheckBoxList(list: number[], value: number): number[] {
         if (!list || !Array.isArray(list)) {
             list = [];
         }
@@ -1077,8 +1065,13 @@ export class PreferenceStore {
         } else {
             list.push(value);
         }
-        this.preferences.set(key, list);
 
         return list;
+    }
+
+    public updateWCSMatchingNum(value: number): number {
+        let list = WCSMatchingClass.getList(this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING));
+        list = this.setCheckBoxList(list, value);
+        return list.reduce((a: number, b: number) => a | b, 0);
     }
 }
