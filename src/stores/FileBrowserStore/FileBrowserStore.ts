@@ -80,8 +80,8 @@ export class FileBrowserStore {
     // Save image
     @observable saveFilename: string = "";
     @observable saveFileType: CARTA.FileType = CARTA.FileType.CASA;
-    @observable saveSpectralStart: string = "0";
-    @observable saveSpectralEnd: string = "0";
+    @observable saveSpectralStart: number = 0;
+    @observable saveSpectralEnd: number = 0;
     @observable saveSpectralStride: number = 1;
     @observable saveStokesOption: number;
     @observable saveRegionId: number;
@@ -307,8 +307,8 @@ export class FileBrowserStore {
     @action initialSaveSpectralRange = () => {
         const activeFrame = AppStore.Instance.activeFrame;
         if (activeFrame && activeFrame.numChannels > 1 && activeFrame.isSpectralChannel) {
-            this.setSaveSpectralStart(Math.min(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min).toString());
-            this.setSaveSpectralEnd(Math.max(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min).toString());
+            this.setSaveSpectralStart(Math.min(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min));
+            this.setSaveSpectralEnd(Math.max(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min));
         }
     };
 
@@ -568,11 +568,11 @@ export class FileBrowserStore {
         }
     };
 
-    @action setSaveSpectralStart = (start: string) => {
+    @action setSaveSpectralStart = (start: number) => {
         this.saveSpectralStart = start;
     };
 
-    @action setSaveSpectralEnd = (end: string) => {
+    @action setSaveSpectralEnd = (end: number) => {
         this.saveSpectralEnd = end;
     };
 
