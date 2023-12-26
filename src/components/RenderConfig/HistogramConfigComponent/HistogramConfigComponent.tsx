@@ -69,7 +69,7 @@ export class HistogramConfigComponent extends React.Component<HistogramConfigPro
                         </HistogramSelect>
                     </FormGroup>
                 )}
-                <Alert className={AppStore.Instance.darkTheme ? "bp4-dark" : ""} icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>
+                <Alert className={AppStore.Instance.darkTheme ? "bp5-dark" : ""} icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>
                     <p>Calculating a cube histogram may take a long time, depending on the size of the file. Are you sure you want to continue?</p>
                 </Alert>
             </React.Fragment>

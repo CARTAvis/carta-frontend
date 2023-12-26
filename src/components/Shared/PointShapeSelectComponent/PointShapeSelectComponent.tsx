@@ -17,7 +17,7 @@ export const PointShapeSelectComponent = observer((props: {handleChange: (pointS
             fillColor = "none";
         }
         return (
-            <span className="bp4-icon">
+            <span className="bp5-icon">
                 <svg data-icon="triangle-up-open" width="16" height="16" viewBox={`0 0 ${viewboxDefault} ${viewboxDefault}`} style={{stroke: color, fill: fillColor, strokeWidth: strokeWidth}}>
                     {path}
                 </svg>
@@ -58,7 +58,7 @@ export const PointShapeSelectComponent = observer((props: {handleChange: (pointS
 
     return (
         <Select2
-            className="bp4-fill"
+            className="bp5-fill"
             filterable={false}
             items={Object.values(CARTA.PointAnnotationShape)}
             activeItem={preference.pointAnnotationShape}

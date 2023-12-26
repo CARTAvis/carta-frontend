@@ -161,7 +161,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                             </FormGroup>
                             <div className="cursor-select">
                                 <Tooltip2 content="Use cursor to select channel range in profiler" position={Position.BOTTOM}>
-                                    <AnchorButton className={widgetStore.isSelectingMomentChannelRange ? "bp4-active" : ""} icon="select" onClick={this.handleChannelSelectionClicked} />
+                                    <AnchorButton className={widgetStore.isSelectingMomentChannelRange ? "bp5-active" : ""} icon="select" onClick={this.handleChannelSelectionClicked} />
                                 </Tooltip2>
                             </div>
                         </div>
@@ -191,7 +191,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                             </FormGroup>
                             <div className="cursor-select">
                                 <Tooltip2 content="Use cursor to select mask range in profiler" position={Position.BOTTOM}>
-                                    <AnchorButton className={widgetStore.isSelectingMomentMaskRange ? "bp4-active" : ""} icon="select" onClick={this.handleMaskSelectionClicked} />
+                                    <AnchorButton className={widgetStore.isSelectingMomentMaskRange ? "bp5-active" : ""} icon="select" onClick={this.handleMaskSelectionClicked} />
                                 </Tooltip2>
                             </div>
                         </div>

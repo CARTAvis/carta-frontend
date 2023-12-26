@@ -2,24 +2,24 @@
     width: 100%;
     margin-top: 10px;
 
-    .bp4-tab-panel {
+    .bp5-tab-panel {
         height: 22em;
         overflow: auto;
         width: 100%;
     }
 
-    .bp4-form-group {
+    .bp5-form-group {
         &:first-of-type {
             margin-left: 0px;
         }
-        .bp4-label {
+        .bp5-label {
             min-width: 11em;
             text-align: right;
         }
     }
 
-    .bp4-numeric-input {
-        .bp4-input-group {
+    .bp5-numeric-input {
+        .bp5-input-group {
             width: 60px;
         }
     }

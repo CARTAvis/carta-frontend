@@ -1,36 +1,36 @@
 .catalog-settings {
     margin: 20px;
 
-    .file-menu .bp4-button {
+    .file-menu .bp5-button {
         white-space: nowrap;
         width: 100%;
     }
-    .bp4-form-group {
+    .bp5-form-group {
         &:first-of-type {
             margin-left: 0px;
         }
     }
 
-    .bp4-form-group.bp4-inline.file-menu .bp4-label {
+    .bp5-form-group.bp5-inline.file-menu .bp5-label {
         width: 3em;
         min-width: 3em;
         text-align: right;
     }
 
-    .bp4-form-group.bp4-inline .bp4-label {
+    .bp5-form-group.bp5-inline .bp5-label {
         width: 8em;
         min-width: 8em;
         text-align: right;
     }
 
-    .bp4-numeric-input {
-        .bp4-input-group {
+    .bp5-numeric-input {
+        .bp5-input-group {
             width: 110px;
         }
     }
 
     .catalog-size-overlay {
-        .bp4-input-group {
+        .bp5-input-group {
             width: 50px;
         }
     }
@@ -43,13 +43,13 @@
     }
 
     .parameter-container {
-        .bp4-form-group.bp4-inline {
-            .bp4-label {
+        .bp5-form-group.bp5-inline {
+            .bp5-label {
                 min-width: 2em;
                 width: 3em;
             }
 
-            .bp4-form-content {
+            .bp5-form-content {
                 display: inline-flex;
                 width: calc(100% - 5em); // because of the popover, the subtraction is needed.
                 max-width: fit-content;
@@ -57,16 +57,16 @@
         }
     }
 
-    .bp4-button:not([class*="bp4-intent-"]) {
+    .bp5-button:not([class*="bp5-intent-"]) {
         white-space: nowrap;
 
-        .bp4-button-text {
+        .bp5-button-text {
             overflow: hidden;
             text-overflow: ellipsis;
         }
     }
 
-    .bp4-form-content {
+    .bp5-form-content {
         display: inline-flex;
         width: calc(100% - 3em); // because of the popover, the subtraction is required
         max-width: fit-content;

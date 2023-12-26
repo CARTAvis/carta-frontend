@@ -93,7 +93,7 @@ export class StokesDialogComponent extends React.Component {
     render() {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
-        const className = classNames("stokes-dialog", {"bp4-dark": appStore.darkTheme});
+        const className = classNames("stokes-dialog", {"bp5-dark": appStore.darkTheme});
         const stokesItems = Object.values(CARTA.PolarizationType) as CARTA.PolarizationType[];
         const files = this.fileNames;
 
@@ -125,7 +125,7 @@ export class StokesDialogComponent extends React.Component {
                                 itemRenderer={this.renderPopOver}
                                 popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                             >
-                                <Button className="bp4-minimal catalog-represent-as-select-button" text={this.getLabelFromValue(this.stokes.get(file).polarizationType)} rightIcon="double-caret-vertical" />
+                                <Button className="bp5-minimal catalog-represent-as-select-button" text={this.getLabelFromValue(this.stokes.get(file).polarizationType)} rightIcon="double-caret-vertical" />
                             </Select2>
                         </Cell>
                     );
@@ -149,7 +149,7 @@ export class StokesDialogComponent extends React.Component {
 
         return (
             <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.STOKES} minWidth={300} minHeight={250} defaultWidth={602} defaultHeight={300} enableResizing={true}>
-                <div className="bp4-dialog-body">
+                <div className="bp5-dialog-body">
                     <Table2
                         className={"file-table"}
                         numRows={this.stokes.size}
@@ -166,8 +166,8 @@ export class StokesDialogComponent extends React.Component {
                         {[fileName, stokesDropDown]}
                     </Table2>
                 </div>
-                <div className="bp4-dialog-footer">
-                    <div className="bp4-dialog-footer-actions">
+                <div className="bp5-dialog-footer">
+                    <div className="bp5-dialog-footer-actions">
                         <AnchorButton
                             intent={Intent.NONE}
                             disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}

@@ -4,31 +4,31 @@
     padding: 20px;
     height: 100%;
 
-    div.bp4-tabs.bp4-vertical {
+    div.bp5-tabs.bp5-vertical {
         height: 100%;
     }
 
-    .bp4-tab-panel {
+    .bp5-tab-panel {
         width: 100%;
         height: 100%;
         overflow: auto;
         user-select: none;
     }
 
-    .bp4-tab-list {
+    .bp5-tab-list {
         width: 10em;
     }
 
-    .bp4-numeric-input input {
+    .bp5-numeric-input input {
         width: 100px !important;
     }
 
-    .bp4-form-group {
+    .bp5-form-group {
         &:first-of-type {
             margin-left: 0px;
         }
 
-        .bp4-label {
+        .bp5-label {
             min-width: 10em;
             width: 10em;
             text-align: right;
@@ -36,7 +36,7 @@
     }
 
     .font-group {
-        .bp4-form-content {
+        .bp5-form-content {
             display: flex;
         }
 
@@ -64,7 +64,7 @@
     }
 
     .panel-colorbar {
-        .bp4-label {
+        .bp5-label {
             width: 12em;
         }
     }
@@ -75,10 +75,10 @@
             height: 30px;
         }
 
-        .bp4-form-content {
+        .bp5-form-content {
             display: flex;
 
-            .bp4-numeric-input input {
+            .bp5-numeric-input input {
                 width: 125px !important;
             }
 

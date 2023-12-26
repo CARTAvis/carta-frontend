@@ -13,12 +13,12 @@
         margin-right: 7px;
     }
 
-    .bp4-dialog-body {
+    .bp5-dialog-body {
         height: 100%;
         overflow: hidden;
         margin-top: 10px;
 
-        .bp4-input-group {
+        .bp5-input-group {
             margin: 10px 5px 5px;
         }
 
@@ -56,13 +56,13 @@
     width: 100%;
     margin-right: 25px;
 
-    .bp4-input:not(:placeholder-shown) {
+    .bp5-input:not(:placeholder-shown) {
         font-family: monospace;
     }
 }
 
 .arithmetic-input {
-    .bp4-input:not(:placeholder-shown) {
+    .bp5-input:not(:placeholder-shown) {
         font-family: monospace;
     }
 }

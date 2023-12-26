@@ -37,7 +37,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         let styleProps: CSSProperties = {
             opacity: this.props.visible ? 1 : 0
         };
-        const className = classNames("profiler-toolbar", {"bp4-dark": this.props.darkMode});
+        const className = classNames("profiler-toolbar", {"bp5-dark": this.props.darkMode});
 
         return (
             <ButtonGroup className={className} style={styleProps}>

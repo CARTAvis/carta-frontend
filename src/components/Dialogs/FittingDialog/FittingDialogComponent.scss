@@ -6,8 +6,8 @@
         margin-bottom: 0px;
     }
 
-    .bp4-html-select select,
-    .bp4-select select {
+    .bp5-html-select select,
+    .bp5-select select {
         width: 100%;
         min-width: 7em;
         overflow: hidden;
@@ -73,45 +73,45 @@
         }
     }
 
-    .bp4-label {
+    .bp5-label {
         display: flex;
         justify-content: flex-end;
         min-width: 11em;
         user-select: none;
 
-        .bp4-text-muted {
+        .bp5-text-muted {
             margin-left: 5px;
             overflow: hidden;
             text-overflow: ellipsis;
         }
     }
 
-    .bp4-form-content {
+    .bp5-form-content {
         display: flex;
         flex-wrap: wrap;
         width: 100%;
         user-select: none;
     }
 
-    .bp4-control-group .bp4-input {
+    .bp5-control-group .bp5-input {
         width: 125px;
     }
 
     .components-input {
         display: flex;
 
-        .bp4-input {
+        .bp5-input {
             width: 40px;
         }
     }
 
-    .bp4-slider {
+    .bp5-slider {
         width: 40%;
         height: 30px;
         margin-left: 20px;
         margin-right: 20px;
 
-        .bp4-button {
+        .bp5-button {
             margin-left: 20px;
         }
     }
@@ -134,11 +134,11 @@
         white-space: nowrap;
     }
 
-    .bp4-divider {
+    .bp5-divider {
         margin: 15px 0 15px 0;
     }
 
-    .bp4-switch {
+    .bp5-switch {
         margin: 7px 10px 0 10px;
     }
 
@@ -149,24 +149,24 @@
         margin: 0 0 0 0;
         transition: opacity 400ms;
 
-        .bp4-button {
+        .bp5-button {
             transition: opacity 400ms;
             user-select: none;
         }
     }
 
     .fitting-result-panel {
-        .bp4-tabs {
+        .bp5-tabs {
             display: flex;
             width: 100%;
             height: 100%;
             text-align: left;
 
-            .bp4-tab-list {
+            .bp5-tab-list {
                 min-width: 10em;
             }
 
-            .bp4-tab-panel {
+            .bp5-tab-panel {
                 width: calc(100% - 125px);
                 height: 100%;
                 padding-left: 10px;

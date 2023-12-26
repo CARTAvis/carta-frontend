@@ -3,19 +3,19 @@
 .layer-list-settings-panel {
     margin: 20px;
 
-    .bp4-form-group {
+    .bp5-form-group {
         &:first-of-type {
             margin-left: 0px;
         }
     }
 
-    .bp4-form-group .bp4-label {
+    .bp5-form-group .bp5-label {
         min-width: 12em;
         width: 12em;
         text-align: right;
     }
 
-    .bp4-button-text {
+    .bp5-button-text {
         display: block;
         white-space: nowrap;
         overflow: hidden;
@@ -23,16 +23,16 @@
     }
 
     .name-text {
-        .bp4-label {
+        .bp5-label {
             min-width: 110px;
             width: 110px;
         }
 
-        .bp4-button {
+        .bp5-button {
             width: 200px;
         }
 
-        .bp4-form-content {
+        .bp5-form-content {
             display: flex;
             width: calc(100% - 120px);
             line-height: 30px;
@@ -55,15 +55,15 @@
     .freq-input {
         display: flex;
 
-        .bp4-label {
+        .bp5-label {
             min-width: 110px;
             width: 110px;
         }
 
-        .bp4-form-group {
+        .bp5-form-group {
             margin-right: 7px;
 
-            .bp4-input-group {
+            .bp5-input-group {
                 min-width: 130px;
                 width: 130px;
             }

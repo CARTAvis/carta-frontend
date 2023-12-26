@@ -7,16 +7,16 @@
     .file-info-panel-top {
         display: inline-flex;
 
-        .bp4-tabs {
+        .bp5-tabs {
             padding-right: 10px;
         }
 
-        .bp4-form-group {
+        .bp5-form-group {
             margin: 0;
             padding-left: 10px;
         }
 
-        .bp4-html-select {
+        .bp5-html-select {
             width: 110px;
         }
     }
@@ -61,7 +61,7 @@
         }
     }
 
-    .bp4-heading {
+    .bp5-heading {
         flex: 0 0 auto;
     }
 
@@ -80,7 +80,7 @@
         margin: 0 10px 10px 0;
         transition: opacity 400ms;
 
-        .bp4-button {
+        .bp5-button {
             transition: opacity 400ms;
             user-select: none;
         }

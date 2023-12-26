@@ -2,39 +2,39 @@
     margin: 20px;
     white-space: nowrap;
 
-    .bp4-form-group {
+    .bp5-form-group {
         &:first-of-type {
             margin-left: 0px;
         }
     }
 
-    .bp4-form-group .bp4-label {
+    .bp5-form-group .bp5-label {
         text-align: right;
         min-width: 11em;
         width: 11em;
     }
 
     .conversion-tab-panel {
-        .bp4-form-group .bp4-label {
+        .bp5-form-group .bp5-label {
             min-width: 11em;
         }
     }
 
     .moment-tab-panel {
-        .range-select .bp4-form-group .bp4-label {
+        .range-select .bp5-form-group .bp5-label {
             margin: 0 10px 0 0;
             min-width: 3em;
         }
     }
 
     .fitting-tab-panel {
-        .bp4-form-group .bp4-label {
+        .bp5-form-group .bp5-label {
             text-align: right;
         }
     }
 
-    .bp4-html-select select,
-    .bp4-select select {
+    .bp5-html-select select,
+    .bp5-select select {
         width: 100%;
         min-width: 7em;
         overflow: hidden;

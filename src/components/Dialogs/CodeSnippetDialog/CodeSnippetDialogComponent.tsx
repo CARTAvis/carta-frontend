@@ -114,7 +114,7 @@ export class CodeSnippetDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
         const snippetStore = appStore.snippetStore;
-        const className = classNames("code-snippet-dialog", {"bp4-dark": appStore.darkTheme});
+        const className = classNames("code-snippet-dialog", {"bp5-dark": appStore.darkTheme});
 
         const dialogProps: DialogProps = {
             icon: "console",

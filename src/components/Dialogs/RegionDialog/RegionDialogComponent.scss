@@ -1,24 +1,24 @@
 .region-dialog {
-    .bp4-dialog-body {
+    .bp5-dialog-body {
         user-select: none;
 
         .region-form {
             user-select: none;
 
-            .bp4-label {
+            .bp5-label {
                 width: 9em;
                 text-align: right;
             }
 
-            .bp4-form-group:first-child .bp4-input {
+            .bp5-form-group:first-child .bp5-input {
                 width: 255px;
             }
 
-            .bp4-input {
+            .bp5-input {
                 width: 125px;
             }
 
-            .bp4-form-content {
+            .bp5-form-content {
                 display: flex;
                 flex-wrap: wrap;
                 flex: 1;

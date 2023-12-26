@@ -8,7 +8,7 @@
 }
 
 .colormap-select-popover {
-    .bp4-menu {
+    .bp5-menu {
         max-height: 180px;
         overflow: auto;
         padding: 0;
@@ -22,7 +22,7 @@
     -moz-image-rendering: crisp-edges;
     border-radius: $pt-border-radius;
     border: 1px solid $gray4;
-    &.bp4-dark {
+    &.bp5-dark {
         border: 1px solid $gray2;
     }
 }
@@ -48,13 +48,13 @@
             margin-right: 0;
         }
 
-        .bp4-form-group {
+        .bp5-form-group {
             float: right;
             margin-bottom: 5px;
-            .bp4-button {
+            .bp5-button {
                 width: 130px;
             }
-            .bp4-label {
+            .bp5-label {
                 margin-right: 5px;
             }
             .bias-contrast-button {
@@ -62,15 +62,15 @@
             }
         }
 
-        .bp4-numeric-input {
-            .bp4-input-group {
+        .bp5-numeric-input {
+            .bp5-input-group {
                 input {
                     width: 130px;
                 }
             }
         }
 
-        .bp4-input-group {
+        .bp5-input-group {
             input {
                 width: 120px;
             }
@@ -82,17 +82,17 @@
         }
 
         .step-input {
-            .bp4-input-group input {
+            .bp5-input-group input {
                 width: 98px;
             }
 
-            .bp4-button {
+            .bp5-button {
                 width: 30px;
             }
         }
 
         .nan-color-button {
-            .bp4-button {
+            .bp5-button {
                 width: 50px;
             }
         }
@@ -116,10 +116,10 @@
 
 .percentile-select {
     margin: 5px auto auto 5px;
-    .bp4-form-group {
+    .bp5-form-group {
         margin: 0;
     }
-    .bp4-button {
+    .bp5-button {
         margin-left: 5px;
     }
 }

@@ -252,9 +252,9 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
             }
             return (
                 <div className="sort-label" onClick={() => (disableSort ? null : this.props.updateSortRequest(column.name, nextSortType, column.columnIndex))}>
-                    <Label disabled={disableSort} className="bp4-inline label">
+                    <Label disabled={disableSort} className="bp5-inline label">
                         <Icon className={iconClass} icon={sortIcon as IconName} />
-                        <Tooltip2 hoverOpenDelay={250} hoverCloseDelay={0} content={headerDescription ?? "Description not avaliable"} position={Position.BOTTOM} popoverClassName={AppStore.Instance.darkTheme ? "bp4-dark" : ""}>
+                        <Tooltip2 hoverOpenDelay={250} hoverCloseDelay={0} content={headerDescription ?? "Description not avaliable"} position={Position.BOTTOM} popoverClassName={AppStore.Instance.darkTheme ? "bp5-dark" : ""}>
                             {column.name}
                         </Tooltip2>
                     </Label>
@@ -345,7 +345,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
 
         const tableCheckData = this.props.dataset.get(lineSelectionIndex)?.data.map(data => data);
 
-        const className = classNames("column-filter-table", {"bp4-dark": AppStore.Instance.darkTheme});
+        const className = classNames("column-filter-table", {"bp5-dark": AppStore.Instance.darkTheme});
 
         return (
             <Table2

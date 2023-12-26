@@ -875,7 +875,7 @@ export class PreferenceDialogComponent extends React.Component {
             </div>
         );
 
-        const className = classNames("preference-dialog", {"bp4-dark": appStore.darkTheme});
+        const className = classNames("preference-dialog", {"bp5-dark": appStore.darkTheme});
 
         const dialogProps: DialogProps = {
             icon: "wrench",
@@ -898,7 +898,7 @@ export class PreferenceDialogComponent extends React.Component {
                 defaultHeight={PreferenceDialogComponent.DefaultHeight}
                 enableResizing={true}
             >
-                <div className="bp4-dialog-body">
+                <div className="bp5-dialog-body">
                     <Tabs id="preferenceTabs" vertical={true} selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
                         <Tab id={PreferenceDialogTabs.GLOBAL} title="Global" panel={globalPanel} />
                         <Tab id={PreferenceDialogTabs.RENDER_CONFIG} title="Render Configuration" panel={renderConfigPanel} />
@@ -914,8 +914,8 @@ export class PreferenceDialogComponent extends React.Component {
                         <Tab id={PreferenceDialogTabs.LOG_EVENT} title="Log Events" panel={logEventsPanel} />
                     </Tabs>
                 </div>
-                <div className="bp4-dialog-footer">
-                    <div className="bp4-dialog-footer-actions">
+                <div className="bp5-dialog-footer">
+                    <div className="bp5-dialog-footer-actions">
                         <Tooltip2 content="Apply to current tab only." position={Position.TOP}>
                             <AnchorButton intent={Intent.WARNING} icon={"refresh"} onClick={this.reset} text="Restore defaults" />
                         </Tooltip2>

@@ -1,14 +1,14 @@
 .profile-fitting-panel {
-    .bp4-popover2-target {
+    .bp5-popover2-target {
         display: block;
     }
 
     .profile-fitting-form {
-        .bp4-form-group {
+        .bp5-form-group {
             &:first-of-type {
                 margin-left: 0px;
             }
-            .bp4-label {
+            .bp5-label {
                 width: 10em;
                 text-align: left;
             }
@@ -18,7 +18,7 @@
             display: flex;
             flex-direction: row;
 
-            .bp4-input-group {
+            .bp5-input-group {
                 width: 40px;
             }
         }
@@ -28,13 +28,13 @@
             flex-direction: row;
             height: 30px;
 
-            .bp4-slider {
+            .bp5-slider {
                 margin-left: 20px;
                 min-width: 200px;
                 width: 100%;
             }
 
-            .bp4-button {
+            .bp5-button {
                 margin-left: 20px;
             }
         }
@@ -43,7 +43,7 @@
             display: flex;
             flex-direction: row;
 
-            .bp4-switch {
+            .bp5-switch {
                 margin-left: 15px;
             }
         }
@@ -78,7 +78,7 @@
         flex-direction: row;
         justify-content: flex-end;
 
-        .bp4-button {
+        .bp5-button {
             margin-left: 10px;
         }
 
@@ -120,7 +120,7 @@
         }
     }
 
-    .bp4-html-select {
+    .bp5-html-select {
         width: 100%;
     }
 }

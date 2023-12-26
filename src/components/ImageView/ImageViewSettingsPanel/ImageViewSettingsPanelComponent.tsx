@@ -760,7 +760,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
             </div>
         ) : null;
 
-        const className = classNames("image-view-settings", {"bp4-dark": appStore.darkTheme});
+        const className = classNames("image-view-settings", {"bp5-dark": appStore.darkTheme});
 
         return (
             <div className={className}>

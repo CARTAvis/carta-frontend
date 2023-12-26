@@ -3,14 +3,14 @@
     width: 100%;
 
     .online-catalog-config {
-        .bp4-form-group {
-            .bp4-label {
+        .bp5-form-group {
+            .bp5-label {
                 margin-left: 5px !important;
             }
-            .bp4-form-content {
+            .bp5-form-content {
                 display: inline-flex;
             }
-            .bp4-form-content > * {
+            .bp5-form-content > * {
                 margin-right: 5px;
                 margin-left: 5px;
             }
@@ -26,18 +26,18 @@
         }
     }
 
-    .bp4-dialog-footer {
+    .bp5-dialog-footer {
         .result-info {
             display: inline-flex;
             font-size: x-small;
         }
 
-        .bp4-dialog-footer-actions {
+        .bp5-dialog-footer-actions {
             float: right;
         }
     }
 
-    .bp4-input-group .bp4-input {
+    .bp5-input-group .bp5-input {
         width: auto;
     }
 
@@ -52,8 +52,8 @@
 }
 
 .vizier-mulit-select {
-    .bp4-popover2-content {
-        .bp4-menu {
+    .bp5-popover2-content {
+        .bp5-menu {
             max-height: 200px;
             overflow: auto;
             min-width: fit-content;

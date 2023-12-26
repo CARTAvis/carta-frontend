@@ -30,7 +30,7 @@ export class TelemetryDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const appReady = appStore.apiService?.authenticated;
         const consentRequired = appStore.telemetryService.consentRequired;
-        const classes = classNames("telemetry-dialog", {"bp4-dark": appStore.darkTheme});
+        const classes = classNames("telemetry-dialog", {"bp5-dark": appStore.darkTheme});
 
         return (
             <Dialog icon="data-connection" canOutsideClickClose={false} isCloseButtonShown={false} lazy={true} isOpen={appReady && consentRequired} className={classes} canEscapeKeyClose={false} title="CARTA Usage Data">

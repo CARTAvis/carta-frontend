@@ -72,7 +72,7 @@ export class SaveLayoutDialogComponent extends React.Component {
 
     render() {
         const appStore = AppStore.Instance;
-        const className = classNames("preference-dialog", {"bp4-dark": appStore.darkTheme});
+        const className = classNames("preference-dialog", {"bp5-dark": appStore.darkTheme});
         const isSave = appStore.layoutStore.isSave;
 
         const dialogProps: DialogProps = {

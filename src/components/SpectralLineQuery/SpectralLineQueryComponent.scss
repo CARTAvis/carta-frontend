@@ -3,19 +3,19 @@
     width: 100%;
     padding: 5px;
 
-    .bp4-dialog-body {
+    .bp5-dialog-body {
         height: calc(100% - 65px);
         margin: 0;
 
-        .bp4-numeric-input {
-            .bp4-input-group {
+        .bp5-numeric-input {
+            .bp5-input-group {
                 width: 80px;
             }
         }
 
-        .bp4-form-group {
+        .bp5-form-group {
             margin: 0 10px 0 0;
-            .bp4-label {
+            .bp5-label {
                 text-align: right;
             }
         }
@@ -34,7 +34,7 @@
             }
 
             .intensity-limit {
-                .bp4-form-group {
+                .bp5-form-group {
                     margin: 0;
                 }
             }
@@ -85,9 +85,9 @@
                 width: 100%;
                 padding: 5px;
 
-                .bp4-table-container {
+                .bp5-table-container {
                     width: 100%;
-                    .bp4-table-header {
+                    .bp5-table-header {
                         line-height: 220%;
                     }
                     .header-table-cell {
@@ -114,13 +114,13 @@
                 .result-table {
                     height: calc(100% - 35px);
                     width: 100%;
-                    .bp4-table-container {
+                    .bp5-table-container {
                         width: 100%;
-                        .bp4-table-editable-name.bp4-editable-text::before {
+                        .bp5-table-editable-name.bp5-editable-text::before {
                             right: 0px;
                             left: 0px;
                         }
-                        .bp4-editable-text::before {
+                        .bp5-editable-text::before {
                             right: 0px;
                             left: 0px;
                         }
@@ -128,7 +128,7 @@
                             width: inherit;
                             height: inherit;
                         }
-                        .bp4-table-bottom-container {
+                        .bp5-table-bottom-container {
                             user-select: text;
                         }
                     }
@@ -137,16 +137,16 @@
         }
     }
 
-    .bp4-dialog-footer {
+    .bp5-dialog-footer {
         height: 65px;
         margin: 0px;
         padding: 0 5px 5px 5px;
-        .bp4-button {
+        .bp5-button {
             height: 30px;
         }
-        .bp4-form-group {
+        .bp5-form-group {
             margin: 0;
-            .bp4-label {
+            .bp5-label {
                 margin: 0;
             }
         }

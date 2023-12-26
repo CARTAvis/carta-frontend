@@ -1,20 +1,20 @@
 .distance-measurement-dialog {
-    .bp4-dialog-body {
+    .bp5-dialog-body {
         user-select: none;
 
         .config-panel {
             user-select: none;
 
-            .bp4-label {
+            .bp5-label {
                 min-width: 8em;
                 text-align: right;
             }
 
-            .bp4-input {
+            .bp5-input {
                 width: 125px;
             }
 
-            .bp4-form-content {
+            .bp5-form-content {
                 display: flex;
                 flex-wrap: wrap;
                 flex: 1;
@@ -34,13 +34,13 @@
         }
 
         .styling-panel {
-            .bp4-label {
+            .bp5-label {
                 min-width: 8em;
                 text-align: right;
             }
 
-            .bp4-numeric-input {
-                .bp4-input-group {
+            .bp5-numeric-input {
+                .bp5-input-group {
                     width: 60px;
                 }
             }

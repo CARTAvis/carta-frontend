@@ -50,7 +50,7 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
 
     private renderColorSelectItem = (colorItem: string, {handleClick, modifiers}) => {
         if (colorItem === CUSTOM_COLOR_OPTION) {
-            const popoverClassName = classNames("color-picker-popup", {"bp4-dark": AppStore.Instance.darkTheme});
+            const popoverClassName = classNames("color-picker-popup", {"bp5-dark": AppStore.Instance.darkTheme});
 
             return (
                 <div key={"custom-color"} className={"custom-color"}>

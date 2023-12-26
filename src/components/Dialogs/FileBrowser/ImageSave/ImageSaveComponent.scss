@@ -7,7 +7,7 @@
     margin-top: 1em;
 
     .file-name {
-        .bp4-label {
+        .bp5-label {
             width: 7em;
         }
 
@@ -17,40 +17,40 @@
         }
     }
 
-    .region-select .bp4-label {
+    .region-select .bp5-label {
         width: 7em;
     }
 
     .coordinate-select {
-        .bp4-label {
+        .bp5-label {
             width: 7em;
         }
 
-        .bp4-html-select {
+        .bp5-html-select {
             margin-right: 7px;
         }
     }
 
     .range-select {
-        .bp4-label {
+        .bp5-label {
             width: 7em;
         }
 
-        .bp4-form-content {
+        .bp5-form-content {
             display: flex;
 
-            .bp4-input-group {
+            .bp5-input-group {
                 margin: 0;
                 width: 13em;
             }
 
-            .bp4-label {
+            .bp5-label {
                 margin-left: 7px;
             }
         }
     }
 
-    .stokes-select .bp4-label {
+    .stokes-select .bp5-label {
         width: 7em;
     }
 
@@ -62,16 +62,16 @@
     .freq-input {
         display: flex;
 
-        .bp4-input-group {
+        .bp5-input-group {
             margin: 0;
             width: 13em;
         }
 
-        .bp4-input-group {
+        .bp5-input-group {
             width: 13em;
         }
 
-        .bp4-html-select {
+        .bp5-html-select {
             margin-left: 7px;
         }
     }

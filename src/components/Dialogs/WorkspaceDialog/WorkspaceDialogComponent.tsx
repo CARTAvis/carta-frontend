@@ -140,7 +140,7 @@ export const WorkspaceDialogComponent = observer(() => {
         }
     }, [mode, fetchWorkspaces]);
 
-    const className = classNames("workspace-dialog", {"bp4-dark": appStore.darkTheme});
+    const className = classNames("workspace-dialog", {"bp5-dark": appStore.darkTheme});
 
     const dialogProps: IDialogProps = {
         icon: "control",
@@ -236,7 +236,7 @@ export const WorkspaceDialogComponent = observer(() => {
     } else {
         tableContent = (
             <Table
-                className={classNames("workspace-table", {"bp4-dark": appStore.darkTheme})}
+                className={classNames("workspace-table", {"bp5-dark": appStore.darkTheme})}
                 enableRowReordering={false}
                 renderMode={RenderMode.NONE}
                 selectionModes={SelectionModes.ROWS_ONLY}

@@ -388,7 +388,7 @@ export class FileInfoComponent extends React.Component<{
         return (
             <AutoSizer>
                 {({height, width}) => (
-                    <List className="header-list bp4-code-block" itemCount={numHeaders} itemSize={18} height={height} width={width} ref={this.listRef}>
+                    <List className="header-list bp5-code-block" itemCount={numHeaders} itemSize={18} height={height} width={width} ref={this.listRef}>
                         {renderHeaderRow}
                     </List>
                 )}

@@ -1,35 +1,35 @@
 @import "~@blueprintjs/core/lib/scss/variables.scss";
 
 .preference-dialog {
-    .bp4-tabs {
+    .bp5-tabs {
         height: 100%;
     }
 
-    .bp4-tab-panel {
+    .bp5-tab-panel {
         height: 100%;
         overflow: auto;
         width: 100%;
     }
 
-    .bp4-form-group {
+    .bp5-form-group {
         white-space: nowrap;
 
         &:first-of-type {
             margin-left: 0px;
         }
-        .bp4-label {
+        .bp5-label {
             min-width: 16em;
             text-align: right;
         }
     }
 
-    .log-event-panel .bp4-form-group .bp4-label {
+    .log-event-panel .bp5-form-group .bp5-label {
         width: auto !important;
         text-align: left;
     }
 
-    .bp4-numeric-input {
-        .bp4-input-group {
+    .bp5-numeric-input {
+        .bp5-input-group {
             width: 60px;
         }
     }
@@ -39,7 +39,7 @@
     }
 
     .log-event-list {
-        .bp4-form-content {
+        .bp5-form-content {
             display: flex;
             flex-wrap: wrap;
             box-sizing: content-box;
@@ -64,7 +64,7 @@
     }
 
     .telemetry-mode-form-group {
-        .bp4-form-helper-text {
+        .bp5-form-helper-text {
             width: 275px;
         }
     }
@@ -78,8 +78,8 @@
         }
     }
 
-    .bp4-html-select select,
-    .bp4-select select {
+    .bp5-html-select select,
+    .bp5-select select {
         width: auto;
     }
 

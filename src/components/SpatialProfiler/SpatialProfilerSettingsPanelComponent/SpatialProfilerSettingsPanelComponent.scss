@@ -1,21 +1,21 @@
 .spatial-profiler-settings {
     margin: 20px;
 
-    .bp4-form-group {
+    .bp5-form-group {
         &:first-of-type {
             margin-left: 0px;
         }
-        .bp4-input-group {
+        .bp5-input-group {
             width: 60px;
         }
     }
 
-    .bp4-form-group .bp4-label {
+    .bp5-form-group .bp5-label {
         min-width: 11em;
         text-align: right;
     }
 
-    .bp4-form-group .bp4-form-helper-text {
+    .bp5-form-group .bp5-form-helper-text {
         white-space: nowrap;
     }
 }

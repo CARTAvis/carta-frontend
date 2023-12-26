@@ -16,24 +16,24 @@
             right: 5px;
         }
 
-        .bp4-tab-panel {
+        .bp5-tab-panel {
             height: 22em;
             overflow: auto;
             width: 100%;
         }
 
-        .bp4-form-group .bp4-label {
+        .bp5-form-group .bp5-label {
             text-align: left;
         }
 
-        .bp4-numeric-input {
-            .bp4-input-group {
+        .bp5-numeric-input {
+            .bp5-input-group {
                 width: 60px;
             }
         }
 
         .line-boundary {
-            .bp4-input-group {
+            .bp5-input-group {
                 input {
                     width: 90px;
                 }
@@ -52,7 +52,7 @@
             height: 100%;
         }
 
-        .bp4-form-group {
+        .bp5-form-group {
             margin-left: 5px;
         }
     }
@@ -104,10 +104,10 @@
             padding-right: 5px;
             padding-top: 5px;
             padding-bottom: 4px;
-            .bp4-table-container {
+            .bp5-table-container {
                 width: 100%;
 
-                .bp4-table-header {
+                .bp5-table-header {
                     line-height: 220%;
                 }
 
@@ -120,15 +120,15 @@
                 }
 
                 .cell-dropdown-menu {
-                    .bp4-table-truncated-text {
+                    .bp5-table-truncated-text {
                         width: 100%;
                         height: 100%;
 
-                        .bp4-html-select {
+                        .bp5-html-select {
                             width: 100%;
                             height: 100%;
 
-                            .bp4-icon {
+                            .bp5-icon {
                                 top: 9px;
                                 right: 9px;
                             }
@@ -147,15 +147,15 @@
             padding-bottom: 1px;
             padding-top: 1px;
 
-            .bp4-table-container {
+            .bp5-table-container {
                 width: 100%;
 
-                .bp4-table-editable-name.bp4-editable-text::before {
+                .bp5-table-editable-name.bp5-editable-text::before {
                     right: 0px;
                     left: 0px;
                 }
 
-                .bp4-editable-text::before {
+                .bp5-editable-text::before {
                     right: 0px;
                     left: 0px;
                 }
@@ -167,7 +167,7 @@
         }
     }
 
-    .bp4-dialog-footer {
+    .bp5-dialog-footer {
         margin: 0;
         width: calc(100% - 5px);
         height: 85px;
@@ -218,9 +218,9 @@
                 margin-left: -40px;
                 width: 140px;
                 height: 30px;
-                .bp4-popover2-target {
+                .bp5-popover2-target {
                     width: inherit;
-                    .bp4-button {
+                    .bp5-button {
                         width: 100%;
                         justify-content: space-between;
                     }
@@ -237,7 +237,7 @@
                         margin-left: 0px;
                         justify-content: space-between;
 
-                        .bp4-button-text {
+                        .bp5-button-text {
                             overflow: hidden;
                             white-space: nowrap;
                         }
@@ -252,16 +252,16 @@
 
             .catalog-max-rows {
                 margin-left: 5px;
-                .bp4-label {
+                .bp5-label {
                     text-align: right;
                     overflow: hidden;
                     width: 65px;
                     height: 30px;
                 }
 
-                .bp4-form-content {
-                    .bp4-control-group {
-                        .bp4-input-group {
+                .bp5-form-content {
+                    .bp5-control-group {
+                        .bp5-input-group {
                             width: 100px;
                         }
                     }
@@ -269,15 +269,15 @@
             }
         }
 
-        .bp4-dialog-footer {
+        .bp5-dialog-footer {
             height: 35px;
             float: right;
-            .bp4-button {
+            .bp5-button {
                 height: 30px;
             }
-            .bp4-form-group {
+            .bp5-form-group {
                 margin: 0;
-                .bp4-label {
+                .bp5-label {
                     margin: 0;
                 }
             }
@@ -286,8 +286,8 @@
 }
 
 .catalog-select {
-    .bp4-popover2-content {
-        .bp4-menu {
+    .bp5-popover2-content {
+        .bp5-menu {
             max-height: 300px;
             overflow: auto;
             min-width: fit-content;

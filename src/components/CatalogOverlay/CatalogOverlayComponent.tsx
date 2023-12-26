@@ -726,7 +726,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 <div className={"catalog-overlay-filter-settings"}>
                     <FormGroup inline={true} label="File">
                         <Select2
-                            className="bp4-fill"
+                            className="bp5-fill"
                             filterable={false}
                             items={catalogFileItems}
                             activeItem={this.catalogFileId}
@@ -771,7 +771,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                         <FilterableTableComponent {...dataTableProps} />
                     </Pane>
                 </SplitPane>
-                <div className="bp4-dialog-footer">
+                <div className="bp5-dialog-footer">
                     <div className={"table-info"}>
                         <table className="info-display">
                             <tbody>{tableInfo}</tbody>
@@ -838,8 +838,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             />
                         </div>
                     </div>
-                    <div className="bp4-dialog-footer">
-                        <div className="bp4-dialog-footer-actions">
+                    <div className="bp5-dialog-footer">
+                        <div className="bp5-dialog-footer-actions">
                             <AnchorButton intent={Intent.SUCCESS} text="Apply filter" onClick={this.handleFilterRequest} disabled={disable || !profileStore.updateTableView || !profileStore.hasFilter} />
                             <AnchorButton intent={Intent.WARNING} text="Reset filter" onClick={this.handleResetClick} disabled={disable} />
                             <AnchorButton text="Close catalog" onClick={this.handleFileCloseClick} disabled={disable} />

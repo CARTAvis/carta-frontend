@@ -14,13 +14,13 @@
     flex-direction: column;
     user-select: none;
 
-    .bp4-numeric-input {
-        .bp4-input-group {
+    .bp5-numeric-input {
+        .bp5-input-group {
             width: 80px;
         }
     }
 
-    .bp4-non-ideal-state {
+    .bp5-non-ideal-state {
         flex: auto;
         padding: 5px 5px 1px;
         margin: 0;
@@ -31,8 +31,8 @@
         padding: 5px 5px 1px;
         margin: 0;
 
-        .bp4-form-group {
-            .bp4-label {
+        .bp5-form-group {
+            .bp5-label {
                 min-width: 13em;
                 width: 13em;
                 text-align: right;
@@ -42,14 +42,14 @@
             }
         }
 
-        .bp4-html-select select,
-        .bp4-select select {
+        .bp5-html-select select,
+        .bp5-select select {
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
         .label-info-group {
-            .bp4-html-select {
+            .bp5-html-select {
                 width: 100%;
             }
 
@@ -78,10 +78,10 @@
             display: flex;
             flex-direction: row;
 
-            .bp4-form-group {
+            .bp5-form-group {
                 margin-right: 10px;
                 margin-bottom: 0px;
-                .bp4-label {
+                .bp5-label {
                     margin: 0 10px 0 0;
                     min-width: 3em;
                     width: 3em;
@@ -99,14 +99,14 @@
             display: flex;
             flex-direction: row;
 
-            .bp4-input-group {
+            .bp5-input-group {
                 width: 65px;
             }
 
-            .bp4-form-group {
+            .bp5-form-group {
                 margin-right: 5px;
                 margin-bottom: 0px;
-                .bp4-label {
+                .bp5-label {
                     margin: 0px;
                     min-width: 2em;
                     width: 2em;

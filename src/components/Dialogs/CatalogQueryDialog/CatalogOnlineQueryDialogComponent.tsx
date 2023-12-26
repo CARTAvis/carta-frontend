@@ -68,7 +68,7 @@ export class CatalogQueryDialogComponent extends React.Component {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         let className = "catalog-query-dialog";
         if (appStore.darkTheme) {
-            className += " bp4-dark";
+            className += " bp5-dark";
         }
 
         const dialogProps: DialogProps = {
@@ -262,15 +262,15 @@ export class CatalogQueryDialogComponent extends React.Component {
                 minHeight={CatalogQueryDialogComponent.MinHeight}
                 enableResizing={true}
             >
-                <div className="bp4-dialog-body">{configBoard}</div>
+                <div className="bp5-dialog-body">{configBoard}</div>
                 <Overlay autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={disable} usePortal={false}>
                     <div className="query-loading-overlay">
                         <Spinner intent={Intent.PRIMARY} size={30} value={null} />
                     </div>
                 </Overlay>
-                <div className="bp4-dialog-footer">
+                <div className="bp5-dialog-footer">
                     <div className={"result-info"}>{tableInfo}</div>
-                    <div className="bp4-dialog-footer-actions">
+                    <div className="bp5-dialog-footer-actions">
                         <AnchorButton intent={Intent.SUCCESS} disabled={disable} onClick={() => this.query()} text={"Query"} />
                         <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => CatalogApiService.Instance.cancelQuery(configStore.catalogDB)} text={"Cancel"} />
                         {configStore.enableLoadVizier ? <AnchorButton intent={Intent.PRIMARY} disabled={disable} onClick={() => this.loadVizierCatalogs()} text={"Load selected"} /> : null}

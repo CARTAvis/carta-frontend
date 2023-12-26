@@ -662,7 +662,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const renderFileSelect = (
             <FormGroup inline={true} label="File">
                 <Select2
-                    className="bp4-fill"
+                    className="bp5-fill"
                     filterable={false}
                     items={catalogFileItems}
                     activeItem={this.catalogFileId}
@@ -678,7 +678,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const renderXSelect = (
             <FormGroup inline={true} label="X">
                 <Select2
-                    className="bp4-fill"
+                    className="bp5-fill"
                     items={xyOptions}
                     activeItem={widgetStore.xColumnName}
                     onItemSelect={item => this.handleColumnNameChange("X", item)}
@@ -703,7 +703,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const renderYSelect = (
             <FormGroup inline={true} label="Y">
                 <Select2
-                    className="bp4-fill"
+                    className="bp5-fill"
                     items={xyOptions}
                     activeItem={widgetStore.yColumnName}
                     onItemSelect={item => this.handleColumnNameChange("Y", item)}
@@ -722,7 +722,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const renderStatisticSelect = (
             <FormGroup inline={true} label="Statistic source">
                 <Select2
-                    className="bp4-fill"
+                    className="bp5-fill"
                     items={xyOptions}
                     activeItem={widgetStore.statisticColumnName}
                     onItemSelect={item => this.handleColumnNameChange("S", item)}
@@ -970,11 +970,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         style={{transform: isScatterPlot ? `scale(${scale})` : "scale(1)", transformOrigin: "top left"}}
                     />
                 </div>
-                <div className="bp4-dialog-footer">
+                <div className="bp5-dialog-footer">
                     <div className="scatter-info">
                         <ProfilerInfoComponent info={infoStrings} type="pre-line" separator="newLine" />
                     </div>
-                    <div className="bp4-dialog-footer-actions">
+                    <div className="bp5-dialog-footer-actions">
                         <Tooltip2 content={"Show only selected sources at image and table viewer"}>
                             <FormGroup label={"Selected only"} inline={true} disabled={disabled}>
                                 <Switch checked={catalogWidgetStore.showSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled} />

@@ -1,24 +1,24 @@
 .vector-overlay-dialog {
-    .bp4-dialog-body {
+    .bp5-dialog-body {
         user-select: none;
 
-        .bp4-label {
+        .bp5-label {
             min-width: 6em;
             width: 6em;
             text-align: right;
         }
 
-        .bp4-button:not([class*="bp4-intent-"]).bp4-align-right {
+        .bp5-button:not([class*="bp5-intent-"]).bp5-align-right {
             white-space: nowrap;
             width: 100%;
 
-            .bp4-button-text {
+            .bp5-button-text {
                 overflow: hidden;
                 text-overflow: ellipsis;
             }
         }
 
-        .bp4-form-group {
+        .bp5-form-group {
             &:first-of-type {
                 margin-left: 0;
             }
@@ -26,40 +26,40 @@
 
         .vector-overlay-config-panel,
         .vector-overlay-style-panel {
-            .bp4-form-group .bp4-label {
+            .bp5-form-group .bp5-label {
                 min-width: 10em;
                 width: 10em;
             }
         }
 
         .parameter-line {
-            .bp4-form-group {
+            .bp5-form-group {
                 width: 6em;
             }
         }
 
         .parameter-length {
-            .bp4-form-group {
-                .bp4-input-group {
+            .bp5-form-group {
+                .bp5-input-group {
                     max-width: 167px;
                 }
             }
         }
 
-        .bp4-tabs {
+        .bp5-tabs {
             margin: 2px;
         }
 
         .parameter-container {
-            .bp4-form-group.bp4-inline {
-                .bp4-label {
+            .bp5-form-group.bp5-inline {
+                .bp5-label {
                     min-width: 2em;
                     width: 3em;
                 }
             }
         }
 
-        .bp4-form-content {
+        .bp5-form-content {
             display: inline-flex;
             width: calc(100% - 7em); // because of popover component, the subtraction of the text label width is required
             max-width: fit-content;

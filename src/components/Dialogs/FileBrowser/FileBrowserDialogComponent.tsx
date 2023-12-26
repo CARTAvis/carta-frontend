@@ -607,7 +607,7 @@ export class FileBrowserDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
-        const className = classNames("file-browser-dialog", {"bp4-dark": appStore.darkTheme});
+        const className = classNames("file-browser-dialog", {"bp5-dark": appStore.darkTheme});
 
         const dialogProps: DialogProps = {
             icon: "folder-open",
@@ -692,7 +692,7 @@ export class FileBrowserDialogComponent extends React.Component {
                         </React.Fragment>
                     )}
                 </div>
-                <div className="bp4-dialog-body">
+                <div className="bp5-dialog-body">
                     <div className={paneClassName}>
                         <div className="file-list">
                             <FileListTableComponent
@@ -733,11 +733,11 @@ export class FileBrowserDialogComponent extends React.Component {
                     </div>
                     {fileInput}
                 </div>
-                <div className="bp4-dialog-footer">
-                    <div className="bp4-dialog-footer-actions">{actionButton}</div>
+                <div className="bp5-dialog-footer">
+                    <div className="bp5-dialog-footer-actions">{actionButton}</div>
                 </div>
                 <Alert
-                    className={appStore.darkTheme ? "bp4-dark" : ""}
+                    className={appStore.darkTheme ? "bp5-dark" : ""}
                     isOpen={this.overwriteExistingFileAlertVisible}
                     confirmButtonText="Yes"
                     cancelButtonText="Cancel"

@@ -748,7 +748,7 @@ export class WidgetsStore {
     };
 
     private getControlButton = (className: string, title: string, icon: string) => {
-        return $(`<li class="${className}" title="${title}"><span class="bp4-icon-standard bp4-icon-${icon}" style/></li>`);
+        return $(`<li class="${className}" title="${title}"><span class="bp5-icon-standard bp5-icon-${icon}" style/></li>`);
     };
 
     public toWidgetSettingsConfig = (widgetType: string, widgetID: string) => {
@@ -895,7 +895,7 @@ export class WidgetsStore {
         const imagePanelButton = $(".lm_goldenlayout")?.find("li.lm-image-panel[style!='display:none;']");
         if (imagePanelButton) {
             imagePanelButton.attr("title", this.getImagePanelButtonTooltip(imagePanelMode));
-            imagePanelButton.find(".bp4-icon-standard")?.attr("class", `bp4-icon-standard ${this.getImagePanelButtonIcon(imagePanelMode)}`);
+            imagePanelButton.find(".bp5-icon-standard")?.attr("class", `bp5-icon-standard ${this.getImagePanelButtonIcon(imagePanelMode)}`);
         }
     };
 
@@ -904,7 +904,7 @@ export class WidgetsStore {
     };
 
     private getImagePanelButtonIcon = (imagePanelMode: ImagePanelMode) => {
-        return imagePanelMode === ImagePanelMode.None ? "bp4-icon-square" : "bp4-icon-grid-view";
+        return imagePanelMode === ImagePanelMode.None ? "bp5-icon-square" : "bp5-icon-grid-view";
     };
 
     onNextPageClick = () => {

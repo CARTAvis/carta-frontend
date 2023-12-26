@@ -131,7 +131,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             backgroundColor: "transparent"
         };
 
-        const className = classNames("image-toolbar", {docked: this.props.docked, "bp4-dark": appStore.darkTheme});
+        const className = classNames("image-toolbar", {docked: this.props.docked, "bp5-dark": appStore.darkTheme});
 
         const zoomLevel = frame.spatialReference && frame.spatialTransform ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
         const currentZoomSpan = (
