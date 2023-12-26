@@ -192,10 +192,12 @@ export class CatalogApiProcessing {
             const columns = data[index].getElementsByTagName("TD");
             for (let j = 0; j < columns.length; j++) {
                 //textContent is faster than innerHTML
-                if (headers[j]["dataType"] !== CARTA.ColumnData["String"] || headers[j]["dataType"] !== CARTA.ColumnData["UnsupportedType"] || headers[j]["dataType"] !== CARTA.ColumnData["Bool"]) {
-                    dataMap.get(j).data[index] = Number(columns[j].textContent);
-                } else {
+                if (headers[j]["dataType"] === CARTA.ColumnType.String || headers[j]["dataType"] === CARTA.ColumnType.UnsupportedType || headers[j]["dataType"] === CARTA.ColumnType.Bool) {
                     dataMap.get(j).data[index] = columns[j].textContent;
+                } else if (headers[j]["dataType"] === CARTA.ColumnType.Float || headers[j]["dataType"] === CARTA.ColumnType.Double) {
+                    dataMap.get(j).data[index] = parseFloat(columns[j].textContent);
+                } else {
+                    dataMap.get(j).data[index] = parseInt(columns[j].textContent);
                 }
             }
         }
