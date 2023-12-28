@@ -17,7 +17,7 @@ describe("ExportImageMenuComponent", () => {
 
     test("renders one menu divider and three menu items", () => {
         render(<ExportImageMenuComponent />);
-        expect(screen.getAllByRole("none")?.[0]).toHaveTextContent(/^Resolution$/);
+        expect(screen.getByRole("separator")).toHaveTextContent(/^Resolution$/);
 
         const menuitems = screen.getAllByRole("menuitem");
         expect(menuitems?.length).toEqual(3);
