@@ -880,8 +880,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             layout.xaxis.range = [border.xMin, border.xMax];
             layout.yaxis.range = [border.yMin, border.yMax];
             layout.yaxis.title = widgetStore.yColumnName;
-            layout.xaxis.tickformat = this.formatTickValues(layout.xaxis.range);
-            layout.yaxis.tickformat = this.formatTickValues(layout.yaxis.range);
+            layout.xaxis.tickformat = this.formatTickValues([border.xMin, border.xMax]);
+            layout.yaxis.tickformat = this.formatTickValues([border.yMin, border.yMax]);
         } else {
             data = this.histogramData.data;
             let border: XBorder;
@@ -891,7 +891,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 border = widgetStore.histogramBorder;
             }
             layout.xaxis.range = [border.xMin, border.xMax];
-            layout.xaxis.tickformat = this.formatTickValues(layout.xaxis.range);
+            layout.xaxis.tickformat = this.formatTickValues([border.xMin, border.xMax]);
             layout.yaxis.range = [this.histogramY?.yMin, this.histogramY?.yMax];
             layout.yaxis.fixedrange = true;
             // autorange will trigger y axis range change
