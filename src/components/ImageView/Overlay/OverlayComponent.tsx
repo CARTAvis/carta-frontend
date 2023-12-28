@@ -178,6 +178,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const axesStyleString = this.props.overlaySettings.axes.styleString;
         const numbersStyleString = this.props.overlaySettings.numbers.styleString;
         const labelsStyleString = this.props.overlaySettings.labels.styleString;
+        const formatStringX = this.props.overlaySettings.numbers.formatStringX;
+        const formatStyingY = this.props.overlaySettings.numbers.formatStringY;
 
         if (frame.isSwappedZ) {
             const requiredChannel = frame.requiredChannel;
@@ -199,12 +201,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         } else if (frame.isSwappedZ && frame.spectralAxis?.valid) {
             AST.set(frame.wcsInfo, spectralAxisSetting + dirAxesSetting);
         } else {
-            const formatStringX = this.props.overlaySettings.numbers.formatStringX;
-            const formatStyingY = this.props.overlaySettings.numbers.formatStringY;
-            const explicitSystem = this.props.overlaySettings.global.explicitSystem;
-            if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined) {
-                AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY}, System=${explicitSystem},` + dirAxesSetting);
-            }
+            AST.set(frame.wcsInfo, dirAxesSetting);
         }
 
         const className = classNames("overlay-canvas", {docked: this.props.docked});

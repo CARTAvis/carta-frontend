@@ -1051,6 +1051,21 @@ export class OverlayStore {
                 }
             });
         });
+
+        autorun(() => {
+            const formatStringX = this.numbers.formatStringX;
+            const formatStyingY = this.numbers.formatStringY;
+            const explicitSystem = this.global.explicitSystem;
+            if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined) {
+                AppStore.Instance.frames.forEach(frame => {
+                    if (!(frame.isPVImage && frame.spectralAxis?.valid) && !(frame.isSwappedZ && frame.spectralAxis?.valid)) {
+                        if (frame?.validWcs && frame?.wcsInfo) {
+                            AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY}, System=${explicitSystem}`);
+                        }
+                    }
+                });
+            }
+        });
     }
 
     @action setViewDimension = (width: number, height: number) => {
