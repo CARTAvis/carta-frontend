@@ -1,9 +1,8 @@
 import * as React from "react";
 import ReactResizeDetector from "react-resize-detector";
 import SplitPane, {Pane} from "react-split-pane";
-import {AnchorButton, Button, ButtonGroup, FormGroup, Intent, NonIdealState, PopoverPosition, Switch} from "@blueprintjs/core";
-import {MenuItem2, Tooltip2} from "@blueprintjs/popover2";
-import {IItemRendererProps, ItemPredicate, Select2} from "@blueprintjs/select";
+import {AnchorButton, Button, ButtonGroup, FormGroup, Intent, MenuItem, NonIdealState, PopoverPosition, Switch, Tooltip} from "@blueprintjs/core";
+import {ItemPredicate, ItemRendererProps, Select} from "@blueprintjs/select";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
 import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
 import {CARTA} from "carta-protobuf";
@@ -265,8 +264,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return axisOptions;
     }
 
-    private renderColumnNamePopOver = (catalogName: string, itemProps: IItemRendererProps) => {
-        return <MenuItem2 key={catalogName} text={catalogName} onClick={itemProps.handleClick} />;
+    private renderColumnNamePopOver = (catalogName: string, itemProps: ItemRendererProps) => {
+        return <MenuItem key={catalogName} text={catalogName} onClick={itemProps.handleClick} />;
     };
 
     private filterColumn: ItemPredicate<string> = (query: string, columnName: string) => {
@@ -553,14 +552,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private renderFileIdPopOver = (fileId: number, itemProps: IItemRendererProps) => {
+    private renderFileIdPopOver = (fileId: number, itemProps: ItemRendererProps) => {
         const fileName = this.catalogFileNames.get(fileId);
         let text = `${fileId}: ${fileName}`;
-        return <MenuItem2 key={fileId} text={text} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+        return <MenuItem key={fileId} text={text} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
-    private renderPlotTypePopOver = (plotType: CatalogPlotType, itemProps: IItemRendererProps) => {
-        return <MenuItem2 key={plotType} text={plotType} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+    private renderPlotTypePopOver = (plotType: CatalogPlotType, itemProps: ItemRendererProps) => {
+        return <MenuItem key={plotType} text={plotType} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
     private onTableResize = (newSize: number) => {
@@ -579,23 +578,23 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private renderSystemPopOver = (system: CatalogSystemType, itemProps: IItemRendererProps) => {
-        const menuItem = <MenuItem2 key={system} text={AbstractCatalogProfileStore.CoordinateSystemName.get(system)} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+    private renderSystemPopOver = (system: CatalogSystemType, itemProps: ItemRendererProps) => {
+        const menuItem = <MenuItem key={system} text={AbstractCatalogProfileStore.CoordinateSystemName.get(system)} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
         switch (system) {
             case CatalogSystemType.Pixel0:
                 return (
                     <div key={system}>
-                        <Tooltip2 position="auto-end" content={<small>PIX0: 0-based image coordinates</small>}>
+                        <Tooltip position="auto-end" content={<small>PIX0: 0-based image coordinates</small>}>
                             {menuItem}
-                        </Tooltip2>
+                        </Tooltip>
                     </div>
                 );
             case CatalogSystemType.Pixel1:
                 return (
                     <div key={system}>
-                        <Tooltip2 position="auto-end" content={<small>PIX1: 1-based image coordinates</small>}>
+                        <Tooltip position="auto-end" content={<small>PIX1: 1-based image coordinates</small>}>
                             {menuItem}
-                        </Tooltip2>
+                        </Tooltip>
                     </div>
                 );
             default:
@@ -719,13 +718,13 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             footerDropdownClass = "footer-action-small";
         }
 
-        const noResults = <MenuItem2 disabled={true} text="No results" />;
+        const noResults = <MenuItem disabled={true} text="No results" />;
 
         return (
             <div className={"catalog-overlay"}>
                 <div className={"catalog-overlay-filter-settings"}>
                     <FormGroup inline={true} label="File">
-                        <Select2
+                        <Select
                             className="bp5-fill"
                             filterable={false}
                             items={catalogFileItems}
@@ -735,10 +734,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                         >
                             <Button text={this.catalogFileId} rightIcon="double-caret-vertical" />
-                        </Select2>
+                        </Select>
                     </FormGroup>
                     <FormGroup className="catalog-system" disabled={!isImageOverlay} inline={true} label="System">
-                        <Select2
+                        <Select
                             filterable={false}
                             items={systemOptions}
                             activeItem={profileStore.catalogCoordinateSystem.system}
@@ -748,7 +747,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                         >
                             <Button text={activeSystem} disabled={!isImageOverlay} rightIcon="double-caret-vertical" />
-                        </Select2>
+                        </Select>
                     </FormGroup>
 
                     <ButtonGroup className="catalog-map-buttons">
@@ -779,7 +778,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     </div>
                     <div className="footer-action-container">
                         <div className={footerDropdownClass}>
-                            <Select2
+                            <Select
                                 className="catalog-type-button"
                                 filterable={false}
                                 items={Object.values(CatalogPlotType)}
@@ -789,10 +788,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                             >
                                 <Button className="bp3" text={catalogWidgetStore.catalogPlotType} rightIcon="double-caret-vertical" />
-                            </Select2>
+                            </Select>
 
                             <FormGroup className="catalog-axis" inline={true} label={this.xAxisLable} disabled={disable}>
-                                <Select2
+                                <Select
                                     className="catalog-axis-select"
                                     items={this.axisOption}
                                     activeItem={null}
@@ -806,11 +805,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     resetOnSelect={true}
                                 >
                                     <Button className="catalog-axis-button" text={catalogWidgetStore.xAxis} disabled={disable} rightIcon="double-caret-vertical" />
-                                </Select2>
+                                </Select>
                             </FormGroup>
 
                             <FormGroup className="catalog-axis" inline={true} label={this.yAxisLable} disabled={isHistogram || disable}>
-                                <Select2
+                                <Select
                                     className="catalog-axis-select"
                                     items={this.axisOption}
                                     activeItem={null}
@@ -824,7 +823,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     resetOnSelect={true}
                                 >
                                     <Button className="catalog-axis-button" text={catalogWidgetStore.yAxis} disabled={isHistogram || disable} rightIcon="double-caret-vertical" />
-                                </Select2>
+                                </Select>
                             </FormGroup>
 
                             <ClearableNumericInputComponent

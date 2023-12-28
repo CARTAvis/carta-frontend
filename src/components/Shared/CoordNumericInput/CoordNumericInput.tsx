@@ -1,5 +1,4 @@
-import {Position} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
+import {Position, Tooltip} from "@blueprintjs/core";
 
 import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
 import {CoordinateMode} from "stores/Frame";
@@ -71,9 +70,9 @@ const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled = fals
     }
 
     return (
-        <Tooltip2 content={tooltipContent} position={Position.BOTTOM} hoverOpenDelay={300}>
+        <Tooltip content={tooltipContent} position={Position.BOTTOM} hoverOpenDelay={300}>
             <SafeNumericInput allowNumericCharactersOnly={false} buttonPosition="none" placeholder={placeholder} disabled={disabled} value={valueWcs ?? ""} onBlur={handleChange} onKeyDown={handleChange} />
-        </Tooltip2>
+        </Tooltip>
     );
 };
 

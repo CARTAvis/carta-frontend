@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Button, Icon, Label, NonIdealState, Spinner} from "@blueprintjs/core";
-import {Cell, Column, ColumnHeaderCell2, Region, Regions, RenderMode, SelectionModes, Table2, TableLoadingOption} from "@blueprintjs/table";
+import {Cell, Column, ColumnHeaderCell, Region, Regions, RenderMode, SelectionModes, Table2, TableLoadingOption} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
 import globToRegExp from "glob-to-regexp";
@@ -303,7 +303,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 );
             }
         };
-        return <ColumnHeaderCell2 className={"column-name"} nameRenderer={nameRenderer} />;
+        return <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer} />;
     };
 
     private renderFilenames = (rowIndex: number) => {

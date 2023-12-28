@@ -1,8 +1,7 @@
 import * as React from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
 import {FixedSizeList as List} from "react-window";
-import {Button, ButtonGroup, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, NonIdealState, OptionProps, Position, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
-import {Popover2, Popover2InteractionKind} from "@blueprintjs/popover2";
+import {Button, ButtonGroup, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, NonIdealState, OptionProps, Popover, PopoverInteractionKind, Position, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -423,9 +422,9 @@ export class FileInfoComponent extends React.Component<{
 
         return !this.props.isLoading && !this.props.errorMessage && this.props.fileInfoExtended && this.props.selectedTab === FileInfoType.IMAGE_HEADER ? (
             <ButtonGroup className="header-search-button" style={{opacity: this.isMouseEntered || this.isSearchOpened ? 1 : 0}}>
-                <Popover2
+                <Popover
                     position={Position.LEFT}
-                    interactionKind={Popover2InteractionKind.CLICK_TARGET_ONLY}
+                    interactionKind={PopoverInteractionKind.CLICK_TARGET_ONLY}
                     modifiers={{
                         arrow: {enabled: false},
                         offset: {enabled: true, options: {offset: [0, 10]}}
@@ -445,7 +444,7 @@ export class FileInfoComponent extends React.Component<{
                     }
                 >
                     <Button icon="search-text"></Button>
-                </Popover2>
+                </Popover>
                 <Button icon="th" onClick={this.exportHeader}></Button>
             </ButtonGroup>
         ) : null;

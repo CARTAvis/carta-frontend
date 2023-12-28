@@ -1,7 +1,6 @@
 import * as React from "react";
-import {AnchorButton, Button, DialogProps, Intent, PopoverPosition} from "@blueprintjs/core";
-import {MenuItem2} from "@blueprintjs/popover2";
-import {IItemRendererProps, Select2} from "@blueprintjs/select";
+import {AnchorButton, Button, DialogProps, Intent, MenuItem, PopoverPosition} from "@blueprintjs/core";
+import {ItemRendererProps, Select} from "@blueprintjs/select";
 import {Cell, Column, SelectionModes, Table2} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -117,7 +116,7 @@ export class StokesDialogComponent extends React.Component {
                     const file = files[rowIndex];
                     return (
                         <Cell className="cell-dropdown-menu" key={`cell_drop_down_${rowIndex}`} interactive={true}>
-                            <Select2
+                            <Select
                                 filterable={false}
                                 items={stokesItems}
                                 activeItem={this.stokes.get(file).polarizationType}
@@ -126,7 +125,7 @@ export class StokesDialogComponent extends React.Component {
                                 popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                             >
                                 <Button className="bp5-minimal catalog-represent-as-select-button" text={this.getLabelFromValue(this.stokes.get(file).polarizationType)} rightIcon="double-caret-vertical" />
-                            </Select2>
+                            </Select>
                         </Cell>
                     );
                 }}
@@ -226,8 +225,8 @@ export class StokesDialogComponent extends React.Component {
         return POLARIZATION_LABELS.get(CARTA.PolarizationType[value]) ?? String(value);
     };
 
-    private renderPopOver = (stokesType: CARTA.PolarizationType, itemProps: IItemRendererProps) => {
+    private renderPopOver = (stokesType: CARTA.PolarizationType, itemProps: ItemRendererProps) => {
         const label = this.getLabelFromValue(stokesType);
-        return <MenuItem2 key={`${stokesType}: ${label}`} text={label} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+        return <MenuItem key={`${stokesType}: ${label}`} text={label} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 }

@@ -1,7 +1,6 @@
 import * as React from "react";
-import {Button, FormGroup, TagInput} from "@blueprintjs/core";
-import {MenuItem2} from "@blueprintjs/popover2";
-import {Select2} from "@blueprintjs/select";
+import {Button, FormGroup, MenuItem, TagInput} from "@blueprintjs/core";
+import {Select} from "@blueprintjs/select";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
@@ -11,7 +10,7 @@ import {getPercentiles, scaleValue} from "utilities";
 
 import "./ContourGeneratorPanelComponent.scss";
 
-const GeneratorSelect = Select2.ofType<ContourGeneratorType>();
+const GeneratorSelect = Select<ContourGeneratorType>;
 
 @observer
 export class ContourGeneratorPanelComponent extends React.Component<{
@@ -290,7 +289,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
     // endregion
 
     private renderGeneratorSelectItem = (generator: ContourGeneratorType, {handleClick, modifiers, query}) => {
-        return <MenuItem2 text={generator} onClick={handleClick} key={generator} />;
+        return <MenuItem text={generator} onClick={handleClick} key={generator} />;
     };
 
     private generateLevels = () => {

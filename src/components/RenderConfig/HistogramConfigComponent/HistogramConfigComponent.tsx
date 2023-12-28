@@ -1,7 +1,6 @@
 import * as React from "react";
-import {Alert, Button, FormGroup} from "@blueprintjs/core";
-import {MenuItem2} from "@blueprintjs/popover2";
-import {Select2} from "@blueprintjs/select";
+import {Alert, Button, FormGroup, MenuItem} from "@blueprintjs/core";
+import {Select} from "@blueprintjs/select";
 import {makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
@@ -9,7 +8,7 @@ import {SCALING_POPOVER_PROPS} from "components/Shared";
 import {AppStore} from "stores";
 import {RenderConfigStore} from "stores/Frame";
 
-const HistogramSelect = Select2.ofType<boolean>();
+const HistogramSelect = Select<boolean>;
 
 interface HistogramConfigProps {
     renderConfig: RenderConfigStore;
@@ -31,7 +30,7 @@ export class HistogramConfigComponent extends React.Component<HistogramConfigPro
     }
 
     renderHistogramSelectItem = (isCube: boolean, {handleClick, modifiers, query}) => {
-        return <MenuItem2 text={isCube ? "Per-cube" : "Per-channel"} onClick={handleClick} key={isCube ? "cube" : "channel"} />;
+        return <MenuItem text={isCube ? "Per-cube" : "Per-channel"} onClick={handleClick} key={isCube ? "cube" : "channel"} />;
     };
 
     handleHistogramChange = (value: boolean) => {

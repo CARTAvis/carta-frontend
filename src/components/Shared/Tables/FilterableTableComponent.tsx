@@ -1,8 +1,7 @@
 import * as React from "react";
-import {Checkbox, Icon, InputGroup, Label, Position} from "@blueprintjs/core";
+import {Checkbox, Icon, InputGroup, Label, Position, Tooltip} from "@blueprintjs/core";
 import {IconName} from "@blueprintjs/icons";
-import {Tooltip2} from "@blueprintjs/popover2";
-import {Cell, Column, ColumnHeaderCell2, Region, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
+import {Cell, Column, ColumnHeaderCell, Region, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
 import {RowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -110,8 +109,8 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         const controlHeader = this.props.filter?.get(columnHeader.name);
         const filterSyntax = this.getFilterSyntax(columnHeader.dataType);
         return (
-            <ColumnHeaderCell2>
-                <ColumnHeaderCell2>
+            <ColumnHeaderCell>
+                <ColumnHeaderCell>
                     <Checkbox
                         indeterminate={selectionType === RowSelectionType.Indeterminate}
                         checked={selectionType === RowSelectionType.All}
@@ -128,9 +127,9 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                             }
                         }}
                     />
-                </ColumnHeaderCell2>
-                <ColumnHeaderCell2 isActive={controlHeader?.filter !== ""}>
-                    <Tooltip2 hoverOpenDelay={250} hoverCloseDelay={0} content={filterSyntax} position={Position.BOTTOM}>
+                </ColumnHeaderCell>
+                <ColumnHeaderCell isActive={controlHeader?.filter !== ""}>
+                    <Tooltip hoverOpenDelay={250} hoverCloseDelay={0} content={filterSyntax} position={Position.BOTTOM}>
                         <InputGroup
                             key={"column-popover-" + columnIndex}
                             small={true}
@@ -138,9 +137,9 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                             value={controlHeader?.filter ?? ""}
                             onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, columnHeader.name)}
                         />
-                    </Tooltip2>
-                </ColumnHeaderCell2>
-            </ColumnHeaderCell2>
+                    </Tooltip>
+                </ColumnHeaderCell>
+            </ColumnHeaderCell>
         );
     };
 
@@ -254,19 +253,19 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 <div className="sort-label" onClick={() => (disableSort ? null : this.props.updateSortRequest(column.name, nextSortType, column.columnIndex))}>
                     <Label disabled={disableSort} className="bp5-inline label">
                         <Icon className={iconClass} icon={sortIcon as IconName} />
-                        <Tooltip2 hoverOpenDelay={250} hoverCloseDelay={0} content={headerDescription ?? "Description not avaliable"} position={Position.BOTTOM} popoverClassName={AppStore.Instance.darkTheme ? "bp5-dark" : ""}>
+                        <Tooltip hoverOpenDelay={250} hoverCloseDelay={0} content={headerDescription ?? "Description not avaliable"} position={Position.BOTTOM} popoverClassName={AppStore.Instance.darkTheme ? "bp5-dark" : ""}>
                             {column.name}
-                        </Tooltip2>
+                        </Tooltip>
                     </Label>
                 </div>
             );
         };
 
         return (
-            <ColumnHeaderCell2>
-                <ColumnHeaderCell2 className={"column-name"} nameRenderer={nameRenderer} />
-                <ColumnHeaderCell2 isActive={controlheader?.filter !== ""}>
-                    <Tooltip2 hoverOpenDelay={250} hoverCloseDelay={0} content={filterSyntax} position={Position.BOTTOM}>
+            <ColumnHeaderCell>
+                <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer} />
+                <ColumnHeaderCell isActive={controlheader?.filter !== ""}>
+                    <Tooltip hoverOpenDelay={250} hoverCloseDelay={0} content={filterSyntax} position={Position.BOTTOM}>
                         <InputGroup
                             key={"column-popover-" + columnIndex}
                             small={true}
@@ -275,9 +274,9 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                             onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, column.name)}
                             onKeyDown={this.handleKeyDown}
                         />
-                    </Tooltip2>
-                </ColumnHeaderCell2>
-            </ColumnHeaderCell2>
+                    </Tooltip>
+                </ColumnHeaderCell>
+            </ColumnHeaderCell>
         );
     };
 

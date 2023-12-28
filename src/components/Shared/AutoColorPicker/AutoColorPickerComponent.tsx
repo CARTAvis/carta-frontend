@@ -1,8 +1,7 @@
 import * as React from "react";
 import {ColorResult, SketchPicker} from "react-color";
-import {Button, PopoverPosition} from "@blueprintjs/core";
-import {MenuItem2, Popover2} from "@blueprintjs/popover2";
-import {Select2} from "@blueprintjs/select";
+import {Button, MenuItem, Popover, PopoverPosition} from "@blueprintjs/core";
+import {Select} from "@blueprintjs/select";
 import classNames from "classnames";
 import * as _ from "lodash";
 import {computed, makeObservable, observable} from "mobx";
@@ -21,7 +20,7 @@ interface AutoColorPickerComponentProps {
     setColor: (color: string) => void;
 }
 
-const ColorSelect = Select2.ofType<string>();
+const ColorSelect = Select<string>;
 const CUSTOM_COLOR_OPTION = "custom-color";
 
 @observer
@@ -54,17 +53,17 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
 
             return (
                 <div key={"custom-color"} className={"custom-color"}>
-                    <Popover2
+                    <Popover
                         position={PopoverPosition.BOTTOM_RIGHT}
                         popoverClassName={popoverClassName}
                         content={<SketchPicker color={this.autoColor} onChange={this.handleColorChange} disableAlpha={this.props.disableAlpha} presetColors={this.props.presetColors} />}
                     >
                         <Button text={"Other"} className="color-swatch-button" disabled={this.props.disabled} />
-                    </Popover2>
+                    </Popover>
                 </div>
             );
         } else {
-            return <MenuItem2 active={modifiers.active} disabled={modifiers.disabled} key={colorItem} onClick={handleClick} text={this.renderColorBlock(getColorForTheme(colorItem))} />;
+            return <MenuItem active={modifiers.active} disabled={modifiers.disabled} key={colorItem} onClick={handleClick} text={this.renderColorBlock(getColorForTheme(colorItem))} />;
         }
     };
 

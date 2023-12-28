@@ -1,9 +1,8 @@
 import * as React from "react";
 import {CSSProperties} from "react";
 import ReactResizeDetector from "react-resize-detector";
-import {AnchorButton, Menu, MenuDivider, NonIdealState} from "@blueprintjs/core";
-import {MenuItem2, Tooltip2} from "@blueprintjs/popover2";
-import {Cell, Column, ColumnHeaderCell2, IMenuContext, RowHeaderCell2, SelectionModes, Table2} from "@blueprintjs/table";
+import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState, Tooltip} from "@blueprintjs/core";
+import {Cell, Column, ColumnHeaderCell, MenuContext, RowHeaderCell, SelectionModes, Table2} from "@blueprintjs/table";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -61,7 +60,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
     private rowHeaderCellRenderer = (rowIndex: number) => {
         const className = classNames("row-cell", {active: rowIndex === AppStore.Instance.activeFrameIndex});
-        return <RowHeaderCell2 name={rowIndex.toString()} className={className} />;
+        return <RowHeaderCell name={rowIndex.toString()} className={className} />;
     };
 
     private onFileSelected = (frame: FrameStore) => {
@@ -117,7 +116,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         return (
             <Cell className={className}>
                 <React.Fragment>
-                    <Tooltip2
+                    <Tooltip
                         position={"bottom"}
                         content={
                             <span>
@@ -132,9 +131,9 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                         <AnchorButton minimal={true} small={true} active={frame.renderConfig.visible} intent={frame.renderConfig.visible ? "success" : "none"} onClick={frame.renderConfig.toggleVisibility}>
                             R
                         </AnchorButton>
-                    </Tooltip2>
+                    </Tooltip>
                     {frame.contourConfig.enabled && (
-                        <Tooltip2
+                        <Tooltip
                             position={"bottom"}
                             content={
                                 <span>
@@ -149,10 +148,10 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                             <AnchorButton minimal={true} small={true} active={frame.contourConfig.visible} intent={frame.contourConfig.visible ? "success" : "none"} onClick={frame.contourConfig.toggleVisibility}>
                                 C
                             </AnchorButton>
-                        </Tooltip2>
+                        </Tooltip>
                     )}
                     {frame.vectorOverlayConfig.enabled && (
-                        <Tooltip2
+                        <Tooltip
                             position={"bottom"}
                             content={
                                 <span>
@@ -167,7 +166,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                             <AnchorButton minimal={true} small={true} active={frame.vectorOverlayConfig.visible} intent={frame.vectorOverlayConfig.visible ? "success" : "none"} onClick={frame.vectorOverlayConfig.toggleVisibility}>
                                 V
                             </AnchorButton>
-                        </Tooltip2>
+                        </Tooltip>
                     )}
                 </React.Fragment>
             </Cell>
@@ -191,7 +190,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 tooltipSubtitle = `Click to ${frame.spatialReference ? "disable" : "enable"} matching to ${appStore.spatialReference.filename}`;
             }
             spatialMatchingButton = (
-                <Tooltip2
+                <Tooltip
                     position={"bottom"}
                     content={
                         <span>
@@ -213,7 +212,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     >
                         XY
                     </AnchorButton>
-                </Tooltip2>
+                </Tooltip>
             );
         }
 
@@ -226,7 +225,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 tooltipSubtitle = `Click to ${frame.spectralReference ? "disable" : "enable"} matching to ${appStore.spectralReference.filename}`;
             }
             spectralMatchingButton = (
-                <Tooltip2
+                <Tooltip
                     position={"bottom"}
                     content={
                         <span>
@@ -248,7 +247,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     >
                         Z
                     </AnchorButton>
-                </Tooltip2>
+                </Tooltip>
             );
         }
 
@@ -261,7 +260,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 tooltipSubtitle = `Click to ${frame.rasterScalingReference ? "disable" : "enable"} matching to ${appStore.rasterScalingReference.filename}`;
             }
             renderConfigMatchingButton = (
-                <Tooltip2
+                <Tooltip
                     position={"bottom"}
                     content={
                         <span>
@@ -283,7 +282,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     >
                         R
                     </AnchorButton>
-                </Tooltip2>
+                </Tooltip>
             );
         }
 
@@ -326,7 +325,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             fontWeight: "bold"
         };
 
-        return <ColumnHeaderCell2 name={name} style={columnHeaderStyleProps} />;
+        return <ColumnHeaderCell name={name} style={columnHeaderStyleProps} />;
     };
 
     private restFreqShortCutOnClick = (selectedFrameIndex: number) => {
@@ -339,7 +338,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private contextMenuRenderer = (context: IMenuContext) => {
+    private contextMenuRenderer = (context: MenuContext) => {
         const rows = context.getTarget().rows;
         const appStore = AppStore.Instance;
         if (rows && rows.length && appStore.frames[rows[0]]) {
@@ -348,15 +347,15 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 return (
                     <Menu>
                         <MenuDivider title={frame.filename} />
-                        <MenuItem2 disabled={appStore.spatialReference === frame} text="Set as spatial reference" onClick={() => appStore.setSpatialReference(frame)} />
-                        <MenuItem2 disabled={appStore.spectralReference === frame || frame.frameInfo.fileInfoExtended.depth <= 1} text="Set as spectral reference" onClick={() => appStore.setSpectralReference(frame)} />
-                        <MenuItem2 disabled={appStore.rasterScalingReference === frame} text="Set as raster scaling reference" onClick={() => appStore.setRasterScalingReference(frame)} />
+                        <MenuItem disabled={appStore.spatialReference === frame} text="Set as spatial reference" onClick={() => appStore.setSpatialReference(frame)} />
+                        <MenuItem disabled={appStore.spectralReference === frame || frame.frameInfo.fileInfoExtended.depth <= 1} text="Set as spectral reference" onClick={() => appStore.setSpectralReference(frame)} />
+                        <MenuItem disabled={appStore.rasterScalingReference === frame} text="Set as raster scaling reference" onClick={() => appStore.setRasterScalingReference(frame)} />
                         <MenuDivider />
-                        <MenuItem2 disabled={!frame.isRestFreqEditable} text="Set rest frequency" onClick={() => this.restFreqShortCutOnClick(rows[0])} />
+                        <MenuItem disabled={!frame.isRestFreqEditable} text="Set rest frequency" onClick={() => this.restFreqShortCutOnClick(rows[0])} />
                         <MenuDivider />
-                        <MenuItem2 text="Close image" onClick={() => appStore.closeFile(frame)} />
-                        <MenuItem2 text="Close other images" disabled={appStore.frames?.length <= 1} onClick={() => appStore.closeOtherFiles(frame)} />
-                        <MenuItem2 text="Close all images" disabled={appStore.frames?.length <= 1} onClick={() => appStore.closeOtherFiles(null, false)} />
+                        <MenuItem text="Close image" onClick={() => appStore.closeFile(frame)} />
+                        <MenuItem text="Close other images" disabled={appStore.frames?.length <= 1} onClick={() => appStore.closeOtherFiles(frame)} />
+                        <MenuItem text="Close all images" disabled={appStore.frames?.length <= 1} onClick={() => appStore.closeOtherFiles(null, false)} />
                     </Menu>
                 );
             }

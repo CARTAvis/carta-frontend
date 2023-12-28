@@ -1,8 +1,7 @@
 import * as React from "react";
 import {ColorResult} from "react-color";
-import {Button, FormGroup, HTMLSelect} from "@blueprintjs/core";
-import {MenuItem2} from "@blueprintjs/popover2";
-import {Select2} from "@blueprintjs/select";
+import {Button, FormGroup, HTMLSelect, MenuItem} from "@blueprintjs/core";
+import {Select} from "@blueprintjs/select";
 import {observer} from "mobx-react";
 
 import {ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
@@ -11,12 +10,12 @@ import {SWATCH_COLORS} from "utilities";
 
 import "./ContourStylePanelComponent.scss";
 
-const DashModeSelect = Select2.ofType<ContourDashMode>();
+const DashModeSelect = Select<ContourDashMode>;
 
 @observer
 export class ContourStylePanelComponent extends React.Component<{frame: FrameStore; darkTheme: boolean}> {
     private renderDashModeSelectItem = (mode: ContourDashMode, {handleClick, modifiers, query}) => {
-        return <MenuItem2 text={mode} onClick={handleClick} key={mode} />;
+        return <MenuItem text={mode} onClick={handleClick} key={mode} />;
     };
 
     render() {

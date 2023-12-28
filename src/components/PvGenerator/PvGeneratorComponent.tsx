@@ -1,7 +1,6 @@
 import * as React from "react";
 import ReactResizeDetector from "react-resize-detector";
-import {AnchorButton, FormGroup, HTMLSelect, Position, Switch} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
+import {AnchorButton, FormGroup, HTMLSelect, Position, Switch, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -416,14 +415,14 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                 </div>
                 <div className="generate-button">
                     <div>
-                        <Tooltip2 disabled={isAbleToGeneratePreview} content={previewHint} position={Position.BOTTOM}>
+                        <Tooltip disabled={isAbleToGeneratePreview} content={previewHint} position={Position.BOTTOM}>
                             <AnchorButton intent="success" disabled={!isAbleToGeneratePreview} text="Start preview" onClick={this.onPreviewButtonClicked} />
-                        </Tooltip2>
+                        </Tooltip>
                     </div>
                     <div>
-                        <Tooltip2 disabled={isAbleToGenerate} content={hint} position={Position.BOTTOM}>
+                        <Tooltip disabled={isAbleToGenerate} content={hint} position={Position.BOTTOM}>
                             <AnchorButton intent="success" disabled={!isAbleToGenerate} text="Generate" onClick={this.onGenerateButtonClicked} />
-                        </Tooltip2>
+                        </Tooltip>
                     </div>
                 </div>
             </div>

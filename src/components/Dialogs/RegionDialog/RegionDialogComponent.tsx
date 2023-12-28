@@ -1,6 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Classes, DialogProps, Intent, NonIdealState, Tab, Tabs} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
+import {AnchorButton, Classes, DialogProps, Intent, NonIdealState, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -128,12 +127,12 @@ export class RegionDialogComponent extends React.Component {
 
         let tooltips = region && region.regionId !== 0 && (
             <React.Fragment>
-                <Tooltip2 content={`Region is ${region.locked ? "locked" : "unlocked"}`}>
+                <Tooltip content={`Region is ${region.locked ? "locked" : "unlocked"}`}>
                     <AnchorButton intent={Intent.WARNING} minimal={true} icon={region.locked ? "lock" : "unlock"} onClick={region.toggleLock} />
-                </Tooltip2>
-                <Tooltip2 content={"Focus"}>
+                </Tooltip>
+                <Tooltip content={"Focus"}>
                     <AnchorButton intent={Intent.WARNING} minimal={true} icon={<CustomIcon icon="center" />} onClick={this.handleFocusClicked} />
-                </Tooltip2>
+                </Tooltip>
             </React.Fragment>
         );
 

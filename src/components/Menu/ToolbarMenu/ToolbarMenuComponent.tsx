@@ -1,7 +1,6 @@
 import * as React from "react";
-import {AnchorButton, ButtonGroup, Menu, Position} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Menu, Popover, Position, Tooltip} from "@blueprintjs/core";
 import {IconName} from "@blueprintjs/icons";
-import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
@@ -120,14 +119,14 @@ export class ToolbarMenuComponent extends React.Component {
                         const regionIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
                         const regionIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
                         return (
-                            <Tooltip2 content={this.regionTooltip(type)} position={Position.BOTTOM} key={index}>
+                            <Tooltip content={this.regionTooltip(type)} position={Position.BOTTOM} key={index}>
                                 <AnchorButton icon={regionIcon} onClick={() => this.handleRegionTypeClicked(type)} active={isRegionCreating && newRegionType === type} disabled={regionButtonsDisabled} />
-                            </Tooltip2>
+                            </Tooltip>
                         );
                     })}
 
-                    <Popover2 content={annotationMenu} position={Position.BOTTOM_LEFT} minimal={true} disabled={regionButtonsDisabled}>
-                        <Tooltip2
+                    <Popover content={annotationMenu} position={Position.BOTTOM_LEFT} minimal={true} disabled={regionButtonsDisabled}>
+                        <Tooltip
                             content={
                                 <span>
                                     Annotation <br /> <small>Click to select annotation type.</small>
@@ -136,8 +135,8 @@ export class ToolbarMenuComponent extends React.Component {
                             position={Position.BOTTOM}
                         >
                             <AnchorButton icon={"annotation"} disabled={regionButtonsDisabled} active={isRegionCreating === true && appStore.activeFrame.regionSet.isNewRegionAnnotation === true} />
-                        </Tooltip2>
-                    </Popover2>
+                        </Tooltip>
+                    </Popover>
                 </ButtonGroup>
                 <ButtonGroup className={className}>
                     {Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).map(widgetType => {
@@ -145,7 +144,7 @@ export class ToolbarMenuComponent extends React.Component {
                         const trimmedStr = widgetType?.replace(/\s+/g, "");
                         const widgetTypeTooltip = widgetType?.charAt(0) + widgetType?.slice(1)?.toLowerCase();
                         return (
-                            <Tooltip2
+                            <Tooltip
                                 key={`${trimmedStr}Tooltip`}
                                 content={
                                     <span>
@@ -159,34 +158,34 @@ export class ToolbarMenuComponent extends React.Component {
                                     id={`${trimmedStr}Button`} // id particularly is for drag source in WidgetStore
                                     onClick={widgetConfig.onClick}
                                 />
-                            </Tooltip2>
+                            </Tooltip>
                         );
                     })}
                 </ButtonGroup>
                 <ButtonGroup className={dialogClassName}>
-                    <Tooltip2 content={<span>File header</span>} position={Position.BOTTOM}>
+                    <Tooltip content={<span>File header</span>} position={Position.BOTTOM}>
                         <AnchorButton icon={"app-header"} onClick={dialogStore.showFileInfoDialog} active={dialogStore.fileInfoDialogVisible} />
-                    </Tooltip2>
-                    <Tooltip2 content={<span>Preferences</span>} position={Position.BOTTOM}>
+                    </Tooltip>
+                    <Tooltip content={<span>Preferences</span>} position={Position.BOTTOM}>
                         <AnchorButton icon={"wrench"} onClick={dialogStore.showPreferenceDialog} active={dialogStore.preferenceDialogVisible} />
-                    </Tooltip2>
-                    <Tooltip2 content={<span>Contours</span>} position={Position.BOTTOM}>
+                    </Tooltip>
+                    <Tooltip content={<span>Contours</span>} position={Position.BOTTOM}>
                         <AnchorButton icon={<CustomIcon icon={"contour"} />} onClick={dialogStore.showContourDialog} active={dialogStore.contourDialogVisible} />
-                    </Tooltip2>
-                    <Tooltip2 content={<span>Vector overlay</span>} position={Position.BOTTOM}>
+                    </Tooltip>
+                    <Tooltip content={<span>Vector overlay</span>} position={Position.BOTTOM}>
                         <AnchorButton icon={<CustomIcon icon={"vectorOverlay"} />} onClick={dialogStore.showVectorOverlayDialog} active={dialogStore.vectorOverlayDialogVisible} />
-                    </Tooltip2>
-                    <Tooltip2 content={<span>Image fitting</span>} position={Position.BOTTOM}>
+                    </Tooltip>
+                    <Tooltip content={<span>Image fitting</span>} position={Position.BOTTOM}>
                         <AnchorButton icon={<CustomIcon icon="imageFitting" />} onClick={dialogStore.showFittingDialog} active={dialogStore.fittingDialogVisible} />
-                    </Tooltip2>
-                    <Tooltip2 content={<span>Online catalog query</span>} position={Position.BOTTOM}>
+                    </Tooltip>
+                    <Tooltip content={<span>Online catalog query</span>} position={Position.BOTTOM}>
                         <AnchorButton icon="geosearch" onClick={dialogStore.showCatalogQueryDialog} active={dialogStore.catalogQueryDialogVisible} />
-                    </Tooltip2>
-                    <Tooltip2 content={<span>Distance measurement</span>} position={Position.BOTTOM}>
+                    </Tooltip>
+                    <Tooltip content={<span>Distance measurement</span>} position={Position.BOTTOM}>
                         <AnchorButton icon={<CustomIcon icon="distanceMeasuring" />} active={dialogStore.distanceMeasuringDialogVisible} onClick={this.handleDistanceMeasuringClicked} />
-                    </Tooltip2>
+                    </Tooltip>
                     {appStore.preferenceStore.codeSnippetsEnabled && (
-                        <Tooltip2
+                        <Tooltip
                             content={
                                 <span>
                                     Code snippets
@@ -207,7 +206,7 @@ export class ToolbarMenuComponent extends React.Component {
                             position={Position.BOTTOM}
                         >
                             <AnchorButton icon={"console"} onClick={appStore.dialogStore.showCodeSnippetDialog} active={dialogStore.codeSnippetDialogVisible} />
-                        </Tooltip2>
+                        </Tooltip>
                     )}
                 </ButtonGroup>
             </React.Fragment>

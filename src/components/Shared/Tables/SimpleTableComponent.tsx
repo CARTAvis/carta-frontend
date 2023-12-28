@@ -1,6 +1,6 @@
 import * as React from "react";
 import {CSSProperties} from "react";
-import {Cell, Column, RenderMode, RowHeaderCell2, SelectionModes, Table2} from "@blueprintjs/table";
+import {Cell, Column, RenderMode, RowHeaderCell, SelectionModes, Table2} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
@@ -27,7 +27,7 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
 
     private renderRowHeaderCell = (rowIndex: number) => {
         const index = this.props.isIndexZero ? rowIndex : rowIndex + 1;
-        return <RowHeaderCell2 name={index.toString()} style={this.getFontStyle(rowIndex)} />;
+        return <RowHeaderCell name={index.toString()} style={this.getFontStyle(rowIndex)} />;
     };
 
     private getTooltip = (columnData: any, columnIndex: number, rowIndex: number) => {

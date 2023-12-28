@@ -1,8 +1,7 @@
 import * as React from "react";
 import {ColorResult} from "react-color";
-import {AnchorButton, Button, Callout, Checkbox, DialogProps, FormGroup, HTMLSelect, Intent, Position, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
-import {MenuItem2, Tooltip2} from "@blueprintjs/popover2";
-import {Select2} from "@blueprintjs/select";
+import {AnchorButton, Button, Callout, Checkbox, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
+import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import * as _ from "lodash";
@@ -43,7 +42,7 @@ export enum MemoryUnit {
     B = "B"
 }
 
-const PercentileSelect = Select2.ofType<string>();
+const PercentileSelect = Select<string>;
 
 const PV_PREVIEW_CUBE_SIZE_LIMIT = 1000000000; //need to be removed and replaced by backend limit
 
@@ -79,7 +78,7 @@ export class PreferenceDialogComponent extends React.Component {
     private static readonly MinHeight = 300;
 
     private renderPercentileSelectItem = (percentile: string, {handleClick, modifiers, query}) => {
-        return <MenuItem2 text={percentile + "%"} onClick={handleClick} key={percentile} />;
+        return <MenuItem text={percentile + "%"} onClick={handleClick} key={percentile} />;
     };
 
     private handleImageCompressionQualityChange = _.throttle((value: number) => {
@@ -916,9 +915,9 @@ export class PreferenceDialogComponent extends React.Component {
                 </div>
                 <div className="bp5-dialog-footer">
                     <div className="bp5-dialog-footer-actions">
-                        <Tooltip2 content="Apply to current tab only." position={Position.TOP}>
+                        <Tooltip content="Apply to current tab only." position={Position.TOP}>
                             <AnchorButton intent={Intent.WARNING} icon={"refresh"} onClick={this.reset} text="Restore defaults" />
-                        </Tooltip2>
+                        </Tooltip>
                     </div>
                 </div>
             </DraggableDialogComponent>

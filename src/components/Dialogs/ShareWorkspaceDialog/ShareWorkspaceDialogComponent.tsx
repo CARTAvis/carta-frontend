@@ -1,6 +1,5 @@
 import {ReactNode, useEffect, useState} from "react";
-import {AnchorButton, Checkbox, Classes, Dialog, DialogProps, InputGroup, Intent} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
+import {AnchorButton, Checkbox, Classes, Dialog, DialogProps, InputGroup, Intent, Tooltip} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
 import {AppStore} from "stores";
@@ -78,9 +77,9 @@ export const ShareWorkspaceDialogComponent = observer(() => {
         footer = (
             <>
                 {isReadOnly ? (
-                    <Tooltip2 usePortal={false} content={readOnlyTooltip}>
+                    <Tooltip usePortal={false} content={readOnlyTooltip}>
                         {saveCheckbox}
-                    </Tooltip2>
+                    </Tooltip>
                 ) : (
                     saveCheckbox
                 )}

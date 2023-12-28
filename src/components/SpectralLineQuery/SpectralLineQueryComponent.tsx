@@ -1,8 +1,7 @@
 import * as React from "react";
 import ReactResizeDetector from "react-resize-detector";
 import SplitPane, {Pane} from "react-split-pane";
-import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, Overlay, Position, Spinner, Switch} from "@blueprintjs/core";
-import {MenuItem2, Popover2, Tooltip2} from "@blueprintjs/popover2";
+import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay, Popover, Position, Spinner, Switch, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
 import classNames from "classnames";
 import {action, computed, makeObservable, observable} from "mobx";
@@ -286,9 +285,9 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                             <Switch checked={widgetStore.intensityLimitEnabled} onChange={() => widgetStore.toggleIntensityLimit()} />
                         </FormGroup>
                         {widgetStore.intensityLimitEnabled && (
-                            <Tooltip2 content="CDMS/JPL intensity (log)" position={Position.BOTTOM}>
+                            <Tooltip content="CDMS/JPL intensity (log)" position={Position.BOTTOM}>
                                 <SafeNumericInput value={widgetStore.intensityLimitValue} buttonPosition="none" onValueChange={val => widgetStore.setIntensityLimitValue(val)} />
-                            </Tooltip2>
+                            </Tooltip>
                         )}
                     </ControlGroup>
                 </div>
@@ -313,11 +312,11 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
 
         const isSelectedWidgetExisted = widgetStore.selectedSpectralProfilerID && AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(widgetStore.selectedSpectralProfilerID);
         const widgetMenu = (
-            <Popover2
+            <Popover
                 content={
                     <Menu>
                         {AppStore.Instance.widgetsStore.spectralProfilerList.map(widgetID => (
-                            <MenuItem2
+                            <MenuItem
                                 key={widgetID}
                                 text={widgetID}
                                 onMouseEnter={() => this.handleEnterWidgetOption(true, widgetID)}
@@ -336,7 +335,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                 <Button disabled={AppStore.Instance.widgetsStore.spectralProfilerList.length <= 0} rightIcon="caret-down">
                     {isSelectedWidgetExisted ? widgetStore.selectedSpectralProfilerID : "----"}
                 </Button>
-            </Popover2>
+            </Popover>
         );
 
         const queryResultTableProps: FilterableTableComponentProps = {
@@ -397,9 +396,9 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                         </FormGroup>
                         <AnchorButton text="Apply filter" intent={Intent.SUCCESS} disabled={widgetStore.numDataRows <= 0} onClick={this.handleFilter} />
                         <AnchorButton text="Reset filter" intent={Intent.WARNING} onClick={this.handleResetFilter} />
-                        <Tooltip2 content={plotTip} position={Position.BOTTOM}>
+                        <Tooltip content={plotTip} position={Position.BOTTOM}>
                             <AnchorButton text="Plot" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || widgetStore.filterResult.size <= 0 || !isSelectedWidgetExisted || !isSelectedLinesUnderLimit} onClick={this.handlePlot} />
-                        </Tooltip2>
+                        </Tooltip>
                         <AnchorButton text="Clear plot" disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.filterResult.size <= 0} onClick={this.handleClear} />
                     </div>
                 </div>

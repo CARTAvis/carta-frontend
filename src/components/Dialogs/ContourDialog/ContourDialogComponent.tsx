@@ -1,7 +1,6 @@
 import * as React from "react";
-import {Alert, AnchorButton, Button, Classes, Colors, DialogProps, FormGroup, HTMLSelect, Intent, NonIdealState, Tab, Tabs, TagInput} from "@blueprintjs/core";
-import {MenuItem2, Tooltip2} from "@blueprintjs/popover2";
-import {Select2} from "@blueprintjs/select";
+import {Alert, AnchorButton, Button, Classes, Colors, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Tab, Tabs, TagInput, Tooltip} from "@blueprintjs/core";
+import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
@@ -26,8 +25,8 @@ enum ContourDialogTabs {
     Styling
 }
 
-const DataSourceSelect = Select2.ofType<FrameStore>();
-const HistogramSelect = Select2.ofType<boolean>();
+const DataSourceSelect = Select<FrameStore>;
+const HistogramSelect = Select<boolean>;
 
 @observer
 export class ContourDialogComponent extends React.Component {
@@ -156,11 +155,11 @@ export class ContourDialogComponent extends React.Component {
         if (!frame) {
             return null;
         }
-        return <MenuItem2 text={frame.filename} onClick={handleClick} key={frame.frameInfo.fileId} />;
+        return <MenuItem text={frame.filename} onClick={handleClick} key={frame.frameInfo.fileId} />;
     };
 
     private renderHistogramSelectItem = (isCube: boolean, {handleClick, modifiers, query}) => {
-        return <MenuItem2 text={isCube ? "Per-cube" : "Per-channel"} onClick={handleClick} key={isCube ? "cube" : "channel"} />;
+        return <MenuItem text={isCube ? "Per-cube" : "Per-channel"} onClick={handleClick} key={isCube ? "cube" : "channel"} />;
     };
 
     private handleHistogramChange = (value: boolean) => {
@@ -498,9 +497,9 @@ export class ContourDialogComponent extends React.Component {
                         >
                             <Button text={dataSource.filename} rightIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.animationActive} />
                         </DataSourceSelect>
-                        <Tooltip2 content={appStore.frameLockedToContour ? "Data source is locked to active image" : "Data source is independent of active image"}>
+                        <Tooltip content={appStore.frameLockedToContour ? "Data source is locked to active image" : "Data source is independent of active image"}>
                             <AnchorButton className="lock-button" icon={appStore.frameLockedToContour ? "lock" : "unlock"} minimal={true} onClick={appStore.toggleFrameContourLock} />
-                        </Tooltip2>
+                        </Tooltip>
                     </FormGroup>
                     <Tabs defaultSelectedTabId={ContourDialogTabs.Levels} renderActiveTabPanelOnly={false}>
                         <Tab id={ContourDialogTabs.Levels} title="Levels" panel={levelPanel} panelClassName="contour-level-panel" />

@@ -1,6 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Classes, DialogProps, FormGroup, InputGroup, Intent, Position} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
+import {AnchorButton, Classes, DialogProps, FormGroup, InputGroup, Intent, Position, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -90,16 +89,16 @@ export class SaveLayoutDialogComponent extends React.Component {
             <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.SAVE_LAYOUT} defaultWidth={400} defaultHeight={185} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label={isSave ? "Save current layout as:" : `Rename ${appStore.layoutStore.oldLayoutName} to:`}>
-                        <Tooltip2 isOpen={!this.isEmpty && !this.validName} position={Position.BOTTOM_LEFT} content={"Layout name should not contain ~, `, !, *, (, ), -, +, =, [, ., ', ?, <, >, /, |, \\, :, ; or &"}>
+                        <Tooltip isOpen={!this.isEmpty && !this.validName} position={Position.BOTTOM_LEFT} content={"Layout name should not contain ~, `, !, *, (, ), -, +, =, [, ., ', ?, <, >, /, |, \\, :, ; or &"}>
                             <InputGroup className="layout-name-input" placeholder="Enter layout name" value={this.layoutName} autoFocus={true} onChange={this.handleInput} onKeyDown={this.handleKeyDown} />
-                        </Tooltip2>
+                        </Tooltip>
                     </FormGroup>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <Tooltip2 content="Layout name cannot be empty!" disabled={!this.isEmpty}>
+                        <Tooltip content="Layout name cannot be empty!" disabled={!this.isEmpty}>
                             <AnchorButton intent={Intent.PRIMARY} onClick={isSave ? this.saveLayout : this.renameLayout} text={isSave ? "Save" : "Rename"} disabled={this.isEmpty || !this.validName} />
-                        </Tooltip2>
+                        </Tooltip>
                     </div>
                 </div>
             </DraggableDialogComponent>

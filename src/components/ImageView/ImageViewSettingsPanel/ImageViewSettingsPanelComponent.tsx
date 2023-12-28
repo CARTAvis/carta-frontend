@@ -1,7 +1,6 @@
 import * as React from "react";
-import {Button, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
-import {MenuItem2} from "@blueprintjs/popover2";
-import {ItemRenderer, Select2} from "@blueprintjs/select";
+import {Button, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
+import {ItemRenderer, Select} from "@blueprintjs/select";
 import * as AST from "ast_wrapper";
 import classNames from "classnames";
 import {action, autorun, makeObservable, observable} from "mobx";
@@ -63,10 +62,10 @@ export class Font {
 }
 
 const astFonts: Font[] = AST.fonts.map((x, i) => new Font(x, i));
-const FontSelect = Select2.ofType<Font>();
+const FontSelect = Select<Font>;
 
 export const renderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, query}) => {
-    return <MenuItem2 active={modifiers.active} disabled={modifiers.disabled} key={font.id} onClick={handleClick} text={<span style={{fontFamily: font.family, fontWeight: font.weight, fontStyle: font.style}}>{font.name}</span>} />;
+    return <MenuItem active={modifiers.active} disabled={modifiers.disabled} key={font.id} onClick={handleClick} text={<span style={{fontFamily: font.family, fontWeight: font.weight, fontStyle: font.style}}>{font.name}</span>} />;
 };
 
 @observer

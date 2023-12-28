@@ -1,9 +1,8 @@
 import * as React from "react";
 import Plot from "react-plotly.js";
 import ReactResizeDetector from "react-resize-detector";
-import {AnchorButton, Button, Colors, FormGroup, Intent, NonIdealState, PopoverPosition, Switch} from "@blueprintjs/core";
-import {MenuItem2, Tooltip2} from "@blueprintjs/popover2";
-import {IItemRendererProps, ItemPredicate, Select2} from "@blueprintjs/select";
+import {AnchorButton, Button, Colors, FormGroup, Intent, MenuItem, NonIdealState, PopoverPosition, Switch, Tooltip} from "@blueprintjs/core";
+import {ItemPredicate, ItemRendererProps, Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
 import * as GSL from "gsl_wrapper";
@@ -544,8 +543,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private renderColumnNamePopOver = (column: string, itemProps: IItemRendererProps) => {
-        return <MenuItem2 key={column} text={column} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+    private renderColumnNamePopOver = (column: string, itemProps: ItemRendererProps) => {
+        return <MenuItem key={column} text={column} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
     private filterColumn: ItemPredicate<string> = (query: string, columnName: string) => {
@@ -566,10 +565,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         this.onDeselect();
     };
 
-    private renderFilePopOver = (fileId: number, itemProps: IItemRendererProps) => {
+    private renderFilePopOver = (fileId: number, itemProps: ItemRendererProps) => {
         const fileName = this.catalogFileNames.get(fileId);
         let text = `${fileId}: ${fileName}`;
-        return <MenuItem2 key={fileId} text={text} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+        return <MenuItem key={fileId} text={text} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
     private handleFittingClick = (selectedPointIndices: number[]) => {
@@ -657,11 +656,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             }
         }
 
-        const noResults = <MenuItem2 disabled={true} text="No results" />;
+        const noResults = <MenuItem disabled={true} text="No results" />;
 
         const renderFileSelect = (
             <FormGroup inline={true} label="File">
-                <Select2
+                <Select
                     className="bp5-fill"
                     filterable={false}
                     items={catalogFileItems}
@@ -671,13 +670,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                 >
                     <Button text={this.catalogFileId} rightIcon="double-caret-vertical" />
-                </Select2>
+                </Select>
             </FormGroup>
         );
 
         const renderXSelect = (
             <FormGroup inline={true} label="X">
-                <Select2
+                <Select
                     className="bp5-fill"
                     items={xyOptions}
                     activeItem={widgetStore.xColumnName}
@@ -690,7 +689,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     resetOnSelect={true}
                 >
                     <Button text={widgetStore.xColumnName} rightIcon="double-caret-vertical" />
-                </Select2>
+                </Select>
             </FormGroup>
         );
 
@@ -702,7 +701,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
         const renderYSelect = (
             <FormGroup inline={true} label="Y">
-                <Select2
+                <Select
                     className="bp5-fill"
                     items={xyOptions}
                     activeItem={widgetStore.yColumnName}
@@ -715,13 +714,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     resetOnSelect={true}
                 >
                     <Button text={widgetStore.yColumnName} rightIcon="double-caret-vertical" />
-                </Select2>
+                </Select>
             </FormGroup>
         );
 
         const renderStatisticSelect = (
             <FormGroup inline={true} label="Statistic source">
-                <Select2
+                <Select
                     className="bp5-fill"
                     items={xyOptions}
                     activeItem={widgetStore.statisticColumnName}
@@ -734,7 +733,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     resetOnSelect={true}
                 >
                     <Button text={widgetStore.statisticColumnName} rightIcon="double-caret-vertical" />
-                </Select2>
+                </Select>
             </FormGroup>
         );
 
@@ -975,11 +974,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         <ProfilerInfoComponent info={infoStrings} type="pre-line" separator="newLine" />
                     </div>
                     <div className="bp5-dialog-footer-actions">
-                        <Tooltip2 content={"Show only selected sources at image and table viewer"}>
+                        <Tooltip content={"Show only selected sources at image and table viewer"}>
                             <FormGroup label={"Selected only"} inline={true} disabled={disabled}>
                                 <Switch checked={catalogWidgetStore.showSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled} />
                             </FormGroup>
-                        </Tooltip2>
+                        </Tooltip>
                         {isScatterPlot && renderLinearRegressionButton}
                         <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={disabled || !profileStore.isFileBasedCatalog} />
                     </div>

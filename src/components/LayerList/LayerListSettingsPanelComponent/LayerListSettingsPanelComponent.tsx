@@ -1,7 +1,6 @@
 import * as React from "react";
-import {Alignment, Button, FormGroup, HTMLSelect, MenuDivider, PopoverPosition, Tab, Tabs, Text} from "@blueprintjs/core";
-import {MenuItem2} from "@blueprintjs/popover2";
-import {IItemRendererProps, Select2} from "@blueprintjs/select";
+import {Alignment, Button, FormGroup, HTMLSelect, MenuDivider, MenuItem, PopoverPosition, Tab, Tabs, Text} from "@blueprintjs/core";
+import {ItemRendererProps, Select} from "@blueprintjs/select";
 import classNames from "classnames";
 import {computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
@@ -50,9 +49,9 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
         makeObservable(this);
     }
 
-    private renderFrameOptions = (val: number, itemProps: IItemRendererProps) => {
+    private renderFrameOptions = (val: number, itemProps: ItemRendererProps) => {
         const option = this.widgetStore.restFreqFrameOptions.find(option => option.frameIndex === val);
-        return <MenuItem2 key={option?.frameIndex} text={option?.label} disabled={option?.disable} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+        return <MenuItem key={option?.frameIndex} text={option?.label} disabled={option?.disable} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
     private renderRestFreqInput = frameOption => {
@@ -108,7 +107,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
             restFreqPanel = (
                 <div className="panel-container">
                     <FormGroup inline={true} label="Source" className="name-text">
-                        <Select2
+                        <Select
                             filterable={false}
                             items={this.widgetStore.restFreqFrameOptions.map(option => option.frameIndex)}
                             activeItem={selectedFrameIndex}
@@ -117,7 +116,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                             popoverProps={{minimal: true, position: PopoverPosition.AUTO_END}}
                         >
                             <Button text={fileText} rightIcon="double-caret-vertical" alignText={Alignment.LEFT} />
-                        </Select2>
+                        </Select>
                     </FormGroup>
                     {this.renderRestFreqInput(inputFrame)}
                 </div>

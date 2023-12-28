@@ -218,7 +218,7 @@
                 margin-left: -40px;
                 width: 140px;
                 height: 30px;
-                .bp5-popover2-target {
+                .bp5-popover-target {
                     width: inherit;
                     .bp5-button {
                         width: 100%;
@@ -286,7 +286,7 @@
 }
 
 .catalog-select {
-    .bp5-popover2-content {
+    .bp5-popover-content {
         .bp5-menu {
             max-height: 300px;
             overflow: auto;

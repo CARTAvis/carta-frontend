@@ -1,7 +1,6 @@
 import * as React from "react";
-import {AnchorButton, Button, DialogProps, FormGroup, Icon, InputGroup, Intent, NonIdealState, Overlay, PopoverPosition, Position, Spinner} from "@blueprintjs/core";
-import {MenuItem2, Tooltip2} from "@blueprintjs/popover2";
-import {IItemRendererProps, MultiSelect2, Select2} from "@blueprintjs/select";
+import {AnchorButton, Button, DialogProps, FormGroup, Icon, InputGroup, Intent, MenuItem, NonIdealState, Overlay, PopoverPosition, Position, Spinner, Tooltip} from "@blueprintjs/core";
+import {ItemRendererProps, MultiSelect, Select} from "@blueprintjs/select";
 import FuzzySearch from "fuzzy-search";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -121,7 +120,7 @@ export class CatalogQueryDialogComponent extends React.Component {
         const configBoard = (
             <div className="online-catalog-config">
                 <FormGroup inline={false} label="Database" disabled={disable} className={isVizier ? "vizier-databse" : ""}>
-                    <Select2
+                    <Select
                         items={Object.values(CatalogDatabase)}
                         activeItem={null}
                         onItemSelect={db => configStore.setCatalogDB(db)}
@@ -132,7 +131,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                         resetOnSelect={true}
                     >
                         <Button text={configStore.catalogDB} disabled={disable} rightIcon="double-caret-vertical" />
-                    </Select2>
+                    </Select>
                 </FormGroup>
                 {isVizier ? (
                     <FormGroup inline={false} label="Keywords (catalog title)" disabled={disable} className={isVizier ? "vizier-key-words" : ""}>
@@ -141,12 +140,12 @@ export class CatalogQueryDialogComponent extends React.Component {
                 ) : null}
                 <FormGroup inline={false} label="Object" disabled={disable}>
                     <InputGroup asyncControl={false} disabled={disable} rightElement={objectSize === undefined ? null : sourceIndicater} onChange={event => this.updateObjectName(event.target.value)} value={configStore.objectName} />
-                    <Tooltip2 content="Reset center coordinates by object" disabled={disable || configStore.disableObjectSearch} position={Position.BOTTOM} hoverOpenDelay={300}>
+                    <Tooltip content="Reset center coordinates by object" disabled={disable || configStore.disableObjectSearch} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <Button disabled={disable || configStore.disableObjectSearch} text={"Resolve"} intent={Intent.NONE} onClick={this.handleObjectUpdate} />
-                    </Tooltip2>
+                    </Tooltip>
                 </FormGroup>
                 <FormGroup inline={false} label="Search radius" disabled={disable}>
-                    <Tooltip2 content={`0 - ${configStore.maxRadius} ${configStore.radiusUnits}`} disabled={disable} position={Position.BOTTOM} hoverOpenDelay={300}>
+                    <Tooltip content={`0 - ${configStore.maxRadius} ${configStore.radiusUnits}`} disabled={disable} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <SafeNumericInput
                             asyncControl={true}
                             disabled={disable}
@@ -156,8 +155,8 @@ export class CatalogQueryDialogComponent extends React.Component {
                             onBlur={ev => this.handleRadiusChange(ev)}
                             onKeyDown={ev => this.handleRadiusChange(ev)}
                         />
-                    </Tooltip2>
-                    <Select2
+                    </Tooltip>
+                    <Select
                         items={Object.values(RadiusUnits)}
                         activeItem={null}
                         onItemSelect={units => configStore.setRadiusUnits(units)}
@@ -168,15 +167,15 @@ export class CatalogQueryDialogComponent extends React.Component {
                         resetOnSelect={true}
                     >
                         <Button text={configStore.radiusUnits} disabled={disable} rightIcon="double-caret-vertical" />
-                    </Select2>
-                    <Tooltip2 content="Reset center coordinates and search radius according current image viewer" disabled={disable} position={Position.BOTTOM} hoverOpenDelay={300}>
+                    </Select>
+                    <Tooltip content="Reset center coordinates and search radius according current image viewer" disabled={disable} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <Button disabled={disable} onClick={() => configStore.resetSearchRadius()}>
                             Set to viewer
                         </Button>
-                    </Tooltip2>
+                    </Tooltip>
                 </FormGroup>
                 <FormGroup inline={false} label="Center coordinates" disabled={disable}>
-                    <Select2
+                    <Select
                         items={Object.keys(SystemType).map(key => SystemType[key])}
                         activeItem={null}
                         onItemSelect={type => appStore.overlayStore.global.setSystem(type)}
@@ -187,8 +186,8 @@ export class CatalogQueryDialogComponent extends React.Component {
                         resetOnSelect={true}
                     >
                         <Button text={appStore.overlayStore.global.system} disabled={disable} rightIcon="double-caret-vertical" />
-                    </Select2>
-                    <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
+                    </Select>
+                    <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <SafeNumericInput
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
@@ -198,8 +197,8 @@ export class CatalogQueryDialogComponent extends React.Component {
                             onBlur={this.handleCenterWcsXChange}
                             onKeyDown={this.handleCenterWcsXChange}
                         />
-                    </Tooltip2>
-                    <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
+                    </Tooltip>
+                    <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <SafeNumericInput
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
@@ -209,10 +208,10 @@ export class CatalogQueryDialogComponent extends React.Component {
                             onBlur={this.handleCenterWcsYChange}
                             onKeyDown={this.handleCenterWcsYChange}
                         />
-                    </Tooltip2>
-                    <Tooltip2 content="Reset to current view center" disabled={disable} position={Position.BOTTOM} hoverOpenDelay={300}>
+                    </Tooltip>
+                    <Tooltip content="Reset to current view center" disabled={disable} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <Button icon="locate" disabled={disable} onClick={() => configStore.setFrameCenter()} />
-                    </Tooltip2>
+                    </Tooltip>
                 </FormGroup>
                 <ClearableNumericInputComponent
                     label={isVizier ? "Max number of objects per catalog" : "Max number of objects"}
@@ -228,7 +227,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                 />
                 {configStore.showVizierResult ? (
                     <FormGroup inline={false} label="VizieR catalog" disabled={disable}>
-                        <MultiSelect2
+                        <MultiSelect
                             placeholder={"Please select catalog tables"}
                             fill={true}
                             popoverProps={{popoverClassName: "vizier-mulit-select", minimal: true, position: PopoverPosition.TOP}}
@@ -238,7 +237,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                             selectedItems={configStore.vizierSelectedTableName}
                             tagRenderer={item => item.name}
                             itemPredicate={this.filterVizierTable}
-                            noResults={<MenuItem2 disabled={true} text="No results." />}
+                            noResults={<MenuItem disabled={true} text="No results." />}
                             tagInputProps={{
                                 onRemove: v => configStore.removeVizierSelectedTable(v.toString()),
                                 rightElement: <Button icon="cross" minimal={true} onClick={() => configStore.resetVizierSelectedTable()} />,
@@ -356,24 +355,24 @@ export class CatalogQueryDialogComponent extends React.Component {
         this.setResultSize(undefined);
     }
 
-    private renderDBPopOver = (catalogDB: CatalogDatabase, itemProps: IItemRendererProps) => {
-        return <MenuItem2 key={catalogDB} text={catalogDB} onClick={itemProps.handleClick} />;
+    private renderDBPopOver = (catalogDB: CatalogDatabase, itemProps: ItemRendererProps) => {
+        return <MenuItem key={catalogDB} text={catalogDB} onClick={itemProps.handleClick} />;
     };
 
-    private renderUnitsPopOver = (units: RadiusUnits, itemProps: IItemRendererProps) => {
-        return <MenuItem2 key={units} text={units} onClick={itemProps.handleClick} />;
+    private renderUnitsPopOver = (units: RadiusUnits, itemProps: ItemRendererProps) => {
+        return <MenuItem key={units} text={units} onClick={itemProps.handleClick} />;
     };
 
-    private renderSysTypePopOver = (type: SystemType, itemProps: IItemRendererProps) => {
-        return <MenuItem2 key={type} text={type} onClick={itemProps.handleClick} />;
+    private renderSysTypePopOver = (type: SystemType, itemProps: ItemRendererProps) => {
+        return <MenuItem key={type} text={type} onClick={itemProps.handleClick} />;
     };
 
-    private vizierItemRenderer = (table: VizierItem, itemProps: IItemRendererProps) => {
+    private vizierItemRenderer = (table: VizierItem, itemProps: ItemRendererProps) => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const isFilmSelected = configStore.vizierSelectedTableName.filter(current => current.name === table.name).length > 0;
 
         return (
-            <MenuItem2
+            <MenuItem
                 active={itemProps.modifiers.active}
                 icon={isFilmSelected ? "tick" : "blank"}
                 key={table.name}

@@ -1,7 +1,6 @@
 import React from "react";
-import {Button, Icon, PopoverPosition} from "@blueprintjs/core";
-import {MenuItem2} from "@blueprintjs/popover2";
-import {IItemRendererProps, Select2} from "@blueprintjs/select";
+import {Button, Icon, MenuItem, PopoverPosition} from "@blueprintjs/core";
+import {ItemRendererProps, Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
@@ -25,9 +24,9 @@ export const PointShapeSelectComponent = observer((props: {handleChange: (pointS
         );
     };
 
-    const renderShapePopOver = (shape: CARTA.PointAnnotationShape, itemProps: IItemRendererProps) => {
+    const renderShapePopOver = (shape: CARTA.PointAnnotationShape, itemProps: ItemRendererProps) => {
         const shapeItem = getPointShape(shape);
-        return <MenuItem2 icon={shapeItem} key={shape} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+        return <MenuItem icon={shapeItem} text="" key={shape} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
     const getPointShape = (shape: CARTA.PointAnnotationShape) => {
@@ -57,7 +56,7 @@ export const PointShapeSelectComponent = observer((props: {handleChange: (pointS
     };
 
     return (
-        <Select2
+        <Select
             className="bp5-fill"
             filterable={false}
             items={Object.values(CARTA.PointAnnotationShape)}
@@ -67,6 +66,6 @@ export const PointShapeSelectComponent = observer((props: {handleChange: (pointS
             popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
         >
             <Button icon={getPointShape(props.pointShape)} rightIcon="double-caret-vertical" />
-        </Select2>
+        </Select>
     );
 });

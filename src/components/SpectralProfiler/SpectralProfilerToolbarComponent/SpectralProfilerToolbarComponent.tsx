@@ -1,6 +1,5 @@
 import * as React from "react";
-import {AnchorButton, ButtonGroup, Checkbox, Intent, Menu, Position} from "@blueprintjs/core";
-import {MenuItem2, Popover2, Tooltip2} from "@blueprintjs/popover2";
+import {AnchorButton, ButtonGroup, Checkbox, Intent, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
@@ -59,14 +58,14 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
 
         return (
             <div className={className}>
-                <Tooltip2 content={this.props.categoryTooltip} position={Position.TOP}>
+                <Tooltip content={this.props.categoryTooltip} position={Position.TOP}>
                     <Checkbox className={"category-checkbox"} label={this.props.categoryName} checked={this.props.isActiveCategory} onChange={ev => this.props.onCategorySelect()} disabled={this.props.disabled} />
-                </Tooltip2>
-                <Popover2
+                </Tooltip>
+                <Popover
                     content={
                         <Menu>
                             {this.props.itemOptions?.map((item, index) => (
-                                <MenuItem2
+                                <MenuItem
                                     key={item.value}
                                     text={item.active ? <b>{item.label}</b> : item.label}
                                     disabled={item?.disabled}
@@ -82,7 +81,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                     placement={Position.BOTTOM}
                     disabled={this.props.disabled || this.props.disableOptions}
                 >
-                    <Tooltip2 disabled={!dropdownHelpText} content={dropdownHelpText} position={Position.TOP}>
+                    <Tooltip disabled={!dropdownHelpText} content={dropdownHelpText} position={Position.TOP}>
                         <AnchorButton
                             text={
                                 <span className="overflow-text" title={dropdownText}>
@@ -93,8 +92,8 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                             rightIcon={"caret-down"}
                             disabled={this.props.disabled || this.props.disableOptions}
                         />
-                    </Tooltip2>
-                </Popover2>
+                    </Tooltip>
+                </Popover>
             </div>
         );
     }
@@ -287,15 +286,15 @@ export class SpectralProfilerToolbarComponent extends React.Component<{widgetSto
             <div className="spectral-profiler-toolbar">
                 <ProfileSelectionComponent profileSelectionStore={widgetStore.profileSelectionStore} />
                 <ButtonGroup className="shortcut-buttons">
-                    <Tooltip2 content="Smoothing">
+                    <Tooltip content="Smoothing">
                         <AnchorButton icon={<CustomIcon icon="smoothing" />} onClick={this.smoothingShortcutClick} />
-                    </Tooltip2>
-                    <Tooltip2 content="Moments">
+                    </Tooltip>
+                    <Tooltip content="Moments">
                         <AnchorButton icon={<CustomIcon icon="moments" />} onClick={this.momentsShortcutClick} />
-                    </Tooltip2>
-                    <Tooltip2 content="Fitting">
+                    </Tooltip>
+                    <Tooltip content="Fitting">
                         <AnchorButton icon={<CustomIcon icon="lineFitting" />} onClick={this.fittingShortcutClick} />
-                    </Tooltip2>
+                    </Tooltip>
                 </ButtonGroup>
             </div>
         );

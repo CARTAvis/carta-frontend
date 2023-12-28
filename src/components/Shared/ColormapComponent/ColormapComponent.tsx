@@ -1,7 +1,6 @@
 import * as React from "react";
-import {Button} from "@blueprintjs/core";
-import {MenuItem2, Popover2Props} from "@blueprintjs/popover2";
-import {Select2} from "@blueprintjs/select";
+import {Button, MenuItem, PopoverProps} from "@blueprintjs/core";
+import {Select} from "@blueprintjs/select";
 // Static assets
 import allMaps from "static/allmaps.png";
 
@@ -14,8 +13,8 @@ interface ColormapComponentProps {
     onItemSelect: (selected: string) => void;
 }
 
-const ColorMapSelect = Select2.ofType<string>();
-const COLORMAP_POPOVER_PROPS: Partial<Popover2Props> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
+const ColorMapSelect = Select<string>;
+const COLORMAP_POPOVER_PROPS: Partial<PopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 
 export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
     const renderColormapBlock = (colormap: string) => {
@@ -41,7 +40,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
         if (!modifiers.matchesPredicate) {
             return null;
         }
-        return <MenuItem2 active={modifiers.active} disabled={modifiers.disabled} label={colormap} key={colormap} onClick={handleClick} text={renderColormapBlock(colormap)} />;
+        return <MenuItem active={modifiers.active} disabled={modifiers.disabled} label={colormap} key={colormap} onClick={handleClick} text={renderColormapBlock(colormap)} />;
     };
 
     return (

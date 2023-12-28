@@ -1,7 +1,6 @@
 import * as React from "react";
 import SplitPane from "react-split-pane";
-import {AnchorButton, ButtonGroup, Classes, DialogProps, Divider, FormGroup, HTMLSelect, Intent, NonIdealState, Position, Pre, Slider, Switch, Tab, Tabs, Text} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
+import {AnchorButton, ButtonGroup, Classes, DialogProps, Divider, FormGroup, HTMLSelect, Intent, NonIdealState, Position, Pre, Slider, Switch, Tab, Tabs, Text, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -129,9 +128,9 @@ export class FittingDialogComponent extends React.Component {
         }
 
         const createRegionButton = (
-            <Tooltip2 content={"Create ellipse regions"} position={Position.LEFT}>
+            <Tooltip content={"Create ellipse regions"} position={Position.LEFT}>
                 <AnchorButton icon="circle" onClick={fittingStore.createRegions}></AnchorButton>
-            </Tooltip2>
+            </Tooltip>
         );
 
         const fittingResultPanel = (
@@ -140,9 +139,9 @@ export class FittingDialogComponent extends React.Component {
                 {fittingStore.effectiveFrame?.fittingResult !== "" && (
                     <ButtonGroup className="output-button" style={{opacity: this.isMouseEntered && fittingStore.effectiveFrame.fittingResult !== "" ? 1 : 0}}>
                         {createRegionButton}
-                        <Tooltip2 content={"Export as txt"} position={Position.LEFT}>
+                        <Tooltip content={"Export as txt"} position={Position.LEFT}>
                             <AnchorButton icon="th" onClick={this.exportResult}></AnchorButton>
-                        </Tooltip2>
+                        </Tooltip>
                     </ButtonGroup>
                 )}
             </Pre>
@@ -154,9 +153,9 @@ export class FittingDialogComponent extends React.Component {
                 {fittingStore.effectiveFrame?.fittingLog !== "" && (
                     <ButtonGroup className="output-button" style={{opacity: this.isMouseEntered && fittingStore.effectiveFrame.fittingLog !== "" ? 1 : 0}}>
                         {createRegionButton}
-                        <Tooltip2 content={"Export as txt"} position={Position.LEFT}>
+                        <Tooltip content={"Export as txt"} position={Position.LEFT}>
                             <AnchorButton icon="th" onClick={this.exportFullLog}></AnchorButton>
-                        </Tooltip2>
+                        </Tooltip>
                     </ButtonGroup>
                 )}
             </Pre>
@@ -211,9 +210,9 @@ export class FittingDialogComponent extends React.Component {
                                             onChange={val => setTimeout(() => fittingStore.setSelectedComponentIndex(val - 1), 0)}
                                             disabled={fittingStore.components.length <= 1}
                                         />
-                                        <Tooltip2 content="Delete current component">
+                                        <Tooltip content="Delete current component">
                                             <AnchorButton icon={"trash"} onClick={fittingStore.deleteSelectedComponent} />
-                                        </Tooltip2>
+                                        </Tooltip>
                                     </>
                                 )}
                             </FormGroup>
@@ -262,12 +261,12 @@ export class FittingDialogComponent extends React.Component {
                             <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                                 <Switch checked={fittingStore.createModelImage} onChange={fittingStore.toggleCreateModelImage} label="Model" />
                                 <Switch checked={fittingStore.createResidualImage} onChange={fittingStore.toggleCreateResidualImage} label="Residual" />
-                                <Tooltip2 content="Clear fitting parameters" position={Position.BOTTOM}>
+                                <Tooltip content="Clear fitting parameters" position={Position.BOTTOM}>
                                     <AnchorButton intent={Intent.WARNING} onClick={fittingStore.clearComponents} text="Clear" />
-                                </Tooltip2>
-                                <Tooltip2 content="Clear existing fitting results and fit the current channel of the image" position={Position.BOTTOM} disabled={fittingStore.fitDisabled}>
+                                </Tooltip>
+                                <Tooltip content="Clear existing fitting results and fit the current channel of the image" position={Position.BOTTOM} disabled={fittingStore.fitDisabled}>
                                     <AnchorButton intent={Intent.PRIMARY} onClick={fittingStore.fitImage} text="Fit" disabled={fittingStore.fitDisabled} />
-                                </Tooltip2>
+                                </Tooltip>
                             </div>
                         </div>
                     </div>
