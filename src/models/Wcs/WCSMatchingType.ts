@@ -7,15 +7,15 @@ export enum WCSMatchingType {
 
 export function IsWCSMatchingTypeValid(type: string) {
     const enumVal = parseInt(type);
-    return type && enumVal >= 0 && enumVal <= 7;
+    return type && enumVal >= 0 && enumVal <= WCSMatching.MATCHING_TYPES.reduce((a: number, b: number) => a | b, 0);
 }
 
-export class WCSMatchingClass {
-    public static readonly MATCHING_TYPES = Object.values(WCSMatchingType).filter(v => !isNaN(Number(v)) && Number(v) !== 0) as WCSMatchingType[];
-    public static readonly MATCHING_NUMBER = WCSMatchingClass.MATCHING_TYPES.length;
+export class WCSMatching {
+    public static readonly MATCHING_TYPES = Object.values(WCSMatchingType).filter(v => !isNaN(Number(v)) && Number(v) !== WCSMatchingType.NONE) as WCSMatchingType[];
+    public static readonly MATCHING_NUMBER = WCSMatching.MATCHING_TYPES.length;
 
-    public static isTypeValid = (matchingType: WCSMatchingType): boolean => {
-        return WCSMatchingClass.MATCHING_TYPES.includes(matchingType);
+    public static isTypeValid = (value: number): boolean => {
+        return value >= 0 && value <= WCSMatching.MATCHING_TYPES.reduce((a: number, b: number) => a | b, 0);
     };
 
     public static getTypeFromName = (matchingName: string): WCSMatchingType => {
@@ -23,16 +23,7 @@ export class WCSMatchingClass {
     };
 
     public static getNameFromType = (matchingType: WCSMatchingType): string => {
-        return WCSMatchingType[matchingType];
-    };
-
-    public static getList = (value: number) => {
-        let b = 1;
-        let powerOfTwo = [];
-        while (b <= value) {
-            if (b & value) powerOfTwo.push(b);
-            b <<= 1;
-        }
-        return powerOfTwo;
+        let string = WCSMatchingType[matchingType];
+        return string.charAt(0) + string.slice(1).toLowerCase();
     };
 }

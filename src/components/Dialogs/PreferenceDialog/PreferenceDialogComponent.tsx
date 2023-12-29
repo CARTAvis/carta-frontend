@@ -12,7 +12,7 @@ import tinycolor from "tinycolor2";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, SuccessToast} from "components/Shared";
-import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingClass, WCSType, Zoom, ZoomPoint} from "models";
+import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {TelemetryMode} from "services";
 import {AppStore, BeamType, HelpType, PreferenceKeys, PreferenceStore} from "stores";
 import {ContourGeneratorType, FrameScaling, RegionStore, RenderConfigStore} from "stores/Frame";
@@ -213,13 +213,13 @@ export class PreferenceDialogComponent extends React.Component {
                     <Switch checked={preference.dragPanning} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_DRAG_PANNING, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Matching on append">
-                    {WCSMatchingClass.MATCHING_TYPES.map(matchingType => (
+                    {WCSMatching.MATCHING_TYPES.map(matchingType => (
                         <Checkbox
-                            className="log-event-list"
+                            className="wcs-matching"
                             key={matchingType}
                             checked={preference.isWCSMatchingEnabled(matchingType)}
-                            label={WCSMatchingClass.getNameFromType(matchingType)}
-                            onChange={() => preference.setPreference(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, preference.updateWCSMatchingNum(matchingType))}
+                            label={WCSMatching.getNameFromType(matchingType)}
+                            onChange={() => preference.setPreference(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, matchingType)}
                         />
                     ))}
                 </FormGroup>

@@ -16,7 +16,7 @@ import {
     SpectralType,
     Theme,
     TileCache,
-    WCSMatchingClass,
+    WCSMatching,
     WCSMatchingType,
     WCSType,
     Zoom,
@@ -334,11 +334,8 @@ export class PreferenceStore {
     }
 
     public isWCSMatchingEnabled = (matchingType: WCSMatchingType): boolean => {
-        if (WCSMatchingClass.isTypeValid(matchingType)) {
-            const matchingTypes = WCSMatchingClass.getList(this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING));
-            if (matchingTypes && Array.isArray(matchingTypes)) {
-                return matchingTypes.includes(matchingType);
-            }
+        if (WCSMatching.isTypeValid(matchingType) && matchingType & this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING)) {
+            return true;
         }
         return false;
     };
@@ -737,6 +734,14 @@ export class PreferenceStore {
             let eventList = this.setCheckBoxList(this.preferences.get(PreferenceKeys.LOG_EVENT), value);
             this.preferences.set(PreferenceKeys.LOG_EVENT, eventList);
             return yield ApiService.Instance.setPreference(PreferenceKeys.LOG_EVENT, eventList);
+        } else if (key === PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING) {
+            if (!WCSMatching.isTypeValid(value)) {
+                return false;
+            }
+            let bin = this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING);
+            let binNew = (bin ^= value);
+            this.preferences.set(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, binNew);
+            return yield ApiService.Instance.setPreference(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, binNew);
         } else {
             this.preferences.set(key, value);
             return yield ApiService.Instance.setPreference(key, value);
@@ -1067,11 +1072,5 @@ export class PreferenceStore {
         }
 
         return list;
-    }
-
-    public updateWCSMatchingNum(value: number): number {
-        let list = WCSMatchingClass.getList(this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING));
-        list = this.setCheckBoxList(list, value);
-        return list.reduce((a: number, b: number) => a | b, 0);
     }
 }
