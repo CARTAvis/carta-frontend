@@ -24,6 +24,10 @@ export class WCSMatching {
 
     public static getNameFromType = (matchingType: WCSMatchingType): string => {
         let string = WCSMatchingType[matchingType];
-        return string.charAt(0) + string.slice(1).toLowerCase();
+        return this.capitalizeFirstLetter(string);
     };
+
+    public static capitalizeFirstLetter(string: string) {
+        return string.charAt(0) + string.slice(1).toLowerCase();
+    }
 }
