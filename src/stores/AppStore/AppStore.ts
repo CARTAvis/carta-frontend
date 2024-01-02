@@ -952,7 +952,7 @@ export class AppStore {
                     CatalogStore.Instance.closeAssociatedCatalog(fileId);
                 }
             });
-            this.imageViewConfigStore.removeAllFrames();
+            this.imageViewConfigStore.removeAllImages();
             // adjust requirements for stores
             this.widgetsStore.removeFrameFromRegionWidgets();
         }

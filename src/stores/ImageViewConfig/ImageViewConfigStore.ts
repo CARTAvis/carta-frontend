@@ -1,7 +1,7 @@
 import {Utils} from "@blueprintjs/table";
 import {action, computed, makeAutoObservable, observable} from "mobx";
 
-import {FrameStore} from "stores";
+import {ColorBlendingStore, FrameStore} from "stores";
 
 enum ImageType {
     FRAME,
@@ -15,7 +15,7 @@ type ImageItem =
       }
     | {
           type: ImageType.COLOR_BLENDING;
-          store: any;
+          store: ColorBlendingStore;
       };
 
 export class ImageViewConfigStore {
@@ -48,8 +48,19 @@ export class ImageViewConfigStore {
         this.imageList = this.imageList.filter(imageItem => (imageItem?.type === ImageType.FRAME ? imageItem?.store?.frameInfo.fileId !== fileId : true));
     };
 
-    @action removeAllFrames = () => {
-        this.imageList = [];
+    @action addColorBlending = (): ColorBlendingStore => {
+        if (this.frames.length > 0) {
+            const id = this.colorBlendingImageMap.size ? Math.max(...this.colorBlendingImageMap.keys()) + 1 : 0;
+            const newImage = new ColorBlendingStore(id);
+            this.imageList.push({type: ImageType.COLOR_BLENDING, store: newImage});
+            return newImage;
+        }
+        return null;
+    };
+
+    @action removeColorBlending = (image: ColorBlendingStore) => {
+        const id = image?.id;
+        this.imageList = this.imageList.filter(imageItem => (imageItem?.type === ImageType.COLOR_BLENDING ? imageItem?.store?.id !== id : true));
     };
 
     @action reorderImage = (oldIndex: number, newIndex: number, length: number) => {
@@ -71,8 +82,24 @@ export class ImageViewConfigStore {
         this.imageList = Utils.reorderArray(this.imageList, oldIndex, newIndex, length);
     };
 
+    @action removeAllImages = () => {
+        this.imageList = [];
+    };
+
     @computed get frames(): FrameStore[] {
-        return this.imageList.filter(imageItem => imageItem?.type === ImageType.FRAME).map(imageItem => imageItem?.store);
+        return this.imageList.filter(imageItem => imageItem?.type === ImageType.FRAME && imageItem?.store instanceof FrameStore).map(imageItem => imageItem?.store as FrameStore);
+    }
+
+    @computed private get colorBlendingImages(): ColorBlendingStore[] {
+        return this.imageList.filter(imageItem => imageItem?.type === ImageType.COLOR_BLENDING && imageItem?.store instanceof ColorBlendingStore).map(imageItem => imageItem?.store as ColorBlendingStore);
+    }
+
+    @computed get colorBlendingImageMap(): Map<number, ColorBlendingStore> {
+        const imageMap = new Map<number, ColorBlendingStore>();
+        for (const image of this.colorBlendingImages) {
+            imageMap.set(image.id, image);
+        }
+        return imageMap;
     }
 
     constructor() {
