@@ -1,5 +1,4 @@
 import {Classes, Colors, IOptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
-import {Utils} from "@blueprintjs/table";
 import * as AST from "ast_wrapper";
 import axios from "axios";
 import * as CARTACompute from "carta_computation";
@@ -43,6 +42,7 @@ import {
     FileBrowserStore,
     HelpStore,
     ImageFittingStore,
+    ImageViewConfigStore,
     LayoutStore,
     LogEntry,
     LogStore,
@@ -112,12 +112,12 @@ export class AppStore {
     readonly preferenceStore: PreferenceStore;
     readonly widgetsStore: WidgetsStore;
     readonly imageFittingStore: ImageFittingStore;
+    readonly imageViewConfigStore: ImageViewConfigStore;
 
     // WebAssembly Module status
     @observable astReady: boolean;
     @observable cartaComputeReady: boolean;
     // Frames
-    @observable frames: FrameStore[] = [];
     @observable previewFrames = new ObservableMap<number, FrameStore>();
     @observable activeFrame: FrameStore = null;
     @observable hoveredFrame: FrameStore = null;
@@ -354,6 +354,10 @@ export class AppStore {
     // Match generated moment image(s) to the spatial reference image
     @observable momentToMatch: boolean;
 
+    @computed get frames(): FrameStore[] {
+        return this.imageViewConfigStore.frames;
+    }
+
     @computed get openFileDisabled(): boolean {
         return this.backendService?.connectionStatus !== ConnectionStatus.ACTIVE || this.fileLoading;
     }
@@ -533,12 +537,11 @@ export class AppStore {
         let newFrame = new FrameStore(frameInfo);
 
         // Place frame in frame array (replace frame with the same ID if it exists)
-        const existingFrameIndex = this.frames.findIndex(f => f.frameInfo.fileId === ack.fileId);
+        const existingFrameIndex = this.imageViewConfigStore.getImageListIndex(ack.fileId);
         if (existingFrameIndex !== -1) {
-            this.frames[existingFrameIndex].clearContours(false);
-            this.frames[existingFrameIndex] = newFrame;
+            this.imageViewConfigStore.replaceFrame(existingFrameIndex, newFrame);
         } else {
-            this.frames.push(newFrame);
+            this.imageViewConfigStore.addFrame(newFrame);
         }
 
         // First image defaults to spatial reference and contour source
@@ -867,7 +870,7 @@ export class AppStore {
                 frame.clearSpatialReference();
                 frame.clearSpectralReference();
                 frame.clearContours(false);
-                this.frames = this.frames.filter(f => f.frameInfo.fileId !== fileId);
+                this.imageViewConfigStore.removeFrame(fileId);
                 const firstFrame = this.frames.length ? this.frames[0] : null;
                 // Clean up if frame is active
                 if (this.activeFrame.frameInfo.fileId === fileId) {
@@ -949,7 +952,7 @@ export class AppStore {
                     CatalogStore.Instance.closeAssociatedCatalog(fileId);
                 }
             });
-            this.frames = [];
+            this.imageViewConfigStore.removeAllFrames();
             // adjust requirements for stores
             this.widgetsStore.removeFrameFromRegionWidgets();
         }
@@ -1074,21 +1077,7 @@ export class AppStore {
     }
 
     @action reorderFrame = (oldIndex: number, newIndex: number, length: number) => {
-        if (
-            !Number.isInteger(oldIndex) ||
-            oldIndex < 0 ||
-            oldIndex >= this.frameNum ||
-            !Number.isInteger(newIndex) ||
-            newIndex < 0 ||
-            newIndex >= this.frameNum ||
-            !Number.isInteger(length) ||
-            length <= 0 ||
-            length >= this.frameNum ||
-            oldIndex === newIndex
-        ) {
-            return;
-        }
-        this.frames = Utils.reorderArray(this.frames, oldIndex, newIndex, length);
+        this.imageViewConfigStore.reorderImage(oldIndex, newIndex, length);
     };
 
     // Region file actions
@@ -1711,6 +1700,7 @@ export class AppStore {
         this.overlayStore = OverlayStore.Instance;
         this.widgetsStore = WidgetsStore.Instance;
         this.imageFittingStore = ImageFittingStore.Instance;
+        this.imageViewConfigStore = ImageViewConfigStore.Instance;
 
         this.astReady = false;
         this.cartaComputeReady = false;

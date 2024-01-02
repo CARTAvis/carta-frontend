@@ -10,6 +10,7 @@ export * from "./FileBrowserStore/FileBrowserStore";
 export * from "./Frame";
 export * from "./HelpStore/HelpStore";
 export * from "./ImageFittingStore/ImageFittingStore";
+export * from "./ImageViewConfig/ImageViewConfigStore";
 export * from "./LayoutStore/LayoutStore";
 export * from "./LogStore/LogStore";
 export * from "./OverlayStore/OverlayStore";
