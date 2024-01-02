@@ -5,12 +5,14 @@ export interface SpectralTypeSet {
 }
 
 // From FITS standard (Table 25 of V4.0 of "Definition of the Flexible Image Transport System")
+// Added unofficial code 'WAV2' for wavelength squared
 export const STANDARD_SPECTRAL_TYPE_SETS: SpectralTypeSet[] = [
     {code: "FREQ", name: "Frequency", unit: "Hz"},
     {code: "ENER", name: "Energy", unit: "J"},
     {code: "WAVN", name: "Wavenumber", unit: "1/m"},
     {code: "VRAD", name: "Radio velocity", unit: "m/s"},
     {code: "WAVE", name: "Vacuum wavelength", unit: "m"},
+    {code: "WAV2", name: "Vacuum wavelength squared", unit: "m^2"},
     {code: "VOPT", name: "Optical velocity", unit: "m/s"},
     {code: "ZOPT", name: "Redshift", unit: ""},
     {code: "AWAV", name: "Air wavelength", unit: "m"},
@@ -18,11 +20,12 @@ export const STANDARD_SPECTRAL_TYPE_SETS: SpectralTypeSet[] = [
     {code: "BETA", name: "Beta", unit: ""}
 ];
 
-// FREQ, ENER, WAVN
+// FREQ, ENER, WAVN, WAV2
 export enum SpectralColorMap {
     FREQ = "FREQ",
     ENER = "ENER",
-    WAVE = "WAVE"
+    WAVE = "WAVE",
+    WAV2 = "WAV2",
 }
 
 export enum SpectralType {
@@ -30,6 +33,7 @@ export enum SpectralType {
     VOPT = "VOPT",
     FREQ = "FREQ",
     WAVE = "WAVE",
+    WAV2 = "WAV2",
     AWAV = "AWAV",
     CHANNEL = "CHANNEL"
 }
@@ -56,7 +60,8 @@ export enum SpectralUnit {
     MM = "mm",
     UM = "um",
     NM = "nm",
-    ANGSTROM = "Angstrom"
+    ANGSTROM = "Angstrom",
+    M2 = "m^2",
 }
 
 export enum FrequencyUnit {
@@ -103,7 +108,8 @@ export const SPECTRAL_TYPE_STRING = new Map<SpectralType, string>([
     [SpectralType.FREQ, "Frequency"],
     [SpectralType.WAVE, "Vacuum wavelength"],
     [SpectralType.AWAV, "Air wavelength"],
-    [SpectralType.CHANNEL, "Channel"]
+    [SpectralType.CHANNEL, "Channel"],
+    [SpectralType.WAV2, "Vacuum wavelength squared"]
 ]);
 
 export const SPECTRAL_DEFAULT_UNIT = new Map<SpectralType, SpectralUnit>([
@@ -111,7 +117,8 @@ export const SPECTRAL_DEFAULT_UNIT = new Map<SpectralType, SpectralUnit>([
     [SpectralType.VOPT, SpectralUnit.KMS],
     [SpectralType.FREQ, SpectralUnit.GHZ],
     [SpectralType.WAVE, SpectralUnit.MM],
-    [SpectralType.AWAV, SpectralUnit.MM]
+    [SpectralType.AWAV, SpectralUnit.MM],
+    [SpectralType.WAV2, SpectralUnit.M2],
 ]);
 
 export const GenCoordinateLabel = (type: SpectralType, unit: SpectralUnit): string => {
@@ -137,7 +144,8 @@ export const SPECTRAL_COORDS_SUPPORTED = new Map<string, {type: SpectralType; un
     [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.UM), {type: SpectralType.AWAV, unit: SpectralUnit.UM}],
     [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.NM), {type: SpectralType.AWAV, unit: SpectralUnit.NM}],
     [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.ANGSTROM), {type: SpectralType.AWAV, unit: SpectralUnit.ANGSTROM}],
-    ["Channel", {type: SpectralType.CHANNEL, unit: null}]
+    ["Channel", {type: SpectralType.CHANNEL, unit: null}],
+    [GenCoordinateLabel(SpectralType.WAV2, SpectralUnit.M2), {type: SpectralType.WAV2, unit: SpectralUnit.M2}]
 ]);
 
 export enum IntensityUnitType {

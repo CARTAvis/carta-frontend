@@ -1875,6 +1875,16 @@ export class FrameStore {
             return value;
         }
 
+        // If requested spectral type is WAV2, convert to WAVE then return squared data
+        if (this.spectralType === SpectralType.WAV2) {
+            const nativeWCSValue = AST.transformSpectralPoint(this.spectralFrame, SpectralType.WAVE, SpectralUnit.MHZ, this.spectralSystem, value, false);
+            if (!isFinite(nativeWCSValue)) {
+                return undefined;
+            }
+            const settingWCSValue = this.astSpectralTransform(SpectralType.WAVE, SpectralUnit.MHZ, this.spectralSystem, nativeWCSValue);
+            return isFinite(settingWCSValue) ? settingWCSValue * settingWCSValue : undefined;
+        }
+
         const nativeWCSValue = AST.transformSpectralPoint(this.spectralFrame, SpectralType.FREQ, SpectralUnit.MHZ, this.spectralSystem, value, false);
         if (!isFinite(nativeWCSValue)) {
             return undefined;
