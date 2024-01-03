@@ -48,7 +48,7 @@ export class ImageViewConfigStore {
         this.imageList = this.imageList.filter(imageItem => (imageItem?.type === ImageType.FRAME ? imageItem?.store?.frameInfo.fileId !== fileId : true));
     };
 
-    @action addColorBlending = (): ColorBlendingStore => {
+    @action createColorBlending = (): ColorBlendingStore => {
         if (this.frames.length > 0) {
             const id = this.colorBlendingImageMap.size ? Math.max(...this.colorBlendingImageMap.keys()) + 1 : 0;
             const newImage = new ColorBlendingStore(id);
