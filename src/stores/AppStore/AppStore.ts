@@ -117,13 +117,13 @@ export class AppStore {
     @observable astReady: boolean;
     @observable cartaComputeReady: boolean;
     // Frames
-    @observable frames: FrameStore[];
-    @observable previewFrames: ObservableMap<number, FrameStore>;
-    @observable activeFrame: FrameStore;
-    @observable hoveredFrame: FrameStore;
-    @observable contourDataSource: FrameStore;
-    @observable syncContourToFrame: boolean;
-    @observable syncFrameToContour: boolean;
+    @observable frames: FrameStore[] = [];
+    @observable previewFrames = new ObservableMap<number, FrameStore>();
+    @observable activeFrame: FrameStore = null;
+    @observable hoveredFrame: FrameStore = null;
+    @observable contourDataSource: FrameStore = null;
+    @observable syncContourToFrame = true;
+    @observable syncFrameToContour = true;
     @observable activeWorkspace: Workspace;
 
     // Profiles and region data
@@ -138,12 +138,12 @@ export class AppStore {
     @observable rasterScalingReference: FrameStore;
 
     // ImageViewer
-    @observable activeLayer: ImageViewLayer;
+    @observable activeLayer = ImageViewLayer.RegionMoving;
     @observable cursorFrozen: boolean;
-    @observable cursorMirror: boolean = false;
-    @observable toolbarExpanded: boolean;
-    @observable imageRatio: number;
-    @observable isExportingImage: boolean;
+    @observable cursorMirror = false;
+    @observable toolbarExpanded = true;
+    @observable imageRatio = 1;
+    @observable isExportingImage = false;
     @observable private isCanvasUpdated: boolean;
 
     private appContainer: HTMLElement;
@@ -1719,19 +1719,7 @@ export class AppStore {
         this.regionStats = new Map<number, ObservableMap<number, ObservableMap<number, CARTA.RegionStatsData>>>();
         this.regionHistograms = new Map<number, ObservableMap<number, ObservableMap<number, CARTA.IRegionHistogramData>>>();
         this.pendingChannelHistograms = new Map<string, CARTA.IRegionHistogramData>();
-
-        this.frames = [];
-        this.previewFrames = new ObservableMap<number, FrameStore>();
-        this.activeFrame = null;
-        this.hoveredFrame = null;
-        this.contourDataSource = null;
-        this.syncFrameToContour = true;
-        this.syncContourToFrame = true;
         this.initRequirements();
-        this.activeLayer = ImageViewLayer.RegionMoving;
-        this.toolbarExpanded = true;
-        this.imageRatio = 1;
-        this.isExportingImage = false;
         this.momentToMatch = true;
 
         AST.onReady.then(

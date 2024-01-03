@@ -1,4 +1,8 @@
 .profile-fitting-panel {
+    .bp3-popover2-target {
+        display: block;
+    }
+
     .profile-fitting-form {
         .bp3-form-group {
             &:first-of-type {
@@ -114,5 +118,9 @@
         .fitting-log-button {
             margin: 10px;
         }
+    }
+
+    .bp3-html-select {
+        width: 100%;
     }
 }
