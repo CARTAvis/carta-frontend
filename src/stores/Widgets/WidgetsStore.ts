@@ -911,7 +911,7 @@ export class WidgetsStore {
         const appStore = AppStore.Instance;
         const firstIndexInNextPage = (appStore.currentImagePage + 1) * appStore.imagesPerPage;
         if (appStore.frames?.length > firstIndexInNextPage) {
-            appStore.setActiveFrameByIndex(firstIndexInNextPage);
+            appStore.setActiveImageByIndex(firstIndexInNextPage);
         }
     };
 
@@ -919,7 +919,7 @@ export class WidgetsStore {
         const appStore = AppStore.Instance;
         if (appStore.currentImagePage > 0) {
             const firstIndexInPreviousPage = (appStore.currentImagePage - 1) * appStore.imagesPerPage;
-            appStore.setActiveFrameByIndex(firstIndexInPreviousPage);
+            appStore.setActiveImageByIndex(firstIndexInPreviousPage);
         }
     };
 

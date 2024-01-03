@@ -1,22 +1,8 @@
 import {Utils} from "@blueprintjs/table";
 import {action, computed, makeAutoObservable, observable} from "mobx";
 
+import {ImageType, ImageViewItem} from "models";
 import {ColorBlendingStore, FrameStore} from "stores";
-
-enum ImageType {
-    FRAME,
-    COLOR_BLENDING
-}
-
-type ImageItem =
-    | {
-          type: ImageType.FRAME;
-          store: FrameStore;
-      }
-    | {
-          type: ImageType.COLOR_BLENDING;
-          store: ColorBlendingStore;
-      };
 
 export class ImageViewConfigStore {
     private static staticInstance: ImageViewConfigStore;
@@ -28,7 +14,7 @@ export class ImageViewConfigStore {
         return ImageViewConfigStore.staticInstance;
     }
 
-    @observable private imageList: ImageItem[] = [];
+    @observable private imageList: ImageViewItem[] = [];
 
     @action addFrame = (frame: FrameStore) => {
         this.imageList.push({type: ImageType.FRAME, store: frame});
@@ -86,6 +72,10 @@ export class ImageViewConfigStore {
         this.imageList = [];
     };
 
+    @computed get imageNum(): number {
+        return this.imageList.length;
+    }
+
     @computed get frames(): FrameStore[] {
         return this.imageList.filter(imageItem => imageItem?.type === ImageType.FRAME && imageItem?.store instanceof FrameStore).map(imageItem => imageItem?.store as FrameStore);
     }
@@ -108,5 +98,9 @@ export class ImageViewConfigStore {
 
     getImageListIndex = (fileId: number): number => {
         return this.imageList.findIndex(imageItem => imageItem?.type === ImageType.FRAME && imageItem?.store?.frameInfo.fileId === fileId);
+    };
+
+    getImage = (index: number): ImageViewItem => {
+        return this.imageList[index];
     };
 }

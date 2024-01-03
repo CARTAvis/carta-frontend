@@ -402,7 +402,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                     <FormGroup inline={true} label="Data source">
                         <DataSourceSelect
                             activeItem={dataSource}
-                            onItemSelect={appStore.setActiveFrame}
+                            onItemSelect={appStore.setActiveImageByFrame}
                             popoverProps={{minimal: true, position: "bottom", fill: true}}
                             filterable={false}
                             items={appStore.frames}

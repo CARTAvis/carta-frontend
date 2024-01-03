@@ -568,7 +568,7 @@ export class RootMenuComponent extends React.Component {
         if (appStore.activeFrame && appStore.activeFrame === frame) {
             return;
         } else {
-            appStore.setActiveFrame(frame);
+            appStore.setActiveImageByFrame(frame);
         }
     };
 }

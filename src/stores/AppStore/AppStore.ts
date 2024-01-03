@@ -5,12 +5,13 @@ import * as CARTACompute from "carta_computation";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import * as Long from "long";
-import {action, autorun, computed, flow, makeObservable, observable, ObservableMap, when} from "mobx";
+import {action, autorun, computed, flow, makeObservable, observable, ObservableMap, reaction, when} from "mobx";
 import * as Semver from "semver";
 
 import {getImageViewCanvas, ImageViewLayer, PvGeneratorComponent} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import {
+    ActiveImage,
     CARTA_INFO,
     CatalogInfo,
     CatalogType,
@@ -18,6 +19,7 @@ import {
     FileId,
     FrameView,
     ImagePanelMode,
+    ImageType,
     Point2D,
     PresetLayout,
     RegionId,
@@ -119,7 +121,7 @@ export class AppStore {
     @observable cartaComputeReady: boolean;
     // Frames
     @observable previewFrames = new ObservableMap<number, FrameStore>();
-    @observable activeFrame: FrameStore = null;
+    @observable activeImage: ActiveImage = null;
     @observable hoveredFrame: FrameStore = null;
     @observable contourDataSource: FrameStore = null;
     @observable syncContourToFrame = true;
@@ -557,7 +559,7 @@ export class AppStore {
         }
 
         if (setAsActive) {
-            this.setActiveFrame(newFrame);
+            this.setActiveImageByFrame(newFrame);
         }
         // init image associated catalog
         this.catalogStore.updateImageAssociatedCatalogId(newFrame.frameInfo.fileId, []);
@@ -602,7 +604,8 @@ export class AppStore {
             fileFeatureFlags: ack.fileFeatureFlags,
             renderMode: CARTA.RenderMode.RASTER,
             beamTable: ack.beamTable,
-            preview: true
+            preview: true,
+            previewId: ack.previewId
         };
 
         const newFrame = new FrameStore(frameInfo);
@@ -612,7 +615,7 @@ export class AppStore {
             newFrame.updatePreviewDataGenerator = newFrame.updatePreviewData(ack);
             // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
             newFrame.updatePreviewDataGenerator.next();
-            this.setActiveFrame(newFrame);
+            this.setActiveImageByFrame(newFrame);
         }
 
         return newFrame;
@@ -870,12 +873,19 @@ export class AppStore {
                 frame.clearSpatialReference();
                 frame.clearSpectralReference();
                 frame.clearContours(false);
-                this.imageViewConfigStore.removeFrame(fileId);
+
                 const firstFrame = this.frames.length ? this.frames[0] : null;
                 // Clean up if frame is active
                 if (this.activeFrame.frameInfo.fileId === fileId) {
-                    this.activeFrame = firstFrame;
+                    if (firstFrame) {
+                        this.setActiveImage({type: ImageType.FRAME, id: firstFrame.id});
+                    } else {
+                        this.setActiveImage(null);
+                    }
                 }
+
+                this.imageViewConfigStore.removeFrame(fileId);
+
                 // Clean up if frame is contour data source
                 if (this.contourDataSource.frameInfo.fileId === fileId) {
                     this.contourDataSource = firstFrame;
@@ -935,7 +945,7 @@ export class AppStore {
         this.clearRasterScalingReference();
         this.activeWorkspace = undefined;
         if (this.backendService.closeFile(-1)) {
-            this.activeFrame = null;
+            this.setActiveImage(null);
             this.tileService.clearCompressedCache(-1);
             this.previewFrames.forEach((previewFrameStore, previewFrameId) => {
                 this.removePreviewFrame(previewFrameId);
@@ -961,7 +971,12 @@ export class AppStore {
     @action removePreviewFrame = (previewId: number) => {
         if (this.previewFrames.delete(previewId)) {
             this.backendService.closePvPreview(previewId);
-            this.activeFrame = this.visibleFrames[0];
+            const firstFrame = this.visibleFrames[0];
+            if (firstFrame) {
+                this.setActiveImage({type: ImageType.FRAME, id: firstFrame?.id});
+            } else {
+                this.setActiveImage(null);
+            }
         }
     };
 
@@ -970,7 +985,7 @@ export class AppStore {
             const frameIds = this.frames.map(f => f.frameInfo.fileId);
             const currentIndex = frameIds.indexOf(this.activeFrame.frameInfo.fileId);
             const requiredIndex = (this.frames.length + currentIndex + delta) % this.frames.length;
-            this.setActiveFrameByIndex(requiredIndex);
+            this.setActiveImageByIndex(requiredIndex);
         }
     };
 
@@ -1424,7 +1439,7 @@ export class AppStore {
             AppToaster.show(ErrorToast(`Image fitting failed: ${err}.`));
         }
 
-        this.setActiveFrameById(message.fileId);
+        this.setActiveImageByFileId(message.fileId);
         if (message.createModelImage || message.createResidualImage) {
             this.endFileLoading();
         }
@@ -1887,6 +1902,19 @@ export class AppStore {
                 this.overlayStore.setDefaultsFromAST(this.activeFrame);
             }
         });
+
+        reaction(
+            () => this.activeFrame,
+            frame => {
+                if (frame && !frame.isPreview) {
+                    this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
+                    this.catalogStore.resetActiveCatalogFile(frame?.id);
+                    if (this.syncContourToFrame) {
+                        this.contourDataSource = frame;
+                    }
+                }
+            }
+        );
 
         // Update image panel page buttons
         autorun(() => {
@@ -2372,7 +2400,7 @@ export class AppStore {
                     }
 
                     if (workspace.selectedFile === frame.frameInfo.fileId) {
-                        this.setActiveFrame(frame);
+                        this.setActiveImageByFrame(frame);
                     }
 
                     if (fileInfo.renderConfig) {
@@ -2598,7 +2626,7 @@ export class AppStore {
         this.removeAllFrames();
     };
 
-    @action setActiveFrame = (frame: FrameStore) => {
+    @action setActiveImageByFrame = (frame: FrameStore) => {
         if (!frame) {
             return;
         }
@@ -2608,39 +2636,49 @@ export class AppStore {
             return;
         }
 
-        this.changeActiveFrame(frame);
+        if (frame.isPreview) {
+            this.setActiveImage({type: ImageType.PV_PREVIEW, id: frame.frameInfo?.previewId});
+        } else {
+            this.setActiveImage({type: ImageType.FRAME, id: frame.id});
+        }
     };
 
-    @action setActiveFrameById = (fileId: number) => {
-        const requiredFrame = this.getFrame(fileId);
-        if (requiredFrame) {
-            this.setActiveFrame(requiredFrame);
+    @action setActiveImageByFileId = (fileId: number) => {
+        const frameExists = this.frames.some(f => f.id === fileId);
+        if (frameExists) {
+            this.setActiveImage({type: ImageType.FRAME, id: fileId});
         } else {
             console.log(`Can't find required frame ${fileId}`);
         }
     };
 
-    @action setActiveFrameByIndex(index: number) {
-        if (index >= 0 && this.frames.length > index) {
-            this.setActiveFrame(this.frames[index]);
+    @action setActiveImageByIndex(index: number) {
+        if (index >= 0 && this.imageViewConfigStore.imageNum > index) {
+            const image = this.imageViewConfigStore.getImage(index);
+            if (image) {
+                this.setActiveImage({type: image.type, id: image.store?.id});
+            }
         } else {
-            console.log(`Invalid frame index ${index}`);
+            console.log(`Invalid image index ${index}`);
         }
     }
 
-    private changeActiveFrame(frame: FrameStore) {
-        if (frame !== this.activeFrame) {
-            // Set overlay defaults from current frame
-            this.overlayStore.setDefaultsFromAST(frame);
+    @action setActiveImage = (activeImage: ActiveImage) => {
+        this.activeImage = activeImage;
+    };
+
+    @computed get activeFrame(): FrameStore {
+        const type = this.activeImage?.type;
+
+        if (type === ImageType.FRAME) {
+            return this.frames.find(f => f?.id === this.activeImage?.id) ?? null;
+        } else if (type === ImageType.COLOR_BLENDING) {
+            return this.spatialReference;
+        } else if (type === ImageType.PV_PREVIEW) {
+            return this.previewFrames.get(this.activeImage?.id) ?? null;
         }
-        this.activeFrame = frame;
-        if (!frame.isPreview) {
-            this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
-            this.catalogStore.resetActiveCatalogFile(frame.frameInfo.fileId);
-            if (this.syncContourToFrame) {
-                this.contourDataSource = frame;
-            }
-        }
+
+        return null;
     }
 
     @action setHoveredFrame(frame: FrameStore) {
@@ -2653,7 +2691,7 @@ export class AppStore {
     @action setContourDataSource = (frame: FrameStore) => {
         this.contourDataSource = frame;
         if (this.syncFrameToContour) {
-            this.setActiveFrame(frame);
+            this.setActiveImageByFrame(frame);
         }
     };
 

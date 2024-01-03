@@ -96,7 +96,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
     onMouseDown = ev => {
         const appStore = AppStore.Instance;
         if (this.props.frame !== appStore.activeFrame) {
-            appStore.setActiveFrame(this.props.frame);
+            appStore.setActiveImageByFrame(this.props.frame);
             ev.stopPropagation();
         }
     };
@@ -104,7 +104,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
     onMouseWheel = ev => {
         const appStore = AppStore.Instance;
         if (this.props.frame !== appStore.activeFrame) {
-            appStore.setActiveFrame(this.props.frame);
+            appStore.setActiveImageByFrame(this.props.frame);
             ev.stopPropagation();
         }
     };

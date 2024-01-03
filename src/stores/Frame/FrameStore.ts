@@ -88,6 +88,7 @@ export interface FrameInfo {
     renderMode: CARTA.RenderMode;
     beamTable: CARTA.IBeam[];
     preview?: boolean;
+    previewId?: number;
 }
 
 export enum CoordinateMode {
@@ -208,6 +209,10 @@ export class FrameStore {
         const extName =
             this.frameInfo?.fileInfoExtended?.computedEntries?.length >= 3 && this.frameInfo?.fileInfoExtended?.computedEntries[2]?.name === "Extension name" ? `_${this.frameInfo.fileInfoExtended.computedEntries[2]?.value}` : "";
         return this.frameInfo.hdu && this.frameInfo.hdu !== "" && this.frameInfo.hdu !== "0" ? `${this.frameInfo.fileInfo.name}.HDU_${this.frameInfo.hdu}${extName}` : this.frameInfo.fileInfo.name;
+    }
+
+    @computed get id(): number {
+        return this.frameInfo?.fileId;
     }
 
     @computed get centerMovement(): Point2D {

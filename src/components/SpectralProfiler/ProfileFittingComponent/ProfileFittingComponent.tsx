@@ -229,7 +229,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                     options={appStore.frames.map(frame => {
                                         return {label: frame.filename, value: frame.frameInfo.fileId};
                                     })}
-                                    onChange={ev => appStore.setActiveFrameById(parseInt(ev.target.value))}
+                                    onChange={ev => appStore.setActiveImageByFileId(parseInt(ev.target.value))}
                                     disabled={disabled}
                                 />
                             </FormGroup>

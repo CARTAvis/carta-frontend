@@ -86,7 +86,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         if (val >= appStore.frames.length) {
             val = 0;
         }
-        appStore.setActiveFrameByIndex(val);
+        appStore.setActiveImageByIndex(val);
     };
 
     onAnimationModeChanged = (event: React.FormEvent<HTMLInputElement>) => {
@@ -104,7 +104,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
         switch (appStore.animatorStore.animationMode) {
             case AnimationMode.FRAME:
-                appStore.setActiveFrameByIndex(0);
+                appStore.setActiveImageByIndex(0);
                 break;
             case AnimationMode.CHANNEL:
                 frame.setChannels(0, frame.stokes, true);
@@ -127,7 +127,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
         switch (appStore.animatorStore.animationMode) {
             case AnimationMode.FRAME:
-                appStore.setActiveFrameByIndex(appStore.frames.length - 1);
+                appStore.setActiveImageByIndex(appStore.frames.length - 1);
                 break;
             case AnimationMode.CHANNEL:
                 frame.setChannels(frame.frameInfo.fileInfoExtended.depth - 1, frame.stokes, true);
