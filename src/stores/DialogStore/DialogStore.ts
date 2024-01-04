@@ -98,8 +98,10 @@ export class DialogStore {
                     break;
 
                 case DialogId.ExternalPage:
-                    this.externalPageDialogUrl = options.url;
-                    this.externalPageDialogTitle = options.title;
+                    if (options?.url && options?.title) {
+                        this.externalPageDialogUrl = options.url;
+                        this.externalPageDialogTitle = options.title;
+                    }
                     this.dialogVisible.set(DialogId.ExternalPage, true);
                     this.zIndexManager.assignIndex(DialogId.ExternalPage);
                     break;
