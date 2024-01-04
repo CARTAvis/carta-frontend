@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+* Added support for changing the depth order of floating widget and dialog on select ([#2307](https://github.com/CARTAvis/carta-frontend/pull/2307)).
 ### Fixed
 * Fixed the blank screen when clicking X/Y profile setting button without images opened ([#2247](https://github.com/CARTAvis/carta-frontend/issues/2247)).
 * Fixed ruler annotation matching bug ([#2242](https://github.com/CARTAvis/carta-frontend/issues/2242)).
