@@ -18,6 +18,7 @@ import {
     COMPUTED_POLARIZATIONS,
     FileId,
     FrameView,
+    ImagePanelItem,
     ImageType,
     Point2D,
     PresetLayout,
@@ -2625,6 +2626,19 @@ export class AppStore {
         this.removeAllFrames();
     };
 
+    @action setActiveImageById = (type: ImageType, id: number) => {
+        if (!isFinite(id)) {
+            return;
+        }
+
+        // Ignore changes when animating
+        if (this.animatorStore.serverAnimationActive) {
+            return;
+        }
+
+        this.setActiveImage({type, id});
+    };
+
     @action setActiveImageByFrame = (frame: FrameStore) => {
         if (!frame) {
             return;
@@ -2679,6 +2693,10 @@ export class AppStore {
 
         return null;
     }
+
+    isActiveImage = (image: ImagePanelItem): boolean => {
+        return image?.type === this.activeImage?.type && image?.store?.id === this.activeImage?.id;
+    };
 
     @action setHoveredFrame(frame: FrameStore) {
         if (!frame) {

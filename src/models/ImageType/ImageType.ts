@@ -16,6 +16,8 @@ export type ImageViewItem =
           store: ColorBlendingStore;
       };
 
+export type ImagePanelItem = ImageViewItem | {type: ImageType.PV_PREVIEW; store: FrameStore};
+
 export type ActiveImage = {
     type: ImageType;
     id: number;
