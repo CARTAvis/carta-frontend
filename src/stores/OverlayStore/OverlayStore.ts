@@ -926,7 +926,7 @@ export class OverlayColorbarSettings {
         if (!this.numberRotation && this.position === "right") {
             textWidth = 0;
             const textFontIndex = clamp(Math.floor(this.numberFont / 4), 0, this.textRatio.length);
-            for (const frame of AppStore.Instance.visibleFrames) {
+            for (const frame of AppStore.Instance.imageViewConfigStore.visibleFrames) {
                 const frameTextWidth = Math.max(...frame.colorbarStore.texts.map(x => x.length - (textFontIndex === 4 ? 0 : x.match(/[.-]/g)?.length * 0.5 || 0))) * this.textRatio[textFontIndex];
                 textWidth = Math.max(textWidth, frameTextWidth);
             }
@@ -1199,11 +1199,11 @@ export class OverlayStore {
     }
 
     @computed get viewWidth() {
-        return Math.floor(this.fullViewWidth / AppStore.Instance.numImageColumns);
+        return Math.floor(this.fullViewWidth / AppStore.Instance.imageViewConfigStore.numImageColumns);
     }
 
     @computed get viewHeight() {
-        return Math.floor(this.fullViewHeight / AppStore.Instance.numImageRows);
+        return Math.floor(this.fullViewHeight / AppStore.Instance.imageViewConfigStore.numImageRows);
     }
 
     @computed get renderWidth() {

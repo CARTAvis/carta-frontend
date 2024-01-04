@@ -236,7 +236,7 @@ export class CatalogStore {
         const visibleCatalogMap = new Map<FrameStore, number[]>();
 
         /// TODO: this should be cleaned up a bit
-        for (const frame of appStore.visibleFrames) {
+        for (const frame of appStore.imageViewConfigStore.visibleFrames) {
             const imageId = frame.frameInfo.fileId;
             let associatedCatalogIds = [...this.imageAssociatedCatalogId.get(imageId)];
             frame.spatialSiblings?.forEach(frame => {

@@ -1,8 +1,9 @@
 import {Utils} from "@blueprintjs/table";
 import {action, computed, makeAutoObservable, observable} from "mobx";
 
-import {ImageType, ImageViewItem} from "models";
-import {ColorBlendingStore, FrameStore} from "stores";
+import {ImagePanelMode, ImageType, ImageViewItem} from "models";
+import {AppStore, ColorBlendingStore, FrameStore, PreferenceStore} from "stores";
+import {clamp} from "utilities";
 
 export class ImageViewConfigStore {
     private static staticInstance: ImageViewConfigStore;
@@ -92,12 +93,92 @@ export class ImageViewConfigStore {
         return imageMap;
     }
 
+    @computed private get activeImageView(): ImageViewItem {
+        const activeImage = AppStore.Instance.activeImage;
+        const type = activeImage?.type;
+        const id = activeImage?.id;
+
+        if (type === ImageType.FRAME || type === ImageType.COLOR_BLENDING) {
+            const index = this.getImageListIndex(type, id);
+            return this.getImage(index);
+        }
+
+        return null;
+    }
+
+    @computed private get numImagePages() {
+        if (this.numImageColumns <= 0 || this.numImageRows <= 0 || !this.imageList) {
+            return 0;
+        }
+
+        return Math.ceil(this.imageNum / this.imagesPerPage);
+    }
+
+    @computed get currentImagePage() {
+        if (!this.imageNum || !this.activeImageView) {
+            return 0;
+        }
+
+        const index = this.imageList.indexOf(this.activeImageView);
+        return Math.floor(index / this.imagesPerPage);
+    }
+
+    @computed get visibleImages(): ImageViewItem[] {
+        if (!this.imageNum) {
+            return [];
+        }
+
+        const pageIndex = clamp(this.currentImagePage, 0, this.numImagePages);
+        const firstImageIndex = pageIndex * this.imagesPerPage;
+        const indexUpperBound = Math.min(firstImageIndex + this.imagesPerPage, this.imageNum);
+        const pageImages = [];
+        for (let i = firstImageIndex; i < indexUpperBound; i++) {
+            pageImages.push(this.imageList[i]);
+        }
+        return pageImages;
+    }
+
+    @computed get visibleFrames(): FrameStore[] {
+        return this.visibleImages.filter(imageItem => imageItem?.type === ImageType.FRAME && imageItem?.store instanceof FrameStore).map(imageItem => imageItem?.store as FrameStore);
+    }
+
+    @computed get numImageColumns() {
+        switch (this.imagePanelMode) {
+            case ImagePanelMode.None:
+                return 1;
+            case ImagePanelMode.Fixed:
+                return Math.max(1, PreferenceStore.Instance.imagePanelColumns);
+            default:
+                return clamp(this.imageNum, 1, PreferenceStore.Instance.imagePanelColumns);
+        }
+    }
+
+    @computed get numImageRows() {
+        switch (this.imagePanelMode) {
+            case ImagePanelMode.None:
+                return 1;
+            case ImagePanelMode.Fixed:
+                return Math.max(1, PreferenceStore.Instance.imagePanelRows);
+            default:
+                return clamp(Math.ceil(this.imageNum / PreferenceStore.Instance.imagePanelColumns), 1, PreferenceStore.Instance.imagePanelRows);
+        }
+    }
+
+    @computed get imagesPerPage() {
+        return this.numImageColumns * this.numImageRows;
+    }
+
+    @computed get imagePanelMode() {
+        const preferenceStore = PreferenceStore.Instance;
+        return preferenceStore.imageMultiPanelEnabled ? preferenceStore.imagePanelMode : ImagePanelMode.None;
+    }
+
     constructor() {
         makeAutoObservable(this);
     }
 
-    getImageListIndex = (fileId: number): number => {
-        return this.imageList.findIndex(imageItem => imageItem?.type === ImageType.FRAME && imageItem?.store?.frameInfo.fileId === fileId);
+    getImageListIndex = (type: ImageType.FRAME | ImageType.COLOR_BLENDING, id: number): number => {
+        return this.imageList.findIndex(imageItem => imageItem?.type === type && imageItem?.store?.id === id);
     };
 
     getImage = (index: number): ImageViewItem => {

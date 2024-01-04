@@ -54,7 +54,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
             this.canvas.height = requiredHeight;
         }
         // Resize and clear the shared WebGL canvas if required
-        this.vectorOverlayWebGLService.setCanvasSize(requiredWidth * appStore.numImageColumns, requiredHeight * appStore.numImageRows);
+        this.vectorOverlayWebGLService.setCanvasSize(requiredWidth * appStore.imageViewConfigStore.numImageColumns, requiredHeight * appStore.imageViewConfigStore.numImageRows);
 
         // Resize canvas if necessary
         if (this.canvas.width !== requiredWidth || this.canvas.height !== requiredHeight) {
@@ -64,7 +64,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         // Otherwise just clear it
         const xOffset = this.props.column * frame.renderWidth * pixelRatio;
         // y-axis is inverted
-        const yOffset = (appStore.numImageRows - 1 - this.props.row) * frame.renderHeight * pixelRatio;
+        const yOffset = (appStore.imageViewConfigStore.numImageRows - 1 - this.props.row) * frame.renderHeight * pixelRatio;
         this.gl.viewport(xOffset, yOffset, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio);
         this.gl.clearColor(0, 0, 0, 0);
         // Clear a scissored rectangle limited to the current frame

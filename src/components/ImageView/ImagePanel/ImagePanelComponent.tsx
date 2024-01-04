@@ -115,7 +115,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
             case CursorInfoVisibility.Always:
                 return true;
             case CursorInfoVisibility.HideTiled:
-                return appStore.numImageRows * appStore.numImageColumns === 1;
+                return appStore.imageViewConfigStore.imagesPerPage === 1;
             case CursorInfoVisibility.ActiveImage:
                 return appStore.activeFrame === this.props.frame;
             default:
@@ -130,7 +130,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
 
         const frame = this.props.frame;
         if (frame?.isRenderable && appStore.astReady) {
-            const isActive = frame === appStore.activeFrame && (appStore.numImageRows * appStore.numImageColumns > 1 || appStore.previewFrames.size > 0);
+            const isActive = frame === appStore.activeFrame && (appStore.imageViewConfigStore.imagesPerPage > 1 || appStore.previewFrames.size > 0);
             const className = classNames("image-panel-div", {active: isActive});
 
             let style: React.CSSProperties = {width: frame.previewViewWidth || overlayStore.viewWidth, height: frame.previewViewHeight || overlayStore.viewHeight};
@@ -144,11 +144,11 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                     style.borderTopLeftRadius = 0;
                     style.borderBottomLeftRadius = 0;
                 }
-                if (this.props.row !== appStore.numImageRows - 1) {
+                if (this.props.row !== appStore.imageViewConfigStore.numImageRows - 1) {
                     style.borderBottomLeftRadius = 0;
                     style.borderBottomRightRadius = 0;
                 }
-                if (this.props.column !== appStore.numImageColumns - 1) {
+                if (this.props.column !== appStore.imageViewConfigStore.numImageColumns - 1) {
                     style.borderTopRightRadius = 0;
                     style.borderBottomRightRadius = 0;
                 }

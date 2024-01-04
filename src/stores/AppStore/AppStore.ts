@@ -18,7 +18,6 @@ import {
     COMPUTED_POLARIZATIONS,
     FileId,
     FrameView,
-    ImagePanelMode,
     ImageType,
     Point2D,
     PresetLayout,
@@ -59,7 +58,7 @@ import {
 } from "stores";
 import {CompassAnnotationStore, CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
-import {clamp, distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
+import {distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
 
 import GitCommit from "../../static/gitInfo";
 
@@ -481,7 +480,7 @@ export class AppStore {
     // Calculates which frames have a contour visible as a function of each visible frame
     @computed get contourFrames(): Map<FrameStore, FrameStore[]> {
         const frameMap = new Map<FrameStore, FrameStore[]>();
-        for (const frame of this.visibleFrames) {
+        for (const frame of this.imageViewConfigStore.visibleFrames) {
             const group = this.spatialGroup(frame).filter(f => f.contourConfig.enabled && f.contourConfig.visible);
             frameMap.set(frame, group);
         }
@@ -491,7 +490,7 @@ export class AppStore {
     // Calculates which frames have a vector overlay visible as a function of each visible frame
     @computed get vectorOverlayFrames(): Map<FrameStore, FrameStore[]> {
         const frameMap = new Map<FrameStore, FrameStore[]>();
-        for (const frame of this.visibleFrames) {
+        for (const frame of this.imageViewConfigStore.visibleFrames) {
             const group = this.spatialGroup(frame).filter(f => f.vectorOverlayConfig.enabled && f.vectorOverlayConfig.visible);
             frameMap.set(frame, group);
         }
@@ -539,7 +538,7 @@ export class AppStore {
         let newFrame = new FrameStore(frameInfo);
 
         // Place frame in frame array (replace frame with the same ID if it exists)
-        const existingFrameIndex = this.imageViewConfigStore.getImageListIndex(ack.fileId);
+        const existingFrameIndex = this.imageViewConfigStore.getImageListIndex(ImageType.FRAME, ack.fileId);
         if (existingFrameIndex !== -1) {
             this.imageViewConfigStore.replaceFrame(existingFrameIndex, newFrame);
         } else {
@@ -971,7 +970,7 @@ export class AppStore {
     @action removePreviewFrame = (previewId: number) => {
         if (this.previewFrames.delete(previewId)) {
             this.backendService.closePvPreview(previewId);
-            const firstFrame = this.visibleFrames[0];
+            const firstFrame = this.imageViewConfigStore.visibleFrames[0];
             if (firstFrame) {
                 this.setActiveImage({type: ImageType.FRAME, id: firstFrame?.id});
             } else {
@@ -1568,7 +1567,7 @@ export class AppStore {
 
             frame.channel = update.channel;
             frame.stokes = update.stokes;
-            if (this.visibleFrames.includes(frame)) {
+            if (this.imageViewConfigStore.visibleFrames.includes(frame)) {
                 // Calculate new required frame view (cropped to file size)
                 const reqView = frame.requiredFrameView;
 
@@ -1819,7 +1818,7 @@ export class AppStore {
             if (this.activeFrame && (!this.activeFrame.zooming || this.preferenceStore.streamContoursWhileZooming)) {
                 // Group all view updates for visible images into one throttled call
                 const viewUpdates: ViewUpdate[] = [];
-                for (const frame of this.visibleFrames) {
+                for (const frame of this.imageViewConfigStore.visibleFrames) {
                     const reqView = frame.requiredFrameView;
                     let croppedReq: FrameView = {
                         xMin: Math.max(0, reqView.xMin),
@@ -1842,7 +1841,7 @@ export class AppStore {
                 // Clear tiles of invisible matched images during animation
                 if (this.animatorStore?.serverAnimationActive) {
                     for (const frame of this.activeFrame.spectralSiblings) {
-                        if (!this.visibleFrames.includes(frame)) {
+                        if (!this.imageViewConfigStore.visibleFrames.includes(frame)) {
                             viewUpdates.push({tiles: [], fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: null, headerUnit: frame.headerUnit});
                         }
                     }
@@ -1857,7 +1856,7 @@ export class AppStore {
         autorun(() => {
             const updates: ChannelUpdate[] = [];
 
-            for (const visibleFrame of this.visibleFrames) {
+            for (const visibleFrame of this.imageViewConfigStore.visibleFrames) {
                 if (visibleFrame) {
                     // Calculate if new data is required for the active channel
                     const updateRequiredChannels = visibleFrame.requiredChannel !== visibleFrame?.channel || visibleFrame.requiredStokes !== visibleFrame.stokes;
@@ -1868,7 +1867,7 @@ export class AppStore {
 
                     // Update any sibling channels
                     visibleFrame.spectralSiblings.forEach(frame => {
-                        const isVisible = this.visibleFrames.includes(frame);
+                        const isVisible = this.imageViewConfigStore.visibleFrames.includes(frame);
                         const siblingUpdateRequired = frame.requiredChannel !== frame.channel || frame.requiredStokes !== frame.stokes;
                         if (!isVisible && siblingUpdateRequired) {
                             updates.push({frame, channel: frame.requiredChannel, stokes: frame.requiredStokes});
@@ -1918,7 +1917,7 @@ export class AppStore {
 
         // Update image panel page buttons
         autorun(() => {
-            if (this.activeFrame && this.numImageColumns && this.numImageRows) {
+            if (this.activeFrame && this.imageViewConfigStore.imagesPerPage) {
                 this.widgetsStore.updateImagePanelPageButtons();
             }
         });
@@ -2934,74 +2933,9 @@ export class AppStore {
         this.momentToMatch = !this.momentToMatch;
     };
 
-    @computed get numImagePages() {
-        if (this.numImageColumns <= 0 || this.numImageRows <= 0 || !this.frames) {
-            return 0;
-        }
-
-        return Math.ceil(this.frames.length / this.imagesPerPage);
-    }
-
-    @computed get currentImagePage() {
-        if (!this.frames?.length || !this.activeFrame) {
-            return 0;
-        }
-
-        const index = this.frames.indexOf(this.activeFrame);
-        return Math.floor(index / this.imagesPerPage);
-    }
-
-    @computed get visibleFrames(): FrameStore[] {
-        if (!this.frames?.length) {
-            return [];
-        }
-
-        const pageIndex = clamp(this.currentImagePage, 0, this.numImagePages);
-        const firstFrameIndex = pageIndex * this.imagesPerPage;
-        const indexUpperBound = Math.min(firstFrameIndex + this.imagesPerPage, this.frames.length);
-        const pageFrames = [];
-        for (let i = firstFrameIndex; i < indexUpperBound; i++) {
-            pageFrames.push(this.frames[i]);
-        }
-        return pageFrames;
-    }
-
-    @computed get numImageColumns() {
-        switch (this.imagePanelMode) {
-            case ImagePanelMode.None:
-                return 1;
-            case ImagePanelMode.Fixed:
-                return Math.max(1, this.preferenceStore.imagePanelColumns);
-            default:
-                const numImages = this.frames?.length ?? 0;
-                return clamp(numImages, 1, this.preferenceStore.imagePanelColumns);
-        }
-    }
-
-    @computed get numImageRows() {
-        switch (this.imagePanelMode) {
-            case ImagePanelMode.None:
-                return 1;
-            case ImagePanelMode.Fixed:
-                return Math.max(1, this.preferenceStore.imagePanelRows);
-            default:
-                const numImages = this.frames?.length ?? 0;
-                return clamp(Math.ceil(numImages / this.preferenceStore.imagePanelColumns), 1, this.preferenceStore.imagePanelRows);
-        }
-    }
-
-    @computed get imagesPerPage() {
-        return this.numImageColumns * this.numImageRows;
-    }
-
-    @computed get imagePanelMode() {
-        const preferenceStore = PreferenceStore.Instance;
-        return preferenceStore.imageMultiPanelEnabled ? preferenceStore.imagePanelMode : ImagePanelMode.None;
-    }
-
     exportImage = (imageRatio: number) => {
         if (this.activeFrame) {
-            const index = this.visibleFrames.indexOf(this.activeFrame);
+            const index = this.imageViewConfigStore.visibleFrames.indexOf(this.activeFrame);
             if (index === -1) {
                 return;
             }
@@ -3014,7 +2948,7 @@ export class AppStore {
                 if (composedCanvas) {
                     composedCanvas.toBlob(blob => {
                         const link = document.createElement("a") as HTMLAnchorElement;
-                        const joinedNames = this.visibleFrames.map(f => f.filename).join("-");
+                        const joinedNames = this.imageViewConfigStore.visibleFrames.map(f => f.filename).join("-");
                         // Trim filename before timestamp to 200 characters to prevent browser errors
                         link.download = `${joinedNames}-image`.substring(0, 200) + `-${getTimestamp()}.png`;
                         link.href = URL.createObjectURL(blob);
@@ -3074,7 +3008,7 @@ export class AppStore {
                 () => {
                     const tilesLoading = this.tileService.remainingTiles > 0;
                     let contoursLoading = false;
-                    for (const frame of this.visibleFrames) {
+                    for (const frame of this.imageViewConfigStore.visibleFrames) {
                         if (frame.contourProgress >= 0 && frame.contourProgress < 1) {
                             contoursLoading = true;
                             break;
