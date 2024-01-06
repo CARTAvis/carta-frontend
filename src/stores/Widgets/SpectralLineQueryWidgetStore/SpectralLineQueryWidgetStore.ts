@@ -5,7 +5,19 @@ import {action, autorun, computed, flow, makeObservable, observable} from "mobx"
 
 import {SplatalogueService} from "services";
 import {AppStore, ControlHeader} from "stores";
-import {booleanFiltering, getComparisonOperatorAndValue, numericFiltering, ProcessedColumnData, ProtobufProcessing, SPEED_OF_LIGHT, stringFiltering, wavelengthToFrequency} from "utilities";
+import {
+    booleanFiltering,
+    hasFilterFunc,
+    initSortedIndexMapFunc,
+    numericFiltering,
+    ProcessedColumnData,
+    ProtobufProcessing,
+    setSortingInfoFunc,
+    SPEED_OF_LIGHT,
+    stringFiltering,
+    updateSortedIndexMapFunc,
+    wavelengthToFrequency
+} from "utilities";
 
 export enum SpectralLineQueryRangeType {
     Range = "Range",
@@ -99,16 +111,16 @@ export interface SpectralLine {
     qn: string;
 }
 
-const LINE_SELECTION_COLUMN_INDEX = -1;
-const SPECIES_COLUMN_INDEX = 0;
-const SHIFTIED_FREQUENCY_COLUMN_INDEX = 2;
-const MEASURED_FREQUENCY_COLUMN_INDEX = 5;
-const RESOLVED_QN_COLUMN_INDEX = 7;
+const LINE_SELECTION_COLUMN_INDEX = 0;
+const SPECIES_COLUMN_INDEX = 1;
+const SHIFTIED_FREQUENCY_COLUMN_INDEX = 3;
+const MEASURED_FREQUENCY_COLUMN_INDEX = 6;
+const RESOLVED_QN_COLUMN_INDEX = 8;
 const FREQUENCY_RANGE_LIMIT = 2 * 1e4; // 20000 MHz
 const DEFAULT_HEADER_WIDTH = 150;
 
-const TRUE_REGEX = /^[tTyY].*$/;
-const FALSE_REGEX = /^[fFnN].*$/;
+// const TRUE_REGEX = /^[tTyY].*$/;
+// const FALSE_REGEX = /^[fFnN].*$/;
 
 export class SpectralLineQueryWidgetStore {
     @observable queryRangeType: SpectralLineQueryRangeType;
@@ -130,7 +142,7 @@ export class SpectralLineQueryWidgetStore {
     @observable numDataRows: number;
     @observable selectedSpectralProfilerID: string;
     @observable controlHeader: Map<string, ControlHeader>;
-    @observable sortingInfo: { columnName: string; sortingType: CARTA.SortingType };
+    @observable sortingInfo: {columnName: string; sortingType: CARTA.SortingType};
     @observable sortedIndexMap: Array<number>;
 
     // raw copy of the shifted frequency column, does not apply shifting factor
@@ -287,6 +299,7 @@ export class SpectralLineQueryWidgetStore {
                 this.columnHeaders = this.preprocessHeaders(ack.headers);
                 this.controlHeader = this.initControlHeader(this.columnHeaders);
                 this.queryResult = this.initColumnData(ack.spectralLineData, ack.dataSize, this.columnHeaders);
+                // this.controlHeader = this.shiftBackColumnIndex(this.controlHeader);
                 this.updateFilterResult(this.fullRowIndexes);
                 this.isDataFiltered = false;
                 this.filterNum = 0;
@@ -358,82 +371,20 @@ export class SpectralLineQueryWidgetStore {
     }
 
     @action setSortingInfo(columnName: string, sortingType: CARTA.SortingType) {
-        this.sortingInfo = { columnName, sortingType };
+        this.sortingInfo = setSortingInfoFunc(columnName, sortingType);
         this.updateSortedIndexMap();
     }
 
     @action updateSortedIndexMap() {
-        const dataIndex = this.controlHeader.get(this.sortingInfo.columnName)?.dataIndex - 1;
-        if (dataIndex >= 0) {
-            let direction = 0;
-            const sortingType = this.sortingInfo.sortingType;
-            if (sortingType === 0) {
-                direction = 1;
-            } else if (sortingType === 1) {
-                direction = -1;
-            }
-            if (direction === 0 && this.hasFilter) {
-                this.initSortedIndexMap();
-                return;
-            }
-            let queryColumn = this.filterResult.get(dataIndex);
-            if (this.hasFilter) {
-                this.initSortedIndexMap();
-            }
-            switch (queryColumn?.dataType) {
-                case CARTA.ColumnType.String:
-                    this.sortedIndexMap.sort((a: number, b: number) => {
-                        const aString = String(queryColumn.data[a]);
-                        const bString = String(queryColumn.data[b]);
-                        if (!aString) {
-                            return direction * -1;
-                        }
-
-                        if (!bString) {
-                            return direction * 1;
-                        }
-                        return direction * aString.localeCompare(bString);
-                    });
-                    break;
-                case CARTA.ColumnType.UnsupportedType:
-                    console.log("Data type is not supported");
-                    break;
-                default:
-                    this.sortedIndexMap.sort((a: number, b: number) => {
-                        const aNumber = Number(queryColumn.data[a]);
-                        const bNumber = Number(queryColumn.data[b]);
-                        return direction * (aNumber < bNumber ? -1 : 1);
-                    });
-                    break;
-            }
-        }
+        this.sortedIndexMap = updateSortedIndexMapFunc(this.controlHeader, this.sortingInfo, this.sortedIndexMap, this.hasFilter, this.numVisibleRows, this.filterResult);
     }
 
     @action initSortedIndexMap() {
-        this.sortedIndexMap = [];
-        for (let index = 0; index < this.numVisibleRows; index++) {
-            this.sortedIndexMap.push(index);
-        }
+        this.sortedIndexMap = initSortedIndexMapFunc(this.numVisibleRows);
     }
 
     @computed get hasFilter(): boolean {
-        let hasfilter = false;
-        this.controlHeader.forEach((value, key) => {
-            if (value.filter && value.display) {
-                const column = this.queryResult.get(value.dataIndex);
-                if (column?.dataType === CARTA.ColumnType.String) {
-                    hasfilter = true;
-                } else if (column?.dataType === CARTA.ColumnType.Bool) {
-                    hasfilter = value.filter.match(TRUE_REGEX)?.length > 0 || value.filter.match(FALSE_REGEX)?.length > 0;
-                } else {
-                    const {operator, values} = getComparisonOperatorAndValue(value.filter);
-                    if (operator >= 0 && values.length) {
-                        hasfilter = true;
-                    }
-                }
-            }
-        });
-        return hasfilter;
+        return hasFilterFunc(this.controlHeader, this.queryResult);
     }
 
     @computed get fullRowIndexes(): Array<number> {
@@ -522,7 +473,7 @@ export class SpectralLineQueryWidgetStore {
                 new CARTA.CatalogHeader({
                     name: header.name,
                     dataType: header.dataType,
-                    columnIndex: header.columnIndex,
+                    columnIndex: header.columnIndex + 1, // to save first column for inserting line selection
                     description: SPECTRAL_LINE_DESCRIPTION.get(header.name as SpectralLineHeaders)
                 })
             );
@@ -546,7 +497,18 @@ export class SpectralLineQueryWidgetStore {
     };
 
     private initColumnData = (ackData, size: number, headers): Map<number, ProcessedColumnData> => {
-        const columns = ProtobufProcessing.ProcessCatalogData(ackData);
+        const ackColumns = ProtobufProcessing.ProcessCatalogData(ackData);
+
+        // to save the first column for line selection boolean
+        // ```ackColumns``` has no line selection boolean column but ```headers``` has
+        let columns = new Map<number, ProcessedColumnData>();
+        for (let i = 1; i < headers.length; i++) {
+            let selectColumn = ackColumns.get(i - 1);
+            columns.set(i, {
+                dataType: selectColumn.dataType,
+                data: selectColumn.data
+            });
+        }
 
         // 1. insert line selection boolean column
         const lineSelectionData = new Array<boolean>(size).fill(false);
@@ -628,8 +590,7 @@ export class SpectralLineQueryWidgetStore {
         this.queryResultTableRef = undefined;
         this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ? AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
         this.resetQueryContents();
-        this.sortingInfo = { columnName: null, sortingType: null };
-        // this.sortedIndexMap = [];
+        this.sortingInfo = {columnName: null, sortingType: null};
         this.initSortedIndexMap();
 
         // update selected spectral profiler when currently selected is closed

@@ -1,5 +1,6 @@
 import {CARTA} from "carta-protobuf";
 
+import {ControlHeader} from "stores";
 import {ColumnArray, getComparisonOperatorAndValue, ProcessedColumnData} from "utilities";
 
 export function getDataTypeString(dataType: CARTA.ColumnType): string {
@@ -158,4 +159,93 @@ export function stringFiltering(columnData: Array<string>, dataIndexes: number[]
         }
     });
     return filteredDataIndexes;
+}
+
+export function hasFilterFunc(controlHeader: Map<string, ControlHeader>, queryResult: Map<number, ProcessedColumnData>): boolean {
+    const TRUE_REGEX = /^[tTyY].*$/;
+    const FALSE_REGEX = /^[fFnN].*$/;
+
+    let hasfilter = false;
+    controlHeader.forEach((value, key) => {
+        if (value.filter && value.display) {
+            const column = queryResult.get(value.dataIndex);
+            if (column?.dataType === CARTA.ColumnType.String) {
+                hasfilter = true;
+            } else if (column?.dataType === CARTA.ColumnType.Bool) {
+                hasfilter = value.filter.match(TRUE_REGEX)?.length > 0 || value.filter.match(FALSE_REGEX)?.length > 0;
+            } else {
+                const {operator, values} = getComparisonOperatorAndValue(value.filter);
+                if (operator >= 0 && values.length) {
+                    hasfilter = true;
+                }
+            }
+        }
+    });
+    return hasfilter;
+}
+
+export function updateSortedIndexMapFunc(
+    controlHeader: Map<string, ControlHeader>,
+    sortingInfo: {columnName: string; sortingType: CARTA.SortingType},
+    sortedIndexMap: Array<number>,
+    hasFilter: boolean,
+    numVisibleRows: number,
+    sortData: Map<number, ProcessedColumnData>
+) {
+    const dataIndex = controlHeader.get(sortingInfo.columnName)?.dataIndex;
+
+    if (dataIndex >= 0) {
+        let direction = 0;
+
+        if (sortingInfo.sortingType != null) {
+            direction = sortingInfo.sortingType ? -1 : 1;
+        } else {
+            return initSortedIndexMapFunc(numVisibleRows);
+        }
+
+        if (hasFilter) {
+            return initSortedIndexMapFunc(numVisibleRows);
+        }
+        let queryColumn = sortData.get(dataIndex);
+
+        switch (queryColumn?.dataType) {
+            case CARTA.ColumnType.String:
+                sortedIndexMap.sort((a: number, b: number) => {
+                    const aString = String(queryColumn.data[a]);
+                    const bString = String(queryColumn.data[b]);
+                    if (!aString) {
+                        return direction * -1;
+                    }
+
+                    if (!bString) {
+                        return direction * 1;
+                    }
+                    return direction * aString.localeCompare(bString);
+                });
+                break;
+            case CARTA.ColumnType.UnsupportedType:
+                console.log("Data type is not supported");
+                break;
+            default:
+                sortedIndexMap.sort((a: number, b: number) => {
+                    const aNumber = Number(queryColumn.data[a]);
+                    const bNumber = Number(queryColumn.data[b]);
+                    return direction * (aNumber < bNumber ? -1 : 1);
+                });
+                break;
+        }
+    }
+    return sortedIndexMap;
+}
+
+export function initSortedIndexMapFunc(numVisibleRows: number) {
+    let sortedIndexMap = [];
+    for (let index = 0; index < numVisibleRows; index++) {
+        sortedIndexMap.push(index);
+    }
+    return sortedIndexMap;
+}
+
+export function setSortingInfoFunc(columnName: string, sortingType: CARTA.SortingType) {
+    return {columnName, sortingType};
 }
