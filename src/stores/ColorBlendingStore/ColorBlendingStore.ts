@@ -10,6 +10,10 @@ export class ColorBlendingStore {
         return AppStore.Instance.spatialReference;
     }
 
+    @computed get selectedFrames(): FrameStore[] {
+        return this.baseFrame ? this.baseFrame.secondarySpatialImages : [];
+    }
+
     constructor(id: number) {
         this.id = id;
         this.filename = `Color Blending ${id + 1}`;
