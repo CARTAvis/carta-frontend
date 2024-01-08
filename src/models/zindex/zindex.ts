@@ -21,10 +21,6 @@ export class FloatingObjzIndexManager {
         return this.floatingObjs.has(id) ? this.floatingObjs.get(id) : 0;
     };
 
-    // @action public removeIndex = (id: string) => {
-    //     this.floatingObjs.delete(id);
-    // };
-
     @action public updateIndexOnSelect = (id: string) => {
         const isValidId = this.floatingObjs.has(id);
         if (isValidId) {
