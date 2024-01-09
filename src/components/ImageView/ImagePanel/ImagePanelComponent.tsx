@@ -4,7 +4,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
-import {CursorInfo, CursorInfoVisibility, ImagePanelItem, ImageType, Zoom} from "models";
+import {CursorInfo, CursorInfoVisibility, ImageItem, ImageType, Zoom} from "models";
 import {AnimationMode, AppStore, type FrameStore} from "stores";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
@@ -22,7 +22,7 @@ import "./ImagePanelComponent.scss";
 
 interface ImagePanelComponentProps {
     docked: boolean;
-    image: ImagePanelItem;
+    image: ImageItem;
     row: number;
     column: number;
 }
@@ -97,7 +97,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
     onMouseDown = ev => {
         const appStore = AppStore.Instance;
         if (!appStore.isActiveImage(this.props.image)) {
-            appStore.setActiveImageById(this.props.image?.type, this.props.image?.store?.id);
+            appStore.updateActiveImage(this.props.image);
             ev.stopPropagation();
         }
     };
@@ -105,7 +105,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
     onMouseWheel = ev => {
         const appStore = AppStore.Instance;
         if (!appStore.isActiveImage(this.props.image)) {
-            appStore.setActiveImageById(this.props.image?.type, this.props.image?.store?.id);
+            appStore.updateActiveImage(this.props.image);
             ev.stopPropagation();
         }
     };

@@ -93,19 +93,6 @@ export class ImageViewConfigStore {
         return imageMap;
     }
 
-    @computed private get activeImageView(): ImageViewItem {
-        const activeImage = AppStore.Instance.activeImage;
-        const type = activeImage?.type;
-        const id = activeImage?.id;
-
-        if (type === ImageType.FRAME || type === ImageType.COLOR_BLENDING) {
-            const index = this.getImageListIndex(type, id);
-            return this.getImage(index);
-        }
-
-        return null;
-    }
-
     @computed private get numImagePages() {
         if (this.numImageColumns <= 0 || this.numImageRows <= 0 || !this.imageList) {
             return 0;
@@ -115,11 +102,12 @@ export class ImageViewConfigStore {
     }
 
     @computed get currentImagePage() {
-        if (!this.imageNum || !this.activeImageView) {
+        const activeImage = AppStore.Instance.activeImage;
+        if (!this.imageNum || !activeImage || activeImage.type === ImageType.PV_PREVIEW) {
             return 0;
         }
 
-        const index = this.imageList.indexOf(this.activeImageView);
+        const index = this.imageList.indexOf(activeImage);
         return Math.floor(index / this.imagesPerPage);
     }
 
