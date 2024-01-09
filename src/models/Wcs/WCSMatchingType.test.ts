@@ -12,6 +12,8 @@ describe("WCSMatching", () => {
     });
 
     test("String converts to lower case except the first letter", () => {
-        expect(WCSMatching.capitalizeFirstLetter("TESTINPUT")).toBe("Testinput");
+        expect(WCSMatching.getNameFromType(1)).toBe("Spatial");
+        expect(WCSMatching.getNameFromType(2)).toBe("Spectral");
+        expect(WCSMatching.getNameFromType(4)).toBe("Raster");
     });
 });

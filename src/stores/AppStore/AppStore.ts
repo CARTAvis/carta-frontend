@@ -569,11 +569,12 @@ export class AppStore {
         }
 
         if (this.frames.length > 1) {
-            if (this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL && this.spatialReference !== newFrame) {
-                this.setSpatialMatchingEnabled(newFrame, true);
-            }
+            // putting spectral matching before spatial matching avoids spectral matching fail when spatial matching is unable.
             if (this.preferenceStore.autoWCSMatching & WCSMatchingType.SPECTRAL && this.spectralReference !== newFrame && newFrame.frameInfo.fileInfoExtended.depth > 1) {
                 this.setSpectralMatchingEnabled(newFrame, true);
+            }
+            if (this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL && this.spatialReference !== newFrame) {
+                this.setSpatialMatchingEnabled(newFrame, true);
             }
             if (this.preferenceStore.autoWCSMatching & WCSMatchingType.RASTER && this.rasterScalingReference !== newFrame) {
                 this.setRasterScalingMatchingEnabled(newFrame, true);
@@ -2774,7 +2775,6 @@ export class AppStore {
 
         if (val) {
             if (!frame.setSpatialReference(this.spatialReference)) {
-                frame.setSpatialReference(this.spatialReference);
                 AppToaster.show(WarningToast(`Could not enable spatial matching of ${frame.filename} to reference image ${this.spatialReference.filename}. No valid transform was found.`));
             }
         } else {
@@ -2888,9 +2888,6 @@ export class AppStore {
 
         if (val) {
             frame.setRasterScalingReference(this.rasterScalingReference);
-            // if (!frame.setRasterScalingReference(this.rasterScalingReference)) {
-            //     AppToaster.show(WarningToast(`Could not enable raster image matching of ${frame.filename} to reference image ${this.spectralReference.filename}. No valid transform was found`));
-            // }
         } else {
             frame.clearRasterScalingReference();
         }
