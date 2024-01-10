@@ -1,9 +1,11 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .file-info-dialog {
     min-width: 60%;
     height: 100%;
     user-select: none;
 
-    .bp5-dialog-body {
+    .#{$ns}-dialog-body {
         height: 100%;
         overflow: hidden;
         margin-top: 10px;

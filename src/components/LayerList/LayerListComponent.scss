@@ -10,18 +10,18 @@
         cursor: pointer;
     }
 
-    .bp5-table-column-name {
+    .#{$ns}-table-column-name {
         font-size: 12px;
     }
 
-    .bp5-button {
+    .#{$ns}-button {
         font-size: 11px;
 
-        &.bp5-small {
+        &.#{$ns}-small {
             min-height: 13px;
         }
 
-        .bp5-button-text {
+        .#{$ns}-button-text {
             line-height: 13px;
         }
 
@@ -39,14 +39,14 @@
             font-weight: bold;
         }
 
-        .bp5-popover-target:last-of-type {
-            .bp5-button {
+        .#{$ns}-popover-target:last-of-type {
+            .#{$ns}-button {
                 margin-right: 0;
             }
         }
     }
 
-    .bp5-popover-wrapper + .bp5-popover-wrapper {
+    .#{$ns}-popover-wrapper + .#{$ns}-popover-wrapper {
         margin-left: 2px;
     }
 }

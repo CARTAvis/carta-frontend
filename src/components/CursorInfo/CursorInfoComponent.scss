@@ -1,20 +1,22 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .cursor-info-widget {
     width: 100%;
     height: 100%;
     user-select: none;
     padding: 5px;
 
-    .bp5-table-column-name {
+    .#{$ns}-table-column-name {
         font-size: 12px;
         font-weight: bold;
     }
 
-    .bp5-table-row-headers .bp5-table-header {
+    .#{$ns}-table-row-headers .#{$ns}-table-header {
         display: flex;
         align-items: center;
     }
 
-    .bp5-table-cell {
+    .#{$ns}-table-cell {
         display: flex;
         align-items: center;
         padding: 5px;

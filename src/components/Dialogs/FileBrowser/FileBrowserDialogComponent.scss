@@ -1,3 +1,5 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .file-browser-dialog {
     min-width: 60%;
     height: 100%;
@@ -13,12 +15,12 @@
         margin-right: 7px;
     }
 
-    .bp5-dialog-body {
+    .#{$ns}-dialog-body {
         height: 100%;
         overflow: hidden;
         margin-top: 10px;
 
-        .bp5-input-group {
+        .#{$ns}-input-group {
             margin: 10px 5px 5px;
         }
 
@@ -56,13 +58,13 @@
     width: 100%;
     margin-right: 25px;
 
-    .bp5-input:not(:placeholder-shown) {
+    .#{$ns}-input:not(:placeholder-shown) {
         font-family: monospace;
     }
 }
 
 .arithmetic-input {
-    .bp5-input:not(:placeholder-shown) {
+    .#{$ns}-input:not(:placeholder-shown) {
         font-family: monospace;
     }
 }

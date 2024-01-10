@@ -5,7 +5,7 @@
     height: 100%;
     user-select: none;
 
-    .bp5-popover-target {
+    .#{$ns}-popover-target {
         flex: none !important;
     }
 
@@ -34,7 +34,7 @@
         margin: 5px;
         border: 1px solid $gray4;
 
-        &.bp5-dark {
+        &.#{$ns}-dark {
             border-color: $dark-gray2;
 
             .row {
@@ -69,7 +69,7 @@
                 background: #bee3fa;
             }
 
-            &.bp5-dark {
+            &.#{$ns}-dark {
                 background: $dark-gray3;
 
                 .cell {
@@ -95,7 +95,7 @@
             font-weight: bold;
             overflow-x: hidden;
 
-            &.bp5-dark {
+            &.#{$ns}-dark {
                 background: $dark-gray4;
 
                 .cell {

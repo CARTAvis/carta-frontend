@@ -1,12 +1,14 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .region-dialog {
-    .bp5-dialog-body {
+    .#{$ns}-dialog-body {
         .region-form {
             .ann-text-input {
-                .bp5-form-content {
+                .#{$ns}-form-content {
                     max-width: calc(100% - 8em - 10px);
                 }
 
-                .bp5-input {
+                .#{$ns}-input {
                     width: 255px;
                     height: 60px;
                     min-width: 125px;

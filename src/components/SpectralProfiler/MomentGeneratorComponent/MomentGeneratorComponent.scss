@@ -1,16 +1,18 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .moment-generator {
     display: block;
     flex-direction: row;
 
-    .bp5-numeric-input {
-        .bp5-input-group {
+    .#{$ns}-numeric-input {
+        .#{$ns}-input-group {
             width: 80px;
         }
     }
 
     .moment-panel {
         .image-region-select {
-            .bp5-html-select {
+            .#{$ns}-html-select {
                 width: 100%;
             }
 
@@ -32,9 +34,9 @@
             display: flex;
             flex-direction: row;
 
-            .bp5-form-group {
+            .#{$ns}-form-group {
                 margin-right: 10px;
-                .bp5-label {
+                .#{$ns}-label {
                     margin: 0px;
                     width: 3em;
                 }

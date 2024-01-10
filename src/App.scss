@@ -1,11 +1,11 @@
 @import "~@blueprintjs/core/lib/scss/variables.scss";
 
-.bp5-dark {
+.#{$ns}-dark {
     background-color: $dark-gray4;
 }
 
 body {
-    &.bp5-dark {
+    &.#{$ns}-dark {
         background-color: $dark-gray4;
     }
 }
@@ -19,7 +19,7 @@ body {
     left: 0;
     z-index: -100;
     user-select: none;
-    .bp5-dark {
+    .#{$ns}-dark {
         background-color: $dark-gray3;
     }
 }
@@ -37,19 +37,19 @@ body {
     background-color: rgba(black, 0.1) !important;
 }
 
-.bp5-overlay {
+.#{$ns}-overlay {
     z-index: 995 !important;
 }
 
-.bp5-popover {
+.#{$ns}-popover {
     z-index: 995 !important;
 }
 
-.bp5-transition-container {
+.#{$ns}-transition-container {
     z-index: 995 !important;
 }
 
-.bp5-dialog.bp5-alert {
+.#{$ns}-dialog.#{$ns}-alert {
     z-index: 999 !important;
 }
 
@@ -58,13 +58,13 @@ body {
 }
 
 // Workaround for BlueprintJS bug
-.bp5-dark .bp5-button-group:not(.bp5-minimal) > .bp5-popover-wrapper:not(:last-child) .bp5-button,
-.bp5-dark .bp5-button-group:not(.bp5-minimal) > .bp5-button:not(:last-child) {
+.#{$ns}-dark .#{$ns}-button-group:not(.#{$ns}-minimal) > .#{$ns}-popover-wrapper:not(:last-child) .#{$ns}-button,
+.#{$ns}-dark .#{$ns}-button-group:not(.#{$ns}-minimal) > .#{$ns}-button:not(:last-child) {
     margin-right: -1px !important;
 }
 
 // override menu item style with BlueprintJS v3 style
-.bp5-menu-item.bp5-selected {
+.#{$ns}-menu-item.#{$ns}-selected {
     background-color: #137cbd !important;
     color: #fff !important;
 }

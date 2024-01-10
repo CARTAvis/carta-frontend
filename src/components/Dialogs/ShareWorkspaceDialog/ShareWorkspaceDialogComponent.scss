@@ -1,5 +1,7 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .share-workspace-dialog {
-    .bp5-dialog-footer-actions {
+    .#{$ns}-dialog-footer-actions {
         align-items: baseline;
         justify-content: space-between;
     }

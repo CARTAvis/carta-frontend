@@ -11,14 +11,14 @@
         padding-left: 5px;
         padding-top: 5px;
 
-        .bp5-form-content {
+        .#{$ns}-form-content {
             margin-right: 5px;
         }
 
         .catalog-bins {
-            .bp5-form-content {
-                .bp5-control-group {
-                    .bp5-input-group {
+            .#{$ns}-form-content {
+                .#{$ns}-control-group {
+                    .#{$ns}-input-group {
                         width: 100px;
                     }
                 }
@@ -64,19 +64,19 @@
         }
     }
 
-    .bp5-dialog-footer {
+    .#{$ns}-dialog-footer {
         height: 70px;
         width: 100%;
         bottom: 5px;
         position: absolute;
         margin: 0px;
         padding: 0 5px 5px 5px;
-        .bp5-button {
+        .#{$ns}-button {
             height: 30px;
         }
-        .bp5-form-group {
+        .#{$ns}-form-group {
             margin: 0;
-            .bp5-label {
+            .#{$ns}-label {
                 margin: 0;
             }
         }

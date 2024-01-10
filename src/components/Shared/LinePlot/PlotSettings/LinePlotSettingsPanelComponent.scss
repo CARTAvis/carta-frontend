@@ -1,18 +1,20 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .line-settings-panel {
     width: 100%;
     margin-top: 10px;
 
-    .bp5-tab-panel {
+    .#{$ns}-tab-panel {
         height: 22em;
         overflow: auto;
         width: 100%;
     }
 
-    .bp5-form-group {
+    .#{$ns}-form-group {
         &:first-of-type {
             margin-left: 0px;
         }
-        .bp5-label {
+        .#{$ns}-label {
             min-width: 11em;
             text-align: right;
 
@@ -27,14 +29,14 @@
         }
     }
 
-    .bp5-numeric-input {
-        .bp5-input-group {
+    .#{$ns}-numeric-input {
+        .#{$ns}-input-group {
             width: 60px;
         }
     }
 
     .line-boundary {
-        .bp5-input-group {
+        .#{$ns}-input-group {
             input {
                 width: 10em;
             }

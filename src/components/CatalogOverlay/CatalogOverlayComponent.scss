@@ -1,3 +1,5 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .catalog-overlay {
     height: 100%;
     width: 100%;
@@ -16,24 +18,24 @@
             right: 5px;
         }
 
-        .bp5-tab-panel {
+        .#{$ns}-tab-panel {
             height: 22em;
             overflow: auto;
             width: 100%;
         }
 
-        .bp5-form-group .bp5-label {
+        .#{$ns}-form-group .#{$ns}-label {
             text-align: left;
         }
 
-        .bp5-numeric-input {
-            .bp5-input-group {
+        .#{$ns}-numeric-input {
+            .#{$ns}-input-group {
                 width: 60px;
             }
         }
 
         .line-boundary {
-            .bp5-input-group {
+            .#{$ns}-input-group {
                 input {
                     width: 90px;
                 }
@@ -52,7 +54,7 @@
             height: 100%;
         }
 
-        .bp5-form-group {
+        .#{$ns}-form-group {
             margin-left: 5px;
         }
     }
@@ -104,10 +106,10 @@
             padding-right: 5px;
             padding-top: 5px;
             padding-bottom: 4px;
-            .bp5-table-container {
+            .#{$ns}-table-container {
                 width: 100%;
 
-                .bp5-table-header {
+                .#{$ns}-table-header {
                     line-height: 220%;
                 }
 
@@ -120,15 +122,15 @@
                 }
 
                 .cell-dropdown-menu {
-                    .bp5-table-truncated-text {
+                    .#{$ns}-table-truncated-text {
                         width: 100%;
                         height: 100%;
 
-                        .bp5-html-select {
+                        .#{$ns}-html-select {
                             width: 100%;
                             height: 100%;
 
-                            .bp5-icon {
+                            .#{$ns}-icon {
                                 top: 9px;
                                 right: 9px;
                             }
@@ -147,15 +149,15 @@
             padding-bottom: 1px;
             padding-top: 1px;
 
-            .bp5-table-container {
+            .#{$ns}-table-container {
                 width: 100%;
 
-                .bp5-table-editable-name.bp5-editable-text::before {
+                .#{$ns}-table-editable-name.#{$ns}-editable-text::before {
                     right: 0px;
                     left: 0px;
                 }
 
-                .bp5-editable-text::before {
+                .#{$ns}-editable-text::before {
                     right: 0px;
                     left: 0px;
                 }
@@ -167,7 +169,7 @@
         }
     }
 
-    .bp5-dialog-footer {
+    .#{$ns}-dialog-footer {
         margin: 0;
         width: calc(100% - 5px);
         height: 85px;
@@ -218,9 +220,9 @@
                 margin-left: -40px;
                 width: 140px;
                 height: 30px;
-                .bp5-popover-target {
+                .#{$ns}-popover-target {
                     width: inherit;
-                    .bp5-button {
+                    .#{$ns}-button {
                         width: 100%;
                         justify-content: space-between;
                     }
@@ -237,7 +239,7 @@
                         margin-left: 0px;
                         justify-content: space-between;
 
-                        .bp5-button-text {
+                        .#{$ns}-button-text {
                             overflow: hidden;
                             white-space: nowrap;
                         }
@@ -252,16 +254,16 @@
 
             .catalog-max-rows {
                 margin-left: 5px;
-                .bp5-label {
+                .#{$ns}-label {
                     text-align: right;
                     overflow: hidden;
                     width: 65px;
                     height: 30px;
                 }
 
-                .bp5-form-content {
-                    .bp5-control-group {
-                        .bp5-input-group {
+                .#{$ns}-form-content {
+                    .#{$ns}-control-group {
+                        .#{$ns}-input-group {
                             width: 100px;
                         }
                     }
@@ -269,15 +271,15 @@
             }
         }
 
-        .bp5-dialog-footer {
+        .#{$ns}-dialog-footer {
             height: 35px;
             float: right;
-            .bp5-button {
+            .#{$ns}-button {
                 height: 30px;
             }
-            .bp5-form-group {
+            .#{$ns}-form-group {
                 margin: 0;
-                .bp5-label {
+                .#{$ns}-label {
                     margin: 0;
                 }
             }
@@ -286,8 +288,8 @@
 }
 
 .catalog-select {
-    .bp5-popover-content {
-        .bp5-menu {
+    .#{$ns}-popover-content {
+        .#{$ns}-menu {
             max-height: 300px;
             overflow: auto;
             min-width: fit-content;

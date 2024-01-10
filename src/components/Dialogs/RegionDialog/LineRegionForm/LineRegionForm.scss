@@ -1,5 +1,7 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .length-form {
-    .bp5-input {
+    .#{$ns}-input {
         margin-right: 130px;
     }
 }

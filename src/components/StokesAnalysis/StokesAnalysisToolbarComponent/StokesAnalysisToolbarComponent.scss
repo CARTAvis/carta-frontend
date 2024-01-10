@@ -1,9 +1,11 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .stokes-analysis-toolbar {
     overflow: hidden;
     display: flex;
     user-select: none;
     height: 50px;
-    .bp5-form-group {
+    .#{$ns}-form-group {
         margin-bottom: 5px;
         margin-top: 5px;
         margin-left: 15px;

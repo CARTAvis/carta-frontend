@@ -26,11 +26,11 @@
                 padding: 0 0 0 5px;
                 width: 90px;
 
-                .bp5-button {
+                .#{$ns}-button {
                     padding-left: 8px;
                     padding-right: 8px;
 
-                    .bp5-button-text {
+                    .#{$ns}-button-text {
                         margin-right: 0;
                     }
                 }

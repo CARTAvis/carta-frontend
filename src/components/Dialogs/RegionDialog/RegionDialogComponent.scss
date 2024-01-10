@@ -1,24 +1,26 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .region-dialog {
-    .bp5-dialog-body {
+    .#{$ns}-dialog-body {
         user-select: none;
 
         .region-form {
             user-select: none;
 
-            .bp5-label {
+            .#{$ns}-label {
                 width: 9em;
                 text-align: right;
             }
 
-            .bp5-form-group:first-child .bp5-input {
+            .#{$ns}-form-group:first-child .#{$ns}-input {
                 width: 255px;
             }
 
-            .bp5-input {
+            .#{$ns}-input {
                 width: 125px;
             }
 
-            .bp5-form-content {
+            .#{$ns}-form-content {
                 display: flex;
                 flex-wrap: wrap;
                 flex: 1;

@@ -1,7 +1,9 @@
-.bp5-dark .equation-div {
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+.#{$ns}-dark .equation-div {
     filter: invert(1);
 }
 
-.bp5-active .equation-div {
+.#{$ns}-active .equation-div {
     filter: invert(1) brightness(2);
 }

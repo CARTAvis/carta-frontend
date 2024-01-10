@@ -2,7 +2,7 @@
 
 .color-swatch-button {
     padding: 5px !important;
-    .bp5-button-text {
+    .#{$ns}-button-text {
         div {
             width: 40px;
             height: 20px;
@@ -11,7 +11,7 @@
 }
 
 .color-picker-popup {
-    &.bp5-dark {
+    &.#{$ns}-dark {
         .sketch-picker {
             background: $dark-gray5 !important;
 

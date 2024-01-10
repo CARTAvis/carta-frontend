@@ -4,8 +4,8 @@
     margin: 4px 4px 4px 10px;
     user-select: none;
 
-    &.bp5-dark {
-        .bp5-button-text {
+    &.#{$ns}-dark {
+        .#{$ns}-button-text {
             color: $gray5;
         }
     }
@@ -15,8 +15,8 @@
     margin: 4px 4px 4px 10px;
     user-select: none;
 
-    &.bp5-dark {
-        .bp5-button-text {
+    &.#{$ns}-dark {
+        .#{$ns}-button-text {
             color: $gray5;
         }
     }
@@ -26,8 +26,8 @@
     margin: 4px auto 4px 10px;
     user-select: none;
 
-    &.bp5-dark {
-        .bp5-button-text {
+    &.#{$ns}-dark {
+        .#{$ns}-button-text {
             color: $gray5;
         }
     }

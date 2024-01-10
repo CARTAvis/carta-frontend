@@ -1,4 +1,6 @@
-.bp5-dialog-footer {
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+.#{$ns}-dialog-footer {
     .footer-text {
         height: 30px;
         line-height: 30px;

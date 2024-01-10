@@ -1,24 +1,26 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .vector-overlay-dialog {
-    .bp5-dialog-body {
+    .#{$ns}-dialog-body {
         user-select: none;
 
-        .bp5-label {
+        .#{$ns}-label {
             min-width: 6em;
             width: 6em;
             text-align: right;
         }
 
-        .bp5-button:not([class*="bp5-intent-"]).bp5-align-right {
+        .#{$ns}-button:not([class*="-intent-"]).#{$ns}-align-right {
             white-space: nowrap;
             width: 100%;
 
-            .bp5-button-text {
+            .#{$ns}-button-text {
                 overflow: hidden;
                 text-overflow: ellipsis;
             }
         }
 
-        .bp5-form-group {
+        .#{$ns}-form-group {
             &:first-of-type {
                 margin-left: 0;
             }
@@ -26,40 +28,40 @@
 
         .vector-overlay-config-panel,
         .vector-overlay-style-panel {
-            .bp5-form-group .bp5-label {
+            .#{$ns}-form-group .#{$ns}-label {
                 min-width: 10em;
                 width: 10em;
             }
         }
 
         .parameter-line {
-            .bp5-form-group {
+            .#{$ns}-form-group {
                 width: 6em;
             }
         }
 
         .parameter-length {
-            .bp5-form-group {
-                .bp5-input-group {
+            .#{$ns}-form-group {
+                .#{$ns}-input-group {
                     max-width: 167px;
                 }
             }
         }
 
-        .bp5-tabs {
+        .#{$ns}-tabs {
             margin: 2px;
         }
 
         .parameter-container {
-            .bp5-form-group.bp5-inline {
-                .bp5-label {
+            .#{$ns}-form-group.#{$ns}-inline {
+                .#{$ns}-label {
                     min-width: 2em;
                     width: 3em;
                 }
             }
         }
 
-        .bp5-form-content {
+        .#{$ns}-form-content {
             display: inline-flex;
             width: calc(100% - 7em); // because of popover component, the subtraction of the text label width is required
             max-width: fit-content;

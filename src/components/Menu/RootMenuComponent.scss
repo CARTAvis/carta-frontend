@@ -30,7 +30,7 @@
         color: $green3;
     }
 
-    .bp5-icon-console.bp5-intent-warning {
+    .#{$ns}-icon-console.#{$ns}-intent-warning {
         padding-right: 8px;
     }
 
@@ -44,7 +44,7 @@
     min-width: 20px;
 }
 
-.bp5-menu .bp5-popover-target {
+.#{$ns}-menu .#{$ns}-popover-target {
     // for menu items with tooltips
     display: block;
 }
@@ -56,7 +56,7 @@
         margin-bottom: 30px;
     }
 
-    .bp5-alert-contents {
+    .#{$ns}-alert-contents {
         width: 290px;
         margin-left: 20px;
 
@@ -71,11 +71,11 @@
         }
     }
 
-    .bp5-alert-footer {
+    .#{$ns}-alert-footer {
         height: 30px;
         margin-top: 0px;
 
-        .bp5-switch {
+        .#{$ns}-switch {
             margin-top: 7px;
             margin-right: 25px;
             font-size: 12px;

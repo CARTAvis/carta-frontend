@@ -4,7 +4,7 @@
     overflow: hidden;
     display: flex;
 
-    .bp5-form-group {
+    .#{$ns}-form-group {
         margin-bottom: 5px;
         margin-top: 5px;
         margin-left: 15px;

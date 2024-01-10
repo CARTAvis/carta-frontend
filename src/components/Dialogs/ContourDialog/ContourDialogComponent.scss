@@ -1,30 +1,32 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .contour-dialog {
-    .bp5-dialog-body {
+    .#{$ns}-dialog-body {
         user-select: none;
 
-        .bp5-label {
+        .#{$ns}-label {
             min-width: 8em;
             text-align: right;
         }
 
-        .bp5-form-group {
+        .#{$ns}-form-group {
             &:first-of-type {
                 margin-left: 0px;
-                .bp5-form-content {
+                .#{$ns}-form-content {
                     display: flex;
                 }
             }
         }
 
-        .contour-level-panel-levels .bp5-form-group .bp5-label {
+        .contour-level-panel-levels .#{$ns}-form-group .#{$ns}-label {
             min-width: 8em;
         }
 
-        .contour-config-panel .bp5-form-group .bp5-label {
+        .contour-config-panel .#{$ns}-form-group .#{$ns}-label {
             min-width: 8em;
         }
 
-        .bp5-tabs {
+        .#{$ns}-tabs {
             margin: 2px;
         }
 
@@ -33,19 +35,19 @@
             position: relative;
         }
 
-        .bp5-form-group.bp5-inline {
-            .bp5-form-content {
+        .#{$ns}-form-group.#{$ns}-inline {
+            .#{$ns}-form-content {
                 display: inline-flex;
                 width: calc(100% - 8em - 15px); // because of the popover, we need the subtractions
                 max-width: fit-content;
             }
         }
 
-        .bp5-button:not([class*="bp5-intent-"]).bp5-align-right {
+        .#{$ns}-button:not([class*="-intent-"]).#{$ns}-align-right {
             white-space: nowrap;
             width: 100%;
 
-            .bp5-button-text {
+            .#{$ns}-button-text {
                 overflow: hidden;
                 text-overflow: ellipsis;
             }
@@ -55,8 +57,8 @@
             margin-left: 5px;
         }
 
-        .bp5-form-group.bp5-inline.source-menu {
-            .bp5-label {
+        .#{$ns}-form-group.#{$ns}-inline.source-menu {
+            .#{$ns}-label {
                 min-width: 6em;
                 text-align: right;
             }
@@ -64,7 +66,7 @@
 
         .parameter-container .parameter-line {
             flex-wrap: nowrap;
-            .bp5-form-group .bp5-label {
+            .#{$ns}-form-group .#{$ns}-label {
                 min-width: 5em;
             }
         }

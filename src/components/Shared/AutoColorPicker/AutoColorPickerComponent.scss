@@ -4,7 +4,7 @@
     position: relative;
     top: -15px;
 
-    &.bp5-dark {
+    &.#{$ns}-dark {
         .sketch-picker {
             background: $dark-gray5 !important;
 
@@ -37,14 +37,14 @@
     border-radius: $pt-border-radius;
 }
 
-.bp5-button.colorselect .bp5-button-text {
+.#{$ns}-button.colorselect .#{$ns}-button-text {
     width: 80px;
 }
 
-.bp5-popover.colorselect {
+.#{$ns}-popover.colorselect {
     width: 120px;
 
-    .bp5-menu {
+    .#{$ns}-menu {
         min-width: 100px;
         max-height: 300px;
         overflow: auto;

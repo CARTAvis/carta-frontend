@@ -1,3 +1,5 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .fitting-dialog {
     .pinned-input-panel {
         height: 45px;
@@ -6,8 +8,8 @@
         margin-bottom: 0px;
     }
 
-    .bp5-html-select select,
-    .bp5-select select {
+    .#{$ns}-html-select select,
+    .#{$ns}-select select {
         width: 100%;
         min-width: 7em;
         overflow: hidden;
@@ -73,45 +75,45 @@
         }
     }
 
-    .bp5-label {
+    .#{$ns}-label {
         display: flex;
         justify-content: flex-end;
         min-width: 11em;
         user-select: none;
 
-        .bp5-text-muted {
+        .#{$ns}-text-muted {
             margin-left: 5px;
             overflow: hidden;
             text-overflow: ellipsis;
         }
     }
 
-    .bp5-form-content {
+    .#{$ns}-form-content {
         display: flex;
         flex-wrap: wrap;
         width: 100%;
         user-select: none;
     }
 
-    .bp5-control-group .bp5-input {
+    .#{$ns}-control-group .#{$ns}-input {
         width: 125px;
     }
 
     .components-input {
         display: flex;
 
-        .bp5-input {
+        .#{$ns}-input {
             width: 40px;
         }
     }
 
-    .bp5-slider {
+    .#{$ns}-slider {
         width: 40%;
         height: 30px;
         margin-left: 20px;
         margin-right: 20px;
 
-        .bp5-button {
+        .#{$ns}-button {
             margin-left: 20px;
         }
     }
@@ -134,11 +136,11 @@
         white-space: nowrap;
     }
 
-    .bp5-divider {
+    .#{$ns}-divider {
         margin: 15px 0 15px 0;
     }
 
-    .bp5-switch {
+    .#{$ns}-switch {
         margin: 7px 10px 0 10px;
     }
 
@@ -149,24 +151,24 @@
         margin: 0 0 0 0;
         transition: opacity 400ms;
 
-        .bp5-button {
+        .#{$ns}-button {
             transition: opacity 400ms;
             user-select: none;
         }
     }
 
     .fitting-result-panel {
-        .bp5-tabs {
+        .#{$ns}-tabs {
             display: flex;
             width: 100%;
             height: 100%;
             text-align: left;
 
-            .bp5-tab-list {
+            .#{$ns}-tab-list {
                 min-width: 10em;
             }
 
-            .bp5-tab-panel {
+            .#{$ns}-tab-panel {
                 width: calc(100% - 125px);
                 height: 100%;
                 padding-left: 10px;

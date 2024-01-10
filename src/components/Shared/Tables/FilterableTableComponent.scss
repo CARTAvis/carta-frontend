@@ -1,4 +1,6 @@
-.bp5-table-header-content .bp5-checkbox {
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+.#{$ns}-table-header-content .#{$ns}-checkbox {
     margin: 0 0 0 10px;
 }
 
@@ -7,29 +9,29 @@
 }
 
 .column-filter-table {
-    .bp5-table-selection-region {
+    .#{$ns}-table-selection-region {
         border: 0px;
         background-color: rgba(255, 255, 255, 0);
     }
 
-    .bp5-table-region {
+    .#{$ns}-table-region {
         border: 0px;
         background-color: rgba(255, 255, 255, 0);
     }
 
-    .bp5-table-header.bp5-table-header-selected::before {
+    .#{$ns}-table-header.#{$ns}-table-header-selected::before {
         background-image: none;
     }
 
-    label.bp5-label .bp5-popover-target {
+    label.#{$ns}-label .#{$ns}-popover-target {
         margin-top: 0px;
     }
 
-    .bp5-popover-target {
+    .#{$ns}-popover-target {
         width: inherit;
 
-        .bp5-input-group {
-            .bp5-input {
+        .#{$ns}-input-group {
+            .#{$ns}-input {
                 border-radius: 0px;
                 vertical-align: baseline;
                 box-shadow: none;
@@ -38,7 +40,7 @@
         }
     }
 
-    .sort-label .bp5-label {
+    .sort-label .#{$ns}-label {
         margin-bottom: 0px;
     }
 }

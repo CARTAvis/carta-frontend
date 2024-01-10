@@ -1,11 +1,13 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .render-config-settings-panel {
     margin: 20px;
 
-    .bp5-form-group {
+    .#{$ns}-form-group {
         &:first-of-type {
             margin-left: 0px;
         }
-        .bp5-form-helper-text {
+        .#{$ns}-form-helper-text {
             white-space: nowrap;
         }
     }

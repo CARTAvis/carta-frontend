@@ -13,31 +13,31 @@
             width: 100%;
             margin-bottom: 5px;
 
-            .bp5-radio {
+            .#{$ns}-radio {
                 flex: 1 1 135px;
             }
 
-            .bp5-slider {
+            .#{$ns}-slider {
                 flex: 3 3 auto;
                 margin-right: 15px;
             }
 
-            .bp5-slider-label {
+            .#{$ns}-slider-label {
                 white-space: nowrap;
             }
 
-            .bp5-input-group {
+            .#{$ns}-input-group {
                 max-width: 80px;
             }
 
             &.tiled-label {
-                .bp5-slider-axis {
-                    .bp5-slider-label {
+                .#{$ns}-slider-axis {
+                    .#{$ns}-slider-label {
                         transform: matrix(0.866, 0.5, -0.5, 0.866, -25, 25);
                     }
                 }
-                .bp5-slider-handle {
-                    .bp5-slider-label {
+                .#{$ns}-slider-handle {
+                    .#{$ns}-slider-label {
                         transform: matrix(0.866, 0.5, -0.5, 0.866, -25, 25);
                     }
                 }
@@ -53,8 +53,8 @@
             &.range-slider {
                 position: relative;
                 height: 30px;
-                .bp5-slider {
-                    .bp5-slider-axis {
+                .#{$ns}-slider {
+                    .#{$ns}-slider-axis {
                         display: none;
                     }
                     top: -5px;
@@ -79,8 +79,8 @@
             height: 20px;
 
             // Re-center button icons
-            .bp5-button {
-                .bp5-icon {
+            .#{$ns}-button {
+                .#{$ns}-icon {
                     position: relative;
                     left: 3px;
                 }
@@ -94,11 +94,11 @@
         .playback-numeric-control {
             min-width: 180px;
             flex: 1 1 180px;
-            .bp5-html-select {
+            .#{$ns}-html-select {
                 width: 115px;
             }
-            .bp5-numeric-input {
-                .bp5-input-group {
+            .#{$ns}-numeric-input {
+                .#{$ns}-input-group {
                     width: 35px;
                 }
             }

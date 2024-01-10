@@ -4,31 +4,31 @@
     padding: 20px;
     height: 100%;
 
-    div.bp5-tabs.bp5-vertical {
+    div.#{$ns}-tabs.#{$ns}-vertical {
         height: 100%;
     }
 
-    .bp5-tab-panel {
+    .#{$ns}-tab-panel {
         width: 100%;
         height: 100%;
         overflow: auto;
         user-select: none;
     }
 
-    .bp5-tab-list {
+    .#{$ns}-tab-list {
         width: 10em;
     }
 
-    .bp5-numeric-input input {
+    .#{$ns}-numeric-input input {
         width: 100px !important;
     }
 
-    .bp5-form-group {
+    .#{$ns}-form-group {
         &:first-of-type {
             margin-left: 0px;
         }
 
-        .bp5-label {
+        .#{$ns}-label {
             min-width: 10em;
             width: 10em;
             text-align: right;
@@ -36,7 +36,7 @@
     }
 
     .font-group {
-        .bp5-form-content {
+        .#{$ns}-form-content {
             display: flex;
         }
 
@@ -64,7 +64,7 @@
     }
 
     .panel-colorbar {
-        .bp5-label {
+        .#{$ns}-label {
             width: 12em;
         }
     }
@@ -75,10 +75,10 @@
             height: 30px;
         }
 
-        .bp5-form-content {
+        .#{$ns}-form-content {
             display: flex;
 
-            .bp5-numeric-input input {
+            .#{$ns}-numeric-input input {
                 width: 125px !important;
             }
 

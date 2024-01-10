@@ -1,21 +1,23 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .spectral-line-query-widget {
     height: 100%;
     width: 100%;
     padding: 5px;
 
-    .bp5-dialog-body {
+    .#{$ns}-dialog-body {
         height: calc(100% - 65px);
         margin: 0;
 
-        .bp5-numeric-input {
-            .bp5-input-group {
+        .#{$ns}-numeric-input {
+            .#{$ns}-input-group {
                 width: 80px;
             }
         }
 
-        .bp5-form-group {
+        .#{$ns}-form-group {
             margin: 0 10px 0 0;
-            .bp5-label {
+            .#{$ns}-label {
                 text-align: right;
             }
         }
@@ -34,7 +36,7 @@
             }
 
             .intensity-limit {
-                .bp5-form-group {
+                .#{$ns}-form-group {
                     margin: 0;
                 }
             }
@@ -85,9 +87,9 @@
                 width: 100%;
                 padding: 5px;
 
-                .bp5-table-container {
+                .#{$ns}-table-container {
                     width: 100%;
-                    .bp5-table-header {
+                    .#{$ns}-table-header {
                         line-height: 220%;
                     }
                     .header-table-cell {
@@ -114,13 +116,13 @@
                 .result-table {
                     height: calc(100% - 35px);
                     width: 100%;
-                    .bp5-table-container {
+                    .#{$ns}-table-container {
                         width: 100%;
-                        .bp5-table-editable-name.bp5-editable-text::before {
+                        .#{$ns}-table-editable-name.#{$ns}-editable-text::before {
                             right: 0px;
                             left: 0px;
                         }
-                        .bp5-editable-text::before {
+                        .#{$ns}-editable-text::before {
                             right: 0px;
                             left: 0px;
                         }
@@ -128,7 +130,7 @@
                             width: inherit;
                             height: inherit;
                         }
-                        .bp5-table-bottom-container {
+                        .#{$ns}-table-bottom-container {
                             user-select: text;
                         }
                     }
@@ -137,16 +139,16 @@
         }
     }
 
-    .bp5-dialog-footer {
+    .#{$ns}-dialog-footer {
         height: 65px;
         margin: 0px;
         padding: 0 5px 5px 5px;
-        .bp5-button {
+        .#{$ns}-button {
             height: 30px;
         }
-        .bp5-form-group {
+        .#{$ns}-form-group {
             margin: 0;
-            .bp5-label {
+            .#{$ns}-label {
                 margin: 0;
             }
         }

@@ -1,5 +1,7 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .iframe-dialog {
-    .bp5-dialog-body {
+    .#{$ns}-dialog-body {
         iframe {
             width: calc(100% - 40px);
             height: calc(100% - 80px);

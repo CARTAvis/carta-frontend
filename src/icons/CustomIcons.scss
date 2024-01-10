@@ -1,7 +1,7 @@
 @import "~@blueprintjs/core/lib/scss/variables.scss";
 
 .custom-icon {
-    &.bp5-icon {
+    &.#{$ns}-icon {
         // for svg(like profileSmoothingSvg) using stroke to decide icon color
         path[fill="none"] {
             stroke: $gray1;

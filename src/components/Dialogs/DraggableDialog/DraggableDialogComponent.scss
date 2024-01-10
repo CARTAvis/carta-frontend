@@ -1,35 +1,37 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .draggable-dialog {
     top: 0;
     left: 0;
     position: fixed;
     z-index: 100;
     user-select: none;
-    .bp5-overlay.bp5-overlay-scroll-container.bp5-overlay-inline {
+    .#{$ns}-overlay.#{$ns}-overlay-scroll-container.#{$ns}-overlay-inline {
         position: static;
         height: 100%;
         width: 100%;
     }
-    .bp5-overlay-inline .bp5-overlay-content,
-    .bp5-overlay-scroll-container .bp5-overlay-content {
+    .#{$ns}-overlay-inline .#{$ns}-overlay-content,
+    .#{$ns}-overlay-scroll-container .#{$ns}-overlay-content {
         position: static;
         width: 100%;
         height: 100%;
     }
-    .bp5-dialog-container .bp5-dialog {
+    .#{$ns}-dialog-container .#{$ns}-dialog {
         position: static;
         width: 100%;
         height: 100%;
         margin: 0 !important;
     }
-    .bp5-dialog-header {
+    .#{$ns}-dialog-header {
         cursor: move;
     }
-    .bp5-dialog-body {
+    .#{$ns}-dialog-body {
         height: 100%;
         width: auto;
         overflow: auto;
     }
-    .bp5-overlay-backdrop {
+    .#{$ns}-overlay-backdrop {
         display: none;
     }
 }
