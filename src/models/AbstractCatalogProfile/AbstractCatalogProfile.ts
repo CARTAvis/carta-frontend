@@ -4,7 +4,7 @@ import {action, computed, observable} from "mobx";
 
 import {CatalogTextureType, CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, CatalogUpdateMode, ControlHeader} from "stores";
-import {filterProcessedColumnData, getComparisonOperatorAndValue, minMaxArray, ProcessedColumnData, transformPoint, TypedArray} from "utilities";
+import {filterProcessedColumnData, getComparisonOperatorAndValue, hasFilterFunc, minMaxArray, ProcessedColumnData, transformPoint, TypedArray} from "utilities";
 
 export interface CatalogInfo {
     fileId: number;
@@ -285,23 +285,7 @@ export abstract class AbstractCatalogProfileStore {
     }
 
     @computed get hasFilter(): boolean {
-        let hasfilter = false;
-        this.catalogControlHeader.forEach((value, key) => {
-            if (value.filter && value.display) {
-                const column = this.catalogData.get(value.dataIndex);
-                if (column?.dataType === CARTA.ColumnType.String) {
-                    hasfilter = true;
-                } else if (column?.dataType === CARTA.ColumnType.Bool) {
-                    hasfilter = value.filter.match(AbstractCatalogProfileStore.TRUE_REGEX)?.length > 0 || value.filter.match(AbstractCatalogProfileStore.FALSE_REGEX)?.length > 0;
-                } else {
-                    const {operator, values} = getComparisonOperatorAndValue(value.filter);
-                    if (operator >= 0 && values.length) {
-                        hasfilter = true;
-                    }
-                }
-            }
-        });
-        return hasfilter;
+        return hasFilterFunc(this.catalogControlHeader, this.catalogData);
     }
 
     @action updateTableStatus(val: boolean) {
