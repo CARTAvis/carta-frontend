@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Checkbox, Icon, InputGroup, Label, Position, Tooltip} from "@blueprintjs/core";
+import {Checkbox, Classes, Icon, InputGroup, Label, Position, Tooltip} from "@blueprintjs/core";
 import {IconName} from "@blueprintjs/icons";
 import {Cell, Column, ColumnHeaderCell, Region, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
 import {RowIndices} from "@blueprintjs/table/lib/esm/common/grid";
@@ -251,9 +251,9 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
             }
             return (
                 <div className="sort-label" onClick={() => (disableSort ? null : this.props.updateSortRequest(column.name, nextSortType, column.columnIndex))}>
-                    <Label disabled={disableSort} className="bp5-inline label">
+                    <Label disabled={disableSort} className={classNames(Classes.INLINE, "label")}>
                         <Icon className={iconClass} icon={sortIcon as IconName} />
-                        <Tooltip hoverOpenDelay={250} hoverCloseDelay={0} content={headerDescription ?? "Description not avaliable"} position={Position.BOTTOM} popoverClassName={AppStore.Instance.darkTheme ? "bp5-dark" : ""}>
+                        <Tooltip hoverOpenDelay={250} hoverCloseDelay={0} content={headerDescription ?? "Description not avaliable"} position={Position.BOTTOM} popoverClassName={classNames({[Classes.DARK]: AppStore.Instance.darkTheme})}>
                             {column.name}
                         </Tooltip>
                     </Label>
@@ -344,7 +344,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
 
         const tableCheckData = this.props.dataset.get(lineSelectionIndex)?.data.map(data => data);
 
-        const className = classNames("column-filter-table", {"bp5-dark": AppStore.Instance.darkTheme});
+        const className = classNames("column-filter-table", {[Classes.DARK]: AppStore.Instance.darkTheme});
 
         return (
             <Table2

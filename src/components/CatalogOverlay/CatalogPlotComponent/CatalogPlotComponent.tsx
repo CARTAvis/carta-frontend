@@ -1,7 +1,7 @@
 import * as React from "react";
 import Plot from "react-plotly.js";
 import ReactResizeDetector from "react-resize-detector";
-import {AnchorButton, Button, Colors, FormGroup, Intent, MenuItem, NonIdealState, PopoverPosition, Switch, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, Colors, FormGroup, Intent, MenuItem, NonIdealState, PopoverPosition, Switch, Tooltip} from "@blueprintjs/core";
 import {ItemPredicate, ItemRendererProps, Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
@@ -661,7 +661,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const renderFileSelect = (
             <FormGroup inline={true} label="File">
                 <Select
-                    className="bp5-fill"
+                    className={Classes.FILL}
                     filterable={false}
                     items={catalogFileItems}
                     activeItem={this.catalogFileId}
@@ -677,7 +677,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const renderXSelect = (
             <FormGroup inline={true} label="X">
                 <Select
-                    className="bp5-fill"
+                    className={Classes.FILL}
                     items={xyOptions}
                     activeItem={widgetStore.xColumnName}
                     onItemSelect={item => this.handleColumnNameChange("X", item)}
@@ -702,7 +702,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const renderYSelect = (
             <FormGroup inline={true} label="Y">
                 <Select
-                    className="bp5-fill"
+                    className={Classes.FILL}
                     items={xyOptions}
                     activeItem={widgetStore.yColumnName}
                     onItemSelect={item => this.handleColumnNameChange("Y", item)}
@@ -721,7 +721,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const renderStatisticSelect = (
             <FormGroup inline={true} label="Statistic source">
                 <Select
-                    className="bp5-fill"
+                    className={Classes.FILL}
                     items={xyOptions}
                     activeItem={widgetStore.statisticColumnName}
                     onItemSelect={item => this.handleColumnNameChange("S", item)}
@@ -969,11 +969,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         style={{transform: isScatterPlot ? `scale(${scale})` : "scale(1)", transformOrigin: "top left"}}
                     />
                 </div>
-                <div className="bp5-dialog-footer">
+                <div className={Classes.DIALOG_FOOTER}>
                     <div className="scatter-info">
                         <ProfilerInfoComponent info={infoStrings} type="pre-line" separator="newLine" />
                     </div>
-                    <div className="bp5-dialog-footer-actions">
+                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <Tooltip content={"Show only selected sources at image and table viewer"}>
                             <FormGroup label={"Selected only"} inline={true} disabled={disabled}>
                                 <Switch checked={catalogWidgetStore.showSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled} />

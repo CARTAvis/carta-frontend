@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Button, DialogProps, Intent, MenuItem, PopoverPosition} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, DialogProps, Intent, MenuItem, PopoverPosition} from "@blueprintjs/core";
 import {ItemRendererProps, Select} from "@blueprintjs/select";
 import {Cell, Column, SelectionModes, Table2} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
@@ -92,7 +92,7 @@ export class StokesDialogComponent extends React.Component {
     render() {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
-        const className = classNames("stokes-dialog", {"bp5-dark": appStore.darkTheme});
+        const className = classNames("stokes-dialog", {[Classes.DARK]: appStore.darkTheme});
         const stokesItems = Object.values(CARTA.PolarizationType) as CARTA.PolarizationType[];
         const files = this.fileNames;
 
@@ -124,7 +124,7 @@ export class StokesDialogComponent extends React.Component {
                                 itemRenderer={this.renderPopOver}
                                 popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                             >
-                                <Button className="bp5-minimal catalog-represent-as-select-button" text={this.getLabelFromValue(this.stokes.get(file).polarizationType)} rightIcon="double-caret-vertical" />
+                                <Button className={classNames(Classes.MINIMAL, "catalog-represent-as-select-button")} text={this.getLabelFromValue(this.stokes.get(file).polarizationType)} rightIcon="double-caret-vertical" />
                             </Select>
                         </Cell>
                     );
@@ -148,7 +148,7 @@ export class StokesDialogComponent extends React.Component {
 
         return (
             <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.STOKES} minWidth={300} minHeight={250} defaultWidth={602} defaultHeight={300} enableResizing={true}>
-                <div className="bp5-dialog-body">
+                <div className={Classes.DIALOG_BODY}>
                     <Table2
                         className={"file-table"}
                         numRows={this.stokes.size}
@@ -165,8 +165,8 @@ export class StokesDialogComponent extends React.Component {
                         {[fileName, stokesDropDown]}
                     </Table2>
                 </div>
-                <div className="bp5-dialog-footer">
-                    <div className="bp5-dialog-footer-actions">
+                <div className={Classes.DIALOG_FOOTER}>
+                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <AnchorButton
                             intent={Intent.NONE}
                             disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}

@@ -1,6 +1,6 @@
 import * as React from "react";
 import {ColorResult} from "react-color";
-import {AnchorButton, Button, Callout, Checkbox, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Callout, Checkbox, Classes, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -874,7 +874,7 @@ export class PreferenceDialogComponent extends React.Component {
             </div>
         );
 
-        const className = classNames("preference-dialog", {"bp5-dark": appStore.darkTheme});
+        const className = classNames("preference-dialog", {[Classes.DARK]: appStore.darkTheme});
 
         const dialogProps: DialogProps = {
             icon: "wrench",
@@ -897,7 +897,7 @@ export class PreferenceDialogComponent extends React.Component {
                 defaultHeight={PreferenceDialogComponent.DefaultHeight}
                 enableResizing={true}
             >
-                <div className="bp5-dialog-body">
+                <div className={Classes.DIALOG_BODY}>
                     <Tabs id="preferenceTabs" vertical={true} selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
                         <Tab id={PreferenceDialogTabs.GLOBAL} title="Global" panel={globalPanel} />
                         <Tab id={PreferenceDialogTabs.RENDER_CONFIG} title="Render Configuration" panel={renderConfigPanel} />
@@ -913,8 +913,8 @@ export class PreferenceDialogComponent extends React.Component {
                         <Tab id={PreferenceDialogTabs.LOG_EVENT} title="Log Events" panel={logEventsPanel} />
                     </Tabs>
                 </div>
-                <div className="bp5-dialog-footer">
-                    <div className="bp5-dialog-footer-actions">
+                <div className={Classes.DIALOG_FOOTER}>
+                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <Tooltip content="Apply to current tab only." position={Position.TOP}>
                             <AnchorButton intent={Intent.WARNING} icon={"refresh"} onClick={this.reset} text="Restore defaults" />
                         </Tooltip>

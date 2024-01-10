@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, ButtonGroup, Checkbox, Intent, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Checkbox, Classes, Intent, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
@@ -54,7 +54,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
             }
         }
 
-        const className = classNames("category-set", {"bp5-dark": AppStore.Instance.darkTheme});
+        const className = classNames("category-set", {[Classes.DARK]: AppStore.Instance.darkTheme});
 
         return (
             <div className={className}>

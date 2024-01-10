@@ -1,7 +1,8 @@
 import * as React from "react";
-import {AnchorButton, Button, Divider, FormGroup, HTMLSelect, MenuItem, Position, Switch, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, Divider, FormGroup, HTMLSelect, MenuItem, Position, Switch, Tooltip} from "@blueprintjs/core";
 import {ItemPredicate, ItemRenderer, MultiSelect} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";
@@ -160,7 +161,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                             </FormGroup>
                             <div className="cursor-select">
                                 <Tooltip content="Use cursor to select channel range in profiler" position={Position.BOTTOM}>
-                                    <AnchorButton className={widgetStore.isSelectingMomentChannelRange ? "bp5-active" : ""} icon="select" onClick={this.handleChannelSelectionClicked} />
+                                    <AnchorButton className={classNames({[Classes.ACTIVE]: widgetStore.isSelectingMomentChannelRange})} icon="select" onClick={this.handleChannelSelectionClicked} />
                                 </Tooltip>
                             </div>
                         </div>
@@ -190,7 +191,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                             </FormGroup>
                             <div className="cursor-select">
                                 <Tooltip content="Use cursor to select mask range in profiler" position={Position.BOTTOM}>
-                                    <AnchorButton className={widgetStore.isSelectingMomentMaskRange ? "bp5-active" : ""} icon="select" onClick={this.handleMaskSelectionClicked} />
+                                    <AnchorButton className={classNames({[Classes.ACTIVE]: widgetStore.isSelectingMomentMaskRange})} icon="select" onClick={this.handleMaskSelectionClicked} />
                                 </Tooltip>
                             </div>
                         </div>

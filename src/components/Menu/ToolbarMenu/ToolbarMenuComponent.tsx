@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, ButtonGroup, Menu, Popover, Position, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Classes, Menu, Popover, Position, Tooltip} from "@blueprintjs/core";
 import {IconName} from "@blueprintjs/icons";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -86,9 +86,9 @@ export class ToolbarMenuComponent extends React.Component {
         const appStore = AppStore.Instance;
         const dialogStore = appStore.dialogStore;
 
-        const className = classNames("toolbar-menu", {"bp5-dark": appStore.darkTheme});
-        const dialogClassName = classNames("dialog-toolbar-menu", {"bp5-dark": appStore.darkTheme});
-        const actionsClassName = classNames("actions-toolbar-menu", {"bp5-dark": appStore.darkTheme});
+        const className = classNames("toolbar-menu", {[Classes.DARK]: appStore.darkTheme});
+        const dialogClassName = classNames("dialog-toolbar-menu", {[Classes.DARK]: appStore.darkTheme});
+        const actionsClassName = classNames("actions-toolbar-menu", {[Classes.DARK]: appStore.darkTheme});
         const isRegionCreating = appStore.activeFrame ? appStore.activeFrame.regionSet.mode === RegionMode.CREATING : false;
         const newRegionType = appStore.activeFrame ? appStore.activeFrame.regionSet.newRegionType : CARTA.RegionType.RECTANGLE;
         const regionButtonsDisabled = !appStore.activeFrame || appStore.activeLayer === ImageViewLayer.Catalog;

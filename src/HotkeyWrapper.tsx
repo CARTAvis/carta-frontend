@@ -14,7 +14,7 @@ import {RegionMode} from "stores/Frame";
 export class HotkeyContainer extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
-        const className = classNames("bp5-hotkey-dialog", {"bp5-dark": appStore.darkTheme});
+        const className = classNames(Classes.HOTKEY_DIALOG, {[Classes.DARK]: appStore.darkTheme});
 
         return (
             <Dialog portalClassName="dialog-portal" isOpen={appStore.dialogStore.hotkeyDialogVisible} className={className} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={appStore.dialogStore.hideHotkeyDialog}>

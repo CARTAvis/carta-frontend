@@ -1,6 +1,7 @@
 import * as React from "react";
-import {AnchorButton, Button, DialogProps, FormGroup, Icon, InputGroup, Intent, MenuItem, NonIdealState, Overlay, PopoverPosition, Position, Spinner, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, DialogProps, FormGroup, Icon, InputGroup, Intent, MenuItem, NonIdealState, Overlay, PopoverPosition, Position, Spinner, Tooltip} from "@blueprintjs/core";
 import {ItemRendererProps, MultiSelect, Select} from "@blueprintjs/select";
+import classNames from "classnames";
 import FuzzySearch from "fuzzy-search";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -65,10 +66,7 @@ export class CatalogQueryDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
-        let className = "catalog-query-dialog";
-        if (appStore.darkTheme) {
-            className += " bp5-dark";
-        }
+        const className = classNames("catalog-query-dialog", {[Classes.DARK]: appStore.darkTheme});
 
         const dialogProps: DialogProps = {
             icon: "geosearch",
@@ -261,15 +259,15 @@ export class CatalogQueryDialogComponent extends React.Component {
                 minHeight={CatalogQueryDialogComponent.MinHeight}
                 enableResizing={true}
             >
-                <div className="bp5-dialog-body">{configBoard}</div>
+                <div className={Classes.DIALOG_BODY}>{configBoard}</div>
                 <Overlay autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={disable} usePortal={false}>
                     <div className="query-loading-overlay">
                         <Spinner intent={Intent.PRIMARY} size={30} value={null} />
                     </div>
                 </Overlay>
-                <div className="bp5-dialog-footer">
+                <div className={Classes.DIALOG_FOOTER}>
                     <div className={"result-info"}>{tableInfo}</div>
-                    <div className="bp5-dialog-footer-actions">
+                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <AnchorButton intent={Intent.SUCCESS} disabled={disable} onClick={() => this.query()} text={"Query"} />
                         <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => CatalogApiService.Instance.cancelQuery(configStore.catalogDB)} text={"Cancel"} />
                         {configStore.enableLoadVizier ? <AnchorButton intent={Intent.PRIMARY} disabled={disable} onClick={() => this.loadVizierCatalogs()} text={"Load selected"} /> : null}

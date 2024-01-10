@@ -437,7 +437,7 @@ export class RootMenuComponent extends React.Component {
         }
 
         const newReleaseMessage = (
-            <div className={classNames(Classes.ALERT, "new-release", {"bp5-dark": appStore.darkTheme})}>
+            <div className={classNames(Classes.ALERT, "new-release", {[Classes.DARK]: appStore.darkTheme})}>
                 <div className={Classes.ALERT_BODY}>
                     <img src="carta_logo.png" />
                     <div className={Classes.ALERT_CONTENTS}>
@@ -492,7 +492,14 @@ export class RootMenuComponent extends React.Component {
                     </Menu>
                 </Popover>
                 <ToolbarMenuComponent />
-                <Alert className={appStore.darkTheme ? "bp5-dark" : ""} isOpen={this.documentationAlertVisible} onClose={this.handleAlertDismissed} canEscapeKeyCancel={true} canOutsideClickCancel={true} confirmButtonText={"Dismiss"}>
+                <Alert
+                    className={classNames({[Classes.DARK]: appStore.darkTheme})}
+                    isOpen={this.documentationAlertVisible}
+                    onClose={this.handleAlertDismissed}
+                    canEscapeKeyCancel={true}
+                    canOutsideClickCancel={true}
+                    confirmButtonText={"Dismiss"}
+                >
                     Documentation will open in a new tab. Please ensure any popup blockers are disabled.
                 </Alert>
                 {appStore.showNewRelease && (

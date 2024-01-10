@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Button, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
+import {Button, Classes, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
 import {ItemRenderer, Select} from "@blueprintjs/select";
 import * as AST from "ast_wrapper";
 import classNames from "classnames";
@@ -759,7 +759,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
             </div>
         ) : null;
 
-        const className = classNames("image-view-settings", {"bp5-dark": appStore.darkTheme});
+        const className = classNames("image-view-settings", {[Classes.DARK]: appStore.darkTheme});
 
         return (
             <div className={className}>

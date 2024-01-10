@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Button, ButtonGroup, FormGroup, Icon, MenuItem, PopoverPosition, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, ButtonGroup, Classes, FormGroup, Icon, MenuItem, PopoverPosition, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {ItemPredicate, ItemRendererProps, Select} from "@blueprintjs/select";
 import classNames from "classnames";
 import FuzzySearch from "fuzzy-search";
@@ -21,7 +21,7 @@ const IconWrapper = (path: React.SVGProps<SVGPathElement>, color: string, fill: 
         fillColor = "none";
     }
     return (
-        <span className="bp5-icon">
+        <span className={Classes.ICON}>
             <svg data-icon="triangle-up-open" width="16" height="16" viewBox={`0 0 ${viewboxDefault} ${viewboxDefault}`} style={{stroke: color, fill: fillColor, strokeWidth: strokeWidth}}>
                 {path}
             </svg>
@@ -497,13 +497,13 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 />
             </div>
         );
-        const className = classNames("catalog-settings", {"bp5-dark": appStore.darkTheme});
+        const className = classNames("catalog-settings", {[Classes.DARK]: appStore.darkTheme});
 
         return (
             <div className={className}>
                 <FormGroup className={"file-menu"} inline={true} label="File" disabled={disabledOverlayPanel}>
                     <Select
-                        className="bp5-fill"
+                        className={Classes.FILL}
                         disabled={disabledOverlayPanel}
                         filterable={false}
                         items={catalogFileItems}
@@ -517,7 +517,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 </FormGroup>
                 <FormGroup className={"file-menu"} inline={true} label="Shape" disabled={disabledOverlayPanel}>
                     <Select
-                        className="bp5-fill"
+                        className={Classes.FILL}
                         disabled={disabledOverlayPanel}
                         filterable={false}
                         items={this.catalogOverlayShape}

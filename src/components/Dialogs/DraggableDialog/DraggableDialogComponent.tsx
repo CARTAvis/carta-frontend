@@ -2,7 +2,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import {ResizeEnable, Rnd} from "react-rnd";
-import {Button, Dialog, DialogProps} from "@blueprintjs/core";
+import {Button, Classes, Dialog, DialogProps} from "@blueprintjs/core";
 
 import {HelpStore, HelpType} from "stores";
 
@@ -27,8 +27,8 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
     componentDidUpdate() {
         // workaround for blueprintjs(@4.8.0) bug, which the blue focus box suppressed to the top due to tabindex="0" replaced in DOM.
         if (!this.focusBoxIsFixed) {
-            const wrongFocusedDiv = this.dd.getElementsByClassName("bp5-overlay-start-focus-trap")?.[0] as HTMLDivElement;
-            const correctFocusedDiv = this.dd.getElementsByClassName("bp5-dialog-container")?.[0] as HTMLDivElement;
+            const wrongFocusedDiv = this.dd.getElementsByClassName(Classes.OVERLAY_START_FOCUS_TRAP)?.[0] as HTMLDivElement;
+            const correctFocusedDiv = this.dd.getElementsByClassName(Classes.DIALOG_CONTAINER)?.[0] as HTMLDivElement;
             if (wrongFocusedDiv?.getAttribute("tabindex") === "0" && correctFocusedDiv) {
                 wrongFocusedDiv.removeAttribute("tabindex");
                 correctFocusedDiv.setAttribute("tabindex", "0");
@@ -37,13 +37,13 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
             }
         }
 
-        const header = this.dd.getElementsByClassName("bp5-dialog-header");
+        const header = this.dd.getElementsByClassName(Classes.DIALOG_HEADER);
         if (this.props.helpType && header.length > 0 && this.dd.getElementsByClassName("help-button").length === 0) {
             const helpButton = <Button icon="help" minimal={true} onClick={this.onClickHelpButton} />;
             const helpButtonDiv = document.createElement("div") as HTMLDivElement;
             helpButtonDiv.setAttribute("class", "help-button");
             ReactDOM.render(helpButton, helpButtonDiv);
-            const closeButton = this.dd.getElementsByClassName("bp5-dialog-close-button");
+            const closeButton = this.dd.getElementsByClassName(Classes.DIALOG_CLOSE_BUTTON);
             if (closeButton.length > 0) {
                 closeButton[0].before(helpButtonDiv);
             } else {
@@ -103,7 +103,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
                         }}
                         minWidth={this.props.minWidth}
                         minHeight={this.props.minHeight}
-                        dragHandleClassName={"bp5-dialog-header"}
+                        dragHandleClassName={Classes.DIALOG_HEADER}
                         ref={c => {
                             this.rnd = c;
                         }}

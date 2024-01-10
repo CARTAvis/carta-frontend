@@ -39,7 +39,7 @@ export class TaskProgressDialogComponent extends React.Component<TaskProgressDia
             titleText = `${this.props.text} (${timeRemainingText} left)`;
         }
 
-        const className = classNames("task-progress-dialog", {"bp5-dark": AppStore.Instance.darkTheme});
+        const className = classNames("task-progress-dialog", {[Classes.DARK]: AppStore.Instance.darkTheme});
         const cancellingText = this.props.isCancelling ? `cancellation in progress${".".repeat(Math.floor(performance.now() / 1000) % 4)}` : "";
 
         return (

@@ -1,8 +1,9 @@
 import * as React from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
 import {FixedSizeList as List} from "react-window";
-import {Button, ButtonGroup, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, NonIdealState, OptionProps, Popover, PopoverInteractionKind, Position, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
+import {Button, ButtonGroup, Classes, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, NonIdealState, OptionProps, Popover, PopoverInteractionKind, Position, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
+import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
@@ -387,7 +388,7 @@ export class FileInfoComponent extends React.Component<{
         return (
             <AutoSizer>
                 {({height, width}) => (
-                    <List className="header-list bp5-code-block" itemCount={numHeaders} itemSize={18} height={height} width={width} ref={this.listRef}>
+                    <List className={classNames("header-list", Classes.CODE_BLOCK)} itemCount={numHeaders} itemSize={18} height={height} width={width} ref={this.listRef}>
                         {renderHeaderRow}
                     </List>
                 )}

@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Icon} from "@blueprintjs/core";
+import {Classes, Icon} from "@blueprintjs/core";
 import classNames from "classnames";
 
 import {AppStore} from "stores";
@@ -29,7 +29,7 @@ export class CustomIcon extends React.Component<{icon: CustomIconName; size?: nu
     static readonly SIZE_LARGE = 20;
 
     public render() {
-        const className = classNames("custom-icon", "bp5-icon", {"dark-theme": AppStore.Instance.darkTheme});
+        const className = classNames("custom-icon", Classes.ICON, {"dark-theme": AppStore.Instance.darkTheme});
         const size = (this.props.size ? this.props.size : CustomIcon.SIZE_STANDARD) + "px";
         const content = (
             <span className={className}>

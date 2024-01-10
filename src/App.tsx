@@ -1,6 +1,6 @@
 import * as React from "react";
 import ReactResizeDetector from "react-resize-detector";
-import {Alert, Intent} from "@blueprintjs/core";
+import {Alert, Classes, Intent} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
@@ -29,7 +29,7 @@ export class App extends React.Component {
         switch (alertStore.alertType) {
             case AlertType.Info:
                 return (
-                    <Alert icon={alertStore.alertIcon} className={classNames({"bp5-dark": darkTheme})} isOpen={alertStore.alertVisible} onClose={alertStore.dismissAlert} canEscapeKeyCancel={true}>
+                    <Alert icon={alertStore.alertIcon} className={classNames({[Classes.DARK]: darkTheme})} isOpen={alertStore.alertVisible} onClose={alertStore.dismissAlert} canEscapeKeyCancel={true}>
                         <p>{alertStore.alertText}</p>
                     </Alert>
                 );
@@ -37,7 +37,7 @@ export class App extends React.Component {
                 return (
                     <Alert
                         icon={alertStore.alertIcon}
-                        className={classNames({"bp5-dark": darkTheme})}
+                        className={classNames({[Classes.DARK]: darkTheme})}
                         isOpen={alertStore.alertVisible}
                         confirmButtonText="OK"
                         cancelButtonText="Cancel"
@@ -59,7 +59,7 @@ export class App extends React.Component {
                 return (
                     <Alert
                         icon={alertStore.alertIcon}
-                        className={classNames({"bp5-dark": darkTheme})}
+                        className={classNames({[Classes.DARK]: darkTheme})}
                         isOpen={alertStore.alertVisible}
                         confirmButtonText="Retry"
                         {...cancelProps}
@@ -77,7 +77,7 @@ export class App extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
-        const className = classNames("App", {"bp5-dark": appStore.darkTheme});
+        const className = classNames("App", {[Classes.DARK]: appStore.darkTheme});
         const glClassName = classNames("gl-container-app", {"dark-theme": appStore.darkTheme});
 
         const alertComponent = this.renderAlertComponent(appStore.alertStore, appStore.darkTheme);

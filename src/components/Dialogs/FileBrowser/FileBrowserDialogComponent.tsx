@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Alert, AnchorButton, Breadcrumb, BreadcrumbProps, Breadcrumbs, Button, ButtonGroup, DialogProps, Icon, InputGroup, Intent, Menu, MenuItem, Popover, Position, TabId, Tooltip} from "@blueprintjs/core";
+import {Alert, AnchorButton, Breadcrumb, BreadcrumbProps, Breadcrumbs, Button, ButtonGroup, Classes, DialogProps, Icon, InputGroup, Intent, Menu, MenuItem, Popover, Position, TabId, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import * as _ from "lodash";
@@ -606,7 +606,7 @@ export class FileBrowserDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
-        const className = classNames("file-browser-dialog", {"bp5-dark": appStore.darkTheme});
+        const className = classNames("file-browser-dialog", {[Classes.DARK]: appStore.darkTheme});
 
         const dialogProps: DialogProps = {
             icon: "folder-open",
@@ -691,7 +691,7 @@ export class FileBrowserDialogComponent extends React.Component {
                         </React.Fragment>
                     )}
                 </div>
-                <div className="bp5-dialog-body">
+                <div className={Classes.DIALOG_BODY}>
                     <div className={paneClassName}>
                         <div className="file-list">
                             <FileListTableComponent
@@ -732,11 +732,11 @@ export class FileBrowserDialogComponent extends React.Component {
                     </div>
                     {fileInput}
                 </div>
-                <div className="bp5-dialog-footer">
-                    <div className="bp5-dialog-footer-actions">{actionButton}</div>
+                <div className={Classes.DIALOG_FOOTER}>
+                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>{actionButton}</div>
                 </div>
                 <Alert
-                    className={appStore.darkTheme ? "bp5-dark" : ""}
+                    className={classNames({[Classes.DARK]: appStore.darkTheme})}
                     isOpen={this.overwriteExistingFileAlertVisible}
                     confirmButtonText="Yes"
                     cancelButtonText="Cancel"

@@ -1,7 +1,8 @@
 import * as React from "react";
-import {Button, Icon, Label, NonIdealState, Spinner} from "@blueprintjs/core";
+import {Button, Classes, Icon, Label, NonIdealState, Spinner} from "@blueprintjs/core";
 import {Cell, Column, ColumnHeaderCell, Region, Regions, RenderMode, SelectionModes, Table2, TableLoadingOption} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
+import classNames from "classnames";
 import FuzzySearch from "fuzzy-search";
 import globToRegExp from "glob-to-regexp";
 import {action, autorun, computed, makeObservable, observable, runInAction} from "mobx";
@@ -286,7 +287,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             if (sortColumn) {
                 return (
                     <div className="sort-label" onClick={() => this.props.onSortingChanged(name, -sortingConfig.direction)}>
-                        <Label className="bp5-inline label">
+                        <Label className={classNames(Classes.INLINE, "label")}>
                             <Icon className="sort-icon" icon={sortDesc ? "sort-desc" : "sort-asc"} />
                             {name}
                         </Label>
@@ -295,7 +296,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             } else {
                 return (
                     <div className="sort-label" onClick={() => this.props.onSortingChanged(name, 1)}>
-                        <Label className="bp5-inline label">
+                        <Label className={classNames(Classes.INLINE, "label")}>
                             <Icon className="sort-icon inactive" icon="sort" />
                             {name}
                         </Label>
@@ -438,7 +439,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
         const classes = ["browser-table"];
         if (this.props.darkTheme) {
-            classes.push("bp5-dark");
+            classes.push(Classes.DARK);
         }
 
         const entryCount = this.tableEntries.length;

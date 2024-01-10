@@ -119,7 +119,7 @@ const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
 export class HelpDrawerComponent extends React.Component {
     render() {
         const helpStore = HelpStore.Instance;
-        const className = classNames("help-drawer", {"bp5-dark": AppStore.Instance.darkTheme});
+        const className = classNames("help-drawer", {[Classes.DARK]: AppStore.Instance.darkTheme});
 
         const drawerProps: DrawerProps = {
             icon: "help",

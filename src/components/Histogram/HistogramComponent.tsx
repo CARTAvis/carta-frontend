@@ -1,6 +1,6 @@
 import * as React from "react";
 import ReactResizeDetector from "react-resize-detector";
-import {NonIdealState} from "@blueprintjs/core";
+import {Classes, NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import * as _ from "lodash";
@@ -339,7 +339,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             this.currentLinePlotProps = linePlotProps;
         }
 
-        const className = classNames("histogram-widget", {"bp5-dark": appStore.darkTheme});
+        const className = classNames("histogram-widget", {[Classes.DARK]: appStore.darkTheme});
 
         return (
             <div className={className}>

@@ -1,6 +1,6 @@
 import * as React from "react";
 import {ColorResult, RGBColor, SketchPicker} from "react-color";
-import {Button, Popover, PopoverPosition} from "@blueprintjs/core";
+import {Button, Classes, Popover, PopoverPosition} from "@blueprintjs/core";
 import classNames from "classnames";
 import * as _ from "lodash";
 import {action, makeObservable, observable} from "mobx";
@@ -43,7 +43,7 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
     }, ColorPickerComponent.CHANGE_DELAY);
 
     public render() {
-        let popoverClassName = classNames("color-picker-popup", {"bp5-dark": this.props.darkTheme});
+        let popoverClassName = classNames("color-picker-popup", {[Classes.DARK]: this.props.darkTheme});
         const buttonColor = tinycolor(this.props.color).toString();
 
         return (

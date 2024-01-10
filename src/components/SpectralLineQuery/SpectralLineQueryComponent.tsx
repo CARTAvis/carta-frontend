@@ -357,7 +357,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             applyFilterWithEnter: this.handleFilter
         };
 
-        const className = classNames("spectral-line-query-widget", {"bp5-dark": appStore.darkTheme});
+        const className = classNames("spectral-line-query-widget", {[Classes.DARK]: appStore.darkTheme});
         const isSelectedLinesUnderLimit = widgetStore.numSelectedLines <= PLOT_LINES_LIMIT;
 
         const hint = (
@@ -376,7 +376,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
 
         return (
             <div className={className}>
-                <div className="bp5-dialog-body">
+                <div className={Classes.DIALOG_BODY}>
                     {queryPanel}
                     <SplitPane className="body-split-pane" split="horizontal" primary={"second"} defaultSize={"60%"} minSize={"5%"} onChange={this.onTableResize}>
                         <Pane className={"header-table-container"}>{this.width > 0 && this.createHeaderTable()}</Pane>
@@ -386,11 +386,11 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                         </Pane>
                     </SplitPane>
                 </div>
-                <div className="bp5-dialog-footer">
+                <div className={Classes.DIALOG_FOOTER}>
                     <div className="result-table-info">
                         <pre>{widgetStore.resultTableInfo}</pre>
                     </div>
-                    <div className="bp5-dialog-footer-actions">
+                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral profiler"}>
                             {widgetMenu}
                         </FormGroup>

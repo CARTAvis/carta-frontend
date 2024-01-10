@@ -1,6 +1,6 @@
 import * as React from "react";
 import {ColorResult, SketchPicker} from "react-color";
-import {Button, MenuItem, Popover, PopoverPosition} from "@blueprintjs/core";
+import {Button, Classes, MenuItem, Popover, PopoverPosition} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import classNames from "classnames";
 import * as _ from "lodash";
@@ -49,7 +49,7 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
 
     private renderColorSelectItem = (colorItem: string, {handleClick, modifiers}) => {
         if (colorItem === CUSTOM_COLOR_OPTION) {
-            const popoverClassName = classNames("color-picker-popup", {"bp5-dark": AppStore.Instance.darkTheme});
+            const popoverClassName = classNames("color-picker-popup", {[Classes.DARK]: AppStore.Instance.darkTheme});
 
             return (
                 <div key={"custom-color"} className={"custom-color"}>

@@ -1,7 +1,7 @@
 import * as React from "react";
 import ReactResizeDetector from "react-resize-detector";
 import SplitPane, {Pane} from "react-split-pane";
-import {AnchorButton, Button, ButtonGroup, FormGroup, Intent, MenuItem, NonIdealState, PopoverPosition, Switch, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, ButtonGroup, Classes, FormGroup, Intent, MenuItem, NonIdealState, PopoverPosition, Switch, Tooltip} from "@blueprintjs/core";
 import {ItemPredicate, ItemRendererProps, Select} from "@blueprintjs/select";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
 import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
@@ -725,7 +725,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 <div className={"catalog-overlay-filter-settings"}>
                     <FormGroup inline={true} label="File">
                         <Select
-                            className="bp5-fill"
+                            className={Classes.FILL}
                             filterable={false}
                             items={catalogFileItems}
                             activeItem={this.catalogFileId}
@@ -770,7 +770,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                         <FilterableTableComponent {...dataTableProps} />
                     </Pane>
                 </SplitPane>
-                <div className="bp5-dialog-footer">
+                <div className={Classes.DIALOG_FOOTER}>
                     <div className={"table-info"}>
                         <table className="info-display">
                             <tbody>{tableInfo}</tbody>
@@ -837,8 +837,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             />
                         </div>
                     </div>
-                    <div className="bp5-dialog-footer">
-                        <div className="bp5-dialog-footer-actions">
+                    <div className={Classes.DIALOG_FOOTER}>
+                        <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                             <AnchorButton intent={Intent.SUCCESS} text="Apply filter" onClick={this.handleFilterRequest} disabled={disable || !profileStore.updateTableView || !profileStore.hasFilter} />
                             <AnchorButton intent={Intent.WARNING} text="Reset filter" onClick={this.handleResetClick} disabled={disable} />
                             <AnchorButton text="Close catalog" onClick={this.handleFileCloseClick} disabled={disable} />

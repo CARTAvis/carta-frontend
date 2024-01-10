@@ -1,6 +1,6 @@
 import * as React from "react";
 import {CSSProperties} from "react";
-import {AnchorButton, ButtonGroup, IconName, Menu, MenuDivider, MenuItem, Popover, PopoverInteractionKind, PopoverPosition, Position, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Classes, IconName, Menu, MenuDivider, MenuItem, Popover, PopoverInteractionKind, PopoverPosition, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
@@ -130,7 +130,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             backgroundColor: "transparent"
         };
 
-        const className = classNames("image-toolbar", {docked: this.props.docked, "bp5-dark": appStore.darkTheme});
+        const className = classNames("image-toolbar", {docked: this.props.docked, [Classes.DARK]: appStore.darkTheme});
 
         const zoomLevel = frame.spatialReference && frame.spatialTransform ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
         const currentZoomSpan = (

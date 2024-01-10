@@ -2,7 +2,7 @@ import * as React from "react";
 import {CSSProperties} from "react";
 import ReactResizeDetector from "react-resize-detector";
 import {FixedSizeList, ListOnItemsRenderedProps} from "react-window";
-import {AnchorButton, ButtonGroup, Icon, NonIdealState, Position, Spinner, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Classes, Icon, NonIdealState, Position, Spinner, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
@@ -250,7 +250,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         const headerRenderer = (regionsVisibility: RegionsOpacity, regionsLock: boolean) => {
             return (props: {index: number; style: CSSProperties}) => {
-                const className = classNames("row-header", {"bp5-dark": darkTheme});
+                const className = classNames("row-header", {[Classes.DARK]: darkTheme});
 
                 return (
                     <div className={className} style={props.style}>
@@ -301,7 +301,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             if (!region) {
                 return null;
             }
-            const className = classNames("row", {"bp5-dark": darkTheme, selected: selectedRegion?.regionId === region.regionId});
+            const className = classNames("row", {[Classes.DARK]: darkTheme, selected: selectedRegion?.regionId === region.regionId});
 
             let centerContent: React.ReactNode;
             if (isFinite(region.center.x) && isFinite(region.center.y)) {
@@ -442,7 +442,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         return (
             <div className="region-list-widget">
-                <div className={classNames("region-list-table", {"bp5-dark": darkTheme})}>
+                <div className={classNames("region-list-table", {[Classes.DARK]: darkTheme})}>
                     <FixedSizeList itemSize={RegionListComponent.HEADER_ROW_HEIGHT} height={RegionListComponent.HEADER_ROW_HEIGHT} itemCount={1} width="100%" className="list-header">
                         {headerRenderer(this.regionsVisibility, this.regionsLock)}
                     </FixedSizeList>
