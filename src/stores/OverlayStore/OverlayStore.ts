@@ -1044,15 +1044,7 @@ export class OverlayStore {
             const formatStringX = this.numbers.formatStringX;
             const formatStyingY = this.numbers.formatStringY;
             const explicitSystem = this.global.explicitSystem;
-            if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined) {
-                AppStore.Instance.frames.forEach(frame => {
-                    if (!(frame.isPVImage && frame.spectralAxis?.valid) && !(frame.isSwappedZ && frame.spectralAxis?.valid)) {
-                        if (frame?.validWcs && frame?.wcsInfo) {
-                            AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY}, System=${explicitSystem}`);
-                        }
-                    }
-                });
-            }
+            this.updateFrames(formatStringX, formatStyingY, explicitSystem);
         });
     }
 
@@ -1104,6 +1096,18 @@ export class OverlayStore {
         this.global.setDefaultSystem(AST.getString(frame.wcsInfo, "System") as SystemType);
         this.setFormatsFromSystem();
     }
+
+    private updateFrames = (formatStringX: string, formatStyingY: string, explicitSystem: SystemType) => {
+        if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined) {
+            AppStore.Instance.frames.forEach(frame => {
+                if (!(frame.isPVImage && frame.spectralAxis?.valid) && !(frame.isSwappedZ && frame.spectralAxis?.valid)) {
+                    if (frame?.validWcs && frame?.wcsInfo) {
+                        AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY}, System=${explicitSystem}`);
+                    }
+                }
+            });
+        }
+    };
 
     @action toggleLabels = () => {
         const newState = !this.labelsHidden;
