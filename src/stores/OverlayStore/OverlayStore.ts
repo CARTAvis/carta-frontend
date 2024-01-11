@@ -1095,6 +1095,11 @@ export class OverlayStore {
 
         this.global.setDefaultSystem(AST.getString(frame.wcsInfo, "System") as SystemType);
         this.setFormatsFromSystem();
+
+        const formatStringX = this.numbers.formatStringX;
+        const formatStyingY = this.numbers.formatStringY;
+        const explicitSystem = this.global.explicitSystem;
+        this.updateFrames(formatStringX, formatStyingY, explicitSystem);
     }
 
     private updateFrames = (formatStringX: string, formatStyingY: string, explicitSystem: SystemType) => {
