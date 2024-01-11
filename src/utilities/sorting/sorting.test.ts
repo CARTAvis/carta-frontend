@@ -1,4 +1,4 @@
-import { initSortedIndexMapFunc } from "./table"
+import {initSortedIndexMapFunc} from "./sorting";
 
 describe("table functions", () => {
     test("initialize sorted index map", () => {

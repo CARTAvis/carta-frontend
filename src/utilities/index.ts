@@ -7,6 +7,7 @@ export * from "./math/math";
 export * from "./math2d/math2d";
 export * from "./parsing/parsing";
 export * from "./Processed/Processed";
+export * from "./sorting/sorting";
 export * from "./table/table";
 export * from "./templates/templates";
 export * from "./tiling/tiling";
