@@ -119,9 +119,6 @@ const RESOLVED_QN_COLUMN_INDEX = 8;
 const FREQUENCY_RANGE_LIMIT = 2 * 1e4; // 20000 MHz
 const DEFAULT_HEADER_WIDTH = 150;
 
-// const TRUE_REGEX = /^[tTyY].*$/;
-// const FALSE_REGEX = /^[fFnN].*$/;
-
 export class SpectralLineQueryWidgetStore {
     @observable queryRangeType: SpectralLineQueryRangeType;
     @observable queryRange: NumberRange;
@@ -299,7 +296,6 @@ export class SpectralLineQueryWidgetStore {
                 this.columnHeaders = this.preprocessHeaders(ack.headers);
                 this.controlHeader = this.initControlHeader(this.columnHeaders);
                 this.queryResult = this.initColumnData(ack.spectralLineData, ack.dataSize, this.columnHeaders);
-                // this.controlHeader = this.shiftBackColumnIndex(this.controlHeader);
                 this.updateFilterResult(this.fullRowIndexes);
                 this.isDataFiltered = false;
                 this.filterNum = 0;
