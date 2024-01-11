@@ -178,8 +178,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const axesStyleString = this.props.overlaySettings.axes.styleString;
         const numbersStyleString = this.props.overlaySettings.numbers.styleString;
         const labelsStyleString = this.props.overlaySettings.labels.styleString;
-        const formatStringX = this.props.overlaySettings.numbers.formatStringX;
-        const formatStyingY = this.props.overlaySettings.numbers.formatStringY;
 
         if (frame.isSwappedZ) {
             const requiredChannel = frame.requiredChannel;
