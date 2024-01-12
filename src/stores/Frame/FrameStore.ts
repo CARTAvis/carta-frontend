@@ -2161,7 +2161,10 @@ export class FrameStore {
                 this.spectralCoordsSupported.set(SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null});
             }
         } else {
-            this.spectralCoordsSupported = new Map<string, {type: SpectralType; unit: SpectralUnit}>([[SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]]);
+            this.spectralCoordsSupported = new Map<string, {type: SpectralType; unit: SpectralUnit}>([
+                [SPECTRAL_TYPE_STRING.get(SpectralType.NATIVE), {type: null, unit: null}],
+                [SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]
+            ]);
         }
 
         // generate spectral system options

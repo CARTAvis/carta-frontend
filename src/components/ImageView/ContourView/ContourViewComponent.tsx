@@ -3,7 +3,7 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {ContourWebGLService} from "services";
-import {AppStore} from "stores";
+import {AnimatorStore, AppStore} from "stores";
 import {ContourDashMode, FrameStore, RenderConfigStore} from "stores/Frame";
 import {ceilToPower, GL2, rotate2D, scale2D, subtract2D} from "utilities";
 
@@ -25,15 +25,26 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     componentDidMount() {
         this.contourWebGLService = ContourWebGLService.Instance;
         this.gl = this.contourWebGLService.gl;
+        const contourStream = AppStore.Instance.backendService.contourStream;
         if (this.canvas) {
-            this.updateCanvas();
+            contourStream.subscribe(this.triggerUpdate);
         }
     }
 
     componentDidUpdate() {
         AppStore.Instance.resetImageRatio();
-        requestAnimationFrame(this.updateCanvas);
+        this.triggerUpdate();
     }
+
+    private triggerUpdate = () => {
+        const animatorStore = AnimatorStore.Instance;
+        const contourFrames = AppStore.Instance.contourFrames.get(this.props.frame);
+        if (contourFrames?.every(frame => frame?.contourProgress === 1) && animatorStore.serverAnimationActive) {
+            requestAnimationFrame(this.updateCanvas);
+        } else if (!animatorStore.serverAnimationActive) {
+            requestAnimationFrame(this.updateCanvas);
+        }
+    };
 
     private resizeAndClearCanvas() {
         const frame = this.props.frame;
