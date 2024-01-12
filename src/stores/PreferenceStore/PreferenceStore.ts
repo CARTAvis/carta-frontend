@@ -976,13 +976,10 @@ export class PreferenceStore {
     }
 
     /**
-     * Perform local storage upgrade by iterating over the old CARTA version keys. This list consists of keys that were present when CARTA used a single localStorage entry per key
+     * Perform localStorage upgrade by iterating over the old CARTA version keys. This list consists of keys that were present when CARTA used a single localStorage entry per key
      */
     private upgradePreferences = async () => {
         if (!localStorage.getItem("preferences")) {
-            // perform localstorage upgrade by iterating over the old keys. This list consists of keys that were present when CARTA used a single localStorage entry per key
-
-            // Strings
             const stringKeys = [
                 PreferenceKeys.GLOBAL_THEME,
                 PreferenceKeys.GLOBAL_LAYOUT,
