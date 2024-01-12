@@ -729,10 +729,10 @@ export class PreferenceStore {
      * Sets the preference parameter
      *
      * @param key - The enum of {@link PreferenceKeys}.
-     * @param value - The given value to the preference key.
+     * @param value - The given value to the preference key except {@link PreferenceKeys.LOG_EVENT} and {@link PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING}. For {@link PreferenceKeys.LOG_EVENT}, the input value should be an enum {@link CARTA.EventType}, functioning as a toggle for an element within the {@link PreferenceKeys.LOG_EVENT}. For {@link PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING}, the input value should be a {@link WCSMatchingType} enum or a sum of the enums, functioning as an exclusive OR value for {@link PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING}.
      * @returns false if the key or value is not valid; yield a result using {@link ApiService.Instance.setPreference}
-     * @remarks {@link PreferenceKeys.LOG_EVENT} should be a number list containing {@link CARTA.EventType} and {@link PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING} should be a bitwise-OR value of a combination of enum {@link WCSMatchingType}.
      */
+
     @flow.bound *setPreference(key: PreferenceKeys, value: any) {
         if (!key) {
             return false;

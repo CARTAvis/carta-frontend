@@ -14,15 +14,16 @@ export class Event {
     };
 }
 
-export function getEventList(list: number[], value: number): number[] {
+export function getEventList(list: number[], value: number[] | number): number[] {
     if (!list || !Array.isArray(list)) {
         list = [];
     }
-    if (list.includes(value)) {
-        list = list.filter(e => e !== value);
-    } else {
-        list.push(value);
-    }
+
+    const valueList = typeof value === "number" ? [value] : value;
+
+    valueList.forEach(x => {
+        list.includes(x) ? (list = list.filter(e => e !== x)) : list.push(x);
+    });
 
     return list;
 }
