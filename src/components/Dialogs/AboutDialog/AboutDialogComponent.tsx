@@ -80,7 +80,7 @@ export class AboutDialogComponent extends React.Component {
                         </li>
                         <li>
                             Documentation is available{" "}
-                            <a href="https://carta.readthedocs.io/en/4.0" rel="noopener noreferrer" target="_blank">
+                            <a href="https://carta.readthedocs.io/en/4.1" rel="noopener noreferrer" target="_blank">
                                 online
                             </a>
                         </li>
