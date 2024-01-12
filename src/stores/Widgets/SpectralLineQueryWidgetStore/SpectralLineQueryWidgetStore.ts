@@ -495,8 +495,8 @@ export class SpectralLineQueryWidgetStore {
     private initColumnData = (ackData, size: number, headers): Map<number, ProcessedColumnData> => {
         const ackColumns = ProtobufProcessing.ProcessCatalogData(ackData);
 
-        // to save the first column for line selection boolean
-        // ```ackColumns``` has no line selection boolean column but ```headers``` has
+        // Starting from i = 1 is to preserve the first column for line selection boolean
+        // Since ```ackColumns``` has no line selection boolean column (but ```headers``` does), ackColumns.get(i - 1) extracts correct column data.
         let columns = new Map<number, ProcessedColumnData>();
         for (let i = 1; i < headers.length; i++) {
             let selectColumn = ackColumns.get(i - 1);
