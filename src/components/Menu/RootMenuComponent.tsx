@@ -264,7 +264,7 @@ export class RootMenuComponent extends React.Component {
                 <Menu.Item text="Open Workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showWorkspaceDialog(WorkspaceDialogMode.Open)} />
                 <Menu.Item text="Save Workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showWorkspaceDialog(WorkspaceDialogMode.Save)} />
                 <Menu.Divider />
-                <Menu.Item text="Preferences" onClick={appStore.dialogStore.showPreferenceDialog} disabled={appStore.preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE} />
+                <Menu.Item text="Preferences" onClick={appStore.dialogStore.showPreferenceDialog} />
                 {serverSubMenu}
             </Menu>
         );
