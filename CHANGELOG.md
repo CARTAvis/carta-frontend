@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Improved the dragging performance of 'Export Region' widget when the list of region/annotation to be exported is large. ([#1867](https://github.com/CARTAvis/carta-frontend/issues/1867)).
 * Fixed the flashing contour rendering during animation ([#579](https://github.com/CARTAvis/carta-frontend/issues/579)).
 * Avoided showing the telemetry dialog temporarily ([#2314](https://github.com/CARTAvis/carta-frontend/issues/2314)).
+* Fixed the crash when plotting online Vizier catalog data. ([#2321](https://github.com/CARTAvis/carta-frontend/pull/2321))
+
 
 ## [4.0.0]
 
