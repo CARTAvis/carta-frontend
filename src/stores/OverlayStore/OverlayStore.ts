@@ -1089,14 +1089,16 @@ export class OverlayStore {
         this.global.setDefaultSystem(AST.getString(frame.wcsInfo, "System") as SystemType);
         this.setFormatsFromSystem();
 
-        const formatStringX = this.numbers.formatStringX;
-        const formatStyingY = this.numbers.formatStringY;
-        const explicitSystem = this.global.explicitSystem;
-        AppStore.Instance.frames.forEach(frame => {
-            if (frame) {
-                frame.updateWcsSystem(formatStringX, formatStyingY, explicitSystem);
-            }
-        });
+        if (this.global.system === SystemType.Auto) {
+            const formatStringX = this.numbers.formatStringX;
+            const formatStyingY = this.numbers.formatStringY;
+            const explicitSystem = this.global.explicitSystem;
+            AppStore.Instance.frames.forEach(frame => {
+                if (frame) {
+                    frame.updateWcsSystem(formatStringX, formatStyingY, explicitSystem);
+                }
+            });
+        }
     }
 
     @action toggleLabels = () => {
