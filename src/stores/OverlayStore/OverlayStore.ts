@@ -1039,13 +1039,6 @@ export class OverlayStore {
                 }
             });
         });
-
-        autorun(() => {
-            const formatStringX = this.numbers.formatStringX;
-            const formatStyingY = this.numbers.formatStringY;
-            const explicitSystem = this.global.explicitSystem;
-            this.updateFrames(formatStringX, formatStyingY, explicitSystem);
-        });
     }
 
     @action setViewDimension = (width: number, height: number) => {
@@ -1099,20 +1092,12 @@ export class OverlayStore {
         const formatStringX = this.numbers.formatStringX;
         const formatStyingY = this.numbers.formatStringY;
         const explicitSystem = this.global.explicitSystem;
-        this.updateFrames(formatStringX, formatStyingY, explicitSystem);
+        AppStore.Instance.frames.forEach(frame => {
+            if (frame) {
+                frame.updateWcsSystem(formatStringX, formatStyingY, explicitSystem);
+            }
+        });
     }
-
-    private updateFrames = (formatStringX: string, formatStyingY: string, explicitSystem: SystemType) => {
-        if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined) {
-            AppStore.Instance.frames.forEach(frame => {
-                if (!(frame.isPVImage && frame.spectralAxis?.valid) && !(frame.isSwappedZ && frame.spectralAxis?.valid)) {
-                    if (frame?.validWcs && frame?.wcsInfo) {
-                        AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY}, System=${explicitSystem}`);
-                    }
-                }
-            });
-        }
-    };
 
     @action toggleLabels = () => {
         const newState = !this.labelsHidden;

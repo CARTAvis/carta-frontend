@@ -35,7 +35,7 @@ import {
     ZoomPoint
 } from "models";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE, TileService} from "services";
-import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore} from "stores";
+import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore, SystemType} from "stores";
 import {
     CENTER_POINT_INDEX,
     ColorbarStore,
@@ -1424,6 +1424,13 @@ export class FrameStore {
             }
         );
 
+        autorun(() => {
+            const formatStringX = this.overlayStore?.numbers?.formatStringX;
+            const formatStyingY = this.overlayStore?.numbers?.formatStringY;
+            const explicitSystem = this.overlayStore?.global?.explicitSystem;
+            this.updateWcsSystem(formatStringX, formatStyingY, explicitSystem);
+        });
+
         // requiredFrameViewForRegionRender is a copy of requiredFrameView in non-observable version,
         // to avoid triggering wasted render() in PointRegionComponent/SimpleShapeRegionComponent/LineSegmentRegionComponent
         autorun(() => {
@@ -1481,6 +1488,16 @@ export class FrameStore {
             }
         });
     }
+
+    updateWcsSystem = (formatStringX: string, formatStyingY: string, explicitSystem: SystemType) => {
+        if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined) {
+            if (!(this.isPVImage && this.spectralAxis?.valid) && !(this.isSwappedZ && this.spectralAxis?.valid)) {
+                if (this.validWcs && this.wcsInfo) {
+                    AST.set(this.wcsInfo, `Format(${this.dirX})=${formatStringX}, Format(${this.dirY})=${formatStyingY}, System=${explicitSystem}`);
+                }
+            }
+        }
+    };
 
     // This function shifts the pixel axis by 1, so that it starts at 0, rather than 1
     // For entries that are not related to the reference pixel location, the current value is returned
