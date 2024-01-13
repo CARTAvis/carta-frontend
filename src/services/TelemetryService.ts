@@ -150,7 +150,7 @@ export class TelemetryService {
         this.axiosInstance.defaults.headers.common = {Authorization: `Bearer ${token}`};
 
         if (flush) {
-            yield this.flushTelemetry();
+            this.flushTelemetry();
         }
 
         return true;
