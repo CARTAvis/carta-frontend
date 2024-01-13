@@ -14,6 +14,8 @@ export class OverlayComponentProps {
     overlaySettings: OverlayStore;
     frame: FrameStore;
     docked: boolean;
+    top: number;
+    left: number;
     onClicked?: (cursorInfo: CursorInfo) => void;
     onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
 }
@@ -208,6 +210,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         }
 
         const className = classNames("overlay-canvas", {docked: this.props.docked});
-        return <canvas className={className} style={{width: w, height: h}} id="overlay-canvas" ref={this.getRef} />;
+        return <canvas className={className} style={{top: this.props.top, left: this.props.left, width: w, height: h}} id="overlay-canvas" ref={this.getRef} />;
     }
 }

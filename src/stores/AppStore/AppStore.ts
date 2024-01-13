@@ -43,10 +43,10 @@ import {
     FileBrowserStore,
     HelpStore,
     ImageFittingStore,
+    ImageViewerSettingStore,
     LayoutStore,
     LogEntry,
     LogStore,
-    OverlayStore,
     PreferenceKeys,
     PreferenceStore,
     RegionFileType,
@@ -108,7 +108,7 @@ export class AppStore {
     readonly layoutStore: LayoutStore;
     readonly snippetStore: SnippetStore;
     readonly logStore: LogStore;
-    readonly overlayStore: OverlayStore;
+    readonly overlayStore: ImageViewerSettingStore;
     readonly preferenceStore: PreferenceStore;
     readonly widgetsStore: WidgetsStore;
     readonly imageFittingStore: ImageFittingStore;
@@ -1474,8 +1474,8 @@ export class AppStore {
                 getColorForTheme(this.overlayStore.border.color),
                 getColorForTheme(this.overlayStore.ticks.color),
                 getColorForTheme(this.overlayStore.axes.color),
-                getColorForTheme(this.overlayStore.numbers.color),
-                getColorForTheme(this.overlayStore.labels.color),
+                getColorForTheme(this.activeFrame.overlayStore.numbers.color),
+                getColorForTheme(this.activeFrame.overlayStore.labels.color),
                 getColorForTheme(this.activeFrame ? this.activeFrame.distanceMeasuring?.color : DistanceMeasuringStore.DEFAULT_COLOR)
             ];
             AST.setColors(astColors);
@@ -1708,7 +1708,7 @@ export class AppStore {
         this.snippetStore = SnippetStore.Instance;
         this.logStore = LogStore.Instance;
         this.preferenceStore = PreferenceStore.Instance;
-        this.overlayStore = OverlayStore.Instance;
+        this.overlayStore = ImageViewerSettingStore.Instance;
         this.widgetsStore = WidgetsStore.Instance;
         this.imageFittingStore = ImageFittingStore.Instance;
 
@@ -1894,7 +1894,7 @@ export class AppStore {
         // Set overlay defaults from current frame
         autorun(() => {
             if (this.activeFrame) {
-                this.overlayStore.setDefaultsFromAST(this.activeFrame);
+                this.activeFrame.overlayStore.setDefaultsFromAST(this.activeFrame);
             }
         });
 
@@ -2641,7 +2641,7 @@ export class AppStore {
     private changeActiveFrame(frame: FrameStore) {
         if (frame !== this.activeFrame) {
             // Set overlay defaults from current frame
-            this.overlayStore.setDefaultsFromAST(frame);
+            frame.overlayStore.setDefaultsFromAST(frame);
         }
         this.activeFrame = frame;
         if (!frame.isPreview) {
@@ -2982,7 +2982,7 @@ export class AppStore {
             this.setImageRatio(imageRatio);
             this.waitForImageData().then(() => {
                 const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : this.darkTheme ? "rgba(0, 0, 0, 1)" : Colors.WHITE;
-                const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
+                const composedCanvas = getImageViewCanvas(this.activeFrame.overlayStore.padding, this.activeFrame.overlayStore.colorbar.position, backgroundColor);
                 if (composedCanvas) {
                     composedCanvas.toBlob(blob => {
                         const link = document.createElement("a") as HTMLAnchorElement;
@@ -3019,15 +3019,16 @@ export class AppStore {
         }
     };
 
-    getImageDataUrl = (backgroundColor: string) => {
-        if (this.activeFrame) {
-            const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
-            if (composedCanvas) {
-                return composedCanvas.toDataURL();
-            }
-        }
-        return null;
-    };
+    // Is this method still being used?
+    // getImageDataUrl = (backgroundColor: string) => {
+    //     if (this.activeFrame) {
+    //         const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
+    //         if (composedCanvas) {
+    //             return composedCanvas.toDataURL();
+    //         }
+    //     }
+    //     return null;
+    // };
 
     delay(time: number) {
         return new Promise(resolve => {

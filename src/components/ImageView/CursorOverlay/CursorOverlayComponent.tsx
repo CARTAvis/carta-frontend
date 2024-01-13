@@ -7,6 +7,7 @@ import {CursorInfo, SpectralInfo} from "models";
 import {formattedExponential, toFixed} from "utilities";
 
 import "./CursorOverlayComponent.scss";
+import { observable } from "mobx";
 
 class CursorOverlayProps {
     cursorInfo: CursorInfo;
@@ -28,6 +29,9 @@ class CursorOverlayProps {
 
 @observer
 export class CursorOverlayComponent extends React.Component<CursorOverlayProps> {
+
+    @observable divElement: HTMLDivElement;
+
     render() {
         const cursorInfo = this.props.cursorInfo;
         let infoStrings: string[] = [];
@@ -87,7 +91,7 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
         const className = classNames("cursor-overlay-div", {docked: this.props.docked});
 
         return (
-            <div className={className} style={styleProps}>
+            <div ref={ref => this.divElement = ref} className={className} style={styleProps}>
                 {infoStrings.length ? infoStrings.join("; ") : "\u00a0"}
             </div>
         );

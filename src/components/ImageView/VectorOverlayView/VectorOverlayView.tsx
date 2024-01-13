@@ -247,7 +247,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         }
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
-        const padding = appStore.overlayStore.padding;
+        const padding = baseFrame.overlayStore.padding;
         const className = classNames("vector-overlay-div", {docked: this.props.docked});
 
         return (

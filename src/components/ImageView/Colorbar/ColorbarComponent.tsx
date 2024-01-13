@@ -69,22 +69,23 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
     private handleMouseMove = event => {
         const appStore = AppStore.Instance;
-        const renderConfig = this.props.frame?.renderConfig;
-        const colorbarSettings = appStore?.overlayStore?.colorbar;
+        const frame = this.props.frame;
+        const renderConfig = frame?.renderConfig;
+        const colorbarSettings = appStore.overlayStore?.colorbar;
         if (!renderConfig || !colorbarSettings) {
             return;
         }
 
         const stage = event.target.getStage();
         let point = colorbarSettings.position === "right" ? stage.getPointerPosition().y : stage.getPointerPosition().x;
-        let scaledPos = point - colorbarSettings.yOffset;
+        let scaledPos = point - colorbarSettings.yOffset(frame);
         if (colorbarSettings.position === "right") {
             scaledPos = colorbarSettings.height(this.props.frame) - scaledPos;
         }
         scaledPos /= colorbarSettings.height(this.props.frame);
         scaledPos = clamp(scaledPos, 0.0, 1.0);
         // Recalculate clamped point position
-        point = clamp(point, colorbarSettings.yOffset, colorbarSettings.yOffset + colorbarSettings.height(this.props.frame));
+        point = clamp(point, colorbarSettings.yOffset(frame), colorbarSettings.yOffset(frame) + colorbarSettings.height(this.props.frame));
         // Lock to mid-pixel for sharp lines
         point = Math.floor(point) + 0.5;
 
@@ -102,8 +103,8 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const appStore = AppStore.Instance;
         const frame = this.props.frame;
         const colorbarSettings = appStore.overlayStore.colorbar;
-        const viewHeight = frame.previewViewHeight || appStore.overlayStore.viewHeight;
-        const viewWidth = frame.previewViewWidth || appStore.overlayStore.viewWidth;
+        const viewHeight = frame.previewViewHeight || frame.overlayStore.viewHeight;
+        const viewWidth = frame.previewViewWidth || frame.overlayStore.viewWidth;
         const colorbarSettingsHeight = colorbarSettings.height(frame);
 
         appStore.updateLayerPixelRatio(this.layerRef);
@@ -123,22 +124,22 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         let stageTop = 0;
         let stageLeft = 0;
         let rectX = colorbarSettings.offset + (isOnePixBorder ? 0.5 / devicePixelRatio : 0);
-        let rectY = colorbarSettings.yOffset - (isOnePixBorder && (isIntPosition(colorbarSettings.yOffset) ? 0.5 / devicePixelRatio : 0));
+        let rectY = colorbarSettings.yOffset(frame) - (isOnePixBorder && (isIntPosition(colorbarSettings.yOffset(frame)) ? 0.5 / devicePixelRatio : 0));
         let rectWidth = colorbarSettings.width;
-        let rectHeight = colorbarSettingsHeight + (isOnePixBorder && (!isIntPosition(colorbarSettingsHeight) ? (isIntPosition(colorbarSettings.yOffset) ? 0.5 : -0.5) / devicePixelRatio : 0));
+        let rectHeight = colorbarSettingsHeight + (isOnePixBorder && (!isIntPosition(colorbarSettingsHeight) ? (isIntPosition(colorbarSettings.yOffset(frame)) ? 0.5 : -0.5) / devicePixelRatio : 0));
         let rectGradientStart = {x: 0, y: 0};
         let rectGradientEnd = {x: 0, y: colorbarSettingsHeight};
         let labelXPos = colorbarSettings.rightBorderPos + colorbarSettings.numberWidth + colorbarSettings.textGap;
-        let labelYPos = colorbarSettings.yOffset;
+        let labelYPos = colorbarSettings.yOffset(frame);
         let hoverBarPosition = [colorbarSettings.offset, this.cursorY, colorbarSettings.rightBorderPos, this.cursorY];
 
         // adjust stage position
         if (colorbarSettings.position === "right") {
-            stageLeft = appStore.overlayStore.padding.left + frame.renderWidth;
+            stageLeft = frame.overlayStore.padding.left + frame.renderWidth;
         } else if (colorbarSettings.position === "bottom") {
-            stageTop = viewHeight - appStore.overlayStore.colorbarHoverInfoHeight - colorbarSettings.stageWidth;
-        } else if (colorbarSettings.position === "top" && appStore.overlayStore.title.show) {
-            stageTop = appStore.overlayStore.padding.top - colorbarSettings.stageWidth;
+            stageTop = viewHeight - frame.overlayStore.colorbarHoverInfoHeight - colorbarSettings.stageWidth;
+        } else if (colorbarSettings.position === "top" && frame.overlayStore.title.show) {
+            stageTop = frame.overlayStore.padding.top - colorbarSettings.stageWidth;
         }
 
         // rotate to horizontal by swapping
@@ -146,7 +147,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
             stageHeight = stageWidth;
             stageWidth = viewWidth;
             rectY = rectX;
-            rectX = colorbarSettings.yOffset + (isOnePixBorder && (isIntPosition(colorbarSettings.yOffset) ? 0.5 / devicePixelRatio : 0));
+            rectX = colorbarSettings.yOffset(frame) + (isOnePixBorder && (isIntPosition(colorbarSettings.yOffset(frame)) ? 0.5 / devicePixelRatio : 0));
             [rectWidth, rectHeight] = [rectHeight, rectWidth];
             [rectGradientStart.x, rectGradientStart.y, rectGradientEnd.x, rectGradientEnd.y] = [rectGradientEnd.y, rectGradientEnd.x, rectGradientStart.y, rectGradientStart.x];
             [labelXPos, labelYPos] = [labelYPos, labelXPos];

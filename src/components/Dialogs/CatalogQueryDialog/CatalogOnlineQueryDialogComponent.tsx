@@ -112,8 +112,8 @@ export class CatalogQueryDialogComponent extends React.Component {
         }
 
         const frame = appStore.activeFrame.spatialReference ?? appStore.activeFrame;
-        const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
-        const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
+        const formatX = frame.overlayStore.numbers.formatTypeX;
+        const formatY = frame.overlayStore.numbers.formatTypeY;
         const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
         const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
         const isVizier = configStore.catalogDB === CatalogDatabase.VIZIER;
@@ -420,7 +420,7 @@ export class CatalogQueryDialogComponent extends React.Component {
         if (wcsString === centerWcsPoint.x) {
             return;
         }
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
+        if (isWCSStringFormatValid(wcsString, frame.overlayStore.numbers.formatTypeX)) {
             const newPoint = getPixelValueFromWCS(wcsInfo, {x: wcsString, y: centerWcsPoint.y});
             if (newPoint && isFinite(newPoint.x)) {
                 configStore.updateCenterPixelCoord(newPoint);
@@ -446,7 +446,7 @@ export class CatalogQueryDialogComponent extends React.Component {
         if (wcsString === centerWcsPoint.y) {
             return;
         }
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
+        if (isWCSStringFormatValid(wcsString, frame.overlayStore.numbers.formatTypeY)) {
             const newPoint = getPixelValueFromWCS(wcsInfo, {x: centerWcsPoint.x, y: wcsString});
             if (newPoint && isFinite(newPoint.y)) {
                 configStore.updateCenterPixelCoord(newPoint);

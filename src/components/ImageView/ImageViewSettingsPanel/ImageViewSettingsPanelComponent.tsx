@@ -123,6 +123,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
 
     public render() {
         const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
         const overlayStore = appStore.overlayStore;
         const global = overlayStore.global;
         const title = overlayStore.title;
@@ -130,9 +131,9 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const border = overlayStore.border;
         const ticks = overlayStore.ticks;
         const axes = overlayStore.axes;
-        const numbers = overlayStore.numbers;
-        const labels = overlayStore.labels;
-        const colorbar = overlayStore.colorbar;
+        const numbers = frame.overlayStore.numbers;
+        const labels = frame.overlayStore.labels;
+        const colorbar = frame.overlayStore.colorbar;
         const beam = overlayStore.beam;
         const beamSettings = beam.settingsForDisplay;
         const preferences = appStore.preferenceStore;
@@ -143,7 +144,6 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const disabledIfExterior = !interior && "Does not apply to exterior labelling.";
         const disabledIfNoWcs = !global.validWcs && "This image has no valid WCS data.";
 
-        const frame = appStore.activeFrame;
         const isPVImage = frame?.isPVImage;
 
         const getFovInfoString = (value: number, valueWcs: string) => {
@@ -727,7 +727,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <SafeNumericInput
                         placeholder="Position (X)"
                         min={0}
-                        max={overlayStore.renderWidth}
+                        max={frame.overlayStore.renderWidth}
                         value={beamSettings.shiftX}
                         stepSize={5}
                         minorStepSize={1}
@@ -739,7 +739,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <SafeNumericInput
                         placeholder="Position (Y)"
                         min={0}
-                        max={overlayStore.renderHeight}
+                        max={frame.overlayStore.renderHeight}
                         value={beamSettings.shiftY}
                         stepSize={5}
                         minorStepSize={1}

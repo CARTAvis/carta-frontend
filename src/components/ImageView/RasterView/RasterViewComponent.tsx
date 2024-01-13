@@ -5,7 +5,7 @@ import tinycolor from "tinycolor2";
 
 import {FrameView, Point2D, TileCoordinate} from "models";
 import {PreviewWebGLService, RasterTile, ShaderUniforms, TEXTURE_SIZE, TILE_SIZE, TileService, TileWebGLService} from "services";
-import {AppStore} from "stores";
+import {AppStore, OverlayStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {add2D, copyToFP32Texture, createFP32Texture, getColorForTheme, GetRequiredTiles, GL2, LayerToMip, scale2D, smoothStep} from "utilities";
 
@@ -14,6 +14,7 @@ import "./RasterViewComponent.scss";
 export class RasterViewComponentProps {
     docked: boolean;
     frame: FrameStore;
+    overlayStore: OverlayStore;
     pixelHighlightValue: number;
     renderWidth: number;
     renderHeight: number;
@@ -35,11 +36,37 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
     React.useEffect(() => {
         if (props.tileBasedRender) {
             if (canvas) {
-                updateCanvas(props.frame, gl, canvas.current, props.renderWidth, props.renderHeight, props.column, props.row, props.numImageColumns, props.numImageRows, props.pixelHighlightValue, props.tileBasedRender, props.rasterData);
+                updateCanvas(
+                    props.frame,
+                    gl,
+                    canvas.current,
+                    props.renderWidth,
+                    props.renderHeight,
+                    props.column,
+                    props.row,
+                    props.numImageColumns,
+                    props.numImageRows,
+                    props.pixelHighlightValue,
+                    props.tileBasedRender,
+                    props.rasterData
+                );
             }
             TileService.Instance.tileStream.subscribe(() => {
                 requestAnimationFrame(() =>
-                    updateCanvas(props.frame, gl, canvas.current, props.renderWidth, props.renderHeight, props.column, props.row, props.numImageColumns, props.numImageRows, props.pixelHighlightValue, props.tileBasedRender, props.rasterData)
+                    updateCanvas(
+                        props.frame,
+                        gl,
+                        canvas.current,
+                        props.renderWidth,
+                        props.renderHeight,
+                        props.column,
+                        props.row,
+                        props.numImageColumns,
+                        props.numImageRows,
+                        props.pixelHighlightValue,
+                        props.tileBasedRender,
+                        props.rasterData
+                    )
                 );
             });
         }
@@ -47,7 +74,20 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
 
     React.useEffect(() => {
         requestAnimationFrame(() =>
-            updateCanvas(props.frame, gl, canvas.current, props.renderWidth, props.renderHeight, props.column, props.row, props.numImageColumns, props.numImageRows, props.pixelHighlightValue, props.tileBasedRender, props.rasterData)
+            updateCanvas(
+                props.frame,
+                gl,
+                canvas.current,
+                props.renderWidth,
+                props.renderHeight,
+                props.column,
+                props.row,
+                props.numImageColumns,
+                props.numImageRows,
+                props.pixelHighlightValue,
+                props.tileBasedRender,
+                props.rasterData
+            )
         );
     }, [props.frame.zoomLevel, props.frame.center]);
 
@@ -79,20 +119,30 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
     //     const ratio = appStore.imageRatio;
     // }
     /* eslint-enable @typescript-eslint/no-unused-vars */
-    const padding = appStore.overlayStore.padding;
-    const className = classNames("raster-div", {docked: props.docked});
+    const padding = props.frame.overlayStore.padding;
+    const className = classNames(`raster-div`, {docked: props.docked});
 
+    // console.log(props.overlayStore)
     return (
-        <div className={className}>
+        <div
+            className={className}
+            style={{
+                top: props.renderHeight * props.row + props.overlayStore.padding.top,
+                left: props.renderWidth * props.column + props.overlayStore.padding.left,
+                // marginTop: props.overlayStore.padding.top,
+                position: "absolute"
+            }}
+        >
             <canvas
                 className={`raster-canvas-${props.row}-${props.column}`}
                 id="raster-canvas"
                 ref={ref => (canvas.current = ref)}
                 style={{
-                    top: padding.top,
-                    left: padding.left,
-                    width: frame?.isRenderable ? props.renderWidth || 1 : 1,
-                    height: frame?.isRenderable ? props.renderHeight || 1 : 1
+                    border: "1px solid red",
+                    // top: props.paddingTop,
+                    // left: props.paddingLeft,
+                    width: frame?.isRenderable ? props.overlayStore.renderWidth || 1 : 1,
+                    height: frame?.isRenderable ? props.overlayStore.renderHeight || 1 : 1
                 }}
             />
         </div>
@@ -119,20 +169,21 @@ const updateCanvas = (
     if (frame && canvas && gl && tileRenderService.cmapTexture) {
         const histStokesIndex = frame.renderConfig.stokesIndex;
         const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histChannel : undefined;
-        if ((frame.renderConfig.useCubeHistogram || frame.channel === histChannel || frame.isPreview) && (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)) {
-            const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
+        // if ((frame.renderConfig.useCubeHistogram || frame.channel === histChannel || frame.isPreview) && (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)) {
+            console.log(frame.frameInfo.fileId, frame.channel)
+            frame.renderConfig.updateFrom(AppStore.Instance.activeFrame.renderConfig);
             const xOffset = 0;
             const yOffset = 0;
             updateCanvasSize(frame, gl, canvas, renderWidth, renderHeight, numImageColumns, numImageRows, tileBasedRender);
             updateUniforms(frame, gl, tileRenderService.shaderUniforms, renderWidth, renderHeight, pixelHighlightValue);
             renderCanvas(frame, gl, xOffset, yOffset, renderWidth, renderHeight, tileBasedRender, rasterData); // change column and row to x and y offset
-        }
+        // }
         // draw in 2d canvas
         const ctx = canvas.getContext("2d");
         const w = canvas.width;
         const h = canvas.height;
         ctx.clearRect(0, 0, w, h);
-        ctx.drawImage(gl.canvas, column * w, row * h, w, h, 0, 0, w, h);
+        ctx.drawImage(gl.canvas, 0, 0, w, h, 0, 0, w, h);
     }
 };
 
@@ -329,6 +380,8 @@ export function renderTile(frame: FrameStore, gl: WebGL2RenderingContext, tile: 
     if (!rasterTile) {
         return;
     }
+
+    console.log(frame.frameInfo.fileId, rasterTile.data)
 
     if (rasterTile.data && tileBasedRender) {
         tileService.uploadTileToGPU(rasterTile);

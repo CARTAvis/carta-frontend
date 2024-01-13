@@ -50,6 +50,7 @@ export class DistanceMeasuringDialog extends React.Component {
     private static readonly MinHeight = 300;
 
     private static HandleValueChange = (distanceMeasuringStore: DistanceMeasuringStore, wcsInfo: AST.FrameSet, WCSStart: WCSPoint2D, WCSFinish: WCSPoint2D, isX: boolean, finish?: boolean, pixel?: boolean) => {
+        const frame = AppStore.Instance.activeFrame;
         if (pixel) {
             return (value: number): boolean => {
                 if (!isFinite(value)) {
@@ -64,7 +65,7 @@ export class DistanceMeasuringDialog extends React.Component {
                 } else {
                     distanceMeasuringStore?.setStart(distanceMeasuringStore?.start.x, value);
                 }
-                distanceMeasuringStore?.updateTransformedPos(AppStore.Instance.activeFrame.spatialTransform);
+                distanceMeasuringStore?.updateTransformedPos(frame.spatialTransform);
                 return true;
             };
         } else {
@@ -72,7 +73,7 @@ export class DistanceMeasuringDialog extends React.Component {
                 if (!wcsInfo) {
                     return false;
                 }
-                if (isX && isWCSStringFormatValid(value, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
+                if (isX && isWCSStringFormatValid(value, frame.overlayStore.numbers.formatTypeX)) {
                     if (finish) {
                         const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, x: value});
                         distanceMeasuringStore?.setFinish(finishPixelFromWCS.x, finishPixelFromWCS.y);
@@ -80,9 +81,9 @@ export class DistanceMeasuringDialog extends React.Component {
                         const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, x: value});
                         distanceMeasuringStore?.setStart(startPixelFromWCS.x, startPixelFromWCS.y);
                     }
-                    distanceMeasuringStore?.updateTransformedPos(AppStore.Instance.activeFrame.spatialTransform);
+                    distanceMeasuringStore?.updateTransformedPos(frame.spatialTransform);
                     return true;
-                } else if (!isX && isWCSStringFormatValid(value, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
+                } else if (!isX && isWCSStringFormatValid(value, frame.overlayStore.numbers.formatTypeY)) {
                     if (finish) {
                         const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, y: value});
                         distanceMeasuringStore?.setFinish(finishPixelFromWCS.x, finishPixelFromWCS.y);
@@ -90,7 +91,7 @@ export class DistanceMeasuringDialog extends React.Component {
                         const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, y: value});
                         distanceMeasuringStore?.setStart(startPixelFromWCS.x, startPixelFromWCS.y);
                     }
-                    distanceMeasuringStore?.updateTransformedPos(AppStore.Instance.activeFrame.spatialTransform);
+                    distanceMeasuringStore?.updateTransformedPos(frame.spatialTransform);
                     return true;
                 } else {
                     return false;

@@ -34,7 +34,7 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
         const row = Math.floor(index / appStore.numImageColumns);
         const panelCanvas = getPanelCanvas(column, row, padding, colorbarPosition, backgroundColor);
         if (panelCanvas) {
-            ctx.drawImage(panelCanvas, appStore.overlayStore.viewWidth * column * pixelRatio, appStore.overlayStore.viewHeight * row * pixelRatio);
+            ctx.drawImage(panelCanvas, frame.overlayStore.viewWidth * column * pixelRatio, frame.overlayStore.viewHeight * row * pixelRatio);
         }
     });
 
@@ -80,7 +80,7 @@ export function getPanelCanvas(column: number, row: number, padding: Padding, co
                 break;
             case "bottom":
                 xPos = 0;
-                yPos = overlayCanvas.height - colorbarCanvas.height - AppStore.Instance.overlayStore.colorbarHoverInfoHeight * pixelRatio;
+                yPos = overlayCanvas.height - colorbarCanvas.height - AppStore.Instance.visibleFrames[0].overlayStore.colorbarHoverInfoHeight * pixelRatio;
                 break;
             case "right":
             default:
@@ -155,7 +155,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         const appStore = AppStore.Instance;
 
         autorun(() => {
-            const imageSize = {x: appStore.overlayStore.renderWidth, y: appStore.overlayStore.renderHeight};
+            const imageSize = {x: appStore.visibleFrames[0]?.overlayStore.renderWidth, y: appStore.visibleFrames[0]?.overlayStore.renderHeight};
             const imageGridSize = {x: appStore.numImageColumns, y: appStore.numImageRows};
             // Compare to cached image size to prevent duplicate events when changing frames
             const imageSizeChanged = !this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y;
@@ -198,7 +198,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         } else if (!appStore.astReady) {
             divContents = <NonIdealState icon={<Spinner className="astLoadingSpinner" />} title={"Loading AST Library"} />;
         } else {
-            const effectiveImageSize = {x: Math.floor(appStore.overlayStore.renderWidth), y: Math.floor(appStore.overlayStore.renderHeight)};
+            const effectiveImageSize = {x: Math.floor(appStore.visibleFrames[0].overlayStore.renderWidth), y: Math.floor(appStore.visibleFrames[0].overlayStore.renderHeight)};
             const ratio = effectiveImageSize.x / effectiveImageSize.y;
             const gridSize = {x: appStore.numImageColumns, y: appStore.numImageRows};
 

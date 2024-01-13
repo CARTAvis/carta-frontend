@@ -8,11 +8,11 @@ import {observer} from "mobx-react";
 import {CoordinateComponent, CoordNumericInput, InputType} from "components/Shared";
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
-import {CoordinateMode, PointAnnotationStore, RegionStore} from "stores/Frame";
+import {CoordinateMode, FrameStore, PointAnnotationStore, RegionStore} from "stores/Frame";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
 @observer
-export class PointRegionForm extends React.Component<{region: RegionStore; wcsInfo: AST.FrameSet}> {
+export class PointRegionForm extends React.Component<{region: RegionStore; frame: FrameStore; wcsInfo: AST.FrameSet}> {
     private static readonly REGION_PIXEL_EPS = 1.0e-3;
 
     @computed get centerWCS(): WCSPoint2D {
@@ -46,7 +46,7 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
     };
 
     private handleCenterWCSXChange = (wcsString: string): boolean => {
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
+        if (isWCSStringFormatValid(wcsString, this.props.frame.overlayStore.numbers.formatTypeX)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.centerWCS.y});
             const existingValue = this.props.region.center.x;
             if (isFinite(newPoint?.x) && !closeTo(newPoint.x, existingValue, PointRegionForm.REGION_PIXEL_EPS)) {
@@ -58,7 +58,7 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
     };
 
     private handleCenterWCSYChange = (wcsString: string): boolean => {
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
+        if (isWCSStringFormatValid(wcsString, this.props.frame.overlayStore.numbers.formatTypeY)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.centerWCS.x, y: wcsString});
             const existingValue = this.props.region.center.y;
             if (isFinite(newPoint?.y) && !closeTo(newPoint.y, existingValue, PointRegionForm.REGION_PIXEL_EPS)) {
@@ -72,9 +72,9 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
     public render() {
         // dummy variables related to wcs to trigger re-render
         /* eslint-disable @typescript-eslint/no-unused-vars */
-        const system = AppStore.Instance.overlayStore.global.explicitSystem;
-        const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
-        const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
+        const system = this.props.frame.overlayStore.global.explicitSystem;
+        const formatX = this.props.frame.overlayStore.numbers.formatTypeX;
+        const formatY = this.props.frame.overlayStore.numbers.formatTypeY;
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
         const region = this.props.region as PointAnnotationStore;

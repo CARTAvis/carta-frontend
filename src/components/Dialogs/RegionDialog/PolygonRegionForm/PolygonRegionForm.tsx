@@ -7,11 +7,11 @@ import {observer} from "mobx-react";
 import {CoordinateComponent, CoordNumericInput, InputType} from "components/Shared";
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
-import {CoordinateMode, RegionStore} from "stores/Frame";
+import {CoordinateMode, FrameStore, RegionStore} from "stores/Frame";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
 @observer
-export class PolygonRegionForm extends React.Component<{region: RegionStore; wcsInfo: AST.FrameSet}> {
+export class PolygonRegionForm extends React.Component<{region: RegionStore; frame: FrameStore; wcsInfo: AST.FrameSet}> {
     private static readonly REGION_PIXEL_EPS = 1.0e-3;
 
     private handleNameChange = ev => {
@@ -38,7 +38,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
         return (wcsString: string): boolean => {
             const region = this.props.region;
             const pointWCS = getFormattedWCSPoint(this.props.wcsInfo, region.controlPoints[index]);
-            if (isWCSStringFormatValid(wcsString, isXCoordinate ? AppStore.Instance.overlayStore.numbers.formatTypeX : AppStore.Instance.overlayStore.numbers.formatTypeY)) {
+            if (isWCSStringFormatValid(wcsString, isXCoordinate ? this.props.frame.overlayStore.numbers.formatTypeX : this.props.frame.overlayStore.numbers.formatTypeY)) {
                 const newPoint = getPixelValueFromWCS(this.props.wcsInfo, isXCoordinate ? {x: wcsString, y: pointWCS.y} : {x: pointWCS.x, y: wcsString});
                 if (!newPoint) {
                     return false;
@@ -58,9 +58,9 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
     public render() {
         // dummy variables related to wcs to trigger re-render
         /* eslint-disable @typescript-eslint/no-unused-vars */
-        const system = AppStore.Instance.overlayStore.global.explicitSystem;
-        const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
-        const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
+        const system = this.props.frame.overlayStore.global.explicitSystem;
+        const formatX = this.props.frame.overlayStore.numbers.formatTypeX;
+        const formatY = this.props.frame.overlayStore.numbers.formatTypeY;
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
         const region = this.props.region;

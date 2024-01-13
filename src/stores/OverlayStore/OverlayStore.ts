@@ -449,7 +449,8 @@ export class OverlayAxisSettings {
 
 export class OverlayNumberSettings {
     @observable visible: boolean;
-    @observable hidden: boolean;
+    @observable bottomHidden: boolean;
+    @observable leftHidden: boolean;
     @observable font: number;
     @observable fontSize: number;
     @observable customColor: boolean;
@@ -470,7 +471,8 @@ export class OverlayNumberSettings {
     constructor() {
         makeObservable(this);
         this.visible = true;
-        this.hidden = false;
+        this.bottomHidden = false;
+        this.leftHidden = false;
         this.fontSize = 12;
         this.font = 0;
         this.customColor = false;
@@ -538,7 +540,8 @@ export class OverlayNumberSettings {
     @computed get styleString() {
         let astString = new ASTSettingsString();
 
-        astString.add("NumLab", this.show);
+        astString.add("NumLab(1)", this.bottomShow);
+        astString.add("NumLab(2)", this.leftShow);
         astString.add("Font(NumLab)", this.font);
         astString.add("Size(NumLab)", this.fontSize * AppStore.Instance.imageRatio);
         astString.add("Color(NumLab)", AstColorsIndex.NUMBER, this.customColor);
@@ -546,8 +549,12 @@ export class OverlayNumberSettings {
         return astString.toString();
     }
 
-    @computed get show() {
-        return this.visible && !this.hidden;
+    @computed get bottomShow() {
+        return this.visible && !this.bottomHidden;
+    }
+
+    @computed get leftShow() {
+        return this.visible && !this.leftHidden;
     }
 
     @action setVisible(visible: boolean = true) {
@@ -555,7 +562,16 @@ export class OverlayNumberSettings {
     }
 
     @action setHidden(hidden: boolean) {
-        this.hidden = hidden;
+        this.bottomHidden = hidden;
+        this.leftHidden = hidden;
+    }
+    
+    @action setBottomHidden(hidden: boolean) {
+        this.bottomHidden = hidden;
+    }
+
+    @action setLeftHidden(hidden: boolean) {
+        this.leftHidden = hidden;
     }
 
     @action setFont = (font: number) => {
@@ -610,7 +626,8 @@ export class OverlayNumberSettings {
 
 export class OverlayLabelSettings {
     @observable visible: boolean;
-    @observable hidden: boolean;
+    @observable bottomHidden: boolean;
+    @observable leftHidden: boolean;
     @observable customColor: boolean;
     @observable color: string;
     @observable font: number;
@@ -622,7 +639,8 @@ export class OverlayLabelSettings {
     constructor() {
         makeObservable(this);
         this.visible = PreferenceStore.Instance.astLabelsVisible;
-        this.hidden = false;
+        this.bottomHidden = false;
+        this.leftHidden = false;
         this.fontSize = 15;
         this.font = 0;
         this.customColor = false;
@@ -635,7 +653,8 @@ export class OverlayLabelSettings {
     @computed get styleString() {
         let astString = new ASTSettingsString();
 
-        astString.add("TextLab", this.show);
+        astString.add("TextLab(1)", this.bottomShow);
+        astString.add("TextLab(2)", this.leftShow);
         astString.add("Font(TextLab)", this.font);
         astString.add("Size(TextLab)", this.fontSize * AppStore.Instance.imageRatio);
         astString.add("Color(TextLab)", AstColorsIndex.LABEL, this.customColor);
@@ -645,8 +664,12 @@ export class OverlayLabelSettings {
         return astString.toString();
     }
 
-    @computed get show() {
-        return this.visible && !this.hidden;
+    @computed get bottomShow() {
+        return this.visible && !this.bottomHidden;
+    }
+
+    @computed get leftShow() {
+        return this.visible && !this.leftHidden;
     }
 
     @action setVisible(visible: boolean = true) {
@@ -654,7 +677,16 @@ export class OverlayLabelSettings {
     }
 
     @action setHidden(hidden: boolean) {
-        this.hidden = hidden;
+        this.bottomHidden = hidden;
+        this.leftHidden = hidden;
+    }
+
+    @action setBottomHidden(hidden: boolean) {
+        this.bottomHidden = hidden;
+    }
+
+    @action setLeftHidden(hidden: boolean) {
+        this.leftHidden = hidden;
     }
 
     @action setCustomColor(customColor: boolean) {
@@ -893,14 +925,16 @@ export class OverlayColorbarSettings {
         this.gradientVisible = visible;
     };
 
-    @computed get yOffset(): number {
-        const padding = AppStore.Instance?.overlayStore?.padding;
-        return this.position === "right" ? padding?.top : padding?.left;
+    @computed get yOffset() {
+        return (frame?: FrameStore) => {
+            const padding = frame?.overlayStore?.padding;
+            return this.position === "right" ? padding?.top : padding?.left;
+        }
     }
 
     @computed get height() {
-        const overlayStore = AppStore.Instance?.overlayStore;
         return (frame?: FrameStore) => {
+            const overlayStore = frame?.overlayStore;
             return this.position === "right" ? frame?.renderHeight || overlayStore?.renderHeight : frame?.renderWidth || overlayStore?.renderWidth;
         };
     }
@@ -980,34 +1014,24 @@ export class OverlayBeamSettings {
 }
 
 export class OverlayStore {
-    private static staticInstance: OverlayStore;
+    // private static staticInstance: OverlayStore;
 
-    static get Instance() {
-        if (!OverlayStore.staticInstance) {
-            OverlayStore.staticInstance = new OverlayStore();
-        }
-        return OverlayStore.staticInstance;
-    }
+    // static get Instance() {
+    //     if (!OverlayStore.staticInstance) {
+    //         OverlayStore.staticInstance = new OverlayStore();
+    //     }
+    //     return OverlayStore.staticInstance;
+    // }
 
     // View size options
-    @observable
-    private _fullViewWidth: number;
-    public get fullViewWidth(): number {
-        return this._fullViewWidth;
-    }
-    public set fullViewWidth(value: number) {
-        this._fullViewWidth = value;
-    }
-    @observable
-    private _fullViewHeight: number;
-    public get fullViewHeight(): number {
-        return this._fullViewHeight;
-    }
-    public set fullViewHeight(value: number) {
-        this._fullViewHeight = value;
-    }
-
+    @observable fullViewWidth: number;
+    @observable fullViewHeight: number;
+    @observable base: number;
+    @observable defaultGap: number;
+    @observable isChannelMap: boolean;
+    
     // Individual settings
+    @observable imageViewerSettingStore: ImageViewerSettingStore;
     @observable global: OverlayGlobalSettings;
     @observable title: OverlayTitleSettings;
     @observable grid: OverlayGridSettings;
@@ -1019,29 +1043,32 @@ export class OverlayStore {
     @observable colorbar: OverlayColorbarSettings;
     @observable beam: OverlayBeamSettings;
 
-    public constructor() {
+    public constructor(fullViewWidth?: number, fullViewHeight?: number, base: number = 5, defaultGap: number = 5) {
         makeObservable(this);
-        this.global = new OverlayGlobalSettings();
-        this.title = new OverlayTitleSettings();
-        this.grid = new OverlayGridSettings();
-        this.border = new OverlayBorderSettings();
-        this.axes = new OverlayAxisSettings();
+        this.imageViewerSettingStore = ImageViewerSettingStore.Instance;
+        this.global = this.imageViewerSettingStore.global;
+        this.title = this.imageViewerSettingStore.title;
+        this.grid = this.imageViewerSettingStore.grid;
+        this.border = this.imageViewerSettingStore.border;
+        this.axes = this.imageViewerSettingStore.axes;
         this.numbers = new OverlayNumberSettings();
         this.labels = new OverlayLabelSettings();
-        this.ticks = new OverlayTickSettings();
-        this.colorbar = new OverlayColorbarSettings();
-        this.beam = new OverlayBeamSettings();
-        this.fullViewWidth = 1;
-        this.fullViewHeight = 1;
+        this.ticks = this.imageViewerSettingStore.ticks;
+        this.colorbar = this.imageViewerSettingStore.colorbar;
+        this.beam = this.imageViewerSettingStore.beam;
+        this.fullViewWidth = fullViewWidth;
+        this.fullViewHeight = fullViewHeight;
+        this.base = base;
+        this.defaultGap = defaultGap;
 
         // if the system is manually selected, set new default formats & update active frame's wcs settings
         autorun(() => {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const _ = this.global.system;
+            const _ = this.imageViewerSettingStore.global.system;
             this.setFormatsFromSystem();
             AppStore.Instance.frames.forEach(frame => {
-                if (frame?.validWcs && frame?.wcsInfoForTransformation && this.global.explicitSystem) {
-                    AST.set(frame.wcsInfoForTransformation, `System=${this.global.explicitSystem}`);
+                if (frame?.validWcs && frame?.wcsInfoForTransformation && this.imageViewerSettingStore.global.explicitSystem) {
+                    AST.set(frame.wcsInfoForTransformation, `System=${this.imageViewerSettingStore.global.explicitSystem}`);
                 }
             });
         });
@@ -1072,8 +1099,20 @@ export class OverlayStore {
         this.fullViewHeight = height;
     };
 
+    @action setBase = (base: number) => {
+        this.base = base;
+    };
+
+    @action setDefaultGap = (defaultGap: number) => {
+        this.defaultGap = defaultGap;
+    };
+
+    @action setIsChannelMap = (isChannelMap: boolean) => {
+        this.isChannelMap = isChannelMap
+    };
+
     @action setFormatsFromSystem() {
-        if (!this.global.validWcs) {
+        if (!this.imageViewerSettingStore.global.validWcs) {
             // TODO: check if degrees would work
             this.numbers.setDefaultFormatX(undefined);
             this.numbers.setDefaultFormatY(undefined);
@@ -1089,7 +1128,7 @@ export class OverlayStore {
                     break;
                 case WCSType.AUTOMATIC:
                 default:
-                    if ([SystemType.FK4, SystemType.FK5, SystemType.ICRS].indexOf(this.global.explicitSystem) > -1) {
+                    if ([SystemType.FK4, SystemType.FK5, SystemType.ICRS].indexOf(this.imageViewerSettingStore.global.explicitSystem) > -1) {
                         this.numbers.setDefaultFormatX(NumberFormatType.HMS);
                         this.numbers.setDefaultFormatY(NumberFormatType.DMS);
                     } else {
@@ -1109,10 +1148,10 @@ export class OverlayStore {
     }
 
     @action setDefaultsFromAST(frame: FrameStore) {
-        this.global.setValidWcs(frame.validWcs);
+        this.imageViewerSettingStore.global.setValidWcs(frame.validWcs);
         this.numbers.setValidWcs(frame.validWcs);
 
-        this.global.setDefaultSystem(AST.getString(frame.wcsInfo, "System") as SystemType);
+        this.imageViewerSettingStore.global.setDefaultSystem(AST.getString(frame.wcsInfo, "System") as SystemType);
         this.setFormatsFromSystem();
     }
 
@@ -1121,21 +1160,21 @@ export class OverlayStore {
 
         this.labels.setHidden(newState);
         this.numbers.setHidden(newState);
-        this.title.setHidden(newState);
+        this.imageViewerSettingStore.title.setHidden(newState);
     };
 
     @computed get labelsHidden() {
-        return this.labels.hidden && this.numbers.hidden && this.title.hidden;
+        return (this.labels.bottomHidden || this.labels.leftHidden) && (this.numbers.bottomHidden || this.numbers.leftHidden) && this.imageViewerSettingStore.title.hidden && this.isChannelMap;
     }
 
     public styleString(frame?: FrameStore) {
         let astString = new ASTSettingsString();
-        astString.addSection(this.global.styleString(frame));
-        astString.addSection(this.title.styleString);
-        astString.addSection(this.grid.styleString);
-        astString.addSection(this.border.styleString);
-        astString.addSection(this.ticks.styleString);
-        astString.addSection(this.axes.styleString);
+        astString.addSection(this.imageViewerSettingStore.global.styleString(frame));
+        astString.addSection(this.imageViewerSettingStore.title.styleString);
+        astString.addSection(this.imageViewerSettingStore.grid.styleString);
+        astString.addSection(this.imageViewerSettingStore.border.styleString);
+        astString.addSection(this.imageViewerSettingStore.ticks.styleString);
+        astString.addSection(this.imageViewerSettingStore.axes.styleString);
         astString.addSection(this.numbers.styleString);
         astString.addSection(this.labels.styleString);
 
@@ -1154,11 +1193,7 @@ export class OverlayStore {
     }
 
     @computed get showNumbers() {
-        return this.numbers.show && this.global.labelType === LabelType.Exterior;
-    }
-
-    @computed get defaultGap() {
-        return 5;
+        return this.isChannelMap || ((this.numbers.leftShow || this.numbers.bottomShow) && this.imageViewerSettingStore.global.labelType === LabelType.Exterior);
     }
 
     @computed get titleGap() {
@@ -1171,20 +1206,16 @@ export class OverlayStore {
         return numGap + numHeight + this.defaultGap;
     }
 
-    @computed get base() {
-        return 5;
-    }
-
     @computed get numberWidth(): number {
-        return this.showNumbers ? this.defaultGap + this.numbers.fontSize : 0;
+        return this.isChannelMap || this.showNumbers ? this.defaultGap + this.numbers.fontSize : 0;
     }
 
     @computed get labelWidth(): number {
-        return this.labels.show ? this.defaultGap + this.labels.fontSize : 0;
+        return this.isChannelMap || (this.labels.leftShow || this.labels.bottomShow) ? this.defaultGap + this.labels.fontSize : 0;
     }
 
     @computed get colorbarHoverInfoHeight(): number {
-        return !this.colorbar.visible || (this.colorbar.visible && this.colorbar.position !== "bottom" && this.labels.show) || (this.colorbar.visible && this.colorbar.position === "bottom" && this.colorbar.labelVisible) ? 0 : 10;
+        return this.isChannelMap || this.colorbar.visible || (this.colorbar.visible && this.colorbar.position !== "bottom" && (this.labels.leftShow || this.labels.bottomShow)) || (this.colorbar.visible && this.colorbar.position === "bottom" && this.colorbar.labelVisible) ? 0 : 10;
     }
 
     @computed get paddingLeft(): number {
@@ -1192,11 +1223,11 @@ export class OverlayStore {
     }
 
     @computed get paddingRight(): number {
-        return this.base + (this.colorbar.visible && this.colorbar.position === "right" ? this.colorbar.totalWidth : 0);
+        return this.base + (!this.isChannelMap && this.colorbar.visible && this.colorbar.position === "right" ? this.colorbar.totalWidth : 0);
     }
 
     @computed get paddingTop(): number {
-        return this.base + (this.title.show ? this.titleGap + this.title.fontSize : this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0);
+        return this.base + (!this.isChannelMap || this.imageViewerSettingStore.title.show ? this.titleGap + this.imageViewerSettingStore.title.fontSize : this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0);
     }
 
     @computed get paddingBottom(): number {
@@ -1213,11 +1244,11 @@ export class OverlayStore {
     }
 
     @computed get viewWidth() {
-        return Math.floor(this.fullViewWidth / AppStore.Instance.numImageColumns);
+        return Math.floor(this.fullViewWidth || this.imageViewerSettingStore.fullViewWidth / AppStore.Instance.numImageColumns);
     }
 
     @computed get viewHeight() {
-        return Math.floor(this.fullViewHeight / AppStore.Instance.numImageRows);
+        return Math.floor(this.fullViewHeight || this.imageViewerSettingStore.fullViewHeight / AppStore.Instance.numImageRows);
     }
 
     @computed get renderWidth() {
@@ -1230,35 +1261,69 @@ export class OverlayStore {
         return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
     }
 
-    @computed get previewRenderWidth() {
-        return (viewWidth: number) => {
-            if (!viewWidth) {
-                return undefined;
-            }
-            const renderWidth = viewWidth - this.paddingLeft - this.paddingRight;
-            return renderWidth > 1 ? renderWidth : 1; // return value > 1 to prevent crashing
-        };
-    }
+    // @computed get previewRenderWidth() {
+    //     return (viewWidth: number) => {
+    //         if (!viewWidth) {
+    //             return undefined;
+    //         }
+    //         const renderWidth = viewWidth - this.paddingLeft - this.paddingRight;
+    //         return renderWidth > 1 ? renderWidth : 1; // return value > 1 to prevent crashing
+    //     };
+    // }
 
-    @computed get previewRenderHeight() {
-        return (viewHeight: number) => {
-            if (!viewHeight) {
-                return undefined;
-            }
-            const renderHeight = viewHeight - this.paddingTop - this.paddingBottom;
-            return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
-        };
-    }
+    // @computed get previewRenderHeight() {
+    //     return (viewHeight: number) => {
+    //         if (!viewHeight) {
+    //             return undefined;
+    //         }
+    //         const renderHeight = viewHeight - this.paddingTop - this.paddingBottom;
+    //         return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
+    //     };
+    // }
 }
 
-export class ChannelMapOverlayStore extends OverlayStore{
-    @computed get fullViewWidth() {
-        return OverlayStore.Instance.fullViewWidth;
-    }
-    @computed get fullViewHeight() {
-        return OverlayStore.Instance.fullViewHeight;
+export class ImageViewerSettingStore {
+
+    private static staticInstance: ImageViewerSettingStore;
+
+    static get Instance() {
+        if (!ImageViewerSettingStore.staticInstance) {
+            ImageViewerSettingStore.staticInstance = new ImageViewerSettingStore();
+        }
+        return ImageViewerSettingStore.staticInstance;
     }
 
-    // Overwrite padding, renderWidth, renderHeight,
-    // Make a single colorbar
+    @observable
+    public fullViewWidth: number;
+
+    @observable
+    public fullViewHeight: number;
+
+    @observable global: OverlayGlobalSettings;
+    @observable title: OverlayTitleSettings;
+    @observable grid: OverlayGridSettings;
+    @observable border: OverlayBorderSettings;
+    @observable axes: OverlayAxisSettings;
+    @observable ticks: OverlayTickSettings;
+    @observable colorbar: OverlayColorbarSettings;
+    @observable beam: OverlayBeamSettings;
+
+    public constructor(fullViewWidth: number = 1, fullViewHeight: number = 1) {
+        makeObservable(this);
+        this.global = new OverlayGlobalSettings();
+        this.title = new OverlayTitleSettings();
+        this.grid = new OverlayGridSettings();
+        this.border = new OverlayBorderSettings();
+        this.axes = new OverlayAxisSettings();
+        this.ticks = new OverlayTickSettings();
+        this.beam = new OverlayBeamSettings();
+        this.colorbar = new OverlayColorbarSettings();
+        this.fullViewWidth = fullViewWidth;
+        this.fullViewHeight = fullViewHeight;
+    }
+
+    @action setViewDimension = (width: number, height: number) => {
+        this.fullViewWidth = width;
+        this.fullViewHeight = height;
+    };
 }

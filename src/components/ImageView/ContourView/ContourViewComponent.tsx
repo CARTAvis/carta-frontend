@@ -243,7 +243,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         }
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
-        const padding = appStore.overlayStore.padding;
+        const padding = baseFrame.overlayStore.padding;
         const className = classNames("contour-div", {docked: this.props.docked});
 
         return (
