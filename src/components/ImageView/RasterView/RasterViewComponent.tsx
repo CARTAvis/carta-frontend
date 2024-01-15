@@ -44,40 +44,45 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     private updateCanvas = () => {
         AppStore.Instance.setCanvasUpdated();
-        if (this.canvas && this.gl) {
-            const baseFrame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image?.store?.baseFrame : this.props.image?.store;
-            if (baseFrame) {
-                this.updateCanvasSize(baseFrame);
-            }
 
-            const ctx = this.canvas.getContext("2d");
-            const w = this.canvas.width;
-            const h = this.canvas.height;
-            ctx.clearRect(0, 0, w, h);
+        if (!this.canvas || !this.gl) {
+            return;
+        }
 
-            if (this.props.image?.type === ImageType.COLOR_BLENDING) {
-                ctx.globalCompositeOperation = "lighter";
-            }
+        const baseFrame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image?.store?.baseFrame : this.props.image?.store;
+        if (baseFrame) {
+            this.updateCanvasSize(baseFrame);
+        }
 
-            const tileRenderService = this.props.image?.type === ImageType.PV_PREVIEW ? PreviewWebGLService.Instance : TileWebGLService.Instance;
-            if (tileRenderService.cmapTexture) {
-                const frames = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image?.store?.frames : [this.props.image?.store];
-                for (const frame of frames) {
-                    if (frame) {
-                        const histStokesIndex = frame.renderConfig.stokesIndex;
-                        const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histChannel : undefined;
-                        if ((frame.renderConfig.useCubeHistogram || frame.channel === histChannel || frame.isPreview) && (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)) {
-                            this.updateUniforms(frame);
-                            this.renderCanvas(frame);
-                        }
+        const ctx = this.canvas.getContext("2d");
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+        ctx.clearRect(0, 0, w, h);
 
-                        if (this.props.image?.type === ImageType.COLOR_BLENDING) {
-                            ctx.globalAlpha = 1.0 / frames.length;
-                        }
+        if (this.props.image?.type === ImageType.COLOR_BLENDING) {
+            ctx.globalCompositeOperation = "lighter";
+        }
 
-                        ctx.drawImage(this.gl.canvas, this.props.column * w, this.props.row * h, w, h, 0, 0, w, h);
-                    }
+        const tileRenderService = this.props.image?.type === ImageType.PV_PREVIEW ? PreviewWebGLService.Instance : TileWebGLService.Instance;
+        if (!tileRenderService.cmapTexture) {
+            return;
+        }
+
+        const frames = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image?.store?.frames : [this.props.image?.store];
+        for (const frame of frames) {
+            if (frame) {
+                const histStokesIndex = frame.renderConfig.stokesIndex;
+                const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histChannel : undefined;
+                if ((frame.renderConfig.useCubeHistogram || frame.channel === histChannel || frame.isPreview) && (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)) {
+                    this.updateUniforms(frame);
+                    this.renderCanvas(frame);
                 }
+
+                if (this.props.image?.type === ImageType.COLOR_BLENDING) {
+                    ctx.globalAlpha = 1.0 / frames.length;
+                }
+
+                ctx.drawImage(this.gl.canvas, this.props.column * w, this.props.row * h, w, h, 0, 0, w, h);
             }
         }
     };
