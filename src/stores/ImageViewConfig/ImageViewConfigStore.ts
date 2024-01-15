@@ -39,7 +39,11 @@ export class ImageViewConfigStore {
         if (this.frames.length > 0) {
             const id = this.colorBlendingImageMap.size ? Math.max(...this.colorBlendingImageMap.keys()) + 1 : 0;
             const newImage = new ColorBlendingStore(id);
-            this.imageList.push({type: ImageType.COLOR_BLENDING, store: newImage});
+
+            const imageItem: ImageViewItem = {type: ImageType.COLOR_BLENDING, store: newImage};
+            this.imageList.push(imageItem);
+            AppStore.Instance.updateActiveImage(imageItem);
+
             return newImage;
         }
         return null;
@@ -74,15 +78,15 @@ export class ImageViewConfigStore {
     };
 
     @computed get imageNum(): number {
-        return this.imageList.length;
+        return this.imageList?.length;
     }
 
     @computed get frames(): FrameStore[] {
-        return this.imageList.filter(imageItem => imageItem?.type === ImageType.FRAME && imageItem?.store instanceof FrameStore).map(imageItem => imageItem?.store as FrameStore);
+        return this.imageList?.filter(imageItem => imageItem?.type === ImageType.FRAME && imageItem?.store instanceof FrameStore).map(imageItem => imageItem?.store as FrameStore);
     }
 
     @computed private get colorBlendingImages(): ColorBlendingStore[] {
-        return this.imageList.filter(imageItem => imageItem?.type === ImageType.COLOR_BLENDING && imageItem?.store instanceof ColorBlendingStore).map(imageItem => imageItem?.store as ColorBlendingStore);
+        return this.imageList?.filter(imageItem => imageItem?.type === ImageType.COLOR_BLENDING && imageItem?.store instanceof ColorBlendingStore).map(imageItem => imageItem?.store as ColorBlendingStore);
     }
 
     @computed get colorBlendingImageMap(): Map<number, ColorBlendingStore> {
@@ -107,7 +111,7 @@ export class ImageViewConfigStore {
             return 0;
         }
 
-        const index = this.imageList.indexOf(activeImage);
+        const index = this.imageList?.findIndex(image => image?.type === activeImage.type && image?.store?.id === activeImage.store?.id);
         return Math.floor(index / this.imagesPerPage);
     }
 
@@ -153,7 +157,7 @@ export class ImageViewConfigStore {
     }
 
     @computed get imagesPerPage() {
-        return this.numImageColumns * this.numImageRows;
+        return this.numImageColumns * this.numImageRows || 1;
     }
 
     @computed get imagePanelMode() {
