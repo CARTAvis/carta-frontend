@@ -93,7 +93,7 @@ export class ImageViewConfigStore {
         return imageMap;
     }
 
-    @computed private get numImagePages() {
+    @computed get numImagePages() {
         if (this.numImageColumns <= 0 || this.numImageRows <= 0 || !this.imageList) {
             return 0;
         }

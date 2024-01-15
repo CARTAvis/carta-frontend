@@ -911,7 +911,7 @@ export class WidgetsStore {
         const appStore = AppStore.Instance;
         const config = appStore.imageViewConfigStore;
         const firstIndexInNextPage = (config.currentImagePage + 1) * config.imagesPerPage;
-        if (appStore.frames?.length > firstIndexInNextPage) {
+        if (config.imageNum > firstIndexInNextPage) {
             appStore.setActiveImageByIndex(firstIndexInNextPage);
         }
     };
@@ -930,8 +930,7 @@ export class WidgetsStore {
         const config = appStore.imageViewConfigStore;
         const nextPageButton = $(".lm_goldenlayout")?.find("li.lm-image-panel-next[style!='display:none;']");
         if (nextPageButton) {
-            const firstIndexInNextPage = (config.currentImagePage + 1) * config.imagesPerPage;
-            nextPageButton.attr("style", appStore.frames?.length > firstIndexInNextPage ? "" : "cursor: not-allowed; opacity: 0.2");
+            nextPageButton.attr("style", config.currentImagePage < config.numImagePages - 1 ? "" : "cursor: not-allowed; opacity: 0.2");
             nextPageButton.attr("title", config.imagePanelMode === ImagePanelMode.None ? "next image" : "next page");
         }
 
