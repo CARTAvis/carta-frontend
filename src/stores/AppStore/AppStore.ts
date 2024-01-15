@@ -2678,6 +2678,13 @@ export class AppStore {
         this.activeImage = activeImage;
     };
 
+    @computed get activeImageIndex(): number {
+        if (!this.activeImage || this.activeImage.type === ImageType.PV_PREVIEW) {
+            return -1;
+        }
+        return this.imageViewConfigStore.getImageListIndex(this.activeImage.type, this.activeImage.store?.id);
+    }
+
     @computed get activeFrame(): FrameStore {
         const type = this.activeImage?.type;
 

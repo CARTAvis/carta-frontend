@@ -8,8 +8,8 @@ import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
+import {ImageItem, ImageType} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
-import {FrameStore} from "stores/Frame";
 import {LayerListSettingsTabs} from "stores/Widgets";
 
 import "./LayerListComponent.scss";
@@ -60,28 +60,30 @@ export class LayerListComponent extends React.Component<WidgetProps> {
     };
 
     private rowHeaderCellRenderer = (rowIndex: number) => {
-        const className = classNames("row-cell", {active: rowIndex === AppStore.Instance.activeFrameIndex});
+        const className = classNames("row-cell", {active: rowIndex === AppStore.Instance.activeImageIndex});
         return <RowHeaderCell name={rowIndex.toString()} className={className} />;
     };
 
-    private onFileSelected = (frame: FrameStore) => {
-        AppStore.Instance.updateActiveImageByFrame(frame);
+    private onFileSelected = (image: ImageItem) => {
+        AppStore.Instance.updateActiveImage(image);
     };
 
     private fileNameRenderer = (rowIndex: number) => {
         const appStore = AppStore.Instance;
-        if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
+        const config = appStore.imageViewConfigStore;
+        if (rowIndex < 0 || rowIndex >= config?.imageNum) {
             return <Cell />;
         }
 
-        const frame = appStore.frames[rowIndex];
-        const className = classNames("row-cell", {active: rowIndex === appStore.activeFrameIndex});
+        const image = config?.getImage(rowIndex);
+        const filename = image?.store?.filename;
+        const className = classNames("row-cell", {active: rowIndex === appStore.activeImageIndex});
 
         return (
-            <Cell className={className} tooltip={frame.filename}>
+            <Cell className={className} tooltip={filename}>
                 <React.Fragment>
-                    <div className="name-cell" onClick={() => this.onFileSelected(frame)}>
-                        {frame.filename}
+                    <div className="name-cell" onClick={() => this.onFileSelected(image)}>
+                        {filename}
                     </div>
                 </React.Fragment>
             </Cell>
@@ -90,30 +92,38 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
     private channelRenderer = (rowIndex: number) => {
         const appStore = AppStore.Instance;
-        if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
+        const config = appStore.imageViewConfigStore;
+        const image = config?.getImage(rowIndex);
+        if (rowIndex < 0 || rowIndex >= config?.imageNum || image?.type === ImageType.COLOR_BLENDING) {
             return <Cell />;
         }
-        const className = classNames("row-cell", {active: rowIndex === appStore.activeFrameIndex});
-        return <Cell className={className}>{appStore.frames[rowIndex].requiredChannel}</Cell>;
+
+        const className = classNames("row-cell", {active: rowIndex === appStore.activeImageIndex});
+        return <Cell className={className}>{image?.store?.requiredChannel}</Cell>;
     };
 
     private stokesRenderer = (rowIndex: number) => {
         const appStore = AppStore.Instance;
-        if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
+        const config = appStore.imageViewConfigStore;
+        const image = config?.getImage(rowIndex);
+        if (rowIndex < 0 || rowIndex >= config?.imageNum || image?.type === ImageType.COLOR_BLENDING) {
             return <Cell />;
         }
-        const className = classNames("row-cell", {active: rowIndex === appStore.activeFrameIndex});
-        return <Cell className={className}>{appStore.frames[rowIndex].requiredPolarizationInfo}</Cell>;
+
+        const className = classNames("row-cell", {active: rowIndex === appStore.activeImageIndex});
+        return <Cell className={className}>{image?.store?.requiredPolarizationInfo}</Cell>;
     };
 
     private typeRenderer = (rowIndex: number) => {
         const appStore = AppStore.Instance;
-        if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
+        const config = appStore.imageViewConfigStore;
+        const image = config?.getImage(rowIndex);
+        if (rowIndex < 0 || rowIndex >= config?.imageNum || image?.type === ImageType.COLOR_BLENDING) {
             return <Cell />;
         }
 
-        const frame = appStore.frames[rowIndex];
-        const className = classNames("row-cell", {active: rowIndex === appStore.activeFrameIndex});
+        const frame = image?.store;
+        const className = classNames("row-cell", {active: rowIndex === appStore.activeImageIndex});
         return (
             <Cell className={className}>
                 <React.Fragment>
@@ -176,11 +186,13 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
     private matchingRenderer = (rowIndex: number) => {
         const appStore = AppStore.Instance;
-        if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
+        const config = appStore.imageViewConfigStore;
+        const image = config?.getImage(rowIndex);
+        if (rowIndex < 0 || rowIndex >= config?.imageNum || image?.type === ImageType.COLOR_BLENDING) {
             return <Cell />;
         }
 
-        const frame = appStore.frames[rowIndex];
+        const frame = image?.store;
 
         let spatialMatchingButton: React.ReactNode;
         if (appStore.spatialReference) {
@@ -287,7 +299,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             );
         }
 
-        const className = classNames("row-cell", {active: rowIndex === appStore.activeFrameIndex});
+        const className = classNames("row-cell", {active: rowIndex === appStore.activeImageIndex});
         return (
             <Cell className={className}>
                 <React.Fragment>
@@ -342,23 +354,28 @@ export class LayerListComponent extends React.Component<WidgetProps> {
     private contextMenuRenderer = (context: IMenuContext) => {
         const rows = context.getTarget().rows;
         const appStore = AppStore.Instance;
-        if (rows && rows.length && appStore.frames[rows[0]]) {
-            const frame = appStore.frames[rows[0]];
-            if (frame) {
-                return (
-                    <Menu>
-                        <MenuDivider title={frame.filename} />
-                        <MenuItem disabled={appStore.spatialReference === frame} text="Set as spatial reference" onClick={() => appStore.setSpatialReference(frame)} />
-                        <MenuItem disabled={appStore.spectralReference === frame || frame.frameInfo.fileInfoExtended.depth <= 1} text="Set as spectral reference" onClick={() => appStore.setSpectralReference(frame)} />
-                        <MenuItem disabled={appStore.rasterScalingReference === frame} text="Set as raster scaling reference" onClick={() => appStore.setRasterScalingReference(frame)} />
-                        <MenuDivider />
-                        <MenuItem disabled={!frame.isRestFreqEditable} text="Set rest frequency" onClick={() => this.restFreqShortCutOnClick(rows[0])} />
-                        <MenuDivider />
-                        <MenuItem text="Close image" onClick={() => appStore.closeFile(frame)} />
-                        <MenuItem text="Close other images" disabled={appStore.frames?.length <= 1} onClick={() => appStore.closeOtherFiles(frame)} />
-                        <MenuItem text="Close all images" disabled={appStore.frames?.length <= 1} onClick={() => appStore.closeOtherFiles(null, false)} />
-                    </Menu>
-                );
+        const image = appStore.imageViewConfigStore?.getImage(rows[0]);
+        if (rows && rows.length && image) {
+            if (image.type === ImageType.COLOR_BLENDING) {
+                return null;
+            } else {
+                const frame = image?.store;
+                if (frame) {
+                    return (
+                        <Menu>
+                            <MenuDivider title={frame.filename} />
+                            <MenuItem disabled={appStore.spatialReference === frame} text="Set as spatial reference" onClick={() => appStore.setSpatialReference(frame)} />
+                            <MenuItem disabled={appStore.spectralReference === frame || frame.frameInfo.fileInfoExtended.depth <= 1} text="Set as spectral reference" onClick={() => appStore.setSpectralReference(frame)} />
+                            <MenuItem disabled={appStore.rasterScalingReference === frame} text="Set as raster scaling reference" onClick={() => appStore.setRasterScalingReference(frame)} />
+                            <MenuDivider />
+                            <MenuItem disabled={!frame.isRestFreqEditable} text="Set rest frequency" onClick={() => this.restFreqShortCutOnClick(rows[0])} />
+                            <MenuDivider />
+                            <MenuItem text="Close image" onClick={() => appStore.closeFile(frame)} />
+                            <MenuItem text="Close other images" disabled={appStore.frames?.length <= 1} onClick={() => appStore.closeOtherFiles(frame)} />
+                            <MenuItem text="Close all images" disabled={appStore.frames?.length <= 1} onClick={() => appStore.closeOtherFiles(null, false)} />
+                        </Menu>
+                    );
+                }
             }
         }
         return null;
@@ -366,9 +383,9 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
     render() {
         const appStore = AppStore.Instance;
-        const frameNum = appStore.frameNum;
+        const imageNum = appStore.imageViewConfigStore?.imageNum;
 
-        if (frameNum <= 0) {
+        if (imageNum <= 0) {
             return (
                 <div className="layer-list-widget">
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;<ReactResizeDetector handleWidth handleHeight onResize={this.onResize}></ReactResizeDetector>
@@ -381,7 +398,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         /* eslint-disable @typescript-eslint/no-unused-vars */
         const frameChannels = appStore.frameChannels;
         const frameStokes = appStore.frameStokes;
-        const activeFrameIndex = appStore.activeFrameIndex;
+        const activeImageIndex = appStore.activeImageIndex;
         const visibilityRaster = appStore.frames.map(f => f.renderConfig.visible);
         const visibilityContour = appStore.frames.map(f => f.contourConfig.visible && f.contourConfig.enabled);
         const visibilityOverlay = appStore.frames.map(f => f.vectorOverlayConfig.visible && f.vectorOverlayConfig.enabled);
@@ -397,7 +414,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             <div className="layer-list-widget">
                 {this.width > 0 && (
                     <Table
-                        numRows={frameNum}
+                        numRows={imageNum}
                         rowHeaderCellRenderer={this.rowHeaderCellRenderer}
                         enableRowHeader={true}
                         enableRowReordering={true}
