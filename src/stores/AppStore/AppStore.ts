@@ -1894,13 +1894,19 @@ export class AppStore {
         });
 
         reaction(
-            () => this.activeFrame,
-            frame => {
-                if (frame && !frame.isPreview) {
-                    this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
-                    this.catalogStore.resetActiveCatalogFile(frame?.id);
-                    if (this.syncContourToFrame) {
-                        this.contourDataSource = frame;
+            () => this.activeImage,
+            image => {
+                if (image) {
+                    if (image.type !== ImageType.PV_PREVIEW) {
+                        this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
+                    }
+
+                    if (image.type === ImageType.FRAME) {
+                        const frame = image.store;
+                        this.catalogStore.resetActiveCatalogFile(frame?.id);
+                        if (this.syncContourToFrame) {
+                            this.contourDataSource = frame;
+                        }
                     }
                 }
             }

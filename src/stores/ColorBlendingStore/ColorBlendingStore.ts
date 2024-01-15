@@ -1,10 +1,16 @@
-import {computed, makeAutoObservable} from "mobx";
+import {action, computed, makeAutoObservable, observable} from "mobx";
 
 import {AppStore, type FrameStore} from "stores";
 
 export class ColorBlendingStore {
     readonly id: number;
     readonly filename: string;
+
+    @observable titleCustomText: string;
+
+    @action setTitleCustomText = (text: string) => {
+        this.titleCustomText = text;
+    };
 
     @computed get baseFrame(): FrameStore {
         return AppStore.Instance.spatialReference;
@@ -21,6 +27,7 @@ export class ColorBlendingStore {
     constructor(id: number) {
         this.id = id;
         this.filename = `Color Blending ${id + 1}`;
+        this.titleCustomText = this.filename;
         makeAutoObservable(this);
     }
 }

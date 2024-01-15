@@ -31,7 +31,7 @@ import {
     // setting Panel
     StokesAnalysisSettingsPanelComponent
 } from "components";
-import {ImagePanelMode} from "models";
+import {ImagePanelMode, ImageType} from "models";
 import {AppStore, CatalogStore, HelpStore, HelpType, LayoutStore, PreferenceKeys, PreferenceStore} from "stores";
 import {
     ACTIVE_FILE_ID,
@@ -1004,8 +1004,8 @@ export class WidgetsStore {
     @action updateImageWidgetTitle(layout: GoldenLayout) {
         const appStore = AppStore.Instance;
         let newTitle;
-        if (appStore.activeFrame) {
-            newTitle = appStore.activeFrame.filename;
+        if (appStore.activeImage?.type !== ImageType.PV_PREVIEW) {
+            newTitle = appStore.activeImage?.store?.filename;
         } else {
             newTitle = "No image loaded";
         }
