@@ -157,7 +157,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
 
             return (
                 <div id={`image-panel-${this.props.column}-${this.props.row}`} className={className} style={style} onWheel={this.onMouseWheel} onMouseDown={this.onMouseDown} onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-                    <RasterViewComponent frame={this.frame} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} row={this.props.row} column={this.props.column} />
+                    <RasterViewComponent image={this.props.image} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} row={this.props.row} column={this.props.column} />
                     <ContourViewComponent frame={this.frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />
                     <VectorOverlayViewComponent frame={this.frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />
                     <OverlayComponent frame={this.frame} overlaySettings={overlayStore} docked={this.props.docked} />

@@ -3,7 +3,7 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
-import {FrameView, Point2D, TileCoordinate} from "models";
+import {FrameView, ImageItem, ImageType, Point2D, TileCoordinate} from "models";
 import {PreviewWebGLService, RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService, TileWebGLService} from "services";
 import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
@@ -13,7 +13,7 @@ import "./RasterViewComponent.scss";
 
 export class RasterViewComponentProps {
     docked: boolean;
-    frame: FrameStore;
+    image: ImageItem;
     pixelHighlightValue: number;
     row: number;
     column: number;
@@ -26,8 +26,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private static readonly Float32Max = 3.402823466e38;
 
     componentDidMount() {
-        this.gl = this.props.frame.isPreview ? PreviewWebGLService.Instance.gl : TileWebGLService.Instance.gl;
-        if (!this.props.frame.isPreview) {
+        const isPreview = this.props.image?.type === ImageType.PV_PREVIEW;
+        this.gl = isPreview ? PreviewWebGLService.Instance.gl : TileWebGLService.Instance.gl;
+        if (!isPreview) {
             if (this.canvas) {
                 this.updateCanvas();
             }
@@ -43,28 +44,41 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     private updateCanvas = () => {
         AppStore.Instance.setCanvasUpdated();
-
-        const frame = this.props.frame;
-        if (frame && this.canvas && this.gl) {
-            this.updateCanvasSize(frame);
-        }
-
-        // draw in 2d canvas
-        const ctx = this.canvas.getContext("2d");
-        const w = this.canvas.width;
-        const h = this.canvas.height;
-        ctx.clearRect(0, 0, w, h);
-
-        const tileRenderService = frame.isPreview ? PreviewWebGLService.Instance : TileWebGLService.Instance;
-        if (frame && this.canvas && this.gl && tileRenderService.cmapTexture) {
-            const histStokesIndex = frame.renderConfig.stokesIndex;
-            const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histChannel : undefined;
-            if ((frame.renderConfig.useCubeHistogram || frame.channel === histChannel || frame.isPreview) && (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)) {
-                this.updateUniforms(frame);
-                this.renderCanvas(frame);
+        if (this.canvas && this.gl) {
+            const baseFrame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image?.store?.baseFrame : this.props.image?.store;
+            if (baseFrame) {
+                this.updateCanvasSize(baseFrame);
             }
 
-            ctx.drawImage(this.gl.canvas, this.props.column * w, this.props.row * h, w, h, 0, 0, w, h);
+            const ctx = this.canvas.getContext("2d");
+            const w = this.canvas.width;
+            const h = this.canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            if (this.props.image?.type === ImageType.COLOR_BLENDING) {
+                ctx.globalCompositeOperation = "lighter";
+            }
+
+            const tileRenderService = this.props.image?.type === ImageType.PV_PREVIEW ? PreviewWebGLService.Instance : TileWebGLService.Instance;
+            if (tileRenderService.cmapTexture) {
+                const frames = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image?.store?.frames : [this.props.image?.store];
+                for (const frame of frames) {
+                    if (frame) {
+                        const histStokesIndex = frame.renderConfig.stokesIndex;
+                        const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histChannel : undefined;
+                        if ((frame.renderConfig.useCubeHistogram || frame.channel === histChannel || frame.isPreview) && (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)) {
+                            this.updateUniforms(frame);
+                            this.renderCanvas(frame);
+                        }
+
+                        if (this.props.image?.type === ImageType.COLOR_BLENDING) {
+                            ctx.globalAlpha = 1.0 / frames.length;
+                        }
+
+                        ctx.drawImage(this.gl.canvas, this.props.column * w, this.props.row * h, w, h, 0, 0, w, h);
+                    }
+                }
+            }
         }
     };
 
@@ -367,31 +381,34 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         // dummy values to trigger React's componentDidUpdate()
         /* eslint-disable @typescript-eslint/no-unused-vars */
         const appStore = AppStore.Instance;
-        const frame = this.props.frame;
-        if (frame) {
-            const spatialReference = frame.spatialReference || frame;
-            const frameView = spatialReference.requiredFrameView;
-            const currentView = spatialReference.currentFrameView;
 
-            const colorMapping = {
-                min: frame.renderConfig.scaleMinVal,
-                max: frame.renderConfig.scaleMaxVal,
-                colorMap: frame.renderConfig.colorMapIndex,
-                contrast: frame.renderConfig.contrast,
-                bias: frame.renderConfig.bias,
-                useSmoothedBiasContrast: appStore.preferenceStore?.useSmoothedBiasContrast,
-                scaling: frame.renderConfig.scaling,
-                gamma: frame.renderConfig.gamma,
-                alpha: frame.renderConfig.alpha,
-                inverted: frame.renderConfig.inverted,
-                visibility: frame.renderConfig.visible,
-                nanColorHex: appStore.preferenceStore.nanColorHex,
-                nanAlpha: appStore.preferenceStore.nanAlpha,
-                pixelGridVisible: appStore.preferenceStore.pixelGridVisible,
-                pixelGridColor: getColorForTheme(appStore.preferenceStore.pixelGridColor)
-            };
+        const frames = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image?.store?.frames : [this.props.image?.store];
+        for (const frame of frames) {
+            if (frame) {
+                const spatialReference = frame.spatialReference || frame;
+                const frameView = spatialReference.requiredFrameView;
+                const currentView = spatialReference.currentFrameView;
 
-            const ratio = appStore.imageRatio;
+                const colorMapping = {
+                    min: frame.renderConfig.scaleMinVal,
+                    max: frame.renderConfig.scaleMaxVal,
+                    colorMap: frame.renderConfig.colorMapIndex,
+                    contrast: frame.renderConfig.contrast,
+                    bias: frame.renderConfig.bias,
+                    useSmoothedBiasContrast: appStore.preferenceStore?.useSmoothedBiasContrast,
+                    scaling: frame.renderConfig.scaling,
+                    gamma: frame.renderConfig.gamma,
+                    alpha: frame.renderConfig.alpha,
+                    inverted: frame.renderConfig.inverted,
+                    visibility: frame.renderConfig.visible,
+                    nanColorHex: appStore.preferenceStore.nanColorHex,
+                    nanAlpha: appStore.preferenceStore.nanAlpha,
+                    pixelGridVisible: appStore.preferenceStore.pixelGridVisible,
+                    pixelGridColor: getColorForTheme(appStore.preferenceStore.pixelGridColor)
+                };
+
+                const ratio = appStore.imageRatio;
+            }
         }
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
@@ -407,8 +424,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     style={{
                         top: padding.top,
                         left: padding.left,
-                        width: frame?.isRenderable ? frame.renderWidth || 1 : 1,
-                        height: frame?.isRenderable ? frame.renderHeight || 1 : 1
+                        width: frames?.[0]?.isRenderable ? frames?.[0]?.renderWidth || 1 : 1,
+                        height: frames?.[0]?.isRenderable ? frames?.[0]?.renderHeight || 1 : 1
                     }}
                 />
             </div>

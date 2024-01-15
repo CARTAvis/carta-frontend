@@ -14,6 +14,10 @@ export class ColorBlendingStore {
         return this.baseFrame ? this.baseFrame.secondarySpatialImages : [];
     }
 
+    @computed get frames(): FrameStore[] {
+        return [this.baseFrame, ...this.selectedFrames];
+    }
+
     constructor(id: number) {
         this.id = id;
         this.filename = `Color Blending ${id + 1}`;
