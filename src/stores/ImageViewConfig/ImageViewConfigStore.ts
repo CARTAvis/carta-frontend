@@ -111,7 +111,7 @@ export class ImageViewConfigStore {
             return 0;
         }
 
-        const index = this.imageList?.findIndex(image => image?.type === activeImage.type && image?.store?.id === activeImage.store?.id);
+        const index = this.getImageListIndex(activeImage.type, activeImage.store?.id);
         return Math.floor(index / this.imagesPerPage);
     }
 
@@ -170,7 +170,7 @@ export class ImageViewConfigStore {
     }
 
     getImageListIndex = (type: ImageType.FRAME | ImageType.COLOR_BLENDING, id: number): number => {
-        return this.imageList.findIndex(imageItem => imageItem?.type === type && imageItem?.store?.id === id);
+        return this.imageList?.findIndex(imageItem => imageItem?.type === type && imageItem?.store?.id === id);
     };
 
     getImage = (index: number): ImageViewItem => {
