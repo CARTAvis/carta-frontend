@@ -4,7 +4,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 
 import {Point2D, Transform2D} from "models";
 import {BackendService} from "services";
-import {PreferenceStore} from "stores";
+import {FileBrowserStore, PreferenceStore} from "stores";
 import {CompassAnnotationStore, CURSOR_REGION_ID, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore, VectorAnnotationStore} from "stores/Frame";
 import {isAstBadPoint, scale2D, transformPoint} from "utilities";
 
@@ -293,12 +293,17 @@ export class RegionSetStore {
     };
 
     @action deleteRegion = (region: RegionStore) => {
+        let exportRegionIndexes: number[] = [];
         // Cursor region cannot be deleted
         if (region && region.regionId !== CURSOR_REGION_ID && this.regions.length) {
             if (region === this.selectedRegion) {
                 this.selectedRegion = this.regions[0];
             }
             this.regions = this.regions.filter(r => r !== region);
+            this.regions.forEach((region, index) => {
+                if (region.regionId !== CURSOR_REGION_ID) exportRegionIndexes.push(index);
+            });
+            FileBrowserStore.Instance.updateExportRegionIndexes(exportRegionIndexes);
             if (!region.isTemporary) {
                 this.backendService.removeRegion(region.regionId);
             }
