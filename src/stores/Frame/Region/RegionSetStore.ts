@@ -300,7 +300,7 @@ export class RegionSetStore {
                 this.selectedRegion = this.regions[0];
             }
             this.regions = this.regions.filter(r => r !== region);
-            exportRegionIndexes = this.regions.map((r, idx) => r.regionId !== CURSOR_REGION_ID ? idx: '').filter(String);
+            exportRegionIndexes = this.regions.map((r, idx) => (r.regionId !== CURSOR_REGION_ID ? idx : "")).filter(String);
             FileBrowserStore.Instance.updateExportRegionIndexes(exportRegionIndexes);
             if (!region.isTemporary) {
                 this.backendService.removeRegion(region.regionId);
