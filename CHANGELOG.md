@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed distance measurement tool render from PV preview frames ([#2267](https://github.com/CARTAvis/carta-frontend/issues/2267)).
 * Fixed bug that the frontend crashes when deleting annotations if the export window is opened ([#2278](https://github.com/CARTAvis/carta-frontend/issues/2278)).
 * Fixed the performance issue when panning images ([#2291](https://github.com/CARTAvis/carta-frontend/issues/2291)).
+* Fixed the delayed start of the program due to telemetry server error. ([#2304](https://github.com/CARTAvis/carta-frontend/issues/2304)).
 * Improved the dragging performance of the Export Region widget when the list of region/annotation to be exported is large ([#1867](https://github.com/CARTAvis/carta-frontend/issues/1867)).
 * Fixed the flashing contour rendering during animation ([#579](https://github.com/CARTAvis/carta-frontend/issues/579)).
 * Fixed incorrect range values in the save image dialog with non-convertible spectral axis images by supporting native/channel options in the spectral coordinate selector for non-convertible spectral axis images.([#2225](https://github.com/CARTAvis/carta-frontend/issues/2225)).
