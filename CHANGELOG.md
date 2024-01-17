@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed the crash when plotting online Vizier catalog data ([#2321](https://github.com/CARTAvis/carta-frontend/pull/2321)).
 * Fixed missing vector overlays on matched images ([#2293](https://github.com/CARTAvis/carta-frontend/issues/2293)).
 * Avoided showing the telemetry dialog temporarily ([#2314](https://github.com/CARTAvis/carta-frontend/issues/2314)).
+* Fixed failing to match images spatially ([2252](https://github.com/CARTAvis/carta-frontend/issues/2252)).
 
 ## [4.0.0]
 
