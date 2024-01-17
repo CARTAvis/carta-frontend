@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed missing vector overlays on matched images ([#2293](https://github.com/CARTAvis/carta-frontend/issues/2293)).
 * Avoided showing the telemetry dialog temporarily ([#2314](https://github.com/CARTAvis/carta-frontend/issues/2314)).
 * Fixed failing to match images spatially ([2252](https://github.com/CARTAvis/carta-frontend/issues/2252)).
+* Fixed the delayed start of the program due to telemetry server error. ([#2304](https://github.com/CARTAvis/carta-frontend/issues/2304)).
 
 ## [4.0.0]
 
