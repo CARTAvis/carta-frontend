@@ -333,7 +333,7 @@ export class SpectralLineQueryWidgetStore {
             if (filterString !== "") {
                 const column = this.queryResult.get(controlHeader.columnIndex);
                 const dataType = column.dataType;
-                const data = column.data;
+                const data = controlHeader.columnIndex !== SHIFTIED_FREQUENCY_COLUMN_INDEX ? column.data : column.data.map(value => (isFinite(value) ? value * this.redshiftFactor : undefined));
                 if (dataType === CARTA.ColumnType.Double) {
                     filteredRowIndexes = numericFiltering(data as Array<number>, filteredRowIndexes, filterString);
                 } else if (dataType === CARTA.ColumnType.Bool) {

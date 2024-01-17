@@ -111,6 +111,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         if (isFinite(value) && value !== existingValue) {
             if ((this.widgetStore.redshiftType === RedshiftType.Z && value >= 0) || this.widgetStore.redshiftType === RedshiftType.V) {
                 this.widgetStore.setRedshiftInput(value);
+                this.widgetStore.filter();
                 return;
             }
         }
