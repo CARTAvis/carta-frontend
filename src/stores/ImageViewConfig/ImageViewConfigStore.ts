@@ -131,7 +131,23 @@ export class ImageViewConfigStore {
     }
 
     @computed get visibleFrames(): FrameStore[] {
-        return this.visibleImages.filter(imageItem => imageItem?.type === ImageType.FRAME && imageItem?.store instanceof FrameStore).map(imageItem => imageItem?.store as FrameStore);
+        let frames: Set<FrameStore> = new Set();
+        this.visibleImages.forEach(imageItem => {
+            if (imageItem?.type === ImageType.FRAME) {
+                const frame = imageItem?.store;
+                if (frame) {
+                    frames.add(imageItem.store);
+                }
+            } else if (imageItem?.type === ImageType.COLOR_BLENDING) {
+                const composedFrames = imageItem?.store?.frames;
+                for (const frame of composedFrames) {
+                    if (frame) {
+                        frames.add(frame);
+                    }
+                }
+            }
+        });
+        return [...frames];
     }
 
     @computed get numImageColumns() {

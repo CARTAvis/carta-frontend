@@ -32,7 +32,7 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
     const ctx = imageViewCanvas.getContext("2d");
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, imageViewCanvas.width, imageViewCanvas.height);
-    config.visibleFrames.forEach((frame, index) => {
+    config.visibleImages.forEach((frame, index) => {
         const column = index % config.numImageColumns;
         const row = Math.floor(index / config.numImageColumns);
         const panelCanvas = getPanelCanvas(column, row, padding, colorbarPosition, backgroundColor);
