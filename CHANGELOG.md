@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed missing vector overlays on matched images ([#2293](https://github.com/CARTAvis/carta-frontend/issues/2293)).
 * Fixed failing to match images spatially ([2252](https://github.com/CARTAvis/carta-frontend/issues/2252)).
 * Fixed a bug when applying a filter to the shifted frequency column in the spectral line query widget ([#2326](https://github.com/CARTAvis/carta-frontend/issues/2326)).
+* Fixed the inability to export regions and the wrong number of export regions after deleting region/annotation under the opened export dialog ([#2297](https://github.com/CARTAvis/carta-frontend/issues/2297)).
 
 ## [4.0.0]
 
