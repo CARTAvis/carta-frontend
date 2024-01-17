@@ -293,16 +293,14 @@ export class RegionSetStore {
     };
 
     @action deleteRegion = (region: RegionStore) => {
-        let exportRegionIndexes: number[] = [];
+        let exportRegionIndexes;
         // Cursor region cannot be deleted
         if (region && region.regionId !== CURSOR_REGION_ID && this.regions.length) {
             if (region === this.selectedRegion) {
                 this.selectedRegion = this.regions[0];
             }
             this.regions = this.regions.filter(r => r !== region);
-            this.regions.forEach((region, index) => {
-                if (region.regionId !== CURSOR_REGION_ID) exportRegionIndexes.push(index);
-            });
+            exportRegionIndexes = this.regions.map((r, idx) => r.regionId !== CURSOR_REGION_ID ? idx: '').filter(String);
             FileBrowserStore.Instance.updateExportRegionIndexes(exportRegionIndexes);
             if (!region.isTemporary) {
                 this.backendService.removeRegion(region.regionId);
