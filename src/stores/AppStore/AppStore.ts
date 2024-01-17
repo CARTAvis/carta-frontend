@@ -782,8 +782,15 @@ export class AppStore {
         }
     }
 
-    @flow.bound
-    *closeFile(frame: FrameStore, confirmClose: boolean = true) {
+    closeImage = (image: ImageItem, confirmClose: boolean = true) => {
+        if (image?.type === ImageType.COLOR_BLENDING) {
+            this.imageViewConfigStore.removeColorBlending(image.store);
+        } else {
+            this.closeFile(image.store, confirmClose);
+        }
+    };
+
+    @flow.bound *closeFile(frame: FrameStore, confirmClose: boolean = true) {
         if (!frame) {
             return;
         }
@@ -810,8 +817,16 @@ export class AppStore {
      */
     @action closeCurrentFile = (confirmClose: boolean = false) => {
         if (!this.appendFileDisabled) {
-            this.closeFile(this.activeFrame, confirmClose);
+            this.closeImage(this.activeImage, confirmClose);
         }
+    };
+
+    @action closeOtherImages = (frame: FrameStore) => {
+        const colorBlendingImages = this.imageViewConfigStore.colorBlendingImages.slice();
+        for (const colorBlendingImage of colorBlendingImages) {
+            this.imageViewConfigStore.removeColorBlending(colorBlendingImage);
+        }
+        this.closeOtherFiles(frame, false);
     };
 
     @action closeOtherFiles = (frame: FrameStore, confirmClose: boolean = true) => {

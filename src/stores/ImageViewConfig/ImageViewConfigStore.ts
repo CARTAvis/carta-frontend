@@ -85,7 +85,7 @@ export class ImageViewConfigStore {
         return this.imageList?.filter(imageItem => imageItem?.type === ImageType.FRAME && imageItem?.store instanceof FrameStore).map(imageItem => imageItem?.store as FrameStore);
     }
 
-    @computed private get colorBlendingImages(): ColorBlendingStore[] {
+    @computed get colorBlendingImages(): ColorBlendingStore[] {
         return this.imageList?.filter(imageItem => imageItem?.type === ImageType.COLOR_BLENDING && imageItem?.store instanceof ColorBlendingStore).map(imageItem => imageItem?.store as ColorBlendingStore);
     }
 

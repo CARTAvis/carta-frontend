@@ -357,7 +357,12 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const image = appStore.imageViewConfigStore?.getImage(rows[0]);
         if (rows && rows.length && image) {
             if (image.type === ImageType.COLOR_BLENDING) {
-                return null;
+                return (
+                    <Menu>
+                        <MenuItem text="Close image" onClick={() => appStore.closeImage(image)} />
+                        <MenuItem text="Close all images" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.closeOtherImages(null)} />
+                    </Menu>
+                );
             } else {
                 const frame = image?.store;
                 if (frame) {
@@ -370,9 +375,9 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                             <MenuDivider />
                             <MenuItem disabled={!frame.isRestFreqEditable} text="Set rest frequency" onClick={() => this.restFreqShortCutOnClick(rows[0])} />
                             <MenuDivider />
-                            <MenuItem text="Close image" onClick={() => appStore.closeFile(frame)} />
-                            <MenuItem text="Close other images" disabled={appStore.frames?.length <= 1} onClick={() => appStore.closeOtherFiles(frame)} />
-                            <MenuItem text="Close all images" disabled={appStore.frames?.length <= 1} onClick={() => appStore.closeOtherFiles(null, false)} />
+                            <MenuItem text="Close image" onClick={() => appStore.closeImage(image)} />
+                            <MenuItem text="Close other images" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.closeOtherImages(frame)} />
+                            <MenuItem text="Close all images" disabled={appStore.imageViewConfigStore?.imageNum <= 1} onClick={() => appStore.closeOtherImages(null)} />
                         </Menu>
                     );
                 }
