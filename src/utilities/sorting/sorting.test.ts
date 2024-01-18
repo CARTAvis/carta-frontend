@@ -1,12 +1,8 @@
-import {initSortedIndexMapFunc} from "./sorting";
+import {getInitIndexMap} from "./sorting";
 
 describe("table functions", () => {
     test("initialize sorted index map", () => {
         const rowNumber: number = 4;
-        const list: number[] = [];
-        for (let i = 0; i < rowNumber; i++) {
-            list.push(i);
-        }
-        expect(initSortedIndexMapFunc(rowNumber)).toEqual(list);
+        expect(getInitIndexMap(rowNumber)).toEqual([0, 1, 2, 3]);
     });
 });

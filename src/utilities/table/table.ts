@@ -161,25 +161,25 @@ export function stringFiltering(columnData: Array<string>, dataIndexes: number[]
     return filteredDataIndexes;
 }
 
-export function hasFilterFunc(controlHeader: Map<string, ControlHeader>, queryResult: Map<number, ProcessedColumnData>): boolean {
-    const TRUE_REGEX = /^[tTyY].*$/;
-    const FALSE_REGEX = /^[fFnN].*$/;
+export function getHasFilter(controlHeader: Map<string, ControlHeader>, queryResult: Map<number, ProcessedColumnData>): boolean {
+    const trueREGEX = /^[tTyY].*$/;
+    const falseREGEX = /^[fFnN].*$/;
 
-    let hasfilter = false;
+    let hasFilter = false;
     controlHeader.forEach((value, key) => {
         if (value.filter && value.display) {
             const column = queryResult.get(value.dataIndex);
             if (column?.dataType === CARTA.ColumnType.String) {
-                hasfilter = true;
+                hasFilter = true;
             } else if (column?.dataType === CARTA.ColumnType.Bool) {
-                hasfilter = value.filter.match(TRUE_REGEX)?.length > 0 || value.filter.match(FALSE_REGEX)?.length > 0;
+                hasFilter = value.filter.match(trueREGEX)?.length > 0 || value.filter.match(falseREGEX)?.length > 0;
             } else {
                 const {operator, values} = getComparisonOperatorAndValue(value.filter);
                 if (operator >= 0 && values.length) {
-                    hasfilter = true;
+                    hasFilter = true;
                 }
             }
         }
     });
-    return hasfilter;
+    return hasFilter;
 }

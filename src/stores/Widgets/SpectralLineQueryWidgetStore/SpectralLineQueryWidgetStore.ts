@@ -5,19 +5,7 @@ import {action, autorun, computed, flow, makeObservable, observable} from "mobx"
 
 import {SplatalogueService} from "services";
 import {AppStore, ControlHeader} from "stores";
-import {
-    booleanFiltering,
-    hasFilterFunc,
-    initSortedIndexMapFunc,
-    numericFiltering,
-    ProcessedColumnData,
-    ProtobufProcessing,
-    setSortingInfoFunc,
-    SPEED_OF_LIGHT,
-    stringFiltering,
-    updateSortedIndexMapFunc,
-    wavelengthToFrequency
-} from "utilities";
+import {booleanFiltering, getHasFilter, getInitIndexMap, getSortedIndexMap, numericFiltering, ProcessedColumnData, ProtobufProcessing, SPEED_OF_LIGHT, stringFiltering, wavelengthToFrequency} from "utilities";
 
 export enum SpectralLineQueryRangeType {
     Range = "Range",
@@ -367,20 +355,20 @@ export class SpectralLineQueryWidgetStore {
     }
 
     @action setSortingInfo(columnName: string, sortingType: CARTA.SortingType) {
-        this.sortingInfo = setSortingInfoFunc(columnName, sortingType);
+        this.sortingInfo = {columnName, sortingType};
         this.updateSortedIndexMap();
     }
 
     @action updateSortedIndexMap() {
-        this.sortedIndexMap = updateSortedIndexMapFunc(this.controlHeader, this.sortingInfo, this.sortedIndexMap, this.hasFilter, this.numVisibleRows, this.filterResult);
+        this.sortedIndexMap = getSortedIndexMap(this.controlHeader, this.sortingInfo, this.sortedIndexMap, this.hasFilter, this.numVisibleRows, this.filterResult);
     }
 
     @action initSortedIndexMap() {
-        this.sortedIndexMap = initSortedIndexMapFunc(this.numVisibleRows);
+        this.sortedIndexMap = getInitIndexMap(this.numVisibleRows);
     }
 
     @computed get hasFilter(): boolean {
-        return hasFilterFunc(this.controlHeader, this.queryResult);
+        return getHasFilter(this.controlHeader, this.queryResult);
     }
 
     @computed get fullRowIndexes(): Array<number> {

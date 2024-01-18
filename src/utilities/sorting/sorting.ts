@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {ControlHeader} from "stores";
 import {ProcessedColumnData} from "utilities";
 
-export function updateSortedIndexMapFunc(
+export function getSortedIndexMap(
     controlHeader: Map<string, ControlHeader>,
     sortingInfo: {columnName: string; sortingType: CARTA.SortingType},
     sortedIndexMap: Array<number>,
@@ -17,13 +17,13 @@ export function updateSortedIndexMapFunc(
         let direction = 0;
 
         if (sortingInfo.sortingType != null) {
-            direction = sortingInfo.sortingType ? -1 : 1;
+            direction = sortingInfo.sortingType === CARTA.SortingType.Descending ? -1 : 1;
         } else {
-            return initSortedIndexMapFunc(numVisibleRows);
+            return getInitIndexMap(numVisibleRows);
         }
 
         if (hasFilter) {
-            return initSortedIndexMapFunc(numVisibleRows);
+            sortedIndexMap = getInitIndexMap(numVisibleRows);
         }
         let queryColumn = sortData.get(dataIndex);
 
@@ -57,14 +57,10 @@ export function updateSortedIndexMapFunc(
     return sortedIndexMap;
 }
 
-export function initSortedIndexMapFunc(numVisibleRows: number) {
+export function getInitIndexMap(numVisibleRows: number) {
     let sortedIndexMap = [];
     for (let index = 0; index < numVisibleRows; index++) {
         sortedIndexMap.push(index);
     }
     return sortedIndexMap;
-}
-
-export function setSortingInfoFunc(columnName: string, sortingType: CARTA.SortingType) {
-    return {columnName, sortingType};
 }

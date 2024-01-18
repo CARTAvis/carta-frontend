@@ -3,7 +3,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 
 import {AbstractCatalogProfileStore, CatalogInfo, CatalogType} from "models";
 import {ControlHeader, PreferenceStore} from "stores";
-import {initSortedIndexMapFunc, ProcessedColumnData, setSortingInfoFunc, updateSortedIndexMapFunc} from "utilities";
+import {getInitIndexMap, getSortedIndexMap, ProcessedColumnData} from "utilities";
 
 export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore {
     private static readonly SimbadInitialedColumnsKeyWords = ["ra", "dec", "main_id", "coo_bibcode", "dist", "otype_txt"];
@@ -74,16 +74,16 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
     }
 
     @action setSortingInfo(columnName: string, sortingType: CARTA.SortingType) {
-        this.sortingInfo = setSortingInfoFunc(columnName, sortingType);
+        this.sortingInfo = {columnName, sortingType};
         this.updateSortedIndexMap();
     }
 
     @action updateSortedIndexMap() {
-        this.sortedIndexMap = updateSortedIndexMapFunc(this.catalogControlHeader, this.sortingInfo, this.sortedIndexMap, this.hasFilter, this.numVisibleRows, this.catalogData);
+        this.sortedIndexMap = getSortedIndexMap(this.catalogControlHeader, this.sortingInfo, this.sortedIndexMap, this.hasFilter, this.numVisibleRows, this.catalogData);
     }
 
     @action initSortedIndexMap() {
-        this.sortedIndexMap = initSortedIndexMapFunc(this.numVisibleRows);
+        this.sortedIndexMap = getInitIndexMap(this.numVisibleRows);
     }
 
     @action initFilterIndexMap() {

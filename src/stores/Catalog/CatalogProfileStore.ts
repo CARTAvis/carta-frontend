@@ -3,7 +3,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 
 import {AbstractCatalogProfileStore, CatalogInfo, CatalogSystemType, CatalogType} from "models";
 import {PreferenceStore} from "stores";
-import {ProcessedColumnData, setSortingInfoFunc} from "utilities";
+import {ProcessedColumnData} from "utilities";
 
 export enum CatalogCoordinate {
     X = "X",
@@ -176,7 +176,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
     }
 
     @action setSortingInfo(columnName: string, sortingType: CARTA.SortingType) {
-        this.sortingInfo = setSortingInfoFunc(columnName, sortingType);
+        this.sortingInfo = {columnName, sortingType};
     }
 
     @computed get loadOntoImage() {

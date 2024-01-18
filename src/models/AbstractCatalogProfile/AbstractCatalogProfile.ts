@@ -4,7 +4,7 @@ import {action, computed, observable} from "mobx";
 
 import {CatalogTextureType, CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, CatalogUpdateMode, ControlHeader} from "stores";
-import {filterProcessedColumnData, getComparisonOperatorAndValue, hasFilterFunc, minMaxArray, ProcessedColumnData, transformPoint, TypedArray} from "utilities";
+import {filterProcessedColumnData, getComparisonOperatorAndValue, getHasFilter, minMaxArray, ProcessedColumnData, transformPoint, TypedArray} from "utilities";
 
 export interface CatalogInfo {
     fileId: number;
@@ -48,8 +48,8 @@ export enum CatalogOverlay {
 export abstract class AbstractCatalogProfileStore {
     private static readonly NEGATIVE_INFINITY = -1.7976931348623157e308;
     private static readonly POSITIVE_INFINITY = 1.7976931348623157e308;
-    private static readonly TRUE_REGEX = /^[tTyY].*$/;
-    private static readonly FALSE_REGEX = /^[fFnN].*$/;
+    private static readonly trueREGEX = /^[tTyY].*$/;
+    private static readonly falseREGEX = /^[fFnN].*$/;
 
     abstract catalogInfo: CatalogInfo;
     abstract catalogHeader: Array<CARTA.ICatalogHeader>;
@@ -194,10 +194,10 @@ export abstract class AbstractCatalogProfileStore {
                 } else if (dataType === CARTA.ColumnType.Bool) {
                     if (value.filter) {
                         filter.comparisonOperator = CARTA.ComparisonOperator.Equal;
-                        if (value.filter.match(AbstractCatalogProfileStore.TRUE_REGEX)) {
+                        if (value.filter.match(AbstractCatalogProfileStore.trueREGEX)) {
                             filter.value = 1;
                             userFilters.push(filter);
-                        } else if (value.filter.match(AbstractCatalogProfileStore.FALSE_REGEX)) {
+                        } else if (value.filter.match(AbstractCatalogProfileStore.falseREGEX)) {
                             filter.value = 0;
                             userFilters.push(filter);
                         }
@@ -285,7 +285,7 @@ export abstract class AbstractCatalogProfileStore {
     }
 
     @computed get hasFilter(): boolean {
-        return hasFilterFunc(this.catalogControlHeader, this.catalogData);
+        return getHasFilter(this.catalogControlHeader, this.catalogData);
     }
 
     @action updateTableStatus(val: boolean) {
