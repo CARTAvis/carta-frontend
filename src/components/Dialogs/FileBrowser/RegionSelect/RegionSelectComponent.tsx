@@ -174,7 +174,7 @@ export class RegionSelectComponent extends React.Component {
                         {this.renderVirtualizedRegions()}
                     </React.Fragment>
                 ) : (
-                    <pre className="select-status">No regions in the active image.</pre>
+                    <pre className="select-status">No regions/annotations in the active image.</pre>
                 )}
             </div>
         );
