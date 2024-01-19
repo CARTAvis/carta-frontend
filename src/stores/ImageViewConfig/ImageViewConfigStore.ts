@@ -52,6 +52,11 @@ export class ImageViewConfigStore {
     @action removeColorBlending = (image: ColorBlendingStore) => {
         const id = image?.id;
         this.imageList = this.imageList.filter(imageItem => (imageItem?.type === ImageType.COLOR_BLENDING ? imageItem?.store?.id !== id : true));
+
+        if (AppStore.Instance.isActiveImage({type: ImageType.COLOR_BLENDING, store: image})) {
+            const firstImage = this.imageNum ? this.getImage(0) : null;
+            AppStore.Instance.setActiveImage(firstImage);
+        }
     };
 
     @action reorderImage = (oldIndex: number, newIndex: number, length: number) => {

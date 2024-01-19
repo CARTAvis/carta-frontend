@@ -1002,10 +1002,10 @@ export class WidgetsStore {
     // endregion
 
     @action updateImageWidgetTitle(layout: GoldenLayout) {
-        const appStore = AppStore.Instance;
+        const activeImage = AppStore.Instance.activeImage;
         let newTitle;
-        if (appStore.activeImage?.type !== ImageType.PV_PREVIEW) {
-            newTitle = appStore.activeImage?.store?.filename;
+        if (activeImage && activeImage.type !== ImageType.PV_PREVIEW) {
+            newTitle = activeImage?.store?.filename ?? "";
         } else {
             newTitle = "No image loaded";
         }

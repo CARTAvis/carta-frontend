@@ -806,8 +806,6 @@ export class AppStore {
         } else {
             this.removeFrame(frame);
         }
-
-        this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
     }
 
     /**
@@ -932,6 +930,11 @@ export class AppStore {
 
                 if (!this.frames?.length) {
                     this.activeWorkspace = undefined;
+
+                    const colorBlendingImages = this.imageViewConfigStore?.colorBlendingImages.slice();
+                    for (const colorBlendingImage of colorBlendingImages) {
+                        this.imageViewConfigStore?.removeColorBlending(colorBlendingImage);
+                    }
                 }
 
                 // TODO: check this
@@ -2689,7 +2692,7 @@ export class AppStore {
         }
     }
 
-    @action private setActiveImage = (activeImage: ImageItem) => {
+    @action setActiveImage = (activeImage: ImageItem) => {
         this.activeImage = activeImage;
     };
 
