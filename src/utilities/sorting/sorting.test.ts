@@ -1,7 +1,7 @@
 import {getInitIndexMap} from "./sorting";
 
-describe("table functions", () => {
-    test("initialize sorted index map", () => {
+describe("getInitIndexMap", () => {
+    test("returns the correct indexes", () => {
         const rowNumber: number = 4;
         expect(getInitIndexMap(rowNumber)).toEqual([0, 1, 2, 3]);
     });

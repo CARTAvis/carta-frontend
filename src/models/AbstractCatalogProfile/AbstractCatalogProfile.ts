@@ -48,8 +48,8 @@ export enum CatalogOverlay {
 export abstract class AbstractCatalogProfileStore {
     private static readonly NEGATIVE_INFINITY = -1.7976931348623157e308;
     private static readonly POSITIVE_INFINITY = 1.7976931348623157e308;
-    private static readonly trueREGEX = /^[tTyY].*$/;
-    private static readonly falseREGEX = /^[fFnN].*$/;
+    private static readonly TRUE_REGEX = /^[tTyY].*$/;
+    private static readonly FALSE_REGEX = /^[fFnN].*$/;
 
     abstract catalogInfo: CatalogInfo;
     abstract catalogHeader: Array<CARTA.ICatalogHeader>;
@@ -194,10 +194,10 @@ export abstract class AbstractCatalogProfileStore {
                 } else if (dataType === CARTA.ColumnType.Bool) {
                     if (value.filter) {
                         filter.comparisonOperator = CARTA.ComparisonOperator.Equal;
-                        if (value.filter.match(AbstractCatalogProfileStore.trueREGEX)) {
+                        if (value.filter.match(AbstractCatalogProfileStore.TRUE_REGEX)) {
                             filter.value = 1;
                             userFilters.push(filter);
-                        } else if (value.filter.match(AbstractCatalogProfileStore.falseREGEX)) {
+                        } else if (value.filter.match(AbstractCatalogProfileStore.FALSE_REGEX)) {
                             filter.value = 0;
                             userFilters.push(filter);
                         }

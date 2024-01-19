@@ -87,10 +87,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
     }
 
     @action initFilterIndexMap() {
-        this.filterIndexMap = [];
-        for (let index = 0; index < this.catalogInfo.dataSize; index++) {
-            this.filterIndexMap.push(index);
-        }
+        this.filterIndexMap = getInitIndexMap(this.catalogInfo.dataSize);
     }
 
     @action resetFilterRequest(filterConfigs?: CARTA.FilterConfig[]) {
