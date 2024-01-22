@@ -603,8 +603,7 @@ export class AppStore {
             fileFeatureFlags: ack.fileFeatureFlags,
             renderMode: CARTA.RenderMode.RASTER,
             beamTable: ack.beamTable,
-            preview: true,
-            previewId: ack.previewId
+            preview: true
         };
 
         const newFrame = new FrameStore(frameInfo);
