@@ -298,12 +298,9 @@ export class RegionSetStore {
             if (region === this.selectedRegion) {
                 this.selectedRegion = this.regions[0];
             }
-            const numExportRegions = FileBrowserStore.Instance.exportRegionIndexes.length;
             const selectedInd = this.regions.findIndex(r => r === region);
-            if (selectedInd <= numExportRegions) {
-                let exportRegionIndexes = Array.from({length: numExportRegions - 1}, (value, index) => index + 1); // the export region index start from 1
-                FileBrowserStore.Instance.updateExportRegionIndexes(exportRegionIndexes);
-            }
+            let exportRegionIndexes = FileBrowserStore.Instance.exportRegionIndexes.filter(x => x !== selectedInd).map( x => x > selectedInd? x - 1: x);
+            FileBrowserStore.Instance.updateExportRegionIndexes(exportRegionIndexes);
             this.regions = this.regions.filter(r => r !== region);
             if (!region.isTemporary) {
                 this.backendService.removeRegion(region.regionId);
