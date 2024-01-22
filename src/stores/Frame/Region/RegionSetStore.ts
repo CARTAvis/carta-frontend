@@ -299,7 +299,7 @@ export class RegionSetStore {
                 this.selectedRegion = this.regions[0];
             }
             const selectedInd = this.regions.findIndex(r => r === region);
-            let exportRegionIndexes = FileBrowserStore.Instance.exportRegionIndexes.filter(x => x !== selectedInd).map( x => x > selectedInd? x - 1: x);
+            let exportRegionIndexes = FileBrowserStore.Instance.exportRegionIndexes.filter(x => x !== selectedInd).map(x => (x > selectedInd ? x - 1 : x));
             FileBrowserStore.Instance.updateExportRegionIndexes(exportRegionIndexes);
             this.regions = this.regions.filter(r => r !== region);
             if (!region.isTemporary) {
