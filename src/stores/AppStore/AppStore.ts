@@ -1655,8 +1655,7 @@ export class AppStore {
         if (isAstReady && isZfpReady && isCartaComputeReady && isApiServiceAuthenticated) {
             try {
                 await this.preferenceStore.fetchPreferences();
-                await this.telemetryService.checkAndGenerateId();
-                await this.telemetryService.flushTelemetry();
+                this.telemetryService.checkAndGenerateId(true);
                 await this.connectToServer();
                 await this.fileBrowserStore.restoreStartingDirectory();
                 await this.layoutStore.fetchLayouts();
