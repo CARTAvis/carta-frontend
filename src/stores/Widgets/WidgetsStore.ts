@@ -1448,6 +1448,16 @@ export class WidgetsStore {
         }
         return id;
     }
+
+    @computed get pvGeneratorMap(): Map<number, PvGeneratorWidgetStore> {
+        const pvGeneratorMap = new Map<number, PvGeneratorWidgetStore>();
+        let i = 0;
+        for (const pvGenerator of this.pvGeneratorWidgets) {
+            pvGeneratorMap.set(i, pvGenerator[1]);
+            i++;
+        }
+        return pvGeneratorMap;
+    }    
     // endregion
 
     // region Floating Widgets
