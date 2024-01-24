@@ -7,24 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-* Fixed the blank screen when clicking X/Y profile setting button without images opened ([#2247](https://github.com/CARTAvis/carta-frontend/issues/2247)).
 * Fixed ruler annotation matching bug ([#2242](https://github.com/CARTAvis/carta-frontend/issues/2242)).
+* Fixed compass and ruler annotations update bug in the spatially matched image when changing the coordinate ([#2270](https://github.com/CARTAvis/carta-frontend/issues/2270)).
+* Removed distance measurement tool render from PV preview frames ([#2267](https://github.com/CARTAvis/carta-frontend/issues/2267)).
+* Improved the dragging performance of the Export Region widget when the list of region/annotation to be exported is large ([#1867](https://github.com/CARTAvis/carta-frontend/issues/1867)).
+* Fixed the flashing contour rendering during animation ([#579](https://github.com/CARTAvis/carta-frontend/issues/579)).
+* Fixed incorrect range values in the save image dialog with non-convertible spectral axis images by supporting native/channel options in the spectral coordinate selector for non-convertible spectral axis images ([#2225](https://github.com/CARTAvis/carta-frontend/issues/2225)).
+* Fixed a bug when applying a filter to the shifted frequency column in the spectral line query widget ([#2326](https://github.com/CARTAvis/carta-frontend/issues/2326)).
+
+## [4.1.0]
+
+### Fixed
+* Fixed the blank screen when clicking X/Y profile setting button without images opened ([#2247](https://github.com/CARTAvis/carta-frontend/issues/2247)).
 * Removed unused help button for PV preview widget ([#2248](https://github.com/CARTAvis/carta-frontend/issues/2248)).
 * Fixed PV preview bug where no PV preview shows up after closing a docked PV preview widget ([#2249](https://github.com/CARTAvis/carta-frontend/issues/2249)).
 * Fixed the incorrect deletion of contour levels ([#2251](https://github.com/CARTAvis/carta-frontend/issues/2251)).
-* Fixed compass and ruler annotations update bug in the spatially matched image when changing the coordinate ([#2270](https://github.com/CARTAvis/carta-frontend/issues/2270)).
-* Removed distance measurement tool render from PV preview frames ([#2267](https://github.com/CARTAvis/carta-frontend/issues/2267)).
 * Fixed bug that the frontend crashes when deleting annotations if the export window is opened ([#2278](https://github.com/CARTAvis/carta-frontend/issues/2278)).
 * Fixed the performance issue when panning images ([#2291](https://github.com/CARTAvis/carta-frontend/issues/2291)).
-* Fixed the delayed start of the program due to telemetry server error. ([#2304](https://github.com/CARTAvis/carta-frontend/issues/2304)).
-* Improved the dragging performance of the Export Region widget when the list of region/annotation to be exported is large ([#1867](https://github.com/CARTAvis/carta-frontend/issues/1867)).
-* Fixed the flashing contour rendering during animation ([#579](https://github.com/CARTAvis/carta-frontend/issues/579)).
-* Fixed incorrect range values in the save image dialog with non-convertible spectral axis images by supporting native/channel options in the spectral coordinate selector for non-convertible spectral axis images.([#2225](https://github.com/CARTAvis/carta-frontend/issues/2225)).
-* Avoided showing the telemetry dialog temporarily ([#2314](https://github.com/CARTAvis/carta-frontend/issues/2314)).
 * Fixed the crash when plotting online Vizier catalog data ([#2321](https://github.com/CARTAvis/carta-frontend/pull/2321)).
 * Fixed missing vector overlays on matched images ([#2293](https://github.com/CARTAvis/carta-frontend/issues/2293)).
+* Avoided showing the telemetry dialog temporarily ([#2314](https://github.com/CARTAvis/carta-frontend/issues/2314)).
 * Fixed failing to match images spatially ([2252](https://github.com/CARTAvis/carta-frontend/issues/2252)).
-* Fixed a bug when applying a filter to the shifted frequency column in the spectral line query widget ([#2326](https://github.com/CARTAvis/carta-frontend/issues/2326)).
+* Fixed the delayed start of the program due to telemetry server error ([#2304](https://github.com/CARTAvis/carta-frontend/issues/2304)).
 
 ## [4.0.0]
 
