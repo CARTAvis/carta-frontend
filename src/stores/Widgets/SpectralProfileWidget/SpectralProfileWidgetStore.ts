@@ -220,7 +220,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 const width = this.effectiveRegion.size.x;
                 const height = this.effectiveRegion.size.y;
                 const depth = Math.abs(channelIndex1 - channelIndex2) + 1;
-                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.MomentGeneration, {regionId: this.effectiveRegion.regionId, width, height, depth});
+                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.MomentGeneration, {regionId: this.effectiveRegion.regionId, regionType: this.effectiveRegion.regionType, width, height, depth});
             }
         }
     };
