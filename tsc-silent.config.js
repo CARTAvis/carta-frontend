@@ -1,6 +1,7 @@
 const migratedFiles = [
     "utilities/array",
-    "utilities/CatalogApiProcess"
+    "utilities/CatalogApiProcess",
+    "utilities/color"
 ];
 
 module.exports = {
