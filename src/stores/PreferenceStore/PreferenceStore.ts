@@ -286,7 +286,11 @@ export class PreferenceStore {
     }
 
     @observable preferences: Map<PreferenceKeys, any>;
-    @observable supportsServer: boolean;
+
+    /**
+     * Whether the preference data is initialized from the preference file or localStorage.
+     */
+    @observable preferenceReady: boolean = false;
 
     // getters for global settings
     @computed get theme(): string {
@@ -973,6 +977,7 @@ export class PreferenceStore {
                 this.preferences.set(key as PreferenceKeys, val);
             }
         }
+        this.preferenceReady = true;
     }
 
     /**

@@ -1,6 +1,6 @@
 {
     "name": "carta-frontend",
-    "version": "4.0.0",
+    "version": "5.0.0-dev",
     "repository": "https://github.com/CARTAvis/carta-frontend",
     "description": "The browser-based frontend component of CARTA, a radio-astronomy visualization tool designed for the ALMA, the VLA and the SKA pathfinders.",
     "homepage": "./",
