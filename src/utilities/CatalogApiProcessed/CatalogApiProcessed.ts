@@ -72,8 +72,8 @@ export class CatalogApiProcessing {
 
     static ProcessSimbadData(data: [], headers: CARTA.ICatalogHeader[]): Map<number, ProcessedColumnData> {
         const dataMap = new Map<number, ProcessedColumnData>();
-        const raIndex = headers.filter(header => header.name === "ra")[0]?.columnIndex;
-        const decIndex = headers.filter(header => header.name === "dec")[0]?.columnIndex;
+        const raIndex = headers.filter(header => header.name === "ra")[0]?.columnIndex ?? NaN;
+        const decIndex = headers.filter(header => header.name === "dec")[0]?.columnIndex ?? NaN;
 
         const frame = AppStore.Instance.activeFrame;
         const raformat = `${NumberFormatType.HMS}.${6}`;
@@ -88,11 +88,11 @@ export class CatalogApiProcessing {
 
         for (let i = 0; i < headers.length; i++) {
             const header = headers[i];
-            let column: ProcessedColumnData = {dataType: header.dataType, data: new Array(data.length)};
+            let column: ProcessedColumnData = {dataType: header.dataType ?? CARTA.ColumnType.UnsupportedType, data: new Array(data.length)};
             for (let j = 0; j < data.length; j++) {
                 if (header["name"] === "dist") {
                     // simbad returns distance in deg, convert to arcsec for usability improvement
-                    column.data[j] = Number((data[j][header.columnIndex] * 3600).toFixed(6));
+                    column.data[j] = Number((data[j][header.columnIndex ?? NaN] * 3600).toFixed(6));
                 } else if (header["name"] === "RA_HMS" && raIndex > -1) {
                     const x = AST.format(wcsCopy, 1, data[j][raIndex] * fraction);
                     column.data[j] = x;
@@ -100,7 +100,7 @@ export class CatalogApiProcessing {
                     const y = AST.format(wcsCopy, 2, data[j][decIndex] * fraction);
                     column.data[j] = y;
                 } else {
-                    column.data[j] = data[j][header.columnIndex];
+                    column.data[j] = data[j][header.columnIndex ?? NaN];
                 }
             }
             dataMap.set(i, column);
@@ -142,19 +142,19 @@ export class CatalogApiProcessing {
             const tableElements = resourceElement.getElementsByTagName("TABLE");
             for (let j = 0; j < tableElements.length; j++) {
                 const tableElement = tableElements[j];
-                const name = tableElement.getAttribute("name");
+                const name = tableElement.getAttribute("name") ?? "";
                 if (tableElement.getElementsByTagName("FIELD")?.length) {
                     const res: VizierResource = {
-                        id: resourceElement.getAttribute("ID"),
-                        name: resourceElement.getAttribute("name"),
-                        description: resourceElement.getElementsByTagName("DESCRIPTION")[0]?.textContent,
+                        id: resourceElement.getAttribute("ID") ?? "",
+                        name: resourceElement.getAttribute("name") ?? "",
+                        description: resourceElement.getElementsByTagName("DESCRIPTION")[0]?.textContent ?? "",
                         coosys: {
                             system: CatalogSystemType.FK5,
                             equinox: "J2000"
                         },
                         table: {
-                            name: name,
-                            description: tableElement.getElementsByTagName("DESCRIPTION")[0]?.textContent,
+                            name: name ?? "",
+                            description: tableElement.getElementsByTagName("DESCRIPTION")[0]?.textContent ?? "",
                             tableElement: tableElement
                         }
                     };
@@ -173,7 +173,7 @@ export class CatalogApiProcessing {
             headers[index] = new CARTA.CatalogHeader({
                 name: field.getAttribute("name"),
                 description: field.getElementsByTagName("DESCRIPTION")[0]?.textContent,
-                dataType: CatalogApiProcessing.matchDataType(field.getAttribute("datatype")),
+                dataType: CatalogApiProcessing.matchDataType(field.getAttribute("datatype") ?? ""),
                 columnIndex: index,
                 units: field.getAttribute("unit")
             });
@@ -191,13 +191,18 @@ export class CatalogApiProcessing {
         for (let index = 0; index < size; index++) {
             const columns = data[index].getElementsByTagName("TD");
             for (let j = 0; j < columns.length; j++) {
+                const columnData = dataMap.get(j);
+                if (columnData === undefined) {
+                    continue;
+                }
+
                 //textContent is faster than innerHTML
                 if (headers[j]["dataType"] === CARTA.ColumnType.String || headers[j]["dataType"] === CARTA.ColumnType.UnsupportedType || headers[j]["dataType"] === CARTA.ColumnType.Bool) {
-                    dataMap.get(j).data[index] = columns[j].textContent;
+                    columnData.data[index] = columns[j].textContent ?? "";
                 } else if (headers[j]["dataType"] === CARTA.ColumnType.Float || headers[j]["dataType"] === CARTA.ColumnType.Double) {
-                    dataMap.get(j).data[index] = parseFloat(columns[j].textContent);
+                    columnData.data[index] = parseFloat(columns[j].textContent ?? "");
                 } else {
-                    dataMap.get(j).data[index] = parseInt(columns[j].textContent);
+                    columnData.data[index] = parseInt(columns[j].textContent ?? "");
                 }
             }
         }
