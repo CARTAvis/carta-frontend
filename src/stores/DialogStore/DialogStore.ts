@@ -84,7 +84,7 @@ export class DialogStore {
                     break;
 
                 case DialogId.Workspace:
-                    this.dialogVisible.set(DialogId.FileBrowser, false);
+                    this.hideDialog(DialogId.FileBrowser);
                     if (options?.mode) {
                         this.workspaceDialogMode = options.mode;
                     }
@@ -92,7 +92,7 @@ export class DialogStore {
                     break;
 
                 case DialogId.FileBrowser:
-                    this.workspaceDialogMode = WorkspaceDialogMode.Hidden;
+                    this.hideDialog(DialogId.Workspace);
                     this.dialogVisible.set(DialogId.FileBrowser, true);
                     this.zIndexManager.assignIndex(DialogId.FileBrowser);
                     break;
