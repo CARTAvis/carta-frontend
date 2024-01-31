@@ -2,7 +2,8 @@ const migratedFiles = [
     "utilities/array",
     "utilities/CatalogApiProcess",
     "utilities/color",
-    "utilities/export"
+    "utilities/export",
+    "utilities/fitting_heuristics"
 ];
 
 module.exports = {
