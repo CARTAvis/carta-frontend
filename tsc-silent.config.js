@@ -1,5 +1,5 @@
 const migratedFiles = [
-    "/"
+    "utilities/array"
 ];
 
 module.exports = {
