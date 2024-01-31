@@ -90,8 +90,8 @@
         "git-info": "./git-info.sh",
         "analyze": "source-map-explorer build/static/js/main.*",
         "postinstall": "patch-package",
-        "start": "npm run git-info; react-scripts start",
-        "build": "npm run git-info; npm-run-all build-wrappers build-protobuf build-ts",
+        "start": "npm run git-info; npm run strict-null-checks && react-scripts start",
+        "build": "npm run git-info; npm run strict-null-checks && npm-run-all build-wrappers build-protobuf build-ts",
         "build-docker": "npm run git-info; npm-run-all build-wrappers-docker build-protobuf build-ts",
         "build-singularity": "npm run git-info; npm-run-all build-wrappers-singularity build-protobuf build-ts",
         "build-ts": "react-scripts --max_old_space_size=4096 build",
@@ -108,7 +108,8 @@
         "checkformat": "npx prettier --check ./src",
         "prepack": "npm run build-libs-docker; npm run build-docker",
         "fix-eslint": "eslint --fix ./src",
-        "check-eslint": "eslint ./src"
+        "check-eslint": "eslint ./src",
+        "strict-null-checks": "npx tsc-silent -p tsconfig.strictNullChecks.json --suppressConfig tsc-silent.config.js"
     },
     "eslintConfig": {
         "extends": "react-app",
