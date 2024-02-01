@@ -4,7 +4,7 @@ import {action, computed, flow, makeObservable, observable} from "mobx";
 import {AppToaster, SuccessToast} from "components/Shared";
 import {LayoutConfig, PresetLayout} from "models";
 import {ApiService} from "services";
-import {AlertStore, AppStore} from "stores";
+import {AlertStore, AppStore, DialogId} from "stores";
 
 const MAX_LAYOUT = 10;
 
@@ -219,7 +219,7 @@ export class LayoutStore {
             return;
         }
 
-        appStore.dialogStore.hideSaveLayoutDialog();
+        appStore.dialogStore.hideDialog(DialogId.Layout);
 
         // save layout to layouts[] & server/local storage
         const configToSave = this.layouts[oldName];
