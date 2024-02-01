@@ -5,6 +5,7 @@ out vec4 outColor;
 // Textures
 uniform sampler2D uDataTexture;
 uniform sampler2D uCmapTexture;
+uniform sampler2D uCmapCalculatedTexture;
 // Render parameters
 uniform int uNumCmaps;
 uniform int uCmapIndex;
@@ -117,15 +118,20 @@ void main(void) {
         x = 1.0 - x;
     }
 
-    float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
-    vec2 cmapCoords = vec2(x, cmapYVal);
-
     // Apply pixel highlight
     if (isNaN(rawVal)) {
         outColor = uNaNColor * uNaNColor.a;
-    } else if (rawVal < uPixelHighlightVal) {
+    } 
+    else if (rawVal < uPixelHighlightVal) {
         outColor = vec4(x, x, x, 1);
-    } else {
+    } 
+    else if (uCmapIndex >= 79) {
+        vec2 cmapCoords = vec2(x, 0.1);
+        outColor = texture(uCmapCalculatedTexture, cmapCoords);
+    } 
+    else {
+        float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
+        vec2 cmapCoords = vec2(x, cmapYVal);
         outColor = texture(uCmapTexture, cmapCoords);
     }
 

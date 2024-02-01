@@ -2,6 +2,7 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {WorkspaceRenderConfig} from "models";
+import {TileWebGLService} from "services";
 import {AppStore, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {clamp, getColorsForValues, getPercentiles, scaleValueInverse} from "utilities";
@@ -106,8 +107,18 @@ export class RenderConfigStore {
         "YlGn",
         "YlGnBu",
         "YlOrBr",
-        "YlOrRd"
+        "YlOrRd",
+        "reds_k",
+        "greens_k",
+        "blues_k",
+        "custom_mono"
     ];
+    static COLOR_MAPS_CALCULATED = new Map<string, string>([
+        ["reds_k", "#FF0000"],
+        ["greens_k", "#00FF00"],
+        ["blues_k", "#0000FF"],
+        ["custom_mono", "#FFA500."]
+    ]);
     static readonly COLOR_MAPS_SELECTED = [
         "afmhot",
         "Blues",
@@ -133,7 +144,11 @@ export class RenderConfigStore {
         "seismic",
         "spectral",
         "tab10",
-        "viridis"
+        "viridis",
+        "reds_k",
+        "greens_k",
+        "blues_k",
+        "custom_mono"
     ];
 
     static readonly PERCENTILE_RANKS = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
@@ -374,6 +389,7 @@ export class RenderConfigStore {
     @action setColorMap = (colormap: string) => {
         const index = RenderConfigStore.COLOR_MAPS_ALL.indexOf(colormap);
         if (index >= 0) {
+            TileWebGLService.Instance.setcmapCalculatedTexture(colormap);
             this.setColorMapIndex(index);
         }
     };
