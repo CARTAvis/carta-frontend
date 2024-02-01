@@ -6,7 +6,7 @@ import {FileInfoType} from "components";
 import {AppToaster, ErrorToast} from "components/Shared";
 import {Freq, FrequencyUnit, LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
 import {BackendService} from "services";
-import {AppStore, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, DialogId, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
 import {RegionStore} from "stores/Frame";
 import {RegionId} from "stores/Widgets";
 import {getDataTypeString, getHeaderNumericValue, ProcessedColumnData} from "utilities";
@@ -80,7 +80,9 @@ export class FileBrowserStore {
     // Save image
     @observable saveFilename: string = "";
     @observable saveFileType: CARTA.FileType = CARTA.FileType.CASA;
-    @observable saveSpectralRange: string[] = ["0", "0"];
+    @observable saveSpectralStart: number = 0;
+    @observable saveSpectralEnd: number = 0;
+    @observable saveSpectralStride: number = 1;
     @observable saveStokesOption: number;
     @observable saveRegionId: number;
     @observable saveRestFreq: Freq = {value: 0, unit: FrequencyUnit.MHZ};
@@ -142,7 +144,7 @@ export class FileBrowserStore {
         }
         this.appendingFrame = append;
         this.browserMode = mode;
-        DialogStore.Instance.showFileBrowserDialog();
+        DialogStore.Instance.showDialog(DialogId.FileBrowser);
         this.fileList = null;
         this.selectedTab = this.getBrowserMode;
         this.responseErrorMessage = "";
@@ -158,7 +160,7 @@ export class FileBrowserStore {
     };
 
     @action hideFileBrowser = () => {
-        DialogStore.Instance.hideFileBrowserDialog();
+        DialogStore.Instance.hideDialog(DialogId.FileBrowser);
     };
 
     @action setFileList = (list: CARTA.IFileListResponse) => {
@@ -305,10 +307,8 @@ export class FileBrowserStore {
     @action initialSaveSpectralRange = () => {
         const activeFrame = AppStore.Instance.activeFrame;
         if (activeFrame && activeFrame.numChannels > 1 && activeFrame.isSpectralChannel) {
-            const min = Math.min(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min);
-            const max = Math.max(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min);
-            const delta = (max - min) / (activeFrame.numChannels - 1);
-            this.saveSpectralRange = [min.toString(), max.toString(), delta.toString()];
+            this.setSaveSpectralStart(Math.min(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min));
+            this.setSaveSpectralEnd(Math.max(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min));
         }
     };
 
@@ -568,12 +568,12 @@ export class FileBrowserStore {
         }
     };
 
-    @action setSaveSpectralRangeMin = (min: string) => {
-        this.saveSpectralRange[0] = min;
+    @action setSaveSpectralStart = (start: number) => {
+        this.saveSpectralStart = start;
     };
 
-    @action setSaveSpectralRangeMax = (max: string) => {
-        this.saveSpectralRange[1] = max;
+    @action setSaveSpectralEnd = (end: number) => {
+        this.saveSpectralEnd = end;
     };
 
     @action setSelectedFiles = (selection: ISelectedFile[]) => {

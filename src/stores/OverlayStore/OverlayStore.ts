@@ -151,12 +151,6 @@ export class OverlayGlobalSettings {
 
     @action setSystem(system: SystemType) {
         this.system = system;
-
-        // update distance measuring position tranformation before plotting
-        const wcsInfo = AppStore.Instance.activeFrame?.wcsInfo;
-        if (wcsInfo && this.explicitSystem) {
-            AST.set(wcsInfo, `System=${this.explicitSystem}`);
-        }
     }
 
     @action setDefaultSystem(system: SystemType) {
@@ -1022,8 +1016,6 @@ export class OverlayStore {
 
         // if the system is manually selected, set new default formats & update active frame's wcs settings
         autorun(() => {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const _ = this.global.system;
             this.setFormatsFromSystem();
             AppStore.Instance.frames.forEach(frame => {
                 if (frame?.validWcs && frame?.wcsInfoForTransformation && this.global.explicitSystem) {
@@ -1033,8 +1025,6 @@ export class OverlayStore {
         });
 
         autorun(() => {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const _ = this.numbers.formatTypeX;
             AppStore.Instance.frames.forEach(frame => {
                 if (frame?.validWcs && frame?.wcsInfoForTransformation && this.numbers.formatTypeX) {
                     AST.set(frame.wcsInfoForTransformation, `Format(${frame.dirX})=${this.numbers.formatTypeX}.${WCS_PRECISION}`);
@@ -1043,8 +1033,6 @@ export class OverlayStore {
         });
 
         autorun(() => {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const _ = this.numbers.formatTypeY;
             AppStore.Instance.frames.forEach(frame => {
                 if (frame?.validWcs && frame?.wcsInfoForTransformation && this.numbers.formatTypeY) {
                     AST.set(frame.wcsInfoForTransformation, `Format(${frame.dirY})=${this.numbers.formatTypeY}.${WCS_PRECISION}`);
@@ -1100,6 +1088,17 @@ export class OverlayStore {
 
         this.global.setDefaultSystem(AST.getString(frame.wcsInfo, "System") as SystemType);
         this.setFormatsFromSystem();
+
+        if (this.global.system === SystemType.Auto) {
+            const formatStringX = this.numbers.formatStringX;
+            const formatStyingY = this.numbers.formatStringY;
+            const explicitSystem = this.global.explicitSystem;
+            AppStore.Instance.frames.forEach(frame => {
+                if (frame) {
+                    frame.updateWcsSystem(formatStringX, formatStyingY, explicitSystem);
+                }
+            });
+        }
     }
 
     @action toggleLabels = () => {

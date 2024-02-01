@@ -17,6 +17,7 @@ import {
     CatalogType,
     COMPUTED_POLARIZATIONS,
     FileId,
+    FloatingObjzIndexManager,
     FrameView,
     ImagePanelMode,
     Point2D,
@@ -39,6 +40,7 @@ import {
     CatalogProfileStore,
     CatalogStore,
     CatalogUpdateMode,
+    DialogId,
     DialogStore,
     FileBrowserStore,
     HelpStore,
@@ -145,6 +147,9 @@ export class AppStore {
     @observable imageRatio = 1;
     @observable isExportingImage = false;
     @observable private isCanvasUpdated: boolean;
+
+    // dynamic zIndex
+    public zIndexManager = new FloatingObjzIndexManager();
 
     private appContainer: HTMLElement;
     private fileCounter = 0;
@@ -692,7 +697,7 @@ export class AppStore {
             }
             this.endFileLoading();
             this.fileBrowserStore.hideFileBrowser();
-            AppStore.Instance.dialogStore.hideStokesDialog();
+            AppStore.Instance.dialogStore.hideDialog(DialogId.Stokes);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
@@ -1646,8 +1651,7 @@ export class AppStore {
         if (isAstReady && isZfpReady && isCartaComputeReady && isApiServiceAuthenticated) {
             try {
                 await this.preferenceStore.fetchPreferences();
-                await this.telemetryService.checkAndGenerateId();
-                await this.telemetryService.flushTelemetry();
+                this.telemetryService.checkAndGenerateId(true);
                 await this.connectToServer();
                 await this.fileBrowserStore.restoreStartingDirectory();
                 await this.layoutStore.fetchLayouts();

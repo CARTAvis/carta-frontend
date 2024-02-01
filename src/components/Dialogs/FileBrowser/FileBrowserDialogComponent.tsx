@@ -10,7 +10,7 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {SimpleTableComponentProps} from "components/Shared";
-import {AppStore, BrowserMode, CatalogProfileStore, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, BrowserMode, CatalogProfileStore, DialogId, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
 import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
@@ -22,19 +22,20 @@ export class FileBrowserDialogComponent extends React.Component {
     @observable overwriteExistingFileAlertVisible: boolean;
     @observable fileFilterString: string = "";
     @observable debouncedFilterString: string = "";
-    @observable defaultWidth: number;
-    @observable defaultHeight: number;
     @observable enableImageArithmetic: boolean = false;
     @observable imageArithmeticString: string = "";
     @observable inputPathString: string = "";
     @observable enableEditPath: boolean = false;
     private readonly imageArithmeticInputRef: React.RefObject<HTMLInputElement>;
 
+    private static readonly DefaultWidth = 1200;
+    private static readonly DefaultHeight = 600;
+    private static readonly MinWidth = 800;
+    private static readonly MinHeight = 400;
+
     constructor(props: any) {
         super(props);
         makeObservable(this);
-        this.defaultWidth = 1200;
-        this.defaultHeight = 600;
         this.imageArithmeticInputRef = React.createRef<HTMLInputElement>();
     }
 
@@ -158,14 +159,15 @@ export class FileBrowserDialogComponent extends React.Component {
         const fileBrowserStore = FileBrowserStore.Instance;
         const activeFrame = appStore.activeFrame;
         const filename = fileBrowserStore.saveFilename.trim();
-        const channelStart = fileBrowserStore.saveSpectralRange ? activeFrame.findChannelIndexByValue(parseFloat(fileBrowserStore.saveSpectralRange[0])) : 0;
-        const channelEnd = fileBrowserStore.saveSpectralRange ? activeFrame.findChannelIndexByValue(parseFloat(fileBrowserStore.saveSpectralRange[1])) : activeFrame.numChannels - 1;
+
+        const channelStart = fileBrowserStore.saveSpectralStart ? activeFrame.findChannelIndexByValue(fileBrowserStore.saveSpectralStart) : 0;
+        const channelEnd = fileBrowserStore.saveSpectralEnd ? activeFrame.findChannelIndexByValue(fileBrowserStore.saveSpectralEnd) : activeFrame.numChannels - 1;
 
         const saveChannelStart = Math.min(channelStart, channelEnd);
         const saveChannelEnd = Math.max(channelStart, channelEnd);
         let saveChannels = [];
         if (activeFrame.numChannels > 1) {
-            saveChannels = [Math.max(saveChannelStart, 0), Math.min(saveChannelEnd, activeFrame.numChannels - 1), 1];
+            saveChannels = [Math.max(saveChannelStart, 0), Math.min(saveChannelEnd, activeFrame.numChannels - 1), fileBrowserStore.saveSpectralStride];
         }
         const saveStokes = fileBrowserStore.saveStokesRange;
 
@@ -327,7 +329,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 </Tooltip2>
                                 {!this.enableImageArithmetic && fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length < 5 && (
                                     <Tooltip2 content={"Append this image while keeping other images open"}>
-                                        <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={appStore.dialogStore.showStokesDialog} text={"Load as hypercube"} />
+                                        <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Stokes)} text={"Load as hypercube"} />
                                     </Tooltip2>
                                 )}
                             </div>
@@ -367,7 +369,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 </Tooltip2>
                                 {!this.enableImageArithmetic && fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length < 5 && (
                                     <Tooltip2 content={"Close any existing images and load this image"}>
-                                        <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={appStore.dialogStore.showStokesDialog} text={"Load as hypercube"} />
+                                        <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Stokes)} text={"Load as hypercube"} />
                                     </Tooltip2>
                                 )}
                             </div>
@@ -599,11 +601,6 @@ export class FileBrowserDialogComponent extends React.Component {
         }
     };
 
-    @action private updateDefaultSize = (newWidth: number, newHeight: number) => {
-        this.defaultWidth = newWidth;
-        this.defaultHeight = newHeight;
-    };
-
     public render() {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
@@ -615,7 +612,7 @@ export class FileBrowserDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.fileBrowserDialogVisible,
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.FileBrowser),
             onClose: this.closeFileBrowser,
             onOpened: this.refreshFileList,
             title: "File Browser"
@@ -659,12 +656,12 @@ export class FileBrowserDialogComponent extends React.Component {
             <DraggableDialogComponent
                 dialogProps={dialogProps}
                 helpType={HelpType.FILE_BROWSER}
-                minWidth={400}
-                minHeight={400}
-                defaultWidth={this.defaultWidth}
-                defaultHeight={this.defaultHeight}
+                minWidth={FileBrowserDialogComponent.MinWidth}
+                minHeight={FileBrowserDialogComponent.MinHeight}
+                defaultWidth={FileBrowserDialogComponent.DefaultWidth}
+                defaultHeight={FileBrowserDialogComponent.DefaultHeight}
                 enableResizing={true}
-                onResizeStop={this.updateDefaultSize}
+                dialogId={DialogId.FileBrowser}
             >
                 <div className="file-path">
                     {this.pathItems && (
@@ -763,8 +760,8 @@ export class FileBrowserDialogComponent extends React.Component {
     private closeFileBrowser = () => {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
-        if (appStore.dialogStore.stokesDialogVisible) {
-            appStore.dialogStore.hideStokesDialog();
+        if (appStore.dialogStore.dialogVisible.get(DialogId.Stokes)) {
+            appStore.dialogStore.hideDialog(DialogId.Stokes);
         }
         fileBrowserStore.hideFileBrowser();
     };

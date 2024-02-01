@@ -31,7 +31,8 @@ export enum SpectralType {
     FREQ = "FREQ",
     WAVE = "WAVE",
     AWAV = "AWAV",
-    CHANNEL = "CHANNEL"
+    CHANNEL = "CHANNEL",
+    NATIVE = "NATIVE" // for non-support spectral type/unit images to switch the coordinate between channel and native value
 }
 
 // Channel is not a valid standalone spectral type
@@ -103,7 +104,8 @@ export const SPECTRAL_TYPE_STRING = new Map<SpectralType, string>([
     [SpectralType.FREQ, "Frequency"],
     [SpectralType.WAVE, "Vacuum wavelength"],
     [SpectralType.AWAV, "Air wavelength"],
-    [SpectralType.CHANNEL, "Channel"]
+    [SpectralType.CHANNEL, "Channel"],
+    [SpectralType.NATIVE, "Native"]
 ]);
 
 export const SPECTRAL_DEFAULT_UNIT = new Map<SpectralType, SpectralUnit>([

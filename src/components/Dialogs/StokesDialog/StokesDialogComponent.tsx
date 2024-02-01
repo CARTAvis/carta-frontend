@@ -9,12 +9,17 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {POLARIZATION_LABELS} from "models";
-import {AppStore, BrowserMode, HelpType} from "stores";
+import {AppStore, BrowserMode, DialogId, HelpType} from "stores";
 
 import "./StokesDialogComponent.scss";
 
 @observer
 export class StokesDialogComponent extends React.Component {
+    private static readonly DefaultWidth = 610;
+    private static readonly DefaultHeight = 300;
+    private static readonly MinWidth = 300;
+    private static readonly MinHeight = 250;
+
     @observable stokes: Map<string, CARTA.IStokesFile>;
     @observable stokesHeader: Map<string, CARTA.IFileInfoExtended>;
 
@@ -53,7 +58,7 @@ export class StokesDialogComponent extends React.Component {
     }
 
     @computed get stokesDialogVisible(): boolean {
-        return AppStore.Instance.dialogStore.stokesDialogVisible;
+        return AppStore.Instance.dialogStore.dialogVisible.get(DialogId.Stokes);
     }
 
     @computed get noneType(): boolean {
@@ -138,13 +143,21 @@ export class StokesDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.stokesDialogVisible,
-            onClose: appStore.dialogStore.hideStokesDialog,
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Stokes),
             title: "Merging polarization hypercube"
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.STOKES} minWidth={300} minHeight={250} defaultWidth={602} defaultHeight={300} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                helpType={HelpType.STOKES}
+                minWidth={StokesDialogComponent.MinWidth}
+                minHeight={StokesDialogComponent.MinHeight}
+                defaultWidth={StokesDialogComponent.DefaultWidth}
+                defaultHeight={StokesDialogComponent.DefaultHeight}
+                enableResizing={true}
+                dialogId={DialogId.Stokes}
+            >
                 <div className="bp3-dialog-body">
                     <Table
                         className={"file-table"}
@@ -164,12 +177,6 @@ export class StokesDialogComponent extends React.Component {
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
                         <AnchorButton
-                            intent={Intent.NONE}
-                            disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                            onClick={AppStore.Instance.dialogStore?.hideStokesDialog}
-                            text={"Cancel"}
-                        />
-                        <AnchorButton
                             intent={Intent.PRIMARY}
                             disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !this.noneType}
                             onClick={this.loadSelectedFiles}
@@ -187,7 +194,9 @@ export class StokesDialogComponent extends React.Component {
             stokeFiles.push(file);
         });
         await this.loadFile(stokeFiles)
-            .then(() => AppStore.Instance.activeFrame?.setStokesFiles(stokeFiles))
+            .then(() => {
+                AppStore.Instance.activeFrame?.setStokesFiles(stokeFiles);
+            })
             .catch(() => {
                 AppStore.Instance.activeFrame?.setStokesFiles([]);
             });
