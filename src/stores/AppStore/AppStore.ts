@@ -531,7 +531,8 @@ export class AppStore {
             fileInfoExtended: new CARTA.FileInfoExtended(ack.fileInfoExtended),
             fileFeatureFlags: ack.fileFeatureFlags,
             renderMode: CARTA.RenderMode.RASTER,
-            beamTable: ack.beamTable
+            beamTable: ack.beamTable,
+            generated
         };
         this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfo.type, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes, generated);
 
@@ -604,6 +605,7 @@ export class AppStore {
             fileFeatureFlags: ack.fileFeatureFlags,
             renderMode: CARTA.RenderMode.RASTER,
             beamTable: ack.beamTable,
+            generated: true,
             preview: true
         };
 
@@ -2246,8 +2248,8 @@ export class AppStore {
         this.animatorStore.stopAnimation();
         this.tileService.clearRequestQueue();
 
-        // Ignore & remove generated in-memory images (moments fileId >= 1000, PV/model/residual fileId < 0)
-        const inMemoryImages = this.frames.filter(frame => frame.frameInfo.fileId >= 1000 || frame.frameInfo.fileId < 0);
+        // Ignore & remove generated in-memory images
+        const inMemoryImages = this.frames.filter(frame => frame?.frameInfo?.generated);
         inMemoryImages.forEach(frame => this.removeFrame(frame));
 
         const images: CARTA.IImageProperties[] = this.frames.map(frame => {
@@ -2494,7 +2496,7 @@ export class AppStore {
         let hasTemporaryFiles = false;
 
         for (const frame of this.frames) {
-            if (frame.frameInfo.fileId >= 1000 || frame.frameInfo.fileId < 0) {
+            if (frame?.frameInfo?.generated) {
                 hasTemporaryFiles = true;
                 continue;
             }
