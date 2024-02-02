@@ -14,7 +14,7 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, SuccessToast} from "components/Shared";
 import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {TelemetryMode} from "services";
-import {AppStore, BeamType, HelpType, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, BeamType, DialogId, HelpType, PreferenceKeys, PreferenceStore} from "stores";
 import {ContourGeneratorType, FrameScaling, RegionStore, RenderConfigStore} from "stores/Frame";
 import {copyToClipboard, SWATCH_COLORS} from "utilities";
 
@@ -883,8 +883,7 @@ export class PreferenceDialogComponent extends React.Component {
             className: className,
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.preferenceDialogVisible,
-            onClose: appStore.dialogStore.hidePreferenceDialog,
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Preference),
             title: "Preferences"
         };
 
@@ -897,6 +896,7 @@ export class PreferenceDialogComponent extends React.Component {
                 defaultWidth={PreferenceDialogComponent.DefaultWidth}
                 defaultHeight={PreferenceDialogComponent.DefaultHeight}
                 enableResizing={true}
+                dialogId={DialogId.Preference}
             >
                 <div className="bp3-dialog-body">
                     <Tabs id="preferenceTabs" vertical={true} selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
