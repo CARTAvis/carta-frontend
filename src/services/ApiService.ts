@@ -91,7 +91,7 @@ export class ApiService {
     constructor() {
         makeObservable(this);
         this.axiosInstance = axios.create();
-        if (localStorage.getItem('authenticationType')) {
+        if (localStorage.getItem("authenticationType")) {
             this.onTokenExpired();
         } else {
             this.handleAuthLost();
