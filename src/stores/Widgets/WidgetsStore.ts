@@ -882,7 +882,20 @@ export class WidgetsStore {
     };
 
     onImagePanelButtonClick = () => {
-        this.setImageMultiPanelEnabled(!PreferenceStore.Instance.imageMultiPanelEnabled);
+        const preferenceStore = PreferenceStore.Instance;
+        if (preferenceStore.imageMultiPanelEnabled) {
+            preferenceStore.setPreference(PreferenceKeys.CHANNEL_MAP_ENABLED, true);
+            AppStore.Instance.channelMapStore.masterFrame?.overlayStore.setIsChannelMap(true); // need to fix
+            this.setImageMultiPanelEnabled(!preferenceStore.imageMultiPanelEnabled);
+        } else if (preferenceStore.channelMapEnabled) {
+            preferenceStore.setPreference(PreferenceKeys.CHANNEL_MAP_ENABLED, false);
+            AppStore.Instance.channelMapStore.masterFrame?.overlayStore.setIsChannelMap(false); // need to fix
+            this.updateImagePanelButton();
+            AppStore.Instance.channelMapStore.masterFrame?.overlayStore.clearViewDimension(); // need to fix
+        } else {
+            this.setImageMultiPanelEnabled(!preferenceStore.imageMultiPanelEnabled);
+        }
+        console.log(preferenceStore.imageMultiPanelEnabled, preferenceStore.channelMapEnabled)
     };
 
     setImageMultiPanelEnabled = (multiPanelEnabled: boolean) => {
@@ -900,11 +913,13 @@ export class WidgetsStore {
     };
 
     private getImagePanelButtonTooltip = (imagePanelMode: ImagePanelMode) => {
-        return imagePanelMode === ImagePanelMode.None ? "switch to multi-panel" : "switch to single panel";
+        // return PreferenceStore.Instance.channelMapEnabled ? "switch to single-panel" : (imagePanelMode === ImagePanelMode.None ? "switch to multi-panel" : "switch to channel map");
+        return imagePanelMode === ImagePanelMode.None ? (PreferenceStore.Instance.channelMapEnabled ? "switch to single-panel" : "switch to multi-panel") : "switch to channel map";
     };
 
     private getImagePanelButtonIcon = (imagePanelMode: ImagePanelMode) => {
-        return imagePanelMode === ImagePanelMode.None ? "bp3-icon-square" : "bp3-icon-grid-view";
+        // return PreferenceStore.Instance.channelMapEnabled ? "bp3-icon-heat-grid" : (imagePanelMode === ImagePanelMode.None ?  "bp3-icon-square" : "bp3-icon-grid-view");
+        return imagePanelMode === ImagePanelMode.None ? (PreferenceStore.Instance.channelMapEnabled ? "bp3-icon-heat-grid" : "bp3-icon-square") : "bp3-icon-grid-view";
     };
 
     onNextPageClick = () => {
@@ -913,6 +928,7 @@ export class WidgetsStore {
         if (appStore.frames?.length > firstIndexInNextPage) {
             appStore.setActiveFrameByIndex(firstIndexInNextPage);
         }
+        // If channel map, and next page clicked
     };
 
     onPreviousPageClick = () => {
@@ -921,6 +937,7 @@ export class WidgetsStore {
             const firstIndexInPreviousPage = (appStore.currentImagePage - 1) * appStore.imagesPerPage;
             appStore.setActiveFrameByIndex(firstIndexInPreviousPage);
         }
+        // If channel map, and previous page clicked
     };
 
     updateImagePanelPageButtons = () => {

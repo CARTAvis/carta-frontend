@@ -60,6 +60,7 @@ import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetSt
 import {clamp, distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
 
 import GitCommit from "../../static/gitInfo";
+import { ChannelMapStore } from "components/ImageView/ChannelMapView/ChannelMapViewComponent";
 
 interface FrameOption extends IOptionProps {
     hasZAxis: boolean;
@@ -112,6 +113,7 @@ export class AppStore {
     readonly preferenceStore: PreferenceStore;
     readonly widgetsStore: WidgetsStore;
     readonly imageFittingStore: ImageFittingStore;
+    readonly channelMapStore: ChannelMapStore;
 
     // WebAssembly Module status
     @observable astReady: boolean;
@@ -531,6 +533,8 @@ export class AppStore {
         this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfo.type, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes, generated);
 
         let newFrame = new FrameStore(frameInfo);
+
+        this.channelMapStore.setMasterFrame(newFrame);
 
         // Place frame in frame array (replace frame with the same ID if it exists)
         const existingFrameIndex = this.frames.findIndex(f => f.frameInfo.fileId === ack.fileId);
@@ -1585,7 +1589,9 @@ export class AppStore {
                 // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
                 const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
                 const compressionQuality = bunitVariant.includes(frame.headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
-                this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, compressionQuality, true);
+                // testing using arbitrary channel range
+                // this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, compressionQuality, true, {min: frame.channel, max: frame.channel + 8});
+                this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, compressionQuality, true, {min: frame.channel, max: frame.channel + this.channelMapStore.numChannels - 1});
             } else {
                 this.tileService.updateHiddenFileChannels(frame.frameInfo.fileId, frame.channel, frame.stokes);
             }
@@ -1711,6 +1717,7 @@ export class AppStore {
         this.overlayStore = ImageViewerSettingStore.Instance;
         this.widgetsStore = WidgetsStore.Instance;
         this.imageFittingStore = ImageFittingStore.Instance;
+        this.channelMapStore = ChannelMapStore.Instance;
 
         this.astReady = false;
         this.cartaComputeReady = false;

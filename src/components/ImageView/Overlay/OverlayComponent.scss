@@ -1,6 +1,6 @@
 .overlay-canvas {
     position: absolute;
-
+    border: 1px solid yellow;
     &.docked {
         z-index: 2;
     }

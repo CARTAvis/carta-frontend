@@ -6,12 +6,14 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {Point2D, Zoom} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, Padding, WidgetProps} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpType, Padding, PreferenceKeys, PreferenceStore, WidgetProps} from "stores";
 import {toFixed} from "utilities";
 
 import {ImagePanelComponent} from "./ImagePanel/ImagePanelComponent";
 
 import "./ImageViewComponent.scss";
+import { ChannelMapViewComponent } from "./ChannelMapView/ChannelMapViewComponent";
+import { TileWebGLService } from "services";
 
 export enum ImageViewLayer {
     RegionCreating = "regionCreating",
@@ -177,11 +179,27 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     @computed get panels() {
         const appStore = AppStore.Instance;
         const visibleFrames = appStore.visibleFrames;
+        const channelMapStore = appStore.channelMapStore;
         this.imagePanelRefs = [];
         if (!visibleFrames) {
             return [];
         }
-        return visibleFrames.map((frame, index) => {
+        
+        return PreferenceStore.Instance.channelMapEnabled && !PreferenceStore.Instance.imageMultiPanelEnabled ? 
+        [
+            <div id={`image-panel`}>
+                <ChannelMapViewComponent
+                    frame={visibleFrames[0]}
+                    gl={TileWebGLService.Instance.gl}
+                    docked={this.props.docked}
+                    channelMapStore={channelMapStore}
+                    renderWidth={appStore.overlayStore.fullViewWidth}
+                    renderHeight={appStore.overlayStore.fullViewHeight}
+                />
+            </div>
+    ]
+        : 
+        visibleFrames.map((frame, index) => {
             const column = index % appStore.numImageColumns;
             const row = Math.floor(index / appStore.numImageColumns);
 
@@ -198,7 +216,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         } else if (!appStore.astReady) {
             divContents = <NonIdealState icon={<Spinner className="astLoadingSpinner" />} title={"Loading AST Library"} />;
         } else {
-            const effectiveImageSize = {x: Math.floor(appStore.visibleFrames[0].overlayStore.renderWidth), y: Math.floor(appStore.visibleFrames[0].overlayStore.renderHeight)};
+            // need to update here, should not use visibleFrames
+            const effectiveImageSize = {x: Math.floor(appStore.visibleFrames[0]?.overlayStore.renderWidth), y: Math.floor(appStore.visibleFrames[0]?.overlayStore.renderHeight)};
             const ratio = effectiveImageSize.x / effectiveImageSize.y;
             const gridSize = {x: appStore.numImageColumns, y: appStore.numImageRows};
 

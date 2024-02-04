@@ -1024,8 +1024,8 @@ export class OverlayStore {
     // }
 
     // View size options
-    @observable fullViewWidth: number;
-    @observable fullViewHeight: number;
+    @observable _fullViewWidth: number;
+    @observable _fullViewHeight: number;
     @observable base: number;
     @observable defaultGap: number;
     @observable isChannelMap: boolean;
@@ -1043,7 +1043,7 @@ export class OverlayStore {
     @observable colorbar: OverlayColorbarSettings;
     @observable beam: OverlayBeamSettings;
 
-    public constructor(fullViewWidth?: number, fullViewHeight?: number, base: number = 5, defaultGap: number = 5) {
+    public constructor(fullViewWidth?: number, fullViewHeight?: number, base: number = 5, defaultGap: number = 5, leftLabelHidden: boolean = false, leftNumberHidden: boolean = false, bottomLabelHidden: boolean = false, bottomNumberHidden: boolean = false, isChannelMap: boolean = false) {
         makeObservable(this);
         this.imageViewerSettingStore = ImageViewerSettingStore.Instance;
         this.global = this.imageViewerSettingStore.global;
@@ -1056,10 +1056,15 @@ export class OverlayStore {
         this.ticks = this.imageViewerSettingStore.ticks;
         this.colorbar = this.imageViewerSettingStore.colorbar;
         this.beam = this.imageViewerSettingStore.beam;
-        this.fullViewWidth = fullViewWidth;
-        this.fullViewHeight = fullViewHeight;
+        this._fullViewWidth = fullViewWidth;
+        this._fullViewHeight = fullViewHeight;
         this.base = base;
         this.defaultGap = defaultGap;
+        this.labels.leftHidden = leftLabelHidden;
+        this.labels.bottomHidden = bottomLabelHidden;
+        this.numbers.leftHidden = leftNumberHidden;
+        this.numbers.bottomHidden = bottomNumberHidden;
+        this.isChannelMap = isChannelMap;
 
         // if the system is manually selected, set new default formats & update active frame's wcs settings
         autorun(() => {
@@ -1094,9 +1099,24 @@ export class OverlayStore {
         });
     }
 
+    @computed get fullViewWidth() {
+        return this._fullViewWidth;
+        // return this.isChannelMap ? this._fullViewWidth : this.imageViewerSettingStore.fullViewWidth;
+    };
+
+    @computed get fullViewHeight() {
+        return this._fullViewHeight;
+        // return this.isChannelMap ? this._fullViewHeight : this.imageViewerSettingStore.fullViewHeight;
+    };
+
     @action setViewDimension = (width: number, height: number) => {
-        this.fullViewWidth = width;
-        this.fullViewHeight = height;
+        this._fullViewWidth = width;
+        this._fullViewHeight = height;
+    };
+
+    @action clearViewDimension = () => {
+        this._fullViewHeight = undefined;
+        this._fullViewWidth = undefined;
     };
 
     @action setBase = (base: number) => {
@@ -1167,7 +1187,7 @@ export class OverlayStore {
         return (this.labels.bottomHidden || this.labels.leftHidden) && (this.numbers.bottomHidden || this.numbers.leftHidden) && this.imageViewerSettingStore.title.hidden && this.isChannelMap;
     }
 
-    public styleString(frame?: FrameStore) {
+    public styleString(frame?: FrameStore, renderWidth?: number, renderHeight?: number) {
         let astString = new ASTSettingsString();
         astString.addSection(this.imageViewerSettingStore.global.styleString(frame));
         astString.addSection(this.imageViewerSettingStore.title.styleString);
@@ -1179,17 +1199,17 @@ export class OverlayStore {
         astString.addSection(this.labels.styleString);
 
         astString.add("LabelUp", 0);
-        astString.add("TitleGap", this.titleGap / this.minSize(frame));
-        astString.add("NumLabGap", this.defaultGap / this.minSize(frame));
-        astString.add("TextLabGap", this.cumulativeLabelGap / this.minSize(frame));
+        astString.add("TitleGap", this.titleGap / this.minSize(frame, renderWidth, renderHeight));
+        astString.add("NumLabGap", this.defaultGap / this.minSize(frame, renderWidth, renderHeight));
+        astString.add("TextLabGap", this.cumulativeLabelGap / this.minSize(frame, renderWidth, renderHeight));
         astString.add("TextGapType", "plot");
         frame ? astString.addSection(frame.distanceMeasuring?.styleString) : astString.addSection(AppStore.Instance.activeFrame?.distanceMeasuring?.styleString);
 
         return astString.toString();
     }
 
-    @action minSize(frame?: FrameStore) {
-        return Math.min(frame.renderWidth || this.renderWidth, frame.renderHeight || this.renderHeight);
+    @action minSize(frame?: FrameStore, renderWidth?: number, renderHeight?: number) {
+        return Math.min(renderWidth || frame.renderWidth || this.renderWidth, renderHeight || frame.renderHeight || this.renderHeight);
     }
 
     @computed get showNumbers() {
@@ -1219,7 +1239,7 @@ export class OverlayStore {
     }
 
     @computed get paddingLeft(): number {
-        return this.base + this.numberWidth + this.labelWidth;
+        return (this.numbers.leftShow || this.labels.leftShow) ?  this.base + this.numberWidth + this.labelWidth : 0;
     }
 
     @computed get paddingRight(): number {
@@ -1227,11 +1247,11 @@ export class OverlayStore {
     }
 
     @computed get paddingTop(): number {
-        return this.base + (!this.isChannelMap || this.imageViewerSettingStore.title.show ? this.titleGap + this.imageViewerSettingStore.title.fontSize : this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0);
+        return this.base + (this.imageViewerSettingStore.title.show ? this.titleGap + this.imageViewerSettingStore.title.fontSize : this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0);
     }
 
     @computed get paddingBottom(): number {
-        return this.base + this.numberWidth + this.labelWidth + (this.colorbar.visible && this.colorbar.position === "bottom" ? this.colorbar.totalWidth : 0) + this.colorbarHoverInfoHeight;
+        return (this.numbers.bottomShow || this.labels.bottomShow) ? this.base + this.numberWidth + this.labelWidth + (this.colorbar.visible && this.colorbar.position === "bottom" ? this.colorbar.totalWidth : 0) + this.colorbarHoverInfoHeight : 0;
     }
 
     @computed get padding(): Padding {
@@ -1243,12 +1263,13 @@ export class OverlayStore {
         };
     }
 
+    // We have to choose between custom view size or default view size. If fullViewWidth and fullViewHeight are defined, then we use them, otherwise, use imageViewerSetting.
     @computed get viewWidth() {
-        return Math.floor(this.fullViewWidth || this.imageViewerSettingStore.fullViewWidth / AppStore.Instance.numImageColumns);
+        return Math.floor(this.fullViewWidth || (this.imageViewerSettingStore.fullViewWidth / AppStore.Instance.numImageColumns));
     }
 
     @computed get viewHeight() {
-        return Math.floor(this.fullViewHeight || this.imageViewerSettingStore.fullViewHeight / AppStore.Instance.numImageRows);
+        return Math.floor(this.fullViewHeight || (this.imageViewerSettingStore.fullViewHeight / AppStore.Instance.numImageRows));
     }
 
     @computed get renderWidth() {

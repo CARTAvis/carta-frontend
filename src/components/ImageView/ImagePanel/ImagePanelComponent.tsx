@@ -127,7 +127,6 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
 
     render() {
         const appStore = AppStore.Instance;
-        const overlayStore = appStore.overlayStore;
         const activeLayer = appStore.activeLayer;
 
         const frame = this.props.frame;
@@ -156,11 +155,9 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                 }
             }
 
-            // const channelFrames = [frame, frame, frame, frame, frame, frame] // using one frame to mock the array of frames at different channels
-
             return (
                 <div id={`image-panel-${this.props.column}-${this.props.row}`} className={className} style={style} onWheel={this.onMouseWheel} onMouseDown={this.onMouseDown} onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-                    {/* <RasterViewComponent
+                    <RasterViewComponent
                         frame={frame}
                         overlayStore={frame.overlayStore}
                         gl={frame.isPreview ? PreviewWebGLService.Instance.gl : TileWebGLService.Instance.gl}
@@ -174,21 +171,11 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                         rasterData={frame.previewPVRasterData}
                         numImageColumns={appStore.numImageColumns}
                         numImageRows={appStore.numImageRows}
-                    /> */}
-                    <ChannelMapViewComponent
-                        frame={frame}
-                        gl={TileWebGLService.Instance.gl}
-                        pixelHighlightValue={this.pixelHighlightValue}
-                        docked={this.props.docked}
-                        renderWidth={frame.overlayStore.imageViewerSettingStore.fullViewWidth}
-                        renderHeight={frame.overlayStore.imageViewerSettingStore.fullViewHeight}
-                        numImageColumn={3}
-                        numImageRow={3}
                     />
                     <ContourViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />
                     <VectorOverlayViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />
-                    {/* <OverlayComponent frame={frame} overlaySettings={overlayStore} docked={this.props.docked} /> */}
-                    {/* {this.cursorInfoRequired && frame.cursorInfo && (
+                    <OverlayComponent frame={frame} overlaySettings={frame?.overlayStore} docked={this.props.docked} />
+                    {this.cursorInfoRequired && frame.cursorInfo && (
                         <CursorOverlayComponent
                             cursorInfo={frame.cursorInfo}
                             cursorValue={frame.cursorInfo.isInsideImage ? (frame.isPreview ? frame.previewCursorValue.value : frame.cursorValue.value) : undefined}
@@ -204,11 +191,11 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                             cursorValueToPercentage={frame.requiredUnit === "%"}
                             isPreview={frame.isPreview}
                         />
-                    )} */}
+                    )}
                     {frame.overlayStore.colorbar.visible && <ColorbarComponent frame={frame} onCursorHoverValueChanged={this.setPixelHighlightValue} />}
                     <BeamProfileOverlayComponent frame={frame} top={frame.overlayStore.padding.top} left={frame.overlayStore.padding.left} docked={this.props.docked} padding={10} />
                     <CatalogViewGLComponent frame={frame} docked={this.props.docked} />
-                    {/* <RegionViewComponent
+                    <RegionViewComponent
                         ref={this.getRegionViewRef}
                         frame={frame}
                         width={frame.renderWidth}
@@ -219,7 +206,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                         overlaySettings={frame.overlayStore}
                         dragPanningEnabled={appStore.preferenceStore.dragPanning}
                         docked={this.props.docked && activeLayer !== ImageViewLayer.Catalog}
-                    /> */}
+                    />
                     {!(appStore.animatorStore.animationActive && appStore.animatorStore.animationMode === AnimationMode.FRAME) && (
                         <ToolbarComponent
                             docked={this.props.docked}
