@@ -4,7 +4,7 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
-import {AppStore, BrowserMode} from "stores";
+import {AppStore, BrowserMode, DialogId} from "stores";
 import {RegionMode} from "stores/Frame";
 
 // There are some issues with the Blueprint hotkey target decorator, so this rather hacky workaround is needed for now
@@ -17,7 +17,14 @@ export class HotkeyContainer extends React.Component {
         const className = classNames("bp3-hotkey-dialog", {"bp3-dark": appStore.darkTheme});
 
         return (
-            <Dialog portalClassName="dialog-portal" isOpen={appStore.dialogStore.hotkeyDialogVisible} className={className} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={appStore.dialogStore.hideHotkeyDialog}>
+            <Dialog
+                portalClassName="dialog-portal"
+                isOpen={appStore.dialogStore.dialogVisible.get(DialogId.Hotkey)}
+                className={className}
+                canEscapeKeyClose={true}
+                canOutsideClickClose={true}
+                onClose={() => appStore.dialogStore.hideDialog(DialogId.Hotkey)}
+            >
                 <div className={Classes.DIALOG_BODY}>{HotkeyContainer.RenderHotkeys()}</div>
             </Dialog>
         );
