@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {CustomIcon} from "icons/CustomIcons";
-import {AppStore, HelpType} from "stores";
+import {AppStore, DialogId, HelpType} from "stores";
 import {RegionStore} from "stores/Frame";
 
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
@@ -41,9 +41,14 @@ export class RegionDialogComponent extends React.Component {
     private static readonly MissingRegionNode = (<NonIdealState icon={"folder-open"} title={"No region selected"} description={"Select a region using the list or image view"} />);
     private static readonly InvalidRegionNode = (<NonIdealState icon={"error"} title={"Region not supported"} description={"The selected region does not have any editable properties"} />);
 
+    private static readonly DefaultWidth = 525;
+    private static readonly DefaultHeight = 575;
+    private static readonly MinWidth = 450;
+    private static readonly MinHeight = 300;
+
     private handleDeleteClicked = () => {
         const appStore = AppStore.Instance;
-        appStore.dialogStore.hideRegionDialog();
+        appStore.dialogStore.hideDialog(DialogId.Region);
         if (appStore.activeFrame && appStore.activeFrame.regionSet.selectedRegion) {
             appStore.deleteRegion(appStore.activeFrame.regionSet.selectedRegion);
         }
@@ -59,8 +64,7 @@ export class RegionDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: true,
             lazy: true,
-            isOpen: appStore.dialogStore.regionDialogVisible,
-            onClose: appStore.dialogStore.hideRegionDialog,
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Region),
             className: "region-dialog",
             canEscapeKeyClose: true,
             title: "No region selected"
@@ -138,7 +142,16 @@ export class RegionDialogComponent extends React.Component {
         );
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.REGION_DIALOG} defaultWidth={525} defaultHeight={575} minHeight={300} minWidth={450} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                helpType={HelpType.REGION_DIALOG}
+                defaultWidth={RegionDialogComponent.DefaultWidth}
+                defaultHeight={RegionDialogComponent.DefaultHeight}
+                minHeight={RegionDialogComponent.MinHeight}
+                minWidth={RegionDialogComponent.MinWidth}
+                enableResizing={true}
+                dialogId={DialogId.Region}
+            >
                 <div className={Classes.DIALOG_BODY}>{bodyContent}</div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>

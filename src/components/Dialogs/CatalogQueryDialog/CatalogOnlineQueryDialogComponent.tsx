@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, SafeNumericInput} from "components/Shared";
 import {CatalogApiService, CatalogDatabase} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, HelpType, NUMBER_FORMAT_LABEL, RadiusUnits, SystemType, VizierItem} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, DialogId, HelpType, NUMBER_FORMAT_LABEL, RadiusUnits, SystemType, VizierItem} from "stores";
 import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
 import "./CatalogOnlineQueryDialogComponent.scss";
@@ -77,8 +77,7 @@ export class CatalogQueryDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.catalogQueryDialogVisible,
-            onClose: appStore.dialogStore.hideCatalogQueryDialog,
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.CatalogQuery),
             title: "Online Catalog Query"
         };
 
@@ -92,6 +91,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                     minWidth={CatalogQueryDialogComponent.MinWidth}
                     minHeight={CatalogQueryDialogComponent.MinHeight}
                     enableResizing={true}
+                    dialogId={DialogId.CatalogQuery}
                 >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </DraggableDialogComponent>
@@ -261,6 +261,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                 minWidth={CatalogQueryDialogComponent.MinWidth}
                 minHeight={CatalogQueryDialogComponent.MinHeight}
                 enableResizing={true}
+                dialogId={DialogId.CatalogQuery}
             >
                 <div className="bp3-dialog-body">{configBoard}</div>
                 <Overlay autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={disable} usePortal={false}>

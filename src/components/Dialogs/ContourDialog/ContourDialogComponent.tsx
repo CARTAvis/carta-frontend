@@ -10,7 +10,7 @@ import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/
 import {LinePlotComponent, LinePlotComponentProps, SafeNumericInput, SCALING_POPOVER_PROPS} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import {Point2D} from "models";
-import {AppStore, HelpType} from "stores";
+import {AppStore, DialogId, HelpType} from "stores";
 import {FrameStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
 import {clamp, getColorForTheme, toExponential, toFixed} from "utilities";
@@ -283,8 +283,7 @@ export class ContourDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.contourDialogVisible,
-            onClose: appStore.dialogStore.hideContourDialog,
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Contour),
             className: "contour-dialog",
             canEscapeKeyClose: true,
             title: "Contour Configuration"
@@ -295,11 +294,12 @@ export class ContourDialogComponent extends React.Component {
                 <DraggableDialogComponent
                     dialogProps={dialogProps}
                     helpType={HelpType.CONTOUR}
-                    minWidth={ContourDialogComponent.MinWidth}
-                    minHeight={ContourDialogComponent.MinHeight}
                     defaultWidth={ContourDialogComponent.DefaultWidth}
                     defaultHeight={ContourDialogComponent.DefaultHeight}
+                    minWidth={ContourDialogComponent.MinWidth}
+                    minHeight={ContourDialogComponent.MinHeight}
                     enableResizing={true}
+                    dialogId={DialogId.Contour}
                 >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </DraggableDialogComponent>
@@ -479,11 +479,12 @@ export class ContourDialogComponent extends React.Component {
             <DraggableDialogComponent
                 dialogProps={dialogProps}
                 helpType={HelpType.CONTOUR}
-                minWidth={ContourDialogComponent.MinWidth}
-                minHeight={ContourDialogComponent.MinHeight}
                 defaultWidth={ContourDialogComponent.DefaultWidth}
                 defaultHeight={ContourDialogComponent.DefaultHeight}
+                minWidth={ContourDialogComponent.MinWidth}
+                minHeight={ContourDialogComponent.MinHeight}
                 enableResizing={true}
+                dialogId={DialogId.Contour}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup className={"source-menu"} inline={true} label="Data source">

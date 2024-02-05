@@ -1,10 +1,10 @@
 import * as React from "react";
-import {FormGroup, HTMLSelect, Intent, IOptionProps, Label, NumericInput, Switch, Text} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, Intent, IOptionProps, Label, Switch, Text} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
-import {ClearableNumericInputComponent} from "components/Shared";
+import {ClearableNumericInputComponent, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {FrequencyUnit, SpectralSystem} from "models";
 import {AppStore, FileBrowserStore} from "stores";
 
@@ -27,19 +27,13 @@ export class ImageSaveComponent extends React.Component {
     }
 
     @computed get validSaveSpectralRangeStart() {
-        const appStore = AppStore.Instance;
         const fileBrowser = FileBrowserStore.Instance;
-        const spectralRange = appStore.activeFrame?.channelValueBounds;
-        const valueAsNumber = parseFloat(fileBrowser.saveSpectralRange[0]);
-        return spectralRange?.min <= valueAsNumber && valueAsNumber <= parseFloat(fileBrowser.saveSpectralRange[1]);
+        return AppStore.Instance.activeFrame?.channelValueBounds?.min <= fileBrowser.saveSpectralStart && fileBrowser.saveSpectralStart <= fileBrowser.saveSpectralEnd;
     }
 
     @computed get validSaveSpectralRangeEnd() {
-        const appStore = AppStore.Instance;
         const fileBrowser = FileBrowserStore.Instance;
-        const spectralRange = appStore.activeFrame?.channelValueBounds;
-        const valueAsNumber = parseFloat(fileBrowser.saveSpectralRange[1]);
-        return parseFloat(fileBrowser.saveSpectralRange[0]) <= valueAsNumber && valueAsNumber <= spectralRange?.max;
+        return fileBrowser.saveSpectralStart <= fileBrowser.saveSpectralEnd && fileBrowser.saveSpectralEnd <= AppStore.Instance.activeFrame?.channelValueBounds?.max;
     }
 
     private onChangeShouldDropDegenerateAxes = () => {
@@ -52,11 +46,11 @@ export class ImageSaveComponent extends React.Component {
     };
 
     private handleSaveSpectralRangeStartChanged = (_valueAsNumber: number, valueAsString: string) => {
-        FileBrowserStore.Instance?.setSaveSpectralRangeMin(valueAsString);
+        FileBrowserStore.Instance?.setSaveSpectralStart(_valueAsNumber);
     };
 
     private handleSaveSpectralRangeEndChanged = (_valueAsNumber: number, valueAsString: string) => {
-        FileBrowserStore.Instance?.setSaveSpectralRangeMax(valueAsString);
+        FileBrowserStore.Instance?.setSaveSpectralEnd(_valueAsNumber);
     };
 
     updateSpectralCoordinate(coordStr: string): void {
@@ -139,21 +133,6 @@ export class ImageSaveComponent extends React.Component {
                 label: `${region.name ? region.name : region.regionId} (${CARTA.RegionType[region.regionType]})`
             }))
         );
-        // Global value of Spectral Coordinate System and Unit
-        const nativeSpectralCoordinate = activeFrame ? activeFrame.nativeSpectralCoordinate : undefined;
-        const spectralCoordinateOptions: IOptionProps[] =
-            activeFrame && activeFrame.spectralCoordsSupported
-                ? Array.from(activeFrame.spectralCoordsSupported.keys()).map((coord: string) => {
-                      return {value: coord, label: coord === nativeSpectralCoordinate ? coord + " (Native WCS)" : coord};
-                  })
-                : [];
-        const spectralSystemOptions: IOptionProps[] =
-            activeFrame && activeFrame.spectralSystemsSupported
-                ? activeFrame.spectralSystemsSupported.map(system => {
-                      return {value: system, label: system};
-                  })
-                : [];
-        // Calculate a small step size
         const numChannels = activeFrame?.numChannels;
         const min = activeFrame?.channelValueBounds?.min ?? 0;
         const max = activeFrame?.channelValueBounds?.max ?? 1;
@@ -174,23 +153,12 @@ export class ImageSaveComponent extends React.Component {
                         {numChannels > 1 && (
                             <React.Fragment>
                                 <div className="coordinate-select">
-                                    <FormGroup label={"Range unit"} inline={true}>
-                                        <HTMLSelect
-                                            value={activeFrame && (activeFrame.spectralCoordinate || "")}
-                                            options={spectralCoordinateOptions}
-                                            onChange={(event: React.FormEvent<HTMLSelectElement>) => this.updateSpectralCoordinate(event.currentTarget.value as string)}
-                                        />
-                                        <HTMLSelect
-                                            value={activeFrame && (activeFrame.spectralSystem || "")}
-                                            options={spectralSystemOptions}
-                                            onChange={(event: React.FormEvent<HTMLSelectElement>) => this.updateSpectralSystem(event.currentTarget.value as SpectralSystem)}
-                                        />
-                                    </FormGroup>
+                                    <SpectralSettingsComponent frame={activeFrame} onSpectralCoordinateChange={this.updateSpectralCoordinate} onSpectralSystemChange={this.updateSpectralSystem} disable={false} customLabel="Range unit" />
                                 </div>
                                 <div className="range-select">
                                     <FormGroup label={"Range from"} inline={true}>
-                                        <NumericInput
-                                            value={fileBrowser.saveSpectralRange[0]}
+                                        <SafeNumericInput
+                                            value={fileBrowser.saveSpectralStart}
                                             buttonPosition="none"
                                             placeholder="First channel"
                                             onValueChange={this.handleSaveSpectralRangeStartChanged}
@@ -203,8 +171,8 @@ export class ImageSaveComponent extends React.Component {
                                         <Label>{activeFrame.spectralUnit ? `(${activeFrame.spectralUnit})` : ""}</Label>
                                     </FormGroup>
                                     <FormGroup label={"Range to"} inline={true}>
-                                        <NumericInput
-                                            value={fileBrowser.saveSpectralRange[1]}
+                                        <SafeNumericInput
+                                            value={fileBrowser.saveSpectralEnd}
                                             buttonPosition="none"
                                             placeholder="Last channel"
                                             onValueChange={this.handleSaveSpectralRangeEndChanged}

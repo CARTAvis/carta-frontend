@@ -3,7 +3,26 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {MemoryUnit} from "components/Dialogs";
-import {CARTA_INFO, CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, ImagePanelMode, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
+import {
+    CARTA_INFO,
+    CompressionQuality,
+    CursorInfoVisibility,
+    CursorPosition,
+    Event,
+    FileFilterMode,
+    getEventList,
+    ImagePanelMode,
+    PresetLayout,
+    RegionCreationMode,
+    SpectralType,
+    Theme,
+    TileCache,
+    WCSMatching,
+    WCSMatchingType,
+    WCSType,
+    Zoom,
+    ZoomPoint
+} from "models";
 import {ApiService} from "services";
 import {TelemetryMode} from "services/TelemetryService";
 import {BeamType, FileFilteringType} from "stores";
@@ -255,6 +274,9 @@ const DEFAULTS = {
     }
 };
 
+/**
+ * The store manages the preference setting
+ */
 export class PreferenceStore {
     private static staticInstance: PreferenceStore;
 
@@ -266,7 +288,11 @@ export class PreferenceStore {
     }
 
     @observable preferences: Map<PreferenceKeys, any>;
-    @observable supportsServer: boolean;
+
+    /**
+     * Whether the preference data is initialized from the preference file or localStorage.
+     */
+    @observable preferenceReady: boolean = false;
 
     // getters for global settings
     @computed get theme(): string {
@@ -316,6 +342,13 @@ export class PreferenceStore {
     @computed get autoWCSMatching(): WCSMatchingType {
         return this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING) ?? DEFAULTS.GLOBAL.autoWCSMatching;
     }
+
+    public isWCSMatchingEnabled = (matchingType: WCSMatchingType): boolean => {
+        if (WCSMatching.isTypeValid(matchingType) && matchingType & this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING)) {
+            return true;
+        }
+        return false;
+    };
 
     @computed get transparentImageBackground(): boolean {
         return this.preferences.get(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND) ?? DEFAULTS.GLOBAL.transparentImageBackground;
@@ -598,7 +631,7 @@ export class PreferenceStore {
     }
 
     public isEventLoggingEnabled = (eventType: CARTA.EventType): boolean => {
-        if (Event.isEventTypeValid(eventType)) {
+        if (Event.isTypeValid(eventType)) {
             const logEvents = this.preferences.get(PreferenceKeys.LOG_EVENT);
             if (logEvents && Array.isArray(logEvents)) {
                 return logEvents.includes(eventType);
@@ -702,6 +735,14 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.LATEST_RELEASE) ?? DEFAULTS.SILENT.latestRelease;
     }
 
+    /**
+     * Sets the preference parameter
+     *
+     * @param key - The enum of {@link PreferenceKeys}.
+     * @param value - The given value to the preference key except {@link PreferenceKeys.LOG_EVENT} and {@link PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING}. For {@link PreferenceKeys.LOG_EVENT}, the input value should be an enum {@link CARTA.EventType}, functioning as a toggle for an element within the {@link PreferenceKeys.LOG_EVENT}. For {@link PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING}, the input value should be a {@link WCSMatchingType} enum or a sum of the enums, functioning as an exclusive OR value for {@link PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING}.
+     * @returns false if the key or value is not valid; yield a result using {@link ApiService.Instance.setPreference}
+     */
+
     @flow.bound *setPreference(key: PreferenceKeys, value: any) {
         if (!key) {
             return false;
@@ -709,27 +750,31 @@ export class PreferenceStore {
 
         // set preference in variable
         if (key === PreferenceKeys.LOG_EVENT) {
-            if (!Event.isEventTypeValid(value)) {
+            if (!Event.isTypeValid(value)) {
                 return false;
             }
-            let eventList = this.preferences.get(PreferenceKeys.LOG_EVENT);
-            if (!eventList || !Array.isArray(eventList)) {
-                eventList = [];
-            }
-            if (eventList.includes(value)) {
-                eventList = eventList.filter(e => e !== value);
-            } else {
-                eventList.push(value);
-            }
+            const eventList = getEventList(this.preferences.get(PreferenceKeys.LOG_EVENT), value);
             this.preferences.set(PreferenceKeys.LOG_EVENT, eventList);
             return yield ApiService.Instance.setPreference(PreferenceKeys.LOG_EVENT, eventList);
+        } else if (key === PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING) {
+            if (!WCSMatching.isTypeValid(value)) {
+                return false;
+            }
+            let binaryNumber = this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING);
+            const binaryNumberNew = (binaryNumber ^= value);
+            this.preferences.set(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, binaryNumberNew);
+            return yield ApiService.Instance.setPreference(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, binaryNumberNew);
         } else {
             this.preferences.set(key, value);
+            return yield ApiService.Instance.setPreference(key, value);
         }
-
-        return yield ApiService.Instance.setPreference(key, value);
     }
 
+    /**
+     * Clears the preference settings of the keys
+     *
+     * @param keys - keys of {@link PreferenceKeys}
+     */
     @flow.bound *clearPreferences(keys: PreferenceKeys[]) {
         for (const key of keys) {
             this.preferences.delete(key);
@@ -752,6 +797,9 @@ export class PreferenceStore {
         ]);
     };
 
+    /**
+     * Resets the Global preference settings
+     */
     @action resetGlobalSettings = () => {
         this.clearPreferences([
             PreferenceKeys.GLOBAL_THEME,
@@ -771,6 +819,9 @@ export class PreferenceStore {
         ]);
     };
 
+    /**
+     * Resets the render configuration settings
+     */
     @action resetRenderConfigSettings = () => {
         this.clearPreferences([
             PreferenceKeys.RENDER_CONFIG_COLORMAP,
@@ -784,6 +835,9 @@ export class PreferenceStore {
         ]);
     };
 
+    /**
+     * Resets the contour configuration settings
+     */
     @action resetContourConfigSettings = () => {
         this.clearPreferences([
             PreferenceKeys.CONTOUR_CONFIG_COLOR,
@@ -797,6 +851,9 @@ export class PreferenceStore {
         ]);
     };
 
+    /**
+     * Resets the vector overlay configuration settings
+     */
     @action resetVectorOverlayConfigSettings = () => {
         this.clearPreferences([
             PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING,
@@ -808,6 +865,9 @@ export class PreferenceStore {
         ]);
     };
 
+    /**
+     * Resets the overlay configuration settings
+     */
     @action resetOverlayConfigSettings = () => {
         this.clearPreferences([
             PreferenceKeys.WCS_OVERLAY_AST_COLOR,
@@ -828,10 +888,16 @@ export class PreferenceStore {
         ]);
     };
 
+    /**
+     * Resets the region settings
+     */
     @action resetRegionSettings = () => {
         this.clearPreferences([PreferenceKeys.REGION_COLOR, PreferenceKeys.REGION_CREATION_MODE, PreferenceKeys.REGION_DASH_LENGTH, PreferenceKeys.REGION_LINE_WIDTH, PreferenceKeys.REGION_TYPE, PreferenceKeys.REGION_SIZE]);
     };
 
+    /**
+     * Resets the annotation settings
+     */
     @action resetAnnotationSettings = () => {
         this.clearPreferences([
             PreferenceKeys.ANNOTATION_COLOR,
@@ -843,6 +909,9 @@ export class PreferenceStore {
         ]);
     };
 
+    /**
+     * Resets the preference settings
+     */
     @action resetPerformanceSettings = () => {
         this.clearPreferences([
             PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY,
@@ -862,10 +931,16 @@ export class PreferenceStore {
         ]);
     };
 
+    /**
+     * Resets the compatibility settings
+     */
     @action resetCompatibilitySettings = () => {
         this.clearPreferences([PreferenceKeys.COMPATIBILITY_AIPS_BEAM_SUPPORT]);
     };
 
+    /**
+     * Resets the all log events
+     */
     @action selectAllLogEvents = () => {
         if (this.isSelectingAllLogEvents || this.isSelectingIndeterminateLogEvents) {
             this.resetLogEventSettings();
@@ -874,18 +949,30 @@ export class PreferenceStore {
         }
     };
 
+    /**
+     * Resets the log event setting
+     */
     @action resetLogEventSettings = () => {
         this.clearPreferences([PreferenceKeys.LOG_EVENT]);
     };
 
+    /**
+     * Resets the catalog settings
+     */
     @action resetCatalogSettings = () => {
         this.clearPreferences([PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION]);
     };
 
+    /**
+     * Resets the telemetry settings
+     */
     @action resetTelemetrySettings = () => {
         this.clearPreferences([PreferenceKeys.TELEMETRY_CONSENT_SHOWN, PreferenceKeys.TELEMETRY_MODE, PreferenceKeys.TELEMETRY_LOGGING]);
     };
 
+    /**
+     * Fetch the values of the preference keys
+     */
     @flow.bound *fetchPreferences() {
         yield this.upgradePreferences();
 
@@ -897,13 +984,14 @@ export class PreferenceStore {
                 this.preferences.set(key as PreferenceKeys, val);
             }
         }
+        this.preferenceReady = true;
     }
 
+    /**
+     * Perform localStorage upgrade by iterating over the old CARTA version keys. This list consists of keys that were present when CARTA used a single localStorage entry per key
+     */
     private upgradePreferences = async () => {
         if (!localStorage.getItem("preferences")) {
-            // perform localstorage upgrade by iterating over the old keys. This list consists of keys that were present when CARTA used a single localStorage entry per key
-
-            // Strings
             const stringKeys = [
                 PreferenceKeys.GLOBAL_THEME,
                 PreferenceKeys.GLOBAL_LAYOUT,
