@@ -21,15 +21,15 @@ export function isWCSStringFormatValid(wcsString: string, format: NumberFormatTy
     return decimalRegExp.test(wcsString);
 }
 
-export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry): number {
+export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry | undefined): number {
     if (!headerEntry) {
         return NaN;
     }
 
     if (headerEntry.entryType === CARTA.EntryType.FLOAT || headerEntry.entryType === CARTA.EntryType.INT) {
-        return headerEntry.numericValue;
+        return headerEntry.numericValue ?? NaN;
     } else {
-        return parseFloat(trimFitsComment(headerEntry.value));
+        return parseFloat(trimFitsComment(headerEntry.value ?? ""));
     }
 }
 
@@ -75,7 +75,7 @@ export function getFormattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: Po
     return null;
 }
 
-export function getPixelValueFromWCS(astTransform: AST.FrameSet, formattedWCSPoint: WCSPoint2D): Point2D {
+export function getPixelValueFromWCS(astTransform: AST.FrameSet, formattedWCSPoint: WCSPoint2D): Point2D | null {
     if (astTransform) {
         const pointWCS = AST.getWCSValueFromFormattedString(astTransform, formattedWCSPoint);
         return transformPoint(astTransform, pointWCS, false);

@@ -10,7 +10,8 @@ const migratedFiles = [
     "utilities/table",
     "utilities/templates",
     "utilities/tiling",
-    "utilities/units"
+    "utilities/units",
+    "utilities/wcs"
 ];
 
 module.exports = {
