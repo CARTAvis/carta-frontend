@@ -73,7 +73,7 @@ export function numericFiltering(columnData: Array<number>, dataIndexes: number[
         return [];
     }
 
-    let compareFunction = undefined;
+    let compareFunction: (data: number) => boolean;
     if (filter.operator === CARTA.ComparisonOperator.Equal && filter.values.length === 1) {
         compareFunction = (data: number): boolean => {
             return data - filter.values[0] === 0;
@@ -114,7 +114,7 @@ export function numericFiltering(columnData: Array<number>, dataIndexes: number[
         return [];
     }
 
-    let filteredDataIndexes = [];
+    let filteredDataIndexes: number[] = [];
     dataIndexes.forEach(dataIndex => {
         if (dataIndex >= 0 && dataIndex < columnData.length && compareFunction(columnData[dataIndex])) {
             filteredDataIndexes.push(dataIndex);
@@ -128,7 +128,7 @@ export function booleanFiltering(columnData: Array<boolean>, dataIndexes: number
         return [];
     }
 
-    let filteredDataIndexes = [];
+    let filteredDataIndexes: number[] = [];
     const trimmedLowercase = filterString?.trim()?.toLowerCase();
     if (trimmedLowercase === "t" || trimmedLowercase === "true") {
         dataIndexes.forEach(dataIndex => {
@@ -151,7 +151,7 @@ export function stringFiltering(columnData: Array<string>, dataIndexes: number[]
         return [];
     }
 
-    let filteredDataIndexes = [];
+    let filteredDataIndexes: number[] = [];
     dataIndexes.forEach(dataIndex => {
         if (dataIndex >= 0 && dataIndex < columnData.length && columnData[dataIndex]?.includes(filterString)) {
             filteredDataIndexes.push(dataIndex);
