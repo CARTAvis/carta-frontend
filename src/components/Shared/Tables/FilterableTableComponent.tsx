@@ -342,7 +342,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
             }
         });
 
-        const tableCheckData = this.props.dataset.get(lineSelectionIndex)?.data.map(data => data);
+        const tableCheckData = this.props.dataset.get(lineSelectionIndex)?.data.slice();
 
         const className = classNames("column-filter-table", {[Classes.DARK]: AppStore.Instance.darkTheme});
 

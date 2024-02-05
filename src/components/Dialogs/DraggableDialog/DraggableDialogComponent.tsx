@@ -22,7 +22,7 @@ export class ResizableDialogComponentProps {
 export class DraggableDialogComponent extends React.Component<ResizableDialogComponentProps> {
     private dd: HTMLDivElement;
     private rnd: Rnd;
-    private focusBoxIsFixed: boolean;
+    private focusBoxIsFixed: boolean = false;
 
     componentDidUpdate() {
         // workaround for blueprintjs(@4.8.0) bug, which the blue focus box suppressed to the top due to tabindex="0" replaced in DOM.
