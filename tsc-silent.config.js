@@ -5,7 +5,8 @@ const migratedFiles = [
     "utilities/export",
     "utilities/fitting_heuristics",
     "utilities/math",
-    "utilities/parsing"
+    "utilities/parsing",
+    "utilities/Processed"
 ];
 
 module.exports = {

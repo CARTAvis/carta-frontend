@@ -72,7 +72,7 @@ function getNumberFromFilterString(filterString: string): number | undefined {
 
 export function getComparisonOperatorAndValue(filterString: string): {operator: CARTA.ComparisonOperator; values: number[]} {
     const filter = filterString.replace(/\s/g, "");
-    let result: {operator: number, values: number[]} = {operator: -1, values: []};
+    let result: {operator: number; values: number[]} = {operator: -1, values: []};
     // order matters, since ... and .. both include .. (same for < and <=, > and >=)
     for (const key of Object.keys(ComparisonOperator)) {
         const operator = ComparisonOperator[key];

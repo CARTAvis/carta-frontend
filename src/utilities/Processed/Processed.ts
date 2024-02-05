@@ -5,11 +5,11 @@ export type TypedArray = Int8Array | Uint8Array | Int16Array | Uint16Array | Int
 export type ColumnArray = Array<string> | Array<boolean> | Array<number>;
 
 export interface ProcessedSpatialProfile extends CARTA.ISpatialProfile {
-    values: Float32Array;
+    values: Float32Array | null;
 }
 
 export interface ProcessedSpectralProfile extends CARTA.ISpectralProfile {
-    values: Float32Array | Float64Array;
+    values: Float32Array | Float64Array | null;
     progress: number;
 }
 
@@ -19,7 +19,7 @@ export interface ProcessedContourData {
     channel: number;
     stokes: number;
     progress: number;
-    contourSets: ProcessedContourSet[];
+    contourSets: ProcessedContourSet[] | null;
 }
 
 export interface ProcessedContourSet {
@@ -82,10 +82,18 @@ export class ProtobufProcessing {
     }
 
     static ProcessContourSet(contourSet: CARTA.IContourSet): ProcessedContourSet {
-        const isCompressed = contourSet.decimationFactor >= 1;
+        if (!contourSet.rawCoordinates || !contourSet.rawStartIndices || !contourSet.uncompressedCoordinatesSize) {
+            return {
+                level: contourSet.level ?? NaN,
+                indexOffsets: new Int32Array(),
+                coordinates: new Float32Array()
+            };
+        }
+
+        const isCompressed = contourSet.decimationFactor && contourSet.decimationFactor >= 1;
 
         let floatCoordinates: Float32Array;
-        if (isCompressed) {
+        if (isCompressed && contourSet.decimationFactor) {
             // Decode raw coordinates from Zstd-compressed binary to a float array
             floatCoordinates = CARTACompute.Decode(contourSet.rawCoordinates, contourSet.uncompressedCoordinatesSize, contourSet.decimationFactor);
         } else {
@@ -96,7 +104,7 @@ export class ProtobufProcessing {
         const indexOffsets = new Int32Array(contourSet.rawStartIndices.buffer.slice(contourSet.rawStartIndices.byteOffset, contourSet.rawStartIndices.byteOffset + contourSet.rawStartIndices.byteLength));
 
         return {
-            level: contourSet.level,
+            level: contourSet.level ?? NaN,
             indexOffsets,
             coordinates: floatCoordinates
         };
@@ -104,11 +112,11 @@ export class ProtobufProcessing {
 
     static ProcessContourData(contourData: CARTA.IContourImageData): ProcessedContourData {
         return {
-            fileId: contourData.fileId,
-            channel: contourData.channel,
-            stokes: contourData.stokes,
-            imageBounds: contourData.imageBounds,
-            progress: contourData.progress,
+            fileId: contourData.fileId ?? NaN,
+            channel: contourData.channel ?? NaN,
+            stokes: contourData.stokes ?? NaN,
+            imageBounds: contourData.imageBounds ?? undefined,
+            progress: contourData.progress ?? NaN,
             contourSets: contourData.contourSets ? contourData.contourSets.map(contourSet => this.ProcessContourSet(contourSet)) : null
         };
     }
@@ -117,44 +125,44 @@ export class ProtobufProcessing {
         let data: TypedArray;
         switch (column.dataType) {
             case CARTA.ColumnType.Uint8:
-                data = new Uint8Array(column.binaryData.slice().buffer);
+                data = column.binaryData ? new Uint8Array(column.binaryData.slice().buffer) : new Uint8Array();
                 break;
             case CARTA.ColumnType.Int8:
-                data = new Int8Array(column.binaryData.slice().buffer);
+                data = column.binaryData ? new Int8Array(column.binaryData.slice().buffer) : new Int8Array();
                 break;
             case CARTA.ColumnType.Uint16:
-                data = new Uint16Array(column.binaryData.slice().buffer);
+                data = column.binaryData ? new Uint16Array(column.binaryData.slice().buffer) : new Uint16Array();
                 break;
             case CARTA.ColumnType.Int16:
-                data = new Int16Array(column.binaryData.slice().buffer);
+                data = column.binaryData ? new Int16Array(column.binaryData.slice().buffer) : new Int16Array();
                 break;
             case CARTA.ColumnType.Uint32:
-                data = new Uint32Array(column.binaryData.slice().buffer);
+                data = column.binaryData ? new Uint32Array(column.binaryData.slice().buffer) : new Uint32Array();
                 break;
             case CARTA.ColumnType.Int32:
-                data = new Int32Array(column.binaryData.slice().buffer);
+                data = column.binaryData ? new Int32Array(column.binaryData.slice().buffer) : new Int32Array();
                 break;
             case CARTA.ColumnType.Float:
-                data = new Float32Array(column.binaryData.slice().buffer);
+                data = column.binaryData ? new Float32Array(column.binaryData.slice().buffer) : new Float32Array();
                 break;
             case CARTA.ColumnType.Double:
-                data = new Float64Array(column.binaryData.slice().buffer);
+                data = column.binaryData ? new Float64Array(column.binaryData.slice().buffer) : new Float64Array();
                 break;
             case CARTA.ColumnType.Int64:
-                data = CARTACompute.ConvertInt64Array(column.binaryData, true);
+                data = column.binaryData ? CARTACompute.ConvertInt64Array(column.binaryData, true) : new Float64Array();
                 break;
             case CARTA.ColumnType.Uint64:
-                data = CARTACompute.ConvertInt64Array(column.binaryData, false);
+                data = column.binaryData ? CARTACompute.ConvertInt64Array(column.binaryData, false) : new Float64Array();
                 break;
             case CARTA.ColumnType.Bool:
-                const array = new Uint8Array(column.binaryData.slice().buffer);
+                const array = column.binaryData ? new Uint8Array(column.binaryData.slice().buffer) : new Uint8Array();
                 const boolData = new Array<boolean>(array.length);
                 for (let i = boolData.length - 1; i >= 0; i--) {
                     boolData[i] = array[i] !== 0;
                 }
                 return {dataType: column.dataType, data: boolData};
             case CARTA.ColumnType.String:
-                return {dataType: column.dataType, data: column.stringData};
+                return {dataType: column.dataType, data: column.stringData ?? []};
             default:
                 return {dataType: CARTA.ColumnType.UnsupportedType, data: []};
         }
