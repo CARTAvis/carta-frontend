@@ -511,6 +511,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         onItemSelect={this.handleCatalogFileChange}
                         itemRenderer={this.renderFileIdPopOver}
                         popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
+                        fill={true}
                     >
                         <Button text={activeFileName} rightIcon="double-caret-vertical" disabled={disabledOverlayPanel} />
                     </Select>

@@ -408,6 +408,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                             items={appStore.frames}
                             itemRenderer={this.renderDataSourceSelectItem}
                             disabled={appStore.animatorStore.animationActive}
+                            fill={true}
                         >
                             <Button text={dataSource.filename} rightIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.animationActive} />
                         </DataSourceSelect>
