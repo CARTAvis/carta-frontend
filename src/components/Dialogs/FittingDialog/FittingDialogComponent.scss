@@ -58,9 +58,13 @@
             }
 
             .unpinned-input-panel {
-                height: calc(100% - 30px - 5px); // pane 1 h - footer h - unpinned inputs bottom margin
+                height: calc(100% - 30px - 10px); // pane 1 h - footer h - unpinned inputs bottom margin
                 margin-top: 0;
-                margin-bottom: 5px;
+                margin-bottom: 10px;
+            }
+
+            .#{$ns}-dialog-footer {
+                margin: 0 15px;
             }
         }
 
@@ -130,6 +134,7 @@
     .info-string {
         width: 100%;
         margin-left: 10px;
+        margin-top: 2px;
         font-size: x-small;
         font-family: monospace;
         user-select: text;
@@ -170,7 +175,7 @@
 
             .#{$ns}-tab-panel {
                 width: calc(100% - 125px);
-                height: 100%;
+                height: calc(100% - 15px);
                 padding-left: 10px;
 
                 .fitting-result-pre {
