@@ -10,7 +10,7 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {ColorPickerComponent, CoordinateComponent, CoordNumericInput, InputType, SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import {Point2D, WCSPoint2D} from "models";
-import {AppStore, DialogStore, HelpType} from "stores";
+import {AppStore, DialogId, DialogStore, HelpType} from "stores";
 import {CoordinateMode, DistanceMeasuringStore} from "stores/Frame";
 import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid, SWATCH_COLORS} from "utilities";
 
@@ -142,8 +142,7 @@ export class DistanceMeasuringDialog extends React.Component {
             className: "distance-measurement-dialog",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: dialogStore.distanceMeasuringDialogVisible,
-            onClose: dialogStore.hideDistanceMeasuringDialog,
+            isOpen: dialogStore.dialogVisible.get(DialogId.DistanceMeasure),
             title: `Distance Measurement (${frame?.filename})`
         };
 
@@ -189,11 +188,12 @@ export class DistanceMeasuringDialog extends React.Component {
             <DraggableDialogComponent
                 dialogProps={dialogProps}
                 helpType={HelpType.DISTANCE_MEASUREMENT}
-                minWidth={DistanceMeasuringDialog.MinWidth}
-                minHeight={DistanceMeasuringDialog.MinHeight}
                 defaultWidth={DistanceMeasuringDialog.DefaultWidth}
                 defaultHeight={DistanceMeasuringDialog.DefaultHeight}
+                minWidth={DistanceMeasuringDialog.MinWidth}
+                minHeight={DistanceMeasuringDialog.MinHeight}
                 enableResizing={true}
+                dialogId={DialogId.DistanceMeasure}
             >
                 <div className={Classes.DIALOG_BODY}>
                     {appStore.activeLayer === ImageViewLayer.DistanceMeasuring ? (

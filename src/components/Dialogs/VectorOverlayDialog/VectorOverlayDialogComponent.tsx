@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
-import {AppStore, HelpType} from "stores";
+import {AppStore, DialogId, HelpType} from "stores";
 import {FrameStore, VectorOverlaySource} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 
@@ -248,8 +248,7 @@ export class VectorOverlayDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.vectorOverlayDialogVisible,
-            onClose: appStore.dialogStore.hideVectorOverlayDialog,
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Vector),
             className: "vector-overlay-dialog",
             canEscapeKeyClose: true,
             title: "Vector Overlay Configuration"
@@ -265,6 +264,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                     defaultWidth={VectorOverlayDialogComponent.DefaultWidth}
                     defaultHeight={VectorOverlayDialogComponent.DefaultHeight}
                     enableResizing={true}
+                    dialogId={DialogId.Vector}
                 >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </DraggableDialogComponent>
@@ -392,11 +392,12 @@ export class VectorOverlayDialogComponent extends React.Component {
             <DraggableDialogComponent
                 dialogProps={dialogProps}
                 helpType={HelpType.VECTOR_OVERLAY}
-                minWidth={VectorOverlayDialogComponent.MinWidth}
-                minHeight={VectorOverlayDialogComponent.MinHeight}
                 defaultWidth={VectorOverlayDialogComponent.DefaultWidth}
                 defaultHeight={VectorOverlayDialogComponent.DefaultHeight}
+                minWidth={VectorOverlayDialogComponent.MinWidth}
+                minHeight={VectorOverlayDialogComponent.MinHeight}
                 enableResizing={true}
+                dialogId={DialogId.Vector}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Data source">

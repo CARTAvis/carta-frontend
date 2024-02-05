@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 import {ImageViewComponent, ImageViewLayer} from "components";
 import {AnnotationMenuComponent, ExportImageMenuComponent} from "components/Shared";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
-import {AppStore} from "stores";
+import {AppStore, DialogId} from "stores";
 import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
 import {OverlayStore, SystemType} from "stores/OverlayStore/OverlayStore";
 import {toFixed} from "utilities";
@@ -258,7 +258,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                         icon={<CustomIcon icon="distanceMeasuring" />}
                                         active={appStore.activeLayer === ImageViewLayer.DistanceMeasuring}
                                         onClick={handleDistanceMeasuringClicked}
-                                        onDoubleClick={dialogStore.showDistanceMeasuringDialog}
+                                        onDoubleClick={() => dialogStore.showDialog(DialogId.DistanceMeasure)}
                                     />
                                 </Tooltip>
                                 <Tooltip

@@ -50,6 +50,14 @@
         }
     }
 
+    .wcs-matching {
+        .#{$ns}-form-content {
+            display: flex;
+            flex-wrap: wrap;
+            box-sizing: content-box;
+        }
+    }
+
     .telemetry-callout {
         margin: 0 10px 20px 10px;
 

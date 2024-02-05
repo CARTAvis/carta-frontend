@@ -5,12 +5,17 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
-import {AppStore, HelpType} from "stores";
+import {AppStore, DialogId, HelpType} from "stores";
 
 import "./FileInfoDialogComponent.scss";
 
 @observer
 export class FileInfoDialogComponent extends React.Component {
+    private static readonly DefaultWidth = 800;
+    private static readonly DefaultHeight = 600;
+    private static readonly MinWidth = 400;
+    private static readonly MinHeight = 400;
+
     render() {
         const appStore = AppStore.Instance;
         const className = classNames("file-info-dialog", {[Classes.DARK]: appStore.darkTheme});
@@ -21,13 +26,21 @@ export class FileInfoDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.fileInfoDialogVisible,
-            onClose: appStore.dialogStore.hideFileInfoDialog,
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.FileInfo),
             title: "File Header"
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.FILE_INFO} minWidth={400} minHeight={400} defaultWidth={800} defaultHeight={600} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                helpType={HelpType.FILE_INFO}
+                defaultWidth={FileInfoDialogComponent.DefaultWidth}
+                defaultHeight={FileInfoDialogComponent.DefaultHeight}
+                minWidth={FileInfoDialogComponent.MinWidth}
+                minHeight={FileInfoDialogComponent.MinHeight}
+                enableResizing={true}
+                dialogId={DialogId.FileInfo}
+            >
                 <div className={Classes.DIALOG_BODY}>
                     <FileInfoComponent
                         infoTypes={[FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER]}

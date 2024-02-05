@@ -11,9 +11,9 @@ import tinycolor from "tinycolor2";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, SuccessToast} from "components/Shared";
-import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
+import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {TelemetryMode} from "services";
-import {AppStore, BeamType, HelpType, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, BeamType, DialogId, HelpType, PreferenceKeys, PreferenceStore} from "stores";
 import {ContourGeneratorType, FrameScaling, RegionStore, RenderConfigStore} from "stores/Frame";
 import {copyToClipboard, SWATCH_COLORS} from "utilities";
 
@@ -211,13 +211,16 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Enable drag-to-pan">
                     <Switch checked={preference.dragPanning} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_DRAG_PANNING, ev.currentTarget.checked)} />
                 </FormGroup>
-                <FormGroup inline={true} label="WCS matching on append">
-                    <HTMLSelect value={preference.autoWCSMatching} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, Number(ev.currentTarget.value))}>
-                        <option value={WCSMatchingType.NONE}>None</option>
-                        <option value={WCSMatchingType.SPATIAL}>Spatial only</option>
-                        <option value={WCSMatchingType.SPECTRAL}>Spectral only</option>
-                        <option value={WCSMatchingType.SPATIAL | WCSMatchingType.SPECTRAL}>Spatial and spectral</option>
-                    </HTMLSelect>
+                <FormGroup inline={true} label="Matching on append">
+                    {WCSMatching.MATCHING_TYPES.map(matchingType => (
+                        <Checkbox
+                            className="wcs-matching"
+                            key={matchingType}
+                            checked={preference.isWCSMatchingEnabled(matchingType)}
+                            label={WCSMatching.getNameFromType(matchingType)}
+                            onChange={() => preference.setPreference(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, matchingType)}
+                        />
+                    ))}
                 </FormGroup>
                 <FormGroup inline={true} label="Spectral matching">
                     <HTMLSelect value={preference.spectralMatchingType} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, ev.currentTarget.value)}>
@@ -802,7 +805,7 @@ export class PreferenceDialogComponent extends React.Component {
                             className="log-event-checkbox"
                             key={eventType}
                             checked={preference.isEventLoggingEnabled(eventType)}
-                            label={Event.getEventNameFromType(eventType)}
+                            label={Event.getNameFromType(eventType)}
                             onChange={() => preference.setPreference(PreferenceKeys.LOG_EVENT, eventType)}
                         />
                     ))}
@@ -882,8 +885,7 @@ export class PreferenceDialogComponent extends React.Component {
             className: className,
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.preferenceDialogVisible,
-            onClose: appStore.dialogStore.hidePreferenceDialog,
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Preference),
             title: "Preferences"
         };
 
@@ -896,6 +898,7 @@ export class PreferenceDialogComponent extends React.Component {
                 defaultWidth={PreferenceDialogComponent.DefaultWidth}
                 defaultHeight={PreferenceDialogComponent.DefaultHeight}
                 enableResizing={true}
+                dialogId={DialogId.Preference}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <Tabs id="preferenceTabs" vertical={true} selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>

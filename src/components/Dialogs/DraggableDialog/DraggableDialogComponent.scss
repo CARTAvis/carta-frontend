@@ -3,8 +3,6 @@
 .draggable-dialog {
     top: 0;
     left: 0;
-    position: fixed;
-    z-index: 100;
     user-select: none;
     .#{$ns}-overlay.#{$ns}-overlay-scroll-container.#{$ns}-overlay-inline {
         position: static;

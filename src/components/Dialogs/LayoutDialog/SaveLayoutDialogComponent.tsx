@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {PresetLayout} from "models";
-import {AppStore, HelpType} from "stores";
+import {AppStore, DialogId, HelpType} from "stores";
 
 import "./SaveLayoutDialogComponent.scss";
 
@@ -14,6 +14,11 @@ const KEYCODE_ENTER = 13;
 
 @observer
 export class SaveLayoutDialogComponent extends React.Component {
+    private static readonly DefaultWidth = 400;
+    private static readonly DefaultHeight = 185;
+    private static readonly MinWidth = 300;
+    private static readonly MinHeight = 150;
+
     @observable private layoutName: string = "";
 
     constructor(props: any) {
@@ -38,7 +43,7 @@ export class SaveLayoutDialogComponent extends React.Component {
     private saveLayout = async () => {
         const appStore = AppStore.Instance;
 
-        appStore.dialogStore.hideSaveLayoutDialog();
+        appStore.dialogStore.hideDialog(DialogId.Layout);
         appStore.layoutStore.setLayoutToBeSaved(this.layoutName.trim());
         if (appStore.layoutStore.layoutExists(this.layoutName)) {
             if (PresetLayout.isPreset(this.layoutName)) {
@@ -80,13 +85,21 @@ export class SaveLayoutDialogComponent extends React.Component {
             className: className,
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.saveLayoutDialogVisible,
-            onClose: appStore.dialogStore.hideSaveLayoutDialog,
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Layout),
             title: isSave ? "Save Layout" : `Rename Layout`
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.SAVE_LAYOUT} defaultWidth={400} defaultHeight={185} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                helpType={HelpType.SAVE_LAYOUT}
+                defaultWidth={SaveLayoutDialogComponent.DefaultWidth}
+                defaultHeight={SaveLayoutDialogComponent.DefaultHeight}
+                minWidth={SaveLayoutDialogComponent.MinWidth}
+                minHeight={SaveLayoutDialogComponent.MinHeight}
+                enableResizing={true}
+                dialogId={DialogId.Layout}
+            >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label={isSave ? "Save current layout as:" : `Rename ${appStore.layoutStore.oldLayoutName} to:`}>
                         <Tooltip isOpen={!this.isEmpty && !this.validName} position={Position.BOTTOM_LEFT} content={"Layout name should not contain ~, `, !, *, (, ), -, +, =, [, ., ', ?, <, >, /, |, \\, :, ; or &"}>

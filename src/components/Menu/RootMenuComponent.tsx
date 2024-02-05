@@ -10,7 +10,7 @@ import {AppToaster, ExportImageMenuComponent, SuccessToast} from "components/Sha
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import {CARTA_INFO, PresetLayout, Snippet} from "models";
 import {ApiService, ConnectionStatus} from "services";
-import {AppStore, BrowserMode, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
+import {AppStore, BrowserMode, DialogId, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
 import {FrameStore} from "stores/Frame";
 import {copyToClipboard, toFixed} from "utilities";
 
@@ -136,7 +136,7 @@ export class RootMenuComponent extends React.Component {
                 <Button className="snippet-run-button" small={true} minimal={true} icon={"play"} intent="success" disabled={appStore.snippetStore.isExecuting} onClick={ev => this.handleWidgetExecuteClicked(ev, snippet, name)} />
             );
 
-            const menuItem = <MenuItem key={name} text={name} icon={labelElement} onClick={() => appStore.dialogStore.showExistingCodeSnippet(snippet, name)} />;
+            const menuItem = <MenuItem key={name} text={name} icon={labelElement} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet, {snippet: snippet, name: name, newSnippet: false})} />;
 
             if (snippet.categories?.length) {
                 for (const category of snippet.categories) {
@@ -160,7 +160,7 @@ export class RootMenuComponent extends React.Component {
             <Menu>
                 {snippetEntries}
                 {snippetEntries.length > 0 && <MenuDivider />}
-                <MenuItem text="Create New Snippet" icon="add" onClick={appStore.dialogStore.showNewCodeSnippet} />
+                <MenuItem text="Create New Snippet" icon="add" onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet, {newSnippet: true})} />
                 <MenuItem text="Online Tutorial" icon={"manual"} onClick={() => this.handleDocumentationClicked("https://cartavis.org/carta-frontend/docs/category/code-snippet-tutorial")} />
             </Menu>
         );
@@ -260,10 +260,10 @@ export class RootMenuComponent extends React.Component {
                     <ExportImageMenuComponent />
                 </MenuItem>
                 <MenuDivider />
-                <MenuItem text="Open Workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showWorkspaceDialog(WorkspaceDialogMode.Open)} />
-                <MenuItem text="Save Workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showWorkspaceDialog(WorkspaceDialogMode.Save)} />
+                <MenuItem text="Open Workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Workspace, {mode: WorkspaceDialogMode.Open})} />
+                <MenuItem text="Save Workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Workspace, {mode: WorkspaceDialogMode.Save})} />
                 <MenuDivider />
-                <MenuItem text="Preferences" onClick={appStore.dialogStore.showPreferenceDialog} />
+                <MenuItem text="Preferences" onClick={() => appStore.dialogStore.showDialog(DialogId.Preference)} />
                 {serverSubMenu}
             </Menu>
         );
@@ -297,11 +297,11 @@ export class RootMenuComponent extends React.Component {
                             </React.Fragment>
                         )}
                     </MenuItem>
-                    <MenuItem text="Save Layout" onClick={() => appStore.dialogStore.showSaveLayoutDialog()} />
+                    <MenuItem text="Save Layout" onClick={() => appStore.dialogStore.showDialog(DialogId.Layout)} />
                     <MenuItem text="Rename Layout" disabled={!userLayouts || userLayouts.length <= 0}>
                         {userLayouts &&
                             userLayouts.length > 0 &&
-                            userLayouts.map(value => <MenuItem key={value} text={value} active={value === appStore.layoutStore.currentLayoutName} onClick={() => appStore.dialogStore.showSaveLayoutDialog(value)} />)}
+                            userLayouts.map(value => <MenuItem key={value} text={value} active={value === appStore.layoutStore.currentLayoutName} onClick={() => appStore.dialogStore.showDialog(DialogId.Layout, {oldLayoutName: value})} />)}
                     </MenuItem>
                     <MenuItem text="Delete Layout" disabled={!userLayouts || userLayouts.length <= 0}>
                         {userLayouts &&
@@ -329,20 +329,20 @@ export class RootMenuComponent extends React.Component {
                         <MenuItem text="Next Image" icon={"step-forward"} disabled={layerItems.length < 2} onClick={appStore.nextFrame} />
                     </MenuItem>
                 )}
-                <MenuItem text="File Header" icon={"app-header"} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showFileInfoDialog} />
-                <MenuItem text="Contours" icon={<CustomIcon icon="contour" />} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showContourDialog} />
-                <MenuItem text="Vector Overlay" icon={<CustomIcon icon="vectorOverlay" />} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showVectorOverlayDialog} />
-                <MenuItem text="Image Fitting" icon={<CustomIcon icon="imageFitting" />} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showFittingDialog} />
-                <MenuItem text="Online Catalog Query" icon="geosearch" disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showCatalogQueryDialog} />
-                {appStore.preferenceStore.codeSnippetsEnabled && <MenuItem text="Code Snippets" icon={"console"} onClick={appStore.dialogStore.showCodeSnippetDialog} />}
+                <MenuItem text="File Header" icon={"app-header"} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.FileInfo)} />
+                <MenuItem text="Contours" icon={<CustomIcon icon="contour" />} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.Contour)} />
+                <MenuItem text="Vector Overlay" icon={<CustomIcon icon="vectorOverlay" />} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.Vector)} />
+                <MenuItem text="Image Fitting" icon={<CustomIcon icon="imageFitting" />} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.Fitting)} />
+                <MenuItem text="Online Catalog Query" icon="geosearch" disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.CatalogQuery)} />
+                {appStore.preferenceStore.codeSnippetsEnabled && <MenuItem text="Code Snippets" icon={"console"} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet)} />}
             </Menu>
         );
 
         const helpMenu = (
             <Menu>
                 <MenuItem text="Online Manual" icon={"manual"} onClick={() => this.handleDocumentationClicked("https://carta.readthedocs.io/en/4.1")} />
-                <MenuItem text="Controls and Shortcuts" icon={"key-control"} label={"Shift + ?"} onClick={appStore.dialogStore.showHotkeyDialog} />
-                <MenuItem text="About" icon={"info-sign"} onClick={appStore.dialogStore.showAboutDialog} />
+                <MenuItem text="Controls and Shortcuts" icon={"key-control"} label={"Shift + ?"} onClick={() => appStore.dialogStore.showDialog(DialogId.Hotkey)} />
+                <MenuItem text="About" icon={"info-sign"} onClick={() => appStore.dialogStore.showDialog(DialogId.About)} />
             </Menu>
         );
 
@@ -521,7 +521,7 @@ export class RootMenuComponent extends React.Component {
                             </span>
                         }
                     >
-                        <AnchorButton icon="share" minimal={true} onClick={appStore.dialogStore.showShareWorkspaceDialog} />
+                        <AnchorButton icon="share" minimal={true} onClick={() => appStore.dialogStore.showDialog(DialogId.ShareWorkspace)} />
                     </Tooltip>
                 )}
                 {showLoadingIndicator && loadingIndicator}
