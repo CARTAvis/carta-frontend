@@ -1199,9 +1199,9 @@ export class OverlayStore {
         astString.addSection(this.labels.styleString);
 
         astString.add("LabelUp", 0);
-        astString.add("TitleGap", this.titleGap / this.minSize(frame, renderWidth, renderHeight));
-        astString.add("NumLabGap", this.defaultGap / this.minSize(frame, renderWidth, renderHeight));
-        astString.add("TextLabGap", this.cumulativeLabelGap / this.minSize(frame, renderWidth, renderHeight));
+        astString.add("TitleGap", this.titleGap / this.minSize(frame, this.renderWidth, this.renderHeight));
+        astString.add("NumLabGap", this.defaultGap / this.minSize(frame, this.renderWidth, this.renderHeight));
+        astString.add("TextLabGap", this.cumulativeLabelGap / this.minSize(frame, this.renderWidth, this.renderHeight));
         astString.add("TextGapType", "plot");
         frame ? astString.addSection(frame.distanceMeasuring?.styleString) : astString.addSection(AppStore.Instance.activeFrame?.distanceMeasuring?.styleString);
 

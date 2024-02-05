@@ -57,7 +57,7 @@ import {
 } from "stores";
 import {CompassAnnotationStore, CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
-import {clamp, distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
+import {clamp, DEFAULT_COLOR, distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
 
 import GitCommit from "../../static/gitInfo";
 import { ChannelMapStore } from "components/ImageView/ChannelMapView/ChannelMapViewComponent";
@@ -1478,8 +1478,8 @@ export class AppStore {
                 getColorForTheme(this.overlayStore.border.color),
                 getColorForTheme(this.overlayStore.ticks.color),
                 getColorForTheme(this.overlayStore.axes.color),
-                getColorForTheme(this.activeFrame.overlayStore.numbers.color),
-                getColorForTheme(this.activeFrame.overlayStore.labels.color),
+                getColorForTheme(this.activeFrame?.overlayStore.numbers.color || DEFAULT_COLOR),
+                getColorForTheme(this.activeFrame?.overlayStore.labels.color || DEFAULT_COLOR),
                 getColorForTheme(this.activeFrame ? this.activeFrame.distanceMeasuring?.color : DistanceMeasuringStore.DEFAULT_COLOR)
             ];
             AST.setColors(astColors);
@@ -1901,7 +1901,8 @@ export class AppStore {
         // Set overlay defaults from current frame
         autorun(() => {
             if (this.activeFrame) {
-                this.activeFrame.overlayStore.setDefaultsFromAST(this.activeFrame);
+                // Will need to update this!
+                // this.activeFrame.overlayStore.setDefaultsFromAST(this.activeFrame);
             }
         });
 
@@ -2648,7 +2649,8 @@ export class AppStore {
     private changeActiveFrame(frame: FrameStore) {
         if (frame !== this.activeFrame) {
             // Set overlay defaults from current frame
-            frame.overlayStore.setDefaultsFromAST(frame);
+            // Will need to update this!
+            // frame.overlayStore.setDefaultsFromAST(frame);
         }
         this.activeFrame = frame;
         if (!frame.isPreview) {

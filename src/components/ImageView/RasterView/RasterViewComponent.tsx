@@ -56,26 +56,26 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
                 );
             }
 
-            TileService.Instance.tileStream.subscribe((tileMessage) => {
-                // sometimes the renderHeight is 0, and still figuring out why
-                (!props.channel || tileMessage.channel === props.channel) && requestAnimationFrame(() =>
-                    updateCanvas(
-                        props.frame,
-                        gl,
-                        canvas.current,
-                        props.renderWidth,
-                        props.renderHeight,
-                        props.column,
-                        props.row,
-                        props.numImageColumns,
-                        props.numImageRows,
-                        props.pixelHighlightValue,
-                        props.tileBasedRender,
-                        props.channel || props.frame.channel,
-                        props.rasterData
-                    )
-                );
-            });
+            // TileService.Instance.tileStream.subscribe((tileMessage) => {
+            //     // sometimes the renderHeight is 0, and still figuring out why
+            //     (!isFinite(props.channel) || tileMessage.channel === props.channel) && requestAnimationFrame(() =>
+            //         updateCanvas(
+            //             props.frame,
+            //             gl,
+            //             canvas.current,
+            //             props.renderWidth,
+            //             props.renderHeight,
+            //             props.column,
+            //             props.row,
+            //             props.numImageColumns,
+            //             props.numImageRows,
+            //             props.pixelHighlightValue,
+            //             props.tileBasedRender,
+            //             props.channel || props.frame.channel,
+            //             props.rasterData
+            //         )
+            //     );
+            // });
         }
         return () => {
             console.log('disarming')
@@ -83,7 +83,6 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
     }, []);
 
     React.useEffect(() => {
-        // console.log('rerendering', props.renderWidth, props.renderHeight)
         requestAnimationFrame(() =>
             updateCanvas(
                 props.frame,
@@ -111,6 +110,7 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
         const spatialReference = frame.spatialReference || frame;
         const frameView = spatialReference.requiredFrameView;
         const currentView = spatialReference.currentFrameView;
+
         const colorMapping = {
             min: frame.renderConfig.scaleMinVal,
             max: frame.renderConfig.scaleMaxVal,
@@ -131,27 +131,21 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
         const ratio = appStore.imageRatio;
     }
     /* eslint-enable @typescript-eslint/no-unused-vars */
-    const padding = props.frame.overlayStore.padding;
-    const className = classNames(`raster-div-${props.channel}`, {docked: props.docked});
+    const padding = props.overlayStore.padding;
+    const className = classNames(`raster-div`, {docked: props.docked});
 
-    // console.log(props.overlayStore)
     return (
         <div
             className={className}
-            style={{
-                top: (props.top || 0) + props.overlayStore.padding.top,
-                left: (props.left || 0) + props.overlayStore.padding.left,
-                // top: props.renderHeight * props.row,
-                // left: props.renderWidth * props.column,
-                // marginTop: props.overlayStore.padding.top,
-                // position: "absolute"
-            }}
+            style={{top: props.top || 0, left: props.left || 0, border: '1px solid red'}}
         >
             <canvas
-                className={`raster-canvas-${props.row}-${props.column}`}
+                className={`raster-canvas`}
                 id="raster-canvas"
                 ref={ref => (canvas.current = ref)}
                 style={{
+                    top: padding.top,
+                    left: padding.left,
                     width: frame?.isRenderable ? props.overlayStore.renderWidth || 1 : 1,
                     height: frame?.isRenderable ? props.overlayStore.renderHeight || 1 : 1
                 }}
@@ -184,8 +178,10 @@ const updateCanvas = (
         if ((frame.renderConfig.useCubeHistogram || frame.channel === histChannel || frame.isPreview) && (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)) {
             frame.renderConfig.updateFrom(AppStore.Instance.activeFrame.renderConfig);
             const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
-            const xOffset = numImageColumns * frame.renderWidth * pixelRatio;
-            const yOffset = gl.canvas.height - frame.renderHeight * (numImageRows + 1) * pixelRatio;
+
+            const xOffset = column * renderWidth * pixelRatio;
+            const yOffset = gl.canvas.height - renderHeight * (row + 1) * pixelRatio;
+
             updateCanvasSize(frame, gl, canvas, renderWidth, renderHeight, numImageColumns, numImageRows, tileBasedRender);
             updateUniforms(frame, gl, tileRenderService.shaderUniforms, renderWidth, renderHeight, pixelHighlightValue);
             renderCanvas(frame, gl, xOffset, yOffset, renderWidth, renderHeight, tileBasedRender, channel, rasterData); // change column and row to x and y offset
@@ -195,7 +191,7 @@ const updateCanvas = (
         const w = canvas.width;
         const h = canvas.height;
         ctx.clearRect(0, 0, w, h);
-        ctx.drawImage(gl.canvas, 0, 0, w, h, 0, 0, w, h);
+        ctx.drawImage(gl.canvas, column * w, row * h, w, h, 0, 0, w, h);
     }
 };
 
@@ -216,7 +212,7 @@ function updateCanvasSize(frame: FrameStore, gl: WebGL2RenderingContext, canvas:
         canvas.height = requiredHeight;
     }
     // Resize and clear the shared WebGL canvas if required
-    tileRenderService.setCanvasSize(requiredWidth, requiredHeight);
+    tileRenderService.setCanvasSize(requiredWidth * numImageColumns, requiredHeight * numImageRows);
 
     if (gl.drawingBufferWidth !== gl.canvas.width || gl.drawingBufferHeight !== gl.canvas.height) {
         appStore.decreaseImageRatio();
@@ -269,13 +265,9 @@ export function renderCanvas(frame: FrameStore, gl: WebGL2RenderingContext, xOff
     if (frame?.isRenderable) {
         const appStore = AppStore.Instance;
         const pixelRatio = devicePixelRatio * appStore.imageRatio;
-        // const xOffset = frame.renderWidth * pixelRatio;
-        // y-axis is inverted
-        // const yOffset = gl.canvas.height - frame.renderHeight * pixelRatio;
-        gl.viewport(xOffset, yOffset, renderWidth * pixelRatio, renderHeight * pixelRatio); // will need to update renderWidth and height
-        gl.enable(GL2.DEPTH_TEST);
 
-        // console.log(renderWidth, renderHeight)
+        gl.viewport(xOffset, yOffset, renderWidth * pixelRatio, renderHeight * pixelRatio);
+        gl.enable(GL2.DEPTH_TEST);
 
         // Clear a scissored rectangle limited to the current frame
         gl.enable(GL2.SCISSOR_TEST);
@@ -290,7 +282,7 @@ export function renderCanvas(frame: FrameStore, gl: WebGL2RenderingContext, xOff
     }
 }
 
-function renderRasterCanvas(frame: FrameStore, gl: WebGL2RenderingContext, rasterData: Float32Array) {
+function renderRasterCanvas(frame: FrameStore, gl: WebGL2RenderingContext, rasterData: Float32Array) { // For PV preview render
     //Preview frame is always rendered with one tile
     const rasterTile = {data: rasterData, width: frame.frameInfo.fileInfoExtended.width, height: frame.frameInfo.fileInfoExtended.height, textureCoordinate: 0};
     const tile = {x: 0, y: 0, layer: 0} as TileCoordinate;
@@ -333,7 +325,6 @@ function renderTiles(frame: FrameStore, gl: WebGL2RenderingContext, tiles: TileC
     for (const tile of tiles) {
         const encodedCoordinate = TileCoordinate.EncodeCoordinate(tile);
         const rasterTile = tileService.getTile(encodedCoordinate, frame.frameInfo.fileId, channel, peek);
-        console.log('rrree', channel, rasterTile?.data)
         if (rasterTile) {
             renderTile(frame, gl, tile, rasterTile, mip, true);
         } else {

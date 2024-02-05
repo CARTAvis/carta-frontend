@@ -413,10 +413,10 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                                 left={overlayComponentLeft}
                                 docked={props.docked}
                                 pixelHighlightValue={props.channelMapStore.pixelHighlightValue}
-                                numImageColumns={0}
-                                numImageRows={0}
-                                row={row}
-                                column={column}
+                                numImageColumns={1}
+                                numImageRows={1}
+                                row={0}
+                                column={0}
                                 tileBasedRender={true}
                                 channel={channel}
                             />

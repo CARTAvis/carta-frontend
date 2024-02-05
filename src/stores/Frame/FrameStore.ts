@@ -316,8 +316,6 @@ export class FrameStore {
             const imageWidth = (this.pixelRatio * this.renderWidth) / this.zoomLevel / this.aspectRatio;
             const imageHeight = (this.pixelRatio * this.renderHeight) / this.zoomLevel;
 
-            console.log('tesing', imageWidth, imageHeight, this.center)
-
             const mipAdjustment = PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0;
             const mipExact = Math.max(1.0, mipAdjustment / this.zoomLevel);
             const mipLog2 = Math.log2(mipExact);
