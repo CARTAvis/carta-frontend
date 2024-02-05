@@ -43,7 +43,9 @@ export function trimFitsComment(val: string): string {
 export function mapToObject<K, T>(map: Map<K, T>) {
     const obj: {[k: string]: T} = {};
     map.forEach((value, key) => {
-        obj[key.toString()] = value;
+        if (key !== null && key !== undefined) {
+            obj[key.toString()] = value;
+        }
     });
     return obj;
 }
@@ -60,7 +62,7 @@ export function findDeep(obj: any, pred: (obj: any) => boolean) {
 }
 
 // parsing filter string for TableComponent filter function
-function getNumberFromFilterString(filterString: string): number {
+function getNumberFromFilterString(filterString: string): number | undefined {
     const n = filterString.replace(/[^0-9.+-.]+/g, "");
     if (n !== "") {
         return Number(n);
@@ -70,7 +72,7 @@ function getNumberFromFilterString(filterString: string): number {
 
 export function getComparisonOperatorAndValue(filterString: string): {operator: CARTA.ComparisonOperator; values: number[]} {
     const filter = filterString.replace(/\s/g, "");
-    let result = {operator: -1, values: []};
+    let result: {operator: number, values: number[]} = {operator: -1, values: []};
     // order matters, since ... and .. both include .. (same for < and <=, > and >=)
     for (const key of Object.keys(ComparisonOperator)) {
         const operator = ComparisonOperator[key];
