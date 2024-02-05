@@ -8,7 +8,6 @@ import * as _ from "lodash";
 // Static assets
 import allMaps from "static/allmaps.png";
 
-import {TileWebGLService} from "services";
 import {AppStore} from "stores";
 import {RenderConfigStore} from "stores/Frame";
 
@@ -42,7 +41,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
                 />
             );
         } else {
-            const N = RenderConfigStore.COLOR_MAPS_ALL.length - RenderConfigStore.COLOR_MAPS_CALCULATED.size;
+            const N = RenderConfigStore.COLOR_MAPS_ALL.length - RenderConfigStore.COLOR_MAPS_CALCULATED.size - 1; // -1 is the custom color
             const i = RenderConfigStore.COLOR_MAPS_ALL.indexOf(colormap);
             return (
                 <div
@@ -59,7 +58,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
         }
     };
 
-    const [color, setColor] = React.useState<string>(RenderConfigStore.COLOR_MAPS_CALCULATED.get("custom_mono"));
+    const [color, setColor] = React.useState<string>("#FFFFFF"); // initial color is white
 
     const renderColormapSelectItem = (colormap: string, {handleClick, modifiers, query}) => {
         const disableAlpha = false;
@@ -68,8 +67,8 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
 
         const handleColorChange = _.throttle((color: any) => {
             setColor(color.hex);
-            RenderConfigStore.COLOR_MAPS_CALCULATED.set("custom_mono", color.hex);
-            AppStore.Instance.activeFrame.renderConfig.setColorMap("custom_mono");
+            AppStore.Instance.activeFrame.renderConfig.setCustomColorMap(color.hex, colormap);
+            // TileWebGLService.Instance.setCustomColormapTexture(color.hex);
         }, changeDelay);
 
         if (!modifiers.matchesPredicate) {
@@ -89,7 +88,6 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
         } else {
             return <MenuItem active={modifiers.active} disabled={modifiers.disabled} label={colormap} key={colormap} onClick={handleClick} text={renderColormapBlock(colormap)} />;
         }
-        // return <MenuItem active={modifiers.active} disabled={modifiers.disabled} label={colormap} key={colormap} onClick={handleClick} text={renderColormapBlock(colormap)} />;
     };
 
     return (

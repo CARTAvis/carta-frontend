@@ -108,16 +108,23 @@ export class RenderConfigStore {
         "YlGnBu",
         "YlOrBr",
         "YlOrRd",
-        "reds_k",
-        "greens_k",
-        "blues_k",
+        "Red",
+        "Orange",
+        "Yellow",
+        "Green",
+        "Cyan",
+        "Blue",
+        "Violet",
         "custom_mono"
     ];
     static COLOR_MAPS_CALCULATED = new Map<string, string>([
-        ["reds_k", "#FF0000"],
-        ["greens_k", "#00FF00"],
-        ["blues_k", "#0000FF"],
-        ["custom_mono", "#FFA500."]
+        ["Red", "#FF0000"],
+        ["Orange", "#FFA500"],
+        ["Yellow", "#FFFF00"],
+        ["Green", "#00FF00"],
+        ["Cyan", "#00FFFF"],
+        ["Blue", "#0000FF"],
+        ["Violet", "#7F00FF"]
     ]);
     static readonly COLOR_MAPS_SELECTED = [
         "afmhot",
@@ -145,9 +152,13 @@ export class RenderConfigStore {
         "spectral",
         "tab10",
         "viridis",
-        "reds_k",
-        "greens_k",
-        "blues_k",
+        "Red",
+        "Orange",
+        "Yellow",
+        "Green",
+        "Cyan",
+        "Blue",
+        "Violet",
         "custom_mono"
     ];
 
@@ -182,6 +193,7 @@ export class RenderConfigStore {
     @observable visible: boolean;
     @observable previewHistogramMax: number;
     @observable previewHistogramMin: number;
+    @observable customColorHex: string;
 
     private frame: FrameStore;
 
@@ -389,9 +401,14 @@ export class RenderConfigStore {
     @action setColorMap = (colormap: string) => {
         const index = RenderConfigStore.COLOR_MAPS_ALL.indexOf(colormap);
         if (index >= 0) {
-            TileWebGLService.Instance.setcmapCalculatedTexture(colormap);
             this.setColorMapIndex(index);
         }
+    };
+
+    @action setCustomColorMap = (colorHex: string, colormap: string) => {
+        this.customColorHex = colorHex;
+        TileWebGLService.Instance.setCustomColormapTexture(colorHex);
+        this.setColorMap(colormap);
     };
 
     @action setScaling = (newScaling: FrameScaling) => {

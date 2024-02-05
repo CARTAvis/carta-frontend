@@ -1,7 +1,8 @@
 import allMaps from "static/allmaps.png";
 
 import {TEXTURE_SIZE, TILE_SIZE} from "services";
-import {getColorsForValues, getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
+import {RenderConfigStore} from "stores";
+import {getColorsForValues, getColorsFromHex, getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
 
 import {rasterShaders} from "./GLSL";
 
@@ -20,7 +21,10 @@ interface ShaderUniforms {
     DataTexture: WebGLUniformLocation;
     CmapTexture: WebGLUniformLocation;
     CmapCalculatedTexture: WebGLUniformLocation;
+    CmapCustomTexture: WebGLUniformLocation;
+    CustomCmapIndex: WebGLUniformLocation;
     NumCmaps: WebGLUniformLocation;
+    NumCmapsCalculated: WebGLUniformLocation;
     CmapIndex: WebGLUniformLocation;
     CanvasWidth: WebGLUniformLocation;
     CanvasHeight: WebGLUniformLocation;
@@ -100,7 +104,10 @@ export class TileWebGLService {
             DataTexture: this.gl.getUniformLocation(this.shaderProgram, "uDataTexture"),
             CmapTexture: this.gl.getUniformLocation(this.shaderProgram, "uCmapTexture"),
             CmapCalculatedTexture: this.gl.getUniformLocation(this.shaderProgram, "uCmapCalculatedTexture"),
+            CmapCustomTexture: this.gl.getUniformLocation(this.shaderProgram, "uCmapCustomTexture"),
+            CustomCmapIndex: this.gl.getUniformLocation(this.shaderProgram, "uCustomCmapIndex"),
             NumCmaps: this.gl.getUniformLocation(this.shaderProgram, "uNumCmaps"),
+            NumCmapsCalculated: this.gl.getUniformLocation(this.shaderProgram, "uNumCmapsCalculated"),
             CmapIndex: this.gl.getUniformLocation(this.shaderProgram, "uCmapIndex"),
             CanvasWidth: this.gl.getUniformLocation(this.shaderProgram, "uCanvasWidth"),
             CanvasHeight: this.gl.getUniformLocation(this.shaderProgram, "uCanvasHeight"),
@@ -123,7 +130,10 @@ export class TileWebGLService {
         this.gl.uniform1i(this.shaderUniforms.DataTexture, 0);
         this.gl.uniform1i(this.shaderUniforms.CmapTexture, 1);
         this.gl.uniform1i(this.shaderUniforms.CmapCalculatedTexture, 2);
+        this.gl.uniform1i(this.shaderUniforms.CmapCustomTexture, 3);
+        this.gl.uniform1i(this.shaderUniforms.CustomCmapIndex, RenderConfigStore.COLOR_MAPS_ALL.length - 1);
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);
+        this.gl.uniform1i(this.shaderUniforms.NumCmapsCalculated, RenderConfigStore.COLOR_MAPS_CALCULATED.size);
         this.gl.uniform1i(this.shaderUniforms.CmapIndex, 2);
         this.gl.uniform1f(this.shaderUniforms.MinVal, 3.4);
         this.gl.uniform1f(this.shaderUniforms.MaxVal, 5.5);
@@ -164,20 +174,45 @@ export class TileWebGLService {
         this.gl.bufferData(GL2.ARRAY_BUFFER, uvs, GL2.STATIC_DRAW);
     }
 
-    setcmapCalculatedTexture(colormap: string) {
-        const tileWidth = 1024;
-        const tileHeight = 1;
+    private setCmapCalculatedTexture() {
+        const Cmap = RenderConfigStore.COLOR_MAPS_CALCULATED;
+        const width = 1024;
+        const height = Cmap.size;
         const components = 4;
-        let cmapCalculatedData = new Float32Array(tileWidth * tileHeight * components);
-        const cmap = getColorsForValues(colormap).color;
-        for (let j = 0; j < tileWidth; j++) {
-            for (let ii = 0; ii < 4; ii++) cmapCalculatedData[j * 4 + ii] = cmap[j * 4 + ii] / 255;
-        }
+        let cmap: any;
+
+        const cmapData = new Float32Array(width * height * components);
+        Array.from(Cmap.keys()).forEach((colormap, y) => {
+            cmap = getColorsForValues(colormap).color;
+            for (let x = 0; x < width; x++) {
+                for (let ii = 0; ii < components; ii++) cmapData[x * components + ii + y * width * components] = cmap[x * components + ii] / 255;
+            }
+        });
 
         const texture = this.gl.createTexture();
         this.gl.activeTexture(GL2.TEXTURE2);
         this.gl.bindTexture(GL2.TEXTURE_2D, texture);
-        this.gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.RGBA32F, tileWidth, tileHeight, 0, GL2.RGBA, GL2.FLOAT, cmapCalculatedData);
+        this.gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.RGBA32F, width, height, 0, GL2.RGBA, GL2.FLOAT, cmapData);
+        this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);
+        this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
+        this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_S, GL2.CLAMP_TO_EDGE);
+        this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_T, GL2.CLAMP_TO_EDGE);
+    }
+
+    public setCustomColormapTexture(targetColorHex: string) {
+        const width = 1024;
+        const height = 1;
+        const components = 4;
+        const cmap = getColorsFromHex(targetColorHex).color;
+        const cmapdData = new Float32Array(width * height * components);
+        for (let x = 0; x < width; x++) {
+            for (let ii = 0; ii < components; ii++) cmapdData[x * components + ii] = cmap[x * components + ii] / 255;
+        }
+
+        const texture = this.gl.createTexture();
+        this.gl.activeTexture(GL2.TEXTURE3);
+        this.gl.bindTexture(GL2.TEXTURE_2D, texture);
+        this.gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.RGBA32F, width, height, 0, GL2.RGBA, GL2.FLOAT, cmapdData);
         this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);
         this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
         this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_S, GL2.CLAMP_TO_EDGE);
@@ -194,6 +229,7 @@ export class TileWebGLService {
         loadImageTexture(this.gl, allMaps, GL2.TEXTURE1).then(texture => {
             this.cmapTexture = texture;
         });
+        this.setCmapCalculatedTexture();
     }
 }
 

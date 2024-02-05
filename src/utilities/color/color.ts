@@ -56,22 +56,23 @@ imageObj.onload = () => {
 // return color map as Uint8ClampedArray according colorMap
 export function getColorsForValues(colorMap: string): {color: Uint8ClampedArray; size: number} {
     if (RenderConfigStore?.COLOR_MAPS_CALCULATED.get(colorMap)) {
-        const targetColorHex: string = RenderConfigStore.COLOR_MAPS_CALCULATED.get(colorMap);
-        const startColorHex: string = "#000000"; // black
-        const steps = 1024;
-        const gradientColors = new Uint8ClampedArray(generateColorGradientArray(targetColorHex, startColorHex, steps));
-        return {color: gradientColors, size: steps};
+        const targetColorHex = RenderConfigStore.COLOR_MAPS_CALCULATED.get(colorMap);
+        return getColorsFromHex(targetColorHex);
     }
 
     const colorMaps = RenderConfigStore.COLOR_MAPS_ALL;
     const colorMapIndex = colorMaps.indexOf(colorMap);
 
     if (colormapContext) {
-        // const colorMapPixel = colormapContext?.getImageData(0, colorMapIndex * 5 + 2, imageObj.width - 1, 1);
         const colorMapPixel = colormapContext?.getImageData(0, colorMapIndex * 5 + 2, imageObj.width, 1);
         return {color: colorMapPixel?.data, size: colorMapPixel?.width};
     }
     return {color: new Uint8ClampedArray([0, 0, 0, 0]), size: 1};
+}
+
+export function getColorsFromHex(colorHex: string, startColorHex: string = "#000000", steps: number = 1024): {color: Uint8ClampedArray; size: number} {
+    const gradientColors = new Uint8ClampedArray(generateColorGradientArray(colorHex, startColorHex, steps));
+    return {color: gradientColors, size: steps};
 }
 
 export function isAutoColor(color: string): boolean {

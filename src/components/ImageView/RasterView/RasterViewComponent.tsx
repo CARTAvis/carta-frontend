@@ -381,6 +381,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 min: frame.renderConfig.scaleMinVal,
                 max: frame.renderConfig.scaleMaxVal,
                 colorMap: frame.renderConfig.colorMapIndex,
+                customColorHex: frame.renderConfig.customColorHex,
                 contrast: frame.renderConfig.contrast,
                 bias: frame.renderConfig.bias,
                 useSmoothedBiasContrast: appStore.preferenceStore?.useSmoothedBiasContrast,
