@@ -575,11 +575,15 @@ export class AppStore {
         }
 
         if (this.frames.length > 1) {
+            // putting spectral matching before spatial matching avoids spectral matching fail when spatial matching is unable.
+            if (this.preferenceStore.autoWCSMatching & WCSMatchingType.SPECTRAL && this.spectralReference !== newFrame && newFrame.frameInfo.fileInfoExtended.depth > 1) {
+                this.setSpectralMatchingEnabled(newFrame, true);
+            }
             if (this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL && this.spatialReference !== newFrame) {
                 this.setSpatialMatchingEnabled(newFrame, true);
             }
-            if (this.preferenceStore.autoWCSMatching & WCSMatchingType.SPECTRAL && this.spectralReference !== newFrame && newFrame.frameInfo.fileInfoExtended.depth > 1) {
-                this.setSpectralMatchingEnabled(newFrame, true);
+            if (this.preferenceStore.autoWCSMatching & WCSMatchingType.RASTER && this.rasterScalingReference !== newFrame) {
+                this.setRasterScalingMatchingEnabled(newFrame, true);
             }
         }
 
