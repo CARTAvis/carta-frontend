@@ -64,10 +64,10 @@ body {
 }
 
 // override menu item style with BlueprintJS v3 style
-.#{$ns}-menu-item.#{$ns}-selected {
-    background-color: #137cbd !important;
-    color: #fff !important;
-}
+// .#{$ns}-menu-item.#{$ns}-active {
+//     background-color: #137cbd !important;
+//     color: #fff !important;
+// }
 
 // hide plotly tips
 body {
