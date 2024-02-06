@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
 import {CursorInfo, Point2D, ZoomPoint} from "models";
-import {AppStore, OverlayStore, PreferenceStore} from "stores";
+import {AppStore, DialogId, OverlayStore, PreferenceStore} from "stores";
 import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
 import {add2D, average2D, isAstBadPoint, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
 
@@ -787,7 +787,7 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: Regi
             const frame = appStore.getFrame(region.fileId);
             if (frame) {
                 frame.regionSet.selectRegion(region);
-                appStore.dialogStore.showRegionDialog();
+                appStore.dialogStore.showDialog(DialogId.Region);
             }
         }
     };

@@ -398,6 +398,7 @@ export class RenderConfigStore {
 
     @action setColorMapIndex = (index: number) => {
         this.colorMapIndex = clamp(index, 0, RenderConfigStore.COLOR_MAPS_ALL.length - 1);
+        this.updateSiblings();
     };
 
     @action setColorMap = (colormap: string) => {
@@ -434,22 +435,27 @@ export class RenderConfigStore {
 
     @action setBias = (bias: number) => {
         this.bias = bias;
+        this.updateSiblings();
     };
 
     @action resetBias = () => {
         this.bias = 0;
+        this.updateSiblings();
     };
 
     @action setContrast = (contrast: number) => {
         this.contrast = contrast;
+        this.updateSiblings();
     };
 
     @action resetContrast = () => {
         this.contrast = 1;
+        this.updateSiblings();
     };
 
     @action setInverted = (inverted: boolean) => {
         this.inverted = inverted;
+        this.updateSiblings();
     };
 
     @action setVisible = (visible: boolean) => {
@@ -470,8 +476,10 @@ export class RenderConfigStore {
 
     @action updateSiblings = () => {
         const siblings = this.frame?.renderConfigSiblings;
-        for (const frame of siblings) {
-            frame.renderConfig.updateFrom(this);
+        if (siblings) {
+            for (const frame of siblings) {
+                frame.renderConfig.updateFrom(this);
+            }
         }
     };
 
@@ -484,6 +492,8 @@ export class RenderConfigStore {
         this.scaleMin[this.stokesIndex] = other.scaleMinVal;
         this.scaleMax[this.stokesIndex] = other.scaleMaxVal;
         this.selectedPercentile[this.stokesIndex] = -1;
+        this.colorMapIndex = other.colorMapIndex;
+        this.inverted = other.inverted;
     };
 
     @action updateFromWorkspace = (config: WorkspaceRenderConfig) => {

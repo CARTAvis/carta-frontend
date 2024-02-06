@@ -4,7 +4,7 @@ import {action} from "mobx";
 
 import {AppToaster, ErrorToast, WarningToast} from "components/Shared";
 import {CatalogInfo, CatalogType, WCSPoint2D} from "models";
-import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, RadiusUnits, SystemType} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, DialogId, RadiusUnits, SystemType} from "stores";
 import {CatalogApiProcessing, ProcessedColumnData, VizierResource} from "utilities";
 
 import {TelemetryAction, TelemetryService} from "./TelemetryService";
@@ -152,7 +152,7 @@ export class CatalogApiService {
             appStore.fileBrowserStore.hideFileBrowser();
             const catalogProfileStore = new CatalogOnlineQueryProfileStore(catalogInfo, headers, columnData, type);
             appStore.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
-            appStore.dialogStore.hideCatalogQueryDialog();
+            appStore.dialogStore.hideDialog(DialogId.CatalogQuery);
         }
     };
 
