@@ -10,7 +10,9 @@ uniform sampler2D uCmapCustomTexture;
 // Render parameters
 uniform int uNumCmaps;
 uniform int uNumCmapsCalculated;
+uniform int uNumCmapsCustom;
 uniform int uCmapIndex;
+uniform int uCustomCmap;
 uniform int uCustomCmapIndex;
 uniform int uScaleType;
 uniform int uInverted;
@@ -127,8 +129,9 @@ void main(void) {
     } 
     else if (rawVal < uPixelHighlightVal) {
         outColor = vec4(x, x, x, 1);
-    } else if (uCmapIndex == uCustomCmapIndex) {
-        vec2 cmapCoords = vec2(x, 0.5);
+    } else if (uCmapIndex == uCustomCmap) {
+        float cmapYVal = (float(uCustomCmapIndex) + 0.5) / float(uNumCmapsCustom);
+        vec2 cmapCoords = vec2(x, cmapYVal);
         outColor = texture(uCmapCustomTexture, cmapCoords);
     }
     else if (uCmapIndex >= uNumCmaps) {

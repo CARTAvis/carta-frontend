@@ -1720,6 +1720,7 @@ export class AppStore {
         this.pendingChannelHistograms = new Map<string, CARTA.IRegionHistogramData>();
         this.initRequirements();
         this.momentToMatch = true;
+        this.customColorHex = new Map<number, string>();
 
         AST.onReady.then(
             action(() => {
@@ -3208,4 +3209,6 @@ export class AppStore {
     get pixelRatio() {
         return devicePixelRatio;
     }
+
+    @observable customColorHex: Map<number, string>;
 }

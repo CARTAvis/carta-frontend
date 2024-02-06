@@ -175,6 +175,7 @@ export class RenderConfigStore {
 
     @observable scaling: FrameScaling;
     @observable colorMapIndex: number;
+    @observable customColorMapIndex: number;
     @observable bias: number;
     @observable contrast: number;
     @observable gamma: number;
@@ -193,7 +194,7 @@ export class RenderConfigStore {
     @observable visible: boolean;
     @observable previewHistogramMax: number;
     @observable previewHistogramMin: number;
-    @observable customColorHex: string;
+    // @observable customColorHex: Map<number, string>;
 
     private frame: FrameStore;
 
@@ -215,6 +216,7 @@ export class RenderConfigStore {
         this.scaleMin = new Array<number>(stokesLength).fill(0);
         this.scaleMax = new Array<number>(stokesLength).fill(1);
         this.visible = true;
+        // this.customColorHex = new Map<number, string>();
     }
 
     public static IsScalingValid(scaling: FrameScaling): boolean {
@@ -406,8 +408,10 @@ export class RenderConfigStore {
     };
 
     @action setCustomColorMap = (colorHex: string, colormap: string) => {
-        this.customColorHex = colorHex;
-        TileWebGLService.Instance.setCustomColormapTexture(colorHex);
+        const fileId = this.frame.frameInfo.fileId;
+        AppStore.Instance.customColorHex.set(fileId, colorHex);
+        this.customColorMapIndex = fileId;
+        TileWebGLService.Instance.setCustomColormapTexture(AppStore.Instance.customColorHex);
         this.setColorMap(colormap);
     };
 
