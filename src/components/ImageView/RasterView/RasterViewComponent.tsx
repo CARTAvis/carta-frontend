@@ -74,7 +74,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.uniform1f(shaderUniforms.MinVal, renderConfig.scaleMinVal);
             this.gl.uniform1f(shaderUniforms.MaxVal, renderConfig.scaleMaxVal);
             this.gl.uniform1i(shaderUniforms.CmapIndex, renderConfig.colorMapIndex);
-            this.gl.uniform1i(shaderUniforms.CustomCmapIndex, frame.frameInfo.fileId);
+            this.gl.uniform1i(
+                shaderUniforms.CustomCmapIndex,
+                Array.from(AppStore.Instance.customColorHex.keys()).findIndex(a => a === frame.frameInfo.fileId)
+            );
             this.gl.uniform1i(shaderUniforms.ScaleType, renderConfig.scaling);
             this.gl.uniform1i(shaderUniforms.Inverted, renderConfig.inverted ? 1 : 0);
             this.gl.uniform1f(shaderUniforms.Bias, renderConfig.bias);

@@ -20,14 +20,30 @@ interface ColormapComponentProps {
 
 const ColorMapSelect = Select.ofType<string>();
 const COLORMAP_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
-// const CUSTOM_COLOR_OPTION = "custom-color";
+const CUSTOM_COLOR_OPTION = "custom_mono";
+const INITIAL_CUSTOM_COLOR = "#FFFFFF";
 
 export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
     const renderColormapBlock = (colormap: string) => {
         let className = "colormap-block";
         const blockHeight = 15;
 
-        if (RenderConfigStore?.COLOR_MAPS_CALCULATED.get(colormap)) {
+        if (colormap === CUSTOM_COLOR_OPTION) {
+            const customColorHex = AppStore.Instance.customColorHex?.get(AppStore.Instance.activeFrameFileId);
+            const colorHex = customColorHex ? customColorHex : INITIAL_CUSTOM_COLOR;
+            return (
+                <div
+                    className={className}
+                    style={{
+                        transform: `scaleX(${props.inverted ? -1 : 1})`,
+                        height: `${blockHeight}px`,
+                        backgroundImage: `linear-gradient(to right, black , ${colorHex})`,
+                        backgroundSize: `100% 300%`,
+                        backgroundPosition: `0 calc(-300% - ${blockHeight}px)`
+                    }}
+                />
+            );
+        } else if (RenderConfigStore?.COLOR_MAPS_CALCULATED.get(colormap)) {
             return (
                 <div
                     className={className}
@@ -58,7 +74,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
         }
     };
 
-    const [color, setColor] = React.useState<string>("#FFFFFF"); // initial color is white
+    const [color, setColor] = React.useState<string>(INITIAL_CUSTOM_COLOR); // initial color is white
 
     const renderColormapSelectItem = (colormap: string, {handleClick, modifiers, query}) => {
         const disableAlpha = false;
@@ -68,20 +84,19 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
         const handleColorChange = _.throttle((color: any) => {
             setColor(color.hex);
             AppStore.Instance.activeFrame.renderConfig.setCustomColorMap(color.hex, colormap);
-            // TileWebGLService.Instance.setCustomColormapTexture(color.hex);
         }, changeDelay);
 
         if (!modifiers.matchesPredicate) {
             return null;
         }
-        if (colormap === "custom_mono") {
+        if (colormap === CUSTOM_COLOR_OPTION) {
             const popoverClassName = classNames("color-picker-popup", {"bp3-dark": AppStore.Instance.darkTheme});
 
             return (
-                <div key={"custom-color"} className={"custom_mono"}>
-                    <Popover2 position={PopoverPosition.AUTO} popoverClassName={popoverClassName} content={<SketchPicker color={color} onChange={handleColorChange} disableAlpha={disableAlpha} presetColors={presetColors} />}>
-                        {/* <MenuItem active={modifiers.active} disabled={modifiers.disabled} label={colormap} key={colormap} shouldDismissPopover={false} text={renderColormapBlock(colormap)} />; */}
-                        <Button text={"custom_mono"} className="color-swatch-button" />
+                <div key={"custom-color"} className={CUSTOM_COLOR_OPTION}>
+                    <Popover2 position={PopoverPosition.LEFT} popoverClassName={popoverClassName} content={<SketchPicker color={color} onChange={handleColorChange} disableAlpha={disableAlpha} presetColors={presetColors} />}>
+                        <MenuItem active={modifiers.active} disabled={modifiers.disabled} label={colormap} key={colormap} shouldDismissPopover={false} text={renderColormapBlock(colormap)} />;
+                        {/* <Button text={CUSTOM_COLOR_OPTION} className="color-swatch-button" /> */}
                     </Popover2>
                 </div>
             );

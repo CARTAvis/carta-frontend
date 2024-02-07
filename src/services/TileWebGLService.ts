@@ -208,12 +208,10 @@ export class TileWebGLService {
         const width = 1024;
         const height = customColorHex.size;
         const components = 4;
+
         this.gl.uniform1i(this.shaderUniforms.NumCmapsCustom, height);
-        // const cmap = getColorsFromHex(targetColorHex).color;
+
         const cmapData = new Float32Array(width * height * components);
-        // for (let x = 0; x < width; x++) {
-        //     for (let ii = 0; ii < components; ii++) cmapdData[x * components + ii] = cmap[x * components + ii] / 255;
-        // }
         let cmap: any;
         Array.from(customColorHex.values()).forEach((colorHex, y) => {
             cmap = getColorsFromHex(colorHex).color;
