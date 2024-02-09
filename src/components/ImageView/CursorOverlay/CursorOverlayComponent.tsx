@@ -1,13 +1,13 @@
 import * as React from "react";
 import {CSSProperties} from "react";
 import classNames from "classnames";
+import { observable } from "mobx";
 import {observer} from "mobx-react";
 
 import {CursorInfo, SpectralInfo} from "models";
 import {formattedExponential, toFixed} from "utilities";
 
 import "./CursorOverlayComponent.scss";
-import { observable } from "mobx";
 
 class CursorOverlayProps {
     cursorInfo: CursorInfo;

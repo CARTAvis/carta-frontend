@@ -11,7 +11,7 @@ import {AnnotationMenuComponent, ExportImageMenuComponent} from "components/Shar
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import {AppStore, DialogId} from "stores";
 import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
-import {OverlayStore, SystemType} from "stores/OverlayStore/OverlayStore";
+import {SystemType} from "stores/OverlayStore/OverlayStore";
 import {toFixed} from "utilities";
 
 import "./ToolbarComponent.scss";

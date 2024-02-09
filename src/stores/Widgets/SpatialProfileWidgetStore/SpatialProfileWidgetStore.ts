@@ -190,16 +190,16 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
             if (coordinate.includes("x")) {
                 return {
                     coordinate,
-                    mip: clamp(frame.requiredFrameView.mip, 1, frame.maxMip),
-                    start: Math.floor(clamp(frame.requiredFrameView.xMin, 0, frame.frameInfo.fileInfoExtended.width)),
-                    end: Math.ceil(clamp(frame.requiredFrameView.xMax, 0, frame.frameInfo.fileInfoExtended.width))
+                    mip: clamp(frame.requiredFrameView().mip, 1, frame.maxMip),
+                    start: Math.floor(clamp(frame.requiredFrameView().xMin, 0, frame.frameInfo.fileInfoExtended.width)),
+                    end: Math.ceil(clamp(frame.requiredFrameView().xMax, 0, frame.frameInfo.fileInfoExtended.width))
                 };
             } else {
                 return {
                     coordinate,
-                    mip: clamp(frame.requiredFrameView.mip, 1, frame.maxMip),
-                    start: Math.floor(clamp(frame.requiredFrameView.yMin, 0, frame.frameInfo.fileInfoExtended.height)),
-                    end: Math.ceil(clamp(frame.requiredFrameView.yMax, 0, frame.frameInfo.fileInfoExtended.height))
+                    mip: clamp(frame.requiredFrameView().mip, 1, frame.maxMip),
+                    start: Math.floor(clamp(frame.requiredFrameView().yMin, 0, frame.frameInfo.fileInfoExtended.height)),
+                    end: Math.ceil(clamp(frame.requiredFrameView().yMax, 0, frame.frameInfo.fileInfoExtended.height))
                 };
             }
         } else {

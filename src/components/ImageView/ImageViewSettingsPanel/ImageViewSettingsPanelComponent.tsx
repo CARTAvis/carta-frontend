@@ -137,6 +137,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const beam = overlayStore.beam;
         const beamSettings = beam.settingsForDisplay;
         const preferences = appStore.preferenceStore;
+        const channelMapSettings = appStore.channelMapStore;
 
         const interior: boolean = global.labelType === LabelType.Interior;
 
@@ -750,6 +751,58 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
             </div>
         ) : null;
 
+        const numChannels = channelMapSettings.masterFrame ? channelMapSettings.masterFrame.frameInfo.fileInfoExtended.depth : 10;
+
+        const onChannelChanged = (val: number) => {
+            const frame = channelMapSettings.masterFrame;
+            if (frame) {
+                if (val < 0) {
+                    val += frame.frameInfo.fileInfoExtended.depth;
+                }
+                if (val >= frame.frameInfo.fileInfoExtended.depth) {
+                    val = 0;
+                }
+                channelMapSettings.setStartChannel(val);
+            }
+        };
+
+        const channelMapPanel = (
+            <div className="panel-container">
+                <FormGroup inline={true} label="Image">
+                    <HTMLSelect options={appStore.frameNames} value={channelMapSettings.masterFrame ? appStore.frames.indexOf(channelMapSettings.masterFrame) : -1} onChange={(event: React.FormEvent<HTMLSelectElement>) => channelMapSettings.setMasterFrame(AppStore.Instance.getFrame(parseInt(event.currentTarget.value)))} />
+                </FormGroup>
+                <FormGroup inline={true} label="Start Channel" >
+                    <SafeNumericInput
+                        placeholder="Number of Columns"
+                        value={channelMapSettings.startChannel}
+                        min={0}
+                        max={numChannels - 1}
+                        onValueChange={onChannelChanged}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Number of Columns" >
+                    <SafeNumericInput
+                        placeholder="Number of Columns"
+                        min={1}
+                        max={5}
+                        value={channelMapSettings.numColumns}
+                        stepSize={1}
+                        onValueChange={(value: number) => channelMapSettings.setNumColumns(value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Number of Rows" >
+                    <SafeNumericInput
+                        placeholder="Number of Rows"
+                        min={1}
+                        max={5}
+                        value={channelMapSettings.numRows}
+                        stepSize={1}
+                        onValueChange={(value: number) => channelMapSettings.setNumRows(value)}
+                    />
+                </FormGroup>
+            </div>
+        );
+
         const spectralPanel = isPVImage ? (
             <div className="panel-container">
                 <p>For spatial-spectral image</p>
@@ -775,6 +828,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Tab id={ImageViewSettingsPanelTabs.LABELS} title={ImageViewSettingsPanelTabs.LABELS} panel={labelsPanel} />
                     <Tab id={ImageViewSettingsPanelTabs.COLORBAR} title={ImageViewSettingsPanelTabs.COLORBAR} panel={colorbarPanel} />
                     <Tab id={ImageViewSettingsPanelTabs.BEAM} title={ImageViewSettingsPanelTabs.BEAM} panel={beamPanel} disabled={appStore.frameNum <= 0} />
+                    <Tab id={100} title={"Channel Map"} panel={channelMapPanel} />
                     <Tab id={ImageViewSettingsPanelTabs.CONVERSION} title={ImageViewSettingsPanelTabs.CONVERSION} panel={spectralPanel} disabled={!isPVImage} />
                 </Tabs>
             </div>

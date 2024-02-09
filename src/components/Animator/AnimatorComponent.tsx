@@ -220,11 +220,11 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             const frameTick = numFrames > 10 ? frameTickPre : Array.from(Array(numFrames).keys());
             frameSlider = (
                 <div className="animator-slider">
-                    <Radio value={AnimationMode.FRAME} disabled={appStore.animatorStore.animationActive} checked={appStore.animatorStore.animationMode === AnimationMode.FRAME} onChange={this.onAnimationModeChanged} label="Image" />
-                    {hideSliders && <SafeNumericInput value={frameIndex} min={-1} max={numFrames} stepSize={1} onValueChange={this.onFrameChanged} fill={true} disabled={appStore.animatorStore.animationActive} />}
+                    <Radio value={AnimationMode.FRAME} disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled} checked={appStore.animatorStore.animationMode === AnimationMode.FRAME} onChange={this.onAnimationModeChanged} label="Image" />
+                    {hideSliders && <SafeNumericInput value={frameIndex} min={-1} max={numFrames} stepSize={1} onValueChange={this.onFrameChanged} fill={true} disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled} />}
                     {!hideSliders && (
                         <React.Fragment>
-                            <Slider value={frameIndex} min={0} max={numFrames - 1} showTrackFill={false} labelValues={frameTick} labelPrecision={0} onChange={this.onFrameChanged} disabled={appStore.animatorStore.animationActive} />
+                            <Slider value={frameIndex} min={0} max={numFrames - 1} showTrackFill={false} labelValues={frameTick} labelPrecision={0} onChange={this.onFrameChanged} disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled} />
                             <div className="slider-info">{activeFrame.filename}</div>
                         </React.Fragment>
                     )}
@@ -243,12 +243,12 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 <div className="animator-slider">
                     <Radio
                         value={AnimationMode.CHANNEL}
-                        disabled={appStore.animatorStore.animationActive}
+                        disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled}
                         checked={appStore.animatorStore.animationMode === AnimationMode.CHANNEL}
                         onChange={this.onAnimationModeChanged}
                         label={activeFrame.channelType}
                     />
-                    {hideSliders && <SafeNumericInput value={activeFrame.requiredChannel} min={-1} max={numChannels} stepSize={1} onValueChange={this.onChannelChanged} fill={true} disabled={appStore.animatorStore.animationActive} />}
+                    {hideSliders && <SafeNumericInput value={activeFrame.requiredChannel} min={-1} max={numChannels} stepSize={1} onValueChange={this.onChannelChanged} fill={true} disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled} />}
                     {!hideSliders && (
                         <React.Fragment>
                             <Slider
@@ -260,7 +260,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                                 labelPrecision={0}
                                 showTrackFill={false}
                                 onChange={this.onChannelChanged}
-                                disabled={appStore.animatorStore.animationActive}
+                                disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled}
                             />
                             <div className="slider-info">
                                 <pre>{activeFrame.depthAxisInfo}</pre>
@@ -281,7 +281,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                                 labelStepSize={channelStep}
                                 labelPrecision={0}
                                 onChange={this.onRangeChanged}
-                                disabled={appStore.animatorStore.animationActive}
+                                disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled}
                             />
                             <div className="slider-info" />
                         </React.Fragment>
@@ -294,7 +294,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         if (numStokes > 1) {
             stokesSlider = (
                 <div className={classNames("animator-slider", "stokes-slider", {"tiled-label": this.width < 750})}>
-                    <Radio value={AnimationMode.STOKES} disabled={appStore.animatorStore.animationActive} checked={appStore.animatorStore.animationMode === AnimationMode.STOKES} onChange={this.onAnimationModeChanged} label="Polarization" />
+                    <Radio value={AnimationMode.STOKES} disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled} checked={appStore.animatorStore.animationMode === AnimationMode.STOKES} onChange={this.onAnimationModeChanged} label="Polarization" />
                     {hideSliders && (
                         <SafeNumericInput
                             value={activeFrame.requiredStokes}
@@ -302,7 +302,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                             max={activeFrame.frameInfo.fileInfoExtended.stokes}
                             stepSize={1}
                             onValueChange={this.onStokesChanged}
-                            disabled={appStore.animatorStore.animationActive}
+                            disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled}
                             fill={true}
                         />
                     )}
@@ -317,7 +317,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                                     return isFinite(val) && val >= 0 && val < activeFrame?.polarizationInfo?.length ? activeFrame.polarizationInfo[val] : `${val}`;
                                 }}
                                 onChange={this.onStokesChanged}
-                                disabled={appStore.animatorStore.animationActive}
+                                disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled}
                             />
                             <div className="slider-info" />
                         </React.Fragment>
@@ -343,7 +343,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 position={Position.TOP}
             >
                 <Tooltip2 content="Playback mode" position={Position.TOP}>
-                    <AnchorButton icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.animationActive}>
+                    <AnchorButton icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled}>
                         {!iconOnly && "Mode"}
                     </AnchorButton>
                 </Tooltip2>
@@ -389,7 +389,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         minorStepSize={1}
                         majorStepSize={1}
                         onValueChange={appStore.animatorStore.setFrameRate}
-                        disabled={appStore.animatorStore.animationActive}
+                        disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled}
                     />
                 ) : (
                     <SafeNumericInput
@@ -400,7 +400,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         minorStepSize={1}
                         majorStepSize={1}
                         onValueChange={appStore.animatorStore.setStep}
-                        disabled={appStore.animatorStore.animationActive}
+                        disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled}
                     />
                 )}
             </ControlGroup>

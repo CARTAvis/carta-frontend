@@ -24,7 +24,7 @@ export function imageToCanvasPos(imageX: number, imageY: number, frameView: Fram
 }
 
 export function canvasToTransformedImagePos(canvasX: number, canvasY: number, frame: FrameStore, layerWidth: number, layerHeight: number) {
-    const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+    const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView() : frame.requiredFrameView();
     let imagePos = canvasToImagePos(canvasX, canvasY, frameView, layerWidth, layerHeight, frame.spatialTransform);
 
     if (frame.spatialReference) {

@@ -10,7 +10,7 @@ import {observer} from "mobx-react";
 
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {Point2D, POLARIZATIONS} from "models";
-import {AppStore, ASTSettingsString, DefaultWidgetConfig, HelpType, OverlayStore, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, ASTSettingsString, DefaultWidgetConfig, HelpType, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {RegionId, SpatialProfileWidgetStore} from "stores/Widgets";
 import {binarySearchByX, clamp, formattedExponential, getColorForTheme, toFixed, transformPoint} from "utilities";
@@ -357,9 +357,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 if (this.lineAxis) {
                     this.setAutoScaleBounds(this.lineAxis.min, this.lineAxis.max);
                 } else if (this.widgetStore.isXProfile) {
-                    this.setAutoScaleBounds(clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width), clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width));
+                    this.setAutoScaleBounds(clamp(this.frame.requiredFrameView().xMin, 0, this.frame.frameInfo.fileInfoExtended.width), clamp(this.frame.requiredFrameView().xMax, 0, this.frame.frameInfo.fileInfoExtended.width));
                 } else {
-                    this.setAutoScaleBounds(clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height), clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height));
+                    this.setAutoScaleBounds(clamp(this.frame.requiredFrameView().yMin, 0, this.frame.frameInfo.fileInfoExtended.height), clamp(this.frame.requiredFrameView().yMax, 0, this.frame.frameInfo.fileInfoExtended.height));
                 }
             },
             {delay: AUTOSCALE_THROTTLE_TIME}

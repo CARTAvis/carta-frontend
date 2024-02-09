@@ -299,9 +299,8 @@ export class TileService {
                     return aX * aX + aY * aY - (bX * bX + bY * bY);
                 })
                 .map(tile => tile.encode());
-            console.log(sortedRequests, 'newRequests')
+
             if (channelsChanged || channelMapRange) {
-                this.backendService.setChannels(fileId, channel, stokes, { fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles: sortedRequests});
                 this.backendService.setChannels(fileId, channel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles: sortedRequests}, channelMapRange);
             } else {
                 this.backendService.addRequiredTiles(fileId, sortedRequests, compressionQuality);
@@ -311,6 +310,8 @@ export class TileService {
             this.tileStream.next({ tileCount: 0, fileId, channel, stokes, flush: false });
         }
     }
+
+    
 
     updateHiddenFileChannels(fileId: number, channel: number, stokes: number) {
         this.clearCompressedCache(fileId);
@@ -459,16 +460,16 @@ export class TileService {
         const currentChannels = this.channelMap.get(tileMessage.fileId);
         const appStore = AppStore.Instance;
         // Ignore stale tiles that don't match the currently required tiles. During animation, ignore changes to channel
+        console.log(appStore.preferenceStore.channelMapEnabled, !appStore.channelMapStore.channelArray.includes(tileMessage.channel), appStore.channelMapStore.channelArray)
+        if (!appStore.preferenceStore.channelMapEnabled && !this.animationEnabled && (!currentChannels || currentChannels.channel !== tileMessage.channel || currentChannels.stokes !== tileMessage.stokes)) {
+            console.log(`Ignoring stale tile for channel=${tileMessage.channel} (Current channel=${currentChannels ? currentChannels.channel : undefined})`);
+            return;
+        }
         
-        // if (appStore.preferenceStore.channelMapEnabled && !appStore.channelMapStore.channelArray.includes(tileMessage.channel)) {
-        //     console.log('Skipping stale tile during channel map.');
-        //     return;
-        // }
-
-        // if (!this.animationEnabled && (!currentChannels || currentChannels.channel !== tileMessage.channel || currentChannels.stokes !== tileMessage.stokes)) {
-        //     console.log(`Ignoring stale tile for channel=${tileMessage.channel} (Current channel=${currentChannels ? currentChannels.channel : undefined})`);
-        //     return;
-        // }
+        if (appStore.preferenceStore.channelMapEnabled && !appStore.channelMapStore.channelArray.includes(tileMessage.channel)) {
+            console.log('Skipping stale tile during channel map.');
+            return;
+        }
 
         if (this.animationEnabled && tileMessage.animationId !== this.backendService.animationId && !this.syncIdMap.has(tileMessage.syncId)) {
             console.log(`Skipping stale tile during animation Message animation_id: ${tileMessage.animationId}. Service animation_id: ${this.backendService.animationId}`);

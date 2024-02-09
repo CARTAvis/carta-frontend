@@ -114,7 +114,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         let dashFactor: number;
 
         if (baseFrame.spatialReference) {
-            const baseRequiredView = baseFrame.spatialReference.requiredFrameView;
+            const baseRequiredView = baseFrame.spatialReference.requiredFrameView();
 
             const rangeScale = {
                 x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
@@ -137,7 +137,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             lineThickness = (pixelRatio * frame.contourConfig.thickness) / (baseFrame.spatialReference.zoomLevel * baseFrame.spatialTransform.scale);
             dashFactor = ceilToPower(1.0 / baseFrame.spatialReference.zoomLevel, 3.0);
         } else {
-            const baseRequiredView = baseFrame.requiredFrameView;
+            const baseRequiredView = baseFrame.requiredFrameView();
             const rangeScale = {
                 x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
                 y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin)
@@ -235,7 +235,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         const appStore = AppStore.Instance;
         const baseFrame = this.props.frame;
         if (baseFrame) {
-            const view = baseFrame.requiredFrameView;
+            const view = baseFrame.requiredFrameView();
         }
 
         const contourFrames = appStore.contourFrames.get(baseFrame);

@@ -61,7 +61,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
 
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : frame.wcsInfo;
-        const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+        const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView(settings.renderWidth, settings.renderHeight) : frame.requiredFrameView(settings.renderWidth, settings.renderHeight);
         if (wcsInfo && frameView && this.canvas) {
             // Take aspect ratio scaling into account
             const tempWcsInfo = AST.copy(wcsInfo);

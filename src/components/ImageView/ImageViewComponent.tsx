@@ -6,14 +6,14 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {Point2D, Zoom} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, Padding, PreferenceKeys, PreferenceStore, WidgetProps} from "stores";
+import { TileWebGLService } from "services";
+import {AppStore, DefaultWidgetConfig, HelpType, Padding, PreferenceStore, WidgetProps} from "stores";
 import {toFixed} from "utilities";
 
+import { ChannelMapViewComponent } from "./ChannelMapView/ChannelMapViewComponent";
 import {ImagePanelComponent} from "./ImagePanel/ImagePanelComponent";
 
 import "./ImageViewComponent.scss";
-import { ChannelMapViewComponent } from "./ChannelMapView/ChannelMapViewComponent";
-import { TileWebGLService } from "services";
 
 export enum ImageViewLayer {
     RegionCreating = "regionCreating",

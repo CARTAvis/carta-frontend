@@ -76,7 +76,7 @@ export class AnimatorStore {
             return;
         }
         // Calculate new required frame view (cropped to file size)
-        const reqView = frame.requiredFrameView;
+        const reqView = frame.requiredFrameView();
 
         const croppedReq: FrameView = {
             xMin: Math.max(0, reqView.xMin),

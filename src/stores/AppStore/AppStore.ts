@@ -10,6 +10,7 @@ import {action, autorun, computed, flow, makeObservable, observable, ObservableM
 import * as Semver from "semver";
 
 import {getImageViewCanvas, ImageViewLayer, PvGeneratorComponent} from "components";
+import { ChannelMapStore } from "components/ImageView/ChannelMapView/ChannelMapViewComponent";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import {
     CARTA_INFO,
@@ -62,7 +63,6 @@ import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetSt
 import {clamp, DEFAULT_COLOR, distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
 
 import GitCommit from "../../static/gitInfo";
-import { ChannelMapStore } from "components/ImageView/ChannelMapView/ChannelMapViewComponent";
 
 interface FrameOption extends IOptionProps {
     hasZAxis: boolean;
@@ -539,9 +539,7 @@ export class AppStore {
         this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfo.type, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes, generated);
 
         let newFrame = new FrameStore(frameInfo);
-
         this.channelMapStore.setMasterFrame(newFrame);
-
         // Place frame in frame array (replace frame with the same ID if it exists)
         const existingFrameIndex = this.frames.findIndex(f => f.frameInfo.fileId === ack.fileId);
         if (existingFrameIndex !== -1) {
@@ -1581,7 +1579,7 @@ export class AppStore {
             frame.stokes = update.stokes;
             if (this.visibleFrames.includes(frame)) {
                 // Calculate new required frame view (cropped to file size)
-                const reqView = frame.requiredFrameView;
+                const reqView = frame.requiredFrameView();
 
                 const croppedReq: FrameView = {
                     xMin: Math.max(0, reqView.xMin),
@@ -1601,8 +1599,7 @@ export class AppStore {
                 const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
                 const compressionQuality = bunitVariant.includes(frame.headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
                 // testing using arbitrary channel range
-                // this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, compressionQuality, true, {min: frame.channel, max: frame.channel + 8});
-                this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, compressionQuality, true, {min: frame.channel, max: frame.channel + this.channelMapStore.numChannels - 1});
+                this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, compressionQuality, true);
             } else {
                 this.tileService.updateHiddenFileChannels(frame.frameInfo.fileId, frame.channel, frame.stokes);
             }
@@ -1832,7 +1829,7 @@ export class AppStore {
                 // Group all view updates for visible images into one throttled call
                 const viewUpdates: ViewUpdate[] = [];
                 for (const frame of this.visibleFrames) {
-                    const reqView = frame.requiredFrameView;
+                    const reqView = frame.requiredFrameView();
                     let croppedReq: FrameView = {
                         xMin: Math.max(0, reqView.xMin),
                         xMax: Math.min(frame.frameInfo.fileInfoExtended.width, reqView.xMax),

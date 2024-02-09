@@ -11,7 +11,6 @@ import {FrameStore} from "stores/Frame";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
 import {CatalogViewGLComponent} from "../CatalogView/CatalogViewGLComponent";
-import {ChannelMapViewComponent} from "../ChannelMapView/ChannelMapViewComponent";
 import {ColorbarComponent} from "../Colorbar/ColorbarComponent";
 import {ContourViewComponent} from "../ContourView/ContourViewComponent";
 import {CursorOverlayComponent} from "../CursorOverlay/CursorOverlayComponent";

@@ -3,7 +3,7 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {CatalogSystemType, Point2D} from "models";
 import {CatalogDatabase} from "services";
-import {AppStore, ASTSettingsString, NumberFormatType, OverlayStore, SystemType} from "stores";
+import {AppStore, ASTSettingsString, NumberFormatType, SystemType} from "stores";
 import {clamp, getPixelValueFromWCS, transformPoint, VizierResource} from "utilities";
 
 export enum RadiusUnits {
@@ -259,7 +259,7 @@ export class CatalogOnlineQueryConfigStore {
     @computed get searchRadiusInDegree(): number {
         const activeFrame = this.activeFrame;
         if (activeFrame) {
-            const requiredFrameView = activeFrame.requiredFrameView;
+            const requiredFrameView = activeFrame.requiredFrameView();
             const diagonal1 = this.calculateDistanceFromPixelCoord({x: requiredFrameView.xMax, y: requiredFrameView.yMax}, {x: requiredFrameView.xMin, y: requiredFrameView.yMin}, true);
             const diagonal2 = this.calculateDistanceFromPixelCoord({x: requiredFrameView.xMin, y: requiredFrameView.yMax}, {x: requiredFrameView.xMax, y: requiredFrameView.yMin}, true);
             const diagonal3 = this.calculateDistanceFromPixelCoord({x: requiredFrameView.xMax, y: requiredFrameView.yMax}, {x: requiredFrameView.xMin, y: requiredFrameView.yMin}, false);

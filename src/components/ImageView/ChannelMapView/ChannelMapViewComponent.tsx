@@ -1,21 +1,22 @@
 // This is a component that uses rasterViewComponent to construct something on the same level as imagePanel component
 import * as React from "react";
+// import { ImageViewLayer } from "../ImageViewComponent";
+import { action, computed, makeObservable, observable } from "mobx";
 import { observer } from "mobx-react";
 
+import { CursorInfo, FrameView, Point2D } from "models";
 import { TileWebGLService } from "services";
 import { AppStore, OverlayStore } from "stores";
-import { FrameInfo, FrameStore } from "stores/Frame";
+import { FrameStore } from "stores/Frame";
+import { GetRequiredTiles } from "utilities";
 
+import { ColorbarComponent } from "../Colorbar/ColorbarComponent";
+// import { CARTA } from "carta-protobuf";
+import { CursorOverlayComponent } from "../CursorOverlay/CursorOverlayComponent";
+import { OverlayComponent } from "../Overlay/OverlayComponent";
 import { RasterViewComponent } from "../RasterView/RasterViewComponent";
 import { RegionViewComponent } from "../RegionView/RegionViewComponent";
-import { OverlayComponent } from "../Overlay/OverlayComponent";
 import { ToolbarComponent } from "../Toolbar/ToolbarComponent";
-import { ImageViewLayer } from "../ImageViewComponent";
-import { action, computed, makeObservable, observable } from "mobx";
-import { CARTA } from "carta-protobuf";
-import { CursorOverlayComponent } from "../CursorOverlay/CursorOverlayComponent";
-import { CursorInfo } from "models";
-import { ColorbarComponent } from "../Colorbar/ColorbarComponent";
 
 export class ChannelMapViewComponentProps {
     frame: FrameStore;
@@ -42,7 +43,7 @@ export class ChannelMapStore {
         makeObservable(this);
         ChannelMapStore.staticInstance = this;
         // this.masterFrame = frame;
-        // this.startChannel = 0;
+        this.startChannel = 0;
         this.numColumns = 2;
         this.numRows = 2;
         this.overlayStores = {corner: undefined, left: undefined, bottom: undefined, inner: undefined};
@@ -74,6 +75,7 @@ export class ChannelMapStore {
     }
 
     @action setMasterFrame(masterFrame: FrameStore) {
+        console.log('setting master frame')
         this.masterFrame = masterFrame;
     };
 
@@ -106,6 +108,39 @@ export class ChannelMapStore {
     @action setPixelHighlightValue = (val: number) => {
         if (!AppStore.Instance.isExportingImage) {
             this.pixelHighlightValue = val;
+        }
+    };
+
+    @action requestChannels = () => {
+        const frame = this.masterFrame;
+        if (!frame) {
+            return;
+        }
+
+        if (true) { // if channel map is active
+            // Calculate new required frame view (cropped to file size)
+            const reqView = frame.requiredFrameView(this.overlayStores.inner.renderWidth, this.overlayStores.inner.renderHeight);
+            const croppedReq: FrameView = {
+                xMin: Math.max(0, reqView.xMin),
+                xMax: Math.min(frame.frameInfo.fileInfoExtended.width, reqView.xMax),
+                yMin: Math.max(0, reqView.yMin),
+                yMax: Math.min(frame.frameInfo.fileInfoExtended.height, reqView.yMax),
+                mip: reqView.mip
+            };
+            const appStore = AppStore.Instance;
+            const imageSize: Point2D = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
+            const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
+            console.log('requesting', tiles, croppedReq, imageSize)
+            const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
+            // TODO: dynamic tile size
+            const tileSizeFullRes = reqView.mip * 256;
+            const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
+            // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
+            const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
+            const compressionQuality = bunitVariant.includes(frame.headerUnit) ? Math.max(appStore.preferenceStore.imageCompressionQuality, 32) : appStore.preferenceStore.imageCompressionQuality;
+            // testing using arbitrary channel range
+            console.log('requesting channel range', {min: this.startChannel, max: this.channelRange})
+            appStore.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, compressionQuality, true, {min: this.startChannel, max: this.channelRange});
         }
     };
 
@@ -158,10 +193,10 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     // let channelFrames: FrameStore[] = observable([]);
     // const [rerenderTrigger, setRerenderTrigger] = React.useState<boolean>(true);
     const frame = channelMapStore.masterFrame;
-    const channelFrames = []
-    for (let i = 0; i < channelMapStore.numChannels; i++) {
-        channelFrames.push(i + frame?.channel);
-    }
+    // const channelFrames = []
+    // for (let i = 0; i < channelMapStore.numChannels; i++) {
+    //     channelFrames.push(i + channelMapStore.startChannel);
+    // }
     const imageRenderWidth = (props.renderWidth - frame?.overlayStore.colorbar.totalWidth - frame?.overlayStore.defaultGap - 40) / channelMapStore.numColumns;
     const imageRenderHeight = isFinite(cursorOverlayRef.current?.divElement.clientHeight) ? ((props.renderHeight - cursorOverlayRef.current?.divElement.clientHeight - 40) / channelMapStore.numRows) : 0;
 
@@ -210,6 +245,10 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         // }
 
     // }, [props.frame?.channel]);
+
+    React.useEffect(() => {
+        AppStore.Instance.channelMapStore.requestChannels();
+    }, [channelMapStore.startChannel, channelMapStore.numColumns, channelMapStore.numRows]);
 
     // React.useEffect(() => {
     //     // The following is a temporary solution to channelMapStore.channelFrames problem.
@@ -325,7 +364,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     return frame ? (
         <>
             <div style={{top: cursorOverlayRef.current?.divElement.clientHeight, left: 40, position: "absolute"}}>
-                {channelFrames.map((channel, index) => {
+                {channelMapStore.channelArray.map((channel, index) => {
                     const appStore = AppStore.Instance;
                     const column = index % channelMapStore.numColumns;
                     const row = Math.floor(index / channelMapStore.numColumns);
@@ -404,6 +443,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     return (
                         <>
                             <RasterViewComponent
+                                key={`raster-view-component-${channel}`}
                                 frame={frame}
                                 gl={TileWebGLService.Instance.gl}
                                 overlayStore={overlayStore}

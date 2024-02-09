@@ -6,7 +6,6 @@ import {observer} from "mobx-react";
 
 import {CoordinateComponent, CoordNumericInput, InputType, SafeNumericInput} from "components/Shared";
 import {Point2D, WCSPoint2D} from "models";
-import {AppStore} from "stores";
 import {CompassAnnotationStore, CoordinateMode, FrameStore, RegionStore} from "stores/Frame";
 import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
