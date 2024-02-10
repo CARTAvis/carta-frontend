@@ -10,7 +10,7 @@ import {action, autorun, computed, flow, makeObservable, observable, ObservableM
 import * as Semver from "semver";
 
 import {getImageViewCanvas, ImageViewLayer, PvGeneratorComponent} from "components";
-import { ChannelMapStore } from "components/ImageView/ChannelMapView/ChannelMapViewComponent";
+import {ChannelMapStore} from "components/ImageView/ChannelMapView/ChannelMapViewComponent";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import {
     CARTA_INFO,
@@ -1579,7 +1579,7 @@ export class AppStore {
             frame.stokes = update.stokes;
             if (this.visibleFrames.includes(frame)) {
                 // Calculate new required frame view (cropped to file size)
-                const reqView = frame.requiredFrameView();
+                const reqView = frame.requiredFrameView;
 
                 const croppedReq: FrameView = {
                     xMin: Math.max(0, reqView.xMin),
@@ -1829,7 +1829,7 @@ export class AppStore {
                 // Group all view updates for visible images into one throttled call
                 const viewUpdates: ViewUpdate[] = [];
                 for (const frame of this.visibleFrames) {
-                    const reqView = frame.requiredFrameView();
+                    const reqView = frame.requiredFrameView;
                     let croppedReq: FrameView = {
                         xMin: Math.max(0, reqView.xMin),
                         xMax: Math.min(frame.frameInfo.fileInfoExtended.width, reqView.xMax),

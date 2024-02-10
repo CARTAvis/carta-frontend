@@ -6,11 +6,11 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {Point2D, Zoom} from "models";
-import { TileWebGLService } from "services";
+import {TileWebGLService} from "services";
 import {AppStore, DefaultWidgetConfig, HelpType, Padding, PreferenceStore, WidgetProps} from "stores";
 import {toFixed} from "utilities";
 
-import { ChannelMapViewComponent } from "./ChannelMapView/ChannelMapViewComponent";
+import {ChannelMapViewComponent} from "./ChannelMapView/ChannelMapViewComponent";
 import {ImagePanelComponent} from "./ImagePanel/ImagePanelComponent";
 
 import "./ImageViewComponent.scss";
@@ -184,27 +184,26 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         if (!visibleFrames) {
             return [];
         }
-        
-        return PreferenceStore.Instance.channelMapEnabled && !PreferenceStore.Instance.imageMultiPanelEnabled ? 
-        [
-            <div id={`image-panel`}>
-                <ChannelMapViewComponent
-                    frame={visibleFrames[0]}
-                    gl={TileWebGLService.Instance.gl}
-                    docked={this.props.docked}
-                    channelMapStore={channelMapStore}
-                    renderWidth={appStore.overlayStore.fullViewWidth}
-                    renderHeight={appStore.overlayStore.fullViewHeight}
-                />
-            </div>
-    ]
-        : 
-        visibleFrames.map((frame, index) => {
-            const column = index % appStore.numImageColumns;
-            const row = Math.floor(index / appStore.numImageColumns);
 
-            return <ImagePanelComponent ref={this.collectImagePanelRef} key={frame.frameInfo.fileId} docked={this.props.docked} frame={frame} row={row} column={column} />;
-        });
+        return PreferenceStore.Instance.channelMapEnabled && !PreferenceStore.Instance.imageMultiPanelEnabled
+            ? [
+                  <div id={`image-panel`}>
+                      <ChannelMapViewComponent
+                          frame={visibleFrames[0]}
+                          gl={TileWebGLService.Instance.gl}
+                          docked={this.props.docked}
+                          channelMapStore={channelMapStore}
+                          renderWidth={appStore.overlayStore.fullViewWidth}
+                          renderHeight={appStore.overlayStore.fullViewHeight}
+                      />
+                  </div>
+              ]
+            : visibleFrames.map((frame, index) => {
+                  const column = index % appStore.numImageColumns;
+                  const row = Math.floor(index / appStore.numImageColumns);
+
+                  return <ImagePanelComponent ref={this.collectImagePanelRef} key={frame.frameInfo.fileId} docked={this.props.docked} frame={frame} row={row} column={column} />;
+              });
     }
 
     render() {

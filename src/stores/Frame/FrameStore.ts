@@ -275,68 +275,65 @@ export class FrameStore {
     }
 
     @computed get requiredFrameView() {
-        console.log(this.center)
-        return (renderWidth?: number, renderHeight?: number): FrameView => {
-            // use spatial reference frame to calculate frame view, if it exists
-            if (this.spatialReference) {
-                // Required view of reference frame
-                const refView = this.spatialReference.requiredFrameView();
-                // Get the position of the ref frame's view in the secondary frame's pixel space
-                const corners = [
-                    this.spatialTransform.transformCoordinate({x: refView.xMin, y: refView.yMin}, false),
-                    this.spatialTransform.transformCoordinate({x: refView.xMin, y: refView.yMax}, false),
-                    this.spatialTransform.transformCoordinate({x: refView.xMax, y: refView.yMax}, false),
-                    this.spatialTransform.transformCoordinate({x: refView.xMax, y: refView.yMin}, false)
-                ];
+        // use spatial reference frame to calculate frame view, if it exists
+        if (this.spatialReference) {
+            // Required view of reference frame
+            const refView = this.spatialReference.requiredFrameView;
+            // Get the position of the ref frame's view in the secondary frame's pixel space
+            const corners = [
+                this.spatialTransform.transformCoordinate({x: refView.xMin, y: refView.yMin}, false),
+                this.spatialTransform.transformCoordinate({x: refView.xMin, y: refView.yMax}, false),
+                this.spatialTransform.transformCoordinate({x: refView.xMax, y: refView.yMax}, false),
+                this.spatialTransform.transformCoordinate({x: refView.xMax, y: refView.yMin}, false)
+            ];
 
-                const {minPoint, maxPoint} = minMax2D(corners);
-                // Manually get adjusted zoom level and round to a power of 2
-                const mipAdjustment = (PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0) / this.spatialTransform.scale;
-                const mipExact = Math.max(1.0, mipAdjustment / this.spatialReference.zoomLevel);
-                const mipLog2 = Math.log2(mipExact);
-                const mipLog2Rounded = Math.round(mipLog2);
+            const {minPoint, maxPoint} = minMax2D(corners);
+            // Manually get adjusted zoom level and round to a power of 2
+            const mipAdjustment = (PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0) / this.spatialTransform.scale;
+            const mipExact = Math.max(1.0, mipAdjustment / this.spatialReference.zoomLevel);
+            const mipLog2 = Math.log2(mipExact);
+            const mipLog2Rounded = Math.round(mipLog2);
 
+            return {
+                xMin: minPoint.x,
+                xMax: maxPoint.x,
+                yMin: minPoint.y,
+                yMax: maxPoint.y,
+                mip: Math.pow(2, mipLog2Rounded)
+            };
+        } else {
+            // If there isn't a valid zoom, return a dummy view
+            if (this.zoomLevel <= 0 || !this.isRenderable) {
                 return {
-                    xMin: minPoint.x,
-                    xMax: maxPoint.x,
-                    yMin: minPoint.y,
-                    yMax: maxPoint.y,
-                    mip: Math.pow(2, mipLog2Rounded)
-                };
-            } else {
-                // If there isn't a valid zoom, return a dummy view
-                if (this.zoomLevel <= 0 || !this.isRenderable) {
-                    return {
-                        xMin: 0,
-                        xMax: 1,
-                        yMin: 0,
-                        yMax: 1,
-                        mip: 1
-                    };
-                }
-
-                // Required image dimensions
-                const imageWidth = (this.pixelRatio * (renderWidth || this.renderWidth)) / this.zoomLevel / this.aspectRatio;
-                const imageHeight = (this.pixelRatio * (renderHeight || this.renderHeight)) / this.zoomLevel;
-
-                const mipAdjustment = PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0;
-                const mipExact = Math.max(1.0, mipAdjustment / this.zoomLevel);
-                const mipLog2 = Math.log2(mipExact);
-                const mipLog2Rounded = Math.round(mipLog2);
-                const mipRoundedPow2 = Math.pow(2, mipLog2Rounded);
-                return {
-                    xMin: this.center.x - imageWidth / 2.0,
-                    xMax: this.center.x + imageWidth / 2.0,
-                    yMin: this.center.y - imageHeight / 2.0,
-                    yMax: this.center.y + imageHeight / 2.0,
-                    mip: mipRoundedPow2
+                    xMin: 0,
+                    xMax: 1,
+                    yMin: 0,
+                    yMax: 1,
+                    mip: 1
                 };
             }
-        };
+
+            // Required image dimensions
+            const imageWidth = (this.pixelRatio * this.renderWidth) / this.zoomLevel / this.aspectRatio;
+            const imageHeight = (this.pixelRatio * this.renderHeight) / this.zoomLevel;
+
+            const mipAdjustment = PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0;
+            const mipExact = Math.max(1.0, mipAdjustment / this.zoomLevel);
+            const mipLog2 = Math.log2(mipExact);
+            const mipLog2Rounded = Math.round(mipLog2);
+            const mipRoundedPow2 = Math.pow(2, mipLog2Rounded);
+            return {
+                xMin: this.center.x - imageWidth / 2.0,
+                xMax: this.center.x + imageWidth / 2.0,
+                yMin: this.center.y - imageHeight / 2.0,
+                yMax: this.center.y + imageHeight / 2.0,
+                mip: mipRoundedPow2
+            };
+        }
     }
 
     @computed get fovSize(): Point2D {
-        return {x: this.requiredFrameView()?.xMax - this.requiredFrameView()?.xMin, y: this.requiredFrameView()?.yMax - this.requiredFrameView()?.yMin};
+        return {x: this.requiredFrameView?.xMax - this.requiredFrameView?.xMin, y: this.requiredFrameView?.yMax - this.requiredFrameView?.yMin};
     }
 
     @computed get fovSizeWCS(): WCSPoint2D {
@@ -390,12 +387,12 @@ export class FrameStore {
     @computed get renderWidth() {
         //need change, ok, we need a way to get this removed from here, and pass in overlaystore where needed
         // return AppStore.Instance.overlayStore.previewRenderWidth(this.previewViewWidth) || AppStore.Instance.overlayStore.renderWidth;
-        return this.overlayStore.renderWidth;
+        return AppStore.Instance.preferenceStore.channelMapEnabled && this.overlayStore.channelMapRenderWidth ? this.overlayStore.channelMapRenderWidth : this.overlayStore.renderWidth;
     }
-    
+
     @computed get renderHeight() {
         // return AppStore.Instance.overlayStore.previewRenderHeight(this.previewViewHeight) || AppStore.Instance.overlayStore.renderHeight;
-        return this.overlayStore.renderHeight;
+        return AppStore.Instance.preferenceStore.channelMapEnabled && this.overlayStore.channelMapRenderHeight ? this.overlayStore.channelMapRenderHeight : this.overlayStore.renderHeight;
     }
 
     @computed get isRenderable() {
@@ -1443,7 +1440,7 @@ export class FrameStore {
         // to avoid triggering wasted render() in PointRegionComponent/SimpleShapeRegionComponent/LineSegmentRegionComponent
         autorun(() => {
             if (this.requiredFrameView) {
-                this.requiredFrameViewForRegionRender = this.requiredFrameView();
+                this.requiredFrameViewForRegionRender = this.requiredFrameView;
             }
         });
 

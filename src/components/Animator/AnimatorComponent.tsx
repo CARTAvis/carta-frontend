@@ -220,11 +220,36 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             const frameTick = numFrames > 10 ? frameTickPre : Array.from(Array(numFrames).keys());
             frameSlider = (
                 <div className="animator-slider">
-                    <Radio value={AnimationMode.FRAME} disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled} checked={appStore.animatorStore.animationMode === AnimationMode.FRAME} onChange={this.onAnimationModeChanged} label="Image" />
-                    {hideSliders && <SafeNumericInput value={frameIndex} min={-1} max={numFrames} stepSize={1} onValueChange={this.onFrameChanged} fill={true} disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled} />}
+                    <Radio
+                        value={AnimationMode.FRAME}
+                        disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled}
+                        checked={appStore.animatorStore.animationMode === AnimationMode.FRAME}
+                        onChange={this.onAnimationModeChanged}
+                        label="Image"
+                    />
+                    {hideSliders && (
+                        <SafeNumericInput
+                            value={frameIndex}
+                            min={-1}
+                            max={numFrames}
+                            stepSize={1}
+                            onValueChange={this.onFrameChanged}
+                            fill={true}
+                            disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled}
+                        />
+                    )}
                     {!hideSliders && (
                         <React.Fragment>
-                            <Slider value={frameIndex} min={0} max={numFrames - 1} showTrackFill={false} labelValues={frameTick} labelPrecision={0} onChange={this.onFrameChanged} disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled} />
+                            <Slider
+                                value={frameIndex}
+                                min={0}
+                                max={numFrames - 1}
+                                showTrackFill={false}
+                                labelValues={frameTick}
+                                labelPrecision={0}
+                                onChange={this.onFrameChanged}
+                                disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled}
+                            />
                             <div className="slider-info">{activeFrame.filename}</div>
                         </React.Fragment>
                     )}
@@ -248,7 +273,17 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         onChange={this.onAnimationModeChanged}
                         label={activeFrame.channelType}
                     />
-                    {hideSliders && <SafeNumericInput value={activeFrame.requiredChannel} min={-1} max={numChannels} stepSize={1} onValueChange={this.onChannelChanged} fill={true} disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled} />}
+                    {hideSliders && (
+                        <SafeNumericInput
+                            value={activeFrame.requiredChannel}
+                            min={-1}
+                            max={numChannels}
+                            stepSize={1}
+                            onValueChange={this.onChannelChanged}
+                            fill={true}
+                            disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled}
+                        />
+                    )}
                     {!hideSliders && (
                         <React.Fragment>
                             <Slider
@@ -294,7 +329,13 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         if (numStokes > 1) {
             stokesSlider = (
                 <div className={classNames("animator-slider", "stokes-slider", {"tiled-label": this.width < 750})}>
-                    <Radio value={AnimationMode.STOKES} disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled} checked={appStore.animatorStore.animationMode === AnimationMode.STOKES} onChange={this.onAnimationModeChanged} label="Polarization" />
+                    <Radio
+                        value={AnimationMode.STOKES}
+                        disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled}
+                        checked={appStore.animatorStore.animationMode === AnimationMode.STOKES}
+                        onChange={this.onAnimationModeChanged}
+                        label="Polarization"
+                    />
                     {hideSliders && (
                         <SafeNumericInput
                             value={activeFrame.requiredStokes}

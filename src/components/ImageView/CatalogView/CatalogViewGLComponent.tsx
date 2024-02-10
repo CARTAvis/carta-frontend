@@ -47,7 +47,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         const appStore = AppStore.Instance;
         const baseFrame = this.props.frame;
         if (baseFrame) {
-            const view = baseFrame.requiredFrameView();
+            const view = baseFrame.requiredFrameView;
         }
 
         const catalogStore = appStore.catalogStore;
@@ -188,7 +188,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     sourceFrame = destinationFrame;
                 }
                 if (sourceFrame.spatialReference) {
-                    const baseRequiredView = sourceFrame.spatialReference.requiredFrameView();
+                    const baseRequiredView = sourceFrame.spatialReference.requiredFrameView;
                     const originAdjustedOffset = subtract2D(sourceFrame.spatialTransform.origin, scale2D(rotate2D(sourceFrame.spatialTransform.origin, sourceFrame.spatialTransform.rotation), sourceFrame.spatialTransform.scale));
 
                     rangeScale = {
@@ -203,7 +203,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     rotationAngle = -sourceFrame.spatialTransform.rotation;
                     scaleAdjustment = sourceFrame.spatialTransform.scale;
                 } else {
-                    let baseRequiredView = sourceFrame.requiredFrameView();
+                    let baseRequiredView = sourceFrame.requiredFrameView;
                     rangeScale = {
                         x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
                         y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin)

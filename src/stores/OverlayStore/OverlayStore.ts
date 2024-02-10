@@ -559,7 +559,7 @@ export class OverlayNumberSettings {
         this.bottomHidden = hidden;
         this.leftHidden = hidden;
     }
-    
+
     @action setBottomHidden(hidden: boolean) {
         this.bottomHidden = hidden;
     }
@@ -923,7 +923,7 @@ export class OverlayColorbarSettings {
         return (frame?: FrameStore) => {
             const padding = frame?.overlayStore?.padding;
             return this.position === "right" ? padding?.top : padding?.left;
-        }
+        };
     }
 
     @computed get height() {
@@ -1023,7 +1023,7 @@ export class OverlayStore {
     @observable base: number;
     @observable defaultGap: number;
     @observable isChannelMap: boolean;
-    
+
     // Individual settings
     @observable imageViewerSettingStore: ImageViewerSettingStore;
     @observable global: OverlayGlobalSettings;
@@ -1037,7 +1037,20 @@ export class OverlayStore {
     @observable colorbar: OverlayColorbarSettings;
     @observable beam: OverlayBeamSettings;
 
-    public constructor(fullViewWidth?: number, fullViewHeight?: number, base: number = 5, defaultGap: number = 5, leftLabelHidden: boolean = false, leftNumberHidden: boolean = false, bottomLabelHidden: boolean = false, bottomNumberHidden: boolean = false, isChannelMap: boolean = false) {
+    @observable channelMapRenderWidth: number;
+    @observable channelMapRenderHeight: number;
+
+    public constructor(
+        fullViewWidth?: number,
+        fullViewHeight?: number,
+        base: number = 5,
+        defaultGap: number = 5,
+        leftLabelHidden: boolean = false,
+        leftNumberHidden: boolean = false,
+        bottomLabelHidden: boolean = false,
+        bottomNumberHidden: boolean = false,
+        isChannelMap: boolean = false
+    ) {
         makeObservable(this);
         this.imageViewerSettingStore = ImageViewerSettingStore.Instance;
         this.global = this.imageViewerSettingStore.global;
@@ -1092,16 +1105,24 @@ export class OverlayStore {
     @computed get fullViewWidth() {
         return this._fullViewWidth;
         // return this.isChannelMap ? this._fullViewWidth : this.imageViewerSettingStore.fullViewWidth;
-    };
+    }
 
     @computed get fullViewHeight() {
         return this._fullViewHeight;
         // return this.isChannelMap ? this._fullViewHeight : this.imageViewerSettingStore.fullViewHeight;
-    };
+    }
 
     @action setViewDimension = (width: number, height: number) => {
         this._fullViewWidth = width;
         this._fullViewHeight = height;
+    };
+
+    @action setChannelMapRenderWidth = (width: number) => {
+        this.channelMapRenderWidth = width;
+    };
+
+    @action setChannelMapRenderHeight = (height: number) => {
+        this.channelMapRenderHeight = height;
     };
 
     @action clearViewDimension = () => {
@@ -1118,7 +1139,7 @@ export class OverlayStore {
     };
 
     @action setIsChannelMap = (isChannelMap: boolean) => {
-        this.isChannelMap = isChannelMap
+        this.isChannelMap = isChannelMap;
     };
 
     @action setFormatsFromSystem() {
@@ -1232,15 +1253,20 @@ export class OverlayStore {
     }
 
     @computed get labelWidth(): number {
-        return this.isChannelMap || (this.labels.leftShow || this.labels.bottomShow) ? this.defaultGap + this.labels.fontSize : 0;
+        return this.isChannelMap || this.labels.leftShow || this.labels.bottomShow ? this.defaultGap + this.labels.fontSize : 0;
     }
 
     @computed get colorbarHoverInfoHeight(): number {
-        return this.isChannelMap || this.colorbar.visible || (this.colorbar.visible && this.colorbar.position !== "bottom" && (this.labels.leftShow || this.labels.bottomShow)) || (this.colorbar.visible && this.colorbar.position === "bottom" && this.colorbar.labelVisible) ? 0 : 10;
+        return this.isChannelMap ||
+            this.colorbar.visible ||
+            (this.colorbar.visible && this.colorbar.position !== "bottom" && (this.labels.leftShow || this.labels.bottomShow)) ||
+            (this.colorbar.visible && this.colorbar.position === "bottom" && this.colorbar.labelVisible)
+            ? 0
+            : 10;
     }
 
     @computed get paddingLeft(): number {
-        return (this.numbers.leftShow || this.labels.leftShow) ?  this.base + this.numberWidth + this.labelWidth : 0;
+        return this.numbers.leftShow || this.labels.leftShow ? this.base + this.numberWidth + this.labelWidth : 0;
     }
 
     @computed get paddingRight(): number {
@@ -1252,7 +1278,9 @@ export class OverlayStore {
     }
 
     @computed get paddingBottom(): number {
-        return (this.numbers.bottomShow || this.labels.bottomShow) ? this.base + this.numberWidth + this.labelWidth + (this.colorbar.visible && this.colorbar.position === "bottom" ? this.colorbar.totalWidth : 0) + this.colorbarHoverInfoHeight : 0;
+        return this.numbers.bottomShow || this.labels.bottomShow
+            ? this.base + this.numberWidth + this.labelWidth + (this.colorbar.visible && this.colorbar.position === "bottom" ? this.colorbar.totalWidth : 0) + this.colorbarHoverInfoHeight
+            : 0;
     }
 
     @computed get padding(): Padding {
@@ -1266,11 +1294,11 @@ export class OverlayStore {
 
     // We have to choose between custom view size or default view size. If fullViewWidth and fullViewHeight are defined, then we use them, otherwise, use imageViewerSetting.
     @computed get viewWidth() {
-        return Math.floor(this.fullViewWidth || (this.imageViewerSettingStore.fullViewWidth / AppStore.Instance.numImageColumns));
+        return Math.floor(this.fullViewWidth || this.imageViewerSettingStore.fullViewWidth / AppStore.Instance.numImageColumns);
     }
 
     @computed get viewHeight() {
-        return Math.floor(this.fullViewHeight || (this.imageViewerSettingStore.fullViewHeight / AppStore.Instance.numImageRows));
+        return Math.floor(this.fullViewHeight || this.imageViewerSettingStore.fullViewHeight / AppStore.Instance.numImageRows);
     }
 
     @computed get renderWidth() {
@@ -1305,7 +1333,6 @@ export class OverlayStore {
 }
 
 export class ImageViewerSettingStore {
-
     private static staticInstance: ImageViewerSettingStore;
 
     static get Instance() {

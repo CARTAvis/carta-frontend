@@ -357,9 +357,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 if (this.lineAxis) {
                     this.setAutoScaleBounds(this.lineAxis.min, this.lineAxis.max);
                 } else if (this.widgetStore.isXProfile) {
-                    this.setAutoScaleBounds(clamp(this.frame.requiredFrameView().xMin, 0, this.frame.frameInfo.fileInfoExtended.width), clamp(this.frame.requiredFrameView().xMax, 0, this.frame.frameInfo.fileInfoExtended.width));
+                    this.setAutoScaleBounds(clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width), clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width));
                 } else {
-                    this.setAutoScaleBounds(clamp(this.frame.requiredFrameView().yMin, 0, this.frame.frameInfo.fileInfoExtended.height), clamp(this.frame.requiredFrameView().yMax, 0, this.frame.frameInfo.fileInfoExtended.height));
+                    this.setAutoScaleBounds(clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height), clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height));
                 }
             },
             {delay: AUTOSCALE_THROTTLE_TIME}

@@ -259,7 +259,7 @@ export class CatalogOnlineQueryConfigStore {
     @computed get searchRadiusInDegree(): number {
         const activeFrame = this.activeFrame;
         if (activeFrame) {
-            const requiredFrameView = activeFrame.requiredFrameView();
+            const requiredFrameView = activeFrame.requiredFrameView;
             const diagonal1 = this.calculateDistanceFromPixelCoord({x: requiredFrameView.xMax, y: requiredFrameView.yMax}, {x: requiredFrameView.xMin, y: requiredFrameView.yMin}, true);
             const diagonal2 = this.calculateDistanceFromPixelCoord({x: requiredFrameView.xMin, y: requiredFrameView.yMax}, {x: requiredFrameView.xMax, y: requiredFrameView.yMin}, true);
             const diagonal3 = this.calculateDistanceFromPixelCoord({x: requiredFrameView.xMax, y: requiredFrameView.yMax}, {x: requiredFrameView.xMin, y: requiredFrameView.yMin}, false);

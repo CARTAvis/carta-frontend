@@ -12,7 +12,7 @@ import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from
 const KEYCODE_ENTER = 13;
 
 @observer
-export class CompassRulerRegionForm extends React.Component<{region: RegionStore; frame: FrameStore, wcsInfo: AST.FrameSet}> {
+export class CompassRulerRegionForm extends React.Component<{region: RegionStore; frame: FrameStore; wcsInfo: AST.FrameSet}> {
     private handleNameChange = (formEvent: React.FormEvent<HTMLInputElement>) => {
         this.props.region.setName(formEvent.currentTarget.value);
     };

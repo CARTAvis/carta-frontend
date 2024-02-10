@@ -109,7 +109,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         const isActive = frame === baseFrame;
 
         if (baseFrame.spatialReference) {
-            const baseRequiredView = baseFrame.spatialReference.requiredFrameView();
+            const baseRequiredView = baseFrame.spatialReference.requiredFrameView;
 
             const rangeScale = {
                 x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
@@ -130,7 +130,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
             this.gl.uniform1f(shaderUniforms.ScaleAdjustment, baseFrame.spatialTransform.scale);
             this.gl.uniform1f(shaderUniforms.ZoomLevel, baseFrame.spatialReference.zoomLevel);
         } else {
-            const baseRequiredView = baseFrame.requiredFrameView();
+            const baseRequiredView = baseFrame.requiredFrameView;
             const rangeScale = {
                 x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
                 y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin)
@@ -234,7 +234,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         const appStore = AppStore.Instance;
         const baseFrame = this.props.frame;
         if (baseFrame) {
-            const view = baseFrame.requiredFrameView();
+            const view = baseFrame.requiredFrameView;
         }
 
         const overlayFrames = appStore.vectorOverlayFrames.get(baseFrame);
