@@ -691,6 +691,32 @@ export class AppStore {
         }
     }
 
+    @flow.bound *loadRemoteFile(remoteRequest: CARTA.RemoteFileRequest) {
+        try {
+            remoteRequest.fileId = this.fileCounter;
+            this.fileCounter++;
+            const ack: CARTA.IRemoteFileResponse = yield this.backendService.requestRemoteFile(remoteRequest);
+            if (!ack.success || !ack.openFileAck) {
+                AppToaster.show({icon: "warning-sign", message: `Load file failed: ${ack.message}`, intent: "danger", timeout: 3000});
+            }
+            if (!this.addFrame(ack.openFileAck, "", false, "", false, true, false)) {
+                AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+            }
+            this.endFileLoading();
+            this.fileBrowserStore.hideFileBrowser();
+            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
+            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
+            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
+            // Ensure loading finishes before next file is added
+            yield this.delay(10);
+            return this.getFrame(ack.openFileAck.fileId);
+        } catch (err) {
+            this.alertStore.showAlert(`Error loading file: ${err}`);
+            this.endFileLoading();
+            throw err;
+        }
+    }
+
     loadConcatStokes = async (stokesFiles: CARTA.IStokesFile[], directory: string, hdu: string) => {
         this.startFileLoading();
         try {
