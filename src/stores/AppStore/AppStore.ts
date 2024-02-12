@@ -643,7 +643,12 @@ export class AppStore {
     *loadFile(path: string, filename: string, hdu: string, imageArithmetic: boolean, setAsActive: boolean = true, updateStartingDirectory: boolean = true) {
         this.startFileLoading();
 
-        if (imageArithmetic) {
+        const isRemoteFile = path?.startsWith("https://");
+        if (isRemoteFile) {
+            filename = path;
+            path = "";
+            hdu = "";
+        } else if (imageArithmetic) {
             hdu = "";
         } else if (!filename) {
             const lastDirSeparator = path.lastIndexOf("/");
@@ -660,7 +665,7 @@ export class AppStore {
         }
 
         // Separate HDU and filename if no HDU is specified
-        if (!hdu?.length && !imageArithmetic) {
+        if (!hdu?.length && !imageArithmetic && !isRemoteFile) {
             const hduRegex = /^(.*)\[(\S+)]$/;
             const matches = hduRegex.exec(filename);
             // Three matching groups. Second is filename, third is HDU

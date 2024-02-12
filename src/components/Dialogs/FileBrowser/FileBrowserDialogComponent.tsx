@@ -829,6 +829,13 @@ export class FileBrowserDialogComponent extends React.Component {
 
     private submitInputPath = (keyEvent?) => {
         if (keyEvent && keyEvent?.keyCode === 13 && this.inputPathString !== "") {
+            if (this.inputPathString.startsWith("https://")) {
+                const appStore = AppStore.Instance;
+                appStore.openFile(this.inputPathString);
+                this.switchEditPathMode();
+                appStore.fileBrowserStore.hideFileBrowser();
+                return;
+            }
             this.handleBreadcrumbClicked(this.inputPathString);
             this.switchEditPathMode();
         }
