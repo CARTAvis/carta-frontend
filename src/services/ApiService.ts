@@ -13,7 +13,6 @@ export interface RuntimeConfig {
     apiAddress?: string;
     tokenRefreshAddress?: string;
     logoutAddress?: string;
-    logoutUsingGet?: boolean;
 }
 
 export class ApiService {
@@ -145,19 +144,9 @@ export class ApiService {
     };
 
     public logout = async () => {
-        this.clearToken();
-        // The controller will assume an existing login session exists if this exists
+        // An existing login session will be assumed to exists if this is found in local storage
         localStorage.removeItem("authenticationType");
-        if (ApiService.RuntimeConfig.logoutUsingGet) {
-            window.open(ApiService.RuntimeConfig.logoutAddress, "_self");
-            return; // avoid later potential dashboard redirect
-        } else {
-            await this.axiosInstance.post(ApiService.RuntimeConfig.logoutAddress);
-        }
-        // Redirect to dashboard URL if it exists
-        if (ApiService.RuntimeConfig.dashboardAddress) {
-            window.open(ApiService.RuntimeConfig.dashboardAddress, "_self");
-        }
+        window.open(ApiService.RuntimeConfig.logoutAddress, "_self");
     };
 
     public stopServer = async () => {
