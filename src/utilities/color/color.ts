@@ -1,6 +1,7 @@
 // Static assets
 import {Colors} from "@blueprintjs/core";
 import allMaps from "static/allmaps.png";
+import tinycolor from "tinycolor2";
 
 import {AppStore} from "stores";
 import {RenderConfigStore} from "stores/Frame";
@@ -99,34 +100,21 @@ export function getColorForTheme(color: string) {
     return Colors[`${requiredColor}${AppStore.Instance.darkTheme ? "4" : "2"}`];
 }
 
-function hexToRgb(hex: string): number[] {
-    // Remove the hash if it exists
-    hex = hex.replace(/^#/, "");
-
-    // Parse the hex values into separate R, G, B values
-    const bigint = parseInt(hex, 16);
-    const r = (bigint >> 16) & 255;
-    const g = (bigint >> 8) & 255;
-    const b = bigint & 255;
-
-    return [r, g, b];
-}
-
 function generateColorGradientArray(targetColorHex: string, startColorHex = "#000000", steps: number = 1023) {
     const gradientArray = [];
 
     // Convert Hex to RGBA
-    const targetColor = hexToRgb(targetColorHex);
-    const startColor = hexToRgb(startColorHex);
+    const targetColor = tinycolor(targetColorHex).toRgb();
+    const startColor = tinycolor(startColorHex).toRgb();
 
     for (let i = 0; i <= steps - 1; i++) {
         // Calculate the interpolation factor
         const factor = i / (steps - 1);
 
         // Interpolate RGBA values from the start color to the target color
-        const red = Math.round((1 - factor) * startColor[0] + factor * targetColor[0]);
-        const green = Math.round((1 - factor) * startColor[1] + factor * targetColor[1]);
-        const blue = Math.round((1 - factor) * startColor[2] + factor * targetColor[2]);
+        const red = Math.round((1 - factor) * startColor.r + factor * targetColor.r);
+        const green = Math.round((1 - factor) * startColor.g + factor * targetColor.g);
+        const blue = Math.round((1 - factor) * startColor.b + factor * targetColor.b);
         const alpha = 255;
 
         // Push the RGBA values as a string to the array

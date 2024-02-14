@@ -47,6 +47,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const frame = this.props.frame;
         const tileRenderService = frame.isPreview ? PreviewWebGLService.Instance : TileWebGLService.Instance;
         if (frame && this.canvas && this.gl && tileRenderService.cmapTexture) {
+            TileWebGLService.Instance.setCustomColormapTexture(frame.renderConfig.customColorHex);
             const histStokesIndex = frame.renderConfig.stokesIndex;
             const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histChannel : undefined;
             if ((frame.renderConfig.useCubeHistogram || frame.channel === histChannel || frame.isPreview) && (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)) {
@@ -74,10 +75,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.uniform1f(shaderUniforms.MinVal, renderConfig.scaleMinVal);
             this.gl.uniform1f(shaderUniforms.MaxVal, renderConfig.scaleMaxVal);
             this.gl.uniform1i(shaderUniforms.CmapIndex, renderConfig.colorMapIndex);
-            this.gl.uniform1i(
-                shaderUniforms.CustomCmapIndex,
-                Array.from(AppStore.Instance.customColorHex.keys()).findIndex(a => a === frame.frameInfo.fileId)
-            );
             this.gl.uniform1i(shaderUniforms.ScaleType, renderConfig.scaling);
             this.gl.uniform1i(shaderUniforms.Inverted, renderConfig.inverted ? 1 : 0);
             this.gl.uniform1f(shaderUniforms.Bias, renderConfig.bias);
@@ -385,7 +382,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 min: frame.renderConfig.scaleMinVal,
                 max: frame.renderConfig.scaleMaxVal,
                 colorMap: frame.renderConfig.colorMapIndex,
-                customColorHex: AppStore.Instance.customColorHex.get(frame.frameInfo.fileId),
+                customColorHex: frame.renderConfig.customColorHex,
                 contrast: frame.renderConfig.contrast,
                 bias: frame.renderConfig.bias,
                 useSmoothedBiasContrast: appStore.preferenceStore?.useSmoothedBiasContrast,

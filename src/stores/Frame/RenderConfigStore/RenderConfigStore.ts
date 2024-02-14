@@ -2,7 +2,6 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {WorkspaceRenderConfig} from "models";
-import {TileWebGLService} from "services";
 import {AppStore, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {clamp, getColorsForValues, getPercentiles, scaleValueInverse} from "utilities";
@@ -175,7 +174,6 @@ export class RenderConfigStore {
 
     @observable scaling: FrameScaling;
     @observable colorMapIndex: number;
-    @observable customColorMapIndex: number;
     @observable bias: number;
     @observable contrast: number;
     @observable gamma: number;
@@ -194,7 +192,7 @@ export class RenderConfigStore {
     @observable visible: boolean;
     @observable previewHistogramMax: number;
     @observable previewHistogramMin: number;
-    // @observable customColorHex: Map<number, string>;
+    @observable customColorHex: string;
 
     private frame: FrameStore;
 
@@ -216,7 +214,7 @@ export class RenderConfigStore {
         this.scaleMin = new Array<number>(stokesLength).fill(0);
         this.scaleMax = new Array<number>(stokesLength).fill(1);
         this.visible = true;
-        // this.customColorHex = new Map<number, string>();
+        this.customColorHex = preference.colormapHex;
     }
 
     public static IsScalingValid(scaling: FrameScaling): boolean {
@@ -409,10 +407,7 @@ export class RenderConfigStore {
     };
 
     @action setCustomColorMap = (colorHex: string, colormap: string) => {
-        const fileId = this.frame.frameInfo.fileId;
-        AppStore.Instance.customColorHex.set(fileId, colorHex);
-        this.customColorMapIndex = fileId;
-        TileWebGLService.Instance.setCustomColormapTexture(AppStore.Instance.customColorHex);
+        this.customColorHex = colorHex;
         this.setColorMap(colormap);
     };
 
@@ -478,7 +473,7 @@ export class RenderConfigStore {
         const siblings = this.frame?.renderConfigSiblings;
         if (siblings) {
             for (const frame of siblings) {
-                frame.renderConfig.updateFrom(this);
+                frame.renderConfig?.updateFrom(this);
             }
         }
     };
@@ -493,6 +488,7 @@ export class RenderConfigStore {
         this.scaleMax[this.stokesIndex] = other.scaleMaxVal;
         this.selectedPercentile[this.stokesIndex] = -1;
         this.colorMapIndex = other.colorMapIndex;
+        this.customColorHex = other.customColorHex;
         this.inverted = other.inverted;
     };
 

@@ -23,7 +23,6 @@ interface ShaderUniforms {
     CmapCalculatedTexture: WebGLUniformLocation;
     CmapCustomTexture: WebGLUniformLocation;
     CustomCmap: WebGLUniformLocation;
-    CustomCmapIndex: WebGLUniformLocation;
     NumCmaps: WebGLUniformLocation;
     NumCmapsCalculated: WebGLUniformLocation;
     NumCmapsCustom: WebGLUniformLocation;
@@ -108,7 +107,7 @@ export class TileWebGLService {
             CmapCalculatedTexture: this.gl.getUniformLocation(this.shaderProgram, "uCmapCalculatedTexture"),
             CmapCustomTexture: this.gl.getUniformLocation(this.shaderProgram, "uCmapCustomTexture"),
             CustomCmap: this.gl.getUniformLocation(this.shaderProgram, "uCustomCmap"),
-            CustomCmapIndex: this.gl.getUniformLocation(this.shaderProgram, "uCustomCmapIndex"),
+            // CustomCmapIndex: this.gl.getUniformLocation(this.shaderProgram, "uCustomCmapIndex"),
             NumCmaps: this.gl.getUniformLocation(this.shaderProgram, "uNumCmaps"),
             NumCmapsCalculated: this.gl.getUniformLocation(this.shaderProgram, "uNumCmapsCalculated"),
             NumCmapsCustom: this.gl.getUniformLocation(this.shaderProgram, "uNumCmapsCustom"),
@@ -180,17 +179,17 @@ export class TileWebGLService {
     }
 
     private setCmapCalculatedTexture() {
-        const Cmap = RenderConfigStore.COLOR_MAPS_CALCULATED;
+        const cmap = RenderConfigStore.COLOR_MAPS_CALCULATED;
         const width = 1024;
-        const height = Cmap.size;
+        const height = cmap.size;
         const components = 4;
-        let cmap: any;
+        let loadCmap: any;
 
         const cmapData = new Float32Array(width * height * components);
-        Array.from(Cmap.keys()).forEach((colormap, y) => {
-            cmap = getColorsForValues(colormap).color;
+        Array.from(cmap.keys()).forEach((colormap, y) => {
+            loadCmap = getColorsForValues(colormap).color;
             for (let x = 0; x < width; x++) {
-                for (let ii = 0; ii < components; ii++) cmapData[x * components + ii + y * width * components] = cmap[x * components + ii] / 255;
+                for (let ii = 0; ii < components; ii++) cmapData[x * components + ii + y * width * components] = loadCmap[x * components + ii] / 255;
             }
         });
 
@@ -204,21 +203,28 @@ export class TileWebGLService {
         this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_T, GL2.CLAMP_TO_EDGE);
     }
 
-    public setCustomColormapTexture(customColorHex: Map<number, string>) {
+    // public setCustomColormapTexture(customColorHex: Map<number, string>) {
+    public setCustomColormapTexture(customColorHex: string) {
         const width = 1024;
-        const height = customColorHex.size;
+        // const height = customColorHex.size;
+        const height = 1;
         const components = 4;
 
         this.gl.uniform1i(this.shaderUniforms.NumCmapsCustom, height);
 
         const cmapData = new Float32Array(width * height * components);
-        let cmap: any;
-        Array.from(customColorHex.values()).forEach((colorHex, y) => {
-            cmap = getColorsFromHex(colorHex).color;
-            for (let x = 0; x < width; x++) {
-                for (let ii = 0; ii < components; ii++) cmapData[x * components + ii + y * width * components] = cmap[x * components + ii] / 255;
-            }
-        });
+        // let cmap: any;
+        // Array.from(customColorHex.values()).forEach((colorHex, y) => {
+        //     cmap = getColorsFromHex(colorHex).color;
+        //     for (let x = 0; x < width; x++) {
+        //         for (let ii = 0; ii < components; ii++) cmapData[x * components + ii + y * width * components] = cmap[x * components + ii] / 255;
+        //     }
+        // });
+
+        const cmap = getColorsFromHex(customColorHex).color;
+        for (let x = 0; x < width; x++) {
+            for (let ii = 0; ii < components; ii++) cmapData[x * components + ii] = cmap[x * components + ii] / 255;
+        }
 
         const texture = this.gl.createTexture();
         this.gl.activeTexture(GL2.TEXTURE3);

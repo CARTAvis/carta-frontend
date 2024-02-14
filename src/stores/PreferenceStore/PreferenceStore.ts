@@ -50,6 +50,7 @@ export enum PreferenceKeys {
 
     RENDER_CONFIG_SCALING = "scaling",
     RENDER_CONFIG_COLORMAP = "colormap",
+    RENDER_CONFIG_COLORMAPHEX = "colormapHex",
     RENDER_CONFIG_PERCENTILE = "percentile",
     RENDER_CONFIG_SCALING_ALPHA = "scalingAlpha",
     RENDER_CONFIG_SCALING_GAMMA = "scalingGamma",
@@ -65,6 +66,7 @@ export enum PreferenceKeys {
     CONTOUR_CONFIG_COLORMAP_ENABLED = "contourColormapEnabled",
     CONTOUR_CONFIG_COLOR = "contourColor",
     CONTOUR_CONFIG_COLORMAP = "contourColormap",
+    CONTOUR_CONFIG_COLORMAPHEX = "contourColormapHex",
 
     VECTOR_OVERLAY_PIXEL_AVERAGING = "vectorOverlayPixelAveraging",
     VECTOR_OVERLAY_FRACTIONAL_INTENSITY = "vectorOverlayFractionalIntensity",
@@ -72,6 +74,7 @@ export enum PreferenceKeys {
     VECTOR_OVERLAY_COLORMAP_ENABLED = "vectorOverlayColormapEnabled",
     VECTOR_OVERLAY_COLOR = "vectorOverlayColor",
     VECTOR_OVERLAY_COLORMAP = "vectorOverlayColormap",
+    VECTOR_OVERLAY_COLORMAPHEX = "vectorOverlayColormapHex",
 
     WCS_OVERLAY_AST_COLOR = "astColor",
     WCS_OVERLAY_AST_GRID_VISIBLE = "astGridVisible",
@@ -141,7 +144,9 @@ export enum PreferenceKeys {
     CHECK_NEW_RELEASE = "checkNewRelease",
     LATEST_RELEASE = "latestRelease",
 
-    COMPATIBILITY_AIPS_BEAM_SUPPORT = "compatibilityAipsBeamSupport"
+    COMPATIBILITY_AIPS_BEAM_SUPPORT = "compatibilityAipsBeamSupport",
+
+    NON_PREFERENCE = "nonPreference"
 }
 
 const DEFAULTS = {
@@ -176,6 +181,7 @@ const DEFAULTS = {
     RENDER_CONFIG: {
         scaling: FrameScaling.LINEAR,
         colormap: "inferno",
+        colormapHex: "#FFFFFF",
         percentile: 99.9,
         scalingAlpha: 1000,
         scalingGamma: 1,
@@ -191,7 +197,8 @@ const DEFAULTS = {
         contourThickness: 1,
         contourColormapEnabled: false,
         contourColor: Colors.GREEN3,
-        contourColormap: "viridis"
+        contourColormap: "viridis",
+        contourColormapHex: "#FFFFFF"
     },
     VECTOR_OVERLAY: {
         vectorOverlayPixelAveraging: 4,
@@ -199,7 +206,8 @@ const DEFAULTS = {
         vectorOverlayThickness: 1,
         vectorOverlayColormapEnabled: false,
         vectorOverlayColor: Colors.GREEN3,
-        vectorOverlayColormap: "viridis"
+        vectorOverlayColormap: "viridis",
+        vectorColormapHex: "#FFFFFF"
     },
     WCS_OVERLAY: {
         astColor: "auto-blue",
@@ -371,6 +379,10 @@ export class PreferenceStore {
 
     @computed get colormap(): string {
         return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP) ?? DEFAULTS.RENDER_CONFIG.colormap;
+    }
+
+    @computed get colormapHex(): string {
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAPHEX) ?? DEFAULTS.RENDER_CONFIG.colormapHex;
     }
 
     @computed get percentile(): number {
