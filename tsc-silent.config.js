@@ -12,7 +12,11 @@ const migratedFiles = [
     "models/FrameView",
     "models/Freq",
     "models/ImagePanelMode",
-    "models/Layout"
+    "models/Layout",
+    "models/MomentDefinition",
+    "models/Point2D",
+    "models/PolarizationDefinition",
+    "models/RegionCreationMode"
 ];
 
 module.exports = {
