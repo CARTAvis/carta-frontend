@@ -9,7 +9,7 @@ import * as prism from "prismjs";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppToaster, WarningToast} from "components/Shared";
 import {Snippet} from "models";
-import {AppStore, SnippetStore} from "stores";
+import {AppStore, DialogId, SnippetStore} from "stores";
 
 import {SaveSnippetDialogComponent} from "./SaveSnippetDialog/SaveSnippetDialogComponent";
 import {ThemeProvider} from "./ThemeProvider";
@@ -23,10 +23,10 @@ export class CodeSnippetDialogComponent extends React.Component {
     @observable saveDialogOpen: boolean = false;
     private editorRef;
 
-    private static readonly MinWidth = 475;
-    private static readonly MinHeight = 300;
     private static readonly DefaultWidth = 700;
     private static readonly DefaultHeight = 400;
+    private static readonly MinWidth = 475;
+    private static readonly MinHeight = 300;
 
     constructor(props: any) {
         super(props);
@@ -121,8 +121,7 @@ export class CodeSnippetDialogComponent extends React.Component {
             className: className,
             canEscapeKeyClose: !this.saveDialogOpen,
             canOutsideClickClose: false,
-            isOpen: appStore.dialogStore.codeSnippetDialogVisible,
-            onClose: appStore.dialogStore.hideCodeSnippetDialog,
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Snippet),
             isCloseButtonShown: true,
             title: "Edit Code Snippet"
         };
@@ -149,11 +148,12 @@ export class CodeSnippetDialogComponent extends React.Component {
         return (
             <DraggableDialogComponent
                 dialogProps={dialogProps}
-                minWidth={CodeSnippetDialogComponent.MinWidth}
-                minHeight={CodeSnippetDialogComponent.MinHeight}
                 defaultWidth={CodeSnippetDialogComponent.DefaultWidth}
                 defaultHeight={CodeSnippetDialogComponent.DefaultHeight}
+                minWidth={CodeSnippetDialogComponent.MinWidth}
+                minHeight={CodeSnippetDialogComponent.MinHeight}
                 enableResizing={true}
+                dialogId={DialogId.Snippet}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <ThemeProvider darkTheme={appStore.darkTheme} children={editor} />

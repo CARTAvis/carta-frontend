@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {CARTA_INFO} from "models";
-import {DialogStore} from "stores";
+import {DialogId, DialogStore} from "stores";
 
 import "./AboutDialogComponent.scss";
 
@@ -23,8 +23,7 @@ export class AboutDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: true,
             lazy: true,
-            isOpen: dialogStore.aboutDialogVisible,
-            onClose: dialogStore.hideAboutDialog,
+            isOpen: dialogStore.dialogVisible.get(DialogId.About),
             className: "about-dialog",
             canEscapeKeyClose: true,
             title: "About CARTA"
@@ -38,6 +37,7 @@ export class AboutDialogComponent extends React.Component {
                 minWidth={AboutDialogComponent.MinWidth}
                 minHeight={AboutDialogComponent.MinHeight}
                 enableResizing={false}
+                dialogId={DialogId.About}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>
