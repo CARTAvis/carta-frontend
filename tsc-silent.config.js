@@ -6,7 +6,11 @@ const migratedFiles = [
     "models/ChannelInfo",
     "models/CompressionQuality",
     "models/ControlMap",
-    "models/Cursor"
+    "models/Cursor",
+    "models/Event",
+    "models/FileFilterMode",
+    "models/FrameView",
+    "models/Freq"
 ];
 
 module.exports = {
