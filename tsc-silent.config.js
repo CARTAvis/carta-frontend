@@ -1,7 +1,11 @@
 const migratedFiles = [
     "utilities",
     "models/AbstractCatalogProfile",
-    "models/AngularSize"
+    "models/AngularSize",
+    "models/CARTAInfo",
+    "models/ChannelInfo",
+    "models/CompressionQuality",
+    "models/ControlMap"
 ];
 
 module.exports = {
