@@ -3,6 +3,6 @@ export class ZoomPoint {
     public static readonly CENTER = "center";
 
     public static isValid = (zoomPoint: string): boolean => {
-        return zoomPoint && (zoomPoint === ZoomPoint.CURSOR || zoomPoint === ZoomPoint.CENTER);
+        return zoomPoint === ZoomPoint.CURSOR || zoomPoint === ZoomPoint.CENTER;
     };
 }
