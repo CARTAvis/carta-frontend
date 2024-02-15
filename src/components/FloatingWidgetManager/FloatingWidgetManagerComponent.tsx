@@ -30,7 +30,7 @@ import {
     StokesAnalysisComponent,
     StokesAnalysisSettingsPanelComponent
 } from "components";
-import {CatalogStore, WidgetConfig, WidgetsStore} from "stores";
+import {AppStore, CatalogStore, WidgetConfig, WidgetsStore} from "stores";
 
 @observer
 export class FloatingWidgetManagerComponent extends React.Component {
@@ -38,7 +38,9 @@ export class FloatingWidgetManagerComponent extends React.Component {
 
     onFloatingWidgetSelected = (widget: WidgetConfig) => {
         // rearrange will cause a bug of empty table, change to zIndex
-        WidgetsStore.Instance.updateSelectFloatingWidgetzIndex(widget.id);
+        const zIndexManager = AppStore.Instance.zIndexManager;
+        const id = widget.componentId ? widget.componentId : widget.id;
+        zIndexManager.updateIndexOnSelect(id);
     };
 
     onFloatingWidgetClosed = (widget: WidgetConfig) => {
@@ -168,18 +170,24 @@ export class FloatingWidgetManagerComponent extends React.Component {
 
     public render() {
         const widgetConfigs = WidgetsStore.Instance.floatingWidgets;
+        const zIndexManager = AppStore.Instance.zIndexManager;
+
         return (
             <div>
                 {widgetConfigs.map(w => {
                     const showPinButton = this.showPin(w);
                     const id = w.componentId ? w.componentId : w.id;
+
+                    let zIndex = zIndexManager.findIndex(id);
+                    const numFloatingObjs = zIndexManager.floatingObjsNum;
+
                     return (
                         <div key={id}>
                             <FloatingWidgetComponent
-                                isSelected={w.zIndex === widgetConfigs.length}
+                                isSelected={zIndex === numFloatingObjs}
                                 key={id}
                                 widgetConfig={w}
-                                zIndex={w.zIndex}
+                                zIndex={zIndex}
                                 showPinButton={showPinButton}
                                 onSelected={() => this.onFloatingWidgetSelected(w)}
                                 onClosed={() => this.onFloatingWidgetClosed(w)}

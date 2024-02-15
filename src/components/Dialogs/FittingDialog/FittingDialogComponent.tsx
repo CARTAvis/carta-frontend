@@ -10,7 +10,7 @@ import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/
 import {ClearableNumericInputComponent, CoordinateComponent, CoordNumericInput, ImageCoordNumericInput, InputType, SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import {Point2D, WCSPoint2D} from "models";
-import {AppStore, HelpType} from "stores";
+import {AppStore, DialogId, HelpType} from "stores";
 import {CoordinateMode} from "stores/Frame";
 import {exportTxtFile, getTimestamp} from "utilities";
 
@@ -107,8 +107,7 @@ export class FittingDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.fittingDialogVisible,
-            onClose: appStore.dialogStore.hideFittingDialog,
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Fitting),
             title: "Image Fitting"
         };
 
@@ -122,6 +121,7 @@ export class FittingDialogComponent extends React.Component {
                     defaultWidth={FittingDialogComponent.DefaultWidth}
                     defaultHeight={FittingDialogComponent.DefaultHeight}
                     enableResizing={true}
+                    dialogId={DialogId.Fitting}
                 >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </DraggableDialogComponent>
@@ -169,11 +169,12 @@ export class FittingDialogComponent extends React.Component {
             <DraggableDialogComponent
                 dialogProps={dialogProps}
                 helpType={HelpType.IMAGE_FITTING}
-                minWidth={FittingDialogComponent.MinWidth}
-                minHeight={FittingDialogComponent.MinHeight}
                 defaultWidth={FittingDialogComponent.DefaultWidth}
                 defaultHeight={FittingDialogComponent.DefaultHeight}
+                minWidth={FittingDialogComponent.MinWidth}
+                minHeight={FittingDialogComponent.MinHeight}
                 enableResizing={true}
+                dialogId={DialogId.Fitting}
             >
                 <div className={classNames(Classes.DIALOG_BODY, "pinned-input-panel")}>
                     <FormGroup label="Data source" inline={true}>
