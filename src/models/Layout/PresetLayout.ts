@@ -85,6 +85,6 @@ export class PresetLayout {
     ]);
 
     public static isPreset = (layoutName: string): boolean => {
-        return layoutName && PresetLayout.PRESETS.includes(layoutName);
+        return PresetLayout.PRESETS.includes(layoutName);
     };
 }

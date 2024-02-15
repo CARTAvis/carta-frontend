@@ -10,7 +10,9 @@ const migratedFiles = [
     "models/Event",
     "models/FileFilterMode",
     "models/FrameView",
-    "models/Freq"
+    "models/Freq",
+    "models/ImagePanelMode",
+    "models/Layout"
 ];
 
 module.exports = {

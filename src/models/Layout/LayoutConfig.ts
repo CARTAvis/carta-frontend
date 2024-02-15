@@ -241,7 +241,7 @@ export class LayoutConfig {
                 type: rootConfig.type,
                 content: []
             },
-            floating: []
+            floating: [] as any[]
         };
 
         // 1. generate config from current docked widgets
@@ -264,8 +264,8 @@ export class LayoutConfig {
             // add widget settings
             let widgetSettingsConfig = undefined;
             if (config.type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
-                const catalogFileId = CatalogStore.Instance.catalogProfiles.get(config.id);
-                const catalogWidgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
+                const catalogFileId = CatalogStore.Instance.catalogProfiles.get(config.id) ?? NaN;
+                const catalogWidgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId) ?? "";
                 widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, catalogWidgetStoreId);
             } else {
                 widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, config.id);
@@ -325,8 +325,8 @@ export class LayoutConfig {
                     // add widget settings
                     let widgetSettingsConfig = undefined;
                     if (widgetType === CatalogOverlayComponent.WIDGET_CONFIG.type) {
-                        const catalogFileId = CatalogStore.Instance.catalogProfiles.get(child.id);
-                        const catalogWidgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
+                        const catalogFileId = CatalogStore.Instance.catalogProfiles.get(child.id) ?? NaN;
+                        const catalogWidgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId) ?? "";
                         widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, catalogWidgetStoreId);
                     } else {
                         widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, child.id);
