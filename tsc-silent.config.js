@@ -18,7 +18,9 @@ const migratedFiles = [
     "models/PolarizationDefinition",
     "models/RegionCreationMode",
     "models/Snippet",
-    "models/Spectral"
+    "models/Spectral",
+    "models/StatisticsDefinition",
+    "models/Theme"
 ];
 
 module.exports = {
