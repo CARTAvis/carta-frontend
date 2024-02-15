@@ -16,7 +16,9 @@ const migratedFiles = [
     "models/MomentDefinition",
     "models/Point2D",
     "models/PolarizationDefinition",
-    "models/RegionCreationMode"
+    "models/RegionCreationMode",
+    "models/Snippet",
+    "models/Spectral"
 ];
 
 module.exports = {
