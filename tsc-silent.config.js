@@ -1,5 +1,6 @@
 const migratedFiles = [
-    "utilities"
+    "utilities",
+    "models/AbstractCatalogProfile"
 ];
 
 module.exports = {
