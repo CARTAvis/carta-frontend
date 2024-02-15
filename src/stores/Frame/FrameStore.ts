@@ -87,6 +87,7 @@ export interface FrameInfo {
     fileFeatureFlags: number;
     renderMode: CARTA.RenderMode;
     beamTable: CARTA.IBeam[];
+    generated: boolean;
     preview?: boolean;
 }
 
@@ -982,7 +983,7 @@ export class FrameStore {
             siblings.push(...this.rasterScalingReference.secondaryRasterScalingImages.slice().filter(f => f !== this));
             return siblings;
         } else {
-            return this.secondaryRasterScalingImages.slice();
+            return this.secondaryRasterScalingImages?.slice();
         }
     }
 

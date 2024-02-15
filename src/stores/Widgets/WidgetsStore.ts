@@ -101,7 +101,6 @@ export class WidgetConfig implements DefaultWidgetConfig {
     parentType?: string;
     helpType?: HelpType | HelpType[];
     componentId?: string;
-    zIndex?: number = 0;
 
     @action setDefaultPosition = (x: number, y: number) => {
         this.defaultX = x;
@@ -1199,7 +1198,7 @@ export class WidgetsStore {
 
     // add catalog widget store
     @action addCatalogWidget(catalogFileId: number, id: string = null, widgetSettings: object = null) {
-        // return widget id if store already exsit
+        // return widget id if store already exist
         const catalogStore = CatalogStore.Instance;
         const catalogWidgetId = catalogStore.catalogWidgets.get(catalogFileId);
         if (catalogWidgetId) {
@@ -1280,6 +1279,9 @@ export class WidgetsStore {
         config.parentType = parentType;
         if (config.id) {
             this.addFloatingWidget(config);
+        } else {
+            const settingWidgetId = parentId + "-floating-settings-0";
+            AppStore.Instance.zIndexManager.updateIndexOnSelect(settingWidgetId);
         }
     };
 
@@ -1468,48 +1470,25 @@ export class WidgetsStore {
         }
     };
 
-    @action updateSelectFloatingWidgetzIndex = (id: string) => {
-        const selectedWidgetIndex = this.floatingWidgets.findIndex(w => w.id === id);
-        const selectedWidget = this.floatingWidgets[selectedWidgetIndex];
-        const N = this.floatingWidgets.length;
-        if (N > 1 && selectedWidgetIndex >= 0 && selectedWidget.zIndex < N) {
-            for (let i = 0; i < N; i++) {
-                let currentWidgetzIndex = this.floatingWidgets[i].zIndex;
-                if (currentWidgetzIndex >= selectedWidget.zIndex) {
-                    this.floatingWidgets[i].zIndex = currentWidgetzIndex - 1;
-                }
-            }
-            this.floatingWidgets[selectedWidgetIndex].zIndex = this.floatingWidgets.length;
-        }
-    };
-
-    // update widget zIndex when remove a widget
-    private updateFloatingWidgetzIndexOnRemove(widgetzIndex: number) {
-        const N = this.floatingWidgets.length;
-        if (widgetzIndex < N) {
-            for (let index = 0; index < N; index++) {
-                const zIndex = this.floatingWidgets[index].zIndex;
-                if (zIndex > widgetzIndex) {
-                    this.floatingWidgets[index].zIndex = zIndex - 1;
-                }
-            }
-        }
-    }
-
     @action addFloatingWidget = (widget: WidgetConfig) => {
         if (!(widget?.defaultX > 0 && widget?.defaultY > 0)) {
             const offset = this.getFloatingWidgetOffset();
             widget.setDefaultPosition(offset, offset);
         }
-        widget.zIndex = this.floatingWidgets.length + 1;
         this.floatingWidgets.push(widget);
+
+        const zIndexManager = AppStore.Instance.zIndexManager;
+        const id = widget.componentId ? widget.componentId : widget.id;
+        zIndexManager.assignIndex(id);
     };
 
     // Removes a widget from the floating widget array, optionally removing the widget's associated store
     @action removeFloatingWidget = (id: string, preserveStore: boolean = false) => {
         const widget = this.floatingWidgets.find(w => w.id === id);
+        const zIndexManager = AppStore.Instance.zIndexManager;
+
         if (widget) {
-            this.updateFloatingWidgetzIndexOnRemove(widget.zIndex);
+            zIndexManager.updateIndexOnRemove(id);
             this.floatingWidgets = this.floatingWidgets.filter(w => w.id !== id);
             if (preserveStore) {
                 return;
@@ -1523,8 +1502,10 @@ export class WidgetsStore {
     // remove a widget component by componentId
     @action removeFloatingWidgetComponent = (componentId: string) => {
         const widget = this.floatingWidgets.find(w => w.componentId === componentId);
+        const zIndexManager = AppStore.Instance.zIndexManager;
+
         if (widget) {
-            this.updateFloatingWidgetzIndexOnRemove(widget.zIndex);
+            zIndexManager.updateIndexOnRemove(componentId);
             this.floatingWidgets = this.floatingWidgets.filter(w => w.componentId !== componentId);
             this.removeAssociatedFloatingSetting(componentId);
         }

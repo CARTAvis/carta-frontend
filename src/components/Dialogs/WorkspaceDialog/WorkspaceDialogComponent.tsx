@@ -8,7 +8,7 @@ import moment from "moment/moment";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {WorkspaceListItem} from "models";
-import {AppStore, HelpType} from "stores";
+import {AppStore, DialogId, HelpType} from "stores";
 
 import {AppToaster, ErrorToast, SuccessToast} from "../../Shared";
 
@@ -56,7 +56,7 @@ export const WorkspaceDialogComponent = observer(() => {
     };
 
     const handleCloseClicked = useCallback(() => {
-        appStore.dialogStore.hideWorkspaceDialog();
+        appStore.dialogStore.hideDialog(DialogId.Workspace);
         setWorkspaceName("");
         setWorkspaceList(undefined);
     }, [appStore]);
@@ -149,7 +149,6 @@ export const WorkspaceDialogComponent = observer(() => {
         canOutsideClickClose: false,
         lazy: true,
         isOpen: mode !== WorkspaceDialogMode.Hidden,
-        onClose: appStore.dialogStore.hideWorkspaceDialog,
         title: mode === WorkspaceDialogMode.Save ? "Save Workspace" : "Open Workspace"
     };
 
@@ -257,7 +256,7 @@ export const WorkspaceDialogComponent = observer(() => {
     }
 
     return (
-        <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.WORKSPACE} defaultWidth={750} defaultHeight={550} minWidth={750} minHeight={550} enableResizing={true}>
+        <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.WORKSPACE} defaultWidth={750} defaultHeight={550} minWidth={750} minHeight={550} enableResizing={true} dialogId={DialogId.Workspace}>
             <div className={Classes.DIALOG_BODY}>
                 <div className="workspace-container">
                     <div className="workspace-table-container">{tableContent}</div>
