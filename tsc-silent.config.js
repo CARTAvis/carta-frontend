@@ -20,7 +20,11 @@ const migratedFiles = [
     "models/Snippet",
     "models/Spectral",
     "models/StatisticsDefinition",
-    "models/Theme"
+    "models/Theme",
+    "models/Tile",
+    "models/Transform2D",
+    "models/TypeDefinition",
+    "models/Wcs"
 ];
 
 module.exports = {
