@@ -5,7 +5,8 @@ const migratedFiles = [
     "models/CARTAInfo",
     "models/ChannelInfo",
     "models/CompressionQuality",
-    "models/ControlMap"
+    "models/ControlMap",
+    "models/Cursor"
 ];
 
 module.exports = {
