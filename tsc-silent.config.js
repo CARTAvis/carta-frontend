@@ -6,7 +6,8 @@ const migratedFiles = [
     "services/CatalogApiService.ts",
     "services/CatalogWebGLService.ts",
     "services/ContourWebGLService.ts",
-    "services/ScriptingService.ts"
+    "services/ScriptingService.ts",
+    "services/SplatalogueService.ts"
 ];
 
 module.exports = {
