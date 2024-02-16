@@ -25,7 +25,7 @@ export function closeTo(a: number, b: number, limit: number = 1.0e-6) {
 }
 
 export function equalIfBothFinite(a: number | undefined, b: number | undefined) {
-    if (a === undefined || !isFinite(a) || b === undefined || !isFinite(b)) {
+    if (!Number.isFinite(a) || !Number.isFinite(b)) {
         return true;
     }
 

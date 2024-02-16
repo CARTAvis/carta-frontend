@@ -239,12 +239,12 @@ const FindConvertibleIntensityTypes = (config: IntensityConfig): IntensityUnitTy
                     options.push(IntensityUnitType.Kelvin);
                 }
             }
-            if (isFinite(config?.cdelta1 ?? NaN) && isFinite(config?.cdelta2 ?? NaN)) {
+            if (Number.isFinite(config?.cdelta1) && Number.isFinite(config?.cdelta2)) {
                 options.push(IntensityUnitType.JyPixel);
             }
         } else if (type === IntensityUnitType.JyPixel) {
             options.push(IntensityUnitType.JyPixel);
-            if (isFinite(config?.cdelta1 ?? NaN) && isFinite(config?.cdelta2 ?? NaN)) {
+            if (Number.isFinite(config?.cdelta1) && Number.isFinite(config?.cdelta2)) {
                 options.push(IntensityUnitType.JySr);
                 options.push(IntensityUnitType.JyArcsec2);
             }
