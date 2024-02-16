@@ -54,7 +54,7 @@ export function profilePreprocessing(data: number[]) {
 export function histogram(data: number[], binN: number): {hist: number[]; binEdges: number[]} {
     if (isFinite(binN) && binN > 0) {
     }
-    const binEdges = [] as number[];
+    const binEdges: number[] = [];
     const min = _.min(data) ?? NaN;
     const max = _.max(data) ?? NaN;
     const binWidth = (max - min) / binN;
