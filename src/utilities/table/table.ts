@@ -1,5 +1,6 @@
 import {CARTA} from "carta-protobuf";
 
+import {ControlHeader} from "stores";
 import {ColumnArray, getComparisonOperatorAndValue, ProcessedColumnData} from "utilities";
 
 export function getDataTypeString(dataType: CARTA.ColumnType): string {
@@ -158,4 +159,27 @@ export function stringFiltering(columnData: Array<string>, dataIndexes: number[]
         }
     });
     return filteredDataIndexes;
+}
+
+export function getHasFilter(controlHeader: Map<string, ControlHeader>, queryResult: Map<number, ProcessedColumnData>): boolean {
+    const trueRegex = /^[tTyY].*$/;
+    const falseRegex = /^[fFnN].*$/;
+
+    let hasFilter = false;
+    controlHeader.forEach((value, key) => {
+        if (value.filter && value.display) {
+            const column = queryResult.get(value.dataIndex);
+            if (column?.dataType === CARTA.ColumnType.String) {
+                hasFilter = true;
+            } else if (column?.dataType === CARTA.ColumnType.Bool) {
+                hasFilter = value.filter.match(trueRegex)?.length > 0 || value.filter.match(falseRegex)?.length > 0;
+            } else {
+                const {operator, values} = getComparisonOperatorAndValue(value.filter);
+                if (operator >= 0 && values.length) {
+                    hasFilter = true;
+                }
+            }
+        }
+    });
+    return hasFilter;
 }

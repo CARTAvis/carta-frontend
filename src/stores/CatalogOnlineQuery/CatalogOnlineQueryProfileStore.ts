@@ -3,7 +3,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 
 import {AbstractCatalogProfileStore, CatalogInfo, CatalogType} from "models";
 import {ControlHeader, PreferenceStore} from "stores";
-import {ProcessedColumnData} from "utilities";
+import {getInitIndexMap, getSortedIndexMap, ProcessedColumnData} from "utilities";
 
 export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore {
     private static readonly SimbadInitialedColumnsKeyWords = ["ra", "dec", "main_id", "coo_bibcode", "dist", "otype_txt"];
@@ -79,64 +79,15 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
     }
 
     @action updateSortedIndexMap() {
-        const dataIndex = this.catalogControlHeader.get(this.sortingInfo.columnName)?.dataIndex;
-        if (dataIndex >= 0) {
-            let direction = 0;
-            const sortingType = this.sortingInfo.sortingType;
-            if (sortingType === 0) {
-                direction = 1;
-            } else if (sortingType === 1) {
-                direction = -1;
-            }
-            if (direction === 0 && this.getUserFilters().length === 0) {
-                this.initSortedIndexMap();
-                return;
-            }
-            let catalogColumn = this.catalogData.get(dataIndex);
-            if (this.hasFilter) {
-                this.initSortedIndexMap();
-            }
-            switch (catalogColumn?.dataType) {
-                case CARTA.ColumnType.String:
-                    this.sortedIndexMap.sort((a: number, b: number) => {
-                        const aString = String(catalogColumn.data[a]);
-                        const bString = String(catalogColumn.data[b]);
-                        if (!aString) {
-                            return direction * -1;
-                        }
-
-                        if (!bString) {
-                            return direction * 1;
-                        }
-                        return direction * aString.localeCompare(bString);
-                    });
-                    break;
-                case CARTA.ColumnType.UnsupportedType:
-                    console.log("Data type is not supported");
-                    break;
-                default:
-                    this.sortedIndexMap.sort((a: number, b: number) => {
-                        const aNumber = Number(catalogColumn.data[a]);
-                        const bNumber = Number(catalogColumn.data[b]);
-                        return direction * (aNumber < bNumber ? -1 : 1);
-                    });
-                    break;
-            }
-        }
+        this.sortedIndexMap = getSortedIndexMap(this.catalogControlHeader, this.sortingInfo, this.sortedIndexMap, this.hasFilter, this.numVisibleRows, this.catalogData);
     }
 
     @action initSortedIndexMap() {
-        this.sortedIndexMap = [];
-        for (let index = 0; index < this.numVisibleRows; index++) {
-            this.sortedIndexMap.push(index);
-        }
+        this.sortedIndexMap = getInitIndexMap(this.numVisibleRows);
     }
 
     @action initFilterIndexMap() {
-        this.filterIndexMap = [];
-        for (let index = 0; index < this.catalogInfo.dataSize; index++) {
-            this.filterIndexMap.push(index);
-        }
+        this.filterIndexMap = getInitIndexMap(this.catalogInfo.dataSize);
     }
 
     @action resetFilterRequest(filterConfigs?: CARTA.FilterConfig[]) {
