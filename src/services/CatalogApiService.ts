@@ -142,7 +142,7 @@ export class CatalogApiService {
         });
     };
 
-    @action loadCatalog = (fileId: number, catalogInfo: CatalogInfo, headers: CARTA.ICatalogHeader[], columnData: Map<number, ProcessedColumnData>, type: CatalogType) => {
+    @action loadCatalog = (fileId: number, catalogInfo: CatalogInfo, headers: CARTA.CatalogHeader[], columnData: Map<number, ProcessedColumnData>, type: CatalogType) => {
         const appStore = AppStore.Instance;
         const catalogWidgetId = appStore.updateCatalogProfile(fileId, appStore.activeFrame);
         if (catalogWidgetId) {

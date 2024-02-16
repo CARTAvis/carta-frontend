@@ -35,7 +35,7 @@ type VizierTable = {
 };
 
 export class CatalogApiProcessing {
-    static ProcessSimbadMetaData(metaData: []): CARTA.ICatalogHeader[] {
+    static ProcessSimbadMetaData(metaData: []): CARTA.CatalogHeader[] {
         let headers: CARTA.CatalogHeader[] = new Array(metaData.length + 2);
         for (let index = 0; index < metaData.length; index++) {
             const header = metaData[index];
@@ -165,7 +165,7 @@ export class CatalogApiProcessing {
         return resources;
     }
 
-    static ProcessVizierTableData(table: Element): {headers: CARTA.ICatalogHeader[]; dataMap: Map<number, ProcessedColumnData>; size: number} {
+    static ProcessVizierTableData(table: Element): {headers: CARTA.CatalogHeader[]; dataMap: Map<number, ProcessedColumnData>; size: number} {
         const fields = table.getElementsByTagName("FIELD");
         let headers: CARTA.CatalogHeader[] = new Array(fields.length);
         for (let index = 0; index < fields.length; index++) {
