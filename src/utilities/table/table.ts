@@ -172,7 +172,7 @@ export function getHasFilter(controlHeader: Map<string, ControlHeader>, queryRes
             if (column?.dataType === CARTA.ColumnType.String) {
                 hasFilter = true;
             } else if (column?.dataType === CARTA.ColumnType.Bool) {
-                hasFilter = value.filter.match(trueRegex)?.length > 0 || value.filter.match(falseRegex)?.length > 0;
+                hasFilter = (value.filter.match(trueRegex) ?? []).length > 0 || (value.filter.match(falseRegex) ?? []).length > 0;
             } else {
                 const {operator, values} = getComparisonOperatorAndValue(value.filter);
                 if (operator >= 0 && values.length) {
