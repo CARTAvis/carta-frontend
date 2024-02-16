@@ -33,10 +33,10 @@ export class ExecutionEntry {
 
     static FromScriptingRequest(requestMessage: CARTA.IScriptingRequest): ExecutionEntry {
         const executionEntry = new ExecutionEntry();
-        executionEntry.async = requestMessage.async;
-        executionEntry.target = requestMessage.target;
-        executionEntry.action = requestMessage.action;
-        executionEntry.valid = executionEntry.parseParameters(requestMessage.parameters, false);
+        executionEntry.async = requestMessage.async ?? false;
+        executionEntry.target = requestMessage.target ?? "";
+        executionEntry.action = requestMessage.action ?? "";
+        executionEntry.valid = executionEntry.parseParameters(requestMessage.parameters ?? "", false);
         return executionEntry;
     }
 
