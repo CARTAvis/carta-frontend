@@ -38,11 +38,11 @@ export class CatalogApiService {
         this.cancelTokenSourceSimbad = axios.CancelToken.source();
         this.cancelTokenSourceVizier = axios.CancelToken.source();
         this.axiosInstanceSimbad = axios.create({
-            baseURL: CatalogApiService.DBMap.get(CatalogDatabase.SIMBAD).baseURL,
+            baseURL: CatalogApiService.DBMap.get(CatalogDatabase.SIMBAD)?.baseURL,
             cancelToken: this.cancelTokenSourceSimbad.token
         });
         this.axiosInstanceVizier = axios.create({
-            baseURL: CatalogApiService.DBMap.get(CatalogDatabase.VIZIER).baseURL,
+            baseURL: CatalogApiService.DBMap.get(CatalogDatabase.VIZIER)?.baseURL,
             cancelToken: this.cancelTokenSourceVizier.token
         });
     }
@@ -78,7 +78,9 @@ export class CatalogApiService {
             }
         } catch (error) {
             if (axios.isCancel(error)) {
-                AppToaster.show(WarningToast(error?.message));
+                if (error?.message) {
+                    AppToaster.show(WarningToast(error?.message));
+                }
                 CatalogApiService.Instance.resetCancelTokenSource(CatalogDatabase.VIZIER);
             } else if (error?.message) {
                 AppToaster.show(ErrorToast(error.message));
@@ -107,7 +109,9 @@ export class CatalogApiService {
             }
         } catch (error) {
             if (axios.isCancel(error)) {
-                AppToaster.show(WarningToast(error?.message));
+                if (error?.message) {
+                    AppToaster.show(WarningToast(error?.message));
+                }
                 CatalogApiService.Instance.resetCancelTokenSource(CatalogDatabase.VIZIER);
             } else if (error?.message) {
                 AppToaster.show(ErrorToast(error.message));
@@ -202,7 +206,9 @@ export class CatalogApiService {
             dataSize = response?.data?.data?.length;
         } catch (error) {
             if (axios.isCancel(error)) {
-                AppToaster.show(WarningToast(error?.message));
+                if (error?.message) {
+                    AppToaster.show(WarningToast(error?.message));
+                }
                 CatalogApiService.Instance.resetCancelTokenSource(CatalogDatabase.SIMBAD);
             } else if (error?.message) {
                 AppToaster.show(ErrorToast(error.message));
