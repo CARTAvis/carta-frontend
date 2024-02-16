@@ -25,7 +25,6 @@ interface ShaderUniforms {
     CustomCmap: WebGLUniformLocation;
     NumCmaps: WebGLUniformLocation;
     NumCmapsCalculated: WebGLUniformLocation;
-    NumCmapsCustom: WebGLUniformLocation;
     CmapIndex: WebGLUniformLocation;
     CanvasWidth: WebGLUniformLocation;
     CanvasHeight: WebGLUniformLocation;
@@ -107,10 +106,8 @@ export class TileWebGLService {
             CmapCalculatedTexture: this.gl.getUniformLocation(this.shaderProgram, "uCmapCalculatedTexture"),
             CmapCustomTexture: this.gl.getUniformLocation(this.shaderProgram, "uCmapCustomTexture"),
             CustomCmap: this.gl.getUniformLocation(this.shaderProgram, "uCustomCmap"),
-            // CustomCmapIndex: this.gl.getUniformLocation(this.shaderProgram, "uCustomCmapIndex"),
             NumCmaps: this.gl.getUniformLocation(this.shaderProgram, "uNumCmaps"),
             NumCmapsCalculated: this.gl.getUniformLocation(this.shaderProgram, "uNumCmapsCalculated"),
-            NumCmapsCustom: this.gl.getUniformLocation(this.shaderProgram, "uNumCmapsCustom"),
             CmapIndex: this.gl.getUniformLocation(this.shaderProgram, "uCmapIndex"),
             CanvasWidth: this.gl.getUniformLocation(this.shaderProgram, "uCanvasWidth"),
             CanvasHeight: this.gl.getUniformLocation(this.shaderProgram, "uCanvasHeight"),
@@ -137,7 +134,6 @@ export class TileWebGLService {
         this.gl.uniform1i(this.shaderUniforms.CustomCmap, RenderConfigStore.COLOR_MAPS_ALL.length - 1);
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);
         this.gl.uniform1i(this.shaderUniforms.NumCmapsCalculated, RenderConfigStore.COLOR_MAPS_CALCULATED.size);
-        this.gl.uniform1i(this.shaderUniforms.NumCmapsCustom, 0);
         this.gl.uniform1i(this.shaderUniforms.CmapIndex, 2);
         this.gl.uniform1f(this.shaderUniforms.MinVal, 3.4);
         this.gl.uniform1f(this.shaderUniforms.MaxVal, 5.5);
@@ -203,24 +199,14 @@ export class TileWebGLService {
         this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_T, GL2.CLAMP_TO_EDGE);
     }
 
-    // public setCustomColormapTexture(customColorHex: Map<number, string>) {
     public setCustomColormapTexture(customColorHex: string) {
         const width = 1024;
-        // const height = customColorHex.size;
         const height = 1;
         const components = 4;
 
-        this.gl.uniform1i(this.shaderUniforms.NumCmapsCustom, height);
+        // this.gl.uniform1i(this.shaderUniforms.NumCmapsCustom, height);
 
         const cmapData = new Float32Array(width * height * components);
-        // let cmap: any;
-        // Array.from(customColorHex.values()).forEach((colorHex, y) => {
-        //     cmap = getColorsFromHex(colorHex).color;
-        //     for (let x = 0; x < width; x++) {
-        //         for (let ii = 0; ii < components; ii++) cmapData[x * components + ii + y * width * components] = cmap[x * components + ii] / 255;
-        //     }
-        // });
-
         const cmap = getColorsFromHex(customColorHex).color;
         for (let x = 0; x < width; x++) {
             for (let ii = 0; ii < components; ii++) cmapData[x * components + ii] = cmap[x * components + ii] / 255;

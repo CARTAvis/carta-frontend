@@ -3,7 +3,7 @@ import {FormGroup, Switch} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
 import {ColormapComponent, SafeNumericInput} from "components/Shared";
-import {PreferenceKeys} from "stores";
+import {ContourConfigStore, PreferenceKeys} from "stores";
 
 import "./ScatterPlotSettingsPanelComponent.scss";
 
@@ -44,6 +44,7 @@ export class ScatterPlotSettingsPanelComponent extends React.Component<ScatterPl
                             onItemSelect={selected => {
                                 props.setColormap(selected);
                             }}
+                            items={ContourConfigStore.COLOR_MAPS_SELECTED}
                         />
                     </FormGroup>
                     <FormGroup label={"Invert colormap"} inline={true}>

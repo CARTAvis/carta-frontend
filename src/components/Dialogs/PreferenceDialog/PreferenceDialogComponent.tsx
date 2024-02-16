@@ -15,7 +15,7 @@ import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComp
 import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {TelemetryMode} from "services";
 import {AppStore, BeamType, DialogId, HelpType, PreferenceKeys, PreferenceStore} from "stores";
-import {ContourGeneratorType, FrameScaling, RegionStore, RenderConfigStore} from "stores/Frame";
+import {ContourConfigStore, ContourGeneratorType, FrameScaling, RegionStore, RenderConfigStore} from "stores/Frame";
 import {copyToClipboard, SWATCH_COLORS} from "utilities";
 
 import "./PreferenceDialogComponent.scss";
@@ -249,7 +249,7 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Default colormap">
                     <ColormapComponent
                         inverted={false}
-                        setPreference={PreferenceKeys.RENDER_CONFIG_COLORMAPHEX}
+                        setPreference={PreferenceKeys.RENDER_CONFIG_COLORHEX}
                         selectedItem={preference.colormap}
                         onItemSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP, selected)}
                     />
@@ -370,9 +370,10 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Default colormap">
                     <ColormapComponent
                         inverted={false}
-                        setPreference={PreferenceKeys.CONTOUR_CONFIG_COLORMAPHEX}
+                        setPreference={PreferenceKeys.CONTOUR_CONFIG_COLORHEX}
                         selectedItem={preference.contourColormap}
                         onItemSelect={selected => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLORMAP, selected)}
+                        items={ContourConfigStore.COLOR_MAPS_SELECTED}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Default color">
@@ -427,9 +428,10 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Default colormap">
                     <ColormapComponent
                         inverted={false}
-                        setPreference={PreferenceKeys.VECTOR_OVERLAY_COLORMAPHEX}
+                        setPreference={PreferenceKeys.VECTOR_OVERLAY_COLORHEX}
                         selectedItem={preference.vectorOverlayColormap}
                         onItemSelect={selected => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLORMAP, selected)}
+                        items={ContourConfigStore.COLOR_MAPS_SELECTED}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Default color">

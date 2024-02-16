@@ -47,7 +47,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const frame = this.props.frame;
         const tileRenderService = frame.isPreview ? PreviewWebGLService.Instance : TileWebGLService.Instance;
         if (frame && this.canvas && this.gl && tileRenderService.cmapTexture) {
-            TileWebGLService.Instance.setCustomColormapTexture(frame.renderConfig.customColorHex);
+            tileRenderService.setCustomColormapTexture(frame.renderConfig.customColorHex);
             const histStokesIndex = frame.renderConfig.stokesIndex;
             const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histChannel : undefined;
             if ((frame.renderConfig.useCubeHistogram || frame.channel === histChannel || frame.isPreview) && (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)) {

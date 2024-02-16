@@ -11,21 +11,24 @@ import allMaps from "static/allmaps.png";
 import {AppStore, PreferenceKeys, PreferenceStore} from "stores";
 import {RenderConfigStore} from "stores/Frame";
 
+import "./ColormapComponent.scss";
+
 interface ColormapComponentProps {
     selectedItem: string;
     inverted: boolean;
     disabled?: boolean;
     onItemSelect: (selected: string) => void;
     setPreference?: PreferenceKeys;
+    items?: string[];
 }
 
 const ColorMapSelect = Select.ofType<string>();
 const COLORMAP_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
-const CUSTOM_COLOR_OPTION = "custom_mono";
-const COLORMAP_KEY_PAIRS = new Map<PreferenceKeys, PreferenceKeys>([
-    [PreferenceKeys.RENDER_CONFIG_COLORMAPHEX, PreferenceKeys.RENDER_CONFIG_COLORMAP],
-    [PreferenceKeys.CONTOUR_CONFIG_COLORMAPHEX, PreferenceKeys.CONTOUR_CONFIG_COLORMAP],
-    [PreferenceKeys.VECTOR_OVERLAY_COLORMAPHEX, PreferenceKeys.VECTOR_OVERLAY_COLORMAP]
+const CUSTOM_COLOR_OPTION = "custom";
+const PREFERENCE_KEY_PAIRS = new Map<PreferenceKeys, PreferenceKeys>([
+    [PreferenceKeys?.RENDER_CONFIG_COLORHEX, PreferenceKeys?.RENDER_CONFIG_COLORMAP],
+    [PreferenceKeys?.CONTOUR_CONFIG_COLORHEX, PreferenceKeys?.CONTOUR_CONFIG_COLORMAP],
+    [PreferenceKeys?.VECTOR_OVERLAY_COLORHEX, PreferenceKeys?.VECTOR_OVERLAY_COLORMAP]
 ]);
 
 export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
@@ -99,21 +102,20 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
                 renderConfig?.setCustomColorMap(color.hex, colormap);
             } else {
                 PreferenceStore.Instance.setPreference(props.setPreference, color.hex);
-                PreferenceStore.Instance.setPreference(COLORMAP_KEY_PAIRS.get(props.setPreference), colormap);
+                PreferenceStore.Instance.setPreference(PREFERENCE_KEY_PAIRS.get(props.setPreference), colormap);
             }
         }, changeDelay);
 
         if (!modifiers.matchesPredicate) {
             return null;
         }
-        if (colormap === CUSTOM_COLOR_OPTION) {
-            const popoverClassName = classNames("color-picker-popup", {"bp3-dark": AppStore.Instance.darkTheme});
+        if (colormap === "color_panel") {
+            const popoverClassName = classNames("raster-color-picker-popup", {"bp3-dark": AppStore.Instance.darkTheme});
 
             return (
-                <div key={"custom-color"} className={CUSTOM_COLOR_OPTION}>
+                <div key={"custom-color"} className={"raster-custom-color"}>
                     <Popover2 position={PopoverPosition.LEFT} popoverClassName={popoverClassName} content={<SketchPicker color={color} onChange={handleColorChange} disableAlpha={disableAlpha} presetColors={presetColors} />}>
-                        <MenuItem active={modifiers.active} disabled={modifiers.disabled} label={colormap} key={colormap} shouldDismissPopover={false} text={renderColormapBlock(colormap)} />;
-                        {/* <Button text={CUSTOM_COLOR_OPTION} className="color-swatch-button"/> */}
+                        <Button text={"color panel"} className="raster-color-swatch-button" />
                     </Popover2>
                 </div>
             );
@@ -122,16 +124,10 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
         }
     };
 
+    const items = props.items ? props.items : RenderConfigStore.COLOR_MAPS_SELECTED;
+
     return (
-        <ColorMapSelect
-            disabled={props.disabled}
-            activeItem={props.selectedItem}
-            popoverProps={COLORMAP_POPOVER_PROPS}
-            filterable={false}
-            items={RenderConfigStore.COLOR_MAPS_SELECTED}
-            onItemSelect={props.onItemSelect}
-            itemRenderer={renderColormapSelectItem}
-        >
+        <ColorMapSelect disabled={props.disabled} activeItem={props.selectedItem} popoverProps={COLORMAP_POPOVER_PROPS} filterable={false} items={items} onItemSelect={props.onItemSelect} itemRenderer={renderColormapSelectItem}>
             <Button disabled={props.disabled} text={renderColormapBlock(props.selectedItem)} rightIcon="double-caret-vertical" alignText={"right"} />
         </ColorMapSelect>
     );

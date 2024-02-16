@@ -33,8 +33,37 @@ export class ContourConfigStore {
     @observable dashMode: ContourDashMode;
     @observable thickness: number;
     @observable visible: boolean;
+    @observable customColorHex: string;
 
     private readonly preferenceStore: PreferenceStore;
+
+    static readonly COLOR_MAPS_SELECTED = [
+        "afmhot",
+        "Blues",
+        "coolwarm",
+        "cubehelix",
+        "gist_heat",
+        "gist_stern",
+        "gnuplot",
+        "gnuplot2",
+        "gray",
+        "greens",
+        "greys",
+        "hot",
+        "inferno",
+        "jet",
+        "magma",
+        "nipy_spectral",
+        "plasma",
+        "rainbow",
+        "RdBu",
+        "RdGy",
+        "reds",
+        "seismic",
+        "spectral",
+        "tab10",
+        "viridis"
+    ];
 
     constructor(preferenceStore: PreferenceStore) {
         makeObservable(this);
@@ -52,6 +81,7 @@ export class ContourConfigStore {
         this.thickness = this.preferenceStore.contourThickness;
         this.dashMode = ContourDashMode.NegativeOnly;
         this.visible = true;
+        this.customColorHex = this.preferenceStore.contourColorHex;
     }
 
     @action setEnabled(val: boolean) {
@@ -82,6 +112,11 @@ export class ContourConfigStore {
 
     @action setColormap = (colormap: string) => {
         this.colormap = colormap;
+    };
+
+    @action setCustomColorMap = (colorHex: string, colormap: string) => {
+        this.customColorHex = colorHex;
+        this.setColormap(colormap);
     };
 
     @action setColormapEnabled = (val: boolean) => {

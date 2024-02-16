@@ -9,7 +9,7 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore, DialogId, HelpType, PreferenceKeys} from "stores";
-import {FrameStore, VectorOverlaySource} from "stores/Frame";
+import {ContourConfigStore, FrameStore, VectorOverlaySource} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 
 import "./VectorOverlayDialogComponent.scss";
@@ -357,7 +357,13 @@ export class VectorOverlayDialogComponent extends React.Component {
                 {dataSource.vectorOverlayConfig.colormapEnabled ? (
                     <React.Fragment>
                         <FormGroup inline={true} label="Colormap">
-                            <ColormapComponent inverted={false} setPreference={PreferenceKeys.NON_PREFERENCE} selectedItem={dataSource.vectorOverlayConfig.colormap} onItemSelect={dataSource.vectorOverlayConfig.setColormap} />
+                            <ColormapComponent
+                                inverted={false}
+                                setPreference={PreferenceKeys.NON_PREFERENCE}
+                                selectedItem={dataSource.vectorOverlayConfig.colormap}
+                                onItemSelect={dataSource.vectorOverlayConfig.setColormap}
+                                items={ContourConfigStore.COLOR_MAPS_SELECTED}
+                            />
                         </FormGroup>
                         <FormGroup inline={true} label="Bias">
                             <SafeNumericInput placeholder="Bias" min={-1.0} max={1.0} value={dataSource.vectorOverlayConfig.colormapBias} majorStepSize={0.1} stepSize={0.1} onValueChange={dataSource.vectorOverlayConfig.setColormapBias} />

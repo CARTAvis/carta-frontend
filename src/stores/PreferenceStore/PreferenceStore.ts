@@ -50,7 +50,7 @@ export enum PreferenceKeys {
 
     RENDER_CONFIG_SCALING = "scaling",
     RENDER_CONFIG_COLORMAP = "colormap",
-    RENDER_CONFIG_COLORMAPHEX = "colormapHex",
+    RENDER_CONFIG_COLORHEX = "colormapHex",
     RENDER_CONFIG_PERCENTILE = "percentile",
     RENDER_CONFIG_SCALING_ALPHA = "scalingAlpha",
     RENDER_CONFIG_SCALING_GAMMA = "scalingGamma",
@@ -66,7 +66,7 @@ export enum PreferenceKeys {
     CONTOUR_CONFIG_COLORMAP_ENABLED = "contourColormapEnabled",
     CONTOUR_CONFIG_COLOR = "contourColor",
     CONTOUR_CONFIG_COLORMAP = "contourColormap",
-    CONTOUR_CONFIG_COLORMAPHEX = "contourColormapHex",
+    CONTOUR_CONFIG_COLORHEX = "contourColorHex",
 
     VECTOR_OVERLAY_PIXEL_AVERAGING = "vectorOverlayPixelAveraging",
     VECTOR_OVERLAY_FRACTIONAL_INTENSITY = "vectorOverlayFractionalIntensity",
@@ -74,7 +74,7 @@ export enum PreferenceKeys {
     VECTOR_OVERLAY_COLORMAP_ENABLED = "vectorOverlayColormapEnabled",
     VECTOR_OVERLAY_COLOR = "vectorOverlayColor",
     VECTOR_OVERLAY_COLORMAP = "vectorOverlayColormap",
-    VECTOR_OVERLAY_COLORMAPHEX = "vectorOverlayColormapHex",
+    VECTOR_OVERLAY_COLORHEX = "vectorOverlayColorHex",
 
     WCS_OVERLAY_AST_COLOR = "astColor",
     WCS_OVERLAY_AST_GRID_VISIBLE = "astGridVisible",
@@ -198,7 +198,7 @@ const DEFAULTS = {
         contourColormapEnabled: false,
         contourColor: Colors.GREEN3,
         contourColormap: "viridis",
-        contourColormapHex: "#FFFFFF"
+        contourColorHex: "#FFFFFF"
     },
     VECTOR_OVERLAY: {
         vectorOverlayPixelAveraging: 4,
@@ -207,7 +207,7 @@ const DEFAULTS = {
         vectorOverlayColormapEnabled: false,
         vectorOverlayColor: Colors.GREEN3,
         vectorOverlayColormap: "viridis",
-        vectorColormapHex: "#FFFFFF"
+        vectorOverlayColorHex: "#FFFFFF"
     },
     WCS_OVERLAY: {
         astColor: "auto-blue",
@@ -382,7 +382,7 @@ export class PreferenceStore {
     }
 
     @computed get colormapHex(): string {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAPHEX) ?? DEFAULTS.RENDER_CONFIG.colormapHex;
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORHEX) ?? DEFAULTS.RENDER_CONFIG.colormapHex;
     }
 
     @computed get percentile(): number {
@@ -420,6 +420,10 @@ export class PreferenceStore {
 
     @computed get contourColormap(): string {
         return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORMAP) ?? DEFAULTS.CONTOUR_CONFIG.contourColormap;
+    }
+
+    @computed get contourColorHex(): string {
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORHEX) ?? DEFAULTS.CONTOUR_CONFIG.contourColorHex;
     }
 
     @computed get contourColor(): string {
@@ -477,6 +481,10 @@ export class PreferenceStore {
 
     @computed get vectorOverlayColormap(): string {
         return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLORMAP) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColormap;
+    }
+
+    @computed get vectorOverlayColorHex(): string {
+        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLORHEX) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColorHex;
     }
 
     // getters for WCS overlay

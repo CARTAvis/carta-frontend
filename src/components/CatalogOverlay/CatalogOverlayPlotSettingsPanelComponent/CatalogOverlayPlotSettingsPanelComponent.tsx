@@ -10,7 +10,7 @@ import {observer} from "mobx-react";
 import {CatalogOverlayComponent} from "components";
 import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingSelectComponent} from "components/Shared";
 import {CatalogOverlay} from "models";
-import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, DefaultWidgetConfig, HelpType, PreferenceKeys, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, ContourConfigStore, DefaultWidgetConfig, HelpType, PreferenceKeys, WidgetProps, WidgetsStore} from "stores";
 import {CatalogOverlayShape, CatalogSettingsTabs, CatalogWidgetStore, ValueClip} from "stores/Widgets";
 import {getColorForTheme, SWATCH_COLORS} from "utilities";
 
@@ -399,7 +399,14 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     <ScalingSelectComponent selectedItem={widgetStore.colorScalingType} onItemSelect={type => widgetStore.setColorScalingType(type)} disabled={disableColorMap} />
                 </FormGroup>
                 <FormGroup inline={true} label="Colormap" disabled={disableColorMap}>
-                    <ColormapComponent inverted={false} setPreference={PreferenceKeys.NON_PREFERENCE} selectedItem={widgetStore.colorMap} onItemSelect={selected => widgetStore.setColorMap(selected)} disabled={disableColorMap} />
+                    <ColormapComponent
+                        inverted={false}
+                        setPreference={PreferenceKeys.NON_PREFERENCE}
+                        selectedItem={widgetStore.colorMap}
+                        onItemSelect={selected => widgetStore.setColorMap(selected)}
+                        disabled={disableColorMap}
+                        items={ContourConfigStore.COLOR_MAPS_SELECTED}
+                    />
                 </FormGroup>
                 <FormGroup label={"Invert colormap"} inline={true} disabled={disableColorMap}>
                     <Switch checked={widgetStore.invertedColorMap} onChange={ev => widgetStore.setColorMapDirection(ev.currentTarget.checked)} disabled={disableColorMap} />

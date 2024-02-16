@@ -114,7 +114,7 @@ export class RenderConfigStore {
         "Cyan",
         "Blue",
         "Violet",
-        "custom_mono"
+        "custom"
     ];
     static COLOR_MAPS_CALCULATED = new Map<string, string>([
         ["Red", "#FF0000"],
@@ -158,7 +158,8 @@ export class RenderConfigStore {
         "Cyan",
         "Blue",
         "Violet",
-        "custom_mono"
+        "custom",
+        "color_panel"
     ];
 
     static readonly PERCENTILE_RANKS = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];

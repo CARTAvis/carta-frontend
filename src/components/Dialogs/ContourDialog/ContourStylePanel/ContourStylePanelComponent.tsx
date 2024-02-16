@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 
 import {ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {PreferenceKeys} from "stores";
-import {ContourDashMode, FrameStore} from "stores/Frame";
+import {ContourConfigStore, ContourDashMode, FrameStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 
 import "./ContourStylePanelComponent.scss";
@@ -55,6 +55,7 @@ export class ContourStylePanelComponent extends React.Component<{frame: FrameSto
                         disabled={!frame.contourConfig.colormapEnabled}
                         selectedItem={frame.contourConfig.colormap}
                         onItemSelect={frame.contourConfig.setColormap}
+                        items={ContourConfigStore.COLOR_MAPS_SELECTED}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Bias" disabled={!frame.contourConfig.colormapEnabled}>

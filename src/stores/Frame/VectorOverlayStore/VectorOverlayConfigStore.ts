@@ -39,6 +39,7 @@ export class VectorOverlayConfigStore {
     @observable intensityMin: number;
     @observable intensityMax: number;
     @observable rotationOffset: number;
+    @observable customColorHex: string;
 
     private readonly preferenceStore: PreferenceStore;
     public static DefaultLengthMin = 0;
@@ -69,6 +70,7 @@ export class VectorOverlayConfigStore {
         this.intensityMax = undefined;
         this.rotationOffset = 0;
         this.visible = true;
+        this.customColorHex = this.preferenceStore.vectorOverlayColorHex;
     }
 
     @action setEnabled(val: boolean) {
@@ -117,6 +119,11 @@ export class VectorOverlayConfigStore {
 
     @action setColormap = (colormap: string) => {
         this.colormap = colormap;
+    };
+
+    @action setCustomColorMap = (colorHex: string, colormap: string) => {
+        this.customColorHex = colorHex;
+        this.setColormap(colormap);
     };
 
     @action setColormapEnabled = (val: boolean) => {
