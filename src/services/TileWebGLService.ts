@@ -2,7 +2,7 @@ import allMaps from "static/allmaps.png";
 
 import {TEXTURE_SIZE, TILE_SIZE} from "services";
 import {RenderConfigStore} from "stores";
-import {getShaderProgram, GL2, initWebGL2, loadImageTexture,setCmapCalculatedTexture} from "utilities";
+import {getShaderProgram, GL2, initWebGL2, loadImageTexture, setCmapCalculatedTexture} from "utilities";
 
 import {rasterShaders} from "./GLSL";
 
