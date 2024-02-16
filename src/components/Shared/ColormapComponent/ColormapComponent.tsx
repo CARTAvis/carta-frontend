@@ -102,7 +102,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
                 renderConfig?.setCustomColorMap(color.hex, colormap);
             } else {
                 PreferenceStore.Instance.setPreference(props.setPreference, color.hex);
-                PreferenceStore.Instance.setPreference(PREFERENCE_KEY_PAIRS.get(props.setPreference), colormap);
+                PreferenceStore.Instance.setPreference(PREFERENCE_KEY_PAIRS.get(props.setPreference), CUSTOM_COLOR_OPTION);
             }
         }, changeDelay);
 
@@ -110,10 +110,10 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
             return null;
         }
         if (colormap === "color_panel") {
-            const popoverClassName = classNames("raster-color-picker-popup", {"bp3-dark": AppStore.Instance.darkTheme});
+            const popoverClassName = classNames("color-picker-popup", {"bp3-dark": AppStore.Instance.darkTheme});
 
             return (
-                <div key={"custom-color"} className={"raster-custom-color"}>
+                <div key={"custom-color"} className={"custom-color"}>
                     <Popover2 position={PopoverPosition.LEFT} popoverClassName={popoverClassName} content={<SketchPicker color={color} onChange={handleColorChange} disableAlpha={disableAlpha} presetColors={presetColors} />}>
                         <Button text={"color panel"} className="raster-color-swatch-button" />
                     </Popover2>

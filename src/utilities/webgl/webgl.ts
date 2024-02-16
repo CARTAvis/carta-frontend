@@ -1,5 +1,5 @@
-import {AlertStore} from "stores";
-import {TemplateNodes} from "utilities";
+import {AlertStore, RenderConfigStore} from "stores";
+import {getColorsForValues, getColorsFromHex, TemplateNodes} from "utilities";
 
 export const GL2 = WebGL2RenderingContext;
 
@@ -166,4 +166,50 @@ function getBufferElementType(buffer: ArrayBufferView): string {
     } else {
         return "Float32";
     }
+}
+
+export function setCmapCalculatedTexture(gl: WebGL2RenderingContext) {
+    const cmap = RenderConfigStore.COLOR_MAPS_CALCULATED;
+    const width = 1024;
+    const height = cmap.size;
+    const components = 4;
+    let loadCmap: any;
+
+    const cmapData = new Float32Array(width * height * components);
+    Array.from(cmap.keys()).forEach((colormap, y) => {
+        loadCmap = getColorsForValues(colormap).color;
+        for (let x = 0; x < width; x++) {
+            for (let ii = 0; ii < components; ii++) cmapData[x * components + ii + y * width * components] = loadCmap[x * components + ii] / 255;
+        }
+    });
+
+    const texture = gl.createTexture();
+    gl.activeTexture(GL2.TEXTURE2);
+    gl.bindTexture(GL2.TEXTURE_2D, texture);
+    gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.RGBA32F, width, height, 0, GL2.RGBA, GL2.FLOAT, cmapData);
+    gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);
+    gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
+    gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_S, GL2.CLAMP_TO_EDGE);
+    gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_T, GL2.CLAMP_TO_EDGE);
+}
+
+export function setCustomColormapTexture(gl: WebGL2RenderingContext, customColorHex: string) {
+    const width = 1024;
+    const height = 1;
+    const components = 4;
+
+    const cmapData = new Float32Array(width * height * components);
+    const cmap = getColorsFromHex(customColorHex).color;
+    for (let x = 0; x < width; x++) {
+        for (let ii = 0; ii < components; ii++) cmapData[x * components + ii] = cmap[x * components + ii] / 255;
+    }
+
+    const texture = gl.createTexture();
+    gl.activeTexture(GL2.TEXTURE3);
+    gl.bindTexture(GL2.TEXTURE_2D, texture);
+    gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.RGBA32F, width, height, 0, GL2.RGBA, GL2.FLOAT, cmapData);
+    gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);
+    gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
+    gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_S, GL2.CLAMP_TO_EDGE);
+    gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_T, GL2.CLAMP_TO_EDGE);
 }

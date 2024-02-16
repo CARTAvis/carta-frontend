@@ -2,7 +2,7 @@ import allMaps from "static/allmaps.png";
 
 import {TEXTURE_SIZE, TILE_SIZE} from "services";
 import {RenderConfigStore} from "stores";
-import {getColorsForValues, getColorsFromHex, getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
+import {getShaderProgram, GL2, initWebGL2, loadImageTexture,setCmapCalculatedTexture} from "utilities";
 
 import {rasterShaders} from "./GLSL";
 
@@ -174,54 +174,6 @@ export class TileWebGLService {
         this.gl.bufferData(GL2.ARRAY_BUFFER, uvs, GL2.STATIC_DRAW);
     }
 
-    private setCmapCalculatedTexture() {
-        const cmap = RenderConfigStore.COLOR_MAPS_CALCULATED;
-        const width = 1024;
-        const height = cmap.size;
-        const components = 4;
-        let loadCmap: any;
-
-        const cmapData = new Float32Array(width * height * components);
-        Array.from(cmap.keys()).forEach((colormap, y) => {
-            loadCmap = getColorsForValues(colormap).color;
-            for (let x = 0; x < width; x++) {
-                for (let ii = 0; ii < components; ii++) cmapData[x * components + ii + y * width * components] = loadCmap[x * components + ii] / 255;
-            }
-        });
-
-        const texture = this.gl.createTexture();
-        this.gl.activeTexture(GL2.TEXTURE2);
-        this.gl.bindTexture(GL2.TEXTURE_2D, texture);
-        this.gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.RGBA32F, width, height, 0, GL2.RGBA, GL2.FLOAT, cmapData);
-        this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);
-        this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
-        this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_S, GL2.CLAMP_TO_EDGE);
-        this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_T, GL2.CLAMP_TO_EDGE);
-    }
-
-    public setCustomColormapTexture(customColorHex: string) {
-        const width = 1024;
-        const height = 1;
-        const components = 4;
-
-        // this.gl.uniform1i(this.shaderUniforms.NumCmapsCustom, height);
-
-        const cmapData = new Float32Array(width * height * components);
-        const cmap = getColorsFromHex(customColorHex).color;
-        for (let x = 0; x < width; x++) {
-            for (let ii = 0; ii < components; ii++) cmapData[x * components + ii] = cmap[x * components + ii] / 255;
-        }
-
-        const texture = this.gl.createTexture();
-        this.gl.activeTexture(GL2.TEXTURE3);
-        this.gl.bindTexture(GL2.TEXTURE_2D, texture);
-        this.gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.RGBA32F, width, height, 0, GL2.RGBA, GL2.FLOAT, cmapData);
-        this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);
-        this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
-        this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_S, GL2.CLAMP_TO_EDGE);
-        this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_T, GL2.CLAMP_TO_EDGE);
-    }
-
     protected constructor() {
         this.gl = initWebGL2();
         if (!this.gl) {
@@ -232,7 +184,7 @@ export class TileWebGLService {
         loadImageTexture(this.gl, allMaps, GL2.TEXTURE1).then(texture => {
             this.cmapTexture = texture;
         });
-        this.setCmapCalculatedTexture();
+        setCmapCalculatedTexture(this.gl);
     }
 }
 
