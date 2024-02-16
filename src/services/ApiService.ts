@@ -48,7 +48,7 @@ export class ApiService {
     private static PreferenceValidator = new Ajv({strictTypes: false}).compile(preferencesSchema);
     private static SnippetValidator = new Ajv({strictTypes: false}).compile(snippetSchema);
 
-    @observable private _accessToken: string;
+    @observable private _accessToken: string | undefined;
     private _tokenLifetime: number;
     private _tokenExpiryHandler: any;
     private axiosInstance: AxiosInstance;
@@ -233,14 +233,14 @@ export class ApiService {
                 return undefined;
             }
         } else {
-            preferences = JSON.parse(localStorage.getItem("preferences")) ?? {};
+            preferences = JSON.parse(localStorage.getItem("preferences") ?? "{}");
         }
 
         if (preferences) {
             this.upgradePreferences(preferences);
             const valid = ApiService.PreferenceValidator(preferences);
             if (!valid) {
-                for (const error of ApiService.PreferenceValidator.errors) {
+                for (const error of ApiService.PreferenceValidator.errors ?? []) {
                     if (error.instancePath) {
                         console.log(`Removing invalid preference ${error.instancePath}`);
                         // Trim the leading "." from the path
@@ -312,7 +312,7 @@ export class ApiService {
             }
         } else {
             try {
-                const obj = JSON.parse(localStorage.getItem("preferences")) ?? {};
+                const obj = JSON.parse(localStorage.getItem("preferences") ?? "{}");
                 for (const key of Object.keys(preferences)) {
                     obj[key] = preferences[key];
                 }
@@ -342,7 +342,7 @@ export class ApiService {
             }
         } else {
             try {
-                const obj = JSON.parse(localStorage.getItem("preferences")) ?? {};
+                const obj = JSON.parse(localStorage.getItem("preferences") ?? "{}");
                 for (const key of keys) {
                     delete obj[key];
                 }
@@ -371,7 +371,7 @@ export class ApiService {
             }
         } else {
             try {
-                savedLayouts = JSON.parse(localStorage.getItem("savedLayouts")) ?? {};
+                savedLayouts = JSON.parse(localStorage.getItem("savedLayouts") ?? "{}");
             } catch (err) {
                 console.log(err);
                 return undefined;
@@ -407,7 +407,7 @@ export class ApiService {
             }
         } else {
             try {
-                const obj = JSON.parse(localStorage.getItem("savedLayouts")) ?? {};
+                const obj = JSON.parse(localStorage.getItem("savedLayouts") ?? "{}");
                 obj[layoutName] = layout;
                 localStorage.setItem("savedLayouts", JSON.stringify(obj));
                 return true;
@@ -429,7 +429,7 @@ export class ApiService {
             }
         } else {
             try {
-                const obj = JSON.parse(localStorage.getItem("savedLayouts")) ?? {};
+                const obj = JSON.parse(localStorage.getItem("savedLayouts") ?? "{}");
                 delete obj[layoutName];
                 localStorage.setItem("savedLayouts", JSON.stringify(obj));
                 return true;
@@ -456,7 +456,7 @@ export class ApiService {
             }
         } else {
             try {
-                savedSnippets = JSON.parse(localStorage.getItem("savedSnippets")) ?? {};
+                savedSnippets = JSON.parse(localStorage.getItem("savedSnippets") ?? "{}");
             } catch (err) {
                 console.log(err);
                 return undefined;
@@ -491,7 +491,7 @@ export class ApiService {
             }
         } else {
             try {
-                const obj = JSON.parse(localStorage.getItem("savedSnippets")) ?? {};
+                const obj = JSON.parse(localStorage.getItem("savedSnippets") ?? "{}");
                 obj[snippetName] = snippet;
                 localStorage.setItem("savedSnippets", JSON.stringify(obj));
                 return true;
@@ -513,7 +513,7 @@ export class ApiService {
             }
         } else {
             try {
-                const obj = JSON.parse(localStorage.getItem("savedSnippets")) ?? {};
+                const obj = JSON.parse(localStorage.getItem("savedSnippets") ?? "{}");
                 delete obj[snippetName];
                 localStorage.setItem("savedSnippets", JSON.stringify(obj));
                 return true;
@@ -539,7 +539,7 @@ export class ApiService {
             }
         } else {
             try {
-                const existingWorkspaces = JSON.parse(localStorage.getItem("savedWorkspaces")) ?? {};
+                const existingWorkspaces = JSON.parse(localStorage.getItem("savedWorkspaces") ?? "{}");
                 if (existingWorkspaces) {
                     const validWorkspaces = new Array<WorkspaceListItem>();
                     for (const workspaceName of Object.keys(existingWorkspaces)) {
@@ -574,7 +574,7 @@ export class ApiService {
             }
         } else if (!isKey) {
             try {
-                const existingWorkspaces = JSON.parse(localStorage.getItem("savedWorkspaces")) ?? {};
+                const existingWorkspaces = JSON.parse(localStorage.getItem("savedWorkspaces") ?? "{}");
                 const workspace = existingWorkspaces?.[name];
                 if (workspace) {
                     const valid = true; // TODO: ApiService.WorkspaceValidator(workspace);
@@ -606,7 +606,7 @@ export class ApiService {
             }
         } else {
             try {
-                const obj = JSON.parse(localStorage.getItem("savedWorkspaces")) ?? {};
+                const obj = JSON.parse(localStorage.getItem("savedWorkspaces") ?? "{}");
                 obj[workspaceName] = workspace;
                 localStorage.setItem("savedWorkspaces", JSON.stringify(obj));
                 return workspace;
@@ -643,7 +643,7 @@ export class ApiService {
             }
         } else {
             try {
-                const obj = JSON.parse(localStorage.getItem("savedWorkspaces")) ?? {};
+                const obj = JSON.parse(localStorage.getItem("savedWorkspaces") ?? "{}");
                 delete obj[workspaceName];
                 localStorage.setItem("savedWorkspaces", JSON.stringify(obj));
                 return true;

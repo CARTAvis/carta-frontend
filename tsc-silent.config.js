@@ -1,6 +1,7 @@
 const migratedFiles = [
     "utilities",
-    "models"
+    "models",
+    "services/ApiService.ts"
 ];
 
 module.exports = {
