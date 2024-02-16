@@ -3,7 +3,8 @@ const migratedFiles = [
     "models",
     "services/ApiService.ts",
     "services/BackendService.ts",
-    "services/CatalogApiService.ts"
+    "services/CatalogApiService.ts",
+    "services/CatalogWebGLService.ts"
 ];
 
 module.exports = {
