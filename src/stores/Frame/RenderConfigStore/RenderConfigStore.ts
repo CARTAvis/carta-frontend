@@ -116,7 +116,7 @@ export class RenderConfigStore {
         "Violet",
         "custom"
     ];
-    static COLOR_MAPS_CALCULATED = new Map<string, string>([
+    static readonly COLOR_MAPS_CALCULATED = new Map<string, string>([
         ["Red", "#FF0000"],
         ["Orange", "#FFA500"],
         ["Yellow", "#FFFF00"],

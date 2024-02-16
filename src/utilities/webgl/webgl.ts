@@ -1,4 +1,4 @@
-import {AlertStore, RenderConfigStore} from "stores";
+import {AlertStore, PreferenceStore, RenderConfigStore} from "stores";
 import {getColorsForValues, getColorsFromHex, TemplateNodes} from "utilities";
 
 export const GL2 = WebGL2RenderingContext;
@@ -199,7 +199,8 @@ export function setCustomColormapTexture(gl: WebGL2RenderingContext, customColor
     const components = 4;
 
     const cmapData = new Float32Array(width * height * components);
-    const cmap = getColorsFromHex(customColorHex).color;
+    const customColoStartHex = PreferenceStore.Instance.colormapStartHex;
+    const cmap = getColorsFromHex(customColorHex, customColoStartHex).color;
     for (let x = 0; x < width; x++) {
         for (let ii = 0; ii < components; ii++) cmapData[x * components + ii] = cmap[x * components + ii] / 255;
     }

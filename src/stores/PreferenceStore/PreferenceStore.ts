@@ -51,6 +51,7 @@ export enum PreferenceKeys {
     RENDER_CONFIG_SCALING = "scaling",
     RENDER_CONFIG_COLORMAP = "colormap",
     RENDER_CONFIG_COLORHEX = "colormapHex",
+    RENDER_CONFIG_COLORSTARTHEX = "colormapStartHex",
     RENDER_CONFIG_PERCENTILE = "percentile",
     RENDER_CONFIG_SCALING_ALPHA = "scalingAlpha",
     RENDER_CONFIG_SCALING_GAMMA = "scalingGamma",
@@ -182,6 +183,7 @@ const DEFAULTS = {
         scaling: FrameScaling.LINEAR,
         colormap: "inferno",
         colormapHex: "#FFFFFF",
+        colormapStartHex: "#000000",
         percentile: 99.9,
         scalingAlpha: 1000,
         scalingGamma: 1,
@@ -383,6 +385,10 @@ export class PreferenceStore {
 
     @computed get colormapHex(): string {
         return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORHEX) ?? DEFAULTS.RENDER_CONFIG.colormapHex;
+    }
+
+    @computed get colormapStartHex(): string {
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORSTARTHEX) ?? DEFAULTS.RENDER_CONFIG.colormapStartHex;
     }
 
     @computed get percentile(): number {

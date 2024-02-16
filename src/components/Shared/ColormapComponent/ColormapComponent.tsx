@@ -44,6 +44,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
             } else {
                 customColorHex = PreferenceStore.Instance.colormapHex;
             }
+            const customColorStarHex = PreferenceStore.Instance.colormapStartHex;
 
             return (
                 <div
@@ -51,7 +52,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
                     style={{
                         transform: `scaleX(${props.inverted ? -1 : 1})`,
                         height: `${blockHeight}px`,
-                        backgroundImage: `linear-gradient(to right, black , ${customColorHex})`,
+                        backgroundImage: `linear-gradient(to right, ${customColorStarHex}, ${customColorHex})`,
                         backgroundSize: `100% 300%`,
                         backgroundPosition: `0 calc(-300% - ${blockHeight}px)`
                     }}
