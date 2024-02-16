@@ -9,8 +9,8 @@ describe("AngularSize", () => {
             expect(AngularSize.convertValueFromArcsec(0.001, AngularSizeUnit.MILLIARCSEC)).toEqual(1);
         });
 
-        test("returns undefined if input arcsec is not finite", () => {
-            expect(AngularSize.convertValueFromArcsec(NaN, AngularSizeUnit.ARCSEC)).toBeUndefined();
+        test("returns nan if input arcsec is not finite", () => {
+            expect(AngularSize.convertValueFromArcsec(NaN, AngularSizeUnit.ARCSEC)).toBeNaN();
         });
     });
 
@@ -56,9 +56,9 @@ describe("AngularSize", () => {
             expect(size?.unit).toEqual(AngularSizeUnit.ARCSEC);
         });
 
-        test("returns undefined if input arcsec is not finite", () => {
+        test("returns nan if input arcsec is not finite", () => {
             const size = AngularSize.convertFromArcsec(NaN);
-            expect(size?.value).toBeUndefined();
+            expect(size?.value).toBeNaN();
             expect(size?.unit).toEqual(AngularSizeUnit.ARCSEC);
         });
     });
