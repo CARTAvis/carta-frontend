@@ -55,6 +55,7 @@ import {
     SnippetStore,
     SpatialProfileStore,
     SpectralProfileStore,
+    SystemType,
     WidgetsStore
 } from "stores";
 import {CompassAnnotationStore, CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
@@ -744,7 +745,15 @@ export class AppStore {
     *appendFile(path: string, filename?: string, hdu?: string, imageArithmetic: boolean = false, setAsActive: boolean = true, updateStartingDirectory: boolean = true) {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
-        return yield this.loadFile(path, filename, hdu, imageArithmetic, setAsActive, updateStartingDirectory);
+        const frame =  yield this.loadFile(path, filename, hdu, imageArithmetic, setAsActive, updateStartingDirectory);
+        if (frame?.wcsInfo && this.overlayStore.global.system !== SystemType.Auto) {
+            if (this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL && frame.spatialReference?.wcsInfo) {
+                this.overlayStore.global.setSystem(frame.spatialReference.wcsSystem);
+            } else if (this.overlayStore.global.system !== frame.wcsSystem) {
+                this.overlayStore.global.setSystem(SystemType.Auto);
+            }
+        }
+        return frame;
     }
 
     /**
@@ -764,7 +773,11 @@ export class AppStore {
     @flow.bound
     *openFile(path: string, filename?: string, hdu?: string, imageArithmetic?: boolean, updateStartingDirectory: boolean = true) {
         this.removeAllFrames();
-        return yield this.loadFile(path, filename, hdu, imageArithmetic, true, updateStartingDirectory);
+        const frame = yield this.loadFile(path, filename, hdu, imageArithmetic, true, updateStartingDirectory);
+        if (frame?.wcsInfo && this.overlayStore.global.system !== frame.wcsSystem) {
+            this.overlayStore.global.setSystem(SystemType.Auto);
+        }
+        return frame;
     }
 
     @flow.bound
