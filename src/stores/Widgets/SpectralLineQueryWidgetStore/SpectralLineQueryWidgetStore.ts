@@ -5,7 +5,7 @@ import {action, autorun, computed, flow, makeObservable, observable} from "mobx"
 
 import {SplatalogueService} from "services";
 import {AppStore, ControlHeader} from "stores";
-import {booleanFiltering, numericFiltering, ProcessedColumnData, ProtobufProcessing, SPEED_OF_LIGHT, stringFiltering, wavelengthToFrequency} from "utilities";
+import {booleanFiltering, getHasFilter, getInitIndexMap, getSortedIndexMap, numericFiltering, ProcessedColumnData, ProtobufProcessing, SPEED_OF_LIGHT, stringFiltering, wavelengthToFrequency} from "utilities";
 
 export enum SpectralLineQueryRangeType {
     Range = "Range",
@@ -99,11 +99,11 @@ export interface SpectralLine {
     qn: string;
 }
 
-const LINE_SELECTION_COLUMN_INDEX = -1;
-const SPECIES_COLUMN_INDEX = 0;
-const SHIFTIED_FREQUENCY_COLUMN_INDEX = 2;
-const MEASURED_FREQUENCY_COLUMN_INDEX = 5;
-const RESOLVED_QN_COLUMN_INDEX = 7;
+const LINE_SELECTION_COLUMN_INDEX = 0;
+const SPECIES_COLUMN_INDEX = 1;
+const SHIFTIED_FREQUENCY_COLUMN_INDEX = 3;
+const MEASURED_FREQUENCY_COLUMN_INDEX = 6;
+const RESOLVED_QN_COLUMN_INDEX = 8;
 const FREQUENCY_RANGE_LIMIT = 2 * 1e4; // 20000 MHz
 const DEFAULT_HEADER_WIDTH = 150;
 
@@ -121,12 +121,14 @@ export class SpectralLineQueryWidgetStore {
     @observable queryResultTableRef: Table2;
     @observable private queryResult: Map<number, ProcessedColumnData>;
     @observable filterResult: Map<number, ProcessedColumnData>;
-    @observable private filteredRowIndexes: Array<number>;
+    @observable filteredRowIndexes: Array<number>;
     @observable private isDataFiltered: boolean;
     @observable private filterNum: number;
     @observable numDataRows: number;
     @observable selectedSpectralProfilerID: string;
     @observable controlHeader: Map<string, ControlHeader>;
+    @observable sortingInfo: {columnName: string; sortingType: CARTA.SortingType};
+    @observable sortedIndexMap: Array<number>;
 
     // raw copy of the shifted frequency column, does not apply shifting factor
     private shiftedFreqColumnRawData: Array<number>;
@@ -228,6 +230,8 @@ export class SpectralLineQueryWidgetStore {
         this.filteredRowIndexes = rowIndexes;
         this.shiftedFreqColumnRawData = this.filterResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX).data as Array<number>;
         this.applyShiftFactor();
+        this.initSortedIndexMap();
+        this.updateSortedIndexMap();
     };
 
     @action private resetQueryContents = () => {
@@ -350,6 +354,23 @@ export class SpectralLineQueryWidgetStore {
         this.controlHeader.get(columnName).columnWidth = width;
     }
 
+    @action setSortingInfo(columnName: string, sortingType: CARTA.SortingType) {
+        this.sortingInfo = {columnName, sortingType};
+        this.updateSortedIndexMap();
+    }
+
+    @action updateSortedIndexMap() {
+        this.sortedIndexMap = getSortedIndexMap(this.controlHeader, this.sortingInfo, this.sortedIndexMap, this.hasFilter, this.numVisibleRows, this.filterResult);
+    }
+
+    @action initSortedIndexMap() {
+        this.sortedIndexMap = getInitIndexMap(this.numVisibleRows);
+    }
+
+    @computed get hasFilter(): boolean {
+        return getHasFilter(this.controlHeader, this.queryResult);
+    }
+
     @computed get fullRowIndexes(): Array<number> {
         return Array.from(Array(this.numDataRows).keys());
     }
@@ -436,7 +457,7 @@ export class SpectralLineQueryWidgetStore {
                 new CARTA.CatalogHeader({
                     name: header.name,
                     dataType: header.dataType,
-                    columnIndex: header.columnIndex,
+                    columnIndex: header.columnIndex + 1, // to save first column for inserting line selection
                     description: SPECTRAL_LINE_DESCRIPTION.get(header.name as SpectralLineHeaders)
                 })
             );
@@ -460,7 +481,18 @@ export class SpectralLineQueryWidgetStore {
     };
 
     private initColumnData = (ackData, size: number, headers): Map<number, ProcessedColumnData> => {
-        const columns = ProtobufProcessing.ProcessCatalogData(ackData);
+        const ackColumns = ProtobufProcessing.ProcessCatalogData(ackData);
+
+        // Starting from i = 1 is to preserve the first column for line selection boolean
+        // Since ```ackColumns``` has no line selection boolean column (but ```headers``` does), ackColumns.get(i - 1) extracts correct column data.
+        const columns = new Map<number, ProcessedColumnData>();
+        for (let i = 1; i < headers.length; i++) {
+            let selectColumn = ackColumns.get(i - 1);
+            columns.set(i, {
+                dataType: selectColumn.dataType,
+                data: selectColumn.data
+            });
+        }
 
         // 1. insert line selection boolean column
         const lineSelectionData = new Array<boolean>(size).fill(false);
@@ -542,6 +574,8 @@ export class SpectralLineQueryWidgetStore {
         this.queryResultTableRef = undefined;
         this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ? AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
         this.resetQueryContents();
+        this.sortingInfo = {columnName: null, sortingType: null};
+        this.initSortedIndexMap();
 
         // update selected spectral profiler when currently selected is closed
         autorun(() => {
