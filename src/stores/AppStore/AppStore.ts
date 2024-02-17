@@ -1904,7 +1904,7 @@ export class AppStore {
         // Set overlay defaults from current frame
         autorun(() => {
             if (this.activeFrame) {
-                this.overlayStore.setDefaultsFromAST(this.activeFrame);
+                this.overlayStore.setDefaultsFromFrame(this.activeFrame);
             }
         });
 
@@ -2651,7 +2651,7 @@ export class AppStore {
     private changeActiveFrame(frame: FrameStore) {
         if (frame !== this.activeFrame) {
             // Set overlay defaults from current frame
-            this.overlayStore.setDefaultsFromAST(frame);
+            this.overlayStore.setDefaultsFromFrame(frame);
         }
         this.activeFrame = frame;
         if (!frame.isPreview) {

@@ -1082,11 +1082,11 @@ export class OverlayStore {
         }
     }
 
-    @action setDefaultsFromAST(frame: FrameStore) {
+    @action setDefaultsFromFrame(frame: FrameStore) {
         this.global.setValidWcs(frame.validWcs);
         this.numbers.setValidWcs(frame.validWcs);
 
-        this.global.setDefaultSystem(AST.getString(frame.wcsInfo, "System") as SystemType);
+        this.global.setDefaultSystem(frame.wcsSystem);
         this.setFormatsFromSystem();
 
         if (this.global.system === SystemType.Auto) {
