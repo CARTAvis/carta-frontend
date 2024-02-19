@@ -1,7 +1,7 @@
 import * as React from "react";
 import ReactResizeDetector from "react-resize-detector";
 import SplitPane, {Pane} from "react-split-pane";
-import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay, Popover, Position, Spinner, Switch, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay2, Popover, Position, Spinner, Switch, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -415,11 +415,11 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                         <AnchorButton text="Clear plot" disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.filterResult.size <= 0} onClick={this.handleClear} />
                     </div>
                 </div>
-                <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={widgetStore.isQuerying} usePortal={false}>
+                <Overlay2 className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={widgetStore.isQuerying} usePortal={false}>
                     <div className="query-loading-overlay">
                         <Spinner intent={Intent.PRIMARY} size={30} value={null} />
                     </div>
-                </Overlay>
+                </Overlay2>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
             </div>
         );

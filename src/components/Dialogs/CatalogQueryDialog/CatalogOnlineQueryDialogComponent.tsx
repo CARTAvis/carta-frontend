@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Button, Classes, DialogProps, FormGroup, Icon, InputGroup, Intent, MenuItem, NonIdealState, Overlay, PopoverPosition, Position, Spinner, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, DialogProps, FormGroup, Icon, InputGroup, Intent, MenuItem, NonIdealState, Overlay2, PopoverPosition, Position, Spinner, Tooltip} from "@blueprintjs/core";
 import {ItemRendererProps, MultiSelect, Select} from "@blueprintjs/select";
 import classNames from "classnames";
 import FuzzySearch from "fuzzy-search";
@@ -261,11 +261,11 @@ export class CatalogQueryDialogComponent extends React.Component {
                 dialogId={DialogId.CatalogQuery}
             >
                 <div className={Classes.DIALOG_BODY}>{configBoard}</div>
-                <Overlay autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={disable} usePortal={false}>
+                <Overlay2 autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={disable} usePortal={false}>
                     <div className="query-loading-overlay">
                         <Spinner intent={Intent.PRIMARY} size={30} value={null} />
                     </div>
-                </Overlay>
+                </Overlay2>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={"result-info"}>{tableInfo}</div>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
