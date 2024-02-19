@@ -745,7 +745,7 @@ export class AppStore {
     *appendFile(path: string, filename?: string, hdu?: string, imageArithmetic: boolean = false, setAsActive: boolean = true, updateStartingDirectory: boolean = true) {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
-        const frame =  yield this.loadFile(path, filename, hdu, imageArithmetic, setAsActive, updateStartingDirectory);
+        const frame = yield this.loadFile(path, filename, hdu, imageArithmetic, setAsActive, updateStartingDirectory);
         if (frame?.wcsInfo && this.overlayStore.global.system !== SystemType.Auto) {
             if (this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL && frame.spatialReference?.wcsInfo) {
                 this.overlayStore.global.setSystem(frame.spatialReference.wcsSystem);
