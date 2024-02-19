@@ -3,12 +3,14 @@
 
     .name-text {
         .bp3-label {
-            min-width: 110px;
-            width: 110px;
+            min-width: 60px;
+            width: 60px;
         }
 
         .bp3-form-content {
             line-height: 30px;
+            min-width: 120px;
+            width: 120px;
         }
     }
 }
