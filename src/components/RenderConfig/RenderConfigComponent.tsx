@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, SafeNumericInput} from "components/Shared";
-import {Point2D} from "models";
+import {ImageType, Point2D} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore, RenderConfigStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
@@ -16,6 +16,7 @@ import {clamp, getColorForTheme, scaleValue, toExponential, toFixed} from "utili
 
 import {MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
+import {ColorBlendingConfigComponent} from "./ColorBlendingConfigComponent/ColorBlendingConfigComponent";
 import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
 import {HistogramConfigComponent} from "./HistogramConfigComponent/HistogramConfigComponent";
 
@@ -246,15 +247,21 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
     render() {
         const appStore = AppStore.Instance;
-        const frame = appStore.activeFrame;
+        const image = appStore.activeImage;
 
-        if (!frame || !this.widgetStore) {
+        if (!image || !this.widgetStore) {
             return (
                 <div className="render-config-container">
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </div>
             );
         }
+
+        if (image.type === ImageType.COLOR_BLENDING) {
+            return <ColorBlendingConfigComponent />;
+        }
+
+        const frame = image.store;
 
         let unitString = "Value";
         if (frame && frame.requiredUnit) {
