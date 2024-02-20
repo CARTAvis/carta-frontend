@@ -27,6 +27,21 @@ export const ColorBlendingConfigComponent = observer(() => {
         colorBlendingStore.setSelectedFrame(index, AppStore.Instance.getFrame(fileId));
     };
 
+    const getLayerSettings = (frame: FrameStore, alphaIndex: number) => {
+        const renderConfig = frame.renderConfig;
+        const alpha = colorBlendingStore.alpha[alphaIndex];
+        const setAlpha = (val: number) => colorBlendingStore.setAlpha(alphaIndex, val);
+        return (
+            <>
+                <ColormapComponent inverted={renderConfig.inverted} selectedItem={renderConfig.colorMap} onItemSelect={renderConfig.setColorMap} />
+                <div className="alpha-settings">
+                    <AlphaPicker className="alpha-slider" color={{r: 0, g: 0, b: 0, a: alpha}} onChange={color => setAlpha(color.rgb.a)} />
+                    <SafeNumericInput className="alpha-input" selectAllOnFocus={true} value={alpha} min={0} max={1} stepSize={0.1} onValueChange={val => setAlpha(val)} />
+                </div>
+            </>
+        );
+    };
+
     return (
         <div className="color-blending-config">
             <div className="heading">
@@ -75,11 +90,7 @@ export const ColorBlendingConfigComponent = observer(() => {
                         {colorBlendingStore.baseFrame.filename}
                     </Text>
                 </Tooltip2>
-                <ColormapComponent inverted={colorBlendingStore.baseFrame.renderConfig.inverted} selectedItem={colorBlendingStore.baseFrame.renderConfig.colorMap} onItemSelect={colorBlendingStore.baseFrame.renderConfig.setColorMap} />
-                <div className="alpha-settings">
-                    <AlphaPicker className="alpha-slider" />
-                    <SafeNumericInput className="alpha-input" selectAllOnFocus={true} value={1} min={0} max={1} stepSize={0.1} />
-                </div>
+                {getLayerSettings(colorBlendingStore.baseFrame, 0)}
             </FormGroup>
             {colorBlendingStore.selectedFrames.map((f, i) => (
                 <FormGroup className="layer-config" label={`Layer ${i + 2}`} inline={true} key={i}>
@@ -98,11 +109,7 @@ export const ColorBlendingConfigComponent = observer(() => {
                     >
                         <HTMLSelect className="image-column" value={f.id} options={getSetFrameOptions(f)} onChange={ev => setSelectedFrame(i, parseInt(ev.target.value))} />
                     </Tooltip2>
-                    <ColormapComponent inverted={f.renderConfig.inverted} selectedItem={f.renderConfig.colorMap} onItemSelect={f.renderConfig.setColorMap} />
-                    <div className="alpha-settings">
-                        <AlphaPicker className="alpha-slider" />
-                        <SafeNumericInput className="alpha-input" selectAllOnFocus={true} value={1} min={0} max={1} stepSize={0.1} />
-                    </div>
+                    {getLayerSettings(f, i + 1)}
                 </FormGroup>
             ))}
         </div>

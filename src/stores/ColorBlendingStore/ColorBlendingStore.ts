@@ -8,6 +8,7 @@ export class ColorBlendingStore {
 
     @observable titleCustomText: string;
     @observable selectedFrames: FrameStore[];
+    @observable alpha: number[];
 
     @action setTitleCustomText = (text: string) => {
         this.titleCustomText = text;
@@ -18,20 +19,33 @@ export class ColorBlendingStore {
             return;
         }
         this.selectedFrames.push(frame);
+        this.alpha.push(1);
     };
 
     @action setSelectedFrame = (index: number, frame: FrameStore) => {
-        if (!this.isValidFrame(frame) || !this.isValidIndex(index)) {
+        if (!this.isValidFrame(frame) || !this.isValidIndex(this.selectedFrames, index)) {
             return;
         }
         this.selectedFrames[index] = frame;
     };
 
+    @action setAlpha = (index: number, alpha: number) => {
+        if (!this.isValidIndex(this.alpha, index)) {
+            return;
+        }
+        if (alpha < 0 || alpha > 1) {
+            console.error("Invalid alpha value.");
+            return;
+        }
+        this.alpha[index] = alpha;
+    };
+
     @action deleteSelectedFrame = (index: number) => {
-        if (!this.isValidIndex(index)) {
+        if (!this.isValidIndex(this.selectedFrames, index)) {
             return;
         }
         this.selectedFrames.splice(index, 1);
+        this.alpha.splice(index, 1);
     };
 
     @computed get baseFrame(): FrameStore {
@@ -47,6 +61,7 @@ export class ColorBlendingStore {
         this.filename = `Color Blending ${id + 1}`;
         this.titleCustomText = this.filename;
         this.selectedFrames = this.baseFrame?.secondarySpatialImages?.slice(0, 2) ?? [];
+        this.alpha = new Array(this.selectedFrames.length + 1).fill(1);
         makeAutoObservable(this);
     }
 
@@ -64,8 +79,8 @@ export class ColorBlendingStore {
         return true;
     };
 
-    private isValidIndex = (index: number): boolean => {
-        if (index < 0 || index > this.selectedFrames.length - 1) {
+    private isValidIndex = (array: any[], index: number): boolean => {
+        if (index < 0 || index > array.length - 1) {
             console.error("Invalid layer index.");
             return false;
         }
