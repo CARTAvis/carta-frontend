@@ -2,6 +2,7 @@ import {Button, ButtonGroup, FormGroup, H6, HTMLSelect, Menu, MenuItem, Text} fr
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {observer} from "mobx-react";
 
+import {ColormapComponent} from "components/Shared";
 import {ImageType} from "models";
 import {AppStore, type FrameStore} from "stores";
 
@@ -55,7 +56,7 @@ export const ColorBlendingConfigComponent = observer(() => {
                     </Button>
                 </ButtonGroup>
             </div>
-            <FormGroup className="name-text" label="Layer 1" inline={true}>
+            <FormGroup className="layer-config" label="Layer 1" inline={true}>
                 <Tooltip2
                     content={
                         <span>
@@ -69,11 +70,14 @@ export const ColorBlendingConfigComponent = observer(() => {
                         </span>
                     }
                 >
-                    <Text ellipsize={true}>{colorBlendingStore.baseFrame.filename}</Text>
+                    <Text className="image-column image-text" ellipsize={true}>
+                        {colorBlendingStore.baseFrame.filename}
+                    </Text>
                 </Tooltip2>
+                <ColormapComponent inverted={colorBlendingStore.baseFrame.renderConfig.inverted} selectedItem={colorBlendingStore.baseFrame.renderConfig.colorMap} onItemSelect={colorBlendingStore.baseFrame.renderConfig.setColorMap} />
             </FormGroup>
             {colorBlendingStore.selectedFrames.map((f, i) => (
-                <FormGroup className="name-text" label={`Layer ${i + 2}`} inline={true} key={i}>
+                <FormGroup className="layer-config" label={`Layer ${i + 2}`} inline={true} key={i}>
                     <Tooltip2
                         content={
                             <span>
@@ -87,8 +91,9 @@ export const ColorBlendingConfigComponent = observer(() => {
                             </span>
                         }
                     >
-                        <HTMLSelect value={f.id} options={getSetFrameOptions(f)} onChange={ev => setSelectedFrame(i, parseInt(ev.target.value))} />
+                        <HTMLSelect className="image-column" value={f.id} options={getSetFrameOptions(f)} onChange={ev => setSelectedFrame(i, parseInt(ev.target.value))} />
                     </Tooltip2>
+                    <ColormapComponent inverted={f.renderConfig.inverted} selectedItem={f.renderConfig.colorMap} onItemSelect={f.renderConfig.setColorMap} />
                 </FormGroup>
             ))}
         </div>

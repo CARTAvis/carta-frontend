@@ -1,3 +1,5 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .color-blending-config {
     margin: 10px;
 
@@ -14,21 +16,32 @@
             margin: 0;
         }
 
-        .bp3-button-group {
+        .#{$ns}-button-group {
             margin-left: auto;
         }
     }
 
-    .name-text {
-        .bp3-label {
+    .layer-config {
+        .#{$ns}-label {
             min-width: 60px;
             width: 60px;
         }
 
-        .bp3-form-content {
-            line-height: 30px;
-            min-width: 120px;
-            width: 120px;
+        .#{$ns}-form-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+
+            .image-text {
+                line-height: 30px;
+                padding-left: 10px;
+            }
+
+            .image-column {
+                height: 30px;
+                min-width: 120px;
+                width: 120px;
+            }
         }
     }
 }

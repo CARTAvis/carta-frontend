@@ -31,7 +31,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         return {
             id: "render-config",
             type: "render-config",
-            minWidth: 250,
+            minWidth: 350,
             minHeight: 225,
             defaultWidth: 650,
             defaultHeight: 225,
