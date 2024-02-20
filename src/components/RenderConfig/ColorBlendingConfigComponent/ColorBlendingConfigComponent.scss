@@ -1,5 +1,23 @@
 .color-blending-config {
-    margin: 20px;
+    margin: 10px;
+
+    .heading {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+
+        h6 {
+            height: 30px;
+            display: flex;
+            align-items: center;
+            margin: 0;
+        }
+
+        .bp3-button-group {
+            margin-left: auto;
+        }
+    }
 
     .name-text {
         .bp3-label {
