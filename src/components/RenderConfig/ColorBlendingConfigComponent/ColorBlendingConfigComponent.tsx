@@ -1,8 +1,9 @@
+import {AlphaPicker} from "react-color";
 import {Button, ButtonGroup, FormGroup, H6, HTMLSelect, Menu, MenuItem, Text} from "@blueprintjs/core";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {observer} from "mobx-react";
 
-import {ColormapComponent} from "components/Shared";
+import {ColormapComponent, SafeNumericInput} from "components/Shared";
 import {ImageType} from "models";
 import {AppStore, type FrameStore} from "stores";
 
@@ -75,6 +76,10 @@ export const ColorBlendingConfigComponent = observer(() => {
                     </Text>
                 </Tooltip2>
                 <ColormapComponent inverted={colorBlendingStore.baseFrame.renderConfig.inverted} selectedItem={colorBlendingStore.baseFrame.renderConfig.colorMap} onItemSelect={colorBlendingStore.baseFrame.renderConfig.setColorMap} />
+                <div className="alpha-settings">
+                    <AlphaPicker className="alpha-slider" />
+                    <SafeNumericInput className="alpha-input" selectAllOnFocus={true} value={1} min={0} max={1} stepSize={0.1} />
+                </div>
             </FormGroup>
             {colorBlendingStore.selectedFrames.map((f, i) => (
                 <FormGroup className="layer-config" label={`Layer ${i + 2}`} inline={true} key={i}>
@@ -94,6 +99,10 @@ export const ColorBlendingConfigComponent = observer(() => {
                         <HTMLSelect className="image-column" value={f.id} options={getSetFrameOptions(f)} onChange={ev => setSelectedFrame(i, parseInt(ev.target.value))} />
                     </Tooltip2>
                     <ColormapComponent inverted={f.renderConfig.inverted} selectedItem={f.renderConfig.colorMap} onItemSelect={f.renderConfig.setColorMap} />
+                    <div className="alpha-settings">
+                        <AlphaPicker className="alpha-slider" />
+                        <SafeNumericInput className="alpha-input" selectAllOnFocus={true} value={1} min={0} max={1} stepSize={0.1} />
+                    </div>
                 </FormGroup>
             ))}
         </div>

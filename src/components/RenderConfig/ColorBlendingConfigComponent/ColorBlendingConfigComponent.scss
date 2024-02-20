@@ -28,8 +28,10 @@
         }
 
         .#{$ns}-form-content {
+            max-width: calc(100% - 70px); // layer-config w - label w
             display: flex;
             flex-wrap: wrap;
+            align-items: center;
             gap: 10px;
 
             .image-text {
@@ -41,6 +43,23 @@
                 height: 30px;
                 min-width: 120px;
                 width: 120px;
+            }
+
+            .alpha-settings {
+                min-width: 120px;
+                max-width: 100%;
+                flex: 1 1 160px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+
+                .alpha-slider {
+                    margin-right: 10px;
+                }
+
+                .alpha-input input {
+                    width: 40px;
+                }
             }
         }
     }
