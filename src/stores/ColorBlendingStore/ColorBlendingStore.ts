@@ -21,19 +21,14 @@ export class ColorBlendingStore {
     };
 
     @action setSelectedFrame = (index: number, frame: FrameStore) => {
-        if (index < 0 || index > this.selectedFrames.length - 1) {
-            console.error("Invalid layer index.");
-            return;
-        }
-        if (!this.isValidFrame(frame)) {
+        if (!this.isValidFrame(frame) || !this.isValidIndex(index)) {
             return;
         }
         this.selectedFrames[index] = frame;
     };
 
     @action deleteSelectedFrame = (index: number) => {
-        if (index < 0 || index > this.selectedFrames.length - 1) {
-            console.error("Invalid layer index.");
+        if (!this.isValidIndex(index)) {
             return;
         }
         this.selectedFrames.splice(index, 1);
@@ -66,6 +61,14 @@ export class ColorBlendingStore {
             return false;
         }
 
+        return true;
+    };
+
+    private isValidIndex = (index: number): boolean => {
+        if (index < 0 || index > this.selectedFrames.length - 1) {
+            console.error("Invalid layer index.");
+            return false;
+        }
         return true;
     };
 }

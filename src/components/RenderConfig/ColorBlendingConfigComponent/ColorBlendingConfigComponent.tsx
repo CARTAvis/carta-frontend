@@ -16,7 +16,7 @@ export const ColorBlendingConfigComponent = observer(() => {
     const matchedFrames = colorBlendingStore.baseFrame?.secondarySpatialImages ?? [];
     const unselectedFrames = matchedFrames.filter(f => !colorBlendingStore.selectedFrames.includes(f));
 
-    const newFrameOptions = unselectedFrames.map(f => <MenuItem text={f.filename} onClick={() => colorBlendingStore.addSelectedFrame(f)} />);
+    const newFrameOptions = unselectedFrames.map((f, i) => <MenuItem text={f.filename} onClick={() => colorBlendingStore.addSelectedFrame(f)} key={i} />);
     const getSetFrameOptions = (frame: FrameStore): {value: number; label: string}[] => {
         return matchedFrames.filter(f => unselectedFrames.includes(f) || f === frame).map(f => ({value: f.id, label: f.filename}));
     };
