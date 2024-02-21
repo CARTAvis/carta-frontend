@@ -9,7 +9,7 @@ const migratedFiles = [
     "services/ScriptingService.ts",
     "services/SplatalogueService.ts",
     "services/TelemetryService.ts",
-    "services/TileService.ts"
+    "services/Tile",
 ];
 
 module.exports = {

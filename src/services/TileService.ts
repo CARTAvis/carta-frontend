@@ -75,7 +75,7 @@ export class TileService {
     private pendingSynchronisedTiles: Map<string, Set<number>>;
     private receivedSynchronisedTiles: Map<string, Map<number, Map<number, RasterTile>>>;
     private animationEnabled: boolean;
-    private readonly gl: WebGL2RenderingContext;
+    private readonly gl: WebGL2RenderingContext | null;
     private syncIdMap: Map<number, boolean>;
     private syncIdTileCountMap: Map<number, number>;
 
@@ -359,16 +359,20 @@ export class TileService {
         const textureSizeMb = (TEXTURE_SIZE * TEXTURE_SIZE * 4) / 1024 / 1024;
         console.log(`Creating ${this.textureArray.length} tile textures of size ${textureSizeMb} MB each (${textureSizeMb * this.textureArray.length} MB total)`);
         for (let i = 0; i < this.textureArray.length; i++) {
-            const texture = createFP32Texture(this.gl, TEXTURE_SIZE, TEXTURE_SIZE, GL2.TEXTURE0);
-            if (texture) {
-                this.textureArray[i] = texture;
+            if (this.gl) {
+                const texture = createFP32Texture(this.gl, TEXTURE_SIZE, TEXTURE_SIZE, GL2.TEXTURE0);
+                if (texture) {
+                    this.textureArray[i] = texture;
+                }
             }
         }
     }
 
     uploadTileToGPU(tile: RasterTile) {
         const textureParameters = this.getTileTextureParameters(tile);
-        copyToFP32Texture(this.gl, textureParameters.texture, tile.data, GL2.TEXTURE0, tile.width, tile.height, textureParameters.offset.x, textureParameters.offset.y);
+        if (this.gl) {
+            copyToFP32Texture(this.gl, textureParameters.texture, tile.data, GL2.TEXTURE0, tile.width, tile.height, textureParameters.offset.x, textureParameters.offset.y);
+        }
     }
 
     getTileTextureParameters(tile: RasterTile) {
