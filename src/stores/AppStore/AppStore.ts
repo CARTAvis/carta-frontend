@@ -748,7 +748,7 @@ export class AppStore {
         const frame = yield this.loadFile(path, filename, hdu, imageArithmetic, setAsActive, updateStartingDirectory);
         if (frame?.wcsInfo && this.overlayStore.global.system !== SystemType.Auto) {
             if (this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL && frame.spatialReference?.wcsInfo) {
-                this.overlayStore.global.setSystem(frame.spatialReference.wcsSystem);
+                this.overlayStore.global.setSystem(AST.getString(frame.spatialReference.wcsInfo, "System") as SystemType);
             } else if (this.overlayStore.global.system !== frame.wcsSystem) {
                 this.overlayStore.global.setSystem(SystemType.Auto);
             }
