@@ -412,7 +412,8 @@ export class AppStore {
     }
 
     @computed get frameNames(): IOptionProps[] {
-        return this.frames?.map((frame, index) => {
+        return this.frames?.map(frame => {
+            const index = this.imageViewConfigStore.getImageListIndex(ImageType.FRAME, frame.id);
             return {
                 label: index + ": " + frame.filename,
                 value: frame.frameInfo.fileId
@@ -421,7 +422,8 @@ export class AppStore {
     }
 
     @computed get frameOptions(): FrameOption[] {
-        return this.frames?.map((frame, index) => {
+        return this.frames?.map(frame => {
+            const index = this.imageViewConfigStore.getImageListIndex(ImageType.FRAME, frame.id);
             return {
                 label: index + ": " + frame.filename,
                 value: frame.frameInfo.fileId,
