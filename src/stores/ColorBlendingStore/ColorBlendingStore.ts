@@ -56,6 +56,10 @@ export class ColorBlendingStore {
         return [this.baseFrame, ...this.selectedFrames];
     }
 
+    @computed get alphaSum(): number {
+        return this.alpha.reduce((acc, curr) => acc + curr, 0);
+    }
+
     constructor(id: number) {
         this.id = id;
         this.filename = `Color Blending ${id + 1}`;

@@ -69,7 +69,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
 
         const frames = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image?.store?.frames : [this.props.image?.store];
-        for (const frame of frames) {
+        frames.forEach((frame, index) => {
             if (frame) {
                 const histStokesIndex = frame.renderConfig.stokesIndex;
                 const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histChannel : undefined;
@@ -79,12 +79,12 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 }
 
                 if (this.props.image?.type === ImageType.COLOR_BLENDING) {
-                    ctx.globalAlpha = 1.0 / frames.length;
+                    ctx.globalAlpha = this.props.image?.store?.alpha[index] / this.props.image?.store?.alphaSum;
                 }
 
                 ctx.drawImage(this.gl.canvas, this.props.column * w, this.props.row * h, w, h, 0, 0, w, h);
             }
-        }
+        });
     };
 
     private updateUniforms(frame) {
@@ -414,6 +414,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
                 const ratio = appStore.imageRatio;
             }
+        }
+
+        if (this.props.image?.type === ImageType.COLOR_BLENDING) {
+            const alpha = this.props.image?.store?.alphaSum;
         }
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
