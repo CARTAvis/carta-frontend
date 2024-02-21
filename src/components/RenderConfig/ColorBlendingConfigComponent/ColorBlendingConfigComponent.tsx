@@ -39,6 +39,9 @@ export const ColorBlendingConfigComponent = observer(() => {
                     <Tooltip2 content="Alpha">
                         <SafeNumericInput className="alpha-input" selectAllOnFocus={true} value={alpha} min={0} max={1} stepSize={0.1} onValueChange={val => setAlpha(val)} />
                     </Tooltip2>
+                    <Tooltip2 content="Remove layer" disabled={alphaIndex <= 0}>
+                        <Button icon="cross" minimal={true} style={{visibility: alphaIndex > 0 ? "visible" : "hidden"}} onClick={() => colorBlendingStore.deleteSelectedFrame(alphaIndex - 1)} />
+                    </Tooltip2>
                 </div>
             </>
         );

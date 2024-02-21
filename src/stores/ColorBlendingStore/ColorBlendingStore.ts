@@ -45,7 +45,9 @@ export class ColorBlendingStore {
             return;
         }
         this.selectedFrames.splice(index, 1);
-        this.alpha.splice(index, 1);
+
+        const alphaIndex = index + 1;
+        this.alpha.splice(alphaIndex, 1);
     };
 
     @computed get baseFrame(): FrameStore {
