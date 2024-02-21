@@ -1,7 +1,9 @@
 @import "~@blueprintjs/core/lib/scss/variables.scss";
 
 .color-blending-config {
-    margin: 10px;
+    padding: 10px;
+    height: 100%;
+    overflow: auto;
 
     .heading {
         display: flex;
