@@ -125,7 +125,7 @@ export class SplatalogueService {
                     entry = entry?.match(/^(^[\d.]+)/)?.[1] ?? ""; // match the string before the first char that is not a number or "."
                 }
 
-                if (column.stringData?.[i]) {
+                if (column.stringData !== null && column.stringData !== undefined) {
                     column.stringData[i] = entry;
                 }
                 j++;
