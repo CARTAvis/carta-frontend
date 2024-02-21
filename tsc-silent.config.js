@@ -10,6 +10,7 @@ const migratedFiles = [
     "services/SplatalogueService.ts",
     "services/TelemetryService.ts",
     "services/Tile",
+    "services/Vector"
 ];
 
 module.exports = {
