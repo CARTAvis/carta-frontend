@@ -36,11 +36,47 @@ export const ColorBlendingConfigComponent = observer(() => {
                 <ColormapComponent inverted={renderConfig.inverted} selectedItem={renderConfig.colorMap} onItemSelect={renderConfig.setColorMap} />
                 <div className="alpha-settings">
                     <AlphaPicker className="alpha-slider" color={{r: 0, g: 0, b: 0, a: alpha}} onChange={color => setAlpha(color.rgb.a)} />
-                    <SafeNumericInput className="alpha-input" selectAllOnFocus={true} value={alpha} min={0} max={1} stepSize={0.1} onValueChange={val => setAlpha(val)} />
+                    <Tooltip2 content="Alpha">
+                        <SafeNumericInput className="alpha-input" selectAllOnFocus={true} value={alpha} min={0} max={1} stepSize={0.1} onValueChange={val => setAlpha(val)} />
+                    </Tooltip2>
                 </div>
             </>
         );
     };
+
+    const addLayerTooltip = (
+        <span>
+            Add a new layer with a spatially matched image
+            <span>
+                <br />
+                <i>
+                    <small>Include images as options by matching them spatially with the Image List widget.</small>
+                </i>
+            </span>
+        </span>
+    );
+    const baseFrameTooltip = (
+        <span>
+            The spatial reference
+            <span>
+                <br />
+                <i>
+                    <small>Change the image by changing the spatial reference with the Image List widget.</small>
+                </i>
+            </span>
+        </span>
+    );
+    const selectedFrameTooltip = (
+        <span>
+            A spatially matched image
+            <span>
+                <br />
+                <i>
+                    <small>Include images as options by matching them spatially with the Image List widget.</small>
+                </i>
+            </span>
+        </span>
+    );
 
     return (
         <div className="color-blending-config">
@@ -48,19 +84,7 @@ export const ColorBlendingConfigComponent = observer(() => {
                 <H6>Color blending configuration</H6>
                 <ButtonGroup>
                     <Popover2 minimal={true} content={<Menu>{newFrameOptions}</Menu>}>
-                        <Tooltip2
-                            content={
-                                <span>
-                                    Add a new layer with a spatially matched image
-                                    <span>
-                                        <br />
-                                        <i>
-                                            <small>Include images as options by matching them spatially with the Image List widget.</small>
-                                        </i>
-                                    </span>
-                                </span>
-                            }
-                        >
+                        <Tooltip2 content={addLayerTooltip}>
                             <Button icon="add" rightIcon="caret-down" disabled={!newFrameOptions.length}>
                                 Add layer
                             </Button>
@@ -73,19 +97,7 @@ export const ColorBlendingConfigComponent = observer(() => {
                 </ButtonGroup>
             </div>
             <FormGroup className="layer-config" label="Layer 1" inline={true}>
-                <Tooltip2
-                    content={
-                        <span>
-                            The spatial reference
-                            <span>
-                                <br />
-                                <i>
-                                    <small>Change the image by changing the spatial reference with the Image List widget.</small>
-                                </i>
-                            </span>
-                        </span>
-                    }
-                >
+                <Tooltip2 content={baseFrameTooltip}>
                     <Text className="image-column image-text" ellipsize={true}>
                         {colorBlendingStore.baseFrame.filename}
                     </Text>
@@ -94,19 +106,7 @@ export const ColorBlendingConfigComponent = observer(() => {
             </FormGroup>
             {colorBlendingStore.selectedFrames.map((f, i) => (
                 <FormGroup className="layer-config" label={`Layer ${i + 2}`} inline={true} key={i}>
-                    <Tooltip2
-                        content={
-                            <span>
-                                A spatially matched image
-                                <span>
-                                    <br />
-                                    <i>
-                                        <small>Include images as options by matching them spatially with the Image List widget.</small>
-                                    </i>
-                                </span>
-                            </span>
-                        }
-                    >
+                    <Tooltip2 content={selectedFrameTooltip}>
                         <HTMLSelect className="image-column" value={f.id} options={getSetFrameOptions(f)} onChange={ev => setSelectedFrame(i, parseInt(ev.target.value))} />
                     </Tooltip2>
                     {getLayerSettings(f, i + 1)}
