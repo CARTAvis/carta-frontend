@@ -115,7 +115,7 @@ export class AppStore {
     readonly preferenceStore: PreferenceStore;
     readonly widgetsStore: WidgetsStore;
     readonly imageFittingStore: ImageFittingStore;
-    readonly imageViewConfigStore: ImageViewConfigStore;
+    readonly imageViewConfigStore = ImageViewConfigStore.Instance;
 
     // WebAssembly Module status
     @observable astReady: boolean;
@@ -1734,7 +1734,6 @@ export class AppStore {
         this.overlayStore = OverlayStore.Instance;
         this.widgetsStore = WidgetsStore.Instance;
         this.imageFittingStore = ImageFittingStore.Instance;
-        this.imageViewConfigStore = ImageViewConfigStore.Instance;
 
         this.astReady = false;
         this.cartaComputeReady = false;
