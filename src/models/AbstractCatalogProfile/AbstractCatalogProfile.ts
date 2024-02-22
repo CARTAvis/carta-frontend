@@ -274,8 +274,8 @@ export abstract class AbstractCatalogProfileStore {
         return this.catalogType === CatalogType.FILE;
     }
 
-    @computed get tableColumnWidts(): Array<number> {
-        const columnWidts: number[] = [];
+    @computed get tableColumnWidts(): Array<number | null> {
+        const columnWidts: (number | null)[] = [];
         this.catalogControlHeader.forEach((value, key) => {
             if (value.display) {
                 columnWidts.push(value.columnWidth);
@@ -299,7 +299,7 @@ export abstract class AbstractCatalogProfileStore {
             dataIndex: current?.dataIndex ?? NaN,
             display: current?.display ?? false,
             filter: filter,
-            columnWidth: current?.columnWidth ?? NaN
+            columnWidth: current?.columnWidth ?? null
         };
         this.catalogControlHeader.set(columnName, newHeader);
         this.updateTableStatus(true);
