@@ -274,14 +274,14 @@ export abstract class AbstractCatalogProfileStore {
         return this.catalogType === CatalogType.FILE;
     }
 
-    @computed get tableColumnWidts(): Array<number | null> {
-        const columnWidts: (number | null)[] = [];
+    @computed get tableColumnWidths(): Array<number | null> {
+        const columnWidths: (number | null)[] = [];
         this.catalogControlHeader.forEach((value, key) => {
             if (value.display) {
-                columnWidts.push(value.columnWidth);
+                columnWidths.push(value.columnWidth);
             }
         });
-        return columnWidts;
+        return columnWidths;
     }
 
     @computed get hasFilter(): boolean {
