@@ -167,3 +167,18 @@ function getBufferElementType(buffer: ArrayBufferView): string {
         return "Float32";
     }
 }
+
+export function bindRGBATexture(gl: WebGL2RenderingContext, data: Float32Array, width: number, height: number, texIndex: number) {
+    if (!gl) {
+        return;
+    }
+
+    const texture = gl.createTexture();
+    gl.activeTexture(texIndex);
+    gl.bindTexture(GL2.TEXTURE_2D, texture);
+    gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.RGBA32F, width, height, 0, GL2.RGBA, GL2.FLOAT, data);
+    gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);
+    gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
+    gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_S, GL2.CLAMP_TO_EDGE);
+    gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_T, GL2.CLAMP_TO_EDGE);
+}

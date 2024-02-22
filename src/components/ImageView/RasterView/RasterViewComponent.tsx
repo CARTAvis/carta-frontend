@@ -72,7 +72,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const pixelRatio = devicePixelRatio * appStore.imageRatio;
 
         if (renderConfig && shaderUniforms) {
-            tileRenderService.setCustomColormapTexture(this.gl, this.props.frame);
+            tileRenderService.setCustomColormapTexture(this.gl, this.props.frame); // to send the texture to WebGL when changing the custom colormap
             this.gl.uniform1f(shaderUniforms.MinVal, renderConfig.scaleMinVal);
             this.gl.uniform1f(shaderUniforms.MaxVal, renderConfig.scaleMaxVal);
             this.gl.uniform1i(shaderUniforms.CmapIndex, renderConfig.colorMapIndex);

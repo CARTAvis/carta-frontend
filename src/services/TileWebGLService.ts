@@ -2,7 +2,7 @@ import allMaps from "static/allmaps.png";
 
 import {TEXTURE_SIZE, TILE_SIZE} from "services";
 import {FrameStore, RenderConfigStore} from "stores";
-import {getColorsForValues, getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
+import {bindRGBATexture, getColorsForValues, getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
 
 import {rasterShaders} from "./GLSL";
 
@@ -180,8 +180,8 @@ export class TileWebGLService {
         const height = cmap.size;
         const components = 4;
         let loadCmap: any;
-
         const cmapData = new Float32Array(width * height * components);
+
         Array.from(cmap.keys()).forEach((colormap, y) => {
             loadCmap = getColorsForValues(colormap).color;
             for (let x = 0; x < width; x++) {
@@ -189,36 +189,21 @@ export class TileWebGLService {
             }
         });
 
-        const texture = this.gl.createTexture();
-        gl.activeTexture(GL2.TEXTURE2);
-        gl.bindTexture(GL2.TEXTURE_2D, texture);
-        gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.RGBA32F, width, height, 0, GL2.RGBA, GL2.FLOAT, cmapData);
-        gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);
-        gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
-        gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_S, GL2.CLAMP_TO_EDGE);
-        gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_T, GL2.CLAMP_TO_EDGE);
+        bindRGBATexture(gl, cmapData, width, height, GL2.TEXTURE2);
     }
 
     setCustomColormapTexture(gl: WebGL2RenderingContext, frame: FrameStore) {
-        console.log("gg");
         const width = 1024;
         const height = 1;
         const components = 4;
-
         const cmapData = new Float32Array(width * height * components);
+
         const cmap = frame.renderConfig.customColorGradient.color;
         for (let x = 0; x < width; x++) {
             for (let ii = 0; ii < components; ii++) cmapData[x * components + ii] = cmap[x * components + ii] / 255;
         }
 
-        const texture = gl.createTexture();
-        gl.activeTexture(GL2.TEXTURE3);
-        gl.bindTexture(GL2.TEXTURE_2D, texture);
-        gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.RGBA32F, width, height, 0, GL2.RGBA, GL2.FLOAT, cmapData);
-        gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);
-        gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
-        gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_S, GL2.CLAMP_TO_EDGE);
-        gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_T, GL2.CLAMP_TO_EDGE);
+        bindRGBATexture(gl, cmapData, width, height, GL2.TEXTURE3);
     }
 
     protected constructor() {

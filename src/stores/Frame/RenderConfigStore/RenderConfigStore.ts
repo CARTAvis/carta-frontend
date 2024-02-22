@@ -116,15 +116,6 @@ export class RenderConfigStore {
         "Violet",
         "custom"
     ];
-    static readonly COLOR_MAPS_CALCULATED = new Map<string, string>([
-        ["Red", "#FF0000"],
-        ["Orange", "#FFA500"],
-        ["Yellow", "#FFFF00"],
-        ["Green", "#00FF00"],
-        ["Cyan", "#00FFFF"],
-        ["Blue", "#0000FF"],
-        ["Violet", "#7F00FF"]
-    ]);
     static readonly COLOR_MAPS_SELECTED = [
         "afmhot",
         "Blues",
@@ -150,17 +141,18 @@ export class RenderConfigStore {
         "seismic",
         "spectral",
         "tab10",
-        "viridis",
-        "Red",
-        "Orange",
-        "Yellow",
-        "Green",
-        "Cyan",
-        "Blue",
-        "Violet",
-        "custom",
-        "color_panel"
+        "viridis"
     ];
+    static readonly COLOR_MAPS_CALCULATED = new Map<string, string>([
+        ["Red", "#FF0000"],
+        ["Orange", "#FFA500"],
+        ["Yellow", "#FFFF00"],
+        ["Green", "#00FF00"],
+        ["Cyan", "#00FFFF"],
+        ["Blue", "#0000FF"],
+        ["Violet", "#7F00FF"]
+    ]);
+    static readonly COLOR_MAPS_CUSTOM = ["custom", "color_panel"];
 
     static readonly PERCENTILE_RANKS = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
 

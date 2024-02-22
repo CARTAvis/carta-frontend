@@ -247,7 +247,13 @@ export class PreferenceDialogComponent extends React.Component {
                     <ScalingSelectComponent selectedItem={preference.scaling} onItemSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING, selected)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Default colormap">
-                    <ColormapComponent inverted={false} selectedItem={preference.colormap} onItemSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP, selected)} enableCustomColor={true} setPreference={true} />
+                    <ColormapComponent
+                        inverted={false}
+                        selectedItem={preference.colormap}
+                        onItemSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP, selected)}
+                        enableAdditionalColor={true}
+                        setPreference={true}
+                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Default percentile ranks">
                     <PercentileSelect

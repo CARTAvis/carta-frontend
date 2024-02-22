@@ -19,17 +19,20 @@ interface ColormapComponentProps {
     disabled?: boolean;
     onItemSelect: (selected: string) => void;
     setPreference?: boolean;
-    enableCustomColor?: boolean;
+    enableAdditionalColor?: boolean;
     frame?: FrameStore;
 }
 
 const ColorMapSelect = Select.ofType<string>();
 const COLORMAP_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 const CUSTOM_COLOR_OPTION = "custom";
+let newColormapSelected = RenderConfigStore.COLOR_MAPS_SELECTED.map(x => x);
+Array.from(RenderConfigStore.COLOR_MAPS_CALCULATED.keys()).map(x => newColormapSelected.push(x));
+RenderConfigStore.COLOR_MAPS_CUSTOM.forEach(x => newColormapSelected.push(x));
 
 export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
     const [color, setColor] = React.useState<string>(PreferenceStore.Instance.colormapHex); // initial color is white
-    const items = props.enableCustomColor ? RenderConfigStore.COLOR_MAPS_SELECTED : RenderConfigStore.COLOR_MAPS_SELECTED.filter(x => !["custom", "color_panel"].includes(x));
+    const items = props.enableAdditionalColor ? newColormapSelected : RenderConfigStore.COLOR_MAPS_SELECTED;
 
     const renderColormapBlock = (colormap: string) => {
         const className = "colormap-block";
