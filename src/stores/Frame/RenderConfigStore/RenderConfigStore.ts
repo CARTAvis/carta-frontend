@@ -492,6 +492,7 @@ export class RenderConfigStore {
     @action updateFromWorkspace = (config: WorkspaceRenderConfig) => {
         this.scaling = config.scaling;
         this.setColorMap(config.colorMap);
+        this.setCustomColorMap(config.customColorHex, config.colorMap);
         this.bias = config.bias;
         this.contrast = config.contrast;
         this.gamma = config.gamma;
