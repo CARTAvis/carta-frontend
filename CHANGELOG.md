@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed the flashing contour rendering during animation ([#579](https://github.com/CARTAvis/carta-frontend/issues/579)).
 * Fixed incorrect range values in the save image dialog with non-convertible spectral axis images by supporting native/channel options in the spectral coordinate selector for non-convertible spectral axis images ([#2225](https://github.com/CARTAvis/carta-frontend/issues/2225)).
 * Fixed a bug when applying a filter to the shifted frequency column in the spectral line query widget ([#2326](https://github.com/CARTAvis/carta-frontend/issues/2326)).
+* Improved the cursor interaction area in the image view widget ([#1794](https://github.com/CARTAvis/carta-frontend/issues/1794)).
 
 ## [4.1.0]
 
