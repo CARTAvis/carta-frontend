@@ -9,7 +9,7 @@ import * as _ from "lodash";
 import allMaps from "static/allmaps.png";
 
 import {AppStore, PreferenceKeys, PreferenceStore} from "stores";
-import {RenderConfigStore} from "stores/Frame";
+import {FrameStore, RenderConfigStore} from "stores/Frame";
 
 import "./ColormapComponent.scss";
 
@@ -18,20 +18,19 @@ interface ColormapComponentProps {
     inverted: boolean;
     disabled?: boolean;
     onItemSelect: (selected: string) => void;
-    setPreference?: PreferenceKeys;
-    items?: string[];
+    setPreference?: boolean;
+    enableCustomColor?: boolean;
+    frame?: FrameStore;
 }
 
 const ColorMapSelect = Select.ofType<string>();
 const COLORMAP_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 const CUSTOM_COLOR_OPTION = "custom";
-const PREFERENCE_KEY_PAIRS = new Map<PreferenceKeys, PreferenceKeys>([
-    [PreferenceKeys?.RENDER_CONFIG_COLORHEX, PreferenceKeys?.RENDER_CONFIG_COLORMAP],
-    [PreferenceKeys?.CONTOUR_CONFIG_COLORHEX, PreferenceKeys?.CONTOUR_CONFIG_COLORMAP],
-    [PreferenceKeys?.VECTOR_OVERLAY_COLORHEX, PreferenceKeys?.VECTOR_OVERLAY_COLORMAP]
-]);
 
 export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
+    const [color, setColor] = React.useState<string>(PreferenceStore.Instance.colormapHex); // initial color is white
+    const items = props.enableCustomColor ? RenderConfigStore.COLOR_MAPS_SELECTED : RenderConfigStore.COLOR_MAPS_SELECTED.filter(x => !["custom", "color_panel"].includes(x));
+
     const renderColormapBlock = (colormap: string) => {
         const className = "colormap-block";
         const blockHeight = 15;
@@ -39,10 +38,10 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
         if (colormap === CUSTOM_COLOR_OPTION) {
             const renderConfig = AppStore.Instance.activeFrame?.renderConfig;
             let customColorHex: string;
-            if (props.setPreference === PreferenceKeys.NON_PREFERENCE) {
-                customColorHex = renderConfig.customColorHex ? renderConfig.customColorHex : PreferenceStore.Instance.colormapHex;
-            } else {
+            if (props.setPreference) {
                 customColorHex = PreferenceStore.Instance.colormapHex;
+            } else {
+                customColorHex = renderConfig.customColorHex ? renderConfig.customColorHex : PreferenceStore.Instance.colormapHex;
             }
             const customColorStarHex = PreferenceStore.Instance.colormapStartHex;
 
@@ -65,7 +64,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
                     style={{
                         transform: `scaleX(${props.inverted ? -1 : 1})`,
                         height: `${blockHeight}px`,
-                        backgroundImage: `linear-gradient(to right, black , ${RenderConfigStore.COLOR_MAPS_CALCULATED.get(colormap)})`,
+                        backgroundImage: `linear-gradient(to right, black, ${RenderConfigStore.COLOR_MAPS_CALCULATED.get(colormap)})`,
                         backgroundSize: `100% 300%`,
                         backgroundPosition: `0 calc(-300% - ${blockHeight}px)`
                     }}
@@ -89,34 +88,33 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
         }
     };
 
-    const [color, setColor] = React.useState<string>(PreferenceStore.Instance.colormapHex); // initial color is white
-
     const renderColormapSelectItem = (colormap: string, {handleClick, modifiers, query}) => {
-        const disableAlpha = false;
+        const disableAlpha = true;
         const changeDelay = 100;
         let presetColors: string[];
         const renderConfig = AppStore.Instance.activeFrame?.renderConfig;
 
         const handleColorChange = _.throttle((color: any) => {
             setColor(color.hex);
-            if (props.setPreference === PreferenceKeys.NON_PREFERENCE) {
-                renderConfig?.setCustomColorMap(color.hex, colormap);
+            if (props.setPreference) {
+                PreferenceStore.Instance.setPreference(PreferenceKeys?.RENDER_CONFIG_COLORHEX, color.hex);
+                PreferenceStore.Instance.setPreference(PreferenceKeys?.RENDER_CONFIG_COLORMAP, CUSTOM_COLOR_OPTION);
             } else {
-                PreferenceStore.Instance.setPreference(props.setPreference, color.hex);
-                PreferenceStore.Instance.setPreference(PREFERENCE_KEY_PAIRS.get(props.setPreference), CUSTOM_COLOR_OPTION);
+                renderConfig?.setCustomColorMap(color.hex, colormap);
             }
         }, changeDelay);
 
         if (!modifiers.matchesPredicate) {
             return null;
         }
+
         if (colormap === "color_panel") {
             const popoverClassName = classNames("color-picker-popup", {"bp3-dark": AppStore.Instance.darkTheme});
 
             return (
-                <div key={"custom-color"} className={"custom-color"}>
+                <div key={"custom-color"} className={"raster-custom-color"}>
                     <Popover2 position={PopoverPosition.LEFT} popoverClassName={popoverClassName} content={<SketchPicker color={color} onChange={handleColorChange} disableAlpha={disableAlpha} presetColors={presetColors} />}>
-                        <Button text={"color panel"} className="raster-color-swatch-button" />
+                        <Button text={"Color panel"} className="raster-color-swatch-button" />
                     </Popover2>
                 </div>
             );
@@ -124,8 +122,6 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
             return <MenuItem active={modifiers.active} disabled={modifiers.disabled} label={colormap} key={colormap} onClick={handleClick} text={renderColormapBlock(colormap)} />;
         }
     };
-
-    const items = props.items ? props.items : RenderConfigStore.COLOR_MAPS_SELECTED;
 
     return (
         <ColorMapSelect disabled={props.disabled} activeItem={props.selectedItem} popoverProps={COLORMAP_POPOVER_PROPS} filterable={false} items={items} onItemSelect={props.onItemSelect} itemRenderer={renderColormapSelectItem}>

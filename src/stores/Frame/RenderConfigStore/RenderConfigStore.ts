@@ -4,7 +4,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {WorkspaceRenderConfig} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
-import {clamp, getColorsForValues, getPercentiles, scaleValueInverse} from "utilities";
+import {clamp, getColorsForValues, getColorsFromHex, getPercentiles, scaleValueInverse} from "utilities";
 
 export enum FrameScaling {
     LINEAR = 0,
@@ -242,8 +242,12 @@ export class RenderConfigStore {
         }
     }
 
+    @computed get customColorGradient() {
+        return getColorsFromHex(this.customColorHex, PreferenceStore.Instance.colormapStartHex);
+    }
+
     @computed get colorscaleArray() {
-        const colorsForValues = getColorsForValues(this.colorMap);
+        const colorsForValues = getColorsForValues(this.colorMap, this.frame);
         const indexArray = Array.from(Array(colorsForValues.size).keys()).map(x => (this.inverted ? 1 - x / colorsForValues.size : x / colorsForValues.size));
         const scaledArray = indexArray.map(x => 1.0 - scaleValueInverse(x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast, AppStore.Instance?.preferenceStore?.useSmoothedBiasContrast));
         let rbgString = (index: number): string => `rgb(${colorsForValues.color[index * 4]}, ${colorsForValues.color[index * 4 + 1]}, ${colorsForValues.color[index * 4 + 2]}, ${colorsForValues.color[index * 4 + 3]})`;

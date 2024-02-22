@@ -33,7 +33,6 @@ export class ContourConfigStore {
     @observable dashMode: ContourDashMode;
     @observable thickness: number;
     @observable visible: boolean;
-    @observable customColorHex: string;
 
     private readonly preferenceStore: PreferenceStore;
 
@@ -81,7 +80,6 @@ export class ContourConfigStore {
         this.thickness = this.preferenceStore.contourThickness;
         this.dashMode = ContourDashMode.NegativeOnly;
         this.visible = true;
-        this.customColorHex = this.preferenceStore.contourColorHex;
     }
 
     @action setEnabled(val: boolean) {
@@ -112,11 +110,6 @@ export class ContourConfigStore {
 
     @action setColormap = (colormap: string) => {
         this.colormap = colormap;
-    };
-
-    @action setCustomColorMap = (colorHex: string, colormap: string) => {
-        this.customColorHex = colorHex;
-        this.setColormap(colormap);
     };
 
     @action setColormapEnabled = (val: boolean) => {

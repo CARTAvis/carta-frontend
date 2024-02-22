@@ -5,8 +5,7 @@ import {Select} from "@blueprintjs/select";
 import {observer} from "mobx-react";
 
 import {ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
-import {PreferenceKeys} from "stores";
-import {ContourConfigStore, ContourDashMode, FrameStore} from "stores/Frame";
+import {ContourDashMode, FrameStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 
 import "./ContourStylePanelComponent.scss";
@@ -49,14 +48,7 @@ export class ContourStylePanelComponent extends React.Component<{frame: FrameSto
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Colormap" disabled={!frame.contourConfig.colormapEnabled}>
-                    <ColormapComponent
-                        inverted={false}
-                        setPreference={PreferenceKeys.NON_PREFERENCE}
-                        disabled={!frame.contourConfig.colormapEnabled}
-                        selectedItem={frame.contourConfig.colormap}
-                        onItemSelect={frame.contourConfig.setColormap}
-                        items={ContourConfigStore.COLOR_MAPS_SELECTED}
-                    />
+                    <ColormapComponent inverted={false} disabled={!frame.contourConfig.colormapEnabled} selectedItem={frame.contourConfig.colormap} onItemSelect={frame.contourConfig.setColormap} />
                 </FormGroup>
                 <FormGroup inline={true} label="Bias" disabled={!frame.contourConfig.colormapEnabled}>
                     <SafeNumericInput

@@ -46,7 +46,8 @@
 
 .bp3-menu .bp3-popover2-target {
     // for menu items with tooltips
-    display: block;
+    display: flex;
+    justify-content: center;
 }
 
 .new-release {
