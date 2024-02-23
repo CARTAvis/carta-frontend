@@ -58,12 +58,12 @@ export class CatalogWebGLService {
     private static staticInstance: CatalogWebGLService;
     private cmapTexture: WebGLTexture;
     private positionArrays: Map<number, Float32Array>;
-    private positionTextures: Map<number, WebGLTexture>;
-    private sizeTextures: Map<number, WebGLTexture>;
-    private colorTextures: Map<number, WebGLTexture>;
-    private orientationTextures: Map<number, WebGLTexture>;
-    private selectedSourceTextures: Map<number, WebGLTexture>;
-    private sizeMinorTextures: Map<number, WebGLTexture>;
+    private positionTextures: Map<number, WebGLTexture | null>;
+    private sizeTextures: Map<number, WebGLTexture | null>;
+    private colorTextures: Map<number, WebGLTexture | null>;
+    private orientationTextures: Map<number, WebGLTexture | null>;
+    private selectedSourceTextures: Map<number, WebGLTexture | null>;
+    private sizeMinorTextures: Map<number, WebGLTexture | null>;
     readonly gl: WebGL2RenderingContext | null;
     shaderUniforms: ShaderUniforms;
 
@@ -108,50 +108,31 @@ export class CatalogWebGLService {
             return;
         }
         // colorMap is texture0, controlMap is texture1
-        let texture: WebGLTexture | null;
         switch (textureType) {
             case CatalogTextureType.Position:
-                texture = createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE2, 2);
-                if (texture) {
-                    this.positionTextures.set(fileId, texture);
-                }
+                this.positionTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE2, 2));
                 break;
             case CatalogTextureType.Size:
-                texture = createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE3, 1);
-                if (texture) {
-                    this.sizeTextures.set(fileId, texture);
-                }
+                this.sizeTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE3, 1));
                 break;
             case CatalogTextureType.Color:
-                texture = createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE4, 1);
-                if (texture) {
-                    this.colorTextures.set(fileId, texture);
-                }
+                this.colorTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE4, 1));
                 break;
             case CatalogTextureType.Orientation:
-                texture = createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE5, 1);
-                if (texture) {
-                    this.orientationTextures.set(fileId, texture);
-                }
+                this.orientationTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE5, 1));
                 break;
             case CatalogTextureType.SelectedSource:
-                texture = createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE6, 1);
-                if (texture) {
-                    this.selectedSourceTextures.set(fileId, texture);
-                }
+                this.selectedSourceTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE6, 1));
                 break;
             case CatalogTextureType.SizeMinor:
-                texture = createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE7, 1);
-                if (texture) {
-                    this.sizeMinorTextures.set(fileId, texture);
-                }
+                this.sizeMinorTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE7, 1));
                 break;
             default:
                 break;
         }
     };
 
-    public getDataTexture = (fileId: number, textureType: CatalogTextureType): WebGLTexture | undefined => {
+    public getDataTexture = (fileId: number, textureType: CatalogTextureType): WebGLTexture | null | undefined => {
         switch (textureType) {
             case CatalogTextureType.Position:
                 return this.positionTextures.get(fileId);
