@@ -75,7 +75,7 @@ export abstract class AbstractCatalogProfileStore {
     @observable updateTableView: boolean;
     @observable updateMode: CatalogUpdateMode;
     @observable selectedPointIndices: number[];
-    @observable sortingInfo: {columnName: string; sortingType: CARTA.SortingType | null};
+    @observable sortingInfo: {columnName: string | null; sortingType: CARTA.SortingType | null};
     @observable sortedIndexMap: number[];
     @observable filterIndexMap: number[];
 
@@ -104,10 +104,10 @@ export abstract class AbstractCatalogProfileStore {
         this.catalogType = catalogType;
         this.updatingDataStream = false;
         this.updateTableView = false;
-        this.filterDataSize = NaN;
+        this.filterDataSize = undefined;
         this.selectedPointIndices = [];
         this.updateMode = CatalogUpdateMode.TableUpdate;
-        this.sortingInfo = {columnName: "", sortingType: null};
+        this.sortingInfo = {columnName: null, sortingType: null};
         this.sortedIndexMap = [];
         this.filterIndexMap = [];
         this.loadingData = false;
@@ -154,8 +154,8 @@ export abstract class AbstractCatalogProfileStore {
         const xHeaderInfo = this.catalogHeader[xHeader?.dataIndex ?? NaN];
         const yHeaderInfo = this.catalogHeader[yHeader?.dataIndex ?? NaN];
 
-        const xColumn = columnsData.get(xHeaderInfo.columnIndex ?? NaN);
-        const yColumn = columnsData.get(yHeaderInfo.columnIndex ?? NaN);
+        const xColumn = columnsData.get(xHeaderInfo.columnIndex);
+        const yColumn = columnsData.get(yHeaderInfo.columnIndex);
 
         if (xColumn && xColumn.dataType !== CARTA.ColumnType.String && xColumn.dataType !== CARTA.ColumnType.Bool && yColumn && yColumn.dataType !== CARTA.ColumnType.String && yColumn.dataType !== CARTA.ColumnType.Bool) {
             let wcsX = xColumn.data as Array<number>;
@@ -170,7 +170,7 @@ export abstract class AbstractCatalogProfileStore {
         const controlHeader = this.catalogControlHeader;
         const header = controlHeader.get(column);
         const headerInfo = this.catalogHeader[header?.dataIndex ?? NaN];
-        const xColumn = this.catalogData.get(headerInfo.columnIndex ?? NaN);
+        const xColumn = this.catalogData.get(headerInfo.columnIndex);
         if (xColumn && xColumn.dataType !== CARTA.ColumnType.String && xColumn.dataType !== CARTA.ColumnType.Bool) {
             let wcsData = xColumn.data as TypedArray;
             return {wcsData, headerInfo};
