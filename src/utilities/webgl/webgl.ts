@@ -67,7 +67,7 @@ export function loadImageTexture(gl: WebGL2RenderingContext, url: string, texInd
     });
 }
 
-export function createFP32Texture(gl: WebGL2RenderingContext, width: number, height: number, texIndex: number, filtering: number = GL2.NEAREST) {
+export function createFP32Texture(gl: WebGL2RenderingContext | null, width: number, height: number, texIndex: number, filtering: number = GL2.NEAREST) {
     if (!gl) {
         return null;
     }
@@ -82,7 +82,7 @@ export function createFP32Texture(gl: WebGL2RenderingContext, width: number, hei
     return texture;
 }
 
-export function copyToFP32Texture(gl: WebGL2RenderingContext, texture: WebGLTexture, data: Float32Array, texIndex: number, dataWidth: number, dataHeight: number, xOffset: number, yOffset: number) {
+export function copyToFP32Texture(gl: WebGL2RenderingContext | null, texture: WebGLTexture, data: Float32Array, texIndex: number, dataWidth: number, dataHeight: number, xOffset: number, yOffset: number) {
     if (!gl) {
         return;
     }
