@@ -89,18 +89,20 @@ export class CatalogApiProcessing {
         for (let i = 0; i < headers.length; i++) {
             const header = headers[i];
             let column: ProcessedColumnData = {dataType: header.dataType, data: new Array(data.length)};
-            for (let j = 0; j < data.length; j++) {
-                if (header["name"] === "dist") {
-                    // simbad returns distance in deg, convert to arcsec for usability improvement
-                    column.data[j] = Number((data[j][header.columnIndex ?? NaN] * 3600).toFixed(6));
-                } else if (header["name"] === "RA_HMS" && raIndex > -1) {
-                    const x = AST.format(wcsCopy, 1, data[j][raIndex] * fraction);
-                    column.data[j] = x;
-                } else if (header["name"] === "DEC_DMS" && decIndex > -1) {
-                    const y = AST.format(wcsCopy, 2, data[j][decIndex] * fraction);
-                    column.data[j] = y;
-                } else {
-                    column.data[j] = data[j][header.columnIndex ?? NaN];
+            if (column.data) {
+                for (let j = 0; j < data.length; j++) {
+                    if (header["name"] === "dist") {
+                        // simbad returns distance in deg, convert to arcsec for usability improvement
+                        column.data[j] = Number((data[j][header.columnIndex ?? NaN] * 3600).toFixed(6));
+                    } else if (header["name"] === "RA_HMS" && raIndex > -1) {
+                        const x = AST.format(wcsCopy, 1, data[j][raIndex] * fraction);
+                        column.data[j] = x;
+                    } else if (header["name"] === "DEC_DMS" && decIndex > -1) {
+                        const y = AST.format(wcsCopy, 2, data[j][decIndex] * fraction);
+                        column.data[j] = y;
+                    } else {
+                        column.data[j] = data[j][header.columnIndex ?? NaN];
+                    }
                 }
             }
             dataMap.set(i, column);
@@ -194,17 +196,15 @@ export class CatalogApiProcessing {
             const columns = data[index].getElementsByTagName("TD");
             for (let j = 0; j < columns.length; j++) {
                 const columnData = dataMap.get(j);
-                if (columnData === undefined) {
-                    continue;
-                }
-
-                //textContent is faster than innerHTML
-                if (headers[j]["dataType"] === CARTA.ColumnType.String || headers[j]["dataType"] === CARTA.ColumnType.UnsupportedType || headers[j]["dataType"] === CARTA.ColumnType.Bool) {
-                    columnData.data[index] = columns[j].textContent ?? "";
-                } else if (headers[j]["dataType"] === CARTA.ColumnType.Float || headers[j]["dataType"] === CARTA.ColumnType.Double) {
-                    columnData.data[index] = parseFloat(columns[j].textContent ?? "");
-                } else {
-                    columnData.data[index] = parseInt(columns[j].textContent ?? "");
+                if (columnData?.data) {
+                    //textContent is faster than innerHTML
+                    if (headers[j]["dataType"] === CARTA.ColumnType.String || headers[j]["dataType"] === CARTA.ColumnType.UnsupportedType || headers[j]["dataType"] === CARTA.ColumnType.Bool) {
+                        columnData.data[index] = columns[j].textContent ?? "";
+                    } else if (headers[j]["dataType"] === CARTA.ColumnType.Float || headers[j]["dataType"] === CARTA.ColumnType.Double) {
+                        columnData.data[index] = parseFloat(columns[j].textContent ?? "");
+                    } else {
+                        columnData.data[index] = parseInt(columns[j].textContent ?? "");
+                    }
                 }
             }
         }

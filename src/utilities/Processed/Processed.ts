@@ -14,23 +14,23 @@ export interface ProcessedSpectralProfile extends CARTA.ISpectralProfile {
 }
 
 export interface ProcessedContourData {
-    fileId: number;
-    imageBounds?: CARTA.IImageBounds;
-    channel: number;
-    stokes: number;
-    progress: number;
+    fileId: number | null | undefined;
+    imageBounds?: CARTA.IImageBounds | null;
+    channel: number | null | undefined;
+    stokes: number | null | undefined;
+    progress: number | null | undefined;
     contourSets: ProcessedContourSet[] | null;
 }
 
 export interface ProcessedContourSet {
-    level: number;
+    level: number | null | undefined;
     indexOffsets: Int32Array;
-    coordinates: Float32Array;
+    coordinates: Float32Array | undefined;
 }
 
 export interface ProcessedColumnData {
     dataType: CARTA.ColumnType | null | undefined;
-    data: ColumnArray | TypedArray;
+    data: ColumnArray | TypedArray | null | undefined;
 }
 
 export class ProtobufProcessing {
@@ -82,29 +82,28 @@ export class ProtobufProcessing {
     }
 
     static ProcessContourSet(contourSet: CARTA.IContourSet): ProcessedContourSet {
-        if (!contourSet.rawCoordinates || !contourSet.rawStartIndices || !contourSet.uncompressedCoordinatesSize) {
-            return {
-                level: contourSet.level ?? NaN,
-                indexOffsets: new Int32Array(),
-                coordinates: new Float32Array()
-            };
-        }
-
         const isCompressed = contourSet.decimationFactor && contourSet.decimationFactor >= 1;
 
-        let floatCoordinates: Float32Array;
+        let floatCoordinates: Float32Array | undefined;
         if (isCompressed && contourSet.decimationFactor) {
             // Decode raw coordinates from Zstd-compressed binary to a float array
-            floatCoordinates = CARTACompute.Decode(contourSet.rawCoordinates, contourSet.uncompressedCoordinatesSize, contourSet.decimationFactor);
+            if (contourSet.rawCoordinates && contourSet.uncompressedCoordinatesSize) {
+                floatCoordinates = CARTACompute.Decode(contourSet.rawCoordinates, contourSet.uncompressedCoordinatesSize, contourSet.decimationFactor);
+            }
         } else {
-            const u8Copy = contourSet.rawCoordinates.slice();
-            floatCoordinates = new Float32Array(u8Copy.buffer);
+            const u8Copy = contourSet.rawCoordinates?.slice();
+            if (u8Copy?.buffer) {
+                floatCoordinates = new Float32Array(u8Copy.buffer);
+            }
         }
         // generate indices
-        const indexOffsets = new Int32Array(contourSet.rawStartIndices.buffer.slice(contourSet.rawStartIndices.byteOffset, contourSet.rawStartIndices.byteOffset + contourSet.rawStartIndices.byteLength));
+        let indexOffsets;
+        if (contourSet.rawStartIndices) {
+            indexOffsets = new Int32Array(contourSet.rawStartIndices.buffer.slice(contourSet.rawStartIndices.byteOffset, contourSet.rawStartIndices.byteOffset + contourSet.rawStartIndices.byteLength));
+        }
 
         return {
-            level: contourSet.level ?? NaN,
+            level: contourSet.level,
             indexOffsets,
             coordinates: floatCoordinates
         };
@@ -112,11 +111,11 @@ export class ProtobufProcessing {
 
     static ProcessContourData(contourData: CARTA.IContourImageData): ProcessedContourData {
         return {
-            fileId: contourData.fileId ?? NaN,
-            channel: contourData.channel ?? NaN,
-            stokes: contourData.stokes ?? NaN,
-            imageBounds: contourData.imageBounds ?? undefined,
-            progress: contourData.progress ?? NaN,
+            fileId: contourData.fileId,
+            channel: contourData.channel,
+            stokes: contourData.stokes,
+            imageBounds: contourData.imageBounds,
+            progress: contourData.progress,
             contourSets: contourData.contourSets ? contourData.contourSets.map(contourSet => this.ProcessContourSet(contourSet)) : null
         };
     }
@@ -162,7 +161,7 @@ export class ProtobufProcessing {
                 }
                 return {dataType: column.dataType, data: boolData};
             case CARTA.ColumnType.String:
-                return {dataType: column.dataType, data: column.stringData ?? []};
+                return {dataType: column.dataType, data: column.stringData};
             default:
                 return {dataType: CARTA.ColumnType.UnsupportedType, data: []};
         }

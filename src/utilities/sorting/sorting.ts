@@ -30,8 +30,8 @@ export function getSortedIndexMap(
         switch (queryColumn?.dataType) {
             case CARTA.ColumnType.String:
                 sortedIndexMap.sort((a: number, b: number) => {
-                    const aString = String(queryColumn?.data[a]);
-                    const bString = String(queryColumn?.data[b]);
+                    const aString = String(queryColumn?.data?.[a]);
+                    const bString = String(queryColumn?.data?.[b]);
                     if (!aString) {
                         return direction * -1;
                     }
@@ -47,8 +47,8 @@ export function getSortedIndexMap(
                 break;
             default:
                 sortedIndexMap.sort((a: number, b: number) => {
-                    const aNumber = Number(queryColumn?.data[a]);
-                    const bNumber = Number(queryColumn?.data[b]);
+                    const aNumber = Number(queryColumn?.data?.[a]);
+                    const bNumber = Number(queryColumn?.data?.[b]);
                     return direction * (aNumber < bNumber ? -1 : 1);
                 });
                 break;
