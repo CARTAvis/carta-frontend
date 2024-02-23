@@ -470,7 +470,7 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
         component.setFwhm(Math.abs(x[lineBox.toIndexOri] - x[lineBox.fromIndexOri]) / 2);
         const localYSmoothed = ySmoothed.slice(lineBox.fromIndex, lineBox.toIndex + 1);
         const localYExtrema = _.mean(localYSmoothed) > intensitySmoothedMean ? _.max(localYSmoothed) : _.min(localYSmoothed);
-        component.setAmp(localYExtrema ?? NaN);
+        component.setAmp(localYExtrema);
         const localYExtremaIndex = localYSmoothed.indexOf(localYExtrema ?? NaN);
         component.setCenter(xSmoothed[lineBox.fromIndex + localYExtremaIndex]);
         components.push(component);
