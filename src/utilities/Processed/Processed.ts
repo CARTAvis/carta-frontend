@@ -29,7 +29,7 @@ export interface ProcessedContourSet {
 }
 
 export interface ProcessedColumnData {
-    dataType: CARTA.ColumnType;
+    dataType: CARTA.ColumnType | null | undefined;
     data: ColumnArray | TypedArray;
 }
 

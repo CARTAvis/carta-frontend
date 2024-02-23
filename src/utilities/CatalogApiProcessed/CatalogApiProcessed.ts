@@ -16,9 +16,9 @@ enum DataType {
 }
 
 export type VizierResource = {
-    id: string;
-    name: string;
-    description: string;
+    id: string | null;
+    name: string | null;
+    description: string | null;
     coosys: VizierCoosys;
     table: VizierTable;
 };
@@ -29,8 +29,8 @@ type VizierCoosys = {
 };
 
 type VizierTable = {
-    name: string;
-    description: string;
+    name: string | null;
+    description: string | null;
     tableElement: Element;
 };
 
@@ -88,7 +88,7 @@ export class CatalogApiProcessing {
 
         for (let i = 0; i < headers.length; i++) {
             const header = headers[i];
-            let column: ProcessedColumnData = {dataType: header.dataType ?? CARTA.ColumnType.UnsupportedType, data: new Array(data.length)};
+            let column: ProcessedColumnData = {dataType: header.dataType, data: new Array(data.length)};
             for (let j = 0; j < data.length; j++) {
                 if (header["name"] === "dist") {
                     // simbad returns distance in deg, convert to arcsec for usability improvement
@@ -110,8 +110,8 @@ export class CatalogApiProcessing {
         return dataMap;
     }
 
-    static matchDataType(dataType: string): CARTA.ColumnType {
-        const dataTypeUpperCase = dataType.toUpperCase();
+    static matchDataType(dataType: string | null): CARTA.ColumnType {
+        const dataTypeUpperCase = dataType?.toUpperCase();
         switch (dataTypeUpperCase) {
             case DataType.CHAR:
                 return CARTA.ColumnType.String;
@@ -142,23 +142,25 @@ export class CatalogApiProcessing {
             const tableElements = resourceElement.getElementsByTagName("TABLE");
             for (let j = 0; j < tableElements.length; j++) {
                 const tableElement = tableElements[j];
-                const name = tableElement.getAttribute("name") ?? "";
+                const name = tableElement.getAttribute("name");
                 if (tableElement.getElementsByTagName("FIELD")?.length) {
                     const res: VizierResource = {
-                        id: resourceElement.getAttribute("ID") ?? "",
-                        name: resourceElement.getAttribute("name") ?? "",
-                        description: resourceElement.getElementsByTagName("DESCRIPTION")[0]?.textContent ?? "",
+                        id: resourceElement.getAttribute("ID"),
+                        name: resourceElement.getAttribute("name"),
+                        description: resourceElement.getElementsByTagName("DESCRIPTION")[0]?.textContent,
                         coosys: {
                             system: CatalogSystemType.FK5,
                             equinox: "J2000"
                         },
                         table: {
-                            name: name ?? "",
-                            description: tableElement.getElementsByTagName("DESCRIPTION")[0]?.textContent ?? "",
+                            name: name,
+                            description: tableElement.getElementsByTagName("DESCRIPTION")[0]?.textContent,
                             tableElement: tableElement
                         }
                     };
-                    resources.set(name, res);
+                    if (name !== null) {
+                        resources.set(name, res);
+                    }
                 }
             }
         }
@@ -173,7 +175,7 @@ export class CatalogApiProcessing {
             headers[index] = new CARTA.CatalogHeader({
                 name: field.getAttribute("name"),
                 description: field.getElementsByTagName("DESCRIPTION")[0]?.textContent,
-                dataType: CatalogApiProcessing.matchDataType(field.getAttribute("datatype") ?? ""),
+                dataType: CatalogApiProcessing.matchDataType(field.getAttribute("datatype")),
                 columnIndex: index,
                 units: field.getAttribute("unit")
             });
