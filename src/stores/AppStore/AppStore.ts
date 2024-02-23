@@ -647,7 +647,7 @@ export class AppStore {
         if (imageArithmetic) {
             hdu = "";
         } else {
-            const fullPath = Path.join(path, filename || "");
+            const fullPath = Path.join(path || "", filename || "");
             path = Path.dirname(fullPath);
             filename = Path.basename(fullPath);
         }
