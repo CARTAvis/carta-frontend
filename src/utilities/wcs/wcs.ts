@@ -29,7 +29,7 @@ export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry | undefine
     if (headerEntry.entryType === CARTA.EntryType.FLOAT || headerEntry.entryType === CARTA.EntryType.INT) {
         return headerEntry.numericValue ?? NaN;
     } else {
-        return parseFloat(trimFitsComment(headerEntry.value ?? ""));
+        return parseFloat(trimFitsComment(headerEntry.value));
     }
 }
 

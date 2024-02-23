@@ -31,7 +31,7 @@ export function parseNumber(val: number, initVal: number): number {
     }
 }
 
-export function trimFitsComment(val: string): string {
+export function trimFitsComment(val: string | null | undefined): string {
     if (!val) {
         return "";
     }
