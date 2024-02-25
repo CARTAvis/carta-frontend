@@ -5,6 +5,7 @@ import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
 import {CursorInfo, CursorInfoVisibility, Zoom} from "models";
+import {PreviewWebGLService, TileService, TileWebGLService} from "services";
 import {AnimationMode, AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
@@ -125,7 +126,6 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
 
     render() {
         const appStore = AppStore.Instance;
-        const overlayStore = appStore.overlayStore;
         const activeLayer = appStore.activeLayer;
 
         const frame = this.props.frame;
@@ -133,7 +133,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
             const isActive = frame === appStore.activeFrame && (appStore.numImageRows * appStore.numImageColumns > 1 || appStore.previewFrames.size > 0);
             const className = classNames("image-panel-div", {active: isActive});
 
-            let style: React.CSSProperties = {width: frame.previewViewWidth || overlayStore.viewWidth, height: frame.previewViewHeight || overlayStore.viewHeight};
+            let style: React.CSSProperties = {width: frame.overlayStore.viewWidth, height: frame.overlayStore.viewHeight};
             if (isActive) {
                 // Disable border radius rounding in inner corners
                 if (this.props.row !== 0) {
@@ -156,39 +156,54 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
 
             return (
                 <div id={`image-panel-${this.props.column}-${this.props.row}`} className={className} style={style} onWheel={this.onMouseWheel} onMouseDown={this.onMouseDown} onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-                    <RasterViewComponent frame={frame} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} row={this.props.row} column={this.props.column} />
+                    <RasterViewComponent
+                        frame={frame}
+                        overlayStore={frame.overlayStore}
+                        webGLService={frame.isPreview ? PreviewWebGLService.Instance : TileWebGLService.Instance}
+                        tileService={TileService.Instance}
+                        docked={this.props.docked}
+                        pixelHighlightValue={this.pixelHighlightValue}
+                        renderWidth={frame.renderWidth}
+                        renderHeight={frame.renderHeight}
+                        row={this.props.row}
+                        column={this.props.column}
+                        tileBasedRender={!frame.isPreview}
+                        rasterData={frame.previewPVRasterData}
+                        numImageColumns={appStore.numImageColumns}
+                        numImageRows={appStore.numImageRows}
+                    />
                     <ContourViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />
                     <VectorOverlayViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />
-                    <OverlayComponent frame={frame} overlaySettings={overlayStore} docked={this.props.docked} />
+                    <OverlayComponent frame={frame} overlaySettings={frame?.overlayStore} docked={this.props.docked} />
                     {this.cursorInfoRequired && frame.cursorInfo && (
                         <CursorOverlayComponent
                             cursorInfo={frame.cursorInfo}
                             cursorValue={frame.cursorInfo.isInsideImage ? (frame.isPreview ? frame.previewCursorValue.value : frame.cursorValue.value) : undefined}
                             isValueCurrent={frame.isCursorValueCurrent}
                             spectralInfo={frame.spectralInfo}
-                            width={frame.previewViewWidth || overlayStore.viewWidth}
-                            left={overlayStore.padding.left}
-                            right={overlayStore.padding.right}
+                            width={frame.overlayStore.viewWidth}
+                            left={frame.overlayStore.padding.left}
+                            right={frame.overlayStore.padding.right}
                             docked={this.props.docked}
                             unit={frame.requiredUnit}
-                            top={overlayStore.padding.top}
+                            top={frame.overlayStore.padding.top}
                             currentStokes={appStore.activeFrame.requiredPolarizationInfo}
                             cursorValueToPercentage={frame.requiredUnit === "%"}
                             isPreview={frame.isPreview}
                         />
                     )}
-                    {overlayStore.colorbar.visible && <ColorbarComponent frame={frame} onCursorHoverValueChanged={this.setPixelHighlightValue} />}
-                    <BeamProfileOverlayComponent frame={frame} top={overlayStore.padding.top} left={overlayStore.padding.left} docked={this.props.docked} padding={10} />
+                    {frame.overlayStore.colorbar.visible && <ColorbarComponent frame={frame} onCursorHoverValueChanged={this.setPixelHighlightValue} />}
+                    <BeamProfileOverlayComponent frame={frame} top={frame.overlayStore.padding.top} left={frame.overlayStore.padding.left} docked={this.props.docked} padding={10} />
                     <CatalogViewGLComponent frame={frame} docked={this.props.docked} />
                     <RegionViewComponent
                         ref={this.getRegionViewRef}
                         frame={frame}
                         width={frame.renderWidth}
                         height={frame.renderHeight}
-                        top={overlayStore.padding.top}
-                        left={overlayStore.padding.left}
+                        top={frame.overlayStore.padding.top}
+                        left={frame.overlayStore.padding.left}
                         onClickToCenter={this.onClickToCenter}
-                        overlaySettings={overlayStore}
+                        overlaySettings={frame.overlayStore}
                         dragPanningEnabled={appStore.preferenceStore.dragPanning}
                         docked={this.props.docked && activeLayer !== ImageViewLayer.Catalog}
                     />

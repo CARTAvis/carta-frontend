@@ -41,11 +41,11 @@ const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled = fals
     let tooltipContent = "";
     switch (inputType) {
         case InputType.XCoord:
-            const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
+            const formatX = AppStore.Instance.visibleFrames[0].overlayStore.numbers.formatTypeX;
             tooltipContent = `Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`;
             break;
         case InputType.YCoord:
-            const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
+            const formatY = AppStore.Instance.visibleFrames[0].overlayStore.numbers.formatTypeY;
             tooltipContent = `Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`;
             break;
         case InputType.Size:

@@ -11,7 +11,7 @@ export class ColorbarStore {
     constructor(frame: FrameStore) {
         makeObservable(this);
         this.frame = frame;
-        this.overlayStore = OverlayStore.Instance;
+        this.overlayStore = frame.overlayStore;
     }
 
     @computed get roundedNumbers(): {numbers: number[]; precision: number} {
@@ -57,15 +57,15 @@ export class ColorbarStore {
 
     @computed get positions(): number[] {
         const colorbar = this.overlayStore.colorbar;
-        if (!this.roundedNumbers || !this.frame || !isFinite(colorbar.yOffset)) {
+        if (!this.roundedNumbers || !this.frame || !isFinite(colorbar.yOffset(this.frame))) {
             return [];
         }
         const scaleMinVal = this.frame?.renderConfig?.scaleMinVal;
         const scaleMaxVal = this.frame?.renderConfig?.scaleMaxVal;
         if (colorbar.position === "right") {
-            return this.roundedNumbers.numbers.map(x => colorbar.yOffset + (colorbar.height(this.frame) * (scaleMaxVal - x)) / (scaleMaxVal - scaleMinVal));
+            return this.roundedNumbers.numbers.map(x => colorbar.yOffset(this.frame) + (colorbar.height(this.frame) * (scaleMaxVal - x)) / (scaleMaxVal - scaleMinVal));
         } else {
-            return this.roundedNumbers.numbers.map(x => colorbar.yOffset + (colorbar.height(this.frame) * (x - scaleMinVal)) / (scaleMaxVal - scaleMinVal));
+            return this.roundedNumbers.numbers.map(x => colorbar.yOffset(this.frame) + (colorbar.height(this.frame) * (x - scaleMinVal)) / (scaleMaxVal - scaleMinVal));
         }
     }
 

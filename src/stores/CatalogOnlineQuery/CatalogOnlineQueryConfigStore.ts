@@ -3,7 +3,7 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {CatalogSystemType, Point2D} from "models";
 import {CatalogDatabase} from "services";
-import {AppStore, ASTSettingsString, NumberFormatType, OverlayStore, SystemType} from "stores";
+import {AppStore, ASTSettingsString, NumberFormatType, SystemType} from "stores";
 import {clamp, getPixelValueFromWCS, transformPoint, VizierResource} from "utilities";
 
 export enum RadiusUnits {
@@ -310,7 +310,7 @@ export class CatalogOnlineQueryConfigStore {
 
     convertToDeg(pixelCoords: Point2D, system?: SystemType): {x: string; y: string} {
         const frame = this.activeFrame;
-        const overlay = OverlayStore.Instance;
+        const overlay = frame.overlayStore;
         let p: {x: string; y: string} = {x: undefined, y: undefined};
         if (frame && overlay) {
             const precision = overlay.numbers.customPrecision ? overlay.numbers.precision : "*";
@@ -333,7 +333,7 @@ export class CatalogOnlineQueryConfigStore {
 
     convertToPixel(coords: Point2D): Point2D {
         const frame = this.activeFrame;
-        const overlay = OverlayStore.Instance;
+        const overlay = frame.overlayStore;
         let p: {x: number; y: number} = {x: undefined, y: undefined};
         if (frame && overlay) {
             const precision = overlay.numbers.customPrecision ? overlay.numbers.precision : "*";

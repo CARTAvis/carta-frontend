@@ -6,9 +6,11 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {Point2D, Zoom} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, Padding, WidgetProps} from "stores";
+import {ChannelMapWebGLService} from "services";
+import {AppStore, DefaultWidgetConfig, HelpType, Padding, PreferenceStore, WidgetProps} from "stores";
 import {toFixed} from "utilities";
 
+import {ChannelMapViewComponent} from "./ChannelMapView/ChannelMapViewComponent";
 import {ImagePanelComponent} from "./ImagePanel/ImagePanelComponent";
 
 import "./ImageViewComponent.scss";
@@ -34,7 +36,7 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
         const row = Math.floor(index / appStore.numImageColumns);
         const panelCanvas = getPanelCanvas(column, row, padding, colorbarPosition, backgroundColor);
         if (panelCanvas) {
-            ctx.drawImage(panelCanvas, appStore.overlayStore.viewWidth * column * pixelRatio, appStore.overlayStore.viewHeight * row * pixelRatio);
+            ctx.drawImage(panelCanvas, frame.overlayStore.viewWidth * column * pixelRatio, frame.overlayStore.viewHeight * row * pixelRatio);
         }
     });
 
@@ -80,7 +82,7 @@ export function getPanelCanvas(column: number, row: number, padding: Padding, co
                 break;
             case "bottom":
                 xPos = 0;
-                yPos = overlayCanvas.height - colorbarCanvas.height - AppStore.Instance.overlayStore.colorbarHoverInfoHeight * pixelRatio;
+                yPos = overlayCanvas.height - colorbarCanvas.height - AppStore.Instance.visibleFrames[0].overlayStore.colorbarHoverInfoHeight * pixelRatio;
                 break;
             case "right":
             default:
@@ -155,7 +157,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         const appStore = AppStore.Instance;
 
         autorun(() => {
-            const imageSize = {x: appStore.overlayStore.renderWidth, y: appStore.overlayStore.renderHeight};
+            const imageSize = {x: appStore.visibleFrames[0]?.overlayStore.renderWidth, y: appStore.visibleFrames[0]?.overlayStore.renderHeight};
             const imageGridSize = {x: appStore.numImageColumns, y: appStore.numImageRows};
             // Compare to cached image size to prevent duplicate events when changing frames
             const imageSizeChanged = !this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y;
@@ -177,16 +179,31 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     @computed get panels() {
         const appStore = AppStore.Instance;
         const visibleFrames = appStore.visibleFrames;
+        const channelMapStore = appStore.channelMapStore;
         this.imagePanelRefs = [];
         if (!visibleFrames) {
             return [];
         }
-        return visibleFrames.map((frame, index) => {
-            const column = index % appStore.numImageColumns;
-            const row = Math.floor(index / appStore.numImageColumns);
 
-            return <ImagePanelComponent ref={this.collectImagePanelRef} key={frame.frameInfo.fileId} docked={this.props.docked} frame={frame} row={row} column={column} />;
-        });
+        return PreferenceStore.Instance.channelMapEnabled && !PreferenceStore.Instance.imageMultiPanelEnabled
+            ? [
+                  <div id={`image-panel`}>
+                      <ChannelMapViewComponent
+                          frame={visibleFrames[0]}
+                          gl={ChannelMapWebGLService.Instance.gl}
+                          docked={this.props.docked}
+                          channelMapStore={channelMapStore}
+                          renderWidth={appStore.overlayStore.fullViewWidth}
+                          renderHeight={appStore.overlayStore.fullViewHeight}
+                      />
+                  </div>
+              ]
+            : visibleFrames.map((frame, index) => {
+                  const column = index % appStore.numImageColumns;
+                  const row = Math.floor(index / appStore.numImageColumns);
+
+                  return <ImagePanelComponent ref={this.collectImagePanelRef} key={frame.frameInfo.fileId} docked={this.props.docked} frame={frame} row={row} column={column} />;
+              });
     }
 
     render() {
@@ -198,7 +215,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         } else if (!appStore.astReady) {
             divContents = <NonIdealState icon={<Spinner className="astLoadingSpinner" />} title={"Loading AST Library"} />;
         } else {
-            const effectiveImageSize = {x: Math.floor(appStore.overlayStore.renderWidth), y: Math.floor(appStore.overlayStore.renderHeight)};
+            // need to update here, should not use visibleFrames
+            const effectiveImageSize = {x: Math.floor(appStore.visibleFrames[0]?.overlayStore.renderWidth), y: Math.floor(appStore.visibleFrames[0]?.overlayStore.renderHeight)};
             const ratio = effectiveImageSize.x / effectiveImageSize.y;
             const gridSize = {x: appStore.numImageColumns, y: appStore.numImageRows};
 

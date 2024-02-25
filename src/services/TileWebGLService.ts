@@ -5,7 +5,7 @@ import {getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
 
 import {rasterShaders} from "./GLSL";
 
-interface ShaderUniforms {
+export interface ShaderUniforms {
     MinVal: WebGLUniformLocation;
     MaxVal: WebGLUniformLocation;
     PixelHighlightVal: WebGLUniformLocation;
@@ -181,6 +181,21 @@ export class PreviewWebGLService extends TileWebGLService {
             PreviewWebGLService.staticInstance = new PreviewWebGLService();
         }
         return PreviewWebGLService.staticInstance;
+    }
+
+    private constructor() {
+        super();
+    }
+}
+
+export class ChannelMapWebGLService extends TileWebGLService {
+    protected static staticInstance: ChannelMapWebGLService;
+
+    static get Instance() {
+        if (!ChannelMapWebGLService.staticInstance) {
+            ChannelMapWebGLService.staticInstance = new ChannelMapWebGLService();
+        }
+        return ChannelMapWebGLService.staticInstance;
     }
 
     private constructor() {

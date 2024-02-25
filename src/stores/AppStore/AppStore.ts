@@ -10,6 +10,7 @@ import {action, autorun, computed, flow, makeObservable, observable, ObservableM
 import * as Semver from "semver";
 
 import {getImageViewCanvas, ImageViewLayer, PvGeneratorComponent} from "components";
+import {ChannelMapStore} from "components/ImageView/ChannelMapView/ChannelMapViewComponent";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import {
     CARTA_INFO,
@@ -45,10 +46,10 @@ import {
     FileBrowserStore,
     HelpStore,
     ImageFittingStore,
+    ImageViewerSettingStore,
     LayoutStore,
     LogEntry,
     LogStore,
-    OverlayStore,
     PreferenceKeys,
     PreferenceStore,
     RegionFileType,
@@ -59,7 +60,7 @@ import {
 } from "stores";
 import {CompassAnnotationStore, CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
-import {clamp, distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
+import {clamp, DEFAULT_COLOR, distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
 
 import GitCommit from "../../static/gitInfo";
 
@@ -110,10 +111,11 @@ export class AppStore {
     readonly layoutStore: LayoutStore;
     readonly snippetStore: SnippetStore;
     readonly logStore: LogStore;
-    readonly overlayStore: OverlayStore;
+    readonly overlayStore: ImageViewerSettingStore;
     readonly preferenceStore: PreferenceStore;
     readonly widgetsStore: WidgetsStore;
     readonly imageFittingStore: ImageFittingStore;
+    readonly channelMapStore: ChannelMapStore;
 
     // WebAssembly Module status
     @observable astReady: boolean;
@@ -537,7 +539,7 @@ export class AppStore {
         this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfo.type, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes, generated);
 
         let newFrame = new FrameStore(frameInfo);
-
+        this.channelMapStore.setMasterFrame(newFrame);
         // Place frame in frame array (replace frame with the same ID if it exists)
         const existingFrameIndex = this.frames.findIndex(f => f.frameInfo.fileId === ack.fileId);
         if (existingFrameIndex !== -1) {
@@ -1485,8 +1487,8 @@ export class AppStore {
                 getColorForTheme(this.overlayStore.border.color),
                 getColorForTheme(this.overlayStore.ticks.color),
                 getColorForTheme(this.overlayStore.axes.color),
-                getColorForTheme(this.overlayStore.numbers.color),
-                getColorForTheme(this.overlayStore.labels.color),
+                getColorForTheme(this.activeFrame?.overlayStore.numbers.color || DEFAULT_COLOR),
+                getColorForTheme(this.activeFrame?.overlayStore.labels.color || DEFAULT_COLOR),
                 getColorForTheme(this.activeFrame ? this.activeFrame.distanceMeasuring?.color : DistanceMeasuringStore.DEFAULT_COLOR)
             ];
             AST.setColors(astColors);
@@ -1718,9 +1720,10 @@ export class AppStore {
         this.snippetStore = SnippetStore.Instance;
         this.logStore = LogStore.Instance;
         this.preferenceStore = PreferenceStore.Instance;
-        this.overlayStore = OverlayStore.Instance;
+        this.overlayStore = ImageViewerSettingStore.Instance;
         this.widgetsStore = WidgetsStore.Instance;
         this.imageFittingStore = ImageFittingStore.Instance;
+        this.channelMapStore = ChannelMapStore.Instance;
 
         this.astReady = false;
         this.cartaComputeReady = false;
@@ -1904,7 +1907,8 @@ export class AppStore {
         // Set overlay defaults from current frame
         autorun(() => {
             if (this.activeFrame) {
-                this.overlayStore.setDefaultsFromAST(this.activeFrame);
+                // Will need to update this!
+                // this.activeFrame.overlayStore.setDefaultsFromAST(this.activeFrame);
             }
         });
 
@@ -2651,7 +2655,8 @@ export class AppStore {
     private changeActiveFrame(frame: FrameStore) {
         if (frame !== this.activeFrame) {
             // Set overlay defaults from current frame
-            this.overlayStore.setDefaultsFromAST(frame);
+            // Will need to update this!
+            // frame.overlayStore.setDefaultsFromAST(frame);
         }
         this.activeFrame = frame;
         if (!frame.isPreview) {
@@ -2992,7 +2997,7 @@ export class AppStore {
             this.setImageRatio(imageRatio);
             this.waitForImageData().then(() => {
                 const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : this.darkTheme ? "rgba(0, 0, 0, 1)" : Colors.WHITE;
-                const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
+                const composedCanvas = getImageViewCanvas(this.activeFrame.overlayStore.padding, this.activeFrame.overlayStore.colorbar.position, backgroundColor);
                 if (composedCanvas) {
                     composedCanvas.toBlob(blob => {
                         const link = document.createElement("a") as HTMLAnchorElement;
@@ -3029,9 +3034,10 @@ export class AppStore {
         }
     };
 
+    // Is this method still being used? Probably for python scripting?
     getImageDataUrl = (backgroundColor: string) => {
         if (this.activeFrame) {
-            const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
+            const composedCanvas = getImageViewCanvas(this.activeFrame.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
             if (composedCanvas) {
                 return composedCanvas.toDataURL();
             }

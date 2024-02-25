@@ -127,6 +127,7 @@ export enum PreferenceKeys {
     PIXEL_GRID_COLOR = "pixelGridColor",
     IMAGE_MULTI_PANEL_ENABLED = "imageMultiPanelEnabled",
     IMAGE_PANEL_MODE = "imagePanelMode",
+    CHANNEL_MAP_ENABLED = "channelMapEnabled",
     IMAGE_PANEL_COLUMNS = "imagePanelColumns",
     IMAGE_PANEL_ROWS = "imagePanelRows",
 
@@ -152,6 +153,7 @@ const DEFAULTS = {
         pixelGridColor: "#FFFFFF",
         imageMultiPanelEnabled: false,
         imagePanelMode: ImagePanelMode.Dynamic,
+        channelMapEnabled: false,
         imagePanelColumns: 2,
         imagePanelRows: 2,
         checkNewRelease: true,
@@ -678,6 +680,10 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED) ?? DEFAULTS.SILENT.imagePanelMode;
     }
 
+    @computed get channelMapEnabled(): boolean {
+        return this.preferences.get(PreferenceKeys.CHANNEL_MAP_ENABLED) ?? DEFAULTS.SILENT.channelMapEnabled;
+    }
+
     @computed get imagePanelMode(): ImagePanelMode {
         return this.preferences.get(PreferenceKeys.IMAGE_PANEL_MODE) ?? DEFAULTS.SILENT.imagePanelMode;
     }
@@ -785,6 +791,7 @@ export class PreferenceStore {
             PreferenceKeys.PIXEL_GRID_COLOR,
             PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED,
             PreferenceKeys.IMAGE_PANEL_MODE,
+            PreferenceKeys.CHANNEL_MAP_ENABLED,
             PreferenceKeys.IMAGE_PANEL_COLUMNS,
             PreferenceKeys.IMAGE_PANEL_ROWS
         ]);
