@@ -779,10 +779,10 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <SafeNumericInput placeholder="Number of Columns" value={channelMapSettings.startChannel} min={0} max={numChannels - 1} onValueChange={onChannelChanged} />
                 </FormGroup>
                 <FormGroup inline={true} label="Number of Columns">
-                    <SafeNumericInput placeholder="Number of Columns" min={1} max={5} value={channelMapSettings.numColumns} stepSize={1} onValueChange={(value: number) => channelMapSettings.setNumColumns(value)} />
+                    <SafeNumericInput placeholder="Number of Columns" min={1} max={10} value={channelMapSettings.numColumns} stepSize={1} onValueChange={(value: number) => channelMapSettings.setNumColumns(value)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Number of Rows">
-                    <SafeNumericInput placeholder="Number of Rows" min={1} max={5} value={channelMapSettings.numRows} stepSize={1} onValueChange={(value: number) => channelMapSettings.setNumRows(value)} />
+                    <SafeNumericInput placeholder="Number of Rows" min={1} max={10} value={channelMapSettings.numRows} stepSize={1} onValueChange={(value: number) => channelMapSettings.setNumRows(value)} />
                 </FormGroup>
             </div>
         );

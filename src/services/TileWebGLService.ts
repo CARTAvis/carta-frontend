@@ -187,3 +187,18 @@ export class PreviewWebGLService extends TileWebGLService {
         super();
     }
 }
+
+export class ChannelMapWebGLService extends TileWebGLService {
+    protected static staticInstance: ChannelMapWebGLService;
+
+    static get Instance() {
+        if (!ChannelMapWebGLService.staticInstance) {
+            ChannelMapWebGLService.staticInstance = new ChannelMapWebGLService();
+        }
+        return ChannelMapWebGLService.staticInstance;
+    }
+
+    private constructor() {
+        super();
+    }
+}

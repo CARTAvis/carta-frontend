@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
 import {CursorInfo, CursorInfoVisibility, Zoom} from "models";
-import {PreviewWebGLService, TileWebGLService} from "services";
+import {PreviewWebGLService, TileService, TileWebGLService} from "services";
 import {AnimationMode, AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
@@ -159,7 +159,8 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                     <RasterViewComponent
                         frame={frame}
                         overlayStore={frame.overlayStore}
-                        gl={frame.isPreview ? PreviewWebGLService.Instance.gl : TileWebGLService.Instance.gl}
+                        webGLService={frame.isPreview ? PreviewWebGLService.Instance : TileWebGLService.Instance}
+                        tileService={TileService.Instance}
                         docked={this.props.docked}
                         pixelHighlightValue={this.pixelHighlightValue}
                         renderWidth={frame.renderWidth}

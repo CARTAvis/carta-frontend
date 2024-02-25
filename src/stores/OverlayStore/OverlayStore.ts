@@ -927,16 +927,19 @@ export class OverlayColorbarSettings {
     }
 
     @computed get height() {
-        return (frame?: FrameStore) => {
+        return (frame?: FrameStore, length?: number) => {
+            if (length) {
+                return length;
+            }
             const overlayStore = frame?.overlayStore;
             return this.position === "right" ? frame?.renderHeight || overlayStore?.renderHeight : frame?.renderWidth || overlayStore?.renderWidth;
         };
     }
 
     @computed get tickNum() {
-        return (frame?: FrameStore) => {
-            const tickNum = Math.round((this.height(frame) / 100.0) * this.tickDensity);
-            return this.height && tickNum > COLORBAR_TICK_NUM_MIN ? tickNum : COLORBAR_TICK_NUM_MIN;
+        return (frame?: FrameStore, length?: number) => {
+            const tickNum = Math.round((this.height(frame, length) / 100.0) * this.tickDensity);
+            return this.height(frame, length) && tickNum > COLORBAR_TICK_NUM_MIN ? tickNum : COLORBAR_TICK_NUM_MIN;
         };
     }
 
@@ -1239,7 +1242,7 @@ export class OverlayStore {
     }
 
     @computed get titleGap() {
-        return this.defaultGap * 2 + (this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0);
+        return this.defaultGap * 2 + (!this.isChannelMap && this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0);
     }
 
     @computed get cumulativeLabelGap() {
@@ -1257,8 +1260,7 @@ export class OverlayStore {
     }
 
     @computed get colorbarHoverInfoHeight(): number {
-        return this.isChannelMap ||
-            this.colorbar.visible ||
+        return !this.colorbar.visible ||
             (this.colorbar.visible && this.colorbar.position !== "bottom" && (this.labels.leftShow || this.labels.bottomShow)) ||
             (this.colorbar.visible && this.colorbar.position === "bottom" && this.colorbar.labelVisible)
             ? 0
@@ -1274,7 +1276,7 @@ export class OverlayStore {
     }
 
     @computed get paddingTop(): number {
-        return this.base + (this.imageViewerSettingStore.title.show ? this.titleGap + this.imageViewerSettingStore.title.fontSize : this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0);
+        return this.base + (this.imageViewerSettingStore.title.show ? this.titleGap + this.imageViewerSettingStore.title.fontSize : (!this.isChannelMap && this.colorbar.visible && this.colorbar.position === "top") ? this.colorbar.totalWidth : 0);
     }
 
     @computed get paddingBottom(): number {

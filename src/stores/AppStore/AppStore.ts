@@ -1598,7 +1598,6 @@ export class AppStore {
                 // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
                 const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
                 const compressionQuality = bunitVariant.includes(frame.headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
-                // testing using arbitrary channel range
                 this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, compressionQuality, true);
             } else {
                 this.tileService.updateHiddenFileChannels(frame.frameInfo.fileId, frame.channel, frame.stokes);
@@ -3035,16 +3034,16 @@ export class AppStore {
         }
     };
 
-    // Is this method still being used?
-    // getImageDataUrl = (backgroundColor: string) => {
-    //     if (this.activeFrame) {
-    //         const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
-    //         if (composedCanvas) {
-    //             return composedCanvas.toDataURL();
-    //         }
-    //     }
-    //     return null;
-    // };
+    // Is this method still being used? Probably for python scripting?
+    getImageDataUrl = (backgroundColor: string) => {
+        if (this.activeFrame) {
+            const composedCanvas = getImageViewCanvas(this.activeFrame.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
+            if (composedCanvas) {
+                return composedCanvas.toDataURL();
+            }
+        }
+        return null;
+    };
 
     delay(time: number) {
         return new Promise(resolve => {

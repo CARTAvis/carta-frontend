@@ -5,7 +5,7 @@ import {Subscription} from "rxjs";
 import tinycolor from "tinycolor2";
 
 import {FrameView, Point2D, TileCoordinate} from "models";
-import {PreviewWebGLService, RasterTile, ShaderUniforms, TEXTURE_SIZE, TILE_SIZE, TileService, TileWebGLService} from "services";
+import {RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService, TileWebGLService} from "services";
 import {AppStore, OverlayStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {add2D, copyToFP32Texture, createFP32Texture, getColorForTheme, GetRequiredTiles, GL2, LayerToMip, scale2D, smoothStep} from "utilities";
@@ -25,7 +25,8 @@ export class RasterViewComponentProps {
     column: number;
     numImageColumns: number;
     numImageRows: number;
-    gl: WebGL2RenderingContext;
+    webGLService: TileWebGLService;
+    tileService: TileService;
     tileBasedRender: boolean;
     rasterData?: Float32Array;
     channel?: number; // if channel is defined, we will fetch tiles info of this channel number instead of frame.channel
@@ -35,7 +36,6 @@ const Float32Max = 3.402823466e38;
 
 export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer((props: RasterViewComponentProps) => {
     const canvas = React.useRef<HTMLCanvasElement>();
-    const gl = props.gl;
     const sub = React.useRef<Subscription>();
 
     React.useEffect(() => {
@@ -43,7 +43,8 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
             if (canvas) {
                 updateCanvas(
                     props.frame,
-                    gl,
+                    props.webGLService,
+                    props.tileService,
                     canvas.current,
                     props.overlayStore,
                     props.column,
@@ -57,14 +58,14 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
                 );
             }
 
-            sub.current = TileService.Instance.tileStream.subscribe(tileMessage => {
+            sub.current = props.tileService.tileStream.subscribe(tileMessage => {
                 // sometimes the renderHeight is 0, and still figuring out why
-                // console.log('aaaa', props.channel, tileMessage.channel);
-                (!isFinite(props.channel) || tileMessage.channel === props.channel) &&
+                ((!isFinite(props.channel) && !AppStore.Instance.preferenceStore.channelMapEnabled) || tileMessage.channel === props.channel) &&
                     requestAnimationFrame(() =>
                         updateCanvas(
                             props.frame,
-                            gl,
+                            props.webGLService,
+                            props.tileService,
                             canvas.current,
                             props.overlayStore,
                             props.column,
@@ -89,7 +90,8 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
         requestAnimationFrame(() =>
             updateCanvas(
                 props.frame,
-                gl,
+                props.webGLService,
+                props.tileService,
                 canvas.current,
                 props.overlayStore,
                 props.column,
@@ -155,7 +157,8 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
 
 const updateCanvas = (
     frame: FrameStore,
-    gl: WebGL2RenderingContext,
+    webGLService: TileWebGLService,
+    tileService: TileService,
     canvas: HTMLCanvasElement,
     overlayStore: OverlayStore,
     column: number,
@@ -169,7 +172,8 @@ const updateCanvas = (
 ) => {
     AppStore.Instance.setCanvasUpdated();
 
-    const tileRenderService = frame.isPreview ? PreviewWebGLService.Instance : TileWebGLService.Instance;
+    const tileRenderService = webGLService;
+    const gl = webGLService.gl;
     if (frame && canvas && gl && tileRenderService.cmapTexture) {
         const histStokesIndex = frame.renderConfig.stokesIndex;
         const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histChannel : undefined;
@@ -182,9 +186,9 @@ const updateCanvas = (
             const xOffset = column * renderWidth * pixelRatio;
             const yOffset = gl.canvas.height - renderHeight * (row + 1) * pixelRatio;
 
-            updateCanvasSize(frame, gl, canvas, renderWidth, renderHeight, numImageColumns, numImageRows, tileBasedRender);
-            updateUniforms(frame, gl, tileRenderService.shaderUniforms, renderWidth, renderHeight, pixelHighlightValue);
-            renderCanvas(frame, gl, xOffset, yOffset, renderWidth, renderHeight, tileBasedRender, channel, rasterData); // change column and row to x and y offset
+            updateCanvasSize(frame, webGLService, canvas, renderWidth, renderHeight, numImageColumns, numImageRows);
+            updateUniforms(frame, webGLService, renderWidth, renderHeight, pixelHighlightValue);
+            renderCanvas(frame, webGLService, tileService, xOffset, yOffset, renderWidth, renderHeight, tileBasedRender, channel, rasterData); // change column and row to x and y offset
         }
         // draw in 2d canvas
         const ctx = canvas.getContext("2d");
@@ -195,7 +199,7 @@ const updateCanvas = (
     }
 };
 
-function updateCanvasSize(frame: FrameStore, gl: WebGL2RenderingContext, canvas: HTMLCanvasElement, renderWidth: number, renderHeight: number, numImageColumns: number, numImageRows: number, tileBasedRender: boolean) {
+function updateCanvasSize(frame: FrameStore, webGLService: TileWebGLService, canvas: HTMLCanvasElement, renderWidth: number, renderHeight: number, numImageColumns: number, numImageRows: number) {
     if (!frame) {
         return;
     }
@@ -205,7 +209,8 @@ function updateCanvasSize(frame: FrameStore, gl: WebGL2RenderingContext, canvas:
     const requiredWidth = Math.max(1, renderWidth * pixelRatio);
     const requiredHeight = Math.max(1, renderHeight * pixelRatio);
 
-    const tileRenderService = tileBasedRender ? TileWebGLService.Instance : PreviewWebGLService.Instance;
+    const tileRenderService = webGLService;
+    const gl = webGLService.gl;
     // Resize and clear the canvas if needed
     if (frame?.isRenderable && (canvas.width !== requiredWidth || canvas.height !== requiredHeight)) {
         canvas.width = requiredWidth;
@@ -219,10 +224,12 @@ function updateCanvasSize(frame: FrameStore, gl: WebGL2RenderingContext, canvas:
     }
 }
 
-export function updateUniforms(frame: FrameStore, gl: WebGL2RenderingContext, shaderUniforms: ShaderUniforms, renderWidth: number, renderHeight: number, pixelHighlightValue: number) {
+export function updateUniforms(frame: FrameStore, webGLService: TileWebGLService, renderWidth: number, renderHeight: number, pixelHighlightValue: number) {
     const appStore = AppStore.Instance;
     const renderConfig = frame.renderConfig;
     const pixelRatio = devicePixelRatio * appStore.imageRatio;
+    const gl = webGLService.gl;
+    const shaderUniforms = webGLService.shaderUniforms;
 
     if (renderConfig && shaderUniforms) {
         gl.uniform1f(shaderUniforms.MinVal, renderConfig.scaleMinVal);
@@ -260,11 +267,12 @@ export function updateUniforms(frame: FrameStore, gl: WebGL2RenderingContext, sh
     }
 }
 
-export function renderCanvas(frame: FrameStore, gl: WebGL2RenderingContext, xOffset: number, yOffset: number, renderWidth: number, renderHeight: number, tileBasedRender: boolean, channel: number, rasterData?: Float32Array) {
+export function renderCanvas(frame: FrameStore, webGLService: TileWebGLService, tileService: TileService, xOffset: number, yOffset: number, renderWidth: number, renderHeight: number, tileBasedRender: boolean, channel: number,  rasterData?: Float32Array) {
     // Only clear and render if we're in animation or tiled mode
     if (frame?.isRenderable) {
         const appStore = AppStore.Instance;
         const pixelRatio = devicePixelRatio * appStore.imageRatio;
+        const gl = webGLService.gl;
 
         gl.viewport(xOffset, yOffset, renderWidth * pixelRatio, renderHeight * pixelRatio);
         gl.enable(GL2.DEPTH_TEST);
@@ -277,21 +285,21 @@ export function renderCanvas(frame: FrameStore, gl: WebGL2RenderingContext, xOff
 
         // Skip rendering if frame is hidden
         if (frame.renderConfig.visible) {
-            tileBasedRender ? renderTiledCanvas(frame, gl, channel) : renderRasterCanvas(frame, gl, rasterData);
+            tileBasedRender ? renderTiledCanvas(frame, webGLService, channel, tileService) : renderRasterCanvas(frame, webGLService, rasterData);
         }
     }
 }
 
-function renderRasterCanvas(frame: FrameStore, gl: WebGL2RenderingContext, rasterData: Float32Array) {
+function renderRasterCanvas(frame: FrameStore, webGLService: TileWebGLService, rasterData: Float32Array) {
     // For PV preview render
     //Preview frame is always rendered with one tile
     const rasterTile = {data: rasterData, width: frame.frameInfo.fileInfoExtended.width, height: frame.frameInfo.fileInfoExtended.height, textureCoordinate: 0};
     const tile = {x: 0, y: 0, layer: 0} as TileCoordinate;
 
-    renderTile(frame, gl, tile, rasterTile, frame.requiredFrameView.mip, false);
+    renderTile(frame, webGLService, tile, rasterTile, frame.requiredFrameView.mip, false);
 }
 
-function renderTiledCanvas(frame: FrameStore, gl: WebGL2RenderingContext, channel: number) {
+function renderTiledCanvas(frame: FrameStore, webGLService: TileWebGLService, channel: number, tileService: TileService) {
     const imageSize = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
     const boundedView: FrameView = {
         xMin: Math.max(0, frame.requiredFrameView.xMin),
@@ -301,20 +309,19 @@ function renderTiledCanvas(frame: FrameStore, gl: WebGL2RenderingContext, channe
         mip: frame.requiredFrameView.mip
     };
 
-    gl.activeTexture(GL2.TEXTURE0);
+    webGLService.gl.activeTexture(GL2.TEXTURE0);
 
     const requiredTiles = GetRequiredTiles(boundedView, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
     // Special case when zoomed out
     if (requiredTiles.length === 1 && requiredTiles[0].layer === 0) {
         const mip = LayerToMip(0, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
-        renderTiles(frame, gl, requiredTiles, channel, mip, false, 3, true);
+        renderTiles(frame, webGLService, requiredTiles, channel, mip, false, 3, true, tileService);
     } else {
-        renderTiles(frame, gl, requiredTiles, channel, boundedView.mip, false, 3, true);
+        renderTiles(frame, webGLService, requiredTiles, channel, boundedView.mip, false, 3, true, tileService);
     }
 }
 
-function renderTiles(frame: FrameStore, gl: WebGL2RenderingContext, tiles: TileCoordinate[], channel: number, mip: number, peek: boolean = false, numPlaceholderLayersHighRes: number, renderLowRes: boolean) {
-    const tileService = TileService.Instance;
+function renderTiles(frame: FrameStore, webGLService: TileWebGLService, tiles: TileCoordinate[], channel: number, mip: number, peek: boolean = false, numPlaceholderLayersHighRes: number, renderLowRes: boolean, tileService: TileService) {
 
     if (!tileService) {
         return;
@@ -327,7 +334,7 @@ function renderTiles(frame: FrameStore, gl: WebGL2RenderingContext, tiles: TileC
         const encodedCoordinate = TileCoordinate.EncodeCoordinate(tile);
         const rasterTile = tileService.getTile(encodedCoordinate, frame.frameInfo.fileId, channel, peek);
         if (rasterTile) {
-            renderTile(frame, gl, tile, rasterTile, mip, true);
+            renderTile(frame, webGLService, tile, rasterTile, mip, true, tileService);
         } else {
             // Add high-res placeholders
             if (numPlaceholderLayersHighRes > 0 && mip >= 2) {
@@ -367,27 +374,28 @@ function renderTiles(frame: FrameStore, gl: WebGL2RenderingContext, tiles: TileC
 
     // Render remaining placeholders
     if (numPlaceholderLayersHighRes > 0 && highResPlaceholders.length) {
-        renderTiles(frame, gl, highResPlaceholders, mip / 2, channel, true, numPlaceholderLayersHighRes - 1, false);
+        renderTiles(frame, webGLService, highResPlaceholders, channel, mip / 2, true, numPlaceholderLayersHighRes - 1, false, tileService);
     }
     if (renderLowRes) {
         const placeholderTileList: TileCoordinate[] = [];
         placeholderTileMap.forEach((val, encodedTile) => placeholderTileList.push(TileCoordinate.Decode(encodedTile)));
         if (placeholderTileList.length) {
-            renderTiles(frame, gl, placeholderTileList, mip * 2, channel, true, 0, true);
+            renderTiles(frame, webGLService, placeholderTileList, channel, mip * 2, true, 0, true, tileService);
         }
     }
 }
 
-export function renderTile(frame: FrameStore, gl: WebGL2RenderingContext, tile: TileCoordinate, rasterTile: RasterTile, mip: number, tileBasedRender: boolean) {
+export function renderTile(frame: FrameStore, webGLService: TileWebGLService, tile: TileCoordinate, rasterTile: RasterTile, mip: number, tileBasedRender: boolean, tileService?: TileService) {
     const appStore = AppStore.Instance;
-    const shaderUniforms = tileBasedRender ? TileWebGLService.Instance.shaderUniforms : PreviewWebGLService.Instance.shaderUniforms;
-    const tileService = TileService.Instance;
+    const shaderUniforms = webGLService.shaderUniforms;
+    const gl = webGLService.gl;
+
     if (!rasterTile) {
         return;
     }
 
     if (rasterTile.data && tileBasedRender) {
-        tileService.uploadTileToGPU(rasterTile);
+        tileService.uploadTileToGPU(rasterTile, gl);
         delete rasterTile.data;
     }
 

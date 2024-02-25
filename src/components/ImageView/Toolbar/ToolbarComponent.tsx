@@ -24,6 +24,8 @@ export class ToolbarComponentProps {
     onActiveLayerChange: (layer: ImageViewLayer) => void;
     onRegionViewZoom: (zoom: number) => void;
     onZoomToFit: () => void;
+    bottom?: number;
+    right?: number;
 }
 
 @observer
@@ -124,8 +126,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const grid = overlay.grid;
 
         const styleProps: CSSProperties = {
-            bottom: overlay.padding.bottom,
-            right: overlay.padding.right,
+            bottom: this.props.bottom ?? overlay.padding.bottom,
+            right: this.props.right ?? overlay.padding.right,
             left: overlay.padding.left,
             opacity: this.props.visible ? 1 : 0,
             backgroundColor: "transparent"

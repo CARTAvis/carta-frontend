@@ -15,6 +15,10 @@ import "./ColorbarComponent.scss";
 export interface ColorbarComponentProps {
     onCursorHoverValueChanged: (number) => void;
     frame: FrameStore;
+    width?: number;
+    height?: number;
+    top?: number;
+    length?: number;
 }
 
 @observer
@@ -103,9 +107,9 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const appStore = AppStore.Instance;
         const frame = this.props.frame;
         const colorbarSettings = appStore.overlayStore.colorbar;
-        const viewHeight = frame.previewViewHeight || frame.overlayStore.viewHeight;
-        const viewWidth = frame.previewViewWidth || frame.overlayStore.viewWidth;
-        const colorbarSettingsHeight = colorbarSettings.height(frame);
+        const viewHeight = this.props.height || frame.previewViewHeight || frame.overlayStore.viewHeight;
+        const viewWidth = this.props.width || frame.previewViewWidth || frame.overlayStore.viewWidth;
+        const colorbarSettingsHeight = this.props.length || colorbarSettings.height(frame);
 
         appStore.updateLayerPixelRatio(this.layerRef);
 
@@ -135,11 +139,14 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
         // adjust stage position
         if (colorbarSettings.position === "right") {
-            stageLeft = frame.overlayStore.padding.left + frame.renderWidth;
+            stageLeft = this.props.width || (frame.overlayStore.padding.left + frame.renderWidth);
+            stageTop = this.props.top || 0;
         } else if (colorbarSettings.position === "bottom") {
-            stageTop = viewHeight - frame.overlayStore.colorbarHoverInfoHeight - colorbarSettings.stageWidth;
+            stageTop = this.props.top || viewHeight - frame.overlayStore.colorbarHoverInfoHeight - colorbarSettings.stageWidth;
         } else if (colorbarSettings.position === "top" && frame.overlayStore.title.show) {
             stageTop = frame.overlayStore.padding.top - colorbarSettings.stageWidth;
+        } else if (colorbarSettings.position === "top" && this.props.top) {
+            stageTop = this.props.top
         }
 
         // rotate to horizontal by swapping
