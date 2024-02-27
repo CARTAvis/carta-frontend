@@ -9,6 +9,7 @@ export interface WorkspaceRenderConfig {
     scaling?: FrameScaling;
     colorMap?: string;
     customColorHex?: string;
+    calculateColorHex?: string;
     bias?: number;
     contrast?: number;
     gamma?: number;

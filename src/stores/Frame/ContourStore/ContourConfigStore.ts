@@ -36,34 +36,6 @@ export class ContourConfigStore {
 
     private readonly preferenceStore: PreferenceStore;
 
-    static readonly COLOR_MAPS_SELECTED = [
-        "afmhot",
-        "Blues",
-        "coolwarm",
-        "cubehelix",
-        "gist_heat",
-        "gist_stern",
-        "gnuplot",
-        "gnuplot2",
-        "gray",
-        "greens",
-        "greys",
-        "hot",
-        "inferno",
-        "jet",
-        "magma",
-        "nipy_spectral",
-        "plasma",
-        "rainbow",
-        "RdBu",
-        "RdGy",
-        "reds",
-        "seismic",
-        "spectral",
-        "tab10",
-        "viridis"
-    ];
-
     constructor(preferenceStore: PreferenceStore) {
         makeObservable(this);
         this.preferenceStore = preferenceStore;

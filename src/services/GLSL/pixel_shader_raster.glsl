@@ -5,13 +5,13 @@ out vec4 outColor;
 // Textures
 uniform sampler2D uDataTexture;
 uniform sampler2D uCmapTexture;
-uniform sampler2D uCmapCalculatedTexture;
-uniform sampler2D uCmapCustomTexture;
 // Render parameters
 uniform int uNumCmaps;
-uniform int uNumCmapsCalculated;
 uniform int uCmapIndex;
-uniform int uCustomCmap;
+uniform int uCustomColorIndex;
+uniform vec3 uCustomRGB;
+uniform vec3 uCustomStartRGB;
+uniform vec3 uCalculateRGB;
 uniform int uScaleType;
 uniform int uInverted;
 uniform int uUseSmoothedBiasContrast;
@@ -121,20 +121,21 @@ void main(void) {
         x = 1.0 - x;
     }
 
-    // Apply pixel highlight
+        // Apply pixel highlight
     if (isNaN(rawVal)) {
         outColor = uNaNColor * uNaNColor.a;
-    } 
-    else if (rawVal < uPixelHighlightVal) {
+    } else if (rawVal < uPixelHighlightVal) {
         outColor = vec4(x, x, x, 1);
-    } else if (uCmapIndex == uCustomCmap) {
-        vec2 cmapCoords = vec2(x, 0.5);
-        outColor = texture(uCmapCustomTexture, cmapCoords);
-    }
-    else if (uCmapIndex >= uNumCmaps) {
-        float cmapYVal = (float(uCmapIndex-uNumCmaps) + 0.5) / float(uNumCmapsCalculated);
-        vec2 cmapCoords = vec2(x, cmapYVal);
-        outColor = texture(uCmapCalculatedTexture, cmapCoords);
+    } else if (uCmapIndex == uCustomColorIndex) {
+        float r = uCustomStartRGB.r+(uCustomRGB.r-uCustomStartRGB.r)*x;
+        float g = uCustomStartRGB.g+(uCustomRGB.g-uCustomStartRGB.g)*x;
+        float b = uCustomStartRGB.b+(uCustomRGB.b-uCustomStartRGB.b)*x;
+        outColor = vec4(r, g, b, 1);
+    } else if (uCmapIndex >= uNumCmaps) {
+        float r = uCalculateRGB.r*x;
+        float g = uCalculateRGB.g*x;
+        float b = uCalculateRGB.b*x;
+        outColor = vec4(r, g, b, 1);
     } 
     else {
         float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);

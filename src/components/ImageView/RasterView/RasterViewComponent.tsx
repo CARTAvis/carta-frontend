@@ -72,7 +72,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const pixelRatio = devicePixelRatio * appStore.imageRatio;
 
         if (renderConfig && shaderUniforms) {
-            tileRenderService.setCustomColormapTexture(this.gl, this.props.frame); // to send the texture to WebGL when changing the custom colormap
+            tileRenderService.setCustomRgbUniform(renderConfig.customColorHex, renderConfig.customStartColorHex);
             this.gl.uniform1f(shaderUniforms.MinVal, renderConfig.scaleMinVal);
             this.gl.uniform1f(shaderUniforms.MaxVal, renderConfig.scaleMaxVal);
             this.gl.uniform1i(shaderUniforms.CmapIndex, renderConfig.colorMapIndex);
@@ -383,7 +383,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 min: frame.renderConfig.scaleMinVal,
                 max: frame.renderConfig.scaleMaxVal,
                 colorMap: frame.renderConfig.colorMapIndex,
-                customColorHex: frame.renderConfig.customColorHex,
+                customHex: frame.renderConfig.customColorHex,
+                customStartHex: frame.renderConfig.customStartColorHex,
                 contrast: frame.renderConfig.contrast,
                 bias: frame.renderConfig.bias,
                 useSmoothedBiasContrast: appStore.preferenceStore?.useSmoothedBiasContrast,

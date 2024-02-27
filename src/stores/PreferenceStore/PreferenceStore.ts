@@ -833,6 +833,7 @@ export class PreferenceStore {
         this.clearPreferences([
             PreferenceKeys.RENDER_CONFIG_COLORMAP,
             PreferenceKeys.RENDER_CONFIG_COLORHEX,
+            PreferenceKeys.RENDER_CONFIG_COLORSTARTHEX,
             PreferenceKeys.RENDER_CONFIG_NAN_ALPHA,
             PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
             PreferenceKeys.RENDER_CONFIG_PERCENTILE,

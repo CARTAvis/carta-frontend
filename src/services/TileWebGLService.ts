@@ -1,8 +1,8 @@
 import allMaps from "static/allmaps.png";
+import tinycolor from "tinycolor2";
 
 import {TEXTURE_SIZE, TILE_SIZE} from "services";
-import {FrameStore, RenderConfigStore} from "stores";
-import {bindRGBATexture, getColorsForValues, getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
+import {getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
 
 import {rasterShaders} from "./GLSL";
 
@@ -20,12 +20,12 @@ interface ShaderUniforms {
     NaNColor: WebGLUniformLocation;
     DataTexture: WebGLUniformLocation;
     CmapTexture: WebGLUniformLocation;
-    CmapCalculatedTexture: WebGLUniformLocation;
-    CmapCustomTexture: WebGLUniformLocation;
-    CustomCmap: WebGLUniformLocation;
+    CustomRGB: WebGLUniformLocation;
+    CustomStartRGB: WebGLUniformLocation;
+    CalculateRGB: WebGLUniformLocation;
     NumCmaps: WebGLUniformLocation;
-    NumCmapsCalculated: WebGLUniformLocation;
     CmapIndex: WebGLUniformLocation;
+    CustomColorIndex: WebGLUniformLocation;
     CanvasWidth: WebGLUniformLocation;
     CanvasHeight: WebGLUniformLocation;
     RotationOrigin: WebGLUniformLocation;
@@ -49,7 +49,7 @@ export class TileWebGLService {
 
     readonly gl: WebGL2RenderingContext;
     cmapTexture: WebGLTexture;
-    cmapCalculatedTexture: WebGLTexture;
+    // cmapCalculatedTexture: WebGLTexture;
     // GL buffers
     vertexPositionBuffer: WebGLBuffer;
     vertexUVBuffer: WebGLBuffer;
@@ -103,12 +103,12 @@ export class TileWebGLService {
             Inverted: this.gl.getUniformLocation(this.shaderProgram, "uInverted"),
             DataTexture: this.gl.getUniformLocation(this.shaderProgram, "uDataTexture"),
             CmapTexture: this.gl.getUniformLocation(this.shaderProgram, "uCmapTexture"),
-            CmapCalculatedTexture: this.gl.getUniformLocation(this.shaderProgram, "uCmapCalculatedTexture"),
-            CmapCustomTexture: this.gl.getUniformLocation(this.shaderProgram, "uCmapCustomTexture"),
-            CustomCmap: this.gl.getUniformLocation(this.shaderProgram, "uCustomCmap"),
+            CustomRGB: this.gl.getUniformLocation(this.shaderProgram, "uCustomRGB"),
+            CustomStartRGB: this.gl.getUniformLocation(this.shaderProgram, "uCustomStartRGB"),
+            CalculateRGB: this.gl.getUniformLocation(this.shaderProgram, "uCalculateRGB"),
             NumCmaps: this.gl.getUniformLocation(this.shaderProgram, "uNumCmaps"),
-            NumCmapsCalculated: this.gl.getUniformLocation(this.shaderProgram, "uNumCmapsCalculated"),
             CmapIndex: this.gl.getUniformLocation(this.shaderProgram, "uCmapIndex"),
+            CustomColorIndex: this.gl.getUniformLocation(this.shaderProgram, "uCustomColorIndex"),
             CanvasWidth: this.gl.getUniformLocation(this.shaderProgram, "uCanvasWidth"),
             CanvasHeight: this.gl.getUniformLocation(this.shaderProgram, "uCanvasHeight"),
             ScaleAdjustment: this.gl.getUniformLocation(this.shaderProgram, "uScaleAdjustment"),
@@ -129,12 +129,12 @@ export class TileWebGLService {
 
         this.gl.uniform1i(this.shaderUniforms.DataTexture, 0);
         this.gl.uniform1i(this.shaderUniforms.CmapTexture, 1);
-        this.gl.uniform1i(this.shaderUniforms.CmapCalculatedTexture, 2);
-        this.gl.uniform1i(this.shaderUniforms.CmapCustomTexture, 3);
-        this.gl.uniform1i(this.shaderUniforms.CustomCmap, RenderConfigStore.COLOR_MAPS_ALL.length - 1);
+        this.gl.uniform3f(this.shaderUniforms.CustomRGB, 0, 0, 0);
+        this.gl.uniform3f(this.shaderUniforms.CustomStartRGB, 1, 1, 1);
+        this.gl.uniform3f(this.shaderUniforms.CalculateRGB, 0, 0, 0);
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);
-        this.gl.uniform1i(this.shaderUniforms.NumCmapsCalculated, RenderConfigStore.COLOR_MAPS_CALCULATED.size);
         this.gl.uniform1i(this.shaderUniforms.CmapIndex, 2);
+        this.gl.uniform1i(this.shaderUniforms.CustomColorIndex, 86); // this value needs to be changed if adding another colormap
         this.gl.uniform1f(this.shaderUniforms.MinVal, 3.4);
         this.gl.uniform1f(this.shaderUniforms.MaxVal, 5.5);
         this.gl.uniform1f(this.shaderUniforms.Bias, 0);
@@ -174,36 +174,16 @@ export class TileWebGLService {
         this.gl.bufferData(GL2.ARRAY_BUFFER, uvs, GL2.STATIC_DRAW);
     }
 
-    private setCmapCalculatedTexture(gl: WebGL2RenderingContext) {
-        const cmap = RenderConfigStore.COLOR_MAPS_CALCULATED;
-        const width = 1024;
-        const height = cmap.size;
-        const components = 4;
-        let loadCmap: any;
-        const cmapData = new Float32Array(width * height * components);
-
-        Array.from(cmap.keys()).forEach((colormap, y) => {
-            loadCmap = getColorsForValues(colormap).color;
-            for (let x = 0; x < width; x++) {
-                for (let ii = 0; ii < components; ii++) cmapData[x * components + ii + y * width * components] = loadCmap[x * components + ii] / 255;
-            }
-        });
-
-        bindRGBATexture(gl, cmapData, width, height, GL2.TEXTURE2);
+    setCustomRgbUniform(customHex: string, customStartHex: string) {
+        const customRGB = tinycolor(customHex).toRgb();
+        const customStartRGB = tinycolor(customStartHex).toRgb();
+        this.gl.uniform3f(this.shaderUniforms.CustomRGB, customRGB.r / 255, customRGB.g / 255, customRGB.b / 255);
+        this.gl.uniform3f(this.shaderUniforms.CustomStartRGB, customStartRGB.r / 255, customStartRGB.g / 255, customStartRGB.b / 255);
     }
 
-    setCustomColormapTexture(gl: WebGL2RenderingContext, frame: FrameStore) {
-        const width = 1024;
-        const height = 1;
-        const components = 4;
-        const cmapData = new Float32Array(width * height * components);
-
-        const cmap = frame.renderConfig.customColorGradient.color;
-        for (let x = 0; x < width; x++) {
-            for (let ii = 0; ii < components; ii++) cmapData[x * components + ii] = cmap[x * components + ii] / 255;
-        }
-
-        bindRGBATexture(gl, cmapData, width, height, GL2.TEXTURE3);
+    setCalculateRgbUniform(calculateHex: string) {
+        const calculateRGB = tinycolor(calculateHex).toRgb();
+        this.gl.uniform3f(this.shaderUniforms.CalculateRGB, calculateRGB.r / 255, calculateRGB.g / 255, calculateRGB.b / 255);
     }
 
     protected constructor() {
@@ -216,7 +196,6 @@ export class TileWebGLService {
         loadImageTexture(this.gl, allMaps, GL2.TEXTURE1).then(texture => {
             this.cmapTexture = texture;
         });
-        this.setCmapCalculatedTexture(this.gl);
     }
 }
 

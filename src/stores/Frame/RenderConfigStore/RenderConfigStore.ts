@@ -2,6 +2,7 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {WorkspaceRenderConfig} from "models";
+import {PreviewWebGLService, TileWebGLService} from "services";
 import {AppStore, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {clamp, getColorsForValues, getColorsFromHex, getPercentiles, scaleValueInverse} from "utilities";
@@ -186,6 +187,8 @@ export class RenderConfigStore {
     @observable previewHistogramMax: number;
     @observable previewHistogramMin: number;
     @observable customColorHex: string;
+    @observable customStartColorHex: string;
+    @observable calculateColorHex: string;
 
     private frame: FrameStore;
 
@@ -208,6 +211,8 @@ export class RenderConfigStore {
         this.scaleMax = new Array<number>(stokesLength).fill(1);
         this.visible = true;
         this.customColorHex = preference.colormapHex;
+        this.customStartColorHex = preference.colormapStartHex;
+        this.calculateColorHex = RenderConfigStore.COLOR_MAPS_CALCULATED.get(preference.colormap);
     }
 
     public static IsScalingValid(scaling: FrameScaling): boolean {
@@ -235,11 +240,11 @@ export class RenderConfigStore {
     }
 
     @computed get customColorGradient() {
-        return getColorsFromHex(this.customColorHex, PreferenceStore.Instance.colormapStartHex);
+        return getColorsFromHex(this.customColorHex, this.customStartColorHex);
     }
 
     @computed get colorscaleArray() {
-        const colorsForValues = getColorsForValues(this.colorMap, this.frame);
+        const colorsForValues = getColorsForValues(this.colorMap, this.frame.renderConfig);
         const indexArray = Array.from(Array(colorsForValues.size).keys()).map(x => (this.inverted ? 1 - x / colorsForValues.size : x / colorsForValues.size));
         const scaledArray = indexArray.map(x => 1.0 - scaleValueInverse(x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast, AppStore.Instance?.preferenceStore?.useSmoothedBiasContrast));
         let rbgString = (index: number): string => `rgb(${colorsForValues.color[index * 4]}, ${colorsForValues.color[index * 4 + 1]}, ${colorsForValues.color[index * 4 + 2]}, ${colorsForValues.color[index * 4 + 3]})`;
@@ -398,14 +403,34 @@ export class RenderConfigStore {
 
     @action setColorMap = (colormap: string) => {
         const index = RenderConfigStore.COLOR_MAPS_ALL.indexOf(colormap);
+        const customColorIndex = RenderConfigStore.COLOR_MAPS_ALL.length - 1;
         if (index >= 0) {
+            // 79 is the colormap number in allmaps.png
+            if (index > 79 && index !== customColorIndex) {
+                this.setCalculateHex(RenderConfigStore.COLOR_MAPS_CALCULATED.get(colormap));
+                const tileRenderService = this.frame.isPreview ? PreviewWebGLService.Instance : TileWebGLService.Instance;
+                const calculateHex = this.calculateColorHex ?? RenderConfigStore.COLOR_MAPS_CALCULATED.get(PreferenceStore.Instance.colormap);
+                tileRenderService.setCalculateRgbUniform(calculateHex);
+            }
             this.setColorMapIndex(index);
         }
     };
 
     @action setCustomColorMap = (colorHex: string, colormap: string) => {
-        this.customColorHex = colorHex;
+        this.setCustomHex(colorHex);
         this.setColorMap(colormap);
+    };
+
+    @action setCustomHex = (colorHex: string) => {
+        this.customColorHex = colorHex;
+    };
+
+    @action setCustomStartHex = (colorHex: string) => {
+        this.customStartColorHex = colorHex;
+    };
+
+    @action setCalculateHex = (colorHex: string) => {
+        this.calculateColorHex = colorHex;
     };
 
     @action setScaling = (newScaling: FrameScaling) => {
@@ -486,6 +511,8 @@ export class RenderConfigStore {
         this.selectedPercentile[this.stokesIndex] = -1;
         this.colorMapIndex = other.colorMapIndex;
         this.customColorHex = other.customColorHex;
+        this.customStartColorHex = other.customStartColorHex;
+        this.calculateColorHex = other.calculateColorHex;
         this.inverted = other.inverted;
     };
 
@@ -493,6 +520,7 @@ export class RenderConfigStore {
         this.scaling = config.scaling;
         this.setColorMap(config.colorMap);
         this.setCustomColorMap(config.customColorHex, config.colorMap);
+        this.setCalculateHex(config.calculateColorHex);
         this.bias = config.bias;
         this.contrast = config.contrast;
         this.gamma = config.gamma;

@@ -9,7 +9,7 @@ import * as _ from "lodash";
 import allMaps from "static/allmaps.png";
 
 import {AppStore, PreferenceKeys, PreferenceStore} from "stores";
-import {FrameStore, RenderConfigStore} from "stores/Frame";
+import {RenderConfigStore} from "stores/Frame";
 
 import "./ColormapComponent.scss";
 
@@ -18,9 +18,9 @@ interface ColormapComponentProps {
     inverted: boolean;
     disabled?: boolean;
     onItemSelect: (selected: string) => void;
-    setPreference?: boolean;
+    // setPreference?: (selected: string) => void;
+    setPreference?: PreferenceKeys;
     enableAdditionalColor?: boolean;
-    frame?: FrameStore;
 }
 
 const ColorMapSelect = Select.ofType<string>();
@@ -40,13 +40,8 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
 
         if (colormap === CUSTOM_COLOR_OPTION) {
             const renderConfig = AppStore.Instance.activeFrame?.renderConfig;
-            let customColorHex: string;
-            if (props.setPreference) {
-                customColorHex = PreferenceStore.Instance.colormapHex;
-            } else {
-                customColorHex = renderConfig.customColorHex ? renderConfig.customColorHex : PreferenceStore.Instance.colormapHex;
-            }
-            const customColorStarHex = PreferenceStore.Instance.colormapStartHex;
+            const customColorHex = props.setPreference ? PreferenceStore.Instance.colormapHex : color;
+            const customColorStarHex = props.setPreference ? PreferenceStore.Instance.colormapStartHex : renderConfig.customStartColorHex;
 
             return (
                 <div
@@ -100,8 +95,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
         const handleColorChange = _.throttle((color: any) => {
             setColor(color.hex);
             if (props.setPreference) {
-                PreferenceStore.Instance.setPreference(PreferenceKeys?.RENDER_CONFIG_COLORHEX, color.hex);
-                PreferenceStore.Instance.setPreference(PreferenceKeys?.RENDER_CONFIG_COLORMAP, CUSTOM_COLOR_OPTION);
+                PreferenceStore.Instance.setPreference(props.setPreference, color.hex);
             } else {
                 renderConfig?.setCustomColorMap(color.hex, colormap);
             }

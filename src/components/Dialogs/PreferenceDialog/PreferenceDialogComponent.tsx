@@ -252,7 +252,8 @@ export class PreferenceDialogComponent extends React.Component {
                         selectedItem={preference.colormap}
                         onItemSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP, selected)}
                         enableAdditionalColor={true}
-                        setPreference={true}
+                        // setPreference={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORHEX, selected)}
+                        setPreference={PreferenceKeys.RENDER_CONFIG_COLORHEX}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Default percentile ranks">

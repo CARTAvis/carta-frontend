@@ -4,7 +4,7 @@ import allMaps from "static/allmaps.png";
 import tinycolor from "tinycolor2";
 
 import {AppStore} from "stores";
-import {FrameStore, RenderConfigStore} from "stores/Frame";
+import {RenderConfigStore} from "stores/Frame";
 
 export const SWATCH_COLORS = [
     Colors.BLUE3,
@@ -55,14 +55,14 @@ imageObj.onload = () => {
 };
 
 // return color map as Uint8ClampedArray according colorMap
-export function getColorsForValues(colorMap: string, frame?: FrameStore): {color: Uint8ClampedArray; size: number} {
+export function getColorsForValues(colorMap: string, renderConfig?: RenderConfigStore): {color: Uint8ClampedArray; size: number} {
     if (RenderConfigStore?.COLOR_MAPS_CALCULATED.get(colorMap)) {
         const targetColorHex = RenderConfigStore.COLOR_MAPS_CALCULATED.get(colorMap);
         return getColorsFromHex(targetColorHex);
     }
 
     if (colorMap === "custom") {
-        return frame.renderConfig.customColorGradient;
+        return renderConfig.customColorGradient;
     }
 
     const colorMaps = RenderConfigStore.COLOR_MAPS_ALL;
