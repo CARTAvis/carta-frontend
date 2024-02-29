@@ -2,7 +2,6 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {WorkspaceRenderConfig} from "models";
-import {PreviewWebGLService, TileWebGLService} from "services";
 import {AppStore, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {clamp, getColorsForValues, getColorsFromHex, getPercentiles, scaleValueInverse} from "utilities";
@@ -144,7 +143,7 @@ export class RenderConfigStore {
         "tab10",
         "viridis"
     ];
-    static readonly COLOR_MAPS_CALCULATED = new Map<string, string>([
+    static readonly COLOR_MAPS_MONO = new Map<string, string>([
         ["Red", "#FF0000"],
         ["Orange", "#FFA500"],
         ["Yellow", "#FFFF00"],
@@ -186,9 +185,9 @@ export class RenderConfigStore {
     @observable visible: boolean;
     @observable previewHistogramMax: number;
     @observable previewHistogramMin: number;
-    @observable customColorHex: string;
-    @observable customStartColorHex: string;
-    @observable calculateColorHex: string;
+    @observable customColormapHex: string;
+    @observable customInitColormapHex: string;
+    @observable monoColormapHex: string;
 
     private frame: FrameStore;
 
@@ -210,9 +209,9 @@ export class RenderConfigStore {
         this.scaleMin = new Array<number>(stokesLength).fill(0);
         this.scaleMax = new Array<number>(stokesLength).fill(1);
         this.visible = true;
-        this.customColorHex = preference.colormapHex;
-        this.customStartColorHex = preference.colormapStartHex;
-        this.calculateColorHex = RenderConfigStore.COLOR_MAPS_CALCULATED.get(preference.colormap);
+        this.customColormapHex = preference.colormapHex;
+        this.customInitColormapHex = preference.InitColormapHex;
+        this.monoColormapHex = RenderConfigStore.COLOR_MAPS_MONO.get(preference.colormap);
     }
 
     public static IsScalingValid(scaling: FrameScaling): boolean {
@@ -232,15 +231,17 @@ export class RenderConfigStore {
     }
 
     @computed get colorMap() {
-        if (this.colorMapIndex >= 0 && this.colorMapIndex <= RenderConfigStore.COLOR_MAPS_ALL.length - 1) {
+        if (this.colorMapIndex >= 0 && this.colorMapIndex <= RenderConfigStore.COLOR_MAPS_ALL.length - 2) {
             return RenderConfigStore.COLOR_MAPS_ALL[this.colorMapIndex];
+        } else if (this.colorMapIndex === -1) {
+            return RenderConfigStore.COLOR_MAPS_CUSTOM[0];
         } else {
             return "Unknown";
         }
     }
 
     @computed get customColorGradient() {
-        return getColorsFromHex(this.customColorHex, this.customStartColorHex);
+        return getColorsFromHex(this.customColormapHex, this.customInitColormapHex);
     }
 
     @computed get colorscaleArray() {
@@ -397,40 +398,42 @@ export class RenderConfigStore {
     };
 
     @action setColorMapIndex = (index: number) => {
-        this.colorMapIndex = clamp(index, 0, RenderConfigStore.COLOR_MAPS_ALL.length - 1);
+        this.colorMapIndex = clamp(index, -1, RenderConfigStore.COLOR_MAPS_ALL.length - 2);
         this.updateSiblings();
     };
 
     @action setColorMap = (colormap: string) => {
-        const index = RenderConfigStore.COLOR_MAPS_ALL.indexOf(colormap);
-        const customColorIndex = RenderConfigStore.COLOR_MAPS_ALL.length - 1;
-        if (index >= 0) {
-            // 79 is the colormap number in allmaps.png
-            if (index > 79 && index !== customColorIndex) {
-                this.setCalculateHex(RenderConfigStore.COLOR_MAPS_CALCULATED.get(colormap));
-                const tileRenderService = this.frame.isPreview ? PreviewWebGLService.Instance : TileWebGLService.Instance;
-                const calculateHex = this.calculateColorHex ?? RenderConfigStore.COLOR_MAPS_CALCULATED.get(PreferenceStore.Instance.colormap);
-                tileRenderService.setCalculateRgbUniform(calculateHex);
+        const customColorIndex = -1;
+        if (colormap === RenderConfigStore.COLOR_MAPS_CUSTOM[0]) {
+            this.setColorMapIndex(customColorIndex);
+        } else {
+            const index = RenderConfigStore.COLOR_MAPS_ALL.indexOf(colormap);
+            if (index >= 0) {
+                // 79 is the colormap number in allmaps.png
+                if (index > 79) {
+                    this.setMonoColormapHex(RenderConfigStore.COLOR_MAPS_MONO.get(colormap));
+                }
+                this.setColorMapIndex(index);
             }
-            this.setColorMapIndex(index);
         }
     };
 
-    @action setCustomColorMap = (colorHex: string, colormap: string) => {
+    @action setCustomColorMap = (colorHex: string) => {
         this.setCustomHex(colorHex);
-        this.setColorMap(colormap);
+        this.setColorMap(RenderConfigStore.COLOR_MAPS_CUSTOM[0]);
+        this.updateSiblings();
     };
 
     @action setCustomHex = (colorHex: string) => {
-        this.customColorHex = colorHex;
+        this.customColormapHex = colorHex;
     };
 
-    @action setCustomStartHex = (colorHex: string) => {
-        this.customStartColorHex = colorHex;
+    @action setCustomInitHex = (colorHex: string) => {
+        this.customInitColormapHex = colorHex;
     };
 
-    @action setCalculateHex = (colorHex: string) => {
-        this.calculateColorHex = colorHex;
+    @action setMonoColormapHex = (colorHex: string) => {
+        this.monoColormapHex = colorHex;
     };
 
     @action setScaling = (newScaling: FrameScaling) => {
@@ -510,17 +513,17 @@ export class RenderConfigStore {
         this.scaleMax[this.stokesIndex] = other.scaleMaxVal;
         this.selectedPercentile[this.stokesIndex] = -1;
         this.colorMapIndex = other.colorMapIndex;
-        this.customColorHex = other.customColorHex;
-        this.customStartColorHex = other.customStartColorHex;
-        this.calculateColorHex = other.calculateColorHex;
+        this.customColormapHex = other.customColormapHex;
+        this.customInitColormapHex = other.customInitColormapHex;
+        this.monoColormapHex = other.monoColormapHex;
         this.inverted = other.inverted;
     };
 
     @action updateFromWorkspace = (config: WorkspaceRenderConfig) => {
         this.scaling = config.scaling;
         this.setColorMap(config.colorMap);
-        this.setCustomColorMap(config.customColorHex, config.colorMap);
-        this.setCalculateHex(config.calculateColorHex);
+        this.setCustomColorMap(config.customColormapHex);
+        this.setMonoColormapHex(config.monoColormapHex);
         this.bias = config.bias;
         this.contrast = config.contrast;
         this.gamma = config.gamma;

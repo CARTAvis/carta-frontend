@@ -20,12 +20,10 @@ interface ShaderUniforms {
     NaNColor: WebGLUniformLocation;
     DataTexture: WebGLUniformLocation;
     CmapTexture: WebGLUniformLocation;
-    CustomRGB: WebGLUniformLocation;
-    CustomStartRGB: WebGLUniformLocation;
-    CalculateRGB: WebGLUniformLocation;
+    RGB: WebGLUniformLocation;
+    InitRGB: WebGLUniformLocation;
     NumCmaps: WebGLUniformLocation;
     CmapIndex: WebGLUniformLocation;
-    CustomColorIndex: WebGLUniformLocation;
     CanvasWidth: WebGLUniformLocation;
     CanvasHeight: WebGLUniformLocation;
     RotationOrigin: WebGLUniformLocation;
@@ -49,7 +47,6 @@ export class TileWebGLService {
 
     readonly gl: WebGL2RenderingContext;
     cmapTexture: WebGLTexture;
-    // cmapCalculatedTexture: WebGLTexture;
     // GL buffers
     vertexPositionBuffer: WebGLBuffer;
     vertexUVBuffer: WebGLBuffer;
@@ -103,12 +100,10 @@ export class TileWebGLService {
             Inverted: this.gl.getUniformLocation(this.shaderProgram, "uInverted"),
             DataTexture: this.gl.getUniformLocation(this.shaderProgram, "uDataTexture"),
             CmapTexture: this.gl.getUniformLocation(this.shaderProgram, "uCmapTexture"),
-            CustomRGB: this.gl.getUniformLocation(this.shaderProgram, "uCustomRGB"),
-            CustomStartRGB: this.gl.getUniformLocation(this.shaderProgram, "uCustomStartRGB"),
-            CalculateRGB: this.gl.getUniformLocation(this.shaderProgram, "uCalculateRGB"),
+            RGB: this.gl.getUniformLocation(this.shaderProgram, "uRGB"),
+            InitRGB: this.gl.getUniformLocation(this.shaderProgram, "uInitRGB"),
             NumCmaps: this.gl.getUniformLocation(this.shaderProgram, "uNumCmaps"),
             CmapIndex: this.gl.getUniformLocation(this.shaderProgram, "uCmapIndex"),
-            CustomColorIndex: this.gl.getUniformLocation(this.shaderProgram, "uCustomColorIndex"),
             CanvasWidth: this.gl.getUniformLocation(this.shaderProgram, "uCanvasWidth"),
             CanvasHeight: this.gl.getUniformLocation(this.shaderProgram, "uCanvasHeight"),
             ScaleAdjustment: this.gl.getUniformLocation(this.shaderProgram, "uScaleAdjustment"),
@@ -129,12 +124,10 @@ export class TileWebGLService {
 
         this.gl.uniform1i(this.shaderUniforms.DataTexture, 0);
         this.gl.uniform1i(this.shaderUniforms.CmapTexture, 1);
-        this.gl.uniform3f(this.shaderUniforms.CustomRGB, 0, 0, 0);
-        this.gl.uniform3f(this.shaderUniforms.CustomStartRGB, 1, 1, 1);
-        this.gl.uniform3f(this.shaderUniforms.CalculateRGB, 0, 0, 0);
+        this.gl.uniform3f(this.shaderUniforms.RGB, 0, 0, 0);
+        this.gl.uniform3f(this.shaderUniforms.InitRGB, 1, 1, 1);
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);
         this.gl.uniform1i(this.shaderUniforms.CmapIndex, 2);
-        this.gl.uniform1i(this.shaderUniforms.CustomColorIndex, 86); // this value needs to be changed if adding another colormap
         this.gl.uniform1f(this.shaderUniforms.MinVal, 3.4);
         this.gl.uniform1f(this.shaderUniforms.MaxVal, 5.5);
         this.gl.uniform1f(this.shaderUniforms.Bias, 0);
@@ -174,16 +167,13 @@ export class TileWebGLService {
         this.gl.bufferData(GL2.ARRAY_BUFFER, uvs, GL2.STATIC_DRAW);
     }
 
-    setCustomRgbUniform(customHex: string, customStartHex: string) {
-        const customRGB = tinycolor(customHex).toRgb();
-        const customStartRGB = tinycolor(customStartHex).toRgb();
-        this.gl.uniform3f(this.shaderUniforms.CustomRGB, customRGB.r / 255, customRGB.g / 255, customRGB.b / 255);
-        this.gl.uniform3f(this.shaderUniforms.CustomStartRGB, customStartRGB.r / 255, customStartRGB.g / 255, customStartRGB.b / 255);
-    }
-
-    setCalculateRgbUniform(calculateHex: string) {
-        const calculateRGB = tinycolor(calculateHex).toRgb();
-        this.gl.uniform3f(this.shaderUniforms.CalculateRGB, calculateRGB.r / 255, calculateRGB.g / 255, calculateRGB.b / 255);
+    setRgbUniform(hex: string, startHex?: string) {
+        if (tinycolor(hex).getFormat() === "hex") {
+            const rgb = tinycolor(hex).toRgb();
+            this.gl.uniform3f(this.shaderUniforms.RGB, rgb.r / 255, rgb.g / 255, rgb.b / 255);
+            const InitRGB = tinycolor(startHex).getFormat() === "hex" ? tinycolor(startHex).toRgb() : tinycolor("#000000").toRgb();
+            this.gl.uniform3f(this.shaderUniforms.InitRGB, InitRGB.r / 255, InitRGB.g / 255, InitRGB.b / 255);
+        }
     }
 
     protected constructor() {

@@ -50,8 +50,8 @@ export enum PreferenceKeys {
 
     RENDER_CONFIG_SCALING = "scaling",
     RENDER_CONFIG_COLORMAP = "colormap",
-    RENDER_CONFIG_COLORHEX = "colormapHex",
-    RENDER_CONFIG_COLORSTARTHEX = "colormapStartHex",
+    RENDER_CONFIG_COLOR_HEX = "colormapHex",
+    RENDER_CONFIG_INIT_COLOR_HEX = "InitColormapHex",
     RENDER_CONFIG_PERCENTILE = "percentile",
     RENDER_CONFIG_SCALING_ALPHA = "scalingAlpha",
     RENDER_CONFIG_SCALING_GAMMA = "scalingGamma",
@@ -143,9 +143,7 @@ export enum PreferenceKeys {
     CHECK_NEW_RELEASE = "checkNewRelease",
     LATEST_RELEASE = "latestRelease",
 
-    COMPATIBILITY_AIPS_BEAM_SUPPORT = "compatibilityAipsBeamSupport",
-
-    NON_PREFERENCE = "nonPreference"
+    COMPATIBILITY_AIPS_BEAM_SUPPORT = "compatibilityAipsBeamSupport"
 }
 
 const DEFAULTS = {
@@ -181,7 +179,7 @@ const DEFAULTS = {
         scaling: FrameScaling.LINEAR,
         colormap: "inferno",
         colormapHex: "#FFFFFF",
-        colormapStartHex: "#000000",
+        InitColormapHex: "#000000",
         percentile: 99.9,
         scalingAlpha: 1000,
         scalingGamma: 1,
@@ -380,11 +378,11 @@ export class PreferenceStore {
     }
 
     @computed get colormapHex(): string {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORHEX) ?? DEFAULTS.RENDER_CONFIG.colormapHex;
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLOR_HEX) ?? DEFAULTS.RENDER_CONFIG.colormapHex;
     }
 
-    @computed get colormapStartHex(): string {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORSTARTHEX) ?? DEFAULTS.RENDER_CONFIG.colormapStartHex;
+    @computed get InitColormapHex(): string {
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_INIT_COLOR_HEX) ?? DEFAULTS.RENDER_CONFIG.InitColormapHex;
     }
 
     @computed get percentile(): number {
@@ -832,8 +830,8 @@ export class PreferenceStore {
     @action resetRenderConfigSettings = () => {
         this.clearPreferences([
             PreferenceKeys.RENDER_CONFIG_COLORMAP,
-            PreferenceKeys.RENDER_CONFIG_COLORHEX,
-            PreferenceKeys.RENDER_CONFIG_COLORSTARTHEX,
+            PreferenceKeys.RENDER_CONFIG_COLOR_HEX,
+            PreferenceKeys.RENDER_CONFIG_INIT_COLOR_HEX,
             PreferenceKeys.RENDER_CONFIG_NAN_ALPHA,
             PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
             PreferenceKeys.RENDER_CONFIG_PERCENTILE,

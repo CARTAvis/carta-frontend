@@ -8,7 +8,7 @@ import * as _ from "lodash";
 // Static assets
 import allMaps from "static/allmaps.png";
 
-import {AppStore, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, PreferenceStore} from "stores";
 import {RenderConfigStore} from "stores/Frame";
 
 import "./ColormapComponent.scss";
@@ -18,8 +18,7 @@ interface ColormapComponentProps {
     inverted: boolean;
     disabled?: boolean;
     onItemSelect: (selected: string) => void;
-    // setPreference?: (selected: string) => void;
-    setPreference?: PreferenceKeys;
+    setPreference?: (selected: string) => void;
     enableAdditionalColor?: boolean;
 }
 
@@ -27,7 +26,7 @@ const ColorMapSelect = Select.ofType<string>();
 const COLORMAP_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 const CUSTOM_COLOR_OPTION = "custom";
 let newColormapSelected = RenderConfigStore.COLOR_MAPS_SELECTED.map(x => x);
-Array.from(RenderConfigStore.COLOR_MAPS_CALCULATED.keys()).map(x => newColormapSelected.push(x));
+Array.from(RenderConfigStore.COLOR_MAPS_MONO.keys()).map(x => newColormapSelected.push(x));
 RenderConfigStore.COLOR_MAPS_CUSTOM.forEach(x => newColormapSelected.push(x));
 
 export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
@@ -40,8 +39,8 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
 
         if (colormap === CUSTOM_COLOR_OPTION) {
             const renderConfig = AppStore.Instance.activeFrame?.renderConfig;
-            const customColorHex = props.setPreference ? PreferenceStore.Instance.colormapHex : color;
-            const customColorStarHex = props.setPreference ? PreferenceStore.Instance.colormapStartHex : renderConfig.customStartColorHex;
+            const customColormapHex = props.setPreference ? PreferenceStore.Instance.colormapHex : renderConfig.customColormapHex;
+            const customColorStarHex = props.setPreference ? PreferenceStore.Instance.InitColormapHex : renderConfig.customInitColormapHex;
 
             return (
                 <div
@@ -49,27 +48,27 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
                     style={{
                         transform: `scaleX(${props.inverted ? -1 : 1})`,
                         height: `${blockHeight}px`,
-                        backgroundImage: `linear-gradient(to right, ${customColorStarHex}, ${customColorHex})`,
+                        backgroundImage: `linear-gradient(to right, ${customColorStarHex}, ${customColormapHex})`,
                         backgroundSize: `100% 300%`,
                         backgroundPosition: `0 calc(-300% - ${blockHeight}px)`
                     }}
                 />
             );
-        } else if (RenderConfigStore.COLOR_MAPS_CALCULATED.get(colormap)) {
+        } else if (RenderConfigStore.COLOR_MAPS_MONO.get(colormap)) {
             return (
                 <div
                     className={className}
                     style={{
                         transform: `scaleX(${props.inverted ? -1 : 1})`,
                         height: `${blockHeight}px`,
-                        backgroundImage: `linear-gradient(to right, black, ${RenderConfigStore.COLOR_MAPS_CALCULATED.get(colormap)})`,
+                        backgroundImage: `linear-gradient(to right, black, ${RenderConfigStore.COLOR_MAPS_MONO.get(colormap)})`,
                         backgroundSize: `100% 300%`,
                         backgroundPosition: `0 calc(-300% - ${blockHeight}px)`
                     }}
                 />
             );
         } else {
-            const N = RenderConfigStore.COLOR_MAPS_ALL.length - RenderConfigStore.COLOR_MAPS_CALCULATED.size - 1; // -1 is the custom color
+            const N = RenderConfigStore.COLOR_MAPS_ALL.length - RenderConfigStore.COLOR_MAPS_MONO.size - 1; // -1 is the custom color
             const i = RenderConfigStore.COLOR_MAPS_ALL.indexOf(colormap);
             return (
                 <div
@@ -94,11 +93,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
 
         const handleColorChange = _.throttle((color: any) => {
             setColor(color.hex);
-            if (props.setPreference) {
-                PreferenceStore.Instance.setPreference(props.setPreference, color.hex);
-            } else {
-                renderConfig?.setCustomColorMap(color.hex, colormap);
-            }
+            props.setPreference ? props.setPreference(color.hex) : renderConfig.setCustomColorMap(color.hex);
         }, changeDelay);
 
         if (!modifiers.matchesPredicate) {

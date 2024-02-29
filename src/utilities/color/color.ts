@@ -56,12 +56,12 @@ imageObj.onload = () => {
 
 // return color map as Uint8ClampedArray according colorMap
 export function getColorsForValues(colorMap: string, renderConfig?: RenderConfigStore): {color: Uint8ClampedArray; size: number} {
-    if (RenderConfigStore?.COLOR_MAPS_CALCULATED.get(colorMap)) {
-        const targetColorHex = RenderConfigStore.COLOR_MAPS_CALCULATED.get(colorMap);
+    if (RenderConfigStore?.COLOR_MAPS_MONO.get(colorMap)) {
+        const targetColorHex = RenderConfigStore.COLOR_MAPS_MONO.get(colorMap);
         return getColorsFromHex(targetColorHex);
     }
 
-    if (colorMap === "custom") {
+    if (colorMap === RenderConfigStore.COLOR_MAPS_CUSTOM[0]) {
         return renderConfig.customColorGradient;
     }
 
@@ -104,10 +104,9 @@ export function getColorForTheme(color: string) {
     return Colors[`${requiredColor}${AppStore.Instance.darkTheme ? "4" : "2"}`];
 }
 
-function generateColorGradientArray(targetColorHex: string, startColorHex = "#000000", steps: number = 1023) {
+function generateColorGradientArray(targetColorHex: string, startColorHex = "#000000", steps: number = 1024) {
     const gradientArray = [];
 
-    // Convert Hex to RGBA
     const targetColor = tinycolor(targetColorHex).toRgb();
     const startColor = tinycolor(startColorHex).toRgb();
 
