@@ -163,7 +163,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                         </div>
                     )}
                     {this.props.showPinButton && (
-                        <div className={buttonClass} ref={ref => (this.pinElementRef = ref)} onClick={() => console.log("pin!")}>
+                        <div className={buttonClass} ref={ref => (this.pinElementRef = ref)} onClick={() => console.log("pin!")} data-testid={this.props.widgetConfig?.id + "-header-dock-button"}>
                             <Tooltip2 content="Drag pin to dock this widget" position={Position.BOTTOM_RIGHT}>
                                 <Icon icon={"pin"} />
                             </Tooltip2>

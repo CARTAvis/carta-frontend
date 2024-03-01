@@ -730,7 +730,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             itemRenderer={this.renderFileIdPopOver}
                             popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                         >
-                            <Button text={this.catalogFileId} rightIcon="double-caret-vertical" />
+                            <Button text={this.catalogFileId} rightIcon="double-caret-vertical" data-testid="catalog-file-dropdown" />
                         </Select>
                     </FormGroup>
                     <FormGroup className="catalog-system" disabled={!isImageOverlay} inline={true} label="System">
@@ -743,7 +743,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             disabled={!isImageOverlay}
                             popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                         >
-                            <Button text={activeSystem} disabled={!isImageOverlay} rightIcon="double-caret-vertical" />
+                            <Button text={activeSystem} disabled={!isImageOverlay} rightIcon="double-caret-vertical" data-testid="catalog-system-dropdown" />
                         </Select>
                     </FormGroup>
 
@@ -770,7 +770,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 <div className="bp3-dialog-footer">
                     <div className={"table-info"}>
                         <table className="info-display">
-                            <tbody>{tableInfo}</tbody>
+                            <tbody data-testid="catalog-table-filtering-info">{tableInfo}</tbody>
                         </table>
                     </div>
                     <div className="footer-action-container">
@@ -784,7 +784,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 itemRenderer={this.renderPlotTypePopOver}
                                 popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                             >
-                                <Button className="bp3" text={catalogWidgetStore.catalogPlotType} rightIcon="double-caret-vertical" />
+                                <Button className="bp3" text={catalogWidgetStore.catalogPlotType} rightIcon="double-caret-vertical" data-testid="catalog-rendering-type-dropdown" />
                             </Select>
 
                             <FormGroup className="catalog-axis" inline={true} label={this.xAxisLable} disabled={disable}>
@@ -801,7 +801,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     itemPredicate={this.filterColumn}
                                     resetOnSelect={true}
                                 >
-                                    <Button className="catalog-axis-button" text={catalogWidgetStore.xAxis} disabled={disable} rightIcon="double-caret-vertical" />
+                                    <Button className="catalog-axis-button" text={catalogWidgetStore.xAxis} disabled={disable} rightIcon="double-caret-vertical" data-testid="catalog-rendering-column-x-dropdown" />
                                 </Select>
                             </FormGroup>
 
@@ -819,7 +819,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     itemPredicate={this.filterColumn}
                                     resetOnSelect={true}
                                 >
-                                    <Button className="catalog-axis-button" text={catalogWidgetStore.yAxis} disabled={isHistogram || disable} rightIcon="double-caret-vertical" />
+                                    <Button className="catalog-axis-button" text={catalogWidgetStore.yAxis} disabled={isHistogram || disable} rightIcon="double-caret-vertical" data-testid="catalog-rendering-column-y-dropdown" />
                                 </Select>
                             </FormGroup>
 
@@ -836,10 +836,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     </div>
                     <div className="bp3-dialog-footer">
                         <div className="bp3-dialog-footer-actions">
-                            <AnchorButton intent={Intent.SUCCESS} text="Apply filter" onClick={this.handleFilterRequest} disabled={disable || !profileStore.updateTableView || !profileStore.hasFilter} />
-                            <AnchorButton intent={Intent.WARNING} text="Reset filter" onClick={this.handleResetClick} disabled={disable} />
-                            <AnchorButton text="Close catalog" onClick={this.handleFileCloseClick} disabled={disable} />
-                            <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={!this.enablePlotButton} />
+                            <AnchorButton intent={Intent.SUCCESS} text="Apply filter" onClick={this.handleFilterRequest} disabled={disable || !profileStore.updateTableView || !profileStore.hasFilter} data-testid="catalog-filter-button" />
+                            <AnchorButton intent={Intent.WARNING} text="Reset filter" onClick={this.handleResetClick} disabled={disable} data-testid="catalog-reset-button" />
+                            <AnchorButton text="Close catalog" onClick={this.handleFileCloseClick} disabled={disable} data-testid="catalog-close-button" />
+                            <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={!this.enablePlotButton} data-testid="catalog-plot-button" />
                         </div>
                     </div>
                 </div>

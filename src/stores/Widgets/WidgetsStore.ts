@@ -742,6 +742,10 @@ export class WidgetsStore {
                     $(stack.header.tabsContainer)
                         ?.find("li.lm_active")
                         ?.attr("data-testid", component + "-tab");
+                    $(stack.header.tabsContainer)
+                        ?.find("li.lm_active")
+                        ?.find(".lm_close_tab")
+                        ?.attr("data-testid", component + "-tab-close-button");
                     if (component === "image-view") {
                         $(stackHeaderControlButtons)
                             ?.find("li.lm-image-panel")
