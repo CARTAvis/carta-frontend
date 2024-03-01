@@ -468,7 +468,7 @@ export class FileInfoComponent extends React.Component<{
 
     render() {
         return (
-            <div className="file-info" onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+            <div className="file-info" onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave} data-testid="file-info">
                 <div className="file-info-panel-top">
                     {this.renderInfoTabs()}
                     {this.renderHDUList()}

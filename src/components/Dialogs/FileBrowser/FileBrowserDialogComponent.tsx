@@ -562,7 +562,17 @@ export class FileBrowserDialogComponent extends React.Component {
                     />
                 );
             } else {
-                return <InputGroup autoFocus={false} placeholder={filterDescription} value={this.fileFilterString} onChange={this.handleFilterStringInputChanged} leftElement={inputTypeMenu} rightElement={filterTypeMenu} />;
+                return (
+                    <InputGroup
+                        autoFocus={false}
+                        placeholder={filterDescription}
+                        value={this.fileFilterString}
+                        onChange={this.handleFilterStringInputChanged}
+                        leftElement={inputTypeMenu}
+                        rightElement={filterTypeMenu}
+                        data-testid="file-filter-input"
+                    />
+                );
             }
         } else {
             return <InputGroup autoFocus={false} placeholder={filterDescription} value={this.fileFilterString} onChange={this.handleFilterStringInputChanged} leftIcon="search" rightElement={filterTypeMenu} />;

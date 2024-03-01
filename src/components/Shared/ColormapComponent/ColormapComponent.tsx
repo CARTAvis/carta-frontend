@@ -53,7 +53,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
             onItemSelect={props.onItemSelect}
             itemRenderer={renderColormapSelectItem}
         >
-            <Button disabled={props.disabled} text={renderColormapBlock(props.selectedItem)} rightIcon="double-caret-vertical" alignText={"right"} />
+            <Button disabled={props.disabled} text={renderColormapBlock(props.selectedItem)} rightIcon="double-caret-vertical" alignText={"right"} data-testid="colormap-dropdown" />
         </ColorMapSelect>
     );
 };

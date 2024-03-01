@@ -170,7 +170,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                         </div>
                     )}
                     {widgetConfig.isCloseable && (
-                        <div onMouseDown={this.props.onClosed} className={buttonClass}>
+                        <div onMouseDown={this.props.onClosed} className={buttonClass} data-testid={this.props.widgetConfig?.id + "-header-close-button"}>
                             <Icon icon={"cross"} />
                         </div>
                     )}
