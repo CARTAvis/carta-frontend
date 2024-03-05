@@ -177,7 +177,13 @@ export class ToolbarMenuComponent extends React.Component {
                         <AnchorButton icon={<CustomIcon icon={"vectorOverlay"} />} disabled={!appStore.activeFrame} onClick={() => dialogStore.showDialog(DialogId.Vector)} active={dialogStore.dialogVisible.get(DialogId.Vector)} />
                     </Tooltip2>
                     <Tooltip2 content={<span>Image fitting</span>} position={Position.BOTTOM}>
-                        <AnchorButton icon={<CustomIcon icon="imageFitting" />} disabled={!appStore.activeFrame} onClick={() => dialogStore.showDialog(DialogId.Fitting)} active={dialogStore.dialogVisible.get(DialogId.Fitting)} />
+                        <AnchorButton
+                            icon={<CustomIcon icon="imageFitting" />}
+                            disabled={!appStore.activeFrame}
+                            onClick={() => dialogStore.showDialog(DialogId.Fitting)}
+                            active={dialogStore.dialogVisible.get(DialogId.Fitting)}
+                            data-testid="image-fitting-dialog-button"
+                        />
                     </Tooltip2>
                     <Tooltip2 content={<span>Online catalog query</span>} position={Position.BOTTOM}>
                         <AnchorButton icon="geosearch" disabled={!appStore.activeFrame} onClick={() => dialogStore.showDialog(DialogId.CatalogQuery)} active={dialogStore.dialogVisible.get(DialogId.CatalogQuery)} />

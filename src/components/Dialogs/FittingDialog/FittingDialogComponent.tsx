@@ -72,8 +72,8 @@ export class FittingDialogComponent extends React.Component {
         return <ImageCoordNumericInput value={value} customPlaceholder={placeholder} onChange={onValueChange} />;
     };
 
-    private renderLockButton = (fixed: boolean, toggleFixed) => {
-        return <AnchorButton className="lock-button" onClick={toggleFixed} icon={fixed ? "lock" : "unlock"} />;
+    private renderLockButton = (fixed: boolean, toggleFixed, testid: string) => {
+        return <AnchorButton className="lock-button" onClick={toggleFixed} icon={fixed ? "lock" : "unlock"} data-testid={"image-fitting-" + testid + "-lock-button"} />;
     };
 
     private renderInfoString = (point: Point2D, pointWcs: WCSPoint2D) => {
@@ -135,7 +135,7 @@ export class FittingDialogComponent extends React.Component {
         );
 
         const fittingResultPanel = (
-            <Pre className="fitting-result-pre">
+            <Pre className="fitting-result-pre" data-testid="image-fitting-result-tab">
                 <Text className="fitting-result-text">{fittingStore.effectiveFrame?.fittingResult ?? ""}</Text>
                 {fittingStore.effectiveFrame?.fittingResult !== "" && (
                     <ButtonGroup className="output-button" style={{opacity: this.isMouseEntered && fittingStore.effectiveFrame.fittingResult !== "" ? 1 : 0}}>
@@ -149,7 +149,7 @@ export class FittingDialogComponent extends React.Component {
         );
 
         const fullLogPanel = (
-            <Pre className="fitting-result-pre">
+            <Pre className="fitting-result-pre" data-testid="image-fitting-full-log-tab">
                 <Text className="log-text">{fittingStore.effectiveFrame?.fittingLog ?? ""}</Text>
                 {fittingStore.effectiveFrame?.fittingLog !== "" && (
                     <ButtonGroup className="output-button" style={{opacity: this.isMouseEntered && fittingStore.effectiveFrame.fittingLog !== "" ? 1 : 0}}>
@@ -198,6 +198,7 @@ export class FittingDialogComponent extends React.Component {
                                     // wait for onBlur events of the inputs
                                     // TODO: find a better way to handle this; one solution is to update the inputs with all keydown events
                                     onValueChange={val => setTimeout(() => fittingStore.setComponents(Math.round(val)), 0)}
+                                    data-testid="image-fitting-component-input"
                                 />
                                 {fittingStore.components.length > 1 && (
                                     <>
@@ -223,25 +224,25 @@ export class FittingDialogComponent extends React.Component {
                             </FormGroup>
                             <FormGroup label="Center" inline={true} labelInfo={pixUnitString}>
                                 {this.renderParamCoordInput(InputType.XCoord, component?.center?.x, "Center X", component?.setCenterX, component?.centerWcs?.x, component?.setCenterXWcs)}
-                                {this.renderLockButton(component?.centerFixed?.x, component?.toggleCenterXFixed)}
+                                {this.renderLockButton(component?.centerFixed?.x, component?.toggleCenterXFixed, "center-x")}
                                 {this.renderParamCoordInput(InputType.YCoord, component?.center?.y, "Center Y", component?.setCenterY, component?.centerWcs?.y, component?.setCenterYWcs)}
-                                {this.renderLockButton(component?.centerFixed?.y, component?.toggleCenterYFixed)}
+                                {this.renderLockButton(component?.centerFixed?.y, component?.toggleCenterYFixed, "center-y")}
                                 {this.renderInfoString(component?.center, component?.centerWcs)}
                             </FormGroup>
                             <FormGroup label="Amplitude" inline={true} labelInfo={<span title={imageUnitString}>{imageUnitString}</span>}>
                                 {this.renderParamInput(component?.amplitude, "Amplitude", component?.setAmplitude)}
-                                {this.renderLockButton(component?.amplitudeFixed, component?.toggleAmplitudeFixed)}
+                                {this.renderLockButton(component?.amplitudeFixed, component?.toggleAmplitudeFixed, "amplitude")}
                             </FormGroup>
                             <FormGroup label="FWHM" inline={true} labelInfo={pixUnitString}>
                                 {this.renderParamCoordInput(InputType.Size, component?.fwhm?.x, "Major axis", component?.setFwhmX, component?.fwhmWcs?.x, component?.setFwhmXWcs)}
-                                {this.renderLockButton(component?.fwhmFixed?.x, component?.toggleFwhmXFixed)}
+                                {this.renderLockButton(component?.fwhmFixed?.x, component?.toggleFwhmXFixed, "fwhm-x")}
                                 {this.renderParamCoordInput(InputType.Size, component?.fwhm?.y, "Minor axis", component?.setFwhmY, component?.fwhmWcs?.y, component?.setFwhmYWcs)}
-                                {this.renderLockButton(component?.fwhmFixed?.y, component?.toggleFwhmYFixed)}
+                                {this.renderLockButton(component?.fwhmFixed?.y, component?.toggleFwhmYFixed, "fwhm-y")}
                                 {this.renderInfoString(component?.fwhm, component?.fwhmWcs)}
                             </FormGroup>
                             <FormGroup label="P.A." inline={true} labelInfo="(deg)">
                                 {this.renderParamInput(component?.pa, "Position angle", component?.setPa)}
-                                {this.renderLockButton(component?.paFixed, component?.togglePaFixed)}
+                                {this.renderLockButton(component?.paFixed, component?.togglePaFixed, "pa")}
                             </FormGroup>
                             <Divider />
                             <ClearableNumericInputComponent
@@ -261,13 +262,13 @@ export class FittingDialogComponent extends React.Component {
                         </div>
                         <div className={Classes.DIALOG_FOOTER}>
                             <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                                <Switch checked={fittingStore.createModelImage} onChange={fittingStore.toggleCreateModelImage} label="Model" />
-                                <Switch checked={fittingStore.createResidualImage} onChange={fittingStore.toggleCreateResidualImage} label="Residual" />
+                                <Switch checked={fittingStore.createModelImage} onChange={fittingStore.toggleCreateModelImage} label="Model" data-testid="image-fitting-model-toggle" />
+                                <Switch checked={fittingStore.createResidualImage} onChange={fittingStore.toggleCreateResidualImage} label="Residual" data-testid="image-fitting-residual-toggle" />
                                 <Tooltip2 content="Clear fitting parameters" position={Position.BOTTOM}>
                                     <AnchorButton intent={Intent.WARNING} onClick={fittingStore.clearComponents} text="Clear" />
                                 </Tooltip2>
                                 <Tooltip2 content="Clear existing fitting results and fit the current channel of the image" position={Position.BOTTOM} disabled={fittingStore.fitDisabled}>
-                                    <AnchorButton intent={Intent.PRIMARY} onClick={fittingStore.fitImage} text="Fit" disabled={fittingStore.fitDisabled} />
+                                    <AnchorButton intent={Intent.PRIMARY} onClick={fittingStore.fitImage} text="Fit" disabled={fittingStore.fitDisabled} data-testid="image-fitting-fit-button" />
                                 </Tooltip2>
                             </div>
                         </div>
@@ -275,7 +276,7 @@ export class FittingDialogComponent extends React.Component {
                     <div className={classNames(Classes.DIALOG_BODY, "lower-pane", "fitting-result-panel")} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
                         <Tabs id="fittingResultTabs" vertical={true} selectedTabId={this.fittingResultTabId} onChange={this.setFittingResultTabId}>
                             <Tab id={FittingResultTabs.RESULT} title="Fitting Result" panel={fittingResultPanel} />
-                            <Tab id={FittingResultTabs.LOG} title="Full Log" panel={fullLogPanel} />
+                            <Tab id={FittingResultTabs.LOG} title="Full Log" panel={fullLogPanel} data-testid="image-fitting-full-log-tab-title" />
                         </Tabs>
                     </div>
                 </SplitPane>
