@@ -265,7 +265,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             });
 
             formContent = (
-                <HTMLTable>
+                <HTMLTable data-testid="statistics-table">
                     <thead className={appStore.darkTheme ? "dark-theme" : ""}>
                         <tr>
                             <th style={{width: StatsComponent.NAME_COLUMN_WIDTH}}>Statistic</th>

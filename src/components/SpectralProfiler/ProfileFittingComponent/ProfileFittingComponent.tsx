@@ -247,7 +247,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                             <FormGroup label="Auto detect" inline={true}>
                                 <div className={"component-input"}>
                                     <Tooltip2 content={this.autoButtonTooltip()}>
-                                        <AnchorButton onClick={this.autoDetect} icon="series-search" disabled={disabled} />
+                                        <AnchorButton onClick={this.autoDetect} icon="series-search" disabled={disabled} data-testid="profile-fitting-auto-detect-button" />
                                     </Tooltip2>
                                     <Switch label="w/ cont." checked={fittingStore.isAutoDetectWithCont} onChange={ev => fittingStore.setIsAutoDetectWithCont(!fittingStore.isAutoDetectWithCont)} disabled={disabled} />
                                     <Switch label="Auto fit" checked={fittingStore.isAutoDetectWithFitting} onChange={ev => fittingStore.setIsAutoDetectWithFitting(!fittingStore.isAutoDetectWithFitting)} disabled={disabled} />
@@ -392,7 +392,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                             <FormGroup label="Fitting result" inline={true}>
                                 <div onMouseOver={this.onMouseOverResult} onMouseLeave={this.onMouseLeaveResult}>
                                     <div className="fitting-result">
-                                        <Pre className="fitting-result-pre" disabled={disabled}>
+                                        <Pre className="fitting-result-pre" disabled={disabled} data-testid="profile-fitting-result">
                                             <Text className="fitting-result-text">{fittingStore.resultString}</Text>
                                         </Pre>
                                     </div>
@@ -401,8 +401,8 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                             </FormGroup>
                         </div>
                         <div className="profile-fitting-footer">
-                            <AnchorButton text="Reset" intent={Intent.PRIMARY} onClick={this.reset} disabled={disabled} />
-                            <AnchorButton text="Fit" intent={Intent.PRIMARY} onClick={this.fitData} disabled={!fittingStore.readyToFit || disabled} />
+                            <AnchorButton text="Reset" intent={Intent.PRIMARY} onClick={this.reset} disabled={disabled} data-testid="profile-fitting-reset-button" />
+                            <AnchorButton text="Fit" intent={Intent.PRIMARY} onClick={this.fitData} disabled={!fittingStore.readyToFit || disabled} data-testid="profile-fitting-fit-button" />
                             <Popover2
                                 isOpen={this.isShowingLog}
                                 onClose={this.handleLogClose}
