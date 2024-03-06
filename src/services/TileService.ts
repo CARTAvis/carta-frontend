@@ -11,7 +11,7 @@ import {copyToFP32Texture, createFP32Texture, GL2} from "utilities";
 import ZFPWorker from "!worker-loader!zfp_wrapper";
 
 export interface RasterTile {
-    data: Float32Array;
+    data?: Float32Array;
     width: number | null | undefined;
     height: number | null | undefined;
     textureCoordinate: number | undefined;
@@ -365,7 +365,7 @@ export class TileService {
 
     uploadTileToGPU(tile: RasterTile) {
         const textureParameters = this.getTileTextureParameters(tile);
-        if (textureParameters.texture && tile.width && tile.height) {
+        if (textureParameters.texture && tile.width && tile.height && tile.data) {
             copyToFP32Texture(this.gl, textureParameters.texture, tile.data, GL2.TEXTURE0, tile.width, tile.height, textureParameters.offset.x, textureParameters.offset.y);
         }
     }
@@ -391,7 +391,7 @@ export class TileService {
 
     private clearTile = (tile: RasterTile, _key: any) => {
         if (tile.data) {
-            tile.data = new Float32Array();
+            delete tile.data;
         }
         this.textureCoordinateQueue.push(tile.textureCoordinate);
     };
