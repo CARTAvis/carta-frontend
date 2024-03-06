@@ -20,8 +20,8 @@ interface ShaderUniforms {
     NaNColor: WebGLUniformLocation;
     DataTexture: WebGLUniformLocation;
     CmapTexture: WebGLUniformLocation;
-    RGB: WebGLUniformLocation;
-    InitRGB: WebGLUniformLocation;
+    CmapCustomGradientEnd: WebGLUniformLocation;
+    CmapCustomGradientStart: WebGLUniformLocation;
     NumCmaps: WebGLUniformLocation;
     CmapIndex: WebGLUniformLocation;
     CanvasWidth: WebGLUniformLocation;
@@ -100,8 +100,8 @@ export class TileWebGLService {
             Inverted: this.gl.getUniformLocation(this.shaderProgram, "uInverted"),
             DataTexture: this.gl.getUniformLocation(this.shaderProgram, "uDataTexture"),
             CmapTexture: this.gl.getUniformLocation(this.shaderProgram, "uCmapTexture"),
-            RGB: this.gl.getUniformLocation(this.shaderProgram, "uRGB"),
-            InitRGB: this.gl.getUniformLocation(this.shaderProgram, "uInitRGB"),
+            CmapCustomGradientEnd: this.gl.getUniformLocation(this.shaderProgram, "uCmapCustomGradientEnd"),
+            CmapCustomGradientStart: this.gl.getUniformLocation(this.shaderProgram, "uCmapCustomGradientStart"),
             NumCmaps: this.gl.getUniformLocation(this.shaderProgram, "uNumCmaps"),
             CmapIndex: this.gl.getUniformLocation(this.shaderProgram, "uCmapIndex"),
             CanvasWidth: this.gl.getUniformLocation(this.shaderProgram, "uCanvasWidth"),
@@ -124,8 +124,8 @@ export class TileWebGLService {
 
         this.gl.uniform1i(this.shaderUniforms.DataTexture, 0);
         this.gl.uniform1i(this.shaderUniforms.CmapTexture, 1);
-        this.gl.uniform3f(this.shaderUniforms.RGB, 0, 0, 0);
-        this.gl.uniform3f(this.shaderUniforms.InitRGB, 1, 1, 1);
+        this.gl.uniform3f(this.shaderUniforms.CmapCustomGradientEnd, 0, 0, 0);
+        this.gl.uniform3f(this.shaderUniforms.CmapCustomGradientStart, 1, 1, 1);
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);
         this.gl.uniform1i(this.shaderUniforms.CmapIndex, 2);
         this.gl.uniform1f(this.shaderUniforms.MinVal, 3.4);
@@ -167,12 +167,12 @@ export class TileWebGLService {
         this.gl.bufferData(GL2.ARRAY_BUFFER, uvs, GL2.STATIC_DRAW);
     }
 
-    setRgbUniform(hex: string, startHex?: string) {
+    setCustomGradientUniforms(hex: string, startHex?: string) {
         if (tinycolor(hex).getFormat() === "hex") {
             const rgb = tinycolor(hex).toRgb();
-            this.gl.uniform3f(this.shaderUniforms.RGB, rgb.r / 255, rgb.g / 255, rgb.b / 255);
-            const InitRGB = tinycolor(startHex).getFormat() === "hex" ? tinycolor(startHex).toRgb() : tinycolor("#000000").toRgb();
-            this.gl.uniform3f(this.shaderUniforms.InitRGB, InitRGB.r / 255, InitRGB.g / 255, InitRGB.b / 255);
+            this.gl.uniform3f(this.shaderUniforms.CmapCustomGradientEnd, rgb.r / 255, rgb.g / 255, rgb.b / 255);
+            const CmapCustomGradientStart = tinycolor(startHex).getFormat() === "hex" ? tinycolor(startHex).toRgb() : tinycolor("#000000").toRgb();
+            this.gl.uniform3f(this.shaderUniforms.CmapCustomGradientStart, CmapCustomGradientStart.r / 255, CmapCustomGradientStart.g / 255, CmapCustomGradientStart.b / 255);
         }
     }
 

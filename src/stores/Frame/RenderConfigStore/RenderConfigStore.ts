@@ -27,6 +27,9 @@ export class RenderConfigStore {
         [FrameScaling.POWER, "Power"]
     ]);
 
+    /**
+     * All provided colormaps.
+     */
     static readonly COLOR_MAPS_ALL = [
         "accent",
         "afmhot",
@@ -113,9 +116,11 @@ export class RenderConfigStore {
         "Green",
         "Cyan",
         "Blue",
-        "Violet",
-        "custom"
+        "Violet"
     ];
+    /**
+     * The selected colormaps shown in the option.
+     */
     static readonly COLOR_MAPS_SELECTED = [
         "afmhot",
         "Blues",
@@ -143,6 +148,9 @@ export class RenderConfigStore {
         "tab10",
         "viridis"
     ];
+    /**
+     * Some commonly used single-color gradients.
+     */
     static readonly COLOR_MAPS_MONO = new Map<string, string>([
         ["Red", "#FF0000"],
         ["Orange", "#FFA500"],
@@ -152,7 +160,9 @@ export class RenderConfigStore {
         ["Blue", "#0000FF"],
         ["Violet", "#7F00FF"]
     ]);
-    static readonly COLOR_MAPS_CUSTOM = ["custom", "color_panel"];
+    static readonly CUSTOM_COLOR_MAP_INDEX = -1;
+    static readonly COLOR_MAPS_CUSTOM = "custom";
+    static readonly COLOR_MAPS_PANEL = "color_panel";
 
     static readonly PERCENTILE_RANKS = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
 
@@ -185,9 +195,8 @@ export class RenderConfigStore {
     @observable visible: boolean;
     @observable previewHistogramMax: number;
     @observable previewHistogramMin: number;
-    @observable customColormapHex: string;
-    @observable customInitColormapHex: string;
-    @observable monoColormapHex: string;
+    @observable customColormapHexEnd: string;
+    @observable customColormapHexStart: string;
 
     private frame: FrameStore;
 
@@ -209,9 +218,8 @@ export class RenderConfigStore {
         this.scaleMin = new Array<number>(stokesLength).fill(0);
         this.scaleMax = new Array<number>(stokesLength).fill(1);
         this.visible = true;
-        this.customColormapHex = preference.colormapHex;
-        this.customInitColormapHex = preference.InitColormapHex;
-        this.monoColormapHex = RenderConfigStore.COLOR_MAPS_MONO.get(preference.colormap);
+        this.customColormapHexEnd = preference.colormapHex;
+        this.customColormapHexStart = preference.colormapHexStart;
     }
 
     public static IsScalingValid(scaling: FrameScaling): boolean {
@@ -231,21 +239,29 @@ export class RenderConfigStore {
     }
 
     @computed get colorMap() {
-        if (this.colorMapIndex >= 0 && this.colorMapIndex <= RenderConfigStore.COLOR_MAPS_ALL.length - 2) {
+        if (this.colorMapIndex >= 0 && this.colorMapIndex < RenderConfigStore.COLOR_MAPS_ALL.length) {
             return RenderConfigStore.COLOR_MAPS_ALL[this.colorMapIndex];
-        } else if (this.colorMapIndex === -1) {
-            return RenderConfigStore.COLOR_MAPS_CUSTOM[0];
+        } else if (this.colorMapIndex === RenderConfigStore.CUSTOM_COLOR_MAP_INDEX) {
+            return RenderConfigStore.COLOR_MAPS_CUSTOM;
         } else {
             return "Unknown";
         }
     }
 
     @computed get customColorGradient() {
-        return getColorsFromHex(this.customColormapHex, this.customInitColormapHex);
+        return getColorsFromHex(this.customColormapHexEnd, this.customColormapHexStart);
     }
 
     @computed get colorscaleArray() {
-        const colorsForValues = getColorsForValues(this.colorMap, this.frame.renderConfig);
+        let colorsForValues: {color: Uint8ClampedArray; size: number};
+        if (this.colorMapIndex === RenderConfigStore.CUSTOM_COLOR_MAP_INDEX) {
+            colorsForValues = this.customColorGradient;
+        } else if (this.colorMapIndex >= 79 && this.colorMapIndex < RenderConfigStore.COLOR_MAPS_ALL.length) {
+            colorsForValues = getColorsFromHex(this.monoColormapHex);
+        } else if (this.colorMapIndex >= 0) {
+            colorsForValues = getColorsForValues(this.colorMap);
+        }
+
         const indexArray = Array.from(Array(colorsForValues.size).keys()).map(x => (this.inverted ? 1 - x / colorsForValues.size : x / colorsForValues.size));
         const scaledArray = indexArray.map(x => 1.0 - scaleValueInverse(x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast, AppStore.Instance?.preferenceStore?.useSmoothedBiasContrast));
         let rbgString = (index: number): string => `rgb(${colorsForValues.color[index * 4]}, ${colorsForValues.color[index * 4 + 1]}, ${colorsForValues.color[index * 4 + 2]}, ${colorsForValues.color[index * 4 + 3]})`;
@@ -314,14 +330,29 @@ export class RenderConfigStore {
         return this.selectedPercentile[this.stokesIndex];
     }
 
+    /**
+     * Set the channel number for the histogram.
+     *
+     * @param val - The channel number.
+     */
     @action setHistChannel = (val: number) => {
         this.histChannel = val;
     };
 
+    /**
+     * Set the polarization index for the histogram.
+     *
+     * @param val - The polarization index from 0 to maximum 8 (depending on data).
+     */
     @action setStokesIndex = (val: number) => {
         this.stokesIndex = val;
     };
 
+    /**
+     * Use cube data instead of per channel data for the histogram.
+     *
+     * @param val - True for using the cube data.
+     */
     @action setUseCubeHistogram = (val: boolean) => {
         if (val !== this.useCubeHistogram) {
             this.useCubeHistogram = val;
@@ -331,6 +362,11 @@ export class RenderConfigStore {
         }
     };
 
+    /**
+     * Use cube data instead of per channel data for the contour.
+     *
+     * @param val - True for using the cube data.
+     */
     @action setUseCubeHistogramContours = (val: boolean) => {
         this.useCubeHistogramContours = val;
     };
@@ -349,6 +385,12 @@ export class RenderConfigStore {
         return this.histogram.firstBinCenter + (this.histogram.bins.length + 0.5) * this.histogram.binWidth;
     }
 
+    /**
+     * Set the included histogram fraction for the colormap.
+     *
+     * @param rank - A value between 0 and 100.
+     * @returns A boolean for the checking purpose.
+     */
     @action setPercentileRank = (rank: number) => {
         this.selectedPercentile[this.stokesIndex] = rank;
         // Find max and min if the rank is 100%
@@ -390,6 +432,12 @@ export class RenderConfigStore {
         }
     };
 
+    /**
+     * Set minimum and maximum values of the scaling.
+     *
+     * @param minVal - The minimum scaling value.
+     * @param maxVal - The maximum scaling value.
+     */
     @action setCustomScale = (minVal: number, maxVal: number) => {
         this.scaleMin[this.stokesIndex] = minVal;
         this.scaleMax[this.stokesIndex] = maxVal;
@@ -397,45 +445,68 @@ export class RenderConfigStore {
         this.updateSiblings();
     };
 
+    /**
+     * Set index of the colormap.
+     *
+     * @param index - The colormap index between -1 and array {@link RenderConfigStore.COLOR_MAPS_ALL} size. The index -1 is the custom color.
+     */
     @action setColorMapIndex = (index: number) => {
-        this.colorMapIndex = clamp(index, -1, RenderConfigStore.COLOR_MAPS_ALL.length - 2);
+        this.colorMapIndex = clamp(index, -1, RenderConfigStore.COLOR_MAPS_ALL.length - 1);
         this.updateSiblings();
     };
 
+    /**
+     * Set the colormap.
+     *
+     * @param colormap - The colormap name in {@link RenderConfigStore.COLOR_MAPS_ALL}.
+     */
     @action setColorMap = (colormap: string) => {
-        const customColorIndex = -1;
-        if (colormap === RenderConfigStore.COLOR_MAPS_CUSTOM[0]) {
-            this.setColorMapIndex(customColorIndex);
-        } else {
-            const index = RenderConfigStore.COLOR_MAPS_ALL.indexOf(colormap);
-            if (index >= 0) {
-                // 79 is the colormap number in allmaps.png
-                if (index > 79) {
-                    this.setMonoColormapHex(RenderConfigStore.COLOR_MAPS_MONO.get(colormap));
-                }
-                this.setColorMapIndex(index);
-            }
+        const index = RenderConfigStore.COLOR_MAPS_ALL.indexOf(colormap);
+        if (colormap === RenderConfigStore.COLOR_MAPS_CUSTOM) {
+            this.setColorMapIndex(RenderConfigStore.CUSTOM_COLOR_MAP_INDEX);
+        } else if (index >= 0 && index < RenderConfigStore.COLOR_MAPS_ALL.length) {
+            this.setColorMapIndex(index);
         }
     };
 
+    /**
+     * Set the colormap to be "custom" and its Hex.
+     *
+     * @param colorHex - The Hex string.
+     */
     @action setCustomColorMap = (colorHex: string) => {
-        this.setCustomHex(colorHex);
-        this.setColorMap(RenderConfigStore.COLOR_MAPS_CUSTOM[0]);
+        this.setCustomHexEnd(colorHex);
+        this.setColorMapIndex(RenderConfigStore.CUSTOM_COLOR_MAP_INDEX);
         this.updateSiblings();
     };
 
-    @action setCustomHex = (colorHex: string) => {
-        this.customColormapHex = colorHex;
+    /**
+     * Set Hex to generate the custom colormap.
+     *
+     * @param colorHex - The Hex string.
+     */
+    @action setCustomHexEnd = (colorHex: string) => {
+        this.customColormapHexEnd = colorHex;
     };
 
-    @action setCustomInitHex = (colorHex: string) => {
-        this.customInitColormapHex = colorHex;
+    /**
+     * Set starting Hex to generate the custom colormap. The default color is black.
+     *
+     * @param colorHex - The Hex string.
+     */
+    @action setCustomHexStart = (colorHex: string) => {
+        this.customColormapHexStart = colorHex;
     };
 
-    @action setMonoColormapHex = (colorHex: string) => {
-        this.monoColormapHex = colorHex;
-    };
+    @computed get monoColormapHex() {
+        return RenderConfigStore.COLOR_MAPS_MONO.get(RenderConfigStore.COLOR_MAPS_ALL[this.colorMapIndex]);
+    }
 
+    /**
+     * Set the colormap scaling type.
+     *
+     * @param newScaling - The colormap scaling type {@link RenderConfigStore.SCALING_TYPES}.
+     */
     @action setScaling = (newScaling: FrameScaling) => {
         if (RenderConfigStore.SCALING_TYPES.has(newScaling)) {
             this.scaling = newScaling;
@@ -443,36 +514,67 @@ export class RenderConfigStore {
         }
     };
 
+    /**
+     * Set the gamma value for the scaling type Gamma.
+     *
+     * @param gamma - The gamma value of the scaling type Gamma.
+     */
     @action setGamma = (gamma: number) => {
         this.gamma = gamma;
         this.updateSiblings();
     };
 
+    /**
+     * Set the alpha value for the scaling type Power.
+     *
+     * @param alpha - The alpha value of the scaling type Power.
+     */
     @action setAlpha = (alpha: number) => {
         this.alpha = alpha;
         this.updateSiblings();
     };
 
+    /**
+     * Set the bias value.
+     *
+     * @param bias - The bias value of the colormap.
+     */
     @action setBias = (bias: number) => {
         this.bias = bias;
         this.updateSiblings();
     };
 
+    /**
+     * Set the bias to be default value 0.
+     */
     @action resetBias = () => {
         this.bias = 0;
         this.updateSiblings();
     };
 
+    /**
+     * Set the contrast value.
+     *
+     * @param contrast - The contrast value of the colormap.
+     */
     @action setContrast = (contrast: number) => {
         this.contrast = contrast;
         this.updateSiblings();
     };
 
+    /**
+     * Set the contrast to be default value 0.
+     */
     @action resetContrast = () => {
         this.contrast = 1;
         this.updateSiblings();
     };
 
+    /**
+     * Invert the colormap.
+     *
+     * @param inverted - True for inverting colormap.
+     */
     @action setInverted = (inverted: boolean) => {
         this.inverted = inverted;
         this.updateSiblings();
@@ -482,10 +584,20 @@ export class RenderConfigStore {
         this.visible = visible;
     };
 
+    /**
+     * Set the upper boundary of the histogram in the preview image.
+     *
+     * @param histogramMax - The upper cut of the histogram.
+     */
     @action setPreviewHistogramMax = (histogramMax: number) => {
         this.previewHistogramMax = histogramMax;
     };
 
+    /**
+     * Set the lower boundary of the histogram in the preview image.
+     *
+     * @param histogramMin - The lower cut of the histogram.
+     */
     @action setPreviewHistogramMin = (histogramMin: number) => {
         this.previewHistogramMin = histogramMin;
     };
@@ -513,17 +625,15 @@ export class RenderConfigStore {
         this.scaleMax[this.stokesIndex] = other.scaleMaxVal;
         this.selectedPercentile[this.stokesIndex] = -1;
         this.colorMapIndex = other.colorMapIndex;
-        this.customColormapHex = other.customColormapHex;
-        this.customInitColormapHex = other.customInitColormapHex;
-        this.monoColormapHex = other.monoColormapHex;
+        this.customColormapHexEnd = other.customColormapHexEnd;
+        this.customColormapHexStart = other.customColormapHexStart;
         this.inverted = other.inverted;
     };
 
     @action updateFromWorkspace = (config: WorkspaceRenderConfig) => {
         this.scaling = config.scaling;
         this.setColorMap(config.colorMap);
-        this.setCustomColorMap(config.customColormapHex);
-        this.setMonoColormapHex(config.monoColormapHex);
+        this.setCustomColorMap(config.customColormapHexEnd);
         this.bias = config.bias;
         this.contrast = config.contrast;
         this.gamma = config.gamma;

@@ -55,16 +55,7 @@ imageObj.onload = () => {
 };
 
 // return color map as Uint8ClampedArray according colorMap
-export function getColorsForValues(colorMap: string, renderConfig?: RenderConfigStore): {color: Uint8ClampedArray; size: number} {
-    if (RenderConfigStore?.COLOR_MAPS_MONO.get(colorMap)) {
-        const targetColorHex = RenderConfigStore.COLOR_MAPS_MONO.get(colorMap);
-        return getColorsFromHex(targetColorHex);
-    }
-
-    if (colorMap === RenderConfigStore.COLOR_MAPS_CUSTOM[0]) {
-        return renderConfig.customColorGradient;
-    }
-
+export function getColorsForValues(colorMap: string): {color: Uint8ClampedArray; size: number} {
     const colorMaps = RenderConfigStore.COLOR_MAPS_ALL;
     const colorMapIndex = colorMaps.indexOf(colorMap);
 
@@ -120,7 +111,7 @@ function generateColorGradientArray(targetColorHex: string, startColorHex = "#00
         const blue = Math.round((1 - factor) * startColor.b + factor * targetColor.b);
         const alpha = 255;
 
-        // Push the RGBA values as a string to the array
+        // Push the RGBA values to the array
         gradientArray.push(red, green, blue, alpha);
     }
 

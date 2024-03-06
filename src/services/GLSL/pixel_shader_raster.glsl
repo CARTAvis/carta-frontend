@@ -8,9 +8,8 @@ uniform sampler2D uCmapTexture;
 // Render parameters
 uniform int uNumCmaps;
 uniform int uCmapIndex;
-uniform vec3 uRGB;
-uniform vec3 uInitRGB;
-// uniform vec3 uCalculateRGB;
+uniform vec3 uCmapCustomGradientEnd;
+uniform vec3 uCmapCustomGradientStartRGB;
 uniform int uScaleType;
 uniform int uInverted;
 uniform int uUseSmoothedBiasContrast;
@@ -126,10 +125,7 @@ void main(void) {
     } else if (rawVal < uPixelHighlightVal) {
         outColor = vec4(x, x, x, 1);
     } else if (uCmapIndex == -1 || uCmapIndex >= uNumCmaps) {
-        float r = uInitRGB.r+(uRGB.r-uInitRGB.r)*x;
-        float g = uInitRGB.g+(uRGB.g-uInitRGB.g)*x;
-        float b = uInitRGB.b+(uRGB.b-uInitRGB.b)*x;
-        outColor = vec4(r, g, b, 1);
+        outColor = vec4(uCmapCustomGradientStartRGB + (uCmapCustomGradientEnd - uCmapCustomGradientStartRGB) * x, 1);
     } else {
         float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
         vec2 cmapCoords = vec2(x, cmapYVal);

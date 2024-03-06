@@ -46,7 +46,15 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                     <ScalingSelectComponent selectedItem={renderConfig.scaling} onItemSelect={renderConfig.setScaling} />
                 </FormGroup>
                 <FormGroup label={"Colormap"} inline={true}>
-                    <ColormapComponent inverted={renderConfig.inverted} selectedItem={renderConfig.colorMap} onItemSelect={renderConfig.setColorMap} enableAdditionalColor={true} />
+                    <ColormapComponent
+                        inverted={renderConfig.inverted}
+                        selectedColormap={renderConfig.colorMap}
+                        onColormapSelect={renderConfig.setColorMap}
+                        enableAdditionalColor={true}
+                        onCustomColorSelect={renderConfig.setCustomColorMap}
+                        selectedCustomColor={renderConfig.customColormapHexEnd}
+                        customColorStart={renderConfig.customColormapHexStart}
+                    />
                 </FormGroup>
                 <FormGroup label={"Invert colormap"} inline={true}>
                     <Switch checked={renderConfig.inverted} onChange={this.handleInvertedChanged} />
