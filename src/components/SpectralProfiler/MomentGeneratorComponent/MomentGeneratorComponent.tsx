@@ -250,11 +250,11 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                             widgetStore.setKeep(e.checked);
                         }}
                     />
-                    {frame === appStore.spatialReference && <Switch label={"Auto spatial matching"} checked={appStore.momentToMatch} onChange={appStore.toggleMomentToMatch} />}
+                    {frame === appStore.spatialReference && <Switch label={"Auto spatial matching"} checked={appStore.momentToMatch} onChange={appStore.toggleMomentToMatch} data-testid="moment-generator-auto-matching-toggle" />}
                 </FormGroup>
                 <div className="moment-generate">
                     <Tooltip2 disabled={isAbleToGenerate} content={msg} position={Position.BOTTOM}>
-                        <AnchorButton intent="success" onClick={this.handleRequestMoment} disabled={!isAbleToGenerate}>
+                        <AnchorButton intent="success" onClick={this.handleRequestMoment} disabled={!isAbleToGenerate} data-testid="moment-generator-generate-button">
                             Generate
                         </AnchorButton>
                     </Tooltip2>

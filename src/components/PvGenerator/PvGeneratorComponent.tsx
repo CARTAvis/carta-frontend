@@ -342,7 +342,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                         </span>
                     }
                 >
-                    <HTMLSelect value={selectedValue} options={this.widgetStore.regionOptions} onChange={this.handleRegionChanged} />
+                    <HTMLSelect value={selectedValue} options={this.widgetStore.regionOptions} onChange={this.handleRegionChanged} data-testid="pv-generator-pv-cut-region-dropdown" />
                 </FormGroup>
                 <FormGroup inline={true} label="Average width">
                     <SafeNumericInput min={1} max={20} stepSize={1} value={this.widgetStore.width} onValueChange={value => this.widgetStore.setWidth(value)} />
@@ -422,7 +422,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                     </div>
                     <div>
                         <Tooltip2 disabled={isAbleToGenerate} content={hint} position={Position.BOTTOM}>
-                            <AnchorButton intent="success" disabled={!isAbleToGenerate} text="Generate" onClick={this.onGenerateButtonClicked} />
+                            <AnchorButton intent="success" disabled={!isAbleToGenerate} text="Generate" onClick={this.onGenerateButtonClicked} data-testid="pv-generator-generate-button" />
                         </Tooltip2>
                     </div>
                 </div>
