@@ -85,6 +85,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
 
         const handleColorChange = _.throttle((color: any) => {
             props.onCustomColorSelect(color.hex);
+            props.onColormapSelect(RenderConfigStore.COLOR_MAPS_CUSTOM);
         }, changeDelay);
 
         if (!modifiers.matchesPredicate) {

@@ -476,7 +476,6 @@ export class RenderConfigStore {
      */
     @action setCustomColorMap = (colorHex: string) => {
         this.setCustomHexEnd(colorHex);
-        this.setColorMapIndex(RenderConfigStore.CUSTOM_COLOR_MAP_INDEX);
         this.updateSiblings();
     };
 

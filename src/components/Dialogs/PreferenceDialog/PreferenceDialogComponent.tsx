@@ -155,13 +155,6 @@ export class PreferenceDialogComponent extends React.Component {
         }
     };
 
-    private handleCustomColorPreference = (colorHex: string) => {
-        const appStore = AppStore.Instance;
-        const preference = appStore.preferenceStore;
-        preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP, "custom"); // the string "custom" should be the same as RenderConfigStore.COLOR_MAPS_CUSTOM
-        preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLOR_HEX, colorHex);
-    };
-
     public render() {
         const appStore = AppStore.Instance;
         const preference = appStore.preferenceStore;
@@ -259,7 +252,7 @@ export class PreferenceDialogComponent extends React.Component {
                         selectedColormap={preference.colormap}
                         onColormapSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP, selected)}
                         enableAdditionalColor={true}
-                        onCustomColorSelect={this.handleCustomColorPreference}
+                        onCustomColorSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLOR_HEX, selected)}
                         selectedCustomColor={preference.colormapHex}
                         customColorStart={preference.colormapHexStart}
                     />
