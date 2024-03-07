@@ -51,7 +51,7 @@ export class TelemetryDialogComponent extends React.Component {
                             <Button intent={Intent.PRIMARY} onClick={this.optInClicked}>
                                 Yes, send usage data
                             </Button>
-                            <Button intent={Intent.PRIMARY} onClick={this.optOutClicked}>
+                            <Button intent={Intent.PRIMARY} onClick={this.optOutClicked} data-testid="telemetry-opt-out-button">
                                 No, do not send usage data
                             </Button>
                             <div className="opt-note">Metrics include session duration, number and size of images opened.</div>

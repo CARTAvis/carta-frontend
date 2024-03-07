@@ -703,7 +703,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 </div>
                 <div className="bp3-dialog-body">
                     <div className={paneClassName}>
-                        <div className="file-list">
+                        <div className="file-list" data-testid="file-list">
                             <FileListTableComponent
                                 darkTheme={appStore.darkTheme}
                                 loading={fileBrowserStore.loadingList}

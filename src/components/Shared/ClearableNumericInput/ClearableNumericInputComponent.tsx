@@ -25,6 +25,7 @@ export interface ClearableNumericInputProps extends NumericInputProps {
     inline?: boolean; // default true
     focused?: boolean;
     additionalFormContent?: React.ReactNode;
+    dataTestId?: string;
 }
 
 @observer
@@ -124,6 +125,7 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
                         </Tooltip2>
                     }
                     placeholder={this.props.placeholder}
+                    data-testid={this.props.dataTestId}
                 />
                 {this.props.additionalFormContent}
             </FormGroup>
