@@ -83,17 +83,17 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
         const disableAlpha = true;
         const changeDelay = 100;
 
-        const handleColorChange = _.throttle((color: any) => {
-            props.onCustomColorSelect(color.hex);
-            props.onColormapSelect(RenderConfigStore.COLOR_MAPS_CUSTOM);
-        }, changeDelay);
-
         if (!modifiers.matchesPredicate) {
             return null;
         }
 
         if (colormap === RenderConfigStore.COLOR_MAPS_PANEL) {
             const popoverClassName = classNames("color-picker-popup", {"bp3-dark": AppStore.Instance.darkTheme});
+
+            const handleColorChange = _.throttle((color: any) => {
+                props.onCustomColorSelect(color.hex);
+                props.onColormapSelect(RenderConfigStore.COLOR_MAPS_CUSTOM);
+            }, changeDelay);
 
             return (
                 <div key={"custom-color"} className={"raster-custom-color"}>

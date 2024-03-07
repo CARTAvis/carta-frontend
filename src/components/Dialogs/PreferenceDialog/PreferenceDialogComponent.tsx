@@ -252,7 +252,7 @@ export class PreferenceDialogComponent extends React.Component {
                         selectedColormap={preference.colormap}
                         onColormapSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP, selected)}
                         enableAdditionalColor={true}
-                        onCustomColorSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLOR_HEX, selected)}
+                        onCustomColorSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX, selected)}
                         selectedCustomColor={preference.colormapHex}
                         customColorStart={preference.colormapHexStart}
                     />

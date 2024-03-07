@@ -470,22 +470,13 @@ export class RenderConfigStore {
     };
 
     /**
-     * Set the colormap to be "custom" and its Hex.
-     *
-     * @param colorHex - The Hex string.
-     */
-    @action setCustomColorMap = (colorHex: string) => {
-        this.setCustomHexEnd(colorHex);
-        this.updateSiblings();
-    };
-
-    /**
      * Set Hex to generate the custom colormap.
      *
      * @param colorHex - The Hex string.
      */
     @action setCustomHexEnd = (colorHex: string) => {
         this.customColormapHexEnd = colorHex;
+        this.updateSiblings();
     };
 
     /**
@@ -495,6 +486,7 @@ export class RenderConfigStore {
      */
     @action setCustomHexStart = (colorHex: string) => {
         this.customColormapHexStart = colorHex;
+        this.updateSiblings();
     };
 
     @computed get monoColormapHex() {
@@ -562,7 +554,7 @@ export class RenderConfigStore {
     };
 
     /**
-     * Set the contrast to be default value 0.
+     * Set the contrast to be default value 1.
      */
     @action resetContrast = () => {
         this.contrast = 1;
@@ -632,7 +624,7 @@ export class RenderConfigStore {
     @action updateFromWorkspace = (config: WorkspaceRenderConfig) => {
         this.scaling = config.scaling;
         this.setColorMap(config.colorMap);
-        this.setCustomColorMap(config.customColormapHexEnd);
+        this.setCustomHexEnd(config.customColormapHexEnd);
         this.bias = config.bias;
         this.contrast = config.contrast;
         this.gamma = config.gamma;

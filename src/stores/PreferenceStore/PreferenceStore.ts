@@ -50,8 +50,8 @@ export enum PreferenceKeys {
 
     RENDER_CONFIG_SCALING = "scaling",
     RENDER_CONFIG_COLORMAP = "colormap",
-    RENDER_CONFIG_COLOR_HEX = "colormapHex",
-    RENDER_CONFIG_COLOR_HEX_START = "colormapHexStart",
+    RENDER_CONFIG_COLORMAP_HEX = "colormapHex",
+    RENDER_CONFIG_COLORMAP_HEX_START = "colormapHexStart",
     RENDER_CONFIG_PERCENTILE = "percentile",
     RENDER_CONFIG_SCALING_ALPHA = "scalingAlpha",
     RENDER_CONFIG_SCALING_GAMMA = "scalingGamma",
@@ -378,11 +378,11 @@ export class PreferenceStore {
     }
 
     @computed get colormapHex(): string {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLOR_HEX) ?? DEFAULTS.RENDER_CONFIG.colormapHex;
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX) ?? DEFAULTS.RENDER_CONFIG.colormapHex;
     }
 
     @computed get colormapHexStart(): string {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLOR_HEX_START) ?? DEFAULTS.RENDER_CONFIG.colormapHexStart;
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX_START) ?? DEFAULTS.RENDER_CONFIG.colormapHexStart;
     }
 
     @computed get percentile(): number {
@@ -832,8 +832,8 @@ export class PreferenceStore {
     @action resetRenderConfigSettings = () => {
         this.clearPreferences([
             PreferenceKeys.RENDER_CONFIG_COLORMAP,
-            PreferenceKeys.RENDER_CONFIG_COLOR_HEX,
-            PreferenceKeys.RENDER_CONFIG_COLOR_HEX_START,
+            PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX,
+            PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX_START,
             PreferenceKeys.RENDER_CONFIG_NAN_ALPHA,
             PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
             PreferenceKeys.RENDER_CONFIG_PERCENTILE,

@@ -51,7 +51,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                         selectedColormap={renderConfig.colorMap}
                         onColormapSelect={renderConfig.setColorMap}
                         enableAdditionalColor={true}
-                        onCustomColorSelect={renderConfig.setCustomColorMap}
+                        onCustomColorSelect={renderConfig.setCustomHexEnd}
                         selectedCustomColor={renderConfig.customColormapHexEnd}
                         customColorStart={renderConfig.customColormapHexStart}
                     />
