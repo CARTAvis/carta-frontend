@@ -9,10 +9,9 @@ import {observer} from "mobx-react";
 
 import {AppToaster, ExportImageMenuComponent, SuccessToast} from "components/Shared";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
-import {CARTA_INFO, PresetLayout, Snippet} from "models";
+import {CARTA_INFO, ImageViewItem, PresetLayout, Snippet} from "models";
 import {ApiService, ConnectionStatus} from "services";
 import {AppStore, BrowserMode, DialogId, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
-import {FrameStore} from "stores/Frame";
 import {copyToClipboard, toFixed} from "utilities";
 
 import {WorkspaceDialogMode} from "../Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
@@ -270,8 +269,9 @@ export class RootMenuComponent extends React.Component {
             </Menu>
         );
 
-        let layerItems = appStore.frames.map(frame => {
-            return <Menu.Item text={frame.filename} active={appStore.activeFrame && appStore.activeFrame.frameInfo.fileId === frame.frameInfo.fileId} key={frame.frameInfo.fileId} onClick={() => this.handleFrameSelect(frame)} />;
+        const imageItems = Array.from(Array(appStore.imageViewConfigStore.imageNum).keys()).map(index => {
+            const image = appStore.imageViewConfigStore.getImage(index);
+            return <Menu.Item text={image.store.filename} active={appStore.activeImageIndex === index} key={index} onClick={() => this.handleImageSelect(image)} />;
         });
 
         const presetLayouts: string[] = PresetLayout.PRESETS;
@@ -323,12 +323,12 @@ export class RootMenuComponent extends React.Component {
                             ))}
                     </Menu.Item>
                 </Menu.Item>
-                {layerItems.length > 0 && (
+                {imageItems.length > 0 && (
                     <Menu.Item text="Images" icon={"multi-select"}>
-                        {layerItems}
+                        {imageItems}
                         <Menu.Divider />
-                        <Menu.Item text="Previous Image" icon={"step-backward"} disabled={layerItems.length < 2} onClick={appStore.prevImage} />
-                        <Menu.Item text="Next Image" icon={"step-forward"} disabled={layerItems.length < 2} onClick={appStore.nextImage} />
+                        <Menu.Item text="Previous Image" icon={"step-backward"} disabled={imageItems.length < 2} onClick={appStore.prevImage} />
+                        <Menu.Item text="Next Image" icon={"step-forward"} disabled={imageItems.length < 2} onClick={appStore.nextImage} />
                     </Menu.Item>
                 )}
                 <Menu.Item text="File Header" icon={"app-header"} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.FileInfo)} />
@@ -563,12 +563,12 @@ export class RootMenuComponent extends React.Component {
         this.documentationAlertVisible = false;
     };
 
-    handleFrameSelect = (frame: FrameStore) => {
+    handleImageSelect = (image: ImageViewItem) => {
         const appStore = AppStore.Instance;
-        if (appStore.activeFrame && appStore.activeFrame === frame) {
+        if (appStore.activeImage && appStore.activeImage === image) {
             return;
         } else {
-            appStore.updateActiveImageByFrame(frame);
+            appStore.updateActiveImage(image);
         }
     };
 }
