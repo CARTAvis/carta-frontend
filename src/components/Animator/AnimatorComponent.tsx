@@ -78,12 +78,13 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         frame?.setStokesByIndex(val, true);
     };
 
-    onFrameChanged = (val: number) => {
+    onImageChanged = (val: number) => {
         const appStore = AppStore.Instance;
+        const imageNum = appStore.imageViewConfigStore.imageNum;
         if (val < 0) {
-            val += appStore.frames.length;
+            val += imageNum;
         }
-        if (val >= appStore.frames.length) {
+        if (val >= imageNum) {
             val = 0;
         }
         appStore.setActiveImageByIndex(val);
@@ -127,7 +128,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
         switch (appStore.animatorStore.animationMode) {
             case AnimationMode.FRAME:
-                appStore.setActiveImageByIndex(appStore.frames.length - 1);
+                appStore.setActiveImageByIndex(appStore.imageViewConfigStore.imageNum - 1);
                 break;
             case AnimationMode.CHANNEL:
                 frame.setChannels(frame.frameInfo.fileInfoExtended.depth - 1, frame.stokes, true);
@@ -202,7 +203,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
     public render() {
         const appStore = AppStore.Instance;
-        const numFrames = appStore.frames.length;
+        const numImages = appStore.imageViewConfigStore.imageNum;
         const activeFrame = appStore.activeFrame;
         const numChannels = activeFrame ? activeFrame.frameInfo.fileInfoExtended.depth : 0;
         const numStokes = activeFrame ? activeFrame.frameInfo.fileInfoExtended.stokes : 0;
@@ -210,22 +211,22 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         const iconOnly = this.width < 625;
         const hideSliders = this.width < 450;
 
-        let channelSlider, channelRangeSlider, stokesSlider, frameSlider;
-        // Frame Control
-        if (appStore.frames.length > 1) {
-            const frameIndex = appStore.frames.findIndex(f => f.frameInfo.fileId === activeFrame.frameInfo.fileId);
+        let channelSlider, channelRangeSlider, stokesSlider, imageSlider;
+        // Image Control
+        if (numImages > 1) {
+            const imageIndex = appStore.activeImageIndex;
             const numIndices = 5;
-            const frameStep = numFrames > 10 ? Math.floor((numFrames - 1) / (numIndices - 1)) : 1;
-            const frameTickPre = numFrames - 1 - 4 * frameStep < frameStep / 2 ? [0, frameStep, 2 * frameStep, 3 * frameStep, numFrames - 1] : [0, frameStep, 2 * frameStep, 3 * frameStep, 4 * frameStep, numFrames - 1];
-            const frameTick = numFrames > 10 ? frameTickPre : Array.from(Array(numFrames).keys());
-            frameSlider = (
+            const imageStep = numImages > 10 ? Math.floor((numImages - 1) / (numIndices - 1)) : 1;
+            const imageTickPre = numImages - 1 - 4 * imageStep < imageStep / 2 ? [0, imageStep, 2 * imageStep, 3 * imageStep, numImages - 1] : [0, imageStep, 2 * imageStep, 3 * imageStep, 4 * imageStep, numImages - 1];
+            const imageTick = numImages > 10 ? imageTickPre : Array.from(Array(numImages).keys());
+            imageSlider = (
                 <div className="animator-slider">
                     <Radio value={AnimationMode.FRAME} disabled={appStore.animatorStore.animationActive} checked={appStore.animatorStore.animationMode === AnimationMode.FRAME} onChange={this.onAnimationModeChanged} label="Image" />
-                    {hideSliders && <SafeNumericInput value={frameIndex} min={-1} max={numFrames} stepSize={1} onValueChange={this.onFrameChanged} fill={true} disabled={appStore.animatorStore.animationActive} />}
+                    {hideSliders && <SafeNumericInput value={imageIndex} min={-1} max={numImages} stepSize={1} onValueChange={this.onImageChanged} fill={true} disabled={appStore.animatorStore.animationActive} />}
                     {!hideSliders && (
                         <React.Fragment>
-                            <Slider value={frameIndex} min={0} max={numFrames - 1} showTrackFill={false} labelValues={frameTick} labelPrecision={0} onChange={this.onFrameChanged} disabled={appStore.animatorStore.animationActive} />
-                            <div className="slider-info">{activeFrame.filename}</div>
+                            <Slider value={imageIndex} min={0} max={numImages - 1} showTrackFill={false} labelValues={imageTick} labelPrecision={0} onChange={this.onImageChanged} disabled={appStore.animatorStore.animationActive} />
+                            <div className="slider-info">{appStore.activeImage.store.filename}</div>
                         </React.Fragment>
                     )}
                 </div>
@@ -419,7 +420,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 {activeFrame &&
                     this.width > 0 && ( // temporary fix for broken range slider, issue #1078
                         <div className="animator-sliders">
-                            {frameSlider}
+                            {imageSlider}
                             {channelSlider}
                             {channelRangeSlider}
                             {stokesSlider}
