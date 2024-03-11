@@ -1000,21 +1000,20 @@ export class AppStore {
         }
     };
 
-    @action shiftFrame = (delta: number) => {
-        if (this.activeFrame && this.frames.length > 1) {
-            const frameIds = this.frames.map(f => f.frameInfo.fileId);
-            const currentIndex = frameIds.indexOf(this.activeFrame.frameInfo.fileId);
-            const requiredIndex = (this.frames.length + currentIndex + delta) % this.frames.length;
+    @action private shiftImage = (delta: number) => {
+        if (this.activeImage && this.activeImage.type !== ImageType.PV_PREVIEW && this.imageViewConfigStore.imageNum > 1) {
+            const currentIndex = this.imageViewConfigStore.getImageListIndex(this.activeImage.type, this.activeImage.store.id);
+            const requiredIndex = (this.imageViewConfigStore.imageNum + currentIndex + delta) % this.imageViewConfigStore.imageNum;
             this.setActiveImageByIndex(requiredIndex);
         }
     };
 
-    @action nextFrame = () => {
-        this.shiftFrame(+1);
+    @action nextImage = () => {
+        this.shiftImage(+1);
     };
 
-    @action prevFrame = () => {
-        this.shiftFrame(-1);
+    @action prevImage = () => {
+        this.shiftImage(-1);
     };
 
     // Open catalog file

@@ -151,7 +151,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
         switch (appStore.animatorStore.animationMode) {
             case AnimationMode.FRAME:
-                appStore.nextFrame();
+                appStore.nextImage();
                 break;
             case AnimationMode.CHANNEL:
                 frame.incrementChannels(1, 0);
@@ -174,7 +174,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
         switch (appStore.animatorStore.animationMode) {
             case AnimationMode.FRAME:
-                appStore.prevFrame();
+                appStore.prevImage();
                 break;
             case AnimationMode.CHANNEL:
                 frame.incrementChannels(-1, 0);
