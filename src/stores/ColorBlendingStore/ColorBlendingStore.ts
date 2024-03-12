@@ -73,6 +73,10 @@ export class ColorBlendingStore {
         reaction(
             () => this.baseFrame?.secondarySpatialImages,
             matchedFrames => {
+                if (!matchedFrames) {
+                    return;
+                }
+
                 for (let i = this.selectedFrames.length - 1; i >= 0; i--) {
                     if (!matchedFrames.includes(this.selectedFrames[i])) {
                         this.deleteSelectedFrame(i);
