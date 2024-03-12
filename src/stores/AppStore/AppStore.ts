@@ -2815,12 +2815,12 @@ export class AppStore {
     };
 
     @flow.bound *setSpatialReference(frame: FrameStore) {
-        const confirmed = yield this.confirmColorBlendingBaseRemoval();
+        const oldRef = this.spatialReference;
+
+        const confirmed = yield this.confirmColorBlendingRemoval(oldRef);
         if (!confirmed) {
             return;
         }
-
-        const oldRef = this.spatialReference;
 
         // check if the new reference is currently a secondary image of the existing reference
         const newRefIsSecondary = oldRef && oldRef.secondarySpatialImages.includes(frame);
@@ -2873,15 +2873,12 @@ export class AppStore {
     }
 
     private confirmColorBlendingRemoval = async (frame: FrameStore): Promise<boolean> => {
+        if (frame === this.spatialReference && this.imageViewConfigStore.colorBlendingImages.length) {
+            return await this.alertStore.showInteractiveAlert("The base layer in the color blending images will be replaced.");
+        }
+
         if (this.imageViewConfigStore.colorBlendingImages.some(store => store.selectedFrames.includes(frame))) {
             return await this.alertStore.showInteractiveAlert("Layers in the color blending images will be removed.");
-        }
-        return true;
-    };
-
-    private confirmColorBlendingBaseRemoval = async (): Promise<boolean> => {
-        if (this.imageViewConfigStore.colorBlendingImages.length) {
-            return await this.alertStore.showInteractiveAlert("The base layer in the color blending images will be replaced.");
         }
         return true;
     };
