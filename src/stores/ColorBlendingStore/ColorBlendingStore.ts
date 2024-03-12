@@ -71,7 +71,7 @@ export class ColorBlendingStore {
         makeAutoObservable(this);
 
         reaction(
-            () => this.baseFrame.secondarySpatialImages,
+            () => this.baseFrame?.secondarySpatialImages,
             matchedFrames => {
                 for (let i = this.selectedFrames.length - 1; i >= 0; i--) {
                     if (!matchedFrames.includes(this.selectedFrames[i])) {

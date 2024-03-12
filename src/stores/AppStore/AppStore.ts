@@ -1942,6 +1942,8 @@ export class AppStore {
                             this.contourDataSource = frame;
                         }
                     }
+                } else {
+                    this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
                 }
             }
         );
