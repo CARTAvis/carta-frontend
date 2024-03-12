@@ -118,7 +118,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
             case CursorInfoVisibility.HideTiled:
                 return appStore.imageViewConfigStore.imagesPerPage === 1;
             case CursorInfoVisibility.ActiveImage:
-                return appStore.activeImage === this.props.image;
+                return appStore.activeImage?.store === this.props.image.store;
             default:
                 return false;
         }
