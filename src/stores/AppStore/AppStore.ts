@@ -806,18 +806,25 @@ export class AppStore {
         if (!frame) {
             return;
         }
-        // Display confirmation if image has secondary images
-        const secondaries = frame.secondarySpatialImages.concat(frame.secondarySpectralImages).filter(distinct);
-        const numSecondaries = secondaries.length;
 
-        if (confirmClose && numSecondaries) {
-            const confirmed = yield this.alertStore.showInteractiveAlert(`${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} matched to this image will be unmatched.`);
-            if (confirmed) {
-                this.removeFrame(frame);
+        if (confirmClose) {
+            const confirmed = yield this.confirmColorBlendingRemoval(frame);
+            if (!confirmed) {
+                return;
             }
-        } else {
-            this.removeFrame(frame);
+
+            // Display confirmation if image has secondary images
+            const secondaries = frame.secondarySpatialImages.concat(frame.secondarySpectralImages).filter(distinct);
+            const numSecondaries = secondaries.length;
+            if (numSecondaries) {
+                const confirmed = yield this.alertStore.showInteractiveAlert(`${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} matched to this image will be unmatched.`);
+                if (!confirmed) {
+                    return;
+                }
+            }
         }
+
+        this.removeFrame(frame);
     }
 
     /**
@@ -846,7 +853,7 @@ export class AppStore {
         }
     };
 
-    @action removeFrame = (frame: FrameStore) => {
+    @action private removeFrame = (frame: FrameStore) => {
         if (frame) {
             // Stop animations playing before removing frame
             this.animatorStore.stopAnimation();
@@ -2839,7 +2846,7 @@ export class AppStore {
         }
     };
 
-    @action setSpatialMatchingEnabled = (frame: FrameStore, val: boolean) => {
+    @flow.bound *setSpatialMatchingEnabled(frame: FrameStore, val: boolean) {
         if (!frame || frame === this.spatialReference) {
             return;
         }
@@ -2849,8 +2856,20 @@ export class AppStore {
                 AppToaster.show(WarningToast(`Could not enable spatial matching of ${frame.filename} to reference image ${this.spatialReference.filename}. No valid transform was found.`));
             }
         } else {
+            const confirmed = yield this.confirmColorBlendingRemoval(frame);
+            if (!confirmed) {
+                return;
+            }
+
             frame.clearSpatialReference();
         }
+    }
+
+    private confirmColorBlendingRemoval = async (frame: FrameStore): Promise<boolean> => {
+        if (this.imageViewConfigStore.colorBlendingImages.some(store => store.selectedFrames.includes(frame))) {
+            return await this.alertStore.showInteractiveAlert("Layers in the color blending images will be removed.");
+        }
+        return true;
     };
 
     @action toggleSpatialMatching = (frame: FrameStore) => {

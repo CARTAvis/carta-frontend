@@ -1,4 +1,4 @@
-import {action, computed, makeAutoObservable, observable} from "mobx";
+import {action, computed, makeAutoObservable, observable, reaction} from "mobx";
 
 import {AppStore, type FrameStore} from "stores";
 
@@ -69,6 +69,17 @@ export class ColorBlendingStore {
         this.selectedFrames = this.baseFrame?.secondarySpatialImages?.slice(0, 2) ?? [];
         this.alpha = new Array(this.selectedFrames.length + 1).fill(1);
         makeAutoObservable(this);
+
+        reaction(
+            () => this.baseFrame.secondarySpatialImages,
+            matchedFrames => {
+                for (let i = this.selectedFrames.length - 1; i >= 0; i--) {
+                    if (!matchedFrames.includes(this.selectedFrames[i])) {
+                        this.deleteSelectedFrame(i);
+                    }
+                }
+            }
+        );
     }
 
     private isValidFrame = (frame: FrameStore): boolean => {
