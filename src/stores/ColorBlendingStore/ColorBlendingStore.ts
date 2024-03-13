@@ -2,18 +2,32 @@ import {action, computed, makeAutoObservable, observable, reaction} from "mobx";
 
 import {AppStore, type FrameStore} from "stores";
 
+/** Configuration of a color blended image. */
 export class ColorBlendingStore {
+    /** The unique identifier of the color blended image. */
     readonly id: number;
+    /** The filename of the color blended image. */
     readonly filename: string;
 
+    /** The custom title shown in the image view overlay. */
     @observable titleCustomText: string;
+    /** The frames from the layers excluding the base layer. */
     @observable selectedFrames: FrameStore[];
+    /** The alpha values of all the layers */
     @observable alpha: number[];
 
+    /**
+     * Sets the custom title shown in the image view overlay.
+     * @param text - The custom text to set.
+     */
     @action setTitleCustomText = (text: string) => {
         this.titleCustomText = text;
     };
 
+    /**
+     * Adds a layer to the color blended image.
+     * @param frame - The frame used for the layer.
+     */
     @action addSelectedFrame = (frame: FrameStore) => {
         if (!this.isValidFrame(frame)) {
             return;
@@ -22,6 +36,11 @@ export class ColorBlendingStore {
         this.alpha.push(1);
     };
 
+    /**
+     * Sets the frame used for the layer.
+     * @param index - The layer index excluding the base layer.
+     * @param frame - The frame used for the layer.
+     */
     @action setSelectedFrame = (index: number, frame: FrameStore) => {
         if (!this.isValidFrame(frame) || !this.isValidIndex(this.selectedFrames, index)) {
             return;
@@ -29,6 +48,11 @@ export class ColorBlendingStore {
         this.selectedFrames[index] = frame;
     };
 
+    /**
+     * Sets the alpha value of the layer.
+     * @param index - The layer index.
+     * @param alpha - The alpha value.
+     */
     @action setAlpha = (index: number, alpha: number) => {
         if (!this.isValidIndex(this.alpha, index)) {
             return;
@@ -40,6 +64,10 @@ export class ColorBlendingStore {
         this.alpha[index] = alpha;
     };
 
+    /**
+     * Deletes a layer from the color blended image.
+     * @param index - The layer index excluding the base layer.
+     */
     @action deleteSelectedFrame = (index: number) => {
         if (!this.isValidIndex(this.selectedFrames, index)) {
             return;
@@ -50,14 +78,17 @@ export class ColorBlendingStore {
         this.alpha.splice(alphaIndex, 1);
     };
 
+    /** The frame from the base layer. */
     @computed get baseFrame(): FrameStore {
         return AppStore.Instance.spatialReference;
     }
 
+    /** The frames from all the layers. */
     @computed get frames(): FrameStore[] {
         return [this.baseFrame, ...this.selectedFrames];
     }
 
+    /** The sum of the alpha values of all the layers. */
     @computed get alphaSum(): number {
         return this.alpha.reduce((acc, curr) => acc + curr, 0);
     }

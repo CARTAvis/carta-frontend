@@ -115,6 +115,7 @@ export class AppStore {
     readonly preferenceStore: PreferenceStore;
     readonly widgetsStore: WidgetsStore;
     readonly imageFittingStore: ImageFittingStore;
+    /** Configuration of the images in the image view widget. */
     readonly imageViewConfigStore = ImageViewConfigStore.Instance;
 
     // WebAssembly Module status
@@ -122,6 +123,7 @@ export class AppStore {
     @observable cartaComputeReady: boolean;
     // Frames
     @observable previewFrames = new ObservableMap<number, FrameStore>();
+    /** The active image, which can be a loaded image, a color blended image, or a PV preivew. */
     @observable activeImage: ImageItem = null;
     @observable hoveredFrame: FrameStore = null;
     @observable contourDataSource: FrameStore = null;
@@ -360,6 +362,7 @@ export class AppStore {
     // Match generated moment image(s) to the spatial reference image
     @observable momentToMatch: boolean;
 
+    /** All the loaded images in the image list. */
     @computed get frames(): FrameStore[] {
         return this.imageViewConfigStore.frames;
     }
@@ -794,6 +797,11 @@ export class AppStore {
         }
     }
 
+    /**
+     * Closes a loaded image or a color blended image.
+     * @param image - The image item to close.
+     * @param confirmClose - Flag indicating whether to display a confirmation dialog before closing.
+     */
     closeImage = (image: ImageItem, confirmClose: boolean = true) => {
         if (image?.type === ImageType.COLOR_BLENDING) {
             this.imageViewConfigStore.removeColorBlending(image.store);
@@ -802,6 +810,11 @@ export class AppStore {
         }
     };
 
+    /**
+     * Closes a loaded image.
+     * @param frame - The loaded image.
+     * @param confirmClose - Flag indicating whether to display a confirmation dialog before closing.
+     */
     @flow.bound *closeFile(frame: FrameStore, confirmClose: boolean = true) {
         if (!frame) {
             return;
@@ -829,7 +842,6 @@ export class AppStore {
 
     /**
      * Closes the currently active image.
-     *
      * @param confirmClose - Flag indicating whether to display a confirmation dialog before closing.
      */
     @action closeCurrentFile = (confirmClose: boolean = false) => {
@@ -838,6 +850,10 @@ export class AppStore {
         }
     };
 
+    /**
+     * Closes all the images except the provided loaded image.
+     * @param frame - A loaded image.
+     */
     @action closeOtherImages = (frame: FrameStore) => {
         const colorBlendingImages = this.imageViewConfigStore.colorBlendingImages.slice();
         for (const colorBlendingImage of colorBlendingImages) {
@@ -846,6 +862,11 @@ export class AppStore {
         this.closeOtherFiles(frame, false);
     };
 
+    /**
+     * Closes all the loaded image except the provided one.
+     * @param frame - A loaded image.
+     * @param confirmClose - Flag indicating whether to display a confirmation dialog before closing.
+     */
     @action closeOtherFiles = (frame: FrameStore, confirmClose: boolean = true) => {
         const otherFiles = this.frames.filter(f => f !== frame);
         for (const f of otherFiles) {
@@ -853,6 +874,10 @@ export class AppStore {
         }
     };
 
+    /**
+     * Closes a loaded image.
+     * @param frame - A loaded image.
+     */
     @action private removeFrame = (frame: FrameStore) => {
         if (frame) {
             // Stop animations playing before removing frame
@@ -969,6 +994,7 @@ export class AppStore {
         }
     };
 
+    /** Closes all the images in the image view widget. */
     @action removeAllFrames = () => {
         // Stop animations playing before removing frames
         this.animatorStore.stopAnimation();
@@ -1000,6 +1026,10 @@ export class AppStore {
         }
     };
 
+    /**
+     * Closes a PV preview.
+     * @param previewId - The file id of the image cube from which the PV preview was created.
+     */
     @action removePreviewFrame = (previewId: number) => {
         if (this.previewFrames.delete(previewId)) {
             this.backendService.closePvPreview(previewId);
@@ -1007,6 +1037,12 @@ export class AppStore {
         }
     };
 
+    /**
+     * Shifts the active image.
+     * @param delta - The amount to shift the active image by.
+     *                A positive delta shifts to the next image, while a negative delta shifts to the previous image.
+     *                If the active image is a PV preview, the shift doesn't occur.
+     */
     @action private shiftImage = (delta: number) => {
         if (this.activeImage && this.activeImage.type !== ImageType.PV_PREVIEW && this.imageViewConfigStore.imageNum > 1) {
             const currentIndex = this.imageViewConfigStore.getImageListIndex(this.activeImage.type, this.activeImage.store.id);
@@ -1015,10 +1051,12 @@ export class AppStore {
         }
     };
 
+    /** Shifts the active image to the next image. If the active image is a PV preview, the shift doesn't occur. */
     @action nextImage = () => {
         this.shiftImage(+1);
     };
 
+    /** Shifts the active image to the previous image. If the active image is a PV preview, the shift doesn't occur. */
     @action prevImage = () => {
         this.shiftImage(-1);
     };
@@ -1117,6 +1155,12 @@ export class AppStore {
         this.backendService.setCatalogFilterRequest(catalogFilter);
     }
 
+    /**
+     * Reorders images in the image list.
+     * @param oldIndex - The first index of the images to move.
+     * @param newIndex - The index to move the image to.
+     * @param length - The length of the images to move.
+     */
     @action reorderFrame = (oldIndex: number, newIndex: number, length: number) => {
         this.imageViewConfigStore.reorderImage(oldIndex, newIndex, length);
     };
@@ -2658,6 +2702,10 @@ export class AppStore {
         this.removeAllFrames();
     };
 
+    /**
+     * Sets the active image. Ignores when animating.
+     * @param image - The image to set as the active image.
+     */
     @action updateActiveImage = (image: ImageItem) => {
         if (!image) {
             return;
@@ -2671,6 +2719,10 @@ export class AppStore {
         this.setActiveImage(image);
     };
 
+    /**
+     * Sets the active image with a loaded image or a PV preview. Ignores when animating.
+     * @param frame - The loaded image or the PV preview.
+     */
     @action updateActiveImageByFrame = (frame: FrameStore) => {
         if (!frame) {
             return;
@@ -2688,6 +2740,10 @@ export class AppStore {
         }
     };
 
+    /**
+     * Sets the active image with a loaded image.
+     * @param fileId - The file id of the loaded image.
+     */
     @action setActiveImageByFileId = (fileId: number) => {
         const index = this.imageViewConfigStore.getImageListIndex(ImageType.FRAME, fileId);
         const image = this.imageViewConfigStore.getImage(index);
@@ -2699,7 +2755,11 @@ export class AppStore {
         }
     };
 
-    @action setActiveImageByIndex(index: number) {
+    /**
+     * Sets the active image based on the image list index.
+     * @param index - The image list index.
+     */
+    @action setActiveImageByIndex = (index: number) => {
         if (index >= 0 && this.imageViewConfigStore.imageNum > index) {
             const image = this.imageViewConfigStore.getImage(index);
             if (image) {
@@ -2708,12 +2768,17 @@ export class AppStore {
         } else {
             console.log(`Invalid image index ${index}`);
         }
-    }
+    };
 
+    /**
+     * Sets the active image.
+     * @param activeImage - The image to set as the active image.
+     */
     @action setActiveImage = (activeImage: ImageItem) => {
         this.activeImage = activeImage;
     };
 
+    /** The index of the active image in the image list. */
     @computed get activeImageIndex(): number {
         if (!this.activeImage || this.activeImage.type === ImageType.PV_PREVIEW) {
             return -1;
@@ -2721,18 +2786,25 @@ export class AppStore {
         return this.imageViewConfigStore.getImageListIndex(this.activeImage.type, this.activeImage.store?.id);
     }
 
+    /** The active frame. If the active image is a loaded image or a PV preview, returns the corresponding frame.
+     * If the active image is a color blended image, returns the base frame. */
     @computed get activeFrame(): FrameStore {
         const type = this.activeImage?.type;
 
         if (type === ImageType.FRAME || type === ImageType.PV_PREVIEW) {
             return this.activeImage.store;
         } else if (type === ImageType.COLOR_BLENDING) {
-            return this.spatialReference;
+            return this.activeImage.store.baseFrame;
         }
 
         return null;
     }
 
+    /**
+     * Checks if the given image is the active image.
+     * @param image - The image to check.
+     * @returns Whether the given image is the active image.
+     */
     isActiveImage = (image: ImageItem): boolean => {
         return image?.type === this.activeImage?.type && image?.store === this.activeImage?.store;
     };
@@ -2814,6 +2886,11 @@ export class AppStore {
         frame?.updateCursorRegion(pos);
     };
 
+    /**
+     * Sets the spatial reference frame.
+     * @param frame - The frame to set as the spatial reference.
+     * @param showColorBlendingAlert - Whether to show an alert when layers will be removed from color blended images.
+     */
     @flow.bound *setSpatialReference(frame: FrameStore, showColorBlendingAlert = true) {
         const oldRef = this.spatialReference;
 
@@ -2855,6 +2932,11 @@ export class AppStore {
         }
     };
 
+    /**
+     * Sets the spatial matching for a frame.
+     * @param frame - The frame for which to set spatial matching.
+     * @param val - Whether to enable or disable spatial matching.
+     */
     @flow.bound *setSpatialMatchingEnabled(frame: FrameStore, val: boolean) {
         if (!frame || frame === this.spatialReference) {
             return;
@@ -2874,6 +2956,11 @@ export class AppStore {
         }
     }
 
+    /**
+     * Shows an alert when layers will be removed from the color blended images due to unmatching or closing a frame.
+     * @param frame - The frame which will be unmatched or closed.
+     * @returns Whether unmatching or closing the frame is confirmed or canceled.
+     */
     private confirmColorBlendingRemoval = async (frame: FrameStore): Promise<boolean> => {
         if (frame === this.spatialReference && this.imageViewConfigStore.colorBlendingImages.length) {
             if (this.frames?.length === 1) {
