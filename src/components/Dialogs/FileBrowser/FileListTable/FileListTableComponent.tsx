@@ -47,7 +47,7 @@ export interface FileListTableComponentProps {
 @observer
 export class FileListTableComponent extends React.Component<FileListTableComponentProps> {
     @observable selectedRegions: Region[];
-    @observable columnWidths = [350, 80, 90, 95];
+    @observable columnWidths = [360, 80, 90, 106];
 
     private static readonly RowHeight = 22;
     private tableRef: Table2;
