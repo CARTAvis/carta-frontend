@@ -9,7 +9,7 @@ import {ImageViewLayer} from "components";
 import {AnnotationMenuComponent} from "components/Shared";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import {RegionCreationMode} from "models";
-import {AppStore, DialogId, WidgetsStore} from "stores";
+import {AppStore, DialogId, WidgetsStore, WidgetType} from "stores";
 import {RegionMode, RegionStore} from "stores/Frame";
 
 import "./ToolbarMenuComponent.scss";
@@ -142,7 +142,8 @@ export class ToolbarMenuComponent extends React.Component {
                     {Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).map(widgetType => {
                         const widgetConfig = WidgetsStore.Instance.CARTAWidgets.get(widgetType);
                         const trimmedStr = widgetType?.replace(/\s+/g, "");
-                        const widgetTypeTooltip = widgetType?.charAt(0) + widgetType?.slice(1)?.toLowerCase();
+                        const lowerCaseStart = widgetType === WidgetType.PvGenerator ? 2 : 1;
+                        const widgetTypeTooltip = widgetType?.slice(0, lowerCaseStart) + widgetType?.slice(lowerCaseStart)?.toLowerCase();
                         return (
                             <Tooltip
                                 key={`${trimmedStr}Tooltip`}
