@@ -452,7 +452,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 }
                 position={Position.BOTTOM_RIGHT}
             >
-                <Button minimal={true} rightIcon="caret-down">
+                <Button minimal={true} rightIcon="caret-down" data-testid="export-region-file-type-dropdown">
                     {fileBrowserStore.exportFileType === CARTA.FileType.CRTF ? "CRTF" : "DS9"}
                 </Button>
             </Popover2>

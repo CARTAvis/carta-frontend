@@ -141,7 +141,7 @@ export class ToolbarMenuComponent extends React.Component {
                             }
                             position={Position.BOTTOM}
                         >
-                            <AnchorButton icon={"annotation"} disabled={regionButtonsDisabled} active={isRegionCreating === true && appStore.activeFrame.regionSet.isNewRegionAnnotation === true} />
+                            <AnchorButton icon={"annotation"} disabled={regionButtonsDisabled} active={isRegionCreating === true && appStore.activeFrame.regionSet.isNewRegionAnnotation === true} data-testid="annotation-shortcut-dropdown" />
                         </Tooltip2>
                     </Popover2>
                 </ButtonGroup>
