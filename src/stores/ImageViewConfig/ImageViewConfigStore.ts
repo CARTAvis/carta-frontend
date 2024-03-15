@@ -46,7 +46,7 @@ export class ImageViewConfigStore {
      * @param fileId - The file id of the loaded image.
      */
     @action removeFrame = (fileId: number) => {
-        this.imageList = this.imageList.filter(imageItem => (imageItem?.type === ImageType.FRAME ? imageItem?.store?.frameInfo.fileId !== fileId : true));
+        this.imageList = this.imageList.filter(imageItem => (imageItem?.type === ImageType.FRAME ? imageItem?.store?.id !== fileId : true));
     };
 
     /**
@@ -227,7 +227,7 @@ export class ImageViewConfigStore {
         return preferenceStore.imageMultiPanelEnabled ? preferenceStore.imagePanelMode : ImagePanelMode.None;
     }
 
-    constructor() {
+    private constructor() {
         makeAutoObservable(this);
     }
 
