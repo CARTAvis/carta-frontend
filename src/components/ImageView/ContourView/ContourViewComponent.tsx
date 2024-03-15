@@ -3,7 +3,7 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {ContourWebGLService} from "services";
-import {AnimatorStore, AppStore} from "stores";
+import {AnimatorStore, AppStore, OverlayStore} from "stores";
 import {ContourDashMode, FrameStore, RenderConfigStore} from "stores/Frame";
 import {ceilToPower, GL2, rotate2D, scale2D, subtract2D} from "utilities";
 
@@ -14,6 +14,10 @@ export interface ContourViewComponentProps {
     frame: FrameStore;
     row: number;
     column: number;
+    refCanvas?: HTMLCanvasElement;
+    top?: number;
+    left?: number;
+    overlayStore?: OverlayStore;
 }
 
 @observer
@@ -23,17 +27,27 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     private contourWebGLService: ContourWebGLService;
 
     componentDidMount() {
-        this.contourWebGLService = ContourWebGLService.Instance;
-        this.gl = this.contourWebGLService.gl;
-        const contourStream = AppStore.Instance.backendService.contourStream;
-        if (this.canvas) {
-            contourStream.subscribe(this.triggerUpdate);
+        if (!this.props.refCanvas) {
+            this.contourWebGLService = ContourWebGLService.Instance;
+            this.gl = this.contourWebGLService.gl;
+            const contourStream = AppStore.Instance.backendService.contourStream;
+            if (this.canvas) {
+                contourStream.subscribe(this.triggerUpdate);
+            }
         }
     }
 
     componentDidUpdate() {
         AppStore.Instance.resetImageRatio();
-        this.triggerUpdate();
+        if (this.props.refCanvas) {
+            const destCanvas = this.canvas.getContext("2d");
+            const w = this.props.refCanvas.width;
+            const h = this.props.refCanvas.height;
+            destCanvas.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            destCanvas.drawImage(this.props.refCanvas, 0, 0, w, h, 0, 0, this.canvas.width, this.canvas.height);
+        } else {
+            this.triggerUpdate();
+        }
     }
 
     private triggerUpdate = () => {
@@ -254,7 +268,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         }
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
-        const padding = baseFrame.overlayStore.padding;
+        const padding = this.props.overlayStore?.padding || baseFrame.overlayStore.padding;
         const className = classNames("contour-div", {docked: this.props.docked});
 
         return (
@@ -264,8 +278,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                     className="contour-canvas"
                     ref={this.getRef}
                     style={{
-                        top: padding.top,
-                        left: padding.left,
+                        top: (this.props.top || 0) + padding.top,
+                        left: (this.props.left || 0) + padding.left,
                         width: baseFrame ? baseFrame.renderWidth || 1 : 1,
                         height: baseFrame ? baseFrame.renderHeight || 1 : 1
                     }}

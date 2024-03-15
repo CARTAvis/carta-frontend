@@ -276,6 +276,7 @@ EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double i
     double pbox[] = {imageX1, imageY1, imageX2, imageY2};
     plot = astPlot(wcsinfo, gbox, pbox, args);
     astBBuf(plot);
+    std::cout << "astGrid making" << std::endl;
     astGrid(plot);
 
     if (showCurve)

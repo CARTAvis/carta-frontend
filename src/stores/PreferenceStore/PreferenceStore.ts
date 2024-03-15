@@ -261,7 +261,7 @@ const DEFAULTS = {
         catalogTableSeparatorPosition: "60%"
     },
     STATS_PANEL: {
-        statsPanelEnabled: false,
+        statsPanelEnabled: true,
         statsPanelMode: 0
     },
     TELEMETRY: {

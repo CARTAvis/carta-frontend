@@ -139,7 +139,7 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
     const className = classNames(`raster-div`, {docked: props.docked});
 
     return (
-        <div className={className} style={{top: props.top || 0, left: props.left || 0, border: "1px solid red"}}>
+        <div className={className} style={{top: props.top || 0, left: props.left || 0}}>
             <canvas
                 className={`raster-canvas`}
                 id="raster-canvas"
@@ -267,7 +267,18 @@ export function updateUniforms(frame: FrameStore, webGLService: TileWebGLService
     }
 }
 
-export function renderCanvas(frame: FrameStore, webGLService: TileWebGLService, tileService: TileService, xOffset: number, yOffset: number, renderWidth: number, renderHeight: number, tileBasedRender: boolean, channel: number,  rasterData?: Float32Array) {
+export function renderCanvas(
+    frame: FrameStore,
+    webGLService: TileWebGLService,
+    tileService: TileService,
+    xOffset: number,
+    yOffset: number,
+    renderWidth: number,
+    renderHeight: number,
+    tileBasedRender: boolean,
+    channel: number,
+    rasterData?: Float32Array
+) {
     // Only clear and render if we're in animation or tiled mode
     if (frame?.isRenderable) {
         const appStore = AppStore.Instance;
@@ -322,7 +333,6 @@ function renderTiledCanvas(frame: FrameStore, webGLService: TileWebGLService, ch
 }
 
 function renderTiles(frame: FrameStore, webGLService: TileWebGLService, tiles: TileCoordinate[], channel: number, mip: number, peek: boolean = false, numPlaceholderLayersHighRes: number, renderLowRes: boolean, tileService: TileService) {
-
     if (!tileService) {
         return;
     }

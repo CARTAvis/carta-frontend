@@ -19,6 +19,8 @@ export class OverlayComponentProps {
     width?: number;
     height?: number;
     refCanvas?: any;
+    column?: number;
+    row?: number;
     onClicked?: (cursorInfo: CursorInfo) => void;
     onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
 }
@@ -36,10 +38,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             }
         } else if (this.canvas && this.props.refCanvas) {
             const destCanvas = this.canvas.getContext("2d");
-            destCanvas.drawImage(this.props.refCanvas, 0, 0);
+            destCanvas.clearRect(0, 0, this.canvas.width, this.canvas.height);
         }
     }
-    
+
     componentDidUpdate() {
         if (!this.props.refCanvas) {
             AppStore.Instance.resetImageRatio();
@@ -50,7 +52,21 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             }
         } else {
             const destCanvas = this.canvas.getContext("2d");
-            destCanvas.drawImage(this.props.refCanvas, 0, 0);
+            const w = this.props.refCanvas.width;
+            const h = this.props.refCanvas.height;
+            destCanvas.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            // destCanvas.rect(0, 0, w, h)
+            destCanvas.drawImage(this.props.refCanvas, 0, 0, w, h, 0, 0, this.canvas.width, this.canvas.height);
+            // destCanvas.fill()
+        }
+    }
+
+    componentWillUnmount(): void {
+        if (this.props.refCanvas) {
+            const destCanvas = this.canvas.getContext("2d");
+            const w = this.props.refCanvas.width;
+            const h = this.props.refCanvas.height;
+            destCanvas.clearRect(0, 0, w, h);
         }
     }
 
@@ -152,7 +168,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     throttledRenderCanvas = _.throttle(this.renderCanvas, 50);
 
     private getRef = ref => {
-        console.log('getting ref')
+        console.log("getting ref");
         this.canvas = ref;
     };
 
@@ -164,48 +180,47 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         const w = frame?.isPreview ? frame?.previewViewWidth : this.props.overlaySettings?.viewWidth;
         const h = frame?.isPreview ? frame?.previewViewHeight : this.props.overlaySettings?.viewHeight;
-        if(!this.props.refCanvas) {
-    
-            // Dummy variables for triggering re-render
-            /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
-            const styleString = this.props.overlaySettings.styleString;
-            const frameView = refFrame.requiredFrameView;
-            const framePadding = this.props.overlaySettings.padding;
-            const moving = frame.moving;
-            const system = this.props.overlaySettings.global.system;
-            const globalColor = this.props.overlaySettings.global.color;
-            const titleColor = this.props.overlaySettings.title.color;
-            const gridColor = this.props.overlaySettings.grid.color;
-            const borderColor = this.props.overlaySettings.border.color;
-            const oticksColor = this.props.overlaySettings.ticks.color;
-            const axesColor = this.props.overlaySettings.axes.color;
-            const numbersColor = this.props.overlaySettings.numbers.color;
-            const labelsColor = this.props.overlaySettings.labels.color;
-            const darktheme = AppStore.Instance.darkTheme;
-            const distanceMeasuring = frame.distanceMeasuring;
-            const distanceMeasuringShowCurve = frame.distanceMeasuring?.showCurve;
-            const distanceMeasuringStart = frame.distanceMeasuring?.start;
-            const distanceMeasuringFinish = frame.distanceMeasuring?.finish;
-            const distanceMeasuringTransformedStart = frame.distanceMeasuring?.transformedStart;
-            const distanceMeasuringTransformedFinish = frame.distanceMeasuring?.transformedFinish;
-            const distanceMeasuringColor = frame.distanceMeasuring?.color;
-            const distanceMeasuringFontSize = frame.distanceMeasuring?.fontSize;
-            const distanceMeasuringLineWidth = frame.distanceMeasuring?.lineWidth;
-            const title = this.props.overlaySettings.title.customText ? frame.titleCustomText : frame.filename;
-            const ratio = AppStore.Instance.imageRatio;
-            const titleStyleString = this.props.overlaySettings.title.styleString;
-            const gridStyleString = this.props.overlaySettings.grid.styleString;
-            const borderStyleString = this.props.overlaySettings.border.styleString;
-            const ticksStyleString = this.props.overlaySettings.ticks.styleString;
-            const axesStyleString = this.props.overlaySettings.axes.styleString;
-            const numbersStyleString = this.props.overlaySettings.numbers.styleString;
-            const labelsStyleString = this.props.overlaySettings.labels.styleString;
-    
+        // Dummy variables for triggering re-render
+        /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
+        const styleString = this.props.overlaySettings.styleString;
+        const frameView = refFrame.requiredFrameView;
+        const framePadding = this.props.overlaySettings.padding;
+        const moving = frame.moving;
+        const system = this.props.overlaySettings.global.system;
+        const globalColor = this.props.overlaySettings.global.color;
+        const titleColor = this.props.overlaySettings.title.color;
+        const gridColor = this.props.overlaySettings.grid.color;
+        const borderColor = this.props.overlaySettings.border.color;
+        const oticksColor = this.props.overlaySettings.ticks.color;
+        const axesColor = this.props.overlaySettings.axes.color;
+        const numbersColor = this.props.overlaySettings.numbers.color;
+        const labelsColor = this.props.overlaySettings.labels.color;
+        const darktheme = AppStore.Instance.darkTheme;
+        const distanceMeasuring = frame.distanceMeasuring;
+        const distanceMeasuringShowCurve = frame.distanceMeasuring?.showCurve;
+        const distanceMeasuringStart = frame.distanceMeasuring?.start;
+        const distanceMeasuringFinish = frame.distanceMeasuring?.finish;
+        const distanceMeasuringTransformedStart = frame.distanceMeasuring?.transformedStart;
+        const distanceMeasuringTransformedFinish = frame.distanceMeasuring?.transformedFinish;
+        const distanceMeasuringColor = frame.distanceMeasuring?.color;
+        const distanceMeasuringFontSize = frame.distanceMeasuring?.fontSize;
+        const distanceMeasuringLineWidth = frame.distanceMeasuring?.lineWidth;
+        const title = this.props.overlaySettings.title.customText ? frame.titleCustomText : frame.filename;
+        const ratio = AppStore.Instance.imageRatio;
+        const titleStyleString = this.props.overlaySettings.title.styleString;
+        const gridStyleString = this.props.overlaySettings.grid.styleString;
+        const borderStyleString = this.props.overlaySettings.border.styleString;
+        const ticksStyleString = this.props.overlaySettings.ticks.styleString;
+        const axesStyleString = this.props.overlaySettings.axes.styleString;
+        const numbersStyleString = this.props.overlaySettings.numbers.styleString;
+        const labelsStyleString = this.props.overlaySettings.labels.styleString;
+
+        if (!this.props.refCanvas) {
             if (frame.isSwappedZ) {
                 const requiredChannel = frame.requiredChannel;
             }
             /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
-    
+
             // Trigger switching AST overlay axis for PV image
             const spectralAxisSetting =
                 `${frame.spectralType ? `System(${frame.spectral})=${frame.spectralType},` : ""}` +
@@ -213,9 +228,9 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 `${frame.spectralSystem ? `StdOfRest=${frame.spectralSystem},` : ""}` +
                 `${frame.restFreqStore.restFreqInHz ? `RestFreq=${frame.restFreqStore.restFreqInHz} Hz,` : ""}` +
                 `${frame.spectralType && frame.spectralSystem ? `Label(${frame.spectral})=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`;
-    
+
             const dirAxesSetting = `${frame.dirX > 2 || frame.dirXLabel === "" ? "" : `Label(${frame.dirX})=${frame.dirXLabel},`} ${frame.dirY > 2 || frame.dirYLabel === "" ? "" : `Label(${frame.dirY})=${frame.dirYLabel},`}`;
-    
+
             if (frame.isPVImage && frame.spectralAxis?.valid) {
                 AST.set(frame.wcsInfo, spectralAxisSetting);
             } else if (frame.isSwappedZ && frame.spectralAxis?.valid) {

@@ -1276,7 +1276,9 @@ export class OverlayStore {
     }
 
     @computed get paddingTop(): number {
-        return this.base + (this.imageViewerSettingStore.title.show ? this.titleGap + this.imageViewerSettingStore.title.fontSize : (!this.isChannelMap && this.colorbar.visible && this.colorbar.position === "top") ? this.colorbar.totalWidth : 0);
+        return (
+            this.base + (this.imageViewerSettingStore.title.show ? this.titleGap + this.imageViewerSettingStore.title.fontSize : !this.isChannelMap && this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0)
+        );
     }
 
     @computed get paddingBottom(): number {

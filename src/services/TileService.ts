@@ -142,7 +142,7 @@ export class TileService {
     private constructor() {
         makeObservable(this);
         this.backendService = BackendService.Instance;
-        this.gl = TileWebGLService.Instance.gl;
+        this.gl = ChannelMapWebGLService.Instance.gl;
 
         this.channelMap = new Map<number, {channel: number; stokes: number}>();
         this.pendingRequests = new Map<string, Map<number, boolean>>();
@@ -314,7 +314,7 @@ export class TileService {
         }
     }
 
-    requestChannelMapTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, compressionQuality: number, channelMapRange:{min: number; max: number}) {
+    requestChannelMapTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, compressionQuality: number, channelMapRange: {min: number; max: number}) {
         // this.clearRequestQueue(fileId);
         this.clearCompressedCache(fileId);
         const newRequests = new Array<TileCoordinate>();
@@ -330,11 +330,11 @@ export class TileService {
                         continue;
                     }
                     const encodedCoordinate = tile.encode();
-                    if(!(pendingRequestsMap && pendingRequestsMap.has(encodedCoordinate))) {
+                    if (!(pendingRequestsMap && pendingRequestsMap.has(encodedCoordinate))) {
                         const compressedTile = this.getCompressedCache(fileId).get(encodedCoordinate);
                         const pendingCompressionMap = this.pendingDecompressions.get(subKey);
                         const tileIsQueuedForDecompression = pendingCompressionMap && pendingCompressionMap.has(encodedCoordinate);
-                        
+
                         const gpuCacheCoordinate = TileCoordinate.AddFileIdAndChannel(encodedCoordinate, fileId, channel);
                         const tileCached = this.cachedTiles?.has(gpuCacheCoordinate);
 
@@ -355,7 +355,6 @@ export class TileService {
                             // this.updateRemainingTileCount();
                             newRequests.push(tile);
                         }
-
                     }
                 }
             }
@@ -385,13 +384,13 @@ export class TileService {
                 if (!pendingRequest) {
                     this.pendingRequests.set(subKey, new Map<number, boolean>());
                 }
-                for(const encodedCoordinate of sortedRequests){
+                for (const encodedCoordinate of sortedRequests) {
                     this.pendingRequests.get(subKey).set(encodedCoordinate, true);
                 }
                 this.updateRemainingTileCount();
             }
 
-            console.log('raster_tile call', sortedRequests.length)
+            console.log("raster_tile call", sortedRequests.length);
             this.backendService.setChannels(fileId, channel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles: sortedRequests}, channelMapRange);
         }
     }
@@ -472,9 +471,9 @@ export class TileService {
     private initTextures() {
         const textureSizeMb = (TEXTURE_SIZE * TEXTURE_SIZE * 4) / 1024 / 1024;
         console.log(`Creating ${this.textureArray.length} tile textures of size ${textureSizeMb} MB each (${textureSizeMb * this.textureArray.length} MB total)`);
-        for (let i = 0; i < this.textureArray.length / 2; i++) {
+        for (let i = 0; i < this.textureArray.length; i++) {
             this.textureArray[i] = createFP32Texture(this.gl, TEXTURE_SIZE, TEXTURE_SIZE, GL2.TEXTURE0);
-            this.textureArray[i*2] = createFP32Texture(ChannelMapWebGLService.Instance.gl, TEXTURE_SIZE, TEXTURE_SIZE, GL2.TEXTURE0);
+            // this.textureArray[i*2] = createFP32Texture(ChannelMapWebGLService.Instance.gl, TEXTURE_SIZE, TEXTURE_SIZE, GL2.TEXTURE0);
         }
     }
 

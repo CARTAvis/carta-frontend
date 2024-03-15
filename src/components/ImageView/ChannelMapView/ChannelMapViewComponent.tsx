@@ -1,24 +1,24 @@
 // This is a component that uses rasterViewComponent to construct something on the same level as imagePanel component
 import * as React from "react";
+import _ from "lodash";
 // import { ImageViewLayer } from "../ImageViewComponent";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {CursorInfo, FrameView, Point2D} from "models";
+import {ChannelMapWebGLService, TileService} from "services";
 import {AppStore, OverlayStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {GetRequiredTiles} from "utilities";
 
 import {ColorbarComponent} from "../Colorbar/ColorbarComponent";
+import {ContourViewComponent} from "../ContourView/ContourViewComponent";
 // import { CARTA } from "carta-protobuf";
 import {CursorOverlayComponent} from "../CursorOverlay/CursorOverlayComponent";
 import {OverlayComponent} from "../Overlay/OverlayComponent";
 import {RasterViewComponent} from "../RasterView/RasterViewComponent";
 import {RegionViewComponent} from "../RegionView/RegionViewComponent";
 import {ToolbarComponent} from "../Toolbar/ToolbarComponent";
-import { ContourViewComponent } from "../ContourView/ContourViewComponent";
-import { ChannelMapWebGLService, TileService } from "services";
-import _ from "lodash";
 
 export class ChannelMapViewComponentProps {
     frame: FrameStore;
@@ -26,7 +26,7 @@ export class ChannelMapViewComponentProps {
     gl: WebGL2RenderingContext;
     channelMapStore: ChannelMapStore;
     renderWidth: number; // width/height of the area where channel map is showing
-    renderHeight: number; 
+    renderHeight: number;
 }
 
 export class ChannelMapStore {
@@ -58,6 +58,7 @@ export class ChannelMapStore {
     @observable numRows: number;
     public overlayStores: {corner: OverlayStore; left: OverlayStore; bottom: OverlayStore; inner: OverlayStore};
     public overlayStoreCanvasReference: {corner: any; left: any; bottom: any; inner: any};
+    public contourStoreCanvasReference: any;
 
     @action setOverlayStores(overlayStore: OverlayStore, position: string) {
         if (position === "corner") {
@@ -112,7 +113,7 @@ export class ChannelMapStore {
         if (!AppStore.Instance.isExportingImage) {
             this.pixelHighlightValue = val;
         }
-    }
+    };
     @action requestChannels = () => {
         const frame = this.masterFrame;
         if (!frame) {
@@ -193,7 +194,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     const leftOverlayComponent = React.useRef<HTMLCanvasElement>();
     const innerOverlayComponent = React.useRef<HTMLCanvasElement>();
     const bottomOverlayComponent = React.useRef<HTMLCanvasElement>();
-    const canvasRef = React.useRef<HTMLCanvasElement>();
+    // const canvasRef = React.useRef<HTMLCanvasElement>();
     // For some reason, the channelMapStore.channelFrames observable is not triggering rerender, the following is a temporary solution.
     // const [channelFrames, setChannelFrames] = React.useState<FrameStore[]>([]);
     // const channelMapStore = new ChannelMapStore(props.frame, props.numImageColumn, props.numImageRow);
@@ -211,50 +212,58 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     const cursorInfoOffset = isFinite(cursorOverlayRef.current?.divElement.clientHeight) ? cursorOverlayRef.current?.divElement.clientHeight : 0;
     const toolbarOffset = 34;
 
-    const heightOffset = 10+ (colorBarSetting.position !== "right" ? colorbarOffset : 0) + cursorInfoOffset + toolbarOffset + 40;
+    const heightOffset = 10 + (colorBarSetting.position !== "right" ? colorbarOffset : 0) + cursorInfoOffset + toolbarOffset + 40;
     const widthOffset = colorbarOffset + 40; // 40 is for the number and label width of the ast grid
     const fullRenderWidth = props.renderWidth - widthOffset;
     const fullRenderHeight = props.renderHeight - heightOffset;
-    const imageRenderWidth =  fullRenderWidth / channelMapStore.numColumns;
+    const imageRenderWidth = fullRenderWidth / channelMapStore.numColumns;
     const imageRenderHeight = fullRenderHeight / channelMapStore.numRows;
 
     frame?.overlayStore?.setChannelMapRenderWidth(imageRenderWidth);
     frame?.overlayStore?.setChannelMapRenderHeight(imageRenderHeight);
 
-//     const cornerOverlayComponent = React.useMemo(() => <OverlayComponent
-//     frame={frame}
-//     width={channelMapStore.overlayStores?.corner?.fullViewWidth}
-//     height={channelMapStore.overlayStores?.corner?.fullViewHeight}
-//     overlaySettings={channelMapStore.overlayStores?.corner}
-//     docked={props.docked}
-// />, []);
-//     const leftOverlayComponent = React.useMemo(() => <OverlayComponent
-//     frame={frame}
-//     width={channelMapStore.overlayStores?.left?.fullViewWidth}
-//     height={channelMapStore.overlayStores?.left?.fullViewHeight}
-//     overlaySettings={channelMapStore.overlayStores?.left}
-//     docked={props.docked}
-// />, []);
-//     const bottomOverlayComponent = React.useMemo(() => <OverlayComponent
-//     frame={frame}
-//     width={channelMapStore.overlayStores?.bottom?.fullViewWidth}
-//     height={channelMapStore.overlayStores?.bottom?.fullViewHeight}
-//     overlaySettings={channelMapStore.overlayStores?.bottom}
-//     docked={props.docked}
-// />, []);
-//     const innerOverlayComponent = React.useMemo(() => <OverlayComponent
-//     frame={frame}
-//     width={channelMapStore.overlayStores?.inner?.fullViewWidth}
-//     height={channelMapStore.overlayStores?.inner?.fullViewHeight}
-//     overlaySettings={channelMapStore.overlayStores?.inner}
-//     docked={props.docked}
-// />, []);
+    //     const cornerOverlayComponent = React.useMemo(() => <OverlayComponent
+    //     frame={frame}
+    //     width={channelMapStore.overlayStores?.corner?.fullViewWidth}
+    //     height={channelMapStore.overlayStores?.corner?.fullViewHeight}
+    //     overlaySettings={channelMapStore.overlayStores?.corner}
+    //     docked={props.docked}
+    // />, []);
+    //     const leftOverlayComponent = React.useMemo(() => <OverlayComponent
+    //     frame={frame}
+    //     width={channelMapStore.overlayStores?.left?.fullViewWidth}
+    //     height={channelMapStore.overlayStores?.left?.fullViewHeight}
+    //     overlaySettings={channelMapStore.overlayStores?.left}
+    //     docked={props.docked}
+    // />, []);
+    //     const bottomOverlayComponent = React.useMemo(() => <OverlayComponent
+    //     frame={frame}
+    //     width={channelMapStore.overlayStores?.bottom?.fullViewWidth}
+    //     height={channelMapStore.overlayStores?.bottom?.fullViewHeight}
+    //     overlaySettings={channelMapStore.overlayStores?.bottom}
+    //     docked={props.docked}
+    // />, []);
+    //     const innerOverlayComponent = React.useMemo(() => <OverlayComponent
+    //     frame={frame}
+    //     width={channelMapStore.overlayStores?.inner?.fullViewWidth}
+    //     height={channelMapStore.overlayStores?.inner?.fullViewHeight}
+    //     overlaySettings={channelMapStore.overlayStores?.inner}
+    //     docked={props.docked}
+    // />, []);
 
     React.useEffect(() => {
         if (channelMapStore.masterFrame) {
             channelMapStore.throttledRequestChannels();
         }
-    }, [channelMapStore.masterFrame, channelMapStore.startChannel, channelMapStore.numColumns, channelMapStore.numRows, channelMapStore.masterFrame?.center, channelMapStore.masterFrame?.requiredFrameView, channelMapStore.masterFrame?.zoomLevel]);
+    }, [
+        channelMapStore.masterFrame,
+        channelMapStore.startChannel,
+        channelMapStore.numColumns,
+        channelMapStore.numRows,
+        channelMapStore.masterFrame?.center,
+        channelMapStore.masterFrame?.requiredFrameView,
+        channelMapStore.masterFrame?.zoomLevel
+    ]);
 
     const onRegionViewZoom = (frame: FrameStore, zoom: number) => {
         if (frame) {
@@ -284,7 +293,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     //         overlaySettings={channelMapStore.overlayStores?.corner}
     //         docked={props.docked}
     //     />
-    
+
     //     const b = <OverlayComponent
     //         ref={ref => (leftOverlayComponent.current = ref)}
     //         frame={frame}
@@ -292,8 +301,8 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     //         height={channelMapStore.overlayStores?.left?.fullViewHeight}
     //         overlaySettings={channelMapStore.overlayStores?.left}
     //         docked={props.docked}
-    //     /> 
-    
+    //     />
+
     //     const c = <OverlayComponent
     //         ref={ref => (bottomOverlayComponent.current = ref)}
     //         frame={frame}
@@ -302,7 +311,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     //         overlaySettings={channelMapStore.overlayStores?.bottom}
     //         docked={props.docked}
     //     />
-    
+
     //     const d = <OverlayComponent
     //         ref={ref => (innerOverlayComponent.current = ref)}
     //         frame={frame}
@@ -347,8 +356,14 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     // let overlayComponentLeft = imageRenderWidth * column;
 
                     const overlayStore = channelMapStore.overlayStore(index, imageRenderWidth, imageRenderHeight);
-                    let overlayCanvasRef
-                    let overlayComp
+                    let overlayCanvasRef;
+                    // let overlayComp;
+                    let thisIs;
+                    let contourCanvasRef;
+
+                    if (!(row === 0 && column === 0)) {
+                        contourCanvasRef = channelMapStore.contourStoreCanvasReference?.canvas;
+                    }
 
                     if (column === 0 && row === channelMapStore.numRows - 1) {
                         // overlayStore.numbers.setBottomHidden(false);
@@ -361,42 +376,45 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                         // overlayComponentLeft -= paddingLeft;
                         // renderCanvas = cornerOverlayComponent.current?.canvas;
                         overlayComponentLeft -= overlayStore.paddingLeft;
-                        overlayComp = cornerOverlayComponent.current ? 
-                    //     <OverlayComponent
-                    //     refCanvas={cornerOverlayComponent.current}
-                    //     frame={frame}
-                    //     width={channelMapStore.overlayStores?.corner?.fullViewWidth}
-                    //     height={channelMapStore.overlayStores?.corner?.fullViewHeight}
-                    //     top={overlayComponentTop}
-                    //     left={overlayComponentLeft}
-                    //     overlaySettings={channelMapStore.overlayStores?.corner}
-                    //     docked={props.docked}
-                    // /> 
-                    undefined
-                    :       
-                        <OverlayComponent
-                            ref={ref => (cornerOverlayComponent.current = ref?.canvas)}
-                            frame={frame}
-                            width={channelMapStore.overlayStores?.corner?.fullViewWidth}
-                            height={channelMapStore.overlayStores?.corner?.fullViewHeight}
-                            top={overlayComponentTop}
-                            left={overlayComponentLeft}
-                            overlaySettings={channelMapStore.overlayStores?.corner}
-                            docked={props.docked}
-                        />
-                    // if (!cornerOverlayComponent.current) {
-                        overlayCanvasRef = cornerOverlayComponent.current;
-                    //     <OverlayComponent
-                    //         ref={ref => (cornerOverlayComponent.current = ref?.canvas)}
-                    //         frame={frame}
-                    //         width={channelMapStore.overlayStores?.corner?.fullViewWidth}
-                    //         height={channelMapStore.overlayStores?.corner?.fullViewHeight}
-                    //         top={overlayComponentTop}
-                    //         left={overlayComponentLeft}
-                    //         overlaySettings={channelMapStore.overlayStores?.corner}
-                    //         docked={props.docked}
-                    //     />
-                    // }
+                        if (!cornerOverlayComponent.current) cornerOverlayComponent.current = channelMapStore.overlayStoreCanvasReference.corner;
+                        overlayCanvasRef = channelMapStore.overlayStoreCanvasReference.corner;
+                        thisIs = "corner";
+                        // overlayComp = cornerOverlayComponent.current ?
+                        //     <OverlayComponent
+                        //     refCanvas={cornerOverlayComponent.current}
+                        //     frame={frame}
+                        //     width={channelMapStore.overlayStores?.corner?.fullViewWidth}
+                        //     height={channelMapStore.overlayStores?.corner?.fullViewHeight}
+                        //     top={overlayComponentTop}
+                        //     left={overlayComponentLeft}
+                        //     overlaySettings={channelMapStore.overlayStores?.corner}
+                        //     docked={props.docked}
+                        // />
+                        // undefined
+                        // :
+                        //     <OverlayComponent
+                        //         ref={ref => (cornerOverlayComponent.current = ref?.canvas)}
+                        //         frame={frame}
+                        //         width={channelMapStore.overlayStores?.corner?.fullViewWidth}
+                        //         height={channelMapStore.overlayStores?.corner?.fullViewHeight}
+                        //         top={overlayComponentTop}
+                        //         left={overlayComponentLeft}
+                        //         overlaySettings={channelMapStore.overlayStores?.corner}
+                        //         docked={props.docked}
+                        //     />
+                        // if (!cornerOverlayComponent.current) {
+                        //     overlayCanvasRef = cornerOverlayComponent.current;
+                        //     <OverlayComponent
+                        //         ref={ref => (cornerOverlayComponent.current = ref?.canvas)}
+                        //         frame={frame}
+                        //         width={channelMapStore.overlayStores?.corner?.fullViewWidth}
+                        //         height={channelMapStore.overlayStores?.corner?.fullViewHeight}
+                        //         top={overlayComponentTop}
+                        //         left={overlayComponentLeft}
+                        //         overlaySettings={channelMapStore.overlayStores?.corner}
+                        //         docked={props.docked}
+                        //     />
+                        // }
                     } else if (column === 0) {
                         // overlayStore.numbers.setLeftHidden(false);
                         // overlayStore.labels.setLeftHidden(false);
@@ -404,10 +422,11 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                         // overlayStore.labels.setBottomHidden(true);
                         // overlayStore.fullViewWidth = imageRenderWidth + paddingLeft;
                         // overlayStore.fullViewHeight = imageRenderHeight;
-                        
+
                         // renderCanvas = leftOverlayComponent.current?.canvas;
                         overlayComponentLeft -= overlayStore.paddingLeft;
-                        overlayComp = leftOverlayComponent.current ? 
+                        thisIs = "left";
+                        // overlayComp = leftOverlayComponent.current ?
                         // <OverlayComponent
                         //         refCanvas={leftOverlayComponent.current}
                         //         frame={frame}
@@ -417,21 +436,21 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                         //         left={overlayComponentLeft}
                         //         overlaySettings={channelMapStore.overlayStores?.left}
                         //         docked={props.docked}
-                        //     /> 
-                            undefined
-                            : 
-                        <OverlayComponent
-                            ref={ref => (leftOverlayComponent.current = ref?.canvas)}
-                            frame={frame}
-                            width={channelMapStore.overlayStores?.left?.fullViewWidth}
-                            height={channelMapStore.overlayStores?.left?.fullViewHeight}
-                            top={overlayComponentTop}
-                            left={overlayComponentLeft}
-                            overlaySettings={channelMapStore.overlayStores?.left}
-                            docked={props.docked}
-                        />;
-                        // if (!leftOverlayComponent.current) {
-                            overlayCanvasRef = leftOverlayComponent.current;
+                        //     />
+                        //     undefined
+                        //     :
+                        // <OverlayComponent
+                        //     ref={ref => (leftOverlayComponent.current = ref?.canvas)}
+                        //     frame={frame}
+                        //     width={channelMapStore.overlayStores?.left?.fullViewWidth}
+                        //     height={channelMapStore.overlayStores?.left?.fullViewHeight}
+                        //     top={overlayComponentTop}
+                        //     left={overlayComponentLeft}
+                        //     overlaySettings={channelMapStore.overlayStores?.left}
+                        //     docked={props.docked}
+                        // />;
+                        if (!leftOverlayComponent.current) leftOverlayComponent.current = channelMapStore.overlayStoreCanvasReference.left;
+                        overlayCanvasRef = channelMapStore.overlayStoreCanvasReference.left;
                         //     <OverlayComponent
                         //         ref={ref => (leftOverlayComponent.current = ref?.canvas)}
                         //         frame={frame}
@@ -442,7 +461,6 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                         //         overlaySettings={channelMapStore.overlayStores?.left}
                         //         docked={props.docked}
                         //     />
-                        // }
                     } else if (row === channelMapStore.numRows - 1) {
                         // overlayStore.numbers.setBottomHidden(false);
                         // overlayStore.labels.setBottomHidden(false);
@@ -452,7 +470,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                         // overlayStore.fullViewWidth = imageRenderWidth;
                         // renderCanvas = bottomOverlayComponent.current?.canvas;
 
-                        overlayComp = bottomOverlayComponent.current ? 
+                        // overlayComp = bottomOverlayComponent.current ?
                         // <OverlayComponent
                         //         refCanvas={bottomOverlayComponent.current}
                         //         frame={frame}
@@ -463,32 +481,34 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                         //         overlaySettings={channelMapStore.overlayStores?.bottom}
                         //         docked={props.docked}
                         //     />
-                            undefined
-                            : 
-                            <OverlayComponent
-                                ref={ref => (bottomOverlayComponent.current = ref?.canvas)}
-                                frame={frame}
-                                width={channelMapStore.overlayStores?.bottom?.fullViewWidth}
-                                height={channelMapStore.overlayStores?.bottom?.fullViewHeight}
-                                top={overlayComponentTop}
-                                left={overlayComponentLeft}
-                                overlaySettings={channelMapStore.overlayStores?.bottom}
-                                docked={props.docked}
-                            />
+                        // undefined
+                        // :
+                        // <OverlayComponent
+                        //     ref={ref => (bottomOverlayComponent.current = ref?.canvas)}
+                        //     frame={frame}
+                        //     width={channelMapStore.overlayStores?.bottom?.fullViewWidth}
+                        //     height={channelMapStore.overlayStores?.bottom?.fullViewHeight}
+                        //     top={overlayComponentTop}
+                        //     left={overlayComponentLeft}
+                        //     overlaySettings={channelMapStore.overlayStores?.bottom}
+                        //     docked={props.docked}
+                        // />
 
-                        // if (!bottomOverlayComponent.current) {
-                            overlayCanvasRef = bottomOverlayComponent.current;
-                        //     <OverlayComponent
-                        //         ref={ref => (bottomOverlayComponent.current = ref?.canvas)}
-                        //         frame={frame}
-                        //         width={channelMapStore.overlayStores?.bottom?.fullViewWidth}
-                        //         height={channelMapStore.overlayStores?.bottom?.fullViewHeight}
-                        //         top={overlayComponentTop}
-                        //         left={overlayComponentLeft}
-                        //         overlaySettings={channelMapStore.overlayStores?.bottom}
-                        //         docked={props.docked}
-                        //     />
-                        // }
+                        thisIs = "bottom";
+                        if (!bottomOverlayComponent.current) {
+                            bottomOverlayComponent.current = channelMapStore.overlayStoreCanvasReference.bottom;
+                            //     <OverlayComponent
+                            //         ref={ref => (bottomOverlayComponent.current = ref?.canvas)}
+                            //         frame={frame}
+                            //         width={channelMapStore.overlayStores?.bottom?.fullViewWidth}
+                            //         height={channelMapStore.overlayStores?.bottom?.fullViewHeight}
+                            //         top={overlayComponentTop}
+                            //         left={overlayComponentLeft}
+                            //         overlaySettings={channelMapStore.overlayStores?.bottom}
+                            //         docked={props.docked}
+                            //     />
+                        }
+                        overlayCanvasRef = channelMapStore.overlayStoreCanvasReference.bottom;
                     } else {
                         // overlayStore.numbers.setBottomHidden(true);
                         // overlayStore.labels.setBottomHidden(true);
@@ -498,31 +518,32 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                         // overlayStore.fullViewWidth = imageRenderWidth;
                         // renderCanvas = innerOverlayComponent.current?.canvas;
 
-                        overlayComp = innerOverlayComponent.current ? 
-                    //     <OverlayComponent
-                    //     refCanvas={innerOverlayComponent.current}
-                    //     frame={frame}
-                    //     width={channelMapStore.overlayStores?.inner?.fullViewWidth}
-                    //     height={channelMapStore.overlayStores?.inner?.fullViewHeight}
-                    //     top={overlayComponentTop}
-                    //     left={overlayComponentLeft}
-                    //     overlaySettings={channelMapStore.overlayStores?.inner}
-                    //     docked={props.docked}
-                    // /> 
-                    undefined
-                    : 
-                        <OverlayComponent
-                                ref={ref => (innerOverlayComponent.current = ref?.canvas)}
-                                frame={frame}
-                                width={channelMapStore.overlayStores?.inner?.fullViewWidth}
-                                height={channelMapStore.overlayStores?.inner?.fullViewHeight}
-                                top={overlayComponentTop}
-                                left={overlayComponentLeft}
-                                overlaySettings={channelMapStore.overlayStores?.inner}
-                                docked={props.docked}
-                            />;
+                        // overlayComp = innerOverlayComponent.current ?
+                        //     <OverlayComponent
+                        //     refCanvas={innerOverlayComponent.current}
+                        //     frame={frame}
+                        //     width={channelMapStore.overlayStores?.inner?.fullViewWidth}
+                        //     height={channelMapStore.overlayStores?.inner?.fullViewHeight}
+                        //     top={overlayComponentTop}
+                        //     left={overlayComponentLeft}
+                        //     overlaySettings={channelMapStore.overlayStores?.inner}
+                        //     docked={props.docked}
+                        // />
+                        // undefined
+                        // :
+                        //     <OverlayComponent
+                        //             ref={ref => (innerOverlayComponent.current = ref?.canvas)}
+                        //             frame={frame}
+                        //             width={channelMapStore.overlayStores?.inner?.fullViewWidth}
+                        //             height={channelMapStore.overlayStores?.inner?.fullViewHeight}
+                        //             top={overlayComponentTop}
+                        //             left={overlayComponentLeft}
+                        //             overlaySettings={channelMapStore.overlayStores?.inner}
+                        //             docked={props.docked}
+                        //         />;
                         // if (!innerOverlayComponent.current) {
-                        //     overlayCanvasRef = innerOverlayComponent.current;
+                        thisIs = "inner";
+                        if (!innerOverlayComponent.current) innerOverlayComponent.current = channelMapStore.overlayStoreCanvasReference.inner;
                         //     <OverlayComponent
                         //         ref={ref => (innerOverlayComponent.current = ref?.canvas)}
                         //         frame={frame}
@@ -534,7 +555,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                         //         docked={props.docked}
                         //     />;
                         // }
-                        overlayCanvasRef = innerOverlayComponent.current;
+                        overlayCanvasRef = channelMapStore.overlayStoreCanvasReference.inner;
                     }
                     // overlayStore.setBase(0);
                     // overlayStore.setDefaultGap(2);
@@ -547,10 +568,19 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     // console.log(overlayComponentWidth, overlayComponentHeight)
                     // const overlayComponentTop = overlayStore.fullViewHeight * row;
                     // const overlayComponentLeft = overlayStore.fullViewWidth * column;
-                    if (canvasRef.current && overlayCanvasRef) {
-                        const destCanvas = canvasRef.current.getContext("2d");
-                        destCanvas.drawImage(overlayCanvasRef, 0, 0);
-                    }
+
+                    // console.log('overlaycanvas ref', channelMapStore.overlayStoreCanvasReference)
+                    // if (canvasRef.current) {
+                    //     const destCanvas = canvasRef.current.getContext("2d");
+                    //     console.log('destcanvas ref', destCanvas)
+                    //     const w = overlayCanvasRef.width;
+                    //     const h = overlayCanvasRef.height;
+                    //     destCanvas.clearRect(0, 0, w, h);
+                    //     destCanvas.drawImage(overlayCanvasRef, 0, 0);
+                    // }
+
+                    console.log("rendering grid", column, row, thisIs);
+                    // if(overlayCanvasRef?.canvas) overlayCanvasRef.canvas.id = `${column}_${row}`;
 
                     return (
                         <>
@@ -573,16 +603,44 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                                 tileBasedRender={true}
                                 channel={channel}
                             />
+                            {/* <canvas style={{top: overlayComponentTop || 0, left: overlayComponentLeft || 0, width: overlayStore.viewWidth, height: overlayStore.viewHeight}} id="overlay-canvas" ref={ref => canvasRef.current = ref} /> */}
+                            {/* {overlayComp} */}
+                            <ContourViewComponent
+                                overlayStore={overlayStore}
+                                ref={ref => {
+                                    if (row === 0 && column === 0) channelMapStore.contourStoreCanvasReference = ref;
+                                }}
+                                frame={frame}
+                                docked={props.docked}
+                                row={row}
+                                column={column}
+                                top={overlayComponentTop}
+                                left={overlayComponentLeft}
+                                refCanvas={contourCanvasRef}
+                            />
                             <OverlayComponent
+                                ref={ref => {
+                                    if ((column === 0 && row === 0) || (column === 0 && row === channelMapStore.numRows - 1) || (column === 1 && row === 0) || (column === 1 && row === channelMapStore.numRows - 1)) {
+                                        channelMapStore.overlayStoreCanvasReference[thisIs] = ref;
+                                        console.log("referencing canvas", column, row);
+                                        if (ref?.canvas) ref.canvas.id = `${column}_${row}`;
+                                    }
+                                }}
                                 frame={frame}
                                 width={channelMapStore.overlayStores?.inner?.fullViewWidth}
                                 height={channelMapStore.overlayStores?.inner?.fullViewHeight}
                                 overlaySettings={overlayStore}
                                 top={overlayComponentTop}
                                 left={overlayComponentLeft}
-                                docked={props.docked} />
-                            {/* <canvas style={{top: overlayComponentTop || 0, left: overlayComponentLeft || 0, width: overlayStore.viewWidth, height: overlayStore.viewHeight}} id="overlay-canvas" ref={ref => canvasRef.current = ref} /> */}
-                            {/* {overlayComp} */}
+                                docked={props.docked}
+                                column={column}
+                                row={row}
+                                refCanvas={
+                                    (column === 0 && row === 0) || (column === 0 && row === channelMapStore.numRows - 1) || (column === 1 && row === 0) || (column === 1 && row === channelMapStore.numRows - 1)
+                                        ? undefined
+                                        : overlayCanvasRef.canvas
+                                }
+                            />
                             <RegionViewComponent
                                 frame={frame}
                                 width={overlayStore.renderWidth}
@@ -594,12 +652,20 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                                 dragPanningEnabled={appStore.preferenceStore.dragPanning}
                                 docked={props.docked}
                             />
-                            {/* <ContourViewComponent frame={frame} docked={props.docked} row={row} column={column} /> */}
                         </>
                     );
                 })}
             </div>
-            {frame.overlayStore.colorbar.visible && <ColorbarComponent frame={frame} onCursorHoverValueChanged={props.channelMapStore.setPixelHighlightValue} width={fullRenderWidth + 40} height={fullRenderHeight + 40} top={frame.overlayStore.colorbar.position === "bottom" ? cursorInfoOffset + fullRenderHeight + 40 : cursorInfoOffset}  length={frame.overlayStore.colorbar.position === "right" ? fullRenderHeight : fullRenderWidth} />}
+            {frame.overlayStore.colorbar.visible && (
+                <ColorbarComponent
+                    frame={frame}
+                    onCursorHoverValueChanged={props.channelMapStore.setPixelHighlightValue}
+                    width={fullRenderWidth + 40}
+                    height={fullRenderHeight + 40}
+                    top={frame.overlayStore.colorbar.position === "bottom" ? cursorInfoOffset + fullRenderHeight + 40 : cursorInfoOffset}
+                    length={frame.overlayStore.colorbar.position === "right" ? fullRenderHeight : fullRenderWidth}
+                />
+            )}
             <ToolbarComponent
                 ref={ref => (toolbarRef.current = ref)}
                 docked={props.docked}
