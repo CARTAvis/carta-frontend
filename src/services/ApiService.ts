@@ -90,10 +90,11 @@ export class ApiService {
     constructor() {
         makeObservable(this);
         this.axiosInstance = axios.create();
-        if (localStorage.getItem("authenticationType")) {
+        if (localStorage.getItem("authenticationType") || ApiService.RuntimeConfig.tokenRefreshAddress) {
             this.onTokenExpired();
         } else {
-            this.handleAuthLost();
+            this._accessToken = "no_auth_configured";
+            this._tokenLifetime = Number.MAX_VALUE;
         }
     }
 
