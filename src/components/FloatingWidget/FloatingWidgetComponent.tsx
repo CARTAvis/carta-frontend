@@ -147,7 +147,9 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 }}
             >
                 <div className={titleClass}>
-                    <div className={"floating-title"}>{widgetConfig.title}</div>
+                    <div className={"floating-title"} data-testid={this.props.widgetConfig?.id + "-header-title"}>
+                        {widgetConfig.title}
+                    </div>
                     {this.props.showFloatingSettingsButton && (
                         <div
                             className={buttonClass}

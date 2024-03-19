@@ -167,7 +167,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         itemPredicate={this.filterColumn}
                         resetOnSelect={true}
                     >
-                        <Button text={widgetStore.sizeMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical" />
+                        <Button text={widgetStore.sizeMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical" data-testid="catalog-settings-major-size-column-dropdown" />
                     </Select>
                 </FormGroup>
                 <FormGroup label={"Scaling"} inline={true} disabled={disableSizeMap}>
@@ -319,6 +319,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             value={widgetStore.thickness}
                             stepSize={0.5}
                             onValueChange={(value: number) => widgetStore.setThickness(value)}
+                            data-testid="catalog-settings-thickness-input"
                         />
                     </Tooltip2>
                 </FormGroup>
@@ -356,7 +357,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         );
 
         const colorMap = (
-            <div className="panel-container">
+            <div className="panel-container" data-testid="catalog-settings-color-tab">
                 <FormGroup label={"Color"} inline={true} disabled={disabledOverlayPanel || !widgetStore.disableColorMap}>
                     <AutoColorPickerComponent
                         color={widgetStore.catalogColor}
@@ -392,7 +393,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         itemPredicate={this.filterColumn}
                         resetOnSelect={true}
                     >
-                        <Button text={widgetStore.colorMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical" />
+                        <Button text={widgetStore.colorMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical" data-testid="catalog-settings-color-column-dropdown" />
                     </Select>
                 </FormGroup>
                 <FormGroup label={"Scaling"} inline={true} disabled={disableColorMap}>
@@ -442,7 +443,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         itemPredicate={this.filterColumn}
                         resetOnSelect={true}
                     >
-                        <Button text={widgetStore.orientationMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical" />
+                        <Button text={widgetStore.orientationMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical" data-testid="catalog-settings-orientation-column-dropdown" />
                     </Select>
                 </FormGroup>
                 <FormGroup label={"Scaling"} inline={true} disabled={disableOrientationMap}>
@@ -527,13 +528,13 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         itemRenderer={this.renderShapePopOver}
                         popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                     >
-                        <Button icon={this.getCatalogShape(widgetStore.catalogShape)} rightIcon="double-caret-vertical" disabled={disabledOverlayPanel} />
+                        <Button icon={this.getCatalogShape(widgetStore.catalogShape)} rightIcon="double-caret-vertical" disabled={disabledOverlayPanel} data-testid="catalog-settings-shape-dropdown" />
                     </Select>
                 </FormGroup>
                 <Tabs id="catalogSettings" vertical={false} selectedTabId={widgetStore.settingsTabId} onChange={tabId => this.handleSelectedTabChanged(tabId)}>
                     <Tab id={CatalogSettingsTabs.SIZE} title="Size" panel={sizeMap} disabled={disabledOverlayPanel} />
-                    <Tab id={CatalogSettingsTabs.COLOR} title="Color" panel={colorMap} disabled={disabledOverlayPanel} />
-                    <Tab id={CatalogSettingsTabs.ORIENTATION} title="Orientation" panel={orientationMap} disabled={disabledOverlayPanel} />
+                    <Tab id={CatalogSettingsTabs.COLOR} title="Color" panel={colorMap} disabled={disabledOverlayPanel} data-testid="catalog-settings-color-tab-title" />
+                    <Tab id={CatalogSettingsTabs.ORIENTATION} title="Orientation" panel={orientationMap} disabled={disabledOverlayPanel} data-testid="catalog-settings-orientation-tab-title" />
                 </Tabs>
             </div>
         );
@@ -598,7 +599,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
     private renderShapePopOver = (shape: CatalogOverlayShape, itemProps: IItemRendererProps) => {
         const shapeItem = this.getCatalogShape(shape);
-        return <MenuItem icon={shapeItem} key={shape} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+        return <MenuItem icon={shapeItem} key={shape} onClick={itemProps.handleClick} active={itemProps.modifiers.active} data-testid={"catalog-settings-shape-" + CatalogOverlayShape[shape].toLowerCase().replaceAll("_", "-")} />;
     };
 
     private handleSelectedTabChanged = (newTabId: React.ReactText) => {

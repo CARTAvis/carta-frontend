@@ -232,7 +232,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 name={columnName}
                 cellRenderer={(rowIndex, columnIndex) => (
                     <Cell className="header-table-cell" key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>
-                        {coloumnData[rowIndex]}
+                        <>
+                            <div data-testid={"catalog-header-table-" + rowIndex + "-" + columnIndex}>{coloumnData[rowIndex]}</div>
+                        </>
                     </Cell>
                 )}
             />
@@ -245,9 +247,16 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         let disable = profileStore.loadingData;
         return (
             <Cell className="header-table-cell" key={`cell_switch_${rowIndex}`}>
-                <React.Fragment>
-                    <Switch className="cell-switch-button" key={`cell_switch_button_${rowIndex}`} disabled={disable} checked={display} onChange={changeEvent => this.handleHeaderDisplayChange(changeEvent, columnName)} />
-                </React.Fragment>
+                <>
+                    <Switch
+                        className="cell-switch-button"
+                        key={`cell_switch_button_${rowIndex}`}
+                        disabled={disable}
+                        checked={display}
+                        onChange={changeEvent => this.handleHeaderDisplayChange(changeEvent, columnName)}
+                        data-testid={"catalog-header-table-switch-" + rowIndex}
+                    />
+                </>
             </Cell>
         );
     }
@@ -625,7 +634,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
         if (!profileStore || catalogFileIds === undefined || catalogFileIds?.length === 0 || !catalogWidgetStore) {
             return (
-                <div className="catalog-overlay">
+                <div className="catalog-overlay" data-testid="catalog-widget-non-ideal">
                     <NonIdealState icon={"folder-open"} title={"No catalog file loaded"} description={"Load a catalog file using the menu"} />;
                 </div>
             );
