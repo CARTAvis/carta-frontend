@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 
 import {AppToaster, ExportImageMenuComponent, SuccessToast} from "components/Shared";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
-import {CARTA_INFO, ImageViewItem, PresetLayout, Snippet} from "models";
+import {CARTA_INFO, ImageType, ImageViewItem, PresetLayout, Snippet} from "models";
 import {ApiService, ConnectionStatus} from "services";
 import {AppStore, BrowserMode, DialogId, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
 import {copyToClipboard, toFixed} from "utilities";
@@ -241,7 +241,7 @@ export class RootMenuComponent extends React.Component {
                         onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)}
                     />
                 </Tooltip2>
-                <Menu.Item text="Close Image" label={`${modString}W`} disabled={appStore.appendFileDisabled} onClick={() => appStore.closeCurrentFile(true)} />
+                <Menu.Item text="Close Image" label={`${modString}W`} disabled={appStore.appendFileDisabled || appStore.activeImage?.type === ImageType.PV_PREVIEW} onClick={() => appStore.closeCurrentFile(true)} />
                 <Menu.Divider />
                 <Menu.Item text="Import Regions" disabled={!appStore.activeFrame} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)} />
                 <Tooltip2

@@ -20,6 +20,7 @@ import {
     FrameView,
     ImageItem,
     ImageType,
+    ImageViewItem,
     Point2D,
     PresetLayout,
     RegionId,
@@ -802,7 +803,7 @@ export class AppStore {
      * @param image - The image item to close.
      * @param confirmClose - Flag indicating whether to display a confirmation dialog before closing.
      */
-    closeImage = (image: ImageItem, confirmClose: boolean = true) => {
+    closeImage = (image: ImageViewItem, confirmClose: boolean = true) => {
         if (image?.type === ImageType.COLOR_BLENDING) {
             this.imageViewConfigStore.removeColorBlending(image.store);
         } else {
@@ -841,11 +842,11 @@ export class AppStore {
     }
 
     /**
-     * Closes the currently active image.
+     * Closes the currently active image if the active image is not a PV preview.
      * @param confirmClose - Flag indicating whether to display a confirmation dialog before closing.
      */
     @action closeCurrentFile = (confirmClose: boolean = false) => {
-        if (!this.appendFileDisabled) {
+        if (!this.appendFileDisabled && this.activeImage?.type !== ImageType.PV_PREVIEW) {
             this.closeImage(this.activeImage, confirmClose);
         }
     };
