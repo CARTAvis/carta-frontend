@@ -9,7 +9,7 @@ import {AppStore, type FrameStore} from "stores";
 
 import "./ColorBlendingConfigComponent.scss";
 
-export const ColorBlendingConfigComponent = observer(() => {
+export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidth: number}) => {
     const image = AppStore.Instance.activeImage;
     if (image?.type !== ImageType.COLOR_BLENDING) {
         return null;
@@ -80,6 +80,7 @@ export const ColorBlendingConfigComponent = observer(() => {
             </span>
         </span>
     );
+    const buttonTextCutoff = 550;
 
     return (
         <div className="color-blending-config">
@@ -89,13 +90,13 @@ export const ColorBlendingConfigComponent = observer(() => {
                     <Popover2 minimal={true} content={<Menu>{newFrameOptions}</Menu>}>
                         <Tooltip2 content={addLayerTooltip}>
                             <Button icon="add" rightIcon="caret-down" disabled={!newFrameOptions.length}>
-                                Add layer
+                                {widgetWidth < buttonTextCutoff ? "" : "Add layer"}
                             </Button>
                         </Tooltip2>
                     </Popover2>
                     {/* TODO: use icon "color-fill" when updated to bp5 */}
                     <Button icon="draw" rightIcon="caret-down" disabled>
-                        Apply color set
+                        {widgetWidth < buttonTextCutoff ? "" : "Apply color set"}
                     </Button>
                 </ButtonGroup>
             </div>

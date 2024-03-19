@@ -258,7 +258,12 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         }
 
         if (image.type === ImageType.COLOR_BLENDING) {
-            return <ColorBlendingConfigComponent />;
+            return (
+                <>
+                    <ColorBlendingConfigComponent widgetWidth={this.width} />
+                    <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}></ReactResizeDetector>
+                </>
+            );
         }
 
         const frame = image.store;
