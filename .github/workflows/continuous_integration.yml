@@ -75,18 +75,6 @@ jobs:
           n exec 16 node -v
           n exec 16 npm install --legacy-peer-deps
 
-      - name: Build wrappers
-        shell: bash        
-        run: |
-          source /emsdk/emsdk_env.sh
-          ./wasm_src/build_wrappers.sh
-
-      - name: Build protobuf
-        shell: bash        
-        run: |
-          source /emsdk/emsdk_env.sh
-          ./protobuf/build_proto.sh
-
       - name: Production build with node 16
         shell: bash        
         run: |
@@ -125,18 +113,6 @@ jobs:
           n 18
           n exec 18 node -v
           n exec 18 npm install --legacy-peer-deps
-
-      - name: Build wrappers
-        shell: bash
-        run: |
-          source /emsdk/emsdk_env.sh
-          ./wasm_src/build_wrappers.sh
-
-      - name: Build protobuf
-        shell: bash
-        run: |
-          source /emsdk/emsdk_env.sh
-          ./protobuf/build_proto.sh
 
       - name: Production build with node 18
         shell: bash
