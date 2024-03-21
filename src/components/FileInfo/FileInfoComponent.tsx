@@ -374,7 +374,7 @@ export class FileInfoComponent extends React.Component<{
                     return <div style={style} className="header-name">{`${header.name}`}</div>;
                 } else {
                     return (
-                        <div style={style} className="header-entry">
+                        <div style={style} className="header-entry" data-testid={"header-entry-" + index}>
                             <span className="header-name">{header.name}</span>
                             <span className="header-value"> = {`${header.value}`}</span>
                             {header.comment && <span className="header-comment"> / {header.comment} </span>}
