@@ -746,10 +746,8 @@ export class AppStore {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
         const frame = yield this.loadFile(path, filename, hdu, imageArithmetic, setAsActive, updateStartingDirectory);
-        if (frame?.wcsInfo && this.overlayStore.global.system !== SystemType.Auto) {
-            if (this.overlayStore.global.system !== frame.wcsSystem && !(this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL && this.spatialReference?.wcsInfo)) {
-                this.overlayStore.global.setSystem(SystemType.Auto);
-            }
+        if (!(this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL)) {
+            this.overlayStore.global.setSystem(SystemType.Auto);
         }
         return frame;
     }
@@ -772,9 +770,7 @@ export class AppStore {
     *openFile(path: string, filename?: string, hdu?: string, imageArithmetic?: boolean, updateStartingDirectory: boolean = true) {
         this.removeAllFrames();
         const frame = yield this.loadFile(path, filename, hdu, imageArithmetic, true, updateStartingDirectory);
-        if (frame?.wcsInfo && this.overlayStore.global.system !== frame.wcsSystem) {
-            this.overlayStore.global.setSystem(SystemType.Auto);
-        }
+        this.overlayStore.global.setSystem(SystemType.Auto);
         return frame;
     }
 
