@@ -90,13 +90,13 @@ export class RegionSelectComponent extends React.Component {
         let status;
         switch (fileBrowserStore.exportRegionNum) {
             case 0:
-                status = "Please select regions to export.";
+                status = "Please select elements to export.";
                 break;
             case 1:
-                status = `Selected 1 / ${fileBrowserStore.regionOptionNum} region.`;
+                status = `Selected 1 / ${fileBrowserStore.regionOptionNum} element.`;
                 break;
             default:
-                status = `Selected ${fileBrowserStore.exportRegionNum} / ${fileBrowserStore.regionOptionNum} regions.`;
+                status = `Selected ${fileBrowserStore.exportRegionNum} / ${fileBrowserStore.regionOptionNum} elements.`;
         }
         return <pre className="select-status">{status}</pre>;
     };
@@ -175,7 +175,7 @@ export class RegionSelectComponent extends React.Component {
                         {this.renderVirtualizedRegions()}
                     </React.Fragment>
                 ) : (
-                    <pre className="select-status">No regions in the active image.</pre>
+                    <pre className="select-status">No regions/annotations in the active image.</pre>
                 )}
             </div>
         );
