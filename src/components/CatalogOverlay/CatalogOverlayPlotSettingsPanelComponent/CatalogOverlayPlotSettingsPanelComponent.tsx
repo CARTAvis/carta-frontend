@@ -305,6 +305,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             value={widgetStore.catalogSize}
                             stepSize={0.5}
                             onValueChange={(value: number) => widgetStore.setCatalogSize(value)}
+                            data-testid="catalog-settings-size-input"
                         />
                     </Tooltip2>
                 </FormGroup>
