@@ -400,7 +400,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                             </>
                         )}
                         <Tooltip2 position={tooltipPosition} content="Toggle grid">
-                            <AnchorButton icon="grid" active={grid.visible} onClick={() => grid.setVisible(!grid.visible)} />
+                            <AnchorButton icon="grid" active={grid.visible} onClick={() => grid.setVisible(!grid.visible)} data-testid="grid-button" />
                         </Tooltip2>
                         {!frame.isPreview && (
                             <>
