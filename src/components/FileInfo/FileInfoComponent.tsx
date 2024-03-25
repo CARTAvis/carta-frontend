@@ -200,7 +200,7 @@ export class FileInfoComponent extends React.Component<{
         const tabEntries = infoTypes.map(infoType => {
             switch (infoType) {
                 case FileInfoType.IMAGE_FILE:
-                    return <Tab key={infoType} id={infoType} title="File Information" />;
+                    return <Tab key={infoType} id={infoType} title="File Information" data-testid={"file-information-tab-title"} />;
                 case FileInfoType.IMAGE_HEADER:
                     return <Tab key={infoType} id={infoType} title="Header" />;
                 case FileInfoType.SAVE_IMAGE:
