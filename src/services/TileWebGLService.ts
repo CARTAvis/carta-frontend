@@ -1,4 +1,5 @@
 import allMaps from "static/allmaps.png";
+import tinycolor from "tinycolor2";
 
 import {TEXTURE_SIZE, TILE_SIZE} from "services";
 import {getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
@@ -19,6 +20,8 @@ interface ShaderUniforms {
     NaNColor: WebGLUniformLocation;
     DataTexture: WebGLUniformLocation;
     CmapTexture: WebGLUniformLocation;
+    CmapCustomGradientEnd: WebGLUniformLocation;
+    CmapCustomGradientStart: WebGLUniformLocation;
     NumCmaps: WebGLUniformLocation;
     CmapIndex: WebGLUniformLocation;
     CanvasWidth: WebGLUniformLocation;
@@ -97,6 +100,8 @@ export class TileWebGLService {
             Inverted: this.gl.getUniformLocation(this.shaderProgram, "uInverted"),
             DataTexture: this.gl.getUniformLocation(this.shaderProgram, "uDataTexture"),
             CmapTexture: this.gl.getUniformLocation(this.shaderProgram, "uCmapTexture"),
+            CmapCustomGradientEnd: this.gl.getUniformLocation(this.shaderProgram, "uCmapCustomGradientEnd"),
+            CmapCustomGradientStart: this.gl.getUniformLocation(this.shaderProgram, "uCmapCustomGradientStart"),
             NumCmaps: this.gl.getUniformLocation(this.shaderProgram, "uNumCmaps"),
             CmapIndex: this.gl.getUniformLocation(this.shaderProgram, "uCmapIndex"),
             CanvasWidth: this.gl.getUniformLocation(this.shaderProgram, "uCanvasWidth"),
@@ -119,6 +124,8 @@ export class TileWebGLService {
 
         this.gl.uniform1i(this.shaderUniforms.DataTexture, 0);
         this.gl.uniform1i(this.shaderUniforms.CmapTexture, 1);
+        this.gl.uniform3f(this.shaderUniforms.CmapCustomGradientEnd, 0, 0, 0);
+        this.gl.uniform3f(this.shaderUniforms.CmapCustomGradientStart, 1, 1, 1);
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);
         this.gl.uniform1i(this.shaderUniforms.CmapIndex, 2);
         this.gl.uniform1f(this.shaderUniforms.MinVal, 3.4);
@@ -158,6 +165,15 @@ export class TileWebGLService {
         this.gl.vertexAttribPointer(this.vertexUVAttribute, 2, GL2.FLOAT, false, 0, 0);
         const uvs = new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]);
         this.gl.bufferData(GL2.ARRAY_BUFFER, uvs, GL2.STATIC_DRAW);
+    }
+
+    setCustomGradientUniforms(hex: string, startHex?: string) {
+        if (tinycolor(hex).getFormat() === "hex") {
+            const rgb = tinycolor(hex).toRgb();
+            this.gl.uniform3f(this.shaderUniforms.CmapCustomGradientEnd, rgb.r / 255, rgb.g / 255, rgb.b / 255);
+            const CmapCustomGradientStart = tinycolor(startHex).getFormat() === "hex" ? tinycolor(startHex).toRgb() : tinycolor("#000000").toRgb();
+            this.gl.uniform3f(this.shaderUniforms.CmapCustomGradientStart, CmapCustomGradientStart.r / 255, CmapCustomGradientStart.g / 255, CmapCustomGradientStart.b / 255);
+        }
     }
 
     protected constructor() {
