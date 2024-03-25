@@ -50,6 +50,8 @@ export enum PreferenceKeys {
 
     RENDER_CONFIG_SCALING = "scaling",
     RENDER_CONFIG_COLORMAP = "colormap",
+    RENDER_CONFIG_COLORMAP_HEX = "colormapHex",
+    RENDER_CONFIG_COLORMAP_HEX_START = "colormapHexStart",
     RENDER_CONFIG_PERCENTILE = "percentile",
     RENDER_CONFIG_SCALING_ALPHA = "scalingAlpha",
     RENDER_CONFIG_SCALING_GAMMA = "scalingGamma",
@@ -176,6 +178,8 @@ const DEFAULTS = {
     RENDER_CONFIG: {
         scaling: FrameScaling.LINEAR,
         colormap: "inferno",
+        colormapHex: "#FFFFFF",
+        colormapHexStart: "#000000",
         percentile: 99.9,
         scalingAlpha: 1000,
         scalingGamma: 1,
@@ -371,6 +375,14 @@ export class PreferenceStore {
 
     @computed get colormap(): string {
         return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP) ?? DEFAULTS.RENDER_CONFIG.colormap;
+    }
+
+    @computed get colormapHex(): string {
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX) ?? DEFAULTS.RENDER_CONFIG.colormapHex;
+    }
+
+    @computed get colormapHexStart(): string {
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX_START) ?? DEFAULTS.RENDER_CONFIG.colormapHexStart;
     }
 
     @computed get percentile(): number {
@@ -765,7 +777,7 @@ export class PreferenceStore {
     }
 
     /**
-     * Clears the preference settings of the keys
+     * Clear the preference setting of the selecting key
      *
      * @param keys - keys of {@link PreferenceKeys}
      */
@@ -776,7 +788,9 @@ export class PreferenceStore {
         yield ApiService.Instance.clearPreferences(keys);
     }
 
-    // reset functions
+    /**
+     * Reset the Silent preference settings
+     */
     @action resetSilentSettings = () => {
         this.clearPreferences([
             PreferenceKeys.SILENT_FILE_SORTING_STRING,
@@ -791,7 +805,7 @@ export class PreferenceStore {
     };
 
     /**
-     * Resets the Global preference settings
+     * Reset the Global preference settings
      */
     @action resetGlobalSettings = () => {
         this.clearPreferences([
@@ -813,11 +827,13 @@ export class PreferenceStore {
     };
 
     /**
-     * Resets the render configuration settings
+     * Reset the render configuration settings
      */
     @action resetRenderConfigSettings = () => {
         this.clearPreferences([
             PreferenceKeys.RENDER_CONFIG_COLORMAP,
+            PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX,
+            PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX_START,
             PreferenceKeys.RENDER_CONFIG_NAN_ALPHA,
             PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
             PreferenceKeys.RENDER_CONFIG_PERCENTILE,
@@ -829,7 +845,7 @@ export class PreferenceStore {
     };
 
     /**
-     * Resets the contour configuration settings
+     * Reset the contour configuration settings
      */
     @action resetContourConfigSettings = () => {
         this.clearPreferences([
@@ -845,7 +861,7 @@ export class PreferenceStore {
     };
 
     /**
-     * Resets the vector overlay configuration settings
+     * Reset the vector overlay configuration settings
      */
     @action resetVectorOverlayConfigSettings = () => {
         this.clearPreferences([
@@ -859,7 +875,7 @@ export class PreferenceStore {
     };
 
     /**
-     * Resets the overlay configuration settings
+     * Reset the overlay configuration settings
      */
     @action resetOverlayConfigSettings = () => {
         this.clearPreferences([
@@ -882,14 +898,14 @@ export class PreferenceStore {
     };
 
     /**
-     * Resets the region settings
+     * Reset the region settings
      */
     @action resetRegionSettings = () => {
         this.clearPreferences([PreferenceKeys.REGION_COLOR, PreferenceKeys.REGION_CREATION_MODE, PreferenceKeys.REGION_DASH_LENGTH, PreferenceKeys.REGION_LINE_WIDTH, PreferenceKeys.REGION_TYPE, PreferenceKeys.REGION_SIZE]);
     };
 
     /**
-     * Resets the annotation settings
+     * Reset the annotation settings
      */
     @action resetAnnotationSettings = () => {
         this.clearPreferences([
@@ -903,7 +919,7 @@ export class PreferenceStore {
     };
 
     /**
-     * Resets the preference settings
+     * Reset the preference settings
      */
     @action resetPerformanceSettings = () => {
         this.clearPreferences([
@@ -925,14 +941,14 @@ export class PreferenceStore {
     };
 
     /**
-     * Resets the compatibility settings
+     * Reset the compatibility settings
      */
     @action resetCompatibilitySettings = () => {
         this.clearPreferences([PreferenceKeys.COMPATIBILITY_AIPS_BEAM_SUPPORT]);
     };
 
     /**
-     * Resets the all log events
+     * Reset the all log events
      */
     @action selectAllLogEvents = () => {
         if (this.isSelectingAllLogEvents || this.isSelectingIndeterminateLogEvents) {
@@ -943,21 +959,21 @@ export class PreferenceStore {
     };
 
     /**
-     * Resets the log event setting
+     * Reset the log event setting
      */
     @action resetLogEventSettings = () => {
         this.clearPreferences([PreferenceKeys.LOG_EVENT]);
     };
 
     /**
-     * Resets the catalog settings
+     * Reset the catalog settings
      */
     @action resetCatalogSettings = () => {
         this.clearPreferences([PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION]);
     };
 
     /**
-     * Resets the telemetry settings
+     * Reset the telemetry settings
      */
     @action resetTelemetrySettings = () => {
         this.clearPreferences([PreferenceKeys.TELEMETRY_CONSENT_SHOWN, PreferenceKeys.TELEMETRY_MODE, PreferenceKeys.TELEMETRY_LOGGING]);
