@@ -79,7 +79,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 }
 
                 if (this.props.image?.type === ImageType.COLOR_BLENDING) {
-                    ctx.globalAlpha = this.props.image?.store?.alpha[index] / this.props.image?.store?.alphaSum;
+                    ctx.globalAlpha = this.props.image?.store?.alpha[index];
                 }
 
                 ctx.drawImage(this.gl.canvas, this.props.column * w, this.props.row * h, w, h, 0, 0, w, h);
@@ -425,7 +425,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
 
         if (this.props.image?.type === ImageType.COLOR_BLENDING) {
-            const alpha = this.props.image?.store?.alphaSum;
+            const alpha = this.props.image?.store?.alpha;
         }
         /* eslint-enable @typescript-eslint/no-unused-vars */
 

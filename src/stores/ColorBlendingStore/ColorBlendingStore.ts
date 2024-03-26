@@ -34,6 +34,8 @@ export class ColorBlendingStore {
         }
         this.selectedFrames.push(frame);
         this.alpha.push(1);
+        // trigger re-render
+        this.alpha = this.alpha.slice();
     };
 
     /**
@@ -62,6 +64,8 @@ export class ColorBlendingStore {
             return;
         }
         this.alpha[index] = alpha;
+        // trigger re-render
+        this.alpha = this.alpha.slice();
     };
 
     /**
@@ -76,6 +80,8 @@ export class ColorBlendingStore {
 
         const alphaIndex = index + 1;
         this.alpha.splice(alphaIndex, 1);
+        // trigger re-render
+        this.alpha = this.alpha.slice();
     };
 
     /** The frame from the base layer. */
@@ -86,11 +92,6 @@ export class ColorBlendingStore {
     /** The frames from all the layers. */
     @computed get frames(): FrameStore[] {
         return [this.baseFrame, ...this.selectedFrames];
-    }
-
-    /** The sum of the alpha values of all the layers. */
-    @computed get alphaSum(): number {
-        return this.alpha.reduce((acc, curr) => acc + curr, 0);
     }
 
     constructor(id: number) {
