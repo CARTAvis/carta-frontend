@@ -90,10 +90,16 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private updateUniforms(frame) {
         const appStore = AppStore.Instance;
         const shaderUniforms = frame.isPreview ? PreviewWebGLService.Instance.shaderUniforms : TileWebGLService.Instance.shaderUniforms;
+        const tileRenderService = frame.isPreview ? PreviewWebGLService.Instance : TileWebGLService.Instance;
         const renderConfig = frame.renderConfig;
         const pixelRatio = devicePixelRatio * appStore.imageRatio;
 
         if (renderConfig && shaderUniforms) {
+            if (renderConfig.colorMapIndex === -1) {
+                tileRenderService.setCustomGradientUniforms(renderConfig.customColormapHexEnd, renderConfig.customColormapHexStart);
+            } else if (renderConfig.colorMapIndex >= 79) {
+                tileRenderService.setCustomGradientUniforms(renderConfig.monoColormapHex);
+            }
             this.gl.uniform1f(shaderUniforms.MinVal, renderConfig.scaleMinVal);
             this.gl.uniform1f(shaderUniforms.MaxVal, renderConfig.scaleMaxVal);
             this.gl.uniform1i(shaderUniforms.CmapIndex, renderConfig.colorMapIndex);
@@ -398,6 +404,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     min: frame.renderConfig.scaleMinVal,
                     max: frame.renderConfig.scaleMaxVal,
                     colorMap: frame.renderConfig.colorMapIndex,
+                    customHex: frame.renderConfig.customColormapHexEnd,
+                    customStartHex: frame.renderConfig.customColormapHexStart,
                     contrast: frame.renderConfig.contrast,
                     bias: frame.renderConfig.bias,
                     useSmoothedBiasContrast: appStore.preferenceStore?.useSmoothedBiasContrast,
