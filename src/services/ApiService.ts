@@ -11,7 +11,6 @@ const snippetSchema = require("models/snippet_schema_1.json");
 export interface RuntimeConfig {
     dashboardAddress?: string;
     apiAddress?: string;
-    googleClientId?: string;
     tokenRefreshAddress?: string;
     logoutAddress?: string;
 }
@@ -52,7 +51,6 @@ export class ApiService {
     private _tokenLifetime: number;
     private _tokenExpiryHandler: any;
     private axiosInstance: AxiosInstance;
-    private authInstance: gapi.auth2.GoogleAuth;
 
     @action setToken = (tokenString: string, tokenLifetime: number = Number.MAX_VALUE) => {
         if (isFinite(tokenLifetime) && tokenLifetime > 0) {
@@ -92,20 +90,7 @@ export class ApiService {
     constructor() {
         makeObservable(this);
         this.axiosInstance = axios.create();
-        if (ApiService.RuntimeConfig.googleClientId) {
-            gapi.load("auth2", () => {
-                console.log("Google auth loaded");
-                try {
-                    gapi.auth2.init({client_id: ApiService.RuntimeConfig.googleClientId, scope: "profile email"}).then(this.onTokenExpired, failureReason => {
-                        console.log(failureReason);
-                        this.handleAuthLost();
-                    });
-                } catch (e) {
-                    console.log(e);
-                    this.handleAuthLost();
-                }
-            });
-        } else if (ApiService.RuntimeConfig.tokenRefreshAddress) {
+        if (localStorage.getItem("authenticationType") || ApiService.RuntimeConfig.tokenRefreshAddress) {
             this.onTokenExpired();
         } else {
             this._accessToken = "no_auth_configured";
@@ -138,28 +123,7 @@ export class ApiService {
     };
 
     private refreshAccessToken = async () => {
-        if (ApiService.RuntimeConfig.googleClientId) {
-            try {
-                this.authInstance = gapi.auth2.getAuthInstance();
-                const currentUser = this.authInstance?.currentUser.get();
-                if (currentUser?.isSignedIn()) {
-                    const authResponse = await currentUser.reloadAuthResponse();
-                    if (this.setToken(authResponse.id_token, authResponse.expires_in)) {
-                        console.debug("Authenticated with Google");
-                        return true;
-                    } else {
-                        console.log("Error parsing Google access token");
-                        return false;
-                    }
-                } else {
-                    console.log("Not authenticated!");
-                    this.clearToken();
-                    return false;
-                }
-            } catch (e) {
-                return false;
-            }
-        } else if (ApiService.RuntimeConfig.tokenRefreshAddress) {
+        if (ApiService.RuntimeConfig.tokenRefreshAddress) {
             try {
                 const response = await this.axiosInstance.post(ApiService.RuntimeConfig.tokenRefreshAddress);
                 if (response?.data?.access_token) {
@@ -181,28 +145,9 @@ export class ApiService {
     };
 
     public logout = async () => {
-        this.clearToken();
-        if (ApiService.RuntimeConfig.googleClientId) {
-            this.authInstance?.signOut();
-        } else if (ApiService.RuntimeConfig.logoutAddress) {
-            // The controller will assume an existing login session exists if this exists
-            localStorage.removeItem("authenticationType");
-            try {
-                await this.axiosInstance.post(ApiService.RuntimeConfig.logoutAddress);
-            } catch (err) {
-                if (err.response.status === 404) {
-                    // OIDC logout requires GET for logout vs POST for other mechanisms
-                    window.open(ApiService.RuntimeConfig.logoutAddress, "_self");
-                    return; // avoid later potential dashboard redirect
-                } else {
-                    console.log(err);
-                }
-            }
-        }
-        // Redirect to dashboard URL if it exists
-        if (ApiService.RuntimeConfig.dashboardAddress) {
-            window.open(ApiService.RuntimeConfig.dashboardAddress, "_self");
-        }
+        // An existing login session will be assumed to exists if this is found in local storage
+        localStorage.removeItem("authenticationType");
+        window.open(ApiService.RuntimeConfig.logoutAddress, "_self");
     };
 
     public stopServer = async () => {
