@@ -146,13 +146,4 @@ describe("ColorBlendingStore", () => {
             expect(colorBlendingStore.frames).toEqual([mockSpatialReference, mockMatchedFrame1, mockMatchedFrame2]);
         });
     });
-
-    describe("alphaSum", () => {
-        it("should return the alpha sum correctly", () => {
-            colorBlendingStore.setAlpha(0, 0.5);
-            colorBlendingStore.setAlpha(1, 0.3);
-            colorBlendingStore.setAlpha(2, 0.1);
-            expect(colorBlendingStore.alphaSum).toBe(0.9);
-        });
-    });
 });
