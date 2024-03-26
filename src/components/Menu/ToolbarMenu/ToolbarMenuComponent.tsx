@@ -180,7 +180,7 @@ export class ToolbarMenuComponent extends React.Component {
                         />
                     </Tooltip2>
                     <Tooltip2 content={<span>Preferences</span>} position={Position.BOTTOM}>
-                        <AnchorButton icon={"wrench"} onClick={() => dialogStore.showDialog(DialogId.Preference)} active={dialogStore.dialogVisible.get(DialogId.Preference)} />
+                        <AnchorButton icon={"wrench"} onClick={() => dialogStore.showDialog(DialogId.Preference)} active={dialogStore.dialogVisible.get(DialogId.Preference)} data-testid="preference-dialog-button" />
                     </Tooltip2>
                     <Tooltip2 content={<span>Contours</span>} position={Position.BOTTOM}>
                         <AnchorButton
@@ -219,7 +219,13 @@ export class ToolbarMenuComponent extends React.Component {
                         />
                     </Tooltip2>
                     <Tooltip2 content={<span>Distance measurement</span>} position={Position.BOTTOM}>
-                        <AnchorButton icon={<CustomIcon icon="distanceMeasuring" />} disabled={!appStore.activeFrame} onClick={this.handleDistanceMeasuringClicked} active={dialogStore.dialogVisible.get(DialogId.DistanceMeasure)} />
+                        <AnchorButton
+                            icon={<CustomIcon icon="distanceMeasuring" />}
+                            disabled={!appStore.activeFrame}
+                            onClick={this.handleDistanceMeasuringClicked}
+                            active={dialogStore.dialogVisible.get(DialogId.DistanceMeasure)}
+                            data-testid="distance-measuring-dialog-button"
+                        />
                     </Tooltip2>
                     {appStore.preferenceStore.codeSnippetsEnabled && (
                         <Tooltip2

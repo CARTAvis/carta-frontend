@@ -624,7 +624,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const scale = 1 / devicePixelRatio;
         if (!widgetStore || !profileStore || !catalogWidgetStore || catalogFileIds === undefined || catalogFileIds?.length === 0) {
             return (
-                <div className="catalog-plot" data-testid="catalog-plot-widget-non-ideal">
+                <div className="catalog-plot">
                     <NonIdealState icon={"folder-open"} title={"No catalog file loaded"} description={"Load a catalog file using the menu"} />;
                 </div>
             );

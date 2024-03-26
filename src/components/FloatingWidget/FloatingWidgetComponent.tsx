@@ -181,7 +181,9 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                         </div>
                     )}
                 </div>
-                <div className={floatingContentClassName}>{this.props.children}</div>
+                <div className={floatingContentClassName} data-testid={this.props.widgetConfig?.id + "-content"}>
+                    {this.props.children}
+                </div>
             </Rnd>
         );
     }
