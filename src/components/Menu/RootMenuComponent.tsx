@@ -113,9 +113,9 @@ export class RootMenuComponent extends React.Component {
     private newReleaseButtonOnClick = () => {
         const appStore = AppStore.Instance;
         if (this.disableCheckRelease) {
-            appStore.preferenceStore.setPreference(PreferenceKeys.CHECK_NEW_RELEASE, false);
+            appStore.preferenceStore.setPreference(PreferenceKeys.SILENT_CHECK_NEW_RELEASE, false);
         }
-        appStore.preferenceStore.setPreference(PreferenceKeys.LATEST_RELEASE, appStore.newRelease);
+        appStore.preferenceStore.setPreference(PreferenceKeys.SILENT_LATEST_RELEASE, appStore.newRelease);
         appStore.setShowNewRelease(false);
     };
 

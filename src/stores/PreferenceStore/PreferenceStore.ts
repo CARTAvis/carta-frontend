@@ -32,6 +32,16 @@ import {parseBoolean} from "utilities";
 export enum PreferenceKeys {
     SILENT_FILE_SORTING_STRING = "fileSortingString",
     SILENT_FILE_FILTERING_TYPE = "fileFilteringType",
+    SILENT_PIXEL_GRID_VISIBLE = "pixelGridVisible",
+    SILENT_PIXEL_GRID_COLOR = "pixelGridColor",
+    SILENT_IMAGE_MULTI_PANEL_ENABLED = "imageMultiPanelEnabled",
+    SILENT_IMAGE_PANEL_MODE = "imagePanelMode",
+    SILENT_IMAGE_PANEL_COLUMNS = "imagePanelColumns",
+    SILENT_IMAGE_PANEL_ROWS = "imagePanelRows",
+    SILENT_STATS_PANEL_ENABLED = "statsPanelEnabled",
+    SILENT_STATS_PANEL_MODE = "statsPanelMode",
+    SILENT_CHECK_NEW_RELEASE = "checkNewRelease",
+    SILENT_LATEST_RELEASE = "latestRelease",
 
     GLOBAL_THEME = "theme",
     GLOBAL_AUTOLAUNCH = "autoLaunch",
@@ -125,23 +135,10 @@ export enum PreferenceKeys {
     CATALOG_DISPLAYED_COLUMN_SIZE = "catalogDisplayedColumnSize",
     CATALOG_TABLE_SEPARATOR_POSITION = "catalogTableSeparatorPosition",
 
-    PIXEL_GRID_VISIBLE = "pixelGridVisible",
-    PIXEL_GRID_COLOR = "pixelGridColor",
-    IMAGE_MULTI_PANEL_ENABLED = "imageMultiPanelEnabled",
-    IMAGE_PANEL_MODE = "imagePanelMode",
-    IMAGE_PANEL_COLUMNS = "imagePanelColumns",
-    IMAGE_PANEL_ROWS = "imagePanelRows",
-
-    STATS_PANEL_ENABLED = "statsPanelEnabled",
-    STATS_PANEL_MODE = "statsPanelMode",
-
     TELEMETRY_UUID = "telemetryUuid",
     TELEMETRY_MODE = "telemetryMode",
     TELEMETRY_CONSENT_SHOWN = "telemetryConsentShown",
     TELEMETRY_LOGGING = "telemetryLogging",
-
-    CHECK_NEW_RELEASE = "checkNewRelease",
-    LATEST_RELEASE = "latestRelease",
 
     COMPATIBILITY_AIPS_BEAM_SUPPORT = "compatibilityAipsBeamSupport"
 }
@@ -156,6 +153,8 @@ const DEFAULTS = {
         imagePanelMode: ImagePanelMode.Dynamic,
         imagePanelColumns: 2,
         imagePanelRows: 2,
+        statsPanelEnabled: false,
+        statsPanelMode: 0,
         checkNewRelease: true,
         latestRelease: "v" + CARTA_INFO.version
     },
@@ -262,10 +261,6 @@ const DEFAULTS = {
         catalogDisplayedColumnSize: 10,
         catalogTableSeparatorPosition: "60%"
     },
-    STATS_PANEL: {
-        statsPanelEnabled: false,
-        statsPanelMode: 0
-    },
     TELEMETRY: {
         telemetryConsentShown: false,
         telemetryMode: TelemetryMode.Usage,
@@ -277,10 +272,90 @@ const DEFAULTS = {
 };
 
 /**
+ * All the preferences NOT in the preference dialog
+ */
+export class PreferenceSilentSettings {
+    @computed get fileSortingString(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.SILENT_FILE_SORTING_STRING) ?? DEFAULTS.SILENT.fileSortingString;
+    }
+
+    @computed get fileFilteringType(): FileFilteringType {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.SILENT_FILE_FILTERING_TYPE) ?? DEFAULTS.SILENT.fileFilteringType;
+    }
+
+    @computed get pixelGridVisible(): boolean {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.SILENT_PIXEL_GRID_VISIBLE) ?? DEFAULTS.SILENT.pixelGridVisible;
+    }
+
+    @computed get pixelGridColor(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.SILENT_PIXEL_GRID_COLOR) ?? DEFAULTS.SILENT.pixelGridColor;
+    }
+
+    @computed get imageMultiPanelEnabled(): boolean {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.SILENT_IMAGE_MULTI_PANEL_ENABLED) ?? DEFAULTS.SILENT.imagePanelMode;
+    }
+
+    @computed get imagePanelMode(): ImagePanelMode {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.SILENT_IMAGE_PANEL_MODE) ?? DEFAULTS.SILENT.imagePanelMode;
+    }
+
+    @computed get imagePanelColumns(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.SILENT_IMAGE_PANEL_COLUMNS) ?? DEFAULTS.SILENT.imagePanelColumns;
+    }
+
+    @computed get imagePanelRows(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.SILENT_IMAGE_PANEL_ROWS) ?? DEFAULTS.SILENT.imagePanelRows;
+    }
+
+    @computed get statsPanelEnabled(): boolean {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.SILENT_STATS_PANEL_ENABLED) ?? DEFAULTS.SILENT.statsPanelEnabled;
+    }
+
+    @computed get statsPanelMode(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.SILENT_STATS_PANEL_MODE) ?? DEFAULTS.SILENT.statsPanelMode;
+    }
+
+    // getters for showing new release
+    @computed get checkNewRelease(): boolean {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.SILENT_CHECK_NEW_RELEASE) ?? DEFAULTS.SILENT.checkNewRelease;
+    }
+
+    @computed get latestRelease(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.SILENT_LATEST_RELEASE) ?? DEFAULTS.SILENT.latestRelease;
+    }
+
+    /**
+     * Reset the Silent preference settings
+     */
+    @action resetSilentSettings = () => {
+        PreferenceStore.Instance.clearPreferences([
+            PreferenceKeys.SILENT_FILE_SORTING_STRING,
+            PreferenceKeys.SILENT_FILE_FILTERING_TYPE,
+            PreferenceKeys.SILENT_PIXEL_GRID_VISIBLE,
+            PreferenceKeys.SILENT_PIXEL_GRID_COLOR,
+            PreferenceKeys.SILENT_IMAGE_MULTI_PANEL_ENABLED,
+            PreferenceKeys.SILENT_IMAGE_PANEL_MODE,
+            PreferenceKeys.SILENT_IMAGE_PANEL_COLUMNS,
+            PreferenceKeys.SILENT_IMAGE_PANEL_ROWS
+        ]);
+    };
+}
+
+/**
  * The store manages the preference setting
  */
 export class PreferenceStore {
     private static staticInstance: PreferenceStore;
+    @observable silent: PreferenceSilentSettings;
+    // @observable global: PreferenceGlobalSettings;
+    // @observable render: PreferenceRenderSettings;
+    // @observable contour: PreferenceContourSettings;
+    // @observable vectorOverlay: PreferenceVectorOverlaySettings;
+    // @observable wcsOverlay: PreferenceWcsOverlaySettings;
+    // @observable regions: PreferenceRegionSettings;
+    // @observable annotation: PreferenceAnnotationSettings;
+    // @observable performance: PreferencePerformanceSettings;
+    // @observable telemetry: PreferenceTelemetrySettings;
 
     static get Instance() {
         if (!PreferenceStore.staticInstance) {
@@ -307,14 +382,6 @@ export class PreferenceStore {
 
     @computed get fileFilterMode(): FileFilterMode {
         return this.preferences.get(PreferenceKeys.GLOBAL_FILE_FILTER_MODE) ?? DEFAULTS.GLOBAL.fileFilterMode;
-    }
-
-    @computed get fileSortingString(): string {
-        return this.preferences.get(PreferenceKeys.SILENT_FILE_SORTING_STRING) ?? DEFAULTS.SILENT.fileSortingString;
-    }
-
-    @computed get fileFilteringType(): FileFilteringType {
-        return this.preferences.get(PreferenceKeys.SILENT_FILE_FILTERING_TYPE) ?? DEFAULTS.SILENT.fileFilteringType;
     }
 
     @computed get layout(): string {
@@ -674,40 +741,8 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION) ?? DEFAULTS.CATALOG.catalogTableSeparatorPosition;
     }
 
-    @computed get pixelGridVisible(): boolean {
-        return this.preferences.get(PreferenceKeys.PIXEL_GRID_VISIBLE) ?? DEFAULTS.SILENT.pixelGridVisible;
-    }
-
-    @computed get pixelGridColor(): string {
-        return this.preferences.get(PreferenceKeys.PIXEL_GRID_COLOR) ?? DEFAULTS.SILENT.pixelGridColor;
-    }
-
     @computed get limitOverlayRedraw(): boolean {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW) ?? DEFAULTS.PERFORMANCE.limitOverlayRedraw;
-    }
-
-    @computed get imageMultiPanelEnabled(): boolean {
-        return this.preferences.get(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED) ?? DEFAULTS.SILENT.imagePanelMode;
-    }
-
-    @computed get imagePanelMode(): ImagePanelMode {
-        return this.preferences.get(PreferenceKeys.IMAGE_PANEL_MODE) ?? DEFAULTS.SILENT.imagePanelMode;
-    }
-
-    @computed get imagePanelColumns(): number {
-        return this.preferences.get(PreferenceKeys.IMAGE_PANEL_COLUMNS) ?? DEFAULTS.SILENT.imagePanelColumns;
-    }
-
-    @computed get imagePanelRows(): number {
-        return this.preferences.get(PreferenceKeys.IMAGE_PANEL_ROWS) ?? DEFAULTS.SILENT.imagePanelRows;
-    }
-
-    @computed get statsPanelEnabled(): boolean {
-        return this.preferences.get(PreferenceKeys.STATS_PANEL_ENABLED) ?? DEFAULTS.STATS_PANEL.statsPanelEnabled;
-    }
-
-    @computed get statsPanelMode(): number {
-        return this.preferences.get(PreferenceKeys.STATS_PANEL_MODE) ?? DEFAULTS.STATS_PANEL.statsPanelMode;
     }
 
     // getters for telemetry
@@ -730,15 +765,6 @@ export class PreferenceStore {
     // getters for compatibility
     @computed get aipsBeamSupport(): boolean {
         return this.preferences.get(PreferenceKeys.COMPATIBILITY_AIPS_BEAM_SUPPORT) ?? DEFAULTS.COMPATIBILITY.aipsBeamSupport;
-    }
-
-    // getters for showing new release
-    @computed get checkNewRelease(): boolean {
-        return this.preferences.get(PreferenceKeys.CHECK_NEW_RELEASE) ?? DEFAULTS.SILENT.checkNewRelease;
-    }
-
-    @computed get latestRelease(): string {
-        return this.preferences.get(PreferenceKeys.LATEST_RELEASE) ?? DEFAULTS.SILENT.latestRelease;
     }
 
     /**
@@ -787,22 +813,6 @@ export class PreferenceStore {
         }
         yield ApiService.Instance.clearPreferences(keys);
     }
-
-    /**
-     * Reset the Silent preference settings
-     */
-    @action resetSilentSettings = () => {
-        this.clearPreferences([
-            PreferenceKeys.SILENT_FILE_SORTING_STRING,
-            PreferenceKeys.SILENT_FILE_FILTERING_TYPE,
-            PreferenceKeys.PIXEL_GRID_VISIBLE,
-            PreferenceKeys.PIXEL_GRID_COLOR,
-            PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED,
-            PreferenceKeys.IMAGE_PANEL_MODE,
-            PreferenceKeys.IMAGE_PANEL_COLUMNS,
-            PreferenceKeys.IMAGE_PANEL_ROWS
-        ]);
-    };
 
     /**
      * Reset the Global preference settings
@@ -1021,7 +1031,7 @@ export class PreferenceStore {
                 PreferenceKeys.REGION_CREATION_MODE,
                 PreferenceKeys.WCS_OVERLAY_AST_COLOR,
                 PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION,
-                PreferenceKeys.PIXEL_GRID_COLOR
+                PreferenceKeys.SILENT_PIXEL_GRID_COLOR
             ];
 
             const intKeys = [
@@ -1070,7 +1080,7 @@ export class PreferenceStore {
                 PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE,
                 PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING,
                 PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE,
-                PreferenceKeys.PIXEL_GRID_VISIBLE
+                PreferenceKeys.SILENT_PIXEL_GRID_VISIBLE
             ];
 
             const preferenceObject = {};
@@ -1139,5 +1149,6 @@ export class PreferenceStore {
     private constructor() {
         makeObservable(this);
         this.preferences = new Map<PreferenceKeys, any>();
+        this.silent = new PreferenceSilentSettings();
     }
 }
