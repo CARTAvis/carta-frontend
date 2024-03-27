@@ -101,6 +101,9 @@ export enum PreferenceKeys {
     WCS_OVERLAY_BEAM_WIDTH = "beamWidth",
     WCS_OVERLAY_CURSOR_INFO = "cursorInfoVisible",
 
+    CATALOG_DISPLAYED_COLUMN_SIZE = "catalogDisplayedColumnSize",
+    CATALOG_TABLE_SEPARATOR_POSITION = "catalogTableSeparatorPosition",
+
     REGION_COLOR = "regionColor",
     REGION_LINE_WIDTH = "regionLineWidth",
     REGION_DASH_LENGTH = "regionDashLength",
@@ -131,9 +134,6 @@ export enum PreferenceKeys {
     PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT = "pvPreviewCubeSizeLimitUnit",
 
     LOG_EVENT = "logEventList",
-
-    CATALOG_DISPLAYED_COLUMN_SIZE = "catalogDisplayedColumnSize",
-    CATALOG_TABLE_SEPARATOR_POSITION = "catalogTableSeparatorPosition",
 
     TELEMETRY_UUID = "telemetryUuid",
     TELEMETRY_MODE = "telemetryMode",
@@ -602,6 +602,154 @@ export class PreferenceVectorOverlaySettings {
     };
 }
 
+export class PreferenceWcsOverlaySettings {
+    // getters for WCS overlay
+    @computed get astColor(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_COLOR) ?? DEFAULTS.WCS_OVERLAY.astColor;
+    }
+
+    @computed get astGridVisible(): boolean {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.astGridVisible;
+    }
+
+    @computed get astLabelsVisible(): boolean {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.astLabelsVisible;
+    }
+
+    @computed get wcsType(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.WCS_OVERLAY_WCS_TYPE) ?? DEFAULTS.WCS_OVERLAY.wcsType;
+    }
+
+    @computed get colorbarVisible(): boolean {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.colorbarVisible;
+    }
+
+    @computed get colorbarInteractive(): boolean {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_INTERACTIVE) ?? DEFAULTS.WCS_OVERLAY.colorbarInteractive;
+    }
+
+    @computed get colorbarPosition(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_POSITION) ?? DEFAULTS.WCS_OVERLAY.colorbarPosition;
+    }
+
+    @computed get colorbarWidth(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH) ?? DEFAULTS.WCS_OVERLAY.colorbarWidth;
+    }
+
+    @computed get colorbarTicksDensity(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY) ?? DEFAULTS.WCS_OVERLAY.colorbarTicksDensity;
+    }
+
+    @computed get colorbarLabelVisible(): boolean {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_LABEL_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.colorbarLabelVisible;
+    }
+
+    @computed get beamVisible(): boolean {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.beamVisible;
+    }
+
+    @computed get beamColor(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_COLOR) ?? DEFAULTS.WCS_OVERLAY.beamColor;
+    }
+
+    @computed get beamType(): BeamType {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_TYPE) ?? DEFAULTS.WCS_OVERLAY.beamType;
+    }
+
+    @computed get beamWidth(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH) ?? DEFAULTS.WCS_OVERLAY.beamWidth;
+    }
+
+    @computed get cursorInfoVisible(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.WCS_OVERLAY_CURSOR_INFO) ?? DEFAULTS.WCS_OVERLAY.cursorInfoVisible;
+    }
+
+    /**
+     * Reset the overlay configuration settings
+     */
+    @action resetOverlayConfigSettings = () => {
+        PreferenceStore.Instance.clearPreferences([
+            PreferenceKeys.WCS_OVERLAY_AST_COLOR,
+            PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE,
+            PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE,
+            PreferenceKeys.WCS_OVERLAY_COLORBAR_VISIBLE,
+            PreferenceKeys.WCS_OVERLAY_COLORBAR_INTERACTIVE,
+            PreferenceKeys.WCS_OVERLAY_COLORBAR_POSITION,
+            PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH,
+            PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY,
+            PreferenceKeys.WCS_OVERLAY_COLORBAR_LABEL_VISIBLE,
+            PreferenceKeys.WCS_OVERLAY_BEAM_COLOR,
+            PreferenceKeys.WCS_OVERLAY_BEAM_TYPE,
+            PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE,
+            PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH,
+            PreferenceKeys.WCS_OVERLAY_WCS_TYPE,
+            PreferenceKeys.WCS_OVERLAY_CURSOR_INFO
+        ]);
+    };
+}
+
+export class PreferenceCatalogSettings {
+    @computed get displayedColumnSize(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE) ?? DEFAULTS.CATALOG.catalogDisplayedColumnSize;
+    }
+
+    @computed get tableSeparatorPosition(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION) ?? DEFAULTS.CATALOG.catalogTableSeparatorPosition;
+    }
+
+    /**
+     * Reset the catalog settings
+     */
+    @action resetCatalogSettings = () => {
+        PreferenceStore.Instance.clearPreferences([PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION]);
+    };
+}
+
+export class PreferenceRegionSettings {
+    // getters for region
+    @computed get color(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.REGION_COLOR) ?? DEFAULTS.REGION.regionColor;
+    }
+
+    @computed get lineWidth(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.REGION_LINE_WIDTH) ?? DEFAULTS.REGION.regionLineWidth;
+    }
+
+    @computed get dashLength(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.REGION_DASH_LENGTH) ?? DEFAULTS.REGION.regionDashLength;
+    }
+
+    @computed get type(): CARTA.RegionType {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.REGION_TYPE) ?? DEFAULTS.REGION.regionType;
+    }
+
+    @computed get creationMode(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.REGION_CREATION_MODE) ?? DEFAULTS.REGION.regionCreationMode;
+    }
+
+    @computed get size(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.REGION_SIZE) ?? DEFAULTS.REGION.regionSize;
+    }
+
+    @computed get isCornerMode(): boolean {
+        return this.creationMode === RegionCreationMode.CORNER;
+    }
+
+    /**
+     * Reset the region settings
+     */
+    @action resetRegionSettings = () => {
+        PreferenceStore.Instance.clearPreferences([
+            PreferenceKeys.REGION_COLOR,
+            PreferenceKeys.REGION_CREATION_MODE,
+            PreferenceKeys.REGION_DASH_LENGTH,
+            PreferenceKeys.REGION_LINE_WIDTH,
+            PreferenceKeys.REGION_TYPE,
+            PreferenceKeys.REGION_SIZE
+        ]);
+    };
+}
+
 /**
  * The store manages the preference setting
  */
@@ -612,8 +760,9 @@ export class PreferenceStore {
     @observable render: PreferenceRenderSettings;
     @observable contour: PreferenceContourSettings;
     @observable vectorOverlay: PreferenceVectorOverlaySettings;
-    // @observable wcsOverlay: PreferenceWcsOverlaySettings;
-    // @observable regions: PreferenceRegionSettings;
+    @observable wcsOverlay: PreferenceWcsOverlaySettings;
+    @observable catalog: PreferenceCatalogSettings;
+    @observable region: PreferenceRegionSettings;
     // @observable annotation: PreferenceAnnotationSettings;
     // @observable performance: PreferencePerformanceSettings;
     // @observable telemetry: PreferenceTelemetrySettings;
@@ -631,92 +780,6 @@ export class PreferenceStore {
      * Whether the preference data is initialized from the preference file or localStorage.
      */
     @observable preferenceReady: boolean = false;
-
-    // getters for WCS overlay
-    @computed get astColor(): string {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_COLOR) ?? DEFAULTS.WCS_OVERLAY.astColor;
-    }
-
-    @computed get astGridVisible(): boolean {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.astGridVisible;
-    }
-
-    @computed get astLabelsVisible(): boolean {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.astLabelsVisible;
-    }
-
-    @computed get wcsType(): string {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_WCS_TYPE) ?? DEFAULTS.WCS_OVERLAY.wcsType;
-    }
-
-    @computed get colorbarVisible(): boolean {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.colorbarVisible;
-    }
-
-    @computed get colorbarInteractive(): boolean {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_INTERACTIVE) ?? DEFAULTS.WCS_OVERLAY.colorbarInteractive;
-    }
-
-    @computed get colorbarPosition(): string {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_POSITION) ?? DEFAULTS.WCS_OVERLAY.colorbarPosition;
-    }
-
-    @computed get colorbarWidth(): number {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH) ?? DEFAULTS.WCS_OVERLAY.colorbarWidth;
-    }
-
-    @computed get colorbarTicksDensity(): number {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY) ?? DEFAULTS.WCS_OVERLAY.colorbarTicksDensity;
-    }
-
-    @computed get colorbarLabelVisible(): boolean {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_LABEL_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.colorbarLabelVisible;
-    }
-
-    @computed get beamVisible(): boolean {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.beamVisible;
-    }
-
-    @computed get beamColor(): string {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_COLOR) ?? DEFAULTS.WCS_OVERLAY.beamColor;
-    }
-
-    @computed get beamType(): BeamType {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_TYPE) ?? DEFAULTS.WCS_OVERLAY.beamType;
-    }
-
-    @computed get beamWidth(): number {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH) ?? DEFAULTS.WCS_OVERLAY.beamWidth;
-    }
-
-    @computed get cursorInfoVisible(): string {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_CURSOR_INFO) ?? DEFAULTS.WCS_OVERLAY.cursorInfoVisible;
-    }
-
-    // getters for region
-    @computed get regionColor(): string {
-        return this.preferences.get(PreferenceKeys.REGION_COLOR) ?? DEFAULTS.REGION.regionColor;
-    }
-
-    @computed get regionLineWidth(): number {
-        return this.preferences.get(PreferenceKeys.REGION_LINE_WIDTH) ?? DEFAULTS.REGION.regionLineWidth;
-    }
-
-    @computed get regionDashLength(): number {
-        return this.preferences.get(PreferenceKeys.REGION_DASH_LENGTH) ?? DEFAULTS.REGION.regionDashLength;
-    }
-
-    @computed get regionType(): CARTA.RegionType {
-        return this.preferences.get(PreferenceKeys.REGION_TYPE) ?? DEFAULTS.REGION.regionType;
-    }
-
-    @computed get regionCreationMode(): string {
-        return this.preferences.get(PreferenceKeys.REGION_CREATION_MODE) ?? DEFAULTS.REGION.regionCreationMode;
-    }
-
-    @computed get regionSize(): number {
-        return this.preferences.get(PreferenceKeys.REGION_SIZE) ?? DEFAULTS.REGION.regionSize;
-    }
 
     // getters for annotation
     @computed get annotationColor(): string {
@@ -803,20 +866,8 @@ export class PreferenceStore {
         return false;
     };
 
-    @computed get isRegionCornerMode(): boolean {
-        return this.regionCreationMode === RegionCreationMode.CORNER;
-    }
-
     @computed get enabledLoggingEventNames(): string[] {
         return this.preferences.get(PreferenceKeys.LOG_EVENT) ?? [];
-    }
-
-    @computed get catalogDisplayedColumnSize(): number {
-        return this.preferences.get(PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE) ?? DEFAULTS.CATALOG.catalogDisplayedColumnSize;
-    }
-
-    @computed get catalogTableSeparatorPosition(): string {
-        return this.preferences.get(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION) ?? DEFAULTS.CATALOG.catalogTableSeparatorPosition;
     }
 
     @computed get limitOverlayRedraw(): boolean {
@@ -893,36 +944,6 @@ export class PreferenceStore {
     }
 
     /**
-     * Reset the overlay configuration settings
-     */
-    @action resetOverlayConfigSettings = () => {
-        this.clearPreferences([
-            PreferenceKeys.WCS_OVERLAY_AST_COLOR,
-            PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE,
-            PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE,
-            PreferenceKeys.WCS_OVERLAY_COLORBAR_VISIBLE,
-            PreferenceKeys.WCS_OVERLAY_COLORBAR_INTERACTIVE,
-            PreferenceKeys.WCS_OVERLAY_COLORBAR_POSITION,
-            PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH,
-            PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY,
-            PreferenceKeys.WCS_OVERLAY_COLORBAR_LABEL_VISIBLE,
-            PreferenceKeys.WCS_OVERLAY_BEAM_COLOR,
-            PreferenceKeys.WCS_OVERLAY_BEAM_TYPE,
-            PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE,
-            PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH,
-            PreferenceKeys.WCS_OVERLAY_WCS_TYPE,
-            PreferenceKeys.WCS_OVERLAY_CURSOR_INFO
-        ]);
-    };
-
-    /**
-     * Reset the region settings
-     */
-    @action resetRegionSettings = () => {
-        this.clearPreferences([PreferenceKeys.REGION_COLOR, PreferenceKeys.REGION_CREATION_MODE, PreferenceKeys.REGION_DASH_LENGTH, PreferenceKeys.REGION_LINE_WIDTH, PreferenceKeys.REGION_TYPE, PreferenceKeys.REGION_SIZE]);
-    };
-
-    /**
      * Reset the annotation settings
      */
     @action resetAnnotationSettings = () => {
@@ -981,13 +1002,6 @@ export class PreferenceStore {
      */
     @action resetLogEventSettings = () => {
         this.clearPreferences([PreferenceKeys.LOG_EVENT]);
-    };
-
-    /**
-     * Reset the catalog settings
-     */
-    @action resetCatalogSettings = () => {
-        this.clearPreferences([PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION]);
     };
 
     /**
@@ -1162,5 +1176,8 @@ export class PreferenceStore {
         this.render = new PreferenceRenderSettings();
         this.contour = new PreferenceContourSettings();
         this.vectorOverlay = new PreferenceVectorOverlaySettings();
+        this.wcsOverlay = new PreferenceWcsOverlaySettings();
+        this.catalog = new PreferenceCatalogSettings();
+        this.region = new PreferenceRegionSettings();
     }
 }

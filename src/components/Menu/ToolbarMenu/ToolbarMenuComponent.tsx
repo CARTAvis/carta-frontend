@@ -36,7 +36,7 @@ export class ToolbarMenuComponent extends React.Component {
     };
 
     regionTooltip = (type: CARTA.RegionType) => {
-        const regionModeIsCenter = AppStore.Instance.preferenceStore.regionCreationMode === RegionCreationMode.CENTER;
+        const regionModeIsCenter = AppStore.Instance.preferenceStore.region.creationMode === RegionCreationMode.CENTER;
         let tooltip = null;
         switch (type) {
             case CARTA.RegionType.RECTANGLE:

@@ -132,7 +132,7 @@ export class CatalogWidgetStore {
         this.catalogShape = CatalogOverlayShape.CIRCLE_LINED;
         this.xAxis = CatalogOverlay.NONE;
         this.yAxis = CatalogOverlay.NONE;
-        this.tableSeparatorPosition = PreferenceStore.Instance.catalogTableSeparatorPosition;
+        this.tableSeparatorPosition = PreferenceStore.Instance.catalog.tableSeparatorPosition;
         this.highlightColor = Colors.RED2;
         this.settingsTabId = CatalogSettingsTabs.SIZE;
         this.thickness = 2.0;

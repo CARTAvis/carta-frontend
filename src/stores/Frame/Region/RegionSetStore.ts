@@ -39,7 +39,7 @@ export class RegionSetStore {
         this.backendService = backendService;
         this.preference = preference;
         this.regions = [];
-        this.newRegionType = preference.regionType;
+        this.newRegionType = preference.region.type;
         this.mode = RegionMode.MOVING;
         this.addPointRegion(frame.center, true);
         this.selectedRegion = this.regions[0];
@@ -241,7 +241,7 @@ export class RegionSetStore {
         type CommonInputs = [BackendService, number, FrameStore, Point2D[], CARTA.RegionType, number, number, string];
         type StyleInputs = [string, number, number];
         const commonInputs: CommonInputs = [this.backendService, this.frame.frameInfo.fileId, this.frame, points, regionType, regionId, rotation, regionName];
-        const regionStyles: StyleInputs = [this.preference.regionColor, this.preference.regionLineWidth, this.preference.regionDashLength];
+        const regionStyles: StyleInputs = [this.preference.region.color, this.preference.region.lineWidth, this.preference.region.dashLength];
         const annotationStyles: StyleInputs = [this.preference.annotationColor, this.preference.annotationLineWidth, this.preference.annotationDashLength];
 
         switch (regionType) {

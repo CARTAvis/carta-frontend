@@ -13,10 +13,10 @@ export class OverlayBeamStore {
     constructor() {
         makeObservable(this);
         const preference = PreferenceStore.Instance;
-        this.visible = preference.beamVisible;
-        this.color = preference.beamColor;
-        this.type = preference.beamType;
-        this.width = preference.beamWidth;
+        this.visible = preference.wcsOverlay.beamVisible;
+        this.color = preference.wcsOverlay.beamColor;
+        this.type = preference.wcsOverlay.beamType;
+        this.width = preference.wcsOverlay.beamWidth;
         this.shiftX = this.shiftY = 0;
     }
 

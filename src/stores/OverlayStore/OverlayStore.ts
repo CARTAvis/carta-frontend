@@ -129,7 +129,7 @@ export class OverlayGlobalSettings {
         makeObservable(this);
         this.system = SystemType.Auto;
         this.labelType = LabelType.Exterior;
-        this.setColor(PreferenceStore.Instance.astColor);
+        this.setColor(PreferenceStore.Instance.wcsOverlay.astColor);
         this.tolerance = 2; // percentage
 
         this.defaultSystem = SystemType.Auto;
@@ -246,7 +246,7 @@ export class OverlayGridSettings {
 
     constructor() {
         makeObservable(this);
-        this.visible = PreferenceStore.Instance.astGridVisible;
+        this.visible = PreferenceStore.Instance.wcsOverlay.astGridVisible;
         this.customColor = false;
         this.color = AST_DEFAULT_COLOR;
         this.width = 1;
@@ -615,7 +615,7 @@ export class OverlayLabelSettings {
 
     constructor() {
         makeObservable(this);
-        this.visible = PreferenceStore.Instance.astLabelsVisible;
+        this.visible = PreferenceStore.Instance.wcsOverlay.astLabelsVisible;
         this.hidden = false;
         this.fontSize = 15;
         this.font = 0;
@@ -720,11 +720,11 @@ export class OverlayColorbarSettings {
     constructor() {
         makeObservable(this);
         const preference = PreferenceStore.Instance;
-        this.visible = preference.colorbarVisible;
-        this.interactive = preference.colorbarInteractive;
-        this.width = preference.colorbarWidth;
+        this.visible = preference.wcsOverlay.colorbarVisible;
+        this.interactive = preference.wcsOverlay.colorbarInteractive;
+        this.width = preference.wcsOverlay.colorbarWidth;
         this.offset = 5;
-        this.position = preference.colorbarPosition;
+        this.position = preference.wcsOverlay.colorbarPosition;
         this.customColor = false;
         this.color = AST_DEFAULT_COLOR;
         this.borderVisible = true;
@@ -732,7 +732,7 @@ export class OverlayColorbarSettings {
         this.borderCustomColor = false;
         this.borderColor = AST_DEFAULT_COLOR;
         this.tickVisible = true;
-        this.tickDensity = preference.colorbarTicksDensity;
+        this.tickDensity = preference.wcsOverlay.colorbarTicksDensity;
         this.tickLen = 6;
         this.tickWidth = 1;
         this.tickCustomColor = false;
@@ -745,7 +745,7 @@ export class OverlayColorbarSettings {
         this.numberPrecision = 3;
         this.numberCustomColor = false;
         this.numberColor = AST_DEFAULT_COLOR;
-        this.labelVisible = preference.colorbarLabelVisible;
+        this.labelVisible = preference.wcsOverlay.colorbarLabelVisible;
         this.labelRotation = -90;
         this.labelFont = 0;
         this.labelFontSize = 15;
@@ -1063,7 +1063,7 @@ export class OverlayStore {
             this.numbers.setDefaultFormatX(undefined);
             this.numbers.setDefaultFormatY(undefined);
         } else {
-            switch (PreferenceStore.Instance.wcsType) {
+            switch (PreferenceStore.Instance.wcsOverlay.wcsType) {
                 case WCSType.DEGREES:
                     this.numbers.setDefaultFormatX(NumberFormatType.Degrees);
                     this.numbers.setDefaultFormatY(NumberFormatType.Degrees);

@@ -111,7 +111,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
 
     @computed get cursorInfoRequired() {
         const appStore = AppStore.Instance;
-        switch (appStore.preferenceStore.cursorInfoVisible) {
+        switch (appStore.preferenceStore.wcsOverlay.cursorInfoVisible) {
             case CursorInfoVisibility.Always:
                 return true;
             case CursorInfoVisibility.HideTiled:

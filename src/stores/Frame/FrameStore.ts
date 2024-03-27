@@ -1236,39 +1236,39 @@ export class FrameStore {
         this.intensityUnit = this.headerUnit;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
-        const astColor = preferenceStore.astColor;
+        const astColor = preferenceStore.wcsOverlay.astColor;
         if (astColor !== this.overlayStore.global.color) {
             this.overlayStore.global.setColor(astColor);
         }
-        const astGridVisible = preferenceStore.astGridVisible;
+        const astGridVisible = preferenceStore.wcsOverlay.astGridVisible;
         if (astGridVisible !== this.overlayStore.grid.visible) {
             this.overlayStore.grid.setVisible(astGridVisible);
         }
-        const astLabelsVisible = preferenceStore.astLabelsVisible;
+        const astLabelsVisible = preferenceStore.wcsOverlay.astLabelsVisible;
         if (astLabelsVisible !== this.overlayStore.labels.visible) {
             this.overlayStore.labels.setVisible(astLabelsVisible);
         }
-        const colorbarVisible = preferenceStore.colorbarVisible;
+        const colorbarVisible = preferenceStore.wcsOverlay.colorbarVisible;
         if (colorbarVisible !== this.overlayStore.colorbar.visible) {
             this.overlayStore.colorbar.setVisible(colorbarVisible);
         }
-        const colorbarInteractive = preferenceStore.colorbarInteractive;
+        const colorbarInteractive = preferenceStore.wcsOverlay.colorbarInteractive;
         if (colorbarInteractive !== this.overlayStore.colorbar.interactive) {
             this.overlayStore.colorbar.setInteractive(colorbarInteractive);
         }
-        const colorbarPosition = preferenceStore.colorbarPosition;
+        const colorbarPosition = preferenceStore.wcsOverlay.colorbarPosition;
         if (colorbarPosition !== this.overlayStore.colorbar.position) {
             this.overlayStore.colorbar.setPosition(colorbarPosition);
         }
-        const colorbarWidth = preferenceStore.colorbarWidth;
+        const colorbarWidth = preferenceStore.wcsOverlay.colorbarWidth;
         if (colorbarWidth !== this.overlayStore.colorbar.width) {
             this.overlayStore.colorbar.setWidth(colorbarWidth);
         }
-        const colorbarTicksDensity = preferenceStore.colorbarTicksDensity;
+        const colorbarTicksDensity = preferenceStore.wcsOverlay.colorbarTicksDensity;
         if (colorbarTicksDensity !== this.overlayStore.colorbar.tickDensity) {
             this.overlayStore.colorbar.setTickDensity(colorbarTicksDensity);
         }
-        const colorbarLabelVisible = preferenceStore.colorbarLabelVisible;
+        const colorbarLabelVisible = preferenceStore.wcsOverlay.colorbarLabelVisible;
         if (colorbarLabelVisible !== this.overlayStore.colorbar.labelVisible) {
             this.overlayStore.colorbar.setLabelVisible(colorbarLabelVisible);
         }

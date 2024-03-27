@@ -248,7 +248,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 frame = this.props.frame.spatialReference || this.props.frame;
                 if (this.creatingRegion.controlPoints.length > 1 && length2D(this.creatingRegion.size) === 0) {
                     const scaleFactor =
-                        (PreferenceStore.Instance.regionSize * (this.creatingRegion.regionType === CARTA.RegionType.RECTANGLE || this.creatingRegion.regionType === CARTA.RegionType.ANNRECTANGLE ? 1.0 : 0.5)) / frame.zoomLevel;
+                        (PreferenceStore.Instance.region.size * (this.creatingRegion.regionType === CARTA.RegionType.RECTANGLE || this.creatingRegion.regionType === CARTA.RegionType.ANNRECTANGLE ? 1.0 : 0.5)) / frame.zoomLevel;
                     this.creatingRegion.setSize(scale2D(this.creatingRegion.regionType === CARTA.RegionType.LINE ? {x: 2, y: 0} : {x: 1, y: 1}, scaleFactor));
                 }
                 break;
@@ -327,7 +327,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             dy = Math.sign(dy) * maxDiff;
         }
         const isCtrlPressed = mouseEvent.ctrlKey || mouseEvent.metaKey;
-        const isRegionCornerMode = AppStore.Instance.preferenceStore.isRegionCornerMode;
+        const isRegionCornerMode = AppStore.Instance.preferenceStore.region.isCornerMode;
         if ((isRegionCornerMode && !isCtrlPressed) || (!isRegionCornerMode && isCtrlPressed)) {
             // corner-to-corner region creation
             const endPoint = {x: this.regionStartPoint.x + dx, y: this.regionStartPoint.y + dy};
@@ -820,7 +820,7 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: Regi
                     const allProps = {
                         ...commonProps,
                         listening: regionSet.mode !== RegionMode.CREATING && AppStore.Instance?.activeLayer !== ImageViewLayer.DistanceMeasuring,
-                        isRegionCornerMode: AppStore.Instance.preferenceStore.isRegionCornerMode
+                        isRegionCornerMode: AppStore.Instance.preferenceStore.region.isCornerMode
                     };
                     return r.regionType === CARTA.RegionType.POLYGON ||
                         r.regionType === CARTA.RegionType.LINE ||

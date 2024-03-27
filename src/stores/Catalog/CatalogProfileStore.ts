@@ -191,7 +191,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
             for (let index = 0; index < catalogHeader.length; index++) {
                 const header = catalogHeader[index];
                 let display = false;
-                if (index < PreferenceStore.Instance.catalogDisplayedColumnSize) {
+                if (index < PreferenceStore.Instance.catalog.displayedColumnSize) {
                     display = true;
                 }
                 let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, filter: "", columnWidth: null};
