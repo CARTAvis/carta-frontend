@@ -127,6 +127,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                                 });
                             }
                         }}
+                        data-testid="filterable-table-header-checkbox"
                     />
                 </ColumnHeaderCell>
                 <ColumnHeaderCell isActive={controlHeader?.filter !== ""}>
