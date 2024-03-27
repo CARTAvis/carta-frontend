@@ -84,13 +84,13 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.uniform1i(shaderUniforms.Inverted, renderConfig.inverted ? 1 : 0);
             this.gl.uniform1f(shaderUniforms.Bias, renderConfig.bias);
             this.gl.uniform1f(shaderUniforms.Contrast, renderConfig.contrast);
-            this.gl.uniform1i(shaderUniforms.UseSmoothedBiasContrast, appStore.preferenceStore.useSmoothedBiasContrast ? 1 : 0);
+            this.gl.uniform1i(shaderUniforms.UseSmoothedBiasContrast, appStore.preferenceStore.render.useSmoothedBiasContrast ? 1 : 0);
             this.gl.uniform1f(shaderUniforms.Gamma, renderConfig.gamma);
             this.gl.uniform1f(shaderUniforms.Alpha, renderConfig.alpha);
             this.gl.uniform1f(shaderUniforms.CanvasWidth, frame.renderWidth * pixelRatio);
             this.gl.uniform1f(shaderUniforms.CanvasHeight, frame.renderHeight * pixelRatio);
 
-            const nanColor = tinycolor(appStore.preferenceStore.nanColorHex).setAlpha(appStore.preferenceStore.nanAlpha);
+            const nanColor = tinycolor(appStore.preferenceStore.render.nanColorHex).setAlpha(appStore.preferenceStore.render.nanAlpha);
             if (nanColor.isValid()) {
                 const rgba = nanColor.toRgb();
                 this.gl.uniform4f(shaderUniforms.NaNColor, rgba.r / 255, rgba.g / 255, rgba.b / 255, rgba.a);
@@ -391,14 +391,14 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 customStartHex: frame.renderConfig.customColormapHexStart,
                 contrast: frame.renderConfig.contrast,
                 bias: frame.renderConfig.bias,
-                useSmoothedBiasContrast: appStore.preferenceStore?.useSmoothedBiasContrast,
+                useSmoothedBiasContrast: appStore.preferenceStore?.render.useSmoothedBiasContrast,
                 scaling: frame.renderConfig.scaling,
                 gamma: frame.renderConfig.gamma,
                 alpha: frame.renderConfig.alpha,
                 inverted: frame.renderConfig.inverted,
                 visibility: frame.renderConfig.visible,
-                nanColorHex: appStore.preferenceStore.nanColorHex,
-                nanAlpha: appStore.preferenceStore.nanAlpha,
+                nanColorHex: appStore.preferenceStore.render.nanColorHex,
+                nanAlpha: appStore.preferenceStore.render.nanAlpha,
                 pixelGridVisible: appStore.preferenceStore.silent.pixelGridVisible,
                 pixelGridColor: getColorForTheme(appStore.preferenceStore.silent.pixelGridColor)
             };

@@ -269,7 +269,7 @@ export class AppStore {
                     yield this.loadFile(folderSearchParam, file, "", false);
                 }
                 this.setLoadingMultipleFiles(false);
-            } else if (this.preferenceStore.autoLaunch && !hasWorkspaceParam) {
+            } else if (this.preferenceStore.global.autoLaunch && !hasWorkspaceParam) {
                 if (folderSearchParam) {
                     this.fileBrowserStore.setStartingDirectory(folderSearchParam);
                 }
@@ -347,10 +347,10 @@ export class AppStore {
 
     // Apply dark theme if it is forced or the system theme is dark
     @computed get darkTheme(): boolean {
-        if (this.preferenceStore.theme === Theme.AUTO) {
+        if (this.preferenceStore.global.theme === Theme.AUTO) {
             return this.systemTheme === Theme.DARK;
         } else {
-            return this.preferenceStore.theme === Theme.DARK;
+            return this.preferenceStore.global.theme === Theme.DARK;
         }
     }
 
@@ -577,13 +577,13 @@ export class AppStore {
 
         if (this.frames.length > 1) {
             // putting spectral matching before spatial matching avoids spectral matching fail when spatial matching is unable.
-            if (this.preferenceStore.autoWCSMatching & WCSMatchingType.SPECTRAL && this.spectralReference !== newFrame && newFrame.frameInfo.fileInfoExtended.depth > 1) {
+            if (this.preferenceStore.global.autoWCSMatching & WCSMatchingType.SPECTRAL && this.spectralReference !== newFrame && newFrame.frameInfo.fileInfoExtended.depth > 1) {
                 this.setSpectralMatchingEnabled(newFrame, true);
             }
-            if (this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL && this.spatialReference !== newFrame) {
+            if (this.preferenceStore.global.autoWCSMatching & WCSMatchingType.SPATIAL && this.spatialReference !== newFrame) {
                 this.setSpatialMatchingEnabled(newFrame, true);
             }
-            if (this.preferenceStore.autoWCSMatching & WCSMatchingType.RASTER && this.rasterScalingReference !== newFrame) {
+            if (this.preferenceStore.global.autoWCSMatching & WCSMatchingType.RASTER && this.rasterScalingReference !== newFrame) {
                 this.setRasterScalingMatchingEnabled(newFrame, true);
             }
         }
@@ -1655,15 +1655,15 @@ export class AppStore {
                 await this.snippetStore.fetchSnippets();
 
                 this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
-                if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
-                    AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
+                if (!this.layoutStore.applyLayout(this.preferenceStore.global.layout)) {
+                    AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.global.layout}" failed! Resetting preference layout to default.`);
                     this.layoutStore.applyLayout(PresetLayout.DEFAULT);
                     this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
                 }
                 await this.loadDefaultFiles();
-                this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
+                this.setCursorFrozen(this.preferenceStore.global.isCursorFrozen);
                 this.updateASTColors();
-                this.setSpectralMatchingType(this.preferenceStore.spectralMatchingType);
+                this.setSpectralMatchingType(this.preferenceStore.global.spectralMatchingType);
                 if (this.preferenceStore.silent.checkNewRelease) {
                     await this.checkNewRelease();
                 }
@@ -2984,7 +2984,7 @@ export class AppStore {
             this.setIsExportingImage(true);
             this.setImageRatio(imageRatio);
             this.waitForImageData().then(() => {
-                const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : this.darkTheme ? "rgba(0, 0, 0, 1)" : Colors.WHITE;
+                const backgroundColor = this.preferenceStore.global.transparentImageBackground ? "rgba(255, 255, 255, 0)" : this.darkTheme ? "rgba(0, 0, 0, 1)" : Colors.WHITE;
                 const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
                 if (composedCanvas) {
                     composedCanvas.toBlob(blob => {
@@ -3087,7 +3087,7 @@ export class AppStore {
     };
 
     getFileList = async (directory: string) => {
-        return await this.backendService.getFileList(directory, ToFileListFilterMode(this.preferenceStore.fileFilterMode));
+        return await this.backendService.getFileList(directory, ToFileListFilterMode(this.preferenceStore.global.fileFilterMode));
     };
 
     // region requirements calculations

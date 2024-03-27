@@ -204,22 +204,22 @@ export class RenderConfigStore {
         makeObservable(this);
         this.frame = frame;
         const stokesLength = this.frame.polarizations.length !== 0 ? this.frame.polarizations.length : 1;
-        const percentile = preference.percentile;
+        const percentile = preference.render.percentile;
         this.selectedPercentile = new Array<number>(stokesLength).fill(percentile);
         this.bias = 0;
         this.contrast = 1;
-        this.alpha = preference.scalingAlpha;
-        this.gamma = preference.scalingGamma;
-        this.scaling = preference.scaling;
+        this.alpha = preference.render.scalingAlpha;
+        this.gamma = preference.render.scalingGamma;
+        this.scaling = preference.render.scaling;
         this.inverted = false;
         this.cubeHistogramProgress = 0;
-        this.setColorMap(preference.colormap);
+        this.setColorMap(preference.render.colormap);
         this.stokesIndex = 0;
         this.scaleMin = new Array<number>(stokesLength).fill(0);
         this.scaleMax = new Array<number>(stokesLength).fill(1);
         this.visible = true;
-        this.customColormapHexEnd = preference.colormapHex;
-        this.customColormapHexStart = preference.colormapHexStart;
+        this.customColormapHexEnd = preference.render.colormapHex;
+        this.customColormapHexStart = preference.render.colormapHexStart;
     }
 
     public static IsScalingValid(scaling: FrameScaling): boolean {
@@ -263,7 +263,7 @@ export class RenderConfigStore {
         }
 
         const indexArray = Array.from(Array(colorsForValues.size).keys()).map(x => (this.inverted ? 1 - x / colorsForValues.size : x / colorsForValues.size));
-        const scaledArray = indexArray.map(x => 1.0 - scaleValueInverse(x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast, AppStore.Instance?.preferenceStore?.useSmoothedBiasContrast));
+        const scaledArray = indexArray.map(x => 1.0 - scaleValueInverse(x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast, AppStore.Instance?.preferenceStore?.render.useSmoothedBiasContrast));
         let rbgString = (index: number): string => `rgb(${colorsForValues.color[index * 4]}, ${colorsForValues.color[index * 4 + 1]}, ${colorsForValues.color[index * 4 + 2]}, ${colorsForValues.color[index * 4 + 3]})`;
 
         let colorscale = [];

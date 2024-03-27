@@ -371,7 +371,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 const colormapScalingX = Array.from(Array(COLORSCALE_LENGTH).keys()).map(x => scaleMinVal + (x / (COLORSCALE_LENGTH - 1)) * (scaleMaxVal - scaleMinVal));
                 let colormapScalingY = Array.from(Array(COLORSCALE_LENGTH).keys()).map(x => x / (COLORSCALE_LENGTH - 1));
                 colormapScalingY = colormapScalingY.map(x =>
-                    scaleValue(x, frame.renderConfig.scaling, frame.renderConfig.alpha, frame.renderConfig.gamma, frame.renderConfig.bias, frame.renderConfig.contrast, appStore.preferenceStore?.useSmoothedBiasContrast)
+                    scaleValue(x, frame.renderConfig.scaling, frame.renderConfig.alpha, frame.renderConfig.gamma, frame.renderConfig.bias, frame.renderConfig.contrast, appStore.preferenceStore?.render.useSmoothedBiasContrast)
                 );
                 // fit to the histogram y axis
                 if (linePlotProps.logY) {

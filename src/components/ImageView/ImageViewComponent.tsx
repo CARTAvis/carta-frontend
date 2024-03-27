@@ -135,7 +135,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     onResize = (width: number, height: number) => {
         if (width > 0 && height > 0) {
             const appStore = AppStore.Instance;
-            const requiresAutoFit = appStore.preferenceStore.zoomMode === Zoom.FIT && appStore.overlayStore.fullViewWidth <= 1 && appStore.overlayStore.fullViewHeight <= 1;
+            const requiresAutoFit = appStore.preferenceStore.global.zoomMode === Zoom.FIT && appStore.overlayStore.fullViewWidth <= 1 && appStore.overlayStore.fullViewHeight <= 1;
             appStore.setImageViewDimensions(width, height);
             if (requiresAutoFit) {
                 this.imagePanelRefs?.forEach(imagePanelRef => imagePanelRef?.fitZoomFrameAndRegion());

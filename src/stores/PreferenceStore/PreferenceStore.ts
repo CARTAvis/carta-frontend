@@ -341,14 +341,171 @@ export class PreferenceSilentSettings {
     };
 }
 
+export class PreferenceGlobalSettings {
+    // getters for global settings
+    @computed get theme(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.GLOBAL_THEME) ?? DEFAULTS.GLOBAL.theme;
+    }
+
+    @computed get autoLaunch(): boolean {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.GLOBAL_AUTOLAUNCH) ?? DEFAULTS.GLOBAL.autoLaunch;
+    }
+
+    @computed get fileFilterMode(): FileFilterMode {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.GLOBAL_FILE_FILTER_MODE) ?? DEFAULTS.GLOBAL.fileFilterMode;
+    }
+
+    @computed get layout(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.GLOBAL_LAYOUT) ?? DEFAULTS.GLOBAL.layout;
+    }
+
+    @computed get cursorPosition(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.GLOBAL_CURSOR_POSITION) ?? DEFAULTS.GLOBAL.cursorPosition;
+    }
+
+    @computed get zoomMode(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.GLOBAL_ZOOM_MODE) ?? DEFAULTS.GLOBAL.zoomMode;
+    }
+
+    @computed get zoomPoint(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.GLOBAL_ZOOM_POINT) ?? DEFAULTS.GLOBAL.zoomPoint;
+    }
+
+    @computed get dragPanning(): boolean {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.GLOBAL_DRAG_PANNING) ?? DEFAULTS.GLOBAL.dragPanning;
+    }
+
+    @computed get spectralMatchingType(): SpectralType {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE) ?? DEFAULTS.GLOBAL.spectralMatchingType;
+    }
+
+    @computed get autoWCSMatching(): WCSMatchingType {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING) ?? DEFAULTS.GLOBAL.autoWCSMatching;
+    }
+
+    public isWCSMatchingEnabled = (matchingType: WCSMatchingType): boolean => {
+        if (WCSMatching.isTypeValid(matchingType) && matchingType & PreferenceStore.Instance.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING)) {
+            return true;
+        }
+        return false;
+    };
+
+    @computed get transparentImageBackground(): boolean {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND) ?? DEFAULTS.GLOBAL.transparentImageBackground;
+    }
+
+    @computed get codeSnippetsEnabled(): boolean {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED) ?? DEFAULTS.GLOBAL.codeSnippetsEnabled;
+    }
+
+    @computed get keepLastUsedFolder(): boolean {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.GLOBAL_KEEP_LAST_USED_FOLDER) ?? DEFAULTS.GLOBAL.keepLastUsedFolder;
+    }
+
+    @computed get lastUsedFolder(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER) ?? DEFAULTS.GLOBAL.lastUsedFolder;
+    }
+
+    @computed get isZoomRAWMode(): boolean {
+        return this.zoomMode === Zoom.FULL;
+    }
+
+    @computed get isCursorFrozen(): boolean {
+        return this.cursorPosition === CursorPosition.FIXED;
+    }
+
+    /**
+     * Reset the Global preference settings
+     */
+    @action resetGlobalSettings = () => {
+        PreferenceStore.Instance.clearPreferences([
+            PreferenceKeys.GLOBAL_THEME,
+            PreferenceKeys.GLOBAL_AUTOLAUNCH,
+            PreferenceKeys.GLOBAL_FILE_FILTER_MODE,
+            PreferenceKeys.GLOBAL_LAYOUT,
+            PreferenceKeys.GLOBAL_CURSOR_POSITION,
+            PreferenceKeys.GLOBAL_ZOOM_MODE,
+            PreferenceKeys.GLOBAL_ZOOM_POINT,
+            PreferenceKeys.GLOBAL_DRAG_PANNING,
+            PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE,
+            PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING,
+            PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND,
+            PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED,
+            PreferenceKeys.GLOBAL_KEEP_LAST_USED_FOLDER,
+            PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER
+        ]);
+    };
+}
+
+export class PreferenceRenderSettings {
+    // getters for render config
+    @computed get scaling(): FrameScaling {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING) ?? DEFAULTS.RENDER_CONFIG.scaling;
+    }
+
+    @computed get colormap(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP) ?? DEFAULTS.RENDER_CONFIG.colormap;
+    }
+
+    @computed get colormapHex(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX) ?? DEFAULTS.RENDER_CONFIG.colormapHex;
+    }
+
+    @computed get colormapHexStart(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX_START) ?? DEFAULTS.RENDER_CONFIG.colormapHexStart;
+    }
+
+    @computed get percentile(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.RENDER_CONFIG_PERCENTILE) ?? DEFAULTS.RENDER_CONFIG.percentile;
+    }
+
+    @computed get scalingAlpha(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA) ?? DEFAULTS.RENDER_CONFIG.scalingAlpha;
+    }
+
+    @computed get scalingGamma(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA) ?? DEFAULTS.RENDER_CONFIG.scalingGamma;
+    }
+
+    @computed get nanColorHex(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX) ?? DEFAULTS.RENDER_CONFIG.nanColorHex;
+    }
+
+    @computed get nanAlpha(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA) ?? DEFAULTS.RENDER_CONFIG.nanAlpha;
+    }
+
+    @computed get useSmoothedBiasContrast(): boolean {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST) ?? DEFAULTS.RENDER_CONFIG.useSmoothedBiasContrast;
+    }
+
+    /**
+     * Reset the render configuration settings
+     */
+    @action resetRenderConfigSettings = () => {
+        PreferenceStore.Instance.clearPreferences([
+            PreferenceKeys.RENDER_CONFIG_COLORMAP,
+            PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX,
+            PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX_START,
+            PreferenceKeys.RENDER_CONFIG_NAN_ALPHA,
+            PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
+            PreferenceKeys.RENDER_CONFIG_PERCENTILE,
+            PreferenceKeys.RENDER_CONFIG_SCALING,
+            PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA,
+            PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA,
+            PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST
+        ]);
+    };
+}
+
 /**
  * The store manages the preference setting
  */
 export class PreferenceStore {
     private static staticInstance: PreferenceStore;
     @observable silent: PreferenceSilentSettings;
-    // @observable global: PreferenceGlobalSettings;
-    // @observable render: PreferenceRenderSettings;
+    @observable global: PreferenceGlobalSettings;
+    @observable render: PreferenceRenderSettings;
     // @observable contour: PreferenceContourSettings;
     // @observable vectorOverlay: PreferenceVectorOverlaySettings;
     // @observable wcsOverlay: PreferenceWcsOverlaySettings;
@@ -370,111 +527,6 @@ export class PreferenceStore {
      * Whether the preference data is initialized from the preference file or localStorage.
      */
     @observable preferenceReady: boolean = false;
-
-    // getters for global settings
-    @computed get theme(): string {
-        return this.preferences.get(PreferenceKeys.GLOBAL_THEME) ?? DEFAULTS.GLOBAL.theme;
-    }
-
-    @computed get autoLaunch(): boolean {
-        return this.preferences.get(PreferenceKeys.GLOBAL_AUTOLAUNCH) ?? DEFAULTS.GLOBAL.autoLaunch;
-    }
-
-    @computed get fileFilterMode(): FileFilterMode {
-        return this.preferences.get(PreferenceKeys.GLOBAL_FILE_FILTER_MODE) ?? DEFAULTS.GLOBAL.fileFilterMode;
-    }
-
-    @computed get layout(): string {
-        return this.preferences.get(PreferenceKeys.GLOBAL_LAYOUT) ?? DEFAULTS.GLOBAL.layout;
-    }
-
-    @computed get cursorPosition(): string {
-        return this.preferences.get(PreferenceKeys.GLOBAL_CURSOR_POSITION) ?? DEFAULTS.GLOBAL.cursorPosition;
-    }
-
-    @computed get zoomMode(): string {
-        return this.preferences.get(PreferenceKeys.GLOBAL_ZOOM_MODE) ?? DEFAULTS.GLOBAL.zoomMode;
-    }
-
-    @computed get zoomPoint(): string {
-        return this.preferences.get(PreferenceKeys.GLOBAL_ZOOM_POINT) ?? DEFAULTS.GLOBAL.zoomPoint;
-    }
-
-    @computed get dragPanning(): boolean {
-        return this.preferences.get(PreferenceKeys.GLOBAL_DRAG_PANNING) ?? DEFAULTS.GLOBAL.dragPanning;
-    }
-
-    @computed get spectralMatchingType(): SpectralType {
-        return this.preferences.get(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE) ?? DEFAULTS.GLOBAL.spectralMatchingType;
-    }
-
-    @computed get autoWCSMatching(): WCSMatchingType {
-        return this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING) ?? DEFAULTS.GLOBAL.autoWCSMatching;
-    }
-
-    public isWCSMatchingEnabled = (matchingType: WCSMatchingType): boolean => {
-        if (WCSMatching.isTypeValid(matchingType) && matchingType & this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING)) {
-            return true;
-        }
-        return false;
-    };
-
-    @computed get transparentImageBackground(): boolean {
-        return this.preferences.get(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND) ?? DEFAULTS.GLOBAL.transparentImageBackground;
-    }
-
-    @computed get codeSnippetsEnabled(): boolean {
-        return this.preferences.get(PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED) ?? DEFAULTS.GLOBAL.codeSnippetsEnabled;
-    }
-
-    @computed get keepLastUsedFolder(): boolean {
-        return this.preferences.get(PreferenceKeys.GLOBAL_KEEP_LAST_USED_FOLDER) ?? DEFAULTS.GLOBAL.keepLastUsedFolder;
-    }
-
-    @computed get lastUsedFolder(): string {
-        return this.preferences.get(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER) ?? DEFAULTS.GLOBAL.lastUsedFolder;
-    }
-
-    // getters for render config
-    @computed get scaling(): FrameScaling {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING) ?? DEFAULTS.RENDER_CONFIG.scaling;
-    }
-
-    @computed get colormap(): string {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP) ?? DEFAULTS.RENDER_CONFIG.colormap;
-    }
-
-    @computed get colormapHex(): string {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX) ?? DEFAULTS.RENDER_CONFIG.colormapHex;
-    }
-
-    @computed get colormapHexStart(): string {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX_START) ?? DEFAULTS.RENDER_CONFIG.colormapHexStart;
-    }
-
-    @computed get percentile(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_PERCENTILE) ?? DEFAULTS.RENDER_CONFIG.percentile;
-    }
-
-    @computed get scalingAlpha(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA) ?? DEFAULTS.RENDER_CONFIG.scalingAlpha;
-    }
-
-    @computed get scalingGamma(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA) ?? DEFAULTS.RENDER_CONFIG.scalingGamma;
-    }
-
-    @computed get nanColorHex(): string {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX) ?? DEFAULTS.RENDER_CONFIG.nanColorHex;
-    }
-
-    @computed get nanAlpha(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA) ?? DEFAULTS.RENDER_CONFIG.nanAlpha;
-    }
-
-    @computed get useSmoothedBiasContrast(): boolean {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST) ?? DEFAULTS.RENDER_CONFIG.useSmoothedBiasContrast;
-    }
 
     // getters for Contour Config
     @computed get contourGeneratorType(): ContourGeneratorType {
@@ -717,16 +769,8 @@ export class PreferenceStore {
         return false;
     };
 
-    @computed get isZoomRAWMode(): boolean {
-        return this.zoomMode === Zoom.FULL;
-    }
-
     @computed get isRegionCornerMode(): boolean {
         return this.regionCreationMode === RegionCreationMode.CORNER;
-    }
-
-    @computed get isCursorFrozen(): boolean {
-        return this.cursorPosition === CursorPosition.FIXED;
     }
 
     @computed get enabledLoggingEventNames(): string[] {
@@ -813,46 +857,6 @@ export class PreferenceStore {
         }
         yield ApiService.Instance.clearPreferences(keys);
     }
-
-    /**
-     * Reset the Global preference settings
-     */
-    @action resetGlobalSettings = () => {
-        this.clearPreferences([
-            PreferenceKeys.GLOBAL_THEME,
-            PreferenceKeys.GLOBAL_AUTOLAUNCH,
-            PreferenceKeys.GLOBAL_FILE_FILTER_MODE,
-            PreferenceKeys.GLOBAL_LAYOUT,
-            PreferenceKeys.GLOBAL_CURSOR_POSITION,
-            PreferenceKeys.GLOBAL_ZOOM_MODE,
-            PreferenceKeys.GLOBAL_ZOOM_POINT,
-            PreferenceKeys.GLOBAL_DRAG_PANNING,
-            PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE,
-            PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING,
-            PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND,
-            PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED,
-            PreferenceKeys.GLOBAL_KEEP_LAST_USED_FOLDER,
-            PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER
-        ]);
-    };
-
-    /**
-     * Reset the render configuration settings
-     */
-    @action resetRenderConfigSettings = () => {
-        this.clearPreferences([
-            PreferenceKeys.RENDER_CONFIG_COLORMAP,
-            PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX,
-            PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX_START,
-            PreferenceKeys.RENDER_CONFIG_NAN_ALPHA,
-            PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
-            PreferenceKeys.RENDER_CONFIG_PERCENTILE,
-            PreferenceKeys.RENDER_CONFIG_SCALING,
-            PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA,
-            PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA,
-            PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST
-        ]);
-    };
 
     /**
      * Reset the contour configuration settings
@@ -1150,5 +1154,7 @@ export class PreferenceStore {
         makeObservable(this);
         this.preferences = new Map<PreferenceKeys, any>();
         this.silent = new PreferenceSilentSettings();
+        this.global = new PreferenceGlobalSettings();
+        this.render = new PreferenceRenderSettings();
     }
 }

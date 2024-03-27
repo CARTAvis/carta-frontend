@@ -185,7 +185,7 @@ export class ToolbarMenuComponent extends React.Component {
                     <Tooltip2 content={<span>Distance measurement</span>} position={Position.BOTTOM}>
                         <AnchorButton icon={<CustomIcon icon="distanceMeasuring" />} disabled={!appStore.activeFrame} onClick={this.handleDistanceMeasuringClicked} active={dialogStore.dialogVisible.get(DialogId.DistanceMeasure)} />
                     </Tooltip2>
-                    {appStore.preferenceStore.codeSnippetsEnabled && (
+                    {appStore.preferenceStore.global.codeSnippetsEnabled && (
                         <Tooltip2
                             content={
                                 <span>

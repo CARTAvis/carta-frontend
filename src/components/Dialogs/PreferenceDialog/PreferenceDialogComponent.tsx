@@ -106,7 +106,7 @@ export class PreferenceDialogComponent extends React.Component {
         const preference = PreferenceStore.Instance;
         switch (this.selectedTab) {
             case PreferenceDialogTabs.RENDER_CONFIG:
-                preference.resetRenderConfigSettings();
+                preference.render.resetRenderConfigSettings();
                 break;
             case PreferenceDialogTabs.CONTOUR_CONFIG:
                 preference.resetContourConfigSettings();
@@ -140,7 +140,7 @@ export class PreferenceDialogComponent extends React.Component {
                 break;
             case PreferenceDialogTabs.GLOBAL:
             default:
-                preference.resetGlobalSettings();
+                preference.global.resetGlobalSettings();
                 break;
         }
     };
@@ -163,27 +163,27 @@ export class PreferenceDialogComponent extends React.Component {
         const globalPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Theme">
-                    <HTMLSelect value={preference.theme} onChange={ev => appStore.setTheme(ev.currentTarget.value)}>
+                    <HTMLSelect value={preference.global.theme} onChange={ev => appStore.setTheme(ev.currentTarget.value)}>
                         <option value={Theme.AUTO}>Automatic</option>
                         <option value={Theme.LIGHT}>Light</option>
                         <option value={Theme.DARK}>Dark</option>
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Enable code snippets">
-                    <Switch checked={preference.codeSnippetsEnabled} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED, ev.currentTarget.checked)} />
+                    <Switch checked={preference.global.codeSnippetsEnabled} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Auto-launch file browser">
-                    <Switch checked={preference.autoLaunch} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_AUTOLAUNCH, ev.currentTarget.checked)} />
+                    <Switch checked={preference.global.autoLaunch} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_AUTOLAUNCH, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="File list">
-                    <HTMLSelect value={preference.fileFilterMode} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_FILE_FILTER_MODE, ev.currentTarget.value)}>
+                    <HTMLSelect value={preference.global.fileFilterMode} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_FILE_FILTER_MODE, ev.currentTarget.value)}>
                         <option value={FileFilterMode.Content}>Filter by file content</option>
                         <option value={FileFilterMode.Extension}>Filter by extension</option>
                         <option value={FileFilterMode.All}>All files</option>
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Initial layout">
-                    <HTMLSelect value={preference.layout} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_LAYOUT, ev.currentTarget.value)}>
+                    <HTMLSelect value={preference.global.layout} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_LAYOUT, ev.currentTarget.value)}>
                         {layoutStore.orderedLayoutNames.map(layout => (
                             <option key={layout} value={layout}>
                                 {layout}
@@ -192,39 +192,39 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Initial cursor position">
-                    <RadioGroup selectedValue={preference.cursorPosition} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_CURSOR_POSITION, ev.currentTarget.value)} inline={true}>
+                    <RadioGroup selectedValue={preference.global.cursorPosition} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_CURSOR_POSITION, ev.currentTarget.value)} inline={true}>
                         <Radio label="Fixed" value={CursorPosition.FIXED} />
                         <Radio label="Tracking" value={CursorPosition.TRACKING} />
                     </RadioGroup>
                 </FormGroup>
                 <FormGroup inline={true} label="Initial zoom level">
-                    <RadioGroup selectedValue={preference.zoomMode} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_ZOOM_MODE, ev.currentTarget.value)} inline={true}>
+                    <RadioGroup selectedValue={preference.global.zoomMode} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_ZOOM_MODE, ev.currentTarget.value)} inline={true}>
                         <Radio label="Zoom to fit" value={Zoom.FIT} />
                         <Radio label="Zoom to 1.0x" value={Zoom.FULL} />
                     </RadioGroup>
                 </FormGroup>
                 <FormGroup inline={true} label="Zoom to">
-                    <RadioGroup selectedValue={preference.zoomPoint} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_ZOOM_POINT, ev.currentTarget.value)} inline={true}>
+                    <RadioGroup selectedValue={preference.global.zoomPoint} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_ZOOM_POINT, ev.currentTarget.value)} inline={true}>
                         <Radio label="Cursor" value={ZoomPoint.CURSOR} />
                         <Radio label="Current center" value={ZoomPoint.CENTER} />
                     </RadioGroup>
                 </FormGroup>
                 <FormGroup inline={true} label="Enable drag-to-pan">
-                    <Switch checked={preference.dragPanning} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_DRAG_PANNING, ev.currentTarget.checked)} />
+                    <Switch checked={preference.global.dragPanning} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_DRAG_PANNING, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Matching on append">
                     {WCSMatching.MATCHING_TYPES.map(matchingType => (
                         <Checkbox
                             className="wcs-matching"
                             key={matchingType}
-                            checked={preference.isWCSMatchingEnabled(matchingType)}
+                            checked={preference.global.isWCSMatchingEnabled(matchingType)}
                             label={WCSMatching.getNameFromType(matchingType)}
                             onChange={() => preference.setPreference(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, matchingType)}
                         />
                     ))}
                 </FormGroup>
                 <FormGroup inline={true} label="Spectral matching">
-                    <HTMLSelect value={preference.spectralMatchingType} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, ev.currentTarget.value)}>
+                    <HTMLSelect value={preference.global.spectralMatchingType} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, ev.currentTarget.value)}>
                         {SPECTRAL_MATCHING_TYPES.map(type => (
                             <option key={type} value={type}>
                                 {SPECTRAL_TYPE_STRING.get(type)}
@@ -233,10 +233,10 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Transparent image background">
-                    <Switch checked={preference.transparentImageBackground} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND, ev.currentTarget.checked)} />
+                    <Switch checked={preference.global.transparentImageBackground} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Save last used directory">
-                    <Switch checked={preference.keepLastUsedFolder} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_KEEP_LAST_USED_FOLDER, ev.currentTarget.checked)} />
+                    <Switch checked={preference.global.keepLastUsedFolder} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_KEEP_LAST_USED_FOLDER, ev.currentTarget.checked)} />
                 </FormGroup>
             </React.Fragment>
         );
@@ -244,37 +244,37 @@ export class PreferenceDialogComponent extends React.Component {
         const renderConfigPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Default scaling">
-                    <ScalingSelectComponent selectedItem={preference.scaling} onItemSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING, selected)} />
+                    <ScalingSelectComponent selectedItem={preference.render.scaling} onItemSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING, selected)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Default colormap">
                     <ColormapComponent
                         inverted={false}
-                        selectedColormap={preference.colormap}
+                        selectedColormap={preference.render.colormap}
                         onColormapSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP, selected)}
                         enableAdditionalColor={true}
                         onCustomColorSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX, selected)}
-                        selectedCustomColor={preference.colormapHex}
-                        customColorStart={preference.colormapHexStart}
+                        selectedCustomColor={preference.render.colormapHex}
+                        customColorStart={preference.render.colormapHexStart}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Default percentile ranks">
                     <PercentileSelect
-                        activeItem={preference.percentile.toString(10)}
+                        activeItem={preference.render.percentile.toString(10)}
                         onItemSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_PERCENTILE, Number(selected))}
                         popoverProps={{minimal: true, position: "auto"}}
                         filterable={false}
                         items={RenderConfigStore.PERCENTILE_RANKS.map(String)}
                         itemRenderer={this.renderPercentileSelectItem}
                     >
-                        <Button text={preference.percentile.toString(10) + "%"} rightIcon="double-caret-vertical" alignText={"right"} />
+                        <Button text={preference.render.percentile.toString(10) + "%"} rightIcon="double-caret-vertical" alignText={"right"} />
                     </PercentileSelect>
                 </FormGroup>
-                {(preference.scaling === FrameScaling.LOG || preference.scaling === FrameScaling.POWER) && (
+                {(preference.render.scaling === FrameScaling.LOG || preference.render.scaling === FrameScaling.POWER) && (
                     <FormGroup label={"Alpha"} inline={true}>
-                        <SafeNumericInput buttonPosition={"none"} value={preference.scalingAlpha} onValueChange={value => preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA, value)} />
+                        <SafeNumericInput buttonPosition={"none"} value={preference.render.scalingAlpha} onValueChange={value => preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA, value)} />
                     </FormGroup>
                 )}
-                {preference.scaling === FrameScaling.GAMMA && (
+                {preference.render.scaling === FrameScaling.GAMMA && (
                     <FormGroup label={"Gamma"} inline={true}>
                         <SafeNumericInput
                             min={RenderConfigStore.GAMMA_MIN}
@@ -282,14 +282,14 @@ export class PreferenceDialogComponent extends React.Component {
                             stepSize={0.1}
                             minorStepSize={0.01}
                             majorStepSize={0.5}
-                            value={preference.scalingGamma}
+                            value={preference.render.scalingGamma}
                             onValueChange={value => preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, value)}
                         />
                     </FormGroup>
                 )}
                 <FormGroup inline={true} label="NaN color">
                     <ColorPickerComponent
-                        color={tinycolor(preference.nanColorHex).setAlpha(preference.nanAlpha).toRgb()}
+                        color={tinycolor(preference.render.nanColorHex).setAlpha(preference.render.nanAlpha).toRgb()}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: ColorResult) => {
                             preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, color.hex === "transparent" ? "#000000" : color.hex);
@@ -300,7 +300,7 @@ export class PreferenceDialogComponent extends React.Component {
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Smoothed bias/contrast">
-                    <Switch checked={preference.useSmoothedBiasContrast} onChange={ev => preference.setPreference(PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST, ev.currentTarget.checked)} />
+                    <Switch checked={preference.render.useSmoothedBiasContrast} onChange={ev => preference.setPreference(PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST, ev.currentTarget.checked)} />
                 </FormGroup>
             </React.Fragment>
         );

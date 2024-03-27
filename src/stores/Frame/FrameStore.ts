@@ -1374,7 +1374,7 @@ export class FrameStore {
         this.restFreqStore = new RestFreqStore(headerRestFreq);
         this.initSupportedSpectralConversion();
         this.initCenter();
-        this.zoomLevel = preferenceStore.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
+        this.zoomLevel = preferenceStore.global.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
         this.pixelUnitSizeArcsec = this.getPixelUnitSize();
 
         // init spectral settings
@@ -2531,7 +2531,7 @@ export class FrameStore {
             const pointRefImage = transformPoint(this.spatialTransformAST, {x, y}, true);
             this.spatialReference.zoomToPoint(pointRefImage.x, pointRefImage.y, adjustedZoom);
         } else {
-            if (PreferenceStore.Instance.zoomPoint === ZoomPoint.CURSOR) {
+            if (PreferenceStore.Instance.global.zoomPoint === ZoomPoint.CURSOR) {
                 this.setCenter(x + (this.zoomLevel / zoom) * (this.center.x - x), y + (this.zoomLevel / zoom) * (this.center.y - y));
             }
             this.setZoom(zoom);

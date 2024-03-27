@@ -55,7 +55,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
     }
 
     private fitZoomOfLoadingMultipleFiles = () => {
-        if (AppStore.Instance.isLoadingMultipleFiles && AppStore.Instance.preferenceStore.zoomMode === Zoom.FIT) {
+        if (AppStore.Instance.isLoadingMultipleFiles && AppStore.Instance.preferenceStore.global.zoomMode === Zoom.FIT) {
             this.fitZoomFrameAndRegion();
         }
     };
@@ -189,7 +189,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                         left={overlayStore.padding.left}
                         onClickToCenter={this.onClickToCenter}
                         overlaySettings={overlayStore}
-                        dragPanningEnabled={appStore.preferenceStore.dragPanning}
+                        dragPanningEnabled={appStore.preferenceStore.global.dragPanning}
                         docked={this.props.docked && activeLayer !== ImageViewLayer.Catalog}
                     />
                     {!(appStore.animatorStore.animationActive && appStore.animatorStore.animationMode === AnimationMode.FRAME) && (

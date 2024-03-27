@@ -301,7 +301,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         composedCanvas.height = canvas.height;
 
         const ctx = composedCanvas.getContext("2d");
-        ctx.fillStyle = AppStore.Instance.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0.0)" : this.props.darkMode ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
+        ctx.fillStyle = AppStore.Instance.preferenceStore.global.transparentImageBackground ? "rgba(255, 255, 255, 0.0)" : this.props.darkMode ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
         ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
         ctx.drawImage(canvas, 0, 0);
 

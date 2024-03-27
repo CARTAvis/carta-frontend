@@ -202,7 +202,7 @@ export class FileBrowserStore {
         this.HDUfileInfoExtended = null;
         this.regionFileInfo = null;
         this.catalogFileInfo = null;
-        const filterMode = ToFileListFilterMode(appStore.preferenceStore.fileFilterMode);
+        const filterMode = ToFileListFilterMode(appStore.preferenceStore.global.fileFilterMode);
         AppStore.Instance.restartTaskProgress();
 
         try {
@@ -457,7 +457,7 @@ export class FileBrowserStore {
     @action saveStartingDirectory(directory?: string) {
         this.setStartingDirectory(directory);
         const preferenceStore = PreferenceStore.Instance;
-        if (preferenceStore.keepLastUsedFolder) {
+        if (preferenceStore.global.keepLastUsedFolder) {
             preferenceStore.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, this.startingDirectory);
         } else {
             preferenceStore.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, "");
@@ -478,9 +478,9 @@ export class FileBrowserStore {
 
     @action restoreStartingDirectory() {
         const preferenceStore = PreferenceStore.Instance;
-        if (preferenceStore.keepLastUsedFolder) {
-            if (preferenceStore.lastUsedFolder?.length > 0) {
-                this.startingDirectory = preferenceStore.lastUsedFolder;
+        if (preferenceStore.global.keepLastUsedFolder) {
+            if (preferenceStore.global.lastUsedFolder?.length > 0) {
+                this.startingDirectory = preferenceStore.global.lastUsedFolder;
             } else {
                 preferenceStore.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, "");
             }

@@ -576,7 +576,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             frame.zoomToPoint(cursorPosImageSpace.x, cursorPosImageSpace.y, newZoom, true);
 
             // Zoom stage
-            const zoomCenter = PreferenceStore.Instance.zoomPoint === ZoomPoint.CURSOR ? {x: mouseEvent.offsetX, y: mouseEvent.offsetY} : {x: this.props.width / 2, y: this.props.height / 2};
+            const zoomCenter = PreferenceStore.Instance.global.zoomPoint === ZoomPoint.CURSOR ? {x: mouseEvent.offsetX, y: mouseEvent.offsetY} : {x: this.props.width / 2, y: this.props.height / 2};
             this.stageZoomToPoint(zoomCenter.x, zoomCenter.y, newZoom);
         }
     };

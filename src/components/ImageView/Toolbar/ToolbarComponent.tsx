@@ -107,8 +107,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 <br />
                 <i>
                     <small>
-                        Background color is {AppStore.Instance.preferenceStore.transparentImageBackground ? "transparent" : "filled"}.<br />
-                        {AppStore.Instance.preferenceStore.transparentImageBackground ? "Disable" : "Enable"} transparent image background in Preferences.
+                        Background color is {AppStore.Instance.preferenceStore.global.transparentImageBackground ? "transparent" : "filled"}.<br />
+                        {AppStore.Instance.preferenceStore.global.transparentImageBackground ? "Disable" : "Enable"} transparent image background in Preferences.
                         <br />
                     </small>
                 </i>
