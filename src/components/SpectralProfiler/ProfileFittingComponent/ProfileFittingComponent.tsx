@@ -255,12 +255,20 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                             </FormGroup>
                             {fittingStore.hasAutoDetectResult && (
                                 <FormGroup label=" " inline={true}>
-                                    <div>{fittingStore.autoDetectResultText}</div>
+                                    <div data-testid="profile-fitting-auto-detect-info">{fittingStore.autoDetectResultText}</div>
                                 </FormGroup>
                             )}
                             <FormGroup label="Components" inline={true}>
                                 <div className={"components-input"}>
-                                    <SafeNumericInput value={fittingStore.components.length} min={1} max={20} stepSize={1} onValueChange={val => fittingStore.setComponents(Math.round(val))} disabled={disabled} />
+                                    <SafeNumericInput
+                                        value={fittingStore.components.length}
+                                        min={1}
+                                        max={20}
+                                        stepSize={1}
+                                        onValueChange={val => fittingStore.setComponents(Math.round(val))}
+                                        disabled={disabled}
+                                        data-testid="profile-fitting-component-input"
+                                    />
                                     {fittingStore.components.length > 1 && (
                                         <div className="components-slider">
                                             <Slider
@@ -293,6 +301,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         disabled={fittingStore.selectedComponent.lockedCenter || disabled}
                                         allowNumericCharactersOnly={false}
                                         buttonPosition="none"
+                                        data-testid="profile-fitting-center-input"
                                     />
                                     <Tooltip2
                                         content={
@@ -314,6 +323,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         disabled={fittingStore.selectedComponent.lockedAmp || disabled}
                                         allowNumericCharactersOnly={false}
                                         buttonPosition="none"
+                                        data-testid="profile-fitting-amplitude-input"
                                     />
                                     <Tooltip2
                                         content={
@@ -335,6 +345,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         disabled={fittingStore.selectedComponent.lockedFwhm || disabled}
                                         allowNumericCharactersOnly={false}
                                         buttonPosition="none"
+                                        data-testid="profile-fitting-fwhm-input"
                                     />
                                     <Tooltip2
                                         content={

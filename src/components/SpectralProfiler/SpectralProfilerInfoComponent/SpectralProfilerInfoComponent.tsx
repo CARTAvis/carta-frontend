@@ -22,7 +22,7 @@ export const SpectralProfilerInfoComponent: React.FC<{profileInfo: ProfileInfo[]
                     />
                 ) : null;
                 return (
-                    <div key={index} className="profile-legend">
+                    <div key={index} className="profile-legend" data-testid={"spectral-profiler-info-" + index}>
                         <div className="profile-info">
                             {colorSquare}
                             <pre>{info.infoString}</pre>

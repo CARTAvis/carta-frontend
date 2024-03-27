@@ -246,6 +246,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                         active={!!frame.spectralReference}
                         intent={frame.spectralReference ? "success" : "none"}
                         onClick={() => appStore.toggleSpectralMatching(frame)}
+                        data-testid={"image-list-" + rowIndex + "-matching-z"}
                     >
                         Z
                     </AnchorButton>
