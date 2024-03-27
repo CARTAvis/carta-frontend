@@ -1,6 +1,5 @@
 import * as React from "react";
-import {Alert, AnchorButton, Breadcrumb, BreadcrumbProps, Breadcrumbs, Button, ButtonGroup, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, Position, TabId} from "@blueprintjs/core";
-import {Popover2, Tooltip2} from "@blueprintjs/popover2";
+import {Alert, AnchorButton, Breadcrumb, BreadcrumbProps, Breadcrumbs, Button, ButtonGroup, Classes, DialogProps, Icon, InputGroup, Intent, Menu, MenuItem, Popover, Position, TabId, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import * as _ from "lodash";
@@ -316,21 +315,21 @@ export class FileBrowserDialogComponent extends React.Component {
                         );
                         return (
                             <div>
-                                <Popover2 content={loadMenuItems} placement="right-end">
+                                <Popover content={loadMenuItems} placement="right-end">
                                     <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} text="Append as" />
-                                </Popover2>
+                                </Popover>
                             </div>
                         );
                     } else {
                         return (
                             <div>
-                                <Tooltip2 content={"Append this image while keeping other images open"}>
+                                <Tooltip content={"Append this image while keeping other images open"}>
                                     <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={actionFunction} text={actionText} />
-                                </Tooltip2>
+                                </Tooltip>
                                 {!this.enableImageArithmetic && fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length < 5 && (
-                                    <Tooltip2 content={"Append this image while keeping other images open"}>
+                                    <Tooltip content={"Append this image while keeping other images open"}>
                                         <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Stokes)} text={"Load as hypercube"} />
-                                    </Tooltip2>
+                                    </Tooltip>
                                 )}
                             </div>
                         );
@@ -356,21 +355,21 @@ export class FileBrowserDialogComponent extends React.Component {
 
                         return (
                             <div>
-                                <Popover2 content={loadMenuItems} placement="right-end">
+                                <Popover content={loadMenuItems} placement="right-end">
                                     <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} text="Load as" />
-                                </Popover2>
+                                </Popover>
                             </div>
                         );
                     } else {
                         return (
                             <div>
-                                <Tooltip2 content={"Close any existing images and load this image"}>
+                                <Tooltip content={"Close any existing images and load this image"}>
                                     <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={actionFunction} text={actionText} />
-                                </Tooltip2>
+                                </Tooltip>
                                 {!this.enableImageArithmetic && fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length < 5 && (
-                                    <Tooltip2 content={"Close any existing images and load this image"}>
+                                    <Tooltip content={"Close any existing images and load this image"}>
                                         <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Stokes)} text={"Load as hypercube"} />
-                                    </Tooltip2>
+                                    </Tooltip>
                                 )}
                             </div>
                         );
@@ -378,43 +377,43 @@ export class FileBrowserDialogComponent extends React.Component {
                 }
             case BrowserMode.SaveFile:
                 return (
-                    <Tooltip2 content={"Save this file"}>
+                    <Tooltip content={"Save this file"}>
                         <AnchorButton intent={Intent.PRIMARY} disabled={appStore.fileLoading || fileBrowserStore.loadingInfo || appStore.fileSaving} onClick={this.handleSaveFileClicked} text="Save" />
-                    </Tooltip2>
+                    </Tooltip>
                 );
             case BrowserMode.RegionImport:
                 return (
-                    <Tooltip2 content={"Load a region file for the currently active image"}>
+                    <Tooltip content={"Load a region file for the currently active image"}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
                             disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
                             onClick={this.loadSelectedFiles}
                             text="Load region"
                         />
-                    </Tooltip2>
+                    </Tooltip>
                 );
             case BrowserMode.Catalog:
                 return (
-                    <Tooltip2 content={"Load a catalog file for the currently active image"}>
+                    <Tooltip content={"Load a catalog file for the currently active image"}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
                             disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !appStore.activeFrame}
                             onClick={this.loadSelectedFiles}
                             text="Load catalog"
                         />
-                    </Tooltip2>
+                    </Tooltip>
                 );
             case BrowserMode.RegionExport:
                 const frame = appStore.activeFrame;
                 return (
-                    <Tooltip2 content={"Export regions for the currently active image"}>
+                    <Tooltip content={"Export regions for the currently active image"}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
                             disabled={!FileBrowserDialogComponent.ValidateFilename(fileBrowserStore.exportFilename) || !frame || frame.regionSet.regions.length <= 1 || fileBrowserStore.exportRegionNum < 1}
                             onClick={this.handleExportRegionsClicked}
                             text="Export regions"
                         />
-                    </Tooltip2>
+                    </Tooltip>
                 );
             default:
                 return "";
@@ -425,7 +424,7 @@ export class FileBrowserDialogComponent extends React.Component {
         const fileBrowserStore = FileBrowserStore.Instance;
 
         const coordinateTypeMenu = (
-            <Popover2
+            <Popover
                 minimal={true}
                 content={
                     <Menu>
@@ -438,11 +437,11 @@ export class FileBrowserDialogComponent extends React.Component {
                 <Button minimal={true} rightIcon="caret-down">
                     {fileBrowserStore.exportCoordinateType === CARTA.CoordinateType.WORLD ? "World" : "Pixel"}
                 </Button>
-            </Popover2>
+            </Popover>
         );
 
         const fileTypeMenu = (
-            <Popover2
+            <Popover
                 minimal={true}
                 content={
                     <Menu>
@@ -455,7 +454,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 <Button minimal={true} rightIcon="caret-down">
                     {fileBrowserStore.exportFileType === CARTA.FileType.CRTF ? "CRTF" : "DS9"}
                 </Button>
-            </Popover2>
+            </Popover>
         );
 
         let sideMenu = (
@@ -471,7 +470,7 @@ export class FileBrowserDialogComponent extends React.Component {
         const fileBrowserStore = FileBrowserStore.Instance;
 
         const fileTypeMenu = (
-            <Popover2
+            <Popover
                 minimal={true}
                 content={
                     <Menu>
@@ -484,7 +483,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 <Button minimal={true} rightIcon="caret-down">
                     {fileBrowserStore.saveFileType === CARTA.FileType.CASA ? "CASA" : "FITS"}
                 </Button>
-            </Popover2>
+            </Popover>
         );
 
         return <InputGroup autoFocus={true} placeholder="Enter file name" value={fileBrowserStore.saveFilename} onChange={this.handleSaveFileNameChanged} rightElement={fileTypeMenu} />;
@@ -496,7 +495,7 @@ export class FileBrowserDialogComponent extends React.Component {
         let filterName: string;
         let filterDescription: string;
 
-        switch (preferenceStore.fileFilteringType) {
+        switch (preferenceStore.silent.fileFilteringType) {
             case FileFilteringType.Fuzzy:
                 filterName = "Fuzzy search";
                 filterDescription = "Filter by filename with fuzzy search";
@@ -514,7 +513,7 @@ export class FileBrowserDialogComponent extends React.Component {
         }
 
         const filterTypeMenu = (
-            <Popover2
+            <Popover
                 minimal={true}
                 content={
                     <Menu>
@@ -528,12 +527,12 @@ export class FileBrowserDialogComponent extends React.Component {
                 <Button minimal={true} icon="filter" rightIcon="caret-down">
                     {filterName}
                 </Button>
-            </Popover2>
+            </Popover>
         );
 
         if (browserMode === BrowserMode.File) {
             const inputTypeMenu = (
-                <Popover2
+                <Popover
                     minimal={true}
                     content={
                         <Menu>
@@ -546,7 +545,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     <Button minimal={true} icon={this.enableImageArithmetic ? "calculator" : "search"} rightIcon="caret-down">
                         {this.enableImageArithmetic ? "Image arithmetic" : "Filter"}
                     </Button>
-                </Popover2>
+                </Popover>
             );
             if (this.enableImageArithmetic) {
                 return (
@@ -604,9 +603,9 @@ export class FileBrowserDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
-        const className = classNames("file-browser-dialog", {"bp3-dark": appStore.darkTheme});
+        const className = classNames("file-browser-dialog", {[Classes.DARK]: appStore.darkTheme});
 
-        const dialogProps: IDialogProps = {
+        const dialogProps: DialogProps = {
             icon: "folder-open",
             className: className,
             backdropClassName: "minimal-dialog-backdrop",
@@ -667,12 +666,12 @@ export class FileBrowserDialogComponent extends React.Component {
                     {this.pathItems && (
                         <React.Fragment>
                             <ButtonGroup>
-                                <Tooltip2 content={"Refresh current directory"}>
+                                <Tooltip content={"Refresh current directory"}>
                                     <AnchorButton icon="repeat" onClick={() => fileBrowserStore.selectFolder(fileList.directory, true)} minimal={true} />
-                                </Tooltip2>
-                                <Tooltip2 content={"Input directory path"} disabled={this.enableEditPath}>
+                                </Tooltip>
+                                <Tooltip content={"Input directory path"} disabled={this.enableEditPath}>
                                     <AnchorButton className="edit-path-button" icon="edit" minimal={true} onClick={this.switchEditPathMode} />
-                                </Tooltip2>
+                                </Tooltip>
                             </ButtonGroup>
                             {this.enableEditPath ? (
                                 <InputGroup
@@ -689,7 +688,7 @@ export class FileBrowserDialogComponent extends React.Component {
                         </React.Fragment>
                     )}
                 </div>
-                <div className="bp3-dialog-body">
+                <div className={Classes.DIALOG_BODY}>
                     <div className={paneClassName}>
                         <div className="file-list">
                             <FileListTableComponent
@@ -702,8 +701,8 @@ export class FileBrowserDialogComponent extends React.Component {
                                 selectedFile={fileBrowserStore.selectedFile}
                                 selectedHDU={fileBrowserStore.selectedHDU}
                                 filterString={this.debouncedFilterString}
-                                filterType={appStore.preferenceStore.fileFilteringType}
-                                sortingString={appStore.preferenceStore.fileSortingString}
+                                filterType={appStore.preferenceStore.silent.fileFilteringType}
+                                sortingString={appStore.preferenceStore.silent.fileSortingString}
                                 onSortingChanged={fileBrowserStore.setSortingConfig}
                                 onFileClicked={this.handleFileClicked}
                                 onSelectionChanged={fileBrowserStore.setSelectedFiles}
@@ -730,11 +729,11 @@ export class FileBrowserDialogComponent extends React.Component {
                     </div>
                     {fileInput}
                 </div>
-                <div className="bp3-dialog-footer">
-                    <div className="bp3-dialog-footer-actions">{actionButton}</div>
+                <div className={Classes.DIALOG_FOOTER}>
+                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>{actionButton}</div>
                 </div>
                 <Alert
-                    className={appStore.darkTheme ? "bp3-dark" : ""}
+                    className={classNames({[Classes.DARK]: appStore.darkTheme})}
                     isOpen={this.overwriteExistingFileAlertVisible}
                     confirmButtonText="Yes"
                     cancelButtonText="Cancel"
@@ -769,7 +768,7 @@ export class FileBrowserDialogComponent extends React.Component {
     private renderBreadcrumb = (props: BreadcrumbProps) => {
         return (
             <Breadcrumb onClick={props.onClick} className="folder-breadcrumb">
-                {props.icon && <Icon iconSize={14} icon={props.icon} />}
+                {props.icon && <Icon size={14} icon={props.icon} />}
                 {props.text}
             </Breadcrumb>
         );

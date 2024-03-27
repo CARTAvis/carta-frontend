@@ -1,7 +1,6 @@
 import * as React from "react";
-import {AnchorButton, Button, ButtonGroup, FormGroup, Icon, MenuItem, PopoverPosition, Switch, Tab, Tabs} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
-import {IItemRendererProps, ItemPredicate, Select} from "@blueprintjs/select";
+import {AnchorButton, Button, ButtonGroup, Classes, FormGroup, Icon, MenuItem, PopoverPosition, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
+import {ItemPredicate, ItemRendererProps, Select} from "@blueprintjs/select";
 import classNames from "classnames";
 import FuzzySearch from "fuzzy-search";
 import {action, autorun, computed, makeObservable} from "mobx";
@@ -22,7 +21,7 @@ const IconWrapper = (path: React.SVGProps<SVGPathElement>, color: string, fill: 
         fillColor = "none";
     }
     return (
-        <span className="bp3-icon">
+        <span className={Classes.ICON}>
             <svg data-icon="triangle-up-open" width="16" height="16" viewBox={`0 0 ${viewboxDefault} ${viewboxDefault}`} style={{stroke: color, fill: fillColor, strokeWidth: strokeWidth}}>
                 {path}
             </svg>
@@ -295,7 +294,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         const sizeMap = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Size" labelInfo="(px)" disabled={disabledOverlayPanel}>
-                    <Tooltip2 disabled={disabledOverlayPanel || !widgetStore.disableSizeMap} content={`${CatalogWidgetStore.MinOverlaySize} ~ ${CatalogWidgetStore.MaxOverlaySize}`}>
+                    <Tooltip disabled={disabledOverlayPanel || !widgetStore.disableSizeMap} content={`${CatalogWidgetStore.MinOverlaySize} ~ ${CatalogWidgetStore.MaxOverlaySize}`}>
                         <SafeNumericInput
                             placeholder="Size"
                             disabled={disabledOverlayPanel || !widgetStore.disableSizeMap}
@@ -306,10 +305,10 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             stepSize={0.5}
                             onValueChange={(value: number) => widgetStore.setCatalogSize(value)}
                         />
-                    </Tooltip2>
+                    </Tooltip>
                 </FormGroup>
                 <FormGroup inline={true} label="Thickness" disabled={disabledOverlayPanel}>
-                    <Tooltip2 disabled={disabledOverlayPanel} content={`${CatalogWidgetStore.MinThickness} ~ ${CatalogWidgetStore.MaxThickness}`}>
+                    <Tooltip disabled={disabledOverlayPanel} content={`${CatalogWidgetStore.MinThickness} ~ ${CatalogWidgetStore.MaxThickness}`}>
                         <SafeNumericInput
                             placeholder="Thickness"
                             disabled={disabledOverlayPanel}
@@ -320,7 +319,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             stepSize={0.5}
                             onValueChange={(value: number) => widgetStore.setThickness(value)}
                         />
-                    </Tooltip2>
+                    </Tooltip>
                 </FormGroup>
                 <Tabs id="catalogSettings" vertical={false} selectedTabId={widgetStore.sizeAxisTabId} onChange={tabId => this.handleSelectedAxisTabChanged(tabId)}>
                     <Tab id={CatalogSettingsTabs.SIZE_MAJOR} title="Major" panel={sizeMajor} />
@@ -339,7 +338,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Size max" labelInfo="(px)" disabled={disableSizeMap}>
-                    <Tooltip2 content={`Maximum size ${widgetStore.maxPointSizebyType}`}>
+                    <Tooltip content={`Maximum size ${widgetStore.maxPointSizebyType}`}>
                         <SafeNumericInput
                             allowNumericCharactersOnly={true}
                             asyncControl={true}
@@ -350,7 +349,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             onBlur={ev => this.handleChange(ev, "size-max")}
                             onKeyDown={ev => this.handleChange(ev, "size-max")}
                         />
-                    </Tooltip2>
+                    </Tooltip>
                 </FormGroup>
             </div>
         );
@@ -498,27 +497,28 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 />
             </div>
         );
-        const className = classNames("catalog-settings", {"bp3-dark": appStore.darkTheme});
+        const className = classNames("catalog-settings", {[Classes.DARK]: appStore.darkTheme});
 
         return (
             <div className={className}>
                 <FormGroup className={"file-menu"} inline={true} label="File" disabled={disabledOverlayPanel}>
                     <Select
-                        className="bp3-fill"
+                        className={Classes.FILL}
                         disabled={disabledOverlayPanel}
                         filterable={false}
                         items={catalogFileItems}
                         activeItem={this.catalogFileId}
                         onItemSelect={this.handleCatalogFileChange}
                         itemRenderer={this.renderFileIdPopOver}
-                        popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END, fill: true}}
+                        popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
+                        fill={true}
                     >
                         <Button text={activeFileName} rightIcon="double-caret-vertical" disabled={disabledOverlayPanel} />
                     </Select>
                 </FormGroup>
                 <FormGroup className={"file-menu"} inline={true} label="Shape" disabled={disabledOverlayPanel}>
                     <Select
-                        className="bp3-fill"
+                        className={Classes.FILL}
                         disabled={disabledOverlayPanel}
                         filterable={false}
                         items={this.catalogOverlayShape}
@@ -539,7 +539,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         );
     }
 
-    private renderAxisPopOver = (catalogName: string, itemProps: IItemRendererProps) => {
+    private renderAxisPopOver = (catalogName: string, itemProps: ItemRendererProps) => {
         return <MenuItem key={catalogName} text={catalogName} onClick={itemProps.handleClick} />;
     };
 
@@ -590,15 +590,15 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         }
     };
 
-    private renderFileIdPopOver = (fileId: number, itemProps: IItemRendererProps) => {
+    private renderFileIdPopOver = (fileId: number, itemProps: ItemRendererProps) => {
         const fileName = this.catalogFileNames.get(fileId);
         let text = `${fileId}: ${fileName}`;
         return <MenuItem key={fileId} text={text} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
-    private renderShapePopOver = (shape: CatalogOverlayShape, itemProps: IItemRendererProps) => {
+    private renderShapePopOver = (shape: CatalogOverlayShape, itemProps: ItemRendererProps) => {
         const shapeItem = this.getCatalogShape(shape);
-        return <MenuItem icon={shapeItem} key={shape} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+        return <MenuItem icon={shapeItem} key={shape} text={""} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
     private handleSelectedTabChanged = (newTabId: React.ReactText) => {

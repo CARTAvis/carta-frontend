@@ -1,35 +1,35 @@
 @import "~@blueprintjs/core/lib/scss/variables.scss";
 
 .preference-dialog {
-    .bp3-tabs {
+    .#{$ns}-tabs {
         height: 100%;
     }
 
-    .bp3-tab-panel {
+    .#{$ns}-tab-panel {
         height: 100%;
         overflow: auto;
         width: 100%;
     }
 
-    .bp3-form-group {
+    .#{$ns}-form-group {
         white-space: nowrap;
 
         &:first-of-type {
             margin-left: 0px;
         }
-        .bp3-label {
+        .#{$ns}-label {
             min-width: 16em;
             text-align: right;
         }
     }
 
-    .log-event-panel .bp3-form-group .bp3-label {
+    .log-event-panel .#{$ns}-form-group .#{$ns}-label {
         width: auto !important;
         text-align: left;
     }
 
-    .bp3-numeric-input {
-        .bp3-input-group {
+    .#{$ns}-numeric-input {
+        .#{$ns}-input-group {
             width: 60px;
         }
     }
@@ -39,7 +39,7 @@
     }
 
     .log-event-list {
-        .bp3-form-content {
+        .#{$ns}-form-content {
             display: flex;
             flex-wrap: wrap;
             box-sizing: content-box;
@@ -51,7 +51,7 @@
     }
 
     .wcs-matching {
-        .bp3-form-content {
+        .#{$ns}-form-content {
             display: flex;
             flex-wrap: wrap;
             box-sizing: content-box;
@@ -72,7 +72,7 @@
     }
 
     .telemetry-mode-form-group {
-        .bp3-form-helper-text {
+        .#{$ns}-form-helper-text {
             width: 275px;
         }
     }
@@ -86,8 +86,8 @@
         }
     }
 
-    .bp3-html-select select,
-    .bp3-select select {
+    .#{$ns}-html-select select,
+    .#{$ns}-select select {
         width: auto;
     }
 

@@ -2,8 +2,7 @@ import * as React from "react";
 import {CSSProperties} from "react";
 import ReactResizeDetector from "react-resize-detector";
 import {FixedSizeList, ListOnItemsRenderedProps} from "react-window";
-import {AnchorButton, ButtonGroup, Icon, NonIdealState, Position, Spinner} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
+import {AnchorButton, ButtonGroup, Classes, Icon, NonIdealState, Position, Spinner, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
@@ -112,7 +111,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         ev.stopPropagation();
     };
 
-    private handleAllRegionsLockClicked = (ev: React.MouseEvent<HTMLElement, MouseEvent>) => {
+    private handleAllRegionsLockClicked = (ev: React.MouseEvent<Element, MouseEvent>) => {
         this.toggleRegionsLock();
         this.syncRegionsLocked();
         ev.stopPropagation();
@@ -239,39 +238,39 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const floatRenderer = () => {
             return (
                 <ButtonGroup className="float" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
-                    <Tooltip2 content="Import regions" position={Position.TOP_LEFT}>
+                    <Tooltip content="Import regions" position={Position.TOP_LEFT}>
                         <AnchorButton icon={"cloud-download"} onClick={this.handleRegionImportClicked} style={{cursor: "pointer"}} />
-                    </Tooltip2>
-                    <Tooltip2 content="Export all regions" position={Position.BOTTOM}>
+                    </Tooltip>
+                    <Tooltip content="Export all regions" position={Position.BOTTOM}>
                         {this.validRegions.length > 1 ? <AnchorButton icon="cloud-upload" onClick={this.handleRegionExportAllClicked} style={{cursor: "pointer"}} /> : <AnchorButton icon="cloud-upload" style={{opacity: 0.4}} />}
-                    </Tooltip2>
+                    </Tooltip>
                 </ButtonGroup>
             );
         };
 
         const headerRenderer = (regionsVisibility: RegionsOpacity, regionsLock: boolean) => {
             return (props: {index: number; style: CSSProperties}) => {
-                const className = classNames("row-header", {"bp3-dark": darkTheme});
+                const className = classNames("row-header", {[Classes.DARK]: darkTheme});
 
                 return (
                     <div className={className} style={props.style}>
                         <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
                             <Icon icon={"blank"} style={{width: 16}} />
-                            <Tooltip2 disabled={regionsVisibility === RegionsOpacity.Invisible} content="Lock all regions" position={Position.BOTTOM}>
+                            <Tooltip disabled={regionsVisibility === RegionsOpacity.Invisible} content="Lock all regions" position={Position.BOTTOM}>
                                 <Icon
                                     icon={regionsLock ? "lock" : regionsVisibility === RegionsOpacity.Invisible ? "lock" : "unlock"}
                                     onClick={regionsVisibility === RegionsOpacity.Invisible ? () => {} : ev => this.handleAllRegionsLockClicked(ev)}
                                     style={{cursor: "pointer", opacity: regionsVisibility === RegionsOpacity.Invisible ? 0.3 : 1}}
                                 />
-                            </Tooltip2>
+                            </Tooltip>
                             <Icon icon={"blank"} style={{width: 5}} />
-                            <Tooltip2 content={regionsVisibility === RegionsOpacity.Invisible ? "Show regions" : "Hide regions"} position={Position.BOTTOM}>
+                            <Tooltip content={regionsVisibility === RegionsOpacity.Invisible ? "Show regions" : "Hide regions"} position={Position.BOTTOM}>
                                 <Icon
                                     icon={regionsVisibility === RegionsOpacity.Invisible ? "eye-off" : "eye-open"}
                                     onClick={this.handleToggleHideClicked()}
                                     style={{cursor: "pointer", opacity: regionsVisibility === RegionsOpacity.SemiTransparent ? 0.3 : 1}}
                                 />
-                            </Tooltip2>
+                            </Tooltip>
                         </div>
                         <div className="cell" style={{width: nameWidth}}>
                             Name
@@ -302,7 +301,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             if (!region) {
                 return null;
             }
-            const className = classNames("row", {"bp3-dark": darkTheme, selected: selectedRegion?.regionId === region.regionId});
+            const className = classNames("row", {[Classes.DARK]: darkTheme, selected: selectedRegion?.regionId === region.regionId});
 
             let centerContent: React.ReactNode;
             if (isFinite(region.center.x) && isFinite(region.center.y)) {
@@ -364,9 +363,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 sizeEntry = (
                     <div className="cell" style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
                         {region.regionType !== CARTA.RegionType.POINT && (
-                            <Tooltip2 content={tooltipContent} position={Position.BOTTOM}>
+                            <Tooltip content={tooltipContent} position={Position.BOTTOM}>
                                 {sizeContent}
-                            </Tooltip2>
+                            </Tooltip>
                         )}
                     </div>
                 );
@@ -409,9 +408,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             if (region.regionId) {
                 exportEntry = (
                     <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={ev => this.handleRegionExportClicked(ev, region)}>
-                        <Tooltip2 content="Export region" position={Position.BOTTOM}>
+                        <Tooltip content="Export region" position={Position.BOTTOM}>
                             <Icon icon="cloud-upload" />
-                        </Tooltip2>
+                        </Tooltip>
                     </div>
                 );
             }
@@ -443,7 +442,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         return (
             <div className="region-list-widget">
-                <div className={classNames("region-list-table", {"bp3-dark": darkTheme})}>
+                <div className={classNames("region-list-table", {[Classes.DARK]: darkTheme})}>
                     <FixedSizeList itemSize={RegionListComponent.HEADER_ROW_HEIGHT} height={RegionListComponent.HEADER_ROW_HEIGHT} itemCount={1} width="100%" className="list-header">
                         {headerRenderer(this.regionsVisibility, this.regionsLock)}
                     </FixedSizeList>

@@ -1,11 +1,13 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .appearance-form {
-    .bp3-label {
+    .#{$ns}-label {
         width: 11em;
         text-align: right;
     }
 
-    .bp3-numeric-input {
-        .bp3-input-group {
+    .#{$ns}-numeric-input {
+        .#{$ns}-input-group {
             width: 60px;
         }
     }

@@ -1,8 +1,8 @@
 import * as React from "react";
-import {Alert, AnchorButton, Button, Classes, Colors, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, NonIdealState, Tab, Tabs, TagInput} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
+import {Alert, AnchorButton, Button, Classes, Colors, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Tab, Tabs, TagInput, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
+import classNames from "classnames";
 import {action, autorun, computed, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
 
@@ -26,8 +26,8 @@ enum ContourDialogTabs {
     Styling
 }
 
-const DataSourceSelect = Select.ofType<FrameStore>();
-const HistogramSelect = Select.ofType<boolean>();
+const DataSourceSelect = Select<FrameStore>;
+const HistogramSelect = Select<boolean>;
 
 @observer
 export class ContourDialogComponent extends React.Component {
@@ -278,7 +278,7 @@ export class ContourDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
 
-        const dialogProps: IDialogProps = {
+        const dialogProps: DialogProps = {
             icon: <CustomIcon icon="contour" size={CustomIcon.SIZE_LARGE} />,
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
@@ -491,17 +491,18 @@ export class ContourDialogComponent extends React.Component {
                         <DataSourceSelect
                             activeItem={dataSource}
                             onItemSelect={appStore.setContourDataSource}
-                            popoverProps={{minimal: true, position: "bottom", fill: true}}
+                            popoverProps={{minimal: true, position: "bottom"}}
                             filterable={false}
                             items={appStore.frames}
                             itemRenderer={this.renderDataSourceSelectItem}
                             disabled={appStore.animatorStore.animationActive}
+                            fill={true}
                         >
                             <Button text={dataSource.filename} rightIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.animationActive} />
                         </DataSourceSelect>
-                        <Tooltip2 content={appStore.frameLockedToContour ? "Data source is locked to active image" : "Data source is independent of active image"}>
+                        <Tooltip content={appStore.frameLockedToContour ? "Data source is locked to active image" : "Data source is independent of active image"}>
                             <AnchorButton className="lock-button" icon={appStore.frameLockedToContour ? "lock" : "unlock"} minimal={true} onClick={appStore.toggleFrameContourLock} />
-                        </Tooltip2>
+                        </Tooltip>
                     </FormGroup>
                     <Tabs defaultSelectedTabId={ContourDialogTabs.Levels} renderActiveTabPanelOnly={false}>
                         <Tab id={ContourDialogTabs.Levels} title="Levels" panel={levelPanel} panelClassName="contour-level-panel" />
@@ -515,7 +516,7 @@ export class ContourDialogComponent extends React.Component {
                         <AnchorButton intent={Intent.SUCCESS} onClick={this.handleApplyContours} disabled={!hasLevels || (!this.contourConfigChanged && dataSource.contourConfig.enabled)} text="Apply" />
                     </div>
                 </div>
-                <Alert className={appStore.darkTheme ? "bp3-dark" : ""} icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>
+                <Alert className={classNames({[Classes.DARK]: appStore.darkTheme})} icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>
                     <p>Calculating a cube histogram may take a long time, depending on the size of the file. Are you sure you want to continue?</p>
                 </Alert>
                 <TaskProgressDialogComponent

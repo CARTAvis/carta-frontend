@@ -5,7 +5,7 @@
     height: 100%;
     user-select: none;
 
-    .bp3-popover2-target {
+    .#{$ns}-popover-target {
         flex: none !important;
     }
 
@@ -34,7 +34,7 @@
         margin: 5px;
         border: 1px solid $gray4;
 
-        &.bp3-dark {
+        &.#{$ns}-dark {
             border-color: $dark-gray2;
 
             .row {
@@ -66,10 +66,10 @@
             display: flex;
 
             &.selected {
-                background: lighten($blue5, 25);
+                background: rgba($blue3, 0.1);
             }
 
-            &.bp3-dark {
+            &.#{$ns}-dark {
                 background: $dark-gray3;
 
                 .cell {
@@ -77,7 +77,7 @@
                 }
 
                 &.selected {
-                    background: #3c5066;
+                    background: rgba($blue3, 0.2);
                 }
             }
 
@@ -95,7 +95,7 @@
             font-weight: bold;
             overflow-x: hidden;
 
-            &.bp3-dark {
+            &.#{$ns}-dark {
                 background: $dark-gray4;
 
                 .cell {

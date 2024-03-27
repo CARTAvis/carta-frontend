@@ -1,4 +1,4 @@
-import {IOptionProps, TabId} from "@blueprintjs/core";
+import {OptionProps, TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, flow, makeObservable, observable} from "mobx";
 
@@ -652,7 +652,7 @@ export class FileBrowserStore {
         return Freq.convertUnitToHz(this.saveRestFreq);
     }
 
-    @computed get HDUList(): IOptionProps[] {
+    @computed get HDUList(): OptionProps[] {
         return this.HDUfileInfoExtended
             ? Object.keys(this.HDUfileInfoExtended)?.map(hdu => {
                   // hdu extension name is in field 3 of fileInfoExtended computed entries

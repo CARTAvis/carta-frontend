@@ -1,4 +1,4 @@
-import {IOptionProps, NumberRange} from "@blueprintjs/core";
+import {NumberRange, OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable, override, reaction} from "mobx";
 import tinycolor from "tinycolor2";
@@ -591,7 +591,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return null;
     }
 
-    @computed get momentRegionOptions(): IOptionProps[] {
+    @computed get momentRegionOptions(): OptionProps[] {
         const frame = this.effectiveFrame;
         let momentRegionOptions = [
             {value: RegionId.ACTIVE, label: "Active"},

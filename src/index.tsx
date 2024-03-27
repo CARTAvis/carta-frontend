@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import {FocusStyleManager} from "@blueprintjs/core";
+import {FocusStyleManager, OverlaysProvider} from "@blueprintjs/core";
 import axios from "axios";
 
 import {ApiService} from "services";
@@ -39,7 +39,12 @@ async function fetchConfig() {
         ApiService.SetRuntimeConfig({});
     }
 
-    ReactDOM.render(<App />, document.getElementById("root") as HTMLElement);
+    ReactDOM.render(
+        <OverlaysProvider>
+            <App />
+        </OverlaysProvider>,
+        document.getElementById("root") as HTMLElement
+    );
 }
 
 fetchConfig().then(() => {

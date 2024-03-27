@@ -1,7 +1,7 @@
 import * as React from "react";
-import {AnchorButton, Button, IDialogProps, Intent, MenuItem, PopoverPosition} from "@blueprintjs/core";
-import {IItemRendererProps, Select} from "@blueprintjs/select";
-import {Cell, Column, SelectionModes, Table} from "@blueprintjs/table";
+import {AnchorButton, Button, Classes, DialogProps, Intent, MenuItem, PopoverPosition} from "@blueprintjs/core";
+import {ItemRendererProps, Select} from "@blueprintjs/select";
+import {Cell, Column, SelectionModes, Table2} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
@@ -97,7 +97,7 @@ export class StokesDialogComponent extends React.Component {
     render() {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
-        const className = classNames("stokes-dialog", {"bp3-dark": appStore.darkTheme});
+        const className = classNames("stokes-dialog", {[Classes.DARK]: appStore.darkTheme});
         const stokesItems = Object.values(CARTA.PolarizationType) as CARTA.PolarizationType[];
         const files = this.fileNames;
 
@@ -129,7 +129,7 @@ export class StokesDialogComponent extends React.Component {
                                 itemRenderer={this.renderPopOver}
                                 popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                             >
-                                <Button className="bp3-minimal catalog-represent-as-select-button" text={this.getLabelFromValue(this.stokes.get(file).polarizationType)} rightIcon="double-caret-vertical" />
+                                <Button className={classNames(Classes.MINIMAL, "catalog-represent-as-select-button")} text={this.getLabelFromValue(this.stokes.get(file).polarizationType)} rightIcon="double-caret-vertical" />
                             </Select>
                         </Cell>
                     );
@@ -137,7 +137,7 @@ export class StokesDialogComponent extends React.Component {
             />
         );
 
-        const dialogProps: IDialogProps = {
+        const dialogProps: DialogProps = {
             icon: "git-merge",
             className: className,
             backdropClassName: "minimal-dialog-backdrop",
@@ -146,6 +146,9 @@ export class StokesDialogComponent extends React.Component {
             isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Stokes),
             title: "Merging polarization hypercube"
         };
+
+        const rerenderCheck = [];
+        this.stokes.forEach(stoke => rerenderCheck.push(stoke.polarizationType));
 
         return (
             <DraggableDialogComponent
@@ -158,8 +161,8 @@ export class StokesDialogComponent extends React.Component {
                 enableResizing={true}
                 dialogId={DialogId.Stokes}
             >
-                <div className="bp3-dialog-body">
-                    <Table
+                <div className={Classes.DIALOG_BODY}>
+                    <Table2
                         className={"file-table"}
                         numRows={this.stokes.size}
                         enableRowHeader={false}
@@ -170,12 +173,13 @@ export class StokesDialogComponent extends React.Component {
                         minColumnWidth={30}
                         columnWidths={[440, 120]}
                         enableRowResizing={false}
+                        cellRendererDependencies={[rerenderCheck]}
                     >
                         {[fileName, stokesDropDown]}
-                    </Table>
+                    </Table2>
                 </div>
-                <div className="bp3-dialog-footer">
-                    <div className="bp3-dialog-footer-actions">
+                <div className={Classes.DIALOG_FOOTER}>
+                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
                             disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !this.noneType}
@@ -230,7 +234,7 @@ export class StokesDialogComponent extends React.Component {
         return POLARIZATION_LABELS.get(CARTA.PolarizationType[value]) ?? String(value);
     };
 
-    private renderPopOver = (stokesType: CARTA.PolarizationType, itemProps: IItemRendererProps) => {
+    private renderPopOver = (stokesType: CARTA.PolarizationType, itemProps: ItemRendererProps) => {
         const label = this.getLabelFromValue(stokesType);
         return <MenuItem key={`${stokesType}: ${label}`} text={label} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };

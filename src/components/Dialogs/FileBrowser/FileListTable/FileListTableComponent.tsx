@@ -1,8 +1,8 @@
 import * as React from "react";
-import {Button, Icon, Label, NonIdealState, Spinner} from "@blueprintjs/core";
-import {Cell, Column, ColumnHeaderCell, Regions, RenderMode, SelectionModes, Table, TableLoadingOption} from "@blueprintjs/table";
-import {IRegion} from "@blueprintjs/table/src/regions";
+import {Button, Classes, Icon, Label, NonIdealState, Spinner} from "@blueprintjs/core";
+import {Cell, Column, ColumnHeaderCell, Region, Regions, RenderMode, SelectionModes, Table2, TableLoadingOption} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
+import classNames from "classnames";
 import FuzzySearch from "fuzzy-search";
 import globToRegExp from "glob-to-regexp";
 import {action, autorun, computed, makeObservable, observable, runInAction} from "mobx";
@@ -46,11 +46,11 @@ export interface FileListTableComponentProps {
 
 @observer
 export class FileListTableComponent extends React.Component<FileListTableComponentProps> {
-    @observable selectedRegions: IRegion[];
-    @observable columnWidths = [350, 80, 90, 95];
+    @observable selectedRegions: Region[];
+    @observable columnWidths = [360, 80, 90, 106];
 
     private static readonly RowHeight = 22;
-    private tableRef: Table;
+    private tableRef: Table2;
     private cachedFilterString: string;
     private cachedSortingString: string;
     private cachedFileResponse: CARTA.IFileListResponse | CARTA.ICatalogListResponse;
@@ -278,7 +278,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         }
     };
 
-    private renderColumnHeader = (name: string, index?: number) => {
+    private renderColumnHeader = (name: string, _index?: number) => {
         const sortingConfig = {direction: this.props.sortingString.startsWith("+") ? 1 : -1, columnName: this.props.sortingString.substring(1).toLowerCase()};
         const sortColumn = name.toLowerCase() === sortingConfig?.columnName;
         const sortDesc = sortingConfig?.direction < 0;
@@ -287,7 +287,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             if (sortColumn) {
                 return (
                     <div className="sort-label" onClick={() => this.props.onSortingChanged(name, -sortingConfig.direction)}>
-                        <Label className="bp3-inline label">
+                        <Label className={classNames(Classes.INLINE, "label")}>
                             <Icon className="sort-icon" icon={sortDesc ? "sort-desc" : "sort-asc"} />
                             {name}
                         </Label>
@@ -296,7 +296,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             } else {
                 return (
                     <div className="sort-label" onClick={() => this.props.onSortingChanged(name, 1)}>
-                        <Label className="bp3-inline label">
+                        <Label className={classNames(Classes.INLINE, "label")}>
                             <Icon className="sort-icon inactive" icon="sort" />
                             {name}
                         </Label>
@@ -436,14 +436,10 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
     render() {
         const fileResponse = this.props.listResponse;
-        // Dummy variable to trigger re-render on sorting change
-        // TODO: is this needed?
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const sortingConfig = this.props.sortingString;
 
         const classes = ["browser-table"];
         if (this.props.darkTheme) {
-            classes.push("bp3-dark");
+            classes.push(Classes.DARK);
         }
 
         const entryCount = this.tableEntries.length;
@@ -476,7 +472,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         }
 
         const table = (
-            <Table
+            <Table2
                 ref={ref => (this.tableRef = ref)}
                 className={classes.join(" ")}
                 enableRowReordering={false}
@@ -493,12 +489,13 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 enableRowHeader={false}
                 numRows={this.tableEntries.length}
                 loadingOptions={this.props.loading ? [TableLoadingOption.CELLS] : []}
+                cellRendererDependencies={[this.props.sortingString]} // trigger re-render on sorting change
             >
                 <Column name="Filename" columnHeaderCellRenderer={() => this.renderColumnHeader("Filename")} cellRenderer={this.renderFilenames} />
                 <Column name="Type" columnHeaderCellRenderer={() => this.renderColumnHeader("Type")} cellRenderer={this.renderTypes} />
                 <Column name="Size" columnHeaderCellRenderer={() => this.renderColumnHeader("Size")} cellRenderer={this.renderSizes} />
                 <Column name="Date" columnHeaderCellRenderer={() => this.renderColumnHeader("Date")} cellRenderer={this.renderDates} />
-            </Table>
+            </Table2>
         );
 
         return (

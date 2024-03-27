@@ -1,20 +1,22 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .distance-measurement-dialog {
-    .bp3-dialog-body {
+    .#{$ns}-dialog-body {
         user-select: none;
 
         .config-panel {
             user-select: none;
 
-            .bp3-label {
+            .#{$ns}-label {
                 min-width: 8em;
                 text-align: right;
             }
 
-            .bp3-input {
+            .#{$ns}-input {
                 width: 125px;
             }
 
-            .bp3-form-content {
+            .#{$ns}-form-content {
                 display: flex;
                 flex-wrap: wrap;
                 flex: 1;
@@ -26,6 +28,7 @@
                     flex: 1 1 auto;
                     min-width: 190px;
                     margin-left: 5px;
+                    margin-top: 2px;
                     font-size: x-small;
                     font-family: monospace;
                     user-select: text;
@@ -34,13 +37,13 @@
         }
 
         .styling-panel {
-            .bp3-label {
+            .#{$ns}-label {
                 min-width: 8em;
                 text-align: right;
             }
 
-            .bp3-numeric-input {
-                .bp3-input-group {
+            .#{$ns}-numeric-input {
+                .#{$ns}-input-group {
                     width: 60px;
                 }
             }

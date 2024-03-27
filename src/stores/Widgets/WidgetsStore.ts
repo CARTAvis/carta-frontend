@@ -1,3 +1,5 @@
+import {Classes} from "@blueprintjs/core";
+import classNames from "classnames";
 import * as GoldenLayout from "golden-layout";
 import $ from "jquery";
 import {action, computed, makeObservable, observable} from "mobx";
@@ -747,7 +749,7 @@ export class WidgetsStore {
     };
 
     private getControlButton = (className: string, title: string, icon: string) => {
-        return $(`<li class="${className}" title="${title}"><span class="bp3-icon-standard bp3-icon-${icon}" style/></li>`);
+        return $(`<li class="${className}" title="${title}"><span class="${classNames(Classes.ICON_STANDARD, Classes.iconClass(icon))}" style/></li>`);
     };
 
     public toWidgetSettingsConfig = (widgetType: string, widgetID: string) => {
@@ -881,11 +883,11 @@ export class WidgetsStore {
     };
 
     onImagePanelButtonClick = () => {
-        this.setImageMultiPanelEnabled(!PreferenceStore.Instance.imageMultiPanelEnabled);
+        this.setImageMultiPanelEnabled(!PreferenceStore.Instance.silent.imageMultiPanelEnabled);
     };
 
     setImageMultiPanelEnabled = (multiPanelEnabled: boolean) => {
-        PreferenceStore.Instance.setPreference(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED, multiPanelEnabled);
+        PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_IMAGE_MULTI_PANEL_ENABLED, multiPanelEnabled);
         this.updateImagePanelButton();
     };
 
@@ -894,7 +896,7 @@ export class WidgetsStore {
         const imagePanelButton = $(".lm_goldenlayout")?.find("li.lm-image-panel[style!='display:none;']");
         if (imagePanelButton) {
             imagePanelButton.attr("title", this.getImagePanelButtonTooltip(imagePanelMode));
-            imagePanelButton.find(".bp3-icon-standard")?.attr("class", `bp3-icon-standard ${this.getImagePanelButtonIcon(imagePanelMode)}`);
+            imagePanelButton.find(`.${Classes.ICON_STANDARD}`)?.attr("class", classNames(Classes.ICON_STANDARD, this.getImagePanelButtonIcon(imagePanelMode)));
         }
     };
 
@@ -903,7 +905,7 @@ export class WidgetsStore {
     };
 
     private getImagePanelButtonIcon = (imagePanelMode: ImagePanelMode) => {
-        return imagePanelMode === ImagePanelMode.None ? "bp3-icon-square" : "bp3-icon-grid-view";
+        return imagePanelMode === ImagePanelMode.None ? Classes.iconClass("square") : Classes.iconClass("grid-view");
     };
 
     onNextPageClick = () => {

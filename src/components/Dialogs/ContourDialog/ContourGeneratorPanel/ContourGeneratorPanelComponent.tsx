@@ -10,7 +10,7 @@ import {getPercentiles, scaleValue} from "utilities";
 
 import "./ContourGeneratorPanelComponent.scss";
 
-const GeneratorSelect = Select.ofType<ContourGeneratorType>();
+const GeneratorSelect = Select<ContourGeneratorType>;
 
 @observer
 export class ContourGeneratorPanelComponent extends React.Component<{

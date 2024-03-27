@@ -1,4 +1,4 @@
-import {IRegion, Regions} from "@blueprintjs/table";
+import {Region, Regions} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {action, computed, observable} from "mobx";
 
@@ -262,8 +262,8 @@ export abstract class AbstractCatalogProfileStore {
         return catalogColumnsData;
     }
 
-    @computed get autoScrollRowNumber(): IRegion {
-        let singleRowRegion: IRegion = Regions.row(0);
+    @computed get autoScrollRowNumber(): Region {
+        let singleRowRegion: Region = Regions.row(0);
         if (this.selectedPointIndices.length > 0) {
             singleRowRegion = Regions.row(minMaxArray(this.selectedPointIndices).minVal);
         }

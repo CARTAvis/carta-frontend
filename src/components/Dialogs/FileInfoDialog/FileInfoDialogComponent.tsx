@@ -1,5 +1,5 @@
 import * as React from "react";
-import {IDialogProps} from "@blueprintjs/core";
+import {Classes, DialogProps} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
@@ -18,9 +18,9 @@ export class FileInfoDialogComponent extends React.Component {
 
     render() {
         const appStore = AppStore.Instance;
-        const className = classNames("file-info-dialog", {"bp3-dark": appStore.darkTheme});
+        const className = classNames("file-info-dialog", {[Classes.DARK]: appStore.darkTheme});
 
-        const dialogProps: IDialogProps = {
+        const dialogProps: DialogProps = {
             icon: "app-header",
             className: className,
             backdropClassName: "minimal-dialog-backdrop",
@@ -41,7 +41,7 @@ export class FileInfoDialogComponent extends React.Component {
                 enableResizing={true}
                 dialogId={DialogId.FileInfo}
             >
-                <div className="bp3-dialog-body">
+                <div className={Classes.DIALOG_BODY}>
                     <FileInfoComponent
                         infoTypes={[FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER]}
                         fileInfoExtended={appStore.activeFrame ? appStore.activeFrame.frameInfo.fileInfoExtended : null}

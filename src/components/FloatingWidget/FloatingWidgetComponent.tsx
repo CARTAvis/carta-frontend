@@ -1,7 +1,6 @@
 import * as React from "react";
 import {Rnd} from "react-rnd";
-import {Icon, Position} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
+import {Classes, Icon, Position, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import * as GoldenLayout from "golden-layout";
 import {observer} from "mobx-react";
@@ -109,10 +108,10 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
     public render() {
         const headerHeight = 25;
         const appStore = AppStore.Instance;
-        const className = classNames("floating-widget", {"bp3-dark": appStore.darkTheme});
-        const titleClass = classNames("floating-header", {selected: this.props.isSelected, "bp3-dark": appStore.darkTheme});
-        const buttonClass = classNames("floating-header-button", {"bp3-dark": appStore.darkTheme});
-        const floatingContentClassName = classNames("floating-content", {"bp3-dark": appStore.darkTheme, "floating-settings-content": !this.props.showPinButton});
+        const className = classNames("floating-widget", {[Classes.DARK]: appStore.darkTheme});
+        const titleClass = classNames("floating-header", {selected: this.props.isSelected, [Classes.DARK]: appStore.darkTheme});
+        const buttonClass = classNames("floating-header-button", {[Classes.DARK]: appStore.darkTheme});
+        const floatingContentClassName = classNames("floating-content", {[Classes.DARK]: appStore.darkTheme, "floating-settings-content": !this.props.showPinButton});
 
         const widgetConfig = this.props.widgetConfig;
 
@@ -150,23 +149,23 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                     <div className={"floating-title"}>{widgetConfig.title}</div>
                     {this.props.showFloatingSettingsButton && (
                         <div className={buttonClass} onClick={() => appStore.widgetsStore.createFloatingSettingsWidget(widgetConfig.title, widgetConfig.id, widgetConfig.type)}>
-                            <Tooltip2 content="Settings" position={Position.BOTTOM_RIGHT}>
+                            <Tooltip content="Settings" position={Position.BOTTOM_RIGHT}>
                                 <Icon icon={"cog"} />
-                            </Tooltip2>
+                            </Tooltip>
                         </div>
                     )}
                     {widgetConfig.helpType && (
                         <div className={buttonClass} onClick={this.onClickHelpButton}>
-                            <Tooltip2 content="Help" position={Position.BOTTOM_RIGHT}>
+                            <Tooltip content="Help" position={Position.BOTTOM_RIGHT}>
                                 <Icon icon={"help"} />
-                            </Tooltip2>
+                            </Tooltip>
                         </div>
                     )}
                     {this.props.showPinButton && (
                         <div className={buttonClass} ref={ref => (this.pinElementRef = ref)} onClick={() => console.log("pin!")}>
-                            <Tooltip2 content="Drag pin to dock this widget" position={Position.BOTTOM_RIGHT}>
+                            <Tooltip content="Drag pin to dock this widget" position={Position.BOTTOM_RIGHT}>
                                 <Icon icon={"pin"} />
-                            </Tooltip2>
+                            </Tooltip>
                         </div>
                     )}
                     {widgetConfig.isCloseable && (

@@ -1,6 +1,6 @@
 import * as React from "react";
 import ReactResizeDetector from "react-resize-detector";
-import {Button, ButtonGroup, Colors, FormGroup, HTMLSelect, IOptionProps, NonIdealState} from "@blueprintjs/core";
+import {Button, ButtonGroup, Colors, FormGroup, HTMLSelect, NonIdealState, OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
@@ -419,7 +419,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 </div>
             );
         } else {
-            const percentileRankOptions: IOptionProps[] = RenderConfigStore.PERCENTILE_RANKS.map(rank => ({label: `${rank}%`, value: rank}));
+            const percentileRankOptions: OptionProps[] = RenderConfigStore.PERCENTILE_RANKS.map(rank => ({label: `${rank}%`, value: rank}));
             percentileRankOptions.push({label: "Custom", value: -1});
             percentileSelectDiv = (
                 <div className="percentile-select">

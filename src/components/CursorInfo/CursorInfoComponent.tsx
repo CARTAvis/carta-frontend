@@ -184,6 +184,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
                         isIndexZero={true}
                         boldIndex={[appStore.activeFrameIndex]}
                         tooltipIndex={0}
+                        cellRendererDependencies={[imageNames, values, systems, worldCoords, imageCoords, zCoords, channels, stokes]}
                     />
                 )}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}></ReactResizeDetector>

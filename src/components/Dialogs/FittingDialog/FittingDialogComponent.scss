@@ -1,3 +1,5 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .fitting-dialog {
     .pinned-input-panel {
         height: 45px;
@@ -6,8 +8,8 @@
         margin-bottom: 0px;
     }
 
-    .bp3-html-select select,
-    .bp3-select select {
+    .#{$ns}-html-select select,
+    .#{$ns}-select select {
         width: 100%;
         min-width: 7em;
         overflow: hidden;
@@ -56,9 +58,13 @@
             }
 
             .unpinned-input-panel {
-                height: calc(100% - 30px - 5px); // pane 1 h - footer h - unpinned inputs bottom margin
+                height: calc(100% - 30px - 10px); // pane 1 h - footer h - unpinned inputs bottom margin
                 margin-top: 0;
-                margin-bottom: 5px;
+                margin-bottom: 10px;
+            }
+
+            .#{$ns}-dialog-footer {
+                margin: 0 15px;
             }
         }
 
@@ -73,45 +79,45 @@
         }
     }
 
-    .bp3-label {
+    .#{$ns}-label {
         display: flex;
         justify-content: flex-end;
         min-width: 11em;
         user-select: none;
 
-        .bp3-text-muted {
+        .#{$ns}-text-muted {
             margin-left: 5px;
             overflow: hidden;
             text-overflow: ellipsis;
         }
     }
 
-    .bp3-form-content {
+    .#{$ns}-form-content {
         display: flex;
         flex-wrap: wrap;
         width: 100%;
         user-select: none;
     }
 
-    .bp3-control-group .bp3-input {
+    .#{$ns}-control-group .#{$ns}-input {
         width: 125px;
     }
 
     .components-input {
         display: flex;
 
-        .bp3-input {
+        .#{$ns}-input {
             width: 40px;
         }
     }
 
-    .bp3-slider {
+    .#{$ns}-slider {
         width: 40%;
         height: 30px;
         margin-left: 20px;
         margin-right: 20px;
 
-        .bp3-button {
+        .#{$ns}-button {
             margin-left: 20px;
         }
     }
@@ -128,47 +134,48 @@
     .info-string {
         width: 100%;
         margin-left: 10px;
+        margin-top: 2px;
         font-size: x-small;
         font-family: monospace;
         user-select: text;
         white-space: nowrap;
     }
 
-    .bp3-divider {
+    .#{$ns}-divider {
         margin: 15px 0 15px 0;
     }
 
-    .bp3-switch {
+    .#{$ns}-switch {
         margin: 7px 10px 0 10px;
     }
 
     .output-button {
         position: absolute;
-        bottom: 5px;
+        bottom: 25px;
         right: 25px;
         margin: 0 0 0 0;
         transition: opacity 400ms;
 
-        .bp3-button {
+        .#{$ns}-button {
             transition: opacity 400ms;
             user-select: none;
         }
     }
 
     .fitting-result-panel {
-        .bp3-tabs {
+        .#{$ns}-tabs {
             display: flex;
             width: 100%;
             height: 100%;
             text-align: left;
 
-            .bp3-tab-list {
+            .#{$ns}-tab-list {
                 min-width: 10em;
             }
 
-            .bp3-tab-panel {
+            .#{$ns}-tab-panel {
                 width: calc(100% - 125px);
-                height: 100%;
+                height: calc(100% - 15px);
                 padding-left: 10px;
 
                 .fitting-result-pre {

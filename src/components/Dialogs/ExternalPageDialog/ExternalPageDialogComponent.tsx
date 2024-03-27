@@ -1,6 +1,6 @@
 import * as React from "react";
 import Iframe from "react-iframe";
-import {IDialogProps} from "@blueprintjs/core";
+import {Classes, DialogProps} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
@@ -18,9 +18,9 @@ export class ExternalPageDialogComponent extends React.Component {
 
     render() {
         const appStore = AppStore.Instance;
-        const className = classNames("iframe-dialog", {"bp3-dark": appStore.darkTheme});
+        const className = classNames("iframe-dialog", {[Classes.DARK]: appStore.darkTheme});
 
-        const dialogProps: IDialogProps = {
+        const dialogProps: DialogProps = {
             icon: "info-sign",
             className: className,
             backdropClassName: "minimal-dialog-backdrop",
@@ -40,7 +40,7 @@ export class ExternalPageDialogComponent extends React.Component {
                 enableResizing={true}
                 dialogId={DialogId.ExternalPage}
             >
-                <div className="bp3-dialog-body">
+                <div className={Classes.DIALOG_BODY}>
                     <Iframe url={appStore.dialogStore.externalPageDialogUrl} />
                 </div>
             </DraggableDialogComponent>

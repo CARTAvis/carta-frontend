@@ -1,13 +1,15 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .histogram-settings-panel {
     margin: 20px;
 
-    .bp3-form-group {
+    .#{$ns}-form-group {
         &:first-of-type {
             margin-left: 0px;
         }
     }
 
-    .bp3-button-text {
+    .#{$ns}-button-text {
         white-space: nowrap;
     }
 }

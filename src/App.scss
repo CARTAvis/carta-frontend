@@ -1,11 +1,11 @@
 @import "~@blueprintjs/core/lib/scss/variables.scss";
 
-.bp3-dark {
+.#{$ns}-dark {
     background-color: $dark-gray4;
 }
 
 body {
-    &.bp3-dark {
+    &.#{$ns}-dark {
         background-color: $dark-gray4;
     }
 }
@@ -19,7 +19,7 @@ body {
     left: 0;
     z-index: -100;
     user-select: none;
-    .bp3-dark {
+    .#{$ns}-dark {
         background-color: $dark-gray3;
     }
 }
@@ -37,19 +37,19 @@ body {
     background-color: rgba(black, 0.1) !important;
 }
 
-.bp3-overlay {
+.#{$ns}-overlay {
     z-index: 995 !important;
 }
 
-.bp3-popover {
+.#{$ns}-popover {
     z-index: 995 !important;
 }
 
-.bp3-transition-container {
+.#{$ns}-transition-container {
     z-index: 995 !important;
 }
 
-.bp3-dialog.bp3-alert {
+.#{$ns}-dialog.#{$ns}-alert {
     z-index: 999 !important;
 }
 
@@ -58,8 +58,8 @@ body {
 }
 
 // Workaround for BlueprintJS bug
-.bp3-dark .bp3-button-group:not(.bp3-minimal) > .bp3-popover-wrapper:not(:last-child) .bp3-button,
-.bp3-dark .bp3-button-group:not(.bp3-minimal) > .bp3-button:not(:last-child) {
+.#{$ns}-dark .#{$ns}-button-group:not(.#{$ns}-minimal) > .#{$ns}-popover-wrapper:not(:last-child) .#{$ns}-button,
+.#{$ns}-dark .#{$ns}-button-group:not(.#{$ns}-minimal) > .#{$ns}-button:not(:last-child) {
     margin-right: -1px !important;
 }
 

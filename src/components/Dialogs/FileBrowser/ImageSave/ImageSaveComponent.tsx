@@ -1,5 +1,5 @@
 import * as React from "react";
-import {FormGroup, HTMLSelect, Intent, IOptionProps, Label, Switch, Text} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, Intent, Label, OptionProps, Switch, Text} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
@@ -127,12 +127,13 @@ export class ImageSaveComponent extends React.Component {
         const fileBrowser = FileBrowserStore.Instance;
         const activeFrame = AppStore.Instance.activeFrame;
         const closedRegions = activeFrame?.regionSet?.regions.filter(region => region.regionId > 0 && region.isClosedRegion);
-        const regionOptions: IOptionProps[] = [{value: 0, label: "Image"}].concat(
+        const regionOptions: OptionProps[] = [{value: 0, label: "Image"}].concat(
             closedRegions?.map(region => ({
                 value: region.regionId,
                 label: `${region.name ? region.name : region.regionId} (${CARTA.RegionType[region.regionType]})`
             }))
         );
+
         const numChannels = activeFrame?.numChannels;
         const min = activeFrame?.channelValueBounds?.min ?? 0;
         const max = activeFrame?.channelValueBounds?.max ?? 1;

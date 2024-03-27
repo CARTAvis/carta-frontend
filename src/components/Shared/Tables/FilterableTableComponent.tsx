@@ -1,9 +1,8 @@
 import * as React from "react";
-import {Checkbox, Icon, InputGroup, Label, Position} from "@blueprintjs/core";
+import {Checkbox, Classes, Icon, InputGroup, Label, Position, Tooltip} from "@blueprintjs/core";
 import {IconName} from "@blueprintjs/icons";
-import {Tooltip2} from "@blueprintjs/popover2";
-import {Cell, Column, ColumnHeaderCell, IRegion, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
-import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
+import {Cell, Column, ColumnHeaderCell, Region, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
+import {RowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
@@ -35,7 +34,7 @@ export class FilterableTableComponentProps {
     loadingCell?: boolean;
     selectedDataIndex?: number[];
     showSelectedData?: boolean;
-    updateTableRef?: (ref: Table) => void;
+    updateTableRef?: (ref: Table2) => void;
     updateColumnFilter?: (value: string, columnName: string) => void;
     updateByInfiniteScroll?: (rowIndexEnd: number) => void;
     updateTableColumnWidth?: (width: number, columnName: string) => void;
@@ -130,7 +129,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                     />
                 </ColumnHeaderCell>
                 <ColumnHeaderCell isActive={controlHeader?.filter !== ""}>
-                    <Tooltip2 hoverOpenDelay={250} hoverCloseDelay={0} content={filterSyntax} position={Position.BOTTOM}>
+                    <Tooltip hoverOpenDelay={250} hoverCloseDelay={0} content={filterSyntax} position={Position.BOTTOM}>
                         <InputGroup
                             key={"column-popover-" + columnIndex}
                             small={true}
@@ -138,7 +137,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                             value={controlHeader?.filter ?? ""}
                             onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, columnHeader.name)}
                         />
-                    </Tooltip2>
+                    </Tooltip>
                 </ColumnHeaderCell>
             </ColumnHeaderCell>
         );
@@ -252,11 +251,11 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
             }
             return (
                 <div className="sort-label" onClick={() => (disableSort ? null : this.props.updateSortRequest(column.name, nextSortType, column.columnIndex))}>
-                    <Label disabled={disableSort} className="bp3-inline label">
+                    <Label disabled={disableSort} className={classNames(Classes.INLINE, "label")}>
                         <Icon className={iconClass} icon={sortIcon as IconName} />
-                        <Tooltip2 hoverOpenDelay={250} hoverCloseDelay={0} content={headerDescription ?? "Description not avaliable"} position={Position.BOTTOM} popoverClassName={AppStore.Instance.darkTheme ? "bp3-dark" : ""}>
+                        <Tooltip hoverOpenDelay={250} hoverCloseDelay={0} content={headerDescription ?? "Description not avaliable"} position={Position.BOTTOM} popoverClassName={classNames({[Classes.DARK]: AppStore.Instance.darkTheme})}>
                             {column.name}
-                        </Tooltip2>
+                        </Tooltip>
                     </Label>
                 </div>
             );
@@ -266,7 +265,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
             <ColumnHeaderCell>
                 <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer} />
                 <ColumnHeaderCell isActive={controlheader?.filter !== ""}>
-                    <Tooltip2 hoverOpenDelay={250} hoverCloseDelay={0} content={filterSyntax} position={Position.BOTTOM}>
+                    <Tooltip hoverOpenDelay={250} hoverCloseDelay={0} content={filterSyntax} position={Position.BOTTOM}>
                         <InputGroup
                             key={"column-popover-" + columnIndex}
                             small={true}
@@ -275,7 +274,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                             onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, column.name)}
                             onKeyDown={this.handleKeyDown}
                         />
-                    </Tooltip2>
+                    </Tooltip>
                 </ColumnHeaderCell>
             </ColumnHeaderCell>
         );
@@ -294,7 +293,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         return false;
     }
 
-    private infiniteScroll = (rowIndices: IRowIndices) => {
+    private infiniteScroll = (rowIndices: RowIndices) => {
         // rowIndices offset around 5 form blueprintjs tabel
         const currentIndex = rowIndices.rowIndexEnd + 1;
         if (rowIndices.rowIndexEnd > 0 && currentIndex >= this.props.numVisibleRows && !this.props.loadingCell && !this.props.showSelectedData) {
@@ -309,7 +308,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         }
     };
 
-    private onRowIndexSelection = (selectedRegions: IRegion[]) => {
+    private onRowIndexSelection = (selectedRegions: Region[]) => {
         if (selectedRegions.length > 0) {
             let selectedDataIndex = [];
             for (let i = 0; i < selectedRegions.length; i++) {
@@ -332,17 +331,23 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         const table = this.props;
         const tableColumns = [];
         const tableData = table.dataset;
+        let lineSelectionIndex: number;
         table.columnHeaders?.forEach(header => {
             const columnIndex = header.columnIndex;
             let dataArray = tableData.get(columnIndex)?.data;
             const column = header.name === SpectralLineHeaders.LineSelection && this.props.flipRowSelection ? this.renderCheckboxColumn(header, dataArray) : this.renderDataColumnWithFilter(header, dataArray);
             tableColumns.push(column);
+            if (header.name === SpectralLineHeaders.LineSelection) {
+                lineSelectionIndex = columnIndex;
+            }
         });
 
-        const className = classNames("column-filter-table", {"bp3-dark": AppStore.Instance.darkTheme});
+        const tableCheckData = this.props.dataset.get(lineSelectionIndex)?.data.slice();
+
+        const className = classNames("column-filter-table", {[Classes.DARK]: AppStore.Instance.darkTheme});
 
         return (
-            <Table
+            <Table2
                 className={className}
                 ref={table.updateTableRef ? ref => table.updateTableRef(ref) : null}
                 numRows={table.numVisibleRows}
@@ -357,9 +362,10 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 enableRowResizing={false}
                 columnWidths={table.columnWidths}
                 onCompleteRender={table.onCompleteRender}
+                cellRendererDependencies={[tableCheckData]} // trigger re-render on line selection change
             >
                 {tableColumns}
-            </Table>
+            </Table2>
         );
     }
 }

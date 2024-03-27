@@ -1,9 +1,9 @@
 import * as React from "react";
-import {INumericInputProps, NumericInput} from "@blueprintjs/core";
+import {NumericInput, NumericInputProps} from "@blueprintjs/core";
 import {action, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
-export interface SafeNumericInputProps extends INumericInputProps {
+export interface SafeNumericInputProps extends NumericInputProps {
     intOnly?: boolean;
     onBlur?(ev: React.FocusEvent<HTMLInputElement>): void;
     onKeyDown?(ev: React.KeyboardEvent<HTMLInputElement>): void;

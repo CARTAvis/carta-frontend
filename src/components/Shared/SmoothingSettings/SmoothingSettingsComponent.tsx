@@ -1,5 +1,5 @@
 import * as React from "react";
-import {FormGroup, HTMLSelect, IOptionProps, Switch} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, OptionProps, Switch} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
 import {AutoColorPickerComponent, LineSettings, PlotType, PlotTypeSelectorComponent, SafeNumericInput} from "components/Shared";
@@ -31,7 +31,7 @@ export class SmoothingSettingsComponent extends React.Component<{
 
     render() {
         const smoothingStore = this.props.smoothingStore;
-        const smoothingTypeOptions: IOptionProps[] = [
+        const smoothingTypeOptions: OptionProps[] = [
             {value: SmoothingType.NONE, label: "None"},
             {value: SmoothingType.BOXCAR, label: "Boxcar"},
             {value: SmoothingType.GAUSSIAN, label: "Gaussian"},
@@ -44,7 +44,7 @@ export class SmoothingSettingsComponent extends React.Component<{
             smoothingTypeOptions.push({value: SmoothingType.DECIMATION, label: "Decimation"});
         }
 
-        let colorKeys: IOptionProps[] = [];
+        let colorKeys: OptionProps[] = [];
         if (smoothingStore.colorMap.size > 0) {
             smoothingStore.colorMap.forEach((v, k) => {
                 colorKeys = colorKeys.concat({value: k, label: k});

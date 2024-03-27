@@ -14,7 +14,7 @@
     flex-wrap: wrap;
     justify-content: flex-end;
 
-    .bp3-popover2-target {
+    .#{$ns}-popover-target {
         flex: none !important;
     }
 
@@ -36,7 +36,7 @@
     .link-button {
         width: 30px;
 
-        .bp3-button-text {
+        .#{$ns}-button-text {
             position: absolute;
             top: 0;
             left: 16px;
@@ -44,20 +44,20 @@
             color: $gray1;
         }
 
-        .bp3-icon {
+        .#{$ns}-icon {
             transform: scale(-1, 1);
         }
     }
 
-    &.bp3-dark {
+    &.#{$ns}-dark {
         .full-zoom-button {
-            .bp3-button-text {
+            .#{$ns}-button-text {
                 color: $gray5;
             }
         }
 
         .link-button {
-            .bp3-button-text {
+            .#{$ns}-button-text {
                 color: $gray5;
             }
         }

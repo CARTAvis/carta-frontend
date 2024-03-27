@@ -19,7 +19,7 @@ enum VectorOverlayDialogTabs {
     Styling
 }
 
-const DataSourceSelect = Select.ofType<FrameStore>();
+const DataSourceSelect = Select<FrameStore>;
 
 @observer
 export class VectorOverlayDialogComponent extends React.Component {
@@ -404,11 +404,12 @@ export class VectorOverlayDialogComponent extends React.Component {
                         <DataSourceSelect
                             activeItem={dataSource}
                             onItemSelect={appStore.setActiveFrame}
-                            popoverProps={{minimal: true, position: "bottom", fill: true}}
+                            popoverProps={{minimal: true, position: "bottom"}}
                             filterable={false}
                             items={appStore.frames}
                             itemRenderer={this.renderDataSourceSelectItem}
                             disabled={appStore.animatorStore.animationActive}
+                            fill={true}
                         >
                             <Button text={dataSource.filename} rightIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.animationActive} />
                         </DataSourceSelect>
