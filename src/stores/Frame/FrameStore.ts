@@ -260,7 +260,7 @@ export class FrameStore {
         const imageWidth = (this.pixelRatio * this.renderWidth) / this.aspectRatio;
         const imageHeight = this.pixelRatio * this.renderHeight;
 
-        const mipAdjustment = PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0;
+        const mipAdjustment = PreferenceStore.Instance.performance.lowBandwidthMode ? 2.0 : 1.0;
         const mipExact = Math.max(1.0, mipAdjustment);
         const mipLog2 = Math.log2(mipExact);
         const mipLog2Rounded = Math.round(mipLog2);
@@ -289,7 +289,7 @@ export class FrameStore {
 
             const {minPoint, maxPoint} = minMax2D(corners);
             // Manually get adjusted zoom level and round to a power of 2
-            const mipAdjustment = (PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0) / this.spatialTransform.scale;
+            const mipAdjustment = (PreferenceStore.Instance.performance.lowBandwidthMode ? 2.0 : 1.0) / this.spatialTransform.scale;
             const mipExact = Math.max(1.0, mipAdjustment / this.spatialReference.zoomLevel);
             const mipLog2 = Math.log2(mipExact);
             const mipLog2Rounded = Math.round(mipLog2);
@@ -317,7 +317,7 @@ export class FrameStore {
             const imageWidth = (this.pixelRatio * this.renderWidth) / this.zoomLevel / this.aspectRatio;
             const imageHeight = (this.pixelRatio * this.renderHeight) / this.zoomLevel;
 
-            const mipAdjustment = PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0;
+            const mipAdjustment = PreferenceStore.Instance.performance.lowBandwidthMode ? 2.0 : 1.0;
             const mipExact = Math.max(1.0, mipAdjustment / this.zoomLevel);
             const mipLog2 = Math.log2(mipExact);
             const mipLog2Rounded = Math.round(mipLog2);
@@ -1972,15 +1972,15 @@ export class FrameStore {
     };
 
     public getControlMap(frame: FrameStore) {
-        const preferenceStore = PreferenceStore.Instance;
+        const preference = PreferenceStore.Instance.performance;
         let controlMap = this.controlMaps.get(frame);
         if (!controlMap) {
             const tStart = performance.now();
-            controlMap = new ControlMap(this, frame, -1, preferenceStore.contourControlMapWidth, preferenceStore.contourControlMapWidth);
+            controlMap = new ControlMap(this, frame, -1, preference.contourControlMapWidth, preference.contourControlMapWidth);
             this.controlMaps.set(frame, controlMap);
             const tEnd = performance.now();
             const dt = tEnd - tStart;
-            console.log(`Created ${preferenceStore.contourControlMapWidth}x${preferenceStore.contourControlMapWidth} transform grid for ${this.frameInfo.fileId} -> ${frame.frameInfo.fileId} in ${dt} ms`);
+            console.log(`Created ${preference.contourControlMapWidth}x${preference.contourControlMapWidth} transform grid for ${this.frameInfo.fileId} -> ${frame.frameInfo.fileId} in ${dt} ms`);
         }
 
         return controlMap;
@@ -1997,15 +1997,15 @@ export class FrameStore {
     }
 
     public getCatalogControlMap(frame: FrameStore) {
-        const preferenceStore = PreferenceStore.Instance;
+        const preference = PreferenceStore.Instance.performance;
         let controlMap = this.catalogControlMaps.get(frame);
         if (!controlMap) {
             const tStart = performance.now();
-            controlMap = new CatalogControlMap(this, frame, -1, preferenceStore.contourControlMapWidth, preferenceStore.contourControlMapWidth);
+            controlMap = new CatalogControlMap(this, frame, -1, preference.contourControlMapWidth, preference.contourControlMapWidth);
             this.catalogControlMaps.set(frame, controlMap);
             const tEnd = performance.now();
             const dt = tEnd - tStart;
-            console.log(`Created ${preferenceStore.contourControlMapWidth}x${preferenceStore.contourControlMapWidth} transform grid for ${this.frameInfo.fileId} -> ${frame.frameInfo.fileId} in ${dt} ms`);
+            console.log(`Created ${preference.contourControlMapWidth}x${preference.contourControlMapWidth} transform grid for ${this.frameInfo.fileId} -> ${frame.frameInfo.fileId} in ${dt} ms`);
         }
 
         return controlMap;

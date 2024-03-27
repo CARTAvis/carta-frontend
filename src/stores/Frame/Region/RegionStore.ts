@@ -515,7 +515,7 @@ export class RegionStore {
             if (!this.editing && !skipUpdate) {
                 this.updateRegion();
             } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.creating && this.isPreviewCut) {
-                PreferenceStore.Instance.lowBandwidthMode ? this.lowBandWidthThrottledUpdateRegion(true) : this.throttledUpdateRegion(true);
+                PreferenceStore.Instance.performance.lowBandwidthMode ? this.lowBandWidthThrottledUpdateRegion(true) : this.throttledUpdateRegion(true);
             }
             if (this.regionType === CARTA.RegionType.POLYGON || this.regionType === CARTA.RegionType.ANNPOLYGON) {
                 this.simplePolygonTest(index);
@@ -553,7 +553,7 @@ export class RegionStore {
         if (!this.editing && !skipUpdate) {
             this.updateRegion();
         } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.creating && this.isPreviewCut) {
-            PreferenceStore.Instance.lowBandwidthMode ? this.lowBandWidthThrottledUpdateRegion(true) : this.throttledUpdateRegion(true);
+            PreferenceStore.Instance.performance.lowBandwidthMode ? this.lowBandWidthThrottledUpdateRegion(true) : this.throttledUpdateRegion(true);
         }
     };
 

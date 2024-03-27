@@ -91,7 +91,7 @@ export class AnimatorStore {
             fileId: frame.frameInfo.fileId,
             tiles: tiles,
             compressionType: CARTA.CompressionType.ZFP,
-            compressionQuality: preferenceStore.animationCompressionQuality
+            compressionQuality: preferenceStore.performance.animationCompressionQuality
         };
 
         // Calculate matched frames for the animation range
@@ -129,7 +129,7 @@ export class AnimatorStore {
         }
 
         clearTimeout(this.stopHandle);
-        this.stopHandle = setTimeout(this.stopAnimation, 1000 * 60 * preferenceStore.stopAnimationPlaybackMinutes);
+        this.stopHandle = setTimeout(this.stopAnimation, 1000 * 60 * preferenceStore.performance.stopAnimationPlaybackMinutes);
     }
 
     @action stopAnimation = () => {

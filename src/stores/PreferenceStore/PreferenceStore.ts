@@ -750,6 +750,116 @@ export class PreferenceRegionSettings {
     };
 }
 
+export class PreferenceAnnotationSettings {
+    // getters for annotation
+    @computed get color(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.ANNOTATION_COLOR) ?? DEFAULTS.ANNOTATION.annotationColor;
+    }
+
+    @computed get lineWidth(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.ANNOTATION_LINE_WIDTH) ?? DEFAULTS.ANNOTATION.annotationLineWidth;
+    }
+
+    @computed get dashLength(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.ANNOTATION_DASH_LENGTH) ?? DEFAULTS.ANNOTATION.annotationDashLength;
+    }
+
+    @computed get pointShape(): CARTA.PointAnnotationShape {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.POINT_ANNOTATION_SHAPE) ?? DEFAULTS.ANNOTATION.pointAnnotationShape;
+    }
+
+    @computed get pointWidth(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.POINT_ANNOTATION_WIDTH) ?? DEFAULTS.ANNOTATION.pointAnnotationWidth;
+    }
+
+    @computed get textLineWidth(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH) ?? DEFAULTS.ANNOTATION.textAnnotationLineWidth;
+    }
+
+    /**
+     * Reset the annotation settings
+     */
+    @action resetAnnotationSettings = () => {
+        PreferenceStore.Instance.clearPreferences([
+            PreferenceKeys.ANNOTATION_COLOR,
+            PreferenceKeys.ANNOTATION_DASH_LENGTH,
+            PreferenceKeys.ANNOTATION_LINE_WIDTH,
+            PreferenceKeys.POINT_ANNOTATION_SHAPE,
+            PreferenceKeys.POINT_ANNOTATION_WIDTH,
+            PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH
+        ]);
+    };
+}
+
+export class PreferencePerformanceSettings {
+    // getters for performance
+    @computed get imageCompressionQuality(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY) ?? DEFAULTS.PERFORMANCE.imageCompressionQuality;
+    }
+
+    @computed get animationCompressionQuality(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY) ?? DEFAULTS.PERFORMANCE.animationCompressionQuality;
+    }
+
+    @computed get gpuTileCache(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE) ?? DEFAULTS.PERFORMANCE.GPUTileCache;
+    }
+
+    @computed get systemTileCache(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE) ?? DEFAULTS.PERFORMANCE.systemTileCache;
+    }
+
+    @computed get contourControlMapWidth(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH) ?? DEFAULTS.PERFORMANCE.contourControlMapWidth;
+    }
+
+    @computed get streamContoursWhileZooming(): boolean {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING) ?? DEFAULTS.PERFORMANCE.streamContoursWhileZooming;
+    }
+
+    @computed get lowBandwidthMode(): boolean {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE) ?? DEFAULTS.PERFORMANCE.lowBandwidthMode;
+    }
+
+    @computed get stopAnimationPlaybackMinutes(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES) ?? DEFAULTS.PERFORMANCE.stopAnimationPlaybackMinutes;
+    }
+
+    @computed get pvPreivewCubeSizeLimit(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT) ?? DEFAULTS.PERFORMANCE.pvPreviewCubeSizeLimit;
+    }
+
+    @computed get pvPreivewCubeSizeLimitUnit(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT) ?? DEFAULTS.PERFORMANCE.pvPreviewCubeSizeLimitUnit;
+    }
+
+    @computed get limitOverlayRedraw(): boolean {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW) ?? DEFAULTS.PERFORMANCE.limitOverlayRedraw;
+    }
+
+    /**
+     * Reset the performance settings
+     */
+    @action resetPerformanceSettings = () => {
+        PreferenceStore.Instance.clearPreferences([
+            PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY,
+            PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE,
+            PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL,
+            PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH,
+            PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION,
+            PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE,
+            PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY,
+            PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE,
+            PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES,
+            PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING,
+            PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE,
+            PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW,
+            PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT,
+            PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT
+        ]);
+    };
+}
+
 /**
  * The store manages the preference setting
  */
@@ -763,8 +873,8 @@ export class PreferenceStore {
     @observable wcsOverlay: PreferenceWcsOverlaySettings;
     @observable catalog: PreferenceCatalogSettings;
     @observable region: PreferenceRegionSettings;
-    // @observable annotation: PreferenceAnnotationSettings;
-    // @observable performance: PreferencePerformanceSettings;
+    @observable annotation: PreferenceAnnotationSettings;
+    @observable performance: PreferencePerformanceSettings;
     // @observable telemetry: PreferenceTelemetrySettings;
 
     static get Instance() {
@@ -780,72 +890,6 @@ export class PreferenceStore {
      * Whether the preference data is initialized from the preference file or localStorage.
      */
     @observable preferenceReady: boolean = false;
-
-    // getters for annotation
-    @computed get annotationColor(): string {
-        return this.preferences.get(PreferenceKeys.ANNOTATION_COLOR) ?? DEFAULTS.ANNOTATION.annotationColor;
-    }
-
-    @computed get annotationLineWidth(): number {
-        return this.preferences.get(PreferenceKeys.ANNOTATION_LINE_WIDTH) ?? DEFAULTS.ANNOTATION.annotationLineWidth;
-    }
-
-    @computed get annotationDashLength(): number {
-        return this.preferences.get(PreferenceKeys.ANNOTATION_DASH_LENGTH) ?? DEFAULTS.ANNOTATION.annotationDashLength;
-    }
-
-    @computed get pointAnnotationShape(): CARTA.PointAnnotationShape {
-        return this.preferences.get(PreferenceKeys.POINT_ANNOTATION_SHAPE) ?? DEFAULTS.ANNOTATION.pointAnnotationShape;
-    }
-
-    @computed get pointAnnotationWidth(): number {
-        return this.preferences.get(PreferenceKeys.POINT_ANNOTATION_WIDTH) ?? DEFAULTS.ANNOTATION.pointAnnotationWidth;
-    }
-
-    @computed get textAnnotationLineWidth(): number {
-        return this.preferences.get(PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH) ?? DEFAULTS.ANNOTATION.textAnnotationLineWidth;
-    }
-
-    // getters for performance
-    @computed get imageCompressionQuality(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY) ?? DEFAULTS.PERFORMANCE.imageCompressionQuality;
-    }
-
-    @computed get animationCompressionQuality(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY) ?? DEFAULTS.PERFORMANCE.animationCompressionQuality;
-    }
-
-    @computed get gpuTileCache(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE) ?? DEFAULTS.PERFORMANCE.GPUTileCache;
-    }
-
-    @computed get systemTileCache(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE) ?? DEFAULTS.PERFORMANCE.systemTileCache;
-    }
-
-    @computed get contourControlMapWidth(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH) ?? DEFAULTS.PERFORMANCE.contourControlMapWidth;
-    }
-
-    @computed get streamContoursWhileZooming(): boolean {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING) ?? DEFAULTS.PERFORMANCE.streamContoursWhileZooming;
-    }
-
-    @computed get lowBandwidthMode(): boolean {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE) ?? DEFAULTS.PERFORMANCE.lowBandwidthMode;
-    }
-
-    @computed get stopAnimationPlaybackMinutes(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES) ?? DEFAULTS.PERFORMANCE.stopAnimationPlaybackMinutes;
-    }
-
-    @computed get pvPreivewCubeSizeLimit(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT) ?? DEFAULTS.PERFORMANCE.pvPreviewCubeSizeLimit;
-    }
-
-    @computed get pvPreivewCubeSizeLimitUnit(): string {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT) ?? DEFAULTS.PERFORMANCE.pvPreviewCubeSizeLimitUnit;
-    }
 
     @computed get isSelectingAllLogEvents(): boolean {
         return this.preferences.get(PreferenceKeys.LOG_EVENT)?.length === Event.EVENT_NUMBER;
@@ -868,10 +912,6 @@ export class PreferenceStore {
 
     @computed get enabledLoggingEventNames(): string[] {
         return this.preferences.get(PreferenceKeys.LOG_EVENT) ?? [];
-    }
-
-    @computed get limitOverlayRedraw(): boolean {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW) ?? DEFAULTS.PERFORMANCE.limitOverlayRedraw;
     }
 
     // getters for telemetry
@@ -942,42 +982,6 @@ export class PreferenceStore {
         }
         yield ApiService.Instance.clearPreferences(keys);
     }
-
-    /**
-     * Reset the annotation settings
-     */
-    @action resetAnnotationSettings = () => {
-        this.clearPreferences([
-            PreferenceKeys.ANNOTATION_COLOR,
-            PreferenceKeys.ANNOTATION_DASH_LENGTH,
-            PreferenceKeys.ANNOTATION_LINE_WIDTH,
-            PreferenceKeys.POINT_ANNOTATION_SHAPE,
-            PreferenceKeys.POINT_ANNOTATION_WIDTH,
-            PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH
-        ]);
-    };
-
-    /**
-     * Reset the preference settings
-     */
-    @action resetPerformanceSettings = () => {
-        this.clearPreferences([
-            PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY,
-            PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE,
-            PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL,
-            PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH,
-            PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION,
-            PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE,
-            PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY,
-            PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE,
-            PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES,
-            PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING,
-            PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE,
-            PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW,
-            PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT,
-            PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT
-        ]);
-    };
 
     /**
      * Reset the compatibility settings
@@ -1179,5 +1183,7 @@ export class PreferenceStore {
         this.wcsOverlay = new PreferenceWcsOverlaySettings();
         this.catalog = new PreferenceCatalogSettings();
         this.region = new PreferenceRegionSettings();
+        this.annotation = new PreferenceAnnotationSettings();
+        this.performance = new PreferencePerformanceSettings();
     }
 }

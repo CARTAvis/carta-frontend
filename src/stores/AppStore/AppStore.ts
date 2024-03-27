@@ -1588,7 +1588,7 @@ export class AppStore {
 
                 // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
                 const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
-                const compressionQuality = bunitVariant.includes(frame.headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
+                const compressionQuality = bunitVariant.includes(frame.headerUnit) ? Math.max(this.preferenceStore.performance.imageCompressionQuality, 32) : this.preferenceStore.performance.imageCompressionQuality;
                 this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, compressionQuality, true);
             } else {
                 this.tileService.updateHiddenFileChannels(frame.frameInfo.fileId, frame.channel, frame.stokes);
@@ -1634,12 +1634,12 @@ export class AppStore {
             this.backendService.addRequiredTiles(
                 fileId,
                 tiles.map(t => t.encode()),
-                this.preferenceStore.animationCompressionQuality
+                this.preferenceStore.performance.animationCompressionQuality
             );
         } else {
             // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
             const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
-            const compressionQuality = bunitVariant.includes(headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
+            const compressionQuality = bunitVariant.includes(headerUnit) ? Math.max(this.preferenceStore.performance.imageCompressionQuality, 32) : this.preferenceStore.performance.imageCompressionQuality;
             this.tileService.requestTiles(tiles, fileId, channel, stokes, focusPoint, compressionQuality);
         }
     };
@@ -1654,7 +1654,7 @@ export class AppStore {
                 await this.layoutStore.fetchLayouts();
                 await this.snippetStore.fetchSnippets();
 
-                this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
+                this.tileService.setCache(this.preferenceStore.performance.gpuTileCache, this.preferenceStore.performance.systemTileCache);
                 if (!this.layoutStore.applyLayout(this.preferenceStore.global.layout)) {
                     AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.global.layout}" failed! Resetting preference layout to default.`);
                     this.layoutStore.applyLayout(PresetLayout.DEFAULT);
@@ -1814,7 +1814,7 @@ export class AppStore {
         // Update frame view for each visible frame
         autorun(() => {
             // Ignore view changes when zooming if preference not set
-            if (this.activeFrame && (!this.activeFrame.zooming || this.preferenceStore.streamContoursWhileZooming)) {
+            if (this.activeFrame && (!this.activeFrame.zooming || this.preferenceStore.performance.streamContoursWhileZooming)) {
                 // Group all view updates for visible images into one throttled call
                 const viewUpdates: ViewUpdate[] = [];
                 for (const frame of this.visibleFrames) {
@@ -1884,7 +1884,7 @@ export class AppStore {
         autorun(() => {
             const pos = this.hoveredFrame?.cursorInfo?.posImageSpace;
             if (pos) {
-                if (this.preferenceStore.lowBandwidthMode) {
+                if (this.preferenceStore.performance.lowBandwidthMode) {
                     throttledSetCursorLowBandwidth(this.hoveredFrame.frameInfo.fileId, pos);
                 } else if (this.hoveredFrame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.ROTATED_DATASET) {
                     throttledSetCursorRotated(this.hoveredFrame.frameInfo.fileId, pos);

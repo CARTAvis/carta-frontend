@@ -32,7 +32,7 @@ export const PointShapeSelectComponent = observer((props: {handleChange: (pointS
     const getPointShape = (shape: CARTA.PointAnnotationShape) => {
         const square = <path d="M 2 2 L 14 2 L 14 14 L 2 14 Z" />;
         const rhomb = <path d="M 8 14 L 14 8 L 8 2 L 2 8 Z" />;
-        const color = preference.annotationColor;
+        const color = preference.annotation.color;
         switch (shape) {
             case CARTA.PointAnnotationShape.SQUARE:
                 return iconWrapper(square, color, true);
@@ -60,7 +60,7 @@ export const PointShapeSelectComponent = observer((props: {handleChange: (pointS
             className="bp3-fill"
             filterable={false}
             items={Object.values(CARTA.PointAnnotationShape)}
-            activeItem={preference.pointAnnotationShape}
+            activeItem={preference.annotation.pointShape}
             onItemSelect={item => props.handleChange(item as CARTA.PointAnnotationShape)}
             itemRenderer={renderShapePopOver}
             popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}

@@ -519,7 +519,7 @@ export class RootMenuComponent extends React.Component {
                     </Tooltip2>
                 )}
                 {showLoadingIndicator && loadingIndicator}
-                {appStore.preferenceStore.lowBandwidthMode && (
+                {appStore.preferenceStore.performance.lowBandwidthMode && (
                     <Tooltip2
                         content={
                             <span>

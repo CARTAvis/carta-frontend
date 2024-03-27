@@ -242,7 +242,7 @@ export class RegionSetStore {
         type StyleInputs = [string, number, number];
         const commonInputs: CommonInputs = [this.backendService, this.frame.frameInfo.fileId, this.frame, points, regionType, regionId, rotation, regionName];
         const regionStyles: StyleInputs = [this.preference.region.color, this.preference.region.lineWidth, this.preference.region.dashLength];
-        const annotationStyles: StyleInputs = [this.preference.annotationColor, this.preference.annotationLineWidth, this.preference.annotationDashLength];
+        const annotationStyles: StyleInputs = [this.preference.annotation.color, this.preference.annotation.lineWidth, this.preference.annotation.dashLength];
 
         switch (regionType) {
             case CARTA.RegionType.ANNCOMPASS:
@@ -250,9 +250,9 @@ export class RegionSetStore {
             case CARTA.RegionType.ANNRULER:
                 return new RulerAnnotationStore(...commonInputs, ...annotationStyles);
             case CARTA.RegionType.ANNTEXT:
-                return new TextAnnotationStore(...commonInputs, this.preference.annotationColor, this.preference.textAnnotationLineWidth, this.preference.annotationDashLength);
+                return new TextAnnotationStore(...commonInputs, this.preference.annotation.color, this.preference.annotation.textLineWidth, this.preference.annotation.dashLength);
             case CARTA.RegionType.ANNPOINT:
-                return new PointAnnotationStore(...commonInputs, ...annotationStyles, this.pointShapeCache || this.preference.pointAnnotationShape, this.preference.pointAnnotationWidth);
+                return new PointAnnotationStore(...commonInputs, ...annotationStyles, this.pointShapeCache || this.preference.annotation.pointShape, this.preference.annotation.pointWidth);
             case CARTA.RegionType.ANNVECTOR:
                 return new VectorAnnotationStore(...commonInputs, ...annotationStyles);
             case CARTA.RegionType.ANNELLIPSE:

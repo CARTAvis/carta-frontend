@@ -162,7 +162,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     }
 
     @computed get isCubeSizeBelowLimit(): boolean {
-        return this.estimatedCubeSize?.bitValue <= PvGeneratorComponent.getBitValueFromFormatted(PreferenceStore.Instance.pvPreivewCubeSizeLimit, PreferenceStore.Instance.pvPreivewCubeSizeLimitUnit);
+        return this.estimatedCubeSize?.bitValue <= PvGeneratorComponent.getBitValueFromFormatted(PreferenceStore.Instance.performance.pvPreivewCubeSizeLimit, PreferenceStore.Instance.performance.pvPreivewCubeSizeLimitUnit);
     }
 
     constructor(props: WidgetProps) {
@@ -312,7 +312,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                         <br />
                         1. Line region is selected.
                         <br />
-                        2. Preview cube size is less than the threshold ({`${PreferenceStore.Instance.pvPreivewCubeSizeLimit} ${PreferenceStore.Instance.pvPreivewCubeSizeLimitUnit}`}).
+                        2. Preview cube size is less than the threshold ({`${PreferenceStore.Instance.performance.pvPreivewCubeSizeLimit} ${PreferenceStore.Instance.performance.pvPreivewCubeSizeLimitUnit}`}).
                     </small>
                 </i>
             </span>

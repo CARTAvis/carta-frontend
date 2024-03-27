@@ -55,13 +55,13 @@ export class PreferenceDialogComponent extends React.Component {
     };
 
     @computed get pvPreviewCubeSizeMaxValue(): number {
-        if (PreferenceStore.Instance.pvPreivewCubeSizeLimitUnit === MemoryUnit.TB) {
+        if (PreferenceStore.Instance.performance.pvPreivewCubeSizeLimitUnit === MemoryUnit.TB) {
             return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e12;
-        } else if (PreferenceStore.Instance.pvPreivewCubeSizeLimitUnit === MemoryUnit.GB) {
+        } else if (PreferenceStore.Instance.performance.pvPreivewCubeSizeLimitUnit === MemoryUnit.GB) {
             return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e9;
-        } else if (PreferenceStore.Instance.pvPreivewCubeSizeLimitUnit === MemoryUnit.MB) {
+        } else if (PreferenceStore.Instance.performance.pvPreivewCubeSizeLimitUnit === MemoryUnit.MB) {
             return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e6;
-        } else if (PreferenceStore.Instance.pvPreivewCubeSizeLimitUnit === MemoryUnit.kB) {
+        } else if (PreferenceStore.Instance.performance.pvPreivewCubeSizeLimitUnit === MemoryUnit.kB) {
             return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e3;
         } else {
             return PV_PREVIEW_CUBE_SIZE_LIMIT;
@@ -121,10 +121,10 @@ export class PreferenceDialogComponent extends React.Component {
                 preference.region.resetRegionSettings();
                 break;
             case PreferenceDialogTabs.ANNOTATION:
-                preference.resetAnnotationSettings();
+                preference.annotation.resetAnnotationSettings();
                 break;
             case PreferenceDialogTabs.PERFORMANCE:
-                preference.resetPerformanceSettings();
+                preference.performance.resetPerformanceSettings();
                 break;
             case PreferenceDialogTabs.LOG_EVENT:
                 preference.resetLogEventSettings();
@@ -605,7 +605,7 @@ export class PreferenceDialogComponent extends React.Component {
             <React.Fragment>
                 <FormGroup inline={true} label="Color">
                     <ColorPickerComponent
-                        color={preference.annotationColor}
+                        color={preference.annotation.color}
                         presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.ANNOTATION_COLOR, color.hex)}
                         disableAlpha={true}
@@ -617,7 +617,7 @@ export class PreferenceDialogComponent extends React.Component {
                         placeholder="Line width"
                         min={RegionStore.MIN_LINE_WIDTH}
                         max={RegionStore.MAX_LINE_WIDTH}
-                        value={preference.annotationLineWidth}
+                        value={preference.annotation.lineWidth}
                         stepSize={0.5}
                         onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_LINE_WIDTH, Math.max(RegionStore.MIN_LINE_WIDTH, Math.min(RegionStore.MAX_LINE_WIDTH, value)))}
                     />
@@ -627,19 +627,19 @@ export class PreferenceDialogComponent extends React.Component {
                         placeholder="Dash length"
                         min={0}
                         max={RegionStore.MAX_DASH_LENGTH}
-                        value={preference.annotationDashLength}
+                        value={preference.annotation.dashLength}
                         stepSize={1}
                         onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_DASH_LENGTH, Math.max(0, Math.min(RegionStore.MAX_DASH_LENGTH, value)))}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Point shape">
-                    <PointShapeSelectComponent handleChange={(item: CARTA.PointAnnotationShape) => preference.setPreference(PreferenceKeys.POINT_ANNOTATION_SHAPE, item)} pointShape={preference.pointAnnotationShape} />
+                    <PointShapeSelectComponent handleChange={(item: CARTA.PointAnnotationShape) => preference.setPreference(PreferenceKeys.POINT_ANNOTATION_SHAPE, item)} pointShape={preference.annotation.pointShape} />
                 </FormGroup>
                 <FormGroup inline={true} label="Point size" labelInfo="(px)">
                     <SafeNumericInput
                         placeholder="Point size"
                         min={1}
-                        value={preference.pointAnnotationWidth}
+                        value={preference.annotation.pointWidth}
                         stepSize={1}
                         onValueChange={(value: number) => preference.setPreference(PreferenceKeys.POINT_ANNOTATION_WIDTH, Math.max(1, value))}
                     />
@@ -650,17 +650,17 @@ export class PreferenceDialogComponent extends React.Component {
         const performancePanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Low bandwidth mode">
-                    <Switch checked={preference.lowBandwidthMode} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, ev.currentTarget.checked)} />
+                    <Switch checked={preference.performance.lowBandwidthMode} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Limit overlay redraw">
-                    <Switch checked={preference.limitOverlayRedraw} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW, ev.currentTarget.checked)} />
+                    <Switch checked={preference.performance.limitOverlayRedraw} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Compression quality" labelInfo={"(Images)"}>
                     <SafeNumericInput
                         placeholder="Compression quality"
                         min={CompressionQuality.IMAGE_MIN}
                         max={CompressionQuality.IMAGE_MAX}
-                        value={preference.imageCompressionQuality}
+                        value={preference.performance.imageCompressionQuality}
                         stepSize={CompressionQuality.IMAGE_STEP}
                         onValueChange={this.handleImageCompressionQualityChange}
                     />
@@ -670,7 +670,7 @@ export class PreferenceDialogComponent extends React.Component {
                         placeholder="Compression quality"
                         min={CompressionQuality.ANIMATION_MIN}
                         max={CompressionQuality.ANIMATION_MAX}
-                        value={preference.animationCompressionQuality}
+                        value={preference.performance.animationCompressionQuality}
                         stepSize={CompressionQuality.ANIMATION_STEP}
                         onValueChange={this.handleAnimationCompressionQualityChange}
                     />
@@ -680,7 +680,7 @@ export class PreferenceDialogComponent extends React.Component {
                         placeholder="GPU tile cache size"
                         min={TileCache.GPU_MIN}
                         max={TileCache.GPU_MAX}
-                        value={preference.gpuTileCache}
+                        value={preference.performance.gpuTileCache}
                         majorStepSize={TileCache.GPU_STEP}
                         stepSize={TileCache.GPU_STEP}
                         onValueChange={this.handleGPUTileCacheChange}
@@ -691,7 +691,7 @@ export class PreferenceDialogComponent extends React.Component {
                         placeholder="System tile cache size"
                         min={TileCache.SYSTEM_MIN}
                         max={TileCache.SYSTEM_MAX}
-                        value={preference.systemTileCache}
+                        value={preference.performance.systemTileCache}
                         majorStepSize={TileCache.SYSTEM_STEP}
                         stepSize={TileCache.SYSTEM_STEP}
                         onValueChange={this.handleSystemTileCacheChange}
@@ -742,7 +742,7 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Control map resolution">
-                    <HTMLSelect value={preference.contourControlMapWidth} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH, parseInt(ev.currentTarget.value))}>
+                    <HTMLSelect value={preference.performance.contourControlMapWidth} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH, parseInt(ev.currentTarget.value))}>
                         <option key={0} value={128}>
                             128&times;128 (128 KB)
                         </option>
@@ -758,10 +758,10 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Stream image tiles while zooming">
-                    <Switch checked={preference.streamContoursWhileZooming} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, ev.currentTarget.checked)} />
+                    <Switch checked={preference.performance.streamContoursWhileZooming} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Stop animation playback in">
-                    <HTMLSelect value={preference.stopAnimationPlaybackMinutes} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES, parseInt(ev.currentTarget.value))}>
+                    <HTMLSelect value={preference.performance.stopAnimationPlaybackMinutes} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES, parseInt(ev.currentTarget.value))}>
                         <option key={0} value={5}>
                             5 minutes
                         </option>
@@ -785,12 +785,12 @@ export class PreferenceDialogComponent extends React.Component {
                             placeholder="PV preview cube size limit"
                             min={1e-12}
                             max={this.pvPreviewCubeSizeMaxValue}
-                            value={preference.pvPreivewCubeSizeLimit}
+                            value={preference.performance.pvPreivewCubeSizeLimit}
                             majorStepSize={1}
                             stepSize={1}
                             onValueChange={value => preference.setPreference(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT, value)}
                         />
-                        <HTMLSelect value={preference.pvPreivewCubeSizeLimitUnit} onChange={ev => this.handlePvPreviewCubeSizeUnitChange(ev.target.value)}>
+                        <HTMLSelect value={preference.performance.pvPreivewCubeSizeLimitUnit} onChange={ev => this.handlePvPreviewCubeSizeUnitChange(ev.target.value)}>
                             <option key={0} value={"MB"}>
                                 MB
                             </option>

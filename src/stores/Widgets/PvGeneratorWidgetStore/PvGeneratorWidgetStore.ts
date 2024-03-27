@@ -104,8 +104,8 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
                           regionId: this.effectivePreviewRegionId,
                           rebinXy: this.xyRebin,
                           rebinZ: this.zRebin,
-                          imageCompressionQuality: PreferenceStore.Instance.imageCompressionQuality || 11,
-                          animationCompressionQuality: PreferenceStore.Instance.animationCompressionQuality || 9,
+                          imageCompressionQuality: PreferenceStore.Instance.performance.imageCompressionQuality || 11,
+                          animationCompressionQuality: PreferenceStore.Instance.performance.animationCompressionQuality || 9,
                           compressionType: CARTA.CompressionType.ZFP
                       }
                     : undefined
