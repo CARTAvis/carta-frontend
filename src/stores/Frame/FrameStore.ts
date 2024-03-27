@@ -128,6 +128,7 @@ export class FrameStore {
     public readonly wcsInfoForTransformation: AST.FrameSet;
     public readonly wcsInfo3D: AST.FrameSet;
     public readonly validWcs: boolean;
+    public readonly defaultWcsSystem: SystemType;
     @observable public frameInfo: FrameInfo;
     public readonly colorbarStore: ColorbarStore;
 
@@ -1341,7 +1342,8 @@ export class FrameStore {
                     AST.set(this.wcsInfoForTransformation, `Format(${this.dirX})=${AppStore.Instance.overlayStore.numbers.formatTypeX}.${WCS_PRECISION}`);
                     AST.set(this.wcsInfoForTransformation, `Format(${this.dirY})=${AppStore.Instance.overlayStore.numbers.formatTypeY}.${WCS_PRECISION}`);
                     this.validWcs = true;
-                    this.overlayStore.setDefaultsFromAST(this);
+                    this.defaultWcsSystem = AST.getString(this.wcsInfo, "System") as SystemType;
+                    this.overlayStore.setDefaultsFromFrame(this);
                 }
             }
         }

@@ -56,6 +56,7 @@ import {
     SnippetStore,
     SpatialProfileStore,
     SpectralProfileStore,
+    SystemType,
     WidgetsStore
 } from "stores";
 import {CompassAnnotationStore, CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
@@ -737,7 +738,11 @@ export class AppStore {
     *appendFile(path: string, filename?: string, hdu?: string, imageArithmetic: boolean = false, setAsActive: boolean = true, updateStartingDirectory: boolean = true) {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
-        return yield this.loadFile(path, filename, hdu, imageArithmetic, setAsActive, updateStartingDirectory);
+        const frame = yield this.loadFile(path, filename, hdu, imageArithmetic, setAsActive, updateStartingDirectory);
+        if (!(this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL)) {
+            this.overlayStore.global.setSystem(SystemType.Auto);
+        }
+        return frame;
     }
 
     /**
@@ -757,7 +762,9 @@ export class AppStore {
     @flow.bound
     *openFile(path: string, filename?: string, hdu?: string, imageArithmetic?: boolean, updateStartingDirectory: boolean = true) {
         this.removeAllFrames();
-        return yield this.loadFile(path, filename, hdu, imageArithmetic, true, updateStartingDirectory);
+        const frame = yield this.loadFile(path, filename, hdu, imageArithmetic, true, updateStartingDirectory);
+        this.overlayStore.global.setSystem(SystemType.Auto);
+        return frame;
     }
 
     @flow.bound
@@ -1897,7 +1904,7 @@ export class AppStore {
         // Set overlay defaults from current frame
         autorun(() => {
             if (this.activeFrame) {
-                this.overlayStore.setDefaultsFromAST(this.activeFrame);
+                this.overlayStore.setDefaultsFromFrame(this.activeFrame);
             }
         });
 
@@ -2644,7 +2651,7 @@ export class AppStore {
     private changeActiveFrame(frame: FrameStore) {
         if (frame !== this.activeFrame) {
             // Set overlay defaults from current frame
-            this.overlayStore.setDefaultsFromAST(frame);
+            this.overlayStore.setDefaultsFromFrame(frame);
         }
         this.activeFrame = frame;
         if (!frame.isPreview) {
