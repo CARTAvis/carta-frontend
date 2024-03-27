@@ -7,6 +7,7 @@ import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import * as Long from "long";
 import {action, autorun, computed, flow, makeObservable, observable, ObservableMap, when} from "mobx";
+import * as Path from "path-browserify";
 import * as Semver from "semver";
 
 import {getImageViewCanvas, ImageViewLayer, PvGeneratorComponent} from "components";
@@ -646,18 +647,10 @@ export class AppStore {
 
         if (imageArithmetic) {
             hdu = "";
-        } else if (!filename) {
-            const lastDirSeparator = path.lastIndexOf("/");
-            if (lastDirSeparator >= 0) {
-                filename = path.substring(lastDirSeparator + 1);
-                path = path.substring(0, lastDirSeparator);
-            }
-        } else if (!path && filename.includes("/")) {
-            const lastDirSeparator = filename.lastIndexOf("/");
-            if (lastDirSeparator >= 0) {
-                path = filename.substring(0, lastDirSeparator);
-                filename = filename.substring(lastDirSeparator + 1);
-            }
+        } else {
+            const fullPath = Path.join(path || "", filename || "");
+            path = Path.dirname(fullPath);
+            filename = Path.basename(fullPath);
         }
 
         // Separate HDU and filename if no HDU is specified

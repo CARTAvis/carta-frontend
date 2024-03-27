@@ -1,6 +1,12 @@
 @import "~@blueprintjs/core/lib/scss/variables.scss";
 
 .image-toolbar {
+    pointer-events: none;
+
+    span {
+        pointer-events: auto;
+    }
+
     position: absolute;
     margin: 5px;
     transition: opacity 400ms;

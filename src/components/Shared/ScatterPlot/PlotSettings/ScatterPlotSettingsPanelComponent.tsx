@@ -38,8 +38,8 @@ export class ScatterPlotSettingsPanelComponent extends React.Component<ScatterPl
                     <FormGroup inline={true} label="Colormap">
                         <ColormapComponent
                             inverted={props.invertedColorMap}
-                            selectedItem={props.colorMap}
-                            onItemSelect={selected => {
+                            selectedColormap={props.colorMap}
+                            onColormapSelect={selected => {
                                 props.setColormap(selected);
                             }}
                         />
