@@ -7,6 +7,7 @@ import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import * as Long from "long";
 import {action, autorun, computed, flow, makeObservable, observable, ObservableMap, when} from "mobx";
+import * as Path from "path-browserify";
 import * as Semver from "semver";
 
 import {getImageViewCanvas, ImageViewLayer, PvGeneratorComponent} from "components";
@@ -645,18 +646,10 @@ export class AppStore {
 
         if (imageArithmetic) {
             hdu = "";
-        } else if (!filename) {
-            const lastDirSeparator = path.lastIndexOf("/");
-            if (lastDirSeparator >= 0) {
-                filename = path.substring(lastDirSeparator + 1);
-                path = path.substring(0, lastDirSeparator);
-            }
-        } else if (!path && filename.includes("/")) {
-            const lastDirSeparator = filename.lastIndexOf("/");
-            if (lastDirSeparator >= 0) {
-                path = filename.substring(0, lastDirSeparator);
-                filename = filename.substring(lastDirSeparator + 1);
-            }
+        } else {
+            const fullPath = Path.join(path || "", filename || "");
+            path = Path.dirname(fullPath);
+            filename = Path.basename(fullPath);
         }
 
         // Separate HDU and filename if no HDU is specified
@@ -1671,7 +1664,7 @@ export class AppStore {
                 this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
                 this.updateASTColors();
                 this.setSpectralMatchingType(this.preferenceStore.spectralMatchingType);
-                if (this.preferenceStore.checkNewRelease) {
+                if (this.preferenceStore.silent.checkNewRelease) {
                     await this.checkNewRelease();
                 }
             } catch (err) {
@@ -1685,7 +1678,7 @@ export class AppStore {
             const response = await axios("https://api.github.com/repos/CARTAvis/carta/releases", {headers: {Accept: "application/vnd.github+json"}});
             const latestRelease = response?.data?.[0]?.tag_name;
 
-            if (latestRelease && Semver.gt(latestRelease, this.preferenceStore.latestRelease)) {
+            if (latestRelease && Semver.gt(latestRelease, this.preferenceStore.silent.latestRelease)) {
                 console.log("new release available: ", latestRelease);
                 this.updateNewRelease(latestRelease);
             }
@@ -1955,7 +1948,7 @@ export class AppStore {
         });
 
         autorun(() => {
-            this.activateStatsPanel(this.preferenceStore.statsPanelEnabled);
+            this.activateStatsPanel(this.preferenceStore.silent.statsPanelEnabled);
         });
     }
 
@@ -2953,10 +2946,10 @@ export class AppStore {
             case ImagePanelMode.None:
                 return 1;
             case ImagePanelMode.Fixed:
-                return Math.max(1, this.preferenceStore.imagePanelColumns);
+                return Math.max(1, this.preferenceStore.silent.imagePanelColumns);
             default:
                 const numImages = this.frames?.length ?? 0;
-                return clamp(numImages, 1, this.preferenceStore.imagePanelColumns);
+                return clamp(numImages, 1, this.preferenceStore.silent.imagePanelColumns);
         }
     }
 
@@ -2965,10 +2958,10 @@ export class AppStore {
             case ImagePanelMode.None:
                 return 1;
             case ImagePanelMode.Fixed:
-                return Math.max(1, this.preferenceStore.imagePanelRows);
+                return Math.max(1, this.preferenceStore.silent.imagePanelRows);
             default:
                 const numImages = this.frames?.length ?? 0;
-                return clamp(Math.ceil(numImages / this.preferenceStore.imagePanelColumns), 1, this.preferenceStore.imagePanelRows);
+                return clamp(Math.ceil(numImages / this.preferenceStore.silent.imagePanelColumns), 1, this.preferenceStore.silent.imagePanelRows);
         }
     }
 
@@ -2978,7 +2971,7 @@ export class AppStore {
 
     @computed get imagePanelMode() {
         const preferenceStore = PreferenceStore.Instance;
-        return preferenceStore.imageMultiPanelEnabled ? preferenceStore.imagePanelMode : ImagePanelMode.None;
+        return preferenceStore.silent.imageMultiPanelEnabled ? preferenceStore.silent.imagePanelMode : ImagePanelMode.None;
     }
 
     exportImage = (imageRatio: number) => {
@@ -3183,7 +3176,7 @@ export class AppStore {
             import("stats-js")
                 .then(({default: Stats}) => {
                     const stats = new Stats();
-                    stats.showPanel(this.preferenceStore.statsPanelMode); // 0: fps, 1: ms, 2: mb, 3+: custom
+                    stats.showPanel(this.preferenceStore.silent.statsPanelMode); // 0: fps, 1: ms, 2: mb, 3+: custom
                     document.body.appendChild(stats.dom);
 
                     function animate() {

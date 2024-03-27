@@ -48,7 +48,7 @@ export class ContourStylePanelComponent extends React.Component<{frame: FrameSto
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Colormap" disabled={!frame.contourConfig.colormapEnabled}>
-                    <ColormapComponent inverted={false} disabled={!frame.contourConfig.colormapEnabled} selectedItem={frame.contourConfig.colormap} onItemSelect={frame.contourConfig.setColormap} />
+                    <ColormapComponent inverted={false} disabled={!frame.contourConfig.colormapEnabled} selectedColormap={frame.contourConfig.colormap} onColormapSelect={frame.contourConfig.setColormap} />
                 </FormGroup>
                 <FormGroup inline={true} label="Bias" disabled={!frame.contourConfig.colormapEnabled}>
                     <SafeNumericInput

@@ -39,27 +39,12 @@ async function fetchConfig() {
         ApiService.SetRuntimeConfig({});
     }
 
-    if (ApiService.RuntimeConfig.googleClientId) {
-        // Lazy load google API script only when the config requires it
-        const script = document.createElement("script");
-        script.src = "https://apis.google.com/js/client.js";
-        script.onload = () => {
-            ReactDOM.render(
-                <OverlaysProvider>
-                    <App />
-                </OverlaysProvider>,
-                document.getElementById("root") as HTMLElement
-            );
-        };
-        document.body.appendChild(script);
-    } else {
-        ReactDOM.render(
-            <OverlaysProvider>
-                <App />
-            </OverlaysProvider>,
-            document.getElementById("root") as HTMLElement
-        );
-    }
+    ReactDOM.render(
+        <OverlaysProvider>
+            <App />
+        </OverlaysProvider>,
+        document.getElementById("root") as HTMLElement
+    );
 }
 
 fetchConfig().then(() => {

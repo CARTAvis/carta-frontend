@@ -1,6 +1,7 @@
 // Static assets
 import {Colors} from "@blueprintjs/core";
 import allMaps from "static/allmaps.png";
+import tinycolor from "tinycolor2";
 
 import {AppStore} from "stores";
 import {RenderConfigStore} from "stores/Frame";
@@ -59,10 +60,15 @@ export function getColorsForValues(colorMap: string): {color: Uint8ClampedArray;
     const colorMapIndex = colorMaps.indexOf(colorMap);
 
     if (colormapContext) {
-        const colorMapPixel = colormapContext?.getImageData(0, colorMapIndex * 5 + 2, imageObj.width - 1, 1);
+        const colorMapPixel = colormapContext?.getImageData(0, colorMapIndex * 5 + 2, imageObj.width, 1);
         return {color: colorMapPixel?.data, size: colorMapPixel?.width};
     }
     return {color: new Uint8ClampedArray([0, 0, 0, 0]), size: 1};
+}
+
+export function getColorsFromHex(colorHex: string, startColorHex: string = "#000000", steps: number = 1024): {color: Uint8ClampedArray; size: number} {
+    const gradientColors = new Uint8ClampedArray(generateColorGradientArray(colorHex, startColorHex, steps));
+    return {color: gradientColors, size: steps};
 }
 
 export function isAutoColor(color: string): boolean {
@@ -87,4 +93,27 @@ export function getColorForTheme(color: string) {
 
     const requiredColor = color.substr(5).toUpperCase();
     return Colors[`${requiredColor}${AppStore.Instance.darkTheme ? "4" : "2"}`];
+}
+
+function generateColorGradientArray(targetColorHex: string, startColorHex = "#000000", steps: number = 1024) {
+    const gradientArray = [];
+
+    const targetColor = tinycolor(targetColorHex).toRgb();
+    const startColor = tinycolor(startColorHex).toRgb();
+
+    for (let i = 0; i <= steps - 1; i++) {
+        // Calculate the interpolation factor
+        const factor = i / (steps - 1);
+
+        // Interpolate RGBA values from the start color to the target color
+        const red = Math.round((1 - factor) * startColor.r + factor * targetColor.r);
+        const green = Math.round((1 - factor) * startColor.g + factor * targetColor.g);
+        const blue = Math.round((1 - factor) * startColor.b + factor * targetColor.b);
+        const alpha = 255;
+
+        // Push the RGBA values to the array
+        gradientArray.push(red, green, blue, alpha);
+    }
+
+    return gradientArray;
 }

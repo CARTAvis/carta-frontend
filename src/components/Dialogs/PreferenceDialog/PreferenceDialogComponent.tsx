@@ -246,7 +246,15 @@ export class PreferenceDialogComponent extends React.Component {
                     <ScalingSelectComponent selectedItem={preference.scaling} onItemSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING, selected)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Default colormap">
-                    <ColormapComponent inverted={false} selectedItem={preference.colormap} onItemSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP, selected)} />
+                    <ColormapComponent
+                        inverted={false}
+                        selectedColormap={preference.colormap}
+                        onColormapSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP, selected)}
+                        enableAdditionalColor={true}
+                        onCustomColorSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX, selected)}
+                        selectedCustomColor={preference.colormapHex}
+                        customColorStart={preference.colormapHexStart}
+                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Default percentile ranks">
                     <PercentileSelect
@@ -362,7 +370,7 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Default colormap">
-                    <ColormapComponent inverted={false} selectedItem={preference.contourColormap} onItemSelect={selected => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLORMAP, selected)} />
+                    <ColormapComponent inverted={false} selectedColormap={preference.contourColormap} onColormapSelect={selected => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLORMAP, selected)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Default color">
                     <ColorPickerComponent
@@ -414,7 +422,7 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Default colormap">
-                    <ColormapComponent inverted={false} selectedItem={preference.vectorOverlayColormap} onItemSelect={selected => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLORMAP, selected)} />
+                    <ColormapComponent inverted={false} selectedColormap={preference.vectorOverlayColormap} onColormapSelect={selected => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLORMAP, selected)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Default color">
                     <ColorPickerComponent

@@ -112,9 +112,9 @@ export class RootMenuComponent extends React.Component {
     private newReleaseButtonOnClick = () => {
         const appStore = AppStore.Instance;
         if (this.disableCheckRelease) {
-            appStore.preferenceStore.setPreference(PreferenceKeys.CHECK_NEW_RELEASE, false);
+            appStore.preferenceStore.setPreference(PreferenceKeys.SILENT_CHECK_NEW_RELEASE, false);
         }
-        appStore.preferenceStore.setPreference(PreferenceKeys.LATEST_RELEASE, appStore.newRelease);
+        appStore.preferenceStore.setPreference(PreferenceKeys.SILENT_LATEST_RELEASE, appStore.newRelease);
         appStore.setShowNewRelease(false);
     };
 
@@ -177,7 +177,7 @@ export class RootMenuComponent extends React.Component {
         if (apiService.authenticated && ApiService.RuntimeConfig.dashboardAddress) {
             serverMenu.push(<MenuItem key="restart" text="Restart Service" disabled={!appStore.apiService.authenticated} onClick={appStore.apiService.stopServer} />);
         }
-        if (ApiService.RuntimeConfig.logoutAddress || ApiService.RuntimeConfig.googleClientId) {
+        if (ApiService.RuntimeConfig.logoutAddress) {
             serverMenu.push(<MenuItem key="logout" text="Logout" disabled={!appStore.apiService.authenticated} onClick={appStore.apiService.logout} />);
         }
         if (ApiService.RuntimeConfig.dashboardAddress) {

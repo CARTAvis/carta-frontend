@@ -1,0 +1,13 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+.raster-color-swatch-button {
+    width: 95%;
+    margin: 5px 0px 5px 0px;
+}
+
+.raster-custom-color {
+    .#{$ns}-popover-target {
+        display: flex;
+        justify-content: center;
+    }
+}
