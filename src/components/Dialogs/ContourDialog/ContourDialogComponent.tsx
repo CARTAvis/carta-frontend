@@ -81,8 +81,8 @@ export class ContourDialogComponent extends React.Component {
             this.smoothingFactor = dataSource.contourConfig.smoothingFactor;
         } else {
             this.levels = [];
-            this.smoothingMode = appStore.preferenceStore.contourSmoothingMode;
-            this.smoothingFactor = appStore.preferenceStore.contourSmoothingFactor;
+            this.smoothingMode = appStore.preferenceStore.contour.smoothingMode;
+            this.smoothingFactor = appStore.preferenceStore.contour.smoothingFactor;
         }
     }
 
@@ -424,7 +424,7 @@ export class ContourDialogComponent extends React.Component {
                 <div className="histogram-plot">
                     <LinePlotComponent {...linePlotProps} />
                 </div>
-                <ContourGeneratorPanelComponent frame={dataSource} generatorType={appStore.preferenceStore.contourGeneratorType} onLevelsGenerated={this.handleLevelsGenerated} />
+                <ContourGeneratorPanelComponent frame={dataSource} generatorType={appStore.preferenceStore.contour.generatorType} onLevelsGenerated={this.handleLevelsGenerated} />
                 <div className="contour-level-panel-levels">
                     <FormGroup label={"Levels"} inline={true}>
                         <TagInput

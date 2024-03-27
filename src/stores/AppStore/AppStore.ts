@@ -2273,9 +2273,9 @@ export class AppStore {
                     levels: frame.contourConfig.levels,
                     smoothingMode: frame.contourConfig.smoothingMode,
                     smoothingFactor: frame.contourConfig.smoothingFactor,
-                    decimationFactor: this.preferenceStore.contourDecimation,
-                    compressionLevel: this.preferenceStore.contourCompressionLevel,
-                    contourChunkSize: this.preferenceStore.contourChunkSize
+                    decimationFactor: this.preferenceStore.contour.decimation,
+                    compressionLevel: this.preferenceStore.contour.compressionLevel,
+                    contourChunkSize: this.preferenceStore.contour.chunkSize
                 };
             }
 

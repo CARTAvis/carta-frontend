@@ -72,9 +72,9 @@ export class VectorOverlayDialogComponent extends React.Component {
         } else {
             this.angularSource = VectorOverlaySource.Current;
             this.intensitySource = VectorOverlaySource.Current;
-            this.pixelAveraging = preferences.vectorOverlayPixelAveraging;
-            this.pixelAveragingEnabled = preferences.vectorOverlayPixelAveraging > 0;
-            this.fractionalIntensity = preferences.vectorOverlayFractionalIntensity;
+            this.pixelAveraging = preferences.vectorOverlay.pixelAveraging;
+            this.pixelAveragingEnabled = preferences.vectorOverlay.pixelAveraging > 0;
+            this.fractionalIntensity = preferences.vectorOverlay.fractionalIntensity;
             this.thresholdEnabled = false;
             this.threshold = 0;
             this.debiasing = false;

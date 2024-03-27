@@ -2603,9 +2603,9 @@ export class FrameStore {
                 yMin: 0,
                 yMax: this.frameInfo.fileInfoExtended.height
             },
-            decimationFactor: preferenceStore.contourDecimation,
-            compressionLevel: preferenceStore.contourCompressionLevel,
-            contourChunkSize: preferenceStore.contourChunkSize
+            decimationFactor: preferenceStore.contour.decimation,
+            compressionLevel: preferenceStore.contour.compressionLevel,
+            contourChunkSize: preferenceStore.contour.chunkSize
         };
         this.backendService.setContourParameters(contourParameters);
     };
@@ -2651,7 +2651,7 @@ export class FrameStore {
             stokesIntensity: config.intensitySource,
             stokesAngle: config.angularSource,
             compressionType: CARTA.CompressionType.NONE,
-            compressionQuality: preferenceStore.contourCompressionLevel
+            compressionQuality: preferenceStore.contour.compressionLevel
         };
         this.backendService.setVectorOverlayParameters(parameters);
     };

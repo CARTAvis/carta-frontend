@@ -50,19 +50,19 @@ export class VectorOverlayConfigStore {
         this.enabled = false;
         this.angularSource = frame.hasLinearStokes ? VectorOverlaySource.Computed : VectorOverlaySource.Current;
         this.intensitySource = frame.hasLinearStokes ? VectorOverlaySource.Computed : VectorOverlaySource.Current;
-        this.fractionalIntensity = this.preferenceStore.vectorOverlayFractionalIntensity;
-        this.pixelAveraging = this.preferenceStore.vectorOverlayPixelAveraging;
-        this.pixelAveragingEnabled = this.preferenceStore.vectorOverlayPixelAveraging > 0;
+        this.fractionalIntensity = this.preferenceStore.vectorOverlay.fractionalIntensity;
+        this.pixelAveraging = this.preferenceStore.vectorOverlay.pixelAveraging;
+        this.pixelAveragingEnabled = this.preferenceStore.vectorOverlay.pixelAveraging > 0;
         this.threshold = 0;
         this.thresholdEnabled = false;
         this.debiasing = false;
 
-        this.color = tinycolor(this.preferenceStore.vectorOverlayColor).toRgb();
-        this.colormapEnabled = this.preferenceStore.vectorOverlayColormapEnabled;
-        this.colormap = this.preferenceStore.vectorOverlayColormap;
+        this.color = tinycolor(this.preferenceStore.vectorOverlay.color).toRgb();
+        this.colormapEnabled = this.preferenceStore.vectorOverlay.colormapEnabled;
+        this.colormap = this.preferenceStore.vectorOverlay.colormap;
         this.colormapBias = 0.0;
         this.colormapContrast = 1.0;
-        this.thickness = this.preferenceStore.vectorOverlayThickness;
+        this.thickness = this.preferenceStore.vectorOverlay.thickness;
         this.lengthMin = VectorOverlayConfigStore.DefaultLengthMin;
         this.lengthMax = VectorOverlayConfigStore.DefaultLengthMax;
         this.intensityMin = undefined;

@@ -498,6 +498,110 @@ export class PreferenceRenderSettings {
     };
 }
 
+export class PreferenceContourSettings {
+    // getters for Contour Config
+    @computed get generatorType(): ContourGeneratorType {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.CONTOUR_CONFIG_GENERATOR_TYPE) ?? DEFAULTS.CONTOUR_CONFIG.contourGeneratorType;
+    }
+
+    @computed get colormapEnabled(): boolean {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_ENABLED) ?? DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled;
+    }
+
+    @computed get colormap(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORMAP) ?? DEFAULTS.CONTOUR_CONFIG.contourColormap;
+    }
+
+    @computed get color(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLOR) ?? DEFAULTS.CONTOUR_CONFIG.contourColor;
+    }
+
+    @computed get smoothingMode(): CARTA.SmoothingMode {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_MODE) ?? DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode;
+    }
+
+    @computed get smoothingFactor(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_FACTOR) ?? DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor;
+    }
+
+    @computed get numLevels(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.CONTOUR_CONFIG_NUM_LEVELS) ?? DEFAULTS.CONTOUR_CONFIG.contourNumLevels;
+    }
+
+    @computed get thickness(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.CONTOUR_CONFIG_THICKNESS) ?? DEFAULTS.CONTOUR_CONFIG.contourThickness;
+    }
+
+    @computed get decimation(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION) ?? DEFAULTS.PERFORMANCE.contourDecimation;
+    }
+
+    @computed get compressionLevel(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL) ?? DEFAULTS.PERFORMANCE.contourCompressionLevel;
+    }
+
+    @computed get chunkSize(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE) ?? DEFAULTS.PERFORMANCE.contourChunkSize;
+    }
+
+    /**
+     * Reset the contour configuration settings
+     */
+    @action resetContourConfigSettings = () => {
+        PreferenceStore.Instance.clearPreferences([
+            PreferenceKeys.CONTOUR_CONFIG_COLOR,
+            PreferenceKeys.CONTOUR_CONFIG_COLORMAP,
+            PreferenceKeys.CONTOUR_CONFIG_COLORMAP_ENABLED,
+            PreferenceKeys.CONTOUR_CONFIG_GENERATOR_TYPE,
+            PreferenceKeys.CONTOUR_CONFIG_NUM_LEVELS,
+            PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_FACTOR,
+            PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_MODE,
+            PreferenceKeys.CONTOUR_CONFIG_THICKNESS
+        ]);
+    };
+}
+
+export class PreferenceVectorOverlaySettings {
+    // getters for vector overlay
+    @computed get pixelAveraging(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayPixelAveraging;
+    }
+
+    @computed get fractionalIntensity(): boolean {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.VECTOR_OVERLAY_FRACTIONAL_INTENSITY) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayFractionalIntensity;
+    }
+
+    @computed get thickness(): number {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.VECTOR_OVERLAY_THICKNESS) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayThickness;
+    }
+
+    @computed get colormapEnabled(): boolean {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_ENABLED) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColormapEnabled;
+    }
+
+    @computed get color(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLOR) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColor;
+    }
+
+    @computed get colormap(): string {
+        return PreferenceStore.Instance.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLORMAP) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColormap;
+    }
+
+    /**
+     * Reset the vector overlay configuration settings
+     */
+    @action resetVectorOverlayConfigSettings = () => {
+        PreferenceStore.Instance.clearPreferences([
+            PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING,
+            PreferenceKeys.VECTOR_OVERLAY_FRACTIONAL_INTENSITY,
+            PreferenceKeys.VECTOR_OVERLAY_COLOR,
+            PreferenceKeys.VECTOR_OVERLAY_COLORMAP,
+            PreferenceKeys.VECTOR_OVERLAY_COLORMAP_ENABLED,
+            PreferenceKeys.VECTOR_OVERLAY_THICKNESS
+        ]);
+    };
+}
+
 /**
  * The store manages the preference setting
  */
@@ -506,8 +610,8 @@ export class PreferenceStore {
     @observable silent: PreferenceSilentSettings;
     @observable global: PreferenceGlobalSettings;
     @observable render: PreferenceRenderSettings;
-    // @observable contour: PreferenceContourSettings;
-    // @observable vectorOverlay: PreferenceVectorOverlaySettings;
+    @observable contour: PreferenceContourSettings;
+    @observable vectorOverlay: PreferenceVectorOverlaySettings;
     // @observable wcsOverlay: PreferenceWcsOverlaySettings;
     // @observable regions: PreferenceRegionSettings;
     // @observable annotation: PreferenceAnnotationSettings;
@@ -527,76 +631,6 @@ export class PreferenceStore {
      * Whether the preference data is initialized from the preference file or localStorage.
      */
     @observable preferenceReady: boolean = false;
-
-    // getters for Contour Config
-    @computed get contourGeneratorType(): ContourGeneratorType {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_GENERATOR_TYPE) ?? DEFAULTS.CONTOUR_CONFIG.contourGeneratorType;
-    }
-
-    @computed get contourColormapEnabled(): boolean {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_ENABLED) ?? DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled;
-    }
-
-    @computed get contourColormap(): string {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORMAP) ?? DEFAULTS.CONTOUR_CONFIG.contourColormap;
-    }
-
-    @computed get contourColor(): string {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLOR) ?? DEFAULTS.CONTOUR_CONFIG.contourColor;
-    }
-
-    @computed get contourSmoothingMode(): CARTA.SmoothingMode {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_MODE) ?? DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode;
-    }
-
-    @computed get contourSmoothingFactor(): number {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_FACTOR) ?? DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor;
-    }
-
-    @computed get contourNumLevels(): number {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_NUM_LEVELS) ?? DEFAULTS.CONTOUR_CONFIG.contourNumLevels;
-    }
-
-    @computed get contourThickness(): number {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_THICKNESS) ?? DEFAULTS.CONTOUR_CONFIG.contourThickness;
-    }
-
-    @computed get contourDecimation(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION) ?? DEFAULTS.PERFORMANCE.contourDecimation;
-    }
-
-    @computed get contourCompressionLevel(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL) ?? DEFAULTS.PERFORMANCE.contourCompressionLevel;
-    }
-
-    @computed get contourChunkSize(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE) ?? DEFAULTS.PERFORMANCE.contourChunkSize;
-    }
-
-    // getters for vector overlay
-    @computed get vectorOverlayPixelAveraging(): number {
-        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayPixelAveraging;
-    }
-
-    @computed get vectorOverlayFractionalIntensity(): boolean {
-        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_FRACTIONAL_INTENSITY) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayFractionalIntensity;
-    }
-
-    @computed get vectorOverlayThickness(): number {
-        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_THICKNESS) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayThickness;
-    }
-
-    @computed get vectorOverlayColormapEnabled(): boolean {
-        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_ENABLED) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColormapEnabled;
-    }
-
-    @computed get vectorOverlayColor(): string {
-        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLOR) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColor;
-    }
-
-    @computed get vectorOverlayColormap(): string {
-        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLORMAP) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColormap;
-    }
 
     // getters for WCS overlay
     @computed get astColor(): string {
@@ -857,36 +891,6 @@ export class PreferenceStore {
         }
         yield ApiService.Instance.clearPreferences(keys);
     }
-
-    /**
-     * Reset the contour configuration settings
-     */
-    @action resetContourConfigSettings = () => {
-        this.clearPreferences([
-            PreferenceKeys.CONTOUR_CONFIG_COLOR,
-            PreferenceKeys.CONTOUR_CONFIG_COLORMAP,
-            PreferenceKeys.CONTOUR_CONFIG_COLORMAP_ENABLED,
-            PreferenceKeys.CONTOUR_CONFIG_GENERATOR_TYPE,
-            PreferenceKeys.CONTOUR_CONFIG_NUM_LEVELS,
-            PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_FACTOR,
-            PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_MODE,
-            PreferenceKeys.CONTOUR_CONFIG_THICKNESS
-        ]);
-    };
-
-    /**
-     * Reset the vector overlay configuration settings
-     */
-    @action resetVectorOverlayConfigSettings = () => {
-        this.clearPreferences([
-            PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING,
-            PreferenceKeys.VECTOR_OVERLAY_FRACTIONAL_INTENSITY,
-            PreferenceKeys.VECTOR_OVERLAY_COLOR,
-            PreferenceKeys.VECTOR_OVERLAY_COLORMAP,
-            PreferenceKeys.VECTOR_OVERLAY_COLORMAP_ENABLED,
-            PreferenceKeys.VECTOR_OVERLAY_THICKNESS
-        ]);
-    };
 
     /**
      * Reset the overlay configuration settings
@@ -1156,5 +1160,7 @@ export class PreferenceStore {
         this.silent = new PreferenceSilentSettings();
         this.global = new PreferenceGlobalSettings();
         this.render = new PreferenceRenderSettings();
+        this.contour = new PreferenceContourSettings();
+        this.vectorOverlay = new PreferenceVectorOverlaySettings();
     }
 }

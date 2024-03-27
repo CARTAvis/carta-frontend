@@ -41,15 +41,15 @@ export class ContourConfigStore {
         this.preferenceStore = preferenceStore;
         this.enabled = false;
         this.levels = [];
-        this.smoothingMode = this.preferenceStore.contourSmoothingMode;
-        this.smoothingFactor = this.preferenceStore.contourSmoothingFactor;
+        this.smoothingMode = this.preferenceStore.contour.smoothingMode;
+        this.smoothingFactor = this.preferenceStore.contour.smoothingFactor;
 
-        this.color = tinycolor(this.preferenceStore.contourColor).toRgb();
-        this.colormapEnabled = this.preferenceStore.contourColormapEnabled;
-        this.colormap = this.preferenceStore.contourColormap;
+        this.color = tinycolor(this.preferenceStore.contour.color).toRgb();
+        this.colormapEnabled = this.preferenceStore.contour.colormapEnabled;
+        this.colormap = this.preferenceStore.contour.colormap;
         this.colormapBias = 0.0;
         this.colormapContrast = 1.0;
-        this.thickness = this.preferenceStore.contourThickness;
+        this.thickness = this.preferenceStore.contour.thickness;
         this.dashMode = ContourDashMode.NegativeOnly;
         this.visible = true;
     }
