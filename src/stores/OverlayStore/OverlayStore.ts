@@ -1097,7 +1097,7 @@ export class OverlayStore {
         this.global.setValidWcs(frame.validWcs);
         this.numbers.setValidWcs(frame.validWcs);
 
-        this.global.setDefaultSystem(frame.wcsSystem);
+        this.global.setDefaultSystem(frame.defaultWcsSystem);
         this.setFormatsFromSystem();
 
         if (this.global.system === SystemType.Auto) {
