@@ -96,7 +96,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 this.gl.uniform4f(shaderUniforms.NaNColor, rgba.r / 255, rgba.g / 255, rgba.b / 255, rgba.a);
             }
 
-            const pixelGridColor = tinycolor(getColorForTheme(appStore.preferenceStore.pixelGridColor));
+            const pixelGridColor = tinycolor(getColorForTheme(appStore.preferenceStore.silent.pixelGridColor));
             if (pixelGridColor.isValid()) {
                 const rgba = pixelGridColor.toRgb();
                 this.gl.uniform4f(shaderUniforms.PixelGridColor, rgba.r / 255, rgba.g / 255, rgba.b / 255, rgba.a);
@@ -352,7 +352,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const pixelGridZoomLow = 6.0;
         const pixelGridZoomHigh = 12.0;
 
-        if (zoom >= pixelGridZoomLow && mip === 1 && appStore.preferenceStore.pixelGridVisible) {
+        if (zoom >= pixelGridZoomLow && mip === 1 && appStore.preferenceStore.silent.pixelGridVisible) {
             const cutoff = 0.5 / zoom;
             const opacity = 0.25 * smoothStep(zoom, pixelGridZoomLow, pixelGridZoomHigh);
             this.gl.uniform1f(shaderUniforms.PixelGridCutoff, cutoff);
@@ -399,8 +399,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 visibility: frame.renderConfig.visible,
                 nanColorHex: appStore.preferenceStore.nanColorHex,
                 nanAlpha: appStore.preferenceStore.nanAlpha,
-                pixelGridVisible: appStore.preferenceStore.pixelGridVisible,
-                pixelGridColor: getColorForTheme(appStore.preferenceStore.pixelGridColor)
+                pixelGridVisible: appStore.preferenceStore.silent.pixelGridVisible,
+                pixelGridColor: getColorForTheme(appStore.preferenceStore.silent.pixelGridColor)
             };
 
             const ratio = appStore.imageRatio;
