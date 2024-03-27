@@ -58,6 +58,8 @@ import {
     WORKSPACE_HELP_CONTENT
 } from "./HelpContent";
 
+import "./HelpDrawerComponent.scss";
+
 const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
     // Dialog
     [HelpType.CONTOUR, CONTOUR_HELP_CONTENT],
@@ -130,7 +132,8 @@ export class HelpDrawerComponent extends React.Component {
             title: helpStore.type ?? "",
             position: helpStore.position,
             size: "33%",
-            hasBackdrop: false
+            hasBackdrop: true,
+            backdropClassName: "help-drawer-backdrop"
         };
 
         return (
