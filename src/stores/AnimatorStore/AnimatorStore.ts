@@ -174,7 +174,7 @@ export class AnimatorStore {
 
     @action animate = () => {
         if (this.animationActive && this.animationMode === AnimationMode.FRAME) {
-            AppStore.Instance.nextFrame();
+            AppStore.Instance.nextImage();
         }
     };
 

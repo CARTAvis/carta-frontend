@@ -1,12 +1,11 @@
 import {Classes, Colors, IOptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
-import {Utils} from "@blueprintjs/table";
 import * as AST from "ast_wrapper";
 import axios from "axios";
 import * as CARTACompute from "carta_computation";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import * as Long from "long";
-import {action, autorun, computed, flow, makeObservable, observable, ObservableMap, when} from "mobx";
+import {action, autorun, computed, flow, makeObservable, observable, ObservableMap, reaction, when} from "mobx";
 import * as Path from "path-browserify";
 import * as Semver from "semver";
 
@@ -20,7 +19,9 @@ import {
     FileId,
     FloatingObjzIndexManager,
     FrameView,
-    ImagePanelMode,
+    ImageItem,
+    ImageType,
+    ImageViewItem,
     Point2D,
     PresetLayout,
     RegionId,
@@ -46,6 +47,7 @@ import {
     FileBrowserStore,
     HelpStore,
     ImageFittingStore,
+    ImageViewConfigStore,
     LayoutStore,
     LogEntry,
     LogStore,
@@ -60,7 +62,7 @@ import {
 } from "stores";
 import {CompassAnnotationStore, CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
-import {clamp, distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
+import {distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
 
 import GitCommit from "../../static/gitInfo";
 
@@ -115,14 +117,16 @@ export class AppStore {
     readonly preferenceStore: PreferenceStore;
     readonly widgetsStore: WidgetsStore;
     readonly imageFittingStore: ImageFittingStore;
+    /** Configuration of the images in the image view widget. */
+    readonly imageViewConfigStore = ImageViewConfigStore.Instance;
 
     // WebAssembly Module status
     @observable astReady: boolean;
     @observable cartaComputeReady: boolean;
     // Frames
-    @observable frames: FrameStore[] = [];
     @observable previewFrames = new ObservableMap<number, FrameStore>();
-    @observable activeFrame: FrameStore = null;
+    /** The active image, which can be a loaded image, a color blended image, or a PV preivew. */
+    @observable activeImage: ImageItem = null;
     @observable hoveredFrame: FrameStore = null;
     @observable contourDataSource: FrameStore = null;
     @observable syncContourToFrame = true;
@@ -360,6 +364,11 @@ export class AppStore {
     // Match generated moment image(s) to the spatial reference image
     @observable momentToMatch: boolean;
 
+    /** All the loaded images in the image list. */
+    @computed get frames(): FrameStore[] {
+        return this.imageViewConfigStore.frames;
+    }
+
     @computed get openFileDisabled(): boolean {
         return this.backendService?.connectionStatus !== ConnectionStatus.ACTIVE || this.fileLoading;
     }
@@ -408,7 +417,8 @@ export class AppStore {
     }
 
     @computed get frameNames(): IOptionProps[] {
-        return this.frames?.map((frame, index) => {
+        return this.frames?.map(frame => {
+            const index = this.imageViewConfigStore.getImageListIndex(ImageType.FRAME, frame.id);
             return {
                 label: index + ": " + frame.filename,
                 value: frame.frameInfo.fileId
@@ -417,7 +427,8 @@ export class AppStore {
     }
 
     @computed get frameOptions(): FrameOption[] {
-        return this.frames?.map((frame, index) => {
+        return this.frames?.map(frame => {
+            const index = this.imageViewConfigStore.getImageListIndex(ImageType.FRAME, frame.id);
             return {
                 label: index + ": " + frame.filename,
                 value: frame.frameInfo.fileId,
@@ -481,7 +492,7 @@ export class AppStore {
     // Calculates which frames have a contour visible as a function of each visible frame
     @computed get contourFrames(): Map<FrameStore, FrameStore[]> {
         const frameMap = new Map<FrameStore, FrameStore[]>();
-        for (const frame of this.visibleFrames) {
+        for (const frame of this.imageViewConfigStore.visibleFrames) {
             const group = this.spatialGroup(frame).filter(f => f.contourConfig.enabled && f.contourConfig.visible);
             frameMap.set(frame, group);
         }
@@ -491,7 +502,7 @@ export class AppStore {
     // Calculates which frames have a vector overlay visible as a function of each visible frame
     @computed get vectorOverlayFrames(): Map<FrameStore, FrameStore[]> {
         const frameMap = new Map<FrameStore, FrameStore[]>();
-        for (const frame of this.visibleFrames) {
+        for (const frame of this.imageViewConfigStore.visibleFrames) {
             const group = this.spatialGroup(frame).filter(f => f.vectorOverlayConfig.enabled && f.vectorOverlayConfig.visible);
             frameMap.set(frame, group);
         }
@@ -540,12 +551,11 @@ export class AppStore {
         let newFrame = new FrameStore(frameInfo);
 
         // Place frame in frame array (replace frame with the same ID if it exists)
-        const existingFrameIndex = this.frames.findIndex(f => f.frameInfo.fileId === ack.fileId);
+        const existingFrameIndex = this.imageViewConfigStore.getImageListIndex(ImageType.FRAME, ack.fileId);
         if (existingFrameIndex !== -1) {
-            this.frames[existingFrameIndex].clearContours(false);
-            this.frames[existingFrameIndex] = newFrame;
+            this.imageViewConfigStore.replaceFrame(existingFrameIndex, newFrame);
         } else {
-            this.frames.push(newFrame);
+            this.imageViewConfigStore.addFrame(newFrame);
         }
 
         // First image defaults to spatial reference and contour source
@@ -561,7 +571,7 @@ export class AppStore {
         }
 
         if (setAsActive) {
-            this.setActiveFrame(newFrame);
+            this.updateActiveImageByFrame(newFrame);
         }
         // init image associated catalog
         this.catalogStore.updateImageAssociatedCatalogId(newFrame.frameInfo.fileId, []);
@@ -621,7 +631,7 @@ export class AppStore {
             newFrame.updatePreviewDataGenerator = newFrame.updatePreviewData(ack);
             // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
             newFrame.updatePreviewDataGenerator.next();
-            this.setActiveFrame(newFrame);
+            this.updateActiveImageByFrame(newFrame);
         }
 
         return newFrame;
@@ -781,38 +791,76 @@ export class AppStore {
         }
     }
 
-    @flow.bound
-    *closeFile(frame: FrameStore, confirmClose: boolean = true) {
-        if (!frame) {
-            return;
-        }
-        // Display confirmation if image has secondary images
-        const secondaries = frame.secondarySpatialImages.concat(frame.secondarySpectralImages).filter(distinct);
-        const numSecondaries = secondaries.length;
-
-        if (confirmClose && numSecondaries) {
-            const confirmed = yield this.alertStore.showInteractiveAlert(`${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} matched to this image will be unmatched.`);
-            if (confirmed) {
-                this.removeFrame(frame);
-            }
-        } else {
-            this.removeFrame(frame);
-        }
-
-        this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
-    }
-
     /**
-     * Closes the currently active image.
-     *
+     * Closes a loaded image or a color blended image.
+     * @param image - The image item to close.
      * @param confirmClose - Flag indicating whether to display a confirmation dialog before closing.
      */
-    @action closeCurrentFile = (confirmClose: boolean = false) => {
-        if (!this.appendFileDisabled) {
-            this.closeFile(this.activeFrame, confirmClose);
+    closeImage = (image: ImageViewItem, confirmClose: boolean = true) => {
+        if (image?.type === ImageType.COLOR_BLENDING) {
+            this.imageViewConfigStore.removeColorBlending(image.store);
+        } else {
+            this.closeFile(image.store, confirmClose);
         }
     };
 
+    /**
+     * Closes a loaded image.
+     * @param frame - The loaded image.
+     * @param confirmClose - Flag indicating whether to display a confirmation dialog before closing.
+     */
+    @flow.bound *closeFile(frame: FrameStore, confirmClose: boolean = true) {
+        if (!frame) {
+            return;
+        }
+
+        if (confirmClose) {
+            const confirmed = yield this.confirmColorBlendingRemoval(frame);
+            if (!confirmed) {
+                return;
+            }
+
+            // Display confirmation if image has secondary images
+            const secondaries = frame.secondarySpatialImages.concat(frame.secondarySpectralImages).filter(distinct);
+            const numSecondaries = secondaries.length;
+            if (numSecondaries) {
+                const confirmed = yield this.alertStore.showInteractiveAlert(`${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} matched to this image will be unmatched.`);
+                if (!confirmed) {
+                    return;
+                }
+            }
+        }
+
+        this.removeFrame(frame);
+    }
+
+    /**
+     * Closes the currently active image if the active image is not a PV preview.
+     * @param confirmClose - Flag indicating whether to display a confirmation dialog before closing.
+     */
+    @action closeCurrentFile = (confirmClose: boolean = false) => {
+        if (!this.appendFileDisabled && this.activeImage?.type !== ImageType.PV_PREVIEW) {
+            this.closeImage(this.activeImage, confirmClose);
+        }
+    };
+
+    /**
+     * Closes all the images except the provided loaded image.
+     * @param frame - A loaded image.
+     */
+    @action closeOtherImages = (frame: FrameStore) => {
+        const colorBlendingImages = this.imageViewConfigStore.colorBlendingImages.slice();
+        for (const colorBlendingImage of colorBlendingImages) {
+            this.imageViewConfigStore.removeColorBlending(colorBlendingImage);
+        }
+        this.closeOtherFiles(frame, false);
+    };
+
+    /**
+     * Closes all the loaded image except the provided one.
+     * @param frame - A loaded image.
+     * @param confirmClose - Flag indicating whether to display a confirmation dialog before closing.
+     */
     @action closeOtherFiles = (frame: FrameStore, confirmClose: boolean = true) => {
         const otherFiles = this.frames.filter(f => f !== frame);
         for (const f of otherFiles) {
@@ -820,7 +868,11 @@ export class AppStore {
         }
     };
 
-    @action removeFrame = (frame: FrameStore) => {
+    /**
+     * Closes a loaded image.
+     * @param frame - A loaded image.
+     */
+    @action private removeFrame = (frame: FrameStore) => {
         if (frame) {
             // Stop animations playing before removing frame
             this.animatorStore.stopAnimation();
@@ -871,12 +923,15 @@ export class AppStore {
                 frame.clearSpatialReference();
                 frame.clearSpectralReference();
                 frame.clearContours(false);
-                this.frames = this.frames.filter(f => f.frameInfo.fileId !== fileId);
+                this.imageViewConfigStore.removeFrame(fileId);
                 const firstFrame = this.frames.length ? this.frames[0] : null;
+
                 // Clean up if frame is active
                 if (this.activeFrame.frameInfo.fileId === fileId) {
-                    this.activeFrame = firstFrame;
+                    const firstImage = this.imageViewConfigStore.imageNum ? this.imageViewConfigStore.getImage(0) : null;
+                    this.setActiveImage(firstImage);
                 }
+
                 // Clean up if frame is contour data source
                 if (this.contourDataSource.frameInfo.fileId === fileId) {
                     this.contourDataSource = firstFrame;
@@ -885,7 +940,7 @@ export class AppStore {
                 if (removedFrameIsSpatialReference) {
                     const newReference = firstFrame;
                     if (newReference) {
-                        this.setSpatialReference(newReference);
+                        this.setSpatialReference(newReference, false);
                     } else {
                         this.clearSpatialReference();
                     }
@@ -913,6 +968,11 @@ export class AppStore {
 
                 if (!this.frames?.length) {
                     this.activeWorkspace = undefined;
+
+                    const colorBlendingImages = this.imageViewConfigStore?.colorBlendingImages.slice();
+                    for (const colorBlendingImage of colorBlendingImages) {
+                        this.imageViewConfigStore?.removeColorBlending(colorBlendingImage);
+                    }
                 }
 
                 // TODO: check this
@@ -928,6 +988,7 @@ export class AppStore {
         }
     };
 
+    /** Closes all the images in the image view widget. */
     @action removeAllFrames = () => {
         // Stop animations playing before removing frames
         this.animatorStore.stopAnimation();
@@ -936,7 +997,7 @@ export class AppStore {
         this.clearRasterScalingReference();
         this.activeWorkspace = undefined;
         if (this.backendService.closeFile(-1)) {
-            this.activeFrame = null;
+            this.setActiveImage(null);
             this.tileService.clearCompressedCache(-1);
             this.previewFrames.forEach((previewFrameStore, previewFrameId) => {
                 this.removePreviewFrame(previewFrameId);
@@ -953,34 +1014,45 @@ export class AppStore {
                     CatalogStore.Instance.closeAssociatedCatalog(fileId);
                 }
             });
-            this.frames = [];
+            this.imageViewConfigStore.removeAllImages();
             // adjust requirements for stores
             this.widgetsStore.removeFrameFromRegionWidgets();
         }
     };
 
+    /**
+     * Closes a PV preview.
+     * @param previewId - The file id of the image cube from which the PV preview was created.
+     */
     @action removePreviewFrame = (previewId: number) => {
         if (this.previewFrames.delete(previewId)) {
             this.backendService.closePvPreview(previewId);
-            this.activeFrame = this.visibleFrames[0];
+            this.setActiveImage(this.imageViewConfigStore.visibleImages[0]);
         }
     };
 
-    @action shiftFrame = (delta: number) => {
-        if (this.activeFrame && this.frames.length > 1) {
-            const frameIds = this.frames.map(f => f.frameInfo.fileId);
-            const currentIndex = frameIds.indexOf(this.activeFrame.frameInfo.fileId);
-            const requiredIndex = (this.frames.length + currentIndex + delta) % this.frames.length;
-            this.setActiveFrameByIndex(requiredIndex);
+    /**
+     * Shifts the active image.
+     * @param delta - The amount to shift the active image by.
+     *                A positive delta shifts to the next image, while a negative delta shifts to the previous image.
+     *                If the active image is a PV preview, the shift doesn't occur.
+     */
+    @action private shiftImage = (delta: number) => {
+        if (this.activeImage && this.activeImage.type !== ImageType.PV_PREVIEW && this.imageViewConfigStore.imageNum > 1) {
+            const currentIndex = this.imageViewConfigStore.getImageListIndex(this.activeImage.type, this.activeImage.store.id);
+            const requiredIndex = (this.imageViewConfigStore.imageNum + currentIndex + delta) % this.imageViewConfigStore.imageNum;
+            this.setActiveImageByIndex(requiredIndex);
         }
     };
 
-    @action nextFrame = () => {
-        this.shiftFrame(+1);
+    /** Shifts the active image to the next image. If the active image is a PV preview, the shift doesn't occur. */
+    @action nextImage = () => {
+        this.shiftImage(+1);
     };
 
-    @action prevFrame = () => {
-        this.shiftFrame(-1);
+    /** Shifts the active image to the previous image. If the active image is a PV preview, the shift doesn't occur. */
+    @action prevImage = () => {
+        this.shiftImage(-1);
     };
 
     // Open catalog file
@@ -1077,22 +1149,14 @@ export class AppStore {
         this.backendService.setCatalogFilterRequest(catalogFilter);
     }
 
+    /**
+     * Reorders images in the image list.
+     * @param oldIndex - The first index of the images to move.
+     * @param newIndex - The index to move the image to.
+     * @param length - The length of the images to move.
+     */
     @action reorderFrame = (oldIndex: number, newIndex: number, length: number) => {
-        if (
-            !Number.isInteger(oldIndex) ||
-            oldIndex < 0 ||
-            oldIndex >= this.frameNum ||
-            !Number.isInteger(newIndex) ||
-            newIndex < 0 ||
-            newIndex >= this.frameNum ||
-            !Number.isInteger(length) ||
-            length <= 0 ||
-            length >= this.frameNum ||
-            oldIndex === newIndex
-        ) {
-            return;
-        }
-        this.frames = Utils.reorderArray(this.frames, oldIndex, newIndex, length);
+        this.imageViewConfigStore.reorderImage(oldIndex, newIndex, length);
     };
 
     // Region file actions
@@ -1439,7 +1503,7 @@ export class AppStore {
             AppToaster.show(ErrorToast(`Image fitting failed: ${err}.`));
         }
 
-        this.setActiveFrameById(message.fileId);
+        this.setActiveImageByFileId(message.fileId);
         if (message.createModelImage || message.createResidualImage) {
             this.endFileLoading();
         }
@@ -1568,7 +1632,7 @@ export class AppStore {
 
             frame.channel = update.channel;
             frame.stokes = update.stokes;
-            if (this.visibleFrames.includes(frame)) {
+            if (this.imageViewConfigStore.visibleFrames.includes(frame)) {
                 // Calculate new required frame view (cropped to file size)
                 const reqView = frame.requiredFrameView;
 
@@ -1817,7 +1881,7 @@ export class AppStore {
             if (this.activeFrame && (!this.activeFrame.zooming || this.preferenceStore.streamContoursWhileZooming)) {
                 // Group all view updates for visible images into one throttled call
                 const viewUpdates: ViewUpdate[] = [];
-                for (const frame of this.visibleFrames) {
+                for (const frame of this.imageViewConfigStore.visibleFrames) {
                     const reqView = frame.requiredFrameView;
                     let croppedReq: FrameView = {
                         xMin: Math.max(0, reqView.xMin),
@@ -1840,7 +1904,7 @@ export class AppStore {
                 // Clear tiles of invisible matched images during animation
                 if (this.animatorStore?.serverAnimationActive) {
                     for (const frame of this.activeFrame.spectralSiblings) {
-                        if (!this.visibleFrames.includes(frame)) {
+                        if (!this.imageViewConfigStore.visibleFrames.includes(frame)) {
                             viewUpdates.push({tiles: [], fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: null, headerUnit: frame.headerUnit});
                         }
                     }
@@ -1855,7 +1919,7 @@ export class AppStore {
         autorun(() => {
             const updates: ChannelUpdate[] = [];
 
-            for (const visibleFrame of this.visibleFrames) {
+            for (const visibleFrame of this.imageViewConfigStore.visibleFrames) {
                 if (visibleFrame) {
                     // Calculate if new data is required for the active channel
                     const updateRequiredChannels = visibleFrame.requiredChannel !== visibleFrame?.channel || visibleFrame.requiredStokes !== visibleFrame.stokes;
@@ -1866,7 +1930,7 @@ export class AppStore {
 
                     // Update any sibling channels
                     visibleFrame.spectralSiblings.forEach(frame => {
-                        const isVisible = this.visibleFrames.includes(frame);
+                        const isVisible = this.imageViewConfigStore.visibleFrames.includes(frame);
                         const siblingUpdateRequired = frame.requiredChannel !== frame.channel || frame.requiredStokes !== frame.stokes;
                         if (!isVisible && siblingUpdateRequired) {
                             updates.push({frame, channel: frame.requiredChannel, stokes: frame.requiredStokes});
@@ -1901,9 +1965,30 @@ export class AppStore {
             }
         });
 
+        reaction(
+            () => this.activeImage,
+            image => {
+                if (image) {
+                    if (image.type !== ImageType.PV_PREVIEW) {
+                        this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
+                    }
+
+                    if (image.type === ImageType.FRAME) {
+                        const frame = image.store;
+                        this.catalogStore.resetActiveCatalogFile(frame?.id);
+                        if (this.syncContourToFrame) {
+                            this.contourDataSource = frame;
+                        }
+                    }
+                } else {
+                    this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
+                }
+            }
+        );
+
         // Update image panel page buttons
         autorun(() => {
-            if (this.activeFrame && this.numImageColumns && this.numImageRows) {
+            if (this.activeFrame && this.imageViewConfigStore.imagesPerPage) {
                 this.widgetsStore.updateImagePanelPageButtons();
             }
         });
@@ -2385,7 +2470,7 @@ export class AppStore {
                     }
 
                     if (workspace.selectedFile === frame.frameInfo.fileId) {
-                        this.setActiveFrame(frame);
+                        this.updateActiveImageByFrame(frame);
                     }
 
                     if (fileInfo.renderConfig) {
@@ -2611,7 +2696,28 @@ export class AppStore {
         this.removeAllFrames();
     };
 
-    @action setActiveFrame = (frame: FrameStore) => {
+    /**
+     * Sets the active image. Ignores when animating.
+     * @param image - The image to set as the active image.
+     */
+    @action updateActiveImage = (image: ImageItem) => {
+        if (!image) {
+            return;
+        }
+
+        // Ignore changes when animating
+        if (this.animatorStore.serverAnimationActive) {
+            return;
+        }
+
+        this.setActiveImage(image);
+    };
+
+    /**
+     * Sets the active image with a loaded image or a PV preview. Ignores when animating.
+     * @param frame - The loaded image or the PV preview.
+     */
+    @action updateActiveImageByFrame = (frame: FrameStore) => {
         if (!frame) {
             return;
         }
@@ -2621,40 +2727,81 @@ export class AppStore {
             return;
         }
 
-        this.changeActiveFrame(frame);
+        if (frame.isPreview) {
+            this.setActiveImage({type: ImageType.PV_PREVIEW, store: frame});
+        } else {
+            this.setActiveImageByFileId(frame.id);
+        }
     };
 
-    @action setActiveFrameById = (fileId: number) => {
-        const requiredFrame = this.getFrame(fileId);
-        if (requiredFrame) {
-            this.setActiveFrame(requiredFrame);
+    /**
+     * Sets the active image with a loaded image.
+     * @param fileId - The file id of the loaded image.
+     */
+    @action setActiveImageByFileId = (fileId: number) => {
+        const index = this.imageViewConfigStore.getImageListIndex(ImageType.FRAME, fileId);
+        const image = this.imageViewConfigStore.getImage(index);
+
+        if (image) {
+            this.setActiveImage(image);
         } else {
             console.log(`Can't find required frame ${fileId}`);
         }
     };
 
-    @action setActiveFrameByIndex(index: number) {
-        if (index >= 0 && this.frames.length > index) {
-            this.setActiveFrame(this.frames[index]);
+    /**
+     * Sets the active image based on the image list index.
+     * @param index - The image list index.
+     */
+    @action setActiveImageByIndex = (index: number) => {
+        if (index >= 0 && this.imageViewConfigStore.imageNum > index) {
+            const image = this.imageViewConfigStore.getImage(index);
+            if (image) {
+                this.setActiveImage(image);
+            }
         } else {
-            console.log(`Invalid frame index ${index}`);
+            console.log(`Invalid image index ${index}`);
         }
+    };
+
+    /**
+     * Sets the active image.
+     * @param activeImage - The image to set as the active image.
+     */
+    @action setActiveImage = (activeImage: ImageItem) => {
+        this.activeImage = activeImage;
+    };
+
+    /** The index of the active image in the image list. */
+    @computed get activeImageIndex(): number {
+        if (!this.activeImage || this.activeImage.type === ImageType.PV_PREVIEW) {
+            return -1;
+        }
+        return this.imageViewConfigStore.getImageListIndex(this.activeImage.type, this.activeImage.store?.id);
     }
 
-    private changeActiveFrame(frame: FrameStore) {
-        if (frame !== this.activeFrame) {
-            // Set overlay defaults from current frame
-            this.overlayStore.setDefaultsFromAST(frame);
+    /** The active frame. If the active image is a loaded image or a PV preview, returns the corresponding frame.
+     * If the active image is a color blended image, returns the base frame. */
+    @computed get activeFrame(): FrameStore {
+        const type = this.activeImage?.type;
+
+        if (type === ImageType.FRAME || type === ImageType.PV_PREVIEW) {
+            return this.activeImage.store;
+        } else if (type === ImageType.COLOR_BLENDING) {
+            return this.activeImage.store.baseFrame;
         }
-        this.activeFrame = frame;
-        if (!frame.isPreview) {
-            this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
-            this.catalogStore.resetActiveCatalogFile(frame.frameInfo.fileId);
-            if (this.syncContourToFrame) {
-                this.contourDataSource = frame;
-            }
-        }
+
+        return null;
     }
+
+    /**
+     * Checks if the given image is the active image.
+     * @param image - The image to check.
+     * @returns Whether the given image is the active image.
+     */
+    isActiveImage = (image: ImageItem): boolean => {
+        return image?.type === this.activeImage?.type && image?.store === this.activeImage?.store;
+    };
 
     @action setHoveredFrame(frame: FrameStore) {
         if (!frame) {
@@ -2666,7 +2813,7 @@ export class AppStore {
     @action setContourDataSource = (frame: FrameStore) => {
         this.contourDataSource = frame;
         if (this.syncFrameToContour) {
-            this.setActiveFrame(frame);
+            this.updateActiveImageByFrame(frame);
         }
     };
 
@@ -2733,8 +2880,20 @@ export class AppStore {
         frame?.updateCursorRegion(pos);
     };
 
-    @action setSpatialReference = (frame: FrameStore) => {
+    /**
+     * Sets the spatial reference frame.
+     * @param frame - The frame to set as the spatial reference.
+     * @param showColorBlendingAlert - Whether to show an alert when layers will be removed from color blended images.
+     */
+    @flow.bound *setSpatialReference(frame: FrameStore, showColorBlendingAlert = true) {
         const oldRef = this.spatialReference;
+
+        if (showColorBlendingAlert) {
+            const confirmed = yield this.confirmColorBlendingRemoval(oldRef);
+            if (!confirmed) {
+                return;
+            }
+        }
 
         // check if the new reference is currently a secondary image of the existing reference
         const newRefIsSecondary = oldRef && oldRef.secondarySpatialImages.includes(frame);
@@ -2758,7 +2917,7 @@ export class AppStore {
         if (oldRef?.secondarySpatialImages.length) {
             oldRef.secondarySpatialImages = [];
         }
-    };
+    }
 
     @action clearSpatialReference = () => {
         this.spatialReference = null;
@@ -2767,7 +2926,12 @@ export class AppStore {
         }
     };
 
-    @action setSpatialMatchingEnabled = (frame: FrameStore, val: boolean) => {
+    /**
+     * Sets the spatial matching for a frame.
+     * @param frame - The frame for which to set spatial matching.
+     * @param val - Whether to enable or disable spatial matching.
+     */
+    @flow.bound *setSpatialMatchingEnabled(frame: FrameStore, val: boolean) {
         if (!frame || frame === this.spatialReference) {
             return;
         }
@@ -2777,8 +2941,33 @@ export class AppStore {
                 AppToaster.show(WarningToast(`Could not enable spatial matching of ${frame.filename} to reference image ${this.spatialReference.filename}. No valid transform was found.`));
             }
         } else {
+            const confirmed = yield this.confirmColorBlendingRemoval(frame);
+            if (!confirmed) {
+                return;
+            }
+
             frame.clearSpatialReference();
         }
+    }
+
+    /**
+     * Shows an alert when layers will be removed from the color blended images due to unmatching or closing a frame.
+     * @param frame - The frame which will be unmatched or closed.
+     * @returns Whether unmatching or closing the frame is confirmed or canceled.
+     */
+    private confirmColorBlendingRemoval = async (frame: FrameStore): Promise<boolean> => {
+        if (frame === this.spatialReference && this.imageViewConfigStore.colorBlendingImages.length) {
+            if (this.frames?.length === 1) {
+                return await this.alertStore.showInteractiveAlert("The color blending images will be closed.");
+            } else {
+                return await this.alertStore.showInteractiveAlert("The base layer in the color blending images will be replaced.");
+            }
+        }
+
+        if (this.imageViewConfigStore.colorBlendingImages.some(store => store.selectedFrames.includes(frame))) {
+            return await this.alertStore.showInteractiveAlert("Layers in the color blending images will be removed.");
+        }
+        return true;
     };
 
     @action toggleSpatialMatching = (frame: FrameStore) => {
@@ -2909,74 +3098,9 @@ export class AppStore {
         this.momentToMatch = !this.momentToMatch;
     };
 
-    @computed get numImagePages() {
-        if (this.numImageColumns <= 0 || this.numImageRows <= 0 || !this.frames) {
-            return 0;
-        }
-
-        return Math.ceil(this.frames.length / this.imagesPerPage);
-    }
-
-    @computed get currentImagePage() {
-        if (!this.frames?.length || !this.activeFrame) {
-            return 0;
-        }
-
-        const index = this.frames.indexOf(this.activeFrame);
-        return Math.floor(index / this.imagesPerPage);
-    }
-
-    @computed get visibleFrames(): FrameStore[] {
-        if (!this.frames?.length) {
-            return [];
-        }
-
-        const pageIndex = clamp(this.currentImagePage, 0, this.numImagePages);
-        const firstFrameIndex = pageIndex * this.imagesPerPage;
-        const indexUpperBound = Math.min(firstFrameIndex + this.imagesPerPage, this.frames.length);
-        const pageFrames = [];
-        for (let i = firstFrameIndex; i < indexUpperBound; i++) {
-            pageFrames.push(this.frames[i]);
-        }
-        return pageFrames;
-    }
-
-    @computed get numImageColumns() {
-        switch (this.imagePanelMode) {
-            case ImagePanelMode.None:
-                return 1;
-            case ImagePanelMode.Fixed:
-                return Math.max(1, this.preferenceStore.imagePanelColumns);
-            default:
-                const numImages = this.frames?.length ?? 0;
-                return clamp(numImages, 1, this.preferenceStore.imagePanelColumns);
-        }
-    }
-
-    @computed get numImageRows() {
-        switch (this.imagePanelMode) {
-            case ImagePanelMode.None:
-                return 1;
-            case ImagePanelMode.Fixed:
-                return Math.max(1, this.preferenceStore.imagePanelRows);
-            default:
-                const numImages = this.frames?.length ?? 0;
-                return clamp(Math.ceil(numImages / this.preferenceStore.imagePanelColumns), 1, this.preferenceStore.imagePanelRows);
-        }
-    }
-
-    @computed get imagesPerPage() {
-        return this.numImageColumns * this.numImageRows;
-    }
-
-    @computed get imagePanelMode() {
-        const preferenceStore = PreferenceStore.Instance;
-        return preferenceStore.imageMultiPanelEnabled ? preferenceStore.imagePanelMode : ImagePanelMode.None;
-    }
-
     exportImage = (imageRatio: number) => {
         if (this.activeFrame) {
-            const index = this.visibleFrames.indexOf(this.activeFrame);
+            const index = this.imageViewConfigStore.visibleFrames.indexOf(this.activeFrame);
             if (index === -1) {
                 return;
             }
@@ -2989,7 +3113,7 @@ export class AppStore {
                 if (composedCanvas) {
                     composedCanvas.toBlob(blob => {
                         const link = document.createElement("a") as HTMLAnchorElement;
-                        const joinedNames = this.visibleFrames.map(f => f.filename).join("-");
+                        const joinedNames = this.imageViewConfigStore.visibleFrames.map(f => f.filename).join("-");
                         // Trim filename before timestamp to 200 characters to prevent browser errors
                         link.download = `${joinedNames}-image`.substring(0, 200) + `-${getTimestamp()}.png`;
                         link.href = URL.createObjectURL(blob);
@@ -3049,7 +3173,7 @@ export class AppStore {
                 () => {
                     const tilesLoading = this.tileService.remainingTiles > 0;
                     let contoursLoading = false;
-                    for (const frame of this.visibleFrames) {
+                    for (const frame of this.imageViewConfigStore.visibleFrames) {
                         if (frame.contourProgress >= 0 && frame.contourProgress < 1) {
                             contoursLoading = true;
                             break;

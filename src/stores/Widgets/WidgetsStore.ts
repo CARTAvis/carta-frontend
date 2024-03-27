@@ -31,7 +31,7 @@ import {
     // setting Panel
     StokesAnalysisSettingsPanelComponent
 } from "components";
-import {ImagePanelMode} from "models";
+import {ImagePanelMode, ImageType} from "models";
 import {AppStore, CatalogStore, HelpStore, HelpType, LayoutStore, PreferenceKeys, PreferenceStore} from "stores";
 import {
     ACTIVE_FILE_ID,
@@ -890,7 +890,7 @@ export class WidgetsStore {
     };
 
     private updateImagePanelButton = () => {
-        const imagePanelMode = AppStore.Instance.imagePanelMode;
+        const imagePanelMode = AppStore.Instance.imageViewConfigStore.imagePanelMode;
         const imagePanelButton = $(".lm_goldenlayout")?.find("li.lm-image-panel[style!='display:none;']");
         if (imagePanelButton) {
             imagePanelButton.attr("title", this.getImagePanelButtonTooltip(imagePanelMode));
@@ -908,33 +908,35 @@ export class WidgetsStore {
 
     onNextPageClick = () => {
         const appStore = AppStore.Instance;
-        const firstIndexInNextPage = (appStore.currentImagePage + 1) * appStore.imagesPerPage;
-        if (appStore.frames?.length > firstIndexInNextPage) {
-            appStore.setActiveFrameByIndex(firstIndexInNextPage);
+        const config = appStore.imageViewConfigStore;
+        const firstIndexInNextPage = (config.currentImagePage + 1) * config.imagesPerPage;
+        if (config.imageNum > firstIndexInNextPage) {
+            appStore.setActiveImageByIndex(firstIndexInNextPage);
         }
     };
 
     onPreviousPageClick = () => {
         const appStore = AppStore.Instance;
-        if (appStore.currentImagePage > 0) {
-            const firstIndexInPreviousPage = (appStore.currentImagePage - 1) * appStore.imagesPerPage;
-            appStore.setActiveFrameByIndex(firstIndexInPreviousPage);
+        const config = appStore.imageViewConfigStore;
+        if (config.currentImagePage > 0) {
+            const firstIndexInPreviousPage = (config.currentImagePage - 1) * config.imagesPerPage;
+            appStore.setActiveImageByIndex(firstIndexInPreviousPage);
         }
     };
 
     updateImagePanelPageButtons = () => {
         const appStore = AppStore.Instance;
+        const config = appStore.imageViewConfigStore;
         const nextPageButton = $(".lm_goldenlayout")?.find("li.lm-image-panel-next[style!='display:none;']");
         if (nextPageButton) {
-            const firstIndexInNextPage = (appStore.currentImagePage + 1) * appStore.imagesPerPage;
-            nextPageButton.attr("style", appStore.frames?.length > firstIndexInNextPage ? "" : "cursor: not-allowed; opacity: 0.2");
-            nextPageButton.attr("title", appStore.imagePanelMode === ImagePanelMode.None ? "next image" : "next page");
+            nextPageButton.attr("style", config.currentImagePage < config.numImagePages - 1 ? "" : "cursor: not-allowed; opacity: 0.2");
+            nextPageButton.attr("title", config.imagePanelMode === ImagePanelMode.None ? "next image" : "next page");
         }
 
         const previousPageButton = $(".lm_goldenlayout")?.find("li.lm-image-panel-previous[style!='display:none;']");
         if (previousPageButton) {
-            previousPageButton.attr("style", appStore.currentImagePage > 0 ? "" : "cursor: not-allowed; opacity: 0.2");
-            previousPageButton.attr("title", appStore.imagePanelMode === ImagePanelMode.None ? "previous image" : "previous page");
+            previousPageButton.attr("style", config.currentImagePage > 0 ? "" : "cursor: not-allowed; opacity: 0.2");
+            previousPageButton.attr("title", config.imagePanelMode === ImagePanelMode.None ? "previous image" : "previous page");
         }
     };
 
@@ -999,10 +1001,10 @@ export class WidgetsStore {
     // endregion
 
     @action updateImageWidgetTitle(layout: GoldenLayout) {
-        const appStore = AppStore.Instance;
+        const activeImage = AppStore.Instance.activeImage;
         let newTitle;
-        if (appStore.activeFrame) {
-            newTitle = appStore.activeFrame.filename;
+        if (activeImage && activeImage.type !== ImageType.PV_PREVIEW) {
+            newTitle = activeImage?.store?.filename ?? "";
         } else {
             newTitle = "No image loaded";
         }

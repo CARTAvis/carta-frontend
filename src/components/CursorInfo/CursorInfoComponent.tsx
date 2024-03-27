@@ -6,6 +6,7 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {SimpleTableComponent} from "components/Shared";
+import {ImageType} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
 import {FrameStore} from "stores/Frame";
 import {formattedExponential, toFixed} from "utilities";
@@ -124,10 +125,10 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
 
     render() {
         const appStore = AppStore.Instance;
-        const frameNum = appStore.frames.length;
+        const imageNum = appStore.imageViewConfigStore.imageNum;
         const frame = appStore.hoveredFrame ?? appStore.activeFrame;
 
-        if (frameNum <= 0) {
+        if (imageNum <= 0) {
             return (
                 <div className="region-list-widget">
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
@@ -139,24 +140,33 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
         const dataType = CARTA.ColumnType.String;
         const columnHeaders = columnNames.map((name, index) => new CARTA.CatalogHeader({name: name, dataType, columnIndex: index}));
 
-        const imageNames = appStore.frames.map(frame => frame.filename);
-        let values = Array(frameNum).fill("-");
-        let systems = Array(frameNum).fill("-");
-        let worldCoords = Array(frameNum).fill("-");
-        let imageCoords = Array(frameNum).fill("-");
-        const zCoords = appStore.frames.map(frame => this.genZCoordContent(frame));
-        const channels = appStore.frames.map(frame => frame.requiredChannel);
-        const stokes = appStore.frames.map(frame => frame.requiredPolarizationInfo);
+        const imageNames = Array.from(Array(appStore.imageViewConfigStore.imageNum).keys()).map(index => {
+            const image = appStore.imageViewConfigStore.getImage(index);
+            return image.store.filename;
+        });
+        let values = Array(imageNum).fill("-");
+        let systems = Array(imageNum).fill("-");
+        let worldCoords = Array(imageNum).fill("-");
+        let imageCoords = Array(imageNum).fill("-");
+        let zCoords = Array(imageNum).fill("-");
+        let channels = Array(imageNum).fill("-");
+        let stokes = Array(imageNum).fill("-");
 
         const showFrames = frame.spatialReference ? [frame.spatialReference, ...frame.spatialReference.secondarySpatialImages] : [frame, ...frame.secondarySpatialImages];
         const showFileIds = showFrames.map(frame => frame.frameInfo.fileId);
-        appStore.frames.forEach((frame, index) => {
+        appStore.frames.forEach(frame => {
+            const index = appStore.imageViewConfigStore.getImageListIndex(ImageType.FRAME, frame.id);
+
             if (showFileIds.includes(frame.frameInfo.fileId)) {
                 values[index] = this.genValueContent(frame);
                 systems[index] = appStore.overlayStore.global.explicitSystem ?? "-";
                 worldCoords[index] = this.genWorldCoordContent(frame);
                 imageCoords[index] = this.genImageCoordContent(frame);
             }
+
+            zCoords[index] = this.genZCoordContent(frame);
+            channels[index] = frame.requiredChannel;
+            stokes[index] = frame.requiredPolarizationInfo;
         });
 
         const columnsData = new Map<number, any>([
@@ -176,13 +186,13 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
                     <SimpleTableComponent
                         dataset={columnsData}
                         columnHeaders={columnHeaders}
-                        numVisibleRows={appStore.frames.length}
+                        numVisibleRows={imageNum}
                         columnWidths={this.columnWidths}
                         onColumnWidthChanged={this.onColumnWidthChanged}
                         enableGhostCells={false}
                         defaultRowHeight={40}
                         isIndexZero={true}
-                        boldIndex={[appStore.activeFrameIndex]}
+                        boldIndex={[appStore.activeImageIndex]}
                         tooltipIndex={0}
                     />
                 )}

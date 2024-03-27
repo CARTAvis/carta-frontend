@@ -9,10 +9,9 @@ import {observer} from "mobx-react";
 
 import {AppToaster, ExportImageMenuComponent, SuccessToast} from "components/Shared";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
-import {CARTA_INFO, PresetLayout, Snippet} from "models";
+import {CARTA_INFO, ImageType, ImageViewItem, PresetLayout, Snippet} from "models";
 import {ApiService, ConnectionStatus} from "services";
 import {AppStore, BrowserMode, DialogId, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
-import {FrameStore} from "stores/Frame";
 import {copyToClipboard, toFixed} from "utilities";
 
 import {WorkspaceDialogMode} from "../Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
@@ -242,7 +241,7 @@ export class RootMenuComponent extends React.Component {
                         onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)}
                     />
                 </Tooltip2>
-                <Menu.Item text="Close Image" label={`${modString}W`} disabled={appStore.appendFileDisabled} onClick={() => appStore.closeCurrentFile(true)} />
+                <Menu.Item text="Close Image" label={`${modString}W`} disabled={appStore.appendFileDisabled || appStore.activeImage?.type === ImageType.PV_PREVIEW} onClick={() => appStore.closeCurrentFile(true)} />
                 <Menu.Divider />
                 <Menu.Item text="Import Regions" disabled={!appStore.activeFrame} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)} />
                 <Tooltip2
@@ -257,6 +256,7 @@ export class RootMenuComponent extends React.Component {
                     />
                 </Tooltip2>
                 <Menu.Item text="Import Catalog" label={`${modString}G`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)} />
+                <Menu.Item text="Create Color Blending" disabled={appStore.frameNum < 1} onClick={appStore.imageViewConfigStore.createColorBlending} />
                 <Menu.Item text="Export Image" disabled={!appStore.activeFrame || appStore.isExportingImage || appStore.activeFrame.isPreview}>
                     <ExportImageMenuComponent />
                 </Menu.Item>
@@ -269,8 +269,9 @@ export class RootMenuComponent extends React.Component {
             </Menu>
         );
 
-        let layerItems = appStore.frames.map(frame => {
-            return <Menu.Item text={frame.filename} active={appStore.activeFrame && appStore.activeFrame.frameInfo.fileId === frame.frameInfo.fileId} key={frame.frameInfo.fileId} onClick={() => this.handleFrameSelect(frame)} />;
+        const imageItems = Array.from(Array(appStore.imageViewConfigStore.imageNum).keys()).map(index => {
+            const image = appStore.imageViewConfigStore.getImage(index);
+            return <Menu.Item text={image.store.filename} active={appStore.activeImageIndex === index} key={index} onClick={() => this.handleImageSelect(image)} />;
         });
 
         const presetLayouts: string[] = PresetLayout.PRESETS;
@@ -322,12 +323,12 @@ export class RootMenuComponent extends React.Component {
                             ))}
                     </Menu.Item>
                 </Menu.Item>
-                {layerItems.length > 0 && (
+                {imageItems.length > 0 && (
                     <Menu.Item text="Images" icon={"multi-select"}>
-                        {layerItems}
+                        {imageItems}
                         <Menu.Divider />
-                        <Menu.Item text="Previous Image" icon={"step-backward"} disabled={layerItems.length < 2} onClick={appStore.prevFrame} />
-                        <Menu.Item text="Next Image" icon={"step-forward"} disabled={layerItems.length < 2} onClick={appStore.nextFrame} />
+                        <Menu.Item text="Previous Image" icon={"step-backward"} disabled={imageItems.length < 2} onClick={appStore.prevImage} />
+                        <Menu.Item text="Next Image" icon={"step-forward"} disabled={imageItems.length < 2} onClick={appStore.nextImage} />
                     </Menu.Item>
                 )}
                 <Menu.Item text="File Header" icon={"app-header"} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.FileInfo)} />
@@ -562,12 +563,12 @@ export class RootMenuComponent extends React.Component {
         this.documentationAlertVisible = false;
     };
 
-    handleFrameSelect = (frame: FrameStore) => {
+    handleImageSelect = (image: ImageViewItem) => {
         const appStore = AppStore.Instance;
-        if (appStore.activeFrame && appStore.activeFrame === frame) {
+        if (appStore.activeImage && appStore.activeImage === image) {
             return;
         } else {
-            appStore.setActiveFrame(frame);
+            appStore.updateActiveImage(image);
         }
     };
 }
