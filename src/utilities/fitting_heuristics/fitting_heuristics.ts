@@ -54,9 +54,9 @@ export function profilePreprocessing(data: number[]) {
 export function histogram(data: number[], binN: number): {hist: number[]; binEdges: number[]} {
     if (isFinite(binN) && binN > 0) {
     }
-    const binEdges = [];
-    const min = _.min(data);
-    const max = _.max(data);
+    const binEdges: number[] = [];
+    const min = _.min(data) ?? NaN;
+    const max = _.max(data) ?? NaN;
     const binWidth = (max - min) / binN;
 
     for (let i = 0; i < binN; i++) {
@@ -87,7 +87,7 @@ export function histogramGaussianFit(y: number[], bins: number) {
 
     // padding 0 to both sides of the histogram
     const histY: number[] = [0, ...histResult.hist, 0];
-    const histXCenterTmp = [];
+    const histXCenterTmp: number[] = [];
     for (let i = 0; i < histResult.binEdges.length - 2; i++) {
         histXCenterTmp.push((histResult.binEdges[i] + histResult.binEdges[i + 1]) / 2);
     }
@@ -119,8 +119,8 @@ export function getEstimatedPoints(xInput: number[], yInput: number[]): {x: numb
 
     let INDEX_FROM, INDEX_TO;
     let SWITCH = false;
-    const xMeanSegment = [];
-    const yMeanSegment = [];
+    const xMeanSegment: number[] = [];
+    const yMeanSegment: number[] = [];
     const SN = 2;
     const FLOOR = flippedSumMean - SN * flippedSumStddev;
     const CEILING = flippedSumMean + SN * flippedSumStddev;
@@ -289,13 +289,13 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
         const lineBox = lineBoxs[i];
         const meanSN = (_.mean(ySmoothed.slice(lineBox.fromIndex, lineBox.toIndex)) - intensitySmoothedMean) / intensitySmoothedStddev;
         const chCount = lineBox.toIndex - lineBox.fromIndex + 1;
-        const dividerIndex = [];
-        let dividerIndexTmp = [];
-        const dividerValueTmp = [];
-        const dividerLocalMaxIndex = [];
-        const dividerLocalMinIndex = [];
-        const dividerLocalMaxValue = [];
-        const dividerLocalMinValue = [];
+        const dividerIndex: number[] = [];
+        let dividerIndexTmp: number[] = [];
+        const dividerValueTmp: number[] = [];
+        const dividerLocalMaxIndex: number[] = [];
+        const dividerLocalMinIndex: number[] = [];
+        const dividerLocalMaxValue: number[] = [];
+        const dividerLocalMinValue: number[] = [];
 
         if (Math.abs(meanSN) >= multiMeanSnThreshold && chCount >= multiChCountThreshold) {
             for (let j = lineBox.fromIndex; j < lineBox.toIndex - 4; j++) {
@@ -307,12 +307,12 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
                     return data.index;
                 });
                 if ((sortedArg[3] === 0 && sortedArg[4] === 4) || (sortedArg[3] === 4 && sortedArg[4] === 0)) {
-                    dividerLocalMinIndex.push(getIndexByValue(x, xSmoothed[j + 2]));
+                    dividerLocalMinIndex.push(getIndexByValue(x, xSmoothed[j + 2]) ?? NaN);
                     dividerLocalMinValue.push(ySmoothed[j + 2]);
                 }
 
                 if ((sortedArg[0] === 0 && sortedArg[1] === 4) || (sortedArg[0] === 4 && sortedArg[1] === 0)) {
-                    dividerLocalMaxIndex.push(getIndexByValue(x, xSmoothed[j + 2]));
+                    dividerLocalMaxIndex.push(getIndexByValue(x, xSmoothed[j + 2]) ?? NaN);
                     dividerLocalMaxValue.push(ySmoothed[j + 2]);
                 }
             }
@@ -471,7 +471,7 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
         const localYSmoothed = ySmoothed.slice(lineBox.fromIndex, lineBox.toIndex + 1);
         const localYExtrema = _.mean(localYSmoothed) > intensitySmoothedMean ? _.max(localYSmoothed) : _.min(localYSmoothed);
         component.setAmp(localYExtrema);
-        const localYExtremaIndex = localYSmoothed.indexOf(localYExtrema);
+        const localYExtremaIndex = localYSmoothed.indexOf(localYExtrema ?? NaN);
         component.setCenter(xSmoothed[lineBox.fromIndex + localYExtremaIndex]);
         components.push(component);
     }

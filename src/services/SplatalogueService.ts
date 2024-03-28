@@ -125,7 +125,9 @@ export class SplatalogueService {
                     entry = entry?.match(/^(^[\d.]+)/)?.[1] ?? ""; // match the string before the first char that is not a number or "."
                 }
 
-                column.stringData[i] = entry;
+                if (column.stringData !== null && column.stringData !== undefined) {
+                    column.stringData[i] = entry;
+                }
                 j++;
             });
         }
@@ -143,7 +145,7 @@ export class SplatalogueService {
         freqTo[0] = freqMax.toString();
         const unit = "MHz";
 
-        const intensityLimitEnabled = isFinite(intensityLimit);
+        const intensityLimitEnabled = Number.isFinite(intensityLimit);
         // use 0.000001 instead of 0 to avoid issues from the catalog itself
         const limit = intensityLimitEnabled ? (intensityLimit === 0 ? 0.000001 : intensityLimit) : 0;
 

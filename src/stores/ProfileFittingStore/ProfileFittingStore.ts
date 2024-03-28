@@ -504,7 +504,7 @@ export class ProfileFittingIndividualStore {
         this.center = val;
     };
 
-    @action setAmp = (val: number) => {
+    @action setAmp = (val: number | undefined) => {
         this.amp = val;
     };
 

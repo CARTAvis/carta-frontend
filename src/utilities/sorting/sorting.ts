@@ -10,10 +10,10 @@ export function getSortedIndexMap(
     hasFilter: boolean,
     numVisibleRows: number,
     sortData: Map<number, ProcessedColumnData>
-) {
+): number[] {
     const dataIndex = controlHeader.get(sortingInfo.columnName)?.dataIndex;
 
-    if (dataIndex >= 0) {
+    if (dataIndex !== undefined && dataIndex >= 0) {
         let direction = 0;
 
         if (sortingInfo.sortingType != null) {
@@ -30,8 +30,8 @@ export function getSortedIndexMap(
         switch (queryColumn?.dataType) {
             case CARTA.ColumnType.String:
                 sortedIndexMap.sort((a: number, b: number) => {
-                    const aString = String(queryColumn.data[a]);
-                    const bString = String(queryColumn.data[b]);
+                    const aString = String(queryColumn?.data?.[a]);
+                    const bString = String(queryColumn?.data?.[b]);
                     if (!aString) {
                         return direction * -1;
                     }
@@ -47,8 +47,8 @@ export function getSortedIndexMap(
                 break;
             default:
                 sortedIndexMap.sort((a: number, b: number) => {
-                    const aNumber = Number(queryColumn.data[a]);
-                    const bNumber = Number(queryColumn.data[b]);
+                    const aNumber = Number(queryColumn?.data?.[a]);
+                    const bNumber = Number(queryColumn?.data?.[b]);
                     return direction * (aNumber < bNumber ? -1 : 1);
                 });
                 break;
@@ -57,8 +57,8 @@ export function getSortedIndexMap(
     return sortedIndexMap;
 }
 
-export function getInitIndexMap(numVisibleRows: number) {
-    let sortedIndexMap = [];
+export function getInitIndexMap(numVisibleRows: number): number[] {
+    let sortedIndexMap: number[] = [];
     for (let index = 0; index < numVisibleRows; index++) {
         sortedIndexMap.push(index);
     }

@@ -11,7 +11,7 @@ export class AngularSize {
 
     public static convertValueFromArcsec = (arcsec: number, dstUnit: AngularSizeUnit): number => {
         if (!isFinite(arcsec)) {
-            return undefined;
+            return NaN;
         }
 
         switch (dstUnit) {
@@ -29,7 +29,7 @@ export class AngularSize {
 
     public static convertFromArcsec = (arcsec: number, supportMilliarcsec: boolean = false): AngularSize => {
         if (!isFinite(arcsec)) {
-            return {value: undefined, unit: AngularSizeUnit.ARCSEC};
+            return {value: NaN, unit: AngularSizeUnit.ARCSEC};
         }
 
         let unit;

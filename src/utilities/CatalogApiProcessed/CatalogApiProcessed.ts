@@ -16,9 +16,9 @@ enum DataType {
 }
 
 export type VizierResource = {
-    id: string;
-    name: string;
-    description: string;
+    id: string | null;
+    name: string | null;
+    description: string | null;
     coosys: VizierCoosys;
     table: VizierTable;
 };
@@ -29,13 +29,13 @@ type VizierCoosys = {
 };
 
 type VizierTable = {
-    name: string;
-    description: string;
+    name: string | null;
+    description: string | null;
     tableElement: Element;
 };
 
 export class CatalogApiProcessing {
-    static ProcessSimbadMetaData(metaData: []): CARTA.ICatalogHeader[] {
+    static ProcessSimbadMetaData(metaData: []): CARTA.CatalogHeader[] {
         let headers: CARTA.CatalogHeader[] = new Array(metaData.length + 2);
         for (let index = 0; index < metaData.length; index++) {
             const header = metaData[index];
@@ -72,8 +72,8 @@ export class CatalogApiProcessing {
 
     static ProcessSimbadData(data: [], headers: CARTA.ICatalogHeader[]): Map<number, ProcessedColumnData> {
         const dataMap = new Map<number, ProcessedColumnData>();
-        const raIndex = headers.filter(header => header.name === "ra")[0]?.columnIndex;
-        const decIndex = headers.filter(header => header.name === "dec")[0]?.columnIndex;
+        const raIndex = headers.filter(header => header.name === "ra")[0]?.columnIndex ?? NaN;
+        const decIndex = headers.filter(header => header.name === "dec")[0]?.columnIndex ?? NaN;
 
         const frame = AppStore.Instance.activeFrame;
         const raformat = `${NumberFormatType.HMS}.${6}`;
@@ -89,18 +89,20 @@ export class CatalogApiProcessing {
         for (let i = 0; i < headers.length; i++) {
             const header = headers[i];
             let column: ProcessedColumnData = {dataType: header.dataType, data: new Array(data.length)};
-            for (let j = 0; j < data.length; j++) {
-                if (header["name"] === "dist") {
-                    // simbad returns distance in deg, convert to arcsec for usability improvement
-                    column.data[j] = Number((data[j][header.columnIndex] * 3600).toFixed(6));
-                } else if (header["name"] === "RA_HMS" && raIndex > -1) {
-                    const x = AST.format(wcsCopy, 1, data[j][raIndex] * fraction);
-                    column.data[j] = x;
-                } else if (header["name"] === "DEC_DMS" && decIndex > -1) {
-                    const y = AST.format(wcsCopy, 2, data[j][decIndex] * fraction);
-                    column.data[j] = y;
-                } else {
-                    column.data[j] = data[j][header.columnIndex];
+            if (column.data) {
+                for (let j = 0; j < data.length; j++) {
+                    if (header["name"] === "dist") {
+                        // simbad returns distance in deg, convert to arcsec for usability improvement
+                        column.data[j] = Number((data[j][header.columnIndex ?? NaN] * 3600).toFixed(6));
+                    } else if (header["name"] === "RA_HMS" && raIndex > -1) {
+                        const x = AST.format(wcsCopy, 1, data[j][raIndex] * fraction);
+                        column.data[j] = x;
+                    } else if (header["name"] === "DEC_DMS" && decIndex > -1) {
+                        const y = AST.format(wcsCopy, 2, data[j][decIndex] * fraction);
+                        column.data[j] = y;
+                    } else {
+                        column.data[j] = data[j][header.columnIndex ?? NaN];
+                    }
                 }
             }
             dataMap.set(i, column);
@@ -110,8 +112,8 @@ export class CatalogApiProcessing {
         return dataMap;
     }
 
-    static matchDataType(dataType: string): CARTA.ColumnType {
-        const dataTypeUpperCase = dataType.toUpperCase();
+    static matchDataType(dataType: string | null): CARTA.ColumnType {
+        const dataTypeUpperCase = dataType?.toUpperCase();
         switch (dataTypeUpperCase) {
             case DataType.CHAR:
                 return CARTA.ColumnType.String;
@@ -158,14 +160,16 @@ export class CatalogApiProcessing {
                             tableElement: tableElement
                         }
                     };
-                    resources.set(name, res);
+                    if (name !== null) {
+                        resources.set(name, res);
+                    }
                 }
             }
         }
         return resources;
     }
 
-    static ProcessVizierTableData(table: Element): {headers: CARTA.ICatalogHeader[]; dataMap: Map<number, ProcessedColumnData>; size: number} {
+    static ProcessVizierTableData(table: Element): {headers: CARTA.CatalogHeader[]; dataMap: Map<number, ProcessedColumnData>; size: number} {
         const fields = table.getElementsByTagName("FIELD");
         let headers: CARTA.CatalogHeader[] = new Array(fields.length);
         for (let index = 0; index < fields.length; index++) {
@@ -191,13 +195,16 @@ export class CatalogApiProcessing {
         for (let index = 0; index < size; index++) {
             const columns = data[index].getElementsByTagName("TD");
             for (let j = 0; j < columns.length; j++) {
-                //textContent is faster than innerHTML
-                if (headers[j]["dataType"] === CARTA.ColumnType.String || headers[j]["dataType"] === CARTA.ColumnType.UnsupportedType || headers[j]["dataType"] === CARTA.ColumnType.Bool) {
-                    dataMap.get(j).data[index] = columns[j].textContent;
-                } else if (headers[j]["dataType"] === CARTA.ColumnType.Float || headers[j]["dataType"] === CARTA.ColumnType.Double) {
-                    dataMap.get(j).data[index] = parseFloat(columns[j].textContent);
-                } else {
-                    dataMap.get(j).data[index] = parseInt(columns[j].textContent);
+                const columnData = dataMap.get(j);
+                if (columnData?.data) {
+                    //textContent is faster than innerHTML
+                    if (headers[j]["dataType"] === CARTA.ColumnType.String || headers[j]["dataType"] === CARTA.ColumnType.UnsupportedType || headers[j]["dataType"] === CARTA.ColumnType.Bool) {
+                        columnData.data[index] = columns[j].textContent ?? "";
+                    } else if (headers[j]["dataType"] === CARTA.ColumnType.Float || headers[j]["dataType"] === CARTA.ColumnType.Double) {
+                        columnData.data[index] = parseFloat(columns[j].textContent ?? "");
+                    } else {
+                        columnData.data[index] = parseInt(columns[j].textContent ?? "");
+                    }
                 }
             }
         }

@@ -7,54 +7,54 @@ import {getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
 import {rasterShaders} from "./GLSL";
 
 interface ShaderUniforms {
-    MinVal: WebGLUniformLocation;
-    MaxVal: WebGLUniformLocation;
-    PixelHighlightVal: WebGLUniformLocation;
-    Bias: WebGLUniformLocation;
-    Contrast: WebGLUniformLocation;
-    UseSmoothedBiasContrast: WebGLUniformLocation;
-    Gamma: WebGLUniformLocation;
-    Alpha: WebGLUniformLocation;
-    ScaleType: WebGLUniformLocation;
-    Inverted: WebGLUniformLocation;
-    NaNColor: WebGLUniformLocation;
-    DataTexture: WebGLUniformLocation;
-    CmapTexture: WebGLUniformLocation;
-    CmapCustomGradientEnd: WebGLUniformLocation;
-    CmapCustomGradientStart: WebGLUniformLocation;
-    NumCmaps: WebGLUniformLocation;
-    CmapIndex: WebGLUniformLocation;
-    CanvasWidth: WebGLUniformLocation;
-    CanvasHeight: WebGLUniformLocation;
-    RotationOrigin: WebGLUniformLocation;
-    RotationAngle: WebGLUniformLocation;
-    ScaleAdjustment: WebGLUniformLocation;
-    TileSize: WebGLUniformLocation;
-    TileScaling: WebGLUniformLocation;
-    TileOffset: WebGLUniformLocation;
-    TileTextureOffset: WebGLUniformLocation;
-    TileTextureSize: WebGLUniformLocation;
-    TextureSize: WebGLUniformLocation;
-    TileBorder: WebGLUniformLocation;
-    PixelGridCutoff: WebGLUniformLocation;
-    PixelGridColor: WebGLUniformLocation;
-    PixelGridOpacity: WebGLUniformLocation;
-    PixelAspectRatio: WebGLUniformLocation;
+    MinVal: WebGLUniformLocation | null;
+    MaxVal: WebGLUniformLocation | null;
+    PixelHighlightVal: WebGLUniformLocation | null;
+    Bias: WebGLUniformLocation | null;
+    Contrast: WebGLUniformLocation | null;
+    UseSmoothedBiasContrast: WebGLUniformLocation | null;
+    Gamma: WebGLUniformLocation | null;
+    Alpha: WebGLUniformLocation | null;
+    ScaleType: WebGLUniformLocation | null;
+    Inverted: WebGLUniformLocation | null;
+    NaNColor: WebGLUniformLocation | null;
+    DataTexture: WebGLUniformLocation | null;
+    CmapTexture: WebGLUniformLocation | null;
+    CmapCustomGradientEnd: WebGLUniformLocation | null;
+    CmapCustomGradientStart: WebGLUniformLocation | null;
+    NumCmaps: WebGLUniformLocation | null;
+    CmapIndex: WebGLUniformLocation | null;
+    CanvasWidth: WebGLUniformLocation | null;
+    CanvasHeight: WebGLUniformLocation | null;
+    RotationOrigin: WebGLUniformLocation | null;
+    RotationAngle: WebGLUniformLocation | null;
+    ScaleAdjustment: WebGLUniformLocation | null;
+    TileSize: WebGLUniformLocation | null;
+    TileScaling: WebGLUniformLocation | null;
+    TileOffset: WebGLUniformLocation | null;
+    TileTextureOffset: WebGLUniformLocation | null;
+    TileTextureSize: WebGLUniformLocation | null;
+    TextureSize: WebGLUniformLocation | null;
+    TileBorder: WebGLUniformLocation | null;
+    PixelGridCutoff: WebGLUniformLocation | null;
+    PixelGridColor: WebGLUniformLocation | null;
+    PixelGridOpacity: WebGLUniformLocation | null;
+    PixelAspectRatio: WebGLUniformLocation | null;
 }
 
 export class TileWebGLService {
     protected static staticInstance: TileWebGLService;
 
-    readonly gl: WebGL2RenderingContext;
+    readonly gl: WebGL2RenderingContext | null;
     cmapTexture: WebGLTexture;
     // GL buffers
-    vertexPositionBuffer: WebGLBuffer;
-    vertexUVBuffer: WebGLBuffer;
+    vertexPositionBuffer: WebGLBuffer | null;
+    vertexUVBuffer: WebGLBuffer | null;
     // Shader attribute handles
     vertexPositionAttribute: number;
     vertexUVAttribute: number;
     // Shader uniform handles
-    shaderProgram: WebGLProgram;
+    shaderProgram: WebGLProgram | null;
     shaderUniforms: ShaderUniforms;
 
     static get Instance() {
@@ -79,48 +79,50 @@ export class TileWebGLService {
             return;
         }
         this.shaderProgram = getShaderProgram(this.gl, rasterShaders.vertexShader, rasterShaders.fragmentShader);
-        this.gl.useProgram(this.shaderProgram);
+        if (this.shaderProgram) {
+            this.gl.useProgram(this.shaderProgram);
 
-        this.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgram, "aVertexPosition");
-        this.vertexUVAttribute = this.gl.getAttribLocation(this.shaderProgram, "aVertexUV");
-        this.gl.enableVertexAttribArray(this.vertexPositionAttribute);
-        this.gl.enableVertexAttribArray(this.vertexUVAttribute);
+            this.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgram, "aVertexPosition");
+            this.vertexUVAttribute = this.gl.getAttribLocation(this.shaderProgram, "aVertexUV");
+            this.gl.enableVertexAttribArray(this.vertexPositionAttribute);
+            this.gl.enableVertexAttribArray(this.vertexUVAttribute);
 
-        this.shaderUniforms = {
-            MinVal: this.gl.getUniformLocation(this.shaderProgram, "uMinVal"),
-            MaxVal: this.gl.getUniformLocation(this.shaderProgram, "uMaxVal"),
-            PixelHighlightVal: this.gl.getUniformLocation(this.shaderProgram, "uPixelHighlightVal"),
-            NaNColor: this.gl.getUniformLocation(this.shaderProgram, "uNaNColor"),
-            Bias: this.gl.getUniformLocation(this.shaderProgram, "uBias"),
-            Contrast: this.gl.getUniformLocation(this.shaderProgram, "uContrast"),
-            UseSmoothedBiasContrast: this.gl.getUniformLocation(this.shaderProgram, "uUseSmoothedBiasContrast"),
-            Gamma: this.gl.getUniformLocation(this.shaderProgram, "uGamma"),
-            Alpha: this.gl.getUniformLocation(this.shaderProgram, "uAlpha"),
-            ScaleType: this.gl.getUniformLocation(this.shaderProgram, "uScaleType"),
-            Inverted: this.gl.getUniformLocation(this.shaderProgram, "uInverted"),
-            DataTexture: this.gl.getUniformLocation(this.shaderProgram, "uDataTexture"),
-            CmapTexture: this.gl.getUniformLocation(this.shaderProgram, "uCmapTexture"),
-            CmapCustomGradientEnd: this.gl.getUniformLocation(this.shaderProgram, "uCmapCustomGradientEnd"),
-            CmapCustomGradientStart: this.gl.getUniformLocation(this.shaderProgram, "uCmapCustomGradientStart"),
-            NumCmaps: this.gl.getUniformLocation(this.shaderProgram, "uNumCmaps"),
-            CmapIndex: this.gl.getUniformLocation(this.shaderProgram, "uCmapIndex"),
-            CanvasWidth: this.gl.getUniformLocation(this.shaderProgram, "uCanvasWidth"),
-            CanvasHeight: this.gl.getUniformLocation(this.shaderProgram, "uCanvasHeight"),
-            ScaleAdjustment: this.gl.getUniformLocation(this.shaderProgram, "uScaleAdjustment"),
-            RotationOrigin: this.gl.getUniformLocation(this.shaderProgram, "uRotationOrigin"),
-            RotationAngle: this.gl.getUniformLocation(this.shaderProgram, "uRotationAngle"),
-            TileSize: this.gl.getUniformLocation(this.shaderProgram, "uTileSize"),
-            TileScaling: this.gl.getUniformLocation(this.shaderProgram, "uTileScaling"),
-            TileOffset: this.gl.getUniformLocation(this.shaderProgram, "uTileOffset"),
-            TileTextureOffset: this.gl.getUniformLocation(this.shaderProgram, "uTileTextureOffset"),
-            TextureSize: this.gl.getUniformLocation(this.shaderProgram, "uTextureSize"),
-            TileTextureSize: this.gl.getUniformLocation(this.shaderProgram, "uTileTextureSize"),
-            TileBorder: this.gl.getUniformLocation(this.shaderProgram, "uTileBorder"),
-            PixelGridCutoff: this.gl.getUniformLocation(this.shaderProgram, "uPixelGridCutoff"),
-            PixelGridColor: this.gl.getUniformLocation(this.shaderProgram, "uPixelGridColor"),
-            PixelGridOpacity: this.gl.getUniformLocation(this.shaderProgram, "uPixelGridOpacity"),
-            PixelAspectRatio: this.gl.getUniformLocation(this.shaderProgram, "uPixelAspectRatio")
-        };
+            this.shaderUniforms = {
+                MinVal: this.gl.getUniformLocation(this.shaderProgram, "uMinVal"),
+                MaxVal: this.gl.getUniformLocation(this.shaderProgram, "uMaxVal"),
+                PixelHighlightVal: this.gl.getUniformLocation(this.shaderProgram, "uPixelHighlightVal"),
+                NaNColor: this.gl.getUniformLocation(this.shaderProgram, "uNaNColor"),
+                Bias: this.gl.getUniformLocation(this.shaderProgram, "uBias"),
+                Contrast: this.gl.getUniformLocation(this.shaderProgram, "uContrast"),
+                UseSmoothedBiasContrast: this.gl.getUniformLocation(this.shaderProgram, "uUseSmoothedBiasContrast"),
+                Gamma: this.gl.getUniformLocation(this.shaderProgram, "uGamma"),
+                Alpha: this.gl.getUniformLocation(this.shaderProgram, "uAlpha"),
+                ScaleType: this.gl.getUniformLocation(this.shaderProgram, "uScaleType"),
+                Inverted: this.gl.getUniformLocation(this.shaderProgram, "uInverted"),
+                DataTexture: this.gl.getUniformLocation(this.shaderProgram, "uDataTexture"),
+                CmapTexture: this.gl.getUniformLocation(this.shaderProgram, "uCmapTexture"),
+                CmapCustomGradientEnd: this.gl.getUniformLocation(this.shaderProgram, "uCmapCustomGradientEnd"),
+                CmapCustomGradientStart: this.gl.getUniformLocation(this.shaderProgram, "uCmapCustomGradientStart"),
+                NumCmaps: this.gl.getUniformLocation(this.shaderProgram, "uNumCmaps"),
+                CmapIndex: this.gl.getUniformLocation(this.shaderProgram, "uCmapIndex"),
+                CanvasWidth: this.gl.getUniformLocation(this.shaderProgram, "uCanvasWidth"),
+                CanvasHeight: this.gl.getUniformLocation(this.shaderProgram, "uCanvasHeight"),
+                ScaleAdjustment: this.gl.getUniformLocation(this.shaderProgram, "uScaleAdjustment"),
+                RotationOrigin: this.gl.getUniformLocation(this.shaderProgram, "uRotationOrigin"),
+                RotationAngle: this.gl.getUniformLocation(this.shaderProgram, "uRotationAngle"),
+                TileSize: this.gl.getUniformLocation(this.shaderProgram, "uTileSize"),
+                TileScaling: this.gl.getUniformLocation(this.shaderProgram, "uTileScaling"),
+                TileOffset: this.gl.getUniformLocation(this.shaderProgram, "uTileOffset"),
+                TileTextureOffset: this.gl.getUniformLocation(this.shaderProgram, "uTileTextureOffset"),
+                TextureSize: this.gl.getUniformLocation(this.shaderProgram, "uTextureSize"),
+                TileTextureSize: this.gl.getUniformLocation(this.shaderProgram, "uTileTextureSize"),
+                TileBorder: this.gl.getUniformLocation(this.shaderProgram, "uTileBorder"),
+                PixelGridCutoff: this.gl.getUniformLocation(this.shaderProgram, "uPixelGridCutoff"),
+                PixelGridColor: this.gl.getUniformLocation(this.shaderProgram, "uPixelGridColor"),
+                PixelGridOpacity: this.gl.getUniformLocation(this.shaderProgram, "uPixelGridOpacity"),
+                PixelAspectRatio: this.gl.getUniformLocation(this.shaderProgram, "uPixelAspectRatio")
+            };
+        }
 
         this.gl.uniform1i(this.shaderUniforms.DataTexture, 0);
         this.gl.uniform1i(this.shaderUniforms.CmapTexture, 1);
@@ -168,7 +170,7 @@ export class TileWebGLService {
     }
 
     setCustomGradientUniforms(hex: string, startHex?: string) {
-        if (tinycolor(hex).getFormat() === "hex") {
+        if (tinycolor(hex).getFormat() === "hex" && this.gl) {
             const rgb = tinycolor(hex).toRgb();
             this.gl.uniform3f(this.shaderUniforms.CmapCustomGradientEnd, rgb.r / 255, rgb.g / 255, rgb.b / 255);
             const CmapCustomGradientStart = tinycolor(startHex).getFormat() === "hex" ? tinycolor(startHex).toRgb() : tinycolor("#000000").toRgb();

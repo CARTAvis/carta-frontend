@@ -6,7 +6,7 @@ export class Freq {
 
     public static convertUnitFromHz = (freq: number): Freq => {
         if (!isFinite(freq)) {
-            return {value: undefined, unit: FrequencyUnit.MHZ};
+            return {value: NaN, unit: FrequencyUnit.MHZ};
         }
 
         if (freq >= 1e9) {

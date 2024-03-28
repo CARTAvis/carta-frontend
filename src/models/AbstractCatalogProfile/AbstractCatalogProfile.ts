@@ -52,7 +52,7 @@ export abstract class AbstractCatalogProfileStore {
     private static readonly FALSE_REGEX = /^[fFnN].*$/;
 
     abstract catalogInfo: CatalogInfo;
-    abstract catalogHeader: Array<CARTA.ICatalogHeader>;
+    abstract catalogHeader: Array<CARTA.CatalogHeader>;
     abstract catalogControlHeader: Map<string, ControlHeader>;
     abstract numVisibleRows: number;
 
@@ -68,14 +68,14 @@ export abstract class AbstractCatalogProfileStore {
     @observable loadingData: boolean;
     @observable catalogType: CatalogType;
     @observable catalogFilterRequest: CARTA.CatalogFilterRequest;
-    @observable catalogCoordinateSystem: {system: CatalogSystemType; equinox: string; epoch: string; coordinate: {x: CatalogOverlay; y: CatalogOverlay}};
-    @observable filterDataSize: number;
+    @observable catalogCoordinateSystem: {system: CatalogSystemType; equinox: string; epoch: string; coordinate: {x: CatalogOverlay; y: CatalogOverlay} | undefined};
+    @observable filterDataSize: number | undefined;
     @observable progress: number;
     @observable updatingDataStream: boolean;
     @observable updateTableView: boolean;
     @observable updateMode: CatalogUpdateMode;
     @observable selectedPointIndices: number[];
-    @observable sortingInfo: {columnName: string; sortingType: CARTA.SortingType};
+    @observable sortingInfo: {columnName: string | null; sortingType: CARTA.SortingType | null};
     @observable sortedIndexMap: number[];
     @observable filterIndexMap: number[];
 
@@ -151,8 +151,8 @@ export abstract class AbstractCatalogProfileStore {
         const controlHeader = this.catalogControlHeader;
         const xHeader = controlHeader.get(xColumnName);
         const yHeader = controlHeader.get(yColumnName);
-        const xHeaderInfo = this.catalogHeader[xHeader.dataIndex];
-        const yHeaderInfo = this.catalogHeader[yHeader.dataIndex];
+        const xHeaderInfo = this.catalogHeader[xHeader?.dataIndex ?? NaN];
+        const yHeaderInfo = this.catalogHeader[yHeader?.dataIndex ?? NaN];
 
         const xColumn = columnsData.get(xHeaderInfo.columnIndex);
         const yColumn = columnsData.get(yHeaderInfo.columnIndex);
@@ -169,7 +169,7 @@ export abstract class AbstractCatalogProfileStore {
     public get1DPlotData(column: string): {wcsData?: TypedArray; headerInfo: CARTA.ICatalogHeader} {
         const controlHeader = this.catalogControlHeader;
         const header = controlHeader.get(column);
-        const headerInfo = this.catalogHeader[header.dataIndex];
+        const headerInfo = this.catalogHeader[header?.dataIndex ?? NaN];
         const xColumn = this.catalogData.get(headerInfo.columnIndex);
         if (xColumn && xColumn.dataType !== CARTA.ColumnType.String && xColumn.dataType !== CARTA.ColumnType.Bool) {
             let wcsData = xColumn.data as TypedArray;
@@ -224,7 +224,7 @@ export abstract class AbstractCatalogProfileStore {
         return this.catalogInfo.fileId;
     }
 
-    @computed get activedSystem(): {x: CatalogOverlay; y: CatalogOverlay} {
+    @computed get activedSystem(): {x: CatalogOverlay; y: CatalogOverlay} | undefined {
         return this.systemCoordinateMap.get(this.catalogCoordinateSystem.system);
     }
 
@@ -233,7 +233,7 @@ export abstract class AbstractCatalogProfileStore {
     }
 
     @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader> {
-        let displayedColumnHeaders = [];
+        let displayedColumnHeaders: CARTA.CatalogHeader[] = [];
         this.catalogControlHeader.forEach((value, key) => {
             if (value.display && this.catalogHeader) {
                 displayedColumnHeaders.push(this.catalogHeader[value.dataIndex]);
@@ -274,14 +274,14 @@ export abstract class AbstractCatalogProfileStore {
         return this.catalogType === CatalogType.FILE;
     }
 
-    @computed get tableColumnWidts(): Array<number> {
-        const columnWidts = [];
+    @computed get tableColumnWidths(): Array<number | null> {
+        const columnWidths: (number | null)[] = [];
         this.catalogControlHeader.forEach((value, key) => {
             if (value.display) {
-                columnWidts.push(value.columnWidth);
+                columnWidths.push(value.columnWidth);
             }
         });
-        return columnWidts;
+        return columnWidths;
     }
 
     @computed get hasFilter(): boolean {
@@ -295,22 +295,28 @@ export abstract class AbstractCatalogProfileStore {
     @action setColumnFilter = (filter: string, columnName: string) => {
         const current = this.catalogControlHeader.get(columnName);
         const newHeader: ControlHeader = {
-            columnIndex: current.columnIndex,
-            dataIndex: current.dataIndex,
-            display: current.display,
+            columnIndex: current?.columnIndex ?? NaN,
+            dataIndex: current?.dataIndex ?? NaN,
+            display: current?.display ?? false,
             filter: filter,
-            columnWidth: current.columnWidth
+            columnWidth: current?.columnWidth ?? null
         };
         this.catalogControlHeader.set(columnName, newHeader);
         this.updateTableStatus(true);
     };
 
     @action.bound setTableColumnWidth(width: number, columnName: string) {
-        this.catalogControlHeader.get(columnName).columnWidth = width;
+        const header = this.catalogControlHeader.get(columnName);
+        if (header) {
+            header.columnWidth = width;
+        }
     }
 
     @action setHeaderDisplay(val: boolean, columnName: string) {
-        this.catalogControlHeader.get(columnName).display = val;
+        const header = this.catalogControlHeader.get(columnName);
+        if (header) {
+            header.display = val;
+        }
     }
 
     @action setUpdateMode(mode: CatalogUpdateMode) {
@@ -373,8 +379,8 @@ export abstract class AbstractCatalogProfileStore {
         const catalogStore = CatalogStore.Instance;
         const coordsArray = CatalogStore.Instance.catalogGLData.get(this.catalogFileId);
         if (coordsArray?.x?.length) {
-            let selectedX = [];
-            let selectedY = [];
+            let selectedX: number[] = [];
+            let selectedY: number[] = [];
             const selectedData = new Uint8Array(coordsArray.x.length);
             let matchedIndices = this.getSortedIndices(pointIndices);
             for (let index = 0; index < matchedIndices.length; index++) {
@@ -404,11 +410,11 @@ export abstract class AbstractCatalogProfileStore {
                     appStore.activeFrame.setZoom(zoomLevel);
                 }
 
-                if (frame.spatialReference && frame !== appStore.activeFrame) {
+                if (frame?.spatialReference && frame !== appStore.activeFrame) {
                     positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
                 }
 
-                if (appStore.activeFrame.spatialReference && !frame.spatialReference) {
+                if (appStore.activeFrame.spatialReference && frame && !frame.spatialReference) {
                     appStore.activeFrame.setCenter(positionImageSpace.x, positionImageSpace.y, false);
                 } else {
                     appStore.activeFrame.setCenter(positionImageSpace.x, positionImageSpace.y);

@@ -46,12 +46,12 @@ function initContextWithSize(width: number, height: number) {
     return canvas.getContext("2d");
 }
 
-let colormapContext: CanvasRenderingContext2D | undefined;
+let colormapContext: CanvasRenderingContext2D | null;
 const imageObj = new Image();
 imageObj.src = allMaps;
 imageObj.onload = () => {
     colormapContext = initContextWithSize(imageObj.width, imageObj.height);
-    colormapContext.drawImage(imageObj, 0, 0, imageObj.width, imageObj.height, 0, 0, imageObj.width, imageObj.height);
+    colormapContext?.drawImage(imageObj, 0, 0, imageObj.width, imageObj.height, 0, 0, imageObj.width, imageObj.height);
 };
 
 // return color map as Uint8ClampedArray according colorMap
@@ -96,7 +96,7 @@ export function getColorForTheme(color: string) {
 }
 
 function generateColorGradientArray(targetColorHex: string, startColorHex = "#000000", steps: number = 1024) {
-    const gradientArray = [];
+    const gradientArray: number[] = [];
 
     const targetColor = tinycolor(targetColorHex).toRgb();
     const startColor = tinycolor(startColorHex).toRgb();
