@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added support for changing the depth order of floating widget and dialog on select ([#2307](https://github.com/CARTAvis/carta-frontend/pull/2307)).
 * Added the raster matching setting to the preference and improved the raster matching function ([#2004](https://github.com/CARTAvis/carta-frontend/issues/2004) and [#1959](https://github.com/CARTAvis/carta-frontend/issues/1959)).
 * Added support for sorting the spectral line table ([#2262](https://github.com/CARTAvis/carta-frontend/issues/2262)).
+* Added additional mono-color colormaps with a customized option for the raster image ([#2300](https://github.com/CARTAvis/carta-frontend/issues/2300))
 ### Fixed
 * Fixed ruler annotation matching bug ([#2242](https://github.com/CARTAvis/carta-frontend/issues/2242)).
 * Fixed compass and ruler annotations update bug in the spatially matched image when changing the coordinate ([#2270](https://github.com/CARTAvis/carta-frontend/issues/2270)).
@@ -18,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed the flashing contour rendering during animation ([#579](https://github.com/CARTAvis/carta-frontend/issues/579)).
 * Fixed incorrect range values in the save image dialog with non-convertible spectral axis images by supporting native/channel options in the spectral coordinate selector for non-convertible spectral axis images ([#2225](https://github.com/CARTAvis/carta-frontend/issues/2225)).
 * Fixed a bug when applying a filter to the shifted frequency column in the spectral line query widget ([#2326](https://github.com/CARTAvis/carta-frontend/issues/2326)).
+* Improved the cursor interaction area in the image view widget ([#1794](https://github.com/CARTAvis/carta-frontend/issues/1794)).
+* Fixed saving or opening CASA image with a trailing slash using the URL parameter or the snippets ([#1816](https://github.com/CARTAvis/carta-frontend/issues/1816) and [#1357](https://github.com/CARTAvis/carta-backend/issues/1357)).
 
 ## [4.1.0]
 
