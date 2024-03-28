@@ -425,7 +425,7 @@ export class ContourDialogComponent extends React.Component {
                     <LinePlotComponent {...linePlotProps} />
                 </div>
                 <ContourGeneratorPanelComponent frame={dataSource} generatorType={appStore.preferenceStore.contourGeneratorType} onLevelsGenerated={this.handleLevelsGenerated} />
-                <div className="contour-level-panel-levels">
+                <div className="contour-level-panel-levels" data-testid="contour-config-level-input-form">
                     <FormGroup label={"Levels"} inline={true}>
                         <TagInput
                             addOnBlur={true}
@@ -504,15 +504,21 @@ export class ContourDialogComponent extends React.Component {
                         </Tooltip2>
                     </FormGroup>
                     <Tabs defaultSelectedTabId={ContourDialogTabs.Levels} renderActiveTabPanelOnly={false}>
-                        <Tab id={ContourDialogTabs.Levels} title="Levels" panel={levelPanel} panelClassName="contour-level-panel" />
-                        <Tab id={ContourDialogTabs.Configuration} title="Configuration" panel={configPanel} panelClassName="contour-config-panel" />
-                        <Tab id={ContourDialogTabs.Styling} title="Styling" panel={<ContourStylePanelComponent frame={dataSource} darkTheme={appStore.darkTheme} />} />
+                        <Tab id={ContourDialogTabs.Levels} title="Levels" panel={levelPanel} panelClassName="contour-level-panel" data-testid="contour-dailog-level-tab-title" />
+                        <Tab id={ContourDialogTabs.Configuration} title="Configuration" panel={configPanel} panelClassName="contour-config-panel" data-testid="contour-dailog-config-tab-title" />
+                        <Tab id={ContourDialogTabs.Styling} title="Styling" panel={<ContourStylePanelComponent frame={dataSource} darkTheme={appStore.darkTheme} />} data-testid="contour-dailog-styling-tab-title" />
                     </Tabs>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <AnchorButton intent={Intent.WARNING} onClick={this.handleClearContours} disabled={!dataSource.contourConfig.enabled} text="Clear" />
-                        <AnchorButton intent={Intent.SUCCESS} onClick={this.handleApplyContours} disabled={!hasLevels || (!this.contourConfigChanged && dataSource.contourConfig.enabled)} text="Apply" />
+                        <AnchorButton
+                            intent={Intent.SUCCESS}
+                            onClick={this.handleApplyContours}
+                            disabled={!hasLevels || (!this.contourConfigChanged && dataSource.contourConfig.enabled)}
+                            text="Apply"
+                            data-testid="contour-config-apply-button"
+                        />
                     </div>
                 </div>
                 <Alert className={appStore.darkTheme ? "bp3-dark" : ""} icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>

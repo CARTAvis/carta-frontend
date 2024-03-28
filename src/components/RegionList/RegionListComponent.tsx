@@ -379,6 +379,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         className="cell"
                         style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}
                         onClick={regionSet.locked || this.regionsVisibility === RegionsOpacity.Invisible ? () => {} : ev => this.handleRegionLockClicked(ev, region)}
+                        data-testid={"region-list-table-row-" + (props.index + 1) + "-lock-cell"}
                     >
                         <Icon
                             icon={region.locked ? "lock" : this.regionsVisibility === RegionsOpacity.Invisible ? "lock" : "unlock"}
@@ -399,7 +400,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             let focusEntry: React.ReactNode;
             if (region.regionId) {
                 focusEntry = (
-                    <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={ev => this.handleFocusClicked(ev, region)}>
+                    <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={ev => this.handleFocusClicked(ev, region)} data-testid={"region-list-table-row-" + (props.index + 1) + "-center-cell"}>
                         <CustomIcon icon="center" />
                     </div>
                 );
@@ -420,7 +421,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             style.overflowX = "hidden";
 
             return (
-                <div className={className} key={region.regionId} onClick={() => frame.regionSet.selectRegion(region)} style={style}>
+                <div className={className} key={region.regionId} onClick={() => frame.regionSet.selectRegion(region)} style={style} data-testid={"region-list-table-row-" + (props.index + 1)}>
                     {lockEntry}
                     {focusEntry}
                     {exportEntry}

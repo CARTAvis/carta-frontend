@@ -343,7 +343,17 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!grid.visible}>
-                    <SafeNumericInput placeholder="Width" min={0.001} value={grid.width} stepSize={0.5} minorStepSize={0.1} majorStepSize={1} disabled={!grid.visible} onValueChange={(value: number) => grid.setWidth(value)} />
+                    <SafeNumericInput
+                        placeholder="Width"
+                        min={0.001}
+                        value={grid.width}
+                        stepSize={0.5}
+                        minorStepSize={0.1}
+                        majorStepSize={1}
+                        disabled={!grid.visible}
+                        onValueChange={(value: number) => grid.setWidth(value)}
+                        data-testid="image-view-settings-grid-width-input"
+                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom gap" disabled={!grid.visible}>
                     <Switch checked={grid.customGap} disabled={!grid.visible} onChange={ev => grid.setCustomGap(ev.currentTarget.checked)} />
@@ -768,7 +778,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Tab id={ImageViewSettingsPanelTabs.GLOBAL} title={ImageViewSettingsPanelTabs.GLOBAL} panel={globalPanel} />
                     <Tab id={ImageViewSettingsPanelTabs.TITLE} title={ImageViewSettingsPanelTabs.TITLE} panel={titlePanel} />
                     <Tab id={ImageViewSettingsPanelTabs.TICKS} title={ImageViewSettingsPanelTabs.TICKS} panel={ticksPanel} />
-                    <Tab id={ImageViewSettingsPanelTabs.GRIDS} title={ImageViewSettingsPanelTabs.GRIDS} panel={gridPanel} />
+                    <Tab id={ImageViewSettingsPanelTabs.GRIDS} title={ImageViewSettingsPanelTabs.GRIDS} panel={gridPanel} data-testid="image-view-settings-grid-tab-title" />
                     <Tab id={ImageViewSettingsPanelTabs.BORDER} title={ImageViewSettingsPanelTabs.BORDER} panel={borderPanel} />
                     <Tab id={ImageViewSettingsPanelTabs.AXES} title={ImageViewSettingsPanelTabs.AXES} panel={axesPanel} />
                     <Tab id={ImageViewSettingsPanelTabs.NUMBERS} title={ImageViewSettingsPanelTabs.NUMBERS} panel={numbersPanel} />

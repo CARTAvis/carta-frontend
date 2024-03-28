@@ -116,12 +116,18 @@ export class ToolbarMenuComponent extends React.Component {
         return (
             <React.Fragment>
                 <ButtonGroup className={actionsClassName}>
-                    {Array.from(RegionStore.AVAILABLE_REGION_TYPES.keys()).map((type, index) => {
+                    {Array.from(RegionStore.AVAILABLE_REGION_TYPES.entries()).map(([type, typeString], index) => {
                         const regionIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
                         const regionIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
                         return (
                             <Tooltip2 content={this.regionTooltip(type)} position={Position.BOTTOM} key={index}>
-                                <AnchorButton icon={regionIcon} onClick={() => this.handleRegionTypeClicked(type)} active={isRegionCreating && newRegionType === type} disabled={regionButtonsDisabled} />
+                                <AnchorButton
+                                    icon={regionIcon}
+                                    onClick={() => this.handleRegionTypeClicked(type)}
+                                    active={isRegionCreating && newRegionType === type}
+                                    disabled={regionButtonsDisabled}
+                                    data-testid={typeString.toLowerCase() + "-region-shortcut-button"}
+                                />
                             </Tooltip2>
                         );
                     })}
@@ -135,7 +141,7 @@ export class ToolbarMenuComponent extends React.Component {
                             }
                             position={Position.BOTTOM}
                         >
-                            <AnchorButton icon={"annotation"} disabled={regionButtonsDisabled} active={isRegionCreating === true && appStore.activeFrame.regionSet.isNewRegionAnnotation === true} />
+                            <AnchorButton icon={"annotation"} disabled={regionButtonsDisabled} active={isRegionCreating === true && appStore.activeFrame.regionSet.isNewRegionAnnotation === true} data-testid="annotation-shortcut-dropdown" />
                         </Tooltip2>
                     </Popover2>
                 </ButtonGroup>
@@ -165,25 +171,61 @@ export class ToolbarMenuComponent extends React.Component {
                 </ButtonGroup>
                 <ButtonGroup className={dialogClassName}>
                     <Tooltip2 content={<span>File header</span>} position={Position.BOTTOM}>
-                        <AnchorButton icon={"app-header"} disabled={!appStore.activeFrame} onClick={() => dialogStore.showDialog(DialogId.FileInfo)} active={dialogStore.dialogVisible.get(DialogId.FileInfo)} />
+                        <AnchorButton
+                            icon={"app-header"}
+                            disabled={!appStore.activeFrame}
+                            onClick={() => dialogStore.showDialog(DialogId.FileInfo)}
+                            active={dialogStore.dialogVisible.get(DialogId.FileInfo)}
+                            data-testid="file-header-dialog-button"
+                        />
                     </Tooltip2>
                     <Tooltip2 content={<span>Preferences</span>} position={Position.BOTTOM}>
-                        <AnchorButton icon={"wrench"} onClick={() => dialogStore.showDialog(DialogId.Preference)} active={dialogStore.dialogVisible.get(DialogId.Preference)} />
+                        <AnchorButton icon={"wrench"} onClick={() => dialogStore.showDialog(DialogId.Preference)} active={dialogStore.dialogVisible.get(DialogId.Preference)} data-testid="preference-dialog-button" />
                     </Tooltip2>
                     <Tooltip2 content={<span>Contours</span>} position={Position.BOTTOM}>
-                        <AnchorButton icon={<CustomIcon icon={"contour"} />} disabled={!appStore.activeFrame} onClick={() => dialogStore.showDialog(DialogId.Contour)} active={dialogStore.dialogVisible.get(DialogId.Contour)} />
+                        <AnchorButton
+                            icon={<CustomIcon icon={"contour"} />}
+                            disabled={!appStore.activeFrame}
+                            onClick={() => dialogStore.showDialog(DialogId.Contour)}
+                            active={dialogStore.dialogVisible.get(DialogId.Contour)}
+                            data-testid="contour-config-dialog-button"
+                        />
                     </Tooltip2>
                     <Tooltip2 content={<span>Vector overlay</span>} position={Position.BOTTOM}>
-                        <AnchorButton icon={<CustomIcon icon={"vectorOverlay"} />} disabled={!appStore.activeFrame} onClick={() => dialogStore.showDialog(DialogId.Vector)} active={dialogStore.dialogVisible.get(DialogId.Vector)} />
+                        <AnchorButton
+                            icon={<CustomIcon icon={"vectorOverlay"} />}
+                            disabled={!appStore.activeFrame}
+                            onClick={() => dialogStore.showDialog(DialogId.Vector)}
+                            active={dialogStore.dialogVisible.get(DialogId.Vector)}
+                            data-testid="vector-field-dialog-button"
+                        />
                     </Tooltip2>
                     <Tooltip2 content={<span>Image fitting</span>} position={Position.BOTTOM}>
-                        <AnchorButton icon={<CustomIcon icon="imageFitting" />} disabled={!appStore.activeFrame} onClick={() => dialogStore.showDialog(DialogId.Fitting)} active={dialogStore.dialogVisible.get(DialogId.Fitting)} />
+                        <AnchorButton
+                            icon={<CustomIcon icon="imageFitting" />}
+                            disabled={!appStore.activeFrame}
+                            onClick={() => dialogStore.showDialog(DialogId.Fitting)}
+                            active={dialogStore.dialogVisible.get(DialogId.Fitting)}
+                            data-testid="image-fitting-dialog-button"
+                        />
                     </Tooltip2>
                     <Tooltip2 content={<span>Online catalog query</span>} position={Position.BOTTOM}>
-                        <AnchorButton icon="geosearch" disabled={!appStore.activeFrame} onClick={() => dialogStore.showDialog(DialogId.CatalogQuery)} active={dialogStore.dialogVisible.get(DialogId.CatalogQuery)} />
+                        <AnchorButton
+                            icon="geosearch"
+                            disabled={!appStore.activeFrame}
+                            onClick={() => dialogStore.showDialog(DialogId.CatalogQuery)}
+                            active={dialogStore.dialogVisible.get(DialogId.CatalogQuery)}
+                            data-testid="catalog-query-dialog-button"
+                        />
                     </Tooltip2>
                     <Tooltip2 content={<span>Distance measurement</span>} position={Position.BOTTOM}>
-                        <AnchorButton icon={<CustomIcon icon="distanceMeasuring" />} disabled={!appStore.activeFrame} onClick={this.handleDistanceMeasuringClicked} active={dialogStore.dialogVisible.get(DialogId.DistanceMeasure)} />
+                        <AnchorButton
+                            icon={<CustomIcon icon="distanceMeasuring" />}
+                            disabled={!appStore.activeFrame}
+                            onClick={this.handleDistanceMeasuringClicked}
+                            active={dialogStore.dialogVisible.get(DialogId.DistanceMeasure)}
+                            data-testid="distance-measuring-dialog-button"
+                        />
                     </Tooltip2>
                     {appStore.preferenceStore.codeSnippetsEnabled && (
                         <Tooltip2

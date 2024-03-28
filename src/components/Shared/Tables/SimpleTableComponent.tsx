@@ -41,7 +41,9 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
                 name={columnName}
                 cellRenderer={(rowIndex, columnIndex) => (
                     <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true} style={this.getFontStyle(rowIndex)} tooltip={this.getTooltip(columnData, columnIndex, rowIndex)}>
-                        {rowIndex < columnData?.length ? columnData[rowIndex] : undefined}
+                        <>
+                            <div data-testid={"simple-table-" + rowIndex + "-" + columnIndex}>{rowIndex < columnData?.length ? columnData[rowIndex] : undefined}</div>
+                        </>
                     </Cell>
                 )}
             />

@@ -738,6 +738,24 @@ export class WidgetsStore {
                     if (component === "image-view") {
                         this.updateImagePanelPageButtons();
                     }
+
+                    $(stack.header.tabsContainer)
+                        ?.find("li.lm_active")
+                        ?.attr("data-testid", component + "-tab");
+                    $(stack.header.tabsContainer)
+                        ?.find("li.lm_active")
+                        ?.find(".lm_close_tab")
+                        ?.attr("data-testid", component + "-tab-close-button");
+                    if (component === "image-view") {
+                        $(stackHeaderControlButtons)
+                            ?.find("li.lm-image-panel")
+                            ?.attr("data-testid", component + "-multipanel-view-switch");
+                    }
+                    if (showCogWidgets.includes(component)) {
+                        $(stackHeaderControlButtons)
+                            ?.find("li.lm_settings")
+                            ?.attr("data-testid", component + "-header-settings-button");
+                    }
                 }
             });
         });

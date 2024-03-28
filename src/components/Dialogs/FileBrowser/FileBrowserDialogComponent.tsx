@@ -452,7 +452,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 }
                 position={Position.BOTTOM_RIGHT}
             >
-                <Button minimal={true} rightIcon="caret-down">
+                <Button minimal={true} rightIcon="caret-down" data-testid="export-region-file-type-dropdown">
                     {fileBrowserStore.exportFileType === CARTA.FileType.CRTF ? "CRTF" : "DS9"}
                 </Button>
             </Popover2>
@@ -562,10 +562,22 @@ export class FileBrowserDialogComponent extends React.Component {
                     />
                 );
             } else {
-                return <InputGroup autoFocus={false} placeholder={filterDescription} value={this.fileFilterString} onChange={this.handleFilterStringInputChanged} leftElement={inputTypeMenu} rightElement={filterTypeMenu} />;
+                return (
+                    <InputGroup
+                        autoFocus={false}
+                        placeholder={filterDescription}
+                        value={this.fileFilterString}
+                        onChange={this.handleFilterStringInputChanged}
+                        leftElement={inputTypeMenu}
+                        rightElement={filterTypeMenu}
+                        data-testid="file-filter-input"
+                    />
+                );
             }
         } else {
-            return <InputGroup autoFocus={false} placeholder={filterDescription} value={this.fileFilterString} onChange={this.handleFilterStringInputChanged} leftIcon="search" rightElement={filterTypeMenu} />;
+            return (
+                <InputGroup autoFocus={false} placeholder={filterDescription} value={this.fileFilterString} onChange={this.handleFilterStringInputChanged} leftIcon="search" rightElement={filterTypeMenu} data-testid="file-filter-input" />
+            );
         }
     }
 
@@ -691,7 +703,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 </div>
                 <div className="bp3-dialog-body">
                     <div className={paneClassName}>
-                        <div className="file-list">
+                        <div className="file-list" data-testid="file-list">
                             <FileListTableComponent
                                 darkTheme={appStore.darkTheme}
                                 loading={fileBrowserStore.loadingList}

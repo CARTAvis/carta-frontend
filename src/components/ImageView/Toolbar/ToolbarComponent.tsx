@@ -348,7 +348,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                             </>
                         )}
                         <Tooltip2 position={tooltipPosition} content={<span>Zoom in (scroll wheel up){currentZoomSpan}</span>}>
-                            <AnchorButton icon={"zoom-in"} onClick={this.handleZoomInClicked} />
+                            <AnchorButton icon={"zoom-in"} onClick={this.handleZoomInClicked} data-testid="zoom-in-button" />
                         </Tooltip2>
                         <Tooltip2 position={tooltipPosition} content={<span>Zoom out (scroll wheel down){currentZoomSpan}</span>}>
                             <AnchorButton icon={"zoom-out"} onClick={this.handleZoomOutClicked} />
@@ -361,7 +361,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                             </Tooltip2>
                         )}
                         <Tooltip2 position={tooltipPosition} content={<span>Zoom to fit{currentZoomSpan}</span>}>
-                            <AnchorButton icon="zoom-to-fit" onClick={this.props.onZoomToFit} />
+                            <AnchorButton icon="zoom-to-fit" onClick={this.props.onZoomToFit} data-testid="zoom-to-fit-button" />
                         </Tooltip2>
                         {!frame.isPreview && (
                             <>
@@ -377,7 +377,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                             </span>
                                         }
                                     >
-                                        <AnchorButton icon="link" className="link-button">
+                                        <AnchorButton icon="link" className="link-button" data-testid="match-button">
                                             {wcsButtonSuperscript}
                                         </AnchorButton>
                                     </Tooltip2>
@@ -400,7 +400,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                             </>
                         )}
                         <Tooltip2 position={tooltipPosition} content="Toggle grid">
-                            <AnchorButton icon="grid" active={grid.visible} onClick={() => grid.setVisible(!grid.visible)} />
+                            <AnchorButton icon="grid" active={grid.visible} onClick={() => grid.setVisible(!grid.visible)} data-testid="grid-button" />
                         </Tooltip2>
                         {!frame.isPreview && (
                             <>

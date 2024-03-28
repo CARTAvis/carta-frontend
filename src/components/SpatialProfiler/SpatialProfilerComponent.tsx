@@ -713,7 +713,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
 
         return (
-            <div className={"spatial-profiler-widget"}>
+            <div className={"spatial-profiler-widget"} data-testid={(isXProfile ? "x" : "y") + "-profiler-widget"}>
                 <div className="profile-container">
                     <div className="profile-toolbar">
                         <RegionSelectorComponent widgetStore={widgetStore} />
@@ -726,7 +726,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     <div className="profile-plot">
                         <LinePlotComponent {...linePlotProps} />
                     </div>
-                    <div className="profile-info">
+                    <div className="profile-info" data-testid={(isXProfile ? "x" : "y") + "-profiler-info"}>
                         <ProfilerInfoComponent info={this.genProfilerInfo()} />
                     </div>
                 </div>

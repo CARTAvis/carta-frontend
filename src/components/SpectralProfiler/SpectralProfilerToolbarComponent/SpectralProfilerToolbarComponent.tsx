@@ -60,7 +60,14 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
         return (
             <div className={className}>
                 <Tooltip2 content={this.props.categoryTooltip} position={Position.TOP}>
-                    <Checkbox className={"category-checkbox"} label={this.props.categoryName} checked={this.props.isActiveCategory} onChange={ev => this.props.onCategorySelect()} disabled={this.props.disabled} />
+                    <Checkbox
+                        className={"category-checkbox"}
+                        label={this.props.categoryName}
+                        checked={this.props.isActiveCategory}
+                        onChange={ev => this.props.onCategorySelect()}
+                        disabled={this.props.disabled}
+                        data-testid={"spectral-profiler-" + this.props.categoryName.toLowerCase() + "-checkbox"}
+                    />
                 </Tooltip2>
                 <Popover2
                     content={
@@ -74,6 +81,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                                     onClick={ev => this.props.onItemSelect(item.value, index)}
                                     icon={this.props.itemSelected?.includes(item.value) ? "tick" : "blank"}
                                     shouldDismissPopover={false}
+                                    data-testid={"spectral-profiler-" + this.props.categoryName.toLowerCase() + "-dropdown-" + item.label.split(" ").join("-").toLowerCase()}
                                 />
                             ))}
                         </Menu>
@@ -92,6 +100,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                             className="dropdown-button"
                             rightIcon={"caret-down"}
                             disabled={this.props.disabled || this.props.disableOptions}
+                            data-testid={"spectral-profiler-" + this.props.categoryName.toLowerCase() + "-dropdown"}
                         />
                     </Tooltip2>
                 </Popover2>
@@ -288,13 +297,13 @@ export class SpectralProfilerToolbarComponent extends React.Component<{widgetSto
                 <ProfileSelectionComponent profileSelectionStore={widgetStore.profileSelectionStore} />
                 <ButtonGroup className="shortcut-buttons">
                     <Tooltip2 content="Smoothing">
-                        <AnchorButton icon={<CustomIcon icon="smoothing" />} onClick={this.smoothingShortcutClick} />
+                        <AnchorButton icon={<CustomIcon icon="smoothing" />} onClick={this.smoothingShortcutClick} data-testid="smoothing-button" />
                     </Tooltip2>
                     <Tooltip2 content="Moments">
-                        <AnchorButton icon={<CustomIcon icon="moments" />} onClick={this.momentsShortcutClick} />
+                        <AnchorButton icon={<CustomIcon icon="moments" />} onClick={this.momentsShortcutClick} data-testid="moment-generator-button" />
                     </Tooltip2>
                     <Tooltip2 content="Fitting">
-                        <AnchorButton icon={<CustomIcon icon="lineFitting" />} onClick={this.fittingShortcutClick} />
+                        <AnchorButton icon={<CustomIcon icon="lineFitting" />} onClick={this.fittingShortcutClick} data-testid="profile-fitting-button" />
                     </Tooltip2>
                 </ButtonGroup>
             </div>

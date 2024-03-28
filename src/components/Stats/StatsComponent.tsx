@@ -265,7 +265,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             });
 
             formContent = (
-                <HTMLTable>
+                <HTMLTable data-testid="statistics-table">
                     <thead className={appStore.darkTheme ? "dark-theme" : ""}>
                         <tr>
                             <th style={{width: StatsComponent.NAME_COLUMN_WIDTH}}>Statistic</th>
@@ -292,7 +292,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
                 <div className="stats-toolbar">
                     <RegionSelectorComponent widgetStore={this.widgetStore} />
                     <FormGroup label={"Polarization"} inline={true} disabled={!enableStokesSelect}>
-                        <HTMLSelect className={stokesClassName} value={widgetStore.coordinate} options={coordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect} />
+                        <HTMLSelect className={stokesClassName} value={widgetStore.coordinate} options={coordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect} data-testid="polarization-dropdown" />
                     </FormGroup>
                 </div>
                 <div className="stats-display" onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>

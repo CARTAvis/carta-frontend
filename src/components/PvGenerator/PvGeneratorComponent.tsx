@@ -330,7 +330,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                         </span>
                     }
                 >
-                    <HTMLSelect value={this.widgetStore.fileId} options={this.widgetStore.frameOptions} onChange={this.handleFrameChanged} />
+                    <HTMLSelect value={this.widgetStore.fileId} options={this.widgetStore.frameOptions} onChange={this.handleFrameChanged} data-testid="pv-generator-image-dropdown" />
                 </FormGroup>
                 <FormGroup
                     className="label-info-group"
@@ -342,7 +342,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                         </span>
                     }
                 >
-                    <HTMLSelect value={selectedValue} options={this.widgetStore.regionOptions} onChange={this.handleRegionChanged} />
+                    <HTMLSelect value={selectedValue} options={this.widgetStore.regionOptions} onChange={this.handleRegionChanged} data-testid="pv-generator-pv-cut-region-dropdown" />
                 </FormGroup>
                 <FormGroup inline={true} label="Average width">
                     <SafeNumericInput min={1} max={20} stepSize={1} value={this.widgetStore.width} onValueChange={value => this.widgetStore.setWidth(value)} />
@@ -363,10 +363,10 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                     <FormGroup label="Range" inline={true} labelInfo={`(${frame.spectralUnit})`}>
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
-                                <SafeNumericInput value={this.widgetStore.range?.min} buttonPosition="none" onValueChange={value => this.handleSpectralRangeChanged(value, false)} />
+                                <SafeNumericInput value={this.widgetStore.range?.min} buttonPosition="none" onValueChange={value => this.handleSpectralRangeChanged(value, false)} data-testid="pv-generator-spectral-range-from-input" />
                             </FormGroup>
                             <FormGroup label="To" inline={true}>
-                                <SafeNumericInput value={this.widgetStore.range?.max} buttonPosition="none" onValueChange={value => this.handleSpectralRangeChanged(value, true)} />
+                                <SafeNumericInput value={this.widgetStore.range?.max} buttonPosition="none" onValueChange={value => this.handleSpectralRangeChanged(value, true)} data-testid="pv-generator-spectral-range-to-input" />
                             </FormGroup>
                         </div>
                     </FormGroup>
@@ -396,6 +396,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                                 stepSize={1}
                                 value={this.widgetStore.xyRebin}
                                 onValueChange={value => this.widgetStore.setXYRebin(value)}
+                                data-testid="pv-generator-preview-rebin-xy-input"
                             />
                         </FormGroup>
                         <FormGroup inline={true} label={"Z"}>
@@ -405,6 +406,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                                 stepSize={1}
                                 value={this.widgetStore.zRebin}
                                 onValueChange={value => this.widgetStore.setZRebin(value)}
+                                data-testid="pv-generator-preview-rebin-z-input"
                             />
                         </FormGroup>
                     </div>
@@ -422,7 +424,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                     </div>
                     <div>
                         <Tooltip2 disabled={isAbleToGenerate} content={hint} position={Position.BOTTOM}>
-                            <AnchorButton intent="success" disabled={!isAbleToGenerate} text="Generate" onClick={this.onGenerateButtonClicked} />
+                            <AnchorButton intent="success" disabled={!isAbleToGenerate} text="Generate" onClick={this.onGenerateButtonClicked} data-testid="pv-generator-generate-button" />
                         </Tooltip2>
                     </div>
                 </div>

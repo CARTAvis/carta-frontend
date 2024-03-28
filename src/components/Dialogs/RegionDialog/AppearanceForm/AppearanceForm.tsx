@@ -79,7 +79,15 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                 </FormGroup>
                 {region.regionType !== CARTA.RegionType.POINT && region.regionType !== CARTA.RegionType.ANNPOINT && region.regionType !== CARTA.RegionType.ANNTEXT && (
                     <FormGroup inline={true} label="Line width" labelInfo="(px)">
-                        <SafeNumericInput placeholder="Line width" min={RegionStore.MIN_LINE_WIDTH} max={RegionStore.MAX_LINE_WIDTH} value={region.lineWidth} stepSize={0.5} onValueChange={this.handleLineWidthChange} />
+                        <SafeNumericInput
+                            placeholder="Line width"
+                            min={RegionStore.MIN_LINE_WIDTH}
+                            max={RegionStore.MAX_LINE_WIDTH}
+                            value={region.lineWidth}
+                            stepSize={0.5}
+                            onValueChange={this.handleLineWidthChange}
+                            data-testid="region-dialog-line-width-input"
+                        />
                     </FormGroup>
                 )}
                 {region.regionType !== CARTA.RegionType.POINT && region.regionType !== CARTA.RegionType.ANNPOINT && region.regionType !== CARTA.RegionType.ANNTEXT && (
