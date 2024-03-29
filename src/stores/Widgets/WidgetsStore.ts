@@ -712,7 +712,8 @@ export class WidgetsStore {
 
             stack.on("activeContentItemChanged", (contentItem: any) => {
                 if (stack && stack.config && stack.header.controlsContainer && stack.config.content.length) {
-                    const component = stack.getActiveContentItem().config.component;
+                    const config = stack.getActiveContentItem().config;
+                    const component = config.component;
                     const stackHeaderControlButtons = stack.header.controlsContainer[0];
 
                     // show/hide help button
@@ -739,22 +740,19 @@ export class WidgetsStore {
                         this.updateImagePanelPageButtons();
                     }
 
-                    $(stack.header.tabsContainer)
-                        ?.find("li.lm_active")
-                        ?.attr("data-testid", component + "-tab");
-                    $(stack.header.tabsContainer)
-                        ?.find("li.lm_active")
-                        ?.find(".lm_close_tab")
-                        ?.attr("data-testid", component + "-tab-close-button");
+                    stack.header.tabs.forEach(tab => {
+                        $(tab.element)?.attr("data-testid", tab.contentItem.config.id + "-header-title");
+                        $(tab.closeElement)?.attr("data-testid", tab.contentItem.config.id + "-header-close-button");
+                    });
                     if (component === "image-view") {
                         $(stackHeaderControlButtons)
                             ?.find("li.lm-image-panel")
-                            ?.attr("data-testid", component + "-multipanel-view-switch");
+                            ?.attr("data-testid", config.id + "-multipanel-view-switch");
                     }
                     if (showCogWidgets.includes(component)) {
                         $(stackHeaderControlButtons)
                             ?.find("li.lm_settings")
-                            ?.attr("data-testid", component + "-header-settings-button");
+                            ?.attr("data-testid", config.id + "-header-settings-button");
                     }
                 }
             });
@@ -965,6 +963,8 @@ export class WidgetsStore {
             config.id = itemId;
             config.props.id = itemId;
         }
+
+        $(item.element)?.attr("data-testid", config.id + "-content");
     };
 
     @action handleItemRemoval = (item: GoldenLayout.ContentItem) => {

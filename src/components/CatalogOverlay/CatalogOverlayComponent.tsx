@@ -634,7 +634,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
         if (!profileStore || catalogFileIds === undefined || catalogFileIds?.length === 0 || !catalogWidgetStore) {
             return (
-                <div className="catalog-overlay" data-testid="catalog-widget-non-ideal">
+                <div className="catalog-overlay">
                     <NonIdealState icon={"folder-open"} title={"No catalog file loaded"} description={"Load a catalog file using the menu"} />;
                 </div>
             );
