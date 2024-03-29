@@ -444,7 +444,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         return (
             <div className="region-list-widget">
-                <div className={classNames("region-list-table", {"bp3-dark": darkTheme})}>
+                <div className={classNames("region-list-table", {"bp3-dark": darkTheme})} data-testid="region-list-table">
                     <FixedSizeList itemSize={RegionListComponent.HEADER_ROW_HEIGHT} height={RegionListComponent.HEADER_ROW_HEIGHT} itemCount={1} width="100%" className="list-header">
                         {headerRenderer(this.regionsVisibility, this.regionsLock)}
                     </FixedSizeList>
