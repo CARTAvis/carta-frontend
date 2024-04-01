@@ -176,11 +176,11 @@ export class ToolbarMenuComponent extends React.Component {
                             disabled={!appStore.activeFrame}
                             onClick={() => dialogStore.showDialog(DialogId.FileInfo)}
                             active={dialogStore.dialogVisible.get(DialogId.FileInfo)}
-                            data-testid="file-header-dialog-button"
+                            data-testid={DialogId.FileInfo + "-button"}
                         />
                     </Tooltip2>
                     <Tooltip2 content={<span>Preferences</span>} position={Position.BOTTOM}>
-                        <AnchorButton icon={"wrench"} onClick={() => dialogStore.showDialog(DialogId.Preference)} active={dialogStore.dialogVisible.get(DialogId.Preference)} data-testid="preference-dialog-button" />
+                        <AnchorButton icon={"wrench"} onClick={() => dialogStore.showDialog(DialogId.Preference)} active={dialogStore.dialogVisible.get(DialogId.Preference)} data-testid={DialogId.Preference + "-button"} />
                     </Tooltip2>
                     <Tooltip2 content={<span>Contours</span>} position={Position.BOTTOM}>
                         <AnchorButton
@@ -188,7 +188,7 @@ export class ToolbarMenuComponent extends React.Component {
                             disabled={!appStore.activeFrame}
                             onClick={() => dialogStore.showDialog(DialogId.Contour)}
                             active={dialogStore.dialogVisible.get(DialogId.Contour)}
-                            data-testid="contour-config-dialog-button"
+                            data-testid={DialogId.Contour + "-button"}
                         />
                     </Tooltip2>
                     <Tooltip2 content={<span>Vector overlay</span>} position={Position.BOTTOM}>
@@ -197,7 +197,7 @@ export class ToolbarMenuComponent extends React.Component {
                             disabled={!appStore.activeFrame}
                             onClick={() => dialogStore.showDialog(DialogId.Vector)}
                             active={dialogStore.dialogVisible.get(DialogId.Vector)}
-                            data-testid="vector-field-dialog-button"
+                            data-testid={DialogId.Vector + "-button"}
                         />
                     </Tooltip2>
                     <Tooltip2 content={<span>Image fitting</span>} position={Position.BOTTOM}>
@@ -206,7 +206,7 @@ export class ToolbarMenuComponent extends React.Component {
                             disabled={!appStore.activeFrame}
                             onClick={() => dialogStore.showDialog(DialogId.Fitting)}
                             active={dialogStore.dialogVisible.get(DialogId.Fitting)}
-                            data-testid="image-fitting-dialog-button"
+                            data-testid={DialogId.Fitting + "-button"}
                         />
                     </Tooltip2>
                     <Tooltip2 content={<span>Online catalog query</span>} position={Position.BOTTOM}>
@@ -215,7 +215,7 @@ export class ToolbarMenuComponent extends React.Component {
                             disabled={!appStore.activeFrame}
                             onClick={() => dialogStore.showDialog(DialogId.CatalogQuery)}
                             active={dialogStore.dialogVisible.get(DialogId.CatalogQuery)}
-                            data-testid="catalog-query-dialog-button"
+                            data-testid={DialogId.CatalogQuery + "-button"}
                         />
                     </Tooltip2>
                     <Tooltip2 content={<span>Distance measurement</span>} position={Position.BOTTOM}>
@@ -224,7 +224,7 @@ export class ToolbarMenuComponent extends React.Component {
                             disabled={!appStore.activeFrame}
                             onClick={this.handleDistanceMeasuringClicked}
                             active={dialogStore.dialogVisible.get(DialogId.DistanceMeasure)}
-                            data-testid="distance-measuring-dialog-button"
+                            data-testid={DialogId.DistanceMeasure + "-button"}
                         />
                     </Tooltip2>
                     {appStore.preferenceStore.codeSnippetsEnabled && (
