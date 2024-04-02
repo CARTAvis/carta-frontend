@@ -935,7 +935,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 onValueCleared={() => this.onNumBinChange(this.numBinsX)}
                 displayExponential={false}
                 disabled={disabled}
-                dataTestId="catalog-plot-widget-bin-input"
+                data-testid="catalog-plot-widget-bin-input"
             />
         );
 

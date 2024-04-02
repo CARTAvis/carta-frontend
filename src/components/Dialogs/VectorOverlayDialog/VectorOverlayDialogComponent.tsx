@@ -362,7 +362,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                     value={dataSource.vectorOverlayConfig.rotationOffset}
                     onValueChanged={dataSource.vectorOverlayConfig.setRotationOffset}
                     onValueCleared={() => dataSource.vectorOverlayConfig.setRotationOffset(0)}
-                    dataTestId="vector-field-rotation-offset-input"
+                    data-testid="vector-field-rotation-offset-input"
                 />
                 <FormGroup inline={true} label="Color mode">
                     <HTMLSelect
