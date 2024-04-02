@@ -219,7 +219,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             const frameTickPre = numFrames - 1 - 4 * frameStep < frameStep / 2 ? [0, frameStep, 2 * frameStep, 3 * frameStep, numFrames - 1] : [0, frameStep, 2 * frameStep, 3 * frameStep, 4 * frameStep, numFrames - 1];
             const frameTick = numFrames > 10 ? frameTickPre : Array.from(Array(numFrames).keys());
             frameSlider = (
-                <div className="animator-slider" data-testid="animator-image-slider">
+                <div className="animator-slider">
                     <Radio value={AnimationMode.FRAME} disabled={appStore.animatorStore.animationActive} checked={appStore.animatorStore.animationMode === AnimationMode.FRAME} onChange={this.onAnimationModeChanged} label="Image" />
                     {hideSliders && <SafeNumericInput value={frameIndex} min={-1} max={numFrames} stepSize={1} onValueChange={this.onFrameChanged} fill={true} disabled={appStore.animatorStore.animationActive} />}
                     {!hideSliders && (
@@ -378,7 +378,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         );
 
         const numericControl = (
-            <ControlGroup className="playback-numeric-control" data-testid="animator-controls">
+            <ControlGroup className="playback-numeric-control">
                 <HTMLSelect options={[NumericInputType.FrameRate, NumericInputType.Step]} onChange={ev => this.onNumericInputTypeChange(ev.currentTarget.value as NumericInputType)} />
                 {this.numericInputType === NumericInputType.FrameRate ? (
                     <SafeNumericInput
@@ -390,6 +390,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         majorStepSize={1}
                         onValueChange={appStore.animatorStore.setFrameRate}
                         disabled={appStore.animatorStore.animationActive}
+                        data-testid="animator-control-input"
                     />
                 ) : (
                     <SafeNumericInput
@@ -401,6 +402,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         majorStepSize={1}
                         onValueChange={appStore.animatorStore.setStep}
                         disabled={appStore.animatorStore.animationActive}
+                        data-testid="animator-control-input"
                     />
                 )}
             </ControlGroup>

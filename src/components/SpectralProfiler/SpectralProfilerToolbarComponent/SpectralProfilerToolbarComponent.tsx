@@ -60,14 +60,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
         return (
             <div className={className}>
                 <Tooltip2 content={this.props.categoryTooltip} position={Position.TOP}>
-                    <Checkbox
-                        className={"category-checkbox"}
-                        label={this.props.categoryName}
-                        checked={this.props.isActiveCategory}
-                        onChange={ev => this.props.onCategorySelect()}
-                        disabled={this.props.disabled}
-                        data-testid={"spectral-profiler-" + this.props.categoryName.toLowerCase() + "-checkbox"}
-                    />
+                    <Checkbox className={"category-checkbox"} label={this.props.categoryName} checked={this.props.isActiveCategory} onChange={ev => this.props.onCategorySelect()} disabled={this.props.disabled} />
                 </Tooltip2>
                 <Popover2
                     content={
