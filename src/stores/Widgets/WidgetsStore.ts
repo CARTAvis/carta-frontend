@@ -750,7 +750,7 @@ export class WidgetsStore {
         return $(`<li class="${className}" title="${title}"><span class="bp3-icon-standard bp3-icon-${icon}" style/></li>`);
     };
 
-    public toWidgetSettingsConfig = (widgetType: string, widgetID: string) => {
+    public toWidgetSettingsConfig = (widgetType: string, widgetID: string | undefined) => {
         if (!widgetType || !widgetID) {
             return null;
         }

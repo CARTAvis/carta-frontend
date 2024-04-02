@@ -3,6 +3,6 @@ export class CursorPosition {
     public static readonly TRACKING = "tracking";
 
     public static isValid = (cursorPosition: string): boolean => {
-        return cursorPosition && (cursorPosition === CursorPosition.FIXED || cursorPosition === CursorPosition.TRACKING);
+        return cursorPosition === CursorPosition.FIXED || cursorPosition === CursorPosition.TRACKING;
     };
 }
