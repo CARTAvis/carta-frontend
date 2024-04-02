@@ -430,11 +430,11 @@ export class RootMenuComponent extends React.Component {
         if (loadingTooltipFragment) {
             loadingIndicator = (
                 <Tooltip2 content={loadingTooltipFragment}>
-                    <Icon icon={"cloud-download"} className={loadingIndicatorClass} />
+                    <Icon icon={"cloud-download"} className={loadingIndicatorClass} data-testid="progress-cloud" />
                 </Tooltip2>
             );
         } else {
-            loadingIndicator = <Icon icon={"cloud-download"} className={loadingIndicatorClass} />;
+            loadingIndicator = <Icon icon={"cloud-download"} className={loadingIndicatorClass} data-testid="progress-cloud" />;
         }
 
         const newReleaseMessage = (
