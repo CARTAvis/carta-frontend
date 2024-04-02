@@ -51,7 +51,7 @@ interface TileMessageArgs {
 }
 
 export class TileService {
-    private static staticInstance: TileService;
+    protected static staticInstance: TileService;
 
     static get Instance() {
         if (!TileService.staticInstance) {
@@ -76,7 +76,7 @@ export class TileService {
     private pendingSynchronisedTiles: Map<string, Set<number>>;
     private receivedSynchronisedTiles: Map<string, Map<number, Map<number, RasterTile>>>;
     private animationEnabled: boolean;
-    private readonly gl: WebGL2RenderingContext;
+    protected readonly gl: WebGL2RenderingContext;
     private syncIdMap: Map<number, boolean>;
     private syncIdTileCountMap: Map<number, number>;
 
@@ -139,10 +139,10 @@ export class TileService {
         this.lruCapacitySystem = lruCapacitySystem;
     };
 
-    private constructor() {
+    protected constructor() {
         makeObservable(this);
         this.backendService = BackendService.Instance;
-        this.gl = ChannelMapWebGLService.Instance.gl;
+        this.gl = TileWebGLService.Instance.gl;
 
         this.channelMap = new Map<number, {channel: number; stokes: number}>();
         this.pendingRequests = new Map<string, Map<number, boolean>>();
@@ -707,5 +707,22 @@ export class TileService {
             pendingCompressionMap.delete(encodedCoordinate);
             this.tileStream.next({tileCount: 1, fileId, channel, stokes, flush: false});
         }
+    }
+}
+
+export class ChannelMapTileService extends TileService {
+    protected static staticInstance: ChannelMapTileService;
+    protected readonly gl: WebGL2RenderingContext;
+
+    static get Instance() {
+        if (!ChannelMapTileService.staticInstance) {
+            ChannelMapTileService.staticInstance = new ChannelMapTileService();
+        }
+        return ChannelMapTileService.staticInstance;
+    }
+
+    protected constructor() {
+        super();
+        this.gl = ChannelMapWebGLService.Instance.gl;
     }
 }

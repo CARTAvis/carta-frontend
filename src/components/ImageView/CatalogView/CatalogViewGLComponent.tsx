@@ -6,7 +6,7 @@ import tinycolor from "tinycolor2";
 import {ImageViewLayer} from "components";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {CatalogTextureType, CatalogWebGLService} from "services";
-import {AppStore, CatalogStore, WidgetsStore} from "stores";
+import {AppStore, CatalogStore, OverlayStore, WidgetsStore} from "stores";
 import {FrameStore, RenderConfigStore} from "stores/Frame";
 import {CatalogOverlayShape} from "stores/Widgets";
 import {closestCatalogIndexToCursor, GL2, rotate2D, scale2D, subtract2D} from "utilities";
@@ -16,6 +16,10 @@ import "./CatalogViewGLComponent.scss";
 export interface CatalogViewGLComponentProps {
     docked: boolean;
     frame: FrameStore;
+    top?: number;
+    left?: number;
+    refCanvas?: HTMLCanvasElement;
+    overlayStore?: OverlayStore;
 }
 
 @observer
@@ -25,16 +29,26 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
     private catalogWebGLService: CatalogWebGLService;
 
     componentDidMount() {
-        this.catalogWebGLService = CatalogWebGLService.Instance;
-        this.gl = this.catalogWebGLService.gl;
-        if (this.canvas) {
-            this.updateCanvas();
+        if (!this.props.refCanvas) {
+            this.catalogWebGLService = CatalogWebGLService.Instance;
+            this.gl = this.catalogWebGLService.gl;
+            if (this.canvas) {
+                this.updateCanvas();
+            }
         }
     }
 
     componentDidUpdate() {
-        AppStore.Instance.resetImageRatio();
-        requestAnimationFrame(this.updateCanvas);
+        if (this.props.refCanvas) {
+            const destCanvas = this.canvas.getContext("2d");
+            const w = this.props.refCanvas.width;
+            const h = this.props.refCanvas.height;
+            destCanvas.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            destCanvas.drawImage(this.props.refCanvas, 0, 0, w, h, 0, 0, this.canvas.width, this.canvas.height);
+        } else {
+            AppStore.Instance.resetImageRatio();
+            requestAnimationFrame(this.updateCanvas);
+        }
     }
 
     private getRef = ref => {
@@ -95,7 +109,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         });
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
-        const padding = baseFrame.overlayStore.padding;
+        const padding = this.props.overlayStore?.padding || baseFrame.overlayStore.padding;
         const className = classNames("catalog-div", {docked: this.props.docked, active: appStore.activeLayer === ImageViewLayer.Catalog});
 
         return (
@@ -107,8 +121,8 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     onClick={evn => this.onClick(evn)}
                     onDoubleClick={this.onDoubleClick}
                     style={{
-                        top: padding.top,
-                        left: padding.left,
+                        top: (this.props.top || 0) + padding.top,
+                        left: (this.props.left || 0) + padding.left,
                         width: baseFrame ? baseFrame.renderWidth || 1 : 1,
                         height: baseFrame ? baseFrame.renderHeight || 1 : 1
                     }}

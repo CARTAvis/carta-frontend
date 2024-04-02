@@ -32,7 +32,7 @@ import {
     Workspace,
     WorkspaceFile
 } from "models";
-import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryAction, TelemetryService, TileService, TileStreamDetails} from "services";
+import {ApiService, BackendService, ChannelMapTileService, ConnectionStatus, ScriptingService, TelemetryAction, TelemetryService, TileService, TileStreamDetails} from "services";
 import {
     AlertStore,
     AnimationMode,
@@ -97,6 +97,7 @@ export class AppStore {
     // Backend services
     readonly backendService: BackendService;
     readonly tileService: TileService;
+    readonly channelMapTileService: ChannelMapTileService;
     readonly scriptingService: ScriptingService;
     readonly apiService: ApiService;
     readonly telemetryService: TelemetryService;
@@ -1664,6 +1665,7 @@ export class AppStore {
                 await this.snippetStore.fetchSnippets();
 
                 this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
+                this.channelMapTileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
                 if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
                     AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
                     this.layoutStore.applyLayout(PresetLayout.DEFAULT);
@@ -1705,6 +1707,7 @@ export class AppStore {
         // Assign service instances
         this.backendService = BackendService.Instance;
         this.tileService = TileService.Instance;
+        this.channelMapTileService = ChannelMapTileService.Instance;
         this.scriptingService = ScriptingService.Instance;
         this.apiService = ApiService.Instance;
         this.telemetryService = TelemetryService.Instance;
