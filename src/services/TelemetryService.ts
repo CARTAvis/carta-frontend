@@ -316,7 +316,7 @@ export class TelemetryService {
                     const tx = db.transaction(TelemetryService.StoreName, "readwrite");
                     const cursor = await tx.store.openCursor();
                     const store = tx.store;
-                    if (store) {
+                    if (cursor && store) {
                         while (numEntries >= TelemetryService.EntryLimit) {
                             tx.store.delete(cursor.key);
                             await cursor.continue();

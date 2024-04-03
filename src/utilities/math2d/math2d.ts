@@ -132,11 +132,11 @@ export function minMaxPointArrayZ(points: Point3D[]): {maxVal: number; minVal: n
     let minVal = Number.MAX_VALUE;
 
     for (const point of points) {
-        if (!point || isNaN(point.z)) {
+        if (!point || isNaN(point.z ?? NaN)) {
             continue;
         }
-        maxVal = Math.max(maxVal, point.z);
-        minVal = Math.min(minVal, point.z);
+        maxVal = Math.max(maxVal, point.z ?? NaN);
+        minVal = Math.min(minVal, point.z ?? NaN);
     }
     return {maxVal, minVal};
 }
