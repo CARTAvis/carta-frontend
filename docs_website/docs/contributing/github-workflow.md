@@ -2,7 +2,7 @@
 sidebar_position: 2
 ---
 
-# Github workflow
+# GitHub workflow
 
 The workflow for contributing to the codebase.
 
