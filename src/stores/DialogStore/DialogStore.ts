@@ -22,7 +22,7 @@ export enum DialogId {
     Stokes = "stokes-dialog",
     Vector = "vector-dialog",
     Workspace = "workspace-dialog",
-    ShareWorkspace = "shareWork-dialog",
+    ShareWorkspace = "share-work-dialog",
     Hotkey = "hotkey-dialog"
 }
 
