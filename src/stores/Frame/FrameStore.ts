@@ -125,8 +125,10 @@ export class FrameStore {
     public requiredFrameViewForRegionRender: FrameView;
 
     public wcsInfo: AST.FrameSet;
+    public wcsInfoOffset: AST.FrameSet;
     public readonly wcsInfoForTransformation: AST.FrameSet;
     public readonly wcsInfo3D: AST.FrameSet;
+    public readonly wcsInfo3DOffset: AST.FrameSet;
     public readonly validWcs: boolean;
     @observable public frameInfo: FrameInfo;
     public readonly colorbarStore: ColorbarStore;
@@ -370,7 +372,7 @@ export class FrameStore {
             }
 
             this.cachedTransformedWcsInfo = AST.createTransformedFrameset(
-                this.wcsInfo,
+                this.wcsInfoOffset,
                 adjTranslation.x,
                 adjTranslation.y,
                 -this.spatialTransform.rotation,
@@ -1184,6 +1186,7 @@ export class FrameStore {
         this.spectralCoordsSupported = null;
         this.spectralSystemsSupported = null;
         this.wcsInfo = null;
+        this.wcsInfoOffset = null;
         this.wcsInfoForTransformation = null;
         this.wcsInfo3D = null;
         this.validWcs = false;
@@ -1319,21 +1322,27 @@ export class FrameStore {
         } else {
             // init WCS
             const astFrameSet = this.initFrame();
+            const astFrameSetOffset = this.initZeroCenterFrame();
             if (astFrameSet) {
                 this.spectralFrame = AST.getSpectralFrame(astFrameSet);
                 if (frameInfo.fileInfoExtended.depth > 1) {
                     // 3D frame
                     this.wcsInfo3D = AST.copy(astFrameSet);
+                    this.wcsInfo3DOffset = AST.copy(astFrameSetOffset);
                     if (this.isYX) {
                         this.wcsInfo = this.initFrame2D();
+                        this.wcsInfoOffset = this.initZeroCenterFrame2D();
                     } else {
                         this.wcsInfo = AST.getSkyFrameSet(this.wcsInfo3D);
+                        this.wcsInfoOffset = AST.getSkyFrameSet(this.wcsInfo3DOffset);
                     }
                 } else {
                     // 2D frame
                     this.wcsInfo = AST.copy(astFrameSet);
+                    this.wcsInfoOffset = AST.copy(astFrameSetOffset);
                 }
                 AST.deleteObject(astFrameSet);
+                AST.deleteObject(astFrameSetOffset);
 
                 if (this.wcsInfo) {
                     // init 2D(Sky) wcs copy for the precision of region coordinate transformation
@@ -1724,6 +1733,116 @@ export class FrameStore {
             let value = trimFitsComment(entry.value);
             if (entry.name.toUpperCase() === "NAXIS" || entry.name.toUpperCase() === "WCSAXES") {
                 value = this.dimension;
+            }
+            if (entry.entryType === CARTA.EntryType.STRING) {
+                value = `'${value}'`;
+            } else {
+                value = FrameStore.ShiftASTCoords(entry, value);
+            }
+
+            while (name.length < 8) {
+                name += " ";
+            }
+
+            const entryString = `${name}=  ${value}`;
+            AST.putFits(fitsChan, entryString);
+        }
+        return AST.getFrameFromFitsChan(fitsChan, checkSkyDomain);
+    };
+
+    private initZeroCenterFrame2D = (): AST.FrameSet => {
+        // Define regular expressions
+        let regOtherAxes;
+        if (this.dimension === "2") {
+            regOtherAxes = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]`);
+        } else {
+            regOtherAxes = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[5-9]`);
+        }
+        const regDirXNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.dirXNumber}`);
+        const regDirYNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.dirYNumber}`);
+        const regSpectralNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.spectralNumber}`);
+        const regStokesNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.stokesNumber}`);
+
+        const fitsChan = AST.emptyFitsChan();
+        for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
+            let name = entry.name;
+
+            if (name.match(regOtherAxes) || name.match(regStokesNumber) || name.match(regSpectralNumber) || name === "HISTORY") {
+                continue;
+            }
+
+            // Remove the stokes axis (if any), and reset axis numbers for x or y
+            if (name.match(regDirXNumber) && this.dirXNumber !== this.dirX) {
+                name = entry.name.replace(`${this.dirXNumber}`, `${this.dirX}`);
+            } else if (name.match(regDirYNumber) && this.dirYNumber !== this.dirY) {
+                name = entry.name.replace(`${this.dirYNumber}`, `${this.dirY}`);
+            }
+
+            let value = trimFitsComment(entry.value);
+            if (entry.name.toUpperCase() === "NAXIS" || entry.name.toUpperCase() === "WCSAXES") {
+                value = "2";
+            }
+            if (entry.name.toUpperCase() === "CRVAL1" || entry.name.toUpperCase() === "CRVAL2") {
+                value = "0";
+            }
+            if (entry.entryType === CARTA.EntryType.STRING) {
+                value = `'${value}'`;
+            } else {
+                value = FrameStore.ShiftASTCoords(entry, value);
+            }
+
+            while (name.length < 8) {
+                name += " ";
+            }
+
+            const entryString = `${name}=  ${value}`;
+            AST.putFits(fitsChan, entryString);
+        }
+        return AST.getFrameFromFitsChan(fitsChan, false);
+    };
+
+    private initZeroCenterFrame = (checkSkyDomain: boolean = true): AST.FrameSet => {
+        const fitsChan = AST.emptyFitsChan();
+
+        // Define regular expressions
+        let regOtherAxes;
+        if (this.dimension === "2") {
+            regOtherAxes = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]`);
+        } else {
+            regOtherAxes = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[5-9]`);
+        }
+        const regDirXNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.dirXNumber}`);
+        const regDirYNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.dirYNumber}`);
+        const regSpectralNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.spectralNumber}`);
+        const regStokesNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.stokesNumber}`);
+
+        for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
+            let name = entry.name;
+
+            if (name.match(regOtherAxes) || name.match(regStokesNumber) || name === "HISTORY") {
+                continue;
+            }
+
+            // Remove the stokes axis (if any), and reset axis numbers for x, y, or spectral
+            if (name.match(regDirXNumber) && this.dirXNumber !== this.dirX) {
+                name = entry.name.replace(`${this.dirXNumber}`, `${this.dirX}`);
+            } else if (name.match(regDirYNumber) && this.dirYNumber !== this.dirY) {
+                name = entry.name.replace(`${this.dirYNumber}`, `${this.dirY}`);
+            } else if (name.match(regSpectralNumber) && this.spectralNumber !== this.spectral) {
+                name = entry.name.replace(`${this.spectralNumber}`, `${this.spectral}`);
+            }
+
+            // Skip empty header entries
+            if (!entry.value.length) {
+                continue;
+            }
+
+            let value = trimFitsComment(entry.value);
+            if (entry.name.toUpperCase() === "NAXIS" || entry.name.toUpperCase() === "WCSAXES") {
+                value = this.dimension;
+            }
+            if (entry.name.toUpperCase() === "CRVAL1" || entry.name.toUpperCase() === "CRVAL2") {
+                value = "0";
             }
             if (entry.entryType === CARTA.EntryType.STRING) {
                 value = `'${value}'`;

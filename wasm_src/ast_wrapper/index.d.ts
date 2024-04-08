@@ -30,7 +30,8 @@ export function plot(
     curveX1: number,
     curveY1: number,
     curveX2: number,
-    curveY2: number
+    curveY2: number,
+    offsetCoord: boolean
 );
 export function emptyFitsChan(): FitsChan;
 export function putFits(fitsChan: FitsChan, card: string): void;

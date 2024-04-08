@@ -1001,6 +1001,7 @@ export class OverlayStore {
     @observable ticks: OverlayTickSettings;
     @observable colorbar: OverlayColorbarSettings;
     @observable beam: OverlayBeamSettings;
+    @observable offsetCoord: boolean;
 
     private constructor() {
         makeObservable(this);
@@ -1016,6 +1017,7 @@ export class OverlayStore {
         this.beam = new OverlayBeamSettings();
         this.fullViewWidth = 1;
         this.fullViewHeight = 1;
+        this.offsetCoord = false;
 
         // if the system is manually selected, set new default formats & update active frame's wcs settings
         autorun(() => {
@@ -1042,6 +1044,10 @@ export class OverlayStore {
                 }
             });
         });
+    }
+
+    @action setOffsetCoord(offset: boolean) {
+        this.offsetCoord = offset;
     }
 
     /**

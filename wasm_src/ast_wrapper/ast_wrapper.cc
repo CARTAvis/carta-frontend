@@ -250,11 +250,18 @@ void plotDistText(AstFrameSet* wcsinfo, AstPlot* plot, double* start, double* fi
 
 EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double imageX2, double imageY1, double imageY2, double width, double height,
                                         double paddingLeft, double paddingRight, double paddingTop, double paddingBottom, const char* args,
-                                        bool showCurve, bool isPVImage, double curveX1, double curveY1, double curveX2, double curveY2)
+                                        bool showCurve, bool isPVImage, double curveX1, double curveY1, double curveX2, double curveY2, bool isOffsetCoord)
 {
     if (!wcsinfo)
     {
         return 1;
+    }
+
+    if (isOffsetCoord) {
+        AstSkyFrame *skyframe = static_cast<AstSkyFrame*>astGetFrame(wcsinfo, AST__CURRENT);
+        astSet(skyframe, "SkyRefIs=Origin");
+        astSet(skyframe, "Format(1)=d.3");
+        astSet(skyframe, "Format(2)=d.3");
     }
 
     AstPlot* plot;
