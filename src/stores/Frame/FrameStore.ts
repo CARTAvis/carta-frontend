@@ -205,6 +205,8 @@ export class FrameStore {
     @observable previewPVRasterData: Float32Array;
     @observable intensityUnit: string;
 
+    @observable offsetCoord: boolean;
+
     @computed get filename(): string {
         // hdu extension name is in field 3 of fileInfoExtended computed entries
         const extName =
@@ -370,8 +372,10 @@ export class FrameStore {
                 AST.deleteObject(this.cachedTransformedWcsInfo);
             }
 
+            const wcsInfo = this.offsetCoord ? this.wcsInfoShifted : this.wcsInfo;
+
             this.cachedTransformedWcsInfo = AST.createTransformedFrameset(
-                this.wcsInfo,
+                wcsInfo,
                 adjTranslation.x,
                 adjTranslation.y,
                 -this.spatialTransform.rotation,
@@ -385,13 +389,11 @@ export class FrameStore {
         return null;
     }
 
-    private zeroCenterWcsInfo() {
-        const entries = this.frameInfo.fileInfoExtended.headerEntries;
-        const axis1 = entries.find(entry => entry.name.includes(`CRVAL${this.renderedAxesNumbers[0]}`)); // in degree
-        const axis2 = entries.find(entry => entry.name.includes(`CRVAL${this.renderedAxesNumbers[1]}`)); // in degree
-
-        this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, parseFloat(axis1.value), parseFloat(axis2.value));
-        return this.wcsInfoShifted;
+    private updateCenterShiftWcsInfo() {
+        const offset1 = 0; // in degree
+        const offset2 = 0; // in degree
+        const wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, offset1, offset2);
+        return wcsInfoShifted;
     }
 
     @computed get renderWidth() {
@@ -1245,6 +1247,8 @@ export class FrameStore {
         this.depthAxisFormat = "";
         this.intensityUnit = this.headerUnit;
 
+        this.offsetCoord = false;
+
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preferenceStore.astColor;
         if (astColor !== this.overlayStore.global.color) {
@@ -1361,7 +1365,7 @@ export class FrameStore {
             this.wcsInfo = AST.initDummyFrame();
         }
 
-        this.wcsInfoShifted = this.zeroCenterWcsInfo(); // the computation depending on wcsInfo
+        this.wcsInfoShifted = this.updateCenterShiftWcsInfo(); // the computation depending on wcsInfo
 
         const cUnit1 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === `CUNIT${this.renderedAxesNumbers[0]}`);
         const cUnit2 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === `CUNIT${this.renderedAxesNumbers[1]}`);
@@ -2151,6 +2155,10 @@ export class FrameStore {
         this.channelSecondaryValues = values;
     }
 
+    @action setOffsetCoord(offset: boolean) {
+        this.offsetCoord = offset;
+    }
+
     @action private initSupportedSpectralConversion = () => {
         if (this.channelInfo && this.spectralAxis && !this.spectralAxis.valid) {
             this.setChannelValues(this.channelInfo.values);
@@ -2707,6 +2715,7 @@ export class FrameStore {
         console.log(`Setting spatial reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
 
         this.spatialTransformAST = AST.getSpatialMapping(this.wcsInfo, frame.wcsInfo);
+        this.setOffsetCoord(frame.offsetCoord);
 
         if (!this.spatialTransformAST) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);

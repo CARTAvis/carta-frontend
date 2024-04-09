@@ -205,9 +205,11 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo
 EMSCRIPTEN_KEEPALIVE AstFrameSet* createShiftmapFrameset(AstFrameSet* wcsinfo, double offsetX, double offsetY)
 {
     AstFrameSet* wcsinfoShifted = static_cast<AstFrameSet*> astCopy(wcsinfo);
+    AstSkyFrame* skyframe = static_cast<AstSkyFrame*>astGetFrame(wcsinfo, AST__CURRENT);
 
     // 2D shifts
-    double offset[] = {-offsetX/180*M_PI, -offsetY/180*M_PI};
+    // double offset[] = {-offsetX/180*M_PI, -offsetY/180*M_PI};
+    double offset[] = {-atof(astGetC(skyframe, "SkyRef(1)")), -atof(astGetC(skyframe, "SkyRef(2)"))};
     AstShiftMap* shiftMap = astShiftMap(2, offset, "");
 
     // remapping
