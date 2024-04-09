@@ -208,9 +208,9 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createShiftmapFrameset(AstFrameSet* wcsinfo, d
     AstSkyFrame* skyframe = static_cast<AstSkyFrame*>astGetFrame(wcsinfo, AST__CURRENT);
 
     // 2D shifts
-    // double offset[] = {-offsetX/180*M_PI, -offsetY/180*M_PI};
-    double offset[] = {-atof(astGetC(skyframe, "SkyRef(1)")), -atof(astGetC(skyframe, "SkyRef(2)"))};
-    AstShiftMap* shiftMap = astShiftMap(2, offset, "");
+    double offset[] = {-offsetX/180*M_PI, -offsetY/180*M_PI};
+    double shift[] = {-atof(astGetC(skyframe, "SkyRef(1)")) + offset[0], -atof(astGetC(skyframe, "SkyRef(2)")) + offset[1]};
+    AstShiftMap* shiftMap = astShiftMap(2, shift, "");
 
     // remapping
     astRemapFrame(wcsinfoShifted, AST__CURRENT, shiftMap);
