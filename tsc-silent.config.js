@@ -2,7 +2,7 @@ const migratedFiles = [
     "utilities",
     "models",
     "services",
-    "stores/Widgets/CatalogWidget/CatalogPlotWidgetStore"
+    "stores/Widgets/CatalogWidget"
 ];
 
 module.exports = {
