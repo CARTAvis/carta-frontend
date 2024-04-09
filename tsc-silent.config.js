@@ -5,7 +5,8 @@ const migratedFiles = [
     "stores/Widgets/CatalogWidget",
     "stores/Widgets/HistogramWidgetStore",
     "stores/Widgets/LayerListWidgetStore",
-    "stores/Widgets/PvGeneratorWidgetStore"
+    "stores/Widgets/PvGeneratorWidgetStore",
+    "stores/Widgets/RegionWidgetStore"
 ];
 
 module.exports = {

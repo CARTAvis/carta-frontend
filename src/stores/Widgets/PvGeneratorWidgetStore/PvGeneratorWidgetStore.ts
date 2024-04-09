@@ -76,6 +76,10 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
 
     @action requestPV = (preview: boolean = false, pvGeneratorId?: string) => {
         const frame = this.effectiveFrame;
+        if (!frame) {
+            return;
+        }
+
         let channelIndexMin = frame.findChannelIndexByValue(this.range.min);
         let channelIndexMax = frame.findChannelIndexByValue(this.range.max);
 
@@ -134,15 +138,11 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     };
 
     @action setSpectralCoordinate = (coordStr: string) => {
-        if (this.effectiveFrame.setSpectralCoordinate(coordStr)) {
-            return;
-        }
+        this.effectiveFrame?.setSpectralCoordinate(coordStr);
     };
 
     @action setSpectralSystem = (specsys: SpectralSystem) => {
-        if (this.effectiveFrame.setSpectralSystem(specsys)) {
-            return;
-        }
+        this.effectiveFrame?.setSpectralSystem(specsys);
     };
 
     @action setWidth = (val: number) => {

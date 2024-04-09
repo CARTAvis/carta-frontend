@@ -51,7 +51,7 @@ export class RegionWidgetStore {
         this.fileId = fileId;
     };
 
-    @computed get effectiveFrame(): FrameStore {
+    @computed get effectiveFrame(): FrameStore | null | undefined {
         if (this.appStore.activeFrame && this.appStore.frames?.length > 0) {
             return this.fileId === ACTIVE_FILE_ID || !this.appStore.getFrame(this.fileId) ? this.appStore.activeFrame : this.appStore.getFrame(this.fileId);
         }
@@ -59,10 +59,13 @@ export class RegionWidgetStore {
     }
 
     @computed get isEffectiveFrameEqualToActiveFrame(): boolean {
-        return this.effectiveFrame && this.appStore.activeFrame?.frameInfo.fileId === this.effectiveFrame.frameInfo.fileId;
+        if (!this.effectiveFrame) {
+            return false;
+        }
+        return this.appStore.activeFrame?.frameInfo.fileId === this.effectiveFrame.frameInfo.fileId;
     }
 
-    @computed get effectiveRegionId(): number {
+    @computed get effectiveRegionId(): number | null {
         if (this.effectiveFrame) {
             const regionId = this.regionIdMap.get(this.fileId);
             if (regionId !== RegionId.ACTIVE && regionId !== RegionId.NONE && regionId !== undefined) {
@@ -89,7 +92,7 @@ export class RegionWidgetStore {
         return this.defaultRegionId();
     }
 
-    private defaultRegionId(): number {
+    private defaultRegionId(): number | null {
         switch (this.type) {
             case RegionsType.CLOSED:
                 return RegionId.IMAGE;
@@ -102,11 +105,11 @@ export class RegionWidgetStore {
         }
     }
 
-    @computed get effectiveRegion(): RegionStore {
-        return this.effectiveFrame?.getRegion(this.effectiveRegionId);
+    @computed get effectiveRegion(): RegionStore | undefined {
+        return this.effectiveFrame?.getRegion(this.effectiveRegionId ?? NaN);
     }
 
-    @computed get effectiveRegionInfo(): string {
+    @computed get effectiveRegionInfo(): string | undefined {
         if (this.effectiveFrame) {
             if (this.effectiveRegionId === RegionId.IMAGE) {
                 return "Image";
@@ -144,15 +147,15 @@ export class RegionWidgetStore {
             }
             const fileId = frame.frameInfo.fileId;
             const regionId = widgetStore.effectiveRegionId;
-            const region = frame.getRegion(regionId);
+            const region = frame.getRegion(regionId ?? NaN);
             if (regionId === -1 || region?.isClosedRegion) {
                 let frameRequirementsArray = updatedRequirements.get(fileId);
                 if (!frameRequirementsArray) {
                     frameRequirementsArray = [];
                     updatedRequirements.set(fileId, frameRequirementsArray);
                 }
-                if (!frameRequirementsArray.includes(regionId)) {
-                    frameRequirementsArray.push(regionId);
+                if (!frameRequirementsArray.includes(regionId ?? NaN)) {
+                    frameRequirementsArray.push(regionId ?? NaN);
                 }
             }
         });

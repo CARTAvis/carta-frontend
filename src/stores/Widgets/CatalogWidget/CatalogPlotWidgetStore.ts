@@ -31,7 +31,7 @@ export class CatalogPlotWidgetStore {
     @observable fitting: Fitting | null;
     @observable minMaxX: {minVal: number; maxVal: number} | null;
     @observable statisticColumnName: string;
-    @observable private statistic: Statistic | null;
+    @observable statistic: Statistic | null;
 
     constructor(props: CatalogPlotWidgetStoreProps) {
         makeObservable(this);

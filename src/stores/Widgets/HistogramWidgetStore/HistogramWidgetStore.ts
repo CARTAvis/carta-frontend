@@ -147,7 +147,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         return this.minY === undefined || this.maxY === undefined;
     }
 
-    @computed get effectivePolarization(): POLARIZATIONS {
+    @computed get effectivePolarization(): POLARIZATIONS | undefined {
         if (this.coordinate === "z") {
             return this.effectiveFrame?.requiredPolarization;
         } else {
@@ -210,10 +210,12 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                     updatedRequirements.set(fileId, frameRequirements);
                 }
 
-                let regionRequirements = frameRequirements.get(regionId);
+                let regionRequirements = frameRequirements.get(regionId ?? NaN);
                 if (!regionRequirements) {
                     regionRequirements = new CARTA.SetHistogramRequirements({fileId, regionId});
-                    frameRequirements.set(regionId, regionRequirements);
+                    if (regionId !== null) {
+                        frameRequirements.set(regionId, regionRequirements);
+                    }
                 }
 
                 if (!regionRequirements.histograms) {
