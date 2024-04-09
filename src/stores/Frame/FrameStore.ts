@@ -2042,7 +2042,7 @@ export class FrameStore {
         return null;
     }
 
-    public findChannelIndexByValue = (x: number): number => {
+    public findChannelIndexByValue = (x: number | null | undefined): number => {
         if (x === null || x === undefined || !isFinite(x)) {
             return undefined;
         }
