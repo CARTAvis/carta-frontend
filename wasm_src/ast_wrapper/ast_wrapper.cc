@@ -202,6 +202,20 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo
     return wcsInfoTransformed;
 }
 
+EMSCRIPTEN_KEEPALIVE AstFrameSet* createShiftmapFrameset(AstFrameSet* wcsinfo, double offsetX, double offsetY)
+{
+    AstFrameSet* wcsinfoShifted = static_cast<AstFrameSet*> astCopy(wcsinfo);
+
+    // 2D shifts
+    double offset[] = {-offsetX/180*M_PI, -offsetY/180*M_PI};
+    AstShiftMap* shiftMap = astShiftMap(2, offset, "");
+
+    // remapping
+    astRemapFrame(wcsinfoShifted, AST__CURRENT, shiftMap);
+
+    return wcsinfoShifted;
+}
+
 EMSCRIPTEN_KEEPALIVE AstFrameSet* initDummyFrame()
 {
     double offsets[] = {-1, -1};
