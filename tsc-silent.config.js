@@ -7,7 +7,8 @@ const migratedFiles = [
     "stores/Widgets/LayerListWidgetStore",
     "stores/Widgets/PvGeneratorWidgetStore",
     "stores/Widgets/RegionWidgetStore",
-    "stores/Widgets/RenderConfigWidgetStore"
+    "stores/Widgets/RenderConfigWidgetStore",
+    "stores/Widgets/SpatialProfileWidgetStore"
 ];
 
 module.exports = {
