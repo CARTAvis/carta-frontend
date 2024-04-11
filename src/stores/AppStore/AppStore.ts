@@ -1394,6 +1394,9 @@ export class AppStore {
         if (frame?.fittingModelImage) {
             this.closeFile(frame.fittingModelImage);
         }
+        if (frame?.fittingDeconModelImage) {
+            this.closeFile(frame.fittingDeconModelImage);
+        }
         if (frame?.fittingResidualImage) {
             this.closeFile(frame.fittingResidualImage);
         }
@@ -1421,6 +1424,14 @@ export class AppStore {
                         frame?.addFittingModelImage(this.getFrame(ack.modelImage.fileId));
                     } else {
                         AppToaster.show({icon: "warning-sign", message: "Load model image failed.", intent: "danger", timeout: 3000});
+                    }
+                }
+                if (ack.deconvolvedModelImage) {
+                    if (this.addFrame(CARTA.OpenFileAck.create(ack.deconvolvedModelImage), this.fileBrowserStore.startingDirectory, false, "", true)) {
+                        this.fileCounter++;
+                        frame?.addFittingModelImage(this.getFrame(ack.deconvolvedModelImage.fileId));
+                    } else {
+                        AppToaster.show({icon: "warning-sign", message: "Load model deconvolved image failed.", intent: "danger", timeout: 3000});
                     }
                 }
                 if (ack.residualImage) {
