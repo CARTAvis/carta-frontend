@@ -80,7 +80,7 @@ export function genColorFromIndex(index: number) {
     return Colors[`${selectedColor.toUpperCase()}${AppStore.Instance.darkTheme ? "4" : "2"}`];
 }
 
-export function getColorForTheme(color: string) {
+export function getColorForTheme(color: string): string {
     if (!isAutoColor(color)) {
         return color;
     }
