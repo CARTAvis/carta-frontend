@@ -11,7 +11,8 @@ const migratedFiles = [
     "stores/Widgets/SpatialProfileWidgetStore",
     "stores/Widgets/SpectralLineQueryWidgetStore",
     "stores/Widgets/SpectralProfileWidget",
-    "stores/Widgets/StatsWidgetStore"
+    "stores/Widgets/StatsWidgetStore",
+    "stores/Widgets/StokesAnalysisWidgetStore"
 ];
 
 module.exports = {
