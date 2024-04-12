@@ -8,7 +8,8 @@ const migratedFiles = [
     "stores/Widgets/PvGeneratorWidgetStore",
     "stores/Widgets/RegionWidgetStore",
     "stores/Widgets/RenderConfigWidgetStore",
-    "stores/Widgets/SpatialProfileWidgetStore"
+    "stores/Widgets/SpatialProfileWidgetStore",
+    "stores/Widgets/SpectralLineQueryWidgetStore"
 ];
 
 module.exports = {

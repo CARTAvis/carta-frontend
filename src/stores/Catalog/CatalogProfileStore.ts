@@ -19,7 +19,7 @@ export enum CatalogUpdateMode {
     PlotsUpdate = "PlotsUpdate"
 }
 
-export type ControlHeader = {columnIndex: number; dataIndex: number; display: boolean; filter: string; columnWidth: number | null};
+export type ControlHeader = {columnIndex: number | undefined; dataIndex: number | undefined; display: boolean | undefined; filter: string; columnWidth: number | null | undefined};
 
 export class CatalogProfileStore extends AbstractCatalogProfileStore {
     public static readonly InitTableRows = 50;

@@ -182,7 +182,7 @@ export abstract class AbstractCatalogProfileStore {
     public getUserFilters(): CARTA.FilterConfig[] {
         let userFilters: CARTA.FilterConfig[] = [];
         this.catalogControlHeader.forEach((value, key) => {
-            if (value.filter !== undefined && value.display) {
+            if (value.filter !== undefined && value.display && value.dataIndex !== undefined) {
                 let filter = new CARTA.FilterConfig();
                 const dataType = this.catalogHeader[value.dataIndex].dataType;
                 filter.columnName = key;
@@ -235,7 +235,7 @@ export abstract class AbstractCatalogProfileStore {
     @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader> {
         let displayedColumnHeaders: CARTA.CatalogHeader[] = [];
         this.catalogControlHeader.forEach((value, key) => {
-            if (value.display && this.catalogHeader) {
+            if (value.display && this.catalogHeader && value.dataIndex !== undefined) {
                 displayedColumnHeaders.push(this.catalogHeader[value.dataIndex]);
             }
         });
@@ -274,8 +274,8 @@ export abstract class AbstractCatalogProfileStore {
         return this.catalogType === CatalogType.FILE;
     }
 
-    @computed get tableColumnWidths(): Array<number | null> {
-        const columnWidths: (number | null)[] = [];
+    @computed get tableColumnWidths(): Array<number | null | undefined> {
+        const columnWidths: (number | null | undefined)[] = [];
         this.catalogControlHeader.forEach((value, key) => {
             if (value.display) {
                 columnWidths.push(value.columnWidth);
