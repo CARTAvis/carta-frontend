@@ -5,19 +5,7 @@ import tinycolor from "tinycolor2";
 
 import {SpectralProfilerSettingsTabs} from "components";
 import {LineSettings, PlotType, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
-import {
-    FindIntensityUnitType,
-    GetCommonIntensityOptions,
-    GetIntensityConversion,
-    GetIntensityOptions,
-    IntensityConfig,
-    IntensityUnitType,
-    IsIntensitySupported,
-    LineKey,
-    Point2D,
-    POLARIZATIONS,
-    SpectralSystem
-} from "models";
+import {FindIntensityUnitType, GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, IntensityConfig, IntensityUnitType, IsIntensitySupported, LineKey, Point2D, POLARIZATIONS, SpectralSystem} from "models";
 import {TelemetryAction, TelemetryService} from "services";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
 import {MultiProfileCategory, RegionId, RegionsType, RegionWidgetStore, SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
