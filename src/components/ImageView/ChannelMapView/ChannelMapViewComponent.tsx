@@ -83,6 +83,10 @@ export class ChannelMapStore {
 
     @action setMasterFrame(masterFrame: FrameStore) {
         this.masterFrame = masterFrame;
+
+        const appStore = AppStore.Instance;
+        const frames = appStore.frames.filter(frame => frame.frameInfo.fileId !== masterFrame.frameInfo.fileId);
+        frames.forEach(frame => appStore.channelMapTileService.handleFileClosed(frame.frameInfo.fileId));
     }
 
     @action setStartChannel(startChannel: number) {
@@ -292,7 +296,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     return (
                         <>
                             <RasterViewComponent
-                                key={`raster-view-component-${channel}`}
+                                key={`raster-view-component-${frame.frameInfo.fileId}-${channel}`}
                                 frame={frame}
                                 webGLService={ChannelMapWebGLService.Instance}
                                 tileService={ChannelMapTileService.Instance}

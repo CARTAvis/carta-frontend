@@ -178,7 +178,6 @@ const updateCanvas = (
         const histStokesIndex = frame.renderConfig.stokesIndex;
         const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histChannel : undefined;
         if ((frame.renderConfig.useCubeHistogram || frame.channel === histChannel || frame.isPreview) && (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)) {
-            frame.renderConfig.updateFrom(AppStore.Instance.activeFrame.renderConfig);
             const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
 
             const renderWidth = overlayStore.renderWidth;

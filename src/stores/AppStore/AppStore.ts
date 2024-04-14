@@ -875,6 +875,7 @@ export class AppStore {
             this.histogramRequirements.delete(fileId);
 
             this.tileService.handleFileClosed(fileId);
+            this.channelMapTileService.handleFileClosed(fileId)
             this.telemetryService.addFileCloseEntry(fileId);
 
             if (this.backendService.closeFile(fileId)) {
@@ -927,6 +928,7 @@ export class AppStore {
 
                 // TODO: check this
                 this.tileService.handleFileClosed(fileId);
+                this.channelMapTileService.handleFileClosed(fileId)
                 // Clean up if frame has associated catalog files
                 if (this.catalogNum) {
                     CatalogStore.Instance.closeAssociatedCatalog(fileId);
@@ -959,6 +961,7 @@ export class AppStore {
                 const fileId = frame.frameInfo.fileId;
                 this.telemetryService.addFileCloseEntry(fileId);
                 this.tileService.handleFileClosed(fileId);
+                this.channelMapTileService.handleFileClosed(fileId)
                 if (this.catalogNum) {
                     CatalogStore.Instance.closeAssociatedCatalog(fileId);
                 }
@@ -1578,7 +1581,7 @@ export class AppStore {
 
             frame.channel = update.channel;
             frame.stokes = update.stokes;
-            if (this.visibleFrames.includes(frame)) {
+            if (this.visibleFrames.includes(frame) && !this.preferenceStore.channelMapEnabled) {
                 // Calculate new required frame view (cropped to file size)
                 const reqView = frame.requiredFrameView;
 
@@ -1646,7 +1649,7 @@ export class AppStore {
                 tiles.map(t => t.encode()),
                 this.preferenceStore.animationCompressionQuality
             );
-        } else {
+        } else if (!this.preferenceStore.channelMapEnabled) {
             // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
             const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
             const compressionQuality = bunitVariant.includes(headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
@@ -1936,6 +1939,7 @@ export class AppStore {
         this.backendService.momentProgressStream.subscribe(this.handleMomentProgressStream);
         this.backendService.scriptingStream.subscribe(this.handleScriptingRequest);
         this.tileService.tileStream.subscribe(this.handleTileStream);
+        this.channelMapTileService.tileStream.subscribe(this.handleTileStream);
         this.backendService.listProgressStream.subscribe(this.handleFileProgressStream);
         this.backendService.pvProgressStream.subscribe(this.handlePvProgressStream);
         this.backendService.fittingProgressStream.subscribe(this.handleFittingProgressStream);
