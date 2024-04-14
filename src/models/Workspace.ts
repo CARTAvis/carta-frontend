@@ -8,6 +8,8 @@ import {Point2D} from "./Point2D/Point2D";
 export interface WorkspaceRenderConfig {
     scaling?: FrameScaling;
     colorMap?: string;
+    customColormapHexEnd?: string;
+    customColormapHexStart?: string;
     bias?: number;
     contrast?: number;
     gamma?: number;

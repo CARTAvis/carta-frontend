@@ -91,7 +91,7 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
 
         return (
             <div ref={ref => (this.divElement = ref)} className={className} style={styleProps}>
-                {infoStrings.length ? infoStrings.join("; ") : "\u00a0"}
+                <span>{infoStrings.length ? infoStrings.join("; ") : "\u00a0"}</span>
             </div>
         );
     }

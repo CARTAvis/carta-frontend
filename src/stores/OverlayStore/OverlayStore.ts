@@ -1020,6 +1020,9 @@ export class OverlayStore {
     //     return OverlayStore.staticInstance;
     // }
 
+    /** Visibility of the overlay. */
+    @observable visible: boolean = true;
+
     // View size options
     @observable _fullViewWidth: number;
     @observable _fullViewHeight: number;
@@ -1113,6 +1116,13 @@ export class OverlayStore {
     @computed get fullViewHeight() {
         return this._fullViewHeight;
         // return this.isChannelMap ? this._fullViewHeight : this.imageViewerSettingStore.fullViewHeight;
+    }
+    /**
+     * Hide or show the overlay.
+     * @param visible - Visibility of the overlay.
+     */
+    @action setVisible(visible: boolean) {
+        this.visible = visible;
     }
 
     @action setViewDimension = (width: number, height: number) => {

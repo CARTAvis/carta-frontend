@@ -14,57 +14,57 @@ export enum CatalogTextureType {
 }
 
 interface ShaderUniforms {
-    LineThickness: WebGLUniformLocation;
-    FeatherWidth: WebGLUniformLocation;
-    ShapeType: WebGLUniformLocation;
-    PointColor: WebGLUniformLocation;
-    PointSize: WebGLUniformLocation;
-    SelectedSourceColor: WebGLUniformLocation;
-    ShowSelectedSource: WebGLUniformLocation;
-    RotationAngle: WebGLUniformLocation;
-    RangeOffset: WebGLUniformLocation;
-    RangeScale: WebGLUniformLocation;
-    ScaleAdjustment: WebGLUniformLocation;
-    ZoomLevel: WebGLUniformLocation;
-    PixelRatio: WebGLUniformLocation;
+    LineThickness: WebGLUniformLocation | null;
+    FeatherWidth: WebGLUniformLocation | null;
+    ShapeType: WebGLUniformLocation | null;
+    PointColor: WebGLUniformLocation | null;
+    PointSize: WebGLUniformLocation | null;
+    SelectedSourceColor: WebGLUniformLocation | null;
+    ShowSelectedSource: WebGLUniformLocation | null;
+    RotationAngle: WebGLUniformLocation | null;
+    RangeOffset: WebGLUniformLocation | null;
+    RangeScale: WebGLUniformLocation | null;
+    ScaleAdjustment: WebGLUniformLocation | null;
+    ZoomLevel: WebGLUniformLocation | null;
+    PixelRatio: WebGLUniformLocation | null;
     // spatial matching
-    ControlMapEnabled: WebGLUniformLocation;
-    ControlMapSize: WebGLUniformLocation;
-    ControlMapTexture: WebGLUniformLocation;
-    ControlMapMin: WebGLUniformLocation;
-    ControlMapMax: WebGLUniformLocation;
+    ControlMapEnabled: WebGLUniformLocation | null;
+    ControlMapSize: WebGLUniformLocation | null;
+    ControlMapTexture: WebGLUniformLocation | null;
+    ControlMapMin: WebGLUniformLocation | null;
+    ControlMapMax: WebGLUniformLocation | null;
     // texture
-    PositionTexture: WebGLUniformLocation;
-    SizeTexture: WebGLUniformLocation;
-    ColorTexture: WebGLUniformLocation;
-    OrientationTexture: WebGLUniformLocation;
-    SelectedSourceTexture: WebGLUniformLocation;
-    SizeMinorTexture: WebGLUniformLocation;
+    PositionTexture: WebGLUniformLocation | null;
+    SizeTexture: WebGLUniformLocation | null;
+    ColorTexture: WebGLUniformLocation | null;
+    OrientationTexture: WebGLUniformLocation | null;
+    SelectedSourceTexture: WebGLUniformLocation | null;
+    SizeMinorTexture: WebGLUniformLocation | null;
     // size
-    SizeMajorMapEnabled: WebGLUniformLocation;
-    AreaMode: WebGLUniformLocation;
-    SizeMinorMapEnabled: WebGLUniformLocation;
-    AreaModeMinor: WebGLUniformLocation;
+    SizeMajorMapEnabled: WebGLUniformLocation | null;
+    AreaMode: WebGLUniformLocation | null;
+    SizeMinorMapEnabled: WebGLUniformLocation | null;
+    AreaModeMinor: WebGLUniformLocation | null;
     // color map
-    CmapEnabled: WebGLUniformLocation;
-    CmapTexture: WebGLUniformLocation;
-    NumCmaps: WebGLUniformLocation;
-    CmapIndex: WebGLUniformLocation;
+    CmapEnabled: WebGLUniformLocation | null;
+    CmapTexture: WebGLUniformLocation | null;
+    NumCmaps: WebGLUniformLocation | null;
+    CmapIndex: WebGLUniformLocation | null;
     //orientation
-    OmapEnabled: WebGLUniformLocation;
+    OmapEnabled: WebGLUniformLocation | null;
 }
 
 export class CatalogWebGLService {
     private static staticInstance: CatalogWebGLService;
     private cmapTexture: WebGLTexture;
     private positionArrays: Map<number, Float32Array>;
-    private positionTextures: Map<number, WebGLTexture>;
-    private sizeTextures: Map<number, WebGLTexture>;
-    private colorTextures: Map<number, WebGLTexture>;
-    private orientationTextures: Map<number, WebGLTexture>;
-    private selectedSourceTextures: Map<number, WebGLTexture>;
-    private sizeMinorTextures: Map<number, WebGLTexture>;
-    readonly gl: WebGL2RenderingContext;
+    private positionTextures: Map<number, WebGLTexture | null>;
+    private sizeTextures: Map<number, WebGLTexture | null>;
+    private colorTextures: Map<number, WebGLTexture | null>;
+    private orientationTextures: Map<number, WebGLTexture | null>;
+    private selectedSourceTextures: Map<number, WebGLTexture | null>;
+    private sizeMinorTextures: Map<number, WebGLTexture | null>;
+    readonly gl: WebGL2RenderingContext | null;
     shaderUniforms: ShaderUniforms;
 
     static get Instance() {
@@ -96,7 +96,7 @@ export class CatalogWebGLService {
 
     public updatePositionTexture = (fileId: number): boolean => {
         const positionArray = this.positionArrays.get(fileId);
-        if (positionArray.length) {
+        if (positionArray?.length) {
             this.updateDataTexture(fileId, positionArray, CatalogTextureType.Position);
             return true;
         }
@@ -132,7 +132,7 @@ export class CatalogWebGLService {
         }
     };
 
-    public getDataTexture = (fileId: number, textureType: CatalogTextureType): WebGLTexture => {
+    public getDataTexture = (fileId: number, textureType: CatalogTextureType): WebGLTexture | null | undefined => {
         switch (textureType) {
             case CatalogTextureType.Position:
                 return this.positionTextures.get(fileId);
@@ -168,44 +168,46 @@ export class CatalogWebGLService {
         const shaderProgram = getShaderProgram(this.gl, catalogShaders.vertexShader, catalogShaders.fragmentShader);
         this.gl.useProgram(shaderProgram);
 
-        this.shaderUniforms = {
-            LineThickness: this.gl.getUniformLocation(shaderProgram, "uLineThickness"),
-            FeatherWidth: this.gl.getUniformLocation(shaderProgram, "uFeatherWidth"),
-            ShapeType: this.gl.getUniformLocation(shaderProgram, "uShapeType"),
-            SelectedSourceColor: this.gl.getUniformLocation(shaderProgram, "uSelectedSourceColor"),
-            ShowSelectedSource: this.gl.getUniformLocation(shaderProgram, "uShowSelectedSource"),
-            PointColor: this.gl.getUniformLocation(shaderProgram, "uPointColor"),
-            PointSize: this.gl.getUniformLocation(shaderProgram, "uPointSize"),
-            CmapIndex: this.gl.getUniformLocation(shaderProgram, "uCmapIndex"),
-            NumCmaps: this.gl.getUniformLocation(shaderProgram, "uNumCmaps"),
-            AreaMode: this.gl.getUniformLocation(shaderProgram, "uAreaMode"),
-            AreaModeMinor: this.gl.getUniformLocation(shaderProgram, "uAreaModeMinor"),
-            SizeMajorMapEnabled: this.gl.getUniformLocation(shaderProgram, "uSizeMajorMapEnabled"),
-            SizeMinorMapEnabled: this.gl.getUniformLocation(shaderProgram, "uSizeMinorMapEnabled"),
-            OmapEnabled: this.gl.getUniformLocation(shaderProgram, "uOmapEnabled"),
-            CmapEnabled: this.gl.getUniformLocation(shaderProgram, "uCmapEnabled"),
-            RotationAngle: this.gl.getUniformLocation(shaderProgram, "uRotationAngle"),
-            RangeOffset: this.gl.getUniformLocation(shaderProgram, "uRangeOffset"),
-            RangeScale: this.gl.getUniformLocation(shaderProgram, "uRangeScale"),
-            ScaleAdjustment: this.gl.getUniformLocation(shaderProgram, "uScaleAdjustment"),
-            ZoomLevel: this.gl.getUniformLocation(shaderProgram, "uZoomLevel"),
-            PixelRatio: this.gl.getUniformLocation(shaderProgram, "uPixelRatio"),
-            // spatial matching
-            ControlMapEnabled: this.gl.getUniformLocation(shaderProgram, "uControlMapEnabled"),
-            ControlMapSize: this.gl.getUniformLocation(shaderProgram, "uControlMapSize"),
-            ControlMapMin: this.gl.getUniformLocation(shaderProgram, "uControlMapMin"),
-            ControlMapMax: this.gl.getUniformLocation(shaderProgram, "uControlMapMax"),
-            // texture 1
-            ControlMapTexture: this.gl.getUniformLocation(shaderProgram, "uControlMapTexture"),
-            // texture 0 2 3 4 5 6 7
-            CmapTexture: this.gl.getUniformLocation(shaderProgram, "uCmapTexture"),
-            PositionTexture: this.gl.getUniformLocation(shaderProgram, "uPositionTexture"),
-            SizeTexture: this.gl.getUniformLocation(shaderProgram, "uSizeTexture"),
-            ColorTexture: this.gl.getUniformLocation(shaderProgram, "uColorTexture"),
-            OrientationTexture: this.gl.getUniformLocation(shaderProgram, "uOrientationTexture"),
-            SelectedSourceTexture: this.gl.getUniformLocation(shaderProgram, "uSelectedSourceTexture"),
-            SizeMinorTexture: this.gl.getUniformLocation(shaderProgram, "uSizeMinorTexture")
-        };
+        if (shaderProgram) {
+            this.shaderUniforms = {
+                LineThickness: this.gl.getUniformLocation(shaderProgram, "uLineThickness"),
+                FeatherWidth: this.gl.getUniformLocation(shaderProgram, "uFeatherWidth"),
+                ShapeType: this.gl.getUniformLocation(shaderProgram, "uShapeType"),
+                SelectedSourceColor: this.gl.getUniformLocation(shaderProgram, "uSelectedSourceColor"),
+                ShowSelectedSource: this.gl.getUniformLocation(shaderProgram, "uShowSelectedSource"),
+                PointColor: this.gl.getUniformLocation(shaderProgram, "uPointColor"),
+                PointSize: this.gl.getUniformLocation(shaderProgram, "uPointSize"),
+                CmapIndex: this.gl.getUniformLocation(shaderProgram, "uCmapIndex"),
+                NumCmaps: this.gl.getUniformLocation(shaderProgram, "uNumCmaps"),
+                AreaMode: this.gl.getUniformLocation(shaderProgram, "uAreaMode"),
+                AreaModeMinor: this.gl.getUniformLocation(shaderProgram, "uAreaModeMinor"),
+                SizeMajorMapEnabled: this.gl.getUniformLocation(shaderProgram, "uSizeMajorMapEnabled"),
+                SizeMinorMapEnabled: this.gl.getUniformLocation(shaderProgram, "uSizeMinorMapEnabled"),
+                OmapEnabled: this.gl.getUniformLocation(shaderProgram, "uOmapEnabled"),
+                CmapEnabled: this.gl.getUniformLocation(shaderProgram, "uCmapEnabled"),
+                RotationAngle: this.gl.getUniformLocation(shaderProgram, "uRotationAngle"),
+                RangeOffset: this.gl.getUniformLocation(shaderProgram, "uRangeOffset"),
+                RangeScale: this.gl.getUniformLocation(shaderProgram, "uRangeScale"),
+                ScaleAdjustment: this.gl.getUniformLocation(shaderProgram, "uScaleAdjustment"),
+                ZoomLevel: this.gl.getUniformLocation(shaderProgram, "uZoomLevel"),
+                PixelRatio: this.gl.getUniformLocation(shaderProgram, "uPixelRatio"),
+                // spatial matching
+                ControlMapEnabled: this.gl.getUniformLocation(shaderProgram, "uControlMapEnabled"),
+                ControlMapSize: this.gl.getUniformLocation(shaderProgram, "uControlMapSize"),
+                ControlMapMin: this.gl.getUniformLocation(shaderProgram, "uControlMapMin"),
+                ControlMapMax: this.gl.getUniformLocation(shaderProgram, "uControlMapMax"),
+                // texture 1
+                ControlMapTexture: this.gl.getUniformLocation(shaderProgram, "uControlMapTexture"),
+                // texture 0 2 3 4 5 6 7
+                CmapTexture: this.gl.getUniformLocation(shaderProgram, "uCmapTexture"),
+                PositionTexture: this.gl.getUniformLocation(shaderProgram, "uPositionTexture"),
+                SizeTexture: this.gl.getUniformLocation(shaderProgram, "uSizeTexture"),
+                ColorTexture: this.gl.getUniformLocation(shaderProgram, "uColorTexture"),
+                OrientationTexture: this.gl.getUniformLocation(shaderProgram, "uOrientationTexture"),
+                SelectedSourceTexture: this.gl.getUniformLocation(shaderProgram, "uSelectedSourceTexture"),
+                SizeMinorTexture: this.gl.getUniformLocation(shaderProgram, "uSizeMinorTexture")
+            };
+        }
 
         this.positionArrays = new Map<number, Float32Array>();
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);

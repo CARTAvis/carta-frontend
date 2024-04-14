@@ -18,8 +18,8 @@ export const INVALID_ANIMATION_ID = -1;
 type HandlerFunction = (eventId: number, parsedMessage: any) => void;
 
 interface IBackendResponse {
-    success?: boolean;
-    message?: string;
+    success?: boolean | null;
+    message?: string | null;
 }
 
 // Deferred class adapted from https://stackoverflow.com/a/58610922/1727322

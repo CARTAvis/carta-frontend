@@ -11,7 +11,7 @@ export class ControlMap {
     readonly height: number;
     minPoint: Point2D;
     maxPoint: Point2D;
-    texture: WebGLTexture;
+    texture: WebGLTexture | null;
     gl: WebGL2RenderingContext;
     private grid: Float32Array;
 
