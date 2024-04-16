@@ -1412,6 +1412,8 @@ export class AppStore {
                     message.fixedParams,
                     ack.resultValues,
                     ack.resultErrors,
+                    ack.resultDeconValues,
+                    ack.resultDeconErrors,
                     ack.offsetValue,
                     ack.offsetError,
                     ack.integratedFluxValues,

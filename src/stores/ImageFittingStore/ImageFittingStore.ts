@@ -222,6 +222,8 @@ export class ImageFittingStore {
         fixedParams: boolean[],
         values: CARTA.IGaussianComponent[],
         errors: CARTA.IGaussianComponent[],
+        deconValues: CARTA.IGaussianComponent[],
+        deconErrors: CARTA.IGaussianComponent[],
         offsetValue: number,
         offsetError: number,
         integratedFluxValues: number[],
@@ -346,7 +348,16 @@ export class ImageFittingStore {
             }
         };
 
-        getResults(values, errors);
+        if (deconErrors.length > 0 && deconErrors.length > 0) {
+            results += "Convolved with beam\n";
+            log += "Convolved with beam\n";
+            getResults(values, errors);
+            results += "Deconvolved from beam\n";
+            log += "Deconvolved from beam\n";
+            getResults(deconValues, deconErrors);
+        } else {
+            getResults(values, errors);
+        }
 
         results += toFixFormat("Background     ", offsetValue, offsetError, frame.requiredUnit, fixedParams[fixedParams.length - 1]);
         log += toExpFormat("Background     ", offsetValue, offsetError, frame.requiredUnit, fixedParams[fixedParams.length - 1]);
