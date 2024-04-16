@@ -254,95 +254,99 @@ export class ImageFittingStore {
         const formatTypeY = AppStore.Instance.overlayStore.numbers?.formatTypeY;
         const showIntegratedFlux = integratedFluxValues.length === values.length && integratedFluxErrors.length === values.length && (frame.requiredUnit === "Jy/pixel" || frame.requiredUnit === "Jy/beam");
 
-        for (let i = 0; i < values.length; i++) {
-            const value = values[i];
-            const error = errors[i];
-            if (!value || !error) {
-                continue;
-            }
-            results += `Component #${i + 1}:\n`;
-            log += `Component #${i + 1}:\n`;
-            const [centerFixedX, centerFixedY, amplitudeFixed, fwhmFixedX, fwhmFixedY, paFixed] = fixedParams.slice(i * 6, i * 6 + 6);
-            if (!frame.wcsInfoForTransformation || !frame.pixelUnitSizeArcsec) {
-                results += toFixFormat("Center X       ", value.center?.x, error.center?.x, "px", centerFixedX);
-                results += toFixFormat("Center Y       ", value.center?.y, error.center?.y, "px", centerFixedY);
-                results += toFixFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, amplitudeFixed);
-                results += toFixFormat("FWHM Major Axis", value.fwhm?.x, error.fwhm?.x, "px", fwhmFixedX);
-                results += toFixFormat("FWHM Minor Axis", value.fwhm?.y, error.fwhm?.y, "px", fwhmFixedY);
-                results += toFixFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
-                if (showIntegratedFlux) {
-                    results += toFixFormat("Integrated flux", integratedFluxValues[i], integratedFluxErrors[i], "Jy", amplitudeFixed && fwhmFixedX && fwhmFixedY);
+        const getResults = (values: CARTA.IGaussianComponent[], errors: CARTA.IGaussianComponent[]) => {
+            for (let i = 0; i < values.length; i++) {
+                const value = values[i];
+                const error = errors[i];
+                if (!value || !error) {
+                    continue;
                 }
-
-                log += toExpFormat("Center X       ", value.center?.x, error.center?.x, "px", centerFixedX);
-                log += toExpFormat("Center Y       ", value.center?.y, error.center?.y, "px", centerFixedY);
-                log += toExpFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, amplitudeFixed);
-                log += toExpFormat("FWHM Major Axis", value.fwhm?.x, error.fwhm?.x, "px", fwhmFixedX);
-                log += toExpFormat("FWHM Minor Axis", value.fwhm?.y, error.fwhm?.y, "px", fwhmFixedY);
-                log += toExpFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
-                if (showIntegratedFlux) {
-                    log += toExpFormat("Integrated flux", integratedFluxValues[i], integratedFluxErrors[i], "Jy", amplitudeFixed && fwhmFixedX && fwhmFixedY);
-                }
-            } else {
-                const centerValueWCS = getFormattedWCSPoint(frame.wcsInfoForTransformation, value.center as Point2D);
-                if (formatTypeX === NumberFormatType.Degrees) {
-                    centerValueWCS.x += " (deg)";
-                }
-                if (formatTypeY === NumberFormatType.Degrees) {
-                    centerValueWCS.y += " (deg)";
-                }
-                const centerErrorWCS = frame.getWcsSizeInArcsec(error.center as Point2D);
-                if (formatTypeX === NumberFormatType.HMS) {
-                    centerErrorWCS.x /= 15; // convert from arcsec to sec
-                }
-                if (formatTypeY === NumberFormatType.HMS) {
-                    centerErrorWCS.y /= 15; // convert from arcsec to sec
-                }
-                const centerXUnit = centerFixedX ? "" : formatTypeX === NumberFormatType.HMS ? "s" : "arcsec";
-                const centerYUnit = centerFixedY ? "" : formatTypeY === NumberFormatType.HMS ? "s" : "arcsec";
-
-                let fwhmValueWCS = frame.getWcsSizeInArcsec(value.fwhm as Point2D);
-                let fwhmErrorWCS = frame.getWcsSizeInArcsec(error.fwhm as Point2D);
-                let fwhmUnit = AngularSizeUnit.ARCSEC;
-                if (fwhmValueWCS && fwhmErrorWCS) {
-                    if (Math.abs(fwhmValueWCS.x) < Math.abs(fwhmValueWCS.y)) {
-                        ({value: fwhmValueWCS.x, unit: fwhmUnit} = AngularSize.convertFromArcsec(fwhmValueWCS.x, true));
-                        fwhmValueWCS.y = AngularSize.convertValueFromArcsec(fwhmValueWCS.y, fwhmUnit);
-                    } else {
-                        ({value: fwhmValueWCS.y, unit: fwhmUnit} = AngularSize.convertFromArcsec(fwhmValueWCS.y, true));
-                        fwhmValueWCS.x = AngularSize.convertValueFromArcsec(fwhmValueWCS.x, fwhmUnit);
+                results += `Component #${i + 1}:\n`;
+                log += `Component #${i + 1}:\n`;
+                const [centerFixedX, centerFixedY, amplitudeFixed, fwhmFixedX, fwhmFixedY, paFixed] = fixedParams.slice(i * 6, i * 6 + 6);
+                if (!frame.wcsInfoForTransformation || !frame.pixelUnitSizeArcsec) {
+                    results += toFixFormat("Center X       ", value.center?.x, error.center?.x, "px", centerFixedX);
+                    results += toFixFormat("Center Y       ", value.center?.y, error.center?.y, "px", centerFixedY);
+                    results += toFixFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, amplitudeFixed);
+                    results += toFixFormat("FWHM Major Axis", value.fwhm?.x, error.fwhm?.x, "px", fwhmFixedX);
+                    results += toFixFormat("FWHM Minor Axis", value.fwhm?.y, error.fwhm?.y, "px", fwhmFixedY);
+                    results += toFixFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
+                    if (showIntegratedFlux) {
+                        results += toFixFormat("Integrated flux", integratedFluxValues[i], integratedFluxErrors[i], "Jy", amplitudeFixed && fwhmFixedX && fwhmFixedY);
                     }
-                    fwhmErrorWCS.x = AngularSize.convertValueFromArcsec(fwhmErrorWCS.x, fwhmUnit);
-                    fwhmErrorWCS.y = AngularSize.convertValueFromArcsec(fwhmErrorWCS.y, fwhmUnit);
-                }
 
-                results += toFixFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, centerXUnit, centerFixedX);
-                results += toFixFormat("Center Y       ", centerValueWCS?.y, centerErrorWCS?.y, centerYUnit, centerFixedY);
-                results += toFixFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, amplitudeFixed);
-                results += toFixFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit, fwhmFixedX);
-                results += toFixFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit, fwhmFixedY);
-                results += toFixFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
-                if (showIntegratedFlux) {
-                    results += toFixFormat("Integrated flux", integratedFluxValues[i], integratedFluxErrors[i], "Jy", amplitudeFixed && fwhmFixedX && fwhmFixedY);
-                }
+                    log += toExpFormat("Center X       ", value.center?.x, error.center?.x, "px", centerFixedX);
+                    log += toExpFormat("Center Y       ", value.center?.y, error.center?.y, "px", centerFixedY);
+                    log += toExpFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, amplitudeFixed);
+                    log += toExpFormat("FWHM Major Axis", value.fwhm?.x, error.fwhm?.x, "px", fwhmFixedX);
+                    log += toExpFormat("FWHM Minor Axis", value.fwhm?.y, error.fwhm?.y, "px", fwhmFixedY);
+                    log += toExpFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
+                    if (showIntegratedFlux) {
+                        log += toExpFormat("Integrated flux", integratedFluxValues[i], integratedFluxErrors[i], "Jy", amplitudeFixed && fwhmFixedX && fwhmFixedY);
+                    }
+                } else {
+                    const centerValueWCS = getFormattedWCSPoint(frame.wcsInfoForTransformation, value.center as Point2D);
+                    if (formatTypeX === NumberFormatType.Degrees) {
+                        centerValueWCS.x += " (deg)";
+                    }
+                    if (formatTypeY === NumberFormatType.Degrees) {
+                        centerValueWCS.y += " (deg)";
+                    }
+                    const centerErrorWCS = frame.getWcsSizeInArcsec(error.center as Point2D);
+                    if (formatTypeX === NumberFormatType.HMS) {
+                        centerErrorWCS.x /= 15; // convert from arcsec to sec
+                    }
+                    if (formatTypeY === NumberFormatType.HMS) {
+                        centerErrorWCS.y /= 15; // convert from arcsec to sec
+                    }
+                    const centerXUnit = centerFixedX ? "" : formatTypeX === NumberFormatType.HMS ? "s" : "arcsec";
+                    const centerYUnit = centerFixedY ? "" : formatTypeY === NumberFormatType.HMS ? "s" : "arcsec";
 
-                log += toExpFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, centerXUnit, centerFixedX);
-                log += toExpFormat("               ", value.center?.x, error.center?.x, "px", centerFixedX);
-                log += toExpFormat("Center Y       ", centerValueWCS?.y, centerErrorWCS?.y, centerYUnit, centerFixedY);
-                log += toExpFormat("               ", value.center?.y, error.center?.y, "px", centerFixedY);
-                log += toExpFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, amplitudeFixed);
-                log += toExpFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit, fwhmFixedX);
-                log += toExpFormat("               ", value.fwhm?.x, error.fwhm?.x, "px", fwhmFixedX);
-                log += toExpFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit, fwhmFixedY);
-                log += toExpFormat("               ", value.fwhm?.y, error.fwhm?.y, "px", fwhmFixedY);
-                log += toExpFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
-                if (showIntegratedFlux) {
-                    log += toExpFormat("Integrated flux", integratedFluxValues[i], integratedFluxErrors[i], "Jy", amplitudeFixed && fwhmFixedX && fwhmFixedY);
+                    let fwhmValueWCS = frame.getWcsSizeInArcsec(value.fwhm as Point2D);
+                    let fwhmErrorWCS = frame.getWcsSizeInArcsec(error.fwhm as Point2D);
+                    let fwhmUnit = AngularSizeUnit.ARCSEC;
+                    if (fwhmValueWCS && fwhmErrorWCS) {
+                        if (Math.abs(fwhmValueWCS.x) < Math.abs(fwhmValueWCS.y)) {
+                            ({value: fwhmValueWCS.x, unit: fwhmUnit} = AngularSize.convertFromArcsec(fwhmValueWCS.x, true));
+                            fwhmValueWCS.y = AngularSize.convertValueFromArcsec(fwhmValueWCS.y, fwhmUnit);
+                        } else {
+                            ({value: fwhmValueWCS.y, unit: fwhmUnit} = AngularSize.convertFromArcsec(fwhmValueWCS.y, true));
+                            fwhmValueWCS.x = AngularSize.convertValueFromArcsec(fwhmValueWCS.x, fwhmUnit);
+                        }
+                        fwhmErrorWCS.x = AngularSize.convertValueFromArcsec(fwhmErrorWCS.x, fwhmUnit);
+                        fwhmErrorWCS.y = AngularSize.convertValueFromArcsec(fwhmErrorWCS.y, fwhmUnit);
+                    }
+
+                    results += toFixFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, centerXUnit, centerFixedX);
+                    results += toFixFormat("Center Y       ", centerValueWCS?.y, centerErrorWCS?.y, centerYUnit, centerFixedY);
+                    results += toFixFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, amplitudeFixed);
+                    results += toFixFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit, fwhmFixedX);
+                    results += toFixFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit, fwhmFixedY);
+                    results += toFixFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
+                    if (showIntegratedFlux) {
+                        results += toFixFormat("Integrated flux", integratedFluxValues[i], integratedFluxErrors[i], "Jy", amplitudeFixed && fwhmFixedX && fwhmFixedY);
+                    }
+
+                    log += toExpFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, centerXUnit, centerFixedX);
+                    log += toExpFormat("               ", value.center?.x, error.center?.x, "px", centerFixedX);
+                    log += toExpFormat("Center Y       ", centerValueWCS?.y, centerErrorWCS?.y, centerYUnit, centerFixedY);
+                    log += toExpFormat("               ", value.center?.y, error.center?.y, "px", centerFixedY);
+                    log += toExpFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, amplitudeFixed);
+                    log += toExpFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit, fwhmFixedX);
+                    log += toExpFormat("               ", value.fwhm?.x, error.fwhm?.x, "px", fwhmFixedX);
+                    log += toExpFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit, fwhmFixedY);
+                    log += toExpFormat("               ", value.fwhm?.y, error.fwhm?.y, "px", fwhmFixedY);
+                    log += toExpFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
+                    if (showIntegratedFlux) {
+                        log += toExpFormat("Integrated flux", integratedFluxValues[i], integratedFluxErrors[i], "Jy", amplitudeFixed && fwhmFixedX && fwhmFixedY);
+                    }
                 }
+                results += "\n";
+                log += "\n";
             }
-            results += "\n";
-            log += "\n";
-        }
+        };
+
+        getResults(values, errors);
 
         results += toFixFormat("Background     ", offsetValue, offsetError, frame.requiredUnit, fixedParams[fixedParams.length - 1]);
         log += toExpFormat("Background     ", offsetValue, offsetError, frame.requiredUnit, fixedParams[fixedParams.length - 1]);
