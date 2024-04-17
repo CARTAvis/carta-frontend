@@ -32,7 +32,7 @@ export class SnippetStore {
     }
 
     public snippetExists = (name: string): boolean => {
-        return name && this.snippets.has(name);
+        return name.length > 0 && this.snippets.has(name);
     };
 
     @action setDefaultSnippets = () => {
