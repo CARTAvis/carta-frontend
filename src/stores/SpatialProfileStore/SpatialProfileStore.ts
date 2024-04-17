@@ -21,17 +21,21 @@ export class SpatialProfileStore {
         this.profiles = new Map<Coordinate, ProcessedSpatialProfile>();
     }
 
-    public getProfile = (coordinate: Coordinate): ProcessedSpatialProfile => {
+    public getProfile = (coordinate: Coordinate): ProcessedSpatialProfile | undefined => {
         return this.profiles?.get(coordinate);
     };
 
-    @action updateFromStream(spatialProfileData: CARTA.ISpatialProfileData) {
+    @action updateFromStream(spatialProfileData: CARTA.SpatialProfileData) {
         if (spatialProfileData) {
             this.channel = spatialProfileData.channel;
             this.value = spatialProfileData.value;
             this.x = spatialProfileData.x;
             this.y = spatialProfileData.y;
-            spatialProfileData.profiles?.forEach(profile => this.profiles.set(profile.coordinate, ProtobufProcessing.ProcessSpatialProfile(profile)));
+            spatialProfileData.profiles?.forEach(profile => {
+                if (profile.coordinate) {
+                    this.profiles.set(profile.coordinate, ProtobufProcessing.ProcessSpatialProfile(profile));
+                }
+            });
         }
     }
 
