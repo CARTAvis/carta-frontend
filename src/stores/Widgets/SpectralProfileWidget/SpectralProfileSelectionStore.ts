@@ -34,7 +34,7 @@ const MAXIMUM_PROFILES = 10;
 type Profile = {
     channelValues: number[];
     channelSecondaryValues: number[];
-    data: ProcessedSpectralProfile | undefined;
+    data: ProcessedSpectralProfile | null | undefined;
     colorKey: LineKey | undefined;
     label: {
         image: string | undefined;

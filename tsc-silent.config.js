@@ -2,7 +2,8 @@ const migratedFiles = [
     "utilities",
     "models",
     "services",
-    "stores/Widgets"
+    "stores/Widgets",
+    "stores/SpectralProfileStore"
 ];
 
 module.exports = {
