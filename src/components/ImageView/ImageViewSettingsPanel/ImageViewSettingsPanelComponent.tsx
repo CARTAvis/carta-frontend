@@ -1,5 +1,6 @@
 import * as React from "react";
-import {Button, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
+import {Button, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Position, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 import {ItemRenderer, Select} from "@blueprintjs/select";
 import * as AST from "ast_wrapper";
 import classNames from "classnames";
@@ -26,7 +27,8 @@ enum ImageViewSettingsPanelTabs {
     LABELS = "Labels",
     BEAM = "Beam",
     COLORBAR = "Colorbar",
-    CONVERSION = "Conversion"
+    CONVERSION = "Conversion",
+    // COORDINATES = "Coordinates"
 }
 
 // Font selector
@@ -205,6 +207,40 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     />
                     <span className="info-string">{getFovInfoString(frame?.fovSize?.y, frame?.fovSizeWCS?.y)}</span>
                 </FormGroup>
+                <FormGroup inline={true} label="Offset Coordinates">
+                    <Switch checked={frame.isOffsetCoord} onChange={frame.toggleOffsetCoord} />
+                    <Collapse isOpen={frame.isOffsetCoord}>
+                        <Tooltip2 content="Set offset to current view center" position={Position.BOTTOM} hoverOpenDelay={300}>
+                            <Button icon="locate" disabled={!frame.isOffsetCoord} onClick={() => frame.updateWcsInfoShifted()} />
+                        </Tooltip2>
+                    </Collapse>
+                </FormGroup>
+                <Collapse isOpen={frame.isOffsetCoord}>
+                    <FormGroup inline={true} label="Offset Center (X)" labelInfo={fovLabelInfo}>
+                        <CoordNumericInput
+                            coord={this.panAndZoomCoord}
+                            inputType={InputType.XCoord}
+                            value={frame?.offsetCenter?.x}
+                            onChange={val => frame?.setOffsetCenter(val, frame?.offsetCenter?.y)}
+                            valueWcs={frame?.offsetCenterWCS?.x}
+                            onChangeWcs={val => frame?.setOffsetCenterWcs(val, frame?.offsetCenterWCS?.y)}
+                            wcsDisabled={isPVImage}
+                        />
+                        <span className="info-string">{getFovInfoString(frame?.offsetCenter?.x, frame?.offsetCenterWCS?.x)}</span>
+                    </FormGroup>
+                    <FormGroup inline={true} label="Offset Center (Y)" labelInfo={fovLabelInfo}>
+                        <CoordNumericInput
+                            coord={this.panAndZoomCoord}
+                            inputType={InputType.YCoord}
+                            value={frame?.offsetCenter?.y}
+                            onChange={val => frame?.setOffsetCenter(frame?.offsetCenter?.x, val)}
+                            valueWcs={frame?.offsetCenterWCS?.y}
+                            onChangeWcs={val => frame?.setOffsetCenterWcs(frame?.offsetCenterWCS?.x, val)}
+                            wcsDisabled={isPVImage}
+                        />
+                        <span className="info-string">{getFovInfoString(frame?.offsetCenter?.y, frame?.offsetCenterWCS?.y)}</span>
+                    </FormGroup>
+                </Collapse>
             </div>
         );
 
@@ -759,6 +795,43 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
             </div>
         ) : null;
 
+        // const coordinatesPanel = (
+        //     <div className="panel-pan-and-zoom">
+        //         <FormGroup inline={true} label="Offset Coordinates">
+        //             <Switch checked={frame.isOffsetCoord} onChange={frame.toggleOffsetCoord} />
+        //         </FormGroup>
+        //         <Collapse isOpen={frame.isOffsetCoord}>
+        //             <FormGroup inline={true} label="Coordinate">
+        //                 <CoordinateComponent selectedValue={this.panAndZoomCoord} onChange={this.setPanAndZoomCoord} />
+        //             </FormGroup>
+        //             <FormGroup inline={true} label="Offset Center (X)" labelInfo={fovLabelInfo}>
+        //                 <CoordNumericInput
+        //                     coord={this.panAndZoomCoord}
+        //                     inputType={InputType.XCoord}
+        //                     value={frame?.offsetCenter?.x}
+        //                     onChange={val => frame?.setOffsetCenter(val, frame?.offsetCenter?.y)}
+        //                     valueWcs={frame?.offsetCenterWCS?.x}
+        //                     onChangeWcs={val => frame?.setOffsetCenterWcs(val, frame?.offsetCenterWCS?.y)}
+        //                     wcsDisabled={isPVImage}
+        //                 />
+        //                 <span className="info-string">{getFovInfoString(frame?.offsetCenter?.x, frame?.offsetCenterWCS?.x)}</span>
+        //             </FormGroup>
+        //             <FormGroup inline={true} label="Offset Center (Y)" labelInfo={fovLabelInfo}>
+        //                 <CoordNumericInput
+        //                     coord={this.panAndZoomCoord}
+        //                     inputType={InputType.YCoord}
+        //                     value={frame?.offsetCenter?.y}
+        //                     onChange={val => frame?.setOffsetCenter(frame?.offsetCenter?.x, val)}
+        //                     valueWcs={frame?.offsetCenterWCS?.y}
+        //                     onChangeWcs={val => frame?.setOffsetCenterWcs(frame?.offsetCenterWCS?.x, val)}
+        //                     wcsDisabled={isPVImage}
+        //                 />
+        //                 <span className="info-string">{getFovInfoString(frame?.offsetCenter?.y, frame?.offsetCenterWCS?.y)}</span>
+        //             </FormGroup>
+        //         </Collapse>
+        //     </div>
+        // );
+
         const className = classNames("image-view-settings", {"bp3-dark": appStore.darkTheme});
 
         return (
@@ -776,6 +849,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Tab id={ImageViewSettingsPanelTabs.COLORBAR} title={ImageViewSettingsPanelTabs.COLORBAR} panel={colorbarPanel} />
                     <Tab id={ImageViewSettingsPanelTabs.BEAM} title={ImageViewSettingsPanelTabs.BEAM} panel={beamPanel} disabled={appStore.frameNum <= 0} />
                     <Tab id={ImageViewSettingsPanelTabs.CONVERSION} title={ImageViewSettingsPanelTabs.CONVERSION} panel={spectralPanel} disabled={!isPVImage} />
+                    {/* <Tab id={ImageViewSettingsPanelTabs.COORDINATES} title={ImageViewSettingsPanelTabs.COORDINATES} panel={coordinatesPanel} /> */}
                 </Tabs>
             </div>
         );

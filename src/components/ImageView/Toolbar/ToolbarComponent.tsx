@@ -1,6 +1,6 @@
 import * as React from "react";
 import {CSSProperties} from "react";
-import {AnchorButton, ButtonGroup, IconName, Menu, MenuDivider, MenuItem, PopoverPosition, Position} from "@blueprintjs/core";
+import {AnchorButton, Button, ButtonGroup, Collapse, FormGroup, IconName, Menu, MenuDivider, MenuItem, PopoverPosition, Position, Switch} from "@blueprintjs/core";
 import {Popover2, Popover2InteractionKind, Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -179,6 +179,14 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.Galactic)} onClick={() => this.handleCoordinateSystemClicked(SystemType.Galactic)} />
                 <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.Ecliptic)} onClick={() => this.handleCoordinateSystemClicked(SystemType.Ecliptic)} />
                 <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.ICRS)} onClick={() => this.handleCoordinateSystemClicked(SystemType.ICRS)} />
+                <FormGroup inline={false} className="offset-group">
+                    <Switch className="offset-switch" checked={frame.isOffsetCoord} onChange={frame.toggleOffsetCoord} label="Offset Coord." />
+                    <Collapse isOpen={frame.isOffsetCoord}>
+                        <Tooltip2 content="Set offset to current view center" position={Position.BOTTOM} hoverOpenDelay={300}>
+                            <Button icon="locate" disabled={!frame.isOffsetCoord} onClick={() => frame.updateWcsInfoShifted()} />
+                        </Tooltip2>
+                    </Collapse>
+                </FormGroup>
             </Menu>
         );
 

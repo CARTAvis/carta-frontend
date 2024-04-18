@@ -56,10 +56,12 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoShifted : frame.wcsInfo;
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
+        const wcsInfoOri = frame.spatialReference ? frame.transformedWcsInfo : frame.wcsInfo;
         const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
         if (wcsInfo && frameView && this.canvas) {
             // Take aspect ratio scaling into account
             const tempWcsInfo = AST.copy(wcsInfo);
+            const tempWcsInfoOri = AST.copy(wcsInfoOri);
             if (!tempWcsInfo) {
                 console.log("Create wcs info copy failed.");
                 return;
@@ -73,6 +75,31 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 AST.addFrame(tempWcsInfo, 1, scaleMapping, newFrame);
                 AST.setI(tempWcsInfo, "Base", 3);
                 AST.setI(tempWcsInfo, "Current", 2);
+
+                AST.addFrame(tempWcsInfoOri, 1, scaleMapping, newFrame);
+                AST.setI(tempWcsInfoOri, "Base", 3);
+                AST.setI(tempWcsInfoOri, "Current", 2);
+            }
+
+            if (frame.isOffsetCoord) {
+                const fovSizeInArcsec = frame.getWcsSizeInArcsec(frame.fovSize);
+                const viewSize = fovSizeInArcsec.x > fovSizeInArcsec.y ? fovSizeInArcsec.y : fovSizeInArcsec.x;
+                const factor = 2; // jump factor
+                let unit;
+                let format;
+
+                if (viewSize < 60 * factor) {
+                    unit = "arcsec";
+                    format = "s.*";
+                } else if (viewSize < 3600 * factor) {
+                    unit = "arcmin";
+                    format = "m.*";
+                } else {
+                    unit = "deg";
+                    format = "d.*";
+                }
+
+                AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)=${unit}, Unit(2)=${unit}`);
             }
 
             const plot = (styleString: string) => {
@@ -90,12 +117,12 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     settings.padding.bottom * pixelRatio,
                     styleString,
                     frame.distanceMeasuring?.showCurve,
+                    tempWcsInfoOri,
                     frame.isPVImage,
                     frame.distanceMeasuring?.transformedStart?.x,
                     frame.distanceMeasuring?.transformedStart?.y,
                     frame.distanceMeasuring?.transformedFinish?.x,
-                    frame.distanceMeasuring?.transformedFinish?.y,
-                    this.props.frame.isOffsetCoord
+                    frame.distanceMeasuring?.transformedFinish?.y
                 );
             };
 
@@ -118,6 +145,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 currentStyleString += `, Title=${frame.titleCustomText}`;
             } else {
                 currentStyleString += `, Title=${""}`;
+            }
+
+            if (frame.isOffsetCoord) {
+                currentStyleString += `, LabelUnits=1`;
             }
 
             plot(currentStyleString);
@@ -180,6 +211,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const axesStyleString = this.props.overlaySettings.axes.styleString;
         const numbersStyleString = this.props.overlaySettings.numbers.styleString;
         const labelsStyleString = this.props.overlaySettings.labels.styleString;
+        const offsetCoord = frame.isOffsetCoord;
+        const offsetWcs = frame.wcsInfoShifted;
 
         if (frame.isSwappedZ) {
             const requiredChannel = frame.requiredChannel;
