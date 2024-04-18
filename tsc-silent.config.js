@@ -6,7 +6,8 @@ const migratedFiles = [
     "stores/SpectralProfileStore",
     "stores/SpatialProfileStore",
     "stores/Snippet",
-    "stores/ProfileSmoothingStore"
+    "stores/ProfileSmoothingStore",
+    "stores/ProfileFittingStore"
 ];
 
 module.exports = {
