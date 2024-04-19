@@ -22,7 +22,7 @@ export class LayoutStore {
     private layoutNameToBeSaved: string;
 
     // self-defined structure: {layoutName: config, layoutName: config, ...}
-    @observable dockedLayout: GoldenLayout;
+    @observable dockedLayout: GoldenLayout | null;
     @observable currentLayoutName: string;
     @observable private layouts: any;
     @observable supportsServer: boolean;
@@ -42,7 +42,7 @@ export class LayoutStore {
     }
 
     public layoutExists = (layoutName: string): boolean => {
-        return layoutName && this.allLayoutNames.includes(layoutName);
+        return layoutName.length > 0 && this.allLayoutNames.includes(layoutName);
     };
 
     public setLayoutToBeSaved = (layoutName: string) => {
@@ -135,8 +135,10 @@ export class LayoutStore {
             },
             appStore.getAppContainer()
         );
-        appStore.widgetsStore.initLayoutWithWidgets(this.dockedLayout);
-        this.dockedLayout.init();
+        if (this.dockedLayout) {
+            appStore.widgetsStore.initLayoutWithWidgets(this.dockedLayout);
+            this.dockedLayout.init();
+        }
         this.currentLayoutName = layoutName;
 
         return true;
