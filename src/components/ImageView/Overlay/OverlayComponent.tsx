@@ -56,12 +56,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoShifted : frame.wcsInfo;
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
-        const wcsInfoOri = frame.spatialReference ? frame.transformedWcsInfo : frame.wcsInfo;
         const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
         if (wcsInfo && frameView && this.canvas) {
             // Take aspect ratio scaling into account
             const tempWcsInfo = AST.copy(wcsInfo);
-            const tempWcsInfoOri = AST.copy(wcsInfoOri);
             if (!tempWcsInfo) {
                 console.log("Create wcs info copy failed.");
                 return;
@@ -75,10 +73,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 AST.addFrame(tempWcsInfo, 1, scaleMapping, newFrame);
                 AST.setI(tempWcsInfo, "Base", 3);
                 AST.setI(tempWcsInfo, "Current", 2);
-
-                AST.addFrame(tempWcsInfoOri, 1, scaleMapping, newFrame);
-                AST.setI(tempWcsInfoOri, "Base", 3);
-                AST.setI(tempWcsInfoOri, "Current", 2);
             }
 
             if (frame.isOffsetCoord) {
@@ -117,7 +111,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     settings.padding.bottom * pixelRatio,
                     styleString,
                     frame.distanceMeasuring?.showCurve,
-                    tempWcsInfoOri,
                     frame.isPVImage,
                     frame.distanceMeasuring?.transformedStart?.x,
                     frame.distanceMeasuring?.transformedStart?.y,

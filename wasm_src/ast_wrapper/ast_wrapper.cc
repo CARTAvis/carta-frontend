@@ -227,12 +227,9 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initDummyFrame()
     return frameSet;
 }
 
-
-void plotDistText(AstFrameSet* wcsinfo, AstPlot* plot, double* start, double* finish, double* startOri, double* finishOri)
-// void plotDistText(AstFrameSet* wcsinfo, AstPlot* plot, double* start, double* finish)
+void plotDistText(AstFrameSet* wcsinfo, AstPlot* plot, double* start, double* finish)
 {
-    double dist = astDistance(wcsinfo, startOri, finishOri);
-    // double dist = astDistance(wcsinfo, start, finish);
+    double dist = astDistance(wcsinfo, start, finish);
     double middle[2];
     astOffset(plot, start, finish, dist / 2, middle);
     float up[] = {0.0f, 1.0f}; // horizontal text
@@ -270,7 +267,7 @@ void plotDistText(AstFrameSet* wcsinfo, AstPlot* plot, double* start, double* fi
 
 EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double imageX2, double imageY1, double imageY2, double width, double height,
                                         double paddingLeft, double paddingRight, double paddingTop, double paddingBottom, const char* args,
-                                        bool showCurve, AstFrameSet* wcsinfoOri, bool isPVImage, double curveX1, double curveY1, double curveX2, double curveY2)
+                                        bool showCurve, bool isPVImage, double curveX1, double curveY1, double curveX2, double curveY2)
 {
     if (!wcsinfo)
     {
@@ -302,37 +299,25 @@ EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double i
     {
         const double x[] = {curveX1, curveX2};
         const double y[] = {curveY1, curveY2};
-
         double xtran[2];
         double ytran[2];
         astTran2(wcsinfo, 2, x, y, 1, xtran, ytran);
-        double start[] = {xtran[0], ytran[0]};
-        double finish[] = {xtran[1], ytran[1]};
-        double corner[] = {xtran[1], ytran[0]};
         
         double in[2][4] = {{xtran[0], xtran[1], xtran[1], xtran[0]}, {ytran[0], ytran[1], ytran[0], ytran[0]}};
         const double* inPtr = in[0];
         astPolyCurve(plot, 4, 2, 4, inPtr);
 
-        double xtranOri[2];
-        double ytranOri[2];
-        astTran2(wcsinfoOri, 2, x, y, 1, xtranOri, ytranOri);
-        double startOri[] = {xtranOri[0], ytranOri[0]};
-        double finishOri[] = {xtranOri[1], ytranOri[1]};
-        double cornerOri[] = {xtranOri[1], ytranOri[0]};
-        
+        double start[] = {xtran[0], ytran[0]};
+        double finish[] = {xtran[1], ytran[1]};
         if (isPVImage)
         {
-            // double corner[] = {xtran[1], ytran[0]};
-            // plotDistText(wcsinfo, plot, start, corner);
-            // plotDistText(wcsinfo, plot, finish, corner);
-            plotDistText(wcsinfo, plot, start, corner, startOri, finishOri);
-            plotDistText(wcsinfo, plot, finish, corner, startOri, finishOri);
+            double corner[] = {xtran[1], ytran[0]};
+            plotDistText(wcsinfo, plot, start, corner);
+            plotDistText(wcsinfo, plot, finish, corner);
         }
         else
         {
-            // plotDistText(wcsinfo, plot, start, finish);
-            plotDistText(wcsinfo, plot, start, finish, startOri, finishOri);
+            plotDistText(wcsinfo, plot, start, finish);
         }        
     }
 

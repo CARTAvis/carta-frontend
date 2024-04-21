@@ -26,7 +26,6 @@ export function plot(
     paddingBottom: number,
     options: string,
     showCurve: boolean,
-    frameSet2: FrameSet,
     isPVImage: boolean,
     curveX1: number,
     curveY1: number,

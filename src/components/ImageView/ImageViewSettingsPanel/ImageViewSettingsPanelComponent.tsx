@@ -27,8 +27,7 @@ enum ImageViewSettingsPanelTabs {
     LABELS = "Labels",
     BEAM = "Beam",
     COLORBAR = "Colorbar",
-    CONVERSION = "Conversion",
-    // COORDINATES = "Coordinates"
+    CONVERSION = "Conversion"
 }
 
 // Font selector
@@ -794,43 +793,6 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 <SpectralSettingsComponent frame={appStore.activeFrame} onSpectralCoordinateChange={frame.setSpectralCoordinate} onSpectralSystemChange={frame.setSpectralSystem} disable={!isPVImage} disableChannelOption={true} />
             </div>
         ) : null;
-
-        // const coordinatesPanel = (
-        //     <div className="panel-pan-and-zoom">
-        //         <FormGroup inline={true} label="Offset Coordinates">
-        //             <Switch checked={frame.isOffsetCoord} onChange={frame.toggleOffsetCoord} />
-        //         </FormGroup>
-        //         <Collapse isOpen={frame.isOffsetCoord}>
-        //             <FormGroup inline={true} label="Coordinate">
-        //                 <CoordinateComponent selectedValue={this.panAndZoomCoord} onChange={this.setPanAndZoomCoord} />
-        //             </FormGroup>
-        //             <FormGroup inline={true} label="Offset Center (X)" labelInfo={fovLabelInfo}>
-        //                 <CoordNumericInput
-        //                     coord={this.panAndZoomCoord}
-        //                     inputType={InputType.XCoord}
-        //                     value={frame?.offsetCenter?.x}
-        //                     onChange={val => frame?.setOffsetCenter(val, frame?.offsetCenter?.y)}
-        //                     valueWcs={frame?.offsetCenterWCS?.x}
-        //                     onChangeWcs={val => frame?.setOffsetCenterWcs(val, frame?.offsetCenterWCS?.y)}
-        //                     wcsDisabled={isPVImage}
-        //                 />
-        //                 <span className="info-string">{getFovInfoString(frame?.offsetCenter?.x, frame?.offsetCenterWCS?.x)}</span>
-        //             </FormGroup>
-        //             <FormGroup inline={true} label="Offset Center (Y)" labelInfo={fovLabelInfo}>
-        //                 <CoordNumericInput
-        //                     coord={this.panAndZoomCoord}
-        //                     inputType={InputType.YCoord}
-        //                     value={frame?.offsetCenter?.y}
-        //                     onChange={val => frame?.setOffsetCenter(frame?.offsetCenter?.x, val)}
-        //                     valueWcs={frame?.offsetCenterWCS?.y}
-        //                     onChangeWcs={val => frame?.setOffsetCenterWcs(frame?.offsetCenterWCS?.x, val)}
-        //                     wcsDisabled={isPVImage}
-        //                 />
-        //                 <span className="info-string">{getFovInfoString(frame?.offsetCenter?.y, frame?.offsetCenterWCS?.y)}</span>
-        //             </FormGroup>
-        //         </Collapse>
-        //     </div>
-        // );
 
         const className = classNames("image-view-settings", {"bp3-dark": appStore.darkTheme});
 

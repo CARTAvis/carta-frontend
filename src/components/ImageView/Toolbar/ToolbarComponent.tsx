@@ -240,7 +240,9 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const catalogSelectionDisabled = appStore.catalogNum === 0 || numSourcesIsZero === true;
 
         const handleDistanceMeasuringClicked = () => {
-            this.handleActiveLayerClicked(ImageViewLayer.DistanceMeasuring);
+            this.handleActiveLayerClicked(ImageViewLayer.RegionCreating);
+            appStore.activeFrame.regionSet.setNewRegionType(CARTA.RegionType.ANNRULER);
+            appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
         };
 
         return (
@@ -265,9 +267,9 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 >
                                     <AnchorButton
                                         icon={<CustomIcon icon="distanceMeasuring" />}
-                                        active={appStore.activeLayer === ImageViewLayer.DistanceMeasuring}
+                                        active={appStore.activeLayer === ImageViewLayer.RegionCreating}
                                         onClick={handleDistanceMeasuringClicked}
-                                        onDoubleClick={() => dialogStore.showDialog(DialogId.DistanceMeasure)}
+                                        onDoubleClick={() => dialogStore.showDialog(DialogId.Region)}
                                     />
                                 </Tooltip2>
                                 <Tooltip2
