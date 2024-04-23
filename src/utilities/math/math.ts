@@ -25,7 +25,7 @@ export function closeTo(a: number, b: number, limit: number = 1.0e-6) {
 }
 
 export function equalIfBothFinite(a: number | undefined, b: number | undefined) {
-    if (!isFinite(a) || !isFinite(b)) {
+    if (!Number.isFinite(a) || !Number.isFinite(b)) {
         return true;
     }
 
@@ -48,12 +48,12 @@ export function normalising(a: number, b: number) {
 }
 
 export function getPercentiles(histogram: CARTA.IHistogram, ranks: number[]): number[] {
-    if (!ranks || !ranks.length || !histogram || !histogram.bins.length) {
+    if (!ranks || !ranks.length || !histogram || !histogram.bins?.length) {
         return [];
     }
 
-    const minVal = histogram.firstBinCenter - histogram.binWidth / 2.0;
-    const dx = histogram.binWidth;
+    const minVal = (histogram.firstBinCenter ?? NaN) - (histogram.binWidth ?? NaN) / 2.0;
+    const dx = histogram.binWidth ?? NaN;
     const vals = histogram.bins;
     let remainingRanks = ranks.slice();
     let cumulativeSum = 0;
@@ -67,7 +67,7 @@ export function getPercentiles(histogram: CARTA.IHistogram, ranks: number[]): nu
         return [];
     }
 
-    let calculatedPercentiles = [];
+    let calculatedPercentiles: number[] = [];
 
     for (let i = 0; i < vals.length && remainingRanks.length; i++) {
         const currentFraction = cumulativeSum / totalSum;

@@ -637,7 +637,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             filter: profileStore.catalogControlHeader,
             columnHeaders: profileStore.displayedColumnHeaders,
             numVisibleRows: catalogTable.numVisibleRows,
-            columnWidths: profileStore.tableColumnWidts,
+            columnWidths: profileStore.tableColumnWidths,
             loadingCell: profileStore.loadingData,
             selectedDataIndex: profileStore.selectedPointIndices,
             showSelectedData: catalogWidgetStore.showSelectedData,

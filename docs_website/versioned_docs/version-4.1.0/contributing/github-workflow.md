@@ -2,7 +2,7 @@
 sidebar_position: 2
 ---
 
-# Github workflow
+# GitHub workflow
 
 The workflow for contributing to the codebase.
 
@@ -32,7 +32,7 @@ Before making any changes to the codebase, create and check out to a new branch.
 git checkout -b "[author]/[issue id]_[description_with_underscores]"
 ```
 
-If the issue doesn't exist yet, please create a new issue. When you start working on the issue, update the ZenHub status of the issue to "In Progress".
+If the issue doesn't exist yet, please create a new issue. When you start working on the issue, update the GitHub Project status of the issue to "In Progress".
 
 ### Pushing changes
 
@@ -63,13 +63,13 @@ For linked issues (if there are): this section is for checking the status of the
 
 -   assignee and label added: assign yourself to the issue you are working on. Add labels to the issue.
 
--   ZenHub issue connection, board status, and estimate updated: connect the issue to the pull request in ZenHub. ZenHub automatically updates the issue status from "In Progress" to "Review/QA" by default. Also, provide an estimate for the time required to complete the issue. This estimation is useful for future development planning.
+-   GitHub Project estimate added: provide an estimate for the time required to complete the issue. This estimation is useful for future development planning.
 
 For the pull request: this section is for checking the status of the pull request and reviewing the code changes.
 
 -   reviewers and assignee added: assign reviewers and an assignee to the pull request. The assignee will be responsible for merging the pull request.
 
--   ZenHub estimate, milestone, and release (if needed) added: provide an estimate for the time required to review the pull request.
+-   GitHub Project estimate added: provide an estimate for the time required to review the pull request.
 
 -   changelog updated / no changelog update needed: updating the changelog is required when the issue exists in the latest release and the changes have an impact on users. It is recommended to update the changelog when sending the pull request and to resolve changelog merge conflicts using the GitHub UI.
 

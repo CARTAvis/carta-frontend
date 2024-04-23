@@ -1,6 +1,7 @@
 @import "~@blueprintjs/core/lib/scss/variables.scss";
 
 .cursor-overlay-div {
+    pointer-events: none;
     position: absolute;
     background-color: rgba($gray1, 0.6);
     padding-left: 5px;
@@ -13,5 +14,9 @@
     user-select: text;
     &.docked {
         z-index: 4;
+    }
+
+    span {
+        pointer-events: auto;
     }
 }
