@@ -19,7 +19,7 @@ export enum CatalogUpdateMode {
     PlotsUpdate = "PlotsUpdate"
 }
 
-export type ControlHeader = {columnIndex: number; dataIndex: number; display: boolean; filter: string; columnWidth: number};
+export type ControlHeader = {columnIndex: number; dataIndex: number; display: boolean; filter: string; columnWidth: number | null};
 
 export class CatalogProfileStore extends AbstractCatalogProfileStore {
     public static readonly InitTableRows = 50;
@@ -31,12 +31,12 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
 
     @observable catalogInfo: CatalogInfo;
     @observable catalogControlHeader: Map<string, ControlHeader>;
-    @observable catalogHeader: Array<CARTA.ICatalogHeader>;
+    @observable catalogHeader: Array<CARTA.CatalogHeader>;
     @observable numVisibleRows: number;
     @observable subsetEndIndex: number;
     @observable maxRows: number;
 
-    constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: Map<number, ProcessedColumnData>, catalogType: CatalogType = CatalogType.FILE) {
+    constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.CatalogHeader>, catalogData: Map<number, ProcessedColumnData>, catalogType: CatalogType = CatalogType.FILE) {
         super(catalogType, catalogData);
         makeObservable(this);
         this.catalogInfo = catalogInfo;

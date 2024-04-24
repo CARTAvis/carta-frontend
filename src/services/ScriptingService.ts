@@ -5,11 +5,11 @@ import {toJS} from "mobx";
 import {AppStore} from "stores";
 
 export class ExecutionEntry {
-    target: string;
-    action: string;
+    target: string | null | undefined;
+    action: string | null | undefined;
     parameters: any[];
     valid: boolean;
-    async: boolean;
+    async: boolean | null | undefined;
 
     static FromString(entryString: string): ExecutionEntry {
         const executionEntry = new ExecutionEntry();
@@ -40,7 +40,7 @@ export class ExecutionEntry {
         return executionEntry;
     }
 
-    private parseParameters(parameterString: string, pad: boolean) {
+    private parseParameters(parameterString: string | null | undefined, pad: boolean) {
         if (!parameterString) {
             this.parameters = [];
             return true;
@@ -66,7 +66,7 @@ export class ExecutionEntry {
             throw new Error(`Missing target object: ${this.target}`);
         }
         const currentParameters = this.parameters.map(this.mapMacro);
-        let actionFunction = targetObject[this.action];
+        let actionFunction = targetObject[this.action ?? NaN];
         if (!actionFunction || typeof actionFunction !== "function") {
             throw new Error(`Missing action function: ${this.action}`);
         }
@@ -80,7 +80,7 @@ export class ExecutionEntry {
         return response;
     }
 
-    private static GetTargetObject(baseObject: any, targetString: string) {
+    private static GetTargetObject(baseObject: any, targetString: string | null | undefined) {
         if (!targetString) {
             return baseObject;
         }

@@ -8,7 +8,7 @@ Guidelines for building and writing this website.
 
 ## Building documentation
 
-The website is hosted on Github Pages, and whenever the `dev` branch is updated, the website is automatically updated using Github Actions.
+The website is hosted on GitHub Pages, and whenever the `dev` branch is updated, the website is automatically updated using GitHub Actions.
 
 To build and test the website locally, navigate to the `docs_website/` directory and install package dependencies:
 

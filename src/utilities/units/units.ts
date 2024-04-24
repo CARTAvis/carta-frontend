@@ -6,7 +6,7 @@ export function velocityFromFrequency(freq: number, refFreq: number): number {
     return SPEED_OF_LIGHT * (1.0 - freq / refFreq);
 }
 
-export function velocityStringFromFrequency(freq: number, refFreq: number): string {
+export function velocityStringFromFrequency(freq: number, refFreq: number): string | null {
     if (isFinite(refFreq)) {
         const velocityVal = velocityFromFrequency(freq, refFreq);
         return `Velocity:\u00a0${toFixed(velocityVal * 1e-3, 4)}\u00a0km/s`;
@@ -18,7 +18,7 @@ export function frequencyFromVelocity(velocity: number, refFreq: number): number
     return refFreq * (1.0 - velocity / SPEED_OF_LIGHT);
 }
 
-export function frequencyStringFromVelocity(velocity: number, refFreq: number): string {
+export function frequencyStringFromVelocity(velocity: number, refFreq: number): string | null {
     if (isFinite(refFreq)) {
         const frequencyVal = frequencyFromVelocity(velocity, refFreq);
         return `Frequency:\u00a0${toFixed(frequencyVal * 1e-9, 4)}\u00a0GHz`;
@@ -67,7 +67,7 @@ export function getVariablePrecision(value: number): number {
     return precision;
 }
 
-export function toFormattedNotationByDiff(value: number, delta: number): string {
+export function toFormattedNotationByDiff(value: number, delta: number): string | null {
     if (value === null || isNaN(value)) {
         return null;
     }
@@ -75,7 +75,7 @@ export function toFormattedNotationByDiff(value: number, delta: number): string 
     return trimTrailingDecimals(value.toFixed(precision));
 }
 
-export function formattedNotation(value: number): string {
+export function formattedNotation(value: number): string | null {
     if (value === null || isNaN(value)) {
         return null;
     }
@@ -101,7 +101,7 @@ export function formattedExponential(val: number, digits: number, unit: string =
     return valString;
 }
 
-export function formattedFrequency(freqGHz: number): string {
+export function formattedFrequency(freqGHz: number): string | null {
     if (!isFinite(freqGHz)) {
         return null;
     }
@@ -118,11 +118,11 @@ export function formattedFrequency(freqGHz: number): string {
 }
 
 export function getAngleInRad(arcsec: number): number {
-    return isFinite(arcsec) ? (arcsec * Math.PI) / 648000 : undefined;
+    return isFinite(arcsec) ? (arcsec * Math.PI) / 648000 : NaN;
 }
 
 // TODO: possibly move to region class since they are the only callers
-export function formattedArcsec(arcsec: number, decimals: number = -1): string {
+export function formattedArcsec(arcsec: number, decimals: number = -1): string | null {
     if (!isFinite(arcsec) || !isFinite(decimals)) {
         return null;
     }
@@ -153,7 +153,7 @@ export function wavelengthToFrequency(meter: number) {
     return SPEED_OF_LIGHT / meter;
 }
 
-export function getValueFromArcsecString(formattedString: string): number {
+export function getValueFromArcsecString(formattedString: string): number | null {
     const trimmedString = formattedString?.trim();
     if (!trimmedString) {
         return null;

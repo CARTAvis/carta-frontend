@@ -4,6 +4,6 @@ export class Theme {
     public static readonly AUTO = "auto";
 
     public static isValid = (theme: string): boolean => {
-        return theme && (theme === Theme.LIGHT || theme === Theme.DARK || theme === Theme.AUTO);
+        return theme === Theme.LIGHT || theme === Theme.DARK || theme === Theme.AUTO;
     };
 }
