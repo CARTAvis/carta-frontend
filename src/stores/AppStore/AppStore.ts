@@ -738,11 +738,7 @@ export class AppStore {
     *appendFile(path: string, filename?: string, hdu?: string, imageArithmetic: boolean = false, setAsActive: boolean = true, updateStartingDirectory: boolean = true) {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
-        const frame = yield this.loadFile(path, filename, hdu, imageArithmetic, setAsActive, updateStartingDirectory);
-        if (!(this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL)) {
-            this.overlayStore.global.setSystem(SystemType.Auto);
-        }
-        return frame;
+        return yield this.loadFile(path, filename, hdu, imageArithmetic, setAsActive, updateStartingDirectory);
     }
 
     /**
@@ -762,9 +758,8 @@ export class AppStore {
     @flow.bound
     *openFile(path: string, filename?: string, hdu?: string, imageArithmetic?: boolean, updateStartingDirectory: boolean = true) {
         this.removeAllFrames();
-        const frame = yield this.loadFile(path, filename, hdu, imageArithmetic, true, updateStartingDirectory);
         this.overlayStore.global.setSystem(SystemType.Auto);
-        return frame;
+        return yield this.loadFile(path, filename, hdu, imageArithmetic, true, updateStartingDirectory);
     }
 
     @flow.bound
@@ -847,6 +842,7 @@ export class AppStore {
             const removedFrameIsSpectralReference = frame === this.spectralReference;
             const removedFrameIsRasterScalingReference = frame === this.rasterScalingReference;
             const fileId = frame.frameInfo.fileId;
+            const removedFrameIsLastFrame = this.frames[this.frames.length - 1].frameInfo.fileId === fileId;
 
             // adjust requirements for stores
             this.widgetsStore.removeFrameFromRegionWidgets(fileId);
@@ -920,6 +916,11 @@ export class AppStore {
 
                 if (!this.frames?.length) {
                     this.activeWorkspace = undefined;
+                } else {
+                    // update overlay defaults from the last frame
+                    if (removedFrameIsLastFrame) {
+                        this.overlayStore.setDefaultsFromFrame(this.frames[this.frames.length - 1]);
+                    }
                 }
 
                 // TODO: check this
@@ -1901,13 +1902,6 @@ export class AppStore {
             }
         });
 
-        // Set overlay defaults from current frame
-        autorun(() => {
-            if (this.activeFrame) {
-                this.overlayStore.setDefaultsFromFrame(this.activeFrame);
-            }
-        });
-
         // Update image panel page buttons
         autorun(() => {
             if (this.activeFrame && this.numImageColumns && this.numImageRows) {
@@ -2649,10 +2643,6 @@ export class AppStore {
     }
 
     private changeActiveFrame(frame: FrameStore) {
-        if (frame !== this.activeFrame) {
-            // Set overlay defaults from current frame
-            this.overlayStore.setDefaultsFromFrame(frame);
-        }
         this.activeFrame = frame;
         if (!frame.isPreview) {
             this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
