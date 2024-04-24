@@ -4,7 +4,7 @@ import axios from "axios";
 import * as CARTACompute from "carta_computation";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
-import * as Long from "long";
+import Long from "long";
 import {action, autorun, computed, flow, makeObservable, observable, ObservableMap, reaction, when} from "mobx";
 import * as Path from "path-browserify";
 import * as Semver from "semver";
