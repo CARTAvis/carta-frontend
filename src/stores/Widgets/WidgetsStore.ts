@@ -752,7 +752,7 @@ export class WidgetsStore {
         return $(`<li class="${className}" title="${title}"><span class="${classNames(Classes.ICON_STANDARD, Classes.iconClass(icon))}" style/></li>`);
     };
 
-    public toWidgetSettingsConfig = (widgetType: string, widgetID: string) => {
+    public toWidgetSettingsConfig = (widgetType: string, widgetID: string | undefined) => {
         if (!widgetType || !widgetID) {
             return null;
         }
