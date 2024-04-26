@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {ControlHeader} from "stores";
 import {ColumnArray, getComparisonOperatorAndValue, ProcessedColumnData} from "utilities";
 
-export function getDataTypeString(dataType: CARTA.ColumnType): string {
+export function getDataTypeString(dataType: CARTA.ColumnType | null | undefined): string {
     switch (dataType) {
         case CARTA.ColumnType.String:
             return "string";

@@ -242,7 +242,7 @@ export class BackendService {
         this.endToEndPing = this.lastPongTime - this.lastPingTime;
     };
 
-    async getFileList(directory: string, filterMode: CARTA.FileListFilterMode): Promise<CARTA.IFileListResponse> {
+    async getFileList(directory: string | null, filterMode: CARTA.FileListFilterMode): Promise<CARTA.IFileListResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
@@ -259,7 +259,7 @@ export class BackendService {
         }
     }
 
-    async getRegionList(directory: string, filterMode: CARTA.FileListFilterMode): Promise<CARTA.IRegionListResponse> {
+    async getRegionList(directory: string | null, filterMode: CARTA.FileListFilterMode): Promise<CARTA.IRegionListResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
@@ -276,7 +276,7 @@ export class BackendService {
         }
     }
 
-    async getCatalogList(directory: string, filterMode: CARTA.FileListFilterMode): Promise<CARTA.ICatalogListResponse> {
+    async getCatalogList(directory: string | null, filterMode: CARTA.FileListFilterMode): Promise<CARTA.ICatalogListResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
@@ -293,7 +293,7 @@ export class BackendService {
         }
     }
 
-    async getFileInfo(directory: string, file: string, hdu: string): Promise<CARTA.IFileInfoResponse> {
+    async getFileInfo(directory: string | null | undefined, file: string | null | undefined, hdu: string | undefined): Promise<CARTA.IFileInfoResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
@@ -311,7 +311,7 @@ export class BackendService {
         }
     }
 
-    async getRegionFileInfo(directory: string, file: string): Promise<CARTA.IRegionFileInfoResponse> {
+    async getRegionFileInfo(directory: string | null | undefined, file: string | null | undefined): Promise<CARTA.IRegionFileInfoResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
@@ -328,7 +328,7 @@ export class BackendService {
         }
     }
 
-    async getCatalogFileInfo(directory: string, name: string): Promise<CARTA.ICatalogFileInfoResponse> {
+    async getCatalogFileInfo(directory: string | null | undefined, name: string | null | undefined): Promise<CARTA.ICatalogFileInfoResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
