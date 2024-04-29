@@ -431,6 +431,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
         const padding = appStore.overlayStore.padding;
         const className = classNames("raster-div", {docked: this.props.docked});
+        const baseFrame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image?.store?.baseFrame : this.props.image?.store;
 
         return (
             <div className={className}>
@@ -441,8 +442,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     style={{
                         top: padding.top,
                         left: padding.left,
-                        width: frames?.[0]?.isRenderable ? frames?.[0]?.renderWidth || 1 : 1,
-                        height: frames?.[0]?.isRenderable ? frames?.[0]?.renderHeight || 1 : 1
+                        width: baseFrame?.isRenderable ? baseFrame?.renderWidth || 1 : 1,
+                        height: baseFrame?.isRenderable ? baseFrame?.renderHeight || 1 : 1
                     }}
                 />
             </div>
