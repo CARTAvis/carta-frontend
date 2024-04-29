@@ -140,10 +140,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
         const dataType = CARTA.ColumnType.String;
         const columnHeaders = columnNames.map((name, index) => new CARTA.CatalogHeader({name: name, dataType, columnIndex: index}));
 
-        const imageNames = Array.from(Array(appStore.imageViewConfigStore.imageNum).keys()).map(index => {
-            const image = appStore.imageViewConfigStore.getImage(index);
-            return image.store.filename;
-        });
+        const imageNames = appStore.imageViewConfigStore.imageNames;
         let values = Array(imageNum).fill("-");
         let systems = Array(imageNum).fill("-");
         let worldCoords = Array(imageNum).fill("-");

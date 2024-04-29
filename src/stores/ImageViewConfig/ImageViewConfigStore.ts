@@ -116,6 +116,11 @@ export class ImageViewConfigStore {
         return this.imageList?.length;
     }
 
+    /** Filenames in the image list. */
+    @computed get imageNames(): string[] {
+        return this.imageList.map(image => image.store.filename);
+    }
+
     /** All the loaded images in the image list. */
     @computed get frames(): FrameStore[] {
         return this.imageList?.filter(imageItem => imageItem?.type === ImageType.FRAME && imageItem?.store instanceof FrameStore).map(imageItem => imageItem?.store as FrameStore);
