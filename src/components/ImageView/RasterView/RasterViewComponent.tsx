@@ -49,6 +49,11 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             return;
         }
 
+        const tileRenderService = this.props.image?.type === ImageType.PV_PREVIEW ? PreviewWebGLService.Instance : TileWebGLService.Instance;
+        if (!tileRenderService.cmapTexture) {
+            return;
+        }
+
         const baseFrame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image?.store?.baseFrame : this.props.image?.store;
         if (baseFrame) {
             this.updateCanvasSize(baseFrame);
@@ -61,11 +66,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
         if (this.props.image?.type === ImageType.COLOR_BLENDING) {
             ctx.globalCompositeOperation = "lighter";
-        }
-
-        const tileRenderService = this.props.image?.type === ImageType.PV_PREVIEW ? PreviewWebGLService.Instance : TileWebGLService.Instance;
-        if (!tileRenderService.cmapTexture) {
-            return;
         }
 
         const frames = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image?.store?.frames : [this.props.image?.store];
