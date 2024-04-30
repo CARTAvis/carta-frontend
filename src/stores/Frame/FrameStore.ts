@@ -159,8 +159,14 @@ export class FrameStore {
     @observable spectralSystem: SpectralSystem;
     @observable channelValues: Array<number>;
     @observable channelSecondaryValues: Array<number>;
-    @observable center: Point2D; // pixel coordinates
-    @observable offsetCenter: Point2D; // pixel coordinates
+    /**
+     * View center in pixel coordinates
+     */
+    @observable center: Point2D;
+    /**
+     * View center for the relative coordinate in pixel coordinates
+     */
+    @observable offsetCenter: Point2D;
     @observable cursorInfo: CursorInfo;
     @observable cursorValue: {position: Point2D; channel: number; value: number};
     @observable cursorMoving: boolean;
@@ -1387,10 +1393,6 @@ export class FrameStore {
         this.zoomLevel = preferenceStore.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
         this.pixelUnitSizeArcsec = this.getPixelUnitSize();
 
-        // initialize offset values for the relative coordinates of image
-        // it depends on center, therefore it should be placed after initCenter()
-        this.updateWcsInfoShifted();
-
         // init spectral settings
         if (this.spectralAxis && IsSpectralTypeSupported(this.spectralAxis.type.code as string) && IsSpectralUnitSupported(this.spectralAxis.type.unit as string)) {
             if (this.isPVImage) {
@@ -2168,6 +2170,9 @@ export class FrameStore {
      * Toggle of the offset coordinates.
      */
     @action toggleOffsetCoord = () => {
+        if (!this.wcsInfoShifted && !this.isPVImage && !this.isPreview && !this.isSwappedZ && !this.isUVImage) {
+            this.updateOffseCenter();
+        }
         this.setIsOffsetCoord(!this.isOffsetCoord);
     };
 
@@ -2177,16 +2182,19 @@ export class FrameStore {
         } else {
             if (this.wcsInfo && this.offsetCenter) {
                 const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.offsetCenter);
-                this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, centerInRad.x, centerInRad.y);
-                for (const frame of this.secondarySpatialImages) {
-                    const frameCenterInRad = getUnformattedWCSPoint(frame.wcsInfo, frame.offsetCenter);
-                    frame.wcsInfoShifted = AST.createShiftmapFrameset(frame.wcsInfo, frameCenterInRad.x, frameCenterInRad.y);
+
+                if (centerInRad) {
+                    this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, centerInRad.x, centerInRad.y);
+                    for (const frame of this.secondarySpatialImages) {
+                        const frameCenterInRad = getUnformattedWCSPoint(frame.wcsInfo, frame.offsetCenter);
+                        frame.wcsInfoShifted = AST.createShiftmapFrameset(frame.wcsInfo, frameCenterInRad.x, frameCenterInRad.y);
+                    }
                 }
             }
         }
     };
 
-    @action updateWcsInfoShifted = () => {
+    @action updateOffseCenter = () => {
         this.setOffsetCenter(this.center.x, this.center.y);
     };
 

@@ -147,7 +147,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const frame = appStore.activeFrame;
         const isPVImage = frame?.isPVImage;
 
-        const getFovInfoString = (value: number, valueWcs: string) => {
+        const getInfoString = (value: number, valueWcs: string) => {
             return this.panAndZoomCoord === CoordinateMode.Image ? `WCS: ${valueWcs}` : `Image: ${toFixed(value, 3)} px`;
         };
         const fovLabelInfo = this.panAndZoomCoord === CoordinateMode.Image ? "(px)" : "";
@@ -166,7 +166,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         onChangeWcs={val => frame?.setCenterWcs(val, frame?.centerWCS?.y)}
                         wcsDisabled={isPVImage}
                     />
-                    <span className="info-string">{getFovInfoString(frame?.center?.x, frame?.centerWCS?.x)}</span>
+                    <span className="info-string">{getInfoString(frame?.center?.x, frame?.centerWCS?.x)}</span>
                 </FormGroup>
                 <FormGroup inline={true} label="Center (Y)" labelInfo={fovLabelInfo}>
                     <CoordNumericInput
@@ -178,7 +178,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         onChangeWcs={val => frame?.setCenterWcs(frame?.centerWCS?.x, val)}
                         wcsDisabled={isPVImage}
                     />
-                    <span className="info-string">{getFovInfoString(frame?.center?.y, frame?.centerWCS?.y)}</span>
+                    <span className="info-string">{getInfoString(frame?.center?.y, frame?.centerWCS?.y)}</span>
                 </FormGroup>
                 <FormGroup inline={true} label="Size (X)" labelInfo={fovLabelInfo}>
                     <CoordNumericInput
@@ -191,7 +191,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         wcsDisabled={isPVImage}
                         customPlaceholder="Width"
                     />
-                    <span className="info-string">{getFovInfoString(frame?.fovSize?.x, frame?.fovSizeWCS?.x)}</span>
+                    <span className="info-string">{getInfoString(frame?.fovSize?.x, frame?.fovSizeWCS?.x)}</span>
                 </FormGroup>
                 <FormGroup inline={true} label="Size (Y)" labelInfo={fovLabelInfo}>
                     <CoordNumericInput
@@ -204,13 +204,13 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         wcsDisabled={isPVImage}
                         customPlaceholder="Height"
                     />
-                    <span className="info-string">{getFovInfoString(frame?.fovSize?.y, frame?.fovSizeWCS?.y)}</span>
+                    <span className="info-string">{getInfoString(frame?.fovSize?.y, frame?.fovSizeWCS?.y)}</span>
                 </FormGroup>
                 <FormGroup inline={true} label="Offset Coordinates">
-                    <Switch checked={frame.isOffsetCoord} onChange={frame.toggleOffsetCoord} />
+                    <Switch checked={frame.isOffsetCoord} disabled={frame.isPVImage || frame.isSwappedZ || frame.isUVImage} onChange={frame.toggleOffsetCoord} />
                     <Collapse isOpen={frame.isOffsetCoord}>
                         <Tooltip2 content="Set offset to current view center" position={Position.BOTTOM} hoverOpenDelay={300}>
-                            <Button icon="locate" disabled={!frame.isOffsetCoord} onClick={() => frame.updateWcsInfoShifted()} />
+                            <Button icon="locate" disabled={!frame.isOffsetCoord} onClick={() => frame.updateOffseCenter()} />
                         </Tooltip2>
                     </Collapse>
                 </FormGroup>
@@ -225,7 +225,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                             onChangeWcs={val => frame?.setOffsetCenterWcs(val, frame?.offsetCenterWCS?.y)}
                             wcsDisabled={isPVImage}
                         />
-                        <span className="info-string">{getFovInfoString(frame?.offsetCenter?.x, frame?.offsetCenterWCS?.x)}</span>
+                        <span className="info-string">{getInfoString(frame?.offsetCenter?.x, frame?.offsetCenterWCS?.x)}</span>
                     </FormGroup>
                     <FormGroup inline={true} label="Offset Center (Y)" labelInfo={fovLabelInfo}>
                         <CoordNumericInput
@@ -237,7 +237,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                             onChangeWcs={val => frame?.setOffsetCenterWcs(frame?.offsetCenterWCS?.x, val)}
                             wcsDisabled={isPVImage}
                         />
-                        <span className="info-string">{getFovInfoString(frame?.offsetCenter?.y, frame?.offsetCenterWCS?.y)}</span>
+                        <span className="info-string">{getInfoString(frame?.offsetCenter?.y, frame?.offsetCenterWCS?.y)}</span>
                     </FormGroup>
                 </Collapse>
             </div>
