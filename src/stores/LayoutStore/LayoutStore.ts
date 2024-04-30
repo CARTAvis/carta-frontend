@@ -26,7 +26,7 @@ export class LayoutStore {
     @observable currentLayoutName: string;
     @observable private layouts: any;
     @observable supportsServer: boolean;
-    @observable oldLayoutName: string;
+    @observable oldLayoutName: string | undefined;
 
     @computed get isSave(): boolean {
         return !this.oldLayoutName;
@@ -49,7 +49,7 @@ export class LayoutStore {
         this.layoutNameToBeSaved = layoutName ? layoutName : "Empty";
     };
 
-    public setOldLayoutName = (oldLayoutName: string) => {
+    public setOldLayoutName = (oldLayoutName: string | undefined) => {
         this.oldLayoutName = oldLayoutName;
     };
 

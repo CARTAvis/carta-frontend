@@ -12,7 +12,8 @@ const migratedFiles = [
     "stores/LayoutStore",
     "stores/ImageFittingStore",
     "stores/HelpStore",
-    "stores/FileBrowserStore"
+    "stores/FileBrowserStore",
+    "stores/DialogStore"
 ];
 
 module.exports = {
