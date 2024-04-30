@@ -67,8 +67,8 @@ export abstract class AbstractCatalogProfileStore {
 
     @observable loadingData: boolean;
     @observable catalogType: CatalogType;
-    @observable catalogFilterRequest: CARTA.CatalogFilterRequest;
-    @observable catalogCoordinateSystem: {system: CatalogSystemType; equinox: string | null; epoch: string | null; coordinate: {x: CatalogOverlay; y: CatalogOverlay} | undefined};
+    @observable catalogFilterRequest: CARTA.ICatalogFilterRequest;
+    @observable catalogCoordinateSystem: {system: CatalogSystemType; equinox: string | null | undefined; epoch: string | null | undefined; coordinate: {x: CatalogOverlay; y: CatalogOverlay} | undefined};
     @observable filterDataSize: number | undefined;
     @observable progress: number;
     @observable updatingDataStream: boolean;

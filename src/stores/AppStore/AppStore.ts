@@ -1070,7 +1070,7 @@ export class AppStore {
         }
     }
 
-    @action sendCatalogFilter(catalogFilter: CARTA.CatalogFilterRequest) {
+    @action sendCatalogFilter(catalogFilter: CARTA.ICatalogFilterRequest) {
         if (!this.activeFrame) {
             return;
         }
