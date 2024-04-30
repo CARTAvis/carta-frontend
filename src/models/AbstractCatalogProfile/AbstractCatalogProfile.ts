@@ -68,7 +68,7 @@ export abstract class AbstractCatalogProfileStore {
     @observable loadingData: boolean;
     @observable catalogType: CatalogType;
     @observable catalogFilterRequest: CARTA.CatalogFilterRequest;
-    @observable catalogCoordinateSystem: {system: CatalogSystemType; equinox: string; epoch: string; coordinate: {x: CatalogOverlay; y: CatalogOverlay} | undefined};
+    @observable catalogCoordinateSystem: {system: CatalogSystemType; equinox: string | null; epoch: string | null; coordinate: {x: CatalogOverlay; y: CatalogOverlay} | undefined};
     @observable filterDataSize: number | undefined;
     @observable progress: number;
     @observable updatingDataStream: boolean;
@@ -136,11 +136,11 @@ export abstract class AbstractCatalogProfileStore {
         this.catalogData.clear();
     }
 
-    public static getCatalogSystem(system: string): CatalogSystemType {
+    public static getCatalogSystem(system: string | null | undefined): CatalogSystemType {
         let catalogSystem = CatalogSystemType.ICRS;
         const systemMap = AbstractCatalogProfileStore.CoordinateSystemName;
         systemMap.forEach((value, key) => {
-            if (system.toUpperCase().includes(value.toUpperCase())) {
+            if (system?.toUpperCase().includes(value.toUpperCase())) {
                 catalogSystem = key;
             }
         });

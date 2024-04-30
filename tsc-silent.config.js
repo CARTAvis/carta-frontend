@@ -14,6 +14,7 @@ const migratedFiles = [
     "stores/HelpStore",
     "stores/FileBrowserStore",
     "stores/DialogStore",
+    "stores/CatalogOnlineQuery",
     "stores/AlertStore"
 ];
 
