@@ -185,10 +185,10 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     };
 
     @computed get isAbleToGenerate(): boolean {
-        if (!this.currentAutoBounds && (!this.currentMinPix || !this.currentMaxPix || this.currentMinPix >= this.currentMaxPix)) {
+        if (!this.currentAutoBounds && this.currentMinPix !== undefined && this.currentMaxPix !== undefined && this.currentMinPix >= this.currentMaxPix) {
             return false;
         }
-        return !(!this.currentAutoBins && (!this.currentNumBins || this.currentNumBins <= 0));
+        return !(!this.currentAutoBins && this.currentNumBins !== null && this.currentNumBins !== undefined && this.currentNumBins <= 0);
     }
 
     public static CalculateRequirementsMap(widgetsMap: Map<string, HistogramWidgetStore>) {
