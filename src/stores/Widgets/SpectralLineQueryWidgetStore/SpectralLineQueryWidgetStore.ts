@@ -115,7 +115,7 @@ export class SpectralLineQueryWidgetStore {
     @observable intensityLimitEnabled: boolean;
     @observable intensityLimitValue: number;
     @observable isQuerying: boolean;
-    @observable columnHeaders: Array<CARTA.CatalogHeader>;
+    @observable columnHeaders: Array<CARTA.ICatalogHeader>;
     @observable redshiftType: RedshiftType;
     @observable redshiftInput: number;
     @observable queryResultTableRef: Table | undefined;
@@ -407,8 +407,8 @@ export class SpectralLineQueryWidgetStore {
         return this.redshiftType === RedshiftType.V ? 1 - (this.redshiftInput * 1e3) / SPEED_OF_LIGHT : 1 / (this.redshiftInput + 1);
     }
 
-    @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader> {
-        let displayedColumnHeaders: CARTA.CatalogHeader[] = [];
+    @computed get displayedColumnHeaders(): Array<CARTA.ICatalogHeader> {
+        let displayedColumnHeaders: CARTA.ICatalogHeader[] = [];
         this.controlHeader?.forEach(controlHeader => {
             if (controlHeader.display && controlHeader.dataIndex && controlHeader.dataIndex < this.columnHeaders?.length) {
                 displayedColumnHeaders.push(this.columnHeaders[controlHeader.dataIndex]);
