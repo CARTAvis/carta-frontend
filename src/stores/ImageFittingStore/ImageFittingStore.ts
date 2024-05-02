@@ -220,8 +220,8 @@ export class ImageFittingStore {
         regionId: number,
         fovInfo: CARTA.IRegionInfo,
         fixedParams: boolean[],
-        values: CARTA.GaussianComponent[],
-        errors: CARTA.GaussianComponent[],
+        values: CARTA.IGaussianComponent[],
+        errors: CARTA.IGaussianComponent[],
         offsetValue: number,
         offsetError: number,
         integratedFluxValues: number[],
@@ -457,7 +457,7 @@ export class ImageFittingStore {
         return log;
     };
 
-    private getRegionParams = (values: CARTA.GaussianComponent[]): {points: Point2D[]; rotation: number}[] => {
+    private getRegionParams = (values: CARTA.IGaussianComponent[]): {points: Point2D[]; rotation: number}[] => {
         return values
             .map(value => {
                 if (
