@@ -1481,7 +1481,7 @@ export class WidgetsStore {
     }
 
     createFloatingCursorInfoWidget = () => {
-        const id = this.addLayerListWidget();
+        const id = this.addCursorInfoWidget();
         if (id !== null) {
             this.addFloatingWidget(new WidgetConfig(id, CursorInfoComponent.WIDGET_CONFIG));
         }
