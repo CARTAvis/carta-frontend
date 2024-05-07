@@ -1075,7 +1075,16 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     render() {
         return (
-            <div className={"line-plot-component"} style={{cursor: this.cursorShape}} onKeyDown={this.onKeyDown} onMouseEnter={this.onMouseEnter} onMouseMove={this.onMouseMove} onMouseLeave={this.onMouseLeave} tabIndex={0}>
+            <div
+                className={"line-plot-component"}
+                style={{cursor: this.cursorShape}}
+                onKeyDown={this.onKeyDown}
+                onMouseEnter={this.onMouseEnter}
+                onMouseMove={this.onMouseMove}
+                onMouseLeave={this.onMouseLeave}
+                tabIndex={0}
+                data-testid="profiler-plot"
+            >
                 <ReactResizeDetector handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
                 {this.width > 0 && this.height > 0 && <PlotContainerComponent {...this.props} plotRefUpdated={this.onPlotRefUpdated} chartAreaUpdated={this.updateChart} width={this.width} height={this.height} />}
                 {this.width > 0 && this.height > 0 && (

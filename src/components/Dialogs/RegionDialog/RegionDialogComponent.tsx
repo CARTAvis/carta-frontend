@@ -123,8 +123,8 @@ export class RegionDialogComponent extends React.Component {
                 const stylingPanel = <AppearanceForm region={region} darkTheme={appStore.darkTheme} />;
                 bodyContent = (
                     <Tabs id="regionDialogTabs" selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
-                        <Tab id={RegionDialogTabs.Configuration} title="Configuration" panel={configurationPanel} />
-                        <Tab id={RegionDialogTabs.Styling} title="Styling" panel={stylingPanel} />
+                        <Tab id={RegionDialogTabs.Configuration} title="Configuration" panel={configurationPanel} data-testid="region-dialog-config-tab-title" />
+                        <Tab id={RegionDialogTabs.Styling} title="Styling" panel={stylingPanel} data-testid="region-dialog-styling-tab-title" />
                     </Tabs>
                 );
             }

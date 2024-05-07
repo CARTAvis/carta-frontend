@@ -2,7 +2,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import {ResizeEnable, Rnd} from "react-rnd";
-import {Button, Dialog, IDialogProps} from "@blueprintjs/core";
+import {Button, Classes, Dialog, IDialogProps} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
 import {AppStore, HelpStore, HelpType} from "stores";
@@ -39,6 +39,16 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
             } else {
                 header[0].append(helpButtonDiv);
             }
+        }
+
+        const dialog = this.dd.getElementsByClassName(Classes.DIALOG)?.[0];
+        if (dialog) {
+            dialog.setAttribute("data-testid", this.props.dialogId);
+        }
+
+        const closeButton = this.dd.getElementsByClassName(Classes.DIALOG_CLOSE_BUTTON)?.[0];
+        if (closeButton) {
+            closeButton.setAttribute("data-testid", `${this.props.dialogId}-header-close-button`);
         }
     }
 
