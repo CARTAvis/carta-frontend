@@ -688,7 +688,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     itemPredicate={this.filterColumn}
                     resetOnSelect={true}
                 >
-                    <Button text={widgetStore.xColumnName} rightIcon="double-caret-vertical" />
+                    <Button text={widgetStore.xColumnName} rightIcon="double-caret-vertical" data-testid="catalog-plot-widget-x-dropdown" />
                 </Select>
             </FormGroup>
         );
@@ -732,7 +732,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     itemPredicate={this.filterColumn}
                     resetOnSelect={true}
                 >
-                    <Button text={widgetStore.statisticColumnName} rightIcon="double-caret-vertical" />
+                    <Button text={widgetStore.statisticColumnName} rightIcon="double-caret-vertical" data-testid="catalog-plot-widget-stat-dropdown" />
                 </Select>
             </FormGroup>
         );
@@ -934,10 +934,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 onValueCleared={() => this.onNumBinChange(this.numBinsX)}
                 displayExponential={false}
                 disabled={disabled}
+                data-testid="catalog-plot-widget-bin-input"
             />
         );
 
-        const renderLinearRegressionButton = <AnchorButton intent={Intent.PRIMARY} text="Linear fit" onClick={() => this.handleFittingClick(selectedPointIndices)} disabled={disabled || selectedPointIndices?.length === 1} />;
+        const renderLinearRegressionButton = (
+            <AnchorButton intent={Intent.PRIMARY} text="Linear fit" onClick={() => this.handleFittingClick(selectedPointIndices)} disabled={disabled || selectedPointIndices?.length === 1} data-testid="catalog-plot-widget-fit-button" />
+        );
         const infoStrings = [this.genProfilerInfo];
         if (widgetStore.showStatisticResult && widgetStore.enableStatistic) {
             infoStrings.push(widgetStore.statisticString);
@@ -953,7 +956,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     {isScatterPlot && renderYSelect}
                     {renderStatisticSelect}
                 </div>
-                <div className={`${spikeLineClass} ${isScatterPlot && devicePixelRatio > 1 ? catalogScatterClass : ""}`}>
+                <div className={`${spikeLineClass} ${isScatterPlot && devicePixelRatio > 1 ? catalogScatterClass : ""}`} data-testid={"catalog-" + (isScatterPlot ? "scatter" : "histogram") + "-plot"}>
                     <Plot
                         data={data}
                         layout={layout}
@@ -970,7 +973,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     />
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
-                    <div className="scatter-info">
+                    <div className="scatter-info" data-testid="catalog-plot-info">
                         <ProfilerInfoComponent info={infoStrings} type="pre-line" separator="newLine" />
                     </div>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
@@ -980,7 +983,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                             </FormGroup>
                         </Tooltip>
                         {isScatterPlot && renderLinearRegressionButton}
-                        <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={disabled || !profileStore.isFileBasedCatalog} />
+                        <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={disabled || !profileStore.isFileBasedCatalog} data-testid="catalog-plot-widget-plot-button" />
                     </div>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>

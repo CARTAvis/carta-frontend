@@ -146,9 +146,15 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 }}
             >
                 <div className={titleClass}>
-                    <div className={"floating-title"}>{widgetConfig.title}</div>
+                    <div className={"floating-title"} data-testid={this.props.widgetConfig?.id + "-header-title"}>
+                        {widgetConfig.title}
+                    </div>
                     {this.props.showFloatingSettingsButton && (
-                        <div className={buttonClass} onClick={() => appStore.widgetsStore.createFloatingSettingsWidget(widgetConfig.title, widgetConfig.id, widgetConfig.type)}>
+                        <div
+                            className={buttonClass}
+                            onClick={() => appStore.widgetsStore.createFloatingSettingsWidget(widgetConfig.title, widgetConfig.id, widgetConfig.type)}
+                            data-testid={this.props.widgetConfig?.id + "-header-settings-button"}
+                        >
                             <Tooltip content="Settings" position={Position.BOTTOM_RIGHT}>
                                 <Icon icon={"cog"} />
                             </Tooltip>
@@ -162,19 +168,21 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                         </div>
                     )}
                     {this.props.showPinButton && (
-                        <div className={buttonClass} ref={ref => (this.pinElementRef = ref)} onClick={() => console.log("pin!")}>
+                        <div className={buttonClass} ref={ref => (this.pinElementRef = ref)} onClick={() => console.log("pin!")} data-testid={this.props.widgetConfig?.id + "-header-dock-button"}>
                             <Tooltip content="Drag pin to dock this widget" position={Position.BOTTOM_RIGHT}>
                                 <Icon icon={"pin"} />
                             </Tooltip>
                         </div>
                     )}
                     {widgetConfig.isCloseable && (
-                        <div onMouseDown={this.props.onClosed} className={buttonClass}>
+                        <div onMouseDown={this.props.onClosed} className={buttonClass} data-testid={this.props.widgetConfig?.id + "-header-close-button"}>
                             <Icon icon={"cross"} />
                         </div>
                     )}
                 </div>
-                <div className={floatingContentClassName}>{this.props.children}</div>
+                <div className={floatingContentClassName} data-testid={this.props.widgetConfig?.id + "-content"}>
+                    {this.props.children}
+                </div>
             </Rnd>
         );
     }

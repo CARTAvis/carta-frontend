@@ -451,7 +451,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 }
                 position={Position.BOTTOM_RIGHT}
             >
-                <Button minimal={true} rightIcon="caret-down">
+                <Button minimal={true} rightIcon="caret-down" data-testid="export-region-file-type-dropdown">
                     {fileBrowserStore.exportFileType === CARTA.FileType.CRTF ? "CRTF" : "DS9"}
                 </Button>
             </Popover>
@@ -690,7 +690,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 </div>
                 <div className={Classes.DIALOG_BODY}>
                     <div className={paneClassName}>
-                        <div className="file-list">
+                        <div className="file-list" data-testid="file-list">
                             <FileListTableComponent
                                 darkTheme={appStore.darkTheme}
                                 loading={fileBrowserStore.loadingList}

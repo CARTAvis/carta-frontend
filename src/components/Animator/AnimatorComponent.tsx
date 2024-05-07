@@ -239,7 +239,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 numChannels - 1 - 4 * channelStep < channelStep / 2 ? [0, channelStep, 2 * channelStep, 3 * channelStep, numChannels - 1] : [0, channelStep, 2 * channelStep, 3 * channelStep, 4 * channelStep, numChannels - 1];
             const channelTick = numChannels > 10 ? channelTickPre : Array.from(Array(numChannels).keys());
             channelSlider = (
-                <div className="animator-slider">
+                <div className="animator-slider" data-testid="animator-slider">
                     <Radio
                         value={AnimationMode.CHANNEL}
                         disabled={appStore.animatorStore.animationActive}
@@ -261,7 +261,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                                 onChange={this.onChannelChanged}
                                 disabled={appStore.animatorStore.animationActive}
                             />
-                            <div className="slider-info">
+                            <div className="slider-info" data-testid="animator-slider-info">
                                 <pre>{activeFrame.depthAxisInfo}</pre>
                             </div>
                         </React.Fragment>
@@ -269,7 +269,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 </div>
             );
             channelRangeSlider = (
-                <div className="animator-slider range-slider">
+                <div className="animator-slider range-slider" data-testid="animator-range-slider">
                     <div className="range-label" />
                     {!hideSliders && (
                         <React.Fragment>
@@ -292,7 +292,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         // Stokes Control
         if (numStokes > 1) {
             stokesSlider = (
-                <div className={classNames("animator-slider", "stokes-slider", {"tiled-label": this.width < 750})}>
+                <div className={classNames("animator-slider", "stokes-slider", {"tiled-label": this.width < 750})} data-testid="animator-polarization-slider">
                     <Radio value={AnimationMode.STOKES} disabled={appStore.animatorStore.animationActive} checked={appStore.animatorStore.animationMode === AnimationMode.STOKES} onChange={this.onAnimationModeChanged} label="Polarization" />
                     {hideSliders && (
                         <SafeNumericInput
@@ -342,7 +342,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 position={Position.TOP}
             >
                 <Tooltip content="Playback mode" position={Position.TOP}>
-                    <AnchorButton icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.animationActive}>
+                    <AnchorButton icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.animationActive} data-testid="animator-playback-mode-button">
                         {!iconOnly && "Mode"}
                     </AnchorButton>
                 </Tooltip>
@@ -351,26 +351,26 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
         const playbackButtons = (
             <ButtonGroup fill={true} className="playback-buttons">
-                <Button icon={"chevron-backward"} onClick={this.onFirstClicked}>
+                <Button icon={"chevron-backward"} onClick={this.onFirstClicked} data-testid="animator-first-button">
                     {!iconOnly && "First"}
                 </Button>
-                <Button icon={"step-backward"} onClick={this.onPrevClicked}>
+                <Button icon={"step-backward"} onClick={this.onPrevClicked} data-testid="animator-previous-button">
                     {!iconOnly && "Prev"}
                 </Button>
                 {appStore.animatorStore.animationActive && (
-                    <Button icon={"stop"} onClick={appStore.animatorStore.stopAnimation}>
+                    <Button icon={"stop"} onClick={appStore.animatorStore.stopAnimation} data-testid="animator-play-stop-button">
                         {!iconOnly && "Stop"}
                     </Button>
                 )}
                 {!appStore.animatorStore.animationActive && (
-                    <Button icon={"play"} onClick={appStore.animatorStore.startAnimation}>
+                    <Button icon={"play"} onClick={appStore.animatorStore.startAnimation} data-testid="animator-play-stop-button">
                         {!iconOnly && "Play"}
                     </Button>
                 )}
-                <Button icon={"step-forward"} onClick={this.onNextClicked}>
+                <Button icon={"step-forward"} onClick={this.onNextClicked} data-testid="animator-next-button">
                     {!iconOnly && "Next"}
                 </Button>
-                <Button icon={"chevron-forward"} onClick={this.onLastClicked}>
+                <Button icon={"chevron-forward"} onClick={this.onLastClicked} data-testid="animator-last-button">
                     {!iconOnly && "Last"}
                 </Button>
             </ButtonGroup>
@@ -389,6 +389,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         majorStepSize={1}
                         onValueChange={appStore.animatorStore.setFrameRate}
                         disabled={appStore.animatorStore.animationActive}
+                        data-testid="animator-control-input"
                     />
                 ) : (
                     <SafeNumericInput
@@ -400,6 +401,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         majorStepSize={1}
                         onValueChange={appStore.animatorStore.setStep}
                         disabled={appStore.animatorStore.animationActive}
+                        data-testid="animator-control-input"
                     />
                 )}
             </ControlGroup>

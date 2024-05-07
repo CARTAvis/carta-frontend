@@ -231,7 +231,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 name={columnName}
                 cellRenderer={(rowIndex, columnIndex) => (
                     <Cell className="header-table-cell" key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>
-                        {coloumnData[rowIndex]}
+                        <>
+                            <div data-testid={"catalog-header-table-" + rowIndex + "-" + columnIndex}>{coloumnData[rowIndex]}</div>
+                        </>
                     </Cell>
                 )}
             />
@@ -244,9 +246,16 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         let disable = profileStore.loadingData;
         return (
             <Cell className="header-table-cell" key={`cell_switch_${rowIndex}`}>
-                <React.Fragment>
-                    <Switch className="cell-switch-button" key={`cell_switch_button_${rowIndex}`} disabled={disable} checked={display} onChange={changeEvent => this.handleHeaderDisplayChange(changeEvent, columnName)} />
-                </React.Fragment>
+                <>
+                    <Switch
+                        className="cell-switch-button"
+                        key={`cell_switch_button_${rowIndex}`}
+                        disabled={disable}
+                        checked={display}
+                        onChange={changeEvent => this.handleHeaderDisplayChange(changeEvent, columnName)}
+                        data-testid={"catalog-header-table-switch-" + rowIndex}
+                    />
+                </>
             </Cell>
         );
     }
@@ -733,7 +742,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             itemRenderer={this.renderFileIdPopOver}
                             popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                         >
-                            <Button text={this.catalogFileId} rightIcon="double-caret-vertical" />
+                            <Button text={this.catalogFileId} rightIcon="double-caret-vertical" data-testid="catalog-file-dropdown" />
                         </Select>
                     </FormGroup>
                     <FormGroup className="catalog-system" disabled={!isImageOverlay} inline={true} label="System">
@@ -746,7 +755,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             disabled={!isImageOverlay}
                             popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                         >
-                            <Button text={activeSystem} disabled={!isImageOverlay} rightIcon="double-caret-vertical" />
+                            <Button text={activeSystem} disabled={!isImageOverlay} rightIcon="double-caret-vertical" data-testid="catalog-system-dropdown" />
                         </Select>
                     </FormGroup>
 
@@ -773,7 +782,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={"table-info"}>
                         <table className="info-display">
-                            <tbody>{tableInfo}</tbody>
+                            <tbody data-testid="catalog-table-filtering-info">{tableInfo}</tbody>
                         </table>
                     </div>
                     <div className="footer-action-container">
@@ -787,7 +796,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 itemRenderer={this.renderPlotTypePopOver}
                                 popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                             >
-                                <Button className="bp3" text={catalogWidgetStore.catalogPlotType} rightIcon="double-caret-vertical" />
+                                <Button className="bp3" text={catalogWidgetStore.catalogPlotType} rightIcon="double-caret-vertical" data-testid="catalog-rendering-type-dropdown" />
                             </Select>
 
                             <FormGroup className="catalog-axis" inline={true} label={this.xAxisLable} disabled={disable}>
@@ -804,7 +813,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     itemPredicate={this.filterColumn}
                                     resetOnSelect={true}
                                 >
-                                    <Button className="catalog-axis-button" text={catalogWidgetStore.xAxis} disabled={disable} rightIcon="double-caret-vertical" />
+                                    <Button className="catalog-axis-button" text={catalogWidgetStore.xAxis} disabled={disable} rightIcon="double-caret-vertical" data-testid="catalog-rendering-column-x-dropdown" />
                                 </Select>
                             </FormGroup>
 
@@ -822,7 +831,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     itemPredicate={this.filterColumn}
                                     resetOnSelect={true}
                                 >
-                                    <Button className="catalog-axis-button" text={catalogWidgetStore.yAxis} disabled={isHistogram || disable} rightIcon="double-caret-vertical" />
+                                    <Button className="catalog-axis-button" text={catalogWidgetStore.yAxis} disabled={isHistogram || disable} rightIcon="double-caret-vertical" data-testid="catalog-rendering-column-y-dropdown" />
                                 </Select>
                             </FormGroup>
 
@@ -839,10 +848,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     </div>
                     <div className={Classes.DIALOG_FOOTER}>
                         <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                            <AnchorButton intent={Intent.SUCCESS} text="Apply filter" onClick={this.handleFilterRequest} disabled={disable || !profileStore.updateTableView || !profileStore.hasFilter} />
-                            <AnchorButton intent={Intent.WARNING} text="Reset filter" onClick={this.handleResetClick} disabled={disable} />
-                            <AnchorButton text="Close catalog" onClick={this.handleFileCloseClick} disabled={disable} />
-                            <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={!this.enablePlotButton} />
+                            <AnchorButton intent={Intent.SUCCESS} text="Apply filter" onClick={this.handleFilterRequest} disabled={disable || !profileStore.updateTableView || !profileStore.hasFilter} data-testid="catalog-filter-button" />
+                            <AnchorButton intent={Intent.WARNING} text="Reset filter" onClick={this.handleResetClick} disabled={disable} data-testid="catalog-reset-button" />
+                            <AnchorButton text="Close catalog" onClick={this.handleFileCloseClick} disabled={disable} data-testid="catalog-close-button" />
+                            <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={!this.enablePlotButton} data-testid="catalog-plot-button" />
                         </div>
                     </div>
                 </div>

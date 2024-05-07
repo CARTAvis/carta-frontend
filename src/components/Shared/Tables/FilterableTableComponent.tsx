@@ -126,6 +126,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                                 });
                             }
                         }}
+                        data-testid="filterable-table-header-checkbox"
                     />
                 </ColumnHeaderCell>
                 <ColumnHeaderCell isActive={controlHeader?.filter !== ""}>
@@ -208,7 +209,9 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         const selected = dataIndex && dataIndex.includes(index) && !this.props.showSelectedData;
         return (
             <Cell key={`cell_${columnIndex}_${rowIndex}`} intent={selected ? "danger" : "none"} loading={this.isLoading(rowIndex)} interactive={false}>
-                <React.Fragment>{cell}</React.Fragment>
+                <>
+                    <div data-testid={"filterable-table-" + rowIndex + "-" + columnIndex}>{cell}</div>
+                </>
             </Cell>
         );
     };
@@ -251,7 +254,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
             }
             return (
                 <div className="sort-label" onClick={() => (disableSort ? null : this.props.updateSortRequest(column.name, nextSortType, column.columnIndex))}>
-                    <Label disabled={disableSort} className={classNames(Classes.INLINE, "label")}>
+                    <Label disabled={disableSort} className={classNames(Classes.INLINE, "label")} data-testid={"filterable-table-header-" + columnIndex}>
                         <Icon className={iconClass} icon={sortIcon as IconName} />
                         <Tooltip hoverOpenDelay={250} hoverCloseDelay={0} content={headerDescription ?? "Description not avaliable"} position={Position.BOTTOM} popoverClassName={classNames({[Classes.DARK]: AppStore.Instance.darkTheme})}>
                             {column.name}
@@ -273,6 +276,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                             value={controlheader?.filter ?? ""}
                             onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, column.name)}
                             onKeyDown={this.handleKeyDown}
+                            data-testid={"filterable-table-filter-input-" + columnIndex}
                         />
                     </Tooltip>
                 </ColumnHeaderCell>

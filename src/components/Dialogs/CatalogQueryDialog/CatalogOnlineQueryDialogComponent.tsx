@@ -133,7 +133,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                 </FormGroup>
                 {isVizier ? (
                     <FormGroup inline={false} label="Keywords (catalog title)" disabled={disable} className={isVizier ? "vizier-key-words" : ""}>
-                        <InputGroup asyncControl={false} disabled={disable} onChange={event => configStore.setVizierKeyWords(event.target.value)} value={configStore.vizierKeyWords} />
+                        <InputGroup asyncControl={false} disabled={disable} onChange={event => configStore.setVizierKeyWords(event.target.value)} value={configStore.vizierKeyWords} data-testid="catalog-query-keyword-input" />
                     </FormGroup>
                 ) : null}
                 <FormGroup inline={false} label="Object" disabled={disable}>
@@ -152,6 +152,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                             onValueChange={(value: number) => configStore.setSearchRadius(value)}
                             onBlur={ev => this.handleRadiusChange(ev)}
                             onKeyDown={ev => this.handleRadiusChange(ev)}
+                            data-testid="catalog-query-search-radius-input"
                         />
                     </Tooltip>
                     <Select
@@ -194,6 +195,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                             value={centerWcsPoint ? centerWcsPoint.x : ""}
                             onBlur={this.handleCenterWcsXChange}
                             onKeyDown={this.handleCenterWcsXChange}
+                            data-testid="catalog-query-center-x-input"
                         />
                     </Tooltip>
                     <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
@@ -205,10 +207,11 @@ export class CatalogQueryDialogComponent extends React.Component {
                             value={centerWcsPoint ? centerWcsPoint.y : ""}
                             onBlur={this.handleCenterWcsYChange}
                             onKeyDown={this.handleCenterWcsYChange}
+                            data-testid="catalog-query-center-y-input"
                         />
                     </Tooltip>
                     <Tooltip content="Reset to current view center" disabled={disable} position={Position.BOTTOM} hoverOpenDelay={300}>
-                        <Button icon="locate" disabled={disable} onClick={() => configStore.setFrameCenter()} />
+                        <Button icon="locate" disabled={disable} onClick={() => configStore.setFrameCenter()} data-testid="catalog-query-reset-center-button" />
                     </Tooltip>
                 </FormGroup>
                 <ClearableNumericInputComponent
@@ -267,7 +270,9 @@ export class CatalogQueryDialogComponent extends React.Component {
                     </div>
                 </Overlay2>
                 <div className={Classes.DIALOG_FOOTER}>
-                    <div className={"result-info"}>{tableInfo}</div>
+                    <div className={"result-info"} data-testid="catalog-query-info">
+                        {tableInfo}
+                    </div>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <AnchorButton intent={Intent.SUCCESS} disabled={disable} onClick={() => this.query()} text={"Query"} />
                         <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => CatalogApiService.Instance.cancelQuery(configStore.catalogDB)} text={"Cancel"} />

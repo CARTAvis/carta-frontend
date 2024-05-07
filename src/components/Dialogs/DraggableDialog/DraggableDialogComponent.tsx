@@ -49,6 +49,16 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
                 header[0].append(helpButtonDiv);
             }
         }
+
+        const dialog = this.dd.current.getElementsByClassName(Classes.DIALOG)?.[0];
+        if (dialog) {
+            dialog.setAttribute("data-testid", this.props.dialogId);
+        }
+
+        const closeButton = this.dd.current.getElementsByClassName(Classes.DIALOG_CLOSE_BUTTON)?.[0];
+        if (closeButton) {
+            closeButton.setAttribute("data-testid", `${this.props.dialogId}-header-close-button`);
+        }
     };
 
     private onClickHelpButton = () => {

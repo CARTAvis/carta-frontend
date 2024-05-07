@@ -123,6 +123,7 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
                         </Tooltip>
                     }
                     placeholder={this.props.placeholder}
+                    data-testid={this.props["data-testid"]}
                 />
                 {this.props.additionalFormContent}
             </FormGroup>

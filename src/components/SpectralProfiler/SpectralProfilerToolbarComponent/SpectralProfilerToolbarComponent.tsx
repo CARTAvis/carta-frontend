@@ -73,6 +73,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                                     onClick={ev => this.props.onItemSelect(item.value, index)}
                                     icon={this.props.itemSelected?.includes(item.value) ? "tick" : "blank"}
                                     shouldDismissPopover={false}
+                                    data-testid={"spectral-profiler-" + this.props.categoryName.toLowerCase() + "-dropdown-" + item.label.split(" ").join("-").toLowerCase()}
                                 />
                             ))}
                         </Menu>
@@ -91,6 +92,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                             className="dropdown-button"
                             rightIcon={"caret-down"}
                             disabled={this.props.disabled || this.props.disableOptions}
+                            data-testid={"spectral-profiler-" + this.props.categoryName.toLowerCase() + "-dropdown"}
                         />
                     </Tooltip>
                 </Popover>
@@ -287,13 +289,13 @@ export class SpectralProfilerToolbarComponent extends React.Component<{widgetSto
                 <ProfileSelectionComponent profileSelectionStore={widgetStore.profileSelectionStore} />
                 <ButtonGroup className="shortcut-buttons">
                     <Tooltip content="Smoothing">
-                        <AnchorButton icon={<CustomIcon icon="smoothing" />} onClick={this.smoothingShortcutClick} />
+                        <AnchorButton icon={<CustomIcon icon="smoothing" />} onClick={this.smoothingShortcutClick} data-testid="smoothing-button" />
                     </Tooltip>
                     <Tooltip content="Moments">
-                        <AnchorButton icon={<CustomIcon icon="moments" />} onClick={this.momentsShortcutClick} />
+                        <AnchorButton icon={<CustomIcon icon="moments" />} onClick={this.momentsShortcutClick} data-testid="moment-generator-button" />
                     </Tooltip>
                     <Tooltip content="Fitting">
-                        <AnchorButton icon={<CustomIcon icon="lineFitting" />} onClick={this.fittingShortcutClick} />
+                        <AnchorButton icon={<CustomIcon icon="lineFitting" />} onClick={this.fittingShortcutClick} data-testid="profile-fitting-button" />
                     </Tooltip>
                 </ButtonGroup>
             </div>

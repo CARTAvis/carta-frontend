@@ -45,6 +45,7 @@ export class SpectralSettingsComponent extends React.Component<{
                         value={frame && frame.spectralCoordinate ? frame.spectralCoordinate : ""}
                         options={spectralCoordinateOptions}
                         onChange={event => this.props.onSpectralCoordinateChange(event.currentTarget.value as string)}
+                        data-testid="spectral-profiler-coordinate-dropdown"
                     />
                 </FormGroup>
                 {this.props.secondaryAxisCursorInfoVisible && (

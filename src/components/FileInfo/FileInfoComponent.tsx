@@ -200,7 +200,7 @@ export class FileInfoComponent extends React.Component<{
         const tabEntries = infoTypes.map(infoType => {
             switch (infoType) {
                 case FileInfoType.IMAGE_FILE:
-                    return <Tab key={infoType} id={infoType} title="File Information" />;
+                    return <Tab key={infoType} id={infoType} title="File Information" data-testid={"file-information-tab-title"} />;
                 case FileInfoType.IMAGE_HEADER:
                     return <Tab key={infoType} id={infoType} title="Header" />;
                 case FileInfoType.SAVE_IMAGE:
@@ -374,7 +374,7 @@ export class FileInfoComponent extends React.Component<{
                     return <div style={style} className="header-name">{`${header.name}`}</div>;
                 } else {
                     return (
-                        <div style={style} className="header-entry">
+                        <div style={style} className="header-entry" data-testid={"header-entry-" + index}>
                             <span className="header-name">{header.name}</span>
                             <span className="header-value"> = {`${header.value}`}</span>
                             {header.comment && <span className="header-comment"> / {header.comment} </span>}
@@ -468,7 +468,7 @@ export class FileInfoComponent extends React.Component<{
 
     render() {
         return (
-            <div className="file-info" onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+            <div className="file-info" onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave} data-testid="file-info">
                 <div className="file-info-panel-top">
                     {this.renderInfoTabs()}
                     {this.renderHDUList()}
