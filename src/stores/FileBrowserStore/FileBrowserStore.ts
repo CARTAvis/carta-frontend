@@ -669,7 +669,7 @@ export class FileBrowserStore {
     }
 
     @computed get fileInfoExtended(): CARTA.IFileInfoExtended | null {
-        return this.HDUfileInfoExtended && this.selectedHDU && this.selectedHDU in this.HDUfileInfoExtended ? this.HDUfileInfoExtended[this.selectedHDU] : null;
+        return this.HDUfileInfoExtended && this.selectedHDU !== null && this.selectedHDU in this.HDUfileInfoExtended ? this.HDUfileInfoExtended[this.selectedHDU] : null;
     }
 
     @computed get isComplexImage() {
