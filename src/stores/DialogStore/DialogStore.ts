@@ -8,21 +8,21 @@ import {AppStore, SnippetStore} from "stores";
 
 export enum DialogId {
     About = "about-dialog",
-    CatalogQuery = "catalogQuery-dialog",
+    CatalogQuery = "catalog-query-dialog",
     Snippet = "snippet-dialog",
     Contour = "contour-dialog",
-    DistanceMeasure = "distanceMeasure-dialog",
-    ExternalPage = "externalPage-dialog",
-    FileBrowser = "fileBrowser-dialog",
-    FileInfo = "fileInfo-dialog",
+    DistanceMeasure = "distance-measure-dialog",
+    ExternalPage = "external-page-dialog",
+    FileBrowser = "file-browser-dialog",
+    FileInfo = "file-info-dialog",
     Fitting = "fitting-dialog",
-    Layout = "saveLayout-dialog",
+    Layout = "save-layout-dialog",
     Preference = "preference-dialog",
     Region = "region-dialog",
     Stokes = "stokes-dialog",
     Vector = "vector-dialog",
     Workspace = "workspace-dialog",
-    ShareWorkspace = "shareWork-dialog",
+    ShareWorkspace = "share-work-dialog",
     Hotkey = "hotkey-dialog"
 }
 
