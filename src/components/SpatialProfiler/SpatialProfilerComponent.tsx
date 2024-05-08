@@ -726,7 +726,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     <div className="profile-plot">
                         <LinePlotComponent {...linePlotProps} />
                     </div>
-                    <div className="profile-info">
+                    <div className="profile-info" data-testid={(isXProfile ? "x" : "y") + "-profiler-info"}>
                         <ProfilerInfoComponent info={this.genProfilerInfo()} />
                     </div>
                 </div>
