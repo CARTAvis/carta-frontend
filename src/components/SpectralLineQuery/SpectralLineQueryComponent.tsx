@@ -142,7 +142,13 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         return (
             <Cell className="header-table-cell" key={`cell_switch_${rowIndex}`}>
                 <React.Fragment>
-                    <Switch className="cell-switch-button" key={`cell_switch_button_${rowIndex}`} checked={display ?? false} onChange={ev => widgetStore.setHeaderDisplay(ev.currentTarget.checked, columnName)} />
+                    <Switch
+                        className="cell-switch-button"
+                        key={`cell_switch_button_${rowIndex}`}
+                        checked={display ?? false}
+                        onChange={ev => widgetStore.setHeaderDisplay(ev.currentTarget.checked, columnName)}
+                        data-testid={"catalog-header-table-switch-" + rowIndex}
+                    />
                 </React.Fragment>
             </Cell>
         );
@@ -254,10 +260,10 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         const inputByRange = (
             <React.Fragment>
                 <FormGroup label="From" inline={true}>
-                    <SafeNumericInput value={widgetStore.queryRange[0]} buttonPosition="none" onValueChange={val => widgetStore.setQueryRange([val, widgetStore.queryRange[1]])} />
+                    <SafeNumericInput value={widgetStore.queryRange[0]} buttonPosition="none" onValueChange={val => widgetStore.setQueryRange([val, widgetStore.queryRange[1]])} data-testid="spectral-line-query-from-input" />
                 </FormGroup>
                 <FormGroup label="To" inline={true}>
-                    <SafeNumericInput value={widgetStore.queryRange[1]} buttonPosition="none" onValueChange={val => widgetStore.setQueryRange([widgetStore.queryRange[0], val])} />
+                    <SafeNumericInput value={widgetStore.queryRange[1]} buttonPosition="none" onValueChange={val => widgetStore.setQueryRange([widgetStore.queryRange[0], val])} data-testid="spectral-line-query-to-input" />
                 </FormGroup>
             </React.Fragment>
         );
@@ -265,10 +271,20 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         const inputByCenter = (
             <React.Fragment>
                 <FormGroup inline={true}>
-                    <SafeNumericInput value={widgetStore.queryRangeByCenter[0]} buttonPosition="none" onValueChange={val => widgetStore.setQueryRangeByCenter([val, widgetStore.queryRangeByCenter[1]])} />
+                    <SafeNumericInput
+                        value={widgetStore.queryRangeByCenter[0]}
+                        buttonPosition="none"
+                        onValueChange={val => widgetStore.setQueryRangeByCenter([val, widgetStore.queryRangeByCenter[1]])}
+                        data-testid="spectral-line-query-center-input"
+                    />
                 </FormGroup>
                 <FormGroup label="±" inline={true}>
-                    <SafeNumericInput value={widgetStore.queryRangeByCenter[1]} buttonPosition="none" onValueChange={val => widgetStore.setQueryRangeByCenter([widgetStore.queryRangeByCenter[0], val])} />
+                    <SafeNumericInput
+                        value={widgetStore.queryRangeByCenter[1]}
+                        buttonPosition="none"
+                        onValueChange={val => widgetStore.setQueryRangeByCenter([widgetStore.queryRangeByCenter[0], val])}
+                        data-testid="spectral-line-query-width-input"
+                    />
                 </FormGroup>
             </React.Fragment>
         );
@@ -281,11 +297,17 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                             options={[SpectralLineQueryRangeType.Range, SpectralLineQueryRangeType.Center]}
                             value={widgetStore.queryRangeType}
                             onChange={ev => widgetStore.setQueryRangeType(ev.currentTarget.value as SpectralLineQueryRangeType)}
+                            data-testid="spectral-line-query-mode-dropdown"
                         />
                     </FormGroup>
                     {widgetStore.queryRangeType === SpectralLineQueryRangeType.Range ? inputByRange : inputByCenter}
                     <FormGroup inline={true}>
-                        <HTMLSelect options={Object.values(SpectralLineQueryUnit)} value={widgetStore.queryUnit} onChange={ev => widgetStore.setQueryUnit(ev.currentTarget.value as SpectralLineQueryUnit)} />
+                        <HTMLSelect
+                            options={Object.values(SpectralLineQueryUnit)}
+                            value={widgetStore.queryUnit}
+                            onChange={ev => widgetStore.setQueryUnit(ev.currentTarget.value as SpectralLineQueryUnit)}
+                            data-testid="spectral-line-query-unit-dropdown"
+                        />
                     </FormGroup>
                     <ControlGroup className="intensity-limit">
                         <FormGroup label={"Intensity limit"} inline={true}>
@@ -309,10 +331,15 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         const redshiftPanel = (
             <div className="redshift-panel">
                 <FormGroup inline={true}>
-                    <HTMLSelect options={[RedshiftType.V, RedshiftType.Z]} value={widgetStore.redshiftType} onChange={ev => widgetStore.setRedshiftType(ev.currentTarget.value as RedshiftType)} />
+                    <HTMLSelect
+                        options={[RedshiftType.V, RedshiftType.Z]}
+                        value={widgetStore.redshiftType}
+                        onChange={ev => widgetStore.setRedshiftType(ev.currentTarget.value as RedshiftType)}
+                        data-testid="spectral-line-query-frequency-shift-reference"
+                    />
                 </FormGroup>
                 <FormGroup inline={true}>
-                    <SafeNumericInput value={widgetStore.redshiftInput} buttonPosition="none" onBlur={this.handleRedshiftChange} onKeyDown={this.handleRedshiftChange} />
+                    <SafeNumericInput value={widgetStore.redshiftInput} buttonPosition="none" onBlur={this.handleRedshiftChange} onKeyDown={this.handleRedshiftChange} data-testid="spectral-line-query-frequency-shift-input" />
                 </FormGroup>
             </div>
         );
@@ -400,7 +427,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                     </SplitPane>
                 </div>
                 <div className="bp3-dialog-footer">
-                    <div className="result-table-info">
+                    <div className="result-table-info" data-testid="spectral-line-query-result-info">
                         <pre>{widgetStore.resultTableInfo}</pre>
                     </div>
                     <div className="bp3-dialog-footer-actions">
@@ -416,7 +443,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                     </div>
                 </div>
                 <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={widgetStore.isQuerying} usePortal={false}>
-                    <div className="query-loading-overlay">
+                    <div className="query-loading-overlay" data-testid="spectral-line-query-loading-icon">
                         <Spinner intent={Intent.PRIMARY} size={30} value={null} />
                     </div>
                 </Overlay>

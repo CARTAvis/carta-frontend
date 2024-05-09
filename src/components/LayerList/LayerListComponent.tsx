@@ -82,7 +82,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         return (
             <Cell className={className} tooltip={filename}>
                 <React.Fragment>
-                    <div className="name-cell" onClick={() => this.onFileSelected(image)}>
+                    <div className="name-cell" onClick={() => this.onFileSelected(image)} data-testid={"image-list-" + rowIndex + "-image-name"}>
                         {filename}
                     </div>
                 </React.Fragment>
@@ -222,6 +222,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                         active={!!frame.spatialReference}
                         intent={frame.spatialReference ? "success" : "none"}
                         onClick={() => appStore.toggleSpatialMatching(frame)}
+                        data-testid={"image-list-" + rowIndex + "-matching-xy"}
                     >
                         XY
                     </AnchorButton>
@@ -257,6 +258,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                         active={!!frame.spectralReference}
                         intent={frame.spectralReference ? "success" : "none"}
                         onClick={() => appStore.toggleSpectralMatching(frame)}
+                        data-testid={"image-list-" + rowIndex + "-matching-z"}
                     >
                         Z
                     </AnchorButton>
