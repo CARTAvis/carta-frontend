@@ -3,7 +3,7 @@ import {action, makeObservable, observable} from "mobx";
 
 import {ProcessedSpatialProfile, ProtobufProcessing} from "utilities";
 
-type Coordinate = string; // combination of I/Q/U/V stokes & x/y spatial axis, e.g. "Ix", "Qy"
+type Coordinate = string | null | undefined; // combination of I/Q/U/V stokes & x/y spatial axis, e.g. "Ix", "Qy"
 
 export class SpatialProfileStore {
     readonly regionId: number;
@@ -32,9 +32,7 @@ export class SpatialProfileStore {
             this.x = spatialProfileData.x;
             this.y = spatialProfileData.y;
             spatialProfileData.profiles?.forEach(profile => {
-                if (profile.coordinate) {
-                    this.profiles.set(profile.coordinate, ProtobufProcessing.ProcessSpatialProfile(profile));
-                }
+                this.profiles.set(profile.coordinate, ProtobufProcessing.ProcessSpatialProfile(profile));
             });
         }
     }
