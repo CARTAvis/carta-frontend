@@ -410,7 +410,7 @@ export class SpectralLineQueryWidgetStore {
     @computed get displayedColumnHeaders(): Array<CARTA.ICatalogHeader> {
         let displayedColumnHeaders: CARTA.ICatalogHeader[] = [];
         this.controlHeader?.forEach(controlHeader => {
-            if (controlHeader.display && controlHeader.dataIndex && controlHeader.dataIndex < this.columnHeaders?.length) {
+            if (controlHeader.display && controlHeader.dataIndex !== undefined && controlHeader.dataIndex < this.columnHeaders?.length) {
                 displayedColumnHeaders.push(this.columnHeaders[controlHeader.dataIndex]);
             }
         });
