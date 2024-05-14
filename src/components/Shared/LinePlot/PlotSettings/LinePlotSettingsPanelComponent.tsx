@@ -122,6 +122,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                             stepSize={LineSettings.LINE_WIDTH_STEP_SIZE}
                             disabled={props.plotType === PlotType.POINTS}
                             onValueChange={(value: number) => props.setLineWidth(value)}
+                            data-testid="profiler-settings-line-width-input"
                         />
                     </FormGroup>
                     <FormGroup inline={true} label="Point size" labelInfo="(px)">

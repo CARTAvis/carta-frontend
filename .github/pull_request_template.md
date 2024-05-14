@@ -6,11 +6,11 @@ linked issues and companion PRs (if there are), what is implemented or fixed, ho
 
 For linked issues (if there are):
 - [ ] assignee and label added
-- [ ] ZenHub issue connection, board status, and estimate updated
+- [ ] GitHub Project estimate added
 
 For the pull request:
 - [ ] reviewers and assignee added
-- [ ] ZenHub estimate, milestone, and release (if needed) added
+- [ ] GitHub Project estimate added
 - [ ] changelog updated / no changelog update needed
 - [ ] unit test added (for functions with no dependenies)
 - [ ] API documentation added (for public variables and methods in stores)
