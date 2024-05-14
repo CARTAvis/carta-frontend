@@ -1479,7 +1479,7 @@ export class AppStore {
                 getColorForTheme(this.overlayStore.ticks.color),
                 getColorForTheme(this.overlayStore.axes.color),
                 getColorForTheme(this.overlayStore.numbers.color),
-                getColorForTheme(this.overlayStore.labels.color),
+                getColorForTheme(this.overlayStore.labels.color)
             ];
             AST.setColors(astColors);
         }

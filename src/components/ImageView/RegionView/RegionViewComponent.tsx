@@ -483,7 +483,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             return;
         }
 
-
         // Deselect selected region if in drag-to-pan mode and user clicks on the stage
         if (this.props.dragPanningEnabled && !isSecondaryClick) {
             frame.regionSet.deselectRegion();
