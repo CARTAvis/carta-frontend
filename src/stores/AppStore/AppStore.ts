@@ -999,25 +999,32 @@ export class AppStore {
         const frame = this.activeFrame;
         const fileId = this.catalogNextFileId;
 
-        const ack = yield this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize);
-        this.endFileLoading();
-        if (frame && ack.success && ack.dataSize) {
-            let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
-            const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
-            let catalogWidgetId = this.updateCatalogProfile(fileId, frame);
-            if (catalogWidgetId) {
-                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: ack.headers.length, row: ack.dataSize, remote: false});
-                this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
-                this.catalogStore.addCatalog(fileId, ack.dataSize);
-                this.fileBrowserStore.hideFileBrowser();
-                const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData, CatalogType.FILE);
-                this.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
-                return fileId;
+        try {
+            const ack = yield this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize);
+            this.endFileLoading();
+            if (frame && ack.success && ack.dataSize) {
+                let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
+                const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
+                let catalogWidgetId = this.updateCatalogProfile(fileId, frame);
+                if (catalogWidgetId) {
+                    TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: ack.headers.length, row: ack.dataSize, remote: false});
+                    this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
+                    this.catalogStore.addCatalog(fileId, ack.dataSize);
+                    this.fileBrowserStore.hideFileBrowser();
+                    const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData, CatalogType.FILE);
+                    this.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
+                    return fileId;
+                } else {
+                    throw new Error("No catalog widget ID");
+                }
             } else {
-                throw new Error("No catalog widget ID");
+                throw new Error("No catalog file loaded");
             }
-        } else {
-            throw new Error("No catalog file loaded");
+        } catch (err) {
+            console.error(err);
+            this.alertStore.showAlert(`Error loading catalogs: ${err}`);
+            this.endFileLoading();
+            throw err;
         }
     }
 
