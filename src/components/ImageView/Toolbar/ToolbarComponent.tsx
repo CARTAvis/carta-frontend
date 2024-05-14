@@ -76,10 +76,6 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     };
 
     private handleActiveLayerClicked = (layer: ImageViewLayer) => {
-        const appStore = AppStore.Instance;
-        if (appStore.activeLayer !== ImageViewLayer.DistanceMeasuring && layer === ImageViewLayer.DistanceMeasuring) {
-            appStore.frames.forEach(frame => frame.distanceMeasuring.resetPos());
-        }
         this.props.onActiveLayerChange(layer);
         if (layer === ImageViewLayer.RegionCreating) {
             this.props.frame.regionSet.setMode(RegionMode.CREATING);
@@ -255,7 +251,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                     position={tooltipPosition}
                                     content={
                                         <span>
-                                            Distance measurement
+                                            Ruler annotation
                                             <br />
                                             <i>
                                                 <small>Click to create geodesic curves.</small>

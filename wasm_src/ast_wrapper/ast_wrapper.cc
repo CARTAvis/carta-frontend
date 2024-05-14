@@ -266,8 +266,7 @@ void plotDistText(AstFrameSet* wcsinfo, AstPlot* plot, double* start, double* fi
 }
 
 EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double imageX2, double imageY1, double imageY2, double width, double height,
-                                        double paddingLeft, double paddingRight, double paddingTop, double paddingBottom, const char* args,
-                                        bool showCurve, bool isPVImage, double curveX1, double curveY1, double curveX2, double curveY2)
+                                        double paddingLeft, double paddingRight, double paddingTop, double paddingBottom, const char* args)
 {
     if (!wcsinfo)
     {
@@ -294,32 +293,6 @@ EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double i
     plot = astPlot(wcsinfo, gbox, pbox, args);
     astBBuf(plot);
     astGrid(plot);
-
-    if (showCurve)
-    {
-        const double x[] = {curveX1, curveX2};
-        const double y[] = {curveY1, curveY2};
-        double xtran[2];
-        double ytran[2];
-        astTran2(wcsinfo, 2, x, y, 1, xtran, ytran);
-        
-        double in[2][4] = {{xtran[0], xtran[1], xtran[1], xtran[0]}, {ytran[0], ytran[1], ytran[0], ytran[0]}};
-        const double* inPtr = in[0];
-        astPolyCurve(plot, 4, 2, 4, inPtr);
-
-        double start[] = {xtran[0], ytran[0]};
-        double finish[] = {xtran[1], ytran[1]};
-        if (isPVImage)
-        {
-            double corner[] = {xtran[1], ytran[0]};
-            plotDistText(wcsinfo, plot, start, corner);
-            plotDistText(wcsinfo, plot, finish, corner);
-        }
-        else
-        {
-            plotDistText(wcsinfo, plot, start, finish);
-        }        
-    }
 
     astEBuf(plot);
     astAnnul(plot);

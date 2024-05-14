@@ -1140,7 +1140,6 @@ export class OverlayStore {
         astString.add("NumLabGap", this.defaultGap / this.minSize(frame));
         astString.add("TextLabGap", this.cumulativeLabelGap / this.minSize(frame));
         astString.add("TextGapType", "plot");
-        frame ? astString.addSection(frame.distanceMeasuring?.styleString) : astString.addSection(AppStore.Instance.activeFrame?.distanceMeasuring?.styleString);
 
         return astString.toString();
     }

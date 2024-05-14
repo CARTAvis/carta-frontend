@@ -41,7 +41,6 @@ import {
     ColorbarStore,
     ContourConfigStore,
     ContourStore,
-    DistanceMeasuringStore,
     OverlayBeamStore,
     RegionSetStore,
     RegionStore,
@@ -138,7 +137,6 @@ export class FrameStore {
     public spatialTransformAST: AST.Mapping;
     private cursorMovementHandle: NodeJS.Timeout;
 
-    public distanceMeasuring: DistanceMeasuringStore;
     public restFreqStore: RestFreqStore;
 
     public readonly renderConfig: RenderConfigStore;
@@ -1240,8 +1238,6 @@ export class FrameStore {
 
         this.stokesFiles = [];
 
-        this.distanceMeasuring = frameInfo.preview ? null : new DistanceMeasuringStore();
-
         this.dirAxis = -1;
         this.dirAxisSize = -1;
         this.dirAxisFormat = "";
@@ -1496,12 +1492,6 @@ export class FrameStore {
                 } else {
                     this.setChannelSecondaryValues(this.isSecondarySpectralPropsEqual ? this.channelInfo.values : this.convertSpectralSecondary(this.channelInfo.values));
                 }
-            }
-        });
-
-        autorun(() => {
-            if (!this.isPreview) {
-                this.distanceMeasuring.updateTransformedPos(this.spatialTransform);
             }
         });
     }

@@ -24,13 +24,7 @@ export function plot(
     paddingRight: number,
     paddingTop: number,
     paddingBottom: number,
-    options: string,
-    showCurve: boolean,
-    isPVImage: boolean,
-    curveX1: number,
-    curveY1: number,
-    curveX2: number,
-    curveY2: number
+    options: string
 );
 export function emptyFitsChan(): FitsChan;
 export function putFits(fitsChan: FitsChan, card: string): void;
