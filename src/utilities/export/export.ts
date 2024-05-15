@@ -57,7 +57,7 @@ export async function exportScreenshot(imageOnly = true, maxWidth = 512, format 
         thumbnailCanvas.width = width;
         thumbnailCanvas.height = height;
         const ctx = thumbnailCanvas.getContext("2d");
-        ctx.drawImage(canvas, 0, 0, width, height);
+        ctx?.drawImage(canvas, 0, 0, width, height);
         return thumbnailCanvas.toDataURL(format, quality);
     } catch (err) {
         console.log(err);

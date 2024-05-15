@@ -5,32 +5,32 @@ export type TypedArray = Int8Array | Uint8Array | Int16Array | Uint16Array | Int
 export type ColumnArray = Array<string> | Array<boolean> | Array<number>;
 
 export interface ProcessedSpatialProfile extends CARTA.ISpatialProfile {
-    values: Float32Array;
+    values: Float32Array | null;
 }
 
 export interface ProcessedSpectralProfile extends CARTA.ISpectralProfile {
-    values: Float32Array | Float64Array;
+    values: Float32Array | Float64Array | null;
     progress: number;
 }
 
 export interface ProcessedContourData {
-    fileId: number;
-    imageBounds?: CARTA.IImageBounds;
-    channel: number;
-    stokes: number;
-    progress: number;
-    contourSets: ProcessedContourSet[];
+    fileId: number | null | undefined;
+    imageBounds?: CARTA.IImageBounds | null;
+    channel: number | null | undefined;
+    stokes: number | null | undefined;
+    progress: number | null | undefined;
+    contourSets: ProcessedContourSet[] | null;
 }
 
 export interface ProcessedContourSet {
-    level: number;
+    level: number | null | undefined;
     indexOffsets: Int32Array;
-    coordinates: Float32Array;
+    coordinates: Float32Array | undefined;
 }
 
 export interface ProcessedColumnData {
-    dataType: CARTA.ColumnType;
-    data: ColumnArray | TypedArray;
+    dataType: CARTA.ColumnType | null | undefined;
+    data: ColumnArray | TypedArray | null | undefined;
 }
 
 export class ProtobufProcessing {
@@ -82,18 +82,25 @@ export class ProtobufProcessing {
     }
 
     static ProcessContourSet(contourSet: CARTA.IContourSet): ProcessedContourSet {
-        const isCompressed = contourSet.decimationFactor >= 1;
+        const isCompressed = contourSet.decimationFactor && contourSet.decimationFactor >= 1;
 
-        let floatCoordinates: Float32Array;
-        if (isCompressed) {
+        let floatCoordinates: Float32Array | undefined;
+        if (isCompressed && contourSet.decimationFactor) {
             // Decode raw coordinates from Zstd-compressed binary to a float array
-            floatCoordinates = CARTACompute.Decode(contourSet.rawCoordinates, contourSet.uncompressedCoordinatesSize, contourSet.decimationFactor);
+            if (contourSet.rawCoordinates && contourSet.uncompressedCoordinatesSize) {
+                floatCoordinates = CARTACompute.Decode(contourSet.rawCoordinates, contourSet.uncompressedCoordinatesSize, contourSet.decimationFactor);
+            }
         } else {
-            const u8Copy = contourSet.rawCoordinates.slice();
-            floatCoordinates = new Float32Array(u8Copy.buffer);
+            const u8Copy = contourSet.rawCoordinates?.slice();
+            if (u8Copy?.buffer) {
+                floatCoordinates = new Float32Array(u8Copy.buffer);
+            }
         }
         // generate indices
-        const indexOffsets = new Int32Array(contourSet.rawStartIndices.buffer.slice(contourSet.rawStartIndices.byteOffset, contourSet.rawStartIndices.byteOffset + contourSet.rawStartIndices.byteLength));
+        let indexOffsets;
+        if (contourSet.rawStartIndices) {
+            indexOffsets = new Int32Array(contourSet.rawStartIndices.buffer.slice(contourSet.rawStartIndices.byteOffset, contourSet.rawStartIndices.byteOffset + contourSet.rawStartIndices.byteLength));
+        }
 
         return {
             level: contourSet.level,
@@ -117,37 +124,37 @@ export class ProtobufProcessing {
         let data: TypedArray;
         switch (column.dataType) {
             case CARTA.ColumnType.Uint8:
-                data = new Uint8Array(column.binaryData.slice().buffer);
+                data = column.binaryData ? new Uint8Array(column.binaryData.slice().buffer) : new Uint8Array();
                 break;
             case CARTA.ColumnType.Int8:
-                data = new Int8Array(column.binaryData.slice().buffer);
+                data = column.binaryData ? new Int8Array(column.binaryData.slice().buffer) : new Int8Array();
                 break;
             case CARTA.ColumnType.Uint16:
-                data = new Uint16Array(column.binaryData.slice().buffer);
+                data = column.binaryData ? new Uint16Array(column.binaryData.slice().buffer) : new Uint16Array();
                 break;
             case CARTA.ColumnType.Int16:
-                data = new Int16Array(column.binaryData.slice().buffer);
+                data = column.binaryData ? new Int16Array(column.binaryData.slice().buffer) : new Int16Array();
                 break;
             case CARTA.ColumnType.Uint32:
-                data = new Uint32Array(column.binaryData.slice().buffer);
+                data = column.binaryData ? new Uint32Array(column.binaryData.slice().buffer) : new Uint32Array();
                 break;
             case CARTA.ColumnType.Int32:
-                data = new Int32Array(column.binaryData.slice().buffer);
+                data = column.binaryData ? new Int32Array(column.binaryData.slice().buffer) : new Int32Array();
                 break;
             case CARTA.ColumnType.Float:
-                data = new Float32Array(column.binaryData.slice().buffer);
+                data = column.binaryData ? new Float32Array(column.binaryData.slice().buffer) : new Float32Array();
                 break;
             case CARTA.ColumnType.Double:
-                data = new Float64Array(column.binaryData.slice().buffer);
+                data = column.binaryData ? new Float64Array(column.binaryData.slice().buffer) : new Float64Array();
                 break;
             case CARTA.ColumnType.Int64:
-                data = CARTACompute.ConvertInt64Array(column.binaryData, true);
+                data = column.binaryData ? CARTACompute.ConvertInt64Array(column.binaryData, true) : new Float64Array();
                 break;
             case CARTA.ColumnType.Uint64:
-                data = CARTACompute.ConvertInt64Array(column.binaryData, false);
+                data = column.binaryData ? CARTACompute.ConvertInt64Array(column.binaryData, false) : new Float64Array();
                 break;
             case CARTA.ColumnType.Bool:
-                const array = new Uint8Array(column.binaryData.slice().buffer);
+                const array = column.binaryData ? new Uint8Array(column.binaryData.slice().buffer) : new Uint8Array();
                 const boolData = new Array<boolean>(array.length);
                 for (let i = boolData.length - 1; i >= 0; i--) {
                     boolData[i] = array[i] !== 0;

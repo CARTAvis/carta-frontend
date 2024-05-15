@@ -712,7 +712,8 @@ export class WidgetsStore {
 
             stack.on("activeContentItemChanged", (contentItem: any) => {
                 if (stack && stack.config && stack.header.controlsContainer && stack.config.content.length) {
-                    const component = stack.getActiveContentItem().config.component;
+                    const config = stack.getActiveContentItem().config;
+                    const component = config.component;
                     const stackHeaderControlButtons = stack.header.controlsContainer[0];
 
                     // show/hide help button
@@ -738,6 +739,21 @@ export class WidgetsStore {
                     if (component === "image-view") {
                         this.updateImagePanelPageButtons();
                     }
+
+                    stack.header.tabs.forEach(tab => {
+                        $(tab.element)?.attr("data-testid", tab.contentItem.config.id + "-header-title");
+                        $(tab.closeElement)?.attr("data-testid", tab.contentItem.config.id + "-header-close-button");
+                    });
+                    if (component === "image-view") {
+                        $(stackHeaderControlButtons)
+                            ?.find("li.lm-image-panel")
+                            ?.attr("data-testid", config.id + "-multipanel-view-switch");
+                    }
+                    if (showCogWidgets.includes(component)) {
+                        $(stackHeaderControlButtons)
+                            ?.find("li.lm_settings")
+                            ?.attr("data-testid", config.id + "-header-settings-button");
+                    }
                 }
             });
         });
@@ -750,7 +766,7 @@ export class WidgetsStore {
         return $(`<li class="${className}" title="${title}"><span class="bp3-icon-standard bp3-icon-${icon}" style/></li>`);
     };
 
-    public toWidgetSettingsConfig = (widgetType: string, widgetID: string) => {
+    public toWidgetSettingsConfig = (widgetType: string, widgetID: string | undefined) => {
         if (!widgetType || !widgetID) {
             return null;
         }
@@ -947,6 +963,8 @@ export class WidgetsStore {
             config.id = itemId;
             config.props.id = itemId;
         }
+
+        $(item.element)?.attr("data-testid", config.id + "-content");
     };
 
     @action handleItemRemoval = (item: GoldenLayout.ContentItem) => {
