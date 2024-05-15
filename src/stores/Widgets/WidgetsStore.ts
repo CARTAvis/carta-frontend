@@ -899,11 +899,11 @@ export class WidgetsStore {
     };
 
     onImagePanelButtonClick = () => {
-        this.setImageMultiPanelEnabled(!PreferenceStore.Instance.silent.imageMultiPanelEnabled);
+        this.setImageMultiPanelEnabled(!PreferenceStore.Instance.imageMultiPanelEnabled);
     };
 
     setImageMultiPanelEnabled = (multiPanelEnabled: boolean) => {
-        PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_IMAGE_MULTI_PANEL_ENABLED, multiPanelEnabled);
+        PreferenceStore.Instance.setPreference(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED, multiPanelEnabled);
         this.updateImagePanelButton();
     };
 

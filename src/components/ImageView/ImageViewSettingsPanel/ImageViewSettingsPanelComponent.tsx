@@ -211,38 +211,34 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const globalPanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Enable multi-panel">
-                    <Switch checked={preferences.silent.imageMultiPanelEnabled} onChange={ev => appStore.widgetsStore.setImageMultiPanelEnabled(ev.currentTarget.checked)} />
+                    <Switch checked={preferences.imageMultiPanelEnabled} onChange={ev => appStore.widgetsStore.setImageMultiPanelEnabled(ev.currentTarget.checked)} />
                 </FormGroup>
-                <FormGroup inline={true} label="Multi-panel mode" disabled={!preferences.silent.imageMultiPanelEnabled}>
-                    <HTMLSelect
-                        value={preferences.silent.imagePanelMode}
-                        disabled={!preferences.silent.imageMultiPanelEnabled}
-                        onChange={event => preferences.setPreference(PreferenceKeys.SILENT_IMAGE_PANEL_MODE, event.currentTarget.value as ImagePanelMode)}
-                    >
+                <FormGroup inline={true} label="Multi-panel mode" disabled={!preferences.imageMultiPanelEnabled}>
+                    <HTMLSelect value={preferences.imagePanelMode} disabled={!preferences.imageMultiPanelEnabled} onChange={event => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_MODE, event.currentTarget.value as ImagePanelMode)}>
                         <option value={ImagePanelMode.Dynamic}>Dynamic grid size</option>
                         <option value={ImagePanelMode.Fixed}>Fixed grid size</option>
                     </HTMLSelect>
                 </FormGroup>
-                <FormGroup inline={true} label="Columns" labelInfo={preferences.silent.imagePanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={!preferences.silent.imageMultiPanelEnabled}>
+                <FormGroup inline={true} label="Columns" labelInfo={preferences.imagePanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={!preferences.imageMultiPanelEnabled}>
                     <SafeNumericInput
                         placeholder="Columns"
                         min={1}
-                        value={preferences.silent.imagePanelColumns}
-                        disabled={!preferences.silent.imageMultiPanelEnabled}
+                        value={preferences.imagePanelColumns}
+                        disabled={!preferences.imageMultiPanelEnabled}
                         stepSize={1}
                         minorStepSize={null}
-                        onValueChange={value => preferences.setPreference(PreferenceKeys.SILENT_IMAGE_PANEL_COLUMNS, value)}
+                        onValueChange={value => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_COLUMNS, value)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Rows" labelInfo={preferences.silent.imagePanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={!preferences.silent.imageMultiPanelEnabled}>
+                <FormGroup inline={true} label="Rows" labelInfo={preferences.imagePanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={!preferences.imageMultiPanelEnabled}>
                     <SafeNumericInput
                         placeholder="Rows"
                         min={1}
-                        disabled={!preferences.silent.imageMultiPanelEnabled}
-                        value={preferences.silent.imagePanelRows}
+                        disabled={!preferences.imageMultiPanelEnabled}
+                        value={preferences.imagePanelRows}
                         stepSize={1}
                         minorStepSize={null}
-                        onValueChange={value => preferences.setPreference(PreferenceKeys.SILENT_IMAGE_PANEL_ROWS, value)}
+                        onValueChange={value => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_ROWS, value)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Overlay color">
@@ -371,10 +367,10 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Pixel grid">
-                    <Switch checked={preferences.silent.pixelGridVisible} onChange={ev => preferences.setPreference(PreferenceKeys.SILENT_PIXEL_GRID_VISIBLE, ev.currentTarget.checked)} />
+                    <Switch checked={preferences.pixelGridVisible} onChange={ev => preferences.setPreference(PreferenceKeys.PIXEL_GRID_VISIBLE, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Pixel grid color">
-                    <AutoColorPickerComponent color={preferences.silent.pixelGridColor} presetColors={SWATCH_COLORS} setColor={color => preferences.setPreference(PreferenceKeys.SILENT_PIXEL_GRID_COLOR, color)} disableAlpha={true} />
+                    <AutoColorPickerComponent color={preferences.pixelGridColor} presetColors={SWATCH_COLORS} setColor={color => preferences.setPreference(PreferenceKeys.PIXEL_GRID_COLOR, color)} disableAlpha={true} />
                 </FormGroup>
             </div>
         );

@@ -495,7 +495,7 @@ export class FileBrowserDialogComponent extends React.Component {
         let filterName: string;
         let filterDescription: string;
 
-        switch (preferenceStore.silent.fileFilteringType) {
+        switch (preferenceStore.fileFilteringType) {
             case FileFilteringType.Fuzzy:
                 filterName = "Fuzzy search";
                 filterDescription = "Filter by filename with fuzzy search";
@@ -701,8 +701,8 @@ export class FileBrowserDialogComponent extends React.Component {
                                 selectedFile={fileBrowserStore.selectedFile}
                                 selectedHDU={fileBrowserStore.selectedHDU}
                                 filterString={this.debouncedFilterString}
-                                filterType={appStore.preferenceStore.silent.fileFilteringType}
-                                sortingString={appStore.preferenceStore.silent.fileSortingString}
+                                filterType={appStore.preferenceStore.fileFilteringType}
+                                sortingString={appStore.preferenceStore.fileSortingString}
                                 onSortingChanged={fileBrowserStore.setSortingConfig}
                                 onFileClicked={this.handleFileClicked}
                                 onSelectionChanged={fileBrowserStore.setSelectedFiles}
