@@ -1,5 +1,6 @@
 import {CARTA} from "carta-protobuf";
 
+import {ControlHeader} from "stores";
 import {ColumnArray, getComparisonOperatorAndValue, ProcessedColumnData} from "utilities";
 
 export function getDataTypeString(dataType: CARTA.ColumnType): string {
@@ -73,7 +74,7 @@ export function numericFiltering(columnData: Array<number>, dataIndexes: number[
         return [];
     }
 
-    let compareFunction = undefined;
+    let compareFunction: ((data: number) => boolean) | undefined = undefined;
     if (filter.operator === CARTA.ComparisonOperator.Equal && filter.values.length === 1) {
         compareFunction = (data: number): boolean => {
             return data - filter.values[0] === 0;
@@ -114,9 +115,9 @@ export function numericFiltering(columnData: Array<number>, dataIndexes: number[
         return [];
     }
 
-    let filteredDataIndexes = [];
+    let filteredDataIndexes: number[] = [];
     dataIndexes.forEach(dataIndex => {
-        if (dataIndex >= 0 && dataIndex < columnData.length && compareFunction(columnData[dataIndex])) {
+        if (dataIndex >= 0 && dataIndex < columnData.length && compareFunction !== undefined && compareFunction(columnData[dataIndex])) {
             filteredDataIndexes.push(dataIndex);
         }
     });
@@ -128,7 +129,7 @@ export function booleanFiltering(columnData: Array<boolean>, dataIndexes: number
         return [];
     }
 
-    let filteredDataIndexes = [];
+    let filteredDataIndexes: number[] = [];
     const trimmedLowercase = filterString?.trim()?.toLowerCase();
     if (trimmedLowercase === "t" || trimmedLowercase === "true") {
         dataIndexes.forEach(dataIndex => {
@@ -151,11 +152,34 @@ export function stringFiltering(columnData: Array<string>, dataIndexes: number[]
         return [];
     }
 
-    let filteredDataIndexes = [];
+    let filteredDataIndexes: number[] = [];
     dataIndexes.forEach(dataIndex => {
         if (dataIndex >= 0 && dataIndex < columnData.length && columnData[dataIndex]?.includes(filterString)) {
             filteredDataIndexes.push(dataIndex);
         }
     });
     return filteredDataIndexes;
+}
+
+export function getHasFilter(controlHeader: Map<string, ControlHeader>, queryResult: Map<number, ProcessedColumnData>): boolean {
+    const trueRegex = /^[tTyY].*$/;
+    const falseRegex = /^[fFnN].*$/;
+
+    let hasFilter = false;
+    controlHeader.forEach((value, key) => {
+        if (value.filter && value.display) {
+            const column = queryResult.get(value.dataIndex);
+            if (column?.dataType === CARTA.ColumnType.String) {
+                hasFilter = true;
+            } else if (column?.dataType === CARTA.ColumnType.Bool) {
+                hasFilter = (value.filter.match(trueRegex) ?? []).length > 0 || (value.filter.match(falseRegex) ?? []).length > 0;
+            } else {
+                const {operator, values} = getComparisonOperatorAndValue(value.filter);
+                if (operator >= 0 && values.length) {
+                    hasFilter = true;
+                }
+            }
+        }
+    });
+    return hasFilter;
 }

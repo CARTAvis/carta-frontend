@@ -178,7 +178,7 @@ export class RootMenuComponent extends React.Component {
         if (apiService.authenticated && ApiService.RuntimeConfig.dashboardAddress) {
             serverMenu.push(<Menu.Item key="restart" text="Restart Service" disabled={!appStore.apiService.authenticated} onClick={appStore.apiService.stopServer} />);
         }
-        if (ApiService.RuntimeConfig.logoutAddress || ApiService.RuntimeConfig.googleClientId) {
+        if (ApiService.RuntimeConfig.logoutAddress) {
             serverMenu.push(<Menu.Item key="logout" text="Logout" disabled={!appStore.apiService.authenticated} onClick={appStore.apiService.logout} />);
         }
         if (ApiService.RuntimeConfig.dashboardAddress) {
@@ -430,11 +430,11 @@ export class RootMenuComponent extends React.Component {
         if (loadingTooltipFragment) {
             loadingIndicator = (
                 <Tooltip2 content={loadingTooltipFragment}>
-                    <Icon icon={"cloud-download"} className={loadingIndicatorClass} />
+                    <Icon icon={"cloud-download"} className={loadingIndicatorClass} data-testid="progress-cloud" />
                 </Tooltip2>
             );
         } else {
-            loadingIndicator = <Icon icon={"cloud-download"} className={loadingIndicatorClass} />;
+            loadingIndicator = <Icon icon={"cloud-download"} className={loadingIndicatorClass} data-testid="progress-cloud" />;
         }
 
         const newReleaseMessage = (

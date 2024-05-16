@@ -983,6 +983,9 @@ export class OverlayStore {
         return OverlayStore.staticInstance;
     }
 
+    /** Visibility of the overlay. */
+    @observable visible: boolean = true;
+
     // View size options
     @observable fullViewWidth: number;
     @observable fullViewHeight: number;
@@ -1039,6 +1042,14 @@ export class OverlayStore {
                 }
             });
         });
+    }
+
+    /**
+     * Hide or show the overlay.
+     * @param visible - Visibility of the overlay.
+     */
+    @action setVisible(visible: boolean) {
+        this.visible = visible;
     }
 
     @action setViewDimension = (width: number, height: number) => {

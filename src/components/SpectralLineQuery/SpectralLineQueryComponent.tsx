@@ -4,6 +4,7 @@ import SplitPane, {Pane} from "react-split-pane";
 import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay, Position, Spinner, Switch} from "@blueprintjs/core";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
+import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -141,7 +142,13 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         return (
             <Cell className="header-table-cell" key={`cell_switch_${rowIndex}`}>
                 <React.Fragment>
-                    <Switch className="cell-switch-button" key={`cell_switch_button_${rowIndex}`} checked={display ?? false} onChange={ev => widgetStore.setHeaderDisplay(ev.currentTarget.checked, columnName)} />
+                    <Switch
+                        className="cell-switch-button"
+                        key={`cell_switch_button_${rowIndex}`}
+                        checked={display ?? false}
+                        onChange={ev => widgetStore.setHeaderDisplay(ev.currentTarget.checked, columnName)}
+                        data-testid={"catalog-header-table-switch-" + rowIndex}
+                    />
                 </React.Fragment>
             </Cell>
         );
@@ -238,6 +245,11 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         }
     };
 
+    private updateSortRequest = (columnName: string, sortingType: CARTA.SortingType, columnIndex: number) => {
+        const widgetStore = this.widgetStore;
+        widgetStore.setSortingInfo(columnName, sortingType);
+    };
+
     render() {
         const appStore = AppStore.Instance;
         const widgetStore = this.widgetStore;
@@ -248,10 +260,10 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         const inputByRange = (
             <React.Fragment>
                 <FormGroup label="From" inline={true}>
-                    <SafeNumericInput value={widgetStore.queryRange[0]} buttonPosition="none" onValueChange={val => widgetStore.setQueryRange([val, widgetStore.queryRange[1]])} />
+                    <SafeNumericInput value={widgetStore.queryRange[0]} buttonPosition="none" onValueChange={val => widgetStore.setQueryRange([val, widgetStore.queryRange[1]])} data-testid="spectral-line-query-from-input" />
                 </FormGroup>
                 <FormGroup label="To" inline={true}>
-                    <SafeNumericInput value={widgetStore.queryRange[1]} buttonPosition="none" onValueChange={val => widgetStore.setQueryRange([widgetStore.queryRange[0], val])} />
+                    <SafeNumericInput value={widgetStore.queryRange[1]} buttonPosition="none" onValueChange={val => widgetStore.setQueryRange([widgetStore.queryRange[0], val])} data-testid="spectral-line-query-to-input" />
                 </FormGroup>
             </React.Fragment>
         );
@@ -259,10 +271,20 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         const inputByCenter = (
             <React.Fragment>
                 <FormGroup inline={true}>
-                    <SafeNumericInput value={widgetStore.queryRangeByCenter[0]} buttonPosition="none" onValueChange={val => widgetStore.setQueryRangeByCenter([val, widgetStore.queryRangeByCenter[1]])} />
+                    <SafeNumericInput
+                        value={widgetStore.queryRangeByCenter[0]}
+                        buttonPosition="none"
+                        onValueChange={val => widgetStore.setQueryRangeByCenter([val, widgetStore.queryRangeByCenter[1]])}
+                        data-testid="spectral-line-query-center-input"
+                    />
                 </FormGroup>
                 <FormGroup label="±" inline={true}>
-                    <SafeNumericInput value={widgetStore.queryRangeByCenter[1]} buttonPosition="none" onValueChange={val => widgetStore.setQueryRangeByCenter([widgetStore.queryRangeByCenter[0], val])} />
+                    <SafeNumericInput
+                        value={widgetStore.queryRangeByCenter[1]}
+                        buttonPosition="none"
+                        onValueChange={val => widgetStore.setQueryRangeByCenter([widgetStore.queryRangeByCenter[0], val])}
+                        data-testid="spectral-line-query-width-input"
+                    />
                 </FormGroup>
             </React.Fragment>
         );
@@ -275,11 +297,17 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                             options={[SpectralLineQueryRangeType.Range, SpectralLineQueryRangeType.Center]}
                             value={widgetStore.queryRangeType}
                             onChange={ev => widgetStore.setQueryRangeType(ev.currentTarget.value as SpectralLineQueryRangeType)}
+                            data-testid="spectral-line-query-mode-dropdown"
                         />
                     </FormGroup>
                     {widgetStore.queryRangeType === SpectralLineQueryRangeType.Range ? inputByRange : inputByCenter}
                     <FormGroup inline={true}>
-                        <HTMLSelect options={Object.values(SpectralLineQueryUnit)} value={widgetStore.queryUnit} onChange={ev => widgetStore.setQueryUnit(ev.currentTarget.value as SpectralLineQueryUnit)} />
+                        <HTMLSelect
+                            options={Object.values(SpectralLineQueryUnit)}
+                            value={widgetStore.queryUnit}
+                            onChange={ev => widgetStore.setQueryUnit(ev.currentTarget.value as SpectralLineQueryUnit)}
+                            data-testid="spectral-line-query-unit-dropdown"
+                        />
                     </FormGroup>
                     <ControlGroup className="intensity-limit">
                         <FormGroup label={"Intensity limit"} inline={true}>
@@ -303,10 +331,15 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         const redshiftPanel = (
             <div className="redshift-panel">
                 <FormGroup inline={true}>
-                    <HTMLSelect options={[RedshiftType.V, RedshiftType.Z]} value={widgetStore.redshiftType} onChange={ev => widgetStore.setRedshiftType(ev.currentTarget.value as RedshiftType)} />
+                    <HTMLSelect
+                        options={[RedshiftType.V, RedshiftType.Z]}
+                        value={widgetStore.redshiftType}
+                        onChange={ev => widgetStore.setRedshiftType(ev.currentTarget.value as RedshiftType)}
+                        data-testid="spectral-line-query-frequency-shift-reference"
+                    />
                 </FormGroup>
                 <FormGroup inline={true}>
-                    <SafeNumericInput value={widgetStore.redshiftInput} buttonPosition="none" onBlur={this.handleRedshiftChange} onKeyDown={this.handleRedshiftChange} />
+                    <SafeNumericInput value={widgetStore.redshiftInput} buttonPosition="none" onBlur={this.handleRedshiftChange} onKeyDown={this.handleRedshiftChange} data-testid="spectral-line-query-frequency-shift-input" />
                 </FormGroup>
             </div>
         );
@@ -350,13 +383,19 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             updateTableRef: ref => {
                 this.resultTableRef = ref;
             },
-            disableSort: true,
+            updateSortRequest: this.updateSortRequest,
+            sortingInfo: widgetStore.sortingInfo,
+            disableSort: false,
             updateColumnFilter: widgetStore.setColumnFilter,
             columnWidths: widgetStore.resultTableColumnWidths,
             updateTableColumnWidth: widgetStore.setResultTableColumnWidth,
             tableHeaders: widgetStore.columnHeaders,
             applyFilterWithEnter: this.handleFilter
         };
+
+        if (widgetStore.sortedIndexMap.length > 0) {
+            queryResultTableProps.sortedIndexMap = widgetStore.sortedIndexMap;
+        }
 
         const className = classNames("spectral-line-query-widget", {"bp3-dark": appStore.darkTheme});
         const isSelectedLinesUnderLimit = widgetStore.numSelectedLines <= PLOT_LINES_LIMIT;
@@ -388,14 +427,14 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                     </SplitPane>
                 </div>
                 <div className="bp3-dialog-footer">
-                    <div className="result-table-info">
+                    <div className="result-table-info" data-testid="spectral-line-query-result-info">
                         <pre>{widgetStore.resultTableInfo}</pre>
                     </div>
                     <div className="bp3-dialog-footer-actions">
                         <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral profiler"}>
                             {widgetMenu}
                         </FormGroup>
-                        <AnchorButton text="Apply filter" intent={Intent.SUCCESS} disabled={widgetStore.numDataRows <= 0} onClick={this.handleFilter} />
+                        <AnchorButton text="Apply filter" intent={Intent.SUCCESS} disabled={widgetStore.numDataRows <= 0 || !widgetStore.hasFilter} onClick={this.handleFilter} />
                         <AnchorButton text="Reset filter" intent={Intent.WARNING} onClick={this.handleResetFilter} />
                         <Tooltip2 content={plotTip} position={Position.BOTTOM}>
                             <AnchorButton text="Plot" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || widgetStore.filterResult.size <= 0 || !isSelectedWidgetExisted || !isSelectedLinesUnderLimit} onClick={this.handlePlot} />
@@ -404,7 +443,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                     </div>
                 </div>
                 <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={widgetStore.isQuerying} usePortal={false}>
-                    <div className="query-loading-overlay">
+                    <div className="query-loading-overlay" data-testid="spectral-line-query-loading-icon">
                         <Spinner intent={Intent.PRIMARY} size={30} value={null} />
                     </div>
                 </Overlay>

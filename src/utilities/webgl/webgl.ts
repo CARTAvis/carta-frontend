@@ -9,11 +9,14 @@ export function getShaderFromString(gl: WebGL2RenderingContext, shaderScript: st
     }
 
     let shader = gl.createShader(type);
-    gl.shaderSource(shader, shaderScript);
-    gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, GL2.COMPILE_STATUS)) {
-        console.log(gl.getShaderInfoLog(shader));
-        return null;
+
+    if (shader) {
+        gl.shaderSource(shader, shaderScript);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, GL2.COMPILE_STATUS)) {
+            console.log(gl.getShaderInfoLog(shader));
+            return null;
+        }
     }
     return shader;
 }
@@ -27,13 +30,15 @@ export function getShaderProgram(gl: WebGL2RenderingContext, vertexShaderString:
     let fragmentShader = getShaderFromString(gl, pixelShaderString, GL2.FRAGMENT_SHADER);
 
     let shaderProgram = gl.createProgram();
-    gl.attachShader(shaderProgram, vertexShader);
-    gl.attachShader(shaderProgram, fragmentShader);
-    gl.linkProgram(shaderProgram);
+    if (shaderProgram && vertexShader && fragmentShader) {
+        gl.attachShader(shaderProgram, vertexShader);
+        gl.attachShader(shaderProgram, fragmentShader);
+        gl.linkProgram(shaderProgram);
 
-    if (!gl.getProgramParameter(shaderProgram, GL2.LINK_STATUS)) {
-        console.log("Could not initialise shaders");
-        return null;
+        if (!gl.getProgramParameter(shaderProgram, GL2.LINK_STATUS)) {
+            console.log("Could not initialise shaders");
+            return null;
+        }
     }
     return shaderProgram;
 }
@@ -46,21 +51,23 @@ export function loadImageTexture(gl: WebGL2RenderingContext, url: string, texInd
         // Replace the existing texture with the real one once loaded
         image.onload = () => {
             const imageTexture = gl.createTexture();
-            gl.activeTexture(texIndex);
-            gl.bindTexture(GL2.TEXTURE_2D, imageTexture);
-            gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.RGB, GL2.RGB, GL2.UNSIGNED_BYTE, image);
-            gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_S, GL2.CLAMP_TO_EDGE);
-            gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_T, GL2.CLAMP_TO_EDGE);
-            gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);
-            gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
-            resolve(imageTexture);
+            if (imageTexture) {
+                gl.activeTexture(texIndex);
+                gl.bindTexture(GL2.TEXTURE_2D, imageTexture);
+                gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.RGB, GL2.RGB, GL2.UNSIGNED_BYTE, image);
+                gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_S, GL2.CLAMP_TO_EDGE);
+                gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_T, GL2.CLAMP_TO_EDGE);
+                gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);
+                gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
+                resolve(imageTexture);
+            }
         };
         image.onerror = () => reject(`Error loading image ${url}`);
         image.src = url;
     });
 }
 
-export function createFP32Texture(gl: WebGL2RenderingContext, width: number, height: number, texIndex: number, filtering: number = GL2.NEAREST) {
+export function createFP32Texture(gl: WebGL2RenderingContext | null, width: number, height: number, texIndex: number, filtering: number = GL2.NEAREST) {
     if (!gl) {
         return null;
     }
@@ -75,7 +82,7 @@ export function createFP32Texture(gl: WebGL2RenderingContext, width: number, hei
     return texture;
 }
 
-export function copyToFP32Texture(gl: WebGL2RenderingContext, texture: WebGLTexture, data: Float32Array, texIndex: number, dataWidth: number, dataHeight: number, xOffset: number, yOffset: number) {
+export function copyToFP32Texture(gl: WebGL2RenderingContext | null, texture: WebGLTexture, data: Float32Array, texIndex: number, dataWidth: number, dataHeight: number, xOffset: number, yOffset: number) {
     if (!gl) {
         return;
     }
@@ -107,7 +114,7 @@ export function initWebGL2() {
     return gl;
 }
 
-export function createTextureFromArray(gl: WebGL2RenderingContext, data: Float32Array | Uint8Array, texIndex: number = WebGL2RenderingContext.TEXTURE0, components: number = 1): WebGLTexture {
+export function createTextureFromArray(gl: WebGL2RenderingContext, data: Float32Array | Uint8Array, texIndex: number = WebGL2RenderingContext.TEXTURE0, components: number = 1): WebGLTexture | null {
     const numPoints = data.length / components;
     if (data.length % components !== 0) {
         console.error(`Invalid data size (${data.length} for number of components ${components}`);

@@ -549,6 +549,10 @@ export class FileBrowserStore {
         }
     };
 
+    @action updateExportRegionIndexes = (exportRegionIndexes: number[]) => {
+        this.exportRegionIndexes = exportRegionIndexes;
+    };
+
     @action setSaveFilename = (filename: string) => {
         this.saveFilename = filename;
     };

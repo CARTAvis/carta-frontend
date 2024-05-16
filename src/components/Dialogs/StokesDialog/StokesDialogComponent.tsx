@@ -107,7 +107,9 @@ export class StokesDialogComponent extends React.Component {
                 name={"File name"}
                 cellRenderer={(rowIndex, columnIndex) => (
                     <Cell className="header-table-cell" key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>
-                        {this.fileNames[rowIndex]}
+                        <>
+                            <div data-testid={"stokes-table-filename-" + rowIndex}>{this.fileNames[rowIndex]}</div>
+                        </>
                     </Cell>
                 )}
             />
@@ -129,7 +131,12 @@ export class StokesDialogComponent extends React.Component {
                                 itemRenderer={this.renderPopOver}
                                 popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                             >
-                                <Button className="bp3-minimal catalog-represent-as-select-button" text={this.getLabelFromValue(this.stokes.get(file).polarizationType)} rightIcon="double-caret-vertical" />
+                                <Button
+                                    className="bp3-minimal catalog-represent-as-select-button"
+                                    text={this.getLabelFromValue(this.stokes.get(file).polarizationType)}
+                                    rightIcon="double-caret-vertical"
+                                    data-testid={"stokes-table-dropdown-" + rowIndex}
+                                />
                             </Select>
                         </Cell>
                     );
@@ -181,6 +188,7 @@ export class StokesDialogComponent extends React.Component {
                             disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !this.noneType}
                             onClick={this.loadSelectedFiles}
                             text={"Load"}
+                            data-testid="load-hypercube-button"
                         />
                     </div>
                 </div>
