@@ -481,10 +481,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                             yRms = pointsAndProperties.ySmoothedRms;
                         }
                     }
-                    if (pointsAndProperties.xBound.xMin && xBound.xMin > pointsAndProperties.xBound.xMin) {
+                    if (pointsAndProperties.xBound.xMin !== undefined && xBound.xMin > pointsAndProperties.xBound.xMin) {
                         xBound.xMin = pointsAndProperties.xBound.xMin;
                     }
-                    if (pointsAndProperties.xBound.xMax && xBound.xMax < pointsAndProperties.xBound.xMax) {
+                    if (pointsAndProperties.xBound.xMax !== undefined && xBound.xMax < pointsAndProperties.xBound.xMax) {
                         xBound.xMax = pointsAndProperties.xBound.xMax;
                     }
                     if (yBound.yMin > pointsAndProperties.yBound.yMin) {
