@@ -1,4 +1,4 @@
-import {DialogProps} from "@blueprintjs/core";
+import {Classes, DialogProps, Tab, Tabs} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
@@ -7,10 +7,17 @@ import {AppStore, DialogId, HelpType} from "stores";
 
 import {CatalogQueryComponent} from "./CatalogOnlineQueryComponent";
 
+import "./OnlineDataQueryDialogComponent.scss";
+
 const DEFAULT_WIDTH = 600;
 const DEFAULT_HEIGHT = 550;
 const MIN_WIDTH = 550;
-const MIN_HEIGHT = 450;
+const MIN_HEIGHT = 200;
+
+enum OnlineDataQueryDialogTabs {
+    Catalog,
+    Hips
+}
 
 export const OnlineDataQueryDialogComponent = observer(() => {
     const appStore = AppStore.Instance;
@@ -38,7 +45,12 @@ export const OnlineDataQueryDialogComponent = observer(() => {
             enableResizing={true}
             dialogId={DialogId.OnlineDataQuery}
         >
-            <CatalogQueryComponent />
+            <div className={Classes.DIALOG_BODY}>
+                <Tabs id="onlineQueryDialogTabs">
+                    <Tab id={OnlineDataQueryDialogTabs.Catalog} title="Catalog" panel={<CatalogQueryComponent />} />
+                    <Tab id={OnlineDataQueryDialogTabs.Hips} title="HiPS" panel={<>hips query panel</>} />
+                </Tabs>
+            </div>
         </DraggableDialogComponent>
     );
 });

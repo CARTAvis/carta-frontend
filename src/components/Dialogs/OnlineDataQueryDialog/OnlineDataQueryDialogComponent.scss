@@ -1,0 +1,16 @@
+.online-data-query-dialog {
+    .bp3-dialog-body {
+        margin-bottom: 0;
+
+        .bp3-tabs {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+
+            .bp3-tab-panel {
+                flex: 1;
+                min-height: 0;
+            }
+        }
+    }
+}

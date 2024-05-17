@@ -223,14 +223,14 @@ export class CatalogQueryComponent extends React.Component {
         const tableInfo = <pre>{this.resultInfo}</pre>;
 
         return (
-            <>
-                <div className="bp3-dialog-body">{configBoard}</div>
+            <div className="catalog-query-panel">
+                {configBoard}
                 <Overlay autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={disable} usePortal={false}>
                     <div className="query-loading-overlay">
                         <Spinner intent={Intent.PRIMARY} size={30} value={null} />
                     </div>
                 </Overlay>
-                <div className="bp3-dialog-footer">
+                <div className="query-footer">
                     <div className={"result-info"} data-testid="catalog-query-info">
                         {tableInfo}
                     </div>
@@ -240,7 +240,7 @@ export class CatalogQueryComponent extends React.Component {
                         {configStore.enableLoadVizier ? <AnchorButton intent={Intent.PRIMARY} disabled={disable} onClick={() => this.loadVizierCatalogs()} text={"Load selected"} /> : null}
                     </div>
                 </div>
-            </>
+            </div>
         );
     }
 

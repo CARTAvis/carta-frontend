@@ -1,8 +1,13 @@
-.online-data-query-dialog {
+.catalog-query-panel {
+    display: flex;
+    flex-direction: column;
     height: 100%;
     width: 100%;
 
     .online-catalog-config {
+        flex: 1;
+        overflow: auto;
+
         .bp3-form-group {
             .bp3-label {
                 margin-left: 5px !important;
@@ -26,7 +31,9 @@
         }
     }
 
-    .bp3-dialog-footer {
+    .query-footer {
+        margin-top: 10px;
+
         .result-info {
             display: inline-flex;
             font-size: x-small;
