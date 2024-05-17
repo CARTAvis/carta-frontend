@@ -209,13 +209,13 @@ export class ToolbarMenuComponent extends React.Component {
                             data-testid={DialogId.Fitting + "-button"}
                         />
                     </Tooltip2>
-                    <Tooltip2 content={<span>Online catalog query</span>} position={Position.BOTTOM}>
+                    <Tooltip2 content={<span>Online data query</span>} position={Position.BOTTOM}>
                         <AnchorButton
                             icon="geosearch"
                             disabled={!appStore.activeFrame}
-                            onClick={() => dialogStore.showDialog(DialogId.CatalogQuery)}
-                            active={dialogStore.dialogVisible.get(DialogId.CatalogQuery)}
-                            data-testid={DialogId.CatalogQuery + "-button"}
+                            onClick={() => dialogStore.showDialog(DialogId.OnlineDataQuery)}
+                            active={dialogStore.dialogVisible.get(DialogId.OnlineDataQuery)}
+                            data-testid={DialogId.OnlineDataQuery + "-button"}
                         />
                     </Tooltip2>
                     <Tooltip2 content={<span>Distance measurement</span>} position={Position.BOTTOM}>

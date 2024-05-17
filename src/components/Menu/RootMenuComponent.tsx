@@ -334,7 +334,7 @@ export class RootMenuComponent extends React.Component {
                 <Menu.Item text="Contours" icon={<CustomIcon icon="contour" />} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.Contour)} />
                 <Menu.Item text="Vector Overlay" icon={<CustomIcon icon="vectorOverlay" />} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.Vector)} />
                 <Menu.Item text="Image Fitting" icon={<CustomIcon icon="imageFitting" />} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.Fitting)} />
-                <Menu.Item text="Online Catalog Query" icon="geosearch" disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.CatalogQuery)} />
+                <Menu.Item text="Online Data Query" icon="geosearch" disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.OnlineDataQuery)} />
                 {appStore.preferenceStore.codeSnippetsEnabled && <Menu.Item text="Code Snippets" icon={"console"} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet)} />}
             </Menu>
         );

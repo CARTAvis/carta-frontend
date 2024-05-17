@@ -23,8 +23,8 @@ export const OnlineDataQueryDialogComponent = observer(() => {
         backdropClassName: "minimal-dialog-backdrop",
         canOutsideClickClose: false,
         lazy: true,
-        isOpen: appStore.dialogStore.dialogVisible.get(DialogId.CatalogQuery),
-        title: "Online Catalog Query"
+        isOpen: appStore.dialogStore.dialogVisible.get(DialogId.OnlineDataQuery),
+        title: "Online Data Query"
     };
 
     return (
@@ -36,7 +36,7 @@ export const OnlineDataQueryDialogComponent = observer(() => {
             minWidth={MIN_WIDTH}
             minHeight={MIN_HEIGHT}
             enableResizing={true}
-            dialogId={DialogId.CatalogQuery}
+            dialogId={DialogId.OnlineDataQuery}
         >
             <CatalogQueryDialogComponent />
         </DraggableDialogComponent>
