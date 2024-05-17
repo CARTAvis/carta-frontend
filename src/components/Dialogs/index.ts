@@ -1,5 +1,5 @@
 export * from "./AboutDialog/AboutDialogComponent";
-export * from "./CatalogQueryDialog/CatalogOnlineQueryDialogComponent";
+export * from "./CatalogQueryDialog/OnlineDataQueryDialogComponent";
 export * from "./CodeSnippetDialog/CodeSnippetDialogComponent";
 export * from "./ContourDialog/ContourDialogComponent";
 export * from "./DistanceMeasuringDialog/DistanceMeasuringDialog";
