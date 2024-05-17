@@ -1,4 +1,5 @@
 import {DialogProps} from "@blueprintjs/core";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
@@ -14,10 +15,7 @@ const MIN_HEIGHT = 450;
 export const OnlineDataQueryDialogComponent = observer(() => {
     const appStore = AppStore.Instance;
 
-    let className = "catalog-query-dialog";
-    if (appStore.darkTheme) {
-        className += " bp3-dark";
-    }
+    const className = classNames("catalog-query-dialog", {"bp3-dark": appStore.darkTheme});
 
     const dialogProps: DialogProps = {
         icon: "geosearch",
