@@ -11,12 +11,12 @@ import {CatalogApiService, CatalogDatabase} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, NUMBER_FORMAT_LABEL, RadiusUnits, SystemType, VizierItem} from "stores";
 import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
-import "./CatalogOnlineQueryDialogComponent.scss";
+import "./CatalogOnlineQueryComponent.scss";
 
 const KEYCODE_ENTER = 13;
 
 @observer
-export class CatalogQueryDialogComponent extends React.Component {
+export class CatalogQueryComponent extends React.Component {
     @observable resultSize: number;
     @observable objectSize: number;
 

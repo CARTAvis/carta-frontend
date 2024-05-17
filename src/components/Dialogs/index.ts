@@ -1,5 +1,4 @@
 export * from "./AboutDialog/AboutDialogComponent";
-export * from "./CatalogQueryDialog/OnlineDataQueryDialogComponent";
 export * from "./CodeSnippetDialog/CodeSnippetDialogComponent";
 export * from "./ContourDialog/ContourDialogComponent";
 export * from "./DistanceMeasuringDialog/DistanceMeasuringDialog";
@@ -11,6 +10,7 @@ export * from "./FileBrowser/RegionSelect/RegionSelectComponent";
 export * from "./FileInfoDialog/FileInfoDialogComponent";
 export * from "./FittingDialog/FittingDialogComponent";
 export * from "./LayoutDialog/SaveLayoutDialogComponent";
+export * from "./OnlineDataQueryDialog/OnlineDataQueryDialogComponent";
 export * from "./PreferenceDialog/PreferenceDialogComponent";
 export * from "./RegionDialog/RegionDialogComponent";
 export * from "./ShareWorkspaceDialog/ShareWorkspaceDialogComponent";

@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore, DialogId, HelpType} from "stores";
 
-import {CatalogQueryDialogComponent} from "./CatalogOnlineQueryDialogComponent";
+import {CatalogQueryComponent} from "./CatalogOnlineQueryComponent";
 
 const DEFAULT_WIDTH = 600;
 const DEFAULT_HEIGHT = 550;
@@ -38,7 +38,7 @@ export const OnlineDataQueryDialogComponent = observer(() => {
             enableResizing={true}
             dialogId={DialogId.OnlineDataQuery}
         >
-            <CatalogQueryDialogComponent />
+            <CatalogQueryComponent />
         </DraggableDialogComponent>
     );
 });
