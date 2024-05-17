@@ -1,16 +1,18 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .catalog-query-dialog {
     height: 100%;
     width: 100%;
 
     .online-catalog-config {
-        .bp3-form-group {
-            .bp3-label {
+        .#{$ns}-form-group {
+            .#{$ns}-label {
                 margin-left: 5px !important;
             }
-            .bp3-form-content {
+            .#{$ns}-form-content {
                 display: inline-flex;
             }
-            .bp3-form-content > * {
+            .#{$ns}-form-content > * {
                 margin-right: 5px;
                 margin-left: 5px;
             }
@@ -26,18 +28,18 @@
         }
     }
 
-    .bp3-dialog-footer {
+    .#{$ns}-dialog-footer {
         .result-info {
             display: inline-flex;
             font-size: x-small;
         }
 
-        .bp3-dialog-footer-actions {
+        .#{$ns}-dialog-footer-actions {
             float: right;
         }
     }
 
-    .bp3-input-group .bp3-input {
+    .#{$ns}-input-group .#{$ns}-input {
         width: auto;
     }
 
@@ -52,8 +54,8 @@
 }
 
 .vizier-mulit-select {
-    .bp3-popover-content {
-        .bp3-menu {
+    .#{$ns}-popover-content {
+        .#{$ns}-menu {
             max-height: 200px;
             overflow: auto;
             min-width: fit-content;

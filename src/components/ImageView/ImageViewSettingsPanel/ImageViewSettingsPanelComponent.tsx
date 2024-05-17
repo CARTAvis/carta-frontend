@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Button, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Position, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
+import {Button, Classes, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Position, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {ItemRenderer, Select} from "@blueprintjs/select";
 import * as AST from "ast_wrapper";
@@ -63,7 +63,7 @@ export class Font {
 }
 
 const astFonts: Font[] = AST.fonts.map((x, i) => new Font(x, i));
-const FontSelect = Select.ofType<Font>();
+const FontSelect = Select<Font>;
 
 export const renderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, query}) => {
     return <MenuItem active={modifiers.active} disabled={modifiers.disabled} key={font.id} onClick={handleClick} text={<span style={{fontFamily: font.family, fontWeight: font.weight, fontStyle: font.style}}>{font.name}</span>} />;
@@ -804,7 +804,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
             </div>
         ) : null;
 
-        const className = classNames("image-view-settings", {"bp3-dark": appStore.darkTheme});
+        const className = classNames("image-view-settings", {[Classes.DARK]: appStore.darkTheme});
 
         return (
             <div className={className}>
