@@ -2160,9 +2160,7 @@ export class FrameStore {
      * Toggle of the offset coordinates.
      */
     @action toggleOffsetCoord = () => {
-        if (!this.wcsInfoShifted && !this.isPVImage && !this.isPreview && !this.isSwappedZ && !this.isUVImage) {
-            this.updateOffseCenter();
-        }
+        this.updateOffseCenter();
         this.setIsOffsetCoord(!this.isOffsetCoord);
     };
 
@@ -2185,7 +2183,9 @@ export class FrameStore {
     };
 
     @action updateOffseCenter = () => {
-        this.setOffsetCenter(this.center.x, this.center.y);
+        if (!this.isPVImage && !this.isPreview && !this.isSwappedZ && !this.isUVImage) {
+            this.setOffsetCenter(this.center.x, this.center.y);
+        }
     };
 
     @computed get offsetCenterWCS(): WCSPoint2D {

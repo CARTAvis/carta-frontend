@@ -77,6 +77,8 @@ export function getFormattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: Po
 
 export function getUnformattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: Point2D) {
     if (astTransform) {
+        const equinox = AST.getString(astTransform, "System") === "FK4" ? "1950.0" : "2000.0";
+        AST.set(astTransform, `Equinox=${equinox}`);
         const pointWCS = transformPoint(astTransform, pixelCoords);
         const normVals = AST.normalizeCoordinates(astTransform, pointWCS.x, pointWCS.y);
         if (normVals) {

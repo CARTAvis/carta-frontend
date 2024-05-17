@@ -73,6 +73,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     handleCoordinateSystemClicked = (coordinateSystem: SystemType) => {
         OverlayStore.Instance.global.setSystem(coordinateSystem);
+        this.props.frame.updateOffseCenter();
     };
 
     private handleActiveLayerClicked = (layer: ImageViewLayer) => {
@@ -176,9 +177,9 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.Ecliptic)} onClick={() => this.handleCoordinateSystemClicked(SystemType.Ecliptic)} />
                 <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.ICRS)} onClick={() => this.handleCoordinateSystemClicked(SystemType.ICRS)} />
                 <FormGroup inline={false} className="offset-group">
-                    <Switch className="offset-switch" disabled={frame.isPVImage || frame.isSwappedZ || frame.isUVImage} checked={frame.isOffsetCoord} onChange={frame.toggleOffsetCoord} label="Offset Coord." />
+                    <Switch className="offset-switch" disabled={frame.isPVImage || frame.isSwappedZ || frame.isUVImage} checked={frame.isOffsetCoord} onChange={frame.toggleOffsetCoord} label="Offset" />
                     <Collapse isOpen={frame.isOffsetCoord}>
-                        <Tooltip2 content="Set offset to current view center" position={Position.BOTTOM} hoverOpenDelay={300}>
+                        <Tooltip2 content="Set origin to current view center" position={Position.BOTTOM} hoverOpenDelay={300}>
                             <Button icon="locate" disabled={!frame.isOffsetCoord} onClick={() => frame.updateOffseCenter()} />
                         </Tooltip2>
                     </Collapse>
