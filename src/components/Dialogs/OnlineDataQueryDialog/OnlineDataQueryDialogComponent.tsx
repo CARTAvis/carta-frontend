@@ -15,7 +15,7 @@ const MIN_HEIGHT = 450;
 export const OnlineDataQueryDialogComponent = observer(() => {
     const appStore = AppStore.Instance;
 
-    const className = classNames("catalog-query-dialog", {"bp3-dark": appStore.darkTheme});
+    const className = classNames("online-data-query-dialog", {"bp3-dark": appStore.darkTheme});
 
     const dialogProps: DialogProps = {
         icon: "geosearch",
