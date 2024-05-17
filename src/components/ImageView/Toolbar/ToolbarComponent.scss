@@ -64,13 +64,13 @@
     }
 }
 
-.bp3-form-group.offset-group {
+.#{$ns}-form-group.offset-group {
     border: 2px;
     margin: 0 0 0 5px;
-    .bp3-form-content {
+    .#{$ns}-form-content {
         display: inline-flex;
         align-items: center;
-        .bp3-popover2-target {
+        .#{$ns}-popover-target {
             margin-left: 5px;
         }
     }

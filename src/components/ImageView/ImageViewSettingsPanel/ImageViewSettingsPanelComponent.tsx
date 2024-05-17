@@ -1,6 +1,5 @@
 import * as React from "react";
-import {Button, Classes, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Position, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
+import {Button, Classes, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Position, Switch, Tab, TabId, Tabs, Tooltip} from "@blueprintjs/core";
 import {ItemRenderer, Select} from "@blueprintjs/select";
 import * as AST from "ast_wrapper";
 import classNames from "classnames";
@@ -209,9 +208,9 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 <FormGroup inline={true} label="Offset Coordinates">
                     <Switch checked={frame.isOffsetCoord} disabled={frame.isPVImage || frame.isSwappedZ || frame.isUVImage} onChange={frame.toggleOffsetCoord} />
                     <Collapse isOpen={frame.isOffsetCoord}>
-                        <Tooltip2 content="Set offset to current view center" position={Position.BOTTOM} hoverOpenDelay={300}>
+                        <Tooltip content="Set offset to current view center" position={Position.BOTTOM} hoverOpenDelay={300}>
                             <Button icon="locate" disabled={!frame.isOffsetCoord} onClick={() => frame.updateOffseCenter()} />
-                        </Tooltip2>
+                        </Tooltip>
                     </Collapse>
                 </FormGroup>
                 <Collapse isOpen={frame.isOffsetCoord}>
@@ -821,7 +820,6 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Tab id={ImageViewSettingsPanelTabs.COLORBAR} title={ImageViewSettingsPanelTabs.COLORBAR} panel={colorbarPanel} />
                     <Tab id={ImageViewSettingsPanelTabs.BEAM} title={ImageViewSettingsPanelTabs.BEAM} panel={beamPanel} disabled={appStore.frameNum <= 0} />
                     <Tab id={ImageViewSettingsPanelTabs.CONVERSION} title={ImageViewSettingsPanelTabs.CONVERSION} panel={spectralPanel} disabled={!isPVImage} />
-                    {/* <Tab id={ImageViewSettingsPanelTabs.COORDINATES} title={ImageViewSettingsPanelTabs.COORDINATES} panel={coordinatesPanel} /> */}
                 </Tabs>
             </div>
         );
