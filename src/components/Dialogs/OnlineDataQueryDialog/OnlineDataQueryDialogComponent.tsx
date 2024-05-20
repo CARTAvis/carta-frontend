@@ -6,6 +6,7 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore, DialogId, HelpType} from "stores";
 
 import {CatalogQueryComponent} from "./CatalogOnlineQueryComponent";
+import {HipsQueryComponent} from "./HipsQueryComponent";
 
 import "./OnlineDataQueryDialogComponent.scss";
 
@@ -48,7 +49,7 @@ export const OnlineDataQueryDialogComponent = observer(() => {
             <div className={Classes.DIALOG_BODY}>
                 <Tabs id="onlineQueryDialogTabs">
                     <Tab id={OnlineDataQueryDialogTabs.Catalog} title="Catalog" panel={<CatalogQueryComponent />} />
-                    <Tab id={OnlineDataQueryDialogTabs.Hips} title="HiPS" panel={<>hips query panel</>} />
+                    <Tab id={OnlineDataQueryDialogTabs.Hips} title="HiPS survey" panel={<HipsQueryComponent />} />
                 </Tabs>
             </div>
         </DraggableDialogComponent>
