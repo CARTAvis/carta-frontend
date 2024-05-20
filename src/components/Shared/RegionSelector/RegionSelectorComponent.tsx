@@ -1,5 +1,5 @@
 import * as React from "react";
-import {FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
@@ -47,7 +47,7 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
 
         let enableRegionSelect = false;
         let selectedValue: number = RegionId.ACTIVE;
-        let regionOptions: IOptionProps[] = [{value: RegionId.ACTIVE, label: "Active"}];
+        let regionOptions: OptionProps[] = [{value: RegionId.ACTIVE, label: "Active"}];
 
         if (widgetStore.effectiveFrame && widgetStore.effectiveFrame.regionSet) {
             if (widgetStore.type === RegionsType.CLOSED) {

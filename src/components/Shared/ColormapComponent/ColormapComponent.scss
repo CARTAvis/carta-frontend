@@ -6,7 +6,7 @@
 }
 
 .raster-custom-color {
-    .bp3-popover2-target {
+    .#{$ns}-popover-target {
         display: flex;
         justify-content: center;
     }

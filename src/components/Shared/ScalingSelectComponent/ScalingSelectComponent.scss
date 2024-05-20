@@ -1,7 +1,17 @@
-.bp3-dark .equation-div {
-    filter: invert(1);
-}
+@import "~@blueprintjs/core/lib/scss/variables.scss";
 
-.bp3-active .equation-div {
-    filter: invert(1) brightness(2);
+.colormap-select-popover.#{$ns}-dark {
+    .equation-div {
+        filter: invert(1);
+    }
+
+    .#{$ns}-menu-item.#{$ns}-active {
+        .equation-div {
+            filter: invert(1) brightness(2);
+        }
+
+        .#{$ns}-menu-item-label {
+            filter: brightness(2);
+        }
+    }
 }
