@@ -1,6 +1,6 @@
 import React from "react";
-import {Button, Icon, MenuItem, PopoverPosition} from "@blueprintjs/core";
-import {IItemRendererProps, Select} from "@blueprintjs/select";
+import {Button, Classes, Icon, MenuItem, PopoverPosition} from "@blueprintjs/core";
+import {ItemRendererProps, Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
@@ -16,7 +16,7 @@ export const PointShapeSelectComponent = observer((props: {handleChange: (pointS
             fillColor = "none";
         }
         return (
-            <span className="bp3-icon">
+            <span className={Classes.ICON}>
                 <svg data-icon="triangle-up-open" width="16" height="16" viewBox={`0 0 ${viewboxDefault} ${viewboxDefault}`} style={{stroke: color, fill: fillColor, strokeWidth: strokeWidth}}>
                     {path}
                 </svg>
@@ -24,9 +24,9 @@ export const PointShapeSelectComponent = observer((props: {handleChange: (pointS
         );
     };
 
-    const renderShapePopOver = (shape: CARTA.PointAnnotationShape, itemProps: IItemRendererProps) => {
+    const renderShapePopOver = (shape: CARTA.PointAnnotationShape, itemProps: ItemRendererProps) => {
         const shapeItem = getPointShape(shape);
-        return <MenuItem icon={shapeItem} key={shape} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+        return <MenuItem icon={shapeItem} text="" key={shape} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
     const getPointShape = (shape: CARTA.PointAnnotationShape) => {
@@ -57,7 +57,7 @@ export const PointShapeSelectComponent = observer((props: {handleChange: (pointS
 
     return (
         <Select
-            className="bp3-fill"
+            className={Classes.FILL}
             filterable={false}
             items={Object.values(CARTA.PointAnnotationShape)}
             activeItem={preference.pointAnnotationShape}
