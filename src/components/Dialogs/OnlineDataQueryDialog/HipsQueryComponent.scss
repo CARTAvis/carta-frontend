@@ -1,27 +1,39 @@
 .hips-query-panel {
-    .bp3-label {
-        min-width: 10em;
-        width: 10em;
-        text-align: right;
-    }
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
 
-    .bp3-form-content {
-        display: flex;
-        flex-wrap: wrap;
+    .hips-query-config {
         flex: 1;
-        gap: 10px;
-    }
+        overflow: auto;
 
-    .center-input-form {
-        .bp3-html-select {
-            width: 70px;
+        .bp3-label {
+            min-width: 10em;
+            width: 10em;
+            text-align: right;
         }
-        .bp3-input-group {
-            width: 140px;
+
+        .bp3-form-content {
+            display: flex;
+            flex-wrap: wrap;
+            flex: 1;
+            gap: 10px;
+        }
+
+        .center-input-form {
+            .bp3-html-select {
+                width: 70px;
+            }
+            .bp3-input-group {
+                width: 140px;
+            }
         }
     }
 
     .query-footer {
-        float: right;
+        margin-top: 10px;
+        display: flex;
+        justify-content: flex-end;
     }
 }
