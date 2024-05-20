@@ -101,8 +101,7 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
                             </Button>
                         </Tooltip>
                     </Popover>
-                    {/* TODO: use icon "color-fill" when updated to bp5 */}
-                    <Button icon="draw" rightIcon="caret-down" disabled>
+                    <Button icon="color-fill" rightIcon="caret-down" disabled>
                         {widgetWidth < buttonTextCutoff ? "" : "Apply color set"}
                     </Button>
                 </ButtonGroup>
