@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Classes, Drawer, IDrawerProps} from "@blueprintjs/core";
+import {Classes, Drawer, DrawerProps} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
@@ -57,6 +57,8 @@ import {
     VECTOR_OVERLAY_HELP_CONTENT,
     WORKSPACE_HELP_CONTENT
 } from "./HelpContent";
+
+import "./HelpDrawerComponent.scss";
 
 const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
     // Dialog
@@ -119,9 +121,9 @@ const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
 export class HelpDrawerComponent extends React.Component {
     render() {
         const helpStore = HelpStore.Instance;
-        const className = classNames("help-drawer", {"bp3-dark": AppStore.Instance.darkTheme});
+        const className = classNames("help-drawer", {[Classes.DARK]: AppStore.Instance.darkTheme});
 
-        const drawerProps: IDrawerProps = {
+        const drawerProps: DrawerProps = {
             icon: "help",
             className: className,
             lazy: true,
@@ -130,7 +132,8 @@ export class HelpDrawerComponent extends React.Component {
             title: helpStore.type ?? "",
             position: helpStore.position,
             size: "33%",
-            hasBackdrop: false
+            hasBackdrop: true,
+            backdropClassName: "help-drawer-backdrop"
         };
 
         return (

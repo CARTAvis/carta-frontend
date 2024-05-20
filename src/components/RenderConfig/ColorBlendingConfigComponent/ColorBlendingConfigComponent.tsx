@@ -1,6 +1,5 @@
 import {AlphaPicker} from "react-color";
-import {Button, ButtonGroup, FormGroup, H6, HTMLSelect, Menu, MenuItem, Text} from "@blueprintjs/core";
-import {Popover2, Tooltip2} from "@blueprintjs/popover2";
+import {Button, ButtonGroup, FormGroup, H6, HTMLSelect, Menu, MenuItem, Popover, Text, Tooltip} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
 import {ColormapComponent, SafeNumericInput} from "components/Shared";
@@ -44,12 +43,12 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
                 />
                 <div className="alpha-settings">
                     <AlphaPicker className="alpha-slider" color={{r: 0, g: 0, b: 0, a: alpha}} onChange={color => setAlpha(color.rgb.a)} />
-                    <Tooltip2 content="Alpha">
+                    <Tooltip content="Alpha">
                         <SafeNumericInput className="alpha-input" selectAllOnFocus={true} value={alpha} min={0} max={1} stepSize={0.1} onValueChange={val => setAlpha(val)} />
-                    </Tooltip2>
-                    <Tooltip2 content="Remove layer" disabled={alphaIndex <= 0}>
+                    </Tooltip>
+                    <Tooltip content="Remove layer" disabled={alphaIndex <= 0}>
                         <Button icon="small-cross" minimal={true} style={{visibility: alphaIndex > 0 ? "visible" : "hidden"}} onClick={() => colorBlendingStore.deleteSelectedFrame(alphaIndex - 1)} />
-                    </Tooltip2>
+                    </Tooltip>
                 </div>
             </>
         );
@@ -95,13 +94,13 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
             <div className="heading">
                 <H6>Color blending configuration</H6>
                 <ButtonGroup>
-                    <Popover2 minimal={true} content={<Menu>{newFrameOptions}</Menu>}>
-                        <Tooltip2 content={addLayerTooltip}>
+                    <Popover minimal={true} content={<Menu>{newFrameOptions}</Menu>}>
+                        <Tooltip content={addLayerTooltip}>
                             <Button icon="add" rightIcon="caret-down" disabled={!newFrameOptions.length}>
                                 {widgetWidth < buttonTextCutoff ? "" : "Add layer"}
                             </Button>
-                        </Tooltip2>
-                    </Popover2>
+                        </Tooltip>
+                    </Popover>
                     {/* TODO: use icon "color-fill" when updated to bp5 */}
                     <Button icon="draw" rightIcon="caret-down" disabled>
                         {widgetWidth < buttonTextCutoff ? "" : "Apply color set"}
@@ -109,18 +108,18 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
                 </ButtonGroup>
             </div>
             <FormGroup className="layer-config" label="Layer 1" inline={true}>
-                <Tooltip2 content={baseFrameTooltip}>
+                <Tooltip content={baseFrameTooltip}>
                     <Text className="image-column image-text" ellipsize={true}>
                         {colorBlendingStore.baseFrame.filename}
                     </Text>
-                </Tooltip2>
+                </Tooltip>
                 {getLayerSettings(colorBlendingStore.baseFrame, 0)}
             </FormGroup>
             {colorBlendingStore.selectedFrames.map((f, i) => (
                 <FormGroup className="layer-config" label={`Layer ${i + 2}`} inline={true} key={i}>
-                    <Tooltip2 content={selectedFrameTooltip}>
+                    <Tooltip content={selectedFrameTooltip}>
                         <HTMLSelect className="image-column" value={f.id} options={getSetFrameOptions(f)} onChange={ev => setSelectedFrame(i, parseInt(ev.target.value))} />
-                    </Tooltip2>
+                    </Tooltip>
                     {getLayerSettings(f, i + 1)}
                 </FormGroup>
             ))}

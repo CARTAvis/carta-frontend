@@ -1,4 +1,4 @@
-import {Classes, Colors, IOptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
+import {Classes, Colors, OptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import axios from "axios";
 import * as CARTACompute from "carta_computation";
@@ -66,7 +66,7 @@ import {distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimes
 
 import GitCommit from "../../static/gitInfo";
 
-interface FrameOption extends IOptionProps {
+interface FrameOption extends OptionProps {
     hasZAxis: boolean;
 }
 
@@ -416,7 +416,7 @@ export class AppStore {
         return id;
     }
 
-    @computed get frameNames(): IOptionProps[] {
+    @computed get frameNames(): OptionProps[] {
         return this.frames?.map(frame => {
             const index = this.imageViewConfigStore.getImageListIndex(ImageType.FRAME, frame.id);
             return {

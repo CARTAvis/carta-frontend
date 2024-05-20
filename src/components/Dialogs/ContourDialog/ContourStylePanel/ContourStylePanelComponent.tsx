@@ -10,7 +10,7 @@ import {SWATCH_COLORS} from "utilities";
 
 import "./ContourStylePanelComponent.scss";
 
-const DashModeSelect = Select.ofType<ContourDashMode>();
+const DashModeSelect = Select<ContourDashMode>;
 
 @observer
 export class ContourStylePanelComponent extends React.Component<{frame: FrameStore; darkTheme: boolean}> {

@@ -1,6 +1,5 @@
 import * as React from "react";
-import {AnchorButton, ButtonGroup, FormGroup, Switch} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
+import {AnchorButton, ButtonGroup, FormGroup, Switch, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
@@ -54,9 +53,9 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
                     <Switch checked={widgetStore.fractionalPolVisible} onChange={this.handleFractionalPolChanged} disabled={!enableFractionalPol} />
                 </FormGroup>
                 <ButtonGroup className="profile-buttons">
-                    <Tooltip2 content="Smoothing">
+                    <Tooltip content="Smoothing">
                         <AnchorButton icon={<CustomIcon icon="smoothing" />} onClick={this.smoothingShortcutClick} />
-                    </Tooltip2>
+                    </Tooltip>
                 </ButtonGroup>
             </div>
         );
