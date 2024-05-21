@@ -1,5 +1,5 @@
 import {CARTA} from "carta-protobuf";
-import {action, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 
 import {Point2D} from "models";
 import {AppStore} from "stores/AppStore/AppStore";
@@ -52,6 +52,10 @@ export class HipsQueryStore {
     @observable projection = HipsProjection.TAN;
     @observable rotationAngle = 0;
     @observable isLoading = false;
+
+    @computed get isValid() {
+        return this.hipsSurvey && this.size.x > 0 && this.size.y > 0 && (this.object || (isFinite(this.center.x) && isFinite(this.center.y))) && this.fov > 0 && isFinite(this.rotationAngle) && !this.isLoading;
+    }
 
     static readonly ProjectionOptionMap = new Map([
         [HipsProjection.AZP, "zenithal/azimuthal perspective"],
@@ -140,6 +144,10 @@ export class HipsQueryStore {
     };
 
     queryByObject = async () => {
+        if (!this.object || !this.isValid) {
+            return;
+        }
+
         const message: CARTA.IRemoteFileRequest = {
             hips: this.hipsSurvey,
             width: this.size.x,
@@ -151,11 +159,19 @@ export class HipsQueryStore {
             rotationAngle: this.rotationAngle
         };
         this.setIsLoading(true);
-        await AppStore.Instance.loadRemoteFile(message);
+        try {
+            await AppStore.Instance.loadRemoteFile(message);
+        } catch (err) {
+            console.log(err);
+        }
         this.setIsLoading(false);
     };
 
     queryByCenter = async () => {
+        if (!isFinite(this.center.x) || !isFinite(this.center.y) || !this.isValid) {
+            return;
+        }
+
         const message: CARTA.IRemoteFileRequest = {
             hips: this.hipsSurvey,
             width: this.size.x,
@@ -168,7 +184,11 @@ export class HipsQueryStore {
             rotationAngle: this.rotationAngle
         };
         this.setIsLoading(true);
-        await AppStore.Instance.loadRemoteFile(message);
+        try {
+            await AppStore.Instance.loadRemoteFile(message);
+        } catch (err) {
+            console.log(err);
+        }
         this.setIsLoading(false);
     };
 }

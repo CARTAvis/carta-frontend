@@ -97,7 +97,12 @@ export const HipsQueryComponent = observer(() => {
                 </div>
             </Overlay2>
             <div className="query-footer">
-                <AnchorButton intent={Intent.SUCCESS} onClick={queryByObject ? hipsQueryStore.queryByObject : hipsQueryStore.queryByCenter} text="Query" />
+                <AnchorButton
+                    intent={Intent.SUCCESS}
+                    disabled={(queryByObject ? !hipsQueryStore.object : !isFinite(hipsQueryStore.center.x) || !isFinite(hipsQueryStore.center.y)) || !hipsQueryStore.isValid}
+                    onClick={queryByObject ? hipsQueryStore.queryByObject : hipsQueryStore.queryByCenter}
+                    text="Query"
+                />
             </div>
         </div>
     );
