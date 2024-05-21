@@ -51,6 +51,7 @@ export class HipsQueryStore {
     @observable coordsys = HipsCoord.Icrs;
     @observable projection = HipsProjection.TAN;
     @observable rotationAngle = 0;
+    @observable isLoading = false;
 
     static readonly ProjectionOptionMap = new Map([
         [HipsProjection.AZP, "zenithal/azimuthal perspective"],
@@ -134,7 +135,11 @@ export class HipsQueryStore {
         this.rotationAngle = rotationAngle;
     };
 
-    queryByObject = () => {
+    @action setIsLoading = (isLoading: boolean) => {
+        this.isLoading = isLoading;
+    };
+
+    queryByObject = async () => {
         const message: CARTA.IRemoteFileRequest = {
             hips: this.hipsSurvey,
             width: this.size.x,
@@ -145,10 +150,12 @@ export class HipsQueryStore {
             projection: this.projection,
             rotationAngle: this.rotationAngle
         };
-        AppStore.Instance.loadRemoteFile(message);
+        this.setIsLoading(true);
+        await AppStore.Instance.loadRemoteFile(message);
+        this.setIsLoading(false);
     };
 
-    queryByCenter = () => {
+    queryByCenter = async () => {
         const message: CARTA.IRemoteFileRequest = {
             hips: this.hipsSurvey,
             width: this.size.x,
@@ -160,6 +167,8 @@ export class HipsQueryStore {
             projection: this.projection,
             rotationAngle: this.rotationAngle
         };
-        AppStore.Instance.loadRemoteFile(message);
+        this.setIsLoading(true);
+        await AppStore.Instance.loadRemoteFile(message);
+        this.setIsLoading(false);
     };
 }
