@@ -1,21 +1,23 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .spatial-profiler-settings {
     margin: 20px;
 
-    .bp3-form-group {
+    .#{$ns}-form-group {
         &:first-of-type {
             margin-left: 0px;
         }
-        .bp3-input {
-            width: 88px;
+        .#{$ns}-input-group {
+            width: 60px;
         }
     }
 
-    .bp3-form-group .bp3-label {
+    .#{$ns}-form-group .#{$ns}-label {
         min-width: 11em;
         text-align: right;
     }
 
-    .bp3-form-group .bp3-form-helper-text {
+    .#{$ns}-form-group .#{$ns}-form-helper-text {
         white-space: nowrap;
     }
 }

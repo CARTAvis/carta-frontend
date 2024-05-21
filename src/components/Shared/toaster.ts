@@ -1,4 +1,4 @@
-import {IconName, IToastProps, Position, Toaster} from "@blueprintjs/core";
+import {IconName, Position, Toaster, ToastProps} from "@blueprintjs/core";
 
 import {copyToClipboard} from "utilities";
 
@@ -7,7 +7,7 @@ export const AppToaster = Toaster.create({
     position: Position.BOTTOM
 });
 
-export function SuccessToast(icon: IconName, message: string, timeout?: number): IToastProps {
+export function SuccessToast(icon: IconName, message: string, timeout?: number): ToastProps {
     return {
         icon: icon,
         intent: "success",
@@ -16,7 +16,7 @@ export function SuccessToast(icon: IconName, message: string, timeout?: number):
     };
 }
 
-export function ErrorToast(message: string): IToastProps {
+export function ErrorToast(message: string): ToastProps {
     return {
         icon: "error",
         intent: "danger",
@@ -29,7 +29,7 @@ export function ErrorToast(message: string): IToastProps {
     };
 }
 
-export function WarningToast(message: string): IToastProps {
+export function WarningToast(message: string): ToastProps {
     return {
         icon: "warning-sign",
         intent: "warning",

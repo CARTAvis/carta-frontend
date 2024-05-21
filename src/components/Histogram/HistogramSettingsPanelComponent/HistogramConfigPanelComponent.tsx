@@ -1,6 +1,5 @@
 import * as React from "react";
-import {Button, Divider, FormGroup, Intent, Slider, Switch} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
+import {Button, Divider, FormGroup, Intent, Slider, Switch, Tooltip} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
 import {SafeNumericInput} from "components/Shared";
@@ -118,14 +117,14 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
                 {!this.widgetStore.currentAutoBounds && (
                     <div className="line-boundary">
                         <FormGroup label="X min" inline={true}>
-                            <Tooltip2 content={errorMinPix} disabled={this.widgetStore.isAbleToGenerate} placement="top">
+                            <Tooltip content={errorMinPix} disabled={this.widgetStore.isAbleToGenerate} placement="top">
                                 <SafeNumericInput intent={this.minPixIntent} value={this.widgetStore.currentMinPix} buttonPosition="none" onValueChange={val => this.onMinPixChanged(val)} />
-                            </Tooltip2>
+                            </Tooltip>
                         </FormGroup>
                         <FormGroup label="X max" inline={true}>
-                            <Tooltip2 content={errorMaxPix} disabled={this.widgetStore.isAbleToGenerate} placement="bottom">
+                            <Tooltip content={errorMaxPix} disabled={this.widgetStore.isAbleToGenerate} placement="bottom">
                                 <SafeNumericInput intent={this.maxPixIntent} value={this.widgetStore.currentMaxPix} buttonPosition="none" onValueChange={val => this.onMaxPixChanged(val)} />
-                            </Tooltip2>
+                            </Tooltip>
                         </FormGroup>
                     </div>
                 )}

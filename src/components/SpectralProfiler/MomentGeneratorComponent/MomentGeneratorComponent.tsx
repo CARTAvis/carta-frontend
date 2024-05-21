@@ -1,8 +1,8 @@
 import * as React from "react";
-import {AnchorButton, Button, Divider, FormGroup, HTMLSelect, MenuItem, Position, Switch} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
+import {AnchorButton, Button, Classes, Divider, FormGroup, HTMLSelect, MenuItem, Position, Switch, Tooltip} from "@blueprintjs/core";
 import {ItemPredicate, ItemRenderer, MultiSelect} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";
@@ -13,7 +13,7 @@ import {MomentSelectingMode, SpectralProfileWidgetStore} from "stores/Widgets";
 
 import "./MomentGeneratorComponent.scss";
 
-const MomentMultiSelect = MultiSelect.ofType<CARTA.Moment>();
+const MomentMultiSelect = MultiSelect<CARTA.Moment>;
 
 @observer
 export class MomentGeneratorComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore}> {
@@ -166,9 +166,9 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                                 <SafeNumericInput value={widgetStore.channelValueRange[1]} buttonPosition="none" onValueChange={val => this.onChannelToChanged(val)} data-testid="moment-generator-spectral-range-to-input" />
                             </FormGroup>
                             <div className="cursor-select">
-                                <Tooltip2 content="Use cursor to select channel range in profiler" position={Position.BOTTOM}>
-                                    <AnchorButton className={widgetStore.isSelectingMomentChannelRange ? "bp3-active" : ""} icon="select" onClick={this.handleChannelSelectionClicked} />
-                                </Tooltip2>
+                                <Tooltip content="Use cursor to select channel range in profiler" position={Position.BOTTOM}>
+                                    <AnchorButton className={classNames({[Classes.ACTIVE]: widgetStore.isSelectingMomentChannelRange})} icon="select" onClick={this.handleChannelSelectionClicked} />
+                                </Tooltip>
                             </div>
                         </div>
                     </FormGroup>
@@ -197,9 +197,9 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                                 <SafeNumericInput value={widgetStore.maskRange[1]} buttonPosition="none" onValueChange={val => this.onMaskToChanged(val)} data-testid="moment-generator-mask-range-to-input" />
                             </FormGroup>
                             <div className="cursor-select">
-                                <Tooltip2 content="Use cursor to select mask range in profiler" position={Position.BOTTOM}>
-                                    <AnchorButton className={widgetStore.isSelectingMomentMaskRange ? "bp3-active" : ""} icon="select" onClick={this.handleMaskSelectionClicked} />
-                                </Tooltip2>
+                                <Tooltip content="Use cursor to select mask range in profiler" position={Position.BOTTOM}>
+                                    <AnchorButton className={classNames({[Classes.ACTIVE]: widgetStore.isSelectingMomentMaskRange})} icon="select" onClick={this.handleMaskSelectionClicked} />
+                                </Tooltip>
                             </div>
                         </div>
                     </FormGroup>
@@ -260,11 +260,11 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     {frame === appStore.spatialReference && <Switch label={"Auto spatial matching"} checked={appStore.momentToMatch} onChange={appStore.toggleMomentToMatch} />}
                 </FormGroup>
                 <div className="moment-generate">
-                    <Tooltip2 disabled={isAbleToGenerate} content={msg} position={Position.BOTTOM}>
+                    <Tooltip disabled={isAbleToGenerate} content={msg} position={Position.BOTTOM}>
                         <AnchorButton intent="success" onClick={this.handleRequestMoment} disabled={!isAbleToGenerate} data-testid="moment-generator-generate-button">
                             Generate
                         </AnchorButton>
-                    </Tooltip2>
+                    </Tooltip>
                 </div>
             </React.Fragment>
         );

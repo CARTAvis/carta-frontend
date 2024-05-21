@@ -1,7 +1,7 @@
 import * as React from "react";
 import {useCallback, useEffect, useState} from "react";
-import {AnchorButton, Classes, IDialogProps, InputGroup, Intent, NonIdealState, Spinner} from "@blueprintjs/core";
-import {Cell, Column, IRegion, RenderMode, SelectionModes, Table, TableLoadingOption} from "@blueprintjs/table";
+import {AnchorButton, Classes, DialogProps, InputGroup, Intent, NonIdealState, Spinner} from "@blueprintjs/core";
+import {Cell, Column, Region, RenderMode, SelectionModes, Table2, TableLoadingOption} from "@blueprintjs/table";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 import moment from "moment/moment";
@@ -140,9 +140,9 @@ export const WorkspaceDialogComponent = observer(() => {
         }
     }, [mode, fetchWorkspaces]);
 
-    const className = classNames("workspace-dialog", {"bp3-dark": appStore.darkTheme});
+    const className = classNames("workspace-dialog", {[Classes.DARK]: appStore.darkTheme});
 
-    const dialogProps: IDialogProps = {
+    const dialogProps: DialogProps = {
         icon: "control",
         backdropClassName: "minimal-dialog-backdrop",
         className: className,
@@ -223,7 +223,7 @@ export const WorkspaceDialogComponent = observer(() => {
     );
 
     const selectedItemIndex = workspaceList?.findIndex(item => item.name === workspaceName);
-    const selectedRegions: IRegion[] = selectedItemIndex >= 0 ? [{rows: [selectedItemIndex, selectedItemIndex]}] : [];
+    const selectedRegions: Region[] = selectedItemIndex >= 0 ? [{rows: [selectedItemIndex, selectedItemIndex]}] : [];
 
     let tableContent: React.ReactNode;
     if (isFetching) {
@@ -234,8 +234,8 @@ export const WorkspaceDialogComponent = observer(() => {
         tableContent = <NonIdealState icon="search" title="No results" description="There are no workspaces available" />;
     } else {
         tableContent = (
-            <Table
-                className={classNames("workspace-table", {"bp3-dark": appStore.darkTheme})}
+            <Table2
+                className={classNames("workspace-table", {[Classes.DARK]: appStore.darkTheme})}
                 enableRowReordering={false}
                 renderMode={RenderMode.NONE}
                 selectionModes={SelectionModes.ROWS_ONLY}
@@ -251,7 +251,7 @@ export const WorkspaceDialogComponent = observer(() => {
             >
                 <Column name="Name" cellRenderer={renderFilenames} />
                 <Column name="Last modified" cellRenderer={renderDates} />
-            </Table>
+            </Table2>
         );
     }
 

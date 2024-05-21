@@ -2,7 +2,6 @@ import * as React from "react";
 import {Arrow, Group, Layer, Line, Rect, Stage, Text} from "react-konva";
 import ReactResizeDetector from "react-resize-detector";
 import {Colors} from "@blueprintjs/core";
-import {ESCAPE} from "@blueprintjs/core/lib/cjs/common/keys";
 import {Chart, ChartArea, Tick} from "chart.js";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -523,7 +522,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     onKeyDown = (ev: React.KeyboardEvent) => {
-        if (this.isSelecting && ev.keyCode === ESCAPE) {
+        if (this.isSelecting && ev.key === "Escape") {
             this.endInteractions();
         }
     };

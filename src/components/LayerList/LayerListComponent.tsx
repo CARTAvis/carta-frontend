@@ -1,9 +1,8 @@
 import * as React from "react";
 import {CSSProperties} from "react";
 import ReactResizeDetector from "react-resize-detector";
-import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
-import {Cell, Column, ColumnHeaderCell, IMenuContext, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
+import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState, Tooltip} from "@blueprintjs/core";
+import {Cell, Column, ColumnHeaderCell, MenuContext, RowHeaderCell, SelectionModes, Table2} from "@blueprintjs/table";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -117,7 +116,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         return (
             <Cell className={className}>
                 <React.Fragment>
-                    <Tooltip2
+                    <Tooltip
                         position={"bottom"}
                         content={
                             <span>
@@ -132,9 +131,9 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                         <AnchorButton minimal={true} small={true} active={frame.renderConfig.visible} intent={frame.renderConfig.visible ? "success" : "none"} onClick={frame.renderConfig.toggleVisibility}>
                             R
                         </AnchorButton>
-                    </Tooltip2>
+                    </Tooltip>
                     {frame.contourConfig.enabled && (
-                        <Tooltip2
+                        <Tooltip
                             position={"bottom"}
                             content={
                                 <span>
@@ -149,10 +148,10 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                             <AnchorButton minimal={true} small={true} active={frame.contourConfig.visible} intent={frame.contourConfig.visible ? "success" : "none"} onClick={frame.contourConfig.toggleVisibility}>
                                 C
                             </AnchorButton>
-                        </Tooltip2>
+                        </Tooltip>
                     )}
                     {frame.vectorOverlayConfig.enabled && (
-                        <Tooltip2
+                        <Tooltip
                             position={"bottom"}
                             content={
                                 <span>
@@ -167,7 +166,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                             <AnchorButton minimal={true} small={true} active={frame.vectorOverlayConfig.visible} intent={frame.vectorOverlayConfig.visible ? "success" : "none"} onClick={frame.vectorOverlayConfig.toggleVisibility}>
                                 V
                             </AnchorButton>
-                        </Tooltip2>
+                        </Tooltip>
                     )}
                 </React.Fragment>
             </Cell>
@@ -191,7 +190,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 tooltipSubtitle = `Click to ${frame.spatialReference ? "disable" : "enable"} matching to ${appStore.spatialReference.filename}`;
             }
             spatialMatchingButton = (
-                <Tooltip2
+                <Tooltip
                     position={"bottom"}
                     content={
                         <span>
@@ -214,7 +213,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     >
                         XY
                     </AnchorButton>
-                </Tooltip2>
+                </Tooltip>
             );
         }
 
@@ -227,7 +226,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 tooltipSubtitle = `Click to ${frame.spectralReference ? "disable" : "enable"} matching to ${appStore.spectralReference.filename}`;
             }
             spectralMatchingButton = (
-                <Tooltip2
+                <Tooltip
                     position={"bottom"}
                     content={
                         <span>
@@ -250,7 +249,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     >
                         Z
                     </AnchorButton>
-                </Tooltip2>
+                </Tooltip>
             );
         }
 
@@ -263,7 +262,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 tooltipSubtitle = `Click to ${frame.rasterScalingReference ? "disable" : "enable"} matching to ${appStore.rasterScalingReference.filename}`;
             }
             renderConfigMatchingButton = (
-                <Tooltip2
+                <Tooltip
                     position={"bottom"}
                     content={
                         <span>
@@ -285,7 +284,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     >
                         R
                     </AnchorButton>
-                </Tooltip2>
+                </Tooltip>
             );
         }
 
@@ -341,7 +340,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private contextMenuRenderer = (context: IMenuContext) => {
+    private contextMenuRenderer = (context: MenuContext) => {
         const rows = context.getTarget().rows;
         const appStore = AppStore.Instance;
         if (rows && rows.length && appStore.frames[rows[0]]) {
@@ -380,7 +379,6 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
         // This is a necessary hack in order to trigger a re-rendering when values change, because the cell renderer is in its own function
         // There is probably a neater way to do this, though
-        /* eslint-disable @typescript-eslint/no-unused-vars */
         const frameChannels = appStore.frameChannels;
         const frameStokes = appStore.frameStokes;
         const activeFrameIndex = appStore.activeFrameIndex;
@@ -393,12 +391,12 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const currentSpectralReference = appStore.spectralReference;
         const currentSpatialReference = appStore.spatialReference;
         const currentRasterScalingReference = appStore.rasterScalingReference;
+        const cellRendererDependencies = [frameChannels, frameStokes, activeFrameIndex, visibilityRaster, visibilityContour, visibilityOverlay, f1, f2, f3, currentSpectralReference, currentSpatialReference, currentRasterScalingReference];
 
-        /* eslint-enable @typescript-eslint/no-unused-vars */
         return (
             <div className="layer-list-widget">
                 {this.width > 0 && (
-                    <Table
+                    <Table2
                         numRows={frameNum}
                         rowHeaderCellRenderer={this.rowHeaderCellRenderer}
                         enableRowHeader={true}
@@ -411,13 +409,14 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                         enableColumnResizing={true}
                         onColumnWidthChanged={this.onColumnWidthsChange}
                         bodyContextMenuRenderer={this.contextMenuRenderer}
+                        cellRendererDependencies={cellRendererDependencies}
                     >
                         <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.fileNameRenderer} />
                         <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.typeRenderer} />
                         <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.matchingRenderer} />
                         <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.channelRenderer} />
                         <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.stokesRenderer} />
-                    </Table>
+                    </Table2>
                 )}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}></ReactResizeDetector>
             </div>
