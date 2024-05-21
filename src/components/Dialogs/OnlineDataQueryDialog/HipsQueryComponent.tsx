@@ -25,7 +25,7 @@ export const HipsQueryComponent = observer(() => {
                         min={1}
                         majorStepSize={100}
                         stepSize={100}
-                        value={Number.isNaN(hipsQueryStore.size.x) ? "" : hipsQueryStore.size.x}
+                        value={isNaN(hipsQueryStore.size.x) ? "" : hipsQueryStore.size.x}
                         onValueChange={hipsQueryStore.setWidth}
                         disabled={hipsQueryStore.isLoading}
                     />
@@ -34,7 +34,7 @@ export const HipsQueryComponent = observer(() => {
                         min={1}
                         majorStepSize={100}
                         stepSize={100}
-                        value={Number.isNaN(hipsQueryStore.size.y) ? "" : hipsQueryStore.size.y}
+                        value={isNaN(hipsQueryStore.size.y) ? "" : hipsQueryStore.size.y}
                         onValueChange={hipsQueryStore.setHeight}
                         disabled={hipsQueryStore.isLoading}
                     />
@@ -55,21 +55,21 @@ export const HipsQueryComponent = observer(() => {
                         <SafeNumericInput
                             buttonPosition="none"
                             placeholder="X WCS coordinate"
-                            value={Number.isNaN(hipsQueryStore.center.x) ? "" : hipsQueryStore.center.x}
+                            value={isNaN(hipsQueryStore.center.x) ? "" : hipsQueryStore.center.x}
                             onValueChange={hipsQueryStore.setCenterX}
                             disabled={hipsQueryStore.isLoading}
                         />
                         <SafeNumericInput
                             buttonPosition="none"
                             placeholder="Y WCS coordinate"
-                            value={Number.isNaN(hipsQueryStore.center.y) ? "" : hipsQueryStore.center.y}
+                            value={isNaN(hipsQueryStore.center.y) ? "" : hipsQueryStore.center.y}
                             onValueChange={hipsQueryStore.setCenterY}
                             disabled={hipsQueryStore.isLoading}
                         />
                     </FormGroup>
                 )}
                 <FormGroup inline={true} label="Field of view" labelInfo="(deg)" disabled={hipsQueryStore.isLoading}>
-                    <SafeNumericInput buttonPosition="none" value={Number.isNaN(hipsQueryStore.fov) ? "" : hipsQueryStore.fov} onValueChange={hipsQueryStore.setFov} disabled={hipsQueryStore.isLoading} />
+                    <SafeNumericInput buttonPosition="none" value={isNaN(hipsQueryStore.fov) ? "" : hipsQueryStore.fov} onValueChange={hipsQueryStore.setFov} disabled={hipsQueryStore.isLoading} />
                     <Tooltip content="Set to current view center">
                         <AnchorButton icon="locate" disabled={hipsQueryStore.isLoading || !AppStore.Instance.activeFrame} onClick={() => {}} />
                     </Tooltip>
