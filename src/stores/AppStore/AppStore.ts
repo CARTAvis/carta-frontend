@@ -692,13 +692,12 @@ export class AppStore {
             this.fileCounter++;
             const ack: CARTA.IRemoteFileResponse = yield this.backendService.requestRemoteFile(remoteRequest);
             if (!ack.success || !ack.openFileAck) {
-                AppToaster.show({icon: "warning-sign", message: `Load file failed: ${ack.message}`, intent: "danger", timeout: 3000});
+                AppToaster.show({icon: "warning-sign", message: `HiPS data query failed: ${ack.message}`, intent: "danger", timeout: 3000});
             }
             if (!this.addFrame(ack.openFileAck, "", false, "", false, true, false)) {
-                AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+                AppToaster.show({icon: "warning-sign", message: "HiPS data query failed: Load file failed.", intent: "danger", timeout: 3000});
             }
-            this.endFileLoading();
-            this.fileBrowserStore.hideFileBrowser();
+            this.dialogStore.hideDialog(DialogId.OnlineDataQuery);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
@@ -706,8 +705,7 @@ export class AppStore {
             yield this.delay(10);
             return this.getFrame(ack.openFileAck.fileId);
         } catch (err) {
-            this.alertStore.showAlert(`Error loading file: ${err}`);
-            this.endFileLoading();
+            this.alertStore.showAlert(`HiPS data query failed: ${err}`);
             throw err;
         }
     }
