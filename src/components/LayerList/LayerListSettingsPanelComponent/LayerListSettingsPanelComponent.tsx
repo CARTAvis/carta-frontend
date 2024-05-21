@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Alignment, Button, FormGroup, HTMLSelect, MenuDivider, MenuItem, PopoverPosition, Tab, Tabs, Text} from "@blueprintjs/core";
-import {IItemRendererProps, Select} from "@blueprintjs/select";
+import {ItemRendererProps, Select} from "@blueprintjs/select";
 import classNames from "classnames";
 import {computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
@@ -49,7 +49,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
         makeObservable(this);
     }
 
-    private renderFrameOptions = (val: number, itemProps: IItemRendererProps) => {
+    private renderFrameOptions = (val: number, itemProps: ItemRendererProps) => {
         const option = this.widgetStore.restFreqFrameOptions.find(option => option.frameIndex === val);
         return <MenuItem key={option?.frameIndex} text={option?.label} disabled={option?.disable} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };

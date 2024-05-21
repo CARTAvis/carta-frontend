@@ -1,3 +1,5 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .hips-query-panel {
     display: flex;
     flex-direction: column;
@@ -8,13 +10,13 @@
         flex: 1;
         overflow: auto;
 
-        .bp3-label {
+        .#{$ns}-label {
             min-width: 10em;
             width: 10em;
             text-align: right;
         }
 
-        .bp3-form-content {
+        .#{$ns}-form-content {
             display: flex;
             flex-wrap: wrap;
             flex: 1;
@@ -22,10 +24,10 @@
         }
 
         .center-input-form {
-            .bp3-html-select {
+            .#{$ns}-html-select {
                 width: 70px;
             }
-            .bp3-input-group {
+            .#{$ns}-input-group {
                 width: 140px;
             }
         }

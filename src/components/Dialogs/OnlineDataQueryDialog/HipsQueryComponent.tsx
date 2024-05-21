@@ -1,6 +1,5 @@
 import {useState} from "react";
-import {AnchorButton, FormGroup, HTMLSelect, InputGroup, Intent, Radio, RadioGroup} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
+import {AnchorButton, FormGroup, HTMLSelect, InputGroup, Intent, Radio, RadioGroup, Tooltip} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
 import {InputType, SafeNumericInput, WcsCoordNumericInput} from "components/Shared";
@@ -37,9 +36,9 @@ export const HipsQueryComponent = observer(() => {
                         <HTMLSelect options={Object.keys(SystemType).map(key => ({label: key, value: SystemType[key]}))} />
                         <WcsCoordNumericInput inputType={InputType.XCoord} valueWcs={null} onChangeWcs={null} />
                         <WcsCoordNumericInput inputType={InputType.YCoord} valueWcs={null} onChangeWcs={null} />
-                        <Tooltip2 content="Reset to current view center">
+                        <Tooltip content="Reset to current view center">
                             <AnchorButton icon="locate" onClick={() => {}} />
-                        </Tooltip2>
+                        </Tooltip>
                     </FormGroup>
                 )}
                 <FormGroup inline={true} label="Field of view" labelInfo="(deg)">

@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Classes, Intent, Overlay, Spinner} from "@blueprintjs/core";
+import {Classes, Intent, Overlay2, Spinner} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
@@ -13,10 +13,10 @@ import "./SplashScreenComponent.scss";
 export class SplashScreenComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
-        const className = classNames("splash-screen", {"bp3-dark": appStore.darkTheme});
+        const className = classNames("splash-screen", {[Classes.DARK]: appStore.darkTheme});
 
         return (
-            <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={false} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={appStore.splashScreenVisible && !appStore.alertStore.alertVisible} usePortal={true}>
+            <Overlay2 className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={false} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={appStore.splashScreenVisible && !appStore.alertStore.alertVisible} usePortal={true}>
                 <div className={className}>
                     <div className={"image-div"}>
                         <img src="carta_logo.png" width={150} />
@@ -37,7 +37,7 @@ export class SplashScreenComponent extends React.Component {
                         </div>
                     ) : null}
                 </div>
-            </Overlay>
+            </Overlay2>
         );
     }
 }
