@@ -1,10 +1,10 @@
 import {useState} from "react";
-import {AnchorButton, Classes, FormGroup, HTMLSelect, InputGroup, Intent, Overlay2, Radio, RadioGroup, Spinner, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Classes, FormGroup, HTMLSelect, InputGroup, Intent, Overlay2, Radio, RadioGroup, Spinner} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {SafeNumericInput} from "components/Shared";
-import {AppStore, HipsCoord, HipsProjection, HipsQueryStore} from "stores";
+import {HipsCoord, HipsProjection, HipsQueryStore} from "stores";
 
 import "./HipsQueryComponent.scss";
 
@@ -70,9 +70,6 @@ export const HipsQueryComponent = observer(() => {
                 )}
                 <FormGroup inline={true} label="Field of view" labelInfo="(deg)" disabled={hipsQueryStore.isLoading}>
                     <SafeNumericInput buttonPosition="none" value={isNaN(hipsQueryStore.fov) ? "" : hipsQueryStore.fov} onValueChange={hipsQueryStore.setFov} disabled={hipsQueryStore.isLoading} />
-                    <Tooltip content="Set to current view center">
-                        <AnchorButton icon="locate" disabled={hipsQueryStore.isLoading || !AppStore.Instance.activeFrame} onClick={() => {}} />
-                    </Tooltip>
                 </FormGroup>
                 <FormGroup inline={true} label="Coordinate system" disabled={hipsQueryStore.isLoading}>
                     <RadioGroup inline={true} onChange={ev => hipsQueryStore.setCoordsys(ev.currentTarget.value as HipsCoord)} selectedValue={hipsQueryStore.coordsys} disabled={hipsQueryStore.isLoading}>
