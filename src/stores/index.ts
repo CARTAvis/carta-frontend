@@ -9,6 +9,7 @@ export * from "./DialogStore/DialogStore";
 export * from "./FileBrowserStore/FileBrowserStore";
 export * from "./Frame";
 export * from "./HelpStore/HelpStore";
+export * from "./HipsQueryStore/HipsQueryStore";
 export * from "./ImageFittingStore/ImageFittingStore";
 export * from "./LayoutStore/LayoutStore";
 export * from "./LogStore/LogStore";

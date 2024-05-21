@@ -45,6 +45,7 @@ import {
     DialogStore,
     FileBrowserStore,
     HelpStore,
+    HipsQueryStore,
     ImageFittingStore,
     LayoutStore,
     LogEntry,
@@ -115,6 +116,7 @@ export class AppStore {
     readonly preferenceStore: PreferenceStore;
     readonly widgetsStore: WidgetsStore;
     readonly imageFittingStore: ImageFittingStore;
+    readonly hipsQueryStore = HipsQueryStore.Instance;
 
     // WebAssembly Module status
     @observable astReady: boolean;
@@ -684,7 +686,7 @@ export class AppStore {
         }
     }
 
-    @flow.bound *loadRemoteFile(remoteRequest: CARTA.RemoteFileRequest) {
+    @flow.bound *loadRemoteFile(remoteRequest: CARTA.IRemoteFileRequest) {
         try {
             remoteRequest.fileId = this.fileCounter;
             this.fileCounter++;
