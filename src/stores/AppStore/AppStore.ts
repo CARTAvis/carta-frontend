@@ -1,4 +1,4 @@
-import {Classes, Colors, IOptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
+import {Classes, Colors, OptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
 import {Utils} from "@blueprintjs/table";
 import * as AST from "ast_wrapper";
 import axios from "axios";
@@ -64,7 +64,7 @@ import {clamp, distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, g
 
 import GitCommit from "../../static/gitInfo";
 
-interface FrameOption extends IOptionProps {
+interface FrameOption extends OptionProps {
     hasZAxis: boolean;
 }
 
@@ -407,7 +407,7 @@ export class AppStore {
         return id;
     }
 
-    @computed get frameNames(): IOptionProps[] {
+    @computed get frameNames(): OptionProps[] {
         return this.frames?.map((frame, index) => {
             return {
                 label: index + ": " + frame.filename,

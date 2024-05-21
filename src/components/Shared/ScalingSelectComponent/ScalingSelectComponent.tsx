@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Button, IPopoverProps, MenuItem} from "@blueprintjs/core";
+import {Button, MenuItem, PopoverProps} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import gammaPng from "static/equations/gamma.png";
 // Equation PNG images
@@ -28,9 +28,9 @@ const equationPngMap = new Map([
     [FrameScaling.POWER, powerPng]
 ]);
 
-const ScalingSelect = Select.ofType<FrameScaling>();
+const ScalingSelect = Select<FrameScaling>;
 const SCALING_KEYS = Array.from(RenderConfigStore.SCALING_TYPES.keys());
-export const SCALING_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
+export const SCALING_POPOVER_PROPS: Partial<PopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 
 export const ScalingSelectComponent: React.FC<ScalingComponentProps> = props => {
     const renderScalingSelectItem = (scaling: FrameScaling, {handleClick, modifiers, query}) => {

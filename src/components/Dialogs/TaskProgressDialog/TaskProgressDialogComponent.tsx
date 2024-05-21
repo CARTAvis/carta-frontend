@@ -1,6 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Classes, Dialog, ProgressBar} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
+import {AnchorButton, Classes, Dialog, ProgressBar, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
@@ -40,7 +39,7 @@ export class TaskProgressDialogComponent extends React.Component<TaskProgressDia
             titleText = `${this.props.text} (${timeRemainingText} left)`;
         }
 
-        const className = classNames("task-progress-dialog", {"bp3-dark": AppStore.Instance.darkTheme});
+        const className = classNames("task-progress-dialog", {[Classes.DARK]: AppStore.Instance.darkTheme});
         const cancellingText = this.props.isCancelling ? `cancellation in progress${".".repeat(Math.floor(performance.now() / 1000) % 4)}` : "";
 
         return (
@@ -53,11 +52,11 @@ export class TaskProgressDialogComponent extends React.Component<TaskProgressDia
                     <div className={Classes.DIALOG_FOOTER}>
                         <div className="footer-text">{cancellingText}</div>
                         <div className="footer-button">
-                            <Tooltip2 content="Cancel the current task">
+                            <Tooltip content="Cancel the current task">
                                 <AnchorButton onClick={this.props.onCancel} disabled={this.props.isCancelling}>
                                     Cancel
                                 </AnchorButton>
-                            </Tooltip2>
+                            </Tooltip>
                         </div>
                     </div>
                 )}
