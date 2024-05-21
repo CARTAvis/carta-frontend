@@ -143,6 +143,17 @@ export class HipsQueryStore {
         this.isLoading = isLoading;
     };
 
+    @action clear = () => {
+        this.hipsSurvey = "";
+        this.size = {x: NaN, y: NaN};
+        this.object = "";
+        this.center = {x: NaN, y: NaN};
+        this.fov = NaN;
+        this.coordsys = HipsCoord.Icrs;
+        this.projection = HipsProjection.TAN;
+        this.rotationAngle = 0;
+    };
+
     queryByObject = async () => {
         if (!this.object || !this.isValid) {
             return;

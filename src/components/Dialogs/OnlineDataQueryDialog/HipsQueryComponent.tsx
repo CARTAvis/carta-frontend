@@ -1,5 +1,6 @@
 import {useState} from "react";
-import {AnchorButton, FormGroup, HTMLSelect, InputGroup, Intent, Overlay2, Radio, RadioGroup, Spinner, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Classes, FormGroup, HTMLSelect, InputGroup, Intent, Overlay2, Radio, RadioGroup, Spinner, Tooltip} from "@blueprintjs/core";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {SafeNumericInput} from "components/Shared";
@@ -16,7 +17,7 @@ export const HipsQueryComponent = observer(() => {
         <div className="hips-query-panel">
             <div className="hips-query-config">
                 <FormGroup inline={true} label="HiPS survey" disabled={hipsQueryStore.isLoading}>
-                    <InputGroup defaultValue={hipsQueryStore.hipsSurvey} onChange={ev => hipsQueryStore.setHipsSurvey(ev.target.value)} disabled={hipsQueryStore.isLoading} />
+                    <InputGroup value={hipsQueryStore.hipsSurvey} onChange={ev => hipsQueryStore.setHipsSurvey(ev.target.value)} disabled={hipsQueryStore.isLoading} />
                 </FormGroup>
                 <FormGroup inline={true} label="Dimension" labelInfo="(px)" disabled={hipsQueryStore.isLoading}>
                     <SafeNumericInput
@@ -46,7 +47,7 @@ export const HipsQueryComponent = observer(() => {
                 </FormGroup>
                 {queryByObject && (
                     <FormGroup inline={true} label="Object" disabled={hipsQueryStore.isLoading}>
-                        <InputGroup defaultValue={hipsQueryStore.object} onChange={ev => hipsQueryStore.setObject(ev.target.value)} disabled={hipsQueryStore.isLoading} />
+                        <InputGroup value={hipsQueryStore.object} onChange={ev => hipsQueryStore.setObject(ev.target.value)} disabled={hipsQueryStore.isLoading} />
                     </FormGroup>
                 )}
                 {!queryByObject && (
@@ -96,7 +97,8 @@ export const HipsQueryComponent = observer(() => {
                     <Spinner intent={Intent.PRIMARY} size={30} value={null} />
                 </div>
             </Overlay2>
-            <div className="query-footer">
+            <div className={classNames(Classes.DIALOG_FOOTER_ACTIONS, "query-footer")}>
+                <AnchorButton disabled={hipsQueryStore.isLoading} onClick={hipsQueryStore.clear} text="Clear" />
                 <AnchorButton
                     intent={Intent.SUCCESS}
                     disabled={(queryByObject ? !hipsQueryStore.object : !isFinite(hipsQueryStore.center.x) || !isFinite(hipsQueryStore.center.y)) || !hipsQueryStore.isValid}
