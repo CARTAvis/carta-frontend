@@ -46,6 +46,7 @@ export class HipsQueryStore {
     @observable hipsSurvey = "";
     @observable size: Point2D = {x: NaN, y: NaN};
     @observable object = "";
+    @observable center: Point2D = {x: NaN, y: NaN};
     @observable fov = NaN;
     @observable coordsys = HipsCoord.Icrs;
     @observable projection = HipsProjection.TAN;
@@ -109,6 +110,14 @@ export class HipsQueryStore {
         this.object = object;
     };
 
+    @action setCenterX = (x: number) => {
+        this.center.x = x;
+    };
+
+    @action setCenterY = (y: number) => {
+        this.center.y = y;
+    };
+
     @action setFov = (fov: number) => {
         this.fov = fov;
     };
@@ -139,5 +148,18 @@ export class HipsQueryStore {
         AppStore.Instance.loadRemoteFile(message);
     };
 
-    queryByCenter = () => {};
+    queryByCenter = () => {
+        const message: CARTA.IRemoteFileRequest = {
+            hips: this.hipsSurvey,
+            width: this.size.x,
+            height: this.size.y,
+            ra: this.center.x,
+            dec: this.center.y,
+            fov: this.fov,
+            coordsys: this.coordsys,
+            projection: this.projection,
+            rotationAngle: this.rotationAngle
+        };
+        AppStore.Instance.loadRemoteFile(message);
+    };
 }

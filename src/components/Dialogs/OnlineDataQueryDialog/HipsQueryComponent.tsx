@@ -2,8 +2,8 @@ import {useState} from "react";
 import {AnchorButton, FormGroup, HTMLSelect, InputGroup, Intent, Radio, RadioGroup, Tooltip} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
-import {InputType, SafeNumericInput, WcsCoordNumericInput} from "components/Shared";
-import {HipsCoord, HipsProjection, HipsQueryStore, SystemType} from "stores";
+import {SafeNumericInput} from "components/Shared";
+import {AppStore, HipsCoord, HipsProjection, HipsQueryStore} from "stores";
 
 import "./HipsQueryComponent.scss";
 
@@ -34,18 +34,16 @@ export const HipsQueryComponent = observer(() => {
                     </FormGroup>
                 )}
                 {!queryByObject && (
-                    <FormGroup inline={true} label="Center coordinates" className="center-input-form">
-                        <HTMLSelect options={Object.keys(SystemType).map(key => ({label: key, value: SystemType[key]}))} />
-                        <WcsCoordNumericInput inputType={InputType.XCoord} valueWcs={null} onChangeWcs={null} />
-                        <WcsCoordNumericInput inputType={InputType.YCoord} valueWcs={null} onChangeWcs={null} />
-                        <Tooltip content="Reset to current view center">
-                            <AnchorButton icon="locate" onClick={() => {}} />
-                        </Tooltip>
+                    <FormGroup inline={true} label="Center" labelInfo="(deg)">
+                        <SafeNumericInput buttonPosition="none" placeholder="X WCS coordinate" value={Number.isNaN(hipsQueryStore.center.x) ? "" : hipsQueryStore.center.x} onValueChange={hipsQueryStore.setCenterX} />
+                        <SafeNumericInput buttonPosition="none" placeholder="Y WCS coordinate" value={Number.isNaN(hipsQueryStore.center.y) ? "" : hipsQueryStore.center.y} onValueChange={hipsQueryStore.setCenterY} />
                     </FormGroup>
                 )}
                 <FormGroup inline={true} label="Field of view" labelInfo="(deg)">
                     <SafeNumericInput buttonPosition="none" value={Number.isNaN(hipsQueryStore.fov) ? "" : hipsQueryStore.fov} onValueChange={hipsQueryStore.setFov} />
-                    <AnchorButton text="Set to viewer" />
+                    <Tooltip content="Set to current view center">
+                        <AnchorButton icon="locate" disabled={!AppStore.Instance.activeFrame} onClick={() => {}} />
+                    </Tooltip>
                 </FormGroup>
                 <FormGroup inline={true} label="Coordinate system">
                     <RadioGroup inline={true} onChange={ev => hipsQueryStore.setCoordsys(ev.currentTarget.value as HipsCoord)} selectedValue={hipsQueryStore.coordsys}>

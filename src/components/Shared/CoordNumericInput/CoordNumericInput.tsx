@@ -20,8 +20,7 @@ type WcsCoordNumericInputProps = {
     disabled?: boolean;
     customPlaceholder?: string;
 };
-
-export const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled = false, customPlaceholder = ""}: WcsCoordNumericInputProps) => {
+const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled = false, customPlaceholder = ""}: WcsCoordNumericInputProps) => {
     const handleChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;

@@ -22,15 +22,6 @@
             flex: 1;
             gap: 10px;
         }
-
-        .center-input-form {
-            .#{$ns}-html-select {
-                width: 70px;
-            }
-            .#{$ns}-input-group {
-                width: 140px;
-            }
-        }
     }
 
     .query-footer {
