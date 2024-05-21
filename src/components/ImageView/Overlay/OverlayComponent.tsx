@@ -19,8 +19,7 @@ export class OverlayComponentProps {
     width?: number;
     height?: number;
     refCanvas?: any;
-    column?: number;
-    row?: number;
+    channel?: number;
     onClicked?: (cursorInfo: CursorInfo) => void;
     onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
 }
@@ -28,6 +27,7 @@ export class OverlayComponentProps {
 @observer
 export class OverlayComponent extends React.Component<OverlayComponentProps> {
     canvas: HTMLCanvasElement;
+    channelNumberCanvas: HTMLCanvasElement
 
     componentDidMount() {
         if (this.canvas && !this.props.refCanvas) {
@@ -43,21 +43,35 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     }
 
     componentDidUpdate() {
-        if (!this.props.refCanvas) {
-            AppStore.Instance.resetImageRatio();
+        AppStore.Instance.resetImageRatio();
+        if (this.props.refCanvas) {
+            requestAnimationFrame(() => {
+                this.updateImageDimensions();
+                const destCanvas = this.canvas.getContext("2d");
+                const w = this.props.refCanvas.width;
+                const h = this.props.refCanvas.height;
+                destCanvas.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                destCanvas.drawImage(this.props.refCanvas, 0, 0, w, h, 0, 0, this.canvas.width, this.canvas.height);
+            });
+        } else {
             if (PreferenceStore.Instance.limitOverlayRedraw) {
                 this.throttledRenderCanvas();
             } else {
                 requestAnimationFrame(this.renderCanvas);
             }
-        } else {
-            const destCanvas = this.canvas.getContext("2d");
-            const w = this.props.refCanvas.width;
-            const h = this.props.refCanvas.height;
-            destCanvas.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            // destCanvas.rect(0, 0, w, h)
-            destCanvas.drawImage(this.props.refCanvas, 0, 0, w, h, 0, 0, this.canvas.width, this.canvas.height);
-            // destCanvas.fill()
+        }
+
+        if (this.props.channel !== undefined && this.channelNumberCanvas) {
+            requestAnimationFrame(() => {
+                const destCanvas = this.channelNumberCanvas.getContext('2d');
+                this.channelNumberCanvas.width = this.props.overlaySettings.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
+                this.channelNumberCanvas.height = this.props.overlaySettings.viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
+                destCanvas.font = '24px Arial';
+                destCanvas.fillStyle = "red"
+                destCanvas.textAlign = 'left';
+                destCanvas.textBaseline = 'top';
+                destCanvas.fillText(`${this.props.channel}`, this.props.overlaySettings.paddingLeft * devicePixelRatio * AppStore.Instance.imageRatio + 10, 10);
+            });
         }
     }
 
@@ -73,8 +87,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     updateImageDimensions() {
         if (this.canvas) {
             const frame = this.props.frame;
-            // this.canvas.width = (frame?.isPreview ? frame?.previewViewWidth : this.props.overlaySettings.viewWidth) * devicePixelRatio * AppStore.Instance.imageRatio;
-            // this.canvas.height = (frame?.isPreview ? frame?.previewViewHeight : this.props.overlaySettings.viewHeight) * devicePixelRatio * AppStore.Instance.imageRatio;
+
             this.canvas.width = (frame?.isPreview ? frame?.previewViewWidth : this.props.overlaySettings.viewWidth) * devicePixelRatio * AppStore.Instance.imageRatio;
             this.canvas.height = (frame?.isPreview ? frame?.previewViewHeight : this.props.overlaySettings.viewHeight) * devicePixelRatio * AppStore.Instance.imageRatio;
         }
@@ -130,7 +143,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 );
             };
 
-            let currentStyleString = settings.styleString(frame, settings.renderWidth, settings.renderHeight);
+            let currentStyleString = settings.styleString(frame);
 
             // console.log('frameView', frameView)
 
@@ -168,8 +181,11 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     throttledRenderCanvas = _.throttle(this.renderCanvas, 50);
 
     private getRef = ref => {
-        console.log("getting ref");
-        this.canvas = ref;
+        if (ref?.id === "channel-number-canvas") {
+            this.channelNumberCanvas = ref;
+        } else {
+            this.canvas = ref;
+        }
     };
 
     render() {
@@ -246,6 +262,30 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         }
 
         const className = classNames("overlay-canvas", {docked: this.props.docked});
-        return <canvas className={className} style={{top: this.props.top || 0, left: this.props.left || 0, width: w, height: h}} id="overlay-canvas" ref={this.getRef} />;
+        
+        return <>
+            <canvas className={className} style={{top: this.props.top || 0, left: this.props.left || 0, width: w, height: h}} id="overlay-canvas" ref={this.getRef} />
+            <canvas className={className} style={{top: this.props.top || 0, left: this.props.left || 0, width: w, height: h}} id="channel-number-canvas" ref={this.getRef} />
+        </>
     }
 }
+
+/* Fix channel map overlay problem
+    Global:
+        In enable multi-panel, the preferenceStore.channelMapEnabled should be changed accordingly.
+        In multi-panel, there are raster bug. Might be related to viewWidth and height not changing.
+        Changing interior and exterior labelling do not update.
+    Title:
+        When title is enabled in channel map, it should not be rendered for each channel view.
+    Border:
+        Border is not shown for top and right because of base = 0 for overlayStore.
+    Number:
+        Number toggle is not working.
+        Font and font size are not working.
+        Color is not working.
+        Precision is not working.
+    Label:
+        Nothing is working.
+    Colorbar:
+        The tick mark is not extended to the entire colorbar.
+*/

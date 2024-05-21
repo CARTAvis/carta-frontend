@@ -18,6 +18,7 @@ export interface ContourViewComponentProps {
     top?: number;
     left?: number;
     overlayStore?: OverlayStore;
+    channel?: number;
 }
 
 @observer
@@ -30,21 +31,22 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         if (!this.props.refCanvas) {
             this.contourWebGLService = ContourWebGLService.Instance;
             this.gl = this.contourWebGLService.gl;
-            const contourStream = AppStore.Instance.backendService.contourStream;
             if (this.canvas) {
-                contourStream.subscribe(this.triggerUpdate);
+                this.triggerUpdate(); //2330
             }
         }
     }
 
     componentDidUpdate() {
         AppStore.Instance.resetImageRatio();
-        if (this.props.refCanvas) {
-            const destCanvas = this.canvas.getContext("2d");
-            const w = this.props.refCanvas.width;
-            const h = this.props.refCanvas.height;
-            destCanvas.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            destCanvas.drawImage(this.props.refCanvas, 0, 0, w, h, 0, 0, this.canvas.width, this.canvas.height);
+        if (this.props.refCanvas && this.props.channel !== undefined) {
+            requestAnimationFrame(() => {
+                const destCanvas = this.canvas.getContext("2d");
+                const w = this.props.refCanvas.width;
+                const h = this.props.refCanvas.height;
+                destCanvas.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                destCanvas.drawImage(this.props.refCanvas, 0, 0, w, h, 0, 0, this.canvas.width, this.canvas.height);
+            });
         } else {
             this.triggerUpdate();
         }
@@ -109,7 +111,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             if (contourFrames) {
                 // Render back-to-front to preserve ordering
                 for (let i = contourFrames.length - 1; i >= 0; --i) {
-                    this.renderFrameContours(contourFrames[i], baseFrame);
+                    this.renderFrameContours(contourFrames[i], baseFrame, this.props.channel);
                 }
             }
             // draw in 2d canvas
@@ -118,10 +120,11 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             const h = this.canvas.height;
             ctx.clearRect(0, 0, w, h);
             ctx.drawImage(this.gl.canvas, this.props.column * w, this.props.row * h, w, h, 0, 0, w, h);
+            // ctx.drawImage(this.gl.canvas, 0, 0, w, h, 0, 0, w, h);
         }
     };
 
-    private renderFrameContours = (frame: FrameStore, baseFrame: FrameStore) => {
+    private renderFrameContours = (frame: FrameStore, baseFrame: FrameStore, channel?: number) => {
         const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
         const isActive = frame === baseFrame;
         let lineThickness: number;
@@ -229,8 +232,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
                 // Update buffers
                 for (let i = 0; i < contourStore.chunkCount; i++) {
-                    contourStore.bindBuffer(i);
-                    const numVertices = contourStore.numGeneratedVertices[i];
+                    contourStore.bindBuffer(i, channel || frame.requiredChannel);
+                    const numVertices = contourStore.numGeneratedVertices.get(channel || frame.requiredChannel)?.[i];
                     this.gl.vertexAttribPointer(this.contourWebGLService.vertexPositionAttribute, 3, GL2.FLOAT, false, 16, 0);
                     this.gl.vertexAttribPointer(this.contourWebGLService.vertexNormalAttribute, 2, GL2.SHORT, false, 16, 12);
                     this.gl.drawArrays(GL2.TRIANGLE_STRIP, 0, numVertices);
@@ -274,7 +277,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         return (
             <div className={className}>
                 <canvas
-                    id="contour-canvas"
+                    id={`contour-canvas-${this.props.channel}`}
                     className="contour-canvas"
                     ref={this.getRef}
                     style={{

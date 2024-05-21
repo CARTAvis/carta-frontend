@@ -1033,7 +1033,7 @@ export class FrameStore {
         let totalProgress = 0;
         this.contourStores.forEach((contourStore, level) => {
             if (this.contourConfig.levels.indexOf(level) !== -1) {
-                totalProgress += contourStore.progress;
+                totalProgress += contourStore.progress.get(this.requiredChannel); // need to be updated
             }
         });
 
@@ -2298,10 +2298,11 @@ export class FrameStore {
                 this.contourStores.set(contourSet.level, contourStore);
             }
 
-            if (!contourStore.isComplete && processedData.progress > 0) {
-                contourStore.addContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
+            console.log('ooo', contourStore.progress.has(processedData.channel), contourStore.isComplete(processedData.channel), processedData.channel)
+            if (contourStore.progress.has(processedData.channel) && !contourStore.isComplete(processedData.channel) && processedData.progress > 0) {
+                contourStore.addContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress, processedData.channel);
             } else {
-                contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
+                contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress, processedData.channel);
             }
         }
 
@@ -2610,7 +2611,8 @@ export class FrameStore {
             },
             decimationFactor: preferenceStore.contourDecimation,
             compressionLevel: preferenceStore.contourCompressionLevel,
-            contourChunkSize: preferenceStore.contourChunkSize
+            contourChunkSize: preferenceStore.contourChunkSize,
+            channelRange: preferenceStore.channelMapEnabled && {min: AppStore.Instance.channelMapStore.startChannel, max: AppStore.Instance.channelMapStore.channelRange}
         };
         this.backendService.setContourParameters(contourParameters);
     };

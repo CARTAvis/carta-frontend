@@ -1,6 +1,6 @@
 import * as React from "react";
 import {CSSProperties} from "react";
-import {AnchorButton, ButtonGroup, IconName, Menu, MenuDivider, MenuItem, PopoverPosition, Position} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, IconName, Menu, MenuDivider, MenuItem, PopoverPosition, Position, RangeSlider, Slider} from "@blueprintjs/core";
 import {Popover2, Popover2InteractionKind, Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -15,6 +15,7 @@ import {SystemType} from "stores/OverlayStore/OverlayStore";
 import {toFixed} from "utilities";
 
 import "./ToolbarComponent.scss";
+import { ChannelMapStore } from "../ChannelMapView/ChannelMapViewComponent";
 
 export class ToolbarComponentProps {
     docked: boolean;
@@ -365,6 +366,26 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                         <Tooltip2 position={tooltipPosition} content={<span>Zoom to fit{currentZoomSpan}</span>}>
                             <AnchorButton icon="zoom-to-fit" onClick={this.props.onZoomToFit} />
                         </Tooltip2>
+                        {appStore.preferenceStore.channelMapEnabled && <Popover2 
+                            content={
+                                <div style={{margin: "10px"}}>
+                                    <Slider
+                                        min={0}
+                                        max={frame.frameInfo.fileInfoExtended.depth - appStore.channelMapStore.numChannels}
+                                        stepSize={1}
+                                        labelStepSize={Math.floor(frame.frameInfo.fileInfoExtended.depth / 5)}
+                                        value={appStore.channelMapStore.startChannel}
+                                        onChange={channel => appStore.channelMapStore.setStartChannel(channel)}
+                                    />
+                                </div>
+                            }
+                            position={Position.TOP}
+                            disabled={!appStore.preferenceStore.channelMapEnabled} 
+                        >
+                            <AnchorButton disabled={!appStore.preferenceStore.channelMapEnabled} className={"full-zoom-button"} >
+                                    Channel
+                            </AnchorButton>
+                        </Popover2>}
                         {!frame.isPreview && (
                             <>
                                 <Popover2 content={wcsMatchingMenu} position={Position.TOP} minimal={true}>

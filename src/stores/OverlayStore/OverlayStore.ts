@@ -326,6 +326,7 @@ export class OverlayBorderSettings {
 }
 
 export class OverlayTickSettings {
+    @observable visible: boolean;
     @observable drawAll: boolean;
     @observable densityX: number;
     @observable densityY: number;
@@ -350,6 +351,7 @@ export class OverlayTickSettings {
 
     constructor() {
         makeObservable(this);
+        this.visible = true;
         this.drawAll = true;
         this.customDensity = false;
         this.densityX = 4;
@@ -359,6 +361,10 @@ export class OverlayTickSettings {
         this.width = 1;
         this.length = 1; // percentage
         this.majorLength = 2; // percentage
+    }
+
+    @action setVisible(visible: boolean) {
+        this.visible = visible;
     }
 
     @action setDrawAll(drawAll: boolean = true) {
@@ -1060,13 +1066,13 @@ export class OverlayStore {
         makeObservable(this);
         this.imageViewerSettingStore = ImageViewerSettingStore.Instance;
         this.global = this.imageViewerSettingStore.global;
-        this.title = this.imageViewerSettingStore.title;
         this.grid = this.imageViewerSettingStore.grid;
-        this.border = this.imageViewerSettingStore.border;
+        this.border = new OverlayBorderSettings();
         this.axes = this.imageViewerSettingStore.axes;
         this.numbers = new OverlayNumberSettings();
         this.labels = new OverlayLabelSettings();
-        this.ticks = this.imageViewerSettingStore.ticks;
+        this.title = new OverlayTitleSettings();
+        this.ticks = new OverlayTickSettings();
         this.colorbar = this.imageViewerSettingStore.colorbar;
         this.beam = this.imageViewerSettingStore.beam;
         this._fullViewWidth = fullViewWidth;
@@ -1215,36 +1221,36 @@ export class OverlayStore {
 
         this.labels.setHidden(newState);
         this.numbers.setHidden(newState);
-        this.imageViewerSettingStore.title.setHidden(newState);
+        this.title.setHidden(newState);
     };
 
     @computed get labelsHidden() {
-        return (this.labels.bottomHidden || this.labels.leftHidden) && (this.numbers.bottomHidden || this.numbers.leftHidden) && this.imageViewerSettingStore.title.hidden && this.isChannelMap;
+        return (this.labels.bottomHidden || this.labels.leftHidden) && (this.numbers.bottomHidden || this.numbers.leftHidden) && this.title.hidden && this.isChannelMap;
     }
 
-    public styleString(frame?: FrameStore, renderWidth?: number, renderHeight?: number) {
+    public styleString(frame?: FrameStore) {
         let astString = new ASTSettingsString();
         astString.addSection(this.imageViewerSettingStore.global.styleString(frame));
-        astString.addSection(this.imageViewerSettingStore.title.styleString);
+        astString.addSection(this.title.styleString);
         astString.addSection(this.imageViewerSettingStore.grid.styleString);
-        astString.addSection(this.imageViewerSettingStore.border.styleString);
-        astString.addSection(this.imageViewerSettingStore.ticks.styleString);
+        astString.addSection(this.border.styleString);
+        astString.addSection(this.ticks.styleString);
         astString.addSection(this.imageViewerSettingStore.axes.styleString);
         astString.addSection(this.numbers.styleString);
         astString.addSection(this.labels.styleString);
 
         astString.add("LabelUp", 0);
-        astString.add("TitleGap", this.titleGap / this.minSize(frame, this.renderWidth, this.renderHeight));
-        astString.add("NumLabGap", this.defaultGap / this.minSize(frame, this.renderWidth, this.renderHeight));
-        astString.add("TextLabGap", this.cumulativeLabelGap / this.minSize(frame, this.renderWidth, this.renderHeight));
+        astString.add("TitleGap", this.titleGap / this.minSize(frame));
+        astString.add("NumLabGap", this.defaultGap / this.minSize(frame));
+        astString.add("TextLabGap", this.cumulativeLabelGap / this.minSize(frame));
         astString.add("TextGapType", "plot");
         frame ? astString.addSection(frame.distanceMeasuring?.styleString) : astString.addSection(AppStore.Instance.activeFrame?.distanceMeasuring?.styleString);
 
         return astString.toString();
     }
 
-    @action minSize(frame?: FrameStore, renderWidth?: number, renderHeight?: number) {
-        return Math.min(renderWidth || frame.renderWidth || this.renderWidth, renderHeight || frame.renderHeight || this.renderHeight);
+    @action minSize(frame?: FrameStore) {
+        return Math.min(this.renderWidth || frame.renderWidth, this.renderHeight || frame.renderHeight);
     }
 
     @computed get showNumbers() {
@@ -1287,7 +1293,7 @@ export class OverlayStore {
 
     @computed get paddingTop(): number {
         return (
-            this.base + (this.imageViewerSettingStore.title.show ? this.titleGap + this.imageViewerSettingStore.title.fontSize : !this.isChannelMap && this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0)
+            this.base + (this.title.show ? this.titleGap + this.title.fontSize : !this.isChannelMap && this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0)
         );
     }
 
@@ -1308,11 +1314,11 @@ export class OverlayStore {
 
     // We have to choose between custom view size or default view size. If fullViewWidth and fullViewHeight are defined, then we use them, otherwise, use imageViewerSetting.
     @computed get viewWidth() {
-        return Math.floor(this.fullViewWidth || this.imageViewerSettingStore.fullViewWidth / AppStore.Instance.numImageColumns);
+        return Math.floor(this.fullViewWidth || (this.imageViewerSettingStore.fullViewWidth / AppStore.Instance.numImageColumns));
     }
 
     @computed get viewHeight() {
-        return Math.floor(this.fullViewHeight || this.imageViewerSettingStore.fullViewHeight / AppStore.Instance.numImageRows);
+        return Math.floor(this.fullViewHeight || (this.imageViewerSettingStore.fullViewHeight / AppStore.Instance.numImageRows));
     }
 
     @computed get renderWidth() {
@@ -1363,22 +1369,20 @@ export class ImageViewerSettingStore {
     public fullViewHeight: number;
 
     @observable global: OverlayGlobalSettings;
-    @observable title: OverlayTitleSettings;
     @observable grid: OverlayGridSettings;
-    @observable border: OverlayBorderSettings;
+    // @observable border: OverlayBorderSettings;
     @observable axes: OverlayAxisSettings;
-    @observable ticks: OverlayTickSettings;
+    // @observable ticks: OverlayTickSettings;
     @observable colorbar: OverlayColorbarSettings;
     @observable beam: OverlayBeamSettings;
 
     public constructor(fullViewWidth: number = 1, fullViewHeight: number = 1) {
         makeObservable(this);
         this.global = new OverlayGlobalSettings();
-        this.title = new OverlayTitleSettings();
         this.grid = new OverlayGridSettings();
-        this.border = new OverlayBorderSettings();
+        // this.border = new OverlayBorderSettings();
         this.axes = new OverlayAxisSettings();
-        this.ticks = new OverlayTickSettings();
+        // this.ticks = new OverlayTickSettings();
         this.beam = new OverlayBeamSettings();
         this.colorbar = new OverlayColorbarSettings();
         this.fullViewWidth = fullViewWidth;

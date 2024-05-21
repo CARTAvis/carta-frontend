@@ -69,6 +69,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
     componentDidUpdate() {
         AppStore.Instance.resetImageRatio();
+        this.props.frame.colorbarStore.setHeight(AppStore.Instance.overlayStore?.colorbar.height(this.props.frame, this.props.length))
     }
 
     private handleMouseMove = event => {
@@ -84,12 +85,12 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         let point = colorbarSettings.position === "right" ? stage.getPointerPosition().y : stage.getPointerPosition().x;
         let scaledPos = point - colorbarSettings.yOffset(frame);
         if (colorbarSettings.position === "right") {
-            scaledPos = colorbarSettings.height(this.props.frame) - scaledPos;
+            scaledPos = colorbarSettings.height(this.props.frame, this.props.length) - scaledPos;
         }
-        scaledPos /= colorbarSettings.height(this.props.frame);
+        scaledPos /= colorbarSettings.height(this.props.frame, this.props.length);
         scaledPos = clamp(scaledPos, 0.0, 1.0);
         // Recalculate clamped point position
-        point = clamp(point, colorbarSettings.yOffset(frame), colorbarSettings.yOffset(frame) + colorbarSettings.height(this.props.frame));
+        point = clamp(point, colorbarSettings.yOffset(frame), colorbarSettings.yOffset(frame) + colorbarSettings.height(this.props.frame, this.props.length));
         // Lock to mid-pixel for sharp lines
         point = Math.floor(point) + 0.5;
 
@@ -109,7 +110,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const colorbarSettings = appStore.overlayStore.colorbar;
         const viewHeight = this.props.height || frame.previewViewHeight || frame.overlayStore.viewHeight;
         const viewWidth = this.props.width || frame.previewViewWidth || frame.overlayStore.viewWidth;
-        const colorbarSettingsHeight = this.props.length || colorbarSettings.height(frame);
+        const colorbarSettingsHeight = this.props.length || colorbarSettings.height(frame, this.props.length);
 
         appStore.updateLayerPixelRatio(this.layerRef);
 
@@ -139,7 +140,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
         // adjust stage position
         if (colorbarSettings.position === "right") {
-            stageLeft = this.props.width || frame.overlayStore.padding.left + frame.renderWidth;
+            stageLeft = this.props.width || (frame.overlayStore.padding.left + frame.renderWidth);
             stageTop = this.props.top || 0;
         } else if (colorbarSettings.position === "bottom") {
             stageTop = this.props.top || viewHeight - frame.overlayStore.colorbarHoverInfoHeight - colorbarSettings.stageWidth;

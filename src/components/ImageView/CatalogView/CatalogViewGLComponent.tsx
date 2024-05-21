@@ -40,11 +40,13 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
 
     componentDidUpdate() {
         if (this.props.refCanvas) {
-            const destCanvas = this.canvas.getContext("2d");
-            const w = this.props.refCanvas.width;
-            const h = this.props.refCanvas.height;
-            destCanvas.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            destCanvas.drawImage(this.props.refCanvas, 0, 0, w, h, 0, 0, this.canvas.width, this.canvas.height);
+            requestAnimationFrame(() => {
+                const destCanvas = this.canvas.getContext("2d");
+                const w = this.props.refCanvas.width;
+                const h = this.props.refCanvas.height;
+                destCanvas.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                destCanvas.drawImage(this.props.refCanvas, 0, 0, w, h, 0, 0, this.canvas.width, this.canvas.height);
+            });
         } else {
             AppStore.Instance.resetImageRatio();
             requestAnimationFrame(this.updateCanvas);

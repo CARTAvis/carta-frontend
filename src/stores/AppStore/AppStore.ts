@@ -1479,10 +1479,10 @@ export class AppStore {
         if (this.astReady) {
             const astColors = [
                 getColorForTheme(this.overlayStore.global.color),
-                getColorForTheme(this.overlayStore.title.color),
+                getColorForTheme(this.activeFrame?.overlayStore.title.color),
                 getColorForTheme(this.overlayStore.grid.color),
-                getColorForTheme(this.overlayStore.border.color),
-                getColorForTheme(this.overlayStore.ticks.color),
+                getColorForTheme(this.activeFrame?.overlayStore.border.color),
+                getColorForTheme(this.activeFrame?.overlayStore.ticks.color),
                 getColorForTheme(this.overlayStore.axes.color),
                 getColorForTheme(this.activeFrame?.overlayStore.numbers.color || DEFAULT_COLOR),
                 getColorForTheme(this.activeFrame?.overlayStore.labels.color || DEFAULT_COLOR),
