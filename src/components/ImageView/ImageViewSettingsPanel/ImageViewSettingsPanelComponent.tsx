@@ -206,14 +206,14 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <span className="info-string">{getInfoString(frame?.fovSize?.y, frame?.fovSizeWCS?.y)}</span>
                 </FormGroup>
                 <FormGroup inline={true} label="Offset Coordinates">
-                    <Switch checked={frame.isOffsetCoord} disabled={frame.isPVImage || frame.isSwappedZ || frame.isUVImage} onChange={frame.toggleOffsetCoord} />
-                    <Collapse isOpen={frame.isOffsetCoord}>
+                    <Switch checked={frame?.isOffsetCoord} disabled={frame?.isPVImage || frame?.isSwappedZ || frame?.isUVImage} onChange={frame?.toggleOffsetCoord} />
+                    <Collapse isOpen={frame?.isOffsetCoord}>
                         <Tooltip content="Set offset to current view center" position={Position.BOTTOM} hoverOpenDelay={300}>
-                            <Button icon="locate" disabled={!frame.isOffsetCoord} onClick={() => frame.updateOffseCenter()} />
+                            <Button icon="locate" disabled={!frame?.isOffsetCoord} onClick={() => frame?.updateOffseCenter()} />
                         </Tooltip>
                     </Collapse>
                 </FormGroup>
-                <Collapse isOpen={frame.isOffsetCoord}>
+                <Collapse isOpen={frame?.isOffsetCoord}>
                     <FormGroup inline={true} label="Offset Center (X)" labelInfo={fovLabelInfo}>
                         <CoordNumericInput
                             coord={this.panAndZoomCoord}
