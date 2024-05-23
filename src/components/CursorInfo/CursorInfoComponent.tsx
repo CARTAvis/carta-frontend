@@ -141,13 +141,13 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
         const columnHeaders = columnNames.map((name, index) => new CARTA.CatalogHeader({name: name, dataType, columnIndex: index}));
 
         const imageNames = appStore.imageViewConfigStore.imageNames;
-        let values = Array(imageNum).fill("-");
-        let systems = Array(imageNum).fill("-");
-        let worldCoords = Array(imageNum).fill("-");
-        let imageCoords = Array(imageNum).fill("-");
-        let zCoords = Array(imageNum).fill("-");
-        let channels = Array(imageNum).fill("-");
-        let stokes = Array(imageNum).fill("-");
+        const values = Array(imageNum).fill("-");
+        const systems = Array(imageNum).fill("-");
+        const worldCoords = Array(imageNum).fill("-");
+        const imageCoords = Array(imageNum).fill("-");
+        const zCoords = Array(imageNum).fill("-");
+        const channels = Array(imageNum).fill("-");
+        const stokes = Array(imageNum).fill("-");
 
         const showFrames = frame.spatialReference ? [frame.spatialReference, ...frame.spatialReference.secondarySpatialImages] : [frame, ...frame.secondarySpatialImages];
         const showFileIds = showFrames.map(frame => frame.frameInfo.fileId);
