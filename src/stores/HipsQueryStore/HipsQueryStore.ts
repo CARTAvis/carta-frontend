@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {Point2D} from "models";
-import {AppStore} from "stores/AppStore/AppStore";
+import {AppStore} from "stores";
 
 /** Coordinate systems for HiPS data queries. */
 export enum HipsCoord {
