@@ -4,11 +4,13 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {Point2D} from "models";
 import {AppStore} from "stores/AppStore/AppStore";
 
+/** Coordinate systems for HiPS data queries. */
 export enum HipsCoord {
     Icrs = "icrs",
     Galactic = "galatic"
 }
 
+/** Projection types for HiPS data queries. */
 export enum HipsProjection {
     AZP = "AZP",
     SZP = "SZP",
@@ -40,23 +42,35 @@ export enum HipsProjection {
     XPH = "XPH"
 }
 
+/** Management of HiPS data queries. */
 export class HipsQueryStore {
     private static staticInstance: HipsQueryStore;
 
+    /** The HiPS survey to be used. */
     @observable hipsSurvey = "";
+    /** The width and height of the output image. */
     @observable size: Point2D = {x: NaN, y: NaN};
+    /** The object name on which the output image will be centered. */
     @observable object = "";
+    /** The center coordinates of the output image. */
     @observable center: Point2D = {x: NaN, y: NaN};
+    /** The field of view of the output image. */
     @observable fov = NaN;
+    /** The coordinate system of the output image. */
     @observable coordsys = HipsCoord.Icrs;
+    /** The projection type of the output image. */
     @observable projection = HipsProjection.TAN;
+    /** The rotation angle of the output image. */
     @observable rotationAngle = 0;
+    /** Whether the query is in progress. */
     @observable isLoading = false;
 
+    /** Whether the current state is valid for a HiPS data query. */
     @computed get isValid() {
         return this.hipsSurvey && this.size.x > 0 && this.size.y > 0 && (this.object || (isFinite(this.center.x) && isFinite(this.center.y))) && this.fov > 0 && isFinite(this.rotationAngle) && !this.isLoading;
     }
 
+    /** HiPS projection types and their descriptions. */
     static readonly ProjectionOptionMap = new Map([
         [HipsProjection.AZP, "zenithal/azimuthal perspective"],
         [HipsProjection.SZP, "slant zenithal perspective"],
@@ -99,50 +113,95 @@ export class HipsQueryStore {
         makeObservable(this);
     }
 
+    /**
+     * Sets the HiPS survey to be used.
+     * @param hipsSurvey - The HiPS survey to set.
+     */
     @action setHipsSurvey = (hipsSurvey: string) => {
         this.hipsSurvey = hipsSurvey;
     };
 
+    /**
+     * Sets the width of the output image.
+     * @param width - The width to set.
+     */
     @action setWidth = (width: number) => {
         this.size.x = width;
     };
 
+    /**
+     * Sets the height of the output image.
+     * @param height - The height to set.
+     */
     @action setHeight = (height: number) => {
         this.size.y = height;
     };
 
+    /**
+     * Sets the object name on which the output image will be centered.
+     * @param object - The object name to set.
+     */
     @action setObject = (object: string) => {
         this.object = object;
     };
 
+    /**
+     * Sets the center x coordinate of the output image.
+     * @param x - The center x coordinate to set.
+     */
     @action setCenterX = (x: number) => {
         this.center.x = x;
     };
 
+    /**
+     * Sets the center y coordinate of the output image.
+     * @param y - The center y coordinate to set.
+     */
     @action setCenterY = (y: number) => {
         this.center.y = y;
     };
 
+    /**
+     * Sets the field of view of the output image.
+     * @param fov - The field of view to set.
+     */
     @action setFov = (fov: number) => {
         this.fov = fov;
     };
 
+    /**
+     * Sets the coordinate system of the output image.
+     * @param coordsys - The coordinate system to set.
+     */
     @action setCoordsys = (coordsys: HipsCoord) => {
         this.coordsys = coordsys;
     };
 
+    /**
+     * Sets the projection type of the output image.
+     * @param projection - The projection type to set.
+     */
     @action setProjection = (projection: HipsProjection) => {
         this.projection = projection;
     };
 
+    /**
+     * Sets the rotation angle of the output image.
+     * @param rotationAngle - The rotation angle to set.
+     */
     @action setRotationAngle = (rotationAngle: number) => {
         this.rotationAngle = rotationAngle;
     };
 
+    /**
+     * Updates the query state.
+     * @param isLoading - Whether the query is in progress.
+     */
     @action setIsLoading = (isLoading: boolean) => {
         this.isLoading = isLoading;
     };
 
+    /** Resets the input parameters. */
     @action clear = () => {
         this.hipsSurvey = "";
         this.size = {x: NaN, y: NaN};
@@ -154,6 +213,7 @@ export class HipsQueryStore {
         this.rotationAngle = 0;
     };
 
+    /** Sends a HiPS data query by the object name. */
     queryByObject = async () => {
         if (!this.object || !this.isValid) {
             return;
@@ -178,6 +238,7 @@ export class HipsQueryStore {
         this.setIsLoading(false);
     };
 
+    /** Sends a HiPS data query by the center coordinates. */
     queryByCenter = async () => {
         if (!isFinite(this.center.x) || !isFinite(this.center.y) || !this.isValid) {
             return;

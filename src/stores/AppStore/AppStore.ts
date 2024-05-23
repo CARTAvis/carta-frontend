@@ -686,6 +686,13 @@ export class AppStore {
         }
     }
 
+    /**
+     * Loads a file by HiPS data queries and adds it as a frame.
+     *
+     * @param remoteRequest - Parameters for the query.
+     * @returns The added frame.
+     * @throws If there is an error loading the file.
+     */
     @flow.bound *loadRemoteFile(remoteRequest: CARTA.IRemoteFileRequest) {
         try {
             remoteRequest.fileId = this.fileCounter;
