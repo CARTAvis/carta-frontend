@@ -85,6 +85,8 @@ describe("HipsQueryStore", () => {
     });
 
     it("checks if the parameters are valid", () => {
+        expect(store.isValid).toBe(false);
+
         store.setHipsSurvey("survey1");
         store.setWidth(100);
         store.setHeight(200);
@@ -117,16 +119,10 @@ describe("HipsQueryStore", () => {
             rotationAngle: 45
         };
 
-        store.setHipsSurvey("survey1");
-        store.setWidth(100);
-        store.setHeight(200);
         store.setObject("object1");
-        store.setFov(1.23);
-        store.setRotationAngle(45);
         store.setIsLoading(false);
 
         await store.queryByObject();
-
         expect(mockLoadRemoteFile).toHaveBeenCalledWith(message);
     });
 
@@ -143,17 +139,7 @@ describe("HipsQueryStore", () => {
             rotationAngle: 45
         };
 
-        store.setHipsSurvey("survey1");
-        store.setWidth(100);
-        store.setHeight(200);
-        store.setCenterX(123.45);
-        store.setCenterY(67.89);
-        store.setFov(1.23);
-        store.setRotationAngle(45);
-        store.setIsLoading(false);
-
         await store.queryByCenter();
-
         expect(mockLoadRemoteFile).toHaveBeenCalledWith(message);
     });
 });
