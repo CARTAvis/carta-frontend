@@ -262,6 +262,7 @@ export class FittingDialogComponent extends React.Component {
                         <div className={Classes.DIALOG_FOOTER}>
                             <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                                 <Switch checked={fittingStore.createModelImage} onChange={fittingStore.toggleCreateModelImage} label="Model" />
+                                <Switch checked={fittingStore.createDeconModelImage} onChange={fittingStore.toggleCreateDeconModelImage} label="Deconvolved model" />
                                 <Switch checked={fittingStore.createResidualImage} onChange={fittingStore.toggleCreateResidualImage} label="Residual" />
                                 <Tooltip content="Clear fitting parameters" position={Position.BOTTOM}>
                                     <AnchorButton intent={Intent.WARNING} onClick={fittingStore.clearComponents} text="Clear" />
