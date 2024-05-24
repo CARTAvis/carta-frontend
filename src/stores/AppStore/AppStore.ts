@@ -1431,7 +1431,7 @@ export class AppStore {
                 if (ack.deconvolvedModelImage) {
                     if (this.addFrame(CARTA.OpenFileAck.create(ack.deconvolvedModelImage), this.fileBrowserStore.startingDirectory, false, "", true)) {
                         this.fileCounter++;
-                        frame?.addFittingDeconModelImage(this.getFrame(ack.deconvolvedModelImage.fileId));
+                        frame?.addFittingModelImage(this.getFrame(ack.deconvolvedModelImage.fileId));
                     } else {
                         AppToaster.show({icon: "warning-sign", message: "Load model deconvolved image failed.", intent: "danger", timeout: 3000});
                     }

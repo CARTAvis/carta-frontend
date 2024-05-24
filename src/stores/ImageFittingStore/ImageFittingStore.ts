@@ -29,7 +29,6 @@ export class ImageFittingStore {
     @observable backgroundOffsetFixed: boolean = true;
     @observable solverType: CARTA.FittingSolverType = CARTA.FittingSolverType.Cholesky;
     @observable createModelImage: boolean = true;
-    @observable createDeconModelImage: boolean = true;
     @observable createResidualImage: boolean = true;
     @observable isFitting: boolean = false;
     @observable progress: number = 0;
@@ -95,10 +94,6 @@ export class ImageFittingStore {
 
     @action toggleCreateModelImage = () => {
         this.createModelImage = !this.createModelImage;
-    };
-
-    @action toggleCreateDeconModelImage = () => {
-        this.createDeconModelImage = !this.createDeconModelImage;
     };
 
     @action toggleCreateResidualImage = () => {
@@ -207,7 +202,6 @@ export class ImageFittingStore {
             regionId,
             fovInfo,
             createModelImage: this.createModelImage,
-            createDeconModelImage: this.createDeconModelImage,
             createResidualImage: this.createResidualImage,
             offset: this.backgroundOffset,
             solver: this.solverType
