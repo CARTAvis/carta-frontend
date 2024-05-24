@@ -67,7 +67,7 @@ export class HipsQueryStore {
 
     /** Whether the current state is valid for a HiPS data query. */
     @computed get isValid(): boolean {
-        return this.hipsSurvey.length > 0 && this.size.x > 0 && this.size.y > 0 && (this.object || (isFinite(this.center.x) && isFinite(this.center.y))) && this.fov > 0 && isFinite(this.rotationAngle) && !this.isLoading;
+        return this.hipsSurvey.length > 0 && this.size.x > 0 && this.size.y > 0 && (this.object.length > 0 || (isFinite(this.center.x) && isFinite(this.center.y))) && this.fov > 0 && isFinite(this.rotationAngle) && !this.isLoading;
     }
 
     /** HiPS projection types and their descriptions. */

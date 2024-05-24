@@ -1,7 +1,8 @@
 const migratedFiles = [
     "utilities",
     "models",
-    "services"
+    "services",
+    "stores/HipsQueryStore/HipsQueryStore.ts"
 ];
 
 module.exports = {
