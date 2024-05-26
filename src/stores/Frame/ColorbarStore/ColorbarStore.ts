@@ -1,4 +1,4 @@
-import {action,computed, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 
 import {OverlayStore} from "stores";
 import {FrameStore} from "stores/Frame";
