@@ -27,7 +27,7 @@ export class OverlayComponentProps {
 @observer
 export class OverlayComponent extends React.Component<OverlayComponentProps> {
     canvas: HTMLCanvasElement;
-    channelNumberCanvas: HTMLCanvasElement
+    channelNumberCanvas: HTMLCanvasElement;
 
     componentDidMount() {
         if (this.canvas && !this.props.refCanvas) {
@@ -63,13 +63,13 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         if (this.props.channel !== undefined && this.channelNumberCanvas) {
             requestAnimationFrame(() => {
-                const destCanvas = this.channelNumberCanvas.getContext('2d');
+                const destCanvas = this.channelNumberCanvas.getContext("2d");
                 this.channelNumberCanvas.width = this.props.overlaySettings.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
                 this.channelNumberCanvas.height = this.props.overlaySettings.viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
-                destCanvas.font = '24px Arial';
-                destCanvas.fillStyle = "red"
-                destCanvas.textAlign = 'left';
-                destCanvas.textBaseline = 'top';
+                destCanvas.font = "24px Arial";
+                destCanvas.fillStyle = "red";
+                destCanvas.textAlign = "left";
+                destCanvas.textBaseline = "top";
                 destCanvas.fillText(`${this.props.channel}`, this.props.overlaySettings.paddingLeft * devicePixelRatio * AppStore.Instance.imageRatio + 10, 10);
             });
         }
@@ -125,8 +125,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     frameView.xMax,
                     frameView.yMin / frame.aspectRatio,
                     frameView.yMax / frame.aspectRatio,
-                    // (this.props.frame.isPreview ? this.props.frame?.previewViewWidth : this.props.overlaySettings.viewWidth + settings.padding.left) * pixelRatio,
-                    // (this.props.frame.isPreview ? this.props.frame?.previewViewHeight : this.props.overlaySettings.viewHeight + settings.padding.bottom) * pixelRatio,
                     (this.props.frame.isPreview ? this.props.frame?.previewViewWidth : this.props.overlaySettings.viewWidth) * pixelRatio,
                     (this.props.frame.isPreview ? this.props.frame?.previewViewHeight : this.props.overlaySettings.viewHeight) * pixelRatio,
                     settings.padding.left * pixelRatio,
@@ -262,11 +260,13 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         }
 
         const className = classNames("overlay-canvas", {docked: this.props.docked});
-        
-        return <>
-            <canvas className={className} style={{top: this.props.top || 0, left: this.props.left || 0, width: w, height: h}} id="overlay-canvas" ref={this.getRef} />
-            <canvas className={className} style={{top: this.props.top || 0, left: this.props.left || 0, width: w, height: h}} id="channel-number-canvas" ref={this.getRef} />
-        </>
+
+        return (
+            <>
+                <canvas className={className} style={{top: this.props.top || 0, left: this.props.left || 0, width: w, height: h}} id="overlay-canvas" ref={this.getRef} />
+                <canvas className={className} style={{top: this.props.top || 0, left: this.props.left || 0, width: w, height: h}} id="channel-number-canvas" ref={this.getRef} />
+            </>
+        );
     }
 }
 

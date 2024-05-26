@@ -61,8 +61,8 @@ export class TileService {
     }
 
     private readonly backendService: BackendService;
-    private readonly cacheMapCompressedTiles: Map<number, LRUCache<number|undefined, CompressedTile>>;
-    private readonly pendingRequests: Map<string|undefined, Map<number, boolean>>;
+    private readonly cacheMapCompressedTiles: Map<number, LRUCache<number | undefined, CompressedTile>>;
+    private readonly pendingRequests: Map<string | undefined, Map<number, boolean>>;
     private readonly pendingDecompressions: Map<string, Map<number, Map<number, boolean>>>;
     private readonly channelMap: Map<number, {channel: number | null | undefined; stokes: number | null | undefined}>;
     private readonly completedChannels: Map<string, boolean>;
@@ -306,7 +306,7 @@ export class TileService {
                         const compressedTile = this.getCompressedCache(fileId).get(gpuCacheCoordinate);
                         const pendingCompressionMap = this.pendingDecompressions.get(subKey);
                         const tileIsQueuedForDecompression = pendingCompressionMap && pendingCompressionMap.has(encodedCoordinate);
-                        
+
                         const tileCached = this.cachedTiles?.has(gpuCacheCoordinate);
 
                         if (!tileCached && compressedTile && !tileIsQueuedForDecompression) {

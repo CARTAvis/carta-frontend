@@ -54,13 +54,13 @@ export class ChannelMapStore {
     @observable masterFrame: FrameStore;
     @observable _auxiliaryFrame: FrameStore;
     @observable auxiliaryFrameChannel: number = 0;
-    @observable startChannel: number;
+    @observable startChannel: number = 0;
     @observable numColumns: number;
     @observable numRows: number;
-    @observable showAuxiliaryFrame: boolean;
-    @observable singleChannelContour: boolean;
+    @observable showAuxiliaryFrame: boolean = false;
+    @observable singleChannelContour: boolean = true;
     @observable singleContourChannel: number = 0;
-    public overlayStores: {corner: OverlayStore; left: OverlayStore; bottom: OverlayStore; inner: OverlayStore; outer: OverlayStore};
+    @observable overlayStores: {corner: OverlayStore; left: OverlayStore; bottom: OverlayStore; inner: OverlayStore; outer: OverlayStore};
     public overlayStoreCanvasReference: {corner: any; left: any; bottom: any; inner: any};
     public contourStoreCanvasReference: any;
     public vectorCanvasReference: any;
@@ -94,7 +94,7 @@ export class ChannelMapStore {
         const frames = appStore.frames.filter(frame => frame.frameInfo.fileId !== masterFrame.frameInfo.fileId);
         frames.forEach(frame => appStore.channelMapTileService.handleFileClosed(frame.frameInfo.fileId));
     }
-    
+
     @action setAuxiliaryFrame(frame: FrameStore) {
         this._auxiliaryFrame = frame;
     }
@@ -120,15 +120,6 @@ export class ChannelMapStore {
         }
     }
 
-    @action flipPage(next: boolean = true) {
-        // this.channelFrames = [];
-        const newStart = next ? this.startChannel + this.numColumns * this.numRows : this.startChannel - this.numColumns * this.numRows;
-        // Check new start valid with masterFrame
-        if (newStart >= 0) {
-            this.setStartChannel(newStart);
-        }
-    }
-
     @action setPixelHighlightValue = (val: number) => {
         if (!AppStore.Instance.isExportingImage) {
             this.pixelHighlightValue = val;
@@ -142,7 +133,7 @@ export class ChannelMapStore {
     @action setSingleChannelContour = (singleChannel: boolean) => {
         this.singleChannelContour = singleChannel;
     };
-    
+
     @action setSingleContourChannel = (channel: number) => {
         this.singleContourChannel = channel;
     };
@@ -178,7 +169,8 @@ export class ChannelMapStore {
             appStore.channelMapTileService.requestChannelMapTiles(tiles, frame.frameInfo.fileId, requiredChannel, frame.stokes, midPointTileCoords, compressionQuality, {min: this.startChannel, max: this.channelRange});
         }
     };
-    throttledRequestChannels = _.throttle(this.requestChannels, 1000);
+
+    @action throttledRequestChannels = _.throttle(this.requestChannels, 1000);
 
     public overlayStore(index: number, imageRenderWidth: number, imageRenderHeight: number) {
         const column = index % this.numColumns;
@@ -187,16 +179,16 @@ export class ChannelMapStore {
         this.updateOverlayStoreSize(imageRenderWidth, imageRenderHeight);
 
         if (column === 0 && row === this.numRows - 1) {
-            this.setOverlayStores(this.overlayStores?.corner || new OverlayStore(imageRenderWidth, imageRenderHeight, 0, 2, true, false, true, false, true), "corner");
+            this.setOverlayStores(this.overlayStores?.corner || new OverlayStore(imageRenderWidth, imageRenderHeight, 1, 2, true, false, true, false, true), "corner");
             return this.overlayStores.corner;
         } else if (column === 0) {
-            this.setOverlayStores(this.overlayStores?.left || new OverlayStore(imageRenderWidth, imageRenderHeight, 0, 2, true, false, true, true, true), "left");
+            this.setOverlayStores(this.overlayStores?.left || new OverlayStore(imageRenderWidth, imageRenderHeight, 1, 2, true, false, true, true, true), "left");
             return this.overlayStores.left;
         } else if (row === this.numRows - 1) {
-            this.setOverlayStores(this.overlayStores?.bottom || new OverlayStore(imageRenderWidth, imageRenderHeight, 0, 2, true, true, true, false, true), "bottom");
+            this.setOverlayStores(this.overlayStores?.bottom || new OverlayStore(imageRenderWidth, imageRenderHeight, 1, 2, true, true, true, false, true), "bottom");
             return this.overlayStores.bottom;
         } else {
-            this.setOverlayStores(this.overlayStores?.inner || new OverlayStore(imageRenderWidth, imageRenderHeight, 0, 2, true, true, true, true, true), "inner");
+            this.setOverlayStores(this.overlayStores?.inner || new OverlayStore(imageRenderWidth, imageRenderHeight, 1, 2, true, true, true, true, true), "inner");
             return this.overlayStores.inner;
         }
     }
@@ -223,7 +215,7 @@ export class ChannelMapStore {
         } else {
             return this._auxiliaryFrame;
         }
-    };
+    }
 }
 
 export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = observer((props: ChannelMapViewComponentProps) => {
@@ -238,27 +230,24 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     const frame = channelMapStore.masterFrame;
     const colorBarSetting = AppStore.Instance.overlayStore.colorbar;
     const titleSetting = channelMapStore.overlayStores?.outer?.title;
-    const titleOffset = (titleSetting?.visible ? titleSetting?.fontSize : 0)
+    const titleOffset = titleSetting?.visible ? titleSetting?.fontSize : 0;
     const colorbarOffset = colorBarSetting.stageWidth;
     const cursorInfoOffset = isFinite(cursorOverlayRef.current?.divElement.clientHeight) ? cursorOverlayRef.current?.divElement.clientHeight : 0;
     const toolbarOffset = 30 + 10 + 10; // overlayPadding bottom + height of button + 10 for aesthetic
 
-    
     const heightOffset = (colorBarSetting.position === "right" ? 0 : colorbarOffset) + cursorInfoOffset + toolbarOffset + titleOffset;
-    const widthOffset = (colorBarSetting.position === "right" ? colorbarOffset : 5); // 40 is for the number and label width of the ast grid
+    const widthOffset = colorBarSetting.position === "right" ? colorbarOffset : 5; // 40 is for the number and label width of the ast grid
     const channelMapViewWidth = props.renderWidth - widthOffset;
     const channelMapViewHeight = props.renderHeight - heightOffset;
 
     // The channel map has one overlayComponent for each of the channel display, but the title and labels are achieved with an outer overlay. The border and ticks of the outer overlay is set to invisible.
     // Therefore the numberOffset is the number of the inner overlays and the label offset is corresponding to the outer overlay.
-    const numberOffset = channelMapStore.overlayStores?.corner?.numberWidth;
-    const labelOffset = channelMapStore.overlayStores?.outer?.labelWidth;
+    const numberOffset = channelMapStore.overlayStores?.corner?.numberWidth || 0;
+    const labelOffset = channelMapStore.overlayStores?.outer?.labelWidth || 0;
     const outerOffset = numberOffset + labelOffset;
-    const imageRenderWidth = Math.floor((channelMapViewWidth - outerOffset) / channelMapStore.numColumns);
-    const imageRenderHeight = Math.floor((channelMapViewHeight - outerOffset) / channelMapStore.numRows);
-    
-    frame?.overlayStore?.setChannelMapRenderWidth(imageRenderWidth);
-    frame?.overlayStore?.setChannelMapRenderHeight(imageRenderHeight);
+    const imageRenderWidth = (channelMapViewWidth - outerOffset) / channelMapStore.numColumns;
+    const imageRenderHeight = (channelMapViewHeight - outerOffset) / channelMapStore.numRows;
+
     channelMapStore.overlayStores.outer.setViewDimension(channelMapViewWidth, props.renderHeight - toolbarOffset - cursorInfoOffset + (colorBarSetting.position === "right" ? 0 : colorbarOffset));
     channelMapStore.overlayStores.outer.setIsChannelMap(true);
     channelMapStore.overlayStores.outer.numbers.setVisible(false);
@@ -270,7 +259,9 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         if (channelMapStore.masterFrame) {
             channelMapStore.throttledRequestChannels();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
+        channelMapStore,
         channelMapStore.masterFrame,
         channelMapStore.startChannel,
         channelMapStore.numColumns,
@@ -281,7 +272,8 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         channelMapStore.auxiliaryFrame,
         channelMapStore.auxiliaryFrameChannel,
         channelMapStore.singleChannelContour,
-        channelMapStore.singleContourChannel
+        channelMapStore.singleContourChannel,
+        channelMapStore.masterFrame?.spatialReference
     ]);
 
     const onRegionViewZoom = (frame: FrameStore, zoom: number) => {
@@ -313,7 +305,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     let overlayComponentTop = imageRenderHeight * row;
                     let overlayComponentLeft = imageRenderWidth * column;
 
-                    const overlayStore = channelMapStore.overlayStore(index, imageRenderWidth, imageRenderHeight);
+                    const overlayStore = channelMapStore.overlayStore(index, Math.floor(imageRenderWidth), Math.floor(imageRenderHeight));
                     let overlayCanvasRef;
                     let thisIs;
                     let contourCanvasRef;
@@ -349,47 +341,48 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     }
 
                     return (
-                        <>
-                            {channelMapStore.showAuxiliaryFrame && channelMapStore.auxiliaryFrame ? 
-                            <RasterViewComponent
-                                key={`raster-view-component-${channelMapStore.auxiliaryFrame.frameInfo.fileId}-${channelMapStore.auxiliaryFrameChannel}`}
-                                frame={channelMapStore.auxiliaryFrame}
-                                webGLService={ChannelMapWebGLService.Instance}
-                                tileService={ChannelMapTileService.Instance}
-                                overlayStore={overlayStore}
-                                renderWidth={overlayStore.fullViewWidth}
-                                renderHeight={overlayStore.fullViewHeight}
-                                top={overlayComponentTop}
-                                left={overlayComponentLeft}
-                                docked={props.docked}
-                                pixelHighlightValue={props.channelMapStore.pixelHighlightValue}
-                                numImageColumns={1}
-                                numImageRows={1}
-                                row={0}
-                                column={0}
-                                tileBasedRender={true}
-                                channel={channelMapStore.auxiliaryFrameChannel}
-                            />
-                            :
-                            <RasterViewComponent
-                                key={`raster-view-component-${frame.frameInfo.fileId}-${channel}`}
-                                frame={frame}
-                                webGLService={ChannelMapWebGLService.Instance}
-                                tileService={ChannelMapTileService.Instance}
-                                overlayStore={overlayStore}
-                                renderWidth={overlayStore.fullViewWidth}
-                                renderHeight={overlayStore.fullViewHeight}
-                                top={overlayComponentTop}
-                                left={overlayComponentLeft}
-                                docked={props.docked}
-                                pixelHighlightValue={props.channelMapStore.pixelHighlightValue}
-                                numImageColumns={1}
-                                numImageRows={1}
-                                row={0}
-                                column={0}
-                                tileBasedRender={true}
-                                channel={channel}
-                            />}
+                        <div key={channel}>
+                            {channelMapStore.showAuxiliaryFrame && channelMapStore.auxiliaryFrame ? (
+                                <RasterViewComponent
+                                    key={`raster-view-component-${channelMapStore.auxiliaryFrame.frameInfo.fileId}-${channelMapStore.auxiliaryFrameChannel}`}
+                                    frame={channelMapStore.auxiliaryFrame}
+                                    webGLService={ChannelMapWebGLService.Instance}
+                                    tileService={ChannelMapTileService.Instance}
+                                    overlayStore={overlayStore}
+                                    renderWidth={overlayStore.fullViewWidth}
+                                    renderHeight={overlayStore.fullViewHeight}
+                                    top={overlayComponentTop}
+                                    left={overlayComponentLeft}
+                                    docked={props.docked}
+                                    pixelHighlightValue={props.channelMapStore.pixelHighlightValue}
+                                    numImageColumns={1}
+                                    numImageRows={1}
+                                    row={0}
+                                    column={0}
+                                    tileBasedRender={true}
+                                    channel={channelMapStore.auxiliaryFrameChannel}
+                                />
+                            ) : (
+                                <RasterViewComponent
+                                    key={`raster-view-component-${frame.frameInfo.fileId}-${channel}`}
+                                    frame={frame}
+                                    webGLService={ChannelMapWebGLService.Instance}
+                                    tileService={ChannelMapTileService.Instance}
+                                    overlayStore={overlayStore}
+                                    renderWidth={overlayStore.fullViewWidth}
+                                    renderHeight={overlayStore.fullViewHeight}
+                                    top={overlayComponentTop}
+                                    left={overlayComponentLeft}
+                                    docked={props.docked}
+                                    pixelHighlightValue={props.channelMapStore.pixelHighlightValue}
+                                    numImageColumns={1}
+                                    numImageRows={1}
+                                    row={0}
+                                    column={0}
+                                    tileBasedRender={true}
+                                    channel={channel}
+                                />
+                            )}
                             <ContourViewComponent
                                 overlayStore={overlayStore}
                                 ref={ref => {
@@ -402,7 +395,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                                 column={0}
                                 top={overlayComponentTop}
                                 left={overlayComponentLeft}
-                                // refCanvas={contourCanvasRef} // if set to one contour, turn on, if contour per channel, turn off.
+                                refCanvas={channelMapStore.singleChannelContour ? contourCanvasRef : undefined} // if set to one contour, turn on, if contour per channel, turn off.
                             />
                             <VectorOverlayViewComponent
                                 ref={ref => {
@@ -424,14 +417,14 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                                         if (ref?.canvas) ref.canvas.id = `${column}_${row}`;
                                     }
                                 }}
-                                frame={frame}
+                                frame={channelMapStore.showAuxiliaryFrame && channelMapStore.auxiliaryFrame ? channelMapStore.auxiliaryFrame : frame}
                                 width={channelMapStore.overlayStores?.inner?.fullViewWidth}
                                 height={channelMapStore.overlayStores?.inner?.fullViewHeight}
                                 overlaySettings={overlayStore}
                                 top={overlayComponentTop}
                                 left={overlayComponentLeft}
                                 docked={props.docked}
-                                channel={channel}
+                                channel={channelMapStore.showAuxiliaryFrame ? channelMapStore.auxiliaryFrameChannel : channel}
                                 refCanvas={
                                     (column === 0 && row === 0) || (column === 0 && row === channelMapStore.numRows - 1) || (column === 1 && row === 0) || (column === 1 && row === channelMapStore.numRows - 1)
                                         ? undefined
@@ -460,7 +453,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                                 dragPanningEnabled={appStore.preferenceStore.dragPanning}
                                 docked={props.docked}
                             />
-                        </>
+                        </div>
                     );
                 })}
                 <BeamProfileOverlayComponent frame={frame} top={imageRenderHeight * (channelMapStore.numRows - 1)} left={0} docked={props.docked} padding={10} />
@@ -471,8 +464,8 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     onCursorHoverValueChanged={props.channelMapStore.setPixelHighlightValue}
                     width={channelMapViewWidth}
                     height={channelMapViewHeight}
-                    top={(frame.overlayStore.colorbar.position === "bottom" ? cursorInfoOffset + channelMapViewHeight + titleOffset : cursorInfoOffset)}
-                    length={frame.overlayStore.colorbar.position === "right" ? channelMapViewHeight - outerOffset: channelMapViewWidth - outerOffset - 20}
+                    top={frame.overlayStore.colorbar.position === "bottom" ? cursorInfoOffset + channelMapViewHeight + titleOffset : cursorInfoOffset}
+                    length={frame.overlayStore.colorbar.position === "right" ? channelMapViewHeight - outerOffset : channelMapViewWidth - outerOffset - 20}
                 />
             )}
             <ToolbarComponent

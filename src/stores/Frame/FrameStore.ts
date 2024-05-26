@@ -387,12 +387,23 @@ export class FrameStore {
     @computed get renderWidth() {
         //need change, ok, we need a way to get this removed from here, and pass in overlaystore where needed
         // return AppStore.Instance.overlayStore.previewRenderWidth(this.previewViewWidth) || AppStore.Instance.overlayStore.renderWidth;
-        return AppStore.Instance.preferenceStore.channelMapEnabled && this.overlayStore.channelMapRenderWidth ? this.overlayStore.channelMapRenderWidth : this.overlayStore.renderWidth;
+        return AppStore.Instance.channelMapStore.overlayStores &&
+            AppStore.Instance.channelMapStore.overlayStores.corner &&
+            AppStore.Instance.preferenceStore.channelMapEnabled &&
+            AppStore.Instance.channelMapStore.overlayStores.corner?.renderWidth
+            ? AppStore.Instance.channelMapStore.overlayStores.corner?.renderWidth
+            : this.overlayStore.renderWidth;
     }
 
     @computed get renderHeight() {
         // return AppStore.Instance.overlayStore.previewRenderHeight(this.previewViewHeight) || AppStore.Instance.overlayStore.renderHeight;
-        return AppStore.Instance.preferenceStore.channelMapEnabled && this.overlayStore.channelMapRenderHeight ? this.overlayStore.channelMapRenderHeight : this.overlayStore.renderHeight;
+        return AppStore.Instance.channelMapStore.overlayStores &&
+            AppStore.Instance.channelMapStore.overlayStores.corner &&
+            AppStore.Instance.channelMapStore.overlayStores.corner &&
+            AppStore.Instance.preferenceStore.channelMapEnabled &&
+            AppStore.Instance.channelMapStore.overlayStores.corner?.renderHeight
+            ? AppStore.Instance.channelMapStore.overlayStores.corner?.renderHeight
+            : this.overlayStore.renderHeight;
     }
 
     @computed get isRenderable() {
@@ -2298,7 +2309,6 @@ export class FrameStore {
                 this.contourStores.set(contourSet.level, contourStore);
             }
 
-            console.log('ooo', contourStore.progress.has(processedData.channel), contourStore.isComplete(processedData.channel), processedData.channel)
             if (contourStore.progress.has(processedData.channel) && !contourStore.isComplete(processedData.channel) && processedData.progress > 0) {
                 contourStore.addContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress, processedData.channel);
             } else {

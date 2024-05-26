@@ -123,7 +123,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
 
     public render() {
         const appStore = AppStore.Instance;
-        const frame = appStore.preferenceStore.channelMapEnabled ? appStore.channelMapStore.masterFrame : appStore.activeFrame;
+        const frame = appStore.preferenceStore.channelMapEnabled && appStore.channelMapStore.masterFrame ? appStore.channelMapStore.masterFrame : appStore.activeFrame;
         const overlayStore = appStore.overlayStore;
         const global = overlayStore.global;
         const title = appStore.preferenceStore.channelMapEnabled ? appStore.channelMapStore.overlayStores.outer.title : frame.overlayStore.title;
@@ -788,13 +788,29 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Switch checked={channelMapSettings.singleChannelContour} onChange={ev => channelMapSettings.setSingleChannelContour(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Contour Channel" disabled={!channelMapSettings.singleChannelContour}>
-                    <SafeNumericInput placeholder="Contour Channel" disabled={!channelMapSettings.singleChannelContour} min={0} max={channelMapSettings.masterFrame?.frameInfo.fileInfoExtended.depth - 1 || 0} value={channelMapSettings.singleContourChannel} stepSize={1} onValueChange={(value: number) => channelMapSettings.setSingleContourChannel(value)} />
+                    <SafeNumericInput
+                        placeholder="Contour Channel"
+                        disabled={!channelMapSettings.singleChannelContour}
+                        min={0}
+                        max={channelMapSettings.masterFrame?.frameInfo.fileInfoExtended.depth - 1 || 0}
+                        value={channelMapSettings.singleContourChannel}
+                        stepSize={1}
+                        onValueChange={(value: number) => channelMapSettings.setSingleContourChannel(value)}
+                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Auxiliary Frame Visible">
                     <Switch checked={channelMapSettings.showAuxiliaryFrame} onChange={ev => channelMapSettings.setShowAuxiliaryFrame(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Auxiliary Frame Channel" disabled={!channelMapSettings.showAuxiliaryFrame}>
-                    <SafeNumericInput placeholder="Auxiliary Frame Channel" disabled={!channelMapSettings.showAuxiliaryFrame} min={0} max={channelMapSettings.auxiliaryFrame?.frameInfo.fileInfoExtended.depth - 1 || 0} value={channelMapSettings.auxiliaryFrameChannel} stepSize={1} onValueChange={(value: number) => channelMapSettings.setAuxiliaryFrameChannel(value)} />
+                    <SafeNumericInput
+                        placeholder="Auxiliary Frame Channel"
+                        disabled={!channelMapSettings.showAuxiliaryFrame}
+                        min={0}
+                        max={channelMapSettings.auxiliaryFrame?.frameInfo.fileInfoExtended.depth - 1 || 0}
+                        value={channelMapSettings.auxiliaryFrameChannel}
+                        stepSize={1}
+                        onValueChange={(value: number) => channelMapSettings.setAuxiliaryFrameChannel(value)}
+                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Auxiliary Image" disabled={!channelMapSettings.showAuxiliaryFrame}>
                     <HTMLSelect

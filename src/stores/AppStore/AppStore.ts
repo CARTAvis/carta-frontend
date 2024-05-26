@@ -541,7 +541,9 @@ export class AppStore {
         this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfo.type, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes, generated);
 
         let newFrame = new FrameStore(frameInfo);
-        this.channelMapStore.setMasterFrame(newFrame);
+        if (!this.channelMapStore.masterFrame) {
+            this.channelMapStore.setMasterFrame(newFrame);
+        }
         // Place frame in frame array (replace frame with the same ID if it exists)
         const existingFrameIndex = this.frames.findIndex(f => f.frameInfo.fileId === ack.fileId);
         if (existingFrameIndex !== -1) {
@@ -868,7 +870,7 @@ export class AppStore {
             this.histogramRequirements.delete(fileId);
 
             this.tileService.handleFileClosed(fileId);
-            this.channelMapTileService.handleFileClosed(fileId)
+            this.channelMapTileService.handleFileClosed(fileId);
             this.telemetryService.addFileCloseEntry(fileId);
 
             if (this.backendService.closeFile(fileId)) {
@@ -921,7 +923,7 @@ export class AppStore {
 
                 // TODO: check this
                 this.tileService.handleFileClosed(fileId);
-                this.channelMapTileService.handleFileClosed(fileId)
+                this.channelMapTileService.handleFileClosed(fileId);
                 // Clean up if frame has associated catalog files
                 if (this.catalogNum) {
                     CatalogStore.Instance.closeAssociatedCatalog(fileId);
@@ -954,7 +956,7 @@ export class AppStore {
                 const fileId = frame.frameInfo.fileId;
                 this.telemetryService.addFileCloseEntry(fileId);
                 this.tileService.handleFileClosed(fileId);
-                this.channelMapTileService.handleFileClosed(fileId)
+                this.channelMapTileService.handleFileClosed(fileId);
                 if (this.catalogNum) {
                     CatalogStore.Instance.closeAssociatedCatalog(fileId);
                 }

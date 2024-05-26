@@ -28,9 +28,9 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     private contourWebGLService: ContourWebGLService;
 
     componentDidMount() {
+        this.contourWebGLService = ContourWebGLService.Instance;
+        this.gl = this.contourWebGLService.gl;
         if (!this.props.refCanvas) {
-            this.contourWebGLService = ContourWebGLService.Instance;
-            this.gl = this.contourWebGLService.gl;
             if (this.canvas) {
                 this.triggerUpdate(); //2330
             }

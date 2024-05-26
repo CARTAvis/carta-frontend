@@ -84,27 +84,8 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
             console.log("disarming");
             sub.current && sub.current.unsubscribe(); // I realized that we need to unsubscribe to streams, if not it will still exist in memory somewhere. Could this be related to any bug?
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-
-    React.useEffect(() => {
-        requestAnimationFrame(() =>
-            updateCanvas(
-                props.frame,
-                props.webGLService,
-                props.tileService,
-                canvas.current,
-                props.overlayStore,
-                props.column,
-                props.row,
-                props.numImageColumns,
-                props.numImageRows,
-                props.pixelHighlightValue,
-                props.tileBasedRender,
-                props.channel || props.frame.channel,
-                props.rasterData
-            )
-        );
-    }, [props.frame.zoomLevel, props.frame.center, props.pixelHighlightValue, props.renderHeight, props.renderWidth]);
 
     // dummy values to trigger React's componentDidUpdate()
     /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -135,6 +116,63 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
         const ratio = appStore.imageRatio;
     }
     /* eslint-enable @typescript-eslint/no-unused-vars */
+
+    React.useEffect(() => {
+        requestAnimationFrame(() =>
+            updateCanvas(
+                props.frame,
+                props.webGLService,
+                props.tileService,
+                canvas.current,
+                props.overlayStore,
+                props.column,
+                props.row,
+                props.numImageColumns,
+                props.numImageRows,
+                props.pixelHighlightValue,
+                props.tileBasedRender,
+                props.channel || props.frame.channel,
+                props.rasterData
+            )
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [
+        props.channel,
+        props.column,
+        props.frame,
+        props.numImageColumns,
+        props.numImageRows,
+        props.overlayStore,
+        props.rasterData,
+        props.row,
+        props.tileBasedRender,
+        props.tileService,
+        props.webGLService,
+        props.frame.zoomLevel,
+        props.frame.center,
+        props.pixelHighlightValue,
+        props.renderHeight,
+        props.renderWidth,
+        props.frame.spatialReference,
+        frame?.renderConfig.scaleMinVal,
+        frame?.renderConfig.scaleMaxVal,
+        frame?.renderConfig.colorMapIndex,
+        frame?.renderConfig.contrast,
+        frame?.renderConfig.bias
+        // appStore.preferenceStore?.useSmoothedBiasContrast,
+        // frame?.renderConfig.scaling,
+        // frame?.renderConfig.gamma,
+        // frame?.renderConfig.alpha,
+        // frame?.renderConfig.inverted,
+        // frame?.renderConfig.visible,
+        // appStore.preferenceStore.nanColorHex,
+        // appStore.preferenceStore.nanAlpha,
+        // appStore.preferenceStore.pixelGridVisible,
+        // appStore.imageRatio,
+        // frame?.spatialReference.requiredFrameView,
+        // frame?.spatialReference.currentFrameView
+    ]);
+
     const padding = props.overlayStore.padding;
     const className = classNames(`raster-div`, {docked: props.docked});
 

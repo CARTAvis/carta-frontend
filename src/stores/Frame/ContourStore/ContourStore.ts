@@ -1,5 +1,5 @@
 import * as CARTACompute from "carta_computation";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 
 import {ContourWebGLService} from "services";
 import {GL2} from "utilities";
@@ -72,7 +72,6 @@ export class ContourStore {
         this.progress.set(channel, progress);
         this.numGeneratedVertices.get(channel).push(vertexData.length / (ContourStore.VertexDataElements / 2));
 
-        
         const index = this.vertexData.get(channel).length - 1;
         this.generateBuffers(index, channel);
 
@@ -100,9 +99,9 @@ export class ContourStore {
     }
 
     @action clearData = () => {
-        this.indexOffsets.forEach((indexes, channel) => indexes = []);
-        this.vertexData.forEach((vertex, channel) => vertex = []);
-        this.numGeneratedVertices.forEach((num, channel) => num = []);
+        this.indexOffsets.forEach((indexes, channel) => (indexes = []));
+        this.vertexData.forEach((vertex, channel) => (vertex = []));
+        this.numGeneratedVertices.forEach((num, channel) => (num = []));
         this.vertexCount = 0;
         this.chunkCount = 0;
 

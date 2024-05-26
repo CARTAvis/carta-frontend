@@ -69,7 +69,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
     componentDidUpdate() {
         AppStore.Instance.resetImageRatio();
-        this.props.frame.colorbarStore.setHeight(AppStore.Instance.overlayStore?.colorbar.height(this.props.frame, this.props.length))
+        this.props.frame.colorbarStore.setHeight(AppStore.Instance.overlayStore?.colorbar.height(this.props.frame, this.props.length));
     }
 
     private handleMouseMove = event => {
@@ -140,7 +140,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
         // adjust stage position
         if (colorbarSettings.position === "right") {
-            stageLeft = this.props.width || (frame.overlayStore.padding.left + frame.renderWidth);
+            stageLeft = this.props.width || frame.overlayStore.padding.left + frame.renderWidth;
             stageTop = this.props.top || 0;
         } else if (colorbarSettings.position === "bottom") {
             stageTop = this.props.top || viewHeight - frame.overlayStore.colorbarHoverInfoHeight - colorbarSettings.stageWidth;

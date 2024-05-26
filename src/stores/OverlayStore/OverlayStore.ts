@@ -1049,9 +1049,6 @@ export class OverlayStore {
     @observable colorbar: OverlayColorbarSettings;
     @observable beam: OverlayBeamSettings;
 
-    @observable channelMapRenderWidth: number;
-    @observable channelMapRenderHeight: number;
-
     public constructor(
         fullViewWidth?: number,
         fullViewHeight?: number,
@@ -1134,14 +1131,6 @@ export class OverlayStore {
     @action setViewDimension = (width: number, height: number) => {
         this._fullViewWidth = width;
         this._fullViewHeight = height;
-    };
-
-    @action setChannelMapRenderWidth = (width: number) => {
-        this.channelMapRenderWidth = width;
-    };
-
-    @action setChannelMapRenderHeight = (height: number) => {
-        this.channelMapRenderHeight = height;
     };
 
     @action clearViewDimension = () => {
@@ -1292,9 +1281,7 @@ export class OverlayStore {
     }
 
     @computed get paddingTop(): number {
-        return (
-            this.base + (this.title.show ? this.titleGap + this.title.fontSize : !this.isChannelMap && this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0)
-        );
+        return this.base + (this.title.show ? this.titleGap + this.title.fontSize : !this.isChannelMap && this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0);
     }
 
     @computed get paddingBottom(): number {
@@ -1314,11 +1301,11 @@ export class OverlayStore {
 
     // We have to choose between custom view size or default view size. If fullViewWidth and fullViewHeight are defined, then we use them, otherwise, use imageViewerSetting.
     @computed get viewWidth() {
-        return Math.floor(this.fullViewWidth || (this.imageViewerSettingStore.fullViewWidth / AppStore.Instance.numImageColumns));
+        return Math.floor(this.fullViewWidth || this.imageViewerSettingStore.fullViewWidth / AppStore.Instance.numImageColumns);
     }
 
     @computed get viewHeight() {
-        return Math.floor(this.fullViewHeight || (this.imageViewerSettingStore.fullViewHeight / AppStore.Instance.numImageRows));
+        return Math.floor(this.fullViewHeight || this.imageViewerSettingStore.fullViewHeight / AppStore.Instance.numImageRows);
     }
 
     @computed get renderWidth() {
