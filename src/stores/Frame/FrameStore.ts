@@ -2157,10 +2157,10 @@ export class FrameStore {
     }
 
     /**
-     * Toggle of the offset coordinates.
+     * Toggle of the offset coordinates. This function sets the current view center (instead of the image center) as the offset center.
      */
     @action toggleOffsetCoord = () => {
-        this.updateOffseCenter();
+        this.updateOffsetCenter();
         this.setIsOffsetCoord(!this.isOffsetCoord);
     };
 
@@ -2182,7 +2182,7 @@ export class FrameStore {
         }
     };
 
-    @action updateOffseCenter = () => {
+    @action updateOffsetCenter = () => {
         if (!this.isPVImage && !this.isPreview && !this.isSwappedZ && !this.isUVImage) {
             this.setOffsetCenter(this.center.x, this.center.y);
         }
@@ -2199,7 +2199,7 @@ export class FrameStore {
     }
 
     /**
-     * Set the offset center in the pixel coordinates.
+     * Set the offset center and update the displayed coordinates.
      *
      * @param x - x-axis value in the pixel coordinates.
      * @param y - y-axis value in the pixel coordinates.

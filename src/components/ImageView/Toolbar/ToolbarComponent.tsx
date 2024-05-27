@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 import {ImageViewComponent, ImageViewLayer} from "components";
 import {AnnotationMenuComponent, ExportImageMenuComponent} from "components/Shared";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
-import {AppStore, DialogId} from "stores";
+import {AppStore} from "stores";
 import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
 import {OverlayStore, SystemType} from "stores/OverlayStore/OverlayStore";
 import {toFixed} from "utilities";
@@ -72,7 +72,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     handleCoordinateSystemClicked = (coordinateSystem: SystemType) => {
         OverlayStore.Instance.global.setSystem(coordinateSystem);
-        this.props.frame.updateOffseCenter();
+        this.props.frame.updateOffsetCenter();
     };
 
     private handleActiveLayerClicked = (layer: ImageViewLayer) => {
@@ -115,7 +115,6 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     render() {
         const appStore = AppStore.Instance;
         const overlay = appStore.overlayStore;
-        const dialogStore = appStore.dialogStore;
         const frame = this.props.frame;
         const grid = overlay.grid;
 
@@ -179,7 +178,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                     <Switch className="offset-switch" disabled={frame.isPVImage || frame.isSwappedZ || frame.isUVImage} checked={frame.isOffsetCoord} onChange={frame.toggleOffsetCoord} label="Offset" />
                     <Collapse isOpen={frame.isOffsetCoord}>
                         <Tooltip content="Set origin to current view center" position={Position.BOTTOM} hoverOpenDelay={300}>
-                            <Button icon="locate" disabled={!frame.isOffsetCoord} onClick={() => frame.updateOffseCenter()} />
+                            <Button icon="locate" disabled={!frame.isOffsetCoord} onClick={() => frame.updateOffsetCenter()} />
                         </Tooltip>
                     </Collapse>
                 </FormGroup>
@@ -254,19 +253,12 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                             Ruler annotation
                                             <br />
                                             <i>
-                                                <small>Click to create geodesic curves.</small>
-                                                <br></br>
-                                                <small>Double Click to open the settings.</small>
+                                                <small>Click-and-drag to create geodesic curves.</small>
                                             </i>
                                         </span>
                                     }
                                 >
-                                    <AnchorButton
-                                        icon={<CustomIcon icon="distanceMeasuring" />}
-                                        active={appStore.activeLayer === ImageViewLayer.RegionCreating}
-                                        onClick={handleDistanceMeasuringClicked}
-                                        onDoubleClick={() => dialogStore.showDialog(DialogId.Region)}
-                                    />
+                                    <AnchorButton icon={<CustomIcon icon="distanceMeasuring" />} active={appStore.activeLayer === ImageViewLayer.RegionCreating} onClick={handleDistanceMeasuringClicked} />
                                 </Tooltip>
                                 <Tooltip
                                     position={tooltipPosition}
