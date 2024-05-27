@@ -189,7 +189,6 @@ export class FrameStore {
     @observable fittingResultRegionParams: {points: Point2D[]; rotation: number}[];
     @observable fittingLog: string;
     @observable fittingModelImage: FrameStore;
-    @observable fittingDeconModelImage: FrameStore;
     @observable fittingResidualImage: FrameStore;
 
     @observable isRequestingMoments: boolean;
@@ -2974,12 +2973,6 @@ export class FrameStore {
         }
     };
 
-    @action addFittingDeconModelImage = (frame: FrameStore) => {
-        if (frame && !this.fittingDeconModelImage) {
-            this.fittingDeconModelImage = frame;
-        }
-    };
-
     @action addFittingResidualImage = (frame: FrameStore) => {
         if (frame && !this.fittingResidualImage) {
             this.fittingResidualImage = frame;
@@ -2988,7 +2981,6 @@ export class FrameStore {
 
     @action resetFitting = () => {
         this.fittingModelImage = null;
-        this.fittingDeconModelImage = null;
         this.fittingResidualImage = null;
         this.fittingResult = "";
         this.fittingResultRegionParams = [];
