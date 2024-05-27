@@ -95,7 +95,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
         filterConfigs?.forEach(filterConfig => {
             const header = this.catalogControlHeader.get(filterConfig.columnName);
             const dataIndex = header?.dataIndex;
-            if (dataIndex && dataIndex > -1 && header.display) {
+            if (dataIndex !== undefined && dataIndex > -1 && header?.display) {
                 const catalogColumn = this.catalogOriginalData.get(dataIndex);
                 switch (catalogColumn?.dataType) {
                     case CARTA.ColumnType.String:
