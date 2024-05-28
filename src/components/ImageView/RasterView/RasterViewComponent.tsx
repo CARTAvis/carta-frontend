@@ -17,14 +17,10 @@ export class RasterViewComponentProps {
     frame: FrameStore;
     overlayStore: OverlayStore;
     pixelHighlightValue: number;
-    renderWidth: number;
-    renderHeight: number;
     top?: number;
     left?: number;
     row: number;
     column: number;
-    numImageColumns: number;
-    numImageRows: number;
     webGLService: TileWebGLService;
     tileService: TileService;
     tileBasedRender: boolean;
@@ -37,56 +33,7 @@ const Float32Max = 3.402823466e38;
 export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer((props: RasterViewComponentProps) => {
     const canvas = React.useRef<HTMLCanvasElement>();
     const sub = React.useRef<Subscription>();
-
-    React.useEffect(() => {
-        if (props.tileBasedRender) {
-            if (canvas) {
-                updateCanvas(
-                    props.frame,
-                    props.webGLService,
-                    props.tileService,
-                    canvas.current,
-                    props.overlayStore,
-                    props.column,
-                    props.row,
-                    props.numImageColumns,
-                    props.numImageRows,
-                    props.pixelHighlightValue,
-                    props.tileBasedRender,
-                    props.channel || props.frame.channel,
-                    props.rasterData
-                );
-            }
-
-            sub.current = props.tileService.tileStream.subscribe(tileMessage => {
-                // sometimes the renderHeight is 0, and still figuring out why
-                ((!isFinite(props.channel) && !AppStore.Instance.preferenceStore.channelMapEnabled) || tileMessage.channel === props.channel) &&
-                    requestAnimationFrame(() =>
-                        updateCanvas(
-                            props.frame,
-                            props.webGLService,
-                            props.tileService,
-                            canvas.current,
-                            props.overlayStore,
-                            props.column,
-                            props.row,
-                            props.numImageColumns,
-                            props.numImageRows,
-                            props.pixelHighlightValue,
-                            props.tileBasedRender,
-                            props.channel || props.frame.channel,
-                            props.rasterData
-                        )
-                    );
-            });
-        }
-        return () => {
-            console.log("disarming");
-            sub.current && sub.current.unsubscribe(); // I realized that we need to unsubscribe to streams, if not it will still exist in memory somewhere. Could this be related to any bug?
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
+    
     // dummy values to trigger React's componentDidUpdate()
     /* eslint-disable @typescript-eslint/no-unused-vars */
     const appStore = AppStore.Instance;
@@ -95,7 +42,7 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
         const spatialReference = frame.spatialReference || frame;
         const frameView = spatialReference.requiredFrameView;
         const currentView = spatialReference.currentFrameView;
-
+    
         const colorMapping = {
             min: frame.renderConfig.scaleMinVal,
             max: frame.renderConfig.scaleMaxVal,
@@ -118,6 +65,55 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
     /* eslint-enable @typescript-eslint/no-unused-vars */
 
     React.useEffect(() => {
+        if (props.tileBasedRender) {
+            if (canvas) {
+                updateCanvas(
+                    props.frame,
+                    props.webGLService,
+                    props.tileService,
+                    canvas.current,
+                    props.overlayStore,
+                    props.column,
+                    props.row,
+                    appStore.numImageColumns,
+                    appStore.numImageRows,
+                    props.pixelHighlightValue,
+                    props.tileBasedRender,
+                    props.channel || props.frame.channel,
+                    props.rasterData
+                );
+            }
+
+            sub.current = props.tileService.tileStream.subscribe(tileMessage => {
+                // sometimes the renderHeight is 0, and still figuring out why
+                ((!isFinite(props.channel) && !AppStore.Instance.preferenceStore.channelMapEnabled) || tileMessage.channel === props.channel) &&
+                    requestAnimationFrame(() =>
+                        updateCanvas(
+                            props.frame,
+                            props.webGLService,
+                            props.tileService,
+                            canvas.current,
+                            props.overlayStore,
+                            props.column,
+                            props.row,
+                            appStore.numImageColumns,
+                            appStore.numImageRows,
+                            props.pixelHighlightValue,
+                            props.tileBasedRender,
+                            props.channel || props.frame.channel,
+                            props.rasterData
+                        )
+                    );
+            });
+        }
+        return () => {
+            console.log("disarming");
+            sub.current && sub.current.unsubscribe(); // I realized that we need to unsubscribe to streams, if not it will still exist in memory somewhere. Could this be related to any bug?
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    React.useEffect(() => {
         requestAnimationFrame(() =>
             updateCanvas(
                 props.frame,
@@ -127,8 +123,8 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
                 props.overlayStore,
                 props.column,
                 props.row,
-                props.numImageColumns,
-                props.numImageRows,
+                appStore.numImageColumns,
+                appStore.numImageRows,
                 props.pixelHighlightValue,
                 props.tileBasedRender,
                 props.channel || props.frame.channel,
@@ -140,8 +136,6 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
         props.channel,
         props.column,
         props.frame,
-        props.numImageColumns,
-        props.numImageRows,
         props.overlayStore,
         props.rasterData,
         props.row,
@@ -151,8 +145,7 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
         props.frame.zoomLevel,
         props.frame.center,
         props.pixelHighlightValue,
-        props.renderHeight,
-        props.renderWidth,
+        props.frame.requiredFrameView,
         props.frame.spatialReference,
         frame?.renderConfig.scaleMinVal,
         frame?.renderConfig.scaleMaxVal,
@@ -225,7 +218,7 @@ const updateCanvas = (
 
             updateCanvasSize(frame, webGLService, canvas, renderWidth, renderHeight, numImageColumns, numImageRows);
             updateUniforms(frame, webGLService, renderWidth, renderHeight, pixelHighlightValue);
-            renderCanvas(frame, webGLService, tileService, xOffset, yOffset, renderWidth, renderHeight, tileBasedRender, channel, rasterData); // change column and row to x and y offset
+            renderCanvas(frame, webGLService, tileService, xOffset, yOffset, renderWidth, renderHeight, tileBasedRender, channel, rasterData);
         }
         // draw in 2d canvas
         const ctx = canvas.getContext("2d");

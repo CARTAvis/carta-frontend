@@ -163,14 +163,10 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                         tileService={TileService.Instance}
                         docked={this.props.docked}
                         pixelHighlightValue={this.pixelHighlightValue}
-                        renderWidth={frame.renderWidth}
-                        renderHeight={frame.renderHeight}
                         row={this.props.row}
                         column={this.props.column}
                         tileBasedRender={!frame.isPreview}
                         rasterData={frame.previewPVRasterData}
-                        numImageColumns={appStore.numImageColumns}
-                        numImageRows={appStore.numImageRows}
                     />
                     <ContourViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />
                     <VectorOverlayViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />
