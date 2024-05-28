@@ -33,7 +33,7 @@ const Float32Max = 3.402823466e38;
 export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer((props: RasterViewComponentProps) => {
     const canvas = React.useRef<HTMLCanvasElement>();
     const sub = React.useRef<Subscription>();
-    
+
     // dummy values to trigger React's componentDidUpdate()
     /* eslint-disable @typescript-eslint/no-unused-vars */
     const appStore = AppStore.Instance;
@@ -42,7 +42,7 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
         const spatialReference = frame.spatialReference || frame;
         const frameView = spatialReference.requiredFrameView;
         const currentView = spatialReference.currentFrameView;
-    
+
         const colorMapping = {
             min: frame.renderConfig.scaleMinVal,
             max: frame.renderConfig.scaleMaxVal,
