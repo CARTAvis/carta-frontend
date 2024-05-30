@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added the raster matching setting to the preference and improved the raster matching function ([#2004](https://github.com/CARTAvis/carta-frontend/issues/2004) and [#1959](https://github.com/CARTAvis/carta-frontend/issues/1959)).
 * Added support for sorting the spectral line table ([#2262](https://github.com/CARTAvis/carta-frontend/issues/2262)).
 * Added additional mono-color colormaps with a customized option for the raster image ([#2300](https://github.com/CARTAvis/carta-frontend/issues/2300))
+* Added support for PV image generation using polyline ([[#2302](https://github.com/CARTAvis/carta-frontend/issues/2302)])
 ### Fixed
 * Fixed ruler annotation matching bug ([#2242](https://github.com/CARTAvis/carta-frontend/issues/2242)).
 * Fixed compass and ruler annotations update bug in the spatially matched image when changing the coordinate ([#2270](https://github.com/CARTAvis/carta-frontend/issues/2270)).
