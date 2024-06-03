@@ -227,44 +227,6 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initDummyFrame()
     return frameSet;
 }
 
-void plotDistText(AstFrameSet* wcsinfo, AstPlot* plot, double* start, double* finish)
-{
-    double dist = astDistance(wcsinfo, start, finish);
-    double middle[2];
-    astOffset(plot, start, finish, dist / 2, middle);
-    float up[] = {0.0f, 1.0f}; // horizontal text
-    string distString;
-    const char* unit = astGetC(wcsinfo, "Unit(1)");
-    if (strstr(unit, "degree") != nullptr || strstr(unit, "hh:mm:s") != nullptr || strstr(unit, "deg") != nullptr || strstr(unit, "arcmin") != nullptr || strstr(unit, "arcsec") != nullptr)
-    {
-        if (dist < M_PI / 180.0 / 60.0)
-        {
-            distString = to_string(dist * 180.0 / M_PI * 3600.0);
-            distString += '"';
-        }
-        else if (dist < M_PI / 180.0)
-        {
-            distString = to_string(dist * 180.0 / M_PI * 60.0);
-            distString += "'";
-        }
-        else
-        {
-            distString = to_string(dist * 180.0 / M_PI);
-            distString += "\u00B0";
-        }
-    }
-    else
-    {
-        distString = to_string(dist);
-        if (unit[0] == '\0') {
-            distString += "pix";
-        }
-    }
-    const char* distChar = distString.c_str();
-
-    astText(plot, distChar, middle, up, "TC");
-}
-
 EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double imageX2, double imageY1, double imageY2, double width, double height,
                                         double paddingLeft, double paddingRight, double paddingTop, double paddingBottom, const char* args)
 {
