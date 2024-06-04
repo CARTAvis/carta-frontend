@@ -1,5 +1,5 @@
 import {useState} from "react";
-import {AnchorButton, Classes, FormGroup, HTMLSelect, InputGroup, Intent, Overlay2, Radio, RadioGroup, Spinner} from "@blueprintjs/core";
+import {AnchorButton, Classes, FormGroup, HTMLSelect, InputGroup, Intent, Overlay2, Position, Radio, RadioGroup, Spinner, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
@@ -17,7 +17,17 @@ export const HipsQueryComponent = observer(() => {
         <div className="hips-query-panel">
             <div className="hips-query-config">
                 <FormGroup inline={true} label="HiPS survey" disabled={hipsQueryStore.isLoading}>
-                    <InputGroup value={hipsQueryStore.hipsSurvey} onChange={ev => hipsQueryStore.setHipsSurvey(ev.target.value)} disabled={hipsQueryStore.isLoading} />
+                    <InputGroup
+                        className="survey-input"
+                        value={hipsQueryStore.hipsSurvey}
+                        onChange={ev => hipsQueryStore.setHipsSurvey(ev.target.value)}
+                        disabled={hipsQueryStore.isLoading}
+                        rightElement={
+                            <Tooltip content="A list of HiPS surveys" position={Position.BOTTOM}>
+                                <AnchorButton icon="share" href="https://aladin.cds.unistra.fr/hips/list" target="_blank" minimal />
+                            </Tooltip>
+                        }
+                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Dimension" labelInfo="(px)" disabled={hipsQueryStore.isLoading}>
                     <SafeNumericInput
