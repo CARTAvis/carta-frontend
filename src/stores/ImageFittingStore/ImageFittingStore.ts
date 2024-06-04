@@ -152,7 +152,7 @@ export class ImageFittingStore {
         const validFileId = isFinite(fileId) && fileId >= 0;
         const allFixed = this.components.every(c => c.allFixed === true);
         const validParams = this.components.every(c => c.validParams === true);
-        return !validFileId || allFixed || !validParams || this.isFitting;
+        return !validFileId || allFixed || (this.components.length > 1 && !validParams) || this.isFitting;
     }
 
     constructor() {
