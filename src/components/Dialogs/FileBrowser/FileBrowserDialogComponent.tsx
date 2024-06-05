@@ -153,7 +153,7 @@ export class FileBrowserDialogComponent extends React.Component {
     }
 
     /// Prepare parameters for send saveFile
-    private handleSaveFile = async () => {
+    private handleSaveFile = async (overwrite: boolean = false) => {
         const appStore = AppStore.Instance;
         const fileBrowserStore = FileBrowserStore.Instance;
         const activeFrame = appStore.activeFrame;
@@ -171,7 +171,7 @@ export class FileBrowserDialogComponent extends React.Component {
         const saveStokes = fileBrowserStore.saveStokesRange;
 
         const restFreq = activeFrame.headerRestFreq === fileBrowserStore.saveRestFreqInHz ? NaN : fileBrowserStore.saveRestFreqInHz;
-        await appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType, fileBrowserStore.saveRegionId, saveChannels, saveStokes, fileBrowserStore.shouldDropDegenerateAxes, restFreq);
+        await appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType, fileBrowserStore.saveRegionId, saveChannels, saveStokes, fileBrowserStore.shouldDropDegenerateAxes, restFreq, overwrite);
     };
 
     private handleSaveFileClicked = () => {
@@ -219,7 +219,7 @@ export class FileBrowserDialogComponent extends React.Component {
             const filename = fileBrowserStore.exportFilename.trim();
             this.exportRegion(fileBrowserStore.fileList.directory, filename);
         } else if (fileBrowserStore.browserMode === BrowserMode.SaveFile) {
-            this.handleSaveFile();
+            this.handleSaveFile(true);
         }
     };
 
