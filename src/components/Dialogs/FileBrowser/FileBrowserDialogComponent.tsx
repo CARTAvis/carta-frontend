@@ -378,7 +378,12 @@ export class FileBrowserDialogComponent extends React.Component {
             case BrowserMode.SaveFile:
                 return (
                     <Tooltip content={"Save this file"}>
-                        <AnchorButton intent={Intent.PRIMARY} disabled={appStore.fileLoading || fileBrowserStore.loadingInfo || appStore.fileSaving} onClick={this.handleSaveFileClicked} text="Save" />
+                        <AnchorButton
+                            intent={Intent.PRIMARY}
+                            disabled={appStore.fileLoading || fileBrowserStore.loadingInfo || appStore.fileSaving || fileBrowserStore.saveFilename.length === 0}
+                            onClick={this.handleSaveFileClicked}
+                            text="Save"
+                        />
                     </Tooltip>
                 );
             case BrowserMode.RegionImport:
