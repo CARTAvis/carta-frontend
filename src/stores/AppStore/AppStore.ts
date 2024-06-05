@@ -58,6 +58,7 @@ import {
     SnippetStore,
     SpatialProfileStore,
     SpectralProfileStore,
+    SystemType,
     WidgetsStore
 } from "stores";
 import {CompassAnnotationStore, CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
@@ -767,6 +768,7 @@ export class AppStore {
     @flow.bound
     *openFile(path: string, filename?: string, hdu?: string, imageArithmetic?: boolean, updateStartingDirectory: boolean = true) {
         this.removeAllFrames();
+        this.overlayStore.global.setSystem(SystemType.Auto);
         return yield this.loadFile(path, filename, hdu, imageArithmetic, true, updateStartingDirectory);
     }
 
@@ -892,6 +894,7 @@ export class AppStore {
             const removedFrameIsSpectralReference = frame === this.spectralReference;
             const removedFrameIsRasterScalingReference = frame === this.rasterScalingReference;
             const fileId = frame.frameInfo.fileId;
+            const removedFrameIsLastFrame = this.frames[this.frames.length - 1].frameInfo.fileId === fileId;
 
             // adjust requirements for stores
             this.widgetsStore.removeFrameFromRegionWidgets(fileId);
@@ -972,6 +975,11 @@ export class AppStore {
                     const colorBlendingImages = this.imageViewConfigStore?.colorBlendingImages.slice();
                     for (const colorBlendingImage of colorBlendingImages) {
                         this.imageViewConfigStore?.removeColorBlending(colorBlendingImage);
+                    }
+                } else {
+                    // update overlay defaults from the last frame
+                    if (removedFrameIsLastFrame) {
+                        this.overlayStore.setDefaultsFromFrame(this.frames[this.frames.length - 1]);
                     }
                 }
 
@@ -1071,25 +1079,32 @@ export class AppStore {
         const frame = this.activeFrame;
         const fileId = this.catalogNextFileId;
 
-        const ack = yield this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize);
-        this.endFileLoading();
-        if (frame && ack.success && ack.dataSize) {
-            let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
-            const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
-            let catalogWidgetId = this.updateCatalogProfile(fileId, frame);
-            if (catalogWidgetId) {
-                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: ack.headers.length, row: ack.dataSize, remote: false});
-                this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
-                this.catalogStore.addCatalog(fileId, ack.dataSize);
-                this.fileBrowserStore.hideFileBrowser();
-                const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData, CatalogType.FILE);
-                this.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
-                return fileId;
+        try {
+            const ack = yield this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize);
+            this.endFileLoading();
+            if (frame && ack.success && ack.dataSize) {
+                let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
+                const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
+                let catalogWidgetId = this.updateCatalogProfile(fileId, frame);
+                if (catalogWidgetId) {
+                    TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: ack.headers.length, row: ack.dataSize, remote: false});
+                    this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
+                    this.catalogStore.addCatalog(fileId, ack.dataSize);
+                    this.fileBrowserStore.hideFileBrowser();
+                    const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData, CatalogType.FILE);
+                    this.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
+                    return fileId;
+                } else {
+                    throw new Error("No catalog widget ID");
+                }
             } else {
-                throw new Error("No catalog widget ID");
+                throw new Error("No catalog file loaded");
             }
-        } else {
-            throw new Error("No catalog file loaded");
+        } catch (err) {
+            console.error(err);
+            this.alertStore.showAlert(`Error loading catalogs: ${err}`);
+            this.endFileLoading();
+            throw err;
         }
     }
 
@@ -1955,13 +1970,6 @@ export class AppStore {
                 } else {
                     throttledSetCursor(this.hoveredFrame.frameInfo.fileId, pos);
                 }
-            }
-        });
-
-        // Set overlay defaults from current frame
-        autorun(() => {
-            if (this.activeFrame) {
-                this.overlayStore.setDefaultsFromAST(this.activeFrame);
             }
         });
 
