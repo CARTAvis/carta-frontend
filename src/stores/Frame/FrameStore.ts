@@ -1494,8 +1494,12 @@ export class FrameStore {
 
     updateWcsSystem = (formatStringX: string, formatStyingY: string, explicitSystem: SystemType) => {
         if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined) {
-            if (!(this.isPVImage && this.spectralAxis?.valid) && !(this.isSwappedZ && this.spectralAxis?.valid)) {
-                if (this.validWcs && this.wcsInfo) {
+            if (!(this.isPVImage && this.spectralAxis?.valid) && !(this.isSwappedZ && this.spectralAxis?.valid) && this.validWcs && this.wcsInfo) {
+                if (explicitSystem === SystemType.Image) {
+                    // Use base frame for image coordinates
+                    AST.setI(this.wcsInfo, "Current", 1);
+                } else {
+                    AST.setI(this.wcsInfo, "Current", 2);
                     AST.set(this.wcsInfo, `Format(${this.dirX})=${formatStringX}, Format(${this.dirY})=${formatStyingY}, System=${explicitSystem}`);
                 }
             }
@@ -1908,7 +1912,7 @@ export class FrameStore {
         let cursorPosWCS, cursorPosFormatted;
         let precisionX = 0;
         let precisionY = 0;
-        if (this.validWcs || this.isYX || this.isPVImage || this.isUVImage || this.isSwappedZ) {
+        if ((this.validWcs || this.isYX || this.isPVImage || this.isUVImage || this.isSwappedZ) && this.overlayStore.global.explicitSystem !== SystemType.Image) {
             // We need to compare X and Y coordinates in both directions
             // to avoid a confusing drop in precision at rounding threshold
             const offsetBlock = [

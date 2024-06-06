@@ -5,7 +5,7 @@ import * as _ from "lodash";
 import {observer} from "mobx-react";
 
 import {CursorInfo, SPECTRAL_TYPE_STRING} from "models";
-import {AppStore, OverlayStore, PreferenceStore} from "stores";
+import {AppStore, OverlayStore, PreferenceStore, SystemType} from "stores";
 import {FrameStore} from "stores/Frame";
 
 import "./OverlayComponent.scss";
@@ -105,7 +105,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 currentStyleString += `, Tol=${tolVal}`;
             }
 
-            if (!this.props.frame.validWcs) {
+            if (!this.props.frame.validWcs || settings.global.explicitSystem === SystemType.Image) {
                 //Remove system and format entries
                 currentStyleString = currentStyleString.replace(/System=.*?,/, "").replaceAll(/Format\(\d\)=.*?,/g, "");
             }
@@ -202,7 +202,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             const formatStringX = this.props.overlaySettings.numbers.formatStringX;
             const formatStyingY = this.props.overlaySettings.numbers.formatStringY;
             const explicitSystem = this.props.overlaySettings.global.explicitSystem;
-            if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined) {
+            if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined && explicitSystem !== SystemType.Image) {
                 AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY}, System=${explicitSystem},` + dirAxesSetting);
             }
         }

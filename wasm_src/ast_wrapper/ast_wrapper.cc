@@ -204,9 +204,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo
 
 EMSCRIPTEN_KEEPALIVE AstFrameSet* initDummyFrame()
 {
-    double offsets[] = {-1, -1};
-    AstFrameSet* frameSet = astFrameSet(astFrame(2, ""), "");
-    astAddFrame(frameSet, 1, astShiftMap(2, offsets, ""), astFrame(2, "Label(1)=X Coordinate,Label(2)=Y Coordinate,Domain=PIXEL"));
+    AstFrameSet* frameSet = astFrameSet(astFrame(2, "Label(1)=X Coordinate,Label(2)=Y Coordinate,Domain=PIXEL"), "");
     return frameSet;
 }
 

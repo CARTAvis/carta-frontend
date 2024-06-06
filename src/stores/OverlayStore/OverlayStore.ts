@@ -32,7 +32,8 @@ export enum SystemType {
     FK4 = "FK4",
     FK5 = "FK5",
     Galactic = "GALACTIC",
-    ICRS = "ICRS"
+    ICRS = "ICRS",
+    Image = "Cartesian"
 }
 
 export enum NumberFormatType {
@@ -101,7 +102,7 @@ export class OverlayGlobalSettings {
         astString.add("Tol", toFixed(this.tolerance / 100, 2), this.tolerance >= 0.001); // convert to fraction
         astString.add("System", this.explicitSystem);
 
-        if ((frame?.isXY || frame?.isYX) && !frame?.isPVImage && typeof this.explicitSystem !== "undefined") {
+        if ((frame?.isXY || frame?.isYX) && !frame?.isPVImage && typeof this.explicitSystem !== "undefined" && this.explicitSystem !== SystemType.Image) {
             if (this.system === SystemType.FK4) {
                 astString.add("Equinox", "1950");
             } else {
@@ -1021,7 +1022,7 @@ export class OverlayStore {
         autorun(() => {
             this.setFormatsFromSystem();
             AppStore.Instance.frames.forEach(frame => {
-                if (frame?.validWcs && frame?.wcsInfoForTransformation && this.global.explicitSystem) {
+                if (frame?.validWcs && frame?.wcsInfoForTransformation && this.global.explicitSystem && this.global.explicitSystem !== SystemType.Image) {
                     AST.set(frame.wcsInfoForTransformation, `System=${this.global.explicitSystem}`);
                 }
             });
