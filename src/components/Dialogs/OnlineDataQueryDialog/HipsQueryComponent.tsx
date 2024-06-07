@@ -84,7 +84,7 @@ export const HipsQueryComponent = observer(() => {
                 <FormGroup inline={true} label="Coordinate system" disabled={hipsQueryStore.isLoading}>
                     <RadioGroup inline={true} onChange={ev => hipsQueryStore.setCoordsys(ev.currentTarget.value as HipsCoord)} selectedValue={hipsQueryStore.coordsys} disabled={hipsQueryStore.isLoading}>
                         <Radio label="ICRS" value={HipsCoord.Icrs} />
-                        <Radio label="Galatic" value={HipsCoord.Galactic} />
+                        <Radio label="Galactic" value={HipsCoord.Galactic} />
                     </RadioGroup>
                 </FormGroup>
                 <FormGroup inline={true} label="Projection" disabled={hipsQueryStore.isLoading}>

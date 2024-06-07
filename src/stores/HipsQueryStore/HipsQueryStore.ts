@@ -7,7 +7,7 @@ import {AppStore} from "stores";
 /** Coordinate systems for HiPS data queries. */
 export enum HipsCoord {
     Icrs = "icrs",
-    Galactic = "galatic"
+    Galactic = "galactic"
 }
 
 /** Projection types for HiPS data queries. */
