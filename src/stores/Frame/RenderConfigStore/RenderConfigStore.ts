@@ -195,6 +195,7 @@ export class RenderConfigStore {
     @observable visible: boolean;
     @observable previewHistogramMax: number;
     @observable previewHistogramMin: number;
+    // Add channel map histogram here
     @observable customColormapHexEnd: string;
     @observable customColormapHexStart: string;
 

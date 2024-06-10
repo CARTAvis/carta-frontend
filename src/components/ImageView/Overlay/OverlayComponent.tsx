@@ -86,10 +86,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     updateImageDimensions() {
         if (this.canvas) {
-            const frame = this.props.frame;
-
-            this.canvas.width = (frame?.isPreview ? frame?.previewViewWidth : this.props.overlaySettings.viewWidth) * devicePixelRatio * AppStore.Instance.imageRatio;
-            this.canvas.height = (frame?.isPreview ? frame?.previewViewHeight : this.props.overlaySettings.viewHeight) * devicePixelRatio * AppStore.Instance.imageRatio;
+            this.canvas.width = this.props.overlaySettings.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
+            this.canvas.height = this.props.overlaySettings.viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
         }
     }
 
@@ -125,8 +123,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     frameView.xMax,
                     frameView.yMin / frame.aspectRatio,
                     frameView.yMax / frame.aspectRatio,
-                    (this.props.frame.isPreview ? this.props.frame?.previewViewWidth : this.props.overlaySettings.viewWidth) * pixelRatio,
-                    (this.props.frame.isPreview ? this.props.frame?.previewViewHeight : this.props.overlaySettings.viewHeight) * pixelRatio,
+                    (this.props.overlaySettings.viewWidth) * pixelRatio,
+                    (this.props.overlaySettings.viewHeight) * pixelRatio,
                     settings.padding.left * pixelRatio,
                     settings.padding.right * pixelRatio,
                     settings.padding.top * pixelRatio,
@@ -192,8 +190,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const refFrame = frame?.spatialReference ?? frame;
         // changing the frame view, padding or width/height triggers a re-render
 
-        const w = frame?.isPreview ? frame?.previewViewWidth : this.props.overlaySettings?.viewWidth;
-        const h = frame?.isPreview ? frame?.previewViewHeight : this.props.overlaySettings?.viewHeight;
+        const w = this.props.overlaySettings?.viewWidth;
+        const h = this.props.overlaySettings?.viewHeight;
         // Dummy variables for triggering re-render
         /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
         const styleString = this.props.overlaySettings.styleString;

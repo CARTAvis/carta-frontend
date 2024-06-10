@@ -108,8 +108,8 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const appStore = AppStore.Instance;
         const frame = this.props.frame;
         const colorbarSettings = appStore.overlayStore.colorbar;
-        const viewHeight = this.props.height || frame.previewViewHeight || frame.overlayStore.viewHeight;
-        const viewWidth = this.props.width || frame.previewViewWidth || frame.overlayStore.viewWidth;
+        const viewHeight = this.props.height || (frame.isPreview ? frame.previewOverlayStore.viewHeight : frame.overlayStore.viewHeight);
+        const viewWidth = this.props.width || (frame.isPreview ? frame.previewOverlayStore.viewWidth : frame.overlayStore.viewWidth);
         const colorbarSettingsHeight = this.props.length || colorbarSettings.height(frame, this.props.length);
 
         appStore.updateLayerPixelRatio(this.layerRef);

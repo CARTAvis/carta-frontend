@@ -109,6 +109,7 @@ export class FrameStore {
     private readonly framePixelRatio: number;
     private readonly backendService: BackendService;
     public readonly overlayStore: OverlayStore;
+    public readonly previewOverlayStore: OverlayStore;
     private readonly logStore: LogStore;
     private readonly initialCenter: Point2D;
     public readonly pixelUnitSizeArcsec: Point2D;
@@ -199,8 +200,8 @@ export class FrameStore {
 
     @observable stokesFiles: CARTA.StokesFile[];
 
-    @observable previewViewWidth: number;
-    @observable previewViewHeight: number;
+    // @observable previewViewWidth: number;
+    // @observable previewViewHeight: number;
     @observable previewPVRasterData: Float32Array;
     @observable intensityUnit: string;
 
@@ -387,23 +388,25 @@ export class FrameStore {
     @computed get renderWidth() {
         //need change, ok, we need a way to get this removed from here, and pass in overlaystore where needed
         // return AppStore.Instance.overlayStore.previewRenderWidth(this.previewViewWidth) || AppStore.Instance.overlayStore.renderWidth;
+        const overlayStore = this.isPreview ? this.previewOverlayStore : this.overlayStore;
         return AppStore.Instance.channelMapStore.overlayStores &&
             AppStore.Instance.channelMapStore.overlayStores.corner &&
             AppStore.Instance.preferenceStore.channelMapEnabled &&
             AppStore.Instance.channelMapStore.overlayStores.corner?.renderWidth
             ? AppStore.Instance.channelMapStore.overlayStores.corner?.renderWidth
-            : this.overlayStore.renderWidth;
+            : overlayStore.renderWidth;
     }
 
     @computed get renderHeight() {
         // return AppStore.Instance.overlayStore.previewRenderHeight(this.previewViewHeight) || AppStore.Instance.overlayStore.renderHeight;
+        const overlayStore = this.isPreview ? this.previewOverlayStore : this.overlayStore;
         return AppStore.Instance.channelMapStore.overlayStores &&
             AppStore.Instance.channelMapStore.overlayStores.corner &&
             AppStore.Instance.channelMapStore.overlayStores.corner &&
             AppStore.Instance.preferenceStore.channelMapEnabled &&
             AppStore.Instance.channelMapStore.overlayStores.corner?.renderHeight
             ? AppStore.Instance.channelMapStore.overlayStores.corner?.renderHeight
-            : this.overlayStore.renderHeight;
+            : overlayStore.renderHeight;
     }
 
     @computed get isRenderable() {
@@ -1183,6 +1186,7 @@ export class FrameStore {
     constructor(frameInfo: FrameInfo) {
         makeObservable(this);
         this.overlayStore = new OverlayStore();
+        this.previewOverlayStore = new OverlayStore();
         this.logStore = LogStore.Instance;
         this.backendService = BackendService.Instance;
         const preferenceStore = PreferenceStore.Instance;
@@ -3059,8 +3063,10 @@ export class FrameStore {
     }
 
     @action onResizePreviewWidget = (width: number, height: number) => {
-        this.previewViewWidth = width;
-        this.previewViewHeight = height;
+        // this.previewViewWidth = width;
+        // this.previewViewHeight = height;
+        this.previewOverlayStore._fullViewWidth = width;
+        this.previewOverlayStore._fullViewHeight = height;
     };
 
     @action setFrameInfo = (frameInfo: FrameInfo) => {
