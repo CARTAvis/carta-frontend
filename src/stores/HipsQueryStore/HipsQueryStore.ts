@@ -5,6 +5,11 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {Point2D} from "models";
 import {AppStore} from "stores";
 
+export interface HipsSurvey {
+    name: string;
+    type: string;
+}
+
 /** Coordinate systems for HiPS data queries. */
 export enum HipsCoord {
     Icrs = "icrs",
@@ -48,7 +53,7 @@ export class HipsQueryStore {
     private static staticInstance: HipsQueryStore;
 
     /** A list of available HiPS surveys. */
-    surveyList: string[] = [];
+    surveyList: HipsSurvey[] = [];
     /** The HiPS survey to be used. */
     @observable hipsSurvey = "";
     /** The width and height of the output image. */
@@ -270,10 +275,24 @@ export class HipsQueryStore {
 
     private fetchSurveyList = async () => {
         try {
-            const response = await axios.get(
+            const skyMaps = await axios.get(
                 "http://alasky.cds.unistra.fr/MocServer/query?expr=(hips_frame%3Dequatorial%2Cgalactic%2Cecliptic+||+hips_frame%3D!*)+%26%26+dataproduct_type!%3Dcatalog%2Ccube+%26%26+hips_service_url%3D*&get=id&fmt=json"
             );
-            this.surveyList = response?.data;
+            if (skyMaps?.data) {
+                this.surveyList = skyMaps?.data.map(x => ({name: x, type: "Sky map"}));
+            }
+
+            const planetMaps = await axios.get(
+                "http://alasky.cds.unistra.fr/MocServer/query?expr=hips_frame!%3Dequatorial%2Cgalactic%2Cecliptic+%26%26+hips_frame%3D*+%26%26+dataproduct_type!%3Dcatalog%2Ccube+%26%26+hips_service_url%3D*&get=id&fmt=json"
+            );
+            if (planetMaps?.data) {
+                planetMaps.data.forEach(x => this.surveyList.push({name: x, type: "Planet map"}));
+            }
+
+            const cubes = await axios.get("http://alasky.cds.unistra.fr/MocServer/query?hips_service_url=*&dataproduct_type=cube&get=id&fmt=json");
+            if (cubes?.data) {
+                cubes.data.forEach(x => this.surveyList.push({name: x, type: "Cubes"}));
+            }
         } catch (error) {
             console.error(error);
         }

@@ -5,12 +5,12 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {SafeNumericInput} from "components/Shared";
-import {HipsCoord, HipsProjection, HipsQueryStore} from "stores";
+import {HipsCoord, HipsProjection, HipsQueryStore, HipsSurvey} from "stores";
 
 import "./HipsQueryComponent.scss";
 
-const filterSurvey: ItemPredicate<string> = (query, survey, _index, exactMatch) => {
-    const normalizedTitle = survey.toLowerCase();
+const filterSurvey: ItemPredicate<HipsSurvey> = (query, survey, _index, exactMatch) => {
+    const normalizedTitle = `${survey.name} ${survey.type}`.toLowerCase();
     const normalizedQuery = query.toLowerCase();
 
     if (exactMatch) {
@@ -20,11 +20,11 @@ const filterSurvey: ItemPredicate<string> = (query, survey, _index, exactMatch) 
     }
 };
 
-const renderSurveyOption: ItemRenderer<string> = (survey, {handleClick, handleFocus, modifiers, query}) => {
+const renderSurveyOption: ItemRenderer<HipsSurvey> = (survey, {handleClick, handleFocus, modifiers, query}) => {
     if (!modifiers.matchesPredicate) {
         return null;
     }
-    return <MenuItem active={modifiers.active} disabled={modifiers.disabled} key={survey} onClick={handleClick} onFocus={handleFocus} roleStructure="listoption" text={survey} />;
+    return <MenuItem active={modifiers.active} disabled={modifiers.disabled} key={survey.name} onClick={handleClick} onFocus={handleFocus} roleStructure="listoption" text={survey.name} label={survey.type} />;
 };
 
 export const HipsQueryComponent = observer(() => {
@@ -42,7 +42,7 @@ export const HipsQueryComponent = observer(() => {
                         items={hipsQueryStore.surveyList}
                         itemPredicate={filterSurvey}
                         itemRenderer={renderSurveyOption}
-                        onItemSelect={hipsQueryStore.setHipsSurvey}
+                        onItemSelect={item => hipsQueryStore.setHipsSurvey(item.name)}
                         onQueryChange={hipsQueryStore.setHipsSurvey}
                         popoverProps={{popoverClassName: "survey-list-select", minimal: true}}
                         disabled={hipsQueryStore.isLoading}
