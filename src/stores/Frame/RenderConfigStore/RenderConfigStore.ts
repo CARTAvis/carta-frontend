@@ -322,11 +322,11 @@ export class RenderConfigStore {
     }
 
     @computed get scaleMinVal() {
-        return AppStore.Instance.preferenceStore.channelMapEnabled ? this.channelMapScaleMin : (this.previewHistogramMin ? Math.max(this.previewHistogramMin, this.scaleMin[this.stokesIndex]) : this.scaleMin[this.stokesIndex]);
+        return AppStore.Instance.preferenceStore.channelMapEnabled ? this.channelMapScaleMin : this.previewHistogramMin ? Math.max(this.previewHistogramMin, this.scaleMin[this.stokesIndex]) : this.scaleMin[this.stokesIndex];
     }
 
     @computed get scaleMaxVal() {
-        return AppStore.Instance.preferenceStore.channelMapEnabled ? this.channelMapScaleMax : (this.previewHistogramMax ? Math.min(this.previewHistogramMax, this.scaleMax[this.stokesIndex]) : this.scaleMax[this.stokesIndex]);
+        return AppStore.Instance.preferenceStore.channelMapEnabled ? this.channelMapScaleMax : this.previewHistogramMax ? Math.min(this.previewHistogramMax, this.scaleMax[this.stokesIndex]) : this.scaleMax[this.stokesIndex];
     }
 
     @computed get selectedPercentileVal() {
@@ -432,7 +432,7 @@ export class RenderConfigStore {
 
         // Need change to 1 standard deviation.
         if (this.selectedPercentile[this.stokesIndex] > 0 && !this.useCubeHistogram) {
-            this.channelMapScaleMin = - histogram.stdDev;
+            this.channelMapScaleMin = -histogram.stdDev;
             this.channelMapScaleMax = histogram.stdDev * 10;
         }
     };

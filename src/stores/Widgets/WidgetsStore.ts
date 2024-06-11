@@ -896,7 +896,7 @@ export class WidgetsStore {
         }
         console.log(preferenceStore.imageMultiPanelEnabled, preferenceStore.channelMapEnabled);
     };
-    
+
     setImageMultiPanelEnabled = (multiPanelEnabled: boolean) => {
         const preferenceStore = PreferenceStore.Instance;
         preferenceStore.setPreference(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED, multiPanelEnabled);
