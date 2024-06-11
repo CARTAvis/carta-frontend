@@ -702,7 +702,7 @@ export class AppStore {
             if (!ack.success || !ack.openFileAck) {
                 AppToaster.show({icon: "warning-sign", message: `HiPS data query failed: ${ack.message}`, intent: "danger", timeout: 3000});
             }
-            if (!this.addFrame(ack.openFileAck, "", false, "", false, true, false)) {
+            if (!this.addFrame(ack.openFileAck, "", false, "", true, true, false)) {
                 AppToaster.show({icon: "warning-sign", message: "HiPS data query failed: Load file failed.", intent: "danger", timeout: 3000});
             }
             this.dialogStore.hideDialog(DialogId.OnlineDataQuery);
