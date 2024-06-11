@@ -46,6 +46,7 @@ export const HipsQueryComponent = observer(() => {
                         onQueryChange={hipsQueryStore.setHipsSurvey}
                         popoverProps={{popoverClassName: "survey-list-select", minimal: true}}
                         disabled={hipsQueryStore.isLoading}
+                        query={hipsQueryStore.hipsSurvey}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Dimension" labelInfo="(px)" disabled={hipsQueryStore.isLoading}>
