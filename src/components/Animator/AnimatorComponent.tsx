@@ -382,6 +382,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                     </Menu>
                 }
                 position={Position.TOP}
+                disabled={appStore.preferenceStore.channelMapEnabled}
             >
                 <Tooltip2 content="Playback mode" position={Position.TOP}>
                     <AnchorButton icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled}>
@@ -393,26 +394,26 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
         const playbackButtons = (
             <ButtonGroup fill={true} className="playback-buttons">
-                <Button icon={"chevron-backward"} onClick={this.onFirstClicked}>
+                <Button icon={"chevron-backward"} onClick={this.onFirstClicked} disabled={appStore.preferenceStore.channelMapEnabled}>
                     {!iconOnly && "First"}
                 </Button>
-                <Button icon={"step-backward"} onClick={this.onPrevClicked}>
+                <Button icon={"step-backward"} onClick={this.onPrevClicked} disabled={appStore.preferenceStore.channelMapEnabled}>
                     {!iconOnly && "Prev"}
                 </Button>
                 {appStore.animatorStore.animationActive && (
-                    <Button icon={"stop"} onClick={appStore.animatorStore.stopAnimation}>
+                    <Button icon={"stop"} onClick={appStore.animatorStore.stopAnimation} disabled={appStore.preferenceStore.channelMapEnabled}>
                         {!iconOnly && "Stop"}
                     </Button>
                 )}
                 {!appStore.animatorStore.animationActive && (
-                    <Button icon={"play"} onClick={appStore.animatorStore.startAnimation}>
+                    <Button icon={"play"} onClick={appStore.animatorStore.startAnimation} disabled={appStore.preferenceStore.channelMapEnabled}>
                         {!iconOnly && "Play"}
                     </Button>
                 )}
-                <Button icon={"step-forward"} onClick={this.onNextClicked}>
+                <Button icon={"step-forward"} onClick={this.onNextClicked} disabled={appStore.preferenceStore.channelMapEnabled}>
                     {!iconOnly && "Next"}
                 </Button>
-                <Button icon={"chevron-forward"} onClick={this.onLastClicked}>
+                <Button icon={"chevron-forward"} onClick={this.onLastClicked} disabled={appStore.preferenceStore.channelMapEnabled}>
                     {!iconOnly && "Last"}
                 </Button>
             </ButtonGroup>

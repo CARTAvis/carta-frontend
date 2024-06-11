@@ -439,7 +439,7 @@ export function renderTile(frame: FrameStore, webGLService: TileWebGLService, ti
         delete rasterTile.data;
     }
 
-    if (!tileBasedRender && rasterTile.width * rasterTile.height === rasterTile.data.length) {
+    if (!tileBasedRender && rasterTile.width * rasterTile.height === rasterTile.data?.length) {
         const texture = createFP32Texture(gl, rasterTile.width, rasterTile.height, GL2.TEXTURE0);
         copyToFP32Texture(gl, texture, rasterTile.data, GL2.TEXTURE0, rasterTile.width, rasterTile.height, 0, 0);
         gl.bindTexture(GL2.TEXTURE_2D, texture);
@@ -449,7 +449,7 @@ export function renderTile(frame: FrameStore, webGLService: TileWebGLService, ti
         gl.uniform2f(shaderUniforms.TileTextureSize, rasterTile.width, rasterTile.height);
         gl.uniform2f(shaderUniforms.TextureSize, rasterTile.width, rasterTile.height);
     } else {
-        const textureParameters = tileService.getTileTextureParameters(rasterTile);
+        const textureParameters = tileService?.getTileTextureParameters(rasterTile);
         if (textureParameters) {
             gl.bindTexture(GL2.TEXTURE_2D, textureParameters.texture);
             gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);

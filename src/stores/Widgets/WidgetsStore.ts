@@ -896,10 +896,12 @@ export class WidgetsStore {
         }
         console.log(preferenceStore.imageMultiPanelEnabled, preferenceStore.channelMapEnabled);
     };
-
+    
     setImageMultiPanelEnabled = (multiPanelEnabled: boolean) => {
-        PreferenceStore.Instance.setPreference(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED, multiPanelEnabled);
+        const preferenceStore = PreferenceStore.Instance;
+        preferenceStore.setPreference(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED, multiPanelEnabled);
         AppStore.Instance.channelMapStore.masterFrame?.overlayStore.setIsChannelMap(!multiPanelEnabled);
+        preferenceStore.setPreference(PreferenceKeys.CHANNEL_MAP_ENABLED, !multiPanelEnabled);
         this.updateImagePanelButton();
     };
 

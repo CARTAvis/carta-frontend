@@ -2089,6 +2089,10 @@ export class AppStore {
                 updatedFrame.renderConfig.updateChannelHistogram(channelHist);
                 updatedFrame.channel = tileStreamDetails.channel;
                 updatedFrame.stokes = tileStreamDetails.stokes;
+
+                if (pendingHistogram.channel === 0) {
+                    updatedFrame.renderConfig.updateChannelMapHistogram(channelHist);
+                }
             }
             this.pendingChannelHistograms.delete(key);
         }
