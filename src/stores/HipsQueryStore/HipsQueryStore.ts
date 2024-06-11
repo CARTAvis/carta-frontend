@@ -1,3 +1,4 @@
+import axios from "axios";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
@@ -46,6 +47,8 @@ export enum HipsProjection {
 export class HipsQueryStore {
     private static staticInstance: HipsQueryStore;
 
+    /** A list of available HiPS surveys. */
+    surveyList: string[] = [];
     /** The HiPS survey to be used. */
     @observable hipsSurvey = "";
     /** The width and height of the output image. */
@@ -111,6 +114,7 @@ export class HipsQueryStore {
 
     constructor() {
         makeObservable(this);
+        this.fetchSurveyList();
     }
 
     /**
@@ -262,5 +266,16 @@ export class HipsQueryStore {
             console.log(err);
         }
         this.setIsLoading(false);
+    };
+
+    private fetchSurveyList = async () => {
+        try {
+            const response = await axios.get(
+                "http://alasky.cds.unistra.fr/MocServer/query?expr=(hips_frame%3Dequatorial%2Cgalactic%2Cecliptic+||+hips_frame%3D!*)+%26%26+dataproduct_type!%3Dcatalog%2Ccube+%26%26+hips_service_url%3D*&get=id&fmt=json"
+            );
+            this.surveyList = response?.data;
+        } catch (error) {
+            console.error(error);
+        }
     };
 }

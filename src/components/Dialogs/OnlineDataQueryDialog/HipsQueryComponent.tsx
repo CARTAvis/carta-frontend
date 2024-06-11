@@ -1,5 +1,6 @@
 import {useState} from "react";
-import {AnchorButton, Classes, FormGroup, HTMLSelect, InputGroup, Intent, Overlay2, Position, Radio, RadioGroup, Spinner, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Classes, FormGroup, HTMLSelect, InputGroup, Intent, MenuItem, Overlay2, Radio, RadioGroup, Spinner} from "@blueprintjs/core";
+import {ItemPredicate, ItemRenderer, Suggest} from "@blueprintjs/select";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
@@ -7,6 +8,24 @@ import {SafeNumericInput} from "components/Shared";
 import {HipsCoord, HipsProjection, HipsQueryStore} from "stores";
 
 import "./HipsQueryComponent.scss";
+
+const filterSurvey: ItemPredicate<string> = (query, survey, _index, exactMatch) => {
+    const normalizedTitle = survey.toLowerCase();
+    const normalizedQuery = query.toLowerCase();
+
+    if (exactMatch) {
+        return normalizedTitle === normalizedQuery;
+    } else {
+        return normalizedTitle.indexOf(normalizedQuery) >= 0;
+    }
+};
+
+const renderSurveyOption: ItemRenderer<string> = (survey, {handleClick, handleFocus, modifiers, query}) => {
+    if (!modifiers.matchesPredicate) {
+        return null;
+    }
+    return <MenuItem active={modifiers.active} disabled={modifiers.disabled} key={survey} onClick={handleClick} onFocus={handleFocus} roleStructure="listoption" text={survey} />;
+};
 
 export const HipsQueryComponent = observer(() => {
     const hipsQueryStore = HipsQueryStore.Instance;
@@ -17,16 +36,16 @@ export const HipsQueryComponent = observer(() => {
         <div className="hips-query-panel">
             <div className="hips-query-config">
                 <FormGroup inline={true} label="HiPS survey" disabled={hipsQueryStore.isLoading}>
-                    <InputGroup
+                    <Suggest
                         className="survey-input"
-                        value={hipsQueryStore.hipsSurvey}
-                        onChange={ev => hipsQueryStore.setHipsSurvey(ev.target.value)}
+                        inputValueRenderer={() => hipsQueryStore.hipsSurvey}
+                        items={hipsQueryStore.surveyList}
+                        itemPredicate={filterSurvey}
+                        itemRenderer={renderSurveyOption}
+                        onItemSelect={hipsQueryStore.setHipsSurvey}
+                        onQueryChange={hipsQueryStore.setHipsSurvey}
+                        popoverProps={{popoverClassName: "survey-list-select", minimal: true}}
                         disabled={hipsQueryStore.isLoading}
-                        rightElement={
-                            <Tooltip content="A list of HiPS surveys" position={Position.BOTTOM}>
-                                <AnchorButton icon="share" href="https://aladin.cds.unistra.fr/hips/list" target="_blank" minimal />
-                            </Tooltip>
-                        }
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Dimension" labelInfo="(px)" disabled={hipsQueryStore.isLoading}>

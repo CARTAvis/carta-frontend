@@ -23,12 +23,22 @@
             gap: 10px;
 
             .survey-input {
-                width: 198px;
+                width: 406px;
             }
         }
     }
 
     .query-footer {
         margin-top: 10px;
+    }
+}
+
+.survey-list-select {
+    .#{$ns}-popover-content {
+        .#{$ns}-menu {
+            max-height: 300px;
+            width: 406px;
+            overflow: auto;
+        }
     }
 }
