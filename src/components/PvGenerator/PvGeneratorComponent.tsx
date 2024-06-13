@@ -293,11 +293,11 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                         <br />
                         1. Animation playback is stopped.
                         <br />
-                        2. Line region is selected.
+                        2. Line/Polyline region is selected.
                         <br />
-                        3. Line region has intersection with image.
+                        3. Line/Polyline region has intersection with image.
                         <br />
-                        4. Line region is not in one pixel.
+                        4. Line/Polyline region is not in one pixel.
                     </small>
                 </i>
             </span>
