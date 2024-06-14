@@ -33,7 +33,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
             const selectedFrame = appStore.getFrame(this.fileId);
             if (selectedFrame?.regionSet) {
                 const validRegionOptions = selectedFrame.regionSet.regions
-                    ?.filter(r => !r.isTemporary && r.regionType === CARTA.RegionType.LINE)
+                    ?.filter(r => !r.isTemporary && (r.regionType === CARTA.RegionType.LINE || r.regionType === CARTA.RegionType.POLYLINE))
                     ?.map(region => {
                         return {value: region?.regionId, label: region?.nameString};
                     });
