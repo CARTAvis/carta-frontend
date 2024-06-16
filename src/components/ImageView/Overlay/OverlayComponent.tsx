@@ -20,6 +20,7 @@ export class OverlayComponentProps {
     height?: number;
     refCanvas?: any;
     channel?: number;
+    unScaled?: boolean;
     onClicked?: (cursorInfo: CursorInfo) => void;
     onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
 }
@@ -97,7 +98,17 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
 
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : frame.wcsInfo;
-        const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+        const frameView = this.props.unScaled
+            ? {
+                  xMin: settings.padding.left * pixelRatio,
+                  xMax: this.props.overlaySettings.viewWidth * pixelRatio - settings.padding.right * pixelRatio,
+                  yMin: settings.padding.bottom * pixelRatio,
+                  yMax: this.props.overlaySettings.viewHeight * pixelRatio - settings.padding.top * pixelRatio,
+                  mip: 1
+              }
+            : frame.spatialReference
+            ? frame.spatialReference.requiredFrameView
+            : frame.requiredFrameView;
         if (wcsInfo && frameView && this.canvas && !this.props.refCanvas) {
             // Take aspect ratio scaling into account
             const tempWcsInfo = AST.copy(wcsInfo);

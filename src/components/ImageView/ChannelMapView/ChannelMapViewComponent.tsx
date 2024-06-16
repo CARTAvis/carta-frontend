@@ -496,6 +496,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                 top={cursorOverlayRef.current?.divElement.clientHeight}
                 left={0}
                 docked={props.docked}
+                unScaled={true}
             />
         </>
     ) : (
