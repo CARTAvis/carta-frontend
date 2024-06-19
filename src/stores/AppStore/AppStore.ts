@@ -925,7 +925,7 @@ export class AppStore {
                 } else {
                     // update overlay defaults from the last frame
                     if (removedFrameIsLastFrame) {
-                        this.overlayStore.setDefaultsFromFrame(this.frames[this.frames.length - 1]);
+                        frame.overlayStore.setDefaultsFromFrame(this.frames[this.frames.length - 1]);
                     }
                 }
 

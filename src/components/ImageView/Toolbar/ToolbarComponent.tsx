@@ -1,7 +1,6 @@
 import * as React from "react";
 import {CSSProperties} from "react";
 import {AnchorButton, ButtonGroup, Classes, IconName, Menu, MenuDivider, MenuItem, Popover, PopoverInteractionKind, PopoverPosition, Position, Slider, Tooltip} from "@blueprintjs/core";
-import {Popover2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
@@ -366,7 +365,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                             <AnchorButton icon="zoom-to-fit" onClick={this.props.onZoomToFit} data-testid="zoom-to-fit-button" />
                         </Tooltip>
                         {appStore.preferenceStore.channelMapEnabled && (
-                            <Popover2
+                            <Popover
                                 content={
                                     <div style={{margin: "10px"}}>
                                         <Slider
@@ -385,7 +384,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 <AnchorButton disabled={!appStore.preferenceStore.channelMapEnabled} className={"full-zoom-button"}>
                                     Channel
                                 </AnchorButton>
-                            </Popover2>
+                            </Popover>
                         )}
                         {!frame.isPreview && (
                             <>
