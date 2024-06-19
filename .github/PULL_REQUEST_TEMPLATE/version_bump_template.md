@@ -1,6 +1,6 @@
 **Description**
 
-This PR is for the release version bump, the final step before tagging a beta release or creating a stable release branch.
+This PR is for the version bump, the final step before tagging a release on a release branch, or the first step when starting a new dev cycle.
 
 **Checklist**
 
@@ -8,7 +8,4 @@ This PR is for the release version bump, the final step before tagging a beta re
 - [ ] `package-lock.json` version string updated (by running `npm install`)
 - [ ] changelog version string updated
 - [ ] user manual URL in the about dialog updated (for stable releases)
-
-**Note**
-
-The documentation website requires an update (following the [guidelines](https://cartavis.org/carta-frontend/docs/contributing/documentation-guidelines#versioning)) after the beta release is tagged or the stable release branch is created.
+- [ ] documentation website updated (for start of new cycle, on the dev branch after a release is tagged) ([guidelines](https://cartavis.org/carta-frontend/docs/contributing/documentation-guidelines#versioning))

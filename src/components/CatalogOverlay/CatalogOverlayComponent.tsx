@@ -1,10 +1,9 @@
 import * as React from "react";
 import ReactResizeDetector from "react-resize-detector";
 import SplitPane, {Pane} from "react-split-pane";
-import {AnchorButton, Button, ButtonGroup, FormGroup, Intent, MenuItem, NonIdealState, PopoverPosition, Switch} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
-import {IItemRendererProps, ItemPredicate, Select} from "@blueprintjs/select";
-import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
+import {AnchorButton, Button, ButtonGroup, Classes, FormGroup, Intent, MenuItem, NonIdealState, PopoverPosition, Switch, Tooltip} from "@blueprintjs/core";
+import {ItemPredicate, ItemRendererProps, Select} from "@blueprintjs/select";
+import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
 import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
 import {CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
@@ -31,11 +30,11 @@ enum HeaderTableColumnName {
 
 @observer
 export class CatalogOverlayComponent extends React.Component<WidgetProps> {
-    @observable catalogTableRef: Table = undefined;
+    @observable catalogTableRef: Table2 = undefined;
     @observable height: number;
     @observable width: number;
 
-    private catalogHeaderTableRef: Table = undefined;
+    private catalogHeaderTableRef: Table2 = undefined;
     private catalogFileNames: Map<number, string>;
     static readonly axisDataType = [
         CARTA.ColumnType.Double,
@@ -232,7 +231,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 name={columnName}
                 cellRenderer={(rowIndex, columnIndex) => (
                     <Cell className="header-table-cell" key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>
-                        {coloumnData[rowIndex]}
+                        <>
+                            <div data-testid={"catalog-header-table-" + rowIndex + "-" + columnIndex}>{coloumnData[rowIndex]}</div>
+                        </>
                     </Cell>
                 )}
             />
@@ -245,9 +246,16 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         let disable = profileStore.loadingData;
         return (
             <Cell className="header-table-cell" key={`cell_switch_${rowIndex}`}>
-                <React.Fragment>
-                    <Switch className="cell-switch-button" key={`cell_switch_button_${rowIndex}`} disabled={disable} checked={display} onChange={changeEvent => this.handleHeaderDisplayChange(changeEvent, columnName)} />
-                </React.Fragment>
+                <>
+                    <Switch
+                        className="cell-switch-button"
+                        key={`cell_switch_button_${rowIndex}`}
+                        disabled={disable}
+                        checked={display}
+                        onChange={changeEvent => this.handleHeaderDisplayChange(changeEvent, columnName)}
+                        data-testid={"catalog-header-table-switch-" + rowIndex}
+                    />
+                </>
             </Cell>
         );
     }
@@ -265,7 +273,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return axisOptions;
     }
 
-    private renderColumnNamePopOver = (catalogName: string, itemProps: IItemRendererProps) => {
+    private renderColumnNamePopOver = (catalogName: string, itemProps: ItemRendererProps) => {
         return <MenuItem key={catalogName} text={catalogName} onClick={itemProps.handleClick} />;
     };
 
@@ -364,8 +372,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const columnDescription = this.renderDataColumn(HeaderTableColumnName.Description, headerDescriptions);
         tableColumns.push(columnDescription);
 
+        const headerDisplays = [];
+        this.profileStore.catalogControlHeader.forEach(header => headerDisplays.push(header.display));
+
         return (
-            <Table
+            <Table2
                 ref={ref => this.onControlHeaderTableRef(ref)}
                 numRows={numResultsRows}
                 enableRowReordering={false}
@@ -379,9 +390,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 columnWidths={this.widgetStore.headerTableColumnWidts}
                 onColumnWidthChanged={this.updateHeaderTableColumnSize}
                 enableRowResizing={false}
+                cellRendererDependencies={[headerDisplays, this.profileStore.loadingData]} // trigger re-render on controlHeader change
             >
                 {tableColumns}
-            </Table>
+            </Table2>
         );
     }
 
@@ -549,13 +561,13 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private renderFileIdPopOver = (fileId: number, itemProps: IItemRendererProps) => {
+    private renderFileIdPopOver = (fileId: number, itemProps: ItemRendererProps) => {
         const fileName = this.catalogFileNames.get(fileId);
         let text = `${fileId}: ${fileName}`;
         return <MenuItem key={fileId} text={text} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
-    private renderPlotTypePopOver = (plotType: CatalogPlotType, itemProps: IItemRendererProps) => {
+    private renderPlotTypePopOver = (plotType: CatalogPlotType, itemProps: ItemRendererProps) => {
         return <MenuItem key={plotType} text={plotType} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
@@ -575,23 +587,23 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private renderSystemPopOver = (system: CatalogSystemType, itemProps: IItemRendererProps) => {
+    private renderSystemPopOver = (system: CatalogSystemType, itemProps: ItemRendererProps) => {
         const menuItem = <MenuItem key={system} text={AbstractCatalogProfileStore.CoordinateSystemName.get(system)} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
         switch (system) {
             case CatalogSystemType.Pixel0:
                 return (
                     <div key={system}>
-                        <Tooltip2 position="auto-end" content={<small>PIX0: 0-based image coordinates</small>}>
+                        <Tooltip position="auto-end" content={<small>PIX0: 0-based image coordinates</small>}>
                             {menuItem}
-                        </Tooltip2>
+                        </Tooltip>
                     </div>
                 );
             case CatalogSystemType.Pixel1:
                 return (
                     <div key={system}>
-                        <Tooltip2 position="auto-end" content={<small>PIX1: 1-based image coordinates</small>}>
+                        <Tooltip position="auto-end" content={<small>PIX1: 1-based image coordinates</small>}>
                             {menuItem}
-                        </Tooltip2>
+                        </Tooltip>
                     </div>
                 );
             default:
@@ -722,7 +734,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 <div className={"catalog-overlay-filter-settings"}>
                     <FormGroup inline={true} label="File">
                         <Select
-                            className="bp3-fill"
+                            className={Classes.FILL}
                             filterable={false}
                             items={catalogFileItems}
                             activeItem={this.catalogFileId}
@@ -730,7 +742,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             itemRenderer={this.renderFileIdPopOver}
                             popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                         >
-                            <Button text={this.catalogFileId} rightIcon="double-caret-vertical" />
+                            <Button text={this.catalogFileId} rightIcon="double-caret-vertical" data-testid="catalog-file-dropdown" />
                         </Select>
                     </FormGroup>
                     <FormGroup className="catalog-system" disabled={!isImageOverlay} inline={true} label="System">
@@ -743,7 +755,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             disabled={!isImageOverlay}
                             popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                         >
-                            <Button text={activeSystem} disabled={!isImageOverlay} rightIcon="double-caret-vertical" />
+                            <Button text={activeSystem} disabled={!isImageOverlay} rightIcon="double-caret-vertical" data-testid="catalog-system-dropdown" />
                         </Select>
                     </FormGroup>
 
@@ -767,10 +779,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                         <FilterableTableComponent {...dataTableProps} />
                     </Pane>
                 </SplitPane>
-                <div className="bp3-dialog-footer">
+                <div className={Classes.DIALOG_FOOTER}>
                     <div className={"table-info"}>
                         <table className="info-display">
-                            <tbody>{tableInfo}</tbody>
+                            <tbody data-testid="catalog-table-filtering-info">{tableInfo}</tbody>
                         </table>
                     </div>
                     <div className="footer-action-container">
@@ -784,7 +796,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 itemRenderer={this.renderPlotTypePopOver}
                                 popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                             >
-                                <Button className="bp3" text={catalogWidgetStore.catalogPlotType} rightIcon="double-caret-vertical" />
+                                <Button className="bp3" text={catalogWidgetStore.catalogPlotType} rightIcon="double-caret-vertical" data-testid="catalog-rendering-type-dropdown" />
                             </Select>
 
                             <FormGroup className="catalog-axis" inline={true} label={this.xAxisLable} disabled={disable}>
@@ -801,7 +813,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     itemPredicate={this.filterColumn}
                                     resetOnSelect={true}
                                 >
-                                    <Button className="catalog-axis-button" text={catalogWidgetStore.xAxis} disabled={disable} rightIcon="double-caret-vertical" />
+                                    <Button className="catalog-axis-button" text={catalogWidgetStore.xAxis} disabled={disable} rightIcon="double-caret-vertical" data-testid="catalog-rendering-column-x-dropdown" />
                                 </Select>
                             </FormGroup>
 
@@ -819,7 +831,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     itemPredicate={this.filterColumn}
                                     resetOnSelect={true}
                                 >
-                                    <Button className="catalog-axis-button" text={catalogWidgetStore.yAxis} disabled={isHistogram || disable} rightIcon="double-caret-vertical" />
+                                    <Button className="catalog-axis-button" text={catalogWidgetStore.yAxis} disabled={isHistogram || disable} rightIcon="double-caret-vertical" data-testid="catalog-rendering-column-y-dropdown" />
                                 </Select>
                             </FormGroup>
 
@@ -834,12 +846,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             />
                         </div>
                     </div>
-                    <div className="bp3-dialog-footer">
-                        <div className="bp3-dialog-footer-actions">
-                            <AnchorButton intent={Intent.SUCCESS} text="Apply filter" onClick={this.handleFilterRequest} disabled={disable || !profileStore.updateTableView || !profileStore.hasFilter} />
-                            <AnchorButton intent={Intent.WARNING} text="Reset filter" onClick={this.handleResetClick} disabled={disable} />
-                            <AnchorButton text="Close catalog" onClick={this.handleFileCloseClick} disabled={disable} />
-                            <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={!this.enablePlotButton} />
+                    <div className={Classes.DIALOG_FOOTER}>
+                        <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                            <AnchorButton intent={Intent.SUCCESS} text="Apply filter" onClick={this.handleFilterRequest} disabled={disable || !profileStore.updateTableView || !profileStore.hasFilter} data-testid="catalog-filter-button" />
+                            <AnchorButton intent={Intent.WARNING} text="Reset filter" onClick={this.handleResetClick} disabled={disable} data-testid="catalog-reset-button" />
+                            <AnchorButton text="Close catalog" onClick={this.handleFileCloseClick} disabled={disable} data-testid="catalog-close-button" />
+                            <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={!this.enablePlotButton} data-testid="catalog-plot-button" />
                         </div>
                     </div>
                 </div>

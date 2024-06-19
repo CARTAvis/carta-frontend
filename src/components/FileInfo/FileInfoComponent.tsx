@@ -1,9 +1,9 @@
 import * as React from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
 import {FixedSizeList as List} from "react-window";
-import {Button, ButtonGroup, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, IOptionProps, NonIdealState, Position, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
-import {Popover2, Popover2InteractionKind} from "@blueprintjs/popover2";
+import {Button, ButtonGroup, Classes, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, NonIdealState, OptionProps, Popover, PopoverInteractionKind, Position, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
+import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
@@ -27,7 +27,7 @@ export enum FileInfoType {
 @observer
 export class FileInfoComponent extends React.Component<{
     infoTypes: FileInfoType[];
-    HDUOptions?: {HDUList: IOptionProps[]; handleSelectedHDUChange: (hdu: string) => void};
+    HDUOptions?: {HDUList: OptionProps[]; handleSelectedHDUChange: (hdu: string) => void};
     fileInfoExtended: CARTA.IFileInfoExtended;
     regionFileInfo: string;
     catalogFileInfo: CARTA.ICatalogFileInfo;
@@ -200,7 +200,7 @@ export class FileInfoComponent extends React.Component<{
         const tabEntries = infoTypes.map(infoType => {
             switch (infoType) {
                 case FileInfoType.IMAGE_FILE:
-                    return <Tab key={infoType} id={infoType} title="File Information" />;
+                    return <Tab key={infoType} id={infoType} title="File Information" data-testid={"file-information-tab-title"} />;
                 case FileInfoType.IMAGE_HEADER:
                     return <Tab key={infoType} id={infoType} title="Header" />;
                 case FileInfoType.SAVE_IMAGE:
@@ -374,7 +374,7 @@ export class FileInfoComponent extends React.Component<{
                     return <div style={style} className="header-name">{`${header.name}`}</div>;
                 } else {
                     return (
-                        <div style={style} className="header-entry">
+                        <div style={style} className="header-entry" data-testid={"header-entry-" + index}>
                             <span className="header-name">{header.name}</span>
                             <span className="header-value"> = {`${header.value}`}</span>
                             {header.comment && <span className="header-comment"> / {header.comment} </span>}
@@ -388,7 +388,7 @@ export class FileInfoComponent extends React.Component<{
         return (
             <AutoSizer>
                 {({height, width}) => (
-                    <List className="header-list bp3-code-block" itemCount={numHeaders} itemSize={18} height={height} width={width} ref={this.listRef}>
+                    <List className={classNames("header-list", Classes.CODE_BLOCK)} itemCount={numHeaders} itemSize={18} height={height} width={width} ref={this.listRef}>
                         {renderHeaderRow}
                     </List>
                 )}
@@ -423,9 +423,9 @@ export class FileInfoComponent extends React.Component<{
 
         return !this.props.isLoading && !this.props.errorMessage && this.props.fileInfoExtended && this.props.selectedTab === FileInfoType.IMAGE_HEADER ? (
             <ButtonGroup className="header-search-button" style={{opacity: this.isMouseEntered || this.isSearchOpened ? 1 : 0}}>
-                <Popover2
+                <Popover
                     position={Position.LEFT}
-                    interactionKind={Popover2InteractionKind.CLICK_TARGET_ONLY}
+                    interactionKind={PopoverInteractionKind.CLICK_TARGET_ONLY}
                     modifiers={{
                         arrow: {enabled: false},
                         offset: {enabled: true, options: {offset: [0, 10]}}
@@ -445,7 +445,7 @@ export class FileInfoComponent extends React.Component<{
                     }
                 >
                     <Button icon="search-text"></Button>
-                </Popover2>
+                </Popover>
                 <Button icon="th" onClick={this.exportHeader}></Button>
             </ButtonGroup>
         ) : null;
@@ -468,7 +468,7 @@ export class FileInfoComponent extends React.Component<{
 
     render() {
         return (
-            <div className="file-info" onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+            <div className="file-info" onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave} data-testid="file-info">
                 <div className="file-info-panel-top">
                     {this.renderInfoTabs()}
                     {this.renderHDUList()}

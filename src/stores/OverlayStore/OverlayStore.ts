@@ -1186,11 +1186,11 @@ export class OverlayStore {
         }
     }
 
-    @action setDefaultsFromAST(frame: FrameStore) {
-        this.imageViewerSettingStore.global.setValidWcs(frame.validWcs);
+    @action setDefaultsFromFrame(frame: FrameStore) {
+        this.global.setValidWcs(frame.validWcs);
         this.numbers.setValidWcs(frame.validWcs);
 
-        this.imageViewerSettingStore.global.setDefaultSystem(AST.getString(frame.wcsInfo, "System") as SystemType);
+        this.global.setDefaultSystem(frame.defaultWcsSystem);
         this.setFormatsFromSystem();
 
         if (this.global.system === SystemType.Auto) {

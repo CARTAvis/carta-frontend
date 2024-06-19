@@ -1,3 +1,5 @@
+import {Classes} from "@blueprintjs/core";
+import classNames from "classnames";
 import * as GoldenLayout from "golden-layout";
 import $ from "jquery";
 import {action, computed, makeObservable, observable} from "mobx";
@@ -712,7 +714,8 @@ export class WidgetsStore {
 
             stack.on("activeContentItemChanged", (contentItem: any) => {
                 if (stack && stack.config && stack.header.controlsContainer && stack.config.content.length) {
-                    const component = stack.getActiveContentItem().config.component;
+                    const config = stack.getActiveContentItem().config;
+                    const component = config.component;
                     const stackHeaderControlButtons = stack.header.controlsContainer[0];
 
                     // show/hide help button
@@ -738,6 +741,21 @@ export class WidgetsStore {
                     if (component === "image-view") {
                         this.updateImagePanelPageButtons();
                     }
+
+                    stack.header.tabs.forEach(tab => {
+                        $(tab.element)?.attr("data-testid", tab.contentItem.config.id + "-header-title");
+                        $(tab.closeElement)?.attr("data-testid", tab.contentItem.config.id + "-header-close-button");
+                    });
+                    if (component === "image-view") {
+                        $(stackHeaderControlButtons)
+                            ?.find("li.lm-image-panel")
+                            ?.attr("data-testid", config.id + "-multipanel-view-switch");
+                    }
+                    if (showCogWidgets.includes(component)) {
+                        $(stackHeaderControlButtons)
+                            ?.find("li.lm_settings")
+                            ?.attr("data-testid", config.id + "-header-settings-button");
+                    }
                 }
             });
         });
@@ -747,7 +765,7 @@ export class WidgetsStore {
     };
 
     private getControlButton = (className: string, title: string, icon: string) => {
-        return $(`<li class="${className}" title="${title}"><span class="bp3-icon-standard bp3-icon-${icon}" style/></li>`);
+        return $(`<li class="${className}" title="${title}"><span class="${classNames(Classes.ICON_STANDARD, Classes.iconClass(icon))}" style/></li>`);
     };
 
     public toWidgetSettingsConfig = (widgetType: string, widgetID: string | undefined) => {
@@ -910,7 +928,7 @@ export class WidgetsStore {
         const imagePanelButton = $(".lm_goldenlayout")?.find("li.lm-image-panel[style!='display:none;']");
         if (imagePanelButton) {
             imagePanelButton.attr("title", this.getImagePanelButtonTooltip(imagePanelMode));
-            imagePanelButton.find(".bp3-icon-standard")?.attr("class", `bp3-icon-standard ${this.getImagePanelButtonIcon(imagePanelMode)}`);
+            imagePanelButton.find(`.${Classes.ICON_STANDARD}`)?.attr("class", classNames(Classes.ICON_STANDARD, this.getImagePanelButtonIcon(imagePanelMode)));
         }
     };
 
@@ -921,7 +939,7 @@ export class WidgetsStore {
 
     private getImagePanelButtonIcon = (imagePanelMode: ImagePanelMode) => {
         // return PreferenceStore.Instance.channelMapEnabled ? "bp3-icon-heat-grid" : (imagePanelMode === ImagePanelMode.None ?  "bp3-icon-square" : "bp3-icon-grid-view");
-        return imagePanelMode === ImagePanelMode.None ? (PreferenceStore.Instance.channelMapEnabled ? "bp3-icon-heat-grid" : "bp3-icon-square") : "bp3-icon-grid-view";
+        return imagePanelMode === ImagePanelMode.None ? (PreferenceStore.Instance.channelMapEnabled ? Classes.iconClass("heat-grid") : Classes.iconClass("square")) : Classes.iconClass("grid-view");
     };
 
     onNextPageClick = () => {
@@ -967,6 +985,8 @@ export class WidgetsStore {
             config.id = itemId;
             config.props.id = itemId;
         }
+
+        $(item.element)?.attr("data-testid", config.id + "-content");
     };
 
     @action handleItemRemoval = (item: GoldenLayout.ContentItem) => {

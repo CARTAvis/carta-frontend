@@ -1,6 +1,7 @@
 import * as React from "react";
-import {Alert, Button, FormGroup, MenuItem} from "@blueprintjs/core";
+import {Alert, Button, Classes, FormGroup, MenuItem} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
+import classNames from "classnames";
 import {makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
@@ -8,7 +9,7 @@ import {SCALING_POPOVER_PROPS} from "components/Shared";
 import {AppStore} from "stores";
 import {RenderConfigStore} from "stores/Frame";
 
-const HistogramSelect = Select.ofType<boolean>();
+const HistogramSelect = Select<boolean>;
 
 interface HistogramConfigProps {
     renderConfig: RenderConfigStore;
@@ -64,11 +65,24 @@ export class HistogramConfigComponent extends React.Component<HistogramConfigPro
                             itemRenderer={this.renderHistogramSelectItem}
                             disabled={this.props.disableHistogramSelect}
                         >
-                            <Button text={renderConfig.useCubeHistogram ? "Per-cube" : "Per-channel"} rightIcon="double-caret-vertical" alignText={"right"} disabled={this.props.disableHistogramSelect} />
+                            <Button
+                                text={renderConfig.useCubeHistogram ? "Per-cube" : "Per-channel"}
+                                rightIcon="double-caret-vertical"
+                                alignText={"right"}
+                                disabled={this.props.disableHistogramSelect}
+                                data-testid="histogram-mode-dropdown"
+                            />
                         </HistogramSelect>
                     </FormGroup>
                 )}
-                <Alert className={AppStore.Instance.darkTheme ? "bp3-dark" : ""} icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>
+                <Alert
+                    className={classNames({[Classes.DARK]: AppStore.Instance.darkTheme})}
+                    icon={"time"}
+                    isOpen={this.showCubeHistogramAlert}
+                    onCancel={this.handleAlertCancel}
+                    onConfirm={this.handleAlertConfirm}
+                    cancelButtonText={"Cancel"}
+                >
                     <p>Calculating a cube histogram may take a long time, depending on the size of the file. Are you sure you want to continue?</p>
                 </Alert>
             </React.Fragment>

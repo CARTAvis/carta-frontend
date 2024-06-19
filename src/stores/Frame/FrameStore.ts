@@ -129,6 +129,7 @@ export class FrameStore {
     public readonly wcsInfoForTransformation: AST.FrameSet;
     public readonly wcsInfo3D: AST.FrameSet;
     public readonly validWcs: boolean;
+    public readonly defaultWcsSystem: SystemType;
     @observable public frameInfo: FrameInfo;
     public readonly colorbarStore: ColorbarStore;
 
@@ -620,8 +621,8 @@ export class FrameStore {
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
             const axis1 = entries.find(entry => entry.name.includes(`CTYPE${this.renderedAxesNumbers[0]}`));
             const axis2 = entries.find(entry => entry.name.includes(`CTYPE${this.renderedAxesNumbers[1]}`));
-            const axis1SpectralAxis2Spatial = axis1?.value?.match(/offset|position|offset position/i) && axis2?.value?.match(/freq/i);
-            const axis1SpatialAxis2Spectral = axis2?.value?.match(/offset|position|offset position/i) && axis1?.value?.match(/freq/i);
+            const axis1SpectralAxis2Spatial = axis1?.value?.match(/offset|position|offset position|distance/i) && axis2?.value?.match(/freq/i);
+            const axis1SpatialAxis2Spectral = axis2?.value?.match(/offset|position|offset position|distance/i) && axis1?.value?.match(/freq/i);
             return !!(axis1SpatialAxis2Spectral || axis1SpectralAxis2Spatial);
         }
         return false;
@@ -1160,9 +1161,12 @@ export class FrameStore {
     }
 
     @computed get centerWCS(): WCSPoint2D {
-        // re-calculate with different wcs system
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const system = this.overlayStore.global.explicitSystem;
+        // re-calculate with different wcs system and format
+        /* eslint-disable @typescript-eslint/no-unused-vars */
+        const system = AppStore.Instance.overlayStore.global.explicitSystem;
+        const formatX = AppStore.Instance.activeFrame.overlayStore.numbers.formatTypeX;
+        const formatY = AppStore.Instance.activeFrame.overlayStore.numbers.formatTypeY;
+        /* eslint-enable @typescript-eslint/no-unused-vars */
         if (!this.wcsInfoForTransformation) {
             return null;
         }
@@ -1360,7 +1364,8 @@ export class FrameStore {
                     AST.set(this.wcsInfoForTransformation, `Format(${this.dirX})=${overlayStore.numbers.formatTypeX}.${WCS_PRECISION}`);
                     AST.set(this.wcsInfoForTransformation, `Format(${this.dirY})=${overlayStore.numbers.formatTypeY}.${WCS_PRECISION}`);
                     this.validWcs = true;
-                    this.overlayStore.setDefaultsFromAST(this);
+                    this.defaultWcsSystem = AST.getString(this.wcsInfo, "System") as SystemType;
+                    this.overlayStore.setDefaultsFromFrame(this);
                 }
             }
         }

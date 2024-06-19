@@ -1,5 +1,5 @@
 import * as React from "react";
-import {FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
@@ -47,7 +47,7 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
 
         let enableRegionSelect = false;
         let selectedValue: number = RegionId.ACTIVE;
-        let regionOptions: IOptionProps[] = [{value: RegionId.ACTIVE, label: "Active"}];
+        let regionOptions: OptionProps[] = [{value: RegionId.ACTIVE, label: "Active"}];
 
         if (widgetStore.effectiveFrame && widgetStore.effectiveFrame.regionSet) {
             if (widgetStore.type === RegionsType.CLOSED) {
@@ -100,10 +100,18 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
         return (
             <React.Fragment>
                 <FormGroup label={"Image"} inline={true} disabled={!enableFrameselect}>
-                    <HTMLSelect className={frameClassName} value={selectedFrameValue} options={widgetStore.frameOptions} onChange={this.handleFrameChanged} disabled={!enableFrameselect} style={{width: "100px"}} />
+                    <HTMLSelect
+                        className={frameClassName}
+                        value={selectedFrameValue}
+                        options={widgetStore.frameOptions}
+                        onChange={this.handleFrameChanged}
+                        disabled={!enableFrameselect}
+                        style={{width: "100px"}}
+                        data-testid="image-dropdown"
+                    />
                 </FormGroup>
                 <FormGroup label={"Region"} inline={true} disabled={!enableRegionSelect}>
-                    <HTMLSelect className={regionClassName} value={selectedValue} options={regionOptions} onChange={this.handleRegionChanged} disabled={!enableRegionSelect} />
+                    <HTMLSelect className={regionClassName} value={selectedValue} options={regionOptions} onChange={this.handleRegionChanged} disabled={!enableRegionSelect} data-testid="region-dropdown" />
                 </FormGroup>
             </React.Fragment>
         );

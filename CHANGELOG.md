@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added the raster matching setting to the preference and improved the raster matching function ([#2004](https://github.com/CARTAvis/carta-frontend/issues/2004) and [#1959](https://github.com/CARTAvis/carta-frontend/issues/1959)).
 * Added support for sorting the spectral line table ([#2262](https://github.com/CARTAvis/carta-frontend/issues/2262)).
 * Added additional mono-color colormaps with a customized option for the raster image ([#2300](https://github.com/CARTAvis/carta-frontend/issues/2300))
+* Added support for PV image generation using polyline ([[#2302](https://github.com/CARTAvis/carta-frontend/issues/2302)])
 ### Fixed
 * Fixed ruler annotation matching bug ([#2242](https://github.com/CARTAvis/carta-frontend/issues/2242)).
 * Fixed compass and ruler annotations update bug in the spatially matched image when changing the coordinate ([#2270](https://github.com/CARTAvis/carta-frontend/issues/2270)).
@@ -21,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed a bug when applying a filter to the shifted frequency column in the spectral line query widget ([#2326](https://github.com/CARTAvis/carta-frontend/issues/2326)).
 * Improved the cursor interaction area in the image view widget ([#1794](https://github.com/CARTAvis/carta-frontend/issues/1794)).
 * Fixed saving or opening CASA image with a trailing slash using the URL parameter or the snippets ([#1816](https://github.com/CARTAvis/carta-frontend/issues/1816) and [#1357](https://github.com/CARTAvis/carta-backend/issues/1357)).
+* Fixed the incorrect coordinate system when loading or appending images after a coordinate system being specified ([#582](https://github.com/CARTAvis/carta-frontend/issues/582)).
+* Upgraded blueprintjs from v3 to v5 ([#2029](https://github.com/CARTAvis/carta-frontend/issues/1395)).
+* Fixed the catalog load button status after double clicking catalog files ([#2378](https://github.com/CARTAvis/carta-frontend/issues/2378)).
+* Synchronized the value format in the pan and zoom tab in the image view settings widget ([#2235](https://github.com/CARTAvis/carta-frontend/issues/2235)).
 
 ## [4.1.0]
 

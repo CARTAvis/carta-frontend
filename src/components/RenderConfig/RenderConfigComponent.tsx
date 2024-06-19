@@ -1,6 +1,6 @@
 import * as React from "react";
 import ReactResizeDetector from "react-resize-detector";
-import {Button, ButtonGroup, Colors, FormGroup, HTMLSelect, IOptionProps, NonIdealState} from "@blueprintjs/core";
+import {Button, ButtonGroup, Colors, FormGroup, HTMLSelect, NonIdealState, OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
@@ -404,7 +404,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         let percentileButtonsDiv, percentileSelectDiv;
         if (displayRankButtons) {
             const percentileRankButtons = RenderConfigStore.PERCENTILE_RANKS.map(rank => (
-                <Button small={true} key={rank} onClick={() => this.handlePercentileRankClick(rank)} active={frame.renderConfig.selectedPercentileVal === rank} disabled={appStore.preferenceStore.channelMapEnabled}>
+                <Button small={true} key={rank} onClick={() => this.handlePercentileRankClick(rank)} active={frame.renderConfig.selectedPercentileVal === rank} disabled={appStore.preferenceStore.channelMapEnabled} data-testid={"clip-button-" + rank} >
                     {`${rank}%`}
                 </Button>
             ));
@@ -419,7 +419,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 </div>
             );
         } else {
-            const percentileRankOptions: IOptionProps[] = RenderConfigStore.PERCENTILE_RANKS.map(rank => ({label: `${rank}%`, value: rank}));
+            const percentileRankOptions: OptionProps[] = RenderConfigStore.PERCENTILE_RANKS.map(rank => ({label: `${rank}%`, value: rank}));
             percentileRankOptions.push({label: "Custom", value: -1});
             percentileSelectDiv = (
                 <div className="percentile-select">
@@ -451,10 +451,10 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                         warnOnCubeHistogram={(frame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) === 0}
                     />
                     <FormGroup label={"Clip min"} inline={true}>
-                        <SafeNumericInput value={frame.renderConfig.scaleMinVal} selectAllOnFocus={true} buttonPosition={"none"} onBlur={this.handleScaleMinChange} onKeyDown={this.handleScaleMinChange} />
+                        <SafeNumericInput value={frame.renderConfig.scaleMinVal} selectAllOnFocus={true} buttonPosition={"none"} onBlur={this.handleScaleMinChange} onKeyDown={this.handleScaleMinChange} data-testid="clip-min-input" />
                     </FormGroup>
                     <FormGroup label={"Clip max"} inline={true}>
-                        <SafeNumericInput value={frame.renderConfig.scaleMaxVal} selectAllOnFocus={true} buttonPosition={"none"} onBlur={this.handleScaleMaxChange} onKeyDown={this.handleScaleMaxChange} />
+                        <SafeNumericInput value={frame.renderConfig.scaleMaxVal} selectAllOnFocus={true} buttonPosition={"none"} onBlur={this.handleScaleMaxChange} onKeyDown={this.handleScaleMaxChange} data-testid="clip-max-input" />
                     </FormGroup>
                     <ColormapConfigComponent renderConfig={frame.renderConfig} />
                     {this.width < histogramCutoff && percentileSelectDiv}

@@ -1,7 +1,6 @@
 import * as React from "react";
 import ReactResizeDetector from "react-resize-detector";
-import {AnchorButton, Button, ButtonGroup, ControlGroup, HTMLSelect, IconName, Menu, MenuItem, NonIdealState, NumberRange, Position, Radio, RangeSlider, Slider} from "@blueprintjs/core";
-import {Popover2, Tooltip2} from "@blueprintjs/popover2";
+import {AnchorButton, Button, ButtonGroup, Classes, ControlGroup, HTMLSelect, IconName, Menu, MenuItem, NonIdealState, NumberRange, Popover, Position, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -265,7 +264,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 numChannels - 1 - 4 * channelStep < channelStep / 2 ? [0, channelStep, 2 * channelStep, 3 * channelStep, numChannels - 1] : [0, channelStep, 2 * channelStep, 3 * channelStep, 4 * channelStep, numChannels - 1];
             const channelTick = numChannels > 10 ? channelTickPre : Array.from(Array(numChannels).keys());
             channelSlider = (
-                <div className="animator-slider">
+                <div className="animator-slider" data-testid="animator-slider">
                     <Radio
                         value={AnimationMode.CHANNEL}
                         disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled}
@@ -297,7 +296,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                                 onChange={this.onChannelChanged}
                                 disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled}
                             />
-                            <div className="slider-info">
+                            <div className="slider-info" data-testid="animator-slider-info">
                                 <pre>{activeFrame.depthAxisInfo}</pre>
                             </div>
                         </React.Fragment>
@@ -305,7 +304,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 </div>
             );
             channelRangeSlider = (
-                <div className="animator-slider range-slider">
+                <div className="animator-slider range-slider" data-testid="animator-range-slider">
                     <div className="range-label" />
                     {!hideSliders && (
                         <React.Fragment>
@@ -328,7 +327,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         // Stokes Control
         if (numStokes > 1) {
             stokesSlider = (
-                <div className={classNames("animator-slider", "stokes-slider", {"tiled-label": this.width < 750})}>
+                <div className={classNames("animator-slider", "stokes-slider", {"tiled-label": this.width < 750})} data-testid="animator-polarization-slider">
                     <Radio
                         value={AnimationMode.STOKES}
                         disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled}
@@ -368,10 +367,10 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         }
 
         const playbackClass = classNames("animator-playback", {wrap: hideSliders});
-        const playbackModeClass = classNames("playback-mode", {"bp3-dark": appStore.darkTheme});
+        const playbackModeClass = classNames("playback-mode", {[Classes.DARK]: appStore.darkTheme});
 
         const playbackModeButton = (
-            <Popover2
+            <Popover
                 className={playbackModeClass}
                 content={
                     <Menu>
@@ -384,36 +383,36 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 position={Position.TOP}
                 disabled={appStore.preferenceStore.channelMapEnabled}
             >
-                <Tooltip2 content="Playback mode" position={Position.TOP}>
-                    <AnchorButton icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled}>
+                <Tooltip content="Playback mode" position={Position.TOP}>
+                    <AnchorButton icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled} data-testid="animator-playback-mode-button">
                         {!iconOnly && "Mode"}
                     </AnchorButton>
-                </Tooltip2>
-            </Popover2>
+                </Tooltip>
+            </Popover>
         );
 
         const playbackButtons = (
             <ButtonGroup fill={true} className="playback-buttons">
-                <Button icon={"chevron-backward"} onClick={this.onFirstClicked} disabled={appStore.preferenceStore.channelMapEnabled}>
+                <Button icon={"chevron-backward"} onClick={this.onFirstClicked} disabled={appStore.preferenceStore.channelMapEnabled} data-testid="animator-first-button">
                     {!iconOnly && "First"}
                 </Button>
-                <Button icon={"step-backward"} onClick={this.onPrevClicked} disabled={appStore.preferenceStore.channelMapEnabled}>
+                <Button icon={"step-backward"} onClick={this.onPrevClicked} disabled={appStore.preferenceStore.channelMapEnabled} data-testid="animator-previous-button">
                     {!iconOnly && "Prev"}
                 </Button>
                 {appStore.animatorStore.animationActive && (
-                    <Button icon={"stop"} onClick={appStore.animatorStore.stopAnimation} disabled={appStore.preferenceStore.channelMapEnabled}>
+                    <Button icon={"stop"} onClick={appStore.animatorStore.stopAnimation} disabled={appStore.preferenceStore.channelMapEnabled} data-testid="animator-play-stop-button">
                         {!iconOnly && "Stop"}
                     </Button>
                 )}
                 {!appStore.animatorStore.animationActive && (
-                    <Button icon={"play"} onClick={appStore.animatorStore.startAnimation} disabled={appStore.preferenceStore.channelMapEnabled}>
+                    <Button icon={"play"} onClick={appStore.animatorStore.startAnimation} disabled={appStore.preferenceStore.channelMapEnabled} data-testid="animator-play-stop-button">
                         {!iconOnly && "Play"}
                     </Button>
                 )}
-                <Button icon={"step-forward"} onClick={this.onNextClicked} disabled={appStore.preferenceStore.channelMapEnabled}>
+                <Button icon={"step-forward"} onClick={this.onNextClicked} disabled={appStore.preferenceStore.channelMapEnabled} data-testid="animator-next-button">
                     {!iconOnly && "Next"}
                 </Button>
-                <Button icon={"chevron-forward"} onClick={this.onLastClicked} disabled={appStore.preferenceStore.channelMapEnabled}>
+                <Button icon={"chevron-forward"} onClick={this.onLastClicked} disabled={appStore.preferenceStore.channelMapEnabled} data-testid="animator-last-button">
                     {!iconOnly && "Last"}
                 </Button>
             </ButtonGroup>
@@ -432,6 +431,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         majorStepSize={1}
                         onValueChange={appStore.animatorStore.setFrameRate}
                         disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled}
+                        data-testid="animator-control-input"
                     />
                 ) : (
                     <SafeNumericInput
@@ -443,6 +443,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         majorStepSize={1}
                         onValueChange={appStore.animatorStore.setStep}
                         disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled}
+                        data-testid="animator-control-input"
                     />
                 )}
             </ControlGroup>

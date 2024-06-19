@@ -1,7 +1,6 @@
 import * as React from "react";
 import {ColorResult} from "react-color";
-import {AnchorButton, Button, Callout, Checkbox, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
+import {AnchorButton, Button, Callout, Checkbox, Classes, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -43,7 +42,7 @@ export enum MemoryUnit {
     B = "B"
 }
 
-const PercentileSelect = Select.ofType<string>();
+const PercentileSelect = Select<string>;
 
 const PV_PREVIEW_CUBE_SIZE_LIMIT = 1000000000; //need to be removed and replaced by backend limit
 
@@ -886,9 +885,9 @@ export class PreferenceDialogComponent extends React.Component {
             </div>
         );
 
-        const className = classNames("preference-dialog", {"bp3-dark": appStore.darkTheme});
+        const className = classNames("preference-dialog", {[Classes.DARK]: appStore.darkTheme});
 
-        const dialogProps: IDialogProps = {
+        const dialogProps: DialogProps = {
             icon: "wrench",
             backdropClassName: "minimal-dialog-backdrop",
             className: className,
@@ -909,7 +908,7 @@ export class PreferenceDialogComponent extends React.Component {
                 enableResizing={true}
                 dialogId={DialogId.Preference}
             >
-                <div className="bp3-dialog-body">
+                <div className={Classes.DIALOG_BODY}>
                     <Tabs id="preferenceTabs" vertical={true} selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
                         <Tab id={PreferenceDialogTabs.GLOBAL} title="Global" panel={globalPanel} />
                         <Tab id={PreferenceDialogTabs.RENDER_CONFIG} title="Render Configuration" panel={renderConfigPanel} />
@@ -925,11 +924,11 @@ export class PreferenceDialogComponent extends React.Component {
                         <Tab id={PreferenceDialogTabs.LOG_EVENT} title="Log Events" panel={logEventsPanel} />
                     </Tabs>
                 </div>
-                <div className="bp3-dialog-footer">
-                    <div className="bp3-dialog-footer-actions">
-                        <Tooltip2 content="Apply to current tab only." position={Position.TOP}>
+                <div className={Classes.DIALOG_FOOTER}>
+                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                        <Tooltip content="Apply to current tab only." position={Position.TOP}>
                             <AnchorButton intent={Intent.WARNING} icon={"refresh"} onClick={this.reset} text="Restore defaults" />
-                        </Tooltip2>
+                        </Tooltip>
                     </div>
                 </div>
             </DraggableDialogComponent>

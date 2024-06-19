@@ -1,7 +1,6 @@
 import * as React from "react";
 import ReactResizeDetector from "react-resize-detector";
-import {AnchorButton, FormGroup, HTMLSelect, Position, Switch} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
+import {AnchorButton, FormGroup, HTMLSelect, Position, Switch, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -285,7 +284,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         }
 
         const isAbleToGenerate = this.widgetStore.effectiveRegion && !appStore.animatorStore.animationActive && this.isLineIntersectedWithImage && !this.isLineInOnePixel && this.isValidSpectralRange;
-        const isAbleToGeneratePreview = isAbleToGenerate && this.isCubeSizeBelowLimit;
+        const isAbleToGeneratePreview = isAbleToGenerate && this.isCubeSizeBelowLimit && this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE;
         const hint = (
             <span>
                 <i>
@@ -294,11 +293,11 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                         <br />
                         1. Animation playback is stopped.
                         <br />
-                        2. Line region is selected.
+                        2. Line/Polyline region is selected.
                         <br />
-                        3. Line region has intersection with image.
+                        3. Line/Polyline region has intersection with image.
                         <br />
-                        4. Line region is not in one pixel.
+                        4. Line/Polyline region is not in one pixel.
                     </small>
                 </i>
             </span>
@@ -330,7 +329,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                         </span>
                     }
                 >
-                    <HTMLSelect value={this.widgetStore.fileId} options={this.widgetStore.frameOptions} onChange={this.handleFrameChanged} />
+                    <HTMLSelect value={this.widgetStore.fileId} options={this.widgetStore.frameOptions} onChange={this.handleFrameChanged} data-testid="pv-generator-image-dropdown" />
                 </FormGroup>
                 <FormGroup
                     className="label-info-group"
@@ -342,7 +341,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                         </span>
                     }
                 >
-                    <HTMLSelect value={selectedValue} options={this.widgetStore.regionOptions} onChange={this.handleRegionChanged} />
+                    <HTMLSelect value={selectedValue} options={this.widgetStore.regionOptions} onChange={this.handleRegionChanged} data-testid="pv-generator-pv-cut-region-dropdown" />
                 </FormGroup>
                 <FormGroup inline={true} label="Average width">
                     <SafeNumericInput min={1} max={20} stepSize={1} value={this.widgetStore.width} onValueChange={value => this.widgetStore.setWidth(value)} />
@@ -363,10 +362,10 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                     <FormGroup label="Range" inline={true} labelInfo={`(${frame.spectralUnit})`}>
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
-                                <SafeNumericInput value={this.widgetStore.range?.min} buttonPosition="none" onValueChange={value => this.handleSpectralRangeChanged(value, false)} />
+                                <SafeNumericInput value={this.widgetStore.range?.min} buttonPosition="none" onValueChange={value => this.handleSpectralRangeChanged(value, false)} data-testid="pv-generator-spectral-range-from-input" />
                             </FormGroup>
                             <FormGroup label="To" inline={true}>
-                                <SafeNumericInput value={this.widgetStore.range?.max} buttonPosition="none" onValueChange={value => this.handleSpectralRangeChanged(value, true)} />
+                                <SafeNumericInput value={this.widgetStore.range?.max} buttonPosition="none" onValueChange={value => this.handleSpectralRangeChanged(value, true)} data-testid="pv-generator-spectral-range-to-input" />
                             </FormGroup>
                         </div>
                     </FormGroup>
@@ -396,6 +395,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                                 stepSize={1}
                                 value={this.widgetStore.xyRebin}
                                 onValueChange={value => this.widgetStore.setXYRebin(value)}
+                                data-testid="pv-generator-preview-rebin-xy-input"
                             />
                         </FormGroup>
                         <FormGroup inline={true} label={"Z"}>
@@ -405,6 +405,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                                 stepSize={1}
                                 value={this.widgetStore.zRebin}
                                 onValueChange={value => this.widgetStore.setZRebin(value)}
+                                data-testid="pv-generator-preview-rebin-z-input"
                             />
                         </FormGroup>
                     </div>
@@ -416,14 +417,14 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                 </div>
                 <div className="generate-button">
                     <div>
-                        <Tooltip2 disabled={isAbleToGeneratePreview} content={previewHint} position={Position.BOTTOM}>
+                        <Tooltip disabled={isAbleToGeneratePreview} content={previewHint} position={Position.BOTTOM}>
                             <AnchorButton intent="success" disabled={!isAbleToGeneratePreview} text="Start preview" onClick={this.onPreviewButtonClicked} />
-                        </Tooltip2>
+                        </Tooltip>
                     </div>
                     <div>
-                        <Tooltip2 disabled={isAbleToGenerate} content={hint} position={Position.BOTTOM}>
-                            <AnchorButton intent="success" disabled={!isAbleToGenerate} text="Generate" onClick={this.onGenerateButtonClicked} />
-                        </Tooltip2>
+                        <Tooltip disabled={isAbleToGenerate} content={hint} position={Position.BOTTOM}>
+                            <AnchorButton intent="success" disabled={!isAbleToGenerate} text="Generate" onClick={this.onGenerateButtonClicked} data-testid="pv-generator-generate-button" />
+                        </Tooltip>
                     </div>
                 </div>
             </div>

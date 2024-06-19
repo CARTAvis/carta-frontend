@@ -10,7 +10,7 @@ import {SWATCH_COLORS} from "utilities";
 
 import "./ContourStylePanelComponent.scss";
 
-const DashModeSelect = Select.ofType<ContourDashMode>();
+const DashModeSelect = Select<ContourDashMode>;
 
 @observer
 export class ContourStylePanelComponent extends React.Component<{frame: FrameStore; darkTheme: boolean}> {
@@ -23,7 +23,16 @@ export class ContourStylePanelComponent extends React.Component<{frame: FrameSto
         return (
             <div className="contour-style-panel">
                 <FormGroup inline={true} label="Thickness">
-                    <SafeNumericInput placeholder="Thickness" min={0.5} max={10} value={frame.contourConfig.thickness} majorStepSize={0.5} stepSize={0.5} onValueChange={frame.contourConfig.setThickness} />
+                    <SafeNumericInput
+                        placeholder="Thickness"
+                        min={0.5}
+                        max={10}
+                        value={frame.contourConfig.thickness}
+                        majorStepSize={0.5}
+                        stepSize={0.5}
+                        onValueChange={frame.contourConfig.setThickness}
+                        data-testid="contour-thickness-input"
+                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Dashes">
                     <DashModeSelect

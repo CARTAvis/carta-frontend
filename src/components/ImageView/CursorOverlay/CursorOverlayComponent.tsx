@@ -90,7 +90,7 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
         const className = classNames("cursor-overlay-div", {docked: this.props.docked});
 
         return (
-            <div ref={ref => (this.divElement = ref)} className={className} style={styleProps}>
+            <div ref={ref => (this.divElement = ref)} className={className} style={styleProps} data-testid="viewer-cursor-info-bar">
                 <span>{infoStrings.length ? infoStrings.join("; ") : "\u00a0"}</span>
             </div>
         );

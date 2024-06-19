@@ -31,7 +31,7 @@ export class TelemetryDialogComponent extends React.Component {
         const appReady = appStore.apiService?.authenticated;
         const consentRequired = appStore.telemetryService.consentRequired;
         const preferenceReady = appStore.preferenceStore?.preferenceReady;
-        const classes = classNames("telemetry-dialog", {"bp3-dark": appStore.darkTheme});
+        const classes = classNames("telemetry-dialog", {[Classes.DARK]: appStore.darkTheme});
 
         return (
             <Dialog icon="data-connection" canOutsideClickClose={false} isCloseButtonShown={false} lazy={true} isOpen={appReady && consentRequired && preferenceReady} className={classes} canEscapeKeyClose={false} title="CARTA Usage Data">
@@ -51,7 +51,7 @@ export class TelemetryDialogComponent extends React.Component {
                             <Button intent={Intent.PRIMARY} onClick={this.optInClicked}>
                                 Yes, send usage data
                             </Button>
-                            <Button intent={Intent.PRIMARY} onClick={this.optOutClicked}>
+                            <Button intent={Intent.PRIMARY} onClick={this.optOutClicked} data-testid="telemetry-opt-out-button">
                                 No, do not send usage data
                             </Button>
                             <div className="opt-note">Metrics include session duration, number and size of images opened.</div>
