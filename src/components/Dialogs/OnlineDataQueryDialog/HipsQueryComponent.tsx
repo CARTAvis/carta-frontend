@@ -29,7 +29,6 @@ const renderSurveyOption: ItemRenderer<HipsSurvey> = (survey, {handleClick, hand
 
 export const HipsQueryComponent = observer(() => {
     const hipsQueryStore = HipsQueryStore.Instance;
-
     const [queryByObject, setQueryByObject] = useState<boolean>(true);
 
     return (

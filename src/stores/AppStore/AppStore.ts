@@ -119,6 +119,7 @@ export class AppStore {
     readonly preferenceStore: PreferenceStore;
     readonly widgetsStore: WidgetsStore;
     readonly imageFittingStore: ImageFittingStore;
+    /** Management of HiPS data queries. */
     readonly hipsQueryStore = HipsQueryStore.Instance;
     /** Configuration of the images in the image view widget. */
     readonly imageViewConfigStore = ImageViewConfigStore.Instance;
@@ -699,7 +700,6 @@ export class AppStore {
 
     /**
      * Loads a file by HiPS data queries and adds it as a frame.
-     *
      * @param remoteRequest - Parameters for the query.
      * @returns The added frame.
      * @throws If there is an error loading the file.

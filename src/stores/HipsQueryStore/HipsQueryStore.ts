@@ -5,8 +5,11 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {Point2D} from "models";
 import {AppStore} from "stores";
 
+/** A HiPS survey. */
 export interface HipsSurvey {
+    /** The ID of the survey. */
     name: string;
+    /** The data product type of the survey. */
     type: "Sky map" | "Planet map" | "Cube";
 }
 
@@ -273,6 +276,7 @@ export class HipsQueryStore {
         this.setIsLoading(false);
     };
 
+    /** Gets the list of available HiPS surveys which provide FITS format. */
     private fetchSurveyList = async () => {
         try {
             const skyMaps = await axios.get(
