@@ -17,10 +17,10 @@ const DEFAULT_STOKES = "current";
 export class SpatialProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
     @observable selectedStokes: string;
-    @observable minX: number;
-    @observable maxX: number;
-    @observable minY: number;
-    @observable maxY: number;
+    @observable minX: number | undefined;
+    @observable maxX: number | undefined;
+    @observable minY: number | undefined;
+    @observable maxY: number | undefined;
     @observable cursorX: number;
     @observable markerTextVisible: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
@@ -166,7 +166,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
     @computed get fullCoordinate(): string {
         // stokes(IQUV) + coordinate(x/y)
         const frame = this.effectiveFrame;
-        let stokes = undefined;
+        let stokes: string | undefined;
         if (frame?.hasStokes) {
             stokes = this.selectedStokes === DEFAULT_STOKES ? frame.requiredPolarizationInfo : this.selectedStokes;
         }
@@ -177,7 +177,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         return this.effectiveRegion?.regionType === CARTA.RegionType.LINE || this.effectiveRegion?.regionType === CARTA.RegionType.POLYLINE;
     }
 
-    @computed get effectivePolarization(): POLARIZATIONS {
+    @computed get effectivePolarization(): POLARIZATIONS | undefined {
         if (this.selectedStokes === DEFAULT_STOKES) {
             return this.effectiveFrame?.requiredPolarization;
         } else {
@@ -215,10 +215,10 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetSpatialRequirements>>();
         widgetsMap.forEach(widgetStore => {
             const frame = widgetStore.effectiveFrame;
-            const fileId = frame.frameInfo.fileId;
+            const fileId = frame?.frameInfo.fileId;
             const regionId = widgetStore.effectiveRegionId;
 
-            if (!frame.regionSet) {
+            if (fileId === undefined || regionId === null || !frame?.regionSet) {
                 return;
             }
 
@@ -268,10 +268,10 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
                 updatedRequirements.set(fileId, updatedFrameRequirements);
             }
             frameRequirements.forEach((regionRequirements, regionId) => {
-                let updatedRegionRequirements = updatedFrameRequirements.get(regionId);
+                let updatedRegionRequirements = updatedFrameRequirements?.get(regionId);
                 if (!updatedRegionRequirements) {
                     updatedRegionRequirements = new CARTA.SetSpatialRequirements({fileId, regionId, spatialProfiles: []});
-                    updatedFrameRequirements.set(regionId, updatedRegionRequirements);
+                    updatedFrameRequirements?.set(regionId, updatedRegionRequirements);
                 }
             });
         });
@@ -284,7 +284,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
                 updatedFrameRequirements.forEach(regionRequirements => diffList.push(regionRequirements));
             } else {
                 updatedFrameRequirements.forEach((updatedRegionRequirements, regionId) => {
-                    let regionRequirements = frameRequirements.get(regionId);
+                    let regionRequirements = frameRequirements?.get(regionId);
                     if (!regionRequirements) {
                         // If there are no existing requirements for this regionId, this is a new entry
                         diffList.push(updatedRegionRequirements);

@@ -139,7 +139,7 @@ export class ImageFittingStore {
         ];
     }
 
-    @computed get effectiveFrame(): FrameStore {
+    @computed get effectiveFrame(): FrameStore | null {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame && appStore.frames?.length > 0) {
             return this.selectedFileId === ACTIVE_FILE_ID ? appStore.activeFrame : appStore.getFrame(this.selectedFileId) ?? appStore.activeFrame;
@@ -149,7 +149,7 @@ export class ImageFittingStore {
 
     @computed get fitDisabled() {
         const fileId = this.effectiveFrame?.frameInfo?.fileId;
-        const validFileId = isFinite(fileId) && fileId >= 0;
+        const validFileId = fileId !== undefined && isFinite(fileId) && fileId >= 0;
         const allFixed = this.components.every(c => c.allFixed === true);
         const validParams = this.components.every(c => c.validParams === true);
         return !validFileId || allFixed || !validParams || this.isFitting;
@@ -196,7 +196,7 @@ export class ImageFittingStore {
         }
 
         const message: CARTA.IFittingRequest = {
-            fileId: this.effectiveFrame.frameInfo.fileId,
+            fileId: this.effectiveFrame?.frameInfo.fileId,
             initialValues,
             fixedParams,
             regionId,
@@ -211,7 +211,7 @@ export class ImageFittingStore {
 
     cancelFitting = () => {
         this.setIsCancelling(true);
-        if (this.progress < 1.0 && this.isFitting) {
+        if (this.progress < 1.0 && this.isFitting && this.effectiveFrame) {
             AppStore.Instance.backendService?.cancelRequestingFitting(this.effectiveFrame.frameInfo.fileId);
         }
     };
@@ -240,14 +240,14 @@ export class ImageFittingStore {
         log += this.getRegionInfoLog(regionId, fovInfo) + "\n";
         log += fittingLog + "\n";
 
-        const toFixFormat = (param: string, value: number | string, error: number, unit: string, fixed: boolean): string => {
+        const toFixFormat = (param: string, value: number | string | null | undefined, error: number | null | undefined, unit: string | undefined, fixed: boolean): string => {
             const valueString = typeof value === "string" ? value : value?.toFixed(6);
             const errorString = fixed ? "" : " \u00b1 " + error?.toFixed(6);
             return `${param} = ${valueString}${errorString}${unit ? ` (${unit})` : ""}${fixed ? " (fixed)" : ""}\n`;
         };
-        const toExpFormat = (param: string, value: number | string, error: number, unit: string, fixed: boolean): string => {
-            const valueString = typeof value === "string" ? value : toExponential(value, 12);
-            const errorString = fixed ? "" : " \u00b1 " + toExponential(error, 12);
+        const toExpFormat = (param: string, value: number | string | null | undefined, error: number | null | undefined, unit: string | undefined, fixed: boolean): string => {
+            const valueString = typeof value === "string" ? value : toExponential(value ?? NaN, 12);
+            const errorString = fixed ? "" : " \u00b1 " + toExponential(error ?? NaN, 12);
             return `${param} = ${valueString}${errorString}${unit ? ` (${unit})` : ""}${fixed ? " (fixed)" : ""}\n`;
         };
         const formatTypeX = AppStore.Instance.overlayStore.numbers?.formatTypeX;
@@ -285,10 +285,10 @@ export class ImageFittingStore {
                 }
             } else {
                 const centerValueWCS = getFormattedWCSPoint(frame.wcsInfoForTransformation, value.center as Point2D);
-                if (formatTypeX === NumberFormatType.Degrees) {
+                if (formatTypeX === NumberFormatType.Degrees && centerValueWCS) {
                     centerValueWCS.x += " (deg)";
                 }
-                if (formatTypeY === NumberFormatType.Degrees) {
+                if (formatTypeY === NumberFormatType.Degrees && centerValueWCS) {
                     centerValueWCS.y += " (deg)";
                 }
                 const centerErrorWCS = frame.getWcsSizeInArcsec(error.center as Point2D);
@@ -355,11 +355,15 @@ export class ImageFittingStore {
     createRegions = async () => {
         const frame = this.effectiveFrame;
         const params = frame?.fittingResultRegionParams;
+        if (!params) {
+            return;
+        }
+
         try {
             const newRegions = await Promise.all(
-                params?.map((param, index) => {
+                params.map((param, index) => {
                     const name = `Fitting result: Component #${index + 1}`;
-                    return frame?.regionSet?.addRegionAsync(CARTA.RegionType.ELLIPSE, param.points.slice(), param.rotation, name);
+                    return frame.regionSet.addRegionAsync(CARTA.RegionType.ELLIPSE, param.points.slice(), param.rotation, name);
                 })
             );
             newRegions?.forEach(r => r?.setDashLength(2));
@@ -436,7 +440,7 @@ export class ImageFittingStore {
                 break;
             case FOV_REGION_ID:
                 log += "Region: field of view\n";
-                if (fovInfo) {
+                if (fovInfo && fovInfo.regionType !== null && fovInfo.regionType !== undefined && fovInfo.rotation !== null && fovInfo.rotation !== undefined) {
                     log += RegionStore.GetRegionProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
                     log += this.effectiveFrame?.genRegionWcsProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
                 }
@@ -446,7 +450,7 @@ export class ImageFittingStore {
                 if (region) {
                     log += `Region: ${region.nameString}\n`;
                     log += region.regionProperties + "\n";
-                    log += this.effectiveFrame.getRegionWcsProperties(region) + "\n";
+                    log += this.effectiveFrame?.getRegionWcsProperties(region) + "\n";
                 }
                 break;
         }
@@ -454,12 +458,29 @@ export class ImageFittingStore {
     };
 
     private getRegionParams = (values: CARTA.IGaussianComponent[]): {points: Point2D[]; rotation: number}[] => {
-        return values.map(value => {
-            const center = {x: value?.center?.x, y: value?.center?.y};
-            // Half lengths of major and minor axes are used to defined an ellipse region. Divide FWHM of Gaussian by 2.
-            const size = {x: value?.fwhm?.x / 2.0, y: value?.fwhm?.y / 2.0};
-            return {points: [center, size], rotation: value?.pa};
-        });
+        return values
+            .map(value => {
+                if (
+                    !value.center ||
+                    value.center.x === null ||
+                    value.center.x === undefined ||
+                    value.center.y === null ||
+                    value.center.y === undefined ||
+                    !value.fwhm ||
+                    value.fwhm.x === null ||
+                    value.fwhm.x === undefined ||
+                    value.fwhm.y === null ||
+                    value.fwhm.y === undefined
+                ) {
+                    return null;
+                }
+
+                const center = {x: value.center.x, y: value.center.y};
+                // Half lengths of major and minor axes are used to defined an ellipse region. Divide FWHM of Gaussian by 2.
+                const size = {x: value.fwhm.x / 2.0, y: value.fwhm.y / 2.0};
+                return {points: [center, size], rotation: value?.pa};
+            })
+            .filter((params): params is {points: Point2D[]; rotation: number} => params !== null);
     };
 }
 
@@ -565,32 +586,37 @@ export class ImageFittingIndividualStore {
         this.paFixed = false;
     }
 
-    @computed get centerWcs(): WCSPoint2D {
+    @computed get centerWcs(): WCSPoint2D | null {
         // re-calculate with different wcs system
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const system = AppStore.Instance.overlayStore.global.explicitSystem;
         const wcsInfo = AppStore.Instance.imageFittingStore?.effectiveFrame?.wcsInfoForTransformation;
-        if (!wcsInfo || !isFinite(this.center?.x) || !isFinite(this.center?.y)) {
+        if (!wcsInfo || !isFinite(this.center.x) || !isFinite(this.center.y)) {
             return null;
         }
         return getFormattedWCSPoint(wcsInfo, this.center);
     }
 
-    @computed get fwhmWcs(): WCSPoint2D {
+    @computed get fwhmWcs(): WCSPoint2D | null {
         const frame = AppStore.Instance.imageFittingStore?.effectiveFrame;
         const wcsSize = frame?.getWcsSizeInArcsec(this.fwhm);
         if (!wcsSize) {
             return null;
         }
-        return {x: formattedArcsec(wcsSize.x, WCS_PRECISION), y: formattedArcsec(wcsSize.y, WCS_PRECISION)};
+        const x = formattedArcsec(wcsSize.x, WCS_PRECISION);
+        const y = formattedArcsec(wcsSize.y, WCS_PRECISION);
+        if (x === null || y === null) {
+            return null;
+        }
+        return {x, y};
     }
 
     @computed get validParams(): boolean {
-        return isFinite(this.center?.x) && isFinite(this.center?.y) && isFinite(this.amplitude) && isFinite(this.fwhm?.x) && isFinite(this.fwhm?.y) && isFinite(this.pa);
+        return isFinite(this.center.x) && isFinite(this.center.y) && isFinite(this.amplitude) && isFinite(this.fwhm.x) && isFinite(this.fwhm.y) && isFinite(this.pa);
     }
 
     @computed get fixedParams(): boolean[] {
-        return [this.centerFixed?.x, this.centerFixed?.y, this.amplitudeFixed, this.fwhmFixed?.x, this.fwhmFixed?.y, this.paFixed];
+        return [this.centerFixed.x, this.centerFixed.y, this.amplitudeFixed, this.fwhmFixed.x, this.fwhmFixed.y, this.paFixed];
     }
 
     @computed get allFixed(): boolean {
@@ -608,6 +634,9 @@ export class ImageFittingIndividualStore {
         // initialize center Y with the wcs coordinate of the origin (0, 0) if center Y is not set yet
         // update center Y with the wcs coordinate of (0, center Y) if center Y is set and center X is not
         const centerYWcs = this.centerWcs?.y ?? getFormattedWCSPoint(wcsInfo, {x: 0, y: isFinite(this.center?.y) ? this.center?.y : 0})?.y;
+        if (!centerYWcs) {
+            return false;
+        }
         const center = getPixelValueFromWCS(wcsInfo, {x: val, y: centerYWcs});
         if (!center) {
             return false;
@@ -626,6 +655,9 @@ export class ImageFittingIndividualStore {
         // initialize center X with the wcs coordinate of origin (0, 0) if center X is not set yet
         // update center X with the wcs coordinate of (center X, 0) if center X is set and center Y is not
         const centerXWcs = this.centerWcs?.x ?? getFormattedWCSPoint(wcsInfo, {x: isFinite(this.center?.x) ? this.center?.x : 0, y: 0})?.x;
+        if (!centerXWcs) {
+            return false;
+        }
         const center = getPixelValueFromWCS(wcsInfo, {x: centerXWcs, y: val});
         if (!center) {
             return false;
@@ -635,16 +667,18 @@ export class ImageFittingIndividualStore {
 
     setFwhmXWcs = (val: string): boolean => {
         const frame = AppStore.Instance.imageFittingStore?.effectiveFrame;
-        if (val && frame) {
-            return this.setFwhmX(frame.getImageXValueFromArcsec(getValueFromArcsecString(val)));
+        const sizeInArcsec = getValueFromArcsecString(val);
+        if (val && frame && sizeInArcsec !== null) {
+            return this.setFwhmX(frame.getImageXValueFromArcsec(sizeInArcsec));
         }
         return false;
     };
 
     setFwhmYWcs = (val: string): boolean => {
         const frame = AppStore.Instance.imageFittingStore?.effectiveFrame;
-        if (val && frame) {
-            return this.setFwhmY(frame.getImageYValueFromArcsec(getValueFromArcsecString(val)));
+        const sizeInArcsec = getValueFromArcsecString(val);
+        if (val && frame && sizeInArcsec !== null) {
+            return this.setFwhmY(frame.getImageYValueFromArcsec(sizeInArcsec));
         }
         return false;
     };

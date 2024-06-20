@@ -359,10 +359,14 @@ const GetUnitScale = (unitStr: string): number => {
     return 1;
 };
 
-export const GetIntensityConversion = (config: IntensityConfig, unitTo: string): IntensityConversion | undefined => {
-    const unitFromType = FindIntensityUnitType(config?.nativeIntensityUnit);
+export const GetIntensityConversion = (config: IntensityConfig | undefined, unitTo: string | undefined): IntensityConversion | undefined => {
+    if (config === undefined || unitTo === undefined) {
+        return undefined;
+    }
+
+    const unitFromType = FindIntensityUnitType(config.nativeIntensityUnit);
     const unitToType = FindIntensityUnitType(unitTo);
-    if (unitFromType === IntensityUnitType.Unsupported || unitToType === IntensityUnitType.Unsupported || config?.nativeIntensityUnit === unitTo) {
+    if (unitFromType === IntensityUnitType.Unsupported || unitToType === IntensityUnitType.Unsupported || config.nativeIntensityUnit === unitTo) {
         return undefined;
     }
 

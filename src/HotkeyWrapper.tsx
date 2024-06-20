@@ -138,8 +138,8 @@ export class HotkeyContainer extends React.Component {
         ];
 
         const animatorHotkeys = [
-            <Hotkey key={0} group={animatorGroupTitle} global={true} combo={`${modString}]`} label="Next image" onKeyDown={appStore.nextFrame} />,
-            <Hotkey key={1} group={animatorGroupTitle} global={true} combo={`${modString}[`} label="Previous image" onKeyDown={appStore.prevFrame} />,
+            <Hotkey key={0} group={animatorGroupTitle} global={true} combo={`${modString}]`} label="Next image" onKeyDown={appStore.nextImage} />,
+            <Hotkey key={1} group={animatorGroupTitle} global={true} combo={`${modString}[`} label="Previous image" onKeyDown={appStore.prevImage} />,
             <Hotkey key={2} group={animatorGroupTitle} global={true} combo={`${modString}up`} label="Next channel" onKeyDown={HotkeyContainer.NextChannel} />,
             <Hotkey key={3} group={animatorGroupTitle} global={true} combo={`${modString}down`} label="Previous channel" onKeyDown={HotkeyContainer.PrevChannel} />,
             <Hotkey key={4} group={animatorGroupTitle} global={true} combo={`${modString}shift + up`} label="Next Stokes cube" onKeyDown={HotkeyContainer.NextStokes} />,

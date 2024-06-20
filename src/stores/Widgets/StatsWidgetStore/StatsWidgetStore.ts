@@ -15,7 +15,7 @@ export class StatsWidgetStore extends RegionWidgetStore {
         }
     };
 
-    @computed get effectivePolarization(): POLARIZATIONS {
+    @computed get effectivePolarization(): POLARIZATIONS | undefined {
         if (this.coordinate === "z") {
             return this.effectiveFrame?.requiredPolarization;
         } else {
@@ -48,19 +48,19 @@ export class StatsWidgetStore extends RegionWidgetStore {
                     updatedRequirements.set(fileId, frameRequirements);
                 }
 
-                let regionRequirements = frameRequirements.get(regionId);
-                if (!regionRequirements) {
+                let regionRequirements = frameRequirements.get(regionId ?? NaN);
+                if (!regionRequirements && regionId !== null) {
                     regionRequirements = new CARTA.SetStatsRequirements({fileId, regionId});
                     frameRequirements.set(regionId, regionRequirements);
                 }
 
-                if (!regionRequirements.statsConfigs) {
+                if (regionRequirements && !regionRequirements.statsConfigs) {
                     regionRequirements.statsConfigs = [];
                 }
 
-                let histogramConfig = regionRequirements.statsConfigs.find(config => config.coordinate === coordinate);
+                let histogramConfig = regionRequirements?.statsConfigs.find(config => config.coordinate === coordinate);
                 if (!histogramConfig) {
-                    regionRequirements.statsConfigs.push({coordinate: coordinate, statsTypes: AppStore.DEFAULT_STATS_TYPES});
+                    regionRequirements?.statsConfigs.push({coordinate: coordinate, statsTypes: AppStore.DEFAULT_STATS_TYPES});
                 }
             }
         });
@@ -84,10 +84,10 @@ export class StatsWidgetStore extends RegionWidgetStore {
                 updatedRequirements.set(fileId, updatedFrameRequirements);
             }
             frameRequirements.forEach((regionRequirements, regionId) => {
-                let updatedRegionRequirements = updatedFrameRequirements.get(regionId);
+                let updatedRegionRequirements = updatedFrameRequirements?.get(regionId);
                 if (!updatedRegionRequirements) {
                     updatedRegionRequirements = new CARTA.SetStatsRequirements({fileId, regionId, statsConfigs: []});
-                    updatedFrameRequirements.set(regionId, updatedRegionRequirements);
+                    updatedFrameRequirements?.set(regionId, updatedRegionRequirements);
                 }
             });
         });
@@ -100,7 +100,7 @@ export class StatsWidgetStore extends RegionWidgetStore {
                 updatedFrameRequirements.forEach(regionRequirements => diffList.push(regionRequirements));
             } else {
                 updatedFrameRequirements.forEach((updatedRegionRequirements, regionId) => {
-                    let regionRequirements = frameRequirements.get(regionId);
+                    let regionRequirements = frameRequirements?.get(regionId);
                     if (!regionRequirements) {
                         // If there are no existing requirements for this regionId, this is a new entry
                         diffList.push(updatedRegionRequirements);
@@ -117,8 +117,8 @@ export class StatsWidgetStore extends RegionWidgetStore {
                         if (configCount === 0) {
                             return;
                         }
-                        const sortedUpdatedConfigs = updatedRegionRequirements.statsConfigs.sort((a, b) => (a.coordinate > b.coordinate ? 1 : -1));
-                        const sortedConfigs = regionRequirements.statsConfigs.sort((a, b) => (a.coordinate > b.coordinate ? 1 : -1));
+                        const sortedUpdatedConfigs = updatedRegionRequirements.statsConfigs.sort((a, b) => ((a.coordinate ?? NaN) > (b.coordinate ?? NaN) ? 1 : -1));
+                        const sortedConfigs = regionRequirements.statsConfigs.sort((a, b) => ((a.coordinate ?? NaN) > (b.coordinate ?? NaN) ? 1 : -1));
 
                         for (let i = 0; i < updatedConfigCount; i++) {
                             const updatedConfig = sortedUpdatedConfigs[i];

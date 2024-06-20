@@ -37,18 +37,18 @@ const DEFAULTS = {
 };
 
 export class StokesAnalysisWidgetStore extends RegionWidgetStore {
-    @observable sharedMinX: number;
-    @observable sharedMaxX: number;
-    @observable quMinY: number;
-    @observable quMaxY: number;
-    @observable polIntensityMinY: number;
-    @observable polIntensityMaxY: number;
-    @observable polAngleMinY: number;
-    @observable polAngleMaxY: number;
-    @observable quScatterMinX: number;
-    @observable quScatterMaxX: number;
-    @observable quScatterMinY: number;
-    @observable quScatterMaxY: number;
+    @observable sharedMinX: number | undefined;
+    @observable sharedMaxX: number | undefined;
+    @observable quMinY: number | undefined;
+    @observable quMaxY: number | undefined;
+    @observable polIntensityMinY: number | undefined;
+    @observable polIntensityMaxY: number | undefined;
+    @observable polAngleMinY: number | undefined;
+    @observable polAngleMaxY: number | undefined;
+    @observable quScatterMinX: number | undefined;
+    @observable quScatterMaxX: number | undefined;
+    @observable quScatterMinY: number | undefined;
+    @observable quScatterMaxY: number | undefined;
     @observable linePlotcursorX: number;
     @observable channel: number;
     @observable scatterPlotCursorX: number;
@@ -115,22 +115,22 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
                         updatedRequirements.set(fileId, frameRequirements);
                     }
 
-                    let regionRequirements = frameRequirements.get(regionId);
-                    if (!regionRequirements) {
+                    let regionRequirements = frameRequirements.get(regionId ?? NaN);
+                    if (!regionRequirements && regionId !== null) {
                         regionRequirements = new CARTA.SetSpectralRequirements({regionId, fileId});
                         frameRequirements.set(regionId, regionRequirements);
                     }
 
-                    if (!regionRequirements.spectralProfiles) {
+                    if (regionRequirements && !regionRequirements.spectralProfiles) {
                         regionRequirements.spectralProfiles = [];
                     }
 
                     coordinates.forEach(coordinate => {
-                        let spectralConfig = regionRequirements.spectralProfiles.find(profiles => profiles.coordinate === coordinate);
+                        let spectralConfig = regionRequirements?.spectralProfiles.find(profiles => profiles.coordinate === coordinate);
                         if (!spectralConfig) {
                             // create new spectral config
-                            regionRequirements.spectralProfiles.push({coordinate, statsTypes: [statsType]});
-                        } else if (spectralConfig.statsTypes.indexOf(statsType) === -1) {
+                            regionRequirements?.spectralProfiles.push({coordinate, statsTypes: [statsType]});
+                        } else if (spectralConfig.statsTypes?.indexOf(statsType) === -1) {
                             // add to the stats type array
                             spectralConfig.statsTypes.push(statsType);
                         }
@@ -160,13 +160,13 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     };
 
     @action setSpectralCoordinate = (coordStr: string) => {
-        if (this.effectiveFrame.setSpectralCoordinate(coordStr)) {
+        if (this.effectiveFrame?.setSpectralCoordinate(coordStr)) {
             this.clearSharedXBounds();
         }
     };
 
     @action setSpectralSystem = (specsys: SpectralSystem) => {
-        if (this.effectiveFrame.setSpectralSystem(specsys)) {
+        if (this.effectiveFrame?.setSpectralSystem(specsys)) {
             this.clearSharedXBounds();
         }
     };
