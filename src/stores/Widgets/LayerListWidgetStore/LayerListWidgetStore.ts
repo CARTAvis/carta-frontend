@@ -1,6 +1,7 @@
 import {TabId} from "@blueprintjs/core";
 import {action, computed, makeObservable, observable} from "mobx";
 
+import {ImageType} from "models";
 import {AppStore} from "stores";
 
 export enum LayerListSettingsTabs {
@@ -36,10 +37,12 @@ export class LayerListWidgetStore {
         ];
 
         appStore.frames?.forEach((frame, index) => {
+            const imageListIndex = appStore.imageViewConfigStore.getImageListIndex(ImageType.FRAME, frame.id);
+            const isAcitve = imageListIndex === appStore.activeImageIndex;
             options.push({
-                label: index + ": " + frame.filename + (index === appStore.activeFrameIndex ? " (Active)" : ""),
+                label: imageListIndex + ": " + frame.filename + (isAcitve ? " (Active)" : ""),
                 frameIndex: index,
-                active: index === appStore.activeFrameIndex,
+                active: isAcitve,
                 disable: !frame.isRestFreqEditable
             });
         });
