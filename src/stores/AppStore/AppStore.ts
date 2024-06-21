@@ -1310,6 +1310,60 @@ export class AppStore {
         }
     }
 
+    /**
+     * Deletes all regions including annotations.
+     */
+    @action deleteAllRegions = () => {
+        this.activeFrame.regionSet.regionMap.forEach(x => {
+            if (x.regionId !== CURSOR_REGION_ID) {
+                this.deleteRegion(x);
+            }
+        });
+    };
+
+    /**
+     * Deletes all annotations.
+     */
+    @action deleteAllAnnotations = () => {
+        this.activeFrame.regionSet.regionMap.forEach(x => {
+            if (
+                x.regionId !== CURSOR_REGION_ID &&
+                (x.regionType === CARTA.RegionType.ANNCOMPASS ||
+                    x.regionType === CARTA.RegionType.ANNELLIPSE ||
+                    x.regionType === CARTA.RegionType.ANNLINE ||
+                    x.regionType === CARTA.RegionType.ANNPOINT ||
+                    x.regionType === CARTA.RegionType.ANNPOLYGON ||
+                    x.regionType === CARTA.RegionType.ANNPOLYLINE ||
+                    x.regionType === CARTA.RegionType.ANNRECTANGLE ||
+                    x.regionType === CARTA.RegionType.ANNRULER ||
+                    x.regionType === CARTA.RegionType.ANNTEXT ||
+                    x.regionType === CARTA.RegionType.ANNULUS ||
+                    x.regionType === CARTA.RegionType.ANNVECTOR)
+            ) {
+                this.deleteRegion(x);
+            }
+        });
+    };
+
+    /**
+     * Deletes all regular regions.
+     */
+    @action deleteAllRegularRegions = () => {
+        this.activeFrame.regionSet.regionMap.forEach(x => {
+            if (
+                x.regionId !== CURSOR_REGION_ID &&
+                (x.regionType === CARTA.RegionType.ELLIPSE ||
+                    x.regionType === CARTA.RegionType.LINE ||
+                    x.regionType === CARTA.RegionType.POINT ||
+                    x.regionType === CARTA.RegionType.POLYGON ||
+                    x.regionType === CARTA.RegionType.POLYLINE ||
+                    x.regionType === CARTA.RegionType.RECTANGLE)
+            ) {
+                this.deleteRegion(x);
+            }
+        });
+    };
+
     @action requestCubeHistogram = (fileId: number = -1) => {
         const frame = this.getFrame(fileId);
         if (frame && frame.renderConfig.cubeHistogramProgress < 1.0) {
