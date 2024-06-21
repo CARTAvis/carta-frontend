@@ -9,6 +9,11 @@ export class ColorBlendingStore {
     /** The filename of the color blended image. */
     readonly filename: string;
 
+    static readonly ColorSets: ReadonlyMap<string, readonly string[]> = new Map([
+        ["RGB", ["Red", "Green", "Blue"]],
+        ["Rainbow", ["Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Violet"]]
+    ]);
+
     /** The custom title shown in the image view overlay. */
     @observable titleCustomText: string;
     /** The frames from the layers excluding the base layer. */
@@ -117,6 +122,18 @@ export class ColorBlendingStore {
             }
         );
     }
+
+    applyColorSet = (colorSet: string) => {
+        const colormaps = ColorBlendingStore.ColorSets.get(colorSet);
+        if (!colormaps) {
+            console.error("Invalid color set name.");
+            return;
+        }
+
+        for (let i = 0; i < Math.min(colormaps.length, this.frames.length); i++) {
+            this.frames[i].renderConfig.setColorMap(colormaps[i]);
+        }
+    };
 
     private isValidFrame = (frame: FrameStore): boolean => {
         if (!frame || !this.baseFrame?.secondarySpatialImages?.includes(frame)) {

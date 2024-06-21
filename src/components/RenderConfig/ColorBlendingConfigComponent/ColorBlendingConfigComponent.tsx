@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 
 import {ColormapComponent, SafeNumericInput} from "components/Shared";
 import {ImageType} from "models";
-import {AppStore, type FrameStore} from "stores";
+import {AppStore, ColorBlendingStore, type FrameStore} from "stores";
 
 import "./ColorBlendingConfigComponent.scss";
 
@@ -18,6 +18,7 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
     const unselectedFrames = matchedFrames.filter(f => !colorBlendingStore.selectedFrames.includes(f));
 
     const newFrameOptions = unselectedFrames.map((f, i) => <MenuItem text={f.filename} onClick={() => colorBlendingStore.addSelectedFrame(f)} key={i} />);
+    const colorSetOptions = Array.from(ColorBlendingStore.ColorSets, ([name, value]) => <MenuItem text={name} onClick={() => colorBlendingStore.applyColorSet(name)} key={name} />);
     const getSetFrameOptions = (frame: FrameStore): {value: number; label: string}[] => {
         return matchedFrames.filter(f => unselectedFrames.includes(f) || f === frame).map(f => ({value: f.id, label: f.filename}));
     };
@@ -101,9 +102,11 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
                             </Button>
                         </Tooltip>
                     </Popover>
-                    <Button icon="color-fill" rightIcon="caret-down" disabled>
-                        {widgetWidth < buttonTextCutoff ? "" : "Apply color set"}
-                    </Button>
+                    <Popover minimal={true} content={<Menu>{colorSetOptions}</Menu>}>
+                        <Button icon="color-fill" rightIcon="caret-down">
+                            {widgetWidth < buttonTextCutoff ? "" : "Apply color set"}
+                        </Button>
+                    </Popover>
                 </ButtonGroup>
             </div>
             <FormGroup className="layer-config" label="Layer 1" inline={true}>
