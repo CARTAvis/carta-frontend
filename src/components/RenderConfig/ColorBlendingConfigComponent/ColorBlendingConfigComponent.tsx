@@ -26,7 +26,7 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
                     {colorSet}
                     <div className="color-set-blocks">
                         {colormaps.map(colormap => (
-                            <ColormapIcon colormap={colormap} />
+                            <ColormapIcon colormap={colormap} key={colormap} />
                         ))}
                     </div>
                 </div>

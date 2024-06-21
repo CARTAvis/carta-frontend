@@ -67,6 +67,19 @@ export class FileBrowserDialogComponent extends React.Component {
         }
     };
 
+    private loadWithRGB = async () => {
+        try {
+            await this.loadSelectedFiles();
+
+            const appStore = AppStore.Instance;
+            appStore.frames.forEach(f => appStore.setSpatialMatchingEnabled(f, true));
+            const colorBlendingStore = appStore.imageViewConfigStore.createColorBlending();
+            colorBlendingStore.applyColorSet("RGB");
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     private loadSelectedFiles = async () => {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
@@ -369,6 +382,11 @@ export class FileBrowserDialogComponent extends React.Component {
                                 {!this.enableImageArithmetic && fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length < 5 && (
                                     <Tooltip content={"Close any existing images and load this image"}>
                                         <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Stokes)} text={"Load as hypercube"} />
+                                    </Tooltip>
+                                )}
+                                {fileBrowserStore.selectedFiles?.length === 3 && (
+                                    <Tooltip content={"Close any existing images and load the images"}>
+                                        <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={this.loadWithRGB} text={"Load with RGB blending"} />
                                     </Tooltip>
                                 )}
                             </div>
