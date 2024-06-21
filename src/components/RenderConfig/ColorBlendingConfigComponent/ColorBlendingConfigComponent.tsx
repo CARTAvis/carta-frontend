@@ -1,10 +1,11 @@
 import {AlphaPicker} from "react-color";
 import {Button, ButtonGroup, FormGroup, H6, HTMLSelect, Menu, MenuItem, Popover, Text, Tooltip} from "@blueprintjs/core";
 import {observer} from "mobx-react";
+import allMaps from "static/allmaps.png";
 
 import {ColormapComponent, SafeNumericInput} from "components/Shared";
 import {ImageType} from "models";
-import {AppStore, ColorBlendingStore, type FrameStore} from "stores";
+import {AppStore, ColorBlendingStore, type FrameStore, RenderConfigStore} from "stores";
 
 import "./ColorBlendingConfigComponent.scss";
 
@@ -18,7 +19,23 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
     const unselectedFrames = matchedFrames.filter(f => !colorBlendingStore.selectedFrames.includes(f));
 
     const newFrameOptions = unselectedFrames.map((f, i) => <MenuItem text={f.filename} onClick={() => colorBlendingStore.addSelectedFrame(f)} key={i} />);
-    const colorSetOptions = Array.from(ColorBlendingStore.ColorSets, ([name, value]) => <MenuItem text={name} onClick={() => colorBlendingStore.applyColorSet(name)} key={name} />);
+    const colorSetOptions = Array.from(ColorBlendingStore.ColorSets, ([colorSet, colormaps]) => (
+        <MenuItem
+            text={
+                <div className="color-set-option">
+                    {colorSet}
+                    <div className="color-set-blocks">
+                        {colormaps.map(colormap => (
+                            <ColormapIcon colormap={colormap} />
+                        ))}
+                    </div>
+                </div>
+            }
+            onClick={() => colorBlendingStore.applyColorSet(colorSet)}
+            key={colorSet}
+        />
+    ));
+
     const getSetFrameOptions = (frame: FrameStore): {value: number; label: string}[] => {
         return matchedFrames.filter(f => unselectedFrames.includes(f) || f === frame).map(f => ({value: f.id, label: f.filename}));
     };
@@ -128,3 +145,42 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
         </div>
     );
 });
+
+const ColormapIcon = ({colormap}: {colormap: string}) => {
+    const className = "colormap-block";
+    const size = 15;
+
+    if (RenderConfigStore.COLOR_MAPS_MONO.get(colormap)) {
+        return (
+            <div
+                className={className}
+                style={{
+                    transform: `scaleX(1)`,
+                    height: `${size}px`,
+                    width: `${size}px`,
+                    borderRadius: `100%`,
+                    backgroundImage: `linear-gradient(to right, black, ${RenderConfigStore.COLOR_MAPS_MONO.get(colormap)})`,
+                    backgroundSize: `100% 300%`,
+                    backgroundPosition: `0 calc(-300% - ${size}px)`
+                }}
+            />
+        );
+    } else {
+        const n = RenderConfigStore.COLOR_MAPS_ALL.length - RenderConfigStore.COLOR_MAPS_MONO.size;
+        const i = RenderConfigStore.COLOR_MAPS_ALL.indexOf(colormap);
+        return (
+            <div
+                className={className}
+                style={{
+                    transform: `scaleX(1)`,
+                    height: `${size}px`,
+                    width: `${size}px`,
+                    borderRadius: `100%`,
+                    backgroundImage: `url(${allMaps})`,
+                    backgroundSize: `100% calc(300% * ${n})`,
+                    backgroundPosition: `0 calc(300% * - ${i} - ${size}px)`
+                }}
+            />
+        );
+    }
+};

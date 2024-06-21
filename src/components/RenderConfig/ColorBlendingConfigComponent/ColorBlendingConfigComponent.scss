@@ -66,3 +66,15 @@
         }
     }
 }
+
+.color-set-option {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+
+    .color-set-blocks {
+        display: flex;
+        gap: 3px;
+        align-items: center;
+    }
+}
