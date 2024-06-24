@@ -20,6 +20,9 @@ export class ColorBlendingStore {
     @observable selectedFrames: FrameStore[];
     /** The alpha values of all the layers */
     @observable alpha: number[];
+    @observable rasterVisible = true;
+    @observable contourVisible = true;
+    @observable vectorOverlayVisible = true;
 
     /**
      * Sets the custom title shown in the image view overlay.
@@ -87,6 +90,18 @@ export class ColorBlendingStore {
         this.alpha.splice(alphaIndex, 1);
         // trigger re-render
         this.alpha = this.alpha.slice();
+    };
+
+    @action toggleRasterVisible = () => {
+        this.rasterVisible = !this.rasterVisible;
+    };
+
+    @action toggleContourVisible = () => {
+        this.contourVisible = !this.contourVisible;
+    };
+
+    @action toggleVectorOverlayVisible = () => {
+        this.vectorOverlayVisible = !this.vectorOverlayVisible;
     };
 
     /** The frame from the base layer. */
