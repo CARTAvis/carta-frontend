@@ -1,6 +1,6 @@
 import {Position, Tooltip} from "@blueprintjs/core";
 
-import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
+import {AppStore, NUMBER_FORMAT_LABEL, SystemType} from "stores";
 import {CoordinateMode} from "stores/Frame";
 
 import {SafeNumericInput} from "..";
@@ -131,6 +131,14 @@ export const CoordNumericInput = ({coord, inputType, value, onChange, valueWcs, 
     if (coord === CoordinateMode.Image) {
         return <ImageCoordNumericInput inputType={inputType} value={value} onChange={onChange} disabled={disabled} customPlaceholder={customPlaceholder} />;
     } else {
-        return <WcsCoordNumericInput inputType={inputType} valueWcs={valueWcs} onChangeWcs={onChangeWcs} disabled={disabled || wcsDisabled} customPlaceholder={customPlaceholder} />;
+        return (
+            <WcsCoordNumericInput
+                inputType={inputType}
+                valueWcs={valueWcs}
+                onChangeWcs={onChangeWcs}
+                disabled={disabled || wcsDisabled || AppStore.Instance.overlayStore.global.system === SystemType.Image}
+                customPlaceholder={customPlaceholder}
+            />
+        );
     }
 };
