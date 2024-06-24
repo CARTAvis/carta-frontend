@@ -8,8 +8,8 @@ export class ColorBlendingStore {
     readonly id: number;
     /** The filename of the color blended image. */
     readonly filename: string;
-
-    static readonly ColorSets: ReadonlyMap<string, readonly string[]> = new Map([
+    /** Available colormap sets used for blending. The keys are the names of the sets, and the values are arrays of colormaps. */
+    static readonly ColormapSets: ReadonlyMap<string, readonly string[]> = new Map([
         ["RGB", ["Red", "Green", "Blue"]],
         ["Rainbow", ["Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Violet"]]
     ]);
@@ -20,8 +20,11 @@ export class ColorBlendingStore {
     @observable selectedFrames: FrameStore[];
     /** The alpha values of all the layers */
     @observable alpha: number[];
+    /** The visibility of the blended raster image. */
     @observable rasterVisible = true;
+    /** The visibility of all the contours. */
     @observable contourVisible = true;
+    /** The visibility of all the vector overlays. */
     @observable vectorOverlayVisible = true;
 
     /**
@@ -92,14 +95,17 @@ export class ColorBlendingStore {
         this.alpha = this.alpha.slice();
     };
 
+    /** Hides or shows the blended raster image. */
     @action toggleRasterVisible = () => {
         this.rasterVisible = !this.rasterVisible;
     };
 
+    /** Hides or shows all the contours. */
     @action toggleContourVisible = () => {
         this.contourVisible = !this.contourVisible;
     };
 
+    /** Hides or shows all the vector overlays. */
     @action toggleVectorOverlayVisible = () => {
         this.vectorOverlayVisible = !this.vectorOverlayVisible;
     };
@@ -138,8 +144,12 @@ export class ColorBlendingStore {
         );
     }
 
-    applyColorSet = (colorSet: string) => {
-        const colormaps = ColorBlendingStore.ColorSets.get(colorSet);
+    /**
+     * Applies the colormap set to the layers. Only the number of colormaps matching the number of layers will be applied.
+     * @param set - The name of the colormap set to apply. Must be a key in the ` ColorBlendingStore.ColormapSets` map.
+     */
+    applyColormapSet = (set: string) => {
+        const colormaps = ColorBlendingStore.ColormapSets.get(set);
         if (!colormaps) {
             console.error("Invalid color set name.");
             return;

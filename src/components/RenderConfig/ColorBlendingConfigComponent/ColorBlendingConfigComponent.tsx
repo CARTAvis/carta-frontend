@@ -19,20 +19,20 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
     const unselectedFrames = matchedFrames.filter(f => !colorBlendingStore.selectedFrames.includes(f));
 
     const newFrameOptions = unselectedFrames.map((f, i) => <MenuItem text={f.filename} onClick={() => colorBlendingStore.addSelectedFrame(f)} key={i} />);
-    const colorSetOptions = Array.from(ColorBlendingStore.ColorSets, ([colorSet, colormaps]) => (
+    const colormapSetOptions = Array.from(ColorBlendingStore.ColormapSets, ([set, colormaps]) => (
         <MenuItem
             text={
-                <div className="color-set-option">
-                    {colorSet}
-                    <div className="color-set-blocks">
-                        {colormaps.map(colormap => (
-                            <ColormapIcon colormap={colormap} key={colormap} />
+                <div className="colormap-set-option">
+                    {set}
+                    <div className="colormap-set-blocks">
+                        {colormaps.map(x => (
+                            <ColormapIcon colormap={x} key={x} />
                         ))}
                     </div>
                 </div>
             }
-            onClick={() => colorBlendingStore.applyColorSet(colorSet)}
-            key={colorSet}
+            onClick={() => colorBlendingStore.applyColormapSet(set)}
+            key={set}
         />
     ));
 
@@ -119,7 +119,7 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
                             </Button>
                         </Tooltip>
                     </Popover>
-                    <Popover minimal={true} content={<Menu>{colorSetOptions}</Menu>}>
+                    <Popover minimal={true} content={<Menu>{colormapSetOptions}</Menu>}>
                         <Button icon="color-fill" rightIcon="caret-down">
                             {widgetWidth < buttonTextCutoff ? "" : "Apply color set"}
                         </Button>

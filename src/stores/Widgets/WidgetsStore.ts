@@ -963,6 +963,7 @@ export class WidgetsStore {
         }
     };
 
+    /** Hides the settings buttons of docked render config widgets when color blending images are active. */
     updateRenderConfigSettingsVisibility = () => {
         const isBlending = AppStore.Instance.activeImage?.type === ImageType.COLOR_BLENDING;
         const layout = AppStore.Instance.layoutStore?.dockedLayout;
