@@ -52,6 +52,9 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* getFrameFromFitsChan(AstFitsChan* fitschan, bo
         return nullptr;
     }
 
+    AstFrame* pixFrame = static_cast<AstFrame*> astGetFrame(frameSet, 1);
+    astSet(pixFrame, "Label(1)=X Coordinate,Label(2)=Y Coordinate");
+
     // work around for missing CTYPE1 & CTYPE2
     if (checkSkyDomain) {
         const char *domain = astGetC(frameSet, "Domain");
@@ -104,7 +107,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* getSkyFrameSet(AstFrameSet* frameSet)
     }
 
     // Create 2D base frame
-    AstFrame *baseframe = astFrame(2, "Title=Pixel Coordinates,Domain=GRID,Label(1)=Pixel axis 1,Label(2)=Pixel axis 2");
+    AstFrame *baseframe = astFrame(2, "Title=Pixel Coordinates,Domain=GRID,Label(1)=X Coordinate,Label(2)=Y Coordinate");
     if (!baseframe)
     {
         cout << "Create 2D base frame failed." << endl;
@@ -204,7 +207,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo
 
 EMSCRIPTEN_KEEPALIVE AstFrameSet* initDummyFrame()
 {
-    AstFrameSet* frameSet = astFrameSet(astFrame(2, "Label(1)=X Coordinate,Label(2)=Y Coordinate,Domain=PIXEL"), "");
+    AstFrameSet* frameSet = astFrameSet(astFrame(2, "Label(1)=X Coordinate,Label(2)=Y Coordinate,Domain=GRID"), "");
     return frameSet;
 }
 
