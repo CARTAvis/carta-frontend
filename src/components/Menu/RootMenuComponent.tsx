@@ -8,10 +8,9 @@ import {observer} from "mobx-react";
 
 import {AppToaster, ExportImageMenuComponent, SuccessToast} from "components/Shared";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
-import {CARTA_INFO, PresetLayout, Snippet} from "models";
+import {CARTA_INFO, ImageType, ImageViewItem, PresetLayout, Snippet} from "models";
 import {ApiService, ConnectionStatus} from "services";
 import {AppStore, BrowserMode, DialogId, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
-import {FrameStore} from "stores/Frame";
 import {copyToClipboard, toFixed} from "utilities";
 
 import {WorkspaceDialogMode} from "../Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
@@ -241,7 +240,8 @@ export class RootMenuComponent extends React.Component {
                         onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)}
                     />
                 </Tooltip>
-                <MenuItem text="Close Image" label={`${modString}W`} disabled={appStore.appendFileDisabled} onClick={() => appStore.closeCurrentFile(true)} />
+                <MenuItem text="Close Image" label={`${modString}W`} disabled={appStore.appendFileDisabled || appStore.activeImage?.type === ImageType.PV_PREVIEW} onClick={() => appStore.closeCurrentFile(true)} />
+                <MenuItem text="Multi-Color Blending" disabled={appStore.frameNum < 1} onClick={appStore.imageViewConfigStore.createColorBlending} />
                 <MenuDivider />
                 <MenuItem text="Import Regions" disabled={!appStore.activeFrame} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)} />
                 <Tooltip
@@ -268,8 +268,9 @@ export class RootMenuComponent extends React.Component {
             </Menu>
         );
 
-        let layerItems = appStore.frames.map(frame => {
-            return <MenuItem text={frame.filename} active={appStore.activeFrame && appStore.activeFrame.frameInfo.fileId === frame.frameInfo.fileId} key={frame.frameInfo.fileId} onClick={() => this.handleFrameSelect(frame)} />;
+        const imageItems = Array.from(Array(appStore.imageViewConfigStore.imageNum).keys()).map(index => {
+            const image = appStore.imageViewConfigStore.getImage(index);
+            return <MenuItem text={image.store.filename} active={appStore.activeImageIndex === index} key={index} onClick={() => this.handleImageSelect(image)} />;
         });
 
         const presetLayouts: string[] = PresetLayout.PRESETS;
@@ -321,12 +322,12 @@ export class RootMenuComponent extends React.Component {
                             ))}
                     </MenuItem>
                 </MenuItem>
-                {layerItems.length > 0 && (
+                {imageItems.length > 0 && (
                     <MenuItem text="Images" icon={"multi-select"}>
-                        {layerItems}
+                        {imageItems}
                         <MenuDivider />
-                        <MenuItem text="Previous Image" icon={"step-backward"} disabled={layerItems.length < 2} onClick={appStore.prevFrame} />
-                        <MenuItem text="Next Image" icon={"step-forward"} disabled={layerItems.length < 2} onClick={appStore.nextFrame} />
+                        <MenuItem text="Previous Image" icon={"step-backward"} disabled={imageItems.length < 2} onClick={appStore.prevImage} />
+                        <MenuItem text="Next Image" icon={"step-forward"} disabled={imageItems.length < 2} onClick={appStore.nextImage} />
                     </MenuItem>
                 )}
                 <MenuItem text="File Header" icon={"app-header"} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.FileInfo)} />
@@ -568,12 +569,12 @@ export class RootMenuComponent extends React.Component {
         this.documentationAlertVisible = false;
     };
 
-    handleFrameSelect = (frame: FrameStore) => {
+    handleImageSelect = (image: ImageViewItem) => {
         const appStore = AppStore.Instance;
-        if (appStore.activeFrame && appStore.activeFrame === frame) {
+        if (appStore.activeImage && appStore.activeImage === image) {
             return;
         } else {
-            appStore.setActiveFrame(frame);
+            appStore.updateActiveImage(image);
         }
     };
 }

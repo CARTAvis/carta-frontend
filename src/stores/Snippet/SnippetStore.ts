@@ -21,7 +21,7 @@ export class SnippetStore {
 
     @observable snippets: Map<string, Snippet>;
     @observable activeSnippet: Snippet;
-    @observable activeSnippetName: string;
+    @observable activeSnippetName: string | undefined;
     @observable isExecuting: boolean;
 
     private constructor() {
@@ -32,7 +32,7 @@ export class SnippetStore {
     }
 
     public snippetExists = (name: string): boolean => {
-        return name && this.snippets.has(name);
+        return name.length > 0 && this.snippets.has(name);
     };
 
     @action setDefaultSnippets = () => {
@@ -99,7 +99,7 @@ export class SnippetStore {
         return undefined;
     }
 
-    @action setActiveSnippet = (snippet: Snippet, name: string) => {
+    @action setActiveSnippet = (snippet: Snippet, name: string | undefined) => {
         this.activeSnippet = {...snippet};
         if (!this.activeSnippet.categories) {
             this.activeSnippet.categories = [];

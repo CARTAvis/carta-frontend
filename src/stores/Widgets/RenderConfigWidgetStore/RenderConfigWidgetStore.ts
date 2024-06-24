@@ -5,10 +5,10 @@ import {LineSettings, PlotType} from "components/Shared";
 import {isAutoColor} from "utilities";
 
 export class RenderConfigWidgetStore {
-    @observable minX: number;
-    @observable maxX: number;
-    @observable minY: number;
-    @observable maxY: number;
+    @observable minX: number | undefined;
+    @observable maxX: number | undefined;
+    @observable minY: number | undefined;
+    @observable maxY: number | undefined;
     @observable cursorX: number;
 
     // settings

@@ -17,7 +17,7 @@ export class SpectralProfileStore {
         this.profiles = new Map<Coordinate, ObservableMap<CARTA.StatsType, ProcessedSpectralProfile>>();
     }
 
-    public getProfile = (coordinate: Coordinate, statsType: CARTA.StatsType): ProcessedSpectralProfile => {
+    public getProfile = (coordinate: Coordinate, statsType: CARTA.StatsType): ProcessedSpectralProfile | null | undefined => {
         let coordinateMap = this.profiles.get(coordinate);
         if (coordinateMap) {
             return coordinateMap.get(statsType);
@@ -36,11 +36,15 @@ export class SpectralProfileStore {
     };
 
     @action setProfile = (profile: ProcessedSpectralProfile) => {
-        let coordinateMap = this.profiles.get(profile.coordinate);
+        let coordinateMap = this.profiles.get(profile.coordinate ?? "");
         if (!coordinateMap) {
             coordinateMap = new ObservableMap<CARTA.StatsType, ProcessedSpectralProfile>();
-            this.profiles.set(profile.coordinate, coordinateMap);
+            if (profile.coordinate) {
+                this.profiles.set(profile.coordinate, coordinateMap);
+            }
         }
-        coordinateMap.set(profile.statsType, profile);
+        if (profile.statsType !== undefined && profile.statsType !== null) {
+            coordinateMap.set(profile.statsType, profile);
+        }
     };
 }

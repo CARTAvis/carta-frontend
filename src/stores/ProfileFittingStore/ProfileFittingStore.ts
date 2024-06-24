@@ -47,7 +47,7 @@ export class ProfileFittingStore {
 
     @action setComponents(length: number, reset?: boolean) {
         this.setSelectedIndex(length - 1);
-        const newComponents = [];
+        const newComponents: ProfileFittingIndividualStore[] = [];
         for (let i = 0; i < length; i++) {
             if (reset) {
                 newComponents.push(new ProfileFittingIndividualStore());
@@ -70,29 +70,31 @@ export class ProfileFittingStore {
         const centerX = (xMin + xMax) / 2;
         const baselineCenterY = this.slope * centerX + this.yIntercept;
         const isPositiveAmp = (yMin + yMax) / 2 >= baselineCenterY;
-        selectedComponent.setAmp(isPositiveAmp ? yMax - yMin : yMin - yMax);
-        selectedComponent.setCenter(centerX);
-        selectedComponent.setFwhm(xMax - xMin);
+        selectedComponent?.setAmp(isPositiveAmp ? yMax - yMin : yMin - yMax);
+        selectedComponent?.setCenter(centerX);
+        selectedComponent?.setFwhm(xMax - xMin);
         this.isCursorSelectingComponent = false;
     }
 
-    @computed get selectedComponent(): ProfileFittingIndividualStore {
+    @computed get selectedComponent(): ProfileFittingIndividualStore | null {
         if (this.components && this.selectedIndex < this.components.length) {
             return this.components[this.selectedIndex];
         }
         return null;
     }
 
-    @computed get fittingData(): {x: number[]; y: Float32Array | Float64Array} {
-        if (this.widgetStore.plotData.fittingData) {
+    @computed get fittingData(): {x: number[]; y: Float32Array | Float64Array} | null {
+        if (this.widgetStore.plotData?.fittingData) {
             let x = this.widgetStore.plotData.fittingData.x;
             let y = this.widgetStore.plotData.fittingData.y;
-            let nonNaNIndex = y.findIndex(yi => !isNaN(yi));
-            if (nonNaNIndex > 0) {
-                x = x.slice(nonNaNIndex, x.length - nonNaNIndex);
-                y = y.slice(nonNaNIndex, y.length - nonNaNIndex);
+            if (y) {
+                let nonNaNIndex = y.findIndex(yi => !isNaN(yi));
+                if (nonNaNIndex > 0) {
+                    x = x.slice(nonNaNIndex, x.length - nonNaNIndex);
+                    y = y.slice(nonNaNIndex, y.length - nonNaNIndex);
+                }
+                return {x, y};
             }
-            return {x, y};
         }
         return null;
     }
@@ -216,16 +218,18 @@ export class ProfileFittingStore {
 
     @computed get baseLinePoint2DArray(): Point2D[] {
         if (this.components && this.continuum !== FittingContinuum.NONE) {
-            const x = this.widgetStore.plotData.fittingData.x;
-            const continuumPoint2DArray = new Array<{x: number; y: number}>(x.length);
-            for (let i = 0; i < x.length; i++) {
-                let yi = this.yIntercept;
-                if (this.continuum === FittingContinuum.FIRST_ORDER) {
-                    yi += x[i] * this.slope;
+            const x = this.widgetStore.plotData?.fittingData?.x;
+            if (x) {
+                const continuumPoint2DArray = new Array<{x: number; y: number}>(x.length);
+                for (let i = 0; i < x.length; i++) {
+                    let yi = this.yIntercept;
+                    if (this.continuum === FittingContinuum.FIRST_ORDER) {
+                        yi += x[i] * this.slope;
+                    }
+                    continuumPoint2DArray[i] = {x: x[i], y: yi};
                 }
-                continuumPoint2DArray[i] = {x: x[i], y: yi};
+                return continuumPoint2DArray;
             }
-            return continuumPoint2DArray;
         }
         return [];
     }
@@ -281,8 +285,11 @@ export class ProfileFittingStore {
     }
 
     autoDetect = (): void => {
-        const x = this.fittingData.x;
-        const y = Array.prototype.slice.call(this.fittingData.y);
+        const x = this.fittingData?.x;
+        if (!x) {
+            return;
+        }
+        const y = Array.prototype.slice.call(this.fittingData?.y);
         const result = autoDetecting(x, y, this.isAutoDetectWithCont ? null : {order: this.continuum, yIntercept: this.yIntercept, slope: this.slope});
         if (result.components?.length > 0) {
             this.setComponents(result.components.length, true);
@@ -299,14 +306,14 @@ export class ProfileFittingStore {
     };
 
     fitData = (): void => {
-        if (!this.widgetStore?.plotData?.fittingData || !this.widgetStore.effectiveFrame) {
+        if (!this.widgetStore?.plotData?.fittingData || !this.widgetStore.effectiveFrame || !this.fittingData) {
             return;
         }
         const x = this.fittingData.x;
         const y = this.fittingData.y;
         this.setOriginData(x, y);
-        const inputData = [];
-        const lockedInputData = [];
+        const inputData: number[] = [];
+        const lockedInputData: number[] = [];
         this.components.forEach(component => {
             inputData.push(component.amp);
             inputData.push(component.center);
@@ -316,8 +323,8 @@ export class ProfileFittingStore {
             lockedInputData.push(component.lockedFwhm ? 1 : 0);
         });
 
-        const orderInputData = [];
-        const lockedOrderInputData = [];
+        const orderInputData: number[] = [];
+        const lockedOrderInputData: number[] = [];
         if (this.continuum === FittingContinuum.NONE) {
             orderInputData.push(0);
             orderInputData.push(0);
@@ -504,7 +511,7 @@ export class ProfileFittingIndividualStore {
         this.center = val;
     };
 
-    @action setAmp = (val: number | undefined) => {
+    @action setAmp = (val: number) => {
         this.amp = val;
     };
 

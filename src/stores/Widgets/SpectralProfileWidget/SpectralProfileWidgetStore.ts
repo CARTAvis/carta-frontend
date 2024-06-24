@@ -5,20 +5,7 @@ import tinycolor from "tinycolor2";
 
 import {SpectralProfilerSettingsTabs} from "components";
 import {LineSettings, PlotType, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
-import {
-    FindIntensityUnitType,
-    GetCommonIntensityOptions,
-    GetIntensityConversion,
-    GetIntensityOptions,
-    IntensityConfig,
-    IntensityConversion,
-    IntensityUnitType,
-    IsIntensitySupported,
-    LineKey,
-    Point2D,
-    POLARIZATIONS,
-    SpectralSystem
-} from "models";
+import {FindIntensityUnitType, GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, IntensityConfig, IntensityUnitType, IsIntensitySupported, LineKey, Point2D, POLARIZATIONS, SpectralSystem} from "models";
 import {TelemetryAction, TelemetryService} from "services";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
 import {MultiProfileCategory, RegionId, RegionsType, RegionWidgetStore, SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
@@ -30,7 +17,7 @@ export enum MomentSelectingMode {
     MASK
 }
 
-type XBound = {xMin: number; xMax: number};
+type XBound = {xMin: number | undefined; xMax: number | undefined};
 type YBound = {yMin: number; yMax: number};
 type DataPoints = Point2D[];
 type Comments = string[];
@@ -39,25 +26,25 @@ export type MultiPlotData = {
     data: DataPoints[];
     secondaryXData: number[][];
     smoothedData: DataPoints[];
-    fittingData: {x: number[]; y: Float32Array | Float64Array};
-    colors: string[];
-    labels: {image: string; plot: string}[];
+    fittingData: {x: number[]; y: Float32Array | Float64Array | undefined} | undefined;
+    colors: (string | undefined)[];
+    labels: {image: string | undefined; plot: string}[];
     comments: Comments[];
     plotName: {image: string; plot: string};
-    xMin: number;
-    xMax: number;
-    yMin: number;
-    yMax: number;
-    yMean: number;
-    yRms: number;
+    xMin: number | undefined;
+    xMax: number | undefined;
+    yMin: number | undefined;
+    yMax: number | undefined;
+    yMean: number | undefined;
+    yRms: number | undefined;
     progress: number;
 };
 
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
-    @observable minX: number;
-    @observable maxX: number;
-    @observable minY: number;
-    @observable maxY: number;
+    @observable minX: number | undefined;
+    @observable maxX: number | undefined;
+    @observable minY: number | undefined;
+    @observable maxY: number | undefined;
     @observable cursorX: number;
     @observable channel: number;
     @observable markerTextVisible: boolean;
@@ -65,7 +52,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable isStreamingData: boolean;
     @observable isHighlighted: boolean;
     @observable private spectralLinesMHz: SpectralLine[];
-    @observable intensityUnit: string;
+    @observable intensityUnit: string | undefined;
 
     // style settings
     @observable plotType: PlotType;
@@ -74,7 +61,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable lineColorMap: Map<LineKey, string>;
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
-    @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number};
+    @observable linePlotInitXYBoundaries: {minXVal: number | undefined; maxXVal: number | undefined; minYVal: number | undefined; maxYVal: number | undefined};
     @observable settingsTabId: SpectralProfilerSettingsTabs;
 
     @observable secondaryAxisCursorInfoVisible: boolean;
@@ -102,24 +89,24 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     };
 
     @action setSpectralCoordinate = (coordStr: string) => {
-        if (this.effectiveFrame.setSpectralCoordinate(coordStr)) {
+        if (this.effectiveFrame?.setSpectralCoordinate(coordStr)) {
             this.clearXBounds();
         }
     };
 
     @action setSpectralCoordinateSecondary = (coordStr: string) => {
-        if (this.effectiveFrame.setSpectralCoordinateSecondary(coordStr)) {
+        if (this.effectiveFrame?.setSpectralCoordinateSecondary(coordStr)) {
             this.clearXBounds();
         }
     };
 
     @action setSpectralSystem = (specsys: SpectralSystem) => {
-        if (this.effectiveFrame.setSpectralSystem(specsys)) {
+        if (this.effectiveFrame?.setSpectralSystem(specsys)) {
             this.clearXBounds();
         }
     };
 
-    @action setMultiProfileIntensityUnit = (intensityUnitStr: string) => {
+    @action setMultiProfileIntensityUnit = (intensityUnitStr: string | undefined) => {
         this.intensityUnit = intensityUnitStr;
     };
 
@@ -203,7 +190,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     min: channelIndex1 <= channelIndex2 ? channelIndex1 : channelIndex2,
                     max: channelIndex1 <= channelIndex2 ? channelIndex2 : channelIndex1
                 };
-                const regionId = this.momentRegionId === RegionId.ACTIVE ? this.effectiveFrame.regionSet?.selectedRegion?.regionId ?? RegionId.CURSOR : this.momentRegionId;
+                const regionId = this.momentRegionId === RegionId.ACTIVE ? this.effectiveFrame?.regionSet?.selectedRegion?.regionId ?? RegionId.CURSOR : this.momentRegionId;
                 const requestMessage: CARTA.IMomentRequest = {
                     fileId: frame.frameInfo.fileId,
                     moments: this.selectedMoments,
@@ -217,10 +204,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 frame.resetMomentRequestState();
                 frame.setIsRequestingMoments(true);
                 AppStore.Instance.requestMoment(requestMessage, frame);
-                const width = this.effectiveRegion.size.x;
-                const height = this.effectiveRegion.size.y;
+
+                const region = frame.regionSet.regionMap.get(regionId);
+                const width = region?.size.x;
+                const height = region?.size.y;
                 const depth = Math.abs(channelIndex1 - channelIndex2) + 1;
-                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.MomentGeneration, {regionId: this.effectiveRegion.regionId, regionType: this.effectiveRegion.regionType, width, height, depth});
+                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.MomentGeneration, {regionId: regionId, regionType: region?.regionType, width, height, depth});
             }
         }
     };
@@ -374,7 +363,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         reaction(
             () => this.effectiveFrame?.requiredPolarization,
             polarization => {
-                if (this.effectiveFrame && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear, POLARIZATIONS.Pangle].includes(polarization)) {
+                if (this.effectiveFrame && polarization !== undefined && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear, POLARIZATIONS.Pangle].includes(polarization)) {
                     this.setMultiProfileIntensityUnit(this.effectiveFrame.headerUnit);
                 }
             }
@@ -405,7 +394,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         });
     }
 
-    @computed private get intensityConfig(): IntensityConfig {
+    @computed private get intensityConfig(): IntensityConfig | undefined {
         const frame = this.effectiveFrame;
         if (frame) {
             return frame.intensityConfig;
@@ -414,7 +403,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     @computed get isIntensityConvertible(): boolean {
-        return IsIntensitySupported(this.intensityConfig?.nativeIntensityUnit) && !this.profileSelectionStore.isCoordinatesIncludingNonIntensityUnit;
+        return this.intensityConfig?.nativeIntensityUnit !== undefined && IsIntensitySupported(this.intensityConfig?.nativeIntensityUnit) && !this.profileSelectionStore.isCoordinatesIncludingNonIntensityUnit;
     }
 
     @computed get intensityOptions(): string[] {
@@ -428,7 +417,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             const intensityConfigArray = [frame?.intensityConfig, ...displayedFramesIntensityConfig];
             return GetCommonIntensityOptions(intensityConfigArray);
         } else {
-            return GetIntensityOptions(this.intensityConfig);
+            return this.intensityConfig ? GetIntensityOptions(this.intensityConfig) : [];
         }
     }
 
@@ -436,7 +425,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return this.profileSelectionStore.profiles?.length;
     }
 
-    @computed get plotData(): MultiPlotData {
+    @computed get plotData(): MultiPlotData | null {
         const frame = this.effectiveFrame;
         if (!frame?.channelInfo) {
             return null;
@@ -450,16 +439,16 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
         // Determine points/smoothingPoints/colors/yBound/progress
         let numProfiles = 0;
-        let data = [];
-        let secondaryXData = [];
-        let smoothedData = [];
-        let colors = [];
-        let labels = [];
-        let comments = [];
+        let data: Point2D[][] = [];
+        let secondaryXData: number[][] = [];
+        let smoothedData: Point2D[][] = [];
+        let colors: (string | undefined)[] = [];
+        let labels: {image: string | undefined; plot: string}[] = [];
+        let comments: string[][] = [];
         let xBound = {xMin: Number.MAX_VALUE, xMax: -Number.MAX_VALUE};
         let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
-        let yMean = undefined;
-        let yRms = undefined;
+        let yMean: number | undefined;
+        let yRms: number | undefined;
         let progressSum: number = 0;
         let dataIndexes: {startIndex: number; endIndex: number}[] = [];
         const wantMeanRms = profiles.length === 1;
@@ -469,17 +458,18 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         profiles.forEach(profile => {
             if (profile?.data) {
                 numProfiles++;
-                colors.push(getColorForTheme(profileColorMap.get(profile.colorKey)));
+                const profileColor = profileColorMap.get(profile.colorKey ?? "");
+                colors.push(profileColor === undefined ? undefined : getColorForTheme(profileColor));
                 labels.push(profile.label);
                 comments.push(profile.comments);
 
-                const intensityConversion: IntensityConversion = GetIntensityConversion(profile.intensityConfig, isMultiProfileActive ? this.intensityUnit : profile.intensityUnit);
-                const intensityValues = intensityConversion ? intensityConversion(profile.data.values) : profile.data.values;
+                const intensityConversion = GetIntensityConversion(profile.intensityConfig, isMultiProfileActive ? this.intensityUnit : profile.intensityUnit);
+                const intensityValues = intensityConversion && profile.data.values ? intensityConversion(profile.data.values) : profile.data.values;
                 const pointsAndProperties = this.getDataPointsAndProperties(profile.channelValues, intensityValues, wantMeanRms);
 
                 data.push(pointsAndProperties?.points ?? []);
                 smoothedData.push(pointsAndProperties?.smoothedPoints ?? []);
-                secondaryXData.push(profile.channelSecondaryValues?.slice(pointsAndProperties?.startIndex, pointsAndProperties?.endIndex + 1) ?? []);
+                secondaryXData.push(profile.channelSecondaryValues?.slice(pointsAndProperties?.startIndex, (pointsAndProperties?.endIndex ?? NaN) + 1) ?? []);
 
                 if (pointsAndProperties) {
                     if (wantMeanRms) {
@@ -491,10 +481,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                             yRms = pointsAndProperties.ySmoothedRms;
                         }
                     }
-                    if (xBound.xMin > pointsAndProperties.xBound.xMin) {
+                    if (pointsAndProperties.xBound.xMin !== undefined && xBound.xMin > pointsAndProperties.xBound.xMin) {
                         xBound.xMin = pointsAndProperties.xBound.xMin;
                     }
-                    if (xBound.xMax < pointsAndProperties.xBound.xMax) {
+                    if (pointsAndProperties.xBound.xMax !== undefined && xBound.xMax < pointsAndProperties.xBound.xMax) {
                         xBound.xMax = pointsAndProperties.xBound.xMax;
                     }
                     if (yBound.yMin > pointsAndProperties.yBound.yMin) {
@@ -509,13 +499,13 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             }
         });
 
-        let fittingData: {x: number[]; y: Float32Array | Float64Array};
+        let fittingData: {x: number[]; y: Float32Array | Float64Array | undefined} | undefined;
         if (profiles.length === 1 && dataIndexes.length === 1) {
             let x = profiles[0].channelValues.slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
-            const intensityConversion: IntensityConversion = GetIntensityConversion(profiles[0].intensityConfig, isMultiProfileActive ? this.intensityUnit : profiles[0].intensityUnit);
-            const intensityValues = intensityConversion ? intensityConversion(profiles[0].data.values) : profiles[0].data.values;
-            let y = intensityValues.slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
-            if (this.smoothingStore.type !== SmoothingType.NONE) {
+            const intensityConversion = GetIntensityConversion(profiles[0].intensityConfig, isMultiProfileActive ? this.intensityUnit : profiles[0].intensityUnit);
+            const intensityValues = intensityConversion && profiles[0].data?.values ? intensityConversion(profiles[0].data.values) : profiles[0].data?.values;
+            let y = intensityValues?.slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
+            if (this.smoothingStore.type !== SmoothingType.NONE && y) {
                 const smoothedData = this.smoothingStore.getSmoothingValues(x, y);
                 x = smoothedData.x;
                 y = smoothedData.y;
@@ -523,37 +513,41 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             fittingData = {x: x, y: y};
         }
 
-        if (xBound.xMin === Number.MAX_VALUE) {
-            xBound.xMin = undefined;
-            xBound.xMax = undefined;
+        let xMin: number | undefined = xBound.xMin;
+        let xMax: number | undefined = xBound.xMax;
+        if (xMin === Number.MAX_VALUE) {
+            xMin = undefined;
+            xMax = undefined;
         }
 
-        if (yBound.yMin === Number.MAX_VALUE) {
-            yBound.yMin = undefined;
-            yBound.yMax = undefined;
+        let yMin: number | undefined = yBound.yMin;
+        let yMax: number | undefined = yBound.yMax;
+        if (yMin === Number.MAX_VALUE) {
+            yMin = undefined;
+            yMax = undefined;
         } else {
             // extend y range a bit
-            const range = yBound.yMax - yBound.yMin;
-            yBound.yMin -= range * VERTICAL_RANGE_PADDING;
-            yBound.yMax += range * VERTICAL_RANGE_PADDING;
+            const range = yMax - yMin;
+            yMin -= range * VERTICAL_RANGE_PADDING;
+            yMax += range * VERTICAL_RANGE_PADDING;
         }
 
         return {
-            numProfiles: numProfiles,
-            data: data,
-            secondaryXData: secondaryXData,
-            smoothedData: smoothedData,
-            fittingData: fittingData,
-            colors: colors,
-            labels: labels,
-            comments: comments,
+            numProfiles,
+            data,
+            secondaryXData,
+            smoothedData,
+            fittingData,
+            colors,
+            labels,
+            comments,
             plotName: this.profileSelectionStore.profilesPlotName,
-            xMin: xBound.xMin,
-            xMax: xBound.xMax,
-            yMin: yBound.yMin,
-            yMax: yBound.yMax,
-            yMean: yMean,
-            yRms: yRms,
+            xMin,
+            xMax,
+            yMin,
+            yMax,
+            yMean,
+            yRms,
             progress: progressSum / numProfiles
         };
     }
@@ -574,7 +568,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return this.selectingMode === MomentSelectingMode.MASK;
     }
 
-    @computed get selectedRange(): {isHorizontal: boolean; center: number; width: number} {
+    @computed get selectedRange(): {isHorizontal: boolean; center: number; width: number} | null {
         if (this.isSelectingMomentChannelRange) {
             return {
                 isHorizontal: false,
@@ -628,7 +622,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return false;
     }
 
-    @computed get momentRegionInfo(): string {
+    @computed get momentRegionInfo(): string | undefined {
         if (this.effectiveFrame) {
             if (this.momentRegionId === RegionId.IMAGE) {
                 return "Image";
@@ -663,11 +657,11 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return transformedSpectralLines;
     }
 
-    @computed get yUnit(): string {
+    @computed get yUnit(): string | undefined {
         const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
         if (this.intensityUnit || this.effectiveFrame?.intensityUnit) {
             if (this.profileSelectionStore.isSameStatsTypeUnit && this.profileSelectionStore.isSameCoordinatesUnit) {
-                let unitString: string;
+                let unitString: string | undefined;
                 if (this.profileSelectionStore.isCoordinatesPFtotalPFlinearOnly) {
                     unitString = "%";
                 } else if (this.profileSelectionStore.isCoordinatesPangleOnly) {
@@ -683,7 +677,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 if (this.profileSelectionStore.isStatsTypeFluxDensityOnly && this.profileSelectionStore.isCoordinatesPangleOnly) {
                     return "";
                 } else if (this.profileSelectionStore.isStatsTypeFluxDensityOnly) {
-                    return FindIntensityUnitType(unitString) === IntensityUnitType.Kelvin ? "K" : "Jy";
+                    return unitString && FindIntensityUnitType(unitString) === IntensityUnitType.Kelvin ? "K" : "Jy";
                 } else if (this.profileSelectionStore.isStatsTypeSumSqOnly) {
                     return `(${unitString})^2`;
                 } else {
@@ -701,6 +695,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             const spectralConfigs = widgetStore.profileSelectionStore.getFormattedSpectralConfigs();
             spectralConfigs?.forEach(spectralConfig => {
                 // fileId
+                if (spectralConfig.fileId === undefined) {
+                    return;
+                }
                 let frameRequirements = updatedRequirements.get(spectralConfig.fileId);
                 if (!frameRequirements) {
                     frameRequirements = new Map<number, CARTA.SetSpectralRequirements>();
@@ -708,6 +705,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 }
 
                 // regionId
+                if (spectralConfig.regionId === undefined || spectralConfig.regionId === null) {
+                    return;
+                }
                 let regionRequirements = frameRequirements.get(spectralConfig.regionId);
                 if (!regionRequirements) {
                     regionRequirements = new CARTA.SetSpectralRequirements({fileId: spectralConfig.fileId, regionId: spectralConfig.regionId});
@@ -724,9 +724,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     regionRequirements.spectralProfiles.push({coordinate: spectralConfig.coordinate, statsTypes: spectralConfig.statsTypes});
                 } else {
                     spectralConfig.statsTypes?.forEach(statsType => {
-                        if (!existingSpectralConfig.statsTypes.includes(statsType)) {
+                        if (!existingSpectralConfig?.statsTypes?.includes(statsType)) {
                             // add to the stats type array
-                            existingSpectralConfig.statsTypes.push(statsType);
+                            existingSpectralConfig?.statsTypes?.push(statsType);
                         }
                     });
                 }
@@ -753,10 +753,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 updatedRequirements.set(fileId, updatedFrameRequirements);
             }
             frameRequirements.forEach((regionRequirements, regionId) => {
-                let updatedRegionRequirements = updatedFrameRequirements.get(regionId);
+                let updatedRegionRequirements = updatedFrameRequirements?.get(regionId);
                 if (!updatedRegionRequirements) {
                     updatedRegionRequirements = new CARTA.SetSpectralRequirements({fileId, regionId, spectralProfiles: []});
-                    updatedFrameRequirements.set(regionId, updatedRegionRequirements);
+                    updatedFrameRequirements?.set(regionId, updatedRegionRequirements);
                 }
             });
         });
@@ -769,7 +769,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 updatedFrameRequirements.forEach(regionRequirements => diffList.push(regionRequirements));
             } else {
                 updatedFrameRequirements.forEach((updatedRegionRequirements, regionId) => {
-                    let regionRequirements = frameRequirements.get(regionId);
+                    let regionRequirements = frameRequirements?.get(regionId);
                     if (!regionRequirements) {
                         // If there are no existing requirements for this regionId, this is a new entry
                         diffList.push(updatedRegionRequirements);
@@ -786,8 +786,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                         if (configCount === 0) {
                             return;
                         }
-                        const sortedUpdatedConfigs = updatedRegionRequirements.spectralProfiles.sort((a, b) => (a.coordinate > b.coordinate ? 1 : -1));
-                        const sortedConfigs = regionRequirements.spectralProfiles.sort((a, b) => (a.coordinate > b.coordinate ? 1 : -1));
+                        const sortedUpdatedConfigs = updatedRegionRequirements.spectralProfiles.sort((a, b) => ((a.coordinate ?? NaN) > (b.coordinate ?? NaN) ? 1 : -1));
+                        const sortedConfigs = regionRequirements.spectralProfiles.sort((a, b) => ((a.coordinate ?? NaN) > (b.coordinate ?? NaN) ? 1 : -1));
 
                         for (let i = 0; i < updatedConfigCount; i++) {
                             const updatedConfig = sortedUpdatedConfigs[i];
@@ -809,10 +809,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                                 return;
                             }
 
-                            const sortedUpdatedStats = updatedConfig.statsTypes.sort();
-                            const sortedStats = config.statsTypes.sort();
+                            const sortedUpdatedStats = updatedConfig.statsTypes?.sort();
+                            const sortedStats = config.statsTypes?.sort();
                             for (let j = 0; j < updatedStatsCount; j++) {
-                                if (sortedUpdatedStats[j] !== sortedStats[j]) {
+                                if (sortedUpdatedStats?.[j] !== sortedStats?.[j]) {
                                     diffList.push(updatedRegionRequirements);
                                     return;
                                 }
@@ -827,7 +827,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     // settings
-    @action getProfileColor = (lineKey: LineKey): string => {
+    @action getProfileColor = (lineKey: LineKey): string | undefined => {
         return this.lineColorMap.get(lineKey);
     };
 
@@ -859,7 +859,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
-    @action initXYBoundaries(minXVal: number, maxXVal: number, minYVal: number, maxYVal: number) {
+    @action initXYBoundaries(minXVal: number | undefined, maxXVal: number | undefined, minYVal: number | undefined, maxYVal: number | undefined) {
         this.linePlotInitXYBoundaries = {minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal};
     }
 
@@ -921,8 +921,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             let xMin = Math.min(channelValues[0], channelValues[channelValues.length - 1]);
             let xMax = Math.max(channelValues[0], channelValues[channelValues.length - 1]);
             if (!this.isAutoScaledX) {
-                const localXMin = clamp(this.minX, xMin, xMax);
-                const localXMax = clamp(this.maxX, xMin, xMax);
+                const localXMin = clamp(this.minX ?? NaN, xMin, xMax);
+                const localXMax = clamp(this.maxX ?? NaN, xMin, xMax);
                 xMin = localXMin;
                 xMax = localXMax;
             }
@@ -933,30 +933,32 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     private getDataPointsAndProperties = (
         frameChannelValues: number[],
-        intensityValues: Float32Array | Float64Array,
+        intensityValues: Float32Array | Float64Array | null,
         wantMeanRms: boolean
-    ): {
-        points: Point2D[];
-        smoothedPoints: Point2D[];
-        xBound: XBound;
-        yBound: YBound;
-        yMean: number;
-        yRms: number;
-        startIndex: number;
-        endIndex: number;
-        ySmoothedMean: number;
-        ySmoothedRms: number;
-    } => {
+    ):
+        | {
+              points: Point2D[];
+              smoothedPoints: Point2D[];
+              xBound: XBound;
+              yBound: YBound;
+              yMean: number | undefined;
+              yRms: number | undefined;
+              startIndex: number;
+              endIndex: number;
+              ySmoothedMean: number | undefined;
+              ySmoothedRms: number | undefined;
+          }
+        | undefined => {
         let points: Point2D[] = [];
         let smoothedPoints: Point2D[] = [];
         let xBound = this.getBoundX(frameChannelValues);
         let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
-        let yMean = undefined;
-        let yRms = undefined;
-        let ySmoothedMean = undefined;
-        let ySmoothedRms = undefined;
+        let yMean: number | undefined;
+        let yRms: number | undefined;
+        let ySmoothedMean: number | undefined;
+        let ySmoothedRms: number | undefined;
 
-        if (intensityValues?.length > 0 && frameChannelValues?.length > 0 && intensityValues.length === frameChannelValues.length) {
+        if (intensityValues && intensityValues.length > 0 && frameChannelValues?.length > 0 && intensityValues.length === frameChannelValues.length) {
             // Variables for mean and RMS calculations
             let ySum = 0;
             let ySum2 = 0;
@@ -967,7 +969,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 const y = intensityValues[i];
 
                 // Skip values outside of range. If array already contains elements, we've reached the end of the range, and can break
-                if (x < xBound?.xMin || x > xBound?.xMax) {
+                if ((xBound.xMin !== undefined && x < xBound.xMin) || (xBound.xMax !== undefined && x > xBound.xMax)) {
                     if (points.length) {
                         break;
                     } else {

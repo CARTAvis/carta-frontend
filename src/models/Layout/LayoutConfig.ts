@@ -2,7 +2,7 @@ import Ajv from "ajv";
 
 import {CatalogOverlayComponent} from "components";
 import {PresetLayout} from "models";
-import {AppStore, CatalogStore, WidgetConfig} from "stores";
+import {AppStore, CatalogStore, WidgetConfig, WidgetsStore} from "stores";
 import {findDeep} from "utilities";
 import {smoothStepOffset} from "utilities/math/math";
 
@@ -262,7 +262,7 @@ export class LayoutConfig {
                 defaultY: config.defaultY ? config.defaultY : ""
             };
             // add widget settings
-            let widgetSettingsConfig = undefined;
+            let widgetSettingsConfig: ReturnType<WidgetsStore["toWidgetSettingsConfig"]> = undefined;
             if (config.type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
                 const catalogFileId = CatalogStore.Instance.catalogProfiles.get(config.id) ?? NaN;
                 const catalogWidgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
@@ -323,7 +323,7 @@ export class LayoutConfig {
                         simpleChild["height"] = child.height;
                     }
                     // add widget settings
-                    let widgetSettingsConfig = undefined;
+                    let widgetSettingsConfig: ReturnType<WidgetsStore["toWidgetSettingsConfig"]> = undefined;
                     if (widgetType === CatalogOverlayComponent.WIDGET_CONFIG.type) {
                         const catalogFileId = CatalogStore.Instance.catalogProfiles.get(child.id) ?? NaN;
                         const catalogWidgetStoreId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
