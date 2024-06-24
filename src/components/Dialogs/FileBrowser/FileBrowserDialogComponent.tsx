@@ -9,6 +9,7 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {SimpleTableComponentProps} from "components/Shared";
+import {ImageType} from "models";
 import {AppStore, BrowserMode, CatalogProfileStore, DialogId, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
@@ -396,7 +397,12 @@ export class FileBrowserDialogComponent extends React.Component {
             case BrowserMode.SaveFile:
                 return (
                     <Tooltip content={"Save this file"}>
-                        <AnchorButton intent={Intent.PRIMARY} disabled={appStore.fileLoading || fileBrowserStore.loadingInfo || appStore.fileSaving} onClick={this.handleSaveFileClicked} text="Save" />
+                        <AnchorButton
+                            intent={Intent.PRIMARY}
+                            disabled={appStore.fileLoading || fileBrowserStore.loadingInfo || appStore.fileSaving || appStore.activeImage?.type !== ImageType.FRAME}
+                            onClick={this.handleSaveFileClicked}
+                            text="Save"
+                        />
                     </Tooltip>
                 );
             case BrowserMode.RegionImport:

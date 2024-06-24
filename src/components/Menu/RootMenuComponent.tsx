@@ -236,7 +236,7 @@ export class RootMenuComponent extends React.Component {
                     <MenuItem
                         text="Save Image"
                         label={`${modString}S`}
-                        disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY}
+                        disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY || appStore.activeImage?.type !== ImageType.FRAME}
                         onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)}
                     />
                 </Tooltip>
