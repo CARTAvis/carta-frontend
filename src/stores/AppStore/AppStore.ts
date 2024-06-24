@@ -1976,6 +1976,7 @@ export class AppStore {
         reaction(
             () => this.activeImage,
             image => {
+                this.widgetsStore.updateRenderConfigSettingsVisibility();
                 if (image) {
                     if (image.type !== ImageType.PV_PREVIEW) {
                         this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
