@@ -12,8 +12,11 @@ describe("ColorBlendingStore", () => {
     const mockMatchedFrame2 = "mockFrameStore2";
     const mockMatchedFrame3 = "mockFrameStore3";
     const mockMatchedFrame4 = "mockFrameStore4";
+
+    const mockReferenceSetColorMap = jest.fn();
     const mockSpatialReference = observable({
-        secondarySpatialImages: []
+        secondarySpatialImages: [],
+        renderConfig: {setColorMap: mockReferenceSetColorMap}
     });
     const setMatchedFrames = action(frames => {
         mockSpatialReference.secondarySpatialImages = frames;
@@ -33,6 +36,9 @@ describe("ColorBlendingStore", () => {
         expect(colorBlendingStore.titleCustomText).toBe("Color Blending 1");
         expect(colorBlendingStore.selectedFrames).toEqual([mockMatchedFrame1, mockMatchedFrame2]);
         expect(colorBlendingStore.alpha).toEqual([1, 1, 1]);
+        expect(colorBlendingStore.rasterVisible).toBe(true);
+        expect(colorBlendingStore.contourVisible).toBe(true);
+        expect(colorBlendingStore.vectorOverlayVisible).toBe(true);
     });
 
     it("removes a selected frame when it's unmatched", () => {
@@ -136,6 +142,33 @@ describe("ColorBlendingStore", () => {
         });
     });
 
+    describe("toggleRasterVisible", () => {
+        it("toggles the visibility correctly", () => {
+            colorBlendingStore.toggleRasterVisible();
+            expect(colorBlendingStore.rasterVisible).toBe(false);
+            colorBlendingStore.toggleRasterVisible();
+            expect(colorBlendingStore.rasterVisible).toBe(true);
+        });
+    });
+
+    describe("toggleContourVisible", () => {
+        it("toggles the visibility correctly", () => {
+            colorBlendingStore.toggleContourVisible();
+            expect(colorBlendingStore.contourVisible).toBe(false);
+            colorBlendingStore.toggleContourVisible();
+            expect(colorBlendingStore.contourVisible).toBe(true);
+        });
+    });
+
+    describe("toggleVectorOverlayVisible", () => {
+        it("toggles the visibility correctly", () => {
+            colorBlendingStore.toggleVectorOverlayVisible();
+            expect(colorBlendingStore.vectorOverlayVisible).toBe(false);
+            colorBlendingStore.toggleVectorOverlayVisible();
+            expect(colorBlendingStore.vectorOverlayVisible).toBe(true);
+        });
+    });
+
     describe("baseFrame", () => {
         it("returns the spatial reference", () => {
             expect(colorBlendingStore.baseFrame).toBe(mockSpatialReference);
@@ -145,6 +178,24 @@ describe("ColorBlendingStore", () => {
     describe("frames", () => {
         it("should return the frames from the layers correctly", () => {
             expect(colorBlendingStore.frames).toEqual([mockSpatialReference, mockMatchedFrame1, mockMatchedFrame2]);
+        });
+    });
+
+    describe("applyColormapSet", () => {
+        it("applies the colormaps correctly", () => {
+            const mockFrame1SetColorMap = jest.fn();
+            const mockFrame2SetColorMap = jest.fn();
+            colorBlendingStore.selectedFrames = [{renderConfig: {setColorMap: mockFrame1SetColorMap}}, {renderConfig: {setColorMap: mockFrame2SetColorMap}}];
+
+            colorBlendingStore.applyColormapSet("RGB");
+            expect(mockReferenceSetColorMap).toHaveBeenCalledWith("Red");
+            expect(mockFrame1SetColorMap).toHaveBeenCalledWith("Green");
+            expect(mockFrame2SetColorMap).toHaveBeenCalledWith("Blue");
+        });
+
+        it("handles invalid colormap set names", () => {
+            colorBlendingStore.applyColormapSet("InvalidSet");
+            expect(mockConsoleError).toHaveBeenCalledWith("Invalid color set name.");
         });
     });
 });
