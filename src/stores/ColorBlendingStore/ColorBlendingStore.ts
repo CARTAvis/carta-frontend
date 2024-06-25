@@ -146,7 +146,7 @@ export class ColorBlendingStore {
 
     /**
      * Applies the colormap set to the layers. Only the number of colormaps matching the number of layers will be applied.
-     * @param set - The name of the colormap set to apply. Must be a key in the ` ColorBlendingStore.ColormapSets` map.
+     * @param set - The name of the colormap set to apply. Must be a key in the `ColorBlendingStore.ColormapSets` map.
      */
     applyColormapSet = (set: string) => {
         const colormaps = ColorBlendingStore.ColormapSets.get(set);
