@@ -1,4 +1,5 @@
 import * as React from "react";
+import {NonIdealState} from "@blueprintjs/core";
 import _ from "lodash";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -101,7 +102,34 @@ export class ChannelMapStore {
 
     @action setStartChannel(startChannel: number) {
         // Add checks for valid startChannel number for the masterFrame
+        if (startChannel < 0 || startChannel > this.masterFrame.frameInfo.fileInfoExtended.depth) {
+            return;
+        }
         this.startChannel = startChannel;
+    }
+
+    @action setPrevChannel() {
+        this.setStartChannel(this.startChannel - 1);
+    }
+
+    @action setNextChannel() {
+        this.setStartChannel(this.startChannel + 1);
+    }
+
+    @action setPrevPage() {
+        const newStart = this.startChannel - this.numColumns * this.numRows;
+
+        if (newStart >= 0) {
+            this.setStartChannel(newStart);
+        }
+    }
+
+    @action setNextPage() {
+        const newStart = this.startChannel + this.numColumns * this.numRows;
+
+        if (newStart >= 0) {
+            this.setStartChannel(newStart);
+        }
     }
 
     @action setAuxiliaryFrameChannel(channel: number) {
@@ -500,6 +528,6 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
             />
         </>
     ) : (
-        <div>Testing</div>
+        <NonIdealState />
     );
 });

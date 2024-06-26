@@ -44,16 +44,19 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     }
 
     componentDidUpdate() {
+        console.log("lolol", this.props.channel);
         AppStore.Instance.resetImageRatio();
         if (this.props.refCanvas) {
-            requestAnimationFrame(() => {
-                this.updateImageDimensions();
-                const destCanvas = this.canvas.getContext("2d");
-                const w = this.props.refCanvas.width;
-                const h = this.props.refCanvas.height;
-                destCanvas.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                destCanvas.drawImage(this.props.refCanvas, 0, 0, w, h, 0, 0, this.canvas.width, this.canvas.height);
-            });
+            setTimeout(() => {
+                requestAnimationFrame(() => {
+                    this.updateImageDimensions();
+                    const destCanvas = this.canvas.getContext("2d");
+                    const w = this.props.refCanvas.width;
+                    const h = this.props.refCanvas.height;
+                    destCanvas.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    destCanvas.drawImage(this.props.refCanvas, 0, 0, w, h, 0, 0, this.canvas.width, this.canvas.height);
+                });
+            }, 1000);
         } else {
             if (PreferenceStore.Instance.limitOverlayRedraw) {
                 this.throttledRenderCanvas();
@@ -63,16 +66,19 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         }
 
         if (this.props.channel !== undefined && this.channelNumberCanvas) {
-            requestAnimationFrame(() => {
-                const destCanvas = this.channelNumberCanvas.getContext("2d");
-                this.channelNumberCanvas.width = this.props.overlaySettings.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
-                this.channelNumberCanvas.height = this.props.overlaySettings.viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
-                destCanvas.font = "24px Arial";
-                destCanvas.fillStyle = "red";
-                destCanvas.textAlign = "left";
-                destCanvas.textBaseline = "top";
-                destCanvas.fillText(`${this.props.channel}`, this.props.overlaySettings.paddingLeft * devicePixelRatio * AppStore.Instance.imageRatio + 10, 10);
-            });
+            console.log("lolol channel number", this.props.channel);
+            setTimeout(() => {
+                requestAnimationFrame(() => {
+                    const destCanvas = this.channelNumberCanvas.getContext("2d");
+                    this.channelNumberCanvas.width = this.props.overlaySettings.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
+                    this.channelNumberCanvas.height = this.props.overlaySettings.viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
+                    destCanvas.font = "24px Arial";
+                    destCanvas.fillStyle = "red";
+                    destCanvas.textAlign = "left";
+                    destCanvas.textBaseline = "top";
+                    destCanvas.fillText(`${this.props.channel}`, this.props.overlaySettings.paddingLeft * devicePixelRatio * AppStore.Instance.imageRatio + 10, 10);
+                });
+            }, 1000);
         }
     }
 
@@ -237,6 +243,11 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const axesStyleString = this.props.overlaySettings.axes.styleString;
         const numbersStyleString = this.props.overlaySettings.numbers.styleString;
         const labelsStyleString = this.props.overlaySettings.labels.styleString;
+        const channelMapStartChannel = AppStore.Instance.channelMapStore.startChannel;
+        const channelMapNumColumns = AppStore.Instance.channelMapStore.numColumns;
+        const channelMapNumRows = AppStore.Instance.channelMapStore.numRows;
+        const channelMapMasterFrame = AppStore.Instance.channelMapStore.masterFrame;
+        const channelMapChannelNum = AppStore.Instance.channelMapStore.numChannels;
 
         if (!this.props.refCanvas) {
             if (frame.isSwappedZ) {

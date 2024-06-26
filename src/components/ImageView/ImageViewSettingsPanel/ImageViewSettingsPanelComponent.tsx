@@ -794,7 +794,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 <FormGroup inline={true} label="Number of Rows">
                     <SafeNumericInput placeholder="Number of Rows" min={1} max={10} value={channelMapSettings.numRows} stepSize={1} onValueChange={(value: number) => channelMapSettings.setNumRows(value)} />
                 </FormGroup>
-                <FormGroup inline={true} label="Single Channel Catalog">
+                <FormGroup inline={true} label="Single Channel Contour">
                     <Switch checked={channelMapSettings.singleChannelContour} onChange={ev => channelMapSettings.setSingleChannelContour(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Contour Channel" disabled={!channelMapSettings.singleChannelContour}>

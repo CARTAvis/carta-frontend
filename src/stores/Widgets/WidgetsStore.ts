@@ -9,6 +9,7 @@ import {
     CatalogOverlayComponent,
     CatalogOverlayPlotSettingsPanelComponent,
     CatalogPlotComponent,
+    ChannelMapControlComponent,
     CursorInfoComponent,
     HistogramComponent,
     HistogramSettingsPanelComponent,
@@ -68,7 +69,8 @@ export enum WidgetType {
     Catalog = "Catalog Widget",
     SpectralLineQuery = "Spectral Line Query Widget",
     CursorInfo = "Cursor Info Widget",
-    PvGenerator = "PV Generator"
+    PvGenerator = "PV Generator",
+    ChannelMapControl = "Channel Map Control"
 }
 
 export interface DefaultWidgetConfig {
@@ -162,6 +164,7 @@ export class WidgetsStore {
     @observable logWidgets: Map<string, EmptyWidgetStore>;
     @observable regionListWidgets: Map<string, EmptyWidgetStore>;
     @observable animatorWidgets: Map<string, EmptyWidgetStore>;
+    @observable channelMapControlWidgets: Map<string, EmptyWidgetStore>;
     @observable stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore>;
     @observable floatingSettingsWidgets: Map<string, string>;
     @observable catalogWidgets: Map<string, CatalogWidgetStore>;
@@ -227,6 +230,15 @@ export class WidgetsStore {
                 icon: "video",
                 onClick: () => WidgetsStore.Instance.createFloatingAnimatorWidget(),
                 widgetConfig: AnimatorComponent.WIDGET_CONFIG
+            }
+        ],
+        [
+            WidgetType.ChannelMapControl,
+            {
+                isCustomIcon: false,
+                icon: "star",
+                onClick: () => WidgetsStore.Instance.createFloatingChannelMapControlWidget(),
+                widgetConfig: ChannelMapControlComponent.WIDGET_CONFIG
             }
         ],
         [
@@ -360,6 +372,7 @@ export class WidgetsStore {
         this.histogramWidgets = new Map<string, HistogramWidgetStore>();
         this.renderConfigWidgets = new Map<string, RenderConfigWidgetStore>();
         this.animatorWidgets = new Map<string, EmptyWidgetStore>();
+        this.channelMapControlWidgets = new Map<string, EmptyWidgetStore>();
         this.layerListWidgets = new Map<string, LayerListWidgetStore>();
         this.logWidgets = new Map<string, EmptyWidgetStore>();
         this.regionListWidgets = new Map<string, EmptyWidgetStore>();
@@ -378,6 +391,7 @@ export class WidgetsStore {
             [HistogramComponent.WIDGET_CONFIG.type, this.histogramWidgets],
             [RenderConfigComponent.WIDGET_CONFIG.type, this.renderConfigWidgets],
             [AnimatorComponent.WIDGET_CONFIG.type, this.animatorWidgets],
+            [ChannelMapControlComponent.WIDGET_CONFIG.type, this.channelMapControlWidgets],
             [LayerListComponent.WIDGET_CONFIG.type, this.layerListWidgets],
             [LogComponent.WIDGET_CONFIG.type, this.logWidgets],
             [RegionListComponent.WIDGET_CONFIG.type, this.regionListWidgets],
@@ -405,6 +419,8 @@ export class WidgetsStore {
                 return LogComponent.WIDGET_CONFIG;
             case AnimatorComponent.WIDGET_CONFIG.type:
                 return AnimatorComponent.WIDGET_CONFIG;
+            case ChannelMapControlComponent.WIDGET_CONFIG.type:
+                return ChannelMapControlComponent.WIDGET_CONFIG;
             case SpatialProfilerComponent.WIDGET_CONFIG.type:
                 return SpatialProfilerComponent.WIDGET_CONFIG;
             case SpectralProfilerComponent.WIDGET_CONFIG.type:
@@ -562,6 +578,9 @@ export class WidgetsStore {
             case AnimatorComponent.WIDGET_CONFIG.type:
                 itemId = this.addAnimatorWidget();
                 break;
+            case ChannelMapControlComponent.WIDGET_CONFIG.type:
+                itemId = this.addAnimatorWidget();
+                break;
             case LayerListComponent.WIDGET_CONFIG.type:
                 itemId = this.addLayerListWidget();
                 break;
@@ -690,6 +709,7 @@ export class WidgetsStore {
         layout.registerComponent("pv-preview", PvPreviewComponent);
         layout.registerComponent("log", LogComponent);
         layout.registerComponent("animator", AnimatorComponent);
+        layout.registerComponent("channel-map-control", ChannelMapControlComponent);
         layout.registerComponent("stokes", StokesAnalysisComponent);
         layout.registerComponent("catalog-overlay", CatalogOverlayComponent);
         layout.registerComponent("catalog-plot", CatalogPlotComponent);
@@ -1427,6 +1447,21 @@ export class WidgetsStore {
 
         if (id) {
             this.animatorWidgets.set(id, new EmptyWidgetStore());
+        }
+        return id;
+    }
+
+    createFloatingChannelMapControlWidget = () => {
+        this.addFloatingWidget(new WidgetConfig(this.addChannelMapControlWidget(), ChannelMapControlComponent.WIDGET_CONFIG));
+    };
+
+    @action addChannelMapControlWidget(id: string = null) {
+        if (!id) {
+            id = this.getNextId(ChannelMapControlComponent.WIDGET_CONFIG.type);
+        }
+
+        if (id) {
+            this.channelMapControlWidgets.set(id, new EmptyWidgetStore());
         }
         return id;
     }

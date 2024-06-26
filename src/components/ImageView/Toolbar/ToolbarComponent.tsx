@@ -364,28 +364,6 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                         <Tooltip position={tooltipPosition} content={<span>Zoom to fit{currentZoomSpan}</span>}>
                             <AnchorButton icon="zoom-to-fit" onClick={this.props.onZoomToFit} data-testid="zoom-to-fit-button" />
                         </Tooltip>
-                        {appStore.preferenceStore.channelMapEnabled && (
-                            <Popover
-                                content={
-                                    <div style={{margin: "10px"}}>
-                                        <Slider
-                                            min={0}
-                                            max={frame.frameInfo.fileInfoExtended.depth - appStore.channelMapStore.numChannels}
-                                            stepSize={1}
-                                            labelStepSize={Math.floor(frame.frameInfo.fileInfoExtended.depth / 5)}
-                                            value={appStore.channelMapStore.startChannel}
-                                            onChange={channel => appStore.channelMapStore.setStartChannel(channel)}
-                                        />
-                                    </div>
-                                }
-                                position={Position.TOP}
-                                disabled={!appStore.preferenceStore.channelMapEnabled}
-                            >
-                                <AnchorButton disabled={!appStore.preferenceStore.channelMapEnabled} className={"full-zoom-button"}>
-                                    Channel
-                                </AnchorButton>
-                            </Popover>
-                        )}
                         {!frame.isPreview && (
                             <>
                                 <Popover content={wcsMatchingMenu} position={Position.TOP} minimal={true}>
