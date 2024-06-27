@@ -14,7 +14,6 @@ export interface ContourViewComponentProps {
     frame: FrameStore;
     row: number;
     column: number;
-    hidden?: boolean;
 }
 
 @observer
@@ -27,6 +26,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         this.contourWebGLService = ContourWebGLService.Instance;
         this.gl = this.contourWebGLService.gl;
         const contourStream = AppStore.Instance.backendService.contourStream;
+        this.triggerUpdate();
         if (this.canvas) {
             contourStream.subscribe(this.triggerUpdate);
         }
@@ -268,8 +268,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                         top: padding.top,
                         left: padding.left,
                         width: baseFrame ? baseFrame.renderWidth || 1 : 1,
-                        height: baseFrame ? baseFrame.renderHeight || 1 : 1,
-                        visibility: this.props.hidden ? "hidden" : "visible"
+                        height: baseFrame ? baseFrame.renderHeight || 1 : 1
                     }}
                 />
             </div>
