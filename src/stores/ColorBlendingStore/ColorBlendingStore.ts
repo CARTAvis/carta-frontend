@@ -11,6 +11,7 @@ export class ColorBlendingStore {
     /** Available colormap sets used for blending. The keys are the names of the sets, and the values are arrays of colormaps. */
     static readonly ColormapSets: ReadonlyMap<string, readonly string[]> = new Map([
         ["RGB", ["Red", "Green", "Blue"]],
+        ["CMY", ["Cyan", "Magenta", "Yellow"]],
         ["Rainbow", ["Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Violet"]]
     ]);
 
