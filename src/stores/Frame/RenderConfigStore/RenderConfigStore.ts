@@ -116,7 +116,8 @@ export class RenderConfigStore {
         "Green",
         "Cyan",
         "Blue",
-        "Violet"
+        "Violet",
+        "Magenta"
     ];
     /**
      * The selected colormaps shown in the option.
@@ -158,7 +159,8 @@ export class RenderConfigStore {
         ["Green", "#00FF00"],
         ["Cyan", "#00FFFF"],
         ["Blue", "#0000FF"],
-        ["Violet", "#7F00FF"]
+        ["Violet", "#7F00FF"],
+        ["Magenta", "#FF00FF"]
     ]);
     static readonly CUSTOM_COLOR_MAP_INDEX = -1;
     static readonly COLOR_MAPS_CUSTOM = "custom";
