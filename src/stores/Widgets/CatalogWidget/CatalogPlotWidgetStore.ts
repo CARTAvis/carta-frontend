@@ -19,19 +19,19 @@ type Statistic = {mean: number; count: number; validCount: number; std: number; 
 
 export class CatalogPlotWidgetStore {
     private static readonly Decimals = 4;
-    @observable indicatorInfo: Point2D;
-    @observable scatterborder: Border;
+    @observable indicatorInfo: Point2D | undefined;
+    @observable scatterborder: Border | undefined;
     @observable dragmode: DragMode;
     @observable plotType: CatalogPlotType;
-    @observable histogramBorder: XBorder;
+    @observable histogramBorder: XBorder | undefined;
     @observable logScaleY: boolean;
-    @observable nBinx: number;
+    @observable nBinx: number | undefined;
     @observable xColumnName: string;
-    @observable yColumnName: string;
-    @observable fitting: Fitting;
-    @observable minMaxX: {minVal: number; maxVal: number};
+    @observable yColumnName: string | undefined;
+    @observable fitting: Fitting | null;
+    @observable minMaxX: {minVal: number; maxVal: number} | null;
     @observable statisticColumnName: string;
-    @observable statistic: Statistic;
+    @observable statistic: Statistic | null;
 
     constructor(props: CatalogPlotWidgetStoreProps) {
         makeObservable(this);
@@ -89,21 +89,21 @@ export class CatalogPlotWidgetStore {
         this.nBinx = val;
     }
 
-    @action setFitting(value: Fitting) {
+    @action setFitting(value: Fitting | null) {
         this.fitting = value;
     }
 
-    @action setMinMaxX(value: {minVal: number; maxVal: number}) {
+    @action setMinMaxX(value: {minVal: number; maxVal: number} | null) {
         this.minMaxX = value;
     }
 
     @action initLinearFitting = () => {
-        this.setFitting({intercept: undefined, slope: undefined, cov00: undefined, cov01: undefined, cov11: undefined, rss: undefined});
-        this.setMinMaxX({minVal: undefined, maxVal: undefined});
+        this.setFitting(null);
+        this.setMinMaxX(null);
     };
 
     @action initStatistic = () => {
-        this.statistic = {mean: undefined, count: undefined, validCount: undefined, std: undefined, min: undefined, max: undefined, rms: undefined};
+        this.statistic = null;
     };
 
     @computed get isScatterAutoScaled() {
@@ -115,7 +115,7 @@ export class CatalogPlotWidgetStore {
     }
 
     @computed get fittingResultString(): string {
-        if (this.showFittingResult) {
+        if (this.showFittingResult && this.fitting) {
             const sqrtCov00 = toExponential(Math.sqrt(this.fitting.cov00), CatalogPlotWidgetStore.Decimals);
             const sqrtCov11 = toExponential(Math.sqrt(this.fitting.cov11), CatalogPlotWidgetStore.Decimals);
             return `${this.yColumnName} = ${toExponential(this.fitting.intercept, CatalogPlotWidgetStore.Decimals)} + ${toExponential(this.fitting.slope, CatalogPlotWidgetStore.Decimals)} ${this.xColumnName} <br>cov00 = ${toExponential(
@@ -130,6 +130,9 @@ export class CatalogPlotWidgetStore {
     }
 
     @computed get showFittingResult(): boolean {
+        if (!this.fitting || !this.minMaxX) {
+            return false;
+        }
         return !isNaN(this.fitting.intercept) && !isNaN(this.fitting.slope) && !isNaN(this.minMaxX.minVal) && !isNaN(this.minMaxX.maxVal);
     }
 
@@ -138,11 +141,14 @@ export class CatalogPlotWidgetStore {
     }
 
     @computed get showStatisticResult(): boolean {
+        if (!this.statistic) {
+            return false;
+        }
         return !isNaN(this.statistic.count) && !isNaN(this.statistic.validCount);
     }
 
     @computed get statisticString(): string {
-        if (this.enableStatistic && this.showStatisticResult) {
+        if (this.enableStatistic && this.showStatisticResult && this.statistic) {
             return `${this.statisticColumnName} - count: ${this.statistic.count}, valid count: ${this.statistic.validCount}, mean: ${toExponential(this.statistic.mean, CatalogPlotWidgetStore.Decimals)}, rms: ${toExponential(
                 this.statistic.rms,
                 CatalogPlotWidgetStore.Decimals

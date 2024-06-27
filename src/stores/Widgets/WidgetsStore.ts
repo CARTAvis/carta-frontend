@@ -33,7 +33,7 @@ import {
     // setting Panel
     StokesAnalysisSettingsPanelComponent
 } from "components";
-import {ImagePanelMode} from "models";
+import {ImagePanelMode, ImageType} from "models";
 import {AppStore, CatalogStore, HelpStore, HelpType, LayoutStore, PreferenceKeys, PreferenceStore} from "stores";
 import {
     ACTIVE_FILE_ID,
@@ -81,7 +81,7 @@ export interface DefaultWidgetConfig {
     defaultX?: number;
     defaultY?: number;
     isCloseable: boolean;
-    title: string;
+    title?: string;
     parentId?: string;
     parentType?: string;
     helpType?: HelpType | HelpType[];
@@ -98,7 +98,7 @@ export class WidgetConfig implements DefaultWidgetConfig {
     @observable defaultX?: number;
     @observable defaultY?: number;
     readonly isCloseable: boolean;
-    @observable title: string;
+    @observable title?: string;
     parentId?: string;
     parentType?: string;
     helpType?: HelpType | HelpType[];
@@ -318,7 +318,7 @@ export class WidgetsStore {
                 if (widgetStore instanceof RegionWidgetStore) {
                     const selectedRegionId = widgetStore.regionIdMap.get(fileId);
                     // remove entry from map if it matches the deleted region
-                    if (isFinite(selectedRegionId) && selectedRegionId === regionId) {
+                    if (isFinite(selectedRegionId ?? NaN) && selectedRegionId === regionId) {
                         widgetStore.clearFrameEntry(fileId);
                     }
                 }
@@ -538,7 +538,7 @@ export class WidgetsStore {
         }
     };
 
-    private addWidgetByType = (widgetType: string, widgetSettings: object = null): string => {
+    private addWidgetByType = (widgetType: string, widgetSettings: object | null = null): string => {
         let itemId;
         switch (widgetType) {
             case ImageViewComponent.WIDGET_CONFIG.type:
@@ -773,7 +773,7 @@ export class WidgetsStore {
             return null;
         }
 
-        let widgetStore = null;
+        let widgetStore: RenderConfigWidgetStore | SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore | CatalogWidgetStore | null | undefined = null;
         switch (widgetType) {
             case RenderConfigComponent.WIDGET_CONFIG.type:
                 widgetStore = this.renderConfigWidgets.get(widgetID);
@@ -822,12 +822,15 @@ export class WidgetsStore {
         }
         // Get floating settings config
         const defaultConfig = WidgetsStore.GetDefaultWidgetSettingsConfig(parentType);
-        let widgetConfig = new WidgetConfig(this.addFloatingSettingsWidget(null, parentId, defaultConfig.type), defaultConfig);
-        widgetConfig.title = parentType === "image-view" ? "Image View Settings" : parentTitle + " Settings";
-        widgetConfig.parentId = parentId;
-        widgetConfig.parentType = parentType;
-        if (widgetConfig.id) {
-            this.addFloatingWidget(widgetConfig);
+        const id = this.addFloatingSettingsWidget(null, parentId, defaultConfig.type);
+        if (id !== null) {
+            let widgetConfig = new WidgetConfig(id, defaultConfig);
+            widgetConfig.title = parentType === "image-view" ? "Image View Settings" : parentTitle + " Settings";
+            widgetConfig.parentId = parentId;
+            widgetConfig.parentType = parentType;
+            if (widgetConfig.id) {
+                this.addFloatingWidget(widgetConfig);
+            }
         }
     };
 
@@ -908,7 +911,7 @@ export class WidgetsStore {
     };
 
     private updateImagePanelButton = () => {
-        const imagePanelMode = AppStore.Instance.imagePanelMode;
+        const imagePanelMode = AppStore.Instance.imageViewConfigStore.imagePanelMode;
         const imagePanelButton = $(".lm_goldenlayout")?.find("li.lm-image-panel[style!='display:none;']");
         if (imagePanelButton) {
             imagePanelButton.attr("title", this.getImagePanelButtonTooltip(imagePanelMode));
@@ -926,33 +929,35 @@ export class WidgetsStore {
 
     onNextPageClick = () => {
         const appStore = AppStore.Instance;
-        const firstIndexInNextPage = (appStore.currentImagePage + 1) * appStore.imagesPerPage;
-        if (appStore.frames?.length > firstIndexInNextPage) {
-            appStore.setActiveFrameByIndex(firstIndexInNextPage);
+        const config = appStore.imageViewConfigStore;
+        const firstIndexInNextPage = (config.currentImagePage + 1) * config.imagesPerPage;
+        if (config.imageNum > firstIndexInNextPage) {
+            appStore.setActiveImageByIndex(firstIndexInNextPage);
         }
     };
 
     onPreviousPageClick = () => {
         const appStore = AppStore.Instance;
-        if (appStore.currentImagePage > 0) {
-            const firstIndexInPreviousPage = (appStore.currentImagePage - 1) * appStore.imagesPerPage;
-            appStore.setActiveFrameByIndex(firstIndexInPreviousPage);
+        const config = appStore.imageViewConfigStore;
+        if (config.currentImagePage > 0) {
+            const firstIndexInPreviousPage = (config.currentImagePage - 1) * config.imagesPerPage;
+            appStore.setActiveImageByIndex(firstIndexInPreviousPage);
         }
     };
 
     updateImagePanelPageButtons = () => {
         const appStore = AppStore.Instance;
+        const config = appStore.imageViewConfigStore;
         const nextPageButton = $(".lm_goldenlayout")?.find("li.lm-image-panel-next[style!='display:none;']");
         if (nextPageButton) {
-            const firstIndexInNextPage = (appStore.currentImagePage + 1) * appStore.imagesPerPage;
-            nextPageButton.attr("style", appStore.frames?.length > firstIndexInNextPage ? "" : "cursor: not-allowed; opacity: 0.2");
-            nextPageButton.attr("title", appStore.imagePanelMode === ImagePanelMode.None ? "next image" : "next page");
+            nextPageButton.attr("style", config.currentImagePage < config.numImagePages - 1 ? "" : "cursor: not-allowed; opacity: 0.2");
+            nextPageButton.attr("title", config.imagePanelMode === ImagePanelMode.None ? "next image" : "next page");
         }
 
         const previousPageButton = $(".lm_goldenlayout")?.find("li.lm-image-panel-previous[style!='display:none;']");
         if (previousPageButton) {
-            previousPageButton.attr("style", appStore.currentImagePage > 0 ? "" : "cursor: not-allowed; opacity: 0.2");
-            previousPageButton.attr("title", appStore.imagePanelMode === ImagePanelMode.None ? "previous image" : "previous page");
+            previousPageButton.attr("style", config.currentImagePage > 0 ? "" : "cursor: not-allowed; opacity: 0.2");
+            previousPageButton.attr("title", config.imagePanelMode === ImagePanelMode.None ? "previous image" : "previous page");
         }
     };
 
@@ -996,7 +1001,7 @@ export class WidgetsStore {
             if (isPvPreview) {
                 const regexPattern = /pv-generator-(\d+)/;
                 const pvGeneratorId = id.match(regexPattern);
-                this.pvGeneratorWidgets.get(pvGeneratorId[0])?.removePreviewFrame(parseInt(id.split("-")[2]));
+                this.pvGeneratorWidgets.get(pvGeneratorId?.[0] ?? "")?.removePreviewFrame(parseInt(id.split("-")[2]));
             }
         }
     };
@@ -1019,10 +1024,10 @@ export class WidgetsStore {
     // endregion
 
     @action updateImageWidgetTitle(layout: GoldenLayout) {
-        const appStore = AppStore.Instance;
+        const activeImage = AppStore.Instance.activeImage;
         let newTitle;
-        if (appStore.activeFrame) {
-            newTitle = appStore.activeFrame.filename;
+        if (activeImage && activeImage.type !== ImageType.PV_PREVIEW) {
+            newTitle = activeImage?.store?.filename ?? "";
         } else {
             newTitle = "No image loaded";
         }
@@ -1083,10 +1088,13 @@ export class WidgetsStore {
 
     // region Spatial Profile Widgets
     createFloatingSpatialProfilerWidget = () => {
-        this.addFloatingWidget(new WidgetConfig(this.addSpatialProfileWidget(), SpatialProfilerComponent.WIDGET_CONFIG));
+        const id = this.addSpatialProfileWidget();
+        if (id !== null) {
+            this.addFloatingWidget(new WidgetConfig(id, SpatialProfilerComponent.WIDGET_CONFIG));
+        }
     };
 
-    @action addSpatialProfileWidget(id: string = null, widgetSettings: object = null) {
+    @action addSpatialProfileWidget(id: string | null = null, widgetSettings: object | null = null) {
         if (!id) {
             id = this.getNextId(SpatialProfilerComponent.WIDGET_CONFIG.type);
         }
@@ -1105,10 +1113,13 @@ export class WidgetsStore {
 
     // region Spectral Profile Widgets
     createFloatingSpectralProfilerWidget = () => {
-        this.addFloatingWidget(new WidgetConfig(this.addSpectralProfileWidget(), SpectralProfilerComponent.WIDGET_CONFIG));
+        const id = this.addSpectralProfileWidget();
+        if (id !== null) {
+            this.addFloatingWidget(new WidgetConfig(id, SpectralProfilerComponent.WIDGET_CONFIG));
+        }
     };
 
-    @action addSpectralProfileWidget(id: string = null, widgetSettings: object = null) {
+    @action addSpectralProfileWidget(id: string | null = null, widgetSettings: object | null = null) {
         if (!id) {
             id = this.getNextId(SpectralProfilerComponent.WIDGET_CONFIG.type);
         }
@@ -1140,7 +1151,7 @@ export class WidgetsStore {
         return result;
     }
 
-    public getSpectralWidgetStoreByID = (id: string): SpectralProfileWidgetStore => {
+    public getSpectralWidgetStoreByID = (id: string): SpectralProfileWidgetStore | undefined => {
         return this.spectralProfileWidgets.get(id);
     };
 
@@ -1148,10 +1159,13 @@ export class WidgetsStore {
 
     // region Stokes Profile Widgets
     createFloatingStokesWidget = () => {
-        this.addFloatingWidget(new WidgetConfig(this.addStokesWidget(), StokesAnalysisComponent.WIDGET_CONFIG));
+        const id = this.addStokesWidget();
+        if (id) {
+            this.addFloatingWidget(new WidgetConfig(id, StokesAnalysisComponent.WIDGET_CONFIG));
+        }
     };
 
-    @action addStokesWidget(id: string = null, widgetSettings: object = null) {
+    @action addStokesWidget(id: string | null = null, widgetSettings: object | null = null) {
         if (!id) {
             id = this.getNextId(StokesAnalysisComponent.WIDGET_CONFIG.type);
         }
@@ -1172,7 +1186,7 @@ export class WidgetsStore {
     private getNextComponentId = (config: DefaultWidgetConfig) => {
         // Find the next appropriate ID
         let nextIndex = 0;
-        let componentIds = [];
+        let componentIds: string[] = [];
 
         if (config.type === CatalogPlotComponent.WIDGET_CONFIG.type) {
             CatalogStore.Instance.catalogPlots.forEach((catalogWidgetMap, componentId) => {
@@ -1193,7 +1207,7 @@ export class WidgetsStore {
         }
     };
 
-    createFloatingCatalogWidget = (catalogFileId: number): {widgetStoreId: string; widgetComponentId: string} => {
+    createFloatingCatalogWidget = (catalogFileId: number): {widgetStoreId: string | null; widgetComponentId: string} => {
         const widgetStoreId = this.addCatalogWidget(catalogFileId);
         const widgetComponentId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
         let config = new WidgetConfig(widgetComponentId, CatalogOverlayComponent.WIDGET_CONFIG);
@@ -1215,7 +1229,7 @@ export class WidgetsStore {
     };
 
     // add catalog widget store
-    @action addCatalogWidget(catalogFileId: number, id: string = null, widgetSettings: object = null) {
+    @action addCatalogWidget(catalogFileId: number, id: string | null = null, widgetSettings: object | null = null) {
         // return widget id if store already exist
         const catalogStore = CatalogStore.Instance;
         const catalogWidgetId = catalogStore.catalogWidgets.get(catalogFileId);
@@ -1234,27 +1248,29 @@ export class WidgetsStore {
                 catalogWidgetStore.init(widgetSettings);
             }
             this.catalogWidgets.set(id, catalogWidgetStore);
+            catalogStore.catalogWidgets.set(catalogFileId, id);
         }
-        catalogStore.catalogWidgets.set(catalogFileId, id);
         return id;
     }
 
     // endregion
 
     // region Catalog Plot Widgets
-    createFloatingCatalogPlotWidget = (props: CatalogPlotWidgetStoreProps): {widgetStoreId: string; widgetComponentId: string} => {
+    createFloatingCatalogPlotWidget = (props: CatalogPlotWidgetStoreProps): {widgetStoreId: string | null; widgetComponentId: string} => {
         const defaultConfig = CatalogPlotComponent.WIDGET_CONFIG;
         const widgetStoreId = this.addCatalogPlotWidget(props);
         const widgetComponentId = this.getNextComponentId(defaultConfig);
-        const config = new WidgetConfig(widgetStoreId, defaultConfig);
-        config.id = widgetStoreId;
-        config.componentId = widgetComponentId;
-        config.helpType = props.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT : HelpType.CATALOG_SCATTER_PLOT;
-        this.addFloatingWidget(config);
+        if (widgetStoreId !== null) {
+            const config = new WidgetConfig(widgetStoreId, defaultConfig);
+            config.id = widgetStoreId;
+            config.componentId = widgetComponentId;
+            config.helpType = props.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT : HelpType.CATALOG_SCATTER_PLOT;
+            this.addFloatingWidget(config);
+        }
         return {widgetStoreId: widgetStoreId, widgetComponentId: widgetComponentId};
     };
 
-    @action addCatalogPlotWidget(props: CatalogPlotWidgetStoreProps, id: string = null) {
+    @action addCatalogPlotWidget(props: CatalogPlotWidgetStoreProps, id: string | null = null) {
         // Generate new id if none passed in
         if (!id) {
             id = this.getNextId(CatalogPlotComponent.WIDGET_CONFIG.type);
@@ -1270,11 +1286,14 @@ export class WidgetsStore {
 
     // region Spectral Line Query Widgets
     createFloatingSpectralLineQueryWidget = () => {
-        this.addFloatingWidget(new WidgetConfig(this.addSpectralLineQueryWidget(), SpectralLineQueryComponent.WIDGET_CONFIG));
+        const id = this.addSpectralLineQueryWidget();
+        if (id !== null) {
+            this.addFloatingWidget(new WidgetConfig(id, SpectralLineQueryComponent.WIDGET_CONFIG));
+        }
     };
 
     // add spectral line query widget store
-    @action addSpectralLineQueryWidget(id: string = null) {
+    @action addSpectralLineQueryWidget(id: string | null = null) {
         // Generate new id if none passed in
         if (!id) {
             id = this.getNextId(SpectralLineQueryComponent.WIDGET_CONFIG.type);
@@ -1291,19 +1310,22 @@ export class WidgetsStore {
     // region Floating Settings
     createFloatingSettingsWidget = (title: string, parentId: string, parentType: string) => {
         const defaultConfig = WidgetsStore.GetDefaultWidgetSettingsConfig(parentType);
-        const config = new WidgetConfig(this.addFloatingSettingsWidget(null, parentId, defaultConfig.type), defaultConfig);
-        config.title = parentType === PvGeneratorComponent.WIDGET_CONFIG.type ? title : title + " Settings";
-        config.parentId = parentId;
-        config.parentType = parentType;
-        if (config.id) {
-            this.addFloatingWidget(config);
-        } else {
-            const settingWidgetId = parentId + "-floating-settings-0";
-            AppStore.Instance.zIndexManager.updateIndexOnSelect(settingWidgetId);
+        const id = this.addFloatingSettingsWidget(null, parentId, defaultConfig.type);
+        if (id !== null) {
+            const config = new WidgetConfig(id, defaultConfig);
+            config.title = parentType === PvGeneratorComponent.WIDGET_CONFIG.type ? title : title + " Settings";
+            config.parentId = parentId;
+            config.parentType = parentType;
+            if (config.id) {
+                this.addFloatingWidget(config);
+            } else {
+                const settingWidgetId = parentId + "-floating-settings-0";
+                AppStore.Instance.zIndexManager.updateIndexOnSelect(settingWidgetId);
+            }
         }
     };
 
-    @action addFloatingSettingsWidget(id: string = null, parentId: string, type: string) {
+    @action addFloatingSettingsWidget(id: string | null = null, parentId: string, type: string) {
         // Generate new id if none passed in
         if (!id) {
             id = this.getNextSettingId(type, parentId);
@@ -1318,10 +1340,13 @@ export class WidgetsStore {
 
     // region Stats Widgets
     createFloatingStatsWidget = () => {
-        this.addFloatingWidget(new WidgetConfig(this.addStatsWidget(), StatsComponent.WIDGET_CONFIG));
+        const id = this.addStatsWidget();
+        if (id !== null) {
+            this.addFloatingWidget(new WidgetConfig(id, StatsComponent.WIDGET_CONFIG));
+        }
     };
 
-    @action addStatsWidget(id: string = null) {
+    @action addStatsWidget(id: string | null = null) {
         // Generate new id if none passed in
         if (!id) {
             id = this.getNextId(StatsComponent.WIDGET_CONFIG.type);
@@ -1337,10 +1362,13 @@ export class WidgetsStore {
 
     // region Histogram Widgets
     createFloatingHistogramWidget = () => {
-        this.addFloatingWidget(new WidgetConfig(this.addHistogramWidget(), HistogramComponent.WIDGET_CONFIG));
+        const id = this.addHistogramWidget();
+        if (id !== null) {
+            this.addFloatingWidget(new WidgetConfig(id, HistogramComponent.WIDGET_CONFIG));
+        }
     };
 
-    @action addHistogramWidget(id: string = null, widgetSettings: object = null) {
+    @action addHistogramWidget(id: string | null = null, widgetSettings: object | null = null) {
         if (!id) {
             id = this.getNextId(HistogramComponent.WIDGET_CONFIG.type);
         }
@@ -1359,10 +1387,13 @@ export class WidgetsStore {
 
     // region Render Config Widgets
     createFloatingRenderWidget = () => {
-        this.addFloatingWidget(new WidgetConfig(this.addRenderConfigWidget(), RenderConfigComponent.WIDGET_CONFIG));
+        const id = this.addRenderConfigWidget();
+        if (id !== null) {
+            this.addFloatingWidget(new WidgetConfig(id, RenderConfigComponent.WIDGET_CONFIG));
+        }
     };
 
-    @action addRenderConfigWidget(id: string = null, widgetSettings: object = null) {
+    @action addRenderConfigWidget(id: string | null = null, widgetSettings: object | null = null) {
         if (!id) {
             id = this.getNextId(RenderConfigComponent.WIDGET_CONFIG.type);
         }
@@ -1382,10 +1413,13 @@ export class WidgetsStore {
     // region Basic widget types (log, animator, region list, layer list, cursor info)
 
     createFloatingLogWidget = () => {
-        this.addFloatingWidget(new WidgetConfig(this.addLogWidget(), LogComponent.WIDGET_CONFIG));
+        const id = this.addLogWidget();
+        if (id !== null) {
+            this.addFloatingWidget(new WidgetConfig(id, LogComponent.WIDGET_CONFIG));
+        }
     };
 
-    @action addLogWidget(id: string = null) {
+    @action addLogWidget(id: string | null = null) {
         if (!id) {
             id = this.getNextId(LogComponent.WIDGET_CONFIG.type);
         }
@@ -1397,10 +1431,13 @@ export class WidgetsStore {
     }
 
     createFloatingAnimatorWidget = () => {
-        this.addFloatingWidget(new WidgetConfig(this.addAnimatorWidget(), AnimatorComponent.WIDGET_CONFIG));
+        const id = this.addAnimatorWidget();
+        if (id !== null) {
+            this.addFloatingWidget(new WidgetConfig(id, AnimatorComponent.WIDGET_CONFIG));
+        }
     };
 
-    @action addAnimatorWidget(id: string = null) {
+    @action addAnimatorWidget(id: string | null = null) {
         if (!id) {
             id = this.getNextId(AnimatorComponent.WIDGET_CONFIG.type);
         }
@@ -1412,10 +1449,13 @@ export class WidgetsStore {
     }
 
     createFloatingRegionListWidget = () => {
-        this.addFloatingWidget(new WidgetConfig(this.addRegionListWidget(), RegionListComponent.WIDGET_CONFIG));
+        const id = this.addRegionListWidget();
+        if (id !== null) {
+            this.addFloatingWidget(new WidgetConfig(id, RegionListComponent.WIDGET_CONFIG));
+        }
     };
 
-    @action addRegionListWidget(id: string = null) {
+    @action addRegionListWidget(id: string | null = null) {
         if (!id) {
             id = this.getNextId(RegionListComponent.WIDGET_CONFIG.type);
         }
@@ -1427,10 +1467,13 @@ export class WidgetsStore {
     }
 
     createFloatingLayerListWidget = () => {
-        this.addFloatingWidget(new WidgetConfig(this.addLayerListWidget(), LayerListComponent.WIDGET_CONFIG));
+        const id = this.addLayerListWidget();
+        if (id !== null) {
+            this.addFloatingWidget(new WidgetConfig(id, LayerListComponent.WIDGET_CONFIG));
+        }
     };
 
-    @action addLayerListWidget(id: string = null) {
+    @action addLayerListWidget(id: string | null = null) {
         if (!id) {
             id = this.getNextId(LayerListComponent.WIDGET_CONFIG.type);
         }
@@ -1442,10 +1485,13 @@ export class WidgetsStore {
     }
 
     createFloatingCursorInfoWidget = () => {
-        this.addFloatingWidget(new WidgetConfig(this.addCursorInfoWidget(), CursorInfoComponent.WIDGET_CONFIG));
+        const id = this.addCursorInfoWidget();
+        if (id !== null) {
+            this.addFloatingWidget(new WidgetConfig(id, CursorInfoComponent.WIDGET_CONFIG));
+        }
     };
 
-    @action addCursorInfoWidget(id: string = null) {
+    @action addCursorInfoWidget(id: string | null = null) {
         if (!id) {
             id = this.getNextId(CursorInfoComponent.WIDGET_CONFIG.type);
         }
@@ -1457,10 +1503,13 @@ export class WidgetsStore {
     }
 
     createFloatingPvGeneratorWidget = () => {
-        this.addFloatingWidget(new WidgetConfig(this.addPvGeneratorWidget(), PvGeneratorComponent.WIDGET_CONFIG));
+        const id = this.addPvGeneratorWidget();
+        if (id !== null) {
+            this.addFloatingWidget(new WidgetConfig(id, PvGeneratorComponent.WIDGET_CONFIG));
+        }
     };
 
-    @action addPvGeneratorWidget(id: string = null) {
+    @action addPvGeneratorWidget(id: string | null = null) {
         if (!id) {
             id = this.getNextId(PvGeneratorComponent.WIDGET_CONFIG.type);
         }
@@ -1489,7 +1538,7 @@ export class WidgetsStore {
     };
 
     @action addFloatingWidget = (widget: WidgetConfig) => {
-        if (!(widget?.defaultX > 0 && widget?.defaultY > 0)) {
+        if (widget.defaultX === undefined || widget.defaultY === undefined || !(widget.defaultX > 0 && widget.defaultY > 0)) {
             const offset = this.getFloatingWidgetOffset();
             widget.setDefaultPosition(offset, offset);
         }
@@ -1531,7 +1580,7 @@ export class WidgetsStore {
 
     private removeAssociatedFloatingSetting = (widgetId: string) => {
         if (this.floatingSettingsWidgets?.size) {
-            let associatedFloatingSettingsId = null;
+            let associatedFloatingSettingsId: string | null = null;
             this.floatingSettingsWidgets.forEach((value, key) => {
                 if (value === widgetId) {
                     associatedFloatingSettingsId = key;

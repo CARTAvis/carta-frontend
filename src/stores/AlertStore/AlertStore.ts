@@ -27,7 +27,7 @@ export class AlertStore {
     @observable alertType: AlertType;
     @observable interactiveAlertText: string | React.ReactNode;
     @observable showDashboardLink: boolean;
-    private interactionPromise: Deferred<boolean>;
+    private interactionPromise: Deferred<boolean> | null;
 
     @action showAlert = (text: string | React.ReactNode, icon?: IconName | MaybeElement, showDashboard = false) => {
         this.alertText = text;

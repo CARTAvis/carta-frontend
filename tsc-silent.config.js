@@ -1,7 +1,22 @@
 const migratedFiles = [
     "utilities",
     "models",
-    "services"
+    "services",
+    "stores/Widgets",
+    "stores/SpectralProfileStore",
+    "stores/SpatialProfileStore",
+    "stores/Snippet",
+    "stores/ProfileSmoothingStore",
+    "stores/ProfileFittingStore",
+    "stores/LogStore",
+    "stores/LayoutStore",
+    "stores/ImageFittingStore",
+    "stores/HelpStore",
+    "stores/FileBrowserStore",
+    "stores/DialogStore",
+    "stores/CatalogOnlineQuery",
+    "stores/Catalog",
+    "stores/AlertStore"
 ];
 
 module.exports = {

@@ -154,7 +154,7 @@ export function getEstimatedPoints(xInput: number[], yInput: number[]): {x: numb
     ];
 }
 
-export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: {order: number; yIntercept: number; slope: number}): {components: ProfileFittingIndividualStore[]; order: number; yIntercept: number; slope: number} {
+export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: {order: number; yIntercept: number; slope: number} | null): {components: ProfileFittingIndividualStore[]; order: number; yIntercept: number; slope: number} {
     // This part of codes tries to analyze the input spectrum and guesses where spectral and continuum features are, then sets up a set of initial solution for the GSL profile fitter. The procedure is outlined below.
 
     // On the GUI, there is a toggle 'w/ cont.' which sets a flag to the guesser if continuum needs to be taken into account or not.
@@ -470,7 +470,9 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
         component.setFwhm(Math.abs(x[lineBox.toIndexOri] - x[lineBox.fromIndexOri]) / 2);
         const localYSmoothed = ySmoothed.slice(lineBox.fromIndex, lineBox.toIndex + 1);
         const localYExtrema = _.mean(localYSmoothed) > intensitySmoothedMean ? _.max(localYSmoothed) : _.min(localYSmoothed);
-        component.setAmp(localYExtrema);
+        if (localYExtrema !== undefined) {
+            component.setAmp(localYExtrema);
+        }
         const localYExtremaIndex = localYSmoothed.indexOf(localYExtrema ?? NaN);
         component.setCenter(xSmoothed[lineBox.fromIndex + localYExtremaIndex]);
         components.push(component);
