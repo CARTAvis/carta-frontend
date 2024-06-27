@@ -145,7 +145,7 @@ export class ColorBlendingStore {
     }
 
     /**
-     * Applies the colormap set to the layers. Only the number of colormaps matching the number of layers will be applied.
+     * Applies the colormap set to the layers. The colormap set is interpolated to match the number of frames.
      * @param set - The name of the colormap set to apply. Must be a key in the `ColorBlendingStore.ColormapSets` map.
      */
     applyColormapSet = (set: string) => {
@@ -155,8 +155,9 @@ export class ColorBlendingStore {
             return;
         }
 
-        for (let i = 0; i < Math.min(colormaps.length, this.frames.length); i++) {
-            this.frames[i].renderConfig.setColorMap(colormaps[i]);
+        for (let i = 0; i < this.frames.length; i++) {
+            const index = Math.round((i * (colormaps.length - 1)) / (this.frames.length - 1));
+            this.frames[i].renderConfig.setColorMap(colormaps[index]);
         }
     };
 
