@@ -384,6 +384,9 @@ export class FrameStore {
                 AST.deleteObject(this.cachedTransformedWcsInfo);
             }
 
+            if (this.spatialReference.isOffsetCoord && !this.wcsInfoShifted) {
+                this.createWcsInfoShifted();
+            }
             const wcsInfo = this.isOffsetCoord ? this.wcsInfoShifted : this.wcsInfo;
 
             this.cachedTransformedWcsInfo = AST.createTransformedFrameset(
@@ -2829,6 +2832,12 @@ export class FrameStore {
         console.log(`Setting spatial reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
 
         this.isOffsetCoord = frame.isOffsetCoord;
+
+        // initialize wcsInfoShifted if it is not existed
+        if (this.isOffsetCoord && !this.wcsInfoShifted) {
+            const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.offsetCenter);
+            this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, centerInRad.x, centerInRad.y);
+        }
 
         this.spatialTransformAST = AST.getSpatialMapping(this.wcsInfo, frame.wcsInfo);
 
