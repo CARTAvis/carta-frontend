@@ -1489,10 +1489,13 @@ export class WidgetsStore {
     }
 
     createFloatingChannelMapControlWidget = () => {
-        this.addFloatingWidget(new WidgetConfig(this.addChannelMapControlWidget(), ChannelMapControlComponent.WIDGET_CONFIG));
+        const id = this.addChannelMapControlWidget();
+        if (id !== null) {
+            this.addFloatingWidget(new WidgetConfig(id, ChannelMapControlComponent.WIDGET_CONFIG));
+        }
     };
 
-    @action addChannelMapControlWidget(id: string = null) {
+    @action addChannelMapControlWidget(id: string | null = null) {
         if (!id) {
             id = this.getNextId(ChannelMapControlComponent.WIDGET_CONFIG.type);
         }

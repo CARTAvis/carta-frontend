@@ -4,7 +4,7 @@ import _ from "lodash";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {CursorInfo, FrameView, Point2D} from "models";
+import {CursorInfo, FrameView, ImageType, Point2D} from "models";
 import {ChannelMapTileService, ChannelMapWebGLService} from "services";
 import {AppStore, OverlayStore} from "stores";
 import {FrameStore} from "stores/Frame";
@@ -373,7 +373,10 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                             {channelMapStore.showAuxiliaryFrame && channelMapStore.auxiliaryFrame ? (
                                 <RasterViewComponent
                                     key={`raster-view-component-${channelMapStore.auxiliaryFrame.frameInfo.fileId}-${channelMapStore.auxiliaryFrameChannel}`}
-                                    frame={channelMapStore.auxiliaryFrame}
+                                    image={{
+                                        type: ImageType.FRAME,
+                                        store: channelMapStore.auxiliaryFrame
+                                    }}
                                     webGLService={ChannelMapWebGLService.Instance}
                                     tileService={ChannelMapTileService.Instance}
                                     overlayStore={overlayStore}
@@ -389,7 +392,10 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                             ) : (
                                 <RasterViewComponent
                                     key={`raster-view-component-${frame.frameInfo.fileId}-${channel}`}
-                                    frame={frame}
+                                    image={{
+                                        type: ImageType.FRAME,
+                                        store: frame
+                                    }}
                                     webGLService={ChannelMapWebGLService.Instance}
                                     tileService={ChannelMapTileService.Instance}
                                     overlayStore={overlayStore}
@@ -437,7 +443,10 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                                         if (ref?.canvas) ref.canvas.id = `${column}_${row}`;
                                     }
                                 }}
-                                frame={channelMapStore.showAuxiliaryFrame && channelMapStore.auxiliaryFrame ? channelMapStore.auxiliaryFrame : frame}
+                                image={{
+                                    type: ImageType.FRAME,
+                                    store: channelMapStore.showAuxiliaryFrame && channelMapStore.auxiliaryFrame ? channelMapStore.auxiliaryFrame : frame
+                                }}
                                 width={channelMapStore.overlayStores?.inner?.fullViewWidth}
                                 height={channelMapStore.overlayStores?.inner?.fullViewHeight}
                                 overlaySettings={overlayStore}
@@ -517,7 +526,10 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                 isPreview={frame.isPreview}
             />
             <OverlayComponent
-                frame={frame}
+                image={{
+                    type: ImageType.FRAME,
+                    store: frame
+                }}
                 width={channelMapStore.overlayStores.outer.fullViewWidth}
                 height={channelMapStore.overlayStores.outer.fullViewHeight}
                 overlaySettings={channelMapStore.overlayStores.outer}
