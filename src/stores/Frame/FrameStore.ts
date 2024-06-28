@@ -386,6 +386,11 @@ export class FrameStore {
 
             const wcsInfo = this.isOffsetCoord ? this.wcsInfoShifted : this.wcsInfo;
 
+            if (!wcsInfo) {
+                console.log("No valid wcsInfo when creating transformedWcsInfo.");
+                return null;
+            }
+
             this.cachedTransformedWcsInfo = AST.createTransformedFrameset(
                 wcsInfo,
                 adjTranslation.x,
@@ -2832,6 +2837,12 @@ export class FrameStore {
 
         this.spatialTransformAST = AST.getSpatialMapping(this.wcsInfo, frame.wcsInfo);
 
+        this.spatialReference.addSecondarySpatialImage(this);
+
+        // udpate center position for setting inputs
+        this.center = this.spatialTransform.transformCoordinate(this.spatialReference.center, false);
+        this.setOffsetCenter(this.center.x, this.center.y);
+
         if (!this.spatialTransformAST) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
             this.spatialReference = null;
@@ -2855,17 +2866,12 @@ export class FrameStore {
             return false;
         }
 
-        this.spatialReference.addSecondarySpatialImage(this);
         // Update cursor position
         const spatialRefCursorPos = this.spatialReference.cursorInfo?.posImageSpace;
         if (spatialRefCursorPos) {
             const cursorPosImage = transformPoint(this.spatialTransformAST, spatialRefCursorPos, false);
             this.cursorInfo = this.getCursorInfo(cursorPosImage);
         }
-
-        // udpate center position for setting inputs
-        this.center = this.spatialTransform.transformCoordinate(this.spatialReference.center, false);
-        this.setOffsetCenter(this.center.x, this.center.y);
 
         this.spatialReference.frameRegionSet.migrateRegionsFromExistingSet(this.frameRegionSet, this.spatialTransformAST, true);
         // Remove old regions after migration
