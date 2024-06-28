@@ -4,15 +4,14 @@ import classNames from "classnames";
 import * as _ from "lodash";
 import {observer} from "mobx-react";
 
-import {CursorInfo, SPECTRAL_TYPE_STRING} from "models";
+import {CursorInfo, ImageItem, ImageType, SPECTRAL_TYPE_STRING} from "models";
 import {AppStore, OverlayStore, PreferenceStore} from "stores";
-import {FrameStore} from "stores/Frame";
 
 import "./OverlayComponent.scss";
 
 export class OverlayComponentProps {
     overlaySettings: OverlayStore;
-    frame: FrameStore;
+    image: ImageItem;
     docked: boolean;
     top?: number;
     left?: number;
@@ -93,14 +92,15 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     updateImageDimensions() {
         if (this.canvas) {
-            this.canvas.width = this.props.overlaySettings.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
-            this.canvas.height = this.props.overlaySettings.viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
+            const frame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image.store?.baseFrame : this.props.image?.store;
+            this.canvas.width = frame.overlayStore.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
+            this.canvas.height = frame.overlayStore .viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
         }
     }
 
     renderCanvas = () => {
         const settings = this.props.overlaySettings;
-        const frame = this.props.frame;
+        const frame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image.store?.baseFrame : this.props.image?.store;
         const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
 
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : frame.wcsInfo;
@@ -140,8 +140,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     frameView.xMax,
                     frameView.yMin / frame.aspectRatio,
                     frameView.yMax / frame.aspectRatio,
-                    this.props.overlaySettings.viewWidth * pixelRatio,
-                    this.props.overlaySettings.viewHeight * pixelRatio,
+                    frame.overlayStore.viewWidth * pixelRatio,
+                    frame.overlayStore.viewHeight * pixelRatio,
                     settings.padding.left * pixelRatio,
                     settings.padding.right * pixelRatio,
                     settings.padding.top * pixelRatio,
@@ -166,15 +166,15 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 currentStyleString += `, Tol=${tolVal}`;
             }
 
-            if (!this.props.frame.validWcs) {
+            if (!frame.validWcs) {
                 //Remove system and format entries
                 currentStyleString = currentStyleString.replace(/System=.*?,/, "").replaceAll(/Format\(\d\)=.*?,/g, "");
             }
 
             if (!settings.title.customText) {
-                currentStyleString += `, Title=${frame.filename}`;
-            } else if (frame.titleCustomText?.length) {
-                currentStyleString += `, Title=${frame.titleCustomText}`;
+                currentStyleString += `, Title=${this.props.image?.store?.filename}`;
+            } else if (this.props.image?.store?.titleCustomText?.length) {
+                currentStyleString += `, Title=${this.props.image?.store?.titleCustomText}`;
             } else {
                 currentStyleString += `, Title=${""}`;
             }
@@ -202,9 +202,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     };
 
     render() {
-        // console.log('rerendering')ff
-        const frame = this.props.frame;
-        const refFrame = frame?.spatialReference ?? frame;
+        const frame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image.store?.baseFrame : this.props.image?.store;
+        const refFrame = frame.spatialReference ?? frame;
         // changing the frame view, padding or width/height triggers a re-render
 
         const w = this.props.overlaySettings?.viewWidth;
@@ -234,7 +233,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const distanceMeasuringColor = frame.distanceMeasuring?.color;
         const distanceMeasuringFontSize = frame.distanceMeasuring?.fontSize;
         const distanceMeasuringLineWidth = frame.distanceMeasuring?.lineWidth;
-        const title = this.props.overlaySettings.title.customText ? frame.titleCustomText : frame.filename;
+        const title = this.props.overlaySettings.title.customText ? this.props.image?.store?.titleCustomText : this.props.image?.store?.filename;
         const ratio = AppStore.Instance.imageRatio;
         const titleStyleString = this.props.overlaySettings.title.styleString;
         const gridStyleString = this.props.overlaySettings.grid.styleString;

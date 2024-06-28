@@ -16,20 +16,34 @@ export enum MultiProfileCategory {
 }
 
 interface ProfileConfig {
-    fileId: number;
-    regionId: number;
+    fileId: number | undefined;
+    regionId: number | null;
     statsType: CARTA.StatsType;
     coordinate: string;
-    colorKey: LineKey;
-    label: {image: string; plot: string};
+    colorKey: LineKey | undefined;
+    label: {image: string | undefined; plot: string};
 }
 
 interface SpectralConfig extends CARTA.SetSpectralRequirements.ISpectralConfig {
-    fileId: number;
-    regionId: number;
+    fileId: number | undefined;
+    regionId: number | null;
 }
 
 const MAXIMUM_PROFILES = 10;
+
+type Profile = {
+    channelValues: number[];
+    channelSecondaryValues: number[];
+    data: ProcessedSpectralProfile | null | undefined;
+    colorKey: LineKey | undefined;
+    label: {
+        image: string | undefined;
+        plot: string;
+    };
+    comments: string[];
+    intensityConfig: IntensityConfig;
+    intensityUnit: string;
+};
 
 export class SpectralProfileSelectionStore {
     // profile selection
@@ -49,7 +63,7 @@ export class SpectralProfileSelectionStore {
         const profileConfigs = this.profileConfigs;
         if (profileConfigs?.length > 0) {
             if (this.activeProfileCategory === MultiProfileCategory.STATISTIC) {
-                let statsTypes = [];
+                let statsTypes: CARTA.StatsType[] = [];
                 profileConfigs.forEach(profileConfig => statsTypes.push(profileConfig.statsType));
                 formattedSpectralConfigs.push({
                     fileId: profileConfigs[0].fileId,
@@ -71,9 +85,9 @@ export class SpectralProfileSelectionStore {
         return formattedSpectralConfigs;
     };
 
-    private genProfileLabel = (fileId: number, regionName: string, statsType: CARTA.StatsType, coordinate: string): {image: string; plot: string} => {
+    private genProfileLabel = (fileId: number | undefined, regionName: string | undefined, statsType: CARTA.StatsType, coordinate: string): {image: string | undefined; plot: string} => {
         return {
-            image: AppStore.Instance.getFrameName(fileId),
+            image: AppStore.Instance.getFrameName(fileId ?? NaN),
             plot: `${regionName}, Statistic ${StatsTypeString(statsType)}, Coordinate ${POLARIZATION_LABELS.get(coordinate.slice(0, coordinate.length - 1))}`
         };
     };
@@ -86,21 +100,23 @@ export class SpectralProfileSelectionStore {
                 const statsType = region?.isClosedRegion ? this.selectedStatsTypes[0] : CARTA.StatsType.Sum;
                 const selectedCoordinate = this.selectedCoordinates[0];
                 const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
-                if (this.activeProfileCategory === MultiProfileCategory.IMAGE && matchedFileIds?.includes(this.selectedFrameFileId)) {
+                if (this.activeProfileCategory === MultiProfileCategory.IMAGE && this.selectedFrameFileId !== undefined && matchedFileIds?.includes(this.selectedFrameFileId)) {
                     const appStore = AppStore.Instance;
 
                     matchedFileIds.forEach(fileId => {
                         const frame = appStore.getFrame(fileId);
-                        const hasCommonIntensityUnit = GetIntensityOptions(frame.intensityConfig).includes(this.widgetStore.intensityUnit);
-                        if (profileConfigs.length < MAXIMUM_PROFILES && (hasCommonIntensityUnit || fileId === this.selectedFrameFileId)) {
-                            profileConfigs.push({
-                                fileId: fileId,
-                                regionId: this.effectiveRegionId,
-                                statsType: statsType,
-                                coordinate: selectedCoordinate,
-                                colorKey: fileId,
-                                label: this.genProfileLabel(fileId, region?.nameString, statsType, selectedCoordinate)
-                            });
+                        if (frame) {
+                            const hasCommonIntensityUnit = this.widgetStore.intensityUnit && GetIntensityOptions(frame.intensityConfig).includes(this.widgetStore.intensityUnit);
+                            if (profileConfigs.length < MAXIMUM_PROFILES && (hasCommonIntensityUnit || fileId === this.selectedFrameFileId)) {
+                                profileConfigs.push({
+                                    fileId: fileId,
+                                    regionId: this.effectiveRegionId,
+                                    statsType: statsType,
+                                    coordinate: selectedCoordinate,
+                                    colorKey: fileId,
+                                    label: this.genProfileLabel(fileId, region?.nameString, statsType, selectedCoordinate)
+                                });
+                            }
                         }
                     });
                 } else {
@@ -118,7 +134,7 @@ export class SpectralProfileSelectionStore {
                 const selectedCoordinate = this.selectedCoordinates[0];
                 this.selectedRegionIds?.forEach(selectedRegionId => {
                     if (selectedRegionId !== RegionId.ACTIVE) {
-                        const region = this.selectedFrame.getRegion(selectedRegionId);
+                        const region = this.selectedFrame?.getRegion(selectedRegionId);
                         const statsType = region?.isClosedRegion ? selectedStatsType : CARTA.StatsType.Sum;
                         profileConfigs.push({
                             fileId: this.selectedFrameFileId,
@@ -173,22 +189,13 @@ export class SpectralProfileSelectionStore {
         return profileConfigs;
     }
 
-    @computed get profiles(): {
-        channelValues: number[];
-        channelSecondaryValues: number[];
-        data: ProcessedSpectralProfile;
-        colorKey: string;
-        label: {image: string; plot: string};
-        comments: string[];
-        intensityConfig: IntensityConfig;
-        intensityUnit: string;
-    }[] {
-        let profiles = [];
+    @computed get profiles(): Profile[] {
+        let profiles: Profile[] = [];
         this.profileConfigs?.forEach(profileConfig => {
             const appStore = AppStore.Instance;
-            const frame = appStore.getFrame(profileConfig.fileId);
-            const frameProfileStoreMap = appStore.spectralProfiles.get(profileConfig.fileId);
-            const regionProfileStoreMap = frameProfileStoreMap?.get(profileConfig.regionId);
+            const frame = appStore.getFrame(profileConfig.fileId ?? NaN);
+            const frameProfileStoreMap = appStore.spectralProfiles.get(profileConfig.fileId ?? NaN);
+            const regionProfileStoreMap = frameProfileStoreMap?.get(profileConfig.regionId ?? NaN);
             const profileData = regionProfileStoreMap?.getProfile(profileConfig.coordinate, profileConfig.statsType);
             if (frame) {
                 profiles.push({
@@ -197,7 +204,7 @@ export class SpectralProfileSelectionStore {
                     data: profileData,
                     colorKey: profileConfig.colorKey,
                     label: profileConfig.label,
-                    comments: frame.getRegionProperties(profileConfig.regionId),
+                    comments: frame.getRegionProperties(profileConfig.regionId ?? NaN),
                     intensityConfig: frame.intensityConfig,
                     intensityUnit: frame.intensityUnit
                 });
@@ -212,7 +219,7 @@ export class SpectralProfileSelectionStore {
         images = regions = statTypes = coordinates = "";
         prevFileId = prevRegionId = prevStatsType = prevCoordinate = undefined;
         this.profileConfigs?.forEach((profileConfig, index) => {
-            const fileName = AppStore.Instance.getFrame(profileConfig.fileId)?.filename;
+            const fileName = AppStore.Instance.getFrame(profileConfig.fileId ?? NaN)?.filename;
             if (prevFileId !== profileConfig.fileId) {
                 images += `${index === 0 ? "" : ","}${fileName}`;
             }
@@ -233,10 +240,10 @@ export class SpectralProfileSelectionStore {
         return {image: images, plot: `Z-Profile-Region_${regions}-Statistic_${statTypes}-Coordinate_${coordinates}`};
     }
 
-    @computed get profileOrderedKeys(): LineKey[] {
+    @computed get profileOrderedKeys(): LineKey[] | undefined {
         if (this.activeProfileCategory === MultiProfileCategory.NONE) {
             return [SpectralProfileWidgetStore.PRIMARY_LINE_KEY];
-        } else if (this.activeProfileCategory === MultiProfileCategory.IMAGE) {
+        } else if (this.activeProfileCategory === MultiProfileCategory.IMAGE && this.selectedFrameFileId !== undefined) {
             const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
             return matchedFileIds?.includes(this.selectedFrameFileId) ? matchedFileIds : [this.selectedFrameFileId];
         } else if (this.activeProfileCategory === MultiProfileCategory.REGION) {
@@ -249,7 +256,7 @@ export class SpectralProfileSelectionStore {
         return undefined;
     }
 
-    @computed get profileOptions(): LineOption[] {
+    @computed get profileOptions(): LineOption[] | undefined {
         if (this.activeProfileCategory === MultiProfileCategory.NONE) {
             return [{value: SpectralProfileWidgetStore.PRIMARY_LINE_KEY, label: SpectralProfileWidgetStore.PRIMARY_LINE_KEY}];
         } else if (this.activeProfileCategory === MultiProfileCategory.IMAGE) {
@@ -274,9 +281,11 @@ export class SpectralProfileSelectionStore {
 
             // Highlight matched active option
             if (matchedFrameIds?.length > 1 && matchedFrameIds?.includes(appStore.activeFrameFileId)) {
-                let activeOption = options.find(option => option.value === ACTIVE_FILE_ID);
-                activeOption.label = "Active (matched)";
-                activeOption.hightlight = true;
+                const activeOption = options.find(option => option.value === ACTIVE_FILE_ID);
+                if (activeOption) {
+                    activeOption.label = "Active (matched)";
+                    activeOption.hightlight = true;
+                }
             }
 
             frameOptions?.forEach(frameNameOption => {
@@ -292,8 +301,10 @@ export class SpectralProfileSelectionStore {
 
             options.forEach(option => {
                 const frame = appStore.getFrame(option.value as number);
-                const hasCommonIntensityUnit = GetIntensityOptions(frame.intensityConfig).includes(this.widgetStore.intensityUnit);
-                option.label += !((option.value as number) === ACTIVE_FILE_ID) && !hasCommonIntensityUnit && !((option.value as number) === this.selectedFrameFileId) ? " (hidden)" : "";
+                if (frame) {
+                    const hasCommonIntensityUnit = this.widgetStore.intensityUnit && GetIntensityOptions(frame.intensityConfig).includes(this.widgetStore.intensityUnit);
+                    option.label += !((option.value as number) === ACTIVE_FILE_ID) && !hasCommonIntensityUnit && !((option.value as number) === this.selectedFrameFileId) ? " (hidden)" : "";
+                }
             });
         } else {
             options = options.concat(
@@ -348,11 +359,11 @@ export class SpectralProfileSelectionStore {
         return options;
     }
 
-    @computed get selectedFrame(): FrameStore {
+    @computed get selectedFrame(): FrameStore | null | undefined {
         return this.widgetStore.effectiveFrame;
     }
 
-    @computed get selectedFrameFileId(): number {
+    @computed get selectedFrameFileId(): number | undefined {
         return this.selectedFrame?.frameInfo.fileId;
     }
 
@@ -360,7 +371,7 @@ export class SpectralProfileSelectionStore {
         return this.widgetStore.fileId;
     }
 
-    @computed get effectiveRegionId(): number {
+    @computed get effectiveRegionId(): number | null {
         return this.widgetStore.effectiveRegionId;
     }
 
@@ -381,12 +392,12 @@ export class SpectralProfileSelectionStore {
         if (this.selectedFrame) {
             if (this.activeProfileCategory === MultiProfileCategory.REGION) {
                 return this.selectedRegionIds?.some(selectedRegionId => {
-                    const selectedRegion = this.selectedFrame.getRegion(selectedRegionId);
+                    const selectedRegion = this.selectedFrame?.getRegion(selectedRegionId);
                     return selectedRegion?.isClosedRegion;
                 });
             } else {
                 const selectedRegion = this.widgetStore.effectiveRegion;
-                return selectedRegion?.isClosedRegion;
+                return selectedRegion === undefined ? false : selectedRegion.isClosedRegion;
             }
         }
         return false;
@@ -414,7 +425,7 @@ export class SpectralProfileSelectionStore {
         const polarizations: POLARIZATIONS[] = [];
         if (this.selectedCoordinates) {
             this.selectedCoordinates.forEach(coordinate => {
-                polarizations.push(coordinate === "z" ? this.widgetStore.effectiveFrame.requiredPolarization : POLARIZATIONS[coordinate.substring(0, coordinate.length - 1)]);
+                polarizations.push(coordinate === "z" ? this.widgetStore.effectiveFrame?.requiredPolarization : POLARIZATIONS[coordinate.substring(0, coordinate.length - 1)]);
             });
         }
         return polarizations;
@@ -501,7 +512,7 @@ export class SpectralProfileSelectionStore {
             // Single profile mode
             widgetStore.setProfileColor(SpectralProfileWidgetStore.PRIMARY_LINE_KEY, primaryLineColor);
         } else if (profileCategory === MultiProfileCategory.IMAGE) {
-            if (this.selectedFrame) {
+            if (this.selectedFrame && this.selectedFrameFileId !== undefined) {
                 // Switch spectral system to Radio velocity for common use case
                 this.selectedFrame.setSpectralCoordinateToRadioVelocity();
                 widgetStore.setProfileColor(this.selectedFrameFileId, primaryLineColor);
@@ -509,7 +520,7 @@ export class SpectralProfileSelectionStore {
         } else if (profileCategory === MultiProfileCategory.REGION) {
             if (this.selectedRegionIds?.length > 0) {
                 // Active region option will be disabled in multi selection mode, switch to specific region
-                if (this.selectedRegionIds[0] === RegionId.ACTIVE) {
+                if (this.selectedRegionIds[0] === RegionId.ACTIVE && this.effectiveRegionId !== null) {
                     this.selectRegionSingleMode(this.effectiveRegionId);
                 }
                 widgetStore.setProfileColor(this.selectedRegionIds[0], primaryLineColor);
@@ -539,14 +550,18 @@ export class SpectralProfileSelectionStore {
         const widgetStore = this.widgetStore;
         widgetStore.setFileId(fileId);
         const regionId = this.activeProfileCategory === MultiProfileCategory.REGION ? this.effectiveRegionId : RegionId.ACTIVE;
-        widgetStore.setRegionId(fileId, regionId);
-        this.selectedRegionIds = [regionId];
+        if (regionId !== null) {
+            widgetStore.setRegionId(fileId, regionId);
+            this.selectedRegionIds = [regionId];
+        }
     };
 
     @action selectRegionSingleMode = (regionId: number) => {
         const widgetStore = this.widgetStore;
-        widgetStore.setFileId(this.selectedFrameFileId);
-        widgetStore.setRegionId(this.selectedFrameFileId, regionId);
+        if (this.selectedFrameFileId !== undefined) {
+            widgetStore.setFileId(this.selectedFrameFileId);
+            widgetStore.setRegionId(this.selectedFrameFileId, regionId);
+        }
         this.selectedRegionIds = [regionId];
     };
 
@@ -676,7 +691,7 @@ export class SpectralProfileSelectionStore {
         // When in Multi profile mode of Image and there are matched files(may change dynamically), assign them colors
         autorun(() => {
             const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
-            if (matchedFileIds?.length > 1 && this.activeProfileCategory === MultiProfileCategory.IMAGE) {
+            if (matchedFileIds?.length > 1 && this.activeProfileCategory === MultiProfileCategory.IMAGE && this.selectedFrameFileId !== undefined) {
                 if (matchedFileIds.includes(this.selectedFrameFileId)) {
                     matchedFileIds.forEach((fileId, index) => {
                         const widgetStore = this.widgetStore;

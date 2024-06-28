@@ -56,7 +56,7 @@ export interface LinePlotInsideBoxMarker {
     boundary: {xMin: number; xMax: number; yMin: number; yMax: number};
     color?: string;
     opacity?: number;
-    strokeColor?: string;
+    strokeColor?: string | null;
     text?: string;
 }
 

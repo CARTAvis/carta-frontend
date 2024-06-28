@@ -213,6 +213,11 @@ export class FrameStore {
         return this.frameInfo.hdu && this.frameInfo.hdu !== "" && this.frameInfo.hdu !== "0" ? `${this.frameInfo.fileInfo.name}.HDU_${this.frameInfo.hdu}${extName}` : this.frameInfo.fileInfo.name;
     }
 
+    /** The unique identifier of the frame. */
+    @computed get id(): number {
+        return this.frameInfo?.fileId;
+    }
+
     @computed get centerMovement(): Point2D {
         return subtract2D(this.initialCenter, this.center);
     }
@@ -2067,7 +2072,7 @@ export class FrameStore {
         return null;
     }
 
-    public findChannelIndexByValue = (x: number): number => {
+    public findChannelIndexByValue = (x: number | null | undefined): number => {
         if (x === null || x === undefined || !isFinite(x)) {
             return undefined;
         }

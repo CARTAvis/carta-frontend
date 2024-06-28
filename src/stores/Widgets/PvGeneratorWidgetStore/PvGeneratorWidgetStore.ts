@@ -23,8 +23,8 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     @observable xyRebin: number = 1;
     @observable zRebin: number = 1;
     @observable previewRegionId: number;
-    @observable previewFrame: FrameStore;
-    @observable pvCutRegionId: number;
+    @observable previewFrame: FrameStore | null;
+    @observable pvCutRegionId: number | null;
 
     @computed get regionOptions(): OptionProps[] {
         const appStore = AppStore.Instance;
@@ -76,6 +76,10 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
 
     @action requestPV = (preview: boolean = false, pvGeneratorId?: string) => {
         const frame = this.effectiveFrame;
+        if (!frame) {
+            return;
+        }
+
         let channelIndexMin = frame.findChannelIndexByValue(this.range.min);
         let channelIndexMax = frame.findChannelIndexByValue(this.range.max);
 
@@ -98,19 +102,20 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
                 spectralRange: isFinite(channelIndexMin) && isFinite(channelIndexMax) ? {min: channelIndexMin, max: channelIndexMax} : null,
                 reverse: this.reverse,
                 keep: this.keep,
-                previewSettings: preview
-                    ? {
-                          previewId: parseInt(pvGeneratorId.split("-")[2]),
-                          regionId: this.effectivePreviewRegionId,
-                          rebinXy: this.xyRebin,
-                          rebinZ: this.zRebin,
-                          imageCompressionQuality: PreferenceStore.Instance.imageCompressionQuality || 11,
-                          animationCompressionQuality: PreferenceStore.Instance.animationCompressionQuality || 9,
-                          compressionType: CARTA.CompressionType.ZFP
-                      }
-                    : undefined
+                previewSettings:
+                    preview && pvGeneratorId
+                        ? {
+                              previewId: parseInt(pvGeneratorId.split("-")[2]),
+                              regionId: this.effectivePreviewRegionId,
+                              rebinXy: this.xyRebin,
+                              rebinZ: this.zRebin,
+                              imageCompressionQuality: PreferenceStore.Instance.imageCompressionQuality || 11,
+                              animationCompressionQuality: PreferenceStore.Instance.animationCompressionQuality || 9,
+                              compressionType: CARTA.CompressionType.ZFP
+                          }
+                        : undefined
             };
-            if (preview) {
+            if (preview && pvGeneratorId) {
                 AppStore.Instance.requestPreviewPV(requestMessage, frame, pvGeneratorId);
             } else {
                 AppStore.Instance.requestPV(requestMessage, frame, this.keep);
@@ -133,15 +138,11 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     };
 
     @action setSpectralCoordinate = (coordStr: string) => {
-        if (this.effectiveFrame.setSpectralCoordinate(coordStr)) {
-            return;
-        }
+        this.effectiveFrame?.setSpectralCoordinate(coordStr);
     };
 
     @action setSpectralSystem = (specsys: SpectralSystem) => {
-        if (this.effectiveFrame.setSpectralSystem(specsys)) {
-            return;
-        }
+        this.effectiveFrame?.setSpectralSystem(specsys);
     };
 
     @action setWidth = (val: number) => {
@@ -157,7 +158,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     };
 
     @action setSpectralRange = (range: CARTA.IIntBounds) => {
-        if (isFinite(range.min) && isFinite(range.max)) {
+        if (isFinite(range.min ?? NaN) && isFinite(range.max ?? NaN)) {
             this.range = range;
         }
     };

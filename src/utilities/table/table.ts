@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {ControlHeader} from "stores";
 import {ColumnArray, getComparisonOperatorAndValue, ProcessedColumnData} from "utilities";
 
-export function getDataTypeString(dataType: CARTA.ColumnType): string {
+export function getDataTypeString(dataType: CARTA.ColumnType | null | undefined): string {
     switch (dataType) {
         case CARTA.ColumnType.String:
             return "string";
@@ -168,7 +168,7 @@ export function getHasFilter(controlHeader: Map<string, ControlHeader>, queryRes
     let hasFilter = false;
     controlHeader.forEach((value, key) => {
         if (value.filter && value.display) {
-            const column = queryResult.get(value.dataIndex);
+            const column = queryResult.get(value.dataIndex ?? NaN);
             if (column?.dataType === CARTA.ColumnType.String) {
                 hasFilter = true;
             } else if (column?.dataType === CARTA.ColumnType.Bool) {

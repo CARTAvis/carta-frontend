@@ -4,8 +4,8 @@ import {observer} from "mobx-react";
 import {Subscription} from "rxjs";
 import tinycolor from "tinycolor2";
 
-import {FrameView, Point2D, TileCoordinate} from "models";
-import {RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService, TileWebGLService} from "services";
+import {FrameView, ImageItem, ImageType, Point2D, TileCoordinate} from "models";
+import {PreviewWebGLService, RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService, TileWebGLService} from "services";
 import {AppStore, OverlayStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {add2D, copyToFP32Texture, createFP32Texture, getColorForTheme, GetRequiredTiles, GL2, LayerToMip, scale2D, smoothStep} from "utilities";
@@ -14,8 +14,8 @@ import "./RasterViewComponent.scss";
 
 export class RasterViewComponentProps {
     docked: boolean;
-    frame: FrameStore;
     overlayStore: OverlayStore;
+    image: ImageItem;
     pixelHighlightValue: number;
     top?: number;
     left?: number;
@@ -37,30 +37,46 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
     // dummy values to trigger React's componentDidUpdate()
     /* eslint-disable @typescript-eslint/no-unused-vars */
     const appStore = AppStore.Instance;
-    const frame = props.frame;
-    if (frame) {
-        const spatialReference = frame.spatialReference || frame;
+    const baseFrame = props.image?.type === ImageType.COLOR_BLENDING ? props.image?.store?.baseFrame : props.image?.store;
+    if (baseFrame) {
+        const spatialReference = baseFrame.spatialReference || baseFrame;
         const frameView = spatialReference.requiredFrameView;
         const currentView = spatialReference.currentFrameView;
 
-        const colorMapping = {
-            min: frame.renderConfig.scaleMinVal,
-            max: frame.renderConfig.scaleMaxVal,
-            colorMap: frame.renderConfig.colorMapIndex,
-            contrast: frame.renderConfig.contrast,
-            bias: frame.renderConfig.bias,
-            useSmoothedBiasContrast: appStore.preferenceStore?.useSmoothedBiasContrast,
-            scaling: frame.renderConfig.scaling,
-            gamma: frame.renderConfig.gamma,
-            alpha: frame.renderConfig.alpha,
-            inverted: frame.renderConfig.inverted,
-            visibility: frame.renderConfig.visible,
-            nanColorHex: appStore.preferenceStore.nanColorHex,
-            nanAlpha: appStore.preferenceStore.nanAlpha,
-            pixelGridVisible: appStore.preferenceStore.pixelGridVisible,
-            pixelGridColor: getColorForTheme(appStore.preferenceStore.pixelGridColor)
-        };
-        const ratio = appStore.imageRatio;
+        const frames = props.image?.type === ImageType.COLOR_BLENDING ? props.image?.store?.frames : [props.image?.store];
+        for (const frame of frames) {
+            if (frame) {
+                const spatialReference = frame.spatialReference || frame;
+                const frameView = spatialReference.requiredFrameView;
+                const currentView = spatialReference.currentFrameView;
+
+                const colorMapping = {
+                    min: frame.renderConfig.scaleMinVal,
+                    max: frame.renderConfig.scaleMaxVal,
+                    colorMap: frame.renderConfig.colorMapIndex,
+                    customHex: frame.renderConfig.customColormapHexEnd,
+                    customStartHex: frame.renderConfig.customColormapHexStart,
+                    contrast: frame.renderConfig.contrast,
+                    bias: frame.renderConfig.bias,
+                    useSmoothedBiasContrast: appStore.preferenceStore?.useSmoothedBiasContrast,
+                    scaling: frame.renderConfig.scaling,
+                    gamma: frame.renderConfig.gamma,
+                    alpha: frame.renderConfig.alpha,
+                    inverted: frame.renderConfig.inverted,
+                    visibility: frame.renderConfig.visible,
+                    nanColorHex: appStore.preferenceStore.nanColorHex,
+                    nanAlpha: appStore.preferenceStore.nanAlpha,
+                    pixelGridVisible: appStore.preferenceStore.pixelGridVisible,
+                    pixelGridColor: getColorForTheme(appStore.preferenceStore.pixelGridColor)
+                };
+
+                const ratio = appStore.imageRatio;
+            }
+        }
+
+        if (props.image?.type === ImageType.COLOR_BLENDING) {
+            const alpha = props.image?.store?.alpha;
+        }
     }
     /* eslint-enable @typescript-eslint/no-unused-vars */
 
@@ -68,18 +84,18 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
         if (props.tileBasedRender) {
             if (canvas) {
                 updateCanvas(
-                    props.frame,
+                    baseFrame,
                     props.webGLService,
                     props.tileService,
                     canvas.current,
                     props.overlayStore,
                     props.column,
                     props.row,
-                    appStore.numImageColumns,
-                    appStore.numImageRows,
+                    appStore.imageViewConfigStore.numImageColumns,
+                    appStore.imageViewConfigStore.numImageRows,
                     props.pixelHighlightValue,
                     props.tileBasedRender,
-                    props.channel || props.frame.channel,
+                    props.channel || baseFrame.channel,
                     props.rasterData
                 );
             }
@@ -89,18 +105,18 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
                 ((!isFinite(props.channel) && !AppStore.Instance.preferenceStore.channelMapEnabled) || tileMessage.channel === props.channel) &&
                     requestAnimationFrame(() =>
                         updateCanvas(
-                            props.frame,
+                            baseFrame,
                             props.webGLService,
                             props.tileService,
                             canvas.current,
                             props.overlayStore,
                             props.column,
                             props.row,
-                            appStore.numImageColumns,
-                            appStore.numImageRows,
+                            appStore.imageViewConfigStore.numImageColumns,
+                            appStore.imageViewConfigStore.numImageRows,
                             props.pixelHighlightValue,
                             props.tileBasedRender,
-                            props.channel || props.frame.channel,
+                            props.channel || baseFrame.channel,
                             props.rasterData
                         )
                     );
@@ -116,18 +132,18 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
     React.useEffect(() => {
         requestAnimationFrame(() =>
             updateCanvas(
-                props.frame,
+                baseFrame,
                 props.webGLService,
                 props.tileService,
                 canvas.current,
                 props.overlayStore,
                 props.column,
                 props.row,
-                appStore.numImageColumns,
-                appStore.numImageRows,
+                appStore.imageViewConfigStore.numImageColumns,
+                appStore.imageViewConfigStore.numImageRows,
                 props.pixelHighlightValue,
                 props.tileBasedRender,
-                props.channel || props.frame.channel,
+                props.channel || baseFrame.channel,
                 props.rasterData
             )
         );
@@ -135,23 +151,23 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
     }, [
         props.channel,
         props.column,
-        props.frame,
+        baseFrame,
         props.overlayStore,
         props.rasterData,
         props.row,
         props.tileBasedRender,
         props.tileService,
         props.webGLService,
-        props.frame.zoomLevel,
-        props.frame.center,
+        baseFrame.zoomLevel,
+        baseFrame.center,
         props.pixelHighlightValue,
-        props.frame.requiredFrameView,
-        props.frame.spatialReference,
-        frame?.renderConfig.scaleMinVal,
-        frame?.renderConfig.scaleMaxVal,
-        frame?.renderConfig.colorMapIndex,
-        frame?.renderConfig.contrast,
-        frame?.renderConfig.bias
+        baseFrame.requiredFrameView,
+        baseFrame.spatialReference,
+        baseFrame?.renderConfig.scaleMinVal,
+        baseFrame?.renderConfig.scaleMaxVal,
+        baseFrame?.renderConfig.colorMapIndex,
+        baseFrame?.renderConfig.contrast,
+        baseFrame?.renderConfig.bias
         // appStore.preferenceStore?.useSmoothedBiasContrast,
         // frame?.renderConfig.scaling,
         // frame?.renderConfig.gamma,
@@ -178,8 +194,8 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
                 style={{
                     top: padding.top,
                     left: padding.left,
-                    width: frame?.isRenderable ? props.overlayStore.renderWidth || 1 : 1,
-                    height: frame?.isRenderable ? props.overlayStore.renderHeight || 1 : 1
+                    width: baseFrame?.isRenderable ? props.overlayStore.renderWidth || 1 : 1,
+                    height: baseFrame?.isRenderable ? props.overlayStore.renderHeight || 1 : 1
                 }}
             />
         </div>

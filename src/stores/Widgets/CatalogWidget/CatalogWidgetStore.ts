@@ -88,8 +88,8 @@ export class CatalogWidgetStore {
     @observable thickness: number;
     // size map
     @observable sizeMapColumn: string;
-    @observable sizeColumnMax: {default: number; clipd: number};
-    @observable sizeColumnMin: {default: number; clipd: number};
+    @observable sizeColumnMax: {default: number | undefined; clipd: number | undefined};
+    @observable sizeColumnMin: {default: number | undefined; clipd: number | undefined};
     @observable sizeMax: {area: number; diameter: number};
     @observable sizeMin: {area: number; diameter: number};
     @observable sizeArea: boolean;
@@ -99,23 +99,23 @@ export class CatalogWidgetStore {
     @observable sizeColumnMaxLocked: boolean;
     // size map minor
     @observable sizeMinorMapColumn: string;
-    @observable sizeMinorColumnMax: {default: number; clipd: number};
-    @observable sizeMinorColumnMin: {default: number; clipd: number};
+    @observable sizeMinorColumnMax: {default: number | undefined; clipd: number | undefined};
+    @observable sizeMinorColumnMin: {default: number | undefined; clipd: number | undefined};
     @observable sizeMinorArea: boolean;
     @observable sizeMinorScalingType: FrameScaling;
     @observable sizeMinorColumnMinLocked: boolean;
     @observable sizeMinorColumnMaxLocked: boolean;
     // color map
     @observable colorMapColumn: string;
-    @observable colorColumnMax: {default: number; clipd: number};
-    @observable colorColumnMin: {default: number; clipd: number};
+    @observable colorColumnMax: {default: number | undefined; clipd: number | undefined};
+    @observable colorColumnMin: {default: number | undefined; clipd: number | undefined};
     @observable colorMap: string;
     @observable colorScalingType: FrameScaling;
     @observable invertedColorMap: boolean;
     // orientation
     @observable orientationMapColumn: string;
-    @observable orientationMax: {default: number; clipd: number};
-    @observable orientationMin: {default: number; clipd: number};
+    @observable orientationMax: {default: number | undefined; clipd: number | undefined};
+    @observable orientationMin: {default: number | undefined; clipd: number | undefined};
     @observable orientationScalingType: FrameScaling;
     @observable angleMax: number;
     @observable angleMin: number;
@@ -680,7 +680,7 @@ export class CatalogWidgetStore {
         let column = this.sizeMapData;
         if (!this.disableSizeMap && column?.length && this.sizeColumnMin.clipd !== undefined && this.sizeColumnMax.clipd !== undefined) {
             const pointSize = this.pointSizebyType;
-            let min = this.sizeArea ? this.shapeSettings.areaBase : this.shapeSettings.diameterBase;
+            let min = (this.sizeArea ? this.shapeSettings?.areaBase : this.shapeSettings?.diameterBase) ?? NaN;
             return CARTACompute.CalculateCatalogSize(
                 column,
                 this.sizeColumnMin.clipd,
@@ -699,7 +699,7 @@ export class CatalogWidgetStore {
         let column = this.sizeMinorMapData;
         if (!this.disableSizeMinorMap && column?.length && this.sizeMinorColumnMin.clipd !== undefined && this.sizeMinorColumnMax.clipd !== undefined) {
             const pointSize = this.minorPointSizebyType;
-            let min = this.sizeMinorArea ? this.shapeSettings.areaBase : this.shapeSettings.diameterBase;
+            let min = (this.sizeMinorArea ? this.shapeSettings?.areaBase : this.shapeSettings?.diameterBase) ?? NaN;
             return CARTACompute.CalculateCatalogSize(
                 column,
                 this.sizeMinorColumnMin.clipd,
@@ -766,11 +766,11 @@ export class CatalogWidgetStore {
         return this.orientationMapColumn === CatalogOverlay.NONE;
     }
 
-    @computed get shapeSettings(): {featherWidth: number; diameterBase: number; areaBase: number; thicknessBase: number} {
+    @computed get shapeSettings(): {featherWidth: number | undefined; diameterBase: number; areaBase: number; thicknessBase: number | undefined} | undefined {
         const pointSize = this.sizeMajor ? this.pointSizebyType : this.minorPointSizebyType;
         const config = this.OverlayShapeSettings.get(this.catalogShape);
         if (pointSize.min === 0) {
-            return {featherWidth: config.featherWidth, diameterBase: 0, areaBase: 0, thicknessBase: config.thicknessBase};
+            return {featherWidth: config?.featherWidth, diameterBase: 0, areaBase: 0, thicknessBase: config?.thicknessBase};
         }
         return config;
     }
