@@ -1257,7 +1257,7 @@ export class FrameStore {
         this.intensityUnit = this.headerUnit;
 
         this.isOffsetCoord = false;
-        this.offsetCenter = {x: 0, y: 0};
+        this.offsetCenter = null;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preferenceStore.astColor;
@@ -2170,10 +2170,11 @@ export class FrameStore {
     }
 
     /**
-     * Toggle of the offset coordinates. This function sets the current view center (instead of the image center) as the offset center.
+     * Toggle of the offset coordinates. This function initially sets the current view center (instead of the image center) as the offset center.
      */
     @action toggleOffsetCoord = () => {
-        this.updateOffsetCenter();
+        const center = this.offsetCenter ?? this.center;
+        this.setOffsetCenter(center.x, center.y);
         this.setIsOffsetCoord(!this.isOffsetCoord);
     };
 
@@ -2835,7 +2836,7 @@ export class FrameStore {
 
         // initialize wcsInfoShifted if it is not existed
         if (this.isOffsetCoord && !this.wcsInfoShifted) {
-            const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.offsetCenter);
+            const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.center);
             this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, centerInRad.x, centerInRad.y);
         }
 
