@@ -12,7 +12,7 @@ import "./OnlineDataQueryDialogComponent.scss";
 
 const DEFAULT_WIDTH = 600;
 const DEFAULT_HEIGHT = 550;
-const MIN_WIDTH = 550;
+const MIN_WIDTH = 450;
 const MIN_HEIGHT = 200;
 
 enum OnlineDataQueryDialogTabs {

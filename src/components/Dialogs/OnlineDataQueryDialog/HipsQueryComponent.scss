@@ -20,10 +20,15 @@
             display: flex;
             flex-wrap: wrap;
             flex: 1;
-            gap: 10px;
+            gap: 5px;
+
+            .#{$ns}-input-group {
+                width: 166px;
+            }
 
             .survey-input {
-                width: 406px;
+                width: 100%;
+                max-width: 401px;
             }
         }
     }
@@ -37,7 +42,7 @@
     .#{$ns}-popover-content {
         .#{$ns}-menu {
             max-height: 300px;
-            width: 406px;
+            width: 401px;
             overflow: auto;
         }
     }
