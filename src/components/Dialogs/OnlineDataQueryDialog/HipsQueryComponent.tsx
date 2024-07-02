@@ -60,7 +60,7 @@ export const HipsQueryComponent = observer(() => {
                     </FormGroup>
                 )}
                 {!queryByObject && (
-                    <FormGroup inline={true} label="Center" labelInfo="(deg)" disabled={hipsQueryStore.isLoading}>
+                    <FormGroup inline={true} label="ICRS Center" labelInfo="(deg)" disabled={hipsQueryStore.isLoading}>
                         <SafeNumericInput
                             buttonPosition="none"
                             placeholder="X WCS coordinate"
@@ -100,7 +100,7 @@ export const HipsQueryComponent = observer(() => {
                 <FormGroup inline={true} label="Field of view" labelInfo="(deg)" disabled={hipsQueryStore.isLoading}>
                     <SafeNumericInput buttonPosition="none" value={isNaN(hipsQueryStore.fov) ? "" : hipsQueryStore.fov} onValueChange={hipsQueryStore.setFov} disabled={hipsQueryStore.isLoading} />
                 </FormGroup>
-                <FormGroup inline={true} label="Coordinate system" disabled={hipsQueryStore.isLoading}>
+                <FormGroup inline={true} label="Output system" disabled={hipsQueryStore.isLoading}>
                     <RadioGroup inline={true} onChange={ev => hipsQueryStore.setCoordsys(ev.currentTarget.value as HipsCoord)} selectedValue={hipsQueryStore.coordsys} disabled={hipsQueryStore.isLoading}>
                         <Radio label="ICRS" value={HipsCoord.Icrs} />
                         <Radio label="Galactic" value={HipsCoord.Galactic} />
