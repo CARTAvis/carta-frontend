@@ -2189,7 +2189,9 @@ export class FrameStore {
                     this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, centerInRad.x, centerInRad.y);
                     for (const frame of this.secondarySpatialImages) {
                         const frameCenterInRad = getUnformattedWCSPoint(frame.wcsInfo, frame.offsetCenter);
-                        frame.wcsInfoShifted = AST.createShiftmapFrameset(frame.wcsInfo, frameCenterInRad.x, frameCenterInRad.y);
+                        if (frame.isOffsetCoord) {
+                            frame.wcsInfoShifted = AST.createShiftmapFrameset(frame.wcsInfo, frameCenterInRad.x, frameCenterInRad.y);
+                        }
                     }
                 }
             }
@@ -2837,7 +2839,9 @@ export class FrameStore {
         // initialize wcsInfoShifted if it is not existed
         if (this.isOffsetCoord && !this.wcsInfoShifted) {
             const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.center);
-            this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, centerInRad.x, centerInRad.y);
+            if (centerInRad) {
+                this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, centerInRad.x, centerInRad.y);
+            }
         }
 
         this.spatialTransformAST = AST.getSpatialMapping(this.wcsInfo, frame.wcsInfo);
@@ -2875,7 +2879,9 @@ export class FrameStore {
 
         // udpate center position for setting inputs
         this.center = this.spatialTransform.transformCoordinate(this.spatialReference.center, false);
-        this.setOffsetCenter(this.center.x, this.center.y);
+        if (this.isOffsetCoord) {
+            this.setOffsetCenter(this.center.x, this.center.y);
+        }
 
         this.spatialReference.frameRegionSet.migrateRegionsFromExistingSet(this.frameRegionSet, this.spatialTransformAST, true);
         // Remove old regions after migration
