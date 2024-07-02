@@ -48,26 +48,6 @@ export const HipsQueryComponent = observer(() => {
                         query={hipsQueryStore.hipsSurvey}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Dimension" labelInfo="(px)" disabled={hipsQueryStore.isLoading}>
-                    <SafeNumericInput
-                        placeholder="Width"
-                        min={1}
-                        majorStepSize={100}
-                        stepSize={100}
-                        value={isNaN(hipsQueryStore.size.x) ? "" : hipsQueryStore.size.x}
-                        onValueChange={hipsQueryStore.setWidth}
-                        disabled={hipsQueryStore.isLoading}
-                    />
-                    <SafeNumericInput
-                        placeholder="Height"
-                        min={1}
-                        majorStepSize={100}
-                        stepSize={100}
-                        value={isNaN(hipsQueryStore.size.y) ? "" : hipsQueryStore.size.y}
-                        onValueChange={hipsQueryStore.setHeight}
-                        disabled={hipsQueryStore.isLoading}
-                    />
-                </FormGroup>
                 <FormGroup inline={true} label=" " disabled={hipsQueryStore.isLoading}>
                     <RadioGroup inline={true} selectedValue={queryByObject ? "object" : "center"} onChange={ev => setQueryByObject(ev.currentTarget.value === "object")} disabled={hipsQueryStore.isLoading}>
                         <Radio label="Query by object" value="object" />
@@ -97,6 +77,26 @@ export const HipsQueryComponent = observer(() => {
                         />
                     </FormGroup>
                 )}
+                <FormGroup inline={true} label="Dimension" labelInfo="(px)" disabled={hipsQueryStore.isLoading}>
+                    <SafeNumericInput
+                        placeholder="Width"
+                        min={1}
+                        majorStepSize={100}
+                        stepSize={100}
+                        value={isNaN(hipsQueryStore.size.x) ? "" : hipsQueryStore.size.x}
+                        onValueChange={hipsQueryStore.setWidth}
+                        disabled={hipsQueryStore.isLoading}
+                    />
+                    <SafeNumericInput
+                        placeholder="Height"
+                        min={1}
+                        majorStepSize={100}
+                        stepSize={100}
+                        value={isNaN(hipsQueryStore.size.y) ? "" : hipsQueryStore.size.y}
+                        onValueChange={hipsQueryStore.setHeight}
+                        disabled={hipsQueryStore.isLoading}
+                    />
+                </FormGroup>
                 <FormGroup inline={true} label="Field of view" labelInfo="(deg)" disabled={hipsQueryStore.isLoading}>
                     <SafeNumericInput buttonPosition="none" value={isNaN(hipsQueryStore.fov) ? "" : hipsQueryStore.fov} onValueChange={hipsQueryStore.setFov} disabled={hipsQueryStore.isLoading} />
                 </FormGroup>
