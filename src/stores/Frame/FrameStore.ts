@@ -2189,7 +2189,7 @@ export class FrameStore {
                     this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, centerInRad.x, centerInRad.y);
                     for (const frame of this.secondarySpatialImages) {
                         const frameCenterInRad = getUnformattedWCSPoint(frame.wcsInfo, frame.offsetCenter);
-                        if (frame.isOffsetCoord) {
+                        if (frame.isOffsetCoord && frameCenterInRad) {
                             frame.wcsInfoShifted = AST.createShiftmapFrameset(frame.wcsInfo, frameCenterInRad.x, frameCenterInRad.y);
                         }
                     }
