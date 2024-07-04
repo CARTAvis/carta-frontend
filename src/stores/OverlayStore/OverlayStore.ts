@@ -100,7 +100,9 @@ export class OverlayGlobalSettings {
         astString.add("Labelling", this.labelType);
         astString.add("Color", AstColorsIndex.GLOBAL);
         astString.add("Tol", toFixed(this.tolerance / 100, 2), this.tolerance >= 0.001); // convert to fraction
-        astString.add("System", this.explicitSystem);
+        if (typeof this.explicitSystem !== "undefined" && this.explicitSystem !== SystemType.Image) {
+            astString.add("System", this.explicitSystem);
+        }
 
         if ((frame?.isXY || frame?.isYX) && !frame?.isPVImage && typeof this.explicitSystem !== "undefined" && this.explicitSystem !== SystemType.Image) {
             if (this.system === SystemType.FK4) {

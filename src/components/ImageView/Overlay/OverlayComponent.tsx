@@ -104,7 +104,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 currentStyleString += `, Tol=${tolVal}`;
             }
 
-            if (!frame.validWcs || settings.global.explicitSystem === SystemType.Image) {
+            if (!frame.validWcs) {
                 //Remove system and format entries
                 currentStyleString = currentStyleString.replace(/System=.*?,/, "").replaceAll(/Format\(\d\)=.*?,/g, "");
             }
