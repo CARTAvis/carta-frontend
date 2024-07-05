@@ -1,7 +1,8 @@
+import {action, observable} from "mobx";
+
 import {AppStore} from "stores";
 
 import {ColorBlendingStore} from "./ColorBlendingStore";
-import {action, observable} from "mobx";
 
 const mockConsoleError = jest.spyOn(console, "error");
 
