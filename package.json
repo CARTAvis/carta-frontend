@@ -205,6 +205,7 @@
     },
     "overrides": {
         "fork-ts-checker-webpack-plugin": "^6.5.3",
-        "@typescript-eslint/typescript-estree": "^7.15.0"
+        "@typescript-eslint/typescript-estree": "^7.15.0",
+        "@typescript-eslint/parser": "^7.15.0"
     }
 }
