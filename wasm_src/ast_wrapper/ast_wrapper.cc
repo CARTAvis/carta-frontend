@@ -183,10 +183,10 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo
         return nullptr;
     }
 
-    AstFrame* pixFrame = static_cast<AstFrame*> astGetFrame(wcsinfo, 1);
+    AstFrame* pixFrame = static_cast<AstFrame*> astGetFrame(wcsinfo, AST__BASE);
     AstFrame* pixFrameCopy = static_cast<AstFrame*> astCopy(pixFrame);
-    AstFrame* skyFrame = static_cast<AstFrame*> astGetFrame(wcsinfo, 2);
-    AstMapping* pixToSkyMapping = static_cast<AstMapping*> astGetMapping(wcsinfo, 1, 2);
+    AstFrame* skyFrame = static_cast<AstFrame*> astGetFrame(wcsinfo, AST__CURRENT);
+    AstMapping* pixToSkyMapping = static_cast<AstMapping*> astGetMapping(wcsinfo, AST__BASE, AST__CURRENT);
     AstFrameSet* wcsInfoTransformed = astFrameSet(pixFrame, "");
 
     // 2D shifts
