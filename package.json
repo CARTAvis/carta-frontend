@@ -55,7 +55,7 @@
         "prettier": "2.8.4",
         "preval.macro": "^5.0.0",
         "prismjs": "^1.29.0",
-        "protobufjs": "7.2.6",
+        "protobufjs": "^7.3.2",
         "protobufjs-cli": "1.1.2",
         "raw-loader": "^4.0.2",
         "react": "^17.0.1",
