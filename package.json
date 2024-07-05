@@ -68,7 +68,7 @@
         "react-resize-detector": "^8.0.4",
         "react-rnd": "^10.4.1",
         "react-scroll-to-bottom": "^4.2.0",
-        "react-simple-code-editor": "^0.13.1",
+        "react-simple-code-editor": "^0.14.1",
         "react-split-pane": "^0.1.91",
         "react-virtualized-auto-sizer": "^1.0.7",
         "react-window": "^1.8.8",
