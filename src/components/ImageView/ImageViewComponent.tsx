@@ -206,11 +206,11 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                   </div>
               ]
             : visibleImages.map((image, index) => {
-                const column = index % config.numImageColumns;
-                const row = Math.floor(index / config.numImageColumns);
-    
-                return <ImagePanelComponent ref={this.collectImagePanelRef} key={`${image?.type}-${image?.store?.id}`} docked={this.props.docked} image={image} row={row} column={column} />;
-            });
+                  const column = index % config.numImageColumns;
+                  const row = Math.floor(index / config.numImageColumns);
+
+                  return <ImagePanelComponent ref={this.collectImagePanelRef} key={`${image?.type}-${image?.store?.id}`} docked={this.props.docked} image={image} row={row} column={column} />;
+              });
     }
 
     render() {

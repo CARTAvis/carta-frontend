@@ -220,11 +220,36 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             const imageTick = numImages > 10 ? imageTickPre : Array.from(Array(numImages).keys());
             imageSlider = (
                 <div className="animator-slider">
-                    <Radio value={AnimationMode.FRAME} disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled} checked={appStore.animatorStore.animationMode === AnimationMode.FRAME} onChange={this.onAnimationModeChanged} label="Image" />
-                    {hideSliders && <SafeNumericInput value={imageIndex} min={-1} max={numImages} stepSize={1} onValueChange={this.onImageChanged} fill={true} disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled} />}
+                    <Radio
+                        value={AnimationMode.FRAME}
+                        disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled}
+                        checked={appStore.animatorStore.animationMode === AnimationMode.FRAME}
+                        onChange={this.onAnimationModeChanged}
+                        label="Image"
+                    />
+                    {hideSliders && (
+                        <SafeNumericInput
+                            value={imageIndex}
+                            min={-1}
+                            max={numImages}
+                            stepSize={1}
+                            onValueChange={this.onImageChanged}
+                            fill={true}
+                            disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled}
+                        />
+                    )}
                     {!hideSliders && (
                         <React.Fragment>
-                            <Slider value={imageIndex} min={0} max={numImages - 1} showTrackFill={false} labelValues={imageTick} labelPrecision={0} onChange={this.onImageChanged} disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled} />
+                            <Slider
+                                value={imageIndex}
+                                min={0}
+                                max={numImages - 1}
+                                showTrackFill={false}
+                                labelValues={imageTick}
+                                labelPrecision={0}
+                                onChange={this.onImageChanged}
+                                disabled={appStore.animatorStore.animationActive || appStore.preferenceStore.channelMapEnabled}
+                            />
                             <div className="slider-info">{appStore.activeImage.store.filename}</div>
                         </React.Fragment>
                     )}

@@ -19,7 +19,7 @@ import {ToolbarComponent} from "../Toolbar/ToolbarComponent";
 import {VectorOverlayViewComponent} from "../VectorOverlayView/VectorOverlayView";
 
 import "./ImagePanelComponent.scss";
-import { PreviewWebGLService, TileService, TileWebGLService } from "services";
+import {PreviewWebGLService, TileService, TileWebGLService} from "services";
 
 interface ImagePanelComponentProps {
     docked: boolean;

@@ -92,9 +92,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     updateImageDimensions() {
         if (this.canvas) {
-            const frame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image.store?.baseFrame : this.props.image?.store;
-            this.canvas.width = frame.overlayStore.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
-            this.canvas.height = frame.overlayStore .viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
+            this.canvas.width = this.props.overlaySettings.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
+            this.canvas.height = this.props.overlaySettings.viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
         }
     }
 
@@ -140,8 +139,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     frameView.xMax,
                     frameView.yMin / frame.aspectRatio,
                     frameView.yMax / frame.aspectRatio,
-                    frame.overlayStore.viewWidth * pixelRatio,
-                    frame.overlayStore.viewHeight * pixelRatio,
+                    this.props.overlaySettings.viewWidth * pixelRatio,
+                    this.props.overlaySettings.viewHeight * pixelRatio,
                     settings.padding.left * pixelRatio,
                     settings.padding.right * pixelRatio,
                     settings.padding.top * pixelRatio,
@@ -233,7 +232,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const distanceMeasuringColor = frame.distanceMeasuring?.color;
         const distanceMeasuringFontSize = frame.distanceMeasuring?.fontSize;
         const distanceMeasuringLineWidth = frame.distanceMeasuring?.lineWidth;
-        const title = this.props.overlaySettings.title.customText ? this.props.image?.store?.titleCustomText : this.props.image?.store?.filename;
+        const title = this.props.overlaySettings.title.customText ? frame.titleCustomText : frame.filename;
         const ratio = AppStore.Instance.imageRatio;
         const titleStyleString = this.props.overlaySettings.title.styleString;
         const gridStyleString = this.props.overlaySettings.grid.styleString;
