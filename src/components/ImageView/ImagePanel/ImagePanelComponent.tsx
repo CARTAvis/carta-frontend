@@ -5,6 +5,7 @@ import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
 import {CursorInfo, CursorInfoVisibility, ImageItem, ImageType, Zoom} from "models";
+import {PreviewWebGLService, TileService, TileWebGLService} from "services";
 import {AnimationMode, AppStore, type FrameStore} from "stores";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
@@ -19,7 +20,6 @@ import {ToolbarComponent} from "../Toolbar/ToolbarComponent";
 import {VectorOverlayViewComponent} from "../VectorOverlayView/VectorOverlayView";
 
 import "./ImagePanelComponent.scss";
-import {PreviewWebGLService, TileService, TileWebGLService} from "services";
 
 interface ImagePanelComponentProps {
     docked: boolean;
