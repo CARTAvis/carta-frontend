@@ -152,7 +152,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         DialogStore.Instance.showDialog(DialogId.Region);
     };
 
-    private handleDeleteDeleteClicked = async () => {
+    private handleRegionDeleteClicked = async () => {
         const appStore = AppStore.Instance;
         const confirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete all regions?");
         if (confirmed) {
@@ -247,7 +247,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             return (
                 <ButtonGroup className="float" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
                     <Tooltip content="Delete all regions" position={Position.TOP_LEFT}>
-                        <AnchorButton icon={"trash"} onClick={this.handleDeleteDeleteClicked} style={{cursor: "pointer"}} />
+                        {this.validRegions.length > 1 ? <AnchorButton icon={"trash"} onClick={this.handleRegionDeleteClicked} style={{cursor: "pointer"}} /> : <AnchorButton icon={"trash"} style={{opacity: 0.4}} />}
                     </Tooltip>
                     <Tooltip content="Import regions" position={Position.TOP_LEFT}>
                         <AnchorButton icon={"cloud-download"} onClick={this.handleRegionImportClicked} style={{cursor: "pointer"}} />
