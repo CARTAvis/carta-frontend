@@ -494,8 +494,9 @@ export class BackendService {
     }
 
     @action("set channels")
-    setChannels(fileId: number, channel: number, stokes: number, requiredTiles: CARTA.IAddRequiredTiles, channelRange?: CARTA.IIntBounds): boolean {
+    setChannels(fileId: number, channel: number, stokes: number, requiredTiles: CARTA.IAddRequiredTiles, _channelRange?: CARTA.IIntBounds): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            const channelRange: CARTA.IIntBounds | null = _channelRange || null;
             const message = CARTA.SetImageChannels.create({fileId, channel, stokes, requiredTiles, channelRange});
             this.logEvent(CARTA.EventType.SET_IMAGE_CHANNELS, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.SET_IMAGE_CHANNELS, CARTA.SetImageChannels.encode(message).finish())) {
