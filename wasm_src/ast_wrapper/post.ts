@@ -95,7 +95,7 @@ Module.setCanvas = function (canvas) {
     Module.gridContext.font = Module.font;
 };
 
-Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string", "boolean", "boolean", "number", "number", "number", "number"]);
+Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"]);
 Module.emptyFitsChan = Module.cwrap("emptyFitsChan", "number");
 Module.putFits = Module.cwrap("putFits", null, ["number", "string"]);
 Module.getFrameFromFitsChan = Module.cwrap("getFrameFromFitsChan", "number", ["number", "number"]);
@@ -129,6 +129,7 @@ Module.addFrame = Module.cwrap("addFrame", null, ["number", "number", "number", 
 Module.setI = Module.cwrap("setI", null, ["number", "string", "number"]);
 Module.setD = Module.cwrap("setD", null, ["number", "string", "number"]);
 Module.createTransformedFrameset = Module.cwrap("createTransformedFrameset", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
+Module.createShiftmapFrameset = Module.cwrap("createShiftmapFrameset", "number", ["number", "number"]);
 Module.fillTransformGrid = Module.cwrap("fillTransformGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
 Module.pointList = Module.cwrap("pointList", "number", ["number", "number", "number", "number", "number"]);
 Module.axPointList = Module.cwrap("axPointList", "number", ["number", "number", "number", "number", "number", "number", "number"]);

@@ -2,7 +2,6 @@ export * from "./AnnotationStore";
 export * from "./ColorbarStore/ColorbarStore";
 export * from "./ContourStore/ContourConfigStore";
 export * from "./ContourStore/ContourStore";
-export * from "./DistanceMeasuringStore/DistanceMeasuringStore";
 export * from "./FrameStore";
 export * from "./OverlayBeamStore/OverlayBeamStore";
 export * from "./Region/RegionSetStore";

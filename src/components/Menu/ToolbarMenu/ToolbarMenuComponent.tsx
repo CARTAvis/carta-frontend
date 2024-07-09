@@ -23,17 +23,6 @@ export class ToolbarMenuComponent extends React.Component {
         appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
     };
 
-    handleDistanceMeasuringClicked = () => {
-        const appStore = AppStore.Instance;
-        appStore.dialogStore.showDialog(DialogId.DistanceMeasure);
-        const layer = ImageViewLayer.DistanceMeasuring;
-        if (appStore.activeLayer !== ImageViewLayer.DistanceMeasuring && layer === ImageViewLayer.DistanceMeasuring) {
-            appStore.frames.forEach(frame => frame.distanceMeasuring.resetPos());
-        }
-        appStore.updateActiveLayer(layer);
-        appStore.activeFrame.regionSet.setMode(RegionMode.MOVING);
-    };
-
     regionTooltip = (type: CARTA.RegionType) => {
         const regionModeIsCenter = AppStore.Instance.preferenceStore.regionCreationMode === RegionCreationMode.CENTER;
         let tooltip = null;
@@ -216,15 +205,6 @@ export class ToolbarMenuComponent extends React.Component {
                             onClick={() => dialogStore.showDialog(DialogId.CatalogQuery)}
                             active={dialogStore.dialogVisible.get(DialogId.CatalogQuery)}
                             data-testid={DialogId.CatalogQuery + "-button"}
-                        />
-                    </Tooltip>
-                    <Tooltip content={<span>Distance measurement</span>} position={Position.BOTTOM}>
-                        <AnchorButton
-                            icon={<CustomIcon icon="distanceMeasuring" />}
-                            disabled={!appStore.activeFrame}
-                            onClick={this.handleDistanceMeasuringClicked}
-                            active={dialogStore.dialogVisible.get(DialogId.DistanceMeasure)}
-                            data-testid={DialogId.DistanceMeasure + "-button"}
                         />
                     </Tooltip>
                     {appStore.preferenceStore.codeSnippetsEnabled && (

@@ -7,7 +7,6 @@ export * from "./CatalogSettingsOrientationHelpContent";
 export * from "./CatalogSettingsSizeHelpContent";
 export * from "./ContourHelpContent";
 export * from "./CursorInfoHelpContent";
-export * from "./DistanceMeasurementHelpContent";
 export * from "./FileBrowserHelpContent";
 export * from "./FileInfoHelpContent";
 export * from "./HistogramHelpContent";
