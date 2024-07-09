@@ -22,6 +22,7 @@ export class OverlayComponentProps {
     unScaled?: boolean;
     onClicked?: (cursorInfo: CursorInfo) => void;
     onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
+    thisIs?: string;
 }
 
 @observer
@@ -43,8 +44,11 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     }
 
     componentDidUpdate() {
-        console.log("lolol", this.props.channel);
         AppStore.Instance.resetImageRatio();
+        const thisIs = this.props.thisIs;
+        const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
+        const paddingLeft = this.props.overlaySettings.padding.left * pixelRatio;
+        const paddingBottom = this.props.overlaySettings.padding.bottom * pixelRatio;
         if (this.props.refCanvas) {
             setTimeout(() => {
                 requestAnimationFrame(() => {
@@ -52,8 +56,16 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     const destCanvas = this.canvas.getContext("2d");
                     const w = this.props.refCanvas.width;
                     const h = this.props.refCanvas.height;
+                    const destWidth = this.canvas.width - (thisIs === "left" || thisIs === "corner" ? 0 : paddingLeft);
+                    const destHeight = this.canvas.height - (thisIs === "bottom" || thisIs === "corner" ? 0 : paddingBottom);
                     destCanvas.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                    destCanvas.drawImage(this.props.refCanvas, 0, 0, w, h, 0, 0, this.canvas.width, this.canvas.height);
+                    if (thisIs === "left") {
+                        destCanvas.drawImage(this.props.refCanvas, 0, 0, w, h - paddingBottom, 0, 0, destWidth, destHeight);
+                    } else if (thisIs === "bottom") {
+                        destCanvas.drawImage(this.props.refCanvas, paddingLeft, 0, w - paddingLeft, h, paddingLeft, 0, destWidth, destHeight);
+                    } else if (thisIs === "inner") {
+                        destCanvas.drawImage(this.props.refCanvas, paddingLeft, 0, w - paddingLeft, h - paddingBottom, paddingLeft, 0, destWidth, destHeight);
+                    }
                 });
             }, 1000);
         } else {
@@ -65,7 +77,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         }
 
         if (this.props.channel !== undefined && this.channelNumberCanvas) {
-            console.log("lolol channel number", this.props.channel);
             setTimeout(() => {
                 requestAnimationFrame(() => {
                     const destCanvas = this.channelNumberCanvas.getContext("2d");

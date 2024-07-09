@@ -48,7 +48,7 @@ export class ChannelMapStore {
         this.startChannel = 0;
         this.numColumns = 2;
         this.numRows = 2;
-        this.overlayStores = {corner: undefined, left: undefined, bottom: undefined, inner: undefined, outer: new OverlayStore(0, 0, 0, 0)};
+        this.overlayStores = {corner: undefined, outer: new OverlayStore(0, 0, 0, 0)};
         this.overlayStoreCanvasReference = {corner: undefined, left: undefined, bottom: undefined, inner: undefined};
     }
 
@@ -61,31 +61,18 @@ export class ChannelMapStore {
     @observable showAuxiliaryFrame: boolean = false;
     @observable singleChannelContour: boolean = true;
     @observable singleContourChannel: number = 0;
-    @observable overlayStores: {corner: OverlayStore; left: OverlayStore; bottom: OverlayStore; inner: OverlayStore; outer: OverlayStore};
+    @observable overlayStores: {corner: OverlayStore; outer: OverlayStore};
     public overlayStoreCanvasReference: {corner: any; left: any; bottom: any; inner: any};
     public contourStoreCanvasReference: any;
     public vectorCanvasReference: any;
     public catalogCanvasReference: any;
 
-    @action setOverlayStores(overlayStore: OverlayStore, position: string) {
-        if (position === "corner") {
-            this.overlayStores.corner = overlayStore;
-        } else if (position === "left") {
-            this.overlayStores.left = overlayStore;
-        } else if (position === "bottom") {
-            this.overlayStores.bottom = overlayStore;
-        } else if (position === "outer") {
-            this.overlayStores.outer = overlayStore;
-        } else {
-            this.overlayStores.inner = overlayStore;
-        }
+    @action setOverlayStores(overlayStore: OverlayStore) {
+        this.overlayStores.corner = overlayStore;
     }
 
     @action updateOverlayStoreSize(width: number, height: number) {
         this.overlayStores?.corner?.setViewDimension(width + this.overlayStores?.corner?.paddingLeft, height + this.overlayStores.corner?.paddingBottom);
-        this.overlayStores?.left?.setViewDimension(width + this.overlayStores?.left?.paddingLeft, height);
-        this.overlayStores?.bottom?.setViewDimension(width, height + this.overlayStores?.bottom?.paddingBottom);
-        this.overlayStores?.inner?.setViewDimension(width, height);
     }
 
     @action setMasterFrame(masterFrame: FrameStore) {
@@ -200,25 +187,11 @@ export class ChannelMapStore {
 
     @action throttledRequestChannels = _.throttle(this.requestChannels, 1000);
 
-    public overlayStore(index: number, imageRenderWidth: number, imageRenderHeight: number) {
-        const column = index % this.numColumns;
-        const row = Math.floor(index / this.numColumns);
-
+    public overlayStore(imageRenderWidth: number, imageRenderHeight: number) {
         this.updateOverlayStoreSize(imageRenderWidth, imageRenderHeight);
 
-        if (column === 0 && row === this.numRows - 1) {
-            this.setOverlayStores(this.overlayStores?.corner || new OverlayStore(imageRenderWidth, imageRenderHeight, 1, 2, true, false, true, false, true), "corner");
-            return this.overlayStores.corner;
-        } else if (column === 0) {
-            this.setOverlayStores(this.overlayStores?.left || new OverlayStore(imageRenderWidth, imageRenderHeight, 1, 2, true, false, true, true, true), "left");
-            return this.overlayStores.left;
-        } else if (row === this.numRows - 1) {
-            this.setOverlayStores(this.overlayStores?.bottom || new OverlayStore(imageRenderWidth, imageRenderHeight, 1, 2, true, true, true, false, true), "bottom");
-            return this.overlayStores.bottom;
-        } else {
-            this.setOverlayStores(this.overlayStores?.inner || new OverlayStore(imageRenderWidth, imageRenderHeight, 1, 2, true, true, true, true, true), "inner");
-            return this.overlayStores.inner;
-        }
+        this.setOverlayStores(this.overlayStores?.corner || new OverlayStore(imageRenderWidth, imageRenderHeight, 1, 2, true, false, true, false, true));
+        return this.overlayStores.corner;
     }
 
     @computed get numChannels(): number {
@@ -250,10 +223,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     const regionViewRef = React.useRef<RegionViewComponent>();
     const cursorOverlayRef = React.useRef<CursorOverlayComponent>();
     const toolbarRef = React.useRef<ToolbarComponent>();
-    const cornerOverlayComponent = React.useRef<HTMLCanvasElement>();
-    const leftOverlayComponent = React.useRef<HTMLCanvasElement>();
-    const innerOverlayComponent = React.useRef<HTMLCanvasElement>();
-    const bottomOverlayComponent = React.useRef<HTMLCanvasElement>();
+    const overlayCanvasRef = React.useRef<any>();
     const channelMapStore = props.channelMapStore;
     const frame = channelMapStore.masterFrame;
     const colorBarSetting = AppStore.Instance.overlayStore.colorbar;
@@ -276,6 +246,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     const imageRenderWidth = (channelMapViewWidth - outerOffset) / channelMapStore.numColumns;
     const imageRenderHeight = (channelMapViewHeight - outerOffset) / channelMapStore.numRows;
 
+    const overlayStore = channelMapStore.overlayStore(Math.floor(imageRenderWidth), Math.floor(imageRenderHeight));
     channelMapStore.overlayStores.outer.setViewDimension(channelMapViewWidth, props.renderHeight - toolbarOffset - cursorInfoOffset + (colorBarSetting.position === "right" ? 0 : colorbarOffset));
     channelMapStore.overlayStores.outer.setIsChannelMap(true);
     channelMapStore.overlayStores.outer.numbers.setVisible(false);
@@ -333,8 +304,6 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     let overlayComponentTop = imageRenderHeight * row;
                     let overlayComponentLeft = imageRenderWidth * column;
 
-                    const overlayStore = channelMapStore.overlayStore(index, Math.floor(imageRenderWidth), Math.floor(imageRenderHeight));
-                    let overlayCanvasRef;
                     let thisIs;
                     let contourCanvasRef;
                     let vectorCanvasRef;
@@ -345,27 +314,19 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                         vectorCanvasRef = channelMapStore.vectorCanvasReference?.canvas;
                         catalogCanvasRef = channelMapStore.catalogCanvasReference?.canvas;
                     }
-
                     if (column === 0 && row === channelMapStore.numRows - 1) {
-                        overlayComponentLeft -= overlayStore.paddingLeft;
-                        if (!cornerOverlayComponent.current) cornerOverlayComponent.current = channelMapStore.overlayStoreCanvasReference.corner;
-                        overlayCanvasRef = channelMapStore.overlayStoreCanvasReference.corner;
+                        overlayCanvasRef.current = channelMapStore.overlayStoreCanvasReference.corner;
+                    }
+
+                    overlayComponentLeft -= overlayStore.paddingLeft;
+                    if (column === 0 && row === channelMapStore.numRows - 1) {
                         thisIs = "corner";
                     } else if (column === 0) {
-                        overlayComponentLeft -= overlayStore.paddingLeft;
                         thisIs = "left";
-                        if (!leftOverlayComponent.current) leftOverlayComponent.current = channelMapStore.overlayStoreCanvasReference.left;
-                        overlayCanvasRef = channelMapStore.overlayStoreCanvasReference.left;
                     } else if (row === channelMapStore.numRows - 1) {
                         thisIs = "bottom";
-                        if (!bottomOverlayComponent.current) {
-                            bottomOverlayComponent.current = channelMapStore.overlayStoreCanvasReference.bottom;
-                        }
-                        overlayCanvasRef = channelMapStore.overlayStoreCanvasReference.bottom;
                     } else {
                         thisIs = "inner";
-                        if (!innerOverlayComponent.current) innerOverlayComponent.current = channelMapStore.overlayStoreCanvasReference.inner;
-                        overlayCanvasRef = channelMapStore.overlayStoreCanvasReference.inner;
                     }
 
                     return (
@@ -438,27 +399,26 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                             />
                             <OverlayComponent
                                 ref={ref => {
-                                    if ((column === 0 && row === 0) || (column === 0 && row === channelMapStore.numRows - 1) || (column === 1 && row === 0) || (column === 1 && row === channelMapStore.numRows - 1)) {
-                                        channelMapStore.overlayStoreCanvasReference[thisIs] = ref;
-                                        if (ref?.canvas) ref.canvas.id = `${column}_${row}`;
+                                    if (column === 0 && row === channelMapStore.numRows - 1) {
+                                        channelMapStore.overlayStoreCanvasReference["corner"] = ref;
+                                        if (ref?.canvas) {
+                                            ref.canvas.id = `${column}_${row}`;
+                                        }
                                     }
                                 }}
+                                thisIs={thisIs}
                                 image={{
                                     type: ImageType.FRAME,
                                     store: channelMapStore.showAuxiliaryFrame && channelMapStore.auxiliaryFrame ? channelMapStore.auxiliaryFrame : frame
                                 }}
-                                width={channelMapStore.overlayStores?.inner?.fullViewWidth}
-                                height={channelMapStore.overlayStores?.inner?.fullViewHeight}
+                                width={channelMapStore.overlayStores?.outer?.fullViewWidth}
+                                height={channelMapStore.overlayStores?.outer?.fullViewHeight}
                                 overlaySettings={overlayStore}
                                 top={overlayComponentTop}
                                 left={overlayComponentLeft}
                                 docked={props.docked}
                                 channel={channelMapStore.showAuxiliaryFrame ? channelMapStore.auxiliaryFrameChannel : channel}
-                                refCanvas={
-                                    (column === 0 && row === 0) || (column === 0 && row === channelMapStore.numRows - 1) || (column === 1 && row === 0) || (column === 1 && row === channelMapStore.numRows - 1)
-                                        ? undefined
-                                        : overlayCanvasRef?.canvas
-                                }
+                                refCanvas={column === 0 && row === channelMapStore.numRows - 1 ? undefined : overlayCanvasRef?.current?.canvas}
                             />
                             <CatalogViewGLComponent
                                 ref={ref => {
