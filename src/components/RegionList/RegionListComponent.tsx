@@ -243,10 +243,11 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         const selectedRegion = frame.regionSet.selectedRegion;
 
+        // openOnTargetFocus={false} is to prevent the tooltip popup after the warming message.
         const floatRenderer = () => {
             return (
                 <ButtonGroup className="float" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
-                    <Tooltip content="Delete all regions" position={Position.TOP_LEFT}>
+                    <Tooltip content="Delete all regions" position={Position.TOP_LEFT} openOnTargetFocus={false}>
                         {this.validRegions.length > 1 ? <AnchorButton icon={"trash"} onClick={this.handleRegionDeleteClicked} style={{cursor: "pointer"}} /> : <AnchorButton icon={"trash"} style={{opacity: 0.4}} />}
                     </Tooltip>
                     <Tooltip content="Import regions" position={Position.TOP_LEFT}>

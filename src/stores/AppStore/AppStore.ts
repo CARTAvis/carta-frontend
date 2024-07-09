@@ -1319,6 +1319,7 @@ export class AppStore {
                 this.deleteRegion(x);
             }
         });
+        AppToaster.show(SuccessToast("console", `Regions deleted successfully.`, 3000));
     };
 
     /**
