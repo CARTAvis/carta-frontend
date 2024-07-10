@@ -4,7 +4,6 @@ import {action, makeObservable, observable} from "mobx";
 export enum HelpType {
     // Dialogs
     CONTOUR = "Contour Configuration",
-    DISTANCE_MEASUREMENT = "Distance Measurement",
     PREFERENCES = "Preferences",
     FILE_BROWSER = "File Browser",
     FILE_INFO = "File Header",

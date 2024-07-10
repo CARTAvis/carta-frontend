@@ -16,8 +16,7 @@ import "./ImageViewComponent.scss";
 export enum ImageViewLayer {
     RegionCreating = "regionCreating",
     Catalog = "catalog",
-    RegionMoving = "regionMoving",
-    DistanceMeasuring = "distanceMeasuring"
+    RegionMoving = "regionMoving"
 }
 
 export function getImageViewCanvas(padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {

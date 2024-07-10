@@ -6,7 +6,6 @@ import {
     AboutDialogComponent,
     CodeSnippetDialogComponent,
     ContourDialogComponent,
-    DistanceMeasuringDialog,
     ExternalPageDialogComponent,
     FileBrowserDialogComponent,
     FileInfoDialogComponent,
@@ -46,7 +45,6 @@ export class UIControllerComponent extends React.Component {
                 <TelemetryDialogComponent />
                 <SplashScreenComponent />
                 <FittingDialogComponent />
-                <DistanceMeasuringDialog />
             </React.Fragment>
         );
     }

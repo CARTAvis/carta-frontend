@@ -1,6 +1,6 @@
 import * as React from "react";
 import {CSSProperties} from "react";
-import {AnchorButton, ButtonGroup, Classes, IconName, Menu, MenuDivider, MenuItem, Popover, PopoverInteractionKind, PopoverPosition, Position, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, ButtonGroup, Classes, Collapse, FormGroup, IconName, Menu, MenuDivider, MenuItem, Popover, PopoverInteractionKind, PopoverPosition, Position, Switch, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 import {ImageViewComponent, ImageViewLayer} from "components";
 import {AnnotationMenuComponent, ExportImageMenuComponent} from "components/Shared";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
-import {AppStore, DialogId} from "stores";
+import {AppStore} from "stores";
 import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
 import {OverlayStore, SystemType} from "stores/OverlayStore/OverlayStore";
 import {toFixed} from "utilities";
@@ -72,13 +72,10 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     handleCoordinateSystemClicked = (coordinateSystem: SystemType) => {
         OverlayStore.Instance.global.setSystem(coordinateSystem);
+        this.props.frame.updateOffsetCenter();
     };
 
     private handleActiveLayerClicked = (layer: ImageViewLayer) => {
-        const appStore = AppStore.Instance;
-        if (appStore.activeLayer !== ImageViewLayer.DistanceMeasuring && layer === ImageViewLayer.DistanceMeasuring) {
-            appStore.frames.forEach(frame => frame.distanceMeasuring.resetPos());
-        }
         this.props.onActiveLayerChange(layer);
         if (layer === ImageViewLayer.RegionCreating) {
             this.props.frame.regionSet.setMode(RegionMode.CREATING);
@@ -118,7 +115,6 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     render() {
         const appStore = AppStore.Instance;
         const overlay = appStore.overlayStore;
-        const dialogStore = appStore.dialogStore;
         const frame = this.props.frame;
         const grid = overlay.grid;
 
@@ -178,6 +174,14 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.Galactic)} onClick={() => this.handleCoordinateSystemClicked(SystemType.Galactic)} />
                 <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.Ecliptic)} onClick={() => this.handleCoordinateSystemClicked(SystemType.Ecliptic)} />
                 <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.ICRS)} onClick={() => this.handleCoordinateSystemClicked(SystemType.ICRS)} />
+                <FormGroup inline={false} className="offset-group">
+                    <Switch className="offset-switch" disabled={frame.isPVImage || frame.isSwappedZ || frame.isUVImage} checked={frame.isOffsetCoord} onChange={frame.toggleOffsetCoord} label="Offset" />
+                    <Collapse isOpen={frame.isOffsetCoord}>
+                        <Tooltip content="Set origin to current view center" position={Position.BOTTOM} hoverOpenDelay={300}>
+                            <Button icon="locate" disabled={!frame.isOffsetCoord} onClick={() => frame.updateOffsetCenter()} />
+                        </Tooltip>
+                    </Collapse>
+                </FormGroup>
             </Menu>
         );
 
@@ -231,7 +235,9 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const catalogSelectionDisabled = appStore.catalogNum === 0 || numSourcesIsZero === true;
 
         const handleDistanceMeasuringClicked = () => {
-            this.handleActiveLayerClicked(ImageViewLayer.DistanceMeasuring);
+            this.handleActiveLayerClicked(ImageViewLayer.RegionCreating);
+            appStore.activeFrame.regionSet.setNewRegionType(CARTA.RegionType.ANNRULER);
+            appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
         };
 
         return (
@@ -244,22 +250,15 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                     position={tooltipPosition}
                                     content={
                                         <span>
-                                            Distance measurement
+                                            Ruler annotation
                                             <br />
                                             <i>
-                                                <small>Click to create geodesic curves.</small>
-                                                <br></br>
-                                                <small>Double Click to open the settings.</small>
+                                                <small>Click-and-drag to create geodesic curves.</small>
                                             </i>
                                         </span>
                                     }
                                 >
-                                    <AnchorButton
-                                        icon={<CustomIcon icon="distanceMeasuring" />}
-                                        active={appStore.activeLayer === ImageViewLayer.DistanceMeasuring}
-                                        onClick={handleDistanceMeasuringClicked}
-                                        onDoubleClick={() => dialogStore.showDialog(DialogId.DistanceMeasure)}
-                                    />
+                                    <AnchorButton icon={<CustomIcon icon="distanceMeasuring" />} active={appStore.activeLayer === ImageViewLayer.RegionCreating} onClick={handleDistanceMeasuringClicked} />
                                 </Tooltip>
                                 <Tooltip
                                     position={tooltipPosition}
@@ -393,7 +392,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                             </span>
                                         }
                                     >
-                                        <AnchorButton disabled={!frame.validWcs} text={ToolbarComponent.CoordinateSystemName.get(coordinateSystem)} />
+                                        <AnchorButton disabled={!frame.validWcs} text={ToolbarComponent.CoordinateSystemName.get(coordinateSystem)} data-testid="overlay-coordinate-button" />
                                     </Tooltip>
                                 </Popover>
                             </>
