@@ -54,6 +54,8 @@ export class CatalogOnlineQueryConfigStore {
         this.vizierResource = new Map();
         this.vizierKeyWords = "";
 
+        this.resetSearchRadius();
+
         reaction(
             () => AppStore.Instance.activeFrame,
             () => {
