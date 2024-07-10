@@ -28,7 +28,7 @@ const KEYCODE_ENTER = 13;
 export class FilterableTableComponentProps {
     dataset: Map<number, ProcessedColumnData>;
     filter?: Map<string, ControlHeader>;
-    columnHeaders: Array<CARTA.CatalogHeader>;
+    columnHeaders: Array<CARTA.ICatalogHeader>;
     numVisibleRows: number;
     columnWidths?: Array<number>;
     loadingCell?: boolean;
@@ -105,7 +105,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         }
     };
 
-    private renderCheckboxColumnHeaderCell = (columnIndex: number, columnHeader: CARTA.CatalogHeader, columnData: any, selectionType: RowSelectionType) => {
+    private renderCheckboxColumnHeaderCell = (columnIndex: number, columnHeader: CARTA.ICatalogHeader, columnData: any, selectionType: RowSelectionType) => {
         const controlHeader = this.props.filter?.get(columnHeader.name);
         const filterSyntax = this.getFilterSyntax(columnHeader.dataType);
         return (
@@ -152,7 +152,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         );
     };
 
-    private renderCheckboxColumn = (columnHeader: CARTA.CatalogHeader, columnData: any) => {
+    private renderCheckboxColumn = (columnHeader: CARTA.ICatalogHeader, columnData: any) => {
         let selected = 0;
         columnData?.forEach(isSelected => (selected += isSelected ? 1 : 0));
         const selectionType = selected === 0 ? RowSelectionType.None : selected === columnData?.length ? RowSelectionType.All : RowSelectionType.Indeterminate;
@@ -167,7 +167,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         );
     };
 
-    private renderDataColumnWithFilter = (columnHeader: CARTA.CatalogHeader, columnData: Array<any> | NodeJS.TypedArray) => {
+    private renderDataColumnWithFilter = (columnHeader: CARTA.ICatalogHeader, columnData: Array<any> | NodeJS.TypedArray) => {
         return (
             <Column
                 key={columnHeader.name}
@@ -178,7 +178,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         );
     };
 
-    private renderCell = (index: number, columnIndex: number, columnData: Array<any> | NodeJS.TypedArray, columnHeader: CARTA.CatalogHeader) => {
+    private renderCell = (index: number, columnIndex: number, columnData: Array<any> | NodeJS.TypedArray, columnHeader: CARTA.ICatalogHeader) => {
         const dataIndex = this.props.selectedDataIndex;
         let rowIndex = index;
         if (this.props.sortedIndexMap) {
@@ -228,7 +228,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         return null;
     };
 
-    private renderColumnHeaderCell = (columnIndex: number, column: CARTA.CatalogHeader) => {
+    private renderColumnHeaderCell = (columnIndex: number, column: CARTA.ICatalogHeader) => {
         if (!isFinite(columnIndex) || !column) {
             return null;
         }

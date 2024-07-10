@@ -13,10 +13,10 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     @observable settingsTabId: HistogramSettingsTabs;
 
     @observable coordinate: string;
-    @observable minX: number;
-    @observable maxX: number;
-    @observable minY: number;
-    @observable maxY: number;
+    @observable minX: number | undefined;
+    @observable maxX: number | undefined;
+    @observable minY: number | undefined;
+    @observable maxY: number | undefined;
     @observable cursorX: number;
     @observable isMouseMoveIntoLinePlots: boolean;
 
@@ -31,20 +31,20 @@ export class HistogramWidgetStore extends RegionWidgetStore {
 
     // Current config settings
     @observable currentAutoBounds: boolean;
-    @observable currentMinPix: number;
-    @observable currentMaxPix: number;
+    @observable currentMinPix: number | undefined;
+    @observable currentMaxPix: number | undefined;
     @observable currentAutoBins: boolean;
-    @observable currentNumBins: number;
+    @observable currentNumBins: number | null | undefined;
 
     // Maximum number of histogram bins on the slider
     @observable maxNumBins: number;
 
     // Config settings in the protobuf message
     public fixedNumBins: boolean;
-    public numBins: number;
+    public numBins: number | null | undefined;
     public fixedBounds: boolean;
-    public minPix: number;
-    public maxPix: number;
+    public minPix: number | undefined;
+    public maxPix: number | undefined;
 
     // Cached histogram config settings
     private cachedMinPix: number;
@@ -147,7 +147,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         return this.minY === undefined || this.maxY === undefined;
     }
 
-    @computed get effectivePolarization(): POLARIZATIONS {
+    @computed get effectivePolarization(): POLARIZATIONS | undefined {
         if (this.coordinate === "z") {
             return this.effectiveFrame?.requiredPolarization;
         } else {
@@ -185,10 +185,10 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     };
 
     @computed get isAbleToGenerate(): boolean {
-        if (!this.currentAutoBounds && this.currentMinPix >= this.currentMaxPix) {
+        if (!this.currentAutoBounds && this.currentMinPix !== undefined && this.currentMaxPix !== undefined && this.currentMinPix >= this.currentMaxPix) {
             return false;
         }
-        return !(!this.currentAutoBins && this.currentNumBins <= 0);
+        return !(!this.currentAutoBins && this.currentNumBins !== null && this.currentNumBins !== undefined && this.currentNumBins <= 0);
     }
 
     public static CalculateRequirementsMap(widgetsMap: Map<string, HistogramWidgetStore>) {
@@ -210,10 +210,12 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                     updatedRequirements.set(fileId, frameRequirements);
                 }
 
-                let regionRequirements = frameRequirements.get(regionId);
+                let regionRequirements = frameRequirements.get(regionId ?? NaN);
                 if (!regionRequirements) {
                     regionRequirements = new CARTA.SetHistogramRequirements({fileId, regionId});
-                    frameRequirements.set(regionId, regionRequirements);
+                    if (regionId !== null) {
+                        frameRequirements.set(regionId, regionRequirements);
+                    }
                 }
 
                 if (!regionRequirements.histograms) {
@@ -228,7 +230,12 @@ export class HistogramWidgetStore extends RegionWidgetStore {
 
                 let histogramConfig = regionRequirements.histograms.find(
                     config =>
-                        config.coordinate === coordinate && config.fixedNumBins === fixedNumBins && config.numBins === numBins && config.fixedBounds === fixedBounds && closeTo(config.bounds.min, minPix) && closeTo(config.bounds.max, maxPix)
+                        config.coordinate === coordinate &&
+                        config.fixedNumBins === fixedNumBins &&
+                        config.numBins === numBins &&
+                        config.fixedBounds === fixedBounds &&
+                        closeTo(config.bounds?.min ?? NaN, minPix ?? NaN) &&
+                        closeTo(config.bounds?.max ?? NaN, maxPix ?? NaN)
                 );
 
                 if (!histogramConfig) {
@@ -263,10 +270,10 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                 updatedRequirements.set(fileId, updatedFrameRequirements);
             }
             frameRequirements.forEach((regionRequirements, regionId) => {
-                let updatedRegionRequirements = updatedFrameRequirements.get(regionId);
+                let updatedRegionRequirements = updatedFrameRequirements?.get(regionId);
                 if (!updatedRegionRequirements) {
                     updatedRegionRequirements = new CARTA.SetHistogramRequirements({fileId, regionId, histograms: []});
-                    updatedFrameRequirements.set(regionId, updatedRegionRequirements);
+                    updatedFrameRequirements?.set(regionId, updatedRegionRequirements);
                 }
             });
         });
@@ -279,7 +286,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                 updatedFrameRequirements.forEach(regionRequirements => diffList.push(regionRequirements));
             } else {
                 updatedFrameRequirements.forEach((updatedRegionRequirements, regionId) => {
-                    let regionRequirements = frameRequirements.get(regionId);
+                    let regionRequirements = frameRequirements?.get(regionId);
                     if (!regionRequirements) {
                         // If there are no existing requirements for this regionId, this is a new entry
                         diffList.push(updatedRegionRequirements);
@@ -308,8 +315,8 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                                 updatedConfig.fixedNumBins !== config.fixedNumBins ||
                                 updatedConfig.numBins !== config.numBins ||
                                 updatedConfig.fixedBounds !== config.fixedBounds ||
-                                !closeTo(updatedConfig.bounds.min, config.bounds.min) ||
-                                !closeTo(updatedConfig.bounds.max, config.bounds.max)
+                                !closeTo(updatedConfig.bounds?.min ?? NaN, config.bounds?.min ?? NaN) ||
+                                !closeTo(updatedConfig.bounds?.max ?? NaN, config.bounds?.max ?? NaN)
                             ) {
                                 diffList.push(updatedRegionRequirements);
                                 return;
@@ -348,7 +355,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.maxPix = 0;
 
         // Initialize the maximum number of histogram bins on the slider
-        this.maxNumBins = this.effectiveFrame?.renderConfig.histogram.numBins * 2;
+        this.maxNumBins = (this.effectiveFrame?.renderConfig.histogram.numBins ?? NaN) * 2;
 
         autorun(() => {
             // Update the config parameters

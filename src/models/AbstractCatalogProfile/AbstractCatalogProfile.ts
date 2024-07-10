@@ -67,8 +67,8 @@ export abstract class AbstractCatalogProfileStore {
 
     @observable loadingData: boolean;
     @observable catalogType: CatalogType;
-    @observable catalogFilterRequest: CARTA.CatalogFilterRequest;
-    @observable catalogCoordinateSystem: {system: CatalogSystemType; equinox: string; epoch: string; coordinate: {x: CatalogOverlay; y: CatalogOverlay} | undefined};
+    @observable catalogFilterRequest: CARTA.ICatalogFilterRequest;
+    @observable catalogCoordinateSystem: {system: CatalogSystemType; equinox: string | null | undefined; epoch: string | null | undefined; coordinate: {x: CatalogOverlay; y: CatalogOverlay} | undefined};
     @observable filterDataSize: number | undefined;
     @observable progress: number;
     @observable updatingDataStream: boolean;
@@ -136,11 +136,11 @@ export abstract class AbstractCatalogProfileStore {
         this.catalogData.clear();
     }
 
-    public static getCatalogSystem(system: string): CatalogSystemType {
+    public static getCatalogSystem(system: string | null | undefined): CatalogSystemType {
         let catalogSystem = CatalogSystemType.ICRS;
         const systemMap = AbstractCatalogProfileStore.CoordinateSystemName;
         systemMap.forEach((value, key) => {
-            if (system.toUpperCase().includes(value.toUpperCase())) {
+            if (system?.toUpperCase().includes(value.toUpperCase())) {
                 catalogSystem = key;
             }
         });
@@ -182,7 +182,7 @@ export abstract class AbstractCatalogProfileStore {
     public getUserFilters(): CARTA.FilterConfig[] {
         let userFilters: CARTA.FilterConfig[] = [];
         this.catalogControlHeader.forEach((value, key) => {
-            if (value.filter !== undefined && value.display) {
+            if (value.filter !== undefined && value.display && value.dataIndex !== undefined) {
                 let filter = new CARTA.FilterConfig();
                 const dataType = this.catalogHeader[value.dataIndex].dataType;
                 filter.columnName = key;
@@ -235,7 +235,7 @@ export abstract class AbstractCatalogProfileStore {
     @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader> {
         let displayedColumnHeaders: CARTA.CatalogHeader[] = [];
         this.catalogControlHeader.forEach((value, key) => {
-            if (value.display && this.catalogHeader) {
+            if (value.display && this.catalogHeader && value.dataIndex !== undefined) {
                 displayedColumnHeaders.push(this.catalogHeader[value.dataIndex]);
             }
         });
@@ -274,8 +274,8 @@ export abstract class AbstractCatalogProfileStore {
         return this.catalogType === CatalogType.FILE;
     }
 
-    @computed get tableColumnWidths(): Array<number | null> {
-        const columnWidths: (number | null)[] = [];
+    @computed get tableColumnWidths(): Array<number | null | undefined> {
+        const columnWidths: (number | null | undefined)[] = [];
         this.catalogControlHeader.forEach((value, key) => {
             if (value.display) {
                 columnWidths.push(value.columnWidth);
