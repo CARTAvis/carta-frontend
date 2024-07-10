@@ -362,11 +362,11 @@ export class BackendService {
         }
     }
 
-    async exportRegion(directory: string, file: string, type: CARTA.FileType, coordType: CARTA.CoordinateType, fileId: number, regionStyles: Map<number, CARTA.IRegionStyle>): Promise<CARTA.IExportRegionAck> {
+    async exportRegion(directory: string, file: string, type: CARTA.FileType, coordType: CARTA.CoordinateType, fileId: number, regionStyles: Map<number, CARTA.IRegionStyle>, overwrite: boolean = false): Promise<CARTA.IExportRegionAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
-            const message = CARTA.ExportRegion.create({directory, file, type, fileId, regionStyles: mapToObject(regionStyles), coordType});
+            const message = CARTA.ExportRegion.create({directory, file, type, fileId, regionStyles: mapToObject(regionStyles), coordType, overwrite});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.EXPORT_REGION, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.EXPORT_REGION, CARTA.ExportRegion.encode(message).finish())) {

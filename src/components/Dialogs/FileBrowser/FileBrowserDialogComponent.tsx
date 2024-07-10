@@ -200,7 +200,7 @@ export class FileBrowserDialogComponent extends React.Component {
         }
     };
 
-    private exportRegion = (directory: string, filename: string) => {
+    private exportRegion = (directory: string, filename: string, overwrite: boolean = false) => {
         if (!filename || !directory) {
             return;
         }
@@ -208,7 +208,7 @@ export class FileBrowserDialogComponent extends React.Component {
         filename = filename.trim();
         const appStore = AppStore.Instance;
         const fileBrowserStore = FileBrowserStore.Instance;
-        appStore.exportRegions(directory, filename, fileBrowserStore.exportCoordinateType, fileBrowserStore.exportFileType, fileBrowserStore.exportRegionIndexes);
+        appStore.exportRegions(directory, filename, fileBrowserStore.exportCoordinateType, fileBrowserStore.exportFileType, fileBrowserStore.exportRegionIndexes, overwrite);
         console.log(`Exporting regions to ${directory}/${filename}`);
     };
 
@@ -217,7 +217,7 @@ export class FileBrowserDialogComponent extends React.Component {
         const fileBrowserStore = FileBrowserStore.Instance;
         if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
             const filename = fileBrowserStore.exportFilename.trim();
-            this.exportRegion(fileBrowserStore.fileList.directory, filename);
+            this.exportRegion(fileBrowserStore.fileList.directory, filename, true);
         } else if (fileBrowserStore.browserMode === BrowserMode.SaveFile) {
             this.handleSaveFile(true);
         }
