@@ -53,7 +53,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const frame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image.store?.baseFrame : this.props.image?.store;
         const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
 
-        const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : frame.wcsInfo;
+        const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoShifted : frame.wcsInfo;
+        const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
         const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
         if (wcsInfo && frameView && this.canvas) {
             // Take aspect ratio scaling into account
@@ -73,6 +74,27 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 AST.setI(tempWcsInfo, "Current", 2);
             }
 
+            if (frame.isOffsetCoord) {
+                const fovSizeInArcsec = frame.getWcsSizeInArcsec(frame.fovSize);
+                const viewSize = fovSizeInArcsec.x > fovSizeInArcsec.y ? fovSizeInArcsec.y : fovSizeInArcsec.x;
+                const factor = 2; // jump factor
+                let unit;
+                let format;
+
+                if (viewSize < 60 * factor) {
+                    unit = "arcsec";
+                    format = "s.*";
+                } else if (viewSize < 3600 * factor) {
+                    unit = "arcmin";
+                    format = "m.*";
+                } else {
+                    unit = "deg";
+                    format = "d.*";
+                }
+
+                AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)=${unit}, Unit(2)=${unit}`);
+            }
+
             const plot = (styleString: string) => {
                 AST.plot(
                     tempWcsInfo,
@@ -86,13 +108,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     settings.padding.right * pixelRatio,
                     settings.padding.top * pixelRatio,
                     settings.padding.bottom * pixelRatio,
-                    styleString,
-                    frame.distanceMeasuring?.showCurve,
-                    frame.isPVImage,
-                    frame.distanceMeasuring?.transformedStart?.x,
-                    frame.distanceMeasuring?.transformedStart?.y,
-                    frame.distanceMeasuring?.transformedFinish?.x,
-                    frame.distanceMeasuring?.transformedFinish?.y
+                    styleString
                 );
             };
 
@@ -115,6 +131,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 currentStyleString += `, Title=${this.props.image?.store?.titleCustomText}`;
             } else {
                 currentStyleString += `, Title=${""}`;
+            }
+
+            if (frame.isOffsetCoord) {
+                currentStyleString += `, LabelUnits=1`;
             }
 
             plot(currentStyleString);
@@ -159,15 +179,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const numbersColor = this.props.overlaySettings.numbers.color;
         const labelsColor = this.props.overlaySettings.labels.color;
         const darktheme = AppStore.Instance.darkTheme;
-        const distanceMeasuring = frame.distanceMeasuring;
-        const distanceMeasuringShowCurve = frame.distanceMeasuring?.showCurve;
-        const distanceMeasuringStart = frame.distanceMeasuring?.start;
-        const distanceMeasuringFinish = frame.distanceMeasuring?.finish;
-        const distanceMeasuringTransformedStart = frame.distanceMeasuring?.transformedStart;
-        const distanceMeasuringTransformedFinish = frame.distanceMeasuring?.transformedFinish;
-        const distanceMeasuringColor = frame.distanceMeasuring?.color;
-        const distanceMeasuringFontSize = frame.distanceMeasuring?.fontSize;
-        const distanceMeasuringLineWidth = frame.distanceMeasuring?.lineWidth;
         const title = this.props.overlaySettings.title.customText ? this.props.image?.store?.titleCustomText : this.props.image?.store?.filename;
         const ratio = AppStore.Instance.imageRatio;
         const titleStyleString = this.props.overlaySettings.title.styleString;
@@ -177,6 +188,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const axesStyleString = this.props.overlaySettings.axes.styleString;
         const numbersStyleString = this.props.overlaySettings.numbers.styleString;
         const labelsStyleString = this.props.overlaySettings.labels.styleString;
+        const offsetCoord = frame.isOffsetCoord;
+        const offsetWcs = frame.wcsInfoShifted;
 
         if (frame.isSwappedZ) {
             const requiredChannel = frame.requiredChannel;

@@ -2,7 +2,6 @@ export * from "./AboutDialog/AboutDialogComponent";
 export * from "./CatalogQueryDialog/CatalogOnlineQueryDialogComponent";
 export * from "./CodeSnippetDialog/CodeSnippetDialogComponent";
 export * from "./ContourDialog/ContourDialogComponent";
-export * from "./DistanceMeasuringDialog/DistanceMeasuringDialog";
 export * from "./DraggableDialog/DraggableDialogComponent";
 export * from "./ExternalPageDialog/ExternalPageDialogComponent";
 export * from "./FileBrowser/FileBrowserDialogComponent";

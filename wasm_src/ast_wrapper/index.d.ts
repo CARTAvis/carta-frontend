@@ -24,13 +24,7 @@ export function plot(
     paddingRight: number,
     paddingTop: number,
     paddingBottom: number,
-    options: string,
-    showCurve: boolean,
-    isPVImage: boolean,
-    curveX1: number,
-    curveY1: number,
-    curveX2: number,
-    curveY2: number
+    options: string
 );
 export function emptyFitsChan(): FitsChan;
 export function putFits(fitsChan: FitsChan, card: string): void;
@@ -62,6 +56,7 @@ export function addFrame(frameSet: FrameSet, index: number, map: Mapping, frame:
 export function setI(obj: AstObject, attrib: string, value: number): void;
 export function setD(obj: AstObject, attrib: string, value: number): void;
 export function createTransformedFrameset(frameSet: FrameSet, offsetX: number, offsetY: number, angle: number, originX: number, originY: number, scaleX: number, scaleY: number);
+export function createShiftmapFrameset(frameSet: FrameSet, offsetX: number, offsetY: number);
 // Not exported fillTransformGrid()
 export function makeSwappedFrameSet(originFrameSet: FrameSet, dirAxis: number, spectralAxis: number, pixelZ: number, nsample: number): FrameSet;
 

@@ -8,8 +8,6 @@ import imageTools from "static/help/imageTools_annotated.png";
 import imageTools_d from "static/help/imageTools_annotated_d.png";
 import catalogSelectionButton from "static/help/imageTools_catalogSelectionButton.png";
 import catalogSelectionButton_d from "static/help/imageTools_catalogSelectionButton_d.png";
-import distanceMeasureButton from "static/help/imageTools_distanceMeasureButton.png";
-import distanceMeasureButton_d from "static/help/imageTools_distanceMeasureButton_d.png";
 import exportPNGButton from "static/help/imageTools_exportButton.png";
 import exportPNGButton_d from "static/help/imageTools_exportButton_d.png";
 import WCSMatchButton from "static/help/imageTools_matchButton.png";
@@ -167,14 +165,6 @@ export const IMAGE_VIEW_HELP_CONTENT = (
         </p>
         <p>
             <ImageComponent light={exportPNGButton} dark={exportPNGButton_d} width="80%" />
-        </p>
-        <h3>Distance measure</h3>
-        <p>
-            This tool allows you to measure a geodesic distance between two locations on an image with mouse clicks. The geodesic line between the two clicks as well as the iso-latitude and iso-longitude lines are visualized. A shortcut
-            button, which brings up the Distance Measurement Dialog, is available in the dialog bar. In the dialog, you can manually provide two coordinates for the calculation and configure the styling.
-        </p>
-        <p>
-            <ImageComponent light={distanceMeasureButton} dark={distanceMeasureButton_d} width="80%" />
         </p>
         <h3>Interactive colorbar</h3>
         <p>
