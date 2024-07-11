@@ -61,7 +61,7 @@ import {
     SystemType,
     WidgetsStore
 } from "stores";
-import {CompassAnnotationStore, CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
+import {CompassAnnotationStore, CURSOR_REGION_ID, FrameInfo, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
 import {distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
 
@@ -1558,8 +1558,7 @@ export class AppStore {
                 getColorForTheme(this.overlayStore.ticks.color),
                 getColorForTheme(this.overlayStore.axes.color),
                 getColorForTheme(this.overlayStore.numbers.color),
-                getColorForTheme(this.overlayStore.labels.color),
-                getColorForTheme(this.activeFrame ? this.activeFrame.distanceMeasuring?.color : DistanceMeasuringStore.DEFAULT_COLOR)
+                getColorForTheme(this.overlayStore.labels.color)
             ];
             AST.setColors(astColors);
         }
