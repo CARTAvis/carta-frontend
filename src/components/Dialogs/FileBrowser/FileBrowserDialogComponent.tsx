@@ -75,7 +75,11 @@ export class FileBrowserDialogComponent extends React.Component {
             const appStore = AppStore.Instance;
             appStore.frames.forEach(f => appStore.setSpatialMatchingEnabled(f, true));
             const colorBlendingStore = appStore.imageViewConfigStore.createColorBlending();
-            colorBlendingStore.applyColormapSet("RGB");
+
+            for (let i = 3; i < appStore.frames.length; i++) {
+                colorBlendingStore.addSelectedFrame(appStore.frames[i]);
+            }
+            colorBlendingStore.applyColormapSet(appStore.fileBrowserStore.selectedFiles?.length <= 3 ? "RGB" : "Rainbow");
         } catch (err) {
             console.error(err);
         }
@@ -385,9 +389,14 @@ export class FileBrowserDialogComponent extends React.Component {
                                         <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Stokes)} text={"Load as hypercube"} />
                                     </Tooltip>
                                 )}
-                                {fileBrowserStore.selectedFiles?.length === 3 && (
+                                {fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length <= 7 && (
                                     <Tooltip content={"Close any existing images and load the images"}>
-                                        <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={this.loadWithRGB} text={"Load with RGB blending"} />
+                                        <AnchorButton
+                                            intent={Intent.PRIMARY}
+                                            disabled={actionDisabled}
+                                            onClick={this.loadWithRGB}
+                                            text={fileBrowserStore.selectedFiles?.length <= 3 ? "Load with RGB blending" : "Load with multi-color blending"}
+                                        />
                                     </Tooltip>
                                 )}
                             </div>
