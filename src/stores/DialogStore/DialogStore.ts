@@ -11,7 +11,6 @@ export enum DialogId {
     CatalogQuery = "catalog-query-dialog",
     Snippet = "snippet-dialog",
     Contour = "contour-dialog",
-    DistanceMeasure = "distance-measure-dialog",
     ExternalPage = "external-page-dialog",
     FileBrowser = "file-browser-dialog",
     FileInfo = "file-info-dialog",
