@@ -931,7 +931,7 @@ export class WidgetsStore {
             preferenceStore.setPreference(PreferenceKeys.CHANNEL_MAP_ENABLED, false);
             AppStore.Instance.channelMapStore.masterFrame?.overlayStore.setIsChannelMap(false); // need to fix
             this.updateImagePanelButton();
-            AppStore.Instance.channelMapStore.masterFrame?.overlayStore.clearViewDimension(); // need to fix
+            // AppStore.Instance.channelMapStore.masterFrame?.overlayStore.clearViewDimension();
         } else {
             this.setImageMultiPanelEnabled(!preferenceStore.imageMultiPanelEnabled);
         }

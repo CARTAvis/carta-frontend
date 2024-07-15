@@ -1107,11 +1107,6 @@ export class OverlayStore {
         this._fullViewHeight = height;
     };
 
-    @action clearViewDimension = () => {
-        this._fullViewHeight = undefined;
-        this._fullViewWidth = undefined;
-    };
-
     @action setBase = (base: number) => {
         this.base = base;
     };
