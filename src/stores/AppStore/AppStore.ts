@@ -49,10 +49,10 @@ import {
     HelpStore,
     ImageFittingStore,
     ImageViewConfigStore,
-    ImageViewerSettingStore,
     LayoutStore,
     LogEntry,
     LogStore,
+    OverlayStore,
     PreferenceKeys,
     PreferenceStore,
     RegionFileType,
@@ -116,7 +116,7 @@ export class AppStore {
     readonly layoutStore: LayoutStore;
     readonly snippetStore: SnippetStore;
     readonly logStore: LogStore;
-    readonly overlayStore: ImageViewerSettingStore;
+    readonly overlayStore: OverlayStore;
     readonly preferenceStore: PreferenceStore;
     readonly widgetsStore: WidgetsStore;
     readonly imageFittingStore: ImageFittingStore;
@@ -1800,7 +1800,7 @@ export class AppStore {
         this.snippetStore = SnippetStore.Instance;
         this.logStore = LogStore.Instance;
         this.preferenceStore = PreferenceStore.Instance;
-        this.overlayStore = ImageViewerSettingStore.Instance;
+        this.overlayStore = OverlayStore.Instance;
         this.widgetsStore = WidgetsStore.Instance;
         this.imageFittingStore = ImageFittingStore.Instance;
         this.channelMapStore = ChannelMapStore.Instance;

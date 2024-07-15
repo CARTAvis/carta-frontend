@@ -108,7 +108,8 @@ export class FrameStore {
     private readonly catalogControlMaps: Map<FrameStore, CatalogControlMap>;
     private readonly framePixelRatio: number;
     private readonly backendService: BackendService;
-    public readonly overlayStore: OverlayStore;
+    public readonly _overlayStore: OverlayStore;
+    public readonly channelMapOverlayStore: OverlayStore;
     public readonly previewOverlayStore: OverlayStore;
     private readonly logStore: LogStore;
     private readonly initialCenter: Point2D;
@@ -252,6 +253,16 @@ export class FrameStore {
         }
 
         return this.renderWidth / this.frameInfo.fileInfoExtended.width / (this.renderHeight / this.frameInfo.fileInfoExtended.height);
+    }
+
+    @computed get overlayStore(): OverlayStore {
+        if (this.isPreview) {
+            return this.previewOverlayStore;
+        } else if (AppStore.Instance.preferenceStore.channelMapEnabled && this.channelMapOverlayStore) {
+            return this.channelMapOverlayStore;
+        } else {
+            return this._overlayStore;
+        }
     }
 
     get hasSquarePixels(): boolean {
@@ -1194,7 +1205,8 @@ export class FrameStore {
 
     constructor(frameInfo: FrameInfo) {
         makeObservable(this);
-        this.overlayStore = new OverlayStore();
+        this._overlayStore = AppStore.Instance.overlayStore;
+        this.channelMapOverlayStore = AppStore.Instance.channelMapStore.overlayStores.corner;
         this.previewOverlayStore = new OverlayStore();
         this.logStore = LogStore.Instance;
         this.backendService = BackendService.Instance;

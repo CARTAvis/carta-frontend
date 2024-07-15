@@ -188,9 +188,31 @@ export class ChannelMapStore {
     @action throttledRequestChannels = _.throttle(this.requestChannels, 1000);
 
     public overlayStore(imageRenderWidth: number, imageRenderHeight: number) {
+        const overlay = AppStore.Instance.overlayStore;
         this.updateOverlayStoreSize(imageRenderWidth, imageRenderHeight);
 
-        this.setOverlayStores(this.overlayStores?.corner || new OverlayStore(imageRenderWidth, imageRenderHeight, 1, 2, true, false, true, false, true));
+        this.setOverlayStores(
+            this.overlayStores?.corner ||
+                new OverlayStore(
+                    imageRenderWidth,
+                    imageRenderHeight,
+                    1,
+                    2,
+                    true,
+                    false,
+                    true,
+                    overlay.global,
+                    overlay.title,
+                    overlay.grid,
+                    overlay.border,
+                    overlay.axes,
+                    overlay.numbers,
+                    undefined,
+                    overlay.ticks,
+                    overlay.colorbar,
+                    overlay.beam
+                )
+        );
         return this.overlayStores.corner;
     }
 
