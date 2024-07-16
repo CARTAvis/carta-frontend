@@ -6,7 +6,6 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ImageType, Point2D, Zoom} from "models";
-import {ChannelMapWebGLService} from "services";
 import {AppStore, DefaultWidgetConfig, HelpType, Padding, PreferenceStore, WidgetProps} from "stores";
 import {toFixed} from "utilities";
 
@@ -197,7 +196,6 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                   <div id={`image-panel`}>
                       <ChannelMapViewComponent
                           frame={config.visibleFrames[0]}
-                          gl={ChannelMapWebGLService.Instance.gl}
                           docked={this.props.docked}
                           channelMapStore={channelMapStore}
                           renderWidth={appStore.overlayStore.fullViewWidth}

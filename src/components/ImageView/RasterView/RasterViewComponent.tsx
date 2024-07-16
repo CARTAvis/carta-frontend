@@ -60,7 +60,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
             this.sub = this.props.tileService.tileStream.subscribe(tileMessage => {
                 // sometimes the renderHeight is 0, and still figuring out why
-                ((!isFinite(this.props.channel) && !AppStore.Instance.preferenceStore.channelMapEnabled) || tileMessage.channel === this.props.channel) &&
+                ((!isFinite(this.props.channel) && (!AppStore.Instance.preferenceStore.channelMapEnabled || (this.props.image.store as FrameStore).isPreview)) || tileMessage.channel === this.props.channel) &&
                     requestAnimationFrame(() =>
                         this.updateCanvas(
                             this.props.image,
@@ -146,73 +146,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     //     // frame?.spatialReference.requiredFrameView,
     //     // frame?.spatialReference.currentFrameView
     // ]);
-
-    render() {
-        // dummy values to trigger React's componentDidUpdate()
-        /* eslint-disable @typescript-eslint/no-unused-vars */
-        const appStore = AppStore.Instance;
-        const baseFrame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image?.store?.baseFrame : this.props.image?.store;
-        if (baseFrame) {
-            const spatialReference = baseFrame.spatialReference || baseFrame;
-            const frameView = spatialReference.requiredFrameView;
-            const currentView = spatialReference.currentFrameView;
-
-            const frames = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image?.store?.frames : [this.props.image?.store];
-            for (const frame of frames) {
-                if (frame) {
-                    const spatialReference = frame.spatialReference || frame;
-                    const frameView = spatialReference.requiredFrameView;
-                    const currentView = spatialReference.currentFrameView;
-
-                    const colorMapping = {
-                        min: frame.renderConfig.scaleMinVal,
-                        max: frame.renderConfig.scaleMaxVal,
-                        colorMap: frame.renderConfig.colorMapIndex,
-                        customHex: frame.renderConfig.customColormapHexEnd,
-                        customStartHex: frame.renderConfig.customColormapHexStart,
-                        contrast: frame.renderConfig.contrast,
-                        bias: frame.renderConfig.bias,
-                        useSmoothedBiasContrast: appStore.preferenceStore?.useSmoothedBiasContrast,
-                        scaling: frame.renderConfig.scaling,
-                        gamma: frame.renderConfig.gamma,
-                        alpha: frame.renderConfig.alpha,
-                        inverted: frame.renderConfig.inverted,
-                        visibility: frame.renderConfig.visible,
-                        nanColorHex: appStore.preferenceStore.nanColorHex,
-                        nanAlpha: appStore.preferenceStore.nanAlpha,
-                        pixelGridVisible: appStore.preferenceStore.pixelGridVisible,
-                        pixelGridColor: getColorForTheme(appStore.preferenceStore.pixelGridColor)
-                    };
-
-                    const ratio = appStore.imageRatio;
-                }
-            }
-
-            if (this.props.image?.type === ImageType.COLOR_BLENDING) {
-                const alpha = this.props.image?.store?.alpha;
-            }
-        }
-        /* eslint-enable @typescript-eslint/no-unused-vars */
-
-        const padding = this.props.overlayStore.padding;
-        const className = classNames(`raster-div`, {docked: this.props.docked});
-
-        return (
-            <div className={className} style={{top: this.props.top || 0, left: this.props.left || 0}}>
-                <canvas
-                    className={`raster-canvas`}
-                    id="raster-canvas"
-                    ref={ref => (this.canvas = ref)}
-                    style={{
-                        top: padding.top,
-                        left: padding.left,
-                        width: baseFrame?.isRenderable ? this.props.overlayStore.renderWidth || 1 : 1,
-                        height: baseFrame?.isRenderable ? this.props.overlayStore.renderHeight || 1 : 1
-                    }}
-                />
-            </div>
-        );
-    }
 
     private updateCanvas = (
         image: ImageItem,
@@ -590,5 +523,72 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         gl.uniform2f(shaderUniforms.TileOffset, bottomLeft.x, bottomLeft.y);
         gl.uniform2f(shaderUniforms.TileScaling, tileScaling.x, tileScaling.y);
         gl.drawArrays(GL2.TRIANGLE_STRIP, 0, 4);
+    }
+
+    render() {
+        // dummy values to trigger React's componentDidUpdate()
+        /* eslint-disable @typescript-eslint/no-unused-vars */
+        const appStore = AppStore.Instance;
+        const baseFrame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image?.store?.baseFrame : this.props.image?.store;
+        if (baseFrame) {
+            const spatialReference = baseFrame.spatialReference || baseFrame;
+            const frameView = spatialReference.requiredFrameView;
+            const currentView = spatialReference.currentFrameView;
+
+            const frames = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image?.store?.frames : [this.props.image?.store];
+            for (const frame of frames) {
+                if (frame) {
+                    const spatialReference = frame.spatialReference || frame;
+                    const frameView = spatialReference.requiredFrameView;
+                    const currentView = spatialReference.currentFrameView;
+
+                    const colorMapping = {
+                        min: frame.renderConfig.scaleMinVal,
+                        max: frame.renderConfig.scaleMaxVal,
+                        colorMap: frame.renderConfig.colorMapIndex,
+                        customHex: frame.renderConfig.customColormapHexEnd,
+                        customStartHex: frame.renderConfig.customColormapHexStart,
+                        contrast: frame.renderConfig.contrast,
+                        bias: frame.renderConfig.bias,
+                        useSmoothedBiasContrast: appStore.preferenceStore?.useSmoothedBiasContrast,
+                        scaling: frame.renderConfig.scaling,
+                        gamma: frame.renderConfig.gamma,
+                        alpha: frame.renderConfig.alpha,
+                        inverted: frame.renderConfig.inverted,
+                        visibility: frame.renderConfig.visible,
+                        nanColorHex: appStore.preferenceStore.nanColorHex,
+                        nanAlpha: appStore.preferenceStore.nanAlpha,
+                        pixelGridVisible: appStore.preferenceStore.pixelGridVisible,
+                        pixelGridColor: getColorForTheme(appStore.preferenceStore.pixelGridColor)
+                    };
+
+                    const ratio = appStore.imageRatio;
+                }
+            }
+
+            if (this.props.image?.type === ImageType.COLOR_BLENDING) {
+                const alpha = this.props.image?.store?.alpha;
+            }
+        }
+        /* eslint-enable @typescript-eslint/no-unused-vars */
+
+        const padding = this.props.overlayStore.padding;
+        const className = classNames(`raster-div`, {docked: this.props.docked});
+
+        return (
+            <div className={className} style={{top: this.props.top || 0, left: this.props.left || 0}}>
+                <canvas
+                    className={`raster-canvas`}
+                    id="raster-canvas"
+                    ref={ref => (this.canvas = ref)}
+                    style={{
+                        top: padding.top,
+                        left: padding.left,
+                        width: baseFrame?.isRenderable ? this.props.overlayStore.renderWidth || 1 : 1,
+                        height: baseFrame?.isRenderable ? this.props.overlayStore.renderHeight || 1 : 1
+                    }}
+                />
+            </div>
+        );
     }
 }

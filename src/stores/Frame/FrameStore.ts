@@ -409,7 +409,8 @@ export class FrameStore {
         return AppStore.Instance.channelMapStore.overlayStores &&
             AppStore.Instance.channelMapStore.overlayStores.corner &&
             AppStore.Instance.preferenceStore.channelMapEnabled &&
-            AppStore.Instance.channelMapStore.overlayStores.corner?.renderWidth
+            AppStore.Instance.channelMapStore.overlayStores.corner?.renderWidth &&
+            !this.isPreview
             ? AppStore.Instance.channelMapStore.overlayStores.corner?.renderWidth
             : overlayStore.renderWidth;
     }
@@ -421,7 +422,8 @@ export class FrameStore {
             AppStore.Instance.channelMapStore.overlayStores.corner &&
             AppStore.Instance.channelMapStore.overlayStores.corner &&
             AppStore.Instance.preferenceStore.channelMapEnabled &&
-            AppStore.Instance.channelMapStore.overlayStores.corner?.renderHeight
+            AppStore.Instance.channelMapStore.overlayStores.corner?.renderHeight &&
+            !this.isPreview
             ? AppStore.Instance.channelMapStore.overlayStores.corner?.renderHeight
             : overlayStore.renderHeight;
     }

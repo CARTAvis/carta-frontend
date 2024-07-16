@@ -24,7 +24,6 @@ import {VectorOverlayViewComponent} from "../VectorOverlayView/VectorOverlayView
 export class ChannelMapViewComponentProps {
     frame: FrameStore;
     docked: boolean;
-    gl: WebGL2RenderingContext;
     channelMapStore: ChannelMapStore;
     renderWidth: number; // width/height of the area where channel map is showing
     renderHeight: number;
@@ -277,6 +276,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     channelMapStore.overlayStores.outer.ticks.setMajorLength(0);
 
     React.useEffect(() => {
+        console.log("hihihi");
         if (channelMapStore.masterFrame) {
             channelMapStore.throttledRequestChannels();
         }

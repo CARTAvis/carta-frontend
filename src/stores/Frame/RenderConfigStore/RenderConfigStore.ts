@@ -322,11 +322,19 @@ export class RenderConfigStore {
     }
 
     @computed get scaleMinVal() {
-        return AppStore.Instance.preferenceStore.channelMapEnabled ? this.channelMapScaleMin : this.previewHistogramMin ? Math.max(this.previewHistogramMin, this.scaleMin[this.stokesIndex]) : this.scaleMin[this.stokesIndex];
+        return AppStore.Instance.preferenceStore.channelMapEnabled && !AppStore.Instance.activeFrame.isPreview
+            ? this.channelMapScaleMin
+            : this.previewHistogramMin
+            ? Math.max(this.previewHistogramMin, this.scaleMin[this.stokesIndex])
+            : this.scaleMin[this.stokesIndex];
     }
 
     @computed get scaleMaxVal() {
-        return AppStore.Instance.preferenceStore.channelMapEnabled ? this.channelMapScaleMax : this.previewHistogramMax ? Math.min(this.previewHistogramMax, this.scaleMax[this.stokesIndex]) : this.scaleMax[this.stokesIndex];
+        return AppStore.Instance.preferenceStore.channelMapEnabled && !AppStore.Instance.activeFrame.isPreview
+            ? this.channelMapScaleMax
+            : this.previewHistogramMax
+            ? Math.min(this.previewHistogramMax, this.scaleMax[this.stokesIndex])
+            : this.scaleMax[this.stokesIndex];
     }
 
     @computed get selectedPercentileVal() {
