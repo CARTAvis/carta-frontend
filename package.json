@@ -72,7 +72,7 @@
         "react-split-pane": "^0.1.91",
         "react-virtualized-auto-sizer": "^1.0.7",
         "react-window": "^1.8.8",
-        "rxjs": "^7.8.0",
+        "rxjs": "^7.8.1",
         "sass": "^1.77.8",
         "semver": "^7.6.2",
         "source-map-explorer": "^2.5.3",
