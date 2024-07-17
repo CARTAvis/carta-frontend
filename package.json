@@ -65,7 +65,7 @@
         "react-iframe": "^1.8.5",
         "react-konva": "^17.0.2-4",
         "react-plotly.js": "^2.6.0",
-        "react-resize-detector": "^8.0.4",
+        "react-resize-detector": "^9.1.1",
         "react-rnd": "^10.4.11",
         "react-scroll-to-bottom": "^4.2.0",
         "react-simple-code-editor": "^0.14.1",
