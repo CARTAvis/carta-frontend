@@ -73,7 +73,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
     }
 
     private onClickHelpButton = () => {
-        const centerX = this.rnd.draggable.state.x + this.rnd.resizable.size.width * 0.5;
+        const centerX = (this.rnd.draggable.state as any).x + this.rnd.resizable.size.width * 0.5;
         if (Array.isArray(this.props.widgetConfig.helpType)) {
             const widgetsStore = AppStore.Instance.widgetsStore;
             const widgetParentType = this.props.widgetConfig.parentType;
