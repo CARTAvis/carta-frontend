@@ -76,9 +76,6 @@ export class FileBrowserDialogComponent extends React.Component {
             appStore.frames.forEach(f => appStore.setSpatialMatchingEnabled(f, true));
             const colorBlendingStore = appStore.imageViewConfigStore.createColorBlending();
 
-            for (let i = 3; i < appStore.frames.length; i++) {
-                colorBlendingStore.addSelectedFrame(appStore.frames[i]);
-            }
             colorBlendingStore.applyColormapSet(appStore.fileBrowserStore.selectedFiles?.length <= 3 ? "RGB" : "Rainbow");
         } catch (err) {
             console.error(err);

@@ -8,7 +8,7 @@ Actions related to color blended images.
 
 ## Creating color blended images
 
-<ApiLink path="/.-stores/class/ImageViewConfigStore/#createColorBlending">`createColorBlending`</ApiLink> creates a color blended image with a base layer from the spatial reference image and at most two other layers from the spatially matched
+<ApiLink path="/.-stores/class/ImageViewConfigStore/#createColorBlending">`createColorBlending`</ApiLink> creates a color blended image with a base layer from the spatial reference image and at most nine other layers from the spatially matched
 images.
 
 ```javascript
@@ -26,7 +26,7 @@ const colorBlendingStore = app.imageViewConfigStore.createColorBlending();
 console.log(colorBlendingStore.frames.length); // 3
 ```
 
-<ApiLink path="/.-stores/class/ImageViewConfigStore/#removeColorBlending">`removeColorBlending`</ApiLink> removes a color blended image.
+<ApiLink path="/.-stores/class/ImageViewConfigStore/#removeColorBlending">`removeColorBlending`</ApiLink> closes a color blended image.
 
 ```javascript
 app.imageViewConfigStore.removeColorBlending(colorBlendingStore);

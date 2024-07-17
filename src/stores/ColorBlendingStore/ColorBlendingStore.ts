@@ -14,6 +14,8 @@ export class ColorBlendingStore {
         ["CMY", ["Cyan", "Magenta", "Yellow"]],
         ["Rainbow", ["Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Violet"]]
     ]);
+    /** The default limit for the number of layers during initialization. */
+    static readonly DefaultLayerLimit = 10;
 
     /** The custom title shown in the image view overlay. */
     @observable titleCustomText: string;
@@ -125,7 +127,7 @@ export class ColorBlendingStore {
         this.id = id;
         this.filename = `Color Blending ${id + 1}`;
         this.titleCustomText = this.filename;
-        this.selectedFrames = this.baseFrame?.secondarySpatialImages?.slice(0, 2) ?? [];
+        this.selectedFrames = this.baseFrame?.secondarySpatialImages?.slice(0, ColorBlendingStore.DefaultLayerLimit - 1) ?? [];
         this.alpha = new Array(this.selectedFrames.length + 1).fill(1);
         makeAutoObservable(this);
 

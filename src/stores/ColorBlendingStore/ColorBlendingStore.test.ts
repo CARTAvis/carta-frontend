@@ -26,7 +26,7 @@ describe("ColorBlendingStore", () => {
         jest.spyOn(AppStore, "Instance", "get").mockImplementation(() => {
             return {spatialReference: mockSpatialReference};
         });
-        setMatchedFrames([mockMatchedFrame1, mockMatchedFrame2, mockMatchedFrame3]);
+        setMatchedFrames([mockMatchedFrame1, mockMatchedFrame2]);
         colorBlendingStore = new ColorBlendingStore(0);
     });
 
@@ -56,6 +56,8 @@ describe("ColorBlendingStore", () => {
 
     describe("addSelectedFrame", () => {
         it("adds a layer correctly", () => {
+            setMatchedFrames([mockMatchedFrame1, mockMatchedFrame2, mockMatchedFrame3]);
+
             colorBlendingStore.addSelectedFrame(mockMatchedFrame3);
             expect(colorBlendingStore.selectedFrames).toContain(mockMatchedFrame3);
             expect(colorBlendingStore.alpha).toHaveLength(4);
@@ -76,6 +78,8 @@ describe("ColorBlendingStore", () => {
 
     describe("setSelectedFrame", () => {
         it("sets a layer correctly", () => {
+            setMatchedFrames([mockMatchedFrame1, mockMatchedFrame2, mockMatchedFrame3]);
+
             colorBlendingStore.setSelectedFrame(0, mockMatchedFrame3);
             expect(colorBlendingStore.selectedFrames[0]).toBe(mockMatchedFrame3);
         });
@@ -93,6 +97,8 @@ describe("ColorBlendingStore", () => {
         });
 
         it("fails when the index is invalid", () => {
+            setMatchedFrames([mockMatchedFrame1, mockMatchedFrame2, mockMatchedFrame3]);
+
             colorBlendingStore.setSelectedFrame(-1, mockMatchedFrame3);
             expect(mockConsoleError).toHaveBeenCalledWith("Invalid layer index.");
 
