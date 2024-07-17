@@ -68,7 +68,7 @@ export class FileBrowserDialogComponent extends React.Component {
         }
     };
 
-    private loadWithRGB = async () => {
+    private loadWithColorBlending = async () => {
         try {
             await this.loadSelectedFiles();
 
@@ -391,7 +391,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                         <AnchorButton
                                             intent={Intent.PRIMARY}
                                             disabled={actionDisabled}
-                                            onClick={this.loadWithRGB}
+                                            onClick={this.loadWithColorBlending}
                                             text={fileBrowserStore.selectedFiles?.length <= 3 ? "Load with RGB blending" : "Load with multi-color blending"}
                                         />
                                     </Tooltip>
