@@ -1304,8 +1304,7 @@ export class AppStore {
             AppToaster.show(SuccessToast("saved", `Exported regions for ${frame.filename} using ${coordType === CARTA.CoordinateType.WORLD ? "world" : "pixel"} coordinates`));
             this.fileBrowserStore.hideFileBrowser();
         } catch (err) {
-            console.error(err);
-            AppToaster.show(ErrorToast(err));
+            throw err;
         }
     }
 

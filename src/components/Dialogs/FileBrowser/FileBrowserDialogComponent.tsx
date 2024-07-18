@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
-import {AppToaster, SimpleTableComponentProps} from "components/Shared";
+import {AppToaster, ErrorToast, SimpleTableComponentProps} from "components/Shared";
 import {AppStore, BrowserMode, CatalogProfileStore, DialogId, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
@@ -192,18 +192,22 @@ export class FileBrowserDialogComponent extends React.Component {
         fileBrowserStore.setSaveFilename(ev.target.value);
     };
 
-    private handleExportRegionsClicked = () => {
-        const fileBrowserStore = FileBrowserStore.Instance;
-        const filename = fileBrowserStore.exportFilename.trim();
-        if (fileBrowserStore.fileList && fileBrowserStore.fileList.files && fileBrowserStore.fileList.files.find(f => f.name.trim() === filename)) {
-            // Existing file being replaced. Alert the user
-            this.overwriteExistingFileAlertVisible = true;
-        } else {
-            this.exportRegion(fileBrowserStore.fileList.directory, filename);
+    private handleExportRegionsClicked = async () => {
+        try {
+            const fileBrowserStore = FileBrowserStore.Instance;
+            const filename = fileBrowserStore.exportFilename.trim();
+            await this.exportRegion(fileBrowserStore.fileList.directory, filename);
+        } catch (err) {
+            if (err === "Export region failed: cannot overwrite existing file.") {
+                this.overwriteExistingFileAlertVisible = true;
+            } else {
+                console.error(err);
+                AppToaster.show(ErrorToast(err));
+            }
         }
     };
 
-    private exportRegion = (directory: string, filename: string, overwrite: boolean = false) => {
+    private exportRegion = async (directory: string, filename: string, overwrite: boolean = false) => {
         if (!filename || !directory) {
             return;
         }
@@ -211,16 +215,21 @@ export class FileBrowserDialogComponent extends React.Component {
         filename = filename.trim();
         const appStore = AppStore.Instance;
         const fileBrowserStore = FileBrowserStore.Instance;
-        appStore.exportRegions(directory, filename, fileBrowserStore.exportCoordinateType, fileBrowserStore.exportFileType, fileBrowserStore.exportRegionIndexes, overwrite);
         console.log(`Exporting regions to ${directory}/${filename}`);
+        await appStore.exportRegions(directory, filename, fileBrowserStore.exportCoordinateType, fileBrowserStore.exportFileType, fileBrowserStore.exportRegionIndexes, overwrite);
     };
 
     private handleOverwriteAlertConfirmed = async () => {
         this.overwriteExistingFileAlertVisible = false;
         const fileBrowserStore = FileBrowserStore.Instance;
         if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
-            const filename = fileBrowserStore.exportFilename.trim();
-            this.exportRegion(fileBrowserStore.fileList.directory, filename, true);
+            try {
+                const filename = fileBrowserStore.exportFilename.trim();
+                await this.exportRegion(fileBrowserStore.fileList.directory, filename, true);
+            } catch (err) {
+                console.error(err);
+                AppToaster.show(ErrorToast(err));
+            }
         } else if (fileBrowserStore.browserMode === BrowserMode.SaveFile) {
             try {
                 await this.handleSaveFile(true);
