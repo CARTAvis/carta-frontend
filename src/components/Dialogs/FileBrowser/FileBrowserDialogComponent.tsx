@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
-import {SimpleTableComponentProps} from "components/Shared";
+import {AppToaster, SimpleTableComponentProps} from "components/Shared";
 import {AppStore, BrowserMode, CatalogProfileStore, DialogId, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
@@ -174,13 +174,16 @@ export class FileBrowserDialogComponent extends React.Component {
         await appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType, fileBrowserStore.saveRegionId, saveChannels, saveStokes, fileBrowserStore.shouldDropDegenerateAxes, restFreq, overwrite);
     };
 
-    private handleSaveFileClicked = () => {
-        const fileBrowserStore = FileBrowserStore.Instance;
-        const filename = fileBrowserStore.saveFilename.trim();
-        if (fileBrowserStore.fileList && fileBrowserStore.fileList.files && fileBrowserStore.fileList.files.find(f => f.name.trim() === filename)) {
-            this.overwriteExistingFileAlertVisible = true;
-        } else {
-            this.handleSaveFile();
+    private handleSaveFileClicked = async () => {
+        try {
+            await this.handleSaveFile();
+        } catch (err) {
+            if (err === "Cannot overwrite existing image." || err === "Cannot overwrite existing file or symlink.") {
+                this.overwriteExistingFileAlertVisible = true;
+            } else {
+                console.error(err);
+                AppToaster.show({icon: "warning-sign", message: err, intent: "danger", timeout: 3000});
+            }
         }
     };
 
@@ -212,14 +215,19 @@ export class FileBrowserDialogComponent extends React.Component {
         console.log(`Exporting regions to ${directory}/${filename}`);
     };
 
-    private handleOverwriteAlertConfirmed = () => {
+    private handleOverwriteAlertConfirmed = async () => {
         this.overwriteExistingFileAlertVisible = false;
         const fileBrowserStore = FileBrowserStore.Instance;
         if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
             const filename = fileBrowserStore.exportFilename.trim();
             this.exportRegion(fileBrowserStore.fileList.directory, filename, true);
         } else if (fileBrowserStore.browserMode === BrowserMode.SaveFile) {
-            this.handleSaveFile(true);
+            try {
+                await this.handleSaveFile(true);
+            } catch (err) {
+                console.error(err);
+                AppToaster.show({icon: "warning-sign", message: err, intent: "danger", timeout: 3000});
+            }
         }
     };
 

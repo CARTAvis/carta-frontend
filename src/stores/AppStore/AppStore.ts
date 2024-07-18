@@ -786,8 +786,6 @@ export class AppStore {
             this.endFileSaving();
             return ack.fileId;
         } catch (err) {
-            console.error(err);
-            AppToaster.show({icon: "warning-sign", message: err, intent: "danger", timeout: 3000});
             this.endFileSaving();
             throw err;
         }
