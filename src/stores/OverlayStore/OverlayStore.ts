@@ -1037,7 +1037,7 @@ export class OverlayStore {
         beam?: OverlayBeamSettings
     ) {
         makeObservable(this);
-        // this.imageViewerSettingStore = ImageViewerSettingStore.Instance;
+        // If not provided, it will make new stores, so if we want an overlayStore to have the same stores as others, remember to pass in the stores
         this.global = global || new OverlayGlobalSettings();
         this.title = title || new OverlayTitleSettings();
         this.grid = grid || new OverlayGridSettings();
@@ -1238,7 +1238,7 @@ export class OverlayStore {
     }
 
     @computed get paddingLeft(): number {
-        return this.numbers.show ? this.base + this.numberWidth + this.labelWidth : 0;
+        return this.base + this.numberWidth + this.labelWidth;
     }
 
     @computed get paddingRight(): number {
@@ -1250,7 +1250,7 @@ export class OverlayStore {
     }
 
     @computed get paddingBottom(): number {
-        return this.numbers.show ? this.base + this.numberWidth + this.labelWidth + (this.colorbar.visible && this.colorbar.position === "bottom" ? this.colorbar.totalWidth : 0) + this.colorbarHoverInfoHeight : 0;
+        return this.base + this.numberWidth + this.labelWidth + (this.colorbar.visible && this.colorbar.position === "bottom" ? this.colorbar.totalWidth : 0) + this.colorbarHoverInfoHeight;
     }
 
     @computed get padding(): Padding {

@@ -15,8 +15,6 @@ export class OverlayComponentProps {
     docked: boolean;
     top?: number;
     left?: number;
-    width?: number;
-    height?: number;
     refCanvas?: any;
     channel?: number;
     unScaled?: boolean;

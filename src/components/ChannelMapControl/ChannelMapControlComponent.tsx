@@ -17,8 +17,8 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
             type: "channel-map-control",
             minWidth: 250,
             minHeight: 200,
-            defaultWidth: 650,
-            defaultHeight: 200,
+            defaultWidth: 480,
+            defaultHeight: 600,
             title: "Channel Map Control",
             isCloseable: true
         };
@@ -91,7 +91,7 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                         stepSize={1}
                         labelStepSize={Math.max(appStore.channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth / appStore.channelMapStore.numChannels, appStore.channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth / 9)}
                         value={appStore.channelMapStore.startChannel}
-                        onChange={channel => appStore.channelMapStore.setStartChannel(channel)}
+                        onChange={channel => appStore.channelMapStore.throttledSetStartChannels(channel)}
                     />
                 </div>
             </div>
@@ -107,7 +107,7 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                     />
                 </FormGroup>
                 <FormGroup className="channel-map-control-label" inline={true} label="Start Channel">
-                    <SafeNumericInput placeholder="Number of Columns" value={channelMapSettings.startChannel} min={0} max={numChannels - 1} onValueChange={onChannelChanged} />
+                    <SafeNumericInput placeholder="Start channel" value={channelMapSettings.startChannel} min={0} max={numChannels - 1} onValueChange={onChannelChanged} />
                 </FormGroup>
                 <FormGroup className="channel-map-control-label" inline={true} label="Number of Columns">
                     <SafeNumericInput placeholder="Number of Columns" min={1} max={10} value={channelMapSettings.numColumns} stepSize={1} onValueChange={(value: number) => channelMapSettings.setNumColumns(value)} />
