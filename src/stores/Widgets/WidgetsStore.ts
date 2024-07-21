@@ -941,7 +941,7 @@ export class WidgetsStore {
     setImageMultiPanelEnabled = (multiPanelEnabled: boolean) => {
         const preferenceStore = PreferenceStore.Instance;
         preferenceStore.setPreference(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED, multiPanelEnabled);
-        AppStore.Instance.channelMapStore.masterFrame?.overlayStore.setIsChannelMap(!multiPanelEnabled);
+        // AppStore.Instance.channelMapStore.overlayStores?.corner?.setIsChannelMap(!multiPanelEnabled);
         preferenceStore.setPreference(PreferenceKeys.CHANNEL_MAP_ENABLED, !multiPanelEnabled);
         this.updateImagePanelButton();
     };

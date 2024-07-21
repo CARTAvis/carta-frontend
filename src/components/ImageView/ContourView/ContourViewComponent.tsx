@@ -23,34 +23,34 @@ export interface ContourViewComponentProps {
 
 @observer
 export class ContourViewComponent extends React.Component<ContourViewComponentProps> {
-    private canvas: HTMLCanvasElement;
+    public canvas: HTMLCanvasElement;
     private gl: WebGL2RenderingContext;
     private contourWebGLService: ContourWebGLService;
 
     componentDidMount() {
         this.contourWebGLService = ContourWebGLService.Instance;
         this.gl = this.contourWebGLService.gl;
-        if (!this.props.refCanvas) {
-            if (this.canvas) {
-                this.triggerUpdate(); //2330
-            }
-        }
+        this.updateImage();
     }
 
     componentDidUpdate() {
+        this.updateImage();
+    }
+
+    private updateImage = () => {
         AppStore.Instance.resetImageRatio();
         if (this.props.refCanvas && this.props.channel !== undefined) {
             requestAnimationFrame(() => {
-                const destCanvas = this.canvas.getContext("2d");
+                const destCanvas = this.canvas.getContext("2d", {willReadFrequently: true});
                 const w = this.props.refCanvas.width;
                 const h = this.props.refCanvas.height;
                 destCanvas.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 destCanvas.drawImage(this.props.refCanvas, 0, 0, w, h, 0, 0, this.canvas.width, this.canvas.height);
             });
-        } else {
-            this.triggerUpdate();
+        } else if (!this.props.refCanvas && this.canvas) {
+            this.triggerUpdate(); //2330
         }
-    }
+    };
 
     private triggerUpdate = () => {
         const animatorStore = AnimatorStore.Instance;

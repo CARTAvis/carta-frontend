@@ -193,7 +193,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
         return PreferenceStore.Instance.channelMapEnabled && !PreferenceStore.Instance.imageMultiPanelEnabled
             ? [
-                  <div id={`image-panel`}>
+                  <div id={`image-panel`} key={"channel-map"}>
                       <ChannelMapViewComponent
                           frame={config.visibleFrames[0]}
                           docked={this.props.docked}

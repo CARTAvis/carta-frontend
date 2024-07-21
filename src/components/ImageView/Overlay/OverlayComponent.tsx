@@ -29,28 +29,32 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     channelNumberCanvas: HTMLCanvasElement;
 
     componentDidMount() {
-        if (this.canvas && !this.props.refCanvas) {
-            if (PreferenceStore.Instance.limitOverlayRedraw) {
-                this.throttledRenderCanvas();
-            } else {
-                requestAnimationFrame(this.renderCanvas);
-            }
-        } else if (this.canvas && this.props.refCanvas) {
-            const destCanvas = this.canvas.getContext("2d");
-            destCanvas.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        }
+        this.updateImage();
     }
 
     componentDidUpdate() {
+        this.updateImage();
+    }
+
+    componentWillUnmount(): void {
+        if (this.props.refCanvas) {
+            const destCanvas = this.canvas.getContext("2d");
+            const w = this.props.refCanvas.width;
+            const h = this.props.refCanvas.height;
+            destCanvas.clearRect(0, 0, w, h);
+        }
+    }
+
+    updateImage() {
         AppStore.Instance.resetImageRatio();
         const thisIs = this.props.thisIs;
         const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
         const paddingLeft = this.props.overlaySettings.padding.left * pixelRatio;
         const paddingBottom = this.props.overlaySettings.padding.bottom * pixelRatio;
-        if (this.props.refCanvas) {
+        if (this.props.refCanvas && this.canvas) {
             requestAnimationFrame(() => {
                 this.updateImageDimensions();
-                const destCanvas = this.canvas.getContext("2d");
+                const destCanvas = this.canvas.getContext("2d", {willReadFrequently: true});
                 const w = this.props.refCanvas.width;
                 const h = this.props.refCanvas.height;
                 const destWidth = this.canvas.width - (thisIs === "left" || thisIs === "corner" ? 0 : paddingLeft);
@@ -64,7 +68,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     destCanvas.drawImage(this.props.refCanvas, paddingLeft, 0, w - paddingLeft, h - paddingBottom, paddingLeft, 0, destWidth, destHeight);
                 }
             });
-        } else {
+        } else if (this.canvas && !this.props.refCanvas) {
             if (PreferenceStore.Instance.limitOverlayRedraw) {
                 this.throttledRenderCanvas();
             } else {
@@ -74,7 +78,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         if (this.props.channel !== undefined && this.channelNumberCanvas) {
             requestAnimationFrame(() => {
-                const destCanvas = this.channelNumberCanvas.getContext("2d");
+                const destCanvas = this.channelNumberCanvas.getContext("2d", {willReadFrequently: true});
                 this.channelNumberCanvas.width = this.props.overlaySettings.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
                 this.channelNumberCanvas.height = this.props.overlaySettings.viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
                 destCanvas.font = "24px Arial";
@@ -83,15 +87,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 destCanvas.textBaseline = "top";
                 destCanvas.fillText(`${this.props.channel}`, this.props.overlaySettings.paddingLeft * devicePixelRatio * AppStore.Instance.imageRatio + 10, 10);
             });
-        }
-    }
-
-    componentWillUnmount(): void {
-        if (this.props.refCanvas) {
-            const destCanvas = this.canvas.getContext("2d");
-            const w = this.props.refCanvas.width;
-            const h = this.props.refCanvas.height;
-            destCanvas.clearRect(0, 0, w, h);
         }
     }
 
@@ -161,8 +156,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             };
 
             let currentStyleString = settings.styleString(frame);
-
-            // console.log('frameView', frameView)
 
             // Override the AST tolerance during motion
             if (frame.moving) {
@@ -286,8 +279,20 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         return (
             <>
-                <canvas className={className} style={{top: this.props.top || 0, left: this.props.left || 0, width: w, height: h}} id="overlay-canvas" ref={this.getRef} />
-                <canvas className={className} style={{top: this.props.top || 0, left: this.props.left || 0, width: w, height: h}} id="channel-number-canvas" ref={this.getRef} />
+                <canvas
+                    className={className}
+                    style={{top: this.props.top || 0, left: this.props.left || 0, width: w, height: h}}
+                    id="overlay-canvas"
+                    ref={this.getRef}
+                    key={`overlay-canvas-${frame.frameInfo.fileId}-${this.props.channel}`}
+                />
+                <canvas
+                    className={className}
+                    style={{top: this.props.top || 0, left: this.props.left || 0, width: w, height: h}}
+                    id="channel-number-canvas"
+                    ref={this.getRef}
+                    key={`channel-number-canvas-${frame.frameInfo.fileId}-${this.props.channel}`}
+                />
             </>
         );
     }

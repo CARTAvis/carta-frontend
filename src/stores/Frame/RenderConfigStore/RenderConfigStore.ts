@@ -322,7 +322,7 @@ export class RenderConfigStore {
     }
 
     @computed get scaleMinVal() {
-        return AppStore.Instance.preferenceStore.channelMapEnabled && !AppStore.Instance.activeFrame.isPreview
+        return AppStore.Instance.preferenceStore.channelMapEnabled && !AppStore.Instance.activeFrame?.isPreview
             ? this.channelMapScaleMin
             : this.previewHistogramMin
             ? Math.max(this.previewHistogramMin, this.scaleMin[this.stokesIndex])
@@ -330,7 +330,7 @@ export class RenderConfigStore {
     }
 
     @computed get scaleMaxVal() {
-        return AppStore.Instance.preferenceStore.channelMapEnabled && !AppStore.Instance.activeFrame.isPreview
+        return AppStore.Instance.preferenceStore.channelMapEnabled && !AppStore.Instance.activeFrame?.isPreview
             ? this.channelMapScaleMax
             : this.previewHistogramMax
             ? Math.min(this.previewHistogramMax, this.scaleMax[this.stokesIndex])

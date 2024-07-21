@@ -22,34 +22,33 @@ export interface VectorOverlayViewComponentProps {
 
 @observer
 export class VectorOverlayViewComponent extends React.Component<VectorOverlayViewComponentProps> {
-    private canvas: HTMLCanvasElement;
+    public canvas: HTMLCanvasElement;
     private gl: WebGL2RenderingContext;
     private vectorOverlayWebGLService: VectorOverlayWebGLService;
 
     componentDidMount() {
-        if (!this.props.refCanvas) {
-            this.vectorOverlayWebGLService = VectorOverlayWebGLService.Instance;
-            this.gl = this.vectorOverlayWebGLService.gl;
-            if (this.canvas) {
-                this.updateCanvas();
-            }
-        }
+        this.vectorOverlayWebGLService = VectorOverlayWebGLService.Instance;
+        this.gl = this.vectorOverlayWebGLService.gl;
+        this.updateImage();
     }
 
     componentDidUpdate() {
-        const appStore = AppStore.Instance;
+        this.updateImage();
+    }
 
+    private updateImage() {
+        const appStore = AppStore.Instance;
         appStore.resetImageRatio();
 
         if (this.props.refCanvas) {
             requestAnimationFrame(() => {
-                const destCanvas = this.canvas.getContext("2d");
+                const destCanvas = this.canvas.getContext("2d", {willReadFrequently: true});
                 const w = this.props.refCanvas.width;
                 const h = this.props.refCanvas.height;
                 destCanvas.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 destCanvas.drawImage(this.props.refCanvas, 0, 0, w, h, 0, 0, this.canvas.width, this.canvas.height);
             });
-        } else {
+        } else if (this.canvas && !this.props.refCanvas) {
             const baseFrame = this.props.frame;
             const vectorOverlayFrames = appStore.vectorOverlayFrames?.get(baseFrame);
             if (vectorOverlayFrames?.every(f => f?.vectorOverlayStore?.isComplete)) {
