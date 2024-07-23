@@ -1,5 +1,6 @@
 import {AlphaPicker} from "react-color";
-import {Button, ButtonGroup, FormGroup, H6, HTMLSelect, Menu, MenuItem, Popover, Text, Tooltip} from "@blueprintjs/core";
+import {Button, ButtonGroup, Classes, FormGroup, H6, HTMLSelect, Menu, MenuItem, Popover, Text, Tooltip} from "@blueprintjs/core";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {ColormapBlock, ColormapComponent, SafeNumericInput} from "components/Shared";
@@ -109,7 +110,7 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
     const buttonTextCutoff = 550;
 
     return (
-        <div className="color-blending-config">
+        <div className={classNames("color-blending-config", {[Classes.DARK]: AppStore.Instance.darkTheme})}>
             <div className="heading">
                 <H6>Color blending configuration</H6>
                 <ButtonGroup>
