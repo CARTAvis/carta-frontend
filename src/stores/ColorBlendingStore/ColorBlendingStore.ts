@@ -1,6 +1,8 @@
 import {action, computed, makeAutoObservable, observable, reaction} from "mobx";
+import tinycolor from "tinycolor2";
 
-import {AppStore, type FrameStore} from "stores";
+import {AppStore, type FrameStore, RenderConfigStore} from "stores";
+import {getColorsForValues} from "utilities";
 
 /** The configuration of a colormap set. Can either be a single gradient colormap or a collection of multiple colormaps. */
 type ColormapSetConfig =
@@ -160,7 +162,9 @@ export class ColorBlendingStore {
     }
 
     /**
-     * Applies the colormap set to the layers. The colormap set is interpolated to match the number of frames.
+     * Applies the specified colormap set to the layers.
+     * - If the colormap set is a single gradient colormap, it interpolates colors along the gradient for each frame.
+     * - If the colormap set is a collection of multiple colormaps, it interpolates between the indexes and selects a colormap from the collection to match the number of frames.
      * @param set - The name of the colormap set to apply. Must be a key in the `ColorBlendingStore.ColormapSets` map.
      */
     applyColormapSet = (set: string) => {
@@ -171,8 +175,27 @@ export class ColorBlendingStore {
         }
 
         if (colormapSetConfig.type === "gradient") {
-            const colormap = colormapSetConfig.colormap;
-            console.log(colormap);
+            const gradient = getColorsForValues(colormapSetConfig.colormap);
+            const getHex = (index: number): string => "#" + tinycolor({r: gradient.color[index * 4], g: gradient.color[index * 4 + 1], b: gradient.color[index * 4 + 2], a: gradient.color[index * 4 + 3]}).toHex();
+
+            for (let i = 0; i < this.frames.length; i++) {
+                const index = Math.round(((colormapSetConfig.inverted ? this.frames.length - 1 - i : i) * (gradient.size - 1)) / (this.frames.length - 1));
+                const hex = getHex(index);
+
+                let isExistingSingleColor = false;
+                for (const [key, val] of RenderConfigStore.COLOR_MAPS_MONO) {
+                    if (val === hex) {
+                        this.frames[i].renderConfig.setColorMap(key);
+                        isExistingSingleColor = true;
+                        break;
+                    }
+                }
+
+                if (!isExistingSingleColor) {
+                    this.frames[i].renderConfig.setCustomHexEnd(hex);
+                    this.frames[i].renderConfig.setColorMap(RenderConfigStore.COLOR_MAPS_CUSTOM);
+                }
+            }
         } else {
             const colormaps = colormapSetConfig.colormaps;
             for (let i = 0; i < this.frames.length; i++) {
