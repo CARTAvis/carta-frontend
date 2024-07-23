@@ -179,7 +179,12 @@ export class ColorBlendingStore {
             const getHex = (index: number): string => "#" + tinycolor({r: gradient.color[index * 4], g: gradient.color[index * 4 + 1], b: gradient.color[index * 4 + 2], a: gradient.color[index * 4 + 3]}).toHex();
 
             for (let i = 0; i < this.frames.length; i++) {
-                const index = Math.round(((colormapSetConfig.inverted ? this.frames.length - 1 - i : i) * (gradient.size - 1)) / (this.frames.length - 1));
+                let index;
+                if (this.frames.length === 1) {
+                    index = colormapSetConfig.inverted ? gradient.size - 1 : 0;
+                } else {
+                    index = Math.round(((colormapSetConfig.inverted ? this.frames.length - 1 - i : i) * (gradient.size - 1)) / (this.frames.length - 1));
+                }
                 const hex = getHex(index);
 
                 let isExistingSingleColor = false;
@@ -199,7 +204,13 @@ export class ColorBlendingStore {
         } else {
             const colormaps = colormapSetConfig.colormaps;
             for (let i = 0; i < this.frames.length; i++) {
-                const index = Math.round((i * (colormaps.length - 1)) / (this.frames.length - 1));
+                let index;
+                if (this.frames.length === 1) {
+                    index = 0;
+                } else {
+                    index = Math.round((i * (colormaps.length - 1)) / (this.frames.length - 1));
+                }
+
                 this.frames[i].renderConfig.setColorMap(colormaps[index]);
             }
         }

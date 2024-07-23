@@ -207,6 +207,11 @@ describe("ColorBlendingStore", () => {
             const mockRainbowGradient = {color: [...violet, ...blue, ...green, ...orange, ...red], size: 5};
             getColorsForValues.mockReturnValue(mockRainbowGradient);
 
+            // one layer
+            colorBlendingStore.selectedFrames = [];
+            colorBlendingStore.applyColormapSet("Rainbow");
+            expect(mockReferenceSetColorMap).toHaveBeenCalledWith("Red");
+
             // two layers
             colorBlendingStore.selectedFrames = [{renderConfig: {setColorMap: mockSetColorMap1, setCustomHexEnd: mockSetCustomHexEnd1}}];
             colorBlendingStore.applyColormapSet("Rainbow");
@@ -225,6 +230,11 @@ describe("ColorBlendingStore", () => {
         it("applies a collection of colormaps correctly", () => {
             const mockSetColorMap1 = jest.fn();
             const mockSetColorMap2 = jest.fn();
+
+            // one layer
+            colorBlendingStore.selectedFrames = [];
+            colorBlendingStore.applyColormapSet("RGB");
+            expect(mockReferenceSetColorMap).toHaveBeenCalledWith("Red");
 
             // two layers
             colorBlendingStore.selectedFrames = [{renderConfig: {setColorMap: mockSetColorMap1}}];
