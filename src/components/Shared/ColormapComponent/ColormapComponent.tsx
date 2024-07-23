@@ -55,7 +55,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
             );
         } else {
             const colormapBlock = <ColormapBlock colormap={colormap} inverted={props.inverted} customColorStart={props.customColorStart} selectedCustomColor={props.selectedCustomColor} />;
-            return <MenuItem active={modifiers.active} disabled={modifiers.disabled} label={colormap} key={colormap} onClick={handleClick} text={colormapBlock} />;
+            return <MenuItem active={modifiers.active} disabled={modifiers.disabled} label={colormap} key={colormap} onClick={handleClick} text="" icon={colormapBlock} />;
         }
     };
 
