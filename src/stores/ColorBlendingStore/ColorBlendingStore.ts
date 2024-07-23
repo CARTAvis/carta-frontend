@@ -25,7 +25,7 @@ export class ColorBlendingStore {
     /** Available colormap sets used for blending. The keys are the names of the sets, and the values are the configuration of the set. */
     static readonly ColormapSets: ReadonlyMap<string, ColormapSetConfig> = new Map([
         ["RGB", {type: "collection", colormaps: ["Red", "Green", "Blue"]}],
-        ["CMY", {type: "collection", colormaps: ["Cyan", "Magenta", "Yellow"]}],
+        ["CMY", {type: "collection", colormaps: ["Magenta", "Yellow", "Cyan"]}],
         ["Rainbow", {type: "gradient", colormap: "rainbow", inverted: true}]
     ]);
     /** The default limit for the number of layers during initialization. */
