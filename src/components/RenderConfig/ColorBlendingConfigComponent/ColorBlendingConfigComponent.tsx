@@ -1,11 +1,10 @@
 import {AlphaPicker} from "react-color";
 import {Button, ButtonGroup, FormGroup, H6, HTMLSelect, Menu, MenuItem, Popover, Text, Tooltip} from "@blueprintjs/core";
 import {observer} from "mobx-react";
-import allMaps from "static/allmaps.png";
 
 import {ColormapBlock, ColormapComponent, SafeNumericInput} from "components/Shared";
 import {ImageType} from "models";
-import {AppStore, ColorBlendingStore, type FrameStore, RenderConfigStore} from "stores";
+import {AppStore, ColorBlendingStore, type FrameStore} from "stores";
 
 import "./ColorBlendingConfigComponent.scss";
 
@@ -27,7 +26,7 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
                 ) : (
                     <div className="colormap-set-blocks">
                         {colormapSetConfig.colormaps.map(x => (
-                            <ColormapIcon colormap={x} key={x} />
+                            <ColormapBlock colormap={x} inverted={false} roundIcon={true} key={x} />
                         ))}
                     </div>
                 )
@@ -147,42 +146,3 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
         </div>
     );
 });
-
-const ColormapIcon = ({colormap}: {colormap: string}) => {
-    const className = "colormap-block";
-    const size = 15;
-
-    if (RenderConfigStore.COLOR_MAPS_MONO.get(colormap)) {
-        return (
-            <div
-                className={className}
-                style={{
-                    transform: `scaleX(1)`,
-                    height: `${size}px`,
-                    width: `${size}px`,
-                    borderRadius: `100%`,
-                    backgroundImage: `linear-gradient(to right, black, ${RenderConfigStore.COLOR_MAPS_MONO.get(colormap)})`,
-                    backgroundSize: `100% 300%`,
-                    backgroundPosition: `0 calc(-300% - ${size}px)`
-                }}
-            />
-        );
-    } else {
-        const n = RenderConfigStore.COLOR_MAPS_ALL.length - RenderConfigStore.COLOR_MAPS_MONO.size;
-        const i = RenderConfigStore.COLOR_MAPS_ALL.indexOf(colormap);
-        return (
-            <div
-                className={className}
-                style={{
-                    transform: `scaleX(1)`,
-                    height: `${size}px`,
-                    width: `${size}px`,
-                    borderRadius: `100%`,
-                    backgroundImage: `url(${allMaps})`,
-                    backgroundSize: `100% calc(300% * ${n})`,
-                    backgroundPosition: `0 calc(300% * - ${i} - ${size}px)`
-                }}
-            />
-        );
-    }
-};

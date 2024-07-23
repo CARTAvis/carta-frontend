@@ -67,7 +67,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
     );
 };
 
-export const ColormapBlock = ({colormap, inverted, customColorStart, selectedCustomColor}: {colormap: string; inverted: boolean; customColorStart?: string; selectedCustomColor?: string}) => {
+export const ColormapBlock = ({colormap, inverted, roundIcon = false, customColorStart, selectedCustomColor}: {colormap: string; inverted: boolean; roundIcon?: boolean; customColorStart?: string; selectedCustomColor?: string}) => {
     const className = "colormap-block";
     const blockHeight = 15;
 
@@ -91,6 +91,8 @@ export const ColormapBlock = ({colormap, inverted, customColorStart, selectedCus
                 style={{
                     transform: `scaleX(${inverted ? -1 : 1})`,
                     height: `${blockHeight}px`,
+                    width: roundIcon ? `${blockHeight}px` : undefined,
+                    borderRadius: roundIcon ? `100%` : undefined,
                     backgroundImage: `linear-gradient(to right, black, ${RenderConfigStore.COLOR_MAPS_MONO.get(colormap)})`,
                     backgroundSize: `100% 300%`,
                     backgroundPosition: `0 calc(-300% - ${blockHeight}px)`
@@ -106,6 +108,8 @@ export const ColormapBlock = ({colormap, inverted, customColorStart, selectedCus
                 style={{
                     transform: `scaleX(${inverted ? -1 : 1})`,
                     height: `${blockHeight}px`,
+                    width: roundIcon ? `${blockHeight}px` : undefined,
+                    borderRadius: roundIcon ? `100%` : undefined,
                     backgroundImage: `url(${allMaps})`,
                     backgroundSize: `100% calc(300% * ${N})`,
                     backgroundPosition: `0 calc(300% * -${i} - ${blockHeight}px)`
