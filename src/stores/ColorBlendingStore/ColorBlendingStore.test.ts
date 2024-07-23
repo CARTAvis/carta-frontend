@@ -201,7 +201,7 @@ describe("ColorBlendingStore", () => {
 
         it("handles invalid colormap set names", () => {
             colorBlendingStore.applyColormapSet("InvalidSet");
-            expect(mockConsoleError).toHaveBeenCalledWith("Invalid color set name.");
+            expect(mockConsoleError).toHaveBeenCalledWith("Invalid colormap set name.");
         });
     });
 });

@@ -2,17 +2,29 @@ import {action, computed, makeAutoObservable, observable, reaction} from "mobx";
 
 import {AppStore, type FrameStore} from "stores";
 
+/** The configuration of a colormap set. Can either be a single gradient colormap or a collection of multiple colormaps. */
+type ColormapSetConfig =
+    | {
+          type: "gradient";
+          colormap: string;
+          inverted: boolean;
+      }
+    | {
+          type: "collection";
+          colormaps: readonly string[];
+      };
+
 /** Configuration of a color blended image. */
 export class ColorBlendingStore {
     /** The unique identifier of the color blended image. */
     readonly id: number;
     /** The filename of the color blended image. */
     readonly filename: string;
-    /** Available colormap sets used for blending. The keys are the names of the sets, and the values are arrays of colormaps. */
-    static readonly ColormapSets: ReadonlyMap<string, readonly string[]> = new Map([
-        ["RGB", ["Red", "Green", "Blue"]],
-        ["CMY", ["Cyan", "Magenta", "Yellow"]],
-        ["Rainbow", ["Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Violet"]]
+    /** Available colormap sets used for blending. The keys are the names of the sets, and the values are the configuration of the set. */
+    static readonly ColormapSets: ReadonlyMap<string, ColormapSetConfig> = new Map([
+        ["RGB", {type: "collection", colormaps: ["Red", "Green", "Blue"]}],
+        ["CMY", {type: "collection", colormaps: ["Cyan", "Magenta", "Yellow"]}],
+        ["Rainbow", {type: "gradient", colormap: "rainbow", inverted: true}]
     ]);
     /** The default limit for the number of layers during initialization. */
     static readonly DefaultLayerLimit = 10;
@@ -152,15 +164,21 @@ export class ColorBlendingStore {
      * @param set - The name of the colormap set to apply. Must be a key in the `ColorBlendingStore.ColormapSets` map.
      */
     applyColormapSet = (set: string) => {
-        const colormaps = ColorBlendingStore.ColormapSets.get(set);
-        if (!colormaps) {
-            console.error("Invalid color set name.");
+        const colormapSetConfig = ColorBlendingStore.ColormapSets.get(set);
+        if (!colormapSetConfig) {
+            console.error("Invalid colormap set name.");
             return;
         }
 
-        for (let i = 0; i < this.frames.length; i++) {
-            const index = Math.round((i * (colormaps.length - 1)) / (this.frames.length - 1));
-            this.frames[i].renderConfig.setColorMap(colormaps[index]);
+        if (colormapSetConfig.type === "gradient") {
+            const colormap = colormapSetConfig.colormap;
+            console.log(colormap);
+        } else {
+            const colormaps = colormapSetConfig.colormaps;
+            for (let i = 0; i < this.frames.length; i++) {
+                const index = Math.round((i * (colormaps.length - 1)) / (this.frames.length - 1));
+                this.frames[i].renderConfig.setColorMap(colormaps[index]);
+            }
         }
     };
 

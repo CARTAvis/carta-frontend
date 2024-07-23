@@ -19,15 +19,17 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
     const unselectedFrames = matchedFrames.filter(f => !colorBlendingStore.selectedFrames.includes(f));
 
     const newFrameOptions = unselectedFrames.map((f, i) => <MenuItem text={f.filename} onClick={() => colorBlendingStore.addSelectedFrame(f)} key={i} />);
-    const colormapSetOptions = Array.from(ColorBlendingStore.ColormapSets, ([set, colormaps]) => (
+    const colormapSetOptions = Array.from(ColorBlendingStore.ColormapSets, ([set, colormapSetConfig]) => (
         <MenuItem
             text={
                 <div className="colormap-set-option">
                     {set}
                     <div className="colormap-set-blocks">
-                        {colormaps.map(x => (
-                            <ColormapIcon colormap={x} key={x} />
-                        ))}
+                        {colormapSetConfig.type === "gradient" ? (
+                            <ColormapGradientIcon colormap={colormapSetConfig.colormap} inverted={colormapSetConfig.inverted} />
+                        ) : (
+                            colormapSetConfig.colormaps.map(x => <ColormapIcon colormap={x} key={x} />)
+                        )}
                     </div>
                 </div>
             }
@@ -183,4 +185,24 @@ const ColormapIcon = ({colormap}: {colormap: string}) => {
             />
         );
     }
+};
+
+const ColormapGradientIcon = ({colormap, inverted}: {colormap: string; inverted: boolean}) => {
+    const className = "colormap-block";
+    const blockHeight = 15;
+
+    const N = RenderConfigStore.COLOR_MAPS_ALL.length - RenderConfigStore.COLOR_MAPS_MONO.size;
+    const i = RenderConfigStore.COLOR_MAPS_ALL.indexOf(colormap);
+    return (
+        <div
+            className={className}
+            style={{
+                transform: `scaleX(${inverted ? -1 : 1})`,
+                height: `${blockHeight}px`,
+                backgroundImage: `url(${allMaps})`,
+                backgroundSize: `100% calc(300% * ${N})`,
+                backgroundPosition: `0 calc(300% * -${i} - ${blockHeight}px)`
+            }}
+        />
+    );
 };
