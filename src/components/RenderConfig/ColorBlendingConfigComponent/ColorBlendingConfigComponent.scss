@@ -67,14 +67,8 @@
     }
 }
 
-.colormap-set-option {
+.colormap-set-blocks {
     display: flex;
-    justify-content: space-between;
-    gap: 10px;
-
-    .colormap-set-blocks {
-        display: flex;
-        gap: 3px;
-        align-items: center;
-    }
+    gap: 3px;
+    align-items: center;
 }

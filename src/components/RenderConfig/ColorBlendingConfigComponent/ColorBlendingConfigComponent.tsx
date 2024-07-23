@@ -3,7 +3,7 @@ import {Button, ButtonGroup, FormGroup, H6, HTMLSelect, Menu, MenuItem, Popover,
 import {observer} from "mobx-react";
 import allMaps from "static/allmaps.png";
 
-import {ColormapComponent, SafeNumericInput} from "components/Shared";
+import {ColormapBlock, ColormapComponent, SafeNumericInput} from "components/Shared";
 import {ImageType} from "models";
 import {AppStore, ColorBlendingStore, type FrameStore, RenderConfigStore} from "stores";
 
@@ -22,17 +22,17 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
     const colormapSetOptions = Array.from(ColorBlendingStore.ColormapSets, ([set, colormapSetConfig]) => (
         <MenuItem
             text={
-                <div className="colormap-set-option">
-                    {set}
+                colormapSetConfig.type === "gradient" ? (
+                    <ColormapBlock colormap={colormapSetConfig.colormap} inverted={colormapSetConfig.inverted} />
+                ) : (
                     <div className="colormap-set-blocks">
-                        {colormapSetConfig.type === "gradient" ? (
-                            <ColormapGradientIcon colormap={colormapSetConfig.colormap} inverted={colormapSetConfig.inverted} />
-                        ) : (
-                            colormapSetConfig.colormaps.map(x => <ColormapIcon colormap={x} key={x} />)
-                        )}
+                        {colormapSetConfig.colormaps.map(x => (
+                            <ColormapIcon colormap={x} key={x} />
+                        ))}
                     </div>
-                </div>
+                )
             }
+            label={set}
             onClick={() => colorBlendingStore.applyColormapSet(set)}
             key={set}
         />
@@ -185,24 +185,4 @@ const ColormapIcon = ({colormap}: {colormap: string}) => {
             />
         );
     }
-};
-
-const ColormapGradientIcon = ({colormap, inverted}: {colormap: string; inverted: boolean}) => {
-    const className = "colormap-block";
-    const blockHeight = 15;
-
-    const N = RenderConfigStore.COLOR_MAPS_ALL.length - RenderConfigStore.COLOR_MAPS_MONO.size;
-    const i = RenderConfigStore.COLOR_MAPS_ALL.indexOf(colormap);
-    return (
-        <div
-            className={className}
-            style={{
-                transform: `scaleX(${inverted ? -1 : 1})`,
-                height: `${blockHeight}px`,
-                backgroundImage: `url(${allMaps})`,
-                backgroundSize: `100% calc(300% * ${N})`,
-                backgroundPosition: `0 calc(300% * -${i} - ${blockHeight}px)`
-            }}
-        />
-    );
 };
