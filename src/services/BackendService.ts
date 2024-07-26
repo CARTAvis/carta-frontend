@@ -132,10 +132,10 @@ export class BackendService {
             [CARTA.EventType.REGION_FILE_INFO_RESPONSE, {messageClass: CARTA.RegionFileInfoResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.CATALOG_FILE_INFO_RESPONSE, {messageClass: CARTA.CatalogFileInfoResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.OPEN_FILE_ACK, {messageClass: CARTA.OpenFileAck, handler: this.onDeferredResponse}],
-            [CARTA.EventType.SAVE_FILE_ACK, {messageClass: CARTA.SaveFileAck, handler: this.onDeferredResponse}],
+            [CARTA.EventType.SAVE_FILE_ACK, {messageClass: CARTA.SaveFileAck, handler: this.onSaveFileAndRegionAck}],
             [CARTA.EventType.OPEN_CATALOG_FILE_ACK, {messageClass: CARTA.OpenCatalogFileAck, handler: this.onDeferredResponse}],
             [CARTA.EventType.IMPORT_REGION_ACK, {messageClass: CARTA.ImportRegionAck, handler: this.onDeferredResponse}],
-            [CARTA.EventType.EXPORT_REGION_ACK, {messageClass: CARTA.ExportRegionAck, handler: this.onDeferredResponse}],
+            [CARTA.EventType.EXPORT_REGION_ACK, {messageClass: CARTA.ExportRegionAck, handler: this.onSaveFileAndRegionAck}],
             [CARTA.EventType.SET_REGION_ACK, {messageClass: CARTA.SetRegionAck, handler: this.onDeferredResponse}],
             [CARTA.EventType.RESUME_SESSION_ACK, {messageClass: CARTA.ResumeSessionAck, handler: this.onDeferredResponse}],
             [CARTA.EventType.START_ANIMATION_ACK, {messageClass: CARTA.StartAnimationAck, handler: this.onStartAnimationAck}],
@@ -910,6 +910,19 @@ export class BackendService {
         } else {
             console.log(`Can't find deferred for request ${eventId}`);
         }
+    }
+
+    private onSaveFileAndRegionAck(eventId: number, ack: CARTA.SaveFileAck | CARTA.ExportRegionAck) {
+        // to check the overwriteConfirmationRequired field, return the entire response instead of the message field
+        if (!ack.success) {
+            const def = this.deferredMap.get(eventId);
+            if (def) {
+                def.reject(ack);
+            } else {
+                console.log(`Can't find deferred for request ${eventId}`);
+            }
+        }
+        this.onDeferredResponse(eventId, ack);
     }
 
     private onRegisterViewerAck(eventId: number, ack: CARTA.RegisterViewerAck) {

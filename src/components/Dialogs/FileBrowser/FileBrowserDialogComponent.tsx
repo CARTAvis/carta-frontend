@@ -178,11 +178,11 @@ export class FileBrowserDialogComponent extends React.Component {
         try {
             await this.handleSaveFile();
         } catch (err) {
-            if (err === "Cannot overwrite existing image." || err === "Cannot overwrite existing file or symlink.") {
+            if (err.overwriteConfirmationRequired) {
                 this.overwriteExistingFileAlertVisible = true;
             } else {
-                console.error(err);
-                AppToaster.show({icon: "warning-sign", message: err, intent: "danger", timeout: 3000});
+                console.error(err.message);
+                AppToaster.show({icon: "warning-sign", message: err.message, intent: "danger", timeout: 3000});
             }
         }
     };
@@ -198,11 +198,11 @@ export class FileBrowserDialogComponent extends React.Component {
             const filename = fileBrowserStore.exportFilename.trim();
             await this.exportRegion(fileBrowserStore.fileList.directory, filename);
         } catch (err) {
-            if (err === "Export region failed: cannot overwrite existing file.") {
+            if (err.overwriteConfirmationRequired) {
                 this.overwriteExistingFileAlertVisible = true;
             } else {
-                console.error(err);
-                AppToaster.show(ErrorToast(err));
+                console.error(err.message);
+                AppToaster.show(ErrorToast(err.message));
             }
         }
     };
@@ -227,15 +227,15 @@ export class FileBrowserDialogComponent extends React.Component {
                 const filename = fileBrowserStore.exportFilename.trim();
                 await this.exportRegion(fileBrowserStore.fileList.directory, filename, true);
             } catch (err) {
-                console.error(err);
-                AppToaster.show(ErrorToast(err));
+                console.error(err.message);
+                AppToaster.show(ErrorToast(err.message));
             }
         } else if (fileBrowserStore.browserMode === BrowserMode.SaveFile) {
             try {
                 await this.handleSaveFile(true);
             } catch (err) {
-                console.error(err);
-                AppToaster.show({icon: "warning-sign", message: err, intent: "danger", timeout: 3000});
+                console.error(err.message);
+                AppToaster.show({icon: "warning-sign", message: err.message, intent: "danger", timeout: 3000});
             }
         }
     };
