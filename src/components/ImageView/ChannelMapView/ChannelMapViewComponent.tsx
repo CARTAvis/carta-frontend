@@ -5,7 +5,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {CursorInfo, FrameView, ImageType, Point2D} from "models";
-import {ChannelMapTileService, ChannelMapWebGLService} from "services";
+import {ChannelMapTileService, TileWebGLService} from "services";
 import {AppStore, OverlayStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {GetRequiredTiles} from "utilities";
@@ -217,7 +217,7 @@ export class ChannelMapStore {
     }
 
     @computed get channelRange(): number {
-        return this.startChannel + this.numChannels - 1;
+        return Math.min(this.startChannel + this.numChannels - 1, this.masterFrame.frameInfo.fileInfoExtended.depth - 1);
     }
 
     @computed get channelArray(): number[] {
@@ -323,9 +323,10 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
 
     const setCornerOverlay = () => {
         const row = channelMapStore.numRows - 1;
+        const lastRow = Math.floor((channelMapStore.channelArray.length - 1) / channelMapStore.numColumns);
         const column = 0;
         const channel = row * channelMapStore.numColumns;
-        const overlayComponentTop = imageRenderHeight * row;
+        const overlayComponentTop = imageRenderHeight * lastRow;
         const overlayComponentLeft = imageRenderWidth * column - overlayStore.paddingLeft;
 
         return (
@@ -388,7 +389,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                                             type: ImageType.FRAME,
                                             store: channelMapStore.auxiliaryFrame
                                         }}
-                                        webGLService={ChannelMapWebGLService.Instance}
+                                        webGLService={TileWebGLService.Instance}
                                         tileService={ChannelMapTileService.Instance}
                                         overlayStore={overlayStore}
                                         top={overlayComponentTop}
@@ -407,7 +408,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                                             type: ImageType.FRAME,
                                             store: frame
                                         }}
-                                        webGLService={ChannelMapWebGLService.Instance}
+                                        webGLService={TileWebGLService.Instance}
                                         tileService={ChannelMapTileService.Instance}
                                         overlayStore={overlayStore}
                                         top={overlayComponentTop}

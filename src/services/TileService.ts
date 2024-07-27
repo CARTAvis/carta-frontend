@@ -4,7 +4,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {Subject} from "rxjs";
 
 import {Point2D, TileCoordinate} from "models";
-import {BackendService, ChannelMapWebGLService, TileWebGLService} from "services";
+import {BackendService, TileWebGLService} from "services";
 import {AppStore, PREVIEW_PV_FILEID} from "stores";
 import {copyToFP32Texture, createFP32Texture, GL2} from "utilities";
 
@@ -723,6 +723,6 @@ export class ChannelMapTileService extends TileService {
 
     protected constructor() {
         super();
-        this.gl = ChannelMapWebGLService.Instance.gl;
+        this.gl = TileWebGLService.Instance.gl;
     }
 }

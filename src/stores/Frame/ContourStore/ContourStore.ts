@@ -5,7 +5,7 @@ import {ContourWebGLService} from "services";
 import {GL2} from "utilities";
 
 export class ContourStore {
-    @observable progress: Map<number, number>;
+    @observable progress: Map<number, number>; // maps channel to the progress of each channel
     @observable numGeneratedVertices: Map<number, number[]>;
     @observable vertexCount: number = 0;
     @observable chunkCount: number = 0;
@@ -30,7 +30,6 @@ export class ContourStore {
 
     isComplete(channel: number) {
         return this.progress.get(channel) >= 1.0;
-        // return Object.values(this.progress).every(progress => progress >= 1.0);
     }
 
     constructor() {
@@ -53,6 +52,7 @@ export class ContourStore {
         const numVertices = sourceVertices.length / 2;
 
         if (!numVertices) {
+            this.progress.set(channel, 1);
             return;
         }
 
@@ -131,7 +131,7 @@ export class ContourStore {
     };
 
     bindBuffer(index: number, channel: number) {
-        if (channel && (!this.vertexBuffers.has(channel) || index >= this.vertexBuffers.get(channel).length)) {
+        if (channel && (!this.vertexBuffers.has(channel) || index > this.vertexBuffers.get(channel).length - 1)) {
             console.log(`WebGL buffer missing`);
         } else {
             this.gl.bindBuffer(GL2.ARRAY_BUFFER, this.vertexBuffers.get(channel)[index]);

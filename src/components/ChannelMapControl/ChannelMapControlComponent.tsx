@@ -110,10 +110,10 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                     <SafeNumericInput placeholder="Start channel" value={channelMapSettings.startChannel} min={0} max={numChannels - 1} onValueChange={onChannelChanged} />
                 </FormGroup>
                 <FormGroup className="channel-map-control-label" inline={true} label="Number of Columns">
-                    <SafeNumericInput placeholder="Number of Columns" min={1} max={10} value={channelMapSettings.numColumns} stepSize={1} onValueChange={(value: number) => channelMapSettings.setNumColumns(value)} />
+                    <SafeNumericInput placeholder="Number of columns" min={1} max={10} value={channelMapSettings.numColumns} stepSize={1} onValueChange={(value: number) => channelMapSettings.setNumColumns(value)} />
                 </FormGroup>
                 <FormGroup className="channel-map-control-label" inline={true} label="Number of Rows">
-                    <SafeNumericInput placeholder="Number of Rows" min={1} max={10} value={channelMapSettings.numRows} stepSize={1} onValueChange={(value: number) => channelMapSettings.setNumRows(value)} />
+                    <SafeNumericInput placeholder="Number of rows" min={1} max={10} value={channelMapSettings.numRows} stepSize={1} onValueChange={(value: number) => channelMapSettings.setNumRows(value)} />
                 </FormGroup>
                 <FormGroup className="channel-map-control-label" inline={true} label="Single Channel Contour">
                     <Switch checked={channelMapSettings.singleChannelContour} onChange={ev => channelMapSettings.setSingleChannelContour(ev.currentTarget.checked)} />

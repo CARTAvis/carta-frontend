@@ -70,8 +70,6 @@ export class TileWebGLService {
             return;
         }
 
-        console.log(this.gl.canvas.width, this.gl.canvas.height);
-
         this.gl.canvas.width = width;
         this.gl.canvas.height = height;
         console.log(width, height, this.gl.canvas.width, this.gl.canvas.height, this.gl);
@@ -202,21 +200,6 @@ export class PreviewWebGLService extends TileWebGLService {
             PreviewWebGLService.staticInstance = new PreviewWebGLService();
         }
         return PreviewWebGLService.staticInstance;
-    }
-
-    private constructor() {
-        super();
-    }
-}
-
-export class ChannelMapWebGLService extends TileWebGLService {
-    protected static staticInstance: ChannelMapWebGLService;
-
-    static get Instance() {
-        if (!ChannelMapWebGLService.staticInstance) {
-            ChannelMapWebGLService.staticInstance = new ChannelMapWebGLService();
-        }
-        return ChannelMapWebGLService.staticInstance;
     }
 
     private constructor() {

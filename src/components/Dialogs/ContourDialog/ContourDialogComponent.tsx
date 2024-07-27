@@ -307,6 +307,7 @@ export class ContourDialogComponent extends React.Component {
         }
 
         const dataSource = appStore.contourDataSource;
+        const channelMapStore = appStore.channelMapStore;
 
         let unitString = "Value";
         if (dataSource.headerUnit) {
@@ -532,6 +533,13 @@ export class ContourDialogComponent extends React.Component {
                     cancellable={true}
                     onCancel={this.handleCubeHistogramCancelled}
                     text={"Calculating cube histogram"}
+                />
+                <TaskProgressDialogComponent
+                    isOpen={channelMapStore.masterFrame?.channelMapContourProgress < 1.0 && !channelMapStore.masterFrame.isChannelMapContourComplete}
+                    progress={channelMapStore.masterFrame?.channelMapContourProgress}
+                    timeRemaining={appStore.estimatedTaskRemainingTime}
+                    cancellable={false}
+                    text={"Streaming channel map contour data"}
                 />
             </DraggableDialogComponent>
         );

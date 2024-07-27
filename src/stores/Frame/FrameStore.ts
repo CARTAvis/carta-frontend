@@ -3,6 +3,7 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
 
+import {PvPreviewComponent} from "components";
 import {
     CatalogControlMap,
     ChannelInfo,
@@ -1073,6 +1074,40 @@ export class FrameStore {
         return totalProgress / (this.contourConfig.levels ? this.contourConfig.levels.length : 1);
     }
 
+    @computed get channelMapContourProgress(): number {
+        let totalProgress = 0;
+        const channelArray = [];
+        for (let i = this.contourConfig.requestedChannelMapContourRange.min; i <= this.contourConfig.requestedChannelMapContourRange.max; i++) {
+            channelArray.push(i);
+        }
+        this.contourStores.forEach((contourStore, level) => {
+            if (this.contourConfig.levels.indexOf(level) !== -1) {
+                channelArray.forEach(channel => {
+                    totalProgress += contourStore.progress.has(channel) ? contourStore.progress.get(channel) : 0;
+                });
+            }
+        });
+
+        return totalProgress / (this.contourConfig.levels ? this.contourConfig.levels.length * channelArray.length : 1);
+    }
+
+    @computed get isChannelMapContourComplete(): boolean {
+        let isComplete = true;
+        const channelArray = [];
+        for (let i = this.contourConfig.requestedChannelMapContourRange.min; i <= this.contourConfig.requestedChannelMapContourRange.max; i++) {
+            channelArray.push(i);
+        }
+        this.contourStores.forEach(contourStore => {
+            for (const channel of channelArray) {
+                if (!contourStore.isComplete(channel)) {
+                    isComplete = false;
+                }
+            }
+        });
+
+        return isComplete;
+    }
+
     @computed get stokesOptions(): {value: number; label: string}[] {
         let stokesOptions = [];
         if (this.frameInfo && this.frameInfo.fileInfoExtended && this.frameInfo.fileInfoExtended.headerEntries) {
@@ -1209,7 +1244,7 @@ export class FrameStore {
         makeObservable(this);
         this._overlayStore = AppStore.Instance.overlayStore;
         this.channelMapOverlayStore = AppStore.Instance.channelMapStore.overlayStores.corner;
-        this.previewOverlayStore = new OverlayStore();
+        this.previewOverlayStore = new OverlayStore(PvPreviewComponent.WIDGET_CONFIG.defaultWidth, PvPreviewComponent.WIDGET_CONFIG.defaultHeight);
         this.logStore = LogStore.Instance;
         this.backendService = BackendService.Instance;
         const preferenceStore = PreferenceStore.Instance;
@@ -2632,7 +2667,12 @@ export class FrameStore {
         }
 
         const preferenceStore = PreferenceStore.Instance;
+        const channelMapStore = AppStore.Instance.channelMapStore;
         this.contourConfig.setEnabled(true);
+
+        const channelRange =
+            preferenceStore.channelMapEnabled &&
+            (channelMapStore.singleChannelContour ? {min: channelMapStore.singleContourChannel, max: channelMapStore.singleContourChannel} : {min: channelMapStore.startChannel, max: channelMapStore.channelRange});
 
         // TODO: Allow a different reference frame
         const contourParameters: CARTA.ISetContourParameters = {
@@ -2650,9 +2690,10 @@ export class FrameStore {
             decimationFactor: preferenceStore.contourDecimation,
             compressionLevel: preferenceStore.contourCompressionLevel,
             contourChunkSize: preferenceStore.contourChunkSize,
-            channelRange: preferenceStore.channelMapEnabled && {min: AppStore.Instance.channelMapStore.startChannel, max: AppStore.Instance.channelMapStore.channelRange}
+            channelRange
         };
         this.backendService.setContourParameters(contourParameters);
+        this.contourConfig.setRequestedChannelMapContourRange(channelRange);
     };
 
     @action clearContours = (updateBackend: boolean = true) => {
@@ -3087,8 +3128,6 @@ export class FrameStore {
     }
 
     @action onResizePreviewWidget = (width: number, height: number) => {
-        // this.previewViewWidth = width;
-        // this.previewViewHeight = height;
         this.previewOverlayStore._fullViewWidth = width;
         this.previewOverlayStore._fullViewHeight = height;
     };
