@@ -7,7 +7,7 @@
     "devDependencies": {
         "@blueprintjs/core": "^5.11.0",
         "@blueprintjs/icons": "^5.7.1",
-        "@blueprintjs/select": "^5.1.1",
+        "@blueprintjs/select": "^5.2.2",
         "@blueprintjs/table": "5.1.1",
         "@testing-library/jest-dom": "^6.4.8",
         "@testing-library/react": "^12.1.5",
