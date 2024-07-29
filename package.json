@@ -15,7 +15,7 @@
         "@types/jest": "^29.4.0",
         "@types/jquery": "^3.5.30",
         "@types/lodash": "^4.17.7",
-        "@types/node": "^20.14.12",
+        "@types/node": "^20.14.13",
         "@types/plotly.js": "^2.33.1",
         "@types/prismjs": "^1.26.4",
         "@types/react": "^17.0.2",
