@@ -74,6 +74,8 @@ export class FileBrowserDialogComponent extends React.Component {
 
             const appStore = AppStore.Instance;
             appStore.frames.forEach(f => appStore.setSpatialMatchingEnabled(f, true));
+            appStore.frames.forEach(f => appStore.setRasterScalingMatchingEnabled(f, false));
+            appStore.frames.forEach(f => f.renderConfig.setPercentileRank(appStore.preferenceStore.percentile));
             const colorBlendingStore = appStore.imageViewConfigStore.createColorBlending();
 
             colorBlendingStore.applyColormapSet(appStore.fileBrowserStore.selectedFiles?.length <= 3 ? "RGB" : "Rainbow");
