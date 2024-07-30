@@ -52,7 +52,7 @@
         "os-browserify": "^0.3.0",
         "path-browserify": "^1.0.1",
         "plotly.js": "^2.34.0",
-        "prettier": "3.3.2",
+        "prettier": "3.3.3",
         "preval.macro": "^5.0.0",
         "prismjs": "^1.29.0",
         "protobufjs": "^7.3.2",
