@@ -388,7 +388,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                         <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Stokes)} text={"Load as hypercube"} />
                                     </Tooltip>
                                 )}
-                                {fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length <= 7 && (
+                                {fileBrowserStore.selectedFiles?.length > 1 && (
                                     <Tooltip content={"Close any existing images and load the images"}>
                                         <AnchorButton
                                             intent={Intent.PRIMARY}
