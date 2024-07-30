@@ -1310,6 +1310,40 @@ export class AppStore {
         }
     }
 
+    /**
+     * Deletes all regions including annotations.
+     */
+    @action deleteAllRegions = () => {
+        this.activeFrame.regionSet.regionMap.forEach(x => {
+            if (x.regionId !== CURSOR_REGION_ID) {
+                this.deleteRegion(x);
+            }
+        });
+        AppToaster.show(SuccessToast("console", `Regions deleted successfully.`, 3000));
+    };
+
+    /**
+     * Deletes all annotations.
+     */
+    @action deleteAllAnnotations = () => {
+        this.activeFrame.regionSet.regionMap.forEach(x => {
+            if (x.regionId !== CURSOR_REGION_ID && x.isAnnotation) {
+                this.deleteRegion(x);
+            }
+        });
+    };
+
+    /**
+     * Deletes all regular regions.
+     */
+    @action deleteAllRegularRegions = () => {
+        this.activeFrame.regionSet.regionMap.forEach(x => {
+            if (x.regionId !== CURSOR_REGION_ID && !x.isAnnotation) {
+                this.deleteRegion(x);
+            }
+        });
+    };
+
     @action requestCubeHistogram = (fileId: number = -1) => {
         const frame = this.getFrame(fileId);
         if (frame && frame.renderConfig.cubeHistogramProgress < 1.0) {
