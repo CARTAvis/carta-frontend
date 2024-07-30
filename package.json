@@ -80,7 +80,7 @@
         "stream-browserify": "^3.0.0",
         "tinycolor2": "^1.6.0",
         "tsc-silent": "^1.2.2",
-        "typescript": "^5.5.3",
+        "typescript": "^5.5.4",
         "util": "^0.12.5",
         "uuid": "^10.0.0",
         "worker-loader": "^3.0.8"
