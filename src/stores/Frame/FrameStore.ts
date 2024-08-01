@@ -2185,8 +2185,8 @@ export class FrameStore {
     @action private createWcsInfoShifted = () => {
         if (this.spatialReference) {
             this.spatialReference.createWcsInfoShifted();
-        } else {
-            if (this.wcsInfo && this.offsetCenter) {
+        } else if (this.wcsInfo && this.offsetCenter) {
+            if (AppStore.Instance.overlayStore.global.explicitSystem !== SystemType.Image) {
                 const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.offsetCenter);
 
                 if (centerInRad) {
@@ -2198,6 +2198,8 @@ export class FrameStore {
                         }
                     }
                 }
+            } else {
+                this.wcsInfoShifted = AST.createShiftmapPixelFrameset(this.wcsInfo, this.offsetCenter.x, this.offsetCenter.y);
             }
         }
     };

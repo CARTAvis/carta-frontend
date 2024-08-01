@@ -222,6 +222,19 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createShiftmapFrameset(AstFrameSet* wcsinfo, d
     return wcsinfoShifted;
 }
 
+EMSCRIPTEN_KEEPALIVE AstFrameSet* createShiftmapPixelFrameset(AstFrameSet* wcsinfo, double offsetX, double offsetY)
+{
+    AstFrameSet* wcsinfoShifted = static_cast<AstFrameSet*> astCopy(wcsinfo);
+
+    // 2D shifts
+    double offset[] = {-offsetX, -offsetY};
+    AstShiftMap* shiftMap = astShiftMap(2, offset, "");
+
+    astAddFrame(wcsinfoShifted, AST__BASE, shiftMap, astFrame(2, "Label(1)=X Coordinate,Label(2)=Y Coordinate,Domain=GRID"));
+
+    return wcsinfoShifted;
+}
+
 EMSCRIPTEN_KEEPALIVE AstFrameSet* initDummyFrame()
 {
     AstFrameSet* frameSet = astFrameSet(astFrame(2, "Label(1)=X Coordinate,Label(2)=Y Coordinate,Domain=GRID"), "");

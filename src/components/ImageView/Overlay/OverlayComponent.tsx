@@ -74,7 +74,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 AST.setI(tempWcsInfo, "Current", 2);
             }
 
-            if (frame.isOffsetCoord) {
+            if (frame.isOffsetCoord && AppStore.Instance.overlayStore.global.explicitSystem !== SystemType.Image) {
                 const fovSizeInArcsec = frame.getWcsSizeInArcsec(frame.fovSize);
                 const viewSize = fovSizeInArcsec.x > fovSizeInArcsec.y ? fovSizeInArcsec.y : fovSizeInArcsec.x;
                 const factor = 2; // jump factor
