@@ -53,15 +53,18 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
         const setAlpha = (val: number) => colorBlendingStore.setAlpha(alphaIndex, val);
         return (
             <>
-                <ColormapComponent
-                    inverted={renderConfig.inverted}
-                    selectedColormap={renderConfig.colorMap}
-                    onColormapSelect={renderConfig.setColorMap}
-                    enableAdditionalColor={true}
-                    onCustomColorSelect={renderConfig.setCustomHexEnd}
-                    selectedCustomColor={renderConfig.customColormapHexEnd}
-                    customColorStart={renderConfig.customColormapHexStart}
-                />
+                <Tooltip content="Raster scaling matching enabled" disabled={!frame.rasterScalingReference}>
+                    <ColormapComponent
+                        disabled={!!frame.rasterScalingReference}
+                        inverted={renderConfig.inverted}
+                        selectedColormap={renderConfig.colorMap}
+                        onColormapSelect={renderConfig.setColorMap}
+                        enableAdditionalColor={true}
+                        onCustomColorSelect={renderConfig.setCustomHexEnd}
+                        selectedCustomColor={renderConfig.customColormapHexEnd}
+                        customColorStart={renderConfig.customColormapHexStart}
+                    />
+                </Tooltip>
                 <div className="alpha-settings">
                     <AlphaPicker className="alpha-slider" color={{r: 0, g: 0, b: 0, a: alpha}} onChange={color => setAlpha(color.rgb.a)} />
                     <Tooltip content="Alpha">
