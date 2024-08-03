@@ -1393,6 +1393,7 @@ export class FrameStore {
             if (Math.abs(this.framePixelRatio - 1.0) < 0.001) {
                 this.framePixelRatio = 1.0;
             }
+            this.framePixelRatio = 1.0;
         }
 
         const headerRestFreq = this.headerRestFreq;

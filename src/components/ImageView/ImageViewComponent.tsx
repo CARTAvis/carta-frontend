@@ -43,6 +43,17 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
     return imageViewCanvas;
 }
 
+
+export function getRasterImage(column: number, row: number) {
+    const panelElement = $(`#image-panel-${column}-${row}`)?.first();
+    if (!panelElement?.length) {
+        return null;
+    }
+    const rasterCanvas = panelElement.find(".raster-canvas")?.[0] as HTMLCanvasElement;
+
+    return rasterCanvas;
+}
+
 export function getPanelCanvas(column: number, row: number, padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
     const panelElement = $(`#image-panel-${column}-${row}`)?.first();
     if (!panelElement?.length) {
@@ -70,7 +81,8 @@ export function getPanelCanvas(column: number, row: number, padding: Padding, co
     const ctx = composedCanvas.getContext("2d");
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
-    ctx.drawImage(rasterCanvas, padding.left * pixelRatio, padding.top * pixelRatio);
+    // ctx.drawImage(rasterCanvas, padding.left * pixelRatio, padding.top * pixelRatio);
+    ctx.drawImage(rasterCanvas, 0, 0);
     ctx.drawImage(contourCanvas, padding.left * pixelRatio, padding.top * pixelRatio);
     ctx.drawImage(vectorOverlayCanvas, padding.left * pixelRatio, padding.top * pixelRatio);
     if (colorbarCanvas) {

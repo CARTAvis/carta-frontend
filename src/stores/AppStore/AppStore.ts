@@ -9,7 +9,7 @@ import {action, autorun, computed, flow, makeObservable, observable, ObservableM
 import * as Path from "path-browserify";
 import * as Semver from "semver";
 
-import {getImageViewCanvas, ImageViewLayer, PvGeneratorComponent} from "components";
+import {getImageViewCanvas, getRasterImage, ImageViewLayer, PvGeneratorComponent} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import {
     CARTA_INFO,
@@ -3196,6 +3196,11 @@ export class AppStore {
         }
         return null;
     };
+
+
+    exportRasterImage = () => {
+        return getRasterImage(0, 0).toDataURL();
+    }
 
     delay(time: number) {
         return new Promise(resolve => {
