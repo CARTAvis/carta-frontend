@@ -123,10 +123,15 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
         const isColorBlending = image?.type === ImageType.COLOR_BLENDING;
         const frame = isColorBlending ? image.store?.baseFrame : image?.store;
+
         const rasterVisible = isColorBlending ? image.store.rasterVisible : frame.renderConfig.visible;
         const toggleRasterVisible = isColorBlending ? image.store.toggleRasterVisible : frame.renderConfig.toggleVisibility;
+
+        const showContourButton = isColorBlending ? image.store.frames.map(f => f.contourConfig.enabled).includes(true) : frame.contourConfig.enabled;
         const contourVisible = isColorBlending ? image.store.contourVisible : frame.contourConfig.visible;
         const toggleContourVisible = isColorBlending ? image.store.toggleContourVisible : frame.contourConfig.toggleVisibility;
+
+        const showVectorOverlayButton = isColorBlending ? image.store.frames.map(f => f.vectorOverlayConfig.enabled).includes(true) : frame.vectorOverlayConfig.enabled;
         const vectorOverlayVisible = isColorBlending ? image.store.vectorOverlayVisible : frame.vectorOverlayConfig.visible;
         const toggleVectorOverlayVisible = isColorBlending ? image.store.toggleVectorOverlayVisible : frame.vectorOverlayConfig.toggleVisibility;
 
@@ -150,7 +155,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                             R
                         </AnchorButton>
                     </Tooltip>
-                    {frame.contourConfig.enabled && (
+                    {showContourButton && (
                         <Tooltip
                             position={"bottom"}
                             content={
@@ -168,7 +173,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                             </AnchorButton>
                         </Tooltip>
                     )}
-                    {frame.vectorOverlayConfig.enabled && (
+                    {showVectorOverlayButton && (
                         <Tooltip
                             position={"bottom"}
                             content={
