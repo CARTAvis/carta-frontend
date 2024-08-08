@@ -125,7 +125,18 @@ export class ImageSaveComponent extends React.Component {
 
     render() {
         if (AppStore.Instance.activeImage?.type !== ImageType.FRAME) {
-            return <NonIdealState icon="document" description="Blending images and PV previews are not supported." />;
+            return (
+                <NonIdealState
+                    icon="document"
+                    description={
+                        <span>
+                            Color-blending and PV preview images cannot be saved.
+                            <br />
+                            <small>To save color-blending images, please save as a workspace via the File menu.</small>
+                        </span>
+                    }
+                />
+            );
         }
 
         const fileBrowser = FileBrowserStore.Instance;

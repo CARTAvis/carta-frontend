@@ -404,7 +404,19 @@ export class FileBrowserDialogComponent extends React.Component {
                 }
             case BrowserMode.SaveFile:
                 return (
-                    <Tooltip content={"Save this file"}>
+                    <Tooltip
+                        content={
+                            appStore.activeImage?.type !== ImageType.FRAME ? (
+                                <span>
+                                    Color-blending and PV preview images cannot be saved.
+                                    <br />
+                                    <small>To save color-blending images, please save as a workspace via the File menu.</small>
+                                </span>
+                            ) : (
+                                "Save this file"
+                            )
+                        }
+                    >
                         <AnchorButton
                             intent={Intent.PRIMARY}
                             disabled={appStore.fileLoading || fileBrowserStore.loadingInfo || appStore.fileSaving || appStore.activeImage?.type !== ImageType.FRAME}
