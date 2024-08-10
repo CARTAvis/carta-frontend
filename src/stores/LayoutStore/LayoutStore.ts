@@ -27,6 +27,8 @@ export class LayoutStore {
     @observable private layouts: any;
     @observable supportsServer: boolean;
     @observable oldLayoutName: string | undefined;
+    @observable pipActive: boolean;
+    public pipRef: Window;
 
     @computed get isSave(): boolean {
         return !this.oldLayoutName;
@@ -38,8 +40,63 @@ export class LayoutStore {
         this.layouts = {};
         this.supportsServer = false;
         this.oldLayoutName = "";
+        this.pipActive = false;
         this.initLayoutsFromPresets();
     }
+
+    public activatePip = async () => {
+        const appStore = AppStore.Instance;
+        if (this.pipActive) {
+            return undefined;
+        }
+
+        // @ts-ignore
+        const documentPictureInPicture = window.documentPictureInPicture;
+
+        try {
+            const pipWindow: Window = await documentPictureInPicture.requestWindow({
+                width: "500",
+                height: "500"
+            });
+
+            const pipDiv = pipWindow.document.createElement("div");
+
+            // Copy style sheets over from the initial document
+            // so that the player looks the same.
+            [...document.styleSheets].forEach(styleSheet => {
+                try {
+                    const cssRules = [...styleSheet.cssRules].map(rule => rule.cssText).join("");
+                    const style = document.createElement("style");
+
+                    style.textContent = cssRules;
+                    pipWindow.document.head.appendChild(style);
+                } catch (e) {
+                    const link = document.createElement("link");
+
+                    link.rel = "stylesheet";
+                    link.type = styleSheet.type;
+                    // @ts-ignore
+                    link.media = styleSheet.media;
+                    link.href = styleSheet.href;
+                    pipWindow.document.head.appendChild(link);
+                }
+            });
+
+            pipDiv.setAttribute("id", "pip-root");
+            pipWindow.document.body.append(pipDiv);
+            pipWindow.addEventListener("pagehide", event => {
+                this.pipActive = false;
+                this.pipRef = undefined;
+            });
+            appStore.layoutStore.pipActive = true;
+            this.pipActive = true;
+            this.pipRef = pipWindow;
+            return pipWindow;
+        } catch (error) {
+            console.log(error);
+            return undefined;
+        }
+    };
 
     public layoutExists = (layoutName: string): boolean => {
         return layoutName.length > 0 && this.allLayoutNames.includes(layoutName);

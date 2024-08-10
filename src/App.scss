@@ -22,6 +22,16 @@ body {
     .#{$ns}-dark {
         background-color: $dark-gray3;
     }
+
+    .pip-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: $dark-gray4;
+        border-radius: $pt-border-radius;
+        cursor: pointer;
+        z-index: 1;
+    }
 }
 
 .gl-container-app {

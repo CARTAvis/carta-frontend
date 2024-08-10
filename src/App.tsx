@@ -1,10 +1,11 @@
 import * as React from "react";
+import * as ReactDOM from "react-dom";
 import ReactResizeDetector from "react-resize-detector";
-import {Alert, Classes, Intent} from "@blueprintjs/core";
+import {Alert, Button, Classes, Intent} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {FloatingWidgetManagerComponent, UIControllerComponent} from "components";
+import {FloatingWidgetComponent, FloatingWidgetManagerComponent, getWidgetContent, UIControllerComponent} from "components";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {ApiService} from "services";
 import {AlertStore, AlertType, AppStore} from "stores";
@@ -14,6 +15,24 @@ import {HotkeyTargetContainer} from "./HotkeyWrapper";
 import "./App.scss";
 import "./layout-base.scss";
 import "./layout-theme.scss";
+
+const PipRenderer = observer(() => {
+    const appStore = AppStore.Instance;
+    const className = classNames("App", {[Classes.DARK]: appStore.darkTheme});
+
+    const w = appStore.widgetsStore.floatingWidgets?.[0];
+    if (!w) {
+        return null;
+    }
+
+    return (
+        <div className={className} style={{zIndex: 100}}>
+            <FloatingWidgetComponent isSelected={true} key={"pip"} widgetConfig={w} zIndex={1} showPinButton={false} floatingWidgets={1} pinnedWindow={true}>
+                {getWidgetContent(w)}
+            </FloatingWidgetComponent>
+        </div>
+    );
+});
 
 @observer
 export class App extends React.Component {
@@ -75,6 +94,14 @@ export class App extends React.Component {
         }
     };
 
+    async openWindow() {
+        const appStore = AppStore.Instance;
+        const pipWindow = await appStore.layoutStore.activatePip();
+        if (pipWindow) {
+            ReactDOM.render(<PipRenderer />, pipWindow.document.getElementById("pip-root") as HTMLElement);
+        }
+    }
+
     public render() {
         const appStore = AppStore.Instance;
         const className = classNames("App", {[Classes.DARK]: appStore.darkTheme});
@@ -84,6 +111,11 @@ export class App extends React.Component {
 
         return (
             <div className={className}>
+                {!appStore.layoutStore.pipActive && (
+                    <div className="pip-button">
+                        <Button icon="trophy" onClick={this.openWindow} />
+                    </div>
+                )}
                 <UIControllerComponent />
                 {alertComponent}
                 <TaskProgressDialogComponent

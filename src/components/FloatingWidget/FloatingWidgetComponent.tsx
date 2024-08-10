@@ -20,23 +20,24 @@ class FloatingWidgetComponentProps {
     onSelected?: () => void;
     onClosed?: () => void;
     floatingWidgets?: number;
+    pinnedWindow?: boolean;
 }
 
 @observer
 export class FloatingWidgetComponent extends React.Component<FloatingWidgetComponentProps> {
     private pinElementRef: HTMLElement;
-    private rnd: Rnd;
+    private rnd: Rnd | undefined;
 
     componentDidMount() {
         this.updateDragSource();
-        this.rnd.updateSize({width: this.props.widgetConfig.defaultWidth, height: this.props.widgetConfig.defaultHeight});
-        this.rnd.updatePosition({x: this.props.widgetConfig.defaultX, y: this.props.widgetConfig.defaultY});
+        this.rnd?.updateSize({width: this.props.widgetConfig.defaultWidth, height: this.props.widgetConfig.defaultHeight});
+        this.rnd?.updatePosition({x: this.props.widgetConfig.defaultX, y: this.props.widgetConfig.defaultY});
     }
 
     componentDidUpdate() {
         this.updateDragSource();
-        this.rnd.updateSize({width: this.props.widgetConfig.defaultWidth, height: this.props.widgetConfig.defaultHeight});
-        this.rnd.updatePosition({x: this.props.widgetConfig.defaultX, y: this.props.widgetConfig.defaultY});
+        this.rnd?.updateSize({width: this.props.widgetConfig.defaultWidth, height: this.props.widgetConfig.defaultHeight});
+        this.rnd?.updatePosition({x: this.props.widgetConfig.defaultX, y: this.props.widgetConfig.defaultY});
     }
 
     updateDragSource() {
@@ -115,6 +116,16 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
 
         const widgetConfig = this.props.widgetConfig;
 
+        const widgetContent = (
+            <div className={floatingContentClassName} data-testid={this.props.widgetConfig?.id + "-content"}>
+                {this.props.children}
+            </div>
+        );
+
+        if (this.props.pinnedWindow) {
+            return widgetContent;
+        }
+
         return (
             <Rnd
                 ref={c => (this.rnd = c)}
@@ -180,9 +191,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                         </div>
                     )}
                 </div>
-                <div className={floatingContentClassName} data-testid={this.props.widgetConfig?.id + "-content"}>
-                    {this.props.children}
-                </div>
+                {widgetContent}
             </Rnd>
         );
     }
