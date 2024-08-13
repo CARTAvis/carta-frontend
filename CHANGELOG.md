@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Upgraded blueprintjs from v3 to v5 ([#2029](https://github.com/CARTAvis/carta-frontend/issues/1395)).
 * Fixed the catalog load button status after double clicking catalog files ([#2378](https://github.com/CARTAvis/carta-frontend/issues/2378)).
 * Synchronized the value format in the pan and zoom tab in the image view settings widget ([#2235](https://github.com/CARTAvis/carta-frontend/issues/2235)).
+* Fixed yUnit of FluxDensity in the spectral profiles ([#2355](https://github.com/CARTAvis/carta-frontend/issues/2355)).
 
 ## [4.1.0]
 
