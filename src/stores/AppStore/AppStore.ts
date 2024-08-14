@@ -46,6 +46,7 @@ import {
     DialogStore,
     FileBrowserStore,
     HelpStore,
+    HipsQueryStore,
     ImageFittingStore,
     ImageViewConfigStore,
     LayoutStore,
@@ -118,6 +119,8 @@ export class AppStore {
     readonly preferenceStore: PreferenceStore;
     readonly widgetsStore: WidgetsStore;
     readonly imageFittingStore: ImageFittingStore;
+    /** Management of HiPS data queries. */
+    readonly hipsQueryStore = HipsQueryStore.Instance;
     /** Configuration of the images in the image view widget. */
     readonly imageViewConfigStore = ImageViewConfigStore.Instance;
 
@@ -691,6 +694,36 @@ export class AppStore {
         } catch (err) {
             this.alertStore.showAlert(`Error loading file: ${err}`);
             this.endFileLoading();
+            throw err;
+        }
+    }
+
+    /**
+     * Loads a file by HiPS data queries and adds it as a frame.
+     * @param remoteRequest - Parameters for the query.
+     * @returns The added frame.
+     * @throws If there is an error loading the file.
+     */
+    @flow.bound *loadRemoteFile(remoteRequest: CARTA.IRemoteFileRequest) {
+        try {
+            remoteRequest.fileId = this.fileCounter;
+            this.fileCounter++;
+            const ack: CARTA.IRemoteFileResponse = yield this.backendService.requestRemoteFile(remoteRequest);
+            if (!ack.success || !ack.openFileAck) {
+                AppToaster.show({icon: "warning-sign", message: `HiPS data query failed: ${ack.message}`, intent: "danger", timeout: 3000});
+            }
+            if (!this.addFrame(ack.openFileAck, "", false, "", true, true, false)) {
+                AppToaster.show({icon: "warning-sign", message: "HiPS data query failed: Load file failed.", intent: "danger", timeout: 3000});
+            }
+            this.dialogStore.hideDialog(DialogId.OnlineDataQuery);
+            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
+            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
+            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
+            // Ensure loading finishes before next file is added
+            yield this.delay(10);
+            return this.getFrame(ack.openFileAck.fileId);
+        } catch (err) {
+            this.alertStore.showAlert(`HiPS data query failed: ${err}`);
             throw err;
         }
     }
