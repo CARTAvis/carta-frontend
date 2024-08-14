@@ -6,8 +6,8 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";
-import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
-import {MOMENT_TEXT} from "models";
+import {ClearableNumericInputComponent, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
+import {FrequencyUnit, MOMENT_TEXT} from "models";
 import {AppStore} from "stores";
 import {MomentSelectingMode, SpectralProfileWidgetStore} from "stores/Widgets";
 
@@ -79,6 +79,29 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
     private renderMomentSelectItem: ItemRenderer<CARTA.Moment> = (moment: CARTA.Moment, {modifiers, handleClick}) => {
         const momentContent = MOMENT_TEXT.get(moment);
         return momentContent ? <MenuItem text={`${momentContent.tag}: ${momentContent.text}`} onClick={handleClick} key={moment} icon={this.props.widgetStore.isMomentSelected(moment) ? "tick" : "blank"} /> : undefined;
+    };
+
+    private renderRestFreqInput = () => {
+        const widgetStore = this.props.widgetStore;
+        const restFreqStore = widgetStore.effectiveFrame.restFreqStore;
+        return (
+            <div className="freq-input">
+                <ClearableNumericInputComponent
+                    label="Rest frequency"
+                    value={restFreqStore.customRestFreq.value}
+                    placeholder="Rest frequency"
+                    selectAllOnFocus={true}
+                    onValueChanged={val => {
+                        restFreqStore.setCustomVal(val);
+                    }}
+                    onValueCleared={restFreqStore.restoreDefaults}
+                    resetDisabled={restFreqStore.resetDisable}
+                    tooltipContent={restFreqStore.defaultInfo}
+                    tooltipPlacement={"bottom"}
+                />
+                <HTMLSelect options={Object.values(FrequencyUnit)} value={restFreqStore.customRestFreq.unit} onChange={ev => restFreqStore.setCustomUnit(ev.currentTarget.value as FrequencyUnit)} />
+            </div>
+        );
     };
 
     private handleMomentTagRemove = (tag: string, index: number) => {
@@ -173,6 +196,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                         </div>
                     </FormGroup>
                 )}
+                <React.Fragment>{this.renderRestFreqInput()}</React.Fragment>
             </React.Fragment>
         );
 
