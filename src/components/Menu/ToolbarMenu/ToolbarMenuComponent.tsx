@@ -198,14 +198,8 @@ export class ToolbarMenuComponent extends React.Component {
                             data-testid={DialogId.Fitting + "-button"}
                         />
                     </Tooltip>
-                    <Tooltip content={<span>Online catalog query</span>} position={Position.BOTTOM}>
-                        <AnchorButton
-                            icon="geosearch"
-                            disabled={!appStore.activeFrame}
-                            onClick={() => dialogStore.showDialog(DialogId.CatalogQuery)}
-                            active={dialogStore.dialogVisible.get(DialogId.CatalogQuery)}
-                            data-testid={DialogId.CatalogQuery + "-button"}
-                        />
+                    <Tooltip content={<span>Online data query</span>} position={Position.BOTTOM}>
+                        <AnchorButton icon="geosearch" onClick={() => dialogStore.showDialog(DialogId.OnlineDataQuery)} active={dialogStore.dialogVisible.get(DialogId.OnlineDataQuery)} data-testid={DialogId.OnlineDataQuery + "-button"} />
                     </Tooltip>
                     {appStore.preferenceStore.codeSnippetsEnabled && (
                         <Tooltip

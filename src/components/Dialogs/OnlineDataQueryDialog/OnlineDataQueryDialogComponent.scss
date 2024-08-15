@@ -1,0 +1,25 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+.online-data-query-dialog {
+    .#{$ns}-dialog-body {
+        .#{$ns}-tabs {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+
+            .#{$ns}-tab-panel {
+                flex: 1;
+                min-height: 0;
+            }
+        }
+
+        .query-loading-overlay {
+            position: absolute !important;
+            top: 50%;
+            left: 50%;
+            margin: -15px 0 0 -15px;
+            width: inherit !important;
+            height: inherit !important;
+        }
+    }
+}
