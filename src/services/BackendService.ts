@@ -157,7 +157,8 @@ export class BackendService {
             [CARTA.EventType.FITTING_PROGRESS, {messageClass: CARTA.FittingProgress, handler: this.onStreamedFittingProgress}],
             [CARTA.EventType.FITTING_RESPONSE, {messageClass: CARTA.FittingResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.VECTOR_OVERLAY_TILE_DATA, {messageClass: CARTA.VectorOverlayTileData, handler: this.onStreamedVectorOverlayData}],
-            [CARTA.EventType.PV_PREVIEW_DATA, {messageClass: CARTA.PvPreviewData, handler: this.onStreamedPvPreviewData}]
+            [CARTA.EventType.PV_PREVIEW_DATA, {messageClass: CARTA.PvPreviewData, handler: this.onStreamedPvPreviewData}],
+            [CARTA.EventType.REMOTE_FILE_RESPONSE, {messageClass: CARTA.RemoteFileResponse, handler: this.onDeferredResponse}]
         ]);
 
         // check ping every 5 seconds
@@ -767,6 +768,22 @@ export class BackendService {
             this.logEvent(CARTA.EventType.PV_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.PV_REQUEST, CARTA.PvRequest.encode(message).finish())) {
                 const deferredResponse = new Deferred<CARTA.IPvResponse>();
+                this.deferredMap.set(requestId, deferredResponse);
+                return await deferredResponse.promise;
+            } else {
+                throw new Error("Could not send event");
+            }
+        }
+    }
+
+    async requestRemoteFile(message: CARTA.IRemoteFileRequest): Promise<CARTA.IRemoteFileResponse> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            throw new Error("Not connected");
+        } else {
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.REMOTE_FILE_REQUEST, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.REMOTE_FILE_REQUEST, CARTA.RemoteFileRequest.encode(message).finish())) {
+                const deferredResponse = new Deferred<CARTA.IRemoteFileResponse>();
                 this.deferredMap.set(requestId, deferredResponse);
                 return await deferredResponse.promise;
             } else {

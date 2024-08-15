@@ -1,0 +1,49 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+.hips-query-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+
+    .hips-query-config {
+        flex: 1;
+        overflow: auto;
+
+        .#{$ns}-label {
+            min-width: 10em;
+            width: 10em;
+            text-align: right;
+        }
+
+        .#{$ns}-form-content {
+            display: flex;
+            flex-wrap: wrap;
+            flex: 1;
+            gap: 5px;
+
+            .#{$ns}-input-group {
+                width: 166px;
+            }
+
+            .survey-input {
+                width: 100%;
+                max-width: 401px;
+            }
+        }
+    }
+
+    .query-footer {
+        margin-top: 10px;
+    }
+}
+
+.survey-list-select {
+    .#{$ns}-popover-content {
+        .#{$ns}-menu {
+            max-height: 300px;
+            width: 401px;
+            overflow: auto;
+        }
+    }
+}
