@@ -45,11 +45,7 @@ export class RestFreqStore {
      * @param val - Unit of rest frequency in {@link FrequencyUnit}.
      */
     @action setCustomUnit = (val: FrequencyUnit) => {
-        const oriFreq = Freq.convertUnitToHz(this.customRestFreq);
         this.customRestFreq.unit = val;
-        const newFreq = Freq.convertUnitToHz(this.customRestFreq);
-        const convertFactor = oriFreq / newFreq;
-        this.setCustomVal(this.customRestFreq.value * convertFactor);
     };
 
     /**
