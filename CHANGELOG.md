@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added support for multi-color blending ([#1204](https://github.com/CARTAvis/carta-frontend/issues/1204)).
 * Added support for showing relative coordinates in image view ([[#681](https://github.com/CARTAvis/carta-frontend/issues/681)])
 * Added a button for deleting all regions ([#1040](https://github.com/CARTAvis/carta-frontend/issues/1040)).
+* Added support for loading remote FITS files from the hips2fits server ([#1379](https://github.com/CARTAvis/carta-backend/issues/1379)).
 ### Fixed
 * Fixed ruler annotation matching bug ([#2242](https://github.com/CARTAvis/carta-frontend/issues/2242)).
 * Fixed compass and ruler annotations update bug in the spatially matched image when changing the coordinate ([#2270](https://github.com/CARTAvis/carta-frontend/issues/2270)).
