@@ -1,7 +1,7 @@
 import * as React from "react";
 import {NonIdealState} from "@blueprintjs/core";
 import _ from "lodash";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {CursorInfo, FrameView, ImageType, Point2D} from "models";
@@ -148,7 +148,7 @@ export class ChannelMapStore {
         this.singleContourChannel = channel;
     };
 
-    @action requestChannels = () => {
+    @action requestChannels = (channelRange?: {min: number; max: number}) => {
         const frame = this.showAuxiliaryFrame ? this.auxiliaryFrame || this.masterFrame : this.masterFrame;
         const requiredChannel = this.showAuxiliaryFrame ? this.auxiliaryFrameChannel : frame.channel;
         if (!frame) {
@@ -176,7 +176,7 @@ export class ChannelMapStore {
             // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
             const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
             const compressionQuality = bunitVariant.includes(frame.headerUnit) ? Math.max(appStore.preferenceStore.imageCompressionQuality, 32) : appStore.preferenceStore.imageCompressionQuality;
-            appStore.channelMapTileService.requestChannelMapTiles(tiles, frame.frameInfo.fileId, requiredChannel, frame.stokes, midPointTileCoords, compressionQuality, {min: this.startChannel, max: this.channelRange});
+            appStore.channelMapTileService.requestChannelMapTiles(tiles, frame.frameInfo.fileId, requiredChannel, frame.stokes, midPointTileCoords, compressionQuality, channelRange || {min: this.startChannel, max: this.channelRange});
         }
     };
 
@@ -217,7 +217,7 @@ export class ChannelMapStore {
     }
 
     @computed get channelRange(): number {
-        return Math.min(this.startChannel + this.numChannels - 1, this.masterFrame.frameInfo.fileInfoExtended.depth - 1);
+        return Math.min(this.startChannel + this.numChannels - 1, this.masterFrame?.frameInfo?.fileInfoExtended?.depth - 1);
     }
 
     @computed get channelArray(): number[] {
@@ -282,14 +282,19 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     channelMapStore.overlayStores.outer.ticks.setMajorLength(0);
 
     React.useEffect(() => {
-        if (channelMapStore.masterFrame) {
-            channelMapStore.throttledRequestChannels();
-        }
+        const disposer = autorun(() => {
+            if (channelMapStore.masterFrame) {
+                channelMapStore.throttledRequestChannels();
+            }
+        });
+
+        return () => {
+            disposer();
+        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
         channelMapStore,
         channelMapStore.masterFrame,
-        channelMapStore.startChannel,
         channelMapStore.numColumns,
         channelMapStore.numRows,
         channelMapStore.masterFrame?.center,
@@ -301,6 +306,31 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         channelMapStore.singleContourChannel,
         channelMapStore.masterFrame?.spatialReference
     ]);
+
+    React.useEffect(() => {
+        const disposer = reaction(
+            () => [channelMapStore.startChannel, channelMapStore.channelRange],
+            ([startChannel, endChannel], [prevStartChannel, prevEndChannel]) => {
+                let channelRange;
+                if (prevEndChannel < startChannel || endChannel < prevStartChannel) {
+                    channelRange = {min: startChannel, max: endChannel};
+                } else if (prevEndChannel < endChannel) {
+                    channelRange = {min: prevEndChannel + 1, max: endChannel};
+                } else if (startChannel < prevStartChannel) {
+                    channelRange = {min: startChannel, max: prevStartChannel - 1};
+                } else {
+                    channelRange = {min: 0, max: 0};
+                }
+                console.log(channelRange);
+
+                channelMapStore.throttledRequestChannels(channelRange);
+            }
+        );
+        return () => {
+            disposer();
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [channelMapStore.startChannel, channelMapStore.channelRange]);
 
     const onRegionViewZoom = (frame: FrameStore, zoom: number) => {
         if (frame) {
@@ -325,7 +355,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         const row = channelMapStore.numRows - 1;
         const lastRow = Math.floor((channelMapStore.channelArray.length - 1) / channelMapStore.numColumns);
         const column = 0;
-        const channel = row * channelMapStore.numColumns;
+        const channel = row * channelMapStore.numColumns + channelMapStore.startChannel;
         const overlayComponentTop = imageRenderHeight * lastRow;
         const overlayComponentLeft = imageRenderWidth * column - overlayStore.paddingLeft;
 

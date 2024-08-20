@@ -362,7 +362,6 @@ export class TileService {
                 }
                 this.updateRemainingTileCount();
             }
-
             this.backendService.setChannels(fileId, channel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles: sortedRequests}, channelMapRange);
         }
     }
@@ -531,10 +530,10 @@ export class TileService {
             return;
         }
 
-        if (appStore.preferenceStore.channelMapEnabled && !appStore.channelMapStore.channelArray.includes(tileMessage?.channel ?? NaN)) {
-            console.log(`Skipping stale tile during channel map for key=${key}`);
-            return;
-        }
+        // if (appStore.preferenceStore.channelMapEnabled && !appStore.channelMapStore.channelArray.includes(tileMessage?.channel ?? NaN)) {
+        //     console.log(`Skipping stale tile during channel map for key=${key}`);
+        //     return;
+        // }
 
         if (this.animationEnabled && tileMessage.animationId !== this.backendService.animationId && !this.syncIdMap.has(tileMessage.syncId ?? NaN)) {
             console.log(`Skipping stale tile during animation Message animation_id: ${tileMessage.animationId}. Service animation_id: ${this.backendService.animationId}`);
@@ -678,12 +677,13 @@ export class TileService {
                     this.clearCompressedCache(fileId ?? NaN);
                 }
                 receivedTiles?.forEach((tile, coordinate) => {
-                    tile.textureCoordinate = this.textureCoordinateQueue.pop();
                     const gpuCacheCoordinate = TileCoordinate.AddFileIdAndChannel(coordinate, fileId ?? NaN, channel ?? NaN);
                     const oldValue = this.cachedTiles.setpop(gpuCacheCoordinate, tile);
                     if (oldValue) {
                         this.clearTile(oldValue.value, oldValue.key);
                     }
+                    // This needs to be after clearTile to avoid empty textureCoordinateQueue
+                    tile.textureCoordinate = this.textureCoordinateQueue.pop();
                 });
                 this.pendingSynchronisedTiles.delete(key);
                 this.receivedSynchronisedTiles.delete(key);
