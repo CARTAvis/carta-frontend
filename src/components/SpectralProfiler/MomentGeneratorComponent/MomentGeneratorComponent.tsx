@@ -81,25 +81,27 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         return momentContent ? <MenuItem text={`${momentContent.tag}: ${momentContent.text}`} onClick={handleClick} key={moment} icon={this.props.widgetStore.isMomentSelected(moment) ? "tick" : "blank"} /> : undefined;
     };
 
-    private renderRestFreqInput = () => {
+    private renderRestFreqInput = frame => {
+        const disableCoordinateSetting = !frame || frame?.isPVImage || !frame?.isSpectralChannel;
         const widgetStore = this.props.widgetStore;
-        const restFreqStore = widgetStore.effectiveFrame.restFreqStore;
+        const restFreqStore = widgetStore.effectiveFrame?.restFreqStore;
         return (
             <div className="freq-input">
                 <ClearableNumericInputComponent
                     label="Rest frequency"
-                    value={restFreqStore.customRestFreq.value}
+                    value={restFreqStore?.customRestFreq.value ?? NaN}
+                    disabled={disableCoordinateSetting}
                     placeholder="Rest frequency"
                     selectAllOnFocus={true}
                     onValueChanged={val => {
-                        restFreqStore.setCustomVal(val);
+                        restFreqStore?.setCustomVal(val);
                     }}
-                    onValueCleared={restFreqStore.restoreDefaults}
-                    resetDisabled={restFreqStore.resetDisable}
-                    tooltipContent={restFreqStore.defaultInfo}
+                    onValueCleared={restFreqStore?.restoreDefaults}
+                    resetDisabled={restFreqStore?.resetDisable}
+                    tooltipContent={restFreqStore?.defaultInfo}
                     tooltipPlacement={"bottom"}
                 />
-                <HTMLSelect options={Object.values(FrequencyUnit)} value={restFreqStore.customRestFreq.unit} onChange={ev => restFreqStore.setCustomUnit(ev.currentTarget.value as FrequencyUnit)} />
+                <HTMLSelect disabled={disableCoordinateSetting} options={Object.values(FrequencyUnit)} value={restFreqStore?.customRestFreq.unit} onChange={ev => restFreqStore?.setCustomUnit(ev.currentTarget.value as FrequencyUnit)} />
             </div>
         );
     };
@@ -196,7 +198,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                         </div>
                     </FormGroup>
                 )}
-                <React.Fragment>{this.renderRestFreqInput()}</React.Fragment>
+                <React.Fragment>{this.renderRestFreqInput(frame)}</React.Fragment>
             </React.Fragment>
         );
 
