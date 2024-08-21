@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
-import {SimpleTableComponentProps} from "components/Shared";
+import {AppToaster, ErrorToast, SimpleTableComponentProps} from "components/Shared";
 import {AppStore, BrowserMode, CatalogProfileStore, DialogId, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
@@ -153,7 +153,7 @@ export class FileBrowserDialogComponent extends React.Component {
     }
 
     /// Prepare parameters for send saveFile
-    private handleSaveFile = async () => {
+    private handleSaveFile = async (overwrite: boolean = false) => {
         const appStore = AppStore.Instance;
         const fileBrowserStore = FileBrowserStore.Instance;
         const activeFrame = appStore.activeFrame;
@@ -171,16 +171,19 @@ export class FileBrowserDialogComponent extends React.Component {
         const saveStokes = fileBrowserStore.saveStokesRange;
 
         const restFreq = activeFrame.headerRestFreq === fileBrowserStore.saveRestFreqInHz ? NaN : fileBrowserStore.saveRestFreqInHz;
-        await appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType, fileBrowserStore.saveRegionId, saveChannels, saveStokes, fileBrowserStore.shouldDropDegenerateAxes, restFreq);
+        await appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType, fileBrowserStore.saveRegionId, saveChannels, saveStokes, fileBrowserStore.shouldDropDegenerateAxes, restFreq, overwrite);
     };
 
-    private handleSaveFileClicked = () => {
-        const fileBrowserStore = FileBrowserStore.Instance;
-        const filename = fileBrowserStore.saveFilename.trim();
-        if (fileBrowserStore.fileList && fileBrowserStore.fileList.files && fileBrowserStore.fileList.files.find(f => f.name.trim() === filename)) {
-            this.overwriteExistingFileAlertVisible = true;
-        } else {
-            this.handleSaveFile();
+    private handleSaveFileClicked = async () => {
+        try {
+            await this.handleSaveFile();
+        } catch (err) {
+            if (err.overwriteConfirmationRequired) {
+                this.overwriteExistingFileAlertVisible = true;
+            } else {
+                console.error(err.message);
+                AppToaster.show({icon: "warning-sign", message: err.message, intent: "danger", timeout: 3000});
+            }
         }
     };
 
@@ -189,18 +192,22 @@ export class FileBrowserDialogComponent extends React.Component {
         fileBrowserStore.setSaveFilename(ev.target.value);
     };
 
-    private handleExportRegionsClicked = () => {
-        const fileBrowserStore = FileBrowserStore.Instance;
-        const filename = fileBrowserStore.exportFilename.trim();
-        if (fileBrowserStore.fileList && fileBrowserStore.fileList.files && fileBrowserStore.fileList.files.find(f => f.name.trim() === filename)) {
-            // Existing file being replaced. Alert the user
-            this.overwriteExistingFileAlertVisible = true;
-        } else {
-            this.exportRegion(fileBrowserStore.fileList.directory, filename);
+    private handleExportRegionsClicked = async () => {
+        try {
+            const fileBrowserStore = FileBrowserStore.Instance;
+            const filename = fileBrowserStore.exportFilename.trim();
+            await this.exportRegion(fileBrowserStore.fileList.directory, filename);
+        } catch (err) {
+            if (err.overwriteConfirmationRequired) {
+                this.overwriteExistingFileAlertVisible = true;
+            } else {
+                console.error(err.message);
+                AppToaster.show(ErrorToast(err.message));
+            }
         }
     };
 
-    private exportRegion = (directory: string, filename: string) => {
+    private exportRegion = async (directory: string, filename: string, overwrite: boolean = false) => {
         if (!filename || !directory) {
             return;
         }
@@ -208,18 +215,28 @@ export class FileBrowserDialogComponent extends React.Component {
         filename = filename.trim();
         const appStore = AppStore.Instance;
         const fileBrowserStore = FileBrowserStore.Instance;
-        appStore.exportRegions(directory, filename, fileBrowserStore.exportCoordinateType, fileBrowserStore.exportFileType, fileBrowserStore.exportRegionIndexes);
         console.log(`Exporting regions to ${directory}/${filename}`);
+        await appStore.exportRegions(directory, filename, fileBrowserStore.exportCoordinateType, fileBrowserStore.exportFileType, fileBrowserStore.exportRegionIndexes, overwrite);
     };
 
-    private handleOverwriteAlertConfirmed = () => {
+    private handleOverwriteAlertConfirmed = async () => {
         this.overwriteExistingFileAlertVisible = false;
         const fileBrowserStore = FileBrowserStore.Instance;
         if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
-            const filename = fileBrowserStore.exportFilename.trim();
-            this.exportRegion(fileBrowserStore.fileList.directory, filename);
+            try {
+                const filename = fileBrowserStore.exportFilename.trim();
+                await this.exportRegion(fileBrowserStore.fileList.directory, filename, true);
+            } catch (err) {
+                console.error(err.message);
+                AppToaster.show(ErrorToast(err.message));
+            }
         } else if (fileBrowserStore.browserMode === BrowserMode.SaveFile) {
-            this.handleSaveFile();
+            try {
+                await this.handleSaveFile(true);
+            } catch (err) {
+                console.error(err.message);
+                AppToaster.show({icon: "warning-sign", message: err.message, intent: "danger", timeout: 3000});
+            }
         }
     };
 
@@ -378,7 +395,12 @@ export class FileBrowserDialogComponent extends React.Component {
             case BrowserMode.SaveFile:
                 return (
                     <Tooltip content={"Save this file"}>
-                        <AnchorButton intent={Intent.PRIMARY} disabled={appStore.fileLoading || fileBrowserStore.loadingInfo || appStore.fileSaving} onClick={this.handleSaveFileClicked} text="Save" />
+                        <AnchorButton
+                            intent={Intent.PRIMARY}
+                            disabled={appStore.fileLoading || fileBrowserStore.loadingInfo || appStore.fileSaving || fileBrowserStore.saveFilename.length === 0}
+                            onClick={this.handleSaveFileClicked}
+                            text="Save"
+                        />
                     </Tooltip>
                 );
             case BrowserMode.RegionImport:

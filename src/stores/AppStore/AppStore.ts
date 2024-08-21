@@ -806,21 +806,19 @@ export class AppStore {
     }
 
     @flow.bound
-    *saveFile(directory: string, filename: string, fileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], shouldDropDegenerateAxes?: boolean, restFreq?: number) {
+    *saveFile(directory: string, filename: string, fileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], shouldDropDegenerateAxes?: boolean, restFreq?: number, overwrite: boolean = false) {
         if (!this.activeFrame) {
             throw new Error("No active image");
         }
         this.startFileSaving();
         const fileId = this.activeFrame.frameInfo.fileId;
         try {
-            const ack = yield this.backendService.saveFile(fileId, directory, filename, fileType, regionId, channels, stokes, !shouldDropDegenerateAxes, restFreq);
+            const ack = yield this.backendService.saveFile(fileId, directory, filename, fileType, regionId, channels, stokes, !shouldDropDegenerateAxes, restFreq, overwrite);
             AppToaster.show({icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000});
             this.fileBrowserStore.hideFileBrowser();
             this.endFileSaving();
             return ack.fileId;
         } catch (err) {
-            console.error(err);
-            AppToaster.show({icon: "warning-sign", message: err, intent: "danger", timeout: 3000});
             this.endFileSaving();
             throw err;
         }
@@ -1293,10 +1291,11 @@ export class AppStore {
      * @param coordType - The coordinate system used in the exported region file.
      * @param fileType - The type of the exported region file.
      * @param exportRegions - The indices of the regions to be exported.
+     * @param overwrite - Whether to allow overwriting existing files.
      * @param targetFrame - The target frame containing the regions. If not provided, the active frame is used.
      */
     @flow.bound
-    *exportRegions(directory: string, file: string, coordType: CARTA.CoordinateType, fileType: RegionFileType, exportRegions: number[], targetFrame?: FrameStore) {
+    *exportRegions(directory: string, file: string, coordType: CARTA.CoordinateType, fileType: RegionFileType, exportRegions: number[], overwrite: boolean = false, targetFrame?: FrameStore) {
         const frame = targetFrame ?? this.activeFrame;
         // Prevent exporting if only the cursor region exists
         if (!frame?.regionSet?.regions || frame.regionSet.regions.length <= 1 || exportRegions?.length < 1) {
@@ -1334,12 +1333,11 @@ export class AppStore {
         }
 
         try {
-            yield this.backendService.exportRegion(directory, file, fileType, coordType, frame.frameInfo.fileId, regionStyles);
+            yield this.backendService.exportRegion(directory, file, fileType, coordType, frame.frameInfo.fileId, regionStyles, overwrite);
             AppToaster.show(SuccessToast("saved", `Exported regions for ${frame.filename} using ${coordType === CARTA.CoordinateType.WORLD ? "world" : "pixel"} coordinates`));
             this.fileBrowserStore.hideFileBrowser();
         } catch (err) {
-            console.error(err);
-            AppToaster.show(ErrorToast(err));
+            throw err;
         }
     }
 
