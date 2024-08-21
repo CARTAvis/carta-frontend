@@ -2104,7 +2104,7 @@ export class FrameStore {
 
     public genRegionWcsProperties = (regionType: CARTA.RegionType, controlPoints: Point2D[], rotation: number, regionId: number = -1): string => {
         const centerPoint = controlPoints[CENTER_POINT_INDEX];
-        if (!this.validWcs || !isFinite(centerPoint.x) || !isFinite(centerPoint.y)) {
+        if (!this.validWcs || !isFinite(centerPoint.x) || !isFinite(centerPoint.y) || this.overlayStore.isImgCoordinates) {
             return "Invalid";
         }
 
