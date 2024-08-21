@@ -33,7 +33,7 @@ export enum SystemType {
     FK5 = "FK5",
     Galactic = "GALACTIC",
     ICRS = "ICRS",
-    Image = "Cartesian"
+    Image = "CARTESIAN"
 }
 
 export enum NumberFormatType {
@@ -1246,5 +1246,13 @@ export class OverlayStore {
             const renderHeight = viewHeight - this.paddingTop - this.paddingBottom;
             return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
         };
+    }
+
+    @computed get isWcsCoordinates() {
+        return this.global.explicitSystem !== SystemType.Image;
+    }
+
+    @computed get isImgCoordinates() {
+        return this.global.explicitSystem === SystemType.Image;
     }
 }

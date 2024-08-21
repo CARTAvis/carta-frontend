@@ -1929,7 +1929,7 @@ export class FrameStore {
         let cursorPosWCS, cursorPosFormatted;
         let precisionX = 0;
         let precisionY = 0;
-        if ((this.validWcs || this.isYX || this.isPVImage || this.isUVImage || this.isSwappedZ) && this.overlayStore.global.explicitSystem !== SystemType.Image) {
+        if ((this.validWcs || this.isYX || this.isPVImage || this.isUVImage || this.isSwappedZ) && this.overlayStore.isWcsCoordinates) {
             // We need to compare X and Y coordinates in both directions
             // to avoid a confusing drop in precision at rounding threshold
             const offsetBlock = [
@@ -2186,7 +2186,7 @@ export class FrameStore {
         if (this.spatialReference) {
             this.spatialReference.createWcsInfoShifted();
         } else if (this.wcsInfo && this.offsetCenter) {
-            if (AppStore.Instance.overlayStore.global.explicitSystem !== SystemType.Image) {
+            if (this.overlayStore.isWcsCoordinates) {
                 const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.offsetCenter);
 
                 if (centerInRad) {
