@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {FrequencyUnit, MOMENT_TEXT} from "models";
-import {AppStore} from "stores";
+import {AppStore, FrameStore} from "stores";
 import {MomentSelectingMode, SpectralProfileWidgetStore} from "stores/Widgets";
 
 import "./MomentGeneratorComponent.scss";
@@ -81,10 +81,9 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         return momentContent ? <MenuItem text={`${momentContent.tag}: ${momentContent.text}`} onClick={handleClick} key={moment} icon={this.props.widgetStore.isMomentSelected(moment) ? "tick" : "blank"} /> : undefined;
     };
 
-    private renderRestFreqInput = frame => {
+    private renderRestFreqInput = (frame: FrameStore) => {
         const disableCoordinateSetting = !frame || frame?.isPVImage || !frame?.isSpectralChannel;
-        const widgetStore = this.props.widgetStore;
-        const restFreqStore = widgetStore.effectiveFrame?.restFreqStore;
+        const restFreqStore = frame?.restFreqStore;
         return (
             <div className="freq-input">
                 <ClearableNumericInputComponent
@@ -93,9 +92,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     disabled={disableCoordinateSetting}
                     placeholder="Rest frequency"
                     selectAllOnFocus={true}
-                    onValueChanged={val => {
-                        restFreqStore?.setCustomVal(val);
-                    }}
+                    onValueChanged={restFreqStore?.setCustomVal}
                     onValueCleared={restFreqStore?.restoreDefaults}
                     resetDisabled={restFreqStore?.resetDisable}
                     tooltipContent={restFreqStore?.defaultInfo}
