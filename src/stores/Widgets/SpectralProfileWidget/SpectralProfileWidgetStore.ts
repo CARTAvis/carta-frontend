@@ -84,7 +84,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     readonly fittingStore: ProfileFittingStore;
 
     /**
-     * Set region for generating moment maps.
+     * Set region for the spectral profiler.
      *
      * @param fileId - File ID number.
      * @param regionId - Region ID number.
@@ -95,7 +95,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     };
 
     /**
-     * Set spectral coordinates for moment maps.
+     * Set spectral coordinates.
      *
      * @param coordStr - A string of <i>Spectral type (unit)</i> like Frequency (GHz).
      */
