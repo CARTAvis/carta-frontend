@@ -40,7 +40,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         const appStore = AppStore.Instance;
         appStore.resetImageRatio();
 
-        if (this.props.refCanvas) {
+        if (this.props.refCanvas && this.canvas) {
             requestAnimationFrame(() => {
                 const destCanvas = this.canvas.getContext("2d", {willReadFrequently: true});
                 const w = this.props.refCanvas.width;

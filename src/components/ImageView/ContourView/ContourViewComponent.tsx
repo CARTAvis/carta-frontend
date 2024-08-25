@@ -39,7 +39,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
     private updateImage = () => {
         AppStore.Instance.resetImageRatio();
-        if (this.props.refCanvas && this.props.channel !== undefined) {
+        if (this.canvas && this.props.refCanvas && this.props.channel !== undefined) {
             requestAnimationFrame(() => {
                 const destCanvas = this.canvas.getContext("2d", {willReadFrequently: true});
                 const w = this.props.refCanvas.width;

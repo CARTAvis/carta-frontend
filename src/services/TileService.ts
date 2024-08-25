@@ -76,7 +76,7 @@ export class TileService {
     private pendingSynchronisedTiles: Map<string, Set<number>>;
     private receivedSynchronisedTiles: Map<string, Map<number, Map<number, RasterTile>>>;
     private animationEnabled: boolean;
-    protected readonly gl: WebGL2RenderingContext | null;
+    private readonly gl: WebGL2RenderingContext | null;
     private syncIdMap: Map<number, boolean>;
     private syncIdTileCountMap: Map<number, number>;
 
@@ -239,7 +239,7 @@ export class TileService {
             if (!(pendingRequestsMap && pendingRequestsMap.has(encodedCoordinate))) {
                 const compressedTile = this.getCompressedCache(fileId).get(gpuCacheCoordinate);
                 const pendingCompressionMap = this.pendingDecompressions.get(key);
-                const tileIsQueuedForDecompression = pendingCompressionMap && pendingCompressionMap.has(encodedCoordinate);
+                const tileIsQueuedForDecompression = pendingCompressionMap && Array.from(pendingCompressionMap.values()).some(map => map.has(encodedCoordinate));
 
                 const tileCached = !channelsChanged && this.cachedTiles?.has(gpuCacheCoordinate);
 
@@ -305,7 +305,7 @@ export class TileService {
                     if (!(pendingRequestsMap && pendingRequestsMap.has(encodedCoordinate))) {
                         const compressedTile = this.getCompressedCache(fileId).get(gpuCacheCoordinate);
                         const pendingCompressionMap = this.pendingDecompressions.get(subKey);
-                        const tileIsQueuedForDecompression = pendingCompressionMap && pendingCompressionMap.has(encodedCoordinate);
+                        const tileIsQueuedForDecompression = pendingCompressionMap && Array.from(pendingCompressionMap.values()).some(map => map.has(encodedCoordinate));
 
                         const tileCached = this.cachedTiles?.has(gpuCacheCoordinate);
 
@@ -710,19 +710,19 @@ export class TileService {
     }
 }
 
-export class ChannelMapTileService extends TileService {
-    protected static staticInstance: ChannelMapTileService;
-    protected readonly gl: WebGL2RenderingContext | null;
+// export class ChannelMapTileService extends TileService {
+//     protected static staticInstance: ChannelMapTileService;
+//     protected readonly gl: WebGL2RenderingContext | null;
 
-    static get Instance() {
-        if (!ChannelMapTileService.staticInstance) {
-            ChannelMapTileService.staticInstance = new ChannelMapTileService();
-        }
-        return ChannelMapTileService.staticInstance;
-    }
+//     static get Instance() {
+//         if (!ChannelMapTileService.staticInstance) {
+//             ChannelMapTileService.staticInstance = new ChannelMapTileService();
+//         }
+//         return ChannelMapTileService.staticInstance;
+//     }
 
-    protected constructor() {
-        super();
-        this.gl = TileWebGLService.Instance.gl;
-    }
-}
+//     protected constructor() {
+//         super();
+//         this.gl = TileWebGLService.Instance.gl;
+//     }
+// }

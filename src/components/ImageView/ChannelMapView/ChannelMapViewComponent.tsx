@@ -5,7 +5,7 @@ import {action, autorun, computed, makeObservable, observable, reaction} from "m
 import {observer} from "mobx-react";
 
 import {CursorInfo, FrameView, ImageType, Point2D} from "models";
-import {ChannelMapTileService, TileWebGLService} from "services";
+import {TileService, TileWebGLService} from "services";
 import {AppStore, OverlayStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {GetRequiredTiles} from "utilities";
@@ -75,7 +75,7 @@ export class ChannelMapStore {
 
         const appStore = AppStore.Instance;
         const frames = appStore.frames.filter(frame => frame.frameInfo.fileId !== masterFrame.frameInfo.fileId);
-        frames.forEach(frame => appStore.channelMapTileService.handleFileClosed(frame.frameInfo.fileId));
+        frames.forEach(frame => appStore.tileService.handleFileClosed(frame.frameInfo.fileId));
     }
 
     @action setAuxiliaryFrame(frame: FrameStore) {
@@ -176,7 +176,7 @@ export class ChannelMapStore {
             // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
             const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
             const compressionQuality = bunitVariant.includes(frame.headerUnit) ? Math.max(appStore.preferenceStore.imageCompressionQuality, 32) : appStore.preferenceStore.imageCompressionQuality;
-            appStore.channelMapTileService.requestChannelMapTiles(tiles, frame.frameInfo.fileId, requiredChannel, frame.stokes, midPointTileCoords, compressionQuality, channelRange || {min: this.startChannel, max: this.channelRange});
+            appStore.tileService.requestChannelMapTiles(tiles, frame.frameInfo.fileId, requiredChannel, frame.stokes, midPointTileCoords, compressionQuality, channelRange || {min: this.startChannel, max: this.channelRange});
         }
     };
 
@@ -420,7 +420,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                                             store: channelMapStore.auxiliaryFrame
                                         }}
                                         webGLService={TileWebGLService.Instance}
-                                        tileService={ChannelMapTileService.Instance}
+                                        tileService={TileService.Instance}
                                         overlayStore={overlayStore}
                                         top={overlayComponentTop}
                                         left={overlayComponentLeft}
@@ -439,7 +439,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                                             store: frame
                                         }}
                                         webGLService={TileWebGLService.Instance}
-                                        tileService={ChannelMapTileService.Instance}
+                                        tileService={TileService.Instance}
                                         overlayStore={overlayStore}
                                         top={overlayComponentTop}
                                         left={overlayComponentLeft}

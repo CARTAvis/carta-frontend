@@ -34,7 +34,7 @@ import {
     Workspace,
     WorkspaceFile
 } from "models";
-import {ApiService, BackendService, ChannelMapTileService, ConnectionStatus, ScriptingService, TelemetryAction, TelemetryService, TileService, TileStreamDetails} from "services";
+import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryAction, TelemetryService, TileService, TileStreamDetails} from "services";
 import {
     AlertStore,
     AnimationMode,
@@ -101,7 +101,7 @@ export class AppStore {
     // Backend services
     readonly backendService: BackendService;
     readonly tileService: TileService;
-    readonly channelMapTileService: ChannelMapTileService;
+    // readonly channelMapTileService: ChannelMapTileService;
     readonly scriptingService: ScriptingService;
     readonly apiService: ApiService;
     readonly telemetryService: TelemetryService;
@@ -924,7 +924,7 @@ export class AppStore {
             this.histogramRequirements.delete(fileId);
 
             this.tileService.handleFileClosed(fileId);
-            this.channelMapTileService.handleFileClosed(fileId);
+            // this.channelMapTileService.handleFileClosed(fileId);
             this.telemetryService.addFileCloseEntry(fileId);
 
             if (this.backendService.closeFile(fileId)) {
@@ -990,7 +990,7 @@ export class AppStore {
 
                 // TODO: check this
                 this.tileService.handleFileClosed(fileId);
-                this.channelMapTileService.handleFileClosed(fileId);
+                // this.channelMapTileService.handleFileClosed(fileId);
                 // Clean up if frame has associated catalog files
                 if (this.catalogNum) {
                     CatalogStore.Instance.closeAssociatedCatalog(fileId);
@@ -1024,7 +1024,7 @@ export class AppStore {
                 const fileId = frame.frameInfo.fileId;
                 this.telemetryService.addFileCloseEntry(fileId);
                 this.tileService.handleFileClosed(fileId);
-                this.channelMapTileService.handleFileClosed(fileId);
+                // this.channelMapTileService.handleFileClosed(fileId);
                 if (this.catalogNum) {
                     CatalogStore.Instance.closeAssociatedCatalog(fileId);
                 }
@@ -1741,7 +1741,7 @@ export class AppStore {
                 await this.snippetStore.fetchSnippets();
 
                 this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
-                this.channelMapTileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
+                // this.channelMapTileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
                 if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
                     AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
                     this.layoutStore.applyLayout(PresetLayout.DEFAULT);
@@ -1783,7 +1783,7 @@ export class AppStore {
         // Assign service instances
         this.backendService = BackendService.Instance;
         this.tileService = TileService.Instance;
-        this.channelMapTileService = ChannelMapTileService.Instance;
+        // this.channelMapTileService = ChannelMapTileService.Instance;
         this.scriptingService = ScriptingService.Instance;
         this.apiService = ApiService.Instance;
         this.telemetryService = TelemetryService.Instance;
@@ -2025,7 +2025,7 @@ export class AppStore {
         this.backendService.momentProgressStream.subscribe(this.handleMomentProgressStream);
         this.backendService.scriptingStream.subscribe(this.handleScriptingRequest);
         this.tileService.tileStream.subscribe(this.handleTileStream);
-        this.channelMapTileService.tileStream.subscribe(this.handleTileStream);
+        // this.channelMapTileService.tileStream.subscribe(this.handleTileStream);
         this.backendService.listProgressStream.subscribe(this.handleFileProgressStream);
         this.backendService.pvProgressStream.subscribe(this.handlePvProgressStream);
         this.backendService.fittingProgressStream.subscribe(this.handleFittingProgressStream);
