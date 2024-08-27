@@ -15,18 +15,6 @@
     }
 }
 
-.colormap-block {
-    width: 75px;
-    height: 15px;
-    image-rendering: pixelated;
-    -moz-image-rendering: crisp-edges;
-    border-radius: $pt-border-radius;
-    border: 1px solid $gray4;
-    &.#{$ns}-dark {
-        border: 1px solid $gray2;
-    }
-}
-
 .render-config-container {
     display: flex;
     width: 100%;

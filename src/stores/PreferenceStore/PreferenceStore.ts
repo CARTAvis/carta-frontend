@@ -151,7 +151,7 @@ const DEFAULTS = {
         fileSortingString: "-date",
         fileFilteringType: FileFilteringType.Fuzzy,
         pixelGridVisible: false,
-        pixelGridColor: "#FFFFFF",
+        pixelGridColor: "#ffffff",
         imageMultiPanelEnabled: false,
         imagePanelMode: ImagePanelMode.Dynamic,
         imagePanelColumns: 2,
@@ -223,7 +223,7 @@ const DEFAULTS = {
         cursorInfoVisible: CursorInfoVisibility.ActiveImage
     },
     REGION: {
-        regionColor: "#2EE6D6",
+        regionColor: "#2ee6d6",
         regionLineWidth: 2,
         regionDashLength: 0,
         regionType: CARTA.RegionType.RECTANGLE,
@@ -231,7 +231,7 @@ const DEFAULTS = {
         regionSize: 30
     },
     ANNOTATION: {
-        annotationColor: "#FFBA01",
+        annotationColor: "#ffba01",
         annotationLineWidth: 2,
         annotationDashLength: 0,
         annotationType: CARTA.RegionType.ANNRECTANGLE,

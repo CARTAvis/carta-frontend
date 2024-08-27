@@ -1,10 +1,11 @@
 import {AlphaPicker} from "react-color";
-import {Button, ButtonGroup, FormGroup, H6, HTMLSelect, Menu, MenuItem, Popover, Text, Tooltip} from "@blueprintjs/core";
+import {Button, ButtonGroup, Classes, FormGroup, H6, HTMLSelect, Menu, MenuItem, Popover, Text, Tooltip} from "@blueprintjs/core";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {ColormapComponent, SafeNumericInput} from "components/Shared";
+import {ColormapBlock, ColormapComponent, SafeNumericInput} from "components/Shared";
 import {ImageType} from "models";
-import {AppStore, type FrameStore} from "stores";
+import {AppStore, ColorBlendingStore, type FrameStore} from "stores";
 
 import "./ColorBlendingConfigComponent.scss";
 
@@ -18,6 +19,26 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
     const unselectedFrames = matchedFrames.filter(f => !colorBlendingStore.selectedFrames.includes(f));
 
     const newFrameOptions = unselectedFrames.map((f, i) => <MenuItem text={f.filename} onClick={() => colorBlendingStore.addSelectedFrame(f)} key={i} />);
+    const colormapSetOptions = Array.from(ColorBlendingStore.ColormapSets, ([set, colormapSetConfig]) => (
+        <MenuItem
+            text=""
+            icon={
+                colormapSetConfig.type === "gradient" ? (
+                    <ColormapBlock colormap={colormapSetConfig.colormap} inverted={colormapSetConfig.inverted} />
+                ) : (
+                    <div className="colormap-set-blocks">
+                        {colormapSetConfig.colormaps.map(x => (
+                            <ColormapBlock colormap={x} inverted={false} roundIcon={true} key={x} />
+                        ))}
+                    </div>
+                )
+            }
+            label={set}
+            onClick={() => colorBlendingStore.applyColormapSet(set)}
+            key={set}
+        />
+    ));
+
     const getSetFrameOptions = (frame: FrameStore): {value: number; label: string}[] => {
         return matchedFrames.filter(f => unselectedFrames.includes(f) || f === frame).map(f => ({value: f.id, label: f.filename}));
     };
@@ -32,15 +53,18 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
         const setAlpha = (val: number) => colorBlendingStore.setAlpha(alphaIndex, val);
         return (
             <>
-                <ColormapComponent
-                    inverted={renderConfig.inverted}
-                    selectedColormap={renderConfig.colorMap}
-                    onColormapSelect={renderConfig.setColorMap}
-                    enableAdditionalColor={true}
-                    onCustomColorSelect={renderConfig.setCustomHexEnd}
-                    selectedCustomColor={renderConfig.customColormapHexEnd}
-                    customColorStart={renderConfig.customColormapHexStart}
-                />
+                <Tooltip content="Raster scaling matching enabled" disabled={!frame.rasterScalingReference}>
+                    <ColormapComponent
+                        disabled={!!frame.rasterScalingReference}
+                        inverted={renderConfig.inverted}
+                        selectedColormap={renderConfig.colorMap}
+                        onColormapSelect={renderConfig.setColorMap}
+                        enableAdditionalColor={true}
+                        onCustomColorSelect={renderConfig.setCustomHexEnd}
+                        selectedCustomColor={renderConfig.customColormapHexEnd}
+                        customColorStart={renderConfig.customColormapHexStart}
+                    />
+                </Tooltip>
                 <div className="alpha-settings">
                     <AlphaPicker className="alpha-slider" color={{r: 0, g: 0, b: 0, a: alpha}} onChange={color => setAlpha(color.rgb.a)} />
                     <Tooltip content="Alpha">
@@ -90,7 +114,7 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
     const buttonTextCutoff = 550;
 
     return (
-        <div className="color-blending-config">
+        <div className={classNames("color-blending-config", {[Classes.DARK]: AppStore.Instance.darkTheme})}>
             <div className="heading">
                 <H6>Color blending configuration</H6>
                 <ButtonGroup>
@@ -101,9 +125,11 @@ export const ColorBlendingConfigComponent = observer(({widgetWidth}: {widgetWidt
                             </Button>
                         </Tooltip>
                     </Popover>
-                    <Button icon="color-fill" rightIcon="caret-down" disabled>
-                        {widgetWidth < buttonTextCutoff ? "" : "Apply color set"}
-                    </Button>
+                    <Popover minimal={true} content={<Menu>{colormapSetOptions}</Menu>}>
+                        <Button icon="color-fill" rightIcon="caret-down">
+                            {widgetWidth < buttonTextCutoff ? "" : "Apply color set"}
+                        </Button>
+                    </Popover>
                 </ButtonGroup>
             </div>
             <FormGroup className="layer-config" label="Layer 1" inline={true}>
