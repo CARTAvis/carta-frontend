@@ -228,7 +228,7 @@ export class RootMenuComponent extends React.Component {
             );
         }
 
-        let saveImageTooltip: string | React.ReactNode = "";
+        let saveImageTooltip: string | React.JSX.Element = "";
         let hideImageTooltip = true;
         if (appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY) {
             saveImageTooltip = "Not allowed in read-only mode";
