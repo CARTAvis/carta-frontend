@@ -112,7 +112,7 @@ jobs:
         run: |
           n 20
           n exec 20 node -v
-          n exec 20 npm install --legacy-peer-deps
+          n exec 20 npm install
 
       - name: Production build with node 20
         shell: bash
