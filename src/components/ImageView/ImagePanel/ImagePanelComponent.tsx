@@ -163,18 +163,20 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
 
             return (
                 <div id={`image-panel-${this.props.column}-${this.props.row}`} className={className} style={style} onWheel={this.onMouseWheel} onMouseDown={this.onMouseDown} onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-                    {showRaster && <RasterViewComponent
-                        image={this.props.image}
-                        overlayStore={overlayStore}
-                        webGLService={frame.isPreview ? PreviewWebGLService.Instance : TileWebGLService.Instance}
-                        tileService={TileService.Instance}
-                        docked={this.props.docked}
-                        pixelHighlightValue={this.pixelHighlightValue}
-                        row={this.props.row}
-                        column={this.props.column}
-                        tileBasedRender={!frame.isPreview}
-                        rasterData={frame.previewPVRasterData}
-                    />}
+                    {showRaster && (
+                        <RasterViewComponent
+                            image={this.props.image}
+                            overlayStore={overlayStore}
+                            webGLService={frame.isPreview ? PreviewWebGLService.Instance : TileWebGLService.Instance}
+                            tileService={TileService.Instance}
+                            docked={this.props.docked}
+                            pixelHighlightValue={this.pixelHighlightValue}
+                            row={this.props.row}
+                            column={this.props.column}
+                            tileBasedRender={!frame.isPreview}
+                            rasterData={frame.previewPVRasterData}
+                        />
+                    )}
                     {showContour && <ContourViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />}
                     {showVector && <VectorOverlayViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />}
                     {frame?.overlayStore?.visible && <OverlayComponent image={this.props.image} overlaySettings={overlayStore} docked={this.props.docked} />}

@@ -105,16 +105,16 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoShifted : frame.wcsInfo;
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
         const frameView = this.props.unScaled
-        ? {
-              xMin: settings.padding.left * pixelRatio,
-              xMax: this.props.overlaySettings.viewWidth * pixelRatio - settings.padding.right * pixelRatio,
-              yMin: settings.padding.bottom * pixelRatio,
-              yMax: this.props.overlaySettings.viewHeight * pixelRatio - settings.padding.top * pixelRatio,
-              mip: 1
-          }
-        : frame.spatialReference
-        ? frame.spatialReference.requiredFrameView
-        : frame.requiredFrameView;
+            ? {
+                  xMin: settings.padding.left * pixelRatio,
+                  xMax: this.props.overlaySettings.viewWidth * pixelRatio - settings.padding.right * pixelRatio,
+                  yMin: settings.padding.bottom * pixelRatio,
+                  yMax: this.props.overlaySettings.viewHeight * pixelRatio - settings.padding.top * pixelRatio,
+                  mip: 1
+              }
+            : frame.spatialReference
+            ? frame.spatialReference.requiredFrameView
+            : frame.requiredFrameView;
         if (wcsInfo && frameView && this.canvas && !this.props.refCanvas) {
             // Take aspect ratio scaling into account
             const tempWcsInfo = AST.copy(wcsInfo);
