@@ -117,7 +117,6 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     render() {
         const appStore = AppStore.Instance;
         const overlay = this.props.frame.overlayStore;
-        const dialogStore = appStore.dialogStore;
         const frame = this.props.frame;
         const grid = overlay.grid;
 
