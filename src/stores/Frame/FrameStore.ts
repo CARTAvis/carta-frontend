@@ -42,7 +42,6 @@ import {
     ColorbarStore,
     ContourConfigStore,
     ContourStore,
-    DistanceMeasuringStore,
     OverlayBeamStore,
     RegionSetStore,
     RegionStore,
@@ -64,6 +63,7 @@ import {
     getPixelSize,
     getPixelValueFromWCS,
     getTransformedChannel,
+    getUnformattedWCSPoint,
     getValueFromArcsecString,
     isAstBadPoint,
     isWCSStringFormatValid,
@@ -129,6 +129,7 @@ export class FrameStore {
 
     public wcsInfo: AST.FrameSet;
     public readonly wcsInfoForTransformation: AST.FrameSet;
+    @observable public wcsInfoShifted: AST.FrameSet;
     public readonly wcsInfo3D: AST.FrameSet;
     public readonly validWcs: boolean;
     public readonly defaultWcsSystem: SystemType;
@@ -140,7 +141,6 @@ export class FrameStore {
     public spatialTransformAST: AST.Mapping;
     private cursorMovementHandle: NodeJS.Timeout;
 
-    public distanceMeasuring: DistanceMeasuringStore;
     public restFreqStore: RestFreqStore;
 
     public readonly renderConfig: RenderConfigStore;
@@ -161,7 +161,14 @@ export class FrameStore {
     @observable spectralSystem: SpectralSystem;
     @observable channelValues: Array<number>;
     @observable channelSecondaryValues: Array<number>;
+    /**
+     * View center in pixel coordinates
+     */
     @observable center: Point2D;
+    /**
+     * View center for the relative coordinate in pixel coordinates
+     */
+    @observable offsetCenter: Point2D;
     @observable cursorInfo: CursorInfo;
     @observable cursorValue: {position: Point2D; channel: number; value: number};
     @observable cursorMoving: boolean;
@@ -207,6 +214,8 @@ export class FrameStore {
     // @observable previewViewHeight: number;
     @observable previewPVRasterData: Float32Array;
     @observable intensityUnit: string;
+
+    @observable isOffsetCoord: boolean;
 
     @computed get filename(): string {
         // hdu extension name is in field 3 of fileInfoExtended computed entries
@@ -388,8 +397,13 @@ export class FrameStore {
                 AST.deleteObject(this.cachedTransformedWcsInfo);
             }
 
+            if (this.spatialReference.isOffsetCoord && !this.wcsInfoShifted) {
+                this.createWcsInfoShifted();
+            }
+            const wcsInfo = this.isOffsetCoord ? this.wcsInfoShifted : this.wcsInfo;
+
             this.cachedTransformedWcsInfo = AST.createTransformedFrameset(
-                this.wcsInfo,
+                wcsInfo,
                 adjTranslation.x,
                 adjTranslation.y,
                 -this.spatialTransform.rotation,
@@ -1303,13 +1317,14 @@ export class FrameStore {
 
         this.stokesFiles = [];
 
-        this.distanceMeasuring = frameInfo.preview ? null : new DistanceMeasuringStore();
-
         this.dirAxis = -1;
         this.dirAxisSize = -1;
         this.dirAxisFormat = "";
         this.depthAxisFormat = "";
         this.intensityUnit = this.headerUnit;
+
+        this.isOffsetCoord = false;
+        this.offsetCenter = null;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preferenceStore.astColor;
@@ -1558,12 +1573,6 @@ export class FrameStore {
                 } else {
                     this.setChannelSecondaryValues(this.isSecondarySpectralPropsEqual ? this.channelInfo.values : this.convertSpectralSecondary(this.channelInfo.values));
                 }
-            }
-        });
-
-        autorun(() => {
-            if (!this.isPreview) {
-                this.distanceMeasuring.updateTransformedPos(this.spatialTransform);
             }
         });
     }
@@ -2218,6 +2227,112 @@ export class FrameStore {
         this.channelSecondaryValues = values;
     }
 
+    @action private setIsOffsetCoord(isoffset: boolean) {
+        if (this.spatialReference) {
+            this.spatialReference.setIsOffsetCoord(isoffset);
+        } else {
+            this.isOffsetCoord = isoffset;
+            for (const frame of this.secondarySpatialImages) {
+                frame.isOffsetCoord = isoffset;
+            }
+        }
+    }
+
+    /**
+     * Toggle of the offset coordinates. This function initially sets the current view center (instead of the image center) as the offset center.
+     */
+    @action toggleOffsetCoord = () => {
+        const center = this.offsetCenter ?? this.center;
+        this.setOffsetCenter(center.x, center.y);
+        this.setIsOffsetCoord(!this.isOffsetCoord);
+    };
+
+    @action private createWcsInfoShifted = () => {
+        if (this.spatialReference) {
+            this.spatialReference.createWcsInfoShifted();
+        } else {
+            if (this.wcsInfo && this.offsetCenter) {
+                const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.offsetCenter);
+
+                if (centerInRad) {
+                    this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, centerInRad.x, centerInRad.y);
+                    for (const frame of this.secondarySpatialImages) {
+                        const frameCenterInRad = getUnformattedWCSPoint(frame.wcsInfo, frame.offsetCenter);
+                        if (frame.isOffsetCoord && frameCenterInRad) {
+                            frame.wcsInfoShifted = AST.createShiftmapFrameset(frame.wcsInfo, frameCenterInRad.x, frameCenterInRad.y);
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    @action updateOffsetCenter = () => {
+        if (!this.isPVImage && !this.isPreview && !this.isSwappedZ && !this.isUVImage) {
+            this.setOffsetCenter(this.center.x, this.center.y);
+        }
+    };
+
+    @computed get offsetCenterWCS(): WCSPoint2D {
+        // re-calculate with different wcs system
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const system = AppStore.Instance.overlayStore.global.explicitSystem;
+        if (!this.wcsInfoShifted) {
+            return null;
+        }
+        return getFormattedWCSPoint(this.wcsInfoForTransformation, this.offsetCenter);
+    }
+
+    /**
+     * Set the offset center and update the displayed coordinates.
+     *
+     * @param x - x-axis value in the pixel coordinates.
+     * @param y - y-axis value in the pixel coordinates.
+     * @param enableSpatialTransform - enable spatial coordinates transform.
+     * @returns - true if offset center is setted succesfully
+     */
+    @action setOffsetCenter = (x: number, y: number, enableSpatialTransform: boolean = true): boolean => {
+        if (!isFinite(x) || !isFinite(y)) {
+            return false;
+        }
+
+        if (this.spatialReference) {
+            let centerPointRefImage = {x, y};
+            if (enableSpatialTransform) {
+                centerPointRefImage = this.spatialTransform.transformCoordinate({x, y}, true);
+            }
+            this.spatialReference.setOffsetCenter(centerPointRefImage.x, centerPointRefImage.y);
+        } else {
+            this.offsetCenter = {x, y};
+            for (const frame of this.secondarySpatialImages) {
+                const centerPointSecondaryImage = frame.spatialTransform.transformCoordinate(this.offsetCenter, false);
+                frame.offsetCenter = centerPointSecondaryImage;
+            }
+        }
+
+        this.createWcsInfoShifted();
+
+        return true;
+    };
+
+    /**
+     * Set the offset center in WCS coordinates.
+     *
+     * @param wcsX - x-axis value in the WCS coordinates.
+     * @param wcsY - y-axis value in the WCS coordinates.
+     * @returns - false
+     */
+    @action setOffsetCenterWcs = (wcsX: string, wcsY: string): boolean => {
+        if (!isWCSStringFormatValid(wcsX, AppStore.Instance.overlayStore.numbers.formatTypeX) || !isWCSStringFormatValid(wcsY, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
+            return false;
+        }
+        const center = getPixelValueFromWCS(this.wcsInfoForTransformation, {x: wcsX, y: wcsY});
+        if (isFinite(center?.x) && isFinite(center?.y)) {
+            return this.setOffsetCenter(center.x, center.y);
+        }
+        return false;
+    };
+
     @action private initSupportedSpectralConversion = () => {
         if (this.channelInfo && this.spectralAxis && !this.spectralAxis.valid) {
             this.setChannelValues(this.channelInfo.values);
@@ -2528,6 +2643,14 @@ export class FrameStore {
         return this.zoomToSizeY(this.getImageYValueFromArcsec(getValueFromArcsecString(wcsY)));
     };
 
+    /**
+     * Set the view center in the pixel coordinates.
+     *
+     * @param x - x-axis value in the pixel coordinates.
+     * @param y - y-axis value in the pixel coordinates.
+     * @param enableSpatialTransform - enable spatial coordinates transform.
+     * @returns - true if offset center is setted succesfully
+     */
     @action setCenter = (x: number, y: number, enableSpatialTransform: boolean = true): boolean => {
         if (!isFinite(x) || !isFinite(y)) {
             return false;
@@ -2549,6 +2672,13 @@ export class FrameStore {
         return true;
     };
 
+    /**
+     * Set the view center in WCS coordinate.
+     *
+     * @param wcsX - x-axis value in the WCS coordinate
+     * @param wcsY - y-axis value in the WCS coordinate
+     * @returns - false
+     */
     @action setCenterWcs = (wcsX: string, wcsY: string): boolean => {
         if (!isWCSStringFormatValid(wcsX, this.overlayStore.numbers.formatTypeX) || !isWCSStringFormatValid(wcsY, this.overlayStore.numbers.formatTypeY)) {
             return false;
@@ -2780,6 +2910,16 @@ export class FrameStore {
         this.spatialReference = frame;
         console.log(`Setting spatial reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
 
+        this.isOffsetCoord = frame.isOffsetCoord;
+
+        // initialize wcsInfoShifted if it is not existed
+        if (this.isOffsetCoord && !this.wcsInfoShifted) {
+            const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.center);
+            if (centerInRad) {
+                this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, centerInRad.x, centerInRad.y);
+            }
+        }
+
         this.spatialTransformAST = AST.getSpatialMapping(this.wcsInfo, frame.wcsInfo);
 
         if (!this.spatialTransformAST) {
@@ -2815,6 +2955,9 @@ export class FrameStore {
 
         // udpate center position for setting inputs
         this.center = this.spatialTransform.transformCoordinate(this.spatialReference.center, false);
+        if (this.isOffsetCoord) {
+            this.setOffsetCenter(this.center.x, this.center.y);
+        }
 
         this.spatialReference.frameRegionSet.migrateRegionsFromExistingSet(this.frameRegionSet, this.spatialTransformAST, true);
         // Remove old regions after migration

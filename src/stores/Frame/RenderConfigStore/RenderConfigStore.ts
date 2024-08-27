@@ -116,7 +116,8 @@ export class RenderConfigStore {
         "Green",
         "Cyan",
         "Blue",
-        "Violet"
+        "Violet",
+        "Magenta"
     ];
     /**
      * The selected colormaps shown in the option.
@@ -152,13 +153,14 @@ export class RenderConfigStore {
      * Some commonly used single-color gradients.
      */
     static readonly COLOR_MAPS_MONO = new Map<string, string>([
-        ["Red", "#FF0000"],
-        ["Orange", "#FFA500"],
-        ["Yellow", "#FFFF00"],
-        ["Green", "#00FF00"],
-        ["Cyan", "#00FFFF"],
-        ["Blue", "#0000FF"],
-        ["Violet", "#7F00FF"]
+        ["Red", "#ff0000"],
+        ["Orange", "#ffa500"],
+        ["Yellow", "#ffff00"],
+        ["Green", "#00ff00"],
+        ["Cyan", "#00ffff"],
+        ["Blue", "#0000ff"],
+        ["Violet", "#7f00ff"],
+        ["Magenta", "#ff00ff"]
     ]);
     static readonly CUSTOM_COLOR_MAP_INDEX = -1;
     static readonly COLOR_MAPS_CUSTOM = "custom";

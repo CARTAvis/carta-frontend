@@ -8,10 +8,9 @@ import {AppStore, SnippetStore} from "stores";
 
 export enum DialogId {
     About = "about-dialog",
-    CatalogQuery = "catalog-query-dialog",
+    OnlineDataQuery = "online-data-query-dialog",
     Snippet = "snippet-dialog",
     Contour = "contour-dialog",
-    DistanceMeasure = "distance-measure-dialog",
     ExternalPage = "external-page-dialog",
     FileBrowser = "file-browser-dialog",
     FileInfo = "file-info-dialog",

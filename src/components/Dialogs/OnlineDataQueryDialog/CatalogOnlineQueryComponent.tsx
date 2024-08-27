@@ -1,28 +1,21 @@
 import * as React from "react";
-import {AnchorButton, Button, Classes, DialogProps, FormGroup, Icon, InputGroup, Intent, MenuItem, NonIdealState, Overlay2, PopoverPosition, Position, Spinner, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, FormGroup, Icon, InputGroup, Intent, MenuItem, NonIdealState, Overlay2, PopoverPosition, Position, Spinner, Tooltip} from "@blueprintjs/core";
 import {ItemRendererProps, MultiSelect, Select} from "@blueprintjs/select";
-import classNames from "classnames";
 import FuzzySearch from "fuzzy-search";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, SafeNumericInput} from "components/Shared";
 import {CatalogApiService, CatalogDatabase} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, DialogId, HelpType, NUMBER_FORMAT_LABEL, RadiusUnits, SystemType, VizierItem} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, NUMBER_FORMAT_LABEL, RadiusUnits, SystemType, VizierItem} from "stores";
 import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
-import "./CatalogOnlineQueryDialogComponent.scss";
+import "./CatalogOnlineQueryComponent.scss";
 
 const KEYCODE_ENTER = 13;
 
 @observer
-export class CatalogQueryDialogComponent extends React.Component {
-    private static readonly DefaultWidth = 600;
-    private static readonly DefaultHeight = 550;
-    private static readonly MinWidth = 550;
-    private static readonly MinHeight = 450;
-
+export class CatalogQueryComponent extends React.Component {
     @observable resultSize: number;
     @observable objectSize: number;
 
@@ -66,33 +59,9 @@ export class CatalogQueryDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
-        const className = classNames("catalog-query-dialog", {[Classes.DARK]: appStore.darkTheme});
-
-        const dialogProps: DialogProps = {
-            icon: "geosearch",
-            className: className,
-            backdropClassName: "minimal-dialog-backdrop",
-            canOutsideClickClose: false,
-            lazy: true,
-            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.CatalogQuery),
-            title: "Online Catalog Query"
-        };
 
         if (!appStore || !appStore.activeFrame) {
-            return (
-                <DraggableDialogComponent
-                    dialogProps={dialogProps}
-                    helpType={HelpType.ONLINE_CATALOG_QUERY}
-                    defaultWidth={CatalogQueryDialogComponent.DefaultWidth}
-                    defaultHeight={CatalogQueryDialogComponent.DefaultHeight}
-                    minWidth={CatalogQueryDialogComponent.MinWidth}
-                    minHeight={CatalogQueryDialogComponent.MinHeight}
-                    enableResizing={true}
-                    dialogId={DialogId.CatalogQuery}
-                >
-                    <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
-                </DraggableDialogComponent>
-            );
+            return <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;
         }
 
         const disable = configStore.isQuerying || configStore.isObjectQuerying;
@@ -253,33 +222,24 @@ export class CatalogQueryDialogComponent extends React.Component {
         const tableInfo = <pre>{this.resultInfo}</pre>;
 
         return (
-            <DraggableDialogComponent
-                dialogProps={dialogProps}
-                helpType={HelpType.ONLINE_CATALOG_QUERY}
-                defaultWidth={CatalogQueryDialogComponent.DefaultWidth}
-                defaultHeight={CatalogQueryDialogComponent.DefaultHeight}
-                minWidth={CatalogQueryDialogComponent.MinWidth}
-                minHeight={CatalogQueryDialogComponent.MinHeight}
-                enableResizing={true}
-                dialogId={DialogId.CatalogQuery}
-            >
-                <div className={Classes.DIALOG_BODY}>{configBoard}</div>
+            <div className="catalog-query-panel">
+                {configBoard}
                 <Overlay2 autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={disable} usePortal={false}>
                     <div className="query-loading-overlay">
                         <Spinner intent={Intent.PRIMARY} size={30} value={null} />
                     </div>
                 </Overlay2>
-                <div className={Classes.DIALOG_FOOTER}>
+                <div className="query-footer">
                     <div className={"result-info"} data-testid="catalog-query-info">
                         {tableInfo}
                     </div>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton intent={Intent.SUCCESS} disabled={disable} onClick={() => this.query()} text={"Query"} />
                         <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => CatalogApiService.Instance.cancelQuery(configStore.catalogDB)} text={"Cancel"} />
                         {configStore.enableLoadVizier ? <AnchorButton intent={Intent.PRIMARY} disabled={disable} onClick={() => this.loadVizierCatalogs()} text={"Load selected"} /> : null}
+                        <AnchorButton intent={Intent.SUCCESS} disabled={disable} onClick={() => this.query()} text={"Query"} />
                     </div>
                 </div>
-            </DraggableDialogComponent>
+            </div>
         );
     }
 

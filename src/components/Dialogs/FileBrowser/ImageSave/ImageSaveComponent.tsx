@@ -1,11 +1,11 @@
 import * as React from "react";
-import {FormGroup, HTMLSelect, Intent, Label, OptionProps, Switch, Text} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, Intent, Label, NonIdealState, OptionProps, Switch, Text} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
-import {FrequencyUnit, SpectralSystem} from "models";
+import {FrequencyUnit, ImageType, SpectralSystem} from "models";
 import {AppStore, FileBrowserStore} from "stores";
 
 import "./ImageSaveComponent.scss";
@@ -124,6 +124,21 @@ export class ImageSaveComponent extends React.Component {
     }
 
     render() {
+        if (AppStore.Instance.activeImage?.type !== ImageType.FRAME) {
+            return (
+                <NonIdealState
+                    icon="document"
+                    description={
+                        <span>
+                            Color-blending and PV preview images cannot be saved.
+                            <br />
+                            <small>To save color-blending images, please save as a workspace via the File menu.</small>
+                        </span>
+                    }
+                />
+            );
+        }
+
         const fileBrowser = FileBrowserStore.Instance;
         const activeFrame = AppStore.Instance.activeFrame;
         const closedRegions = activeFrame?.regionSet?.regions.filter(region => region.regionId > 0 && region.isClosedRegion);

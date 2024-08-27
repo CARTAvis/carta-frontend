@@ -31,6 +31,7 @@ import {
     StokesAnalysisComponent,
     StokesAnalysisSettingsPanelComponent
 } from "components";
+import {ImageType} from "models";
 import {AppStore, CatalogStore, WidgetConfig, WidgetsStore} from "stores";
 
 @observer
@@ -178,6 +179,11 @@ export class FloatingWidgetManagerComponent extends React.Component {
         return (
             <div>
                 {widgetConfigs.map(w => {
+                    let showSettingsButton = this.showFloatingSettingsButton(w);
+                    if (w.type === RenderConfigComponent.WIDGET_CONFIG.type) {
+                        showSettingsButton = AppStore.Instance.activeImage?.type !== ImageType.COLOR_BLENDING;
+                    }
+
                     const showPinButton = this.showPin(w);
                     const id = w.componentId ? w.componentId : w.id;
 
@@ -194,7 +200,7 @@ export class FloatingWidgetManagerComponent extends React.Component {
                                 showPinButton={showPinButton}
                                 onSelected={() => this.onFloatingWidgetSelected(w)}
                                 onClosed={() => this.onFloatingWidgetClosed(w)}
-                                showFloatingSettingsButton={this.showFloatingSettingsButton(w)}
+                                showFloatingSettingsButton={showSettingsButton}
                                 floatingWidgets={widgetConfigs.length}
                             >
                                 {showPinButton ? this.getWidgetContent(w) : this.getWidgetSettings(w)}

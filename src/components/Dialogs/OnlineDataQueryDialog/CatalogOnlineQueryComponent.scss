@@ -1,10 +1,15 @@
 @import "~@blueprintjs/core/lib/scss/variables.scss";
 
-.catalog-query-dialog {
+.catalog-query-panel {
+    display: flex;
+    flex-direction: column;
     height: 100%;
     width: 100%;
 
     .online-catalog-config {
+        flex: 1;
+        overflow: auto;
+
         .#{$ns}-form-group {
             .#{$ns}-label {
                 margin-left: 5px !important;
@@ -28,7 +33,9 @@
         }
     }
 
-    .#{$ns}-dialog-footer {
+    .query-footer {
+        margin-top: 10px;
+
         .result-info {
             display: inline-flex;
             font-size: x-small;
@@ -41,15 +48,6 @@
 
     .#{$ns}-input-group .#{$ns}-input {
         width: auto;
-    }
-
-    .query-loading-overlay {
-        position: absolute !important;
-        top: 50%;
-        left: 50%;
-        margin: -15px 0 0 -15px;
-        width: inherit !important;
-        height: inherit !important;
     }
 }
 

@@ -48,7 +48,11 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 destCanvas.drawImage(this.props.refCanvas, 0, 0, w, h, 0, 0, this.canvas.width, this.canvas.height);
             });
         } else if (!this.props.refCanvas && this.canvas) {
-            this.triggerUpdate(); //2330
+            const contourStream = AppStore.Instance.backendService.contourStream;
+            this.triggerUpdate();
+            if (this.canvas) {
+                contourStream.subscribe(this.triggerUpdate);
+            }
         }
     };
 

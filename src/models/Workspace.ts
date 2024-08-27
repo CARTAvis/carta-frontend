@@ -76,6 +76,12 @@ export interface WorkspaceRegion {
     annotationStyles?: any;
 }
 
+export interface WorkspaceColorBlending {
+    imageListIndex: number;
+    selectedFrameId: number[];
+    alpha: number[];
+}
+
 export interface WorkspaceFile {
     id: number;
     directory?: string;
@@ -108,6 +114,7 @@ export interface Workspace {
     frontendVersion: number;
     description?: string;
     files?: WorkspaceFile[];
+    colorBlendingImages?: WorkspaceColorBlending[];
     references?: {
         spatial?: number;
         spectral?: number;
