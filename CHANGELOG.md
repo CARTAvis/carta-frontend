@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added support for multi-color blending ([#1204](https://github.com/CARTAvis/carta-frontend/issues/1204)).
 * Added support for showing relative coordinates in image view ([[#681](https://github.com/CARTAvis/carta-frontend/issues/681)])
 * Added a button for deleting all regions ([#1040](https://github.com/CARTAvis/carta-frontend/issues/1040)).
+* Added support for loading remote FITS files from the hips2fits server ([#1379](https://github.com/CARTAvis/carta-backend/issues/1379)).
 * Supported the customized rest frequency for the moment maps ([[#2396](https://github.com/CARTAvis/carta-frontend/issues/2396)]).
 ### Fixed
 * Fixed ruler annotation matching bug ([#2242](https://github.com/CARTAvis/carta-frontend/issues/2242)).
@@ -30,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Upgraded blueprintjs from v3 to v5 ([#2029](https://github.com/CARTAvis/carta-frontend/issues/1395)).
 * Fixed the catalog load button status after double clicking catalog files ([#2378](https://github.com/CARTAvis/carta-frontend/issues/2378)).
 * Synchronized the value format in the pan and zoom tab in the image view settings widget ([#2235](https://github.com/CARTAvis/carta-frontend/issues/2235)).
+* Fix save image/export regions bug which could cause directory overwrite or deletion ([#1377](https://github.com/CARTAvis/carta-backend/issues/1377)).
 
 ## [4.1.0]
 

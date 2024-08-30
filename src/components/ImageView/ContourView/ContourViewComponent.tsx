@@ -26,6 +26,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         this.contourWebGLService = ContourWebGLService.Instance;
         this.gl = this.contourWebGLService.gl;
         const contourStream = AppStore.Instance.backendService.contourStream;
+        this.triggerUpdate();
         if (this.canvas) {
             contourStream.subscribe(this.triggerUpdate);
         }
