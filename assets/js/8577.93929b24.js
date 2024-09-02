@@ -1,0 +1,1 @@
+(self.webpackChunkcarta_frontend_docs=self.webpackChunkcarta_frontend_docs||[]).push([[8577],{549:(c,s,a)=>{"use strict";a.d(s,{A:()=>n});var e=a(8291);const n=e},5741:()=>{}}]);
