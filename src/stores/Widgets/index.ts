@@ -5,6 +5,8 @@ export * from "./HistogramWidgetStore/HistogramWidgetStore";
 export * from "./LayerListWidgetStore/LayerListWidgetStore";
 export * from "./PvGeneratorWidgetStore/PvGeneratorWidgetStore";
 export * from "./RegionWidgetStore/RegionWidgetStore";
+// add render 3d
+export * from "./Render3DWidgetStore/Render3DWidgetStore";
 export * from "./RenderConfigWidgetStore/RenderConfigWidgetStore";
 export * from "./SpatialProfileWidgetStore/SpatialProfileWidgetStore";
 export * from "./SpectralLineQueryWidgetStore/SpectralLineQueryWidgetStore";

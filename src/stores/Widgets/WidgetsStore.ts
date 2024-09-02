@@ -21,6 +21,9 @@ import {
     PvGeneratorComponent,
     PvPreviewComponent,
     RegionListComponent,
+    // add render 3d
+    Render3DComponent,
+    Render3DSettingsPanelComponent,
     RenderConfigComponent,
     RenderConfigSettingsPanelComponent,
     SpatialProfilerComponent,
@@ -46,6 +49,8 @@ import {
     LayerListWidgetStore,
     PvGeneratorWidgetStore,
     RegionWidgetStore,
+    // add render 3d
+    Render3DWidgetStore,
     RenderConfigWidgetStore,
     SpatialProfileWidgetStore,
     SpectralLineQueryWidgetStore,
@@ -62,6 +67,7 @@ export enum WidgetType {
     Statistics = "Statistics Widget",
     Histogram = "Histogram Widget",
     Animator = "Animator Widget",
+    Render3D = "3D Rendering Widget",
     RenderConfig = "Render Configuration Widget",
     StokesAnalysis = "Stokes Analysis Widget",
     ImageList = "Image List Widget",
@@ -162,6 +168,8 @@ export class WidgetsStore {
     @observable logWidgets: Map<string, EmptyWidgetStore>;
     @observable regionListWidgets: Map<string, EmptyWidgetStore>;
     @observable animatorWidgets: Map<string, EmptyWidgetStore>;
+    // add render 3d
+    @observable render3DWidgets: Map<string, Render3DWidgetStore>;
     @observable stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore>;
     @observable floatingSettingsWidgets: Map<string, string>;
     @observable catalogWidgets: Map<string, CatalogWidgetStore>;
@@ -229,6 +237,16 @@ export class WidgetsStore {
                 widgetConfig: AnimatorComponent.WIDGET_CONFIG
             }
         ],
+        // add render 3d
+        [
+            WidgetType.Render3D,
+            {
+                isCustomIcon: false,
+                icon: "3d",
+                onClick: () => WidgetsStore.Instance.createFloatingRender3DWidget(),
+                widgetConfig: Render3DComponent.WIDGET_CONFIG
+            }
+        ],	
         [
             WidgetType.RenderConfig,
             {
@@ -360,6 +378,8 @@ export class WidgetsStore {
         this.histogramWidgets = new Map<string, HistogramWidgetStore>();
         this.renderConfigWidgets = new Map<string, RenderConfigWidgetStore>();
         this.animatorWidgets = new Map<string, EmptyWidgetStore>();
+        // add render 3d
+        this.render3DWidgets = new Map<string, Render3DWidgetStore>();
         this.layerListWidgets = new Map<string, LayerListWidgetStore>();
         this.logWidgets = new Map<string, EmptyWidgetStore>();
         this.regionListWidgets = new Map<string, EmptyWidgetStore>();
@@ -378,6 +398,8 @@ export class WidgetsStore {
             [HistogramComponent.WIDGET_CONFIG.type, this.histogramWidgets],
             [RenderConfigComponent.WIDGET_CONFIG.type, this.renderConfigWidgets],
             [AnimatorComponent.WIDGET_CONFIG.type, this.animatorWidgets],
+            // add render 3d
+            [Render3DComponent.WIDGET_CONFIG.type, this.render3DWidgets],
             [LayerListComponent.WIDGET_CONFIG.type, this.layerListWidgets],
             [LogComponent.WIDGET_CONFIG.type, this.logWidgets],
             [RegionListComponent.WIDGET_CONFIG.type, this.regionListWidgets],
@@ -405,6 +427,9 @@ export class WidgetsStore {
                 return LogComponent.WIDGET_CONFIG;
             case AnimatorComponent.WIDGET_CONFIG.type:
                 return AnimatorComponent.WIDGET_CONFIG;
+            // add render 3d
+            case Render3DComponent.WIDGET_CONFIG.type:
+                return Render3DComponent.WIDGET_CONFIG;
             case SpatialProfilerComponent.WIDGET_CONFIG.type:
                 return SpatialProfilerComponent.WIDGET_CONFIG;
             case SpectralProfilerComponent.WIDGET_CONFIG.type:
@@ -444,6 +469,9 @@ export class WidgetsStore {
                 return SpectralProfilerSettingsPanelComponent.WIDGET_CONFIG;
             case SpatialProfilerComponent.WIDGET_CONFIG.type:
                 return SpatialProfilerSettingsPanelComponent.WIDGET_CONFIG;
+            // add render 3d
+            case Render3DComponent.WIDGET_CONFIG.type:
+                return Render3DSettingsPanelComponent.WIDGET_CONFIG;
             case RenderConfigComponent.WIDGET_CONFIG.type:
                 return RenderConfigSettingsPanelComponent.WIDGET_CONFIG;
             case HistogramComponent.WIDGET_CONFIG.type:
@@ -561,6 +589,10 @@ export class WidgetsStore {
                 break;
             case AnimatorComponent.WIDGET_CONFIG.type:
                 itemId = this.addAnimatorWidget();
+                break;
+            // add render 3d
+            case Render3DComponent.WIDGET_CONFIG.type:
+                itemId = this.addRender3DWidget();
                 break;
             case LayerListComponent.WIDGET_CONFIG.type:
                 itemId = this.addLayerListWidget();
@@ -682,6 +714,8 @@ export class WidgetsStore {
         layout.registerComponent("spectral-line-query", SpectralLineQueryComponent);
         layout.registerComponent("stats", StatsComponent);
         layout.registerComponent("histogram", HistogramComponent);
+        // add 3d render
+        layout.registerComponent("render-3d", Render3DComponent);
         layout.registerComponent("render-config", RenderConfigComponent);
         layout.registerComponent("region-list", RegionListComponent);
         layout.registerComponent("layer-list", LayerListComponent);
@@ -694,7 +728,7 @@ export class WidgetsStore {
         layout.registerComponent("catalog-overlay", CatalogOverlayComponent);
         layout.registerComponent("catalog-plot", CatalogPlotComponent);
 
-        const showCogWidgets = ["image-view", "spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes", "catalog-overlay", "layer-list"];
+        const showCogWidgets = ["image-view", "spatial-profiler", "spectral-profiler", "histogram", 'render-3d', "render-config", "stokes", "catalog-overlay", "layer-list"];
         const hideHelpButtonWidgets = ["pv-preview"];
         // add drag source buttons for ToolbarMenuComponent
         this.CARTAWidgets.forEach((props, widgetType) => {
@@ -775,7 +809,7 @@ export class WidgetsStore {
             return null;
         }
 
-        let widgetStore: RenderConfigWidgetStore | SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore | CatalogWidgetStore | null | undefined = null;
+        let widgetStore: RenderConfigWidgetStore | SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | Render3DWidgetStore | StokesAnalysisWidgetStore | CatalogWidgetStore | null | undefined = null;
         switch (widgetType) {
             case RenderConfigComponent.WIDGET_CONFIG.type:
                 widgetStore = this.renderConfigWidgets.get(widgetID);
@@ -788,6 +822,10 @@ export class WidgetsStore {
                 break;
             case HistogramComponent.WIDGET_CONFIG.type:
                 widgetStore = this.histogramWidgets.get(widgetID);
+                break;
+            // add render 3d
+            case Render3DComponent.WIDGET_CONFIG.type:
+                widgetStore = this.render3DWidgets.get(widgetID);
                 break;
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 widgetStore = this.stokesAnalysisWidgets.get(widgetID);
@@ -816,6 +854,8 @@ export class WidgetsStore {
             SpatialProfilerComponent.WIDGET_CONFIG.type,
             RenderConfigComponent.WIDGET_CONFIG.type,
             HistogramComponent.WIDGET_CONFIG.type,
+            // add render 3d
+            Render3DComponent.WIDGET_CONFIG.type,
             CatalogOverlayComponent.WIDGET_CONFIG.type,
             LayerListComponent.WIDGET_CONFIG.type
         ];
@@ -1393,6 +1433,32 @@ export class WidgetsStore {
                 widgetStore.init(widgetSettings);
             }
             this.histogramWidgets.set(id, widgetStore);
+        }
+        return id;
+    }
+
+    // endregion
+
+    // add render 3d
+    // region Render 3D Widgets
+    createFloatingRender3DWidget = () => {
+        const id = this.addRender3DWidget();
+        if (id !== null) {
+            this.addFloatingWidget(new WidgetConfig(id, Render3DComponent.WIDGET_CONFIG));
+        }
+    };
+
+    @action addRender3DWidget(id: string | null = null, widgetSettings: object | null = null) {
+        if (!id) {
+            id = this.getNextId(Render3DComponent.WIDGET_CONFIG.type);
+        }
+
+        if (id) {
+            const widgetStore = new Render3DWidgetStore();
+            if (widgetSettings) {
+                widgetStore.init(widgetSettings);
+            }
+            this.render3DWidgets.set(id, widgetStore);
         }
         return id;
     }

@@ -1,0 +1,32 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+.render-3d-widget {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    user-select: none;
+    .profile-container {
+        flex: 3 3 auto;
+        min-width: 0;
+
+        .#{$ns}-form-group {
+            padding: 5px 5px 1px;
+            margin: 0;
+        }
+
+        .profile-toolbar {
+            overflow: hidden;
+            display: flex;
+            height: 40px;
+        }
+
+        .profile-plot {
+            height: calc(100% - 55px);
+            position: relative;
+        }
+
+        .profile-info {
+            height: 15px;
+        }
+    }
+}

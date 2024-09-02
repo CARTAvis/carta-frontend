@@ -28,6 +28,9 @@ export enum HelpType {
     REGION_LIST = "Region List",
     RENDER_CONFIG = "Render Configuration",
     RENDER_CONFIG_SETTINGS = "Render Configuration Settings",
+    // add render 3d
+    RENDER_3D = "3D Rendering",
+    RENDER_3D_SETTINGS = "3D Rendering Settings",
     SPATIAL_PROFILER = "Spatial Profiler",
     SPATIAL_PROFILER_SETTINGS_STYLING = "Spatial Profiler Style Settings",
     SPATIAL_PROFILER_SETTINGS_SMOOTHING = "Spatial Profiler Smoothing Settings",
