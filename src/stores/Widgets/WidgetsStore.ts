@@ -23,7 +23,6 @@ import {
     RegionListComponent,
     // add render 3d
     Render3DComponent,
-    Render3DSettingsPanelComponent,
     RenderConfigComponent,
     RenderConfigSettingsPanelComponent,
     SpatialProfilerComponent,
@@ -242,7 +241,7 @@ export class WidgetsStore {
             WidgetType.Render3D,
             {
                 isCustomIcon: false,
-                icon: "3d",
+                icon: "video",
                 onClick: () => WidgetsStore.Instance.createFloatingRender3DWidget(),
                 widgetConfig: Render3DComponent.WIDGET_CONFIG
             }
@@ -469,9 +468,6 @@ export class WidgetsStore {
                 return SpectralProfilerSettingsPanelComponent.WIDGET_CONFIG;
             case SpatialProfilerComponent.WIDGET_CONFIG.type:
                 return SpatialProfilerSettingsPanelComponent.WIDGET_CONFIG;
-            // add render 3d
-            case Render3DComponent.WIDGET_CONFIG.type:
-                return Render3DSettingsPanelComponent.WIDGET_CONFIG;
             case RenderConfigComponent.WIDGET_CONFIG.type:
                 return RenderConfigSettingsPanelComponent.WIDGET_CONFIG;
             case HistogramComponent.WIDGET_CONFIG.type:

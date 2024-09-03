@@ -1,32 +1,127 @@
 @import "~@blueprintjs/core/lib/scss/variables.scss";
 
+.floating-content:has(.render-3d-widget) {
+    overflow: auto;
+}
+
+.lm_content:has(.render-3d-widget) {
+    overflow: auto;
+}
+
 .render-3d-widget {
+    margin: 20px;
     display: flex;
-    width: 100%;
-    height: 100%;
+    flex-direction: column;
     user-select: none;
-    .profile-container {
-        flex: 3 3 auto;
-        min-width: 0;
+
+    .#{$ns}-numeric-input {
+        .#{$ns}-input-group {
+            width: 80px;
+        }
+    }
+
+    .#{$ns}-non-ideal-state {
+        flex: auto;
+        padding: 5px 5px 1px;
+        margin: 0;
+    }
+
+    .render-3d-panel {
+        flex: auto;
+        padding: 5px 5px 1px;
+        margin: 0;
 
         .#{$ns}-form-group {
-            padding: 5px 5px 1px;
-            margin: 0;
+            .#{$ns}-label {
+                min-width: 13em;
+                width: 13em;
+                text-align: right;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
         }
 
-        .profile-toolbar {
+        .#{$ns}-html-select select,
+        .#{$ns}-select select {
             overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .label-info-group {
+            .#{$ns}-html-select {
+                width: 100%;
+            }
+
+            .label-info {
+                max-width: calc(100% - 92px); // because of the popover, we need the subtraction
+                text-overflow: ellipsis;
+                overflow: hidden;
+                white-space: nowrap;
+                display: inline-block;
+                vertical-align: bottom;
+            }
+        }
+
+        .cube-size-button-group {
+            .cube-size-group {
+                display: flex;
+                align-items: center;
+
+                .cube-size {
+                    vertical-align: middle;
+                }
+            }
+        }
+
+        .range-select {
             display: flex;
-            height: 40px;
+            flex-direction: row;
+
+            .#{$ns}-form-group {
+                margin-right: 10px;
+                margin-bottom: 0px;
+                .#{$ns}-label {
+                    margin: 0 10px 0 0;
+                    min-width: 3em;
+                    width: 3em;
+                    text-align: right;
+                }
+            }
+
+            .cursor-select {
+                display: flex;
+                margin-left: 5px;
+            }
         }
 
-        .profile-plot {
-            height: calc(100% - 55px);
-            position: relative;
+        .rebin-select {
+            display: flex;
+            flex-direction: row;
+
+            .#{$ns}-input-group {
+                width: 65px;
+            }
+
+            .#{$ns}-form-group {
+                margin-right: 5px;
+                margin-bottom: 0px;
+                .#{$ns}-label {
+                    margin: 0px;
+                    min-width: 2em;
+                    width: 2em;
+                    text-align: left;
+                }
+            }
         }
 
-        .profile-info {
-            height: 15px;
+        .generate-button {
+            float: right;
+            display: flex;
+            div {
+                margin-left: 1em;
+            }
         }
     }
 }
+

@@ -10,7 +10,6 @@ export * from "./FloatingWidgetManager/FloatingWidgetManagerComponent";
 export * from "./HelpDrawer/HelpDrawerComponent";
 export * from "./Histogram/HistogramComponent";
 export * from "./Histogram/HistogramSettingsPanelComponent/HistogramSettingsPanelComponent";
-// add render 3d
 export * from "./ImageView/ImageViewComponent";
 export * from "./ImageView/ImageViewSettingsPanel/ImageViewSettingsPanelComponent";
 export * from "./LayerList/LayerListComponent";
@@ -22,8 +21,8 @@ export * from "./Placeholder/PlaceholderComponent";
 export * from "./PvGenerator/PvGeneratorComponent";
 export * from "./PvGenerator/PvPreviewComponent";
 export * from "./RegionList/RegionListComponent";
+// add render 3d
 export * from "./Render3D/Render3DComponent";
-export * from "./Render3D/Render3DSettingsPanelComponent/Render3DSettingsPanelComponent";
 export * from "./RenderConfig/RenderConfigComponent";
 export * from "./RenderConfig/RenderConfigSettingsPanelComponent/RenderConfigSettingsPanelComponent";
 export * from "./SpatialProfiler/SpatialProfilerComponent";
