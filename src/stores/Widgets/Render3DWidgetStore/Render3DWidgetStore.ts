@@ -10,10 +10,10 @@ import {length2D} from "utilities";
 
 import {ACTIVE_FILE_ID, RegionId, RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
-export enum PVAxis {
-    SPATIAL = "Spatial",
-    SPECTRAL = "Spectral"
-}
+// export enum PVAxis {
+//     SPATIAL = "Spatial",
+//     SPECTRAL = "Spectral"
+// }
 
 export class Render3DWidgetStore extends RegionWidgetStore {
     @observable width: number;

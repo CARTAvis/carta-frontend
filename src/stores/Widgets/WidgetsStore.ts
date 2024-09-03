@@ -805,7 +805,7 @@ export class WidgetsStore {
             return null;
         }
 
-        let widgetStore: RenderConfigWidgetStore | SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | Render3DWidgetStore | StokesAnalysisWidgetStore | CatalogWidgetStore | null | undefined = null;
+        let widgetStore: RenderConfigWidgetStore | SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore | CatalogWidgetStore | null | undefined = null;
         switch (widgetType) {
             case RenderConfigComponent.WIDGET_CONFIG.type:
                 widgetStore = this.renderConfigWidgets.get(widgetID);
@@ -819,10 +819,10 @@ export class WidgetsStore {
             case HistogramComponent.WIDGET_CONFIG.type:
                 widgetStore = this.histogramWidgets.get(widgetID);
                 break;
-            // add render 3d
-            case Render3DComponent.WIDGET_CONFIG.type:
-                widgetStore = this.render3DWidgets.get(widgetID);
-                break;
+            // // add render 3d
+            // case Render3DComponent.WIDGET_CONFIG.type:
+            //     widgetStore = this.render3DWidgets.get(widgetID);
+            //     break;
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 widgetStore = this.stokesAnalysisWidgets.get(widgetID);
                 break;
@@ -1444,20 +1444,31 @@ export class WidgetsStore {
         }
     };
 
-    @action addRender3DWidget(id: string | null = null, widgetSettings: object | null = null) {
+    @action addRender3DWidget(id: string | null = null) {
         if (!id) {
             id = this.getNextId(Render3DComponent.WIDGET_CONFIG.type);
         }
 
         if (id) {
-            const widgetStore = new Render3DWidgetStore();
-            if (widgetSettings) {
-                widgetStore.init(widgetSettings);
-            }
-            this.render3DWidgets.set(id, widgetStore);
+            this.render3DWidgets.set(id, new Render3DWidgetStore());
         }
         return id;
     }
+
+    // @action addRender3DWidget(id: string | null = null, widgetSettings: object | null = null) {
+    //     if (!id) {
+    //         id = this.getNextId(Render3DComponent.WIDGET_CONFIG.type);
+    //     }
+
+    //     if (id) {
+    //         const widgetStore = new Render3DWidgetStore();
+    //         if (widgetSettings) {
+    //             widgetStore.init(widgetSettings);
+    //         }
+    //         this.render3DWidgets.set(id, widgetStore);
+    //     }
+    //     return id;
+    // }
 
     // endregion
 
