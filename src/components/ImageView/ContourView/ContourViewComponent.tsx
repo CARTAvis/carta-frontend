@@ -1,6 +1,7 @@
 import * as React from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
+import {Subscription} from "rxjs";
 
 import {ContourWebGLService} from "services";
 import {AnimatorStore, AppStore, OverlayStore} from "stores";
@@ -26,11 +27,16 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     public canvas: HTMLCanvasElement;
     private gl: WebGL2RenderingContext;
     private contourWebGLService: ContourWebGLService;
+    private sub: Subscription;
 
     componentDidMount() {
         this.contourWebGLService = ContourWebGLService.Instance;
         this.gl = this.contourWebGLService.gl;
         this.updateImage();
+    }
+
+    componentWillUnmount(): void {
+        this.sub && this.sub.unsubscribe();
     }
 
     componentDidUpdate() {
@@ -41,6 +47,9 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         AppStore.Instance.resetImageRatio();
         if (this.canvas && this.props.refCanvas && this.props.channel !== undefined) {
             requestAnimationFrame(() => {
+                if (!(this.props.refCanvas && this.canvas)) {
+                    return;
+                }
                 const destCanvas = this.canvas.getContext("2d", {willReadFrequently: true});
                 const w = this.props.refCanvas.width;
                 const h = this.props.refCanvas.height;
@@ -51,7 +60,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             const contourStream = AppStore.Instance.backendService.contourStream;
             this.triggerUpdate();
             if (this.canvas) {
-                contourStream.subscribe(this.triggerUpdate);
+                this.sub = contourStream.subscribe(this.triggerUpdate);
             }
         }
     };

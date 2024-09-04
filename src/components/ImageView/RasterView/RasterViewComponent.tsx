@@ -17,6 +17,8 @@ export class RasterViewComponentProps {
     overlayStore: OverlayStore;
     image: ImageItem;
     pixelHighlightValue: number;
+    renderWidth?: number;
+    renderHeight?: number;
     top?: number;
     left?: number;
     row: number;
@@ -25,7 +27,7 @@ export class RasterViewComponentProps {
     tileService: TileService;
     tileBasedRender: boolean;
     rasterData?: Float32Array;
-    channel?: number; // if channel is defined, we will fetch tiles info of this channel number instead of frame.channel
+    channel?: number[]; // if channel is defined, we will fetch tiles info of this channel number instead of frame.channel
 }
 
 const Float32Max = 3.402823466e38;
@@ -57,35 +59,35 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     this.props.rasterData
                 );
             }
-
-            this.sub = this.props.tileService.tileStream.subscribe(tileMessage => {
-                // sometimes the renderHeight is 0, and still figuring out why
-                ((!isFinite(this.props.channel) && (!AppStore.Instance.preferenceStore.channelMapEnabled || (this.props.image.store as FrameStore).isPreview)) || tileMessage.channel === this.props.channel) &&
-                    requestAnimationFrame(() =>
-                        this.updateCanvas(
-                            this.props.image,
-                            this.props.webGLService,
-                            this.props.tileService,
-                            this.canvas,
-                            this.props.overlayStore,
-                            this.props.column,
-                            this.props.row,
-                            appStore.imageViewConfigStore.numImageColumns,
-                            appStore.imageViewConfigStore.numImageRows,
-                            this.props.pixelHighlightValue,
-                            this.props.tileBasedRender,
-                            this.props.channel || baseFrame.channel,
-                            this.props.rasterData
-                        )
-                    );
-            });
         }
-        // return () => {
-        //     console.log("disarming");
-        //     sub.current && sub.current.unsubscribe(); // I realized that we need to unsubscribe to streams, if not it will still exist in memory somewhere. Could this be related to any bug?
-        // };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+
+        this.sub = this.props.tileService.tileStream.subscribe(tileMessage => {
+            // sometimes the renderHeight is 0, and still figuring out why
+            ((!isFinite(this.props.channel?.length) && (!AppStore.Instance.preferenceStore.channelMapEnabled || (this.props.image.store as FrameStore).isPreview)) || this.props.channel.includes(tileMessage.channel)) &&
+                requestAnimationFrame(() =>
+                    this.updateCanvas(
+                        this.props.image,
+                        this.props.webGLService,
+                        this.props.tileService,
+                        this.canvas,
+                        this.props.overlayStore,
+                        this.props.column,
+                        this.props.row,
+                        appStore.imageViewConfigStore.numImageColumns,
+                        appStore.imageViewConfigStore.numImageRows,
+                        this.props.pixelHighlightValue,
+                        this.props.tileBasedRender,
+                        this.props.channel || baseFrame.channel,
+                        this.props.rasterData
+                    )
+                );
+        });
     }
+    // return () => {
+    //     console.log("disarming");
+    //     sub.current && sub.current.unsubscribe(); // I realized that we need to unsubscribe to streams, if not it will still exist in memory somewhere. Could this be related to any bug?
+    // };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
 
     componentWillUnmount(): void {
         this.sub && this.sub.unsubscribe();
@@ -147,6 +149,31 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     //     // frame?.spatialReference.currentFrameView
     // ]);
 
+    private renderMultipleCanvas = (frame: FrameStore, webGLService: TileWebGLService, tileService: TileService, canvas: HTMLCanvasElement, tileBasedRender: boolean, channels: number[], rasterData?: Float32Array) => {
+        const ctx = canvas.getContext("2d");
+        const w = canvas.width;
+        const h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+
+        channels.map((channel, index) => {
+            const appStore = AppStore.Instance;
+            const channelMapStore = appStore.channelMapStore;
+            const column = index % channelMapStore.numColumns;
+            const row = Math.floor(index / channelMapStore.numColumns);
+            const overlayStore = channelMapStore.overlayStores.corner;
+
+            // let overlayComponentTop = this.props.renderHeight * row;
+            // let overlayComponentLeft = this.props.renderWidth * column;
+            // overlayComponentLeft -= overlayStore.paddingLeft;
+
+            const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
+            const xOffset = column * (overlayStore.renderWidth + overlayStore.defaultGap) * pixelRatio;
+            const yOffset = webGLService.gl.canvas.height - (overlayStore.renderHeight + overlayStore.defaultGap / pixelRatio) * (row + 1) * pixelRatio;
+
+            this.renderCanvas(frame, webGLService, tileService, xOffset, yOffset, overlayStore.renderWidth, overlayStore.renderHeight, tileBasedRender, channel, rasterData);
+        });
+    };
+
     private updateCanvas = (
         image: ImageItem,
         webGLService: TileWebGLService,
@@ -159,7 +186,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         numImageRows: number,
         pixelHighlightValue: number,
         tileBasedRender: boolean,
-        channel: number,
+        channel: number[] | number,
         rasterData?: Float32Array
     ) => {
         AppStore.Instance.setCanvasUpdated();
@@ -172,8 +199,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         //     if ((frame.renderConfig.useCubeHistogram || frame.channel === histChannel || frame.isPreview) && (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)) {
         const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
 
-        const renderWidth = overlayStore.renderWidth;
-        const renderHeight = overlayStore.renderHeight;
+        const renderWidth = this.props.renderWidth || overlayStore.renderWidth;
+        const renderHeight = this.props.renderHeight || overlayStore.renderHeight;
         const xOffset = column * renderWidth * pixelRatio;
         const yOffset = gl.canvas.height - renderHeight * (row + 1) * pixelRatio;
 
@@ -210,8 +237,12 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 const histStokesIndex = frame.renderConfig.stokesIndex;
                 const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histChannel : undefined;
                 if ((frame.renderConfig.useCubeHistogram || frame.channel === histChannel || frame.isPreview) && (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)) {
-                    this.updateUniforms(frame, webGLService, renderWidth, renderHeight, pixelHighlightValue);
-                    this.renderCanvas(frame, webGLService, tileService, xOffset, yOffset, renderWidth, renderHeight, tileBasedRender, channel, rasterData);
+                    this.updateUniforms(frame, webGLService, overlayStore.renderWidth, overlayStore.renderHeight, pixelHighlightValue);
+                    if ((channel as number[]).length) {
+                        this.renderMultipleCanvas(frame, webGLService, tileService, canvas, tileBasedRender, channel as number[], rasterData);
+                    } else {
+                        this.renderCanvas(frame, webGLService, tileService, xOffset, yOffset, renderWidth, renderHeight, tileBasedRender, channel as number, rasterData);
+                    }
                 }
 
                 if (image?.type === ImageType.COLOR_BLENDING) {
@@ -576,16 +607,16 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const className = classNames(`raster-div`, {docked: this.props.docked});
 
         return (
-            <div className={className} style={{top: this.props.top || 0, left: this.props.left || 0}}>
+            <div className={className} style={{top: 0, left: 0}}>
                 <canvas
                     className={`raster-canvas`}
                     id="raster-canvas"
                     ref={ref => (this.canvas = ref)}
                     style={{
                         top: padding.top,
-                        left: padding.left,
-                        width: baseFrame?.isRenderable ? this.props.overlayStore.renderWidth || 1 : 1,
-                        height: baseFrame?.isRenderable ? this.props.overlayStore.renderHeight || 1 : 1
+                        left: 0,
+                        width: baseFrame?.isRenderable ? this.props.renderWidth || this.props.overlayStore.renderWidth || 1 : 1,
+                        height: baseFrame?.isRenderable ? this.props.renderHeight || this.props.overlayStore.renderHeight || 1 : 1
                     }}
                 />
             </div>

@@ -53,6 +53,9 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const paddingBottom = this.props.overlaySettings.padding.bottom * pixelRatio;
         if (this.props.refCanvas && this.canvas) {
             requestAnimationFrame(() => {
+                if (!(this.props.refCanvas && this.canvas)) {
+                    return;
+                }
                 this.updateImageDimensions();
                 const destCanvas = this.canvas.getContext("2d", {willReadFrequently: true});
                 const w = this.props.refCanvas.width;

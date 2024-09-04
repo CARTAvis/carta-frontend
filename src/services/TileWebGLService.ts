@@ -72,7 +72,6 @@ export class TileWebGLService {
 
         this.gl.canvas.width = width;
         this.gl.canvas.height = height;
-        console.log(width, height, this.gl.canvas.width, this.gl.canvas.height, this.gl);
     };
 
     private initShaders() {

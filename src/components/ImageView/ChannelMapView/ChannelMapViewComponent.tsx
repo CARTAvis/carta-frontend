@@ -180,12 +180,13 @@ export class ChannelMapStore {
         }
     };
 
-    @action throttledRequestChannels = _.throttle(this.requestChannels, 1000);
-    @action throttledSetStartChannels = _.throttle(this.setStartChannel, 100);
+    @action throttledRequestChannels = _.throttle(this.requestChannels, 100);
 
-    public overlayStore(imageRenderWidth: number, imageRenderHeight: number, corner: boolean = true) {
+    public overlayStore(imageRenderWidth?: number, imageRenderHeight?: number) {
         const overlay = AppStore.Instance.overlayStore;
-        this.updateOverlayStoreSize(imageRenderWidth, imageRenderHeight);
+        if (imageRenderWidth && imageRenderHeight) {
+            this.updateOverlayStoreSize(imageRenderWidth, imageRenderHeight);
+        }
 
         this.setOverlayStores(
             this.overlayStores?.corner ||
@@ -281,8 +282,68 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     channelMapStore.overlayStores.outer.ticks.setLength(0);
     channelMapStore.overlayStores.outer.ticks.setMajorLength(0);
 
+    // React.useEffect(() => {
+    //     const disposer = autorun(() => {
+    //         if (channelMapStore.masterFrame) {
+    //             channelMapStore.throttledRequestChannels();
+    //         }
+    //     });
+
+    //     return () => {
+    //         disposer();
+    //     };
+    //     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // }, [
+    //     channelMapStore,
+    //     channelMapStore.masterFrame,
+    //     channelMapStore.numColumns,
+    //     channelMapStore.numRows,
+    //     channelMapStore.masterFrame?.center,
+    //     channelMapStore.masterFrame?.requiredFrameView,
+    //     channelMapStore.masterFrame?.zoomLevel,
+    //     channelMapStore.auxiliaryFrame,
+    //     channelMapStore.auxiliaryFrameChannel,
+    //     channelMapStore.singleChannelContour,
+    //     channelMapStore.singleContourChannel,
+    //     channelMapStore.masterFrame?.spatialReference
+    // ]);
+
     React.useEffect(() => {
+        // const disposer = reaction(
+        //     () => [channelMapStore.startChannel, channelMapStore.channelRange],
+        //     ([startChannel, endChannel], [prevStartChannel, prevEndChannel]) => {
+        //         let channelRange;
+        //         if (prevEndChannel < startChannel || endChannel < prevStartChannel) {
+        //             channelRange = {min: startChannel, max: endChannel};
+        //         } else if (prevEndChannel < endChannel) {
+        //             channelRange = {min: prevEndChannel + 1, max: endChannel};
+        //         } else if (startChannel < prevStartChannel) {
+        //             channelRange = {min: startChannel, max: prevStartChannel - 1};
+        //         } else {
+        //             channelRange = {min: 0, max: 0};
+        //         }
+        //         channelMapStore.throttledRequestChannels();
+        //     }
+        // );
+
         const disposer = autorun(() => {
+            /* eslint-disable @typescript-eslint/no-unused-vars */
+            const stat = [
+                channelMapStore,
+                channelMapStore.startChannel,
+                channelMapStore.channelRange,
+                channelMapStore.masterFrame,
+                channelMapStore.numColumns,
+                channelMapStore.numRows,
+                channelMapStore.masterFrame?.center,
+                channelMapStore.masterFrame?.requiredFrameView,
+                channelMapStore.masterFrame?.zoomLevel,
+                channelMapStore.auxiliaryFrame,
+                channelMapStore.auxiliaryFrameChannel,
+                channelMapStore.singleChannelContour,
+                channelMapStore.singleContourChannel,
+                channelMapStore.masterFrame?.spatialReference
+            ];
             if (channelMapStore.masterFrame) {
                 channelMapStore.throttledRequestChannels();
             }
@@ -292,45 +353,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
             disposer();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [
-        channelMapStore,
-        channelMapStore.masterFrame,
-        channelMapStore.numColumns,
-        channelMapStore.numRows,
-        channelMapStore.masterFrame?.center,
-        channelMapStore.masterFrame?.requiredFrameView,
-        channelMapStore.masterFrame?.zoomLevel,
-        channelMapStore.auxiliaryFrame,
-        channelMapStore.auxiliaryFrameChannel,
-        channelMapStore.singleChannelContour,
-        channelMapStore.singleContourChannel,
-        channelMapStore.masterFrame?.spatialReference
-    ]);
-
-    React.useEffect(() => {
-        const disposer = reaction(
-            () => [channelMapStore.startChannel, channelMapStore.channelRange],
-            ([startChannel, endChannel], [prevStartChannel, prevEndChannel]) => {
-                let channelRange;
-                if (prevEndChannel < startChannel || endChannel < prevStartChannel) {
-                    channelRange = {min: startChannel, max: endChannel};
-                } else if (prevEndChannel < endChannel) {
-                    channelRange = {min: prevEndChannel + 1, max: endChannel};
-                } else if (startChannel < prevStartChannel) {
-                    channelRange = {min: startChannel, max: prevStartChannel - 1};
-                } else {
-                    channelRange = {min: 0, max: 0};
-                }
-                console.log(channelRange);
-
-                channelMapStore.throttledRequestChannels(channelRange);
-            }
-        );
-        return () => {
-            disposer();
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [channelMapStore.startChannel, channelMapStore.channelRange]);
+    }, []);
 
     const onRegionViewZoom = (frame: FrameStore, zoom: number) => {
         if (frame) {
@@ -412,45 +435,6 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     return (
                         channel < channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth && (
                             <div key={channel}>
-                                {channelMapStore.showAuxiliaryFrame && channelMapStore.auxiliaryFrame ? (
-                                    <RasterViewComponent
-                                        key={`raster-view-component-${channelMapStore.auxiliaryFrame.frameInfo.fileId}-${channelMapStore.auxiliaryFrameChannel}`}
-                                        image={{
-                                            type: ImageType.FRAME,
-                                            store: channelMapStore.auxiliaryFrame
-                                        }}
-                                        webGLService={TileWebGLService.Instance}
-                                        tileService={TileService.Instance}
-                                        overlayStore={overlayStore}
-                                        top={overlayComponentTop}
-                                        left={overlayComponentLeft}
-                                        docked={props.docked}
-                                        pixelHighlightValue={props.channelMapStore.pixelHighlightValue}
-                                        row={0}
-                                        column={0}
-                                        tileBasedRender={true}
-                                        channel={channelMapStore.auxiliaryFrameChannel}
-                                    />
-                                ) : (
-                                    <RasterViewComponent
-                                        key={`raster-view-component-${frame.frameInfo.fileId}-${channel}`}
-                                        image={{
-                                            type: ImageType.FRAME,
-                                            store: frame
-                                        }}
-                                        webGLService={TileWebGLService.Instance}
-                                        tileService={TileService.Instance}
-                                        overlayStore={overlayStore}
-                                        top={overlayComponentTop}
-                                        left={overlayComponentLeft}
-                                        docked={props.docked}
-                                        pixelHighlightValue={props.channelMapStore.pixelHighlightValue}
-                                        row={0}
-                                        column={0}
-                                        tileBasedRender={true}
-                                        channel={channel}
-                                    />
-                                )}
                                 <ContourViewComponent
                                     key={`contour-view-component-${frame.frameInfo.fileId}-${channel}`}
                                     overlayStore={overlayStore}
@@ -526,6 +510,45 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     );
                 })}
                 <BeamProfileOverlayComponent frame={frame} top={imageRenderHeight * (channelMapStore.numRows - 1)} left={0} docked={props.docked} padding={10} />
+                {channelMapStore.showAuxiliaryFrame && channelMapStore.auxiliaryFrame ? (
+                    <RasterViewComponent
+                        key={`raster-view-component-${channelMapStore.auxiliaryFrame.frameInfo.fileId}-${channelMapStore.auxiliaryFrameChannel}`}
+                        image={{
+                            type: ImageType.FRAME,
+                            store: channelMapStore.auxiliaryFrame
+                        }}
+                        webGLService={TileWebGLService.Instance}
+                        tileService={TileService.Instance}
+                        overlayStore={overlayStore}
+                        docked={props.docked}
+                        pixelHighlightValue={props.channelMapStore.pixelHighlightValue}
+                        renderWidth={imageRenderWidth}
+                        renderHeight={imageRenderHeight}
+                        row={0}
+                        column={0}
+                        tileBasedRender={true}
+                        channel={[channelMapStore.auxiliaryFrameChannel]}
+                    />
+                ) : (
+                    <RasterViewComponent
+                        key={`raster-view-component-${frame.frameInfo.fileId}-channel-map`}
+                        image={{
+                            type: ImageType.FRAME,
+                            store: frame
+                        }}
+                        webGLService={TileWebGLService.Instance}
+                        tileService={TileService.Instance}
+                        overlayStore={overlayStore}
+                        docked={props.docked}
+                        pixelHighlightValue={props.channelMapStore.pixelHighlightValue}
+                        renderWidth={channelMapViewWidth - outerOffset}
+                        renderHeight={channelMapViewHeight - outerOffset}
+                        row={0}
+                        column={0}
+                        tileBasedRender={true}
+                        channel={channelMapStore.channelArray}
+                    />
+                )}
             </div>
             {frame.overlayStore.colorbar.visible && (
                 <ColorbarComponent

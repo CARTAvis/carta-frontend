@@ -89,9 +89,9 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                         min={0}
                         max={appStore.channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth}
                         stepSize={1}
-                        labelStepSize={Math.max(appStore.channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth / appStore.channelMapStore.numChannels, appStore.channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth / 9)}
+                        labelStepSize={Math.max(appStore.channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth / appStore.channelMapStore.numChannels, appStore.channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth / 5)}
                         value={appStore.channelMapStore.startChannel}
-                        onChange={channel => appStore.channelMapStore.throttledSetStartChannels(channel)}
+                        onChange={channel => appStore.channelMapStore.setStartChannel(channel)}
                     />
                 </div>
             </div>
