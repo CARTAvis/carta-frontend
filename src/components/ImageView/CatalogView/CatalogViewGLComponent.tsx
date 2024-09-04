@@ -72,6 +72,8 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const sizeColumnMinClipd = catalogWidgetStore.sizeColumnMin.clipd;
             const sizeArea = catalogWidgetStore.sizeArea;
             const sizeScalingType = catalogWidgetStore.sizeScalingType;
+            const isImagePixelSize = catalogWidgetStore.isImagePixelSize;
+            // const factorToArasec = catalogWidgetStore.factorToArasec;
             // size minor
             const sizeMinorMapColumn = catalogWidgetStore.sizeMinorMapColumn;
             const sizeMinorColumnMaxClipd = catalogWidgetStore.sizeMinorColumnMax.clipd;
@@ -223,6 +225,8 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 this.gl.uniform1f(shaderUniforms.RotationAngle, rotationAngle);
                 this.gl.uniform1f(shaderUniforms.ZoomLevel, sourceFrame?.spatialReference?.zoomLevel ?? sourceFrame?.zoomLevel);
                 this.gl.uniform1f(shaderUniforms.PixelRatio, sourceFrame?.spatialReference?.aspectRatio ?? sourceFrame?.aspectRatio);
+                // this.gl.uniform1f(shaderUniforms.PixelUnitSizeArcsec, sourceFrame?.spatialReference?.pixelUnitSizeArcsec.x ?? sourceFrame?.pixelUnitSizeArcsec.x);
+                // this.gl.uniform1f(shaderUniforms.FactorToArcsec, catalogWidgetStore.factorToArasec);
 
                 // size
                 this.gl.uniform1i(shaderUniforms.SizeMajorMapEnabled, 0);
@@ -230,6 +234,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 const sizeTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Size);
                 if (!catalogWidgetStore.disableSizeMap && sizeTexture) {
                     this.gl.uniform1i(shaderUniforms.SizeMajorMapEnabled, 1);
+                    this.gl.uniform1i(shaderUniforms.IsImagePixelSize, catalogWidgetStore.isImagePixelSize ? 1 : 0);
                     this.gl.activeTexture(GL2.TEXTURE3);
                     this.gl.bindTexture(GL2.TEXTURE_2D, sizeTexture);
                     this.gl.uniform1i(shaderUniforms.SizeTexture, 3);

@@ -22,6 +22,7 @@ uniform bool uSizeMajorMapEnabled;
 uniform bool uAreaMode;
 uniform bool uShowSelectedSource;
 uniform bool uSizeMinorMapEnabled;
+uniform bool uIsImagePixelSize;
 uniform bool uAreaModeMinor;
 uniform bool uCmapEnabled;
 uniform bool uOmapEnabled;
@@ -32,6 +33,8 @@ uniform vec2 uRangeScale;
 uniform float uScaleAdjustment;
 uniform float uZoomLevel;
 uniform float uPixelRatio;
+// uniform float uPixelUnitSizeArcsec;
+// uniform float uFactorToArcsec;
 
 // Control-map based transformation
 uniform int uControlMapEnabled;
@@ -110,6 +113,11 @@ void main() {
     if (uSizeMajorMapEnabled) {
         vec4 sizeMajor = getValueByIndexFromTexture(uSizeTexture, dataPointIndex);
         float size = sizeMajor.x;
+        if (uIsImagePixelSize) {
+            size = size * uZoomLevel;
+            // size = size * uFactorToArcsec / uPixelUnitSizeArcsec * uZoomLevel;
+            // if (uShapeType == ELLIPSE_LINED) size *= 2.0;
+        }
         if(!isNaN(size)) {
             v_pointSize = size;
         }
@@ -132,6 +140,12 @@ void main() {
     if (uSizeMinorMapEnabled) {
         vec4 sizeMinor = getValueByIndexFromTexture(uSizeMinorTexture, dataPointIndex);
         v_minorSize = sizeMinor.x;
+        if (uIsImagePixelSize) {
+            v_minorSize = v_minorSize * uZoomLevel;
+            // v_minorSize = v_minorSize * uFactorToArcsec / uPixelUnitSizeArcsec * uZoomLevel;
+            // if (uShapeType == ELLIPSE_LINED) v_minorSize *= 2.0;
+        }
+
         if (uAreaModeMinor) {
             v_minorSize = getSquareSideByArea(v_pointSize, v_minorSize);
         }
@@ -142,6 +156,8 @@ void main() {
 
     if (uShapeType == ELLIPSE_LINED) {
         v_featherWidth = v_pointSize / 50.0 * 15.0 + 0.7;
+        // if (uIsImagePixelSize) v_featherWidth = v_pointSize;
+        // else v_featherWidth = v_pointSize / 50.0 * 15.0 + 0.7;
     }
 
     vec2 offset = getOffsetFromId(gl_VertexID);

@@ -9,6 +9,7 @@ import {observer} from "mobx-react";
 import {CatalogOverlayComponent} from "components";
 import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingSelectComponent} from "components/Shared";
 import {CatalogOverlay} from "models";
+// import { AngularSizeUnit, CatalogOverlay } from "models";
 import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {CatalogOverlayShape, CatalogSettingsTabs, CatalogWidgetStore, ValueClip} from "stores/Widgets";
 import {getColorForTheme, SWATCH_COLORS} from "utilities";
@@ -169,6 +170,22 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         <Button text={widgetStore.sizeMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical" data-testid="catalog-settings-major-size-column-dropdown" />
                     </Select>
                 </FormGroup>
+                <FormGroup inline={true} label="Absolute size">
+                    <Switch checked={widgetStore.isImagePixelSize} onChange={widgetStore.toggleAbsoluteSize} />
+                    {/* <Select
+                        items={Object.values(AngularSizeUnit).filter(item => item != AngularSizeUnit.MILLIARCSEC)}
+                        activeItem={null}
+                        onItemSelect={units => widgetStore.setFactorToArcsec(units)}
+                        itemRenderer={this.renderUnitPopOver}
+                        disabled={!widgetStore.isImagePixelSize}
+                        popoverProps={{minimal: true}}
+                        filterable={false}
+                        resetOnSelect={true}
+                    >
+                        <Button text={widgetStore.sizeUnit} disabled={!widgetStore.isImagePixelSize} rightIcon="double-caret-vertical" />
+                    </Select> */}
+                </FormGroup>
+                {/* <Collapse isOpen={!widgetStore.isImagePixelSize}> */}
                 <FormGroup label={"Scaling"} inline={true} disabled={disableSizeMap}>
                     <ScalingSelectComponent selectedItem={widgetStore.sizeScalingType} onItemSelect={type => widgetStore.setSizeScalingType(type)} disabled={disableSizeMap} />
                 </FormGroup>
@@ -218,6 +235,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         onClick={widgetStore.toggleSizeColumnMaxLock}
                     />
                 </div>
+                {/* </Collapse> */}
             </div>
         );
 
@@ -238,6 +256,9 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     >
                         <Button text={widgetStore.sizeMinorMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical" />
                     </Select>
+                </FormGroup>
+                <FormGroup inline={true} label="Absolute size">
+                    <Switch checked={widgetStore.isImagePixelSize} onChange={widgetStore.toggleAbsoluteSize} />
                 </FormGroup>
                 <FormGroup label={"Scaling"} inline={true} disabled={disableSizeMinorMap}>
                     <ScalingSelectComponent selectedItem={widgetStore.sizeMinorScalingType} onItemSelect={type => widgetStore.setSizeMinorScalingType(type)} disabled={disableSizeMinorMap} />
@@ -544,6 +565,10 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     private renderAxisPopOver = (catalogName: string, itemProps: ItemRendererProps) => {
         return <MenuItem key={catalogName} text={catalogName} onClick={itemProps.handleClick} />;
     };
+
+    // private renderUnitPopOver = (unit: AngularSizeUnit, itemProps: ItemRendererProps) => {
+    //     return <MenuItem key={unit} text={unit} onClick={itemProps.handleClick} />;
+    // };
 
     private filterColumn: ItemPredicate<string> = (query: string, columnName: string) => {
         const fileSearcher = new FuzzySearch([columnName]);
