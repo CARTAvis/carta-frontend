@@ -3,11 +3,12 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {SpectralSystem} from "models";
-import {TelemetryAction, TelemetryService} from "services";
-import {AppStore, PreferenceStore} from "stores";
+// import {TelemetryAction, TelemetryService} from "services";
+// , PreferenceStore
+import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
-import {length2D} from "utilities";
 
+// import {length2D} from "utilities";
 import {ACTIVE_FILE_ID, RegionId, RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
 // export enum PVAxis {
@@ -33,7 +34,7 @@ export class Render3DWidgetStore extends RegionWidgetStore {
             const selectedFrame = appStore.getFrame(this.fileId);
             if (selectedFrame?.regionSet) {
                 const validRegionOptions = selectedFrame.regionSet.regions
-                    ?.filter(r => !r.isTemporary && (r.regionType === CARTA.RegionType.LINE || r.regionType === CARTA.RegionType.POLYLINE))
+                    ?.filter(r => !r.isTemporary && r.regionType === CARTA.RegionType.RECTANGLE)
                     ?.map(region => {
                         return {value: region?.regionId, label: region?.nameString};
                     });
@@ -95,33 +96,7 @@ export class Render3DWidgetStore extends RegionWidgetStore {
             channelIndexMin = channelIndexMax - 1;
         }
         if (frame && this.effectiveRegion) {
-            const requestMessage: CARTA.IPvRequest = {
-                fileId: frame.frameInfo.fileId,
-                regionId: this.effectiveRegionId,
-                width: this.width,
-                spectralRange: isFinite(channelIndexMin) && isFinite(channelIndexMax) ? {min: channelIndexMin, max: channelIndexMax} : null,
-                reverse: this.reverse,
-                keep: this.keep,
-                previewSettings:
-                    preview && render3DId
-                        ? {
-                              previewId: parseInt(render3DId.split("-")[2]),
-                              regionId: this.effectivePreviewRegionId,
-                              rebinXy: this.xyRebin,
-                              rebinZ: this.zRebin,
-                              imageCompressionQuality: PreferenceStore.Instance.imageCompressionQuality || 11,
-                              animationCompressionQuality: PreferenceStore.Instance.animationCompressionQuality || 9,
-                              compressionType: CARTA.CompressionType.ZFP
-                          }
-                        : undefined
-            };
-            if (preview && render3DId) {
-                AppStore.Instance.requestPreviewPV(requestMessage, frame, render3DId);
-            } else {
-                AppStore.Instance.requestPV(requestMessage, frame, this.keep);
-                const depth = channelIndexMax - channelIndexMin + 1;
-                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.PvGeneration, {regionId: this.effectiveRegion.regionId, regionType: this.effectiveRegion.regionType, length: length2D(this.effectiveRegion.size), depth});
-            }
+            
             frame.resetPvRequestState();
             frame.setIsRequestingPV(true);
         }
@@ -190,7 +165,7 @@ export class Render3DWidgetStore extends RegionWidgetStore {
     };
 
     constructor() {
-        super(RegionsType.LINE);
+        super(RegionsType.CLOSED);
         makeObservable(this);
         this.width = 3;
         this.reverse = false;

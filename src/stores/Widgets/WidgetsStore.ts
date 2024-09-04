@@ -470,6 +470,9 @@ export class WidgetsStore {
                 return SpatialProfilerSettingsPanelComponent.WIDGET_CONFIG;
             case RenderConfigComponent.WIDGET_CONFIG.type:
                 return RenderConfigSettingsPanelComponent.WIDGET_CONFIG;
+            // add render 3d
+            case Render3DComponent.WIDGET_CONFIG.type:
+                return PvPreviewComponent.WIDGET_CONFIG;
             case HistogramComponent.WIDGET_CONFIG.type:
                 return HistogramSettingsPanelComponent.WIDGET_CONFIG;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
@@ -724,8 +727,8 @@ export class WidgetsStore {
         layout.registerComponent("catalog-overlay", CatalogOverlayComponent);
         layout.registerComponent("catalog-plot", CatalogPlotComponent);
 
-        const showCogWidgets = ["image-view", "spatial-profiler", "spectral-profiler", "histogram", 'render-3d', "render-config", "stokes", "catalog-overlay", "layer-list"];
-        const hideHelpButtonWidgets = ["pv-preview"];
+        const showCogWidgets = ["image-view", "spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes", "catalog-overlay", "layer-list"];
+        const hideHelpButtonWidgets = ["pv-preview", 'render-3d'];
         // add drag source buttons for ToolbarMenuComponent
         this.CARTAWidgets.forEach((props, widgetType) => {
             const widgetButtonID = widgetType.replace(/\s+/g, "") + "Button";
@@ -1435,43 +1438,6 @@ export class WidgetsStore {
 
     // endregion
 
-    // add render 3d
-    // region Render 3D Widgets
-    createFloatingRender3DWidget = () => {
-        const id = this.addRender3DWidget();
-        if (id !== null) {
-            this.addFloatingWidget(new WidgetConfig(id, Render3DComponent.WIDGET_CONFIG));
-        }
-    };
-
-    @action addRender3DWidget(id: string | null = null) {
-        if (!id) {
-            id = this.getNextId(Render3DComponent.WIDGET_CONFIG.type);
-        }
-
-        if (id) {
-            this.render3DWidgets.set(id, new Render3DWidgetStore());
-        }
-        return id;
-    }
-
-    // @action addRender3DWidget(id: string | null = null, widgetSettings: object | null = null) {
-    //     if (!id) {
-    //         id = this.getNextId(Render3DComponent.WIDGET_CONFIG.type);
-    //     }
-
-    //     if (id) {
-    //         const widgetStore = new Render3DWidgetStore();
-    //         if (widgetSettings) {
-    //             widgetStore.init(widgetSettings);
-    //         }
-    //         this.render3DWidgets.set(id, widgetStore);
-    //     }
-    //     return id;
-    // }
-
-    // endregion
-
     // region Render Config Widgets
     createFloatingRenderWidget = () => {
         const id = this.addRenderConfigWidget();
@@ -1607,6 +1573,44 @@ export class WidgetsStore {
         return id;
     }
     // endregion
+
+    // add render 3d
+    // region Render 3D Widgets
+    createFloatingRender3DWidget = () => {
+        const id = this.addRender3DWidget();
+        if (id !== null) {
+            this.addFloatingWidget(new WidgetConfig(id, Render3DComponent.WIDGET_CONFIG));
+        }
+    };
+
+    @action addRender3DWidget(id: string | null = null) {
+        if (!id) {
+            id = this.getNextId(Render3DComponent.WIDGET_CONFIG.type);
+        }
+
+        if (id) {
+            this.render3DWidgets.set(id, new Render3DWidgetStore());
+        }
+        return id;
+    }
+
+    // @action addRender3DWidget(id: string | null = null, widgetSettings: object | null = null) {
+    //     if (!id) {
+    //         id = this.getNextId(Render3DComponent.WIDGET_CONFIG.type);
+    //     }
+
+    //     if (id) {
+    //         const widgetStore = new Render3DWidgetStore();
+    //         if (widgetSettings) {
+    //             widgetStore.init(widgetSettings);
+    //         }
+    //         this.render3DWidgets.set(id, widgetStore);
+    //     }
+    //     return id;
+    // }
+
+    // endregion
+
 
     // region Floating Widgets
     @action selectFloatingWidget = (id: string) => {

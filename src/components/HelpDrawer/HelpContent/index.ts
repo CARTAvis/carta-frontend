@@ -23,6 +23,7 @@ export * from "./PreferencesHelpContent";
 export * from "./PvGeneratorHelpComponent";
 export * from "./RegionDialogHelpContent";
 export * from "./RegionListHelpContent";
+export * from "./Render3DHelpContent";
 export * from "./RenderConfigHelpContent";
 export * from "./RenderConfigSettingsHelpContent";
 export * from "./SaveLayoutHelpContent";

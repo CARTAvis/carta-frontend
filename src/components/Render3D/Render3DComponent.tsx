@@ -7,10 +7,10 @@ import {FormGroup, HTMLSelect} from "@blueprintjs/core";
 // import {CARTA} from "carta-protobuf";
 // import {Tick} from "chart.js";
 // import * as _ from "lodash";
-// action, autorun, observable
-import {computed, makeObservable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react"; 
 
+// import {TaskProgressDialogComponent} from "components/Dialogs";
 // import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
 // import {Point2D, POLARIZATIONS} from "models";
 //ASTSettingsString, OverlayStore,  PreferenceStore,
@@ -42,6 +42,9 @@ export class Render3DComponent extends React.Component<WidgetProps> {
             helpType: HelpType.RENDER_3D
         };
     }
+
+    @observable width: number;
+    @observable height: number;
 
     // find widgetStore for render 3d
     @computed get widgetStore(): Render3DWidgetStore {
@@ -83,6 +86,11 @@ export class Render3DComponent extends React.Component<WidgetProps> {
             }
         }
     }
+
+    @action private onResize = (width: number, height: number) => {
+        this.width = width;
+        this.height = height;
+    };
 
     // handle changing the data source
     private handleFrameChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {

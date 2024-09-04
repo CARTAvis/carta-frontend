@@ -19,6 +19,7 @@ import {
     PvGeneratorComponent,
     PvPreviewComponent,
     RegionListComponent,
+    Render3DComponent,
     RenderConfigComponent,
     RenderConfigSettingsPanelComponent,
     SpatialProfilerComponent,
@@ -68,6 +69,10 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 widgetsStore.pvGeneratorWidgets.get(widget.id)?.removePreviewFrame(parseInt(widget.id.split("-")[2]));
                 widgetsStore.removeFloatingWidget(widget.id);
                 break;
+            case Render3DComponent.WIDGET_CONFIG.type:
+                widgetsStore.render3DWidgets.get(widget.id)?.removePreviewFrame(parseInt(widget.id.split("-")[2]));
+                widgetsStore.removeFloatingWidget(widget.id);
+                break;
             default:
                 widgetsStore.removeFloatingWidget(widget.id);
                 break;
@@ -110,6 +115,8 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 return <PvGeneratorComponent id={widgetConfig.id} docked={false} />;
             case PvPreviewComponent.WIDGET_CONFIG.type:
                 return <PvPreviewComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id} />;
+            case Render3DComponent.WIDGET_CONFIG.type:
+                return <Render3DComponent id={widgetConfig.id} docked={false} />;
             default:
                 return <PlaceholderComponent id={widgetConfig.id} docked={false} label={widgetConfig.title} />;
         }
