@@ -1,7 +1,7 @@
 import * as React from "react";
 // import ReactResizeDetector from "react-resize-detector";
 // Colors,  , NonIdealState
-import {FormGroup, HTMLSelect} from "@blueprintjs/core";
+import {Divider, FormGroup, HTMLSelect, Tab, Tabs} from "@blueprintjs/core";
 // import {Select} from "@blueprintjs/select";
 // import * as AST from "ast_wrapper";
 // import {CARTA} from "carta-protobuf";
@@ -25,6 +25,17 @@ import "./Render3DComponent.scss";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
 // const AUTOSCALE_THROTTLE_TIME = 100;
+
+enum Render3DTabs {
+    IsoSurfaces,
+    Volume
+}
+
+enum IsoSurfaceTabs {
+    Levels = "levels",
+    Configuration = "configuration",
+    Styling = "styling"
+}
 
 
 @observer
@@ -120,8 +131,37 @@ export class Render3DComponent extends React.Component<WidgetProps> {
             selectedValue = this.widgetStore.regionIdMap.get(this.widgetStore.effectiveFrame.frameInfo.fileId);
         }
 
-        const render3DPanel = (
-            <div className="render-3d-panel">
+        const isoSurfacesLevelsPanel = (
+            <div>levels</div>
+        );
+
+        const isoSurfacesConfigurationPanel = (
+            <div>configuration</div>
+        );
+
+        const isoSurfacesStylingPanel = (
+            <div>styling</div>
+        );
+
+        const isoSurfacesPanel = (
+            <div>
+                <Divider />
+                <Tabs defaultSelectedTabId={IsoSurfaceTabs.Levels} renderActiveTabPanelOnly={false}>
+                    <Tab id={IsoSurfaceTabs.Levels} title="Levels" panel={isoSurfacesLevelsPanel} panelClassName="render-3d-isosurfaces-levels-panel" data-testid="render-3d-isosurfaces-levels-tab-title" />
+                    <Tab id={IsoSurfaceTabs.Configuration} title="Configuration" panel={isoSurfacesConfigurationPanel} panelClassName="render-3d-isosurfaces-configuration-panel" data-testid="render-3d-isosurfaces-configuration-tab-title" />
+                    <Tab id={IsoSurfaceTabs.Styling} title="Styling" panel={isoSurfacesStylingPanel} panelClassName="render-3d-isosurfaces-styling-panel" data-testid="render-3d-isosurfaces-styling-tab-title" />
+                </Tabs>
+            </div>
+        );
+
+        const volumePanel = (
+            <div>volume</div>
+        );
+
+
+        return (
+            <div className="render-3d-widget">
+                <div className="render-3d-panel">
                 <FormGroup
                     className="label-info-group"
                     inline={true}
@@ -146,13 +186,12 @@ export class Render3DComponent extends React.Component<WidgetProps> {
                 >
                     <HTMLSelect value={selectedValue} options={this.widgetStore.regionOptions} onChange={this.handleRegionChanged} data-testid="render-3d-region-dropdown" />
                 </FormGroup>
-            </div>
-        );
-
-        return (
-            <div className="render-3d-widget">
-                <div className="render-3d-panel">{render3DPanel}</div>
-                
+                <Divider />
+                <Tabs defaultSelectedTabId={Render3DTabs.IsoSurfaces} renderActiveTabPanelOnly={false}>
+                        <Tab id={Render3DTabs.IsoSurfaces} title="Iso-surfaces" panel={isoSurfacesPanel} panelClassName="render-3d-isosurfaces-panel" data-testid="render-3d-isosurfaces-tab-title" />
+                        <Tab id={Render3DTabs.Volume} title="Volume rendering" panel={volumePanel} panelClassName="render-3d-volume-panel" data-testid="render-3d-volume-tab-title" />
+                    </Tabs>
+                </div>
             </div>
         );
     }
