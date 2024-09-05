@@ -1,31 +1,26 @@
 import {OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {action, computed, makeObservable, observable, reaction} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 
-import {SpectralSystem} from "models";
-// import {TelemetryAction, TelemetryService} from "services";
-// , PreferenceStore
+import { PlotType} from "components/Shared";
 import {AppStore} from "stores";
-import {FrameStore} from "stores/Frame";
 
-// import {length2D} from "utilities";
 import {ACTIVE_FILE_ID, RegionId, RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
-// export enum PVAxis {
-//     SPATIAL = "Spatial",
-//     SPECTRAL = "Spectral"
-// }
-
 export class Render3DWidgetStore extends RegionWidgetStore {
-    @observable width: number;
-    @observable reverse: boolean;
-    @observable keep: boolean;
-    @observable range: CARTA.IIntBounds = {min: this.effectiveFrame?.channelValueBounds?.min, max: this.effectiveFrame?.channelValueBounds?.max};
-    @observable xyRebin: number = 1;
-    @observable zRebin: number = 1;
-    @observable previewRegionId: number;
-    @observable previewFrame: FrameStore | null;
-    @observable pvCutRegionId: number | null;
+
+    @observable coordinate: string;
+    @observable minX: number | undefined;
+    @observable maxX: number | undefined;
+    @observable minY: number | undefined;
+    @observable maxY: number | undefined;
+
+    // settings
+    @observable logScaleY: boolean;
+    @observable plotType: PlotType;
+    @observable primaryLineColor: string;
+    @observable lineWidth: number;
+    @observable linePlotPointSize: number;
 
     @computed get regionOptions(): OptionProps[] {
         const appStore = AppStore.Instance;
@@ -46,138 +41,51 @@ export class Render3DWidgetStore extends RegionWidgetStore {
         return regionOptions;
     }
 
-    @computed get previewRegionOptions(): OptionProps[] {
-        const appStore = AppStore.Instance;
-        let previewRegionOptions: OptionProps[] = [{value: RegionId.IMAGE, label: "Image"}];
-        if (appStore.frames) {
-            const selectedFrame = appStore.getFrame(this.fileId);
-            if (selectedFrame?.regionSet) {
-                const validRegionOptions = selectedFrame.regionSet.regions
-                    ?.filter(r => !r.isTemporary && r.regionType === CARTA.RegionType.RECTANGLE)
-                    ?.map(region => {
-                        return {value: region?.regionId, label: region?.nameString};
-                    });
-                if (validRegionOptions) {
-                    previewRegionOptions = previewRegionOptions.concat(validRegionOptions);
-                }
-            }
-        }
-        return previewRegionOptions;
+    @action setXBounds = (minVal: number, maxVal: number) => {
+        this.minX = minVal;
+        this.maxX = maxVal;
+    };
+
+    @action clearXBounds = () => {
+        this.minX = undefined;
+        this.maxX = undefined;
+    };
+
+    @action setYBounds = (minVal: number, maxVal: number) => {
+        this.minY = minVal;
+        this.maxY = maxVal;
+    };
+
+    @action clearYBounds = () => {
+        this.minX = undefined;
+        this.maxX = undefined;
+    };
+
+    @action setXYBounds = (minX: number, maxX: number, minY: number, maxY: number) => {
+        this.minX = minX;
+        this.maxX = maxX;
+        this.minY = minY;
+        this.maxY = maxY;
+    };
+
+    @action clearXYBounds = () => {
+        this.minX = undefined;
+        this.maxX = undefined;
+        this.minY = undefined;
+        this.maxY = undefined;
+    };
+
+    @computed get isAutoScaledX() {
+        return this.minX === undefined || this.maxX === undefined;
     }
 
-    @computed get effectivePreviewRegionId(): number {
-        if (this.effectiveFrame) {
-            const regionId = this.previewRegionId;
-            if (regionId !== RegionId.IMAGE && regionId !== undefined && this.effectiveFrame.getRegion(regionId)) {
-                return regionId;
-            }
-        }
-        return RegionId.IMAGE;
+    @computed get isAutoScaledY() {
+        return this.minY === undefined || this.maxY === undefined;
     }
-
-    @action requestPV = (preview: boolean = false, render3DId?: string) => {
-        const frame = this.effectiveFrame;
-        if (!frame) {
-            return;
-        }
-
-        let channelIndexMin = frame.findChannelIndexByValue(this.range.min);
-        let channelIndexMax = frame.findChannelIndexByValue(this.range.max);
-
-        if (channelIndexMin > channelIndexMax) {
-            const holder = channelIndexMax;
-            channelIndexMax = channelIndexMin;
-            channelIndexMin = holder;
-        }
-        if (channelIndexMin >= channelIndexMax) {
-            if (channelIndexMax === 0) {
-                channelIndexMax++;
-            }
-            channelIndexMin = channelIndexMax - 1;
-        }
-        if (frame && this.effectiveRegion) {
-            
-            frame.resetPvRequestState();
-            frame.setIsRequestingPV(true);
-        }
-    };
-
-    @action requestingPVCancelled = (render3DId: string) => {
-        return () => {
-            const frame = this.effectiveFrame;
-            if (frame) {
-                AppStore.Instance.cancelRequestingPV(frame.frameInfo.fileId, parseInt(render3DId.split("-")[2]));
-                frame.setIsRequestPVCancelling(true);
-            }
-        };
-    };
-
-    @action setSpectralCoordinate = (coordStr: string) => {
-        this.effectiveFrame?.setSpectralCoordinate(coordStr);
-    };
-
-    @action setSpectralSystem = (specsys: SpectralSystem) => {
-        this.effectiveFrame?.setSpectralSystem(specsys);
-    };
-
-    @action setWidth = (val: number) => {
-        this.width = val;
-    };
-
-    @action setReverse = (bool: boolean) => {
-        this.reverse = bool;
-    };
-
-    @action setKeep = (bool: boolean) => {
-        this.keep = bool;
-    };
-
-    @action setSpectralRange = (range: CARTA.IIntBounds) => {
-        if (isFinite(range.min ?? NaN) && isFinite(range.max ?? NaN)) {
-            this.range = range;
-        }
-    };
-
-    @action setXYRebin = (val: number) => {
-        this.xyRebin = val;
-    };
-
-    @action setZRebin = (val: number) => {
-        this.zRebin = val;
-    };
-
-    @action setPreviewRegionId = (regionId: number) => {
-        this.previewRegionId = regionId;
-    };
-
-    @action setPreviewFrame = (frame: FrameStore) => {
-        this.previewFrame = frame;
-    };
-
-    @action setPvCutRegionId = (regionId: number) => {
-        this.pvCutRegionId = regionId;
-    };
-
-    @action removePreviewFrame = (id: number) => {
-        AppStore.Instance.removePreviewFrame(id);
-        this.previewFrame = null;
-        this.pvCutRegionId = null;
-    };
 
     constructor() {
         super(RegionsType.CLOSED);
         makeObservable(this);
-        this.width = 3;
-        this.reverse = false;
-        this.keep = false;
         this.regionIdMap.set(ACTIVE_FILE_ID, RegionId.NONE);
-        reaction(
-            () => this.effectiveFrame?.channelValueBounds,
-            channelValueBounds => {
-                if (channelValueBounds) {
-                    this.setSpectralRange(channelValueBounds);
-                }
-            }
-        );
     }
 }

@@ -70,7 +70,6 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 widgetsStore.removeFloatingWidget(widget.id);
                 break;
             case Render3DComponent.WIDGET_CONFIG.type:
-                widgetsStore.render3DWidgets.get(widget.id)?.removePreviewFrame(parseInt(widget.id.split("-")[2]));
                 widgetsStore.removeFloatingWidget(widget.id);
                 break;
             default:
