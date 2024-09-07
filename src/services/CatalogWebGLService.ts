@@ -27,7 +27,7 @@ interface ShaderUniforms {
     ScaleAdjustment: WebGLUniformLocation | null;
     ZoomLevel: WebGLUniformLocation | null;
     PixelRatio: WebGLUniformLocation | null;
-    // PixelUnitSizeArcsec: WebGLUniformLocation | null;
+    PixelUnitSizeArcsec: WebGLUniformLocation | null;
     // spatial matching
     ControlMapEnabled: WebGLUniformLocation | null;
     ControlMapSize: WebGLUniformLocation | null;
@@ -47,7 +47,8 @@ interface ShaderUniforms {
     SizeMinorMapEnabled: WebGLUniformLocation | null;
     AreaModeMinor: WebGLUniformLocation | null;
     IsImagePixelSize: WebGLUniformLocation | null;
-    // FactorToArcsec: WebGLUniformLocation | null;
+    FactorToArcsec: WebGLUniformLocation | null;
+    IsAngularSize: WebGLUniformLocation | null;
     // color map
     CmapEnabled: WebGLUniformLocation | null;
     CmapTexture: WebGLUniformLocation | null;
@@ -187,7 +188,8 @@ export class CatalogWebGLService {
                 SizeMajorMapEnabled: this.gl.getUniformLocation(shaderProgram, "uSizeMajorMapEnabled"),
                 SizeMinorMapEnabled: this.gl.getUniformLocation(shaderProgram, "uSizeMinorMapEnabled"),
                 IsImagePixelSize: this.gl.getUniformLocation(shaderProgram, "uIsImagePixelSize"),
-                // FactorToArcsec: this.gl.getUniformLocation(shaderProgram, "uFactorToArcsec"),
+                IsAngularSize: this.gl.getUniformLocation(shaderProgram, "uIsAngularSize"),
+                FactorToArcsec: this.gl.getUniformLocation(shaderProgram, "uFactorToArcsec"),
                 OmapEnabled: this.gl.getUniformLocation(shaderProgram, "uOmapEnabled"),
                 CmapEnabled: this.gl.getUniformLocation(shaderProgram, "uCmapEnabled"),
                 RotationAngle: this.gl.getUniformLocation(shaderProgram, "uRotationAngle"),
@@ -196,7 +198,7 @@ export class CatalogWebGLService {
                 ScaleAdjustment: this.gl.getUniformLocation(shaderProgram, "uScaleAdjustment"),
                 ZoomLevel: this.gl.getUniformLocation(shaderProgram, "uZoomLevel"),
                 PixelRatio: this.gl.getUniformLocation(shaderProgram, "uPixelRatio"),
-                // PixelUnitSizeArcsec: this.gl.getUniformLocation(shaderProgram, "uPixelUnitSizeArcsec"),
+                PixelUnitSizeArcsec: this.gl.getUniformLocation(shaderProgram, "uPixelUnitSizeArcsec"),
                 // spatial matching
                 ControlMapEnabled: this.gl.getUniformLocation(shaderProgram, "uControlMapEnabled"),
                 ControlMapSize: this.gl.getUniformLocation(shaderProgram, "uControlMapSize"),

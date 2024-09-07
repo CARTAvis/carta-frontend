@@ -2,8 +2,7 @@ import {Colors} from "@blueprintjs/core";
 import * as CARTACompute from "carta_computation";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
-import {CatalogOverlay} from "models";
-// import { AngularSizeUnit, CatalogOverlay } from "models";
+import {AngularSizeUnit, CatalogOverlay} from "models";
 import {CatalogTextureType, CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, PreferenceStore} from "stores";
 import {FrameScaling} from "stores/Frame";
@@ -39,7 +38,8 @@ export enum CatalogSettingsTabs {
     SIZE,
     ORIENTATION,
     SIZE_MAJOR,
-    SIZE_MINOR
+    SIZE_MINOR,
+    ANGULAR_SIZE
 }
 
 export type ValueClip = "size-min" | "size-max" | "angle-min" | "angle-max";
@@ -99,8 +99,9 @@ export class CatalogWidgetStore {
     @observable sizeColumnMinLocked: boolean;
     @observable sizeColumnMaxLocked: boolean;
     @observable isImagePixelSize: boolean;
-    // @observable factorToArasec: number;
-    // @observable sizeUnit: AngularSizeUnit;
+    @observable isAngularSize: boolean;
+    @observable factorToArasec: number;
+    @observable sizeUnit: AngularSizeUnit;
     // size map minor
     @observable sizeMinorMapColumn: string;
     @observable sizeMinorColumnMax: {default: number | undefined; clipd: number | undefined};
@@ -169,9 +170,10 @@ export class CatalogWidgetStore {
         this.sizeColumnMaxLocked = false;
         this.sizeMinorColumnMinLocked = false;
         this.sizeMinorColumnMaxLocked = false;
-        this.isImagePixelSize = true;
-        // this.factorToArasec = 1.0;
-        // this.sizeUnit = AngularSizeUnit.ARCSEC;
+        this.isImagePixelSize = false;
+        this.isAngularSize = false;
+        this.factorToArasec = 1.0;
+        this.sizeUnit = AngularSizeUnit.ARCSEC;
 
         reaction(
             () => this.sizeMapData,
@@ -567,22 +569,32 @@ export class CatalogWidgetStore {
 
     @action toggleAbsoluteSize = () => {
         this.isImagePixelSize = !this.isImagePixelSize;
+        if (!this.isImagePixelSize) this.isAngularSize = false;
     };
 
-    // @action setFactorToArcsec(unit: AngularSizeUnit) {
-    //     switch (unit) {
-    //         case AngularSizeUnit.DEG:
-    //             this.factorToArasec = 3600;
-    //             this.sizeUnit = AngularSizeUnit.DEG;
-    //             break;
-    //         case AngularSizeUnit.ARCMIN:
-    //             this.factorToArasec = 60;
-    //             this.sizeUnit = AngularSizeUnit.ARCMIN;
-    //             break;
-    //         default:
-    //             break;
-    //     }
-    // }
+    @action toggleAngularSize = () => {
+        this.isAngularSize = !this.isAngularSize;
+        if (this.isAngularSize) this.isImagePixelSize = true;
+    };
+
+    @action setFactorToArcsec(unit: AngularSizeUnit) {
+        switch (unit) {
+            case AngularSizeUnit.DEG:
+                this.factorToArasec = 3600;
+                this.sizeUnit = AngularSizeUnit.DEG;
+                break;
+            case AngularSizeUnit.ARCMIN:
+                this.factorToArasec = 60;
+                this.sizeUnit = AngularSizeUnit.ARCMIN;
+                break;
+            case AngularSizeUnit.ARCSEC:
+                this.factorToArasec = 1;
+                this.sizeUnit = AngularSizeUnit.ARCSEC;
+                break;
+            default:
+                break;
+        }
+    }
 
     @action setHeaderTableColumnWidts(vals: Array<number>) {
         this.headerTableColumnWidts = vals;
@@ -704,7 +716,9 @@ export class CatalogWidgetStore {
 
     sizeArray(): Float32Array {
         let column = this.sizeMapData;
-        // if (this.isImagePixelSize) return new Float32Array(column);
+        if (this.isAngularSize && !this.disableSizeMap && column?.length) {
+            return new Float32Array(column);
+        }
         if (!this.disableSizeMap && column?.length && this.sizeColumnMin.clipd !== undefined && this.sizeColumnMax.clipd !== undefined) {
             const pointSize = this.pointSizebyType;
             let min = (this.sizeArea ? this.shapeSettings?.areaBase : this.shapeSettings?.diameterBase) ?? NaN;
@@ -724,7 +738,9 @@ export class CatalogWidgetStore {
 
     sizeMinorArray(): Float32Array {
         let column = this.sizeMinorMapData;
-        // if (this.isImagePixelSize) return new Float32Array(column);
+        if (this.isAngularSize && !this.disableSizeMinorMap && column?.length) {
+            return new Float32Array(column);
+        }
         if (!this.disableSizeMinorMap && column?.length && this.sizeMinorColumnMin.clipd !== undefined && this.sizeMinorColumnMax.clipd !== undefined) {
             const pointSize = this.minorPointSizebyType;
             let min = (this.sizeMinorArea ? this.shapeSettings?.areaBase : this.shapeSettings?.diameterBase) ?? NaN;
