@@ -61,13 +61,13 @@ export class TileService {
     }
 
     private readonly backendService: BackendService;
-    private readonly cacheMapCompressedTiles: Map<number, LRUCache<number | undefined, CompressedTile>>;
+    private readonly cacheMapCompressedTiles: Map<number, LRUCache<bigint | undefined, CompressedTile>>;
     private readonly pendingRequests: Map<string | undefined, Map<number, boolean>>;
     private readonly pendingDecompressions: Map<string, Map<number, Map<number, boolean>>>;
     private readonly channelMap: Map<number, {channel: number | null | undefined; stokes: number | null | undefined}>;
     private readonly completedChannels: Map<string, boolean>;
     readonly tileStream: Subject<TileStreamDetails>;
-    private cachedTiles: LRUCache<number, RasterTile>;
+    private cachedTiles: LRUCache<bigint, RasterTile>;
     private lruCapacitySystem: number;
     private textureArray: Array<WebGLTexture | null>;
     private textureCoordinateQueue: Array<number | undefined>;
@@ -133,7 +133,7 @@ export class TileService {
         this.textureArray = new Array<WebGLTexture>(numTextures);
         this.initTextures();
         this.resetCoordinateQueue();
-        this.cachedTiles = new LRUCache<number, RasterTile>(Float64Array, ArrayBuffer, lruCapacityGPU);
+        this.cachedTiles = new LRUCache<bigint, RasterTile>(BigInt64Array, ArrayBuffer, lruCapacityGPU);
 
         // L2 cache: compressed tiles on system memory
         this.lruCapacitySystem = lruCapacitySystem;
@@ -146,7 +146,7 @@ export class TileService {
 
         this.channelMap = new Map<number, {channel: number; stokes: number}>();
         this.pendingRequests = new Map<string, Map<number, boolean>>();
-        this.cacheMapCompressedTiles = new Map<number, LRUCache<number, CompressedTile>>();
+        this.cacheMapCompressedTiles = new Map<number, LRUCache<bigint, CompressedTile>>();
         this.pendingDecompressions = new Map<string, Map<number, Map<number, boolean>>>();
         this.completedChannels = new Map<string, boolean>();
         this.receivedSynchronisedTiles = new Map<string, Map<number, Map<number, RasterTile>>>();
@@ -203,7 +203,7 @@ export class TileService {
         if (cache) {
             return cache;
         } else {
-            const newCache = new LRUCache<number, CompressedTile>(Float64Array, ArrayBuffer, this.lruCapacitySystem);
+            const newCache = new LRUCache<bigint, CompressedTile>(BigInt64Array, ArrayBuffer, this.lruCapacitySystem);
             this.cacheMapCompressedTiles.set(fileId, newCache);
             return newCache;
         }
@@ -286,8 +286,7 @@ export class TileService {
     }
 
     requestChannelMapTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, compressionQuality: number, channelMapRange: {min: number; max: number}) {
-        // this.clearRequestQueue(fileId);
-        // this.clearCompressedCache(fileId);
+        this.clearRequestQueue(fileId);
         const newRequests = new Array<TileCoordinate>();
         if (channelMapRange) {
             for (let i = channelMapRange.min; i <= channelMapRange.max; i++) {
@@ -306,6 +305,14 @@ export class TileService {
                         const compressedTile = this.getCompressedCache(fileId).get(gpuCacheCoordinate);
                         const pendingCompressionMap = this.pendingDecompressions.get(subKey);
                         const tileIsQueuedForDecompression = pendingCompressionMap && Array.from(pendingCompressionMap.values()).some(map => map.has(encodedCoordinate));
+                        // const tileIsQueuedForDecompression = false;
+                        /*still causing problem if it's in pendingCompressionMap,
+                        because we are clearing the request queue, 
+                        so if the tile is in the compression map, we skip requesting, but it won't be rendered after decompression is complete,
+                        because it's absent in the request queue, causing an empty tile
+                        if force-set it as false, and forcefully request it, the previous decompression will be handled instead of the current new request,
+                        which causes wrong tile to show up.
+                        If we do not clear the request queue, and if the tile never gets sent, the tile will remain in the request queue and cannot be removed.*/
 
                         const tileCached = this.cachedTiles?.has(gpuCacheCoordinate);
 
@@ -375,7 +382,7 @@ export class TileService {
 
     clearGPUCache(fileId: number | null | undefined) {
         const cacheCapacity = this.cachedTiles.capacity;
-        const keys: number[] = [];
+        const keys: bigint[] = [];
         const tiles: RasterTile[] = [];
 
         for (const [key, tile] of this.cachedTiles) {
@@ -389,7 +396,7 @@ export class TileService {
         }
 
         // populate new cache with old entries, from oldest to newest, in order to preserve LRU ordering
-        this.cachedTiles = new LRUCache<number, RasterTile>(Float64Array, ArrayBuffer, cacheCapacity);
+        this.cachedTiles = new LRUCache<bigint, RasterTile>(BigInt64Array, ArrayBuffer, cacheCapacity);
         for (let i = keys.length - 1; i >= 0; i--) {
             this.cachedTiles.set(keys[i], tiles[i]);
         }

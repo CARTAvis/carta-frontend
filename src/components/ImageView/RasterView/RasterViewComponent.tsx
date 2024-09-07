@@ -19,7 +19,6 @@ export class RasterViewComponentProps {
     pixelHighlightValue: number;
     renderWidth?: number;
     renderHeight?: number;
-    top?: number;
     left?: number;
     row: number;
     column: number;
@@ -154,21 +153,24 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const w = canvas.width;
         const h = canvas.height;
         ctx.clearRect(0, 0, w, h);
+        webGLService.gl.clear(GL2.COLOR_BUFFER_BIT | GL2.DEPTH_BUFFER_BIT);
 
-        channels.map((channel, index) => {
+        if (!channels.length) {
+            return;
+        }
+
+        channels.forEach((channel, index) => {
             const appStore = AppStore.Instance;
             const channelMapStore = appStore.channelMapStore;
             const column = index % channelMapStore.numColumns;
             const row = Math.floor(index / channelMapStore.numColumns);
             const overlayStore = channelMapStore.overlayStores.corner;
 
-            // let overlayComponentTop = this.props.renderHeight * row;
-            // let overlayComponentLeft = this.props.renderWidth * column;
-            // overlayComponentLeft -= overlayStore.paddingLeft;
-
             const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
-            const xOffset = column * (overlayStore.renderWidth + overlayStore.defaultGap) * pixelRatio;
-            const yOffset = webGLService.gl.canvas.height - (overlayStore.renderHeight + overlayStore.defaultGap / pixelRatio) * (row + 1) * pixelRatio;
+            const renderWidth = w / pixelRatio / channelMapStore.numColumns;
+            const renderHeight = h / pixelRatio / channelMapStore.numRows;
+            const xOffset = column * renderWidth * pixelRatio + overlayStore.base;
+            const yOffset = webGLService.gl.canvas.height - renderHeight * (row + 1) * pixelRatio + overlayStore.base * 2 * pixelRatio;
 
             this.renderCanvas(frame, webGLService, tileService, xOffset, yOffset, overlayStore.renderWidth, overlayStore.renderHeight, tileBasedRender, channel, rasterData);
         });
@@ -238,7 +240,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histChannel : undefined;
                 if ((frame.renderConfig.useCubeHistogram || frame.channel === histChannel || frame.isPreview) && (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)) {
                     this.updateUniforms(frame, webGLService, overlayStore.renderWidth, overlayStore.renderHeight, pixelHighlightValue);
-                    if ((channel as number[]).length) {
+                    if (isFinite((channel as number[]).length)) {
                         this.renderMultipleCanvas(frame, webGLService, tileService, canvas, tileBasedRender, channel as number[], rasterData);
                     } else {
                         this.renderCanvas(frame, webGLService, tileService, xOffset, yOffset, renderWidth, renderHeight, tileBasedRender, channel as number, rasterData);
@@ -614,7 +616,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     ref={ref => (this.canvas = ref)}
                     style={{
                         top: padding.top,
-                        left: 0,
+                        left: this.props.left ?? padding.left,
                         width: baseFrame?.isRenderable ? this.props.renderWidth || this.props.overlayStore.renderWidth || 1 : 1,
                         height: baseFrame?.isRenderable ? this.props.renderHeight || this.props.overlayStore.renderHeight || 1 : 1
                     }}

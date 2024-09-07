@@ -1,7 +1,7 @@
 import * as React from "react";
 import {NonIdealState} from "@blueprintjs/core";
 import _ from "lodash";
-import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {CursorInfo, FrameView, ImageType, Point2D} from "models";
@@ -309,7 +309,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     // ]);
 
     React.useEffect(() => {
-        // const disposer = reaction(
+        // const disposerA = reaction(
         //     () => [channelMapStore.startChannel, channelMapStore.channelRange],
         //     ([startChannel, endChannel], [prevStartChannel, prevEndChannel]) => {
         //         let channelRange;
@@ -322,7 +322,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         //         } else {
         //             channelRange = {min: 0, max: 0};
         //         }
-        //         channelMapStore.throttledRequestChannels();
+        //         channelMapStore.throttledRequestChannels(channelRange);
         //     }
         // );
 
@@ -351,6 +351,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
 
         return () => {
             disposer();
+            // disposerA();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -522,12 +523,13 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                         overlayStore={overlayStore}
                         docked={props.docked}
                         pixelHighlightValue={props.channelMapStore.pixelHighlightValue}
-                        renderWidth={imageRenderWidth}
-                        renderHeight={imageRenderHeight}
+                        renderWidth={channelMapViewWidth - outerOffset}
+                        renderHeight={channelMapViewHeight - outerOffset}
                         row={0}
                         column={0}
+                        left={0}
                         tileBasedRender={true}
-                        channel={[channelMapStore.auxiliaryFrameChannel]}
+                        channel={channelMapStore.channelArray.map(channel => channelMapStore.auxiliaryFrameChannel)}
                     />
                 ) : (
                     <RasterViewComponent
@@ -545,6 +547,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                         renderHeight={channelMapViewHeight - outerOffset}
                         row={0}
                         column={0}
+                        left={0}
                         tileBasedRender={true}
                         channel={channelMapStore.channelArray}
                     />
