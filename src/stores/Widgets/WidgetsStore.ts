@@ -808,7 +808,7 @@ export class WidgetsStore {
             return null;
         }
 
-        let widgetStore: RenderConfigWidgetStore | SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore | CatalogWidgetStore | null | undefined = null;
+        let widgetStore: RenderConfigWidgetStore | Render3DWidgetStore | SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore | CatalogWidgetStore | null | undefined = null;
         switch (widgetType) {
             case RenderConfigComponent.WIDGET_CONFIG.type:
                 widgetStore = this.renderConfigWidgets.get(widgetID);
@@ -822,10 +822,10 @@ export class WidgetsStore {
             case HistogramComponent.WIDGET_CONFIG.type:
                 widgetStore = this.histogramWidgets.get(widgetID);
                 break;
-            // // add render 3d
-            // case Render3DComponent.WIDGET_CONFIG.type:
-            //     widgetStore = this.render3DWidgets.get(widgetID);
-            //     break;
+            // add render 3d
+            case Render3DComponent.WIDGET_CONFIG.type:
+                widgetStore = this.render3DWidgets.get(widgetID);
+                break;
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 widgetStore = this.stokesAnalysisWidgets.get(widgetID);
                 break;
@@ -1594,6 +1594,7 @@ export class WidgetsStore {
         return id;
     }
 
+    // Use this when adding settings for the widget.
     // @action addRender3DWidget(id: string | null = null, widgetSettings: object | null = null) {
     //     if (!id) {
     //         id = this.getNextId(Render3DComponent.WIDGET_CONFIG.type);
