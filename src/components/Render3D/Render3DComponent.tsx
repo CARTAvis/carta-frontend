@@ -1,18 +1,20 @@
 import * as React from "react";
 // import ReactResizeDetector from "react-resize-detector";
-import {Divider, FormGroup, HTMLSelect, NonIdealState, Tab, Tabs} from "@blueprintjs/core";
+import {AnchorButton, Divider, FormGroup, HTMLSelect, NonIdealState, Position, Tab, Tabs, TagInput, Tooltip} from "@blueprintjs/core";
 // import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react"; 
 
 // import {TaskProgressDialogComponent} from "components/Dialogs";
-import {LinePlotComponent, LinePlotComponentProps} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, SafeNumericInput} from "components/Shared";
 import {Point2D} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 // import {FrameStore} from "stores/Frame";
 import {RegionId, Render3DWidgetStore} from "stores/Widgets";
-import {clamp, getColorForTheme} from "utilities";
+import {clamp, getColorForTheme, toExponential, toFixed} from "utilities";
+
+import {ContourGeneratorPanelComponent} from "../Dialogs/ContourDialog/ContourGeneratorPanel/ContourGeneratorPanelComponent";
 
 // import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import "./Render3DComponent.scss";
@@ -27,7 +29,6 @@ enum IsoSurfaceTabs {
     Configuration = "configuration",
     Styling = "styling"
 }
-
 
 @observer
 export class Render3DComponent extends React.Component<WidgetProps> {
@@ -47,6 +48,9 @@ export class Render3DComponent extends React.Component<WidgetProps> {
 
     @observable width: number;
     @observable height: number;
+
+    // Generate levels
+    @observable levels: number[];
 
     // find widgetStore for render 3d
     @computed get widgetStore(): Render3DWidgetStore {
@@ -77,12 +81,14 @@ export class Render3DComponent extends React.Component<WidgetProps> {
                 appStore.widgetsStore.render3DWidgets.set(this.props.id, new Render3DWidgetStore());
             }
         }
+
+        // Generate levels
+        this.setDefaultContourParameters();
     }
 
     // handle changing the data source
     private handleFrameChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         if (this.widgetStore.effectiveFrame) {
-            alert("frame changed");
             const selectedFileId = parseInt(changeEvent.target.value);
             this.widgetStore.setFileId(selectedFileId);
             this.widgetStore.setRegionId(this.widgetStore.effectiveFrame.frameInfo.fileId, RegionId.NONE);
@@ -100,9 +106,25 @@ export class Render3DComponent extends React.Component<WidgetProps> {
     @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} {
         const widgetStore = this.widgetStore;
         const frame = widgetStore.effectiveFrame;
-        if (frame && frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
+        const appStore = AppStore.Instance;
+        // const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+        // const regionId = this.widgetStore.effectiveRegionId;
+        if (frame && frame.renderConfig) {
+            frame.renderConfig.setUseCubeHistogram(true);
+            if (frame.renderConfig.cubeHistogramProgress < 1.0) {
+                appStore.requestCubeHistogram();
+                // if (fileId && regionId) {
+                //     appStore.requestCubeHistogram(fileId, regionId);
+                // } else {
+                //     appStore.requestCubeHistogram();
+                // }
+                // maybe the else is not necessary, seems to work with regionId=-1
+                // Appstore setHistogramRequirements
+            }
+        }
+
+        if (frame && frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {    
             const histogram = frame.renderConfig.histogram;
-            alert("histogram: " + histogram);
             let minIndex = 0;
             let maxIndex = histogram.bins.length - 1;
 
@@ -144,13 +166,85 @@ export class Render3DComponent extends React.Component<WidgetProps> {
         this.widgetStore.setCursor(x);
     }, 100);
 
+    // Generate levels
+    @action setDefaultContourParameters() {
+        const appStore = AppStore.Instance;
+        const dataSource = appStore.contourDataSource;
+        if (dataSource) {
+            this.levels = dataSource.contourConfig.levels.slice();
+            // this.smoothingMode = dataSource.contourConfig.smoothingMode;
+            // this.smoothingFactor = dataSource.contourConfig.smoothingFactor;
+        } else {
+            this.levels = [];
+            // this.smoothingMode = appStore.preferenceStore.contourSmoothingMode;
+            // this.smoothingFactor = appStore.preferenceStore.contourSmoothingFactor;
+        }
+    }
+
+    @action private handleLevelAdded = (values: string[]) => {
+        try {
+            for (const valueString of values) {
+                const val = parseFloat(valueString);
+                if (isFinite(val)) {
+                    this.levels.push(val);
+                    this.levels.sort((a, b) => a - b);
+                }
+            }
+        } catch (e) {
+            console.log(e);
+        }
+    };
+
+    @action private handleLevelRemoved = (value: string, index: number) => {
+        this.levels = this.levels.filter((v, i) => i !== index);
+    };
+
+    @action private handleLevelDragged = (index: number) => (val: number) => {
+        if (index >= 0 && index < this.levels.length) {
+            this.levels[index] = val;
+        }
+    };
+
+    @action private handleLevelsGenerated = (levels: number[]) => {
+        this.levels = levels.slice();
+    };
+
+    private onVisualizeButtonClicked = () => {
+        this.widgetStore.requestRender3D();
+    }
+
+    private handleSpectralRangeChanged = (value: number, max: boolean) => {
+        //TODO
+        // if (max) {
+        //     this.widgetStore.setSpectralRange({min: this.widgetStore.range?.min, max: value ?? null});
+        // } else {
+        //     this.widgetStore.setSpectralRange({min: value ?? null, max: this.widgetStore.range?.max});
+        // }
+
+        // const frame = this.widgetStore.effectiveFrame;
+        // let channelIndexMin = frame.findChannelIndexByValue(this.widgetStore.range?.min);
+        // let channelIndexMax = frame.findChannelIndexByValue(this.widgetStore.range?.max);
+
+        // if (channelIndexMin > channelIndexMax) {
+        //     const holder = channelIndexMax;
+        //     channelIndexMax = channelIndexMin;
+        //     channelIndexMin = holder;
+        // }
+
+        // if (isFinite(this.widgetStore.range?.min) && isFinite(this.widgetStore.range?.max) && channelIndexMin < channelIndexMax && channelIndexMax < frame.numChannels) {
+        //     this.setisValidSpectralRange(true);
+        // } else {
+        //     this.setisValidSpectralRange(false);
+        // }
+    };
+
     render() {
         const appStore = AppStore.Instance;
         const frame = this.widgetStore.effectiveFrame;
         const fileInfo = frame ? `${appStore.getFrameIndex(frame.frameInfo.fileId)}: ${frame.filename}` : undefined;
         const regionInfo = this.widgetStore.effectiveRegionInfo;
 
-        let selectedValue = RegionId.NONE;
+        let selectedValue = RegionId.ACTIVE;
         if (this.widgetStore.effectiveFrame?.regionSet) {
             selectedValue = this.widgetStore.regionIdMap.get(this.widgetStore.effectiveFrame.frameInfo.fileId);
         }
@@ -170,6 +264,8 @@ export class Render3DComponent extends React.Component<WidgetProps> {
         }
 
         let linePlotProps: LinePlotComponentProps = {
+            width: 200,
+            height:100,
             xLabel: unit ? `Value (${unit})` : "Value",
             darkMode: appStore.darkTheme,
             logY: this.widgetStore.logScaleY,
@@ -193,7 +289,6 @@ export class Render3DComponent extends React.Component<WidgetProps> {
             const currentPlotData = this.plotData;
             if (currentPlotData) {
                 linePlotProps.data = currentPlotData.values;
-                alert(currentPlotData.values);
 
                 // set line color
                 linePlotProps.lineColor = getColorForTheme(this.widgetStore.primaryLineColor);
@@ -219,28 +314,89 @@ export class Render3DComponent extends React.Component<WidgetProps> {
                     linePlotProps.yMin = 0.5;
                 }
             }
-        }        
+        }
 
-        const isoSurfacesLevelsPanel = (
-            <div className="histogram-plot">
-                <LinePlotComponent {...linePlotProps} />
+        // Generate Levels
+        let sortedLevels = this.levels
+            .slice()
+            .sort((a, b) => a - b)
+            .map(level => (Math.abs(level) < 0.1 ? toExponential(level, 2) : toFixed(level, 2)));
+
+            const hint = (
+                <span>
+                    <i>
+                        <small>
+                            Please ensure:
+                            <br />
+                            1. Image/Region is not too large.
+                            <br />
+                            2. Region is not in one pixel.
+                            <br />
+                            3. Levels have been set.
+                        </small>
+                    </i>
+                </span>
+            );
+
+            const isAbleToVisualize = this.levels.length > 0;
+            // const isAbleToVisualize = this.levels.length > 0 && this.isRegionIntersectedWithImage && !this.isRegionInOnePixel && isValidSpectralRange && this.isCubeBelowLimit;
+
+        // RENDERING PANELS
+
+        const isoSurfaceLevelsPanel = (
+            <div className="isosurface-level-panel">
+                {frame && frame.numChannels > 1 && (
+                    <FormGroup label="Range" inline={true} labelInfo={`(${frame.spectralUnit})`}>
+                        <div className="range-select">
+                            <FormGroup label="From" inline={true}>
+                                <SafeNumericInput value={this.widgetStore.range?.min} buttonPosition="none" onValueChange={value => this.handleSpectralRangeChanged(value, false)} data-testid="render-3d-spectral-range-from-input" />
+                            </FormGroup>
+                            <FormGroup label="To" inline={true}>
+                                <SafeNumericInput value={this.widgetStore.range?.max} buttonPosition="none" onValueChange={value => this.handleSpectralRangeChanged(value, true)} data-testid="render-3d-spectral-range-to-input" />
+                            </FormGroup>
+                        </div>
+                    </FormGroup>
+                )}
+                <div className="histogram-plot">
+                    <LinePlotComponent {...linePlotProps} />
+                </div>
+                <ContourGeneratorPanelComponent frame={frame} generatorType={appStore.preferenceStore.contourGeneratorType} onLevelsGenerated={this.handleLevelsGenerated} />
+                <div className="contour-level-panel-levels" data-testid="contour-config-level-input-form">
+                    <FormGroup label={"Levels"} inline={true}>
+                        <TagInput
+                            addOnBlur={true}
+                            fill={true}
+                            tagProps={{
+                                minimal: true
+                            }}
+                            onAdd={this.handleLevelAdded}
+                            onRemove={this.handleLevelRemoved}
+                            values={sortedLevels}
+                        />
+                    </FormGroup>
+                    <div className="generate-button">
+                        <Tooltip disabled={isAbleToVisualize} content={hint} position={Position.BOTTOM}>
+                            <AnchorButton intent="success" disabled={!isAbleToVisualize} text="Visualize" onClick={this.onVisualizeButtonClicked} />
+                        </Tooltip>
+                    </div>
+                </div>
             </div>
         );
 
-        const isoSurfacesConfigurationPanel = (
+        const isoSurfaceConfigurationPanel = (
             <div>configuration</div>
         );
 
-        const isoSurfacesStylingPanel = (
+        const isoSurfaceStylingPanel = (
             <div>styling</div>
         );
 
         const isoSurfacesPanel = (
             <div>
                 <Tabs defaultSelectedTabId={IsoSurfaceTabs.Levels} renderActiveTabPanelOnly={false}>
-                    <Tab id={IsoSurfaceTabs.Levels} title="Levels" panel={isoSurfacesLevelsPanel} panelClassName="render-3d-isosurfaces-levels-panel" data-testid="render-3d-isosurfaces-levels-tab-title" />
-                    <Tab id={IsoSurfaceTabs.Configuration} title="Configuration" panel={isoSurfacesConfigurationPanel} panelClassName="render-3d-isosurfaces-configuration-panel" data-testid="render-3d-isosurfaces-configuration-tab-title" />
-                    <Tab id={IsoSurfaceTabs.Styling} title="Styling" panel={isoSurfacesStylingPanel} panelClassName="render-3d-isosurfaces-styling-panel" data-testid="render-3d-isosurfaces-styling-tab-title" />
+                    <Tab id={IsoSurfaceTabs.Levels} title="Levels" panel={isoSurfaceLevelsPanel} panelClassName="isosurface-level-panel" data-testid="isosurface-level-tab-title" />
+                    <Tab id={IsoSurfaceTabs.Configuration} title="Configuration" panel={isoSurfaceConfigurationPanel} panelClassName="isosurfaces-configuration-panel" data-testid="isosurfaces-configuration-tab-title" />
+                    <Tab id={IsoSurfaceTabs.Styling} title="Styling" panel={isoSurfaceStylingPanel} panelClassName="isosurfaces-styling-panel" data-testid="isosurfaces-styling-tab-title" />
                 </Tabs>
             </div>
         );

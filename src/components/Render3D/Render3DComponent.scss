@@ -20,11 +20,11 @@
         }
     }
 
-    .#{$ns}-non-ideal-state {
-        flex: auto;
-        padding: 5px 5px 1px;
-        margin: 0;
-    }
+    // .#{$ns}-non-ideal-state {
+    //     flex: auto;
+    //     padding: 5px 5px 1px;
+    //     margin: 0;
+    // }
 
     .render-3d-panel {
         flex: auto;
@@ -33,8 +33,8 @@
 
         .#{$ns}-form-group {
             .#{$ns}-label {
-                min-width: 13em;
-                width: 13em;
+                min-width: 5em;
+                width: 5em;
                 text-align: right;
                 white-space: nowrap;
                 overflow: hidden;
@@ -46,6 +46,17 @@
         .#{$ns}-select select {
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+
+        .contour-level-panel-levels .#{$ns}-form-group .#{$ns}-label {
+            min-width: 8em;
+        }
+
+        .histogram-plot {
+            margin-left: 5px;
+            height: 200px;
+            width: 100%;
+            position: relative;
         }
 
         .label-info-group {

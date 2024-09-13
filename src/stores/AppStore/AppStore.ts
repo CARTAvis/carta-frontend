@@ -1375,6 +1375,13 @@ export class AppStore {
         });
     };
 
+    // @action requestCubeHistogram = (fileId: number = -1, regionId: number = -2) => {
+    //     const frame = this.getFrame(fileId);
+    //     if (frame && frame.renderConfig.cubeHistogramProgress < 1.0) {
+    //         this.backendService.setHistogramRequirements({fileId: frame.frameInfo.fileId, regionId: regionId, histograms: [{channel: -2, fixedNumBins: false, numBins: -1, fixedBounds: false, bounds: {min: 0, max: 0}}]});
+    //         this.restartTaskProgress();
+    //     }
+    // };
     @action requestCubeHistogram = (fileId: number = -1) => {
         const frame = this.getFrame(fileId);
         if (frame && frame.renderConfig.cubeHistogramProgress < 1.0) {
