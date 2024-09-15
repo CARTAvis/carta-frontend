@@ -1,13 +1,13 @@
 import * as React from "react";
 // import ReactResizeDetector from "react-resize-detector";
-import {AnchorButton, Divider, FormGroup, HTMLSelect, NonIdealState, Position, Tab, Tabs, TagInput, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Colors, Divider, FormGroup,  NonIdealState, Position, Tab, Tabs, TagInput, Tooltip} from "@blueprintjs/core";
 // import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react"; 
 
 // import {TaskProgressDialogComponent} from "components/Dialogs";
-import {LinePlotComponent, LinePlotComponentProps, SafeNumericInput} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, RegionSelectorComponent, SafeNumericInput} from "components/Shared";
 import {Point2D} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 // import {FrameStore} from "stores/Frame";
@@ -241,20 +241,17 @@ export class Render3DComponent extends React.Component<WidgetProps> {
     render() {
         const appStore = AppStore.Instance;
         const frame = this.widgetStore.effectiveFrame;
-        const fileInfo = frame ? `${appStore.getFrameIndex(frame.frameInfo.fileId)}: ${frame.filename}` : undefined;
-        const regionInfo = this.widgetStore.effectiveRegionInfo;
+        // const fileInfo = frame ? `${appStore.getFrameIndex(frame.frameInfo.fileId)}: ${frame.filename}` : undefined;
+        // const regionInfo = this.widgetStore.effectiveRegionInfo;
 
-        let selectedValue = RegionId.ACTIVE;
-        if (this.widgetStore.effectiveFrame?.regionSet) {
-            selectedValue = this.widgetStore.regionIdMap.get(this.widgetStore.effectiveFrame.frameInfo.fileId);
-        }
+        // let selectedValue = RegionId.ACTIVE;
+        // if (this.widgetStore.effectiveFrame?.regionSet) {
+        //     selectedValue = this.widgetStore.regionIdMap.get(this.widgetStore.effectiveFrame.frameInfo.fileId);
+        // }
 
-        // here
         if (!frame || !this.widgetStore) {
             return (
-                <div className="isosurface-panel">
-                    <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
-                </div>
+                <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
             );
         }
 
@@ -317,6 +314,41 @@ export class Render3DComponent extends React.Component<WidgetProps> {
         }
 
         // Generate Levels
+        const hasLevels = this.levels && this.levels.filter(level => isFinite(level)).length;
+
+        if (hasLevels) {
+            linePlotProps.markers = this.levels.map((level, index) => ({
+                value: level,
+                id: `marker-${index}`,
+                draggable: true,
+                dragMove: this.handleLevelDragged(index),
+                horizontal: false
+            }));
+        } else {
+            linePlotProps.markers = [];
+        }
+
+        if (this.widgetStore.meanRmsVisible && frame.renderConfig.contourHistogram && frame.renderConfig.contourHistogram.stdDev > 0) {
+            linePlotProps.markers.push({
+                value: frame.renderConfig.contourHistogram.mean,
+                id: "marker-mean",
+                draggable: false,
+                horizontal: false,
+                color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
+                dash: [5]
+            });
+
+            linePlotProps.markers.push({
+                value: frame.renderConfig.contourHistogram.mean,
+                id: "marker-rms",
+                draggable: false,
+                horizontal: false,
+                width: frame.renderConfig.contourHistogram.stdDev,
+                opacity: 0.2,
+                color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+            });
+        }
+
         let sortedLevels = this.levels
             .slice()
             .sort((a, b) => a - b)
@@ -345,18 +377,6 @@ export class Render3DComponent extends React.Component<WidgetProps> {
 
         const isoSurfaceLevelsPanel = (
             <div className="isosurface-level-panel">
-                {frame && frame.numChannels > 1 && (
-                    <FormGroup label="Range" inline={true} labelInfo={`(${frame.spectralUnit})`}>
-                        <div className="range-select">
-                            <FormGroup label="From" inline={true}>
-                                <SafeNumericInput value={this.widgetStore.range?.min} buttonPosition="none" onValueChange={value => this.handleSpectralRangeChanged(value, false)} data-testid="render-3d-spectral-range-from-input" />
-                            </FormGroup>
-                            <FormGroup label="To" inline={true}>
-                                <SafeNumericInput value={this.widgetStore.range?.max} buttonPosition="none" onValueChange={value => this.handleSpectralRangeChanged(value, true)} data-testid="render-3d-spectral-range-to-input" />
-                            </FormGroup>
-                        </div>
-                    </FormGroup>
-                )}
                 <div className="histogram-plot">
                     <LinePlotComponent {...linePlotProps} />
                 </div>
@@ -405,34 +425,24 @@ export class Render3DComponent extends React.Component<WidgetProps> {
             <div>volume</div>
         );
 
-
         return (
             <div className="render-3d-widget">
                 <div className="render-3d-panel">
-                <FormGroup
-                    className="label-info-group"
-                    inline={true}
-                    label="Data source"
-                    labelInfo={
-                        <span className="label-info" title={fileInfo}>
-                            {fileInfo ? `(${fileInfo})` : ""}
-                        </span>
-                    }
-                >
-                    <HTMLSelect value={this.widgetStore.fileId} options={this.widgetStore.frameOptions} onChange={this.handleFrameChanged} data-testid="render-3d-image-dropdown" />
-                </FormGroup>
-                <FormGroup
-                    className="label-info-group"
-                    inline={true}
-                    label="Region"
-                    labelInfo={
-                        <span className="label-info" title={regionInfo}>
-                            {regionInfo ? `(${regionInfo})` : ""}
-                        </span>
-                    }
-                >
-                    <HTMLSelect value={selectedValue} options={this.widgetStore.regionOptions} onChange={this.handleRegionChanged} data-testid="render-3d-region-dropdown" />
-                </FormGroup>
+                    <div className="spectral-profiler-toolbar">
+                        <RegionSelectorComponent widgetStore={this.widgetStore} />
+                    </div>
+                    {frame && frame.numChannels > 1 && (
+                        <FormGroup label="Range" inline={true} labelInfo={`(${frame.spectralUnit})`}>
+                            <div className="range-select">
+                                <FormGroup label="From" inline={true}>
+                                    <SafeNumericInput value={this.widgetStore.range?.min} buttonPosition="none" onValueChange={value => this.handleSpectralRangeChanged(value, false)} data-testid="render-3d-spectral-range-from-input" />
+                                </FormGroup>
+                                <FormGroup label="To" inline={true}>
+                                    <SafeNumericInput value={this.widgetStore.range?.max} buttonPosition="none" onValueChange={value => this.handleSpectralRangeChanged(value, true)} data-testid="render-3d-spectral-range-to-input" />
+                                </FormGroup>
+                            </div>
+                        </FormGroup>
+                    )}
                 <Divider />
                 <Tabs defaultSelectedTabId={Render3DTabs.IsoSurfaces} renderActiveTabPanelOnly={false}>
                         <Tab id={Render3DTabs.IsoSurfaces} title="Iso-surfaces" panel={isoSurfacesPanel} panelClassName="render-3d-isosurfaces-panel" data-testid="render-3d-isosurfaces-tab-title" />

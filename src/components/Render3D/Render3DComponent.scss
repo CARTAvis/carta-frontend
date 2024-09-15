@@ -14,18 +14,6 @@
     flex-direction: column;
     user-select: none;
 
-    .#{$ns}-numeric-input {
-        .#{$ns}-input-group {
-            width: 80px;
-        }
-    }
-
-    // .#{$ns}-non-ideal-state {
-    //     flex: auto;
-    //     padding: 5px 5px 1px;
-    //     margin: 0;
-    // }
-
     .render-3d-panel {
         flex: auto;
         padding: 5px 5px 1px;
@@ -33,12 +21,18 @@
 
         .#{$ns}-form-group {
             .#{$ns}-label {
-                min-width: 5em;
-                width: 5em;
+                min-width: 8em;
+                width: 8em;
                 text-align: right;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
+            }
+
+            .#{$ns}-numeric-input {
+                .#{$ns}-input-group {
+                    width: 100px;
+                }
             }
         }
 

@@ -5,7 +5,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {LineSettings, PlotType} from "components/Shared";
 import {AppStore} from "stores";
 
-import {ACTIVE_FILE_ID, RegionId, RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
+import {RegionId, RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
 export class Render3DWidgetStore extends RegionWidgetStore {
 
@@ -103,13 +103,46 @@ export class Render3DWidgetStore extends RegionWidgetStore {
     };
 
     @action requestRender3D = () => {
-        //TODO
+        const frame = this.effectiveFrame;
+        if (!frame) {
+            return;
+        }
+
+        let channelIndexMin = frame.findChannelIndexByValue(this.range.min);
+        let channelIndexMax = frame.findChannelIndexByValue(this.range.max);
+
+        if (channelIndexMin > channelIndexMax) {
+            const holder = channelIndexMax;
+            channelIndexMax = channelIndexMin;
+            channelIndexMin = holder;
+        }
+        if (channelIndexMin >= channelIndexMax) {
+            if (channelIndexMax === 0) {
+                channelIndexMax++;
+            }
+            channelIndexMin = channelIndexMax - 1;
+        }
     };
+
+    // /** Properties of a IRender3DData */
+    // interface IRender3DData {
+    //     /** Render3DData fileId */
+    //     fileId?: (number|null);
+
+    //     /** Render3DData regionId */
+    //     regionId?: (number|null);
+
+    //     /** Render3DData imageBounds */
+    //     imageBounds?: (CARTA.IImageBounds|null);
+
+    //     /** Render3DData spectralRange */
+    //     spectralRange?: (CARTA.IIntBounds|null);
+    // }
 
     constructor() {
         super(RegionsType.CLOSED);
         makeObservable(this);
-        this.regionIdMap.set(ACTIVE_FILE_ID, RegionId.ACTIVE);
+        // this.regionIdMap.set(ACTIVE_FILE_ID, RegionId.ACTIVE);
         this.logScaleY = true;
         this.plotType = PlotType.STEPS;
         this.markerTextVisible = true;
