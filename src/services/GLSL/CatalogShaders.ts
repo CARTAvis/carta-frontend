@@ -28,7 +28,9 @@ const sharedMacros = `
 const vertexMacros = `
 #define PI radians(180.0)
 #define SQRT3 sqrt(3.0)
+#define COS_45 0.70710678118
 #define SIN_60 0.86602540378
+
 
 #define LINEAR 0
 #define LOG 1

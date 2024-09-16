@@ -73,6 +73,18 @@ float getSquareSideByArea(float area, float minorSize) {
     }
 }
 
+float getSize(float pointSize) {
+    if (uShapeType == BOX_FILLED || uShapeType == BOX_LINED || uShapeType == X_FILLED || uShapeType == X_LINED) {
+        return pointSize / COS_45;
+    } else if (uShapeType == TRIANGLE_FILLED_UP || uShapeType == TRIANGLE_LINED_UP || uShapeType == TRIANGLE_FILLED_DOWN || uShapeType == TRIANGLE_LINED_DOWN) {
+        return pointSize / SIN_60;
+    } else if (uShapeType == ELLIPSE_FILLED || uShapeType == ELLIPSE_LINED) {
+        return pointSize * 2.0;
+    } else {
+        return pointSize;
+    }
+}
+
 bool isNaN(float val) {
     return isnan(val) || isinf(val);
 }
@@ -97,7 +109,7 @@ void main() {
     v_featherWidth = uFeatherWidth;
     
     if (uIsImagePixelSize && !uIsAngularSize) {
-        v_pointSize = uPointSize * uZoomLevel;
+        v_pointSize = getSize(uPointSize) * uZoomLevel;
     }
 
     if (uCmapEnabled) {
@@ -165,7 +177,7 @@ void main() {
     }
 
     if (uShapeType == ELLIPSE_LINED) {
-        if (uIsAngularSize) v_featherWidth = v_pointSize;
+        if (uIsImagePixelSize) v_featherWidth = v_pointSize;
         else v_featherWidth = v_pointSize / 50.0 * 15.0 + 0.7;
     }
 
