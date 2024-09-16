@@ -79,6 +79,7 @@ export class TileService {
     private readonly gl: WebGL2RenderingContext | null;
     private syncIdMap: Map<number, boolean>;
     private syncIdTileCountMap: Map<number, number>;
+    private currentlyStreamingChannelRange: {min: number; max: number};
 
     @observable remainingTiles: number;
     @observable workersReady: boolean[];
@@ -286,10 +287,15 @@ export class TileService {
     }
 
     requestChannelMapTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, compressionQuality: number, channelMapRange: {min: number; max: number}) {
-        this.clearRequestQueue(fileId);
+        // this.clearQueueForChannelMap(this.pendingRequests, fileId, this.currentlyStreamingChannelRange);
+        // this.clearQueueForChannelMap(this.pendingDecompressions, fileId, this.currentlyStreamingChannelRange);
+        this.clearRequestQueue();
         const newRequests = new Array<TileCoordinate>();
-        if (channelMapRange) {
-            for (let i = channelMapRange.min; i <= channelMapRange.max; i++) {
+        const channelMapStore = AppStore.Instance.channelMapStore;
+        const fullChannelRange = {min: channelMapStore.startChannel, max: channelMapStore.channelRange};
+
+        if (fullChannelRange) {
+            for (let i = fullChannelRange.min; i <= fullChannelRange.max; i++) {
                 const subKey = `${fileId}_${stokes}_${i}` || `0_0_0`;
                 this.pendingSynchronisedTiles.set(subKey, new Set(tiles.map(tile => tile.encode())));
                 this.receivedSynchronisedTiles.delete(subKey);
@@ -358,7 +364,7 @@ export class TileService {
                     return acc;
                 }, []);
 
-            for (let i = channelMapRange.min; i <= channelMapRange.max; i++) {
+            for (let i = fullChannelRange.min; i <= fullChannelRange.max; i++) {
                 const subKey = `${fileId}_${stokes}_${i}`;
                 const pendingRequest = this.pendingRequests.get(subKey);
                 if (!pendingRequest) {
@@ -369,7 +375,12 @@ export class TileService {
                 }
                 this.updateRemainingTileCount();
             }
-            this.backendService.setChannels(fileId, channel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles: sortedRequests}, channelMapRange);
+
+            const requestSentSuccessfully = this.backendService.setChannels(fileId, channel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles: sortedRequests}, channelMapRange, fullChannelRange);
+
+            if (requestSentSuccessfully) {
+                this.currentlyStreamingChannelRange = fullChannelRange;
+            }
         }
     }
 
@@ -423,6 +434,23 @@ export class TileService {
             // Clear all requests
             this.pendingRequests.clear();
         }
+
+        this.updateRemainingTileCount();
+    }
+
+    clearQueueForChannelMap(map: Map<string, any>, fileId: number, channelRange: {min: number; max: number}) {
+        // Clear all requests with the given file ID within the channel range
+        map.forEach((value, key) => {
+            const splitKey = key?.split("_");
+            if (splitKey.length <= 0) {
+                return;
+            }
+            const keyFileId = parseInt(splitKey[0]);
+            const channel = parseInt(splitKey[splitKey.length - 1]);
+            if (keyFileId === fileId && isFinite(channel) && channel >= 0 && channel >= channelRange.min && channel <= channelRange.max) {
+                map.delete(key);
+            }
+        });
 
         this.updateRemainingTileCount();
     }

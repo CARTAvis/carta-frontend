@@ -1,7 +1,7 @@
 import * as React from "react";
 import {NonIdealState} from "@blueprintjs/core";
 import _ from "lodash";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {CursorInfo, FrameView, ImageType, Point2D} from "models";
@@ -309,29 +309,11 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     // ]);
 
     React.useEffect(() => {
-        // const disposerA = reaction(
-        //     () => [channelMapStore.startChannel, channelMapStore.channelRange],
-        //     ([startChannel, endChannel], [prevStartChannel, prevEndChannel]) => {
-        //         let channelRange;
-        //         if (prevEndChannel < startChannel || endChannel < prevStartChannel) {
-        //             channelRange = {min: startChannel, max: endChannel};
-        //         } else if (prevEndChannel < endChannel) {
-        //             channelRange = {min: prevEndChannel + 1, max: endChannel};
-        //         } else if (startChannel < prevStartChannel) {
-        //             channelRange = {min: startChannel, max: prevStartChannel - 1};
-        //         } else {
-        //             channelRange = {min: 0, max: 0};
-        //         }
-        //         channelMapStore.throttledRequestChannels(channelRange);
-        //     }
-        // );
-
-        const disposer = autorun(() => {
-            /* eslint-disable @typescript-eslint/no-unused-vars */
-            const stat = [
-                channelMapStore,
+        const disposer = reaction(
+            () => [
                 channelMapStore.startChannel,
                 channelMapStore.channelRange,
+                channelMapStore,
                 channelMapStore.masterFrame,
                 channelMapStore.numColumns,
                 channelMapStore.numRows,
@@ -343,15 +325,44 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                 channelMapStore.singleChannelContour,
                 channelMapStore.singleContourChannel,
                 channelMapStore.masterFrame?.spatialReference
-            ];
-            if (channelMapStore.masterFrame) {
-                channelMapStore.throttledRequestChannels();
+            ],
+            (
+                [startChannel, endChannel, _channelMapStore, masterFrame, numColumns, numRows, center, requiredFrameView, zoomLevel, auxiliaryFrame, auxiliaryFrameChannel, singleChannelContour, singleContourChannel, spatialReference],
+                [
+                    prevStartChannel,
+                    prevEndChannel,
+                    prevChannelMapStore,
+                    prevMasterFrame,
+                    prevNumColumns,
+                    prevNumRows,
+                    prevCenter,
+                    prevRequiredFrameView,
+                    prevZoomLevel,
+                    prevAuxiliaryFrame,
+                    prevAuxiliaryFrameChannel,
+                    prevSingleChannelContour,
+                    prevSingleContourChannel,
+                    prevSpatialReference
+                ]
+            ) => {
+                let channelRange;
+                if (prevEndChannel < startChannel || endChannel < prevStartChannel) {
+                    channelRange = {min: startChannel, max: endChannel};
+                } else if (prevEndChannel < endChannel) {
+                    channelRange = {min: (prevEndChannel as number) + 1, max: endChannel};
+                } else if (startChannel < prevStartChannel) {
+                    channelRange = {min: startChannel, max: (prevStartChannel as number) - 1};
+                } else {
+                    channelRange = {min: channelMapStore.startChannel as number, max: channelMapStore.channelRange};
+                }
+                if (channelMapStore.masterFrame) {
+                    channelMapStore.throttledRequestChannels(channelRange);
+                }
             }
-        });
+        );
 
         return () => {
             disposer();
-            // disposerA();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
