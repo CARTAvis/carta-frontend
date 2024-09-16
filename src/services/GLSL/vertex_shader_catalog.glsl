@@ -95,6 +95,10 @@ void main() {
     v_selected = float(selectedSource.x);
     v_pointSize = uPointSize;
     v_featherWidth = uFeatherWidth;
+    
+    if (uIsImagePixelSize && !uIsAngularSize) {
+        v_pointSize = uPointSize * uZoomLevel;
+    }
 
     if (uCmapEnabled) {
         vec4 color = getValueByIndexFromTexture(uColorTexture, dataPointIndex);
