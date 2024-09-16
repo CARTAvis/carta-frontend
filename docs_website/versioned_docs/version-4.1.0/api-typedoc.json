@@ -23625,7 +23625,7 @@
 						},
 						{
 							"id": 2037,
-							"name": "helpURL",
+							"name": "helpType",
 							"kind": 1024,
 							"kindString": "Property",
 							"flags": {
