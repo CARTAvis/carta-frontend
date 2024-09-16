@@ -83,11 +83,22 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     readonly profileSelectionStore: SpectralProfileSelectionStore;
     readonly fittingStore: ProfileFittingStore;
 
+    /**
+     * Set region for the spectral profiler.
+     *
+     * @param fileId - File ID number.
+     * @param regionId - Region ID number.
+     */
     @override setRegionId = (fileId: number, regionId: number) => {
         this.regionIdMap.set(fileId, regionId);
         this.clearXYBounds();
     };
 
+    /**
+     * Set spectral coordinates.
+     *
+     * @param coordStr - A string of <i>Spectral type (unit)</i> like Frequency (GHz).
+     */
     @action setSpectralCoordinate = (coordStr: string) => {
         if (this.effectiveFrame?.setSpectralCoordinate(coordStr)) {
             this.clearXBounds();
@@ -100,6 +111,11 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
+    /**
+     * Set the spectral system.
+     *
+     * @param specsys - Spectral system {@link SpectralSystem}.
+     */
     @action setSpectralSystem = (specsys: SpectralSystem) => {
         if (this.effectiveFrame?.setSpectralSystem(specsys)) {
             this.clearXBounds();
@@ -110,6 +126,11 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.intensityUnit = intensityUnitStr;
     };
 
+    /**
+     * Select region for generating moment maps.
+     *
+     * @param regionId -  Region ID number.
+     */
     @action selectMomentRegion = (regionId: number) => {
         this.momentRegionId = regionId;
     };
@@ -124,6 +145,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.selectingMode = MomentSelectingMode.NONE;
     };
 
+    /**
+     * Set the channel range for generating moment maps.
+     *
+     * @param min - Number of first channel.
+     * @param max - Number of last channel.
+     */
     @action setSelectedChannelRange = (min: number, max: number) => {
         if (isFinite(min) && isFinite(max)) {
             this.channelValueRange[0] = min;
@@ -150,16 +177,31 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
+    /**
+     * Mask for generating moment maps.
+     *
+     * @param momentMask - enum {@link CARTA.MomentMask}.
+     */
     @action setMomentMask = (momentMask: CARTA.MomentMask) => {
         this.momentMask = momentMask;
     };
 
+    /**
+     * Add moments to generate maps.
+     *
+     * @param selected - Moment in {@link CARTA.Moment}.
+     */
     @action selectMoment = (selected: CARTA.Moment) => {
         if (!this.selectedMoments.includes(selected)) {
             this.selectedMoments.push(selected);
         }
     };
 
+    /**
+     * Delete moments to generate maps.
+     *
+     * @param deselected - Moment in {@link CARTA.Moment}.
+     */
     @action deselectMoment = (deselected: CARTA.Moment) => {
         if (this.selectedMoments.includes(deselected)) {
             this.selectedMoments = this.selectedMoments.filter(momentType => momentType !== deselected);
@@ -180,6 +222,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return this.selectedMoments.includes(momentType);
     };
 
+    /**
+     * Request the moment maps.
+     */
     @action requestMoment = () => {
         const frame = this.effectiveFrame;
         if (frame && this.isMomentRegionValid) {
@@ -199,7 +244,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     spectralRange: channelIndexRange,
                     mask: this.momentMask,
                     pixelRange: new CARTA.FloatBounds({min: this.maskRange[0], max: this.maskRange[1]}),
-                    keep: this.keep
+                    keep: this.keep,
+                    restFreq: frame.restFreqStore?.restFreqInHz
                 };
                 frame.resetMomentRequestState();
                 frame.setIsRequestingMoments(true);
@@ -214,6 +260,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
+    /**
+     * Cancel the moment maps request.
+     */
     @action requestingMomentCancelled = () => {
         const frame = this.effectiveFrame;
         if (frame) {
@@ -305,6 +354,11 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.secondaryAxisCursorInfoVisible = val;
     };
 
+    /**
+     * Keep previous moment maps.
+     *
+     * @param bool - A boolean. Set true to keep previous moment maps.
+     */
     @action setKeep = (bool: boolean) => {
         this.keep = bool;
     };
