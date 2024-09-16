@@ -73,8 +73,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
     }
 
     private onClickHelpButton = () => {
-        const centerX = this.rnd.draggable.state.x + this.rnd.resizable.size.width * 0.5;
-        if (Array.isArray(this.props.widgetConfig.helpType)) {
+        if (Array.isArray(this.props.widgetConfig.helpURL)) {
             const widgetsStore = AppStore.Instance.widgetsStore;
             const widgetParentType = this.props.widgetConfig.parentType;
             const parentId = widgetsStore.floatingSettingsWidgets.get(this.props.widgetConfig.id);
@@ -99,9 +98,9 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                     settingsTab = widgetsStore.stokesAnalysisWidgets.get(parentId).settingsTabId;
                     break;
             }
-            HelpStore.Instance.showHelpDrawer(this.props.widgetConfig.helpType[settingsTab], centerX);
+            HelpStore.Instance.openHelpURL(this.props.widgetConfig.helpURL[settingsTab])
         } else {
-            HelpStore.Instance.showHelpDrawer(this.props.widgetConfig.helpType, centerX);
+            HelpStore.Instance.openHelpURL(this.props.widgetConfig.helpURL)
         }
     };
 
@@ -160,7 +159,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                             </Tooltip>
                         </div>
                     )}
-                    {widgetConfig.helpType && (
+                    {widgetConfig.helpURL && (
                         <div className={buttonClass} onClick={this.onClickHelpButton}>
                             <Tooltip content="Help" position={Position.BOTTOM_RIGHT}>
                                 <Icon icon={"help"} />

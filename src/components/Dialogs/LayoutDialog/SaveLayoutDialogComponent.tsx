@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {PresetLayout} from "models";
-import {AppStore, DialogId, HelpType} from "stores";
+import {AppStore, DialogId, HelpURL} from "stores";
 
 import "./SaveLayoutDialogComponent.scss";
 
@@ -92,7 +92,7 @@ export class SaveLayoutDialogComponent extends React.Component {
         return (
             <DraggableDialogComponent
                 dialogProps={dialogProps}
-                helpType={HelpType.SAVE_LAYOUT}
+                helpURL={HelpURL.SAVE_LAYOUT}
                 defaultWidth={SaveLayoutDialogComponent.DefaultWidth}
                 defaultHeight={SaveLayoutDialogComponent.DefaultHeight}
                 minWidth={SaveLayoutDialogComponent.MinWidth}

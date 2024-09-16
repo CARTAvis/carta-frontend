@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 import {CatalogOverlayComponent} from "components";
 import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingSelectComponent} from "components/Shared";
 import {CatalogOverlay} from "models";
-import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, DefaultWidgetConfig, HelpURL, WidgetProps, WidgetsStore} from "stores";
 import {CatalogOverlayShape, CatalogSettingsTabs, CatalogWidgetStore, ValueClip} from "stores/Widgets";
 import {getColorForTheme, SWATCH_COLORS} from "utilities";
 
@@ -67,7 +67,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             isCloseable: true,
             parentId: "catalog-overlay",
             parentType: "catalog-overlay",
-            helpType: [HelpType.CATALOG_SETTINGS_GOLBAL, HelpType.CATALOG_SETTINGS_OVERLAY, HelpType.CATALOG_SETTINGS_COLOR, HelpType.CATALOG_SETTINGS_SIZE, HelpType.CATALOG_SETTINGS_ORIENTATION]
+            helpURL: [HelpURL.CATALOG_SETTINGS_GOLBAL, HelpURL.CATALOG_SETTINGS_OVERLAY, HelpURL.CATALOG_SETTINGS_COLOR, HelpURL.CATALOG_SETTINGS_SIZE, HelpURL.CATALOG_SETTINGS_ORIENTATION]
         };
     }
 

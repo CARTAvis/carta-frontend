@@ -1,60 +1,59 @@
-import {Position} from "@blueprintjs/core";
 import {action, makeObservable, observable} from "mobx";
 
-export enum HelpType {
+export enum HelpURL {
     // Dialogs
-    CONTOUR = "Contour Configuration",
-    PREFERENCES = "Preferences",
-    FILE_BROWSER = "File Browser",
-    FILE_INFO = "File Header",
-    SAVE_LAYOUT = "Save Layout",
-    REGION_DIALOG = "Region Dialog",
-    STOKES = "Stokes Hypercube Dialog",
-    ONLINE_CATALOG_QUERY = "Online Catalog Query",
-    VECTOR_OVERLAY = "Vector Overlay Configuration",
-    IMAGE_FITTING = "Image Fitting",
-    WORKSPACE = "Workspace Management",
+    CONTOUR = "https://carta.readthedocs.io/en/latest/image_visualization.html#contour-rendering",
+    PREFERENCES = "https://carta.readthedocs.io/en/latest/about_gui.html#user-preferences",
+    FILE_BROWSER = "https://carta.readthedocs.io/en/latest/image_visualization.html#file-browser",
+    FILE_INFO = "https://carta.readthedocs.io/en/latest/analysis_tools.html#file-header",
+    SAVE_LAYOUT = "https://carta.readthedocs.io/en/latest/about_gui.html#custom-layout-save-and-restore",
+    REGION_DIALOG = "https://carta.readthedocs.io/en/latest/analysis_tools.html#region-of-interest",
+    STOKES = "https://carta.readthedocs.io/en/latest/image_visualization.html#forming-a-stokes-hypercube",
+    ONLINE_CATALOG_QUERY = "https://carta.readthedocs.io/en/latest/catalogue_visualization.html#catalog-visualization",
+    VECTOR_OVERLAY = "https://carta.readthedocs.io/en/latest/image_visualization.html#vector-field-rendering",
+    IMAGE_FITTING = "https://carta.readthedocs.io/en/latest/analysis_tools.html#image-fitting",
+    WORKSPACE = "https://carta.readthedocs.io/en/latest/workspace.html",
 
     // Widgets
-    ANIMATOR = "Animator",
-    HISTOGRAM = "Histogram",
-    HISTOGRAM_SETTINGS = "Histogram Settings",
-    IMAGE_VIEW = "Image View",
-    IMAGE_VIEW_SETTINGS = "Image View Settings",
-    LAYER_LIST = "Image List",
-    LAYER_LIST_SETTINGS = "Image List Settings",
-    LOG = "Log",
-    PLACEHOLDER = "Placeholder",
-    REGION_LIST = "Region List",
-    RENDER_CONFIG = "Render Configuration",
-    RENDER_CONFIG_SETTINGS = "Render Configuration Settings",
-    SPATIAL_PROFILER = "Spatial Profiler",
-    SPATIAL_PROFILER_SETTINGS_STYLING = "Spatial Profiler Style Settings",
-    SPATIAL_PROFILER_SETTINGS_SMOOTHING = "Spatial Profiler Smoothing Settings",
-    SPATIAL_PROFILER_SETTINGS_COMPUTATION = "Spatial Profiler Computation Settings",
-    SPECTRAL_PROFILER = "Spectral Profiler",
-    SPECTRAL_PROFILER_SETTINGS_CONVERSION = "Spectral Profiler Conversion Settings",
-    SPECTRAL_PROFILER_SETTINGS_STYLING = "Spectral Profiler Style Settings",
-    SPECTRAL_PROFILER_SETTINGS_SMOOTHING = "Spectral Profiler Smoothing Settings",
-    SPECTRAL_PROFILER_SETTINGS_MOMENTS = "Spectral Profiler Moments Settings",
-    SPECTRAL_PROFILER_SETTINGS_FITTING = "Spectral Profiler Fitting Settings",
-    STATS = "Statistics",
-    STOKES_ANALYSIS = "Stokes Analysis",
-    STOKES_ANALYSIS_SETTINGS_CONVERSION = "Stokes Conversion Settings",
-    STOKES_ANALYSIS_SETTINGS_LINE_PLOT_STYLING = "Stokes Line Plot Settings",
-    STOKES_ANALYSIS_SETTINGS_SCATTER_PLOT_STYLING = "Stokes Scatter Plot Settings",
-    STOKES_ANALYSIS_SETTINGS_SMOOTHING = "Stokes Smoothing Settings",
-    CATALOG_OVERLAY = "Catalog Overlay",
-    CATALOG_HISTOGRAM_PLOT = "Catalog Histogram Plot",
-    CATALOG_SCATTER_PLOT = "Catalog Scatter Plot",
-    CATALOG_SETTINGS_GOLBAL = "Catalog Global Settings",
-    CATALOG_SETTINGS_OVERLAY = "Catalog Overlay Settings",
-    CATALOG_SETTINGS_COLOR = "Catalog Color Settings",
-    CATALOG_SETTINGS_SIZE = "Catalog Size Settings",
-    CATALOG_SETTINGS_ORIENTATION = "Catalog Orientation Settings",
-    SPECTRAL_LINE_QUERY = "Spectral Line Query",
-    PV_GENERATOR = "PV Generator",
-    CURSOR_INFO = "Cursor Information"
+    ANIMATOR = "https://carta.readthedocs.io/en/latest/image_visualization.html#animator",
+    HISTOGRAM = "https://carta.readthedocs.io/en/latest/analysis_tools.html#histogram-widget",
+    HISTOGRAM_SETTINGS = "https://carta.readthedocs.io/en/latest/analysis_tools.html#histogram-widget",
+    IMAGE_VIEW = "https://carta.readthedocs.io/en/latest/image_visualization.html#image-viewer",
+    IMAGE_VIEW_SETTINGS = "https://carta.readthedocs.io/en/latest/image_visualization.html#image-viewer",
+    LAYER_LIST = "https://carta.readthedocs.io/en/latest/image_visualization.html#matching-images-spatially-and-spectrally",
+    LAYER_LIST_SETTINGS = "https://carta.readthedocs.io/en/latest/image_visualization.html#matching-images-spatially-and-spectrally",
+    LOG = "https://carta.readthedocs.io/en/latest/analysis_tools.html#log-widget",
+    PLACEHOLDER = "https://carta.readthedocs.io/en/latest",
+    REGION_LIST = "https://carta.readthedocs.io/en/latest/analysis_tools.html#region-of-interest",
+    RENDER_CONFIG = "https://carta.readthedocs.io/en/latest/image_visualization.html#raster-rendering",
+    RENDER_CONFIG_SETTINGS = "https://carta.readthedocs.io/en/latest/image_visualization.html#raster-rendering",
+    SPATIAL_PROFILER = "https://carta.readthedocs.io/en/latest/analysis_tools.html#spatial-profiler",
+    SPATIAL_PROFILER_SETTINGS_STYLING = "https://carta.readthedocs.io/en/latest/analysis_tools.html#spatial-profiler",
+    SPATIAL_PROFILER_SETTINGS_SMOOTHING = "https://carta.readthedocs.io/en/latest/analysis_tools.html#profile-smoothing",
+    SPATIAL_PROFILER_SETTINGS_COMPUTATION = "https://carta.readthedocs.io/en/latest/analysis_tools.html#spatial-profiler",
+    SPECTRAL_PROFILER = "https://carta.readthedocs.io/en/latest/analysis_tools.html#spectral-profiler",
+    SPECTRAL_PROFILER_SETTINGS_CONVERSION = "https://carta.readthedocs.io/en/latest/analysis_tools.html#spectral-profiler",
+    SPECTRAL_PROFILER_SETTINGS_STYLING = "https://carta.readthedocs.io/en/latest/analysis_tools.html#spectral-profiler",
+    SPECTRAL_PROFILER_SETTINGS_SMOOTHING = "https://carta.readthedocs.io/en/latest/analysis_tools.html#profile-smoothing",
+    SPECTRAL_PROFILER_SETTINGS_MOMENTS = "https://carta.readthedocs.io/en/latest/analysis_tools.html#moment-map-generator",
+    SPECTRAL_PROFILER_SETTINGS_FITTING = "https://carta.readthedocs.io/en/latest/analysis_tools.html#profile-fitting",
+    STATS = "https://carta.readthedocs.io/en/latest/analysis_tools.html#statistics-widget",
+    STOKES_ANALYSIS = "https://carta.readthedocs.io/en/latest/analysis_tools.html#stokes-analysis-widget",
+    STOKES_ANALYSIS_SETTINGS_CONVERSION = "https://carta.readthedocs.io/en/latest/analysis_tools.html#stokes-analysis-widget",
+    STOKES_ANALYSIS_SETTINGS_LINE_PLOT_STYLING = "https://carta.readthedocs.io/en/latest/analysis_tools.html#stokes-analysis-widget",
+    STOKES_ANALYSIS_SETTINGS_SCATTER_PLOT_STYLING = "https://carta.readthedocs.io/en/latest/analysis_tools.html#stokes-analysis-widget",
+    STOKES_ANALYSIS_SETTINGS_SMOOTHING = "https://carta.readthedocs.io/en/latest/analysis_tools.html#profile-smoothing",
+    CATALOG_OVERLAY = "https://carta.readthedocs.io/en/latest/catalogue_visualization.html",
+    CATALOG_HISTOGRAM_PLOT = "https://carta.readthedocs.io/en/latest/catalogue_visualization.html#catalog-histogram-plot",
+    CATALOG_SCATTER_PLOT = "https://carta.readthedocs.io/en/latest/catalogue_visualization.html#catalog-2d-scatter-plot",
+    CATALOG_SETTINGS_GOLBAL = "https://carta.readthedocs.io/en/latest/catalogue_visualization.html",
+    CATALOG_SETTINGS_OVERLAY = "https://carta.readthedocs.io/en/latest/catalogue_visualization.html",
+    CATALOG_SETTINGS_COLOR = "https://carta.readthedocs.io/en/latest/catalogue_visualization.html",
+    CATALOG_SETTINGS_SIZE = "https://carta.readthedocs.io/en/latest/catalogue_visualization.html",
+    CATALOG_SETTINGS_ORIENTATION = "https://carta.readthedocs.io/en/latest/catalogue_visualization.html",
+    SPECTRAL_LINE_QUERY = "https://carta.readthedocs.io/en/latest/analysis_tools.html#spectral-line-query",
+    PV_GENERATOR = "https://carta.readthedocs.io/en/latest/analysis_tools.html#position-velocity-pv-generator",
+    CURSOR_INFO = "https://carta.readthedocs.io/en/latest/analysis_tools.html#cursor-info-widget"
 }
 
 export class HelpStore {
@@ -71,17 +70,10 @@ export class HelpStore {
         return HelpStore.staticInstance;
     }
 
-    @observable type: HelpType;
-    @observable helpVisible: boolean = false;
-    @observable position: Position = Position.RIGHT;
+    @observable url: HelpURL;
 
-    @action showHelpDrawer = (helpType: HelpType, centerX: number) => {
-        this.type = helpType;
-        this.position = centerX > document.body.clientWidth * 0.5 ? Position.LEFT : Position.RIGHT;
-        this.helpVisible = true;
-    };
-
-    @action hideHelpDrawer = () => {
-        this.helpVisible = false;
-    };
+    @action openHelpURL = (helpURL: HelpURL) => {
+        this.url = helpURL;
+        window.open(this.url, "_blank", "width=1024");
+    }
 }

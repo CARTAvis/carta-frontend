@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 
 import {SimpleTableComponent} from "components/Shared";
 import {ImageType} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpURL, WidgetProps} from "stores";
 import {FrameStore} from "stores/Frame";
 import {formattedExponential, toFixed} from "utilities";
 
@@ -25,7 +25,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
             defaultHeight: 180,
             title: "Cursor Info",
             isCloseable: true,
-            helpType: HelpType.CURSOR_INFO
+            helpURL: HelpURL.CURSOR_INFO
         };
     }
 

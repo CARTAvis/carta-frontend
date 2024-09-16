@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, ScatterPlotComponent, ScatterPlotComponentProps, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {Point2D, SpectralColorMap, SpectralType} from "models";
-import {AnimatorStore, AppStore, DefaultWidgetConfig, HelpType, SpectralProfileStore, WidgetProps, WidgetsStore} from "stores";
+import {AnimatorStore, AppStore, DefaultWidgetConfig, HelpURL, SpectralProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/Widgets";
 import {binarySearchByX, clamp, closestPointIndexToCursor, formattedNotation, getColorForTheme, minMaxArray, minMaxPointArrayZ, normalising, polarizationAngle, polarizedIntensity, toExponential, toFixed} from "utilities";
@@ -46,7 +46,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             defaultHeight: 650,
             title: "Stokes Analysis",
             isCloseable: true,
-            helpType: HelpType.STOKES_ANALYSIS
+            helpURL: HelpURL.STOKES_ANALYSIS
         };
     }
 

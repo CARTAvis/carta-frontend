@@ -6,7 +6,7 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {SafeNumericInput} from "components/Shared";
-import {AnimationMode, AnimatorStore, AppStore, DefaultWidgetConfig, HelpType, PlayMode, WidgetProps} from "stores";
+import {AnimationMode, AnimatorStore, AppStore, DefaultWidgetConfig, HelpURL, PlayMode, WidgetProps} from "stores";
 
 import "./AnimatorComponent.scss";
 
@@ -27,7 +27,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             defaultHeight: 200,
             title: "Animator",
             isCloseable: true,
-            helpType: HelpType.ANIMATOR
+            helpURL: HelpURL.ANIMATOR
         };
     }
 

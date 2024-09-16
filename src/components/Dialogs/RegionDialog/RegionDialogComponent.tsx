@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {CustomIcon} from "icons/CustomIcons";
-import {AppStore, DialogId, HelpType} from "stores";
+import {AppStore, DialogId, HelpURL} from "stores";
 import {RegionStore} from "stores/Frame";
 
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
@@ -143,7 +143,7 @@ export class RegionDialogComponent extends React.Component {
         return (
             <DraggableDialogComponent
                 dialogProps={dialogProps}
-                helpType={HelpType.REGION_DIALOG}
+                helpURL={HelpURL.REGION_DIALOG}
                 defaultWidth={RegionDialogComponent.DefaultWidth}
                 defaultHeight={RegionDialogComponent.DefaultHeight}
                 minHeight={RegionDialogComponent.MinHeight}

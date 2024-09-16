@@ -6,7 +6,7 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {Point2D, Zoom} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, Padding, WidgetProps} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpURL, Padding, WidgetProps} from "stores";
 import {toFixed} from "utilities";
 
 import {ImagePanelComponent} from "./ImagePanel/ImagePanelComponent";
@@ -123,7 +123,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             defaultHeight: 600,
             title: "Image view",
             isCloseable: false,
-            helpType: HelpType.IMAGE_VIEW
+            helpURL: HelpURL.IMAGE_VIEW
         };
     }
 

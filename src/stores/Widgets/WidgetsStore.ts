@@ -34,7 +34,7 @@ import {
     StokesAnalysisSettingsPanelComponent
 } from "components";
 import {ImagePanelMode, ImageType} from "models";
-import {AppStore, CatalogStore, HelpStore, HelpType, LayoutStore, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, CatalogStore, HelpStore, HelpURL, LayoutStore, PreferenceKeys, PreferenceStore} from "stores";
 import {
     ACTIVE_FILE_ID,
     CatalogPlotType,
@@ -84,7 +84,7 @@ export interface DefaultWidgetConfig {
     title?: string;
     parentId?: string;
     parentType?: string;
-    helpType?: HelpType | HelpType[];
+    helpURL?: HelpURL | HelpURL[];
     componentId?: string;
 }
 
@@ -101,7 +101,7 @@ export class WidgetConfig implements DefaultWidgetConfig {
     @observable title?: string;
     parentId?: string;
     parentType?: string;
-    helpType?: HelpType | HelpType[];
+    helpURL?: HelpURL | HelpURL[];
     componentId?: string;
 
     @action setDefaultPosition = (x: number, y: number) => {
@@ -129,7 +129,7 @@ export class WidgetConfig implements DefaultWidgetConfig {
         this.title = defaultConfig.title;
         this.parentId = defaultConfig.parentId;
         this.parentType = defaultConfig.parentType;
-        this.helpType = defaultConfig.helpType;
+        this.helpURL = defaultConfig.helpURL;
         this.componentId = defaultConfig.componentId;
     }
 }
@@ -862,7 +862,7 @@ export class WidgetsStore {
 
         const catalogPlotWidgetStore = this.catalogPlotWidgets.get(id);
         if (catalogPlotWidgetStore) {
-            widgetConfig.helpType = catalogPlotWidgetStore.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT : HelpType.CATALOG_SCATTER_PLOT;
+            widgetConfig.helpURL = catalogPlotWidgetStore.plotType === CatalogPlotType.Histogram ? HelpURL.CATALOG_HISTOGRAM_PLOT : HelpURL.CATALOG_SCATTER_PLOT;
         }
 
         // Set default size and position from the existing item
@@ -890,15 +890,16 @@ export class WidgetsStore {
         let centerX = 0;
         if (container && container.width) {
             centerX = ev.target.getBoundingClientRect().right + 36 - container.width * 0.5; // 36(px) is the length between help button and right border of widget
+            console.log(centerX); // workaround. should remove centerX
         }
 
-        if (widgetConfig.helpType && !Array.isArray(widgetConfig.helpType)) {
-            HelpStore.Instance.showHelpDrawer(widgetConfig.helpType, centerX);
+        if (widgetConfig.helpURL && !Array.isArray(widgetConfig.helpURL)) {
+            HelpStore.Instance.openHelpURL(widgetConfig.helpURL);
         } else {
             const id = itemConfig.id as string;
             const catalogPlotWidgetStore = this.catalogPlotWidgets.get(id);
             if (catalogPlotWidgetStore) {
-                HelpStore.Instance.showHelpDrawer(catalogPlotWidgetStore.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT : HelpType.CATALOG_SCATTER_PLOT, centerX);
+                HelpStore.Instance.openHelpURL(catalogPlotWidgetStore.plotType === CatalogPlotType.Histogram ? HelpURL.CATALOG_HISTOGRAM_PLOT : HelpURL.CATALOG_SCATTER_PLOT);
             }
         }
     };
@@ -1278,7 +1279,7 @@ export class WidgetsStore {
             const config = new WidgetConfig(widgetStoreId, defaultConfig);
             config.id = widgetStoreId;
             config.componentId = widgetComponentId;
-            config.helpType = props.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT : HelpType.CATALOG_SCATTER_PLOT;
+            config.helpURL = props.plotType === CatalogPlotType.Histogram ? HelpURL.CATALOG_HISTOGRAM_PLOT : HelpURL.CATALOG_SCATTER_PLOT;
             this.addFloatingWidget(config);
         }
         return {widgetStoreId: widgetStoreId, widgetComponentId: widgetComponentId};

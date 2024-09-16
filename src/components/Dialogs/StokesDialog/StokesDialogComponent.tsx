@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {POLARIZATION_LABELS} from "models";
-import {AppStore, BrowserMode, DialogId, HelpType} from "stores";
+import {AppStore, BrowserMode, DialogId, HelpURL} from "stores";
 
 import "./StokesDialogComponent.scss";
 
@@ -160,7 +160,7 @@ export class StokesDialogComponent extends React.Component {
         return (
             <DraggableDialogComponent
                 dialogProps={dialogProps}
-                helpType={HelpType.STOKES}
+                helpURL={HelpURL.STOKES}
                 minWidth={StokesDialogComponent.MinWidth}
                 minHeight={StokesDialogComponent.MinHeight}
                 defaultWidth={StokesDialogComponent.DefaultWidth}

@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps} from "components/Shared";
 import {LineKey} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpURL, WidgetProps, WidgetsStore} from "stores";
 import {HistogramWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 
@@ -34,7 +34,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
             isCloseable: true,
             parentId: "histogram",
             parentType: "histogram",
-            helpType: HelpType.HISTOGRAM_SETTINGS
+            helpURL: HelpURL.HISTOGRAM_SETTINGS
         };
     }
 

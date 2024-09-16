@@ -23625,7 +23625,7 @@
 						},
 						{
 							"id": 2037,
-							"name": "helpType",
+							"name": "helpURL",
 							"kind": 1024,
 							"kindString": "Property",
 							"flags": {
@@ -23642,7 +23642,7 @@
 							"type": {
 								"type": "reference",
 								"id": 9828,
-								"name": "HelpType"
+								"name": "HelpURL"
 							}
 						},
 						{
@@ -75028,7 +75028,7 @@
 				},
 				{
 					"id": 9828,
-					"name": "HelpType",
+					"name": "HelpURL",
 					"kind": 8,
 					"kindString": "Enumeration",
 					"flags": {},
@@ -128072,7 +128072,7 @@
 							"type": {
 								"type": "reference",
 								"id": 9828,
-								"name": "HelpType"
+								"name": "HelpURL"
 							}
 						},
 						{
@@ -128156,14 +128156,14 @@
 									"parameters": [
 										{
 											"id": 9891,
-											"name": "helpType",
+											"name": "helpURL",
 											"kind": 32768,
 											"kindString": "Parameter",
 											"flags": {},
 											"type": {
 												"type": "reference",
 												"id": 9828,
-												"name": "HelpType"
+												"name": "HelpURL"
 											}
 										},
 										{
@@ -196845,7 +196845,7 @@
 						},
 						{
 							"id": 13536,
-							"name": "helpType",
+							"name": "helpURL",
 							"kind": 1024,
 							"kindString": "Property",
 							"flags": {
@@ -196865,14 +196865,14 @@
 									{
 										"type": "reference",
 										"id": 9828,
-										"name": "HelpType"
+										"name": "HelpURL"
 									},
 									{
 										"type": "array",
 										"elementType": {
 											"type": "reference",
 											"id": 9828,
-											"name": "HelpType"
+											"name": "HelpURL"
 										}
 									}
 								]
@@ -196880,7 +196880,7 @@
 							"implementationOf": {
 								"type": "reference",
 								"id": 13517,
-								"name": "DefaultWidgetConfig.helpType"
+								"name": "DefaultWidgetConfig.helpURL"
 							}
 						},
 						{
@@ -201376,7 +201376,7 @@
 						},
 						{
 							"id": 13517,
-							"name": "helpType",
+							"name": "helpURL",
 							"kind": 1024,
 							"kindString": "Property",
 							"flags": {
@@ -201396,14 +201396,14 @@
 									{
 										"type": "reference",
 										"id": 9828,
-										"name": "HelpType"
+										"name": "HelpURL"
 									},
 									{
 										"type": "array",
 										"elementType": {
 											"type": "reference",
 											"id": 9828,
-											"name": "HelpType"
+											"name": "HelpURL"
 										}
 									}
 								]

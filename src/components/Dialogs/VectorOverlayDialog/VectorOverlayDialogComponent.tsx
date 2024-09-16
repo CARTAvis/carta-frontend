@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
-import {AppStore, DialogId, HelpType} from "stores";
+import {AppStore, DialogId, HelpURL} from "stores";
 import {FrameStore, VectorOverlaySource} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 
@@ -258,7 +258,7 @@ export class VectorOverlayDialogComponent extends React.Component {
             return (
                 <DraggableDialogComponent
                     dialogProps={dialogProps}
-                    helpType={HelpType.VECTOR_OVERLAY}
+                    helpURL={HelpURL.VECTOR_OVERLAY}
                     minWidth={VectorOverlayDialogComponent.MinWidth}
                     minHeight={VectorOverlayDialogComponent.MinHeight}
                     defaultWidth={VectorOverlayDialogComponent.DefaultWidth}
@@ -415,7 +415,7 @@ export class VectorOverlayDialogComponent extends React.Component {
         return (
             <DraggableDialogComponent
                 dialogProps={dialogProps}
-                helpType={HelpType.VECTOR_OVERLAY}
+                helpURL={HelpURL.VECTOR_OVERLAY}
                 defaultWidth={VectorOverlayDialogComponent.DefaultWidth}
                 defaultHeight={VectorOverlayDialogComponent.DefaultHeight}
                 minWidth={VectorOverlayDialogComponent.MinWidth}

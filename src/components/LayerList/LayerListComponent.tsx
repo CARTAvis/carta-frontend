@@ -8,7 +8,7 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ImageItem, ImageType} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpURL, WidgetProps} from "stores";
 import {LayerListSettingsTabs} from "stores/Widgets";
 
 import "./LayerListComponent.scss";
@@ -25,7 +25,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             defaultHeight: 180,
             title: "Image List",
             isCloseable: true,
-            helpType: HelpType.LAYER_LIST
+            helpURL: HelpURL.LAYER_LIST
         };
     }
 

@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps} from "components/Shared";
 import {LineKey} from "models";
-import {DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {DefaultWidgetConfig, HelpURL, WidgetProps, WidgetsStore} from "stores";
 import {RenderConfigWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 
@@ -26,7 +26,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
             isCloseable: true,
             parentId: "render-config",
             parentType: "render-config",
-            helpType: HelpType.RENDER_CONFIG_SETTINGS
+            helpURL: HelpURL.RENDER_CONFIG_SETTINGS
         };
     }
 

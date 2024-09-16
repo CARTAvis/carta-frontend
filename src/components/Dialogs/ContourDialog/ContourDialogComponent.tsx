@@ -10,7 +10,7 @@ import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/
 import {LinePlotComponent, LinePlotComponentProps, SafeNumericInput, SCALING_POPOVER_PROPS} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import {Point2D} from "models";
-import {AppStore, DialogId, HelpType} from "stores";
+import {AppStore, DialogId, HelpURL} from "stores";
 import {FrameStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
 import {clamp, getColorForTheme, toExponential, toFixed} from "utilities";
@@ -293,7 +293,7 @@ export class ContourDialogComponent extends React.Component {
             return (
                 <DraggableDialogComponent
                     dialogProps={dialogProps}
-                    helpType={HelpType.CONTOUR}
+                    helpURL={HelpURL.CONTOUR}
                     defaultWidth={ContourDialogComponent.DefaultWidth}
                     defaultHeight={ContourDialogComponent.DefaultHeight}
                     minWidth={ContourDialogComponent.MinWidth}
@@ -478,7 +478,7 @@ export class ContourDialogComponent extends React.Component {
         return (
             <DraggableDialogComponent
                 dialogProps={dialogProps}
-                helpType={HelpType.CONTOUR}
+                helpURL={HelpURL.CONTOUR}
                 defaultWidth={ContourDialogComponent.DefaultWidth}
                 defaultHeight={ContourDialogComponent.DefaultHeight}
                 minWidth={ContourDialogComponent.MinWidth}

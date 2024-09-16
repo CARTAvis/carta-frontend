@@ -4,7 +4,7 @@ import {autorun, computed} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpURL, WidgetProps, WidgetsStore} from "stores";
 import {MultiProfileCategory, SpectralProfileWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 
@@ -37,12 +37,12 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             isCloseable: true,
             parentId: "spectal-profiler",
             parentType: "spectral-profiler",
-            helpType: [
-                HelpType.SPECTRAL_PROFILER_SETTINGS_CONVERSION,
-                HelpType.SPECTRAL_PROFILER_SETTINGS_STYLING,
-                HelpType.SPECTRAL_PROFILER_SETTINGS_SMOOTHING,
-                HelpType.SPECTRAL_PROFILER_SETTINGS_MOMENTS,
-                HelpType.SPECTRAL_PROFILER_SETTINGS_FITTING
+            helpURL: [
+                HelpURL.SPECTRAL_PROFILER_SETTINGS_CONVERSION,
+                HelpURL.SPECTRAL_PROFILER_SETTINGS_STYLING,
+                HelpURL.SPECTRAL_PROFILER_SETTINGS_SMOOTHING,
+                HelpURL.SPECTRAL_PROFILER_SETTINGS_MOMENTS,
+                HelpURL.SPECTRAL_PROFILER_SETTINGS_FITTING
             ]
         };
     }

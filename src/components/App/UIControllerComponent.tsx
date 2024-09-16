@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 
-import {HelpDrawerComponent, RootMenuComponent, SplashScreenComponent} from "components";
+import {RootMenuComponent, SplashScreenComponent} from "components";
 import {
     AboutDialogComponent,
     CodeSnippetDialogComponent,
@@ -40,7 +40,6 @@ export class UIControllerComponent extends React.Component {
                 <CodeSnippetDialogComponent />
                 <AboutDialogComponent />
                 <ExternalPageDialogComponent />
-                <HelpDrawerComponent />
                 <StokesDialogComponent />
                 <TelemetryDialogComponent />
                 <SplashScreenComponent />

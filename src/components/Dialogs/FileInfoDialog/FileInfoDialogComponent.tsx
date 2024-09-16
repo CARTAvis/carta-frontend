@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
-import {AppStore, DialogId, HelpType} from "stores";
+import {AppStore, DialogId, HelpURL} from "stores";
 
 import "./FileInfoDialogComponent.scss";
 
@@ -33,7 +33,7 @@ export class FileInfoDialogComponent extends React.Component {
         return (
             <DraggableDialogComponent
                 dialogProps={dialogProps}
-                helpType={HelpType.FILE_INFO}
+                helpURL={HelpURL.FILE_INFO}
                 defaultWidth={FileInfoDialogComponent.DefaultWidth}
                 defaultHeight={FileInfoDialogComponent.DefaultHeight}
                 minWidth={FileInfoDialogComponent.MinWidth}

@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 import {MemoryUnit, TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {Point2D, SpectralSystem} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpURL, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
 import {PVAxis, PvGeneratorWidgetStore, RegionId} from "stores/Widgets";
 import {toFixed} from "utilities";
 
@@ -29,7 +29,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             defaultHeight: 620,
             title: "PV Generator",
             isCloseable: true,
-            helpType: HelpType.PV_GENERATOR
+            helpURL: HelpURL.PV_GENERATOR
         };
     }
 

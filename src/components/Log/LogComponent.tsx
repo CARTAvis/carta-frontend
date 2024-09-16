@@ -4,7 +4,7 @@ import {Button, Code, Colors, FormGroup, HTMLSelect, Intent, NonIdealState, Tag}
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
-import {DefaultWidgetConfig, HelpType, LogStore, WidgetProps} from "stores";
+import {DefaultWidgetConfig, HelpURL, LogStore, WidgetProps} from "stores";
 
 import "./LogComponent.scss";
 
@@ -20,7 +20,7 @@ export class LogComponent extends React.Component<WidgetProps> {
             defaultHeight: 200,
             title: "Log",
             isCloseable: true,
-            helpType: HelpType.LOG
+            helpURL: HelpURL.LOG
         };
     }
 

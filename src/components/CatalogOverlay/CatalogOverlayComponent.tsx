@@ -13,7 +13,7 @@ import {observer} from "mobx-react";
 import {ImageViewLayer} from "components";
 import {ClearableNumericInputComponent, FilterableTableComponent, FilterableTableComponentProps} from "components/Shared";
 import {AbstractCatalogProfileStore, CatalogOverlay, CatalogSystemType} from "models";
-import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, CatalogUpdateMode, DefaultWidgetConfig, HelpType, PreferenceKeys, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, CatalogUpdateMode, DefaultWidgetConfig, HelpURL, PreferenceKeys, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
 import {RegionMode} from "stores/Frame";
 import {CatalogPlotType, CatalogPlotWidgetStoreProps, CatalogSettingsTabs, CatalogWidgetStore} from "stores/Widgets";
 import {ProcessedColumnData, toFixed} from "utilities";
@@ -59,7 +59,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             defaultHeight: 400,
             title: "Catalog",
             isCloseable: true,
-            helpType: HelpType.CATALOG_OVERLAY,
+            helpURL: HelpURL.CATALOG_OVERLAY,
             componentId: "catalog-overlay-component"
         };
     }

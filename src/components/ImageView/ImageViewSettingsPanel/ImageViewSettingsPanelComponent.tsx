@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 
 import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, InputType, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {ImagePanelMode} from "models";
-import {AppStore, BeamType, DefaultWidgetConfig, HelpType, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
+import {AppStore, BeamType, DefaultWidgetConfig, HelpURL, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
 import {ColorbarStore, CoordinateMode} from "stores/Frame";
 import {SWATCH_COLORS, toFixed} from "utilities";
 
@@ -117,7 +117,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
             isCloseable: true,
             parentId: "image-view",
             parentType: "image-view",
-            helpType: HelpType.IMAGE_VIEW_SETTINGS
+            helpURL: HelpURL.IMAGE_VIEW_SETTINGS
         };
     }
 

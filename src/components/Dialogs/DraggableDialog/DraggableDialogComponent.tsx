@@ -5,7 +5,7 @@ import {ResizeEnable, Rnd} from "react-rnd";
 import {Button, Classes, Dialog, DialogProps} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
-import {AppStore, HelpStore, HelpType} from "stores";
+import {AppStore, HelpStore, HelpURL} from "stores";
 
 import "./DraggableDialogComponent.scss";
 
@@ -16,7 +16,7 @@ export class ResizableDialogComponentProps {
     minWidth?: number;
     minHeight?: number;
     enableResizing: boolean;
-    helpType?: HelpType;
+    helpURL?: HelpURL;
     onResizeStop?: (newWidth: number, newHeight: number) => void;
     dialogId: string;
 }
@@ -37,7 +37,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
 
         // add help button in dialog header
         const header = this.dd.current.getElementsByClassName(Classes.DIALOG_HEADER);
-        if (this.props.helpType && header?.length > 0 && this.dd.current.getElementsByClassName("help-button").length === 0) {
+        if (this.props.helpURL && header?.length > 0 && this.dd.current.getElementsByClassName("help-button").length === 0) {
             const helpButton = <Button icon="help" minimal={true} onClick={this.onClickHelpButton} />;
             const helpButtonDiv = document.createElement("div") as HTMLDivElement;
             helpButtonDiv.setAttribute("class", "help-button");
@@ -62,8 +62,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
     };
 
     private onClickHelpButton = () => {
-        const centerX = this.rnd.draggable.state.x + this.rnd.resizable.size.width * 0.5;
-        HelpStore.Instance.showHelpDrawer(this.props.helpType, centerX);
+        HelpStore.Instance.openHelpURL(this.props.helpURL);
     };
 
     private onResizeStop = (e, direction, elementRef: HTMLDivElement) => {

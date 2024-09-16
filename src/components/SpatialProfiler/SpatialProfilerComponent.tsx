@@ -10,7 +10,7 @@ import {observer} from "mobx-react";
 
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {Point2D, POLARIZATIONS} from "models";
-import {AppStore, ASTSettingsString, DefaultWidgetConfig, HelpType, OverlayStore, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, ASTSettingsString, DefaultWidgetConfig, HelpURL, OverlayStore, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {RegionId, SpatialProfileWidgetStore} from "stores/Widgets";
 import {binarySearchByX, clamp, formattedExponential, getColorForTheme, toFixed, transformPoint} from "utilities";
@@ -34,7 +34,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             defaultHeight: 250,
             title: "X Profile: Cursor",
             isCloseable: true,
-            helpType: HelpType.SPATIAL_PROFILER
+            helpURL: HelpURL.SPATIAL_PROFILER
         };
     }
 

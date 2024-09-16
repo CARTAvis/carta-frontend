@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 
 import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
 import {Point2D, POLARIZATIONS} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpURL, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {HistogramWidgetStore} from "stores/Widgets";
 import {binarySearchByX, clamp, closeTo, getColorForTheme, toExponential, toFixed} from "utilities";
@@ -32,7 +32,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             defaultHeight: 225,
             title: "Histogram",
             isCloseable: true,
-            helpType: HelpType.HISTOGRAM
+            helpURL: HelpURL.HISTOGRAM
         };
     }
 

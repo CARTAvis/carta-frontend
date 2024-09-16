@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent} from "components/Shared";
 import {FrequencyUnit, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, SpectralType} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpURL, WidgetProps, WidgetsStore} from "stores";
 import {LayerListSettingsTabs, LayerListWidgetStore} from "stores/Widgets";
 
 import "./LayerListSettingsPanelComponent.scss";
@@ -28,7 +28,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
             isCloseable: true,
             parentId: "layer-list",
             parentType: "layer-list",
-            helpType: HelpType.LAYER_LIST_SETTINGS
+            helpURL: HelpURL.LAYER_LIST_SETTINGS
         };
     }
 

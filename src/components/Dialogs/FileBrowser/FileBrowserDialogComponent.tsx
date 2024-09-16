@@ -10,7 +10,7 @@ import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {AppToaster, ErrorToast, SimpleTableComponentProps} from "components/Shared";
 import {ImageType} from "models";
-import {AppStore, BrowserMode, CatalogProfileStore, DialogId, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, BrowserMode, CatalogProfileStore, DialogId, FileBrowserStore, FileFilteringType, HelpURL, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
 import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
@@ -715,7 +715,7 @@ export class FileBrowserDialogComponent extends React.Component {
         return (
             <DraggableDialogComponent
                 dialogProps={dialogProps}
-                helpType={HelpType.FILE_BROWSER}
+                helpURL={HelpURL.FILE_BROWSER}
                 minWidth={FileBrowserDialogComponent.MinWidth}
                 minHeight={FileBrowserDialogComponent.MinHeight}
                 defaultWidth={FileBrowserDialogComponent.DefaultWidth}

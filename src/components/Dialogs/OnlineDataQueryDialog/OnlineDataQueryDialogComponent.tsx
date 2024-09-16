@@ -3,7 +3,7 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore, DialogId, HelpType} from "stores";
+import {AppStore, DialogId, HelpURL} from "stores";
 
 import {CatalogQueryComponent} from "./CatalogOnlineQueryComponent";
 import {HipsQueryComponent} from "./HipsQueryComponent";
@@ -36,7 +36,7 @@ export const OnlineDataQueryDialogComponent = observer(() => {
     return (
         <DraggableDialogComponent
             dialogProps={dialogProps}
-            helpType={HelpType.ONLINE_CATALOG_QUERY}
+            helpURL={HelpURL.ONLINE_CATALOG_QUERY}
             defaultWidth={DEFAULT_WIDTH}
             defaultHeight={DEFAULT_HEIGHT}
             minWidth={MIN_WIDTH}

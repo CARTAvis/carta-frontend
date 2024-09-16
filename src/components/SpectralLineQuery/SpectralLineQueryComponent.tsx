@@ -9,7 +9,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {FilterableTableComponent, FilterableTableComponentProps, SafeNumericInput} from "components/Shared";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpURL, WidgetProps, WidgetsStore} from "stores";
 import {RedshiftType, SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit, SpectralLineQueryWidgetStore} from "stores/Widgets";
 
 import "./SpectralLineQueryComponent.scss";
@@ -44,7 +44,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             defaultHeight: 600,
             title: "Spectral Line Query",
             isCloseable: true,
-            helpType: HelpType.SPECTRAL_LINE_QUERY
+            helpURL: HelpURL.SPECTRAL_LINE_QUERY
         };
     }
 

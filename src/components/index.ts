@@ -7,7 +7,6 @@ export * from "./CursorInfo/CursorInfoComponent";
 export * from "./FileInfo/FileInfoComponent";
 export * from "./FloatingWidget/FloatingWidgetComponent";
 export * from "./FloatingWidgetManager/FloatingWidgetManagerComponent";
-export * from "./HelpDrawer/HelpDrawerComponent";
 export * from "./Histogram/HistogramComponent";
 export * from "./Histogram/HistogramSettingsPanelComponent/HistogramSettingsPanelComponent";
 export * from "./ImageView/ImageViewComponent";

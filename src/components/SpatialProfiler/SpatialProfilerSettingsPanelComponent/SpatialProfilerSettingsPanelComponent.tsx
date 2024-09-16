@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, SafeNumericInput, SmoothingSettingsComponent} from "components/Shared";
 import {LineKey} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpURL, WidgetProps, WidgetsStore} from "stores";
 import {RegionId, SpatialProfileWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 
@@ -34,7 +34,7 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
             isCloseable: true,
             parentId: "spatial-profiler",
             parentType: "spatial-profiler",
-            helpType: [HelpType.SPATIAL_PROFILER_SETTINGS_STYLING, HelpType.SPATIAL_PROFILER_SETTINGS_SMOOTHING, HelpType.SPATIAL_PROFILER_SETTINGS_COMPUTATION]
+            helpURL: [HelpURL.SPATIAL_PROFILER_SETTINGS_STYLING, HelpURL.SPATIAL_PROFILER_SETTINGS_SMOOTHING, HelpURL.SPATIAL_PROFILER_SETTINGS_COMPUTATION]
         };
     }
 

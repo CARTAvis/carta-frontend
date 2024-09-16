@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 
 import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, PlotType, SmoothingType} from "components/Shared";
 import {Point2D, SpectralType} from "models";
-import {AnimatorStore, AppStore, DefaultWidgetConfig, FittingContinuum, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {AnimatorStore, AppStore, DefaultWidgetConfig, FittingContinuum, HelpURL, WidgetProps, WidgetsStore} from "stores";
 import {MultiPlotData, SpectralProfileWidgetStore} from "stores/Widgets";
 import {binarySearchByX, clamp, formattedExponential, getColorForTheme, toExponential, toFixed, toFormattedNotationByDiff} from "utilities";
 
@@ -34,7 +34,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             defaultHeight: 300,
             title: "Z Profile: Cursor",
             isCloseable: true,
-            helpType: HelpType.SPECTRAL_PROFILER
+            helpURL: HelpURL.SPECTRAL_PROFILER
         };
     }
 

@@ -9,7 +9,7 @@ import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/
 import {ClearableNumericInputComponent, CoordinateComponent, CoordNumericInput, ImageCoordNumericInput, InputType, SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import {Point2D, WCSPoint2D} from "models";
-import {AppStore, DialogId, HelpType} from "stores";
+import {AppStore, DialogId, HelpURL} from "stores";
 import {CoordinateMode} from "stores/Frame";
 import {exportTxtFile, getTimestamp} from "utilities";
 
@@ -114,7 +114,7 @@ export class FittingDialogComponent extends React.Component {
             return (
                 <DraggableDialogComponent
                     dialogProps={dialogProps}
-                    helpType={HelpType.IMAGE_FITTING}
+                    helpURL={HelpURL.IMAGE_FITTING}
                     minWidth={FittingDialogComponent.MinWidth}
                     minHeight={FittingDialogComponent.MinHeight}
                     defaultWidth={FittingDialogComponent.DefaultWidth}
@@ -167,7 +167,7 @@ export class FittingDialogComponent extends React.Component {
         return (
             <DraggableDialogComponent
                 dialogProps={dialogProps}
-                helpType={HelpType.IMAGE_FITTING}
+                helpURL={HelpURL.IMAGE_FITTING}
                 defaultWidth={FittingDialogComponent.DefaultWidth}
                 defaultHeight={FittingDialogComponent.DefaultHeight}
                 minWidth={FittingDialogComponent.MinWidth}

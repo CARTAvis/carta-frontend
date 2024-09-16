@@ -8,7 +8,7 @@ import moment from "moment/moment";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {WorkspaceListItem} from "models";
-import {AppStore, DialogId, HelpType} from "stores";
+import {AppStore, DialogId, HelpURL} from "stores";
 
 import {AppToaster, ErrorToast, SuccessToast} from "../../Shared";
 
@@ -256,7 +256,7 @@ export const WorkspaceDialogComponent = observer(() => {
     }
 
     return (
-        <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.WORKSPACE} defaultWidth={750} defaultHeight={550} minWidth={750} minHeight={550} enableResizing={true} dialogId={DialogId.Workspace}>
+        <DraggableDialogComponent dialogProps={dialogProps} helpURL={HelpURL.WORKSPACE} defaultWidth={750} defaultHeight={550} minWidth={750} minHeight={550} enableResizing={true} dialogId={DialogId.Workspace}>
             <div className={Classes.DIALOG_BODY}>
                 <div className="workspace-container">
                     <div className="workspace-table-container">{tableContent}</div>

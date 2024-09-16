@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponent, ScatterPlotSettingsPanelComponentProps, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
 import {LineKey} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpURL, WidgetProps, WidgetsStore} from "stores";
 import {StokesAnalysisWidgetStore} from "stores/Widgets";
 
 import "./StokesAnalysisSettingsPanelComponent.scss";
@@ -31,7 +31,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             isCloseable: true,
             parentId: "stokes",
             parentType: "stokes",
-            helpType: [HelpType.STOKES_ANALYSIS_SETTINGS_CONVERSION, HelpType.STOKES_ANALYSIS_SETTINGS_LINE_PLOT_STYLING, HelpType.STOKES_ANALYSIS_SETTINGS_SCATTER_PLOT_STYLING, HelpType.STOKES_ANALYSIS_SETTINGS_SMOOTHING]
+            helpURL: [HelpURL.STOKES_ANALYSIS_SETTINGS_CONVERSION, HelpURL.STOKES_ANALYSIS_SETTINGS_LINE_PLOT_STYLING, HelpURL.STOKES_ANALYSIS_SETTINGS_SCATTER_PLOT_STYLING, HelpURL.STOKES_ANALYSIS_SETTINGS_SMOOTHING]
         };
     }
 

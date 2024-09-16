@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, SafeNumericInput} from "components/Shared";
 import {ImageType, Point2D} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpURL, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore, RenderConfigStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
 import {clamp, getColorForTheme, scaleValue, toExponential, toFixed} from "utilities";
@@ -37,7 +37,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             defaultHeight: 225,
             title: "Render Configuration",
             isCloseable: true,
-            helpType: HelpType.RENDER_CONFIG
+            helpURL: HelpURL.RENDER_CONFIG
         };
     }
 

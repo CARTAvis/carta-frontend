@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 import {RegionSelectorComponent} from "components/Shared";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {FULL_POLARIZATIONS, POLARIZATIONS} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpURL, WidgetProps, WidgetsStore} from "stores";
 import {StatsWidgetStore} from "stores/Widgets";
 import {exportTsvFile, toExponential} from "utilities";
 
@@ -27,7 +27,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             defaultHeight: 325,
             title: "Statistics",
             isCloseable: true,
-            helpType: HelpType.STATS
+            helpURL: HelpURL.STATS
         };
     }
 

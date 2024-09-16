@@ -9,7 +9,7 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {CustomIcon} from "icons/CustomIcons";
-import {AppStore, BrowserMode, DefaultWidgetConfig, DialogId, DialogStore, FileBrowserStore, HelpType, WidgetProps} from "stores";
+import {AppStore, BrowserMode, DefaultWidgetConfig, DialogId, DialogStore, FileBrowserStore, HelpURL, WidgetProps} from "stores";
 import {FrameStore, RegionsOpacity, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {clamp, formattedArcsec, getFormattedWCSPoint, length2D, toFixed} from "utilities";
 
@@ -39,7 +39,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             defaultHeight: 180,
             title: "Region List",
             isCloseable: true,
-            helpType: HelpType.REGION_LIST
+            helpURL: HelpURL.REGION_LIST
         };
     }
 
