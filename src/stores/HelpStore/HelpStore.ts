@@ -75,5 +75,5 @@ export class HelpStore {
     @action openHelpURL = (helpURL: HelpURL) => {
         this.url = helpURL;
         window.open(this.url, "_blank", "width=1024");
-    }
+    };
 }

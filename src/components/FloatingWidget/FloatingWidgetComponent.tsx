@@ -98,9 +98,9 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                     settingsTab = widgetsStore.stokesAnalysisWidgets.get(parentId).settingsTabId;
                     break;
             }
-            HelpStore.Instance.openHelpURL(this.props.widgetConfig.helpURL[settingsTab])
+            HelpStore.Instance.openHelpURL(this.props.widgetConfig.helpURL[settingsTab]);
         } else {
-            HelpStore.Instance.openHelpURL(this.props.widgetConfig.helpURL)
+            HelpStore.Instance.openHelpURL(this.props.widgetConfig.helpURL);
         }
     };
 
