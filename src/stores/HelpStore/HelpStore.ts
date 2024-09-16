@@ -1,4 +1,4 @@
-import {action, makeObservable, observable} from "mobx";
+import {action, makeObservable} from "mobx";
 
 export enum HelpURL {
     // Dialogs
@@ -70,10 +70,10 @@ export class HelpStore {
         return HelpStore.staticInstance;
     }
 
-    @observable url: HelpURL;
+    //@observable url: HelpURL;
 
     @action openHelpURL = (helpURL: HelpURL) => {
-        this.url = helpURL;
-        window.open(this.url, "_blank", "width=1024");
+        //this.url = helpURL;
+        window.open(helpURL, "_blank", "width=1024");
     };
 }
