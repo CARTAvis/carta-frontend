@@ -100,11 +100,12 @@ export class OverlayGlobalSettings {
         astString.add("Labelling", this.labelType);
         astString.add("Color", AstColorsIndex.GLOBAL);
         astString.add("Tol", toFixed(this.tolerance / 100, 2), this.tolerance >= 0.001); // convert to fraction
-        if (typeof this.explicitSystem !== "undefined" && this.explicitSystem !== SystemType.Image) {
+        const isWcsFrameAndSystem = typeof this.explicitSystem !== "undefined" && this.explicitSystem !== SystemType.Image && frame.validWcs;
+        if (isWcsFrameAndSystem) {
             astString.add("System", this.explicitSystem);
         }
 
-        if ((frame?.isXY || frame?.isYX) && !frame?.isPVImage && typeof this.explicitSystem !== "undefined" && this.explicitSystem !== SystemType.Image) {
+        if ((frame?.isXY || frame?.isYX) && !frame?.isPVImage && isWcsFrameAndSystem) {
             if (this.system === SystemType.FK4) {
                 astString.add("Equinox", "1950");
             } else {
