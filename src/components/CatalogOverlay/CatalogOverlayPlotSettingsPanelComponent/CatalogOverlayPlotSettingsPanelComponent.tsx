@@ -10,7 +10,7 @@ import {CatalogOverlayComponent} from "components";
 import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingSelectComponent} from "components/Shared";
 import {AngularSizeUnit, CatalogOverlay} from "models";
 import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {CatalogOverlayShape, CatalogSettingsTabs, CatalogWidgetStore, ValueClip} from "stores/Widgets";
+import {CatalogOverlayShape, CatalogSettingsTabs, CatalogWidgetStore, TabDisplayMode, ValueClip} from "stores/Widgets";
 import {getColorForTheme, SWATCH_COLORS} from "utilities";
 
 import "./CatalogOverlayPlotSettingsPanelComponent.scss";
@@ -293,7 +293,11 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
         const sizeMap = (
             <div className="panel-container">
-                <FormGroup inline={true} label="Size" labelInfo="(px)" disabled={disabledOverlayPanel}>
+                <FormGroup inline={true} disabled={disabledOverlayPanel} label="Pixel">
+                        <AnchorButton onClick={() => widgetStore.setAbsoluteSize(false)} text="Screen" outlined={!widgetStore.isImagePixelSize} disabled={disabledOverlayPanel}/>
+                        <AnchorButton onClick={() => widgetStore.setAbsoluteSize(true)} text="Image" outlined={widgetStore.isImagePixelSize} disabled={disabledOverlayPanel}/>
+                    </FormGroup>
+                <FormGroup inline={true} label="Size" labelInfo={widgetStore.isImagePixelSize ? "(image px)" : "(screen px)"} disabled={disabledOverlayPanel}>
                     <Tooltip disabled={disabledOverlayPanel || !widgetStore.disableSizeMap} content={`${CatalogWidgetStore.MinOverlaySize} ~ ${CatalogWidgetStore.MaxOverlaySize}`}>
                         <SafeNumericInput
                             placeholder="Size"
@@ -322,9 +326,6 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             data-testid="catalog-settings-thickness-input"
                         />
                     </Tooltip>
-                </FormGroup>
-                <FormGroup inline={true} label="Absolute Size" disabled={disabledOverlayPanel}>
-                    <Switch checked={widgetStore.isImagePixelSize} onChange={widgetStore.toggleAbsoluteSize} disabled={disabledOverlayPanel} />
                 </FormGroup>
                 <Tabs id="catalogSettings" vertical={false} selectedTabId={widgetStore.sizeAxisTabId} onChange={tabId => this.handleSelectedAxisTabChanged(tabId)}>
                     <Tab id={CatalogSettingsTabs.SIZE_MAJOR} title="Major" panel={sizeMajor} />
@@ -359,12 +360,12 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             </div>
         );
 
-        const angularSize = (
+        const angularSizePanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Source Size" disabled={disabledOverlayPanel}>
                     <Switch checked={widgetStore.isAngularSize} onChange={widgetStore.toggleAngularSize} disabled={disabledOverlayPanel} />
                 </FormGroup>
-                <Collapse isOpen={widgetStore.isAngularSize}>
+                {/* <Collapse isOpen={widgetStore.isAngularSize}> */}
                     <FormGroup inline={true} label="Major" labelInfo={`(${widgetStore.sizeUnit})`} disabled={disabledOverlayPanel}>
                         <Select
                             items={this.axisOption}
@@ -427,7 +428,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             <Button text={widgetStore.orientationMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical" data-testid="catalog-settings-orientation-column-dropdown" />
                         </Select>
                     </FormGroup>
-                </Collapse>
+                {/* </Collapse> */}
             </div>
         );
 
@@ -607,12 +608,26 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         <Button icon={this.getCatalogShape(widgetStore.catalogShape)} rightIcon="double-caret-vertical" disabled={disabledOverlayPanel} data-testid="catalog-settings-shape-dropdown" />
                     </Select>
                 </FormGroup>
-                <Tabs id="catalogSettings" vertical={false} selectedTabId={widgetStore.settingsTabId} onChange={tabId => this.handleSelectedTabChanged(tabId)}>
-                    <Tab id={CatalogSettingsTabs.SIZE} title="Size" panel={sizeMap} disabled={disabledOverlayPanel} />
-                    <Tab id={CatalogSettingsTabs.COLOR} title="Color" panel={colorMap} disabled={disabledOverlayPanel} data-testid="catalog-settings-color-tab-title" />
-                    <Tab id={CatalogSettingsTabs.ORIENTATION} title="Orientation" panel={orientationMap} disabled={disabledOverlayPanel} data-testid="catalog-settings-orientation-tab-title" />
-                    <Tab id={CatalogSettingsTabs.ANGULAR_SIZE} title="Source Size" panel={angularSize} disabled={disabledOverlayPanel} />
-                </Tabs>
+                <FormGroup className={"file-menu"} inline={true} disabled={disabledOverlayPanel} label="Mode">
+                    <AnchorButton onClick={() => widgetStore.setTabDisplayMode(TabDisplayMode.Symbol)} text={TabDisplayMode.Symbol} outlined={widgetStore.tabDisplayMode === TabDisplayMode.Symbol} disabled={disabledOverlayPanel}/>
+                    <AnchorButton onClick={() => widgetStore.setTabDisplayMode(TabDisplayMode.Source)} text={TabDisplayMode.Source} outlined={widgetStore.tabDisplayMode === TabDisplayMode.Source} disabled={disabledOverlayPanel}/>
+                </FormGroup>
+                <Collapse isOpen={widgetStore.tabDisplayMode === TabDisplayMode.Symbol}>
+                    {/* <FormGroup className={"file-menu"} inline={true} disabled={disabledOverlayPanel} label="Pixel">
+                        <AnchorButton onClick={() => widgetStore.setAbsoluteSize(false)} text="Screen" outlined={!widgetStore.isImagePixelSize} disabled={disabledOverlayPanel}/>
+                        <AnchorButton onClick={() => widgetStore.setAbsoluteSize(true)} text="Image" outlined={widgetStore.isImagePixelSize} disabled={disabledOverlayPanel}/>
+                    </FormGroup> */}
+                    <Tabs id="catalogSettings" vertical={false} selectedTabId={widgetStore.settingsTabId} onChange={tabId => this.handleSelectedTabChanged(tabId)}>
+                        <Tab id={CatalogSettingsTabs.SIZE} title="Size" panel={sizeMap} disabled={disabledOverlayPanel} />
+                        <Tab id={CatalogSettingsTabs.COLOR} title="Color" panel={colorMap} disabled={disabledOverlayPanel} data-testid="catalog-settings-color-tab-title" />
+                        <Tab id={CatalogSettingsTabs.ORIENTATION} title="Orientation" panel={orientationMap} disabled={disabledOverlayPanel} data-testid="catalog-settings-orientation-tab-title" />
+                    </Tabs>
+                </Collapse>
+                <Collapse isOpen={widgetStore.tabDisplayMode === TabDisplayMode.Source}>
+                    <Tabs>
+                        <Tab id={CatalogSettingsTabs.ANGULAR_SIZE} title="Source Size" panel={angularSizePanel} disabled={disabledOverlayPanel} />
+                    </Tabs>
+                </Collapse>
             </div>
         );
     }

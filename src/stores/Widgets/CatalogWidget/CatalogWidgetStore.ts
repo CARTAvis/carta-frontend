@@ -42,6 +42,11 @@ export enum CatalogSettingsTabs {
     ANGULAR_SIZE
 }
 
+export enum TabDisplayMode {
+    Symbol = "Symbol",
+    Source = "Source"
+}
+
 export type ValueClip = "size-min" | "size-max" | "angle-min" | "angle-max";
 
 export class CatalogWidgetStore {
@@ -87,6 +92,7 @@ export class CatalogWidgetStore {
     @observable highlightColor: string;
     @observable settingsTabId: CatalogSettingsTabs;
     @observable thickness: number;
+    @observable tabDisplayMode: TabDisplayMode;
     // size map
     @observable sizeMapColumn: string;
     @observable sizeColumnMax: {default: number | undefined; clipd: number | undefined};
@@ -174,6 +180,7 @@ export class CatalogWidgetStore {
         this.isAngularSize = false;
         this.factorToArasec = 1.0;
         this.sizeUnit = AngularSizeUnit.ARCSEC;
+        this.tabDisplayMode = TabDisplayMode.Symbol;
 
         reaction(
             () => this.sizeMapData,
@@ -567,10 +574,20 @@ export class CatalogWidgetStore {
         }
     }
 
+    @action setTabDisplayMode(value: TabDisplayMode) {
+        this.tabDisplayMode = value;
+        // value === TabDisplayMode.Source ? this.isAngularSize = true: this.isAngularSize = false; 
+    }
+
     @action toggleAbsoluteSize = () => {
         this.isImagePixelSize = !this.isImagePixelSize;
         if (!this.isImagePixelSize) this.isAngularSize = false;
     };
+
+    @action setAbsoluteSize(value: boolean) {
+        this.isImagePixelSize = value;
+        if (!this.isImagePixelSize) this.isAngularSize = false;
+    }
 
     @action toggleAngularSize = () => {
         this.isAngularSize = !this.isAngularSize;
