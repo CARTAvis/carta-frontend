@@ -204,12 +204,15 @@ export class FrameStore {
     @observable isRequestingPV: boolean;
     @observable requestingPVProgress: number;
     @observable isRequestPVCancelling: boolean;
+    @observable isRequestingRender3D: boolean;
+    @observable requestingRender3DProgress: number;
 
     @observable stokesFiles: CARTA.StokesFile[];
 
     @observable previewViewWidth: number;
     @observable previewViewHeight: number;
     @observable previewPVRasterData: Float32Array;
+    @observable render3DRasterData: Float32Array;
     @observable intensityUnit: string;
 
     @observable isOffsetCoord: boolean;
@@ -3108,6 +3111,19 @@ export class FrameStore {
         this.isRequestPVCancelling = val;
     };
 
+    @action setIsRequestingRender3D = (val: boolean) => {
+        this.isRequestingRender3D = val;
+    };
+
+    @action updateRequestingRender3DProgress = (progress: number) => {
+        this.requestingRender3DProgress = progress;
+    };
+
+    @action resetRender3DRequestState = () => {
+        this.setIsRequestingRender3D(false);
+        this.updateRequestingRender3DProgress(0);
+    }
+
     @action setFittingResult = (results: string) => {
         this.fittingResult = results;
     };
@@ -3148,11 +3164,20 @@ export class FrameStore {
         }
     };
 
+    @action setRender3DRasterData = (render3DRasterData: Float32Array, skipUpdateRender3DData: boolean = false) => {
+        this.render3DRasterData = render3DRasterData;
+        // if skipUpdateRender3DData is false, the code after the yield keyword in the updateRender3DData function will be executed by calling the next() function.
+        if (!skipUpdateRender3DData) {
+            this.updateRender3DDataGenerator.next();
+        }
+    };
+
     @action setIntensityUnit = (intensityUnitStr: string) => {
         this.intensityUnit = intensityUnitStr;
     };
 
     public updatePreviewDataGenerator: Generator;
+    public updateRender3DDataGenerator: Generator;
 
     // The incoming data will be decompressed using zfp WebWorker instance, which runs in a different thread. WebWorker instance has an onmessage event listener function. Generator function is used here to wait for the decompression of rasterData to complete.
     public *updatePreviewData(previewData: CARTA.PvPreviewData) {
@@ -3202,4 +3227,51 @@ export class FrameStore {
     @action setFrameInfo = (frameInfo: FrameInfo) => {
         this.frameInfo = frameInfo;
     };
+
+    // The incoming data will be decompressed using zfp WebWorker instance, which runs in a different thread. WebWorker instance has an onmessage event listener function. Generator function is used here to wait for the decompression of rasterData to complete.
+    public *updateRender3DData(render3DData: CARTA.Render3DData) {
+        // Old values before updating to the new frameInfo
+        // const oldAspectRatio = this.aspectRatio;
+        // const oldHeight = this.frameInfo.fileInfoExtended.height;
+        // const oldWidth = this.frameInfo.fileInfoExtended.width;
+        // const oldDepth = this.frameInfo.fileInfoExtended.depth;
+
+        // Using the 'yield' keyword of generator functions to wait for decompressed raster data from other WebWorker thread.
+        // next() will be called in setPreviewPVRasterData, which will be called in the onmessage() function after receiving the decompressed data from other worker thread.u
+        yield TileService.Instance.decompressRender3DRasterData(render3DData);
+
+        // Make sure histogram functions work correctly with PV
+        if (render3DData.histogram) {
+            this.renderConfig.setPreviewHistogramMax(null);
+            this.renderConfig.setPreviewHistogramMin(null);
+            this.renderConfig.updateCubeHistogram(render3DData.histogram, this.renderConfig.cubeHistogramProgress);
+        } else {
+            this.renderConfig.setPreviewHistogramMax(render3DData.histogramBounds?.max);
+            this.renderConfig.setPreviewHistogramMin(render3DData.histogramBounds?.min);
+        }
+
+        console.log(`Updating render3D data for frame ${this.frameInfo.fileId}`);
+
+        const newFrameInfo = {...this.frameInfo};
+        newFrameInfo.fileInfoExtended = new CARTA.FileInfoExtended(render3DData.imageInfo);
+        this.setFrameInfo(newFrameInfo);
+
+        // Update wcsInfo
+        const astFrameSet = this.initPVFrame();
+        if (astFrameSet) {
+            this.spectralFrame = AST.getSpectralFrame(astFrameSet);
+            this.wcsInfo = AST.copy(astFrameSet);
+            AST.deleteObject(astFrameSet);
+        }
+
+        // Have a look at the code below
+
+        // const isHeightUpdated = oldHeight !== this.frameInfo.fileInfoExtended.height;
+        // const isWidthUpdated = oldWidth !== this.frameInfo.fileInfoExtended.width;
+        // const isDepthUpdated = oldDepth !== this.frameInfo.fileInfoExtended.depth;
+
+        // // Avoid image moving within the frame caused by changing image width or height as rasterData is updating
+        // this.setZoom((this.zoomLevel * oldHeight) / this.frameInfo.fileInfoExtended.height);
+        // this.setCenter(isWidthUpdated ? ((this.center.x + 0.5) * oldAspectRatio) / this.aspectRatio - 0.5 : this.center.x, isHeightUpdated ? ((this.center.y + 0.5) * this.aspectRatio) / oldAspectRatio - 0.5 : this.center.y, false);
+    }
 }

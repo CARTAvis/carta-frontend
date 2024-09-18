@@ -3,7 +3,8 @@ import type {ColorBlendingStore, FrameStore} from "stores";
 export enum ImageType {
     FRAME,
     COLOR_BLENDING,
-    PV_PREVIEW
+    PV_PREVIEW,
+    RENDER3D
 }
 
 export type ImageViewItem =
@@ -17,3 +18,5 @@ export type ImageViewItem =
       };
 
 export type ImageItem = ImageViewItem | {type: ImageType.PV_PREVIEW; store: FrameStore};
+
+export type ImageItem3D = ImageViewItem | {type: ImageType.RENDER3D; store: FrameStore};

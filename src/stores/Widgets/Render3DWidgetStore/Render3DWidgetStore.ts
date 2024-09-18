@@ -1,9 +1,10 @@
 import {OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {LineSettings, PlotType} from "components/Shared";
 import {AppStore} from "stores";
+import {FrameStore} from "stores/Frame";
 
 import {RegionId, RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
@@ -28,6 +29,9 @@ export class Render3DWidgetStore extends RegionWidgetStore {
 
     // Generate Levels
     @observable range: CARTA.IIntBounds = {min: this.effectiveFrame?.channelValueBounds?.min, max: this.effectiveFrame?.channelValueBounds?.max};
+    @observable keep: boolean;
+
+    @observable render3DFrame: FrameStore | null;
 
     @computed get regionOptions(): OptionProps[] {
         const appStore = AppStore.Instance;
@@ -102,12 +106,13 @@ export class Render3DWidgetStore extends RegionWidgetStore {
         this.cursorX = cursorVal;
     };
 
-    @action requestRender3D = () => {
+    @action requestRender3D = (render3DGeneratorId?: string) => {
+        console.log("Requesting Render3D");
         const frame = this.effectiveFrame;
         if (!frame) {
             return;
         }
-
+        console.log(this.effectiveRegion);
         let channelIndexMin = frame.findChannelIndexByValue(this.range.min);
         let channelIndexMax = frame.findChannelIndexByValue(this.range.max);
 
@@ -122,22 +127,33 @@ export class Render3DWidgetStore extends RegionWidgetStore {
             }
             channelIndexMin = channelIndexMax - 1;
         }
+        if (frame && this.effectiveRegion) {
+            console.log("Requesting Render3D with region ID: " + this.effectiveRegionId);
+            const requestMessage: CARTA.IRender3DRequest = {
+                fileId: frame.frameInfo.fileId,
+                regionId: this.effectiveRegionId,
+                imageBounds: {
+                    xMin: 0,
+                    xMax: frame.frameInfo.fileInfoExtended.width,
+                    yMin: 0,
+                    yMax: frame.frameInfo.fileInfoExtended.height
+                },
+                spectralRange: isFinite(channelIndexMin) && isFinite(channelIndexMax) ? {min: channelIndexMin, max: channelIndexMax} : null,
+                keep: this.keep,
+            }
+            console.log(render3DGeneratorId);
+            if (render3DGeneratorId) {
+                console.log("Requesting Render3D with generator ID: " + render3DGeneratorId);
+                AppStore.Instance.requestRender3D(requestMessage, frame, render3DGeneratorId);
+            }
+        }
     };
 
-    // /** Properties of a IRender3DData */
-    // interface IRender3DData {
-    //     /** Render3DData fileId */
-    //     fileId?: (number|null);
-
-    //     /** Render3DData regionId */
-    //     regionId?: (number|null);
-
-    //     /** Render3DData imageBounds */
-    //     imageBounds?: (CARTA.IImageBounds|null);
-
-    //     /** Render3DData spectralRange */
-    //     spectralRange?: (CARTA.IIntBounds|null);
-    // }
+    @action setSpectralRange = (range: CARTA.IIntBounds) => {
+        if (isFinite(range.min ?? NaN) && isFinite(range.max ?? NaN)) {
+            this.range = range;
+        }
+    };
 
     constructor() {
         super(RegionsType.CLOSED);
@@ -151,6 +167,16 @@ export class Render3DWidgetStore extends RegionWidgetStore {
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
+        // request render3d
+        this.keep = false;
+        reaction(
+            () => this.effectiveFrame?.channelValueBounds,
+            channelValueBounds => {
+                if (channelValueBounds) {
+                    this.setSpectralRange(channelValueBounds);
+                }
+            }
+        );
     } // endconstructor
 
     // settings
@@ -173,6 +199,15 @@ export class Render3DWidgetStore extends RegionWidgetStore {
     @action initXYBoundaries(minXVal: number, maxXVal: number, minYVal: number, maxYVal: number) {
         this.linePlotInitXYBoundaries = {minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal};
     }
+
+    @action setRender3DFrame = (frame: FrameStore) => {
+        this.render3DFrame = frame;
+    };
+
+    @action removeRender3DFrame = (id: number) => {
+        AppStore.Instance.removeRender3DFrame(id);
+        this.render3DFrame = null;
+    };
 
     public toConfig = () => {
         return {

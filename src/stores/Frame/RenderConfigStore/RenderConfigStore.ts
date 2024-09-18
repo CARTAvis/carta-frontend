@@ -320,6 +320,10 @@ export class RenderConfigStore {
         }
     }
 
+    @computed get isoSurfaceHistogram() {
+        return this.cubeHistogram;
+    }
+
     @computed get scaleMinVal() {
         return this.previewHistogramMin ? Math.max(this.previewHistogramMin, this.scaleMin[this.stokesIndex]) : this.scaleMin[this.stokesIndex];
     }

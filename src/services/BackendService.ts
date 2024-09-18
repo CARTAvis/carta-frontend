@@ -777,6 +777,35 @@ export class BackendService {
         }
     }
 
+    async requestRender3D(message: CARTA.IRender3DRequest): Promise<CARTA.IRender3DResponse> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            throw new Error("Not connected");
+        } else {
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.RENDER3D_REQUEST, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.RENDER3D_REQUEST, CARTA.Render3DRequest.encode(message).finish())) {
+                const deferredResponse = new Deferred<CARTA.IRender3DResponse>();
+                this.deferredMap.set(requestId, deferredResponse);
+                return await deferredResponse.promise;
+            } else {
+                throw new Error("Could not send event");
+            }
+        }
+    }
+
+    closeRender3D(render3DId: number) {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            throw new Error("Not connected");
+        } else {
+            const message = CARTA.CloseRender3D.create({render3DId});
+            this.logEvent(CARTA.EventType.CLOSE_RENDER3D, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.CLOSE_RENDER3D, CARTA.CloseRender3D.encode(message).finish())) {
+                return true;
+            }
+            throw new Error("Could not send event");
+        }
+    }
+
     async requestRemoteFile(message: CARTA.IRemoteFileRequest): Promise<CARTA.IRemoteFileResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");

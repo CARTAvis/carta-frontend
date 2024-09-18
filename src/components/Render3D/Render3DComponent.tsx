@@ -1,7 +1,7 @@
 import * as React from "react";
 // import ReactResizeDetector from "react-resize-detector";
 import {AnchorButton, Colors, Divider, FormGroup,  NonIdealState, Position, Tab, Tabs, TagInput, Tooltip} from "@blueprintjs/core";
-// import {CARTA} from "carta-protobuf";
+import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react"; 
@@ -11,10 +11,10 @@ import {LinePlotComponent, LinePlotComponentProps, RegionSelectorComponent, Safe
 import {Point2D} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 // import {FrameStore} from "stores/Frame";
-import {RegionId, Render3DWidgetStore} from "stores/Widgets";
+import {Render3DWidgetStore} from "stores/Widgets";
 import {clamp, getColorForTheme, toExponential, toFixed} from "utilities";
 
-import {ContourGeneratorPanelComponent} from "../Dialogs/ContourDialog/ContourGeneratorPanel/ContourGeneratorPanelComponent";
+import {IsoSurfaceGeneratorPanelComponent} from "./IsoSurfaceComponent/IsoSurfaceGeneratorPanelComponent";
 
 // import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import "./Render3DComponent.scss";
@@ -36,15 +36,17 @@ export class Render3DComponent extends React.Component<WidgetProps> {
         return {
             id: "render-3d",
             type: "render-3d",
-            minWidth: 425,
+            minWidth: 550,
             minHeight: 450,
-            defaultWidth: 600,
+            defaultWidth: 550,
             defaultHeight: 700,
             title: "3D Rendering",
             isCloseable: true,
             helpType: HelpType.RENDER_3D
         };
     }
+
+    private cachedHistogram: CARTA.IHistogram;
 
     @observable width: number;
     @observable height: number;
@@ -85,23 +87,6 @@ export class Render3DComponent extends React.Component<WidgetProps> {
         // Generate levels
         this.setDefaultContourParameters();
     }
-
-    // handle changing the data source
-    private handleFrameChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        if (this.widgetStore.effectiveFrame) {
-            const selectedFileId = parseInt(changeEvent.target.value);
-            this.widgetStore.setFileId(selectedFileId);
-            this.widgetStore.setRegionId(this.widgetStore.effectiveFrame.frameInfo.fileId, RegionId.NONE);
-        }
-    };
-
-    private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        if (this.widgetStore.effectiveFrame) {
-            const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
-            this.widgetStore.setFileId(fileId);
-            this.widgetStore.setRegionId(fileId, parseInt(changeEvent.target.value));
-        }
-    };
 
     @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} {
         const widgetStore = this.widgetStore;
@@ -210,7 +195,7 @@ export class Render3DComponent extends React.Component<WidgetProps> {
     };
 
     private onVisualizeButtonClicked = () => {
-        this.widgetStore.requestRender3D();
+        this.widgetStore.requestRender3D(this.props.id);
     }
 
     private handleSpectralRangeChanged = (value: number, max: boolean) => {
@@ -380,7 +365,7 @@ export class Render3DComponent extends React.Component<WidgetProps> {
                 <div className="histogram-plot">
                     <LinePlotComponent {...linePlotProps} />
                 </div>
-                <ContourGeneratorPanelComponent frame={frame} generatorType={appStore.preferenceStore.contourGeneratorType} onLevelsGenerated={this.handleLevelsGenerated} />
+                <IsoSurfaceGeneratorPanelComponent frame={frame} generatorType={appStore.preferenceStore.contourGeneratorType} onLevelsGenerated={this.handleLevelsGenerated} />
                 <div className="contour-level-panel-levels" data-testid="contour-config-level-input-form">
                     <FormGroup label={"Levels"} inline={true}>
                         <TagInput
@@ -394,11 +379,6 @@ export class Render3DComponent extends React.Component<WidgetProps> {
                             values={sortedLevels}
                         />
                     </FormGroup>
-                    <div className="generate-button">
-                        <Tooltip disabled={isAbleToVisualize} content={hint} position={Position.BOTTOM}>
-                            <AnchorButton intent="success" disabled={!isAbleToVisualize} text="Visualize" onClick={this.onVisualizeButtonClicked} />
-                        </Tooltip>
-                    </div>
                 </div>
             </div>
         );
@@ -448,6 +428,11 @@ export class Render3DComponent extends React.Component<WidgetProps> {
                         <Tab id={Render3DTabs.IsoSurfaces} title="Iso-surfaces" panel={isoSurfacesPanel} panelClassName="render-3d-isosurfaces-panel" data-testid="render-3d-isosurfaces-tab-title" />
                         <Tab id={Render3DTabs.Volume} title="Volume rendering" panel={volumePanel} panelClassName="render-3d-volume-panel" data-testid="render-3d-volume-tab-title" />
                     </Tabs>
+                </div>
+                <div className="generate-button">
+                    <Tooltip disabled={isAbleToVisualize} content={hint} position={Position.BOTTOM}>
+                        <AnchorButton intent="success" disabled={!isAbleToVisualize} text="Visualize" onClick={this.onVisualizeButtonClicked} />
+                    </Tooltip>
                 </div>
             </div>
         );

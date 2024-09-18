@@ -5,7 +5,7 @@ import {Subject} from "rxjs";
 
 import {Point2D, TileCoordinate} from "models";
 import {BackendService, TileWebGLService} from "services";
-import {AppStore, PREVIEW_PV_FILEID} from "stores";
+import {AppStore, PREVIEW_PV_FILEID, RENDER3D_FILEID} from "stores";
 import {copyToFP32Texture, createFP32Texture, GL2} from "utilities";
 
 import ZFPWorker from "!worker-loader!zfp_wrapper";
@@ -114,6 +114,32 @@ export class TileService {
         };
 
         this.workers[0].postMessage(["preview decompress", compressedView.buffer, eventArgs, previewData], [compressedView.buffer, nanEncodings32.buffer]);
+    }
+
+    public decompressRender3DRasterData(render3DData: CARTA.Render3DData) {
+        const compressedArray = render3DData.imageData;
+        const nanEncodings32 = new Int32Array(render3DData.nanEncodings.slice(0).buffer);
+        let compressedView = new Uint8Array(Math.max(compressedArray.byteLength, render3DData.width * render3DData.height * render3DData.depth * 4));
+        compressedView.set(compressedArray);
+
+        const eventArgs = {
+            fileId: RENDER3D_FILEID,
+            channel: 0,
+            stokes: 0,
+            width: render3DData.width,
+            // depth: render3DData.depth,
+            subsetHeight: render3DData.height,
+            subsetLength: compressedArray.byteLength,
+            compression: render3DData.compressionQuality,
+            nanEncodings: nanEncodings32,
+            tileCoordinate: 0,
+            layer: 0,
+            requestId: 0,
+            render3DId: render3DData.render3DId
+        };
+
+        console.log("Decompressing render3D data");
+        this.workers[0].postMessage(["render3d decompress", compressedView.buffer, eventArgs, render3DData], [compressedView.buffer, nanEncodings32.buffer]);
     }
 
     public setAnimationEnabled = (val: boolean) => {

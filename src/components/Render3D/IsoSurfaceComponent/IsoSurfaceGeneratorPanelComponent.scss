@@ -1,0 +1,71 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+.isosurface-generator-panel {
+    .generator-select-row {
+        display: flex;
+
+        .generate-button {
+            height: 30px;
+            margin-left: 10px;
+        }
+
+        .#{$ns}-form-group .#{$ns}-label {
+            width: 6em;
+            text-align: right;
+        }
+    }
+
+    .generator-parameters-row {
+        display: flex;
+
+        .#{$ns}-form-group .#{$ns}-label {
+            width: 6em;
+            text-align: right;
+        }
+
+        .parameter-container {
+            display: flex;
+            flex-direction: column;
+            .parameter-line {
+                display: flex;
+                flex-direction: row;
+                flex-wrap: wrap;
+
+                .#{$ns}-form-group {
+                    padding-right: 10px;
+                    .#{$ns}-label {
+                        width: 5em;
+                        text-align: right;
+                    }
+                }
+            }
+        }
+
+        .#{$ns}-numeric-input {
+            width: 110px;
+            .#{$ns}-input-group {
+                height: 30px;
+                input {
+                    width: 110px;
+                }
+            }
+
+            &.narrow {
+                .#{$ns}-input-group {
+                    height: 30px;
+                    input {
+                        width: 80px;
+                    }
+                }
+
+                .#{$ns}-button-group {
+                    height: 30px;
+                    .#{$ns}-button {
+                        height: 15px;
+                        width: 30px;
+                    }
+                }
+            }
+        }
+    }
+}

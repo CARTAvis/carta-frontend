@@ -9,7 +9,7 @@ import {action, autorun, computed, flow, makeObservable, observable, ObservableM
 import * as Path from "path-browserify";
 import * as Semver from "semver";
 
-import {getImageViewCanvas, ImageViewLayer, PvGeneratorComponent} from "components";
+import {getImageViewCanvas, ImageViewLayer, PvGeneratorComponent, Render3DComponent} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import {
     CARTA_INFO,
@@ -90,6 +90,7 @@ interface ChannelUpdate {
 const IMPORT_REGION_BATCH_SIZE = 1000;
 const EXPORT_IMAGE_DELAY = 500;
 export const PREVIEW_PV_FILEID = -2;
+export const RENDER3D_FILEID = -2;
 
 export class AppStore {
     private static staticInstance: AppStore;
@@ -129,6 +130,7 @@ export class AppStore {
     @observable cartaComputeReady: boolean;
     // Frames
     @observable previewFrames = new ObservableMap<number, FrameStore>();
+    @observable render3DFrames = new ObservableMap<number, FrameStore>();
     /** The active image, which can be a loaded image, a color blended image, or a PV preivew. */
     @observable activeImage: ImageItem = null;
     @observable hoveredFrame: FrameStore = null;
@@ -641,6 +643,38 @@ export class AppStore {
         return newFrame;
     };
 
+    @action addRender3DFrame = (ack: any, directory: string, hdu: string) => {
+        if (!ack) {
+            return undefined;
+        }
+
+        const frameInfo: FrameInfo = {
+            fileId: RENDER3D_FILEID,
+            directory,
+            lelExpr: false,
+            hdu,
+            fileInfo: new CARTA.FileInfo(ack.imageInfo),
+            fileInfoExtended: new CARTA.FileInfoExtended(ack.imageInfo),
+            fileFeatureFlags: ack.fileFeatureFlags,
+            renderMode: CARTA.RenderMode.RASTER,
+            beamTable: ack.beamTable,
+            generated: true,
+        };
+
+        console.log("Adding render3D frame", frameInfo);
+        const newFrame = new FrameStore(frameInfo);
+
+        if (newFrame) {
+            this.render3DFrames.set(ack.render3DId, newFrame);
+            newFrame.updateRender3DDataGenerator = newFrame.updateRender3DData(ack);
+            // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
+            newFrame.updateRender3DDataGenerator.next();
+            this.updateActiveImageByFrame(newFrame);
+        }
+
+        return newFrame;
+    };
+
     /**
      * Loads a file at the given path and adds it as a frame to the application.
      *
@@ -941,8 +975,20 @@ export class AppStore {
             }
 
             this.widgetsStore.pvGeneratorWidgets.get(pvGeneratorWidgetId)?.removePreviewFrame(parseInt(pvGeneratorWidgetId.split("-")[2]));
+
+            // clear render3d frames
+            const render3DFrame = this.render3DFrames.get(fileId);
+            let render3DWidgetId;
+
+            for (const [key, value] of this.widgetsStore.render3DWidgets) {
+                if (_.isEqual(value?.render3DFrame, render3DFrame)) {
+                    render3DWidgetId = key;
+                }
+            }
+
+            this.widgetsStore.render3DWidgets.get(render3DWidgetId)?.removeRender3DFrame(parseInt(render3DWidgetId.split("-")[2]));
             this.widgetsStore.removeFloatingWidget(pvGeneratorWidgetId);
-            this.previewFrames.delete(fileId);
+            this.render3DFrames.delete(fileId);
 
             // clear existing requirements for the frame
             this.spectralRequirements.delete(fileId);
@@ -1044,6 +1090,12 @@ export class AppStore {
             this.widgetsStore.pvGeneratorWidgets.forEach((value, key) => {
                 this.widgetsStore.removeFloatingWidget(key);
             });
+            this.render3DFrames.forEach((render3DFrameStore, render3DFrameId) => {
+                this.removeRender3DFrame(render3DFrameId);
+            });
+            this.widgetsStore.render3DWidgets.forEach((value, key) => {
+                this.widgetsStore.removeFloatingWidget(key);
+            });
             this.frames.forEach(frame => {
                 frame.clearContours(false);
                 const fileId = frame.frameInfo.fileId;
@@ -1066,6 +1118,17 @@ export class AppStore {
     @action removePreviewFrame = (previewId: number) => {
         if (this.previewFrames.delete(previewId)) {
             this.backendService.closePvPreview(previewId);
+            this.setActiveImage(this.imageViewConfigStore.visibleImages[0]);
+        }
+    };
+
+    /**
+     * Closes a Render3D frame.
+     * @param render3DId - The file id of the image cube from which the Render3D was created.
+     */
+    @action removeRender3DFrame = (render3DId: number) => {
+        if (this.render3DFrames.delete(render3DId)) {
+            this.backendService.closeRender3D(render3DId);
             this.setActiveImage(this.imageViewConfigStore.visibleImages[0]);
         }
     };
@@ -1481,6 +1544,41 @@ export class AppStore {
         } catch (err) {
             frame.resetPvRequestState();
             frame.setIsRequestPVCancelling(false);
+            this.endFileLoading();
+            console.error(err);
+            AppToaster.show(ErrorToast(err));
+        }
+    }
+
+    @flow.bound
+    *requestRender3D(message: CARTA.IRender3DRequest, frame: FrameStore, id: string) {
+        if (!message || !frame) {
+            return;
+        }
+        try {
+            this.startFileLoading();
+            const ack = yield this.backendService.requestRender3D(message);
+            this.restartTaskProgress();
+            if (!ack.cancel && ack.render3dData) {
+                const render3DWidgetStore = WidgetsStore.Instance.render3DWidgets.get(id);
+                if (render3DWidgetStore.render3DFrame) {
+                    render3DWidgetStore.render3DFrame.updateRender3DDataGenerator = render3DWidgetStore.render3DFrame.updateRender3DData(ack.render3dData);
+                    // The initial next() function call executes the FrameStore.updateRender3DData until the first yield keyword
+                    render3DWidgetStore.render3DFrame.updateRender3DDataGenerator.next();
+                } else {
+                    render3DWidgetStore.setRender3DFrame(this.addRender3DFrame(ack.render3DData, this.fileBrowserStore.startingDirectory, ""));
+                    WidgetsStore.Instance.createFloatingSettingsWidget("3D Rendering Viewer", id, Render3DComponent.WIDGET_CONFIG.type);
+                }  
+            } else {
+                AppToaster.show({icon: "warning-sign", message: "Load 3D renderig failed.", intent: "danger", timeout: 3000});
+            }
+            console.log("requestRender3D", ack);
+            frame.resetRender3DRequestState();
+            // frame.setIsRequestPVCancelling(false);
+            this.endFileLoading();
+        } catch (err) {
+            frame.resetRender3DRequestState();
+            // frame.setIsRequestPVCancelling(false);
             this.endFileLoading();
             console.error(err);
             AppToaster.show(ErrorToast(err));
