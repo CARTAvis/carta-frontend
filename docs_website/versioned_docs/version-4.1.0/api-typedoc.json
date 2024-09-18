@@ -23642,7 +23642,7 @@
 							"type": {
 								"type": "reference",
 								"id": 9828,
-								"name": "HelpURL"
+								"name": "HelpType"
 							}
 						},
 						{
@@ -75028,7 +75028,7 @@
 				},
 				{
 					"id": 9828,
-					"name": "HelpURL",
+					"name": "HelpType",
 					"kind": 8,
 					"kindString": "Enumeration",
 					"flags": {},
@@ -128072,7 +128072,7 @@
 							"type": {
 								"type": "reference",
 								"id": 9828,
-								"name": "HelpURL"
+								"name": "HelpType"
 							}
 						},
 						{
@@ -128156,14 +128156,14 @@
 									"parameters": [
 										{
 											"id": 9891,
-											"name": "helpURL",
+											"name": "helpType",
 											"kind": 32768,
 											"kindString": "Parameter",
 											"flags": {},
 											"type": {
 												"type": "reference",
 												"id": 9828,
-												"name": "HelpURL"
+												"name": "HelpType"
 											}
 										},
 										{
@@ -196845,7 +196845,7 @@
 						},
 						{
 							"id": 13536,
-							"name": "helpURL",
+							"name": "helpType",
 							"kind": 1024,
 							"kindString": "Property",
 							"flags": {
@@ -196865,14 +196865,14 @@
 									{
 										"type": "reference",
 										"id": 9828,
-										"name": "HelpURL"
+										"name": "HelpType"
 									},
 									{
 										"type": "array",
 										"elementType": {
 											"type": "reference",
 											"id": 9828,
-											"name": "HelpURL"
+											"name": "HelpType"
 										}
 									}
 								]
@@ -196880,7 +196880,7 @@
 							"implementationOf": {
 								"type": "reference",
 								"id": 13517,
-								"name": "DefaultWidgetConfig.helpURL"
+								"name": "DefaultWidgetConfig.helpType"
 							}
 						},
 						{
@@ -201376,7 +201376,7 @@
 						},
 						{
 							"id": 13517,
-							"name": "helpURL",
+							"name": "helpType",
 							"kind": 1024,
 							"kindString": "Property",
 							"flags": {
@@ -201396,14 +201396,14 @@
 									{
 										"type": "reference",
 										"id": 9828,
-										"name": "HelpURL"
+										"name": "HelpType"
 									},
 									{
 										"type": "array",
 										"elementType": {
 											"type": "reference",
 											"id": 9828,
-											"name": "HelpURL"
+											"name": "HelpType"
 										}
 									}
 								]
