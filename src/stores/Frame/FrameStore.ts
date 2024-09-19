@@ -1515,9 +1515,16 @@ export class FrameStore {
                 if (explicitSystem === SystemType.Image) {
                     // Use base frame for image coordinates
                     AST.setI(this.wcsInfo, "Current", 1);
+                    if (this.wcsInfoShifted) {
+                        AST.setI(this.wcsInfoShifted, "Current", 1);
+                    }
                 } else {
                     AST.setI(this.wcsInfo, "Current", 2);
                     AST.set(this.wcsInfo, `Format(${this.dirX})=${formatStringX}, Format(${this.dirY})=${formatStyingY}, System=${explicitSystem}`);
+                    if (this.wcsInfoShifted) {
+                        AST.setI(this.wcsInfoShifted, "Current", 2);
+                        AST.set(this.wcsInfoShifted, `Format(${this.dirX})=${formatStringX}, Format(${this.dirY})=${formatStyingY}, System=${explicitSystem}`);
+                    }
                 }
             }
         }
