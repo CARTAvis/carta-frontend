@@ -2052,8 +2052,6 @@ export class AppStore {
                             this.contourDataSource = frame;
                         }
                     }
-
-                    this.overlayStore.setDefaultsFromFrame(this.activeFrame);
                 } else {
                     this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
                 }
