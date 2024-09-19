@@ -161,7 +161,15 @@ export class AppStore {
     // dynamic zIndex
     public zIndexManager = new FloatingObjzIndexManager();
 
-    svgGenerator = new SvgGenerator();
+    // svg export
+    private svgGenerator = new SvgGenerator();
+
+    exportSvg = () => {
+        const pixelRatio = devicePixelRatio * this.imageRatio;
+        const width = this.overlayStore.fullViewWidth * pixelRatio;
+        const height = this.overlayStore.fullViewHeight * pixelRatio;
+        this.svgGenerator.exportSvg(width, height);
+    };
 
     private appContainer: HTMLElement;
     private fileCounter = 0;

@@ -78,6 +78,7 @@
         "source-map-explorer": "^2.5.3",
         "stats-js": "^1.0.1",
         "stream-browserify": "^3.0.0",
+        "svgcanvas": "^2.5.0",
         "tinycolor2": "^1.6.0",
         "tsc-silent": "^1.2.2",
         "typescript": "^4.9.5",

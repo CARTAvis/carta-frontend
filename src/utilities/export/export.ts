@@ -78,3 +78,11 @@ export async function copyToClipboard(value: string) {
         document.body.removeChild(copyText);
     }
 }
+
+export const exportSvgFile = (svgElement: HTMLElement & SVGElement) => {
+    const svgBlob = new Blob([svgElement.outerHTML], {type: "image/svg+xml;charset=utf-8"});
+    const link = document.createElement("a") as HTMLAnchorElement;
+    link.download = "test.svg";
+    link.href = URL.createObjectURL(svgBlob);
+    link.dispatchEvent(new MouseEvent("click"));
+};

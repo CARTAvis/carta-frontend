@@ -275,7 +275,7 @@ export class RootMenuComponent extends React.Component {
                 <MenuItem text="Export Image" disabled={!appStore.activeFrame || appStore.isExportingImage || appStore.activeFrame.isPreview}>
                     <ExportImageMenuComponent />
                 </MenuItem>
-                <MenuItem text="Export Image as SVG" onClick={appStore.svgGenerator.exportSvg} />
+                <MenuItem text="Export Image as SVG" onClick={appStore.exportSvg} />
                 <MenuDivider />
                 <MenuItem text="Open Workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Workspace, {mode: WorkspaceDialogMode.Open})} />
                 <MenuItem text="Save Workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Workspace, {mode: WorkspaceDialogMode.Save})} />
