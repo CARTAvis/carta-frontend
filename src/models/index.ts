@@ -23,6 +23,7 @@ export * from "./Snippet/Snippet";
 export * from "./Spectral/SpectralDefinition";
 export * from "./Spectral/SpectralInfo";
 export * from "./StatisticsDefinition/StatisticsDefinition";
+export * from "./SvgGenerator/SvgGenerator";
 export * from "./Theme/Theme";
 export * from "./Tile/TileCache";
 export * from "./Tile/TileCoordinate";

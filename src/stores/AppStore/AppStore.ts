@@ -26,6 +26,7 @@ import {
     PresetLayout,
     RegionId,
     SpectralType,
+    SvgGenerator,
     Theme,
     TileCoordinate,
     ToFileListFilterMode,
@@ -159,6 +160,8 @@ export class AppStore {
 
     // dynamic zIndex
     public zIndexManager = new FloatingObjzIndexManager();
+
+    svgGenerator = new SvgGenerator();
 
     private appContainer: HTMLElement;
     private fileCounter = 0;
