@@ -180,7 +180,7 @@ export class ChannelMapStore {
         }
     };
 
-    @action throttledRequestChannels = _.throttle(this.requestChannels, 100);
+    @action throttledRequestChannels = _.debounce(this.requestChannels, 100);
 
     public overlayStore(imageRenderWidth?: number, imageRenderHeight?: number) {
         const overlay = AppStore.Instance.overlayStore;
@@ -360,12 +360,47 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                 }
             }
         );
+        // const disposer = autorun(() => {
+        //     const stat = [
+        //         channelMapStore.startChannel,
+        //         channelMapStore.channelRange,
+        //         channelMapStore,
+        //         channelMapStore.masterFrame,
+        //         channelMapStore.numColumns,
+        //         channelMapStore.numRows,
+        //         channelMapStore.masterFrame?.center,
+        //         channelMapStore.masterFrame?.requiredFrameView,
+        //         channelMapStore.masterFrame?.zoomLevel,
+        //         channelMapStore.auxiliaryFrame,
+        //         channelMapStore.auxiliaryFrameChannel,
+        //         channelMapStore.singleChannelContour,
+        //         channelMapStore.singleContourChannel,
+        //         channelMapStore.masterFrame?.spatialReference]
+        //     if (channelMapStore.masterFrame) {
+        //         channelMapStore.throttledRequestChannels();
+        //     }
+        // })
 
         return () => {
             disposer();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [
+        channelMapStore.startChannel,
+        channelMapStore.channelRange,
+        channelMapStore,
+        channelMapStore.masterFrame,
+        channelMapStore.numColumns,
+        channelMapStore.numRows,
+        channelMapStore.masterFrame?.center,
+        channelMapStore.masterFrame?.requiredFrameView,
+        channelMapStore.masterFrame?.zoomLevel,
+        channelMapStore.auxiliaryFrame,
+        channelMapStore.auxiliaryFrameChannel,
+        channelMapStore.singleChannelContour,
+        channelMapStore.singleContourChannel,
+        channelMapStore.masterFrame?.spatialReference
+    ]);
 
     const onRegionViewZoom = (frame: FrameStore, zoom: number) => {
         if (frame) {

@@ -287,9 +287,8 @@ export class TileService {
     }
 
     requestChannelMapTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, compressionQuality: number, channelMapRange: {min: number; max: number}) {
-        // this.clearQueueForChannelMap(this.pendingRequests, fileId, this.currentlyStreamingChannelRange);
-        // this.clearQueueForChannelMap(this.pendingDecompressions, fileId, this.currentlyStreamingChannelRange);
-        this.clearRequestQueue();
+        if (this.currentlyStreamingChannelRange) this.clearQueueForChannelMap(this.pendingRequests, fileId, this.currentlyStreamingChannelRange);
+        // this.clearRequestQueue(fileId);
         const newRequests = new Array<TileCoordinate>();
         const channelMapStore = AppStore.Instance.channelMapStore;
         const fullChannelRange = {min: channelMapStore.startChannel, max: channelMapStore.channelRange};
@@ -438,9 +437,12 @@ export class TileService {
         this.updateRemainingTileCount();
     }
 
-    clearQueueForChannelMap(map: Map<string, any>, fileId: number, channelRange: {min: number; max: number}) {
+    clearQueueForChannelMap(map: Map<string | undefined, any>, fileId: number, channelRange: {min: number; max: number}) {
         // Clear all requests with the given file ID within the channel range
-        map.forEach((value, key) => {
+        this.pendingRequests.forEach((value, key) => {
+            if (!key) {
+                return;
+            }
             const splitKey = key?.split("_");
             if (splitKey.length <= 0) {
                 return;
@@ -593,7 +595,11 @@ export class TileService {
             const gpuCacheCoordinate = TileCoordinate.AddFileIdAndChannel(encodedCoordinate, tileMessage?.fileId ?? NaN, tileMessage?.channel ?? NaN);
             // Remove from the requested tile map. If in animation mode, don't check if we're still requesting tiles
             const pendingRequestsMap = this.pendingRequests.get(key);
-            if (pendingRequestsMap?.has(encodedCoordinate) || this.animationEnabled) {
+            const channelMapStore = AppStore.Instance.channelMapStore;
+            const fullChannelRange = {min: channelMapStore.startChannel, max: channelMapStore.channelRange};
+            const channel = tileMessage.channel || -1;
+
+            if (pendingRequestsMap?.has(encodedCoordinate) || this.animationEnabled || (channel >= 0 && channel >= fullChannelRange.min && channel <= fullChannelRange.max)) {
                 if (pendingRequestsMap) {
                     pendingRequestsMap.delete(encodedCoordinate);
                 }
