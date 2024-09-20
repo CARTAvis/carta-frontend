@@ -49,14 +49,19 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     }
 
     renderCanvas = () => {
-        const settings = this.props.overlaySettings;
-        const frame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image.store?.baseFrame : this.props.image?.store;
+        this.updateImageDimensions();
+        OverlayComponent.PlotOverlay(this.canvas, this.props.image, this.props.overlaySettings);
+    };
+
+    private static PlotOverlay = (canvas: HTMLCanvasElement, image: ImageItem, settings: OverlayStore) => {
         const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
+        const frame = image?.type === ImageType.COLOR_BLENDING ? image.store?.baseFrame : image?.store;
 
         const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoShifted : frame.wcsInfo;
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
         const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
-        if (wcsInfo && frameView && this.canvas) {
+
+        if (wcsInfo && frameView && canvas) {
             // Take aspect ratio scaling into account
             const tempWcsInfo = AST.copy(wcsInfo);
             if (!tempWcsInfo) {
@@ -64,8 +69,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 return;
             }
 
-            this.updateImageDimensions();
-            AST.setCanvas(this.canvas);
+            AST.setCanvas(canvas);
             if (!frame.hasSquarePixels) {
                 const scaleMapping = AST.scaleMap2D(1.0, 1.0 / frame.aspectRatio);
                 const newFrame = AST.frame(2, "Domain=PIXEL");
@@ -102,8 +106,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     frameView.xMax,
                     frameView.yMin / frame.aspectRatio,
                     frameView.yMax / frame.aspectRatio,
-                    (frame.isPreview ? frame?.previewViewWidth : this.props.overlaySettings.viewWidth) * pixelRatio,
-                    (frame.isPreview ? frame?.previewViewHeight : this.props.overlaySettings.viewHeight) * pixelRatio,
+                    (frame.isPreview ? frame?.previewViewWidth : settings.viewWidth) * pixelRatio,
+                    (frame.isPreview ? frame?.previewViewHeight : settings.viewHeight) * pixelRatio,
                     settings.padding.left * pixelRatio,
                     settings.padding.right * pixelRatio,
                     settings.padding.top * pixelRatio,
@@ -126,9 +130,9 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             }
 
             if (!settings.title.customText) {
-                currentStyleString += `, Title=${this.props.image?.store?.filename}`;
-            } else if (this.props.image?.store?.titleCustomText?.length) {
-                currentStyleString += `, Title=${this.props.image?.store?.titleCustomText}`;
+                currentStyleString += `, Title=${image?.store?.filename}`;
+            } else if (image?.store?.titleCustomText?.length) {
+                currentStyleString += `, Title=${image?.store?.titleCustomText}`;
             } else {
                 currentStyleString += `, Title=${""}`;
             }
