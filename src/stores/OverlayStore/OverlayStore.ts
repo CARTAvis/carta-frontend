@@ -1,7 +1,7 @@
 import * as AST from "ast_wrapper";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 
-import {WCSType} from "models";
+import {ImageItem, ImageType, WCSType} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {FrameStore, OverlayBeamStore, WCS_PRECISION} from "stores/Frame";
 import {clamp, getColorForTheme, toFixed} from "utilities";
@@ -1244,4 +1244,104 @@ export class OverlayStore {
             return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
         };
     }
+
+    plot = (canvas: HTMLCanvasElement, image: ImageItem) => {
+        const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
+        const frame = image?.type === ImageType.COLOR_BLENDING ? image.store?.baseFrame : image?.store;
+
+        const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoShifted : frame.wcsInfo;
+        const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
+        const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+
+        if (wcsInfo && frameView && canvas) {
+            // Take aspect ratio scaling into account
+            const tempWcsInfo = AST.copy(wcsInfo);
+            if (!tempWcsInfo) {
+                console.log("Create wcs info copy failed.");
+                return;
+            }
+
+            AST.setCanvas(canvas);
+            if (!frame.hasSquarePixels) {
+                const scaleMapping = AST.scaleMap2D(1.0, 1.0 / frame.aspectRatio);
+                const newFrame = AST.frame(2, "Domain=PIXEL");
+                AST.addFrame(tempWcsInfo, 1, scaleMapping, newFrame);
+                AST.setI(tempWcsInfo, "Base", 3);
+                AST.setI(tempWcsInfo, "Current", 2);
+            }
+
+            if (frame.isOffsetCoord) {
+                const fovSizeInArcsec = frame.getWcsSizeInArcsec(frame.fovSize);
+                const viewSize = fovSizeInArcsec.x > fovSizeInArcsec.y ? fovSizeInArcsec.y : fovSizeInArcsec.x;
+                const factor = 2; // jump factor
+                let unit;
+                let format;
+
+                if (viewSize < 60 * factor) {
+                    unit = "arcsec";
+                    format = "s.*";
+                } else if (viewSize < 3600 * factor) {
+                    unit = "arcmin";
+                    format = "m.*";
+                } else {
+                    unit = "deg";
+                    format = "d.*";
+                }
+
+                AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)=${unit}, Unit(2)=${unit}`);
+            }
+
+            const plot = (styleString: string) => {
+                AST.plot(
+                    tempWcsInfo,
+                    frameView.xMin,
+                    frameView.xMax,
+                    frameView.yMin / frame.aspectRatio,
+                    frameView.yMax / frame.aspectRatio,
+                    (frame.isPreview ? frame?.previewViewWidth : this.viewWidth) * pixelRatio,
+                    (frame.isPreview ? frame?.previewViewHeight : this.viewHeight) * pixelRatio,
+                    this.padding.left * pixelRatio,
+                    this.padding.right * pixelRatio,
+                    this.padding.top * pixelRatio,
+                    this.padding.bottom * pixelRatio,
+                    styleString
+                );
+            };
+
+            let currentStyleString = this.styleString(frame);
+
+            // Override the AST tolerance during motion
+            if (frame.moving) {
+                const tolVal = Math.max((this.global.tolerance * 2) / 100.0, 0.1);
+                currentStyleString += `, Tol=${tolVal}`;
+            }
+
+            if (!frame.validWcs) {
+                //Remove system and format entries
+                currentStyleString = currentStyleString.replace(/System=.*?,/, "").replaceAll(/Format\(\d\)=.*?,/g, "");
+            }
+
+            if (!this.title.customText) {
+                currentStyleString += `, Title=${image?.store?.filename}`;
+            } else if (image?.store?.titleCustomText?.length) {
+                currentStyleString += `, Title=${image?.store?.titleCustomText}`;
+            } else {
+                currentStyleString += `, Title=${""}`;
+            }
+
+            if (frame.isOffsetCoord) {
+                currentStyleString += `, LabelUnits=1`;
+            }
+
+            plot(currentStyleString);
+
+            if (/No grid curves can be drawn for axis/.test(AST.getLastErrorMessage())) {
+                // Try to re-plot without the grid
+                plot(currentStyleString.replace(/Gap\(\d\)=[^,]+, ?/g, "").replace("Grid=1", "Grid=0"));
+            }
+
+            AST.deleteObject(tempWcsInfo);
+            AST.clearLastErrorMessage();
+        }
+    };
 }
