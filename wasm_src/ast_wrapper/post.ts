@@ -87,11 +87,11 @@ Module.setFontList = function (fonts) {
     Module.fonts = fonts;
 };
 
-Module.setCanvas = function (canvas) {
-    Module.gridContext = canvas.getContext("2d");
+Module.setCanvas = function (canvasContext, canvasHeight) {
+    Module.gridContext = canvasContext;
     Module.gridContext.imageSmoothingEnabled = false;
     Module.gridContext.scale(1, -1);
-    Module.gridContext.translate(0, -canvas.height);
+    Module.gridContext.translate(0, -canvasHeight);
     Module.gridContext.font = Module.font;
 };
 

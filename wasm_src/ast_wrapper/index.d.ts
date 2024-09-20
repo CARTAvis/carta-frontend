@@ -9,7 +9,7 @@ export let fonts: string[];
 export function setColors(newColors: string[]): void;
 export function setColor(color: string, index: number): void;
 export function setFontList(newList: string[]): void;
-export function setCanvas(canvas: HTMLCanvasElement);
+export function setCanvas(canvasContext: CanvasRenderingContext2D, canvasHeight: number);
 
 // cwrap'd functions
 export function plot(
