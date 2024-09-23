@@ -142,7 +142,7 @@ export class ImageFittingStore {
     @computed get effectiveFrame(): FrameStore | null {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame && appStore.frames?.length > 0) {
-            return this.selectedFileId === ACTIVE_FILE_ID ? appStore.activeFrame : appStore.getFrame(this.selectedFileId) ?? appStore.activeFrame;
+            return this.selectedFileId === ACTIVE_FILE_ID ? appStore.activeFrame : (appStore.getFrame(this.selectedFileId) ?? appStore.activeFrame);
         }
         return null;
     }

@@ -202,7 +202,10 @@ export class RenderConfigStore {
 
     private frame: FrameStore;
 
-    constructor(readonly preference: PreferenceStore, frame: FrameStore) {
+    constructor(
+        readonly preference: PreferenceStore,
+        frame: FrameStore
+    ) {
         makeObservable(this);
         this.frame = frame;
         const stokesLength = this.frame.polarizations.length !== 0 ? this.frame.polarizations.length : 1;

@@ -36,7 +36,7 @@ export class ControlMap {
     setGrid = (astTransform?: AST.Mapping) => {
         let cleanUpTransform: boolean = false;
 
-        if (!astTransform || astTransform < 0) {
+        if (!astTransform || (astTransform as number) < 0) {
             astTransform = AST.getSpatialMapping(this.source.wcsInfo, this.destination.wcsInfo);
             cleanUpTransform = true;
         }
