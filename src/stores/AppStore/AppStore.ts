@@ -165,9 +165,21 @@ export class AppStore {
     private svgGenerator = new SvgGenerator();
 
     exportSvg = () => {
+        if (!this.activeImage) {
+            console.error("Active image not found.");
+            return;
+        }
+
+        if (this.activeImage.type === ImageType.PV_PREVIEW) {
+            console.error("PV preview not supported.");
+            return;
+        }
+
         const pixelRatio = devicePixelRatio * this.imageRatio;
         const width = this.overlayStore.fullViewWidth * pixelRatio;
         const height = this.overlayStore.fullViewHeight * pixelRatio;
+
+        this.svgGenerator.setOverlayPlotFunction((canvasContext: CanvasRenderingContext2D, canvasHeight: number) => this.overlayStore.plot(canvasContext, canvasHeight, this.activeImage));
         this.svgGenerator.exportSvg(width, height);
     };
 
