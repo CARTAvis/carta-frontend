@@ -179,7 +179,7 @@ export class AppStore {
         const width = this.overlayStore.fullViewWidth * pixelRatio;
         const height = this.overlayStore.fullViewHeight * pixelRatio;
 
-        this.svgGenerator.setOverlayPlotFunction((canvasContext: CanvasRenderingContext2D, canvasHeight: number) => this.overlayStore.plot(canvasContext, canvasHeight, this.activeImage));
+        this.svgGenerator.setOverlayPlotFunction(() => this.overlayStore.plot(this.activeImage));
         this.svgGenerator.exportSvg(width, height);
     };
 

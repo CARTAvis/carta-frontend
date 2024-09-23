@@ -1245,7 +1245,7 @@ export class OverlayStore {
         };
     }
 
-    plot = (canvasContext: CanvasRenderingContext2D | undefined, canvasHeight: number | undefined, image: ImageItem) => {
+    plot = (image: ImageItem) => {
         const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
         const frame = image?.type === ImageType.COLOR_BLENDING ? image.store?.baseFrame : image?.store;
 
@@ -1253,7 +1253,7 @@ export class OverlayStore {
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
         const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
 
-        if (wcsInfo && frameView && canvasContext && canvasHeight) {
+        if (wcsInfo && frameView) {
             // Take aspect ratio scaling into account
             const tempWcsInfo = AST.copy(wcsInfo);
             if (!tempWcsInfo) {
@@ -1261,7 +1261,6 @@ export class OverlayStore {
                 return;
             }
 
-            AST.setCanvas(canvasContext, canvasHeight);
             if (!frame.hasSquarePixels) {
                 const scaleMapping = AST.scaleMap2D(1.0, 1.0 / frame.aspectRatio);
                 const newFrame = AST.frame(2, "Domain=PIXEL");

@@ -5,7 +5,7 @@ import {AstSvgGenerator} from "./AstSvgGenerator";
 export class SvgGenerator {
     private astSvgGenerator = new AstSvgGenerator();
 
-    setOverlayPlotFunction = (func: (canvasContext: CanvasRenderingContext2D, canvasHeight: number) => void) => {
+    setOverlayPlotFunction = (func: () => void) => {
         this.astSvgGenerator.plotFunction = func;
     };
 

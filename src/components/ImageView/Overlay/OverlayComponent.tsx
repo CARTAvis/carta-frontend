@@ -50,7 +50,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     renderCanvas = () => {
         this.updateImageDimensions();
-        this.props.overlaySettings.plot(this.canvas?.getContext("2d"), this.canvas?.height, this.props.image);
+        if (this.canvas) {
+            AST.setCanvas(this.canvas.getContext("2d"), this.canvas.height);
+            this.props.overlaySettings.plot(this.props.image);
+        }
     };
 
     throttledRenderCanvas = _.throttle(this.renderCanvas, 50);
