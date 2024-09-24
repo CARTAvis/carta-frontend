@@ -162,7 +162,7 @@ export class AppStore {
     public zIndexManager = new FloatingObjzIndexManager();
 
     // svg export
-    private svgGenerator = new SvgGenerator();
+    svgGenerator = new SvgGenerator();
 
     exportSvg = () => {
         if (!this.activeImage) {
@@ -178,9 +178,11 @@ export class AppStore {
         const pixelRatio = devicePixelRatio * this.imageRatio;
         const width = this.overlayStore.fullViewWidth * pixelRatio;
         const height = this.overlayStore.fullViewHeight * pixelRatio;
+        const leftPadding = this.overlayStore.padding.left * pixelRatio;
+        const topPadding = this.overlayStore.padding.top * pixelRatio;
 
         this.svgGenerator.setOverlayPlotFunction(() => this.overlayStore.plot(this.activeImage));
-        this.svgGenerator.exportSvg(width, height);
+        this.svgGenerator.exportSvg(width, height, leftPadding, topPadding);
     };
 
     private appContainer: HTMLElement;

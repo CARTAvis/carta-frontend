@@ -44,7 +44,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     @observable creatingRegion: RegionStore;
     @observable currentCursorPos: Point2D;
 
-    private stageRef;
+    private stageRef: React.MutableRefObject<Konva.Stage>;
+    private layerRef: React.MutableRefObject<Konva.Layer>;
     private stageResizeOffset: Point2D;
     private regionStartPoint: Point2D;
     private mousePreviousClick: Point2D = {x: -1000, y: -1000};
@@ -54,13 +55,13 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private initialDragCenter: Point2D;
     private initialPinchZoom: number;
     private initialPinchDistance: number;
-    private layerRef = React.createRef<any>();
 
     constructor(props: any) {
         super(props);
         makeObservable(this);
 
-        this.stageRef = React.createRef();
+        this.stageRef = React.createRef<Konva.Stage>();
+        this.layerRef = React.createRef<Konva.Layer>();
         this.stageResizeOffset = {x: 0, y: 0};
 
         // Sync stage when matched, tracking frame's spatialReference only.
@@ -727,7 +728,16 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     x={0}
                     y={0}
                 >
-                    <Layer ref={this.layerRef} opacity={regionSet.locked ? 0.7 * regionSet.opacity : regionSet.opacity} listening={!regionSet.locked}>
+                    <Layer
+                        ref={ref => {
+                            this.layerRef.current = ref;
+                            if (AppStore.Instance.activeFrame === this.props.frame) {
+                                AppStore.Instance.svgGenerator.regionLayerRef = ref;
+                            }
+                        }}
+                        opacity={regionSet.locked ? 0.7 * regionSet.opacity : regionSet.opacity}
+                        listening={!regionSet.locked}
+                    >
                         <RegionComponents frame={frame} regions={frame?.regionSet?.regionsAndAnnotationsForRender} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         <CursorRegionComponent frame={frame} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         {creatingLine}
