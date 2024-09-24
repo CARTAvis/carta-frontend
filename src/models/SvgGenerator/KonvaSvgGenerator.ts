@@ -54,6 +54,44 @@ export class KonvaSvgGenerator {
                 console.warn("TODO: support ellipse");
                 break;
             }
+            case "Rect": {
+                const colorStops = shape.fillLinearGradientColorStops();
+                if (colorStops?.length) {
+                    const pos = shape.position();
+                    const startPoint = shape.fillLinearGradientStartPoint();
+                    const endPoint = shape.fillLinearGradientEndPoint();
+
+                    if (!this.layerRef) {
+                        break;
+                    }
+                    const mockCanvasContext = this.layerRef.canvas.context._context;
+                    const pixelRatio = this.layerRef.canvas.pixelRatio;
+                    const gradient = mockCanvasContext.createLinearGradient(
+                        pos.x * pixelRatio + startPoint.x * pixelRatio,
+                        pos.y * pixelRatio + startPoint.y * pixelRatio,
+                        pos.x * pixelRatio + endPoint.x * pixelRatio,
+                        pos.y * pixelRatio + endPoint.y * pixelRatio
+                    );
+                    // must add color stops from offset 0 to offset 1
+                    for (let i = colorStops.length - 2; i > -1; i -= 2) {
+                        gradient.addColorStop(colorStops[i] as number, colorStops[i + 1] as string);
+                    }
+                    mockCanvasContext.fillStyle = gradient;
+
+                    shape.fillEnabled(false);
+                    shape.draw();
+                    shape.fillEnabled(true);
+                } else {
+                    shape.strokeScaleEnabled(true);
+                    const oldStokeWidth = shape.strokeWidth();
+                    const scale = shape.getStage()?.scale()?.x ?? 1;
+                    shape.strokeWidth(oldStokeWidth / scale);
+                    shape.draw();
+                    shape.strokeScaleEnabled(false);
+                    shape.strokeWidth(oldStokeWidth);
+                }
+                break;
+            }
             default: {
                 shape.strokeScaleEnabled(true);
                 const oldStokeWidth = shape.strokeWidth();

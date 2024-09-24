@@ -7,6 +7,7 @@ import {KonvaSvgGenerator} from "./KonvaSvgGenerator";
 
 export class SvgGenerator {
     regionLayerRef: Konva.Layer | null = null;
+    colorbarLayerRef: Konva.Layer | null = null;
 
     private astSvgGenerator = new AstSvgGenerator();
     private konvaSvgGenerator = new KonvaSvgGenerator();
@@ -21,8 +22,13 @@ export class SvgGenerator {
         this.konvaSvgGenerator.layerRef = this.regionLayerRef;
         const regionSvgElement = this.konvaSvgGenerator.generate(width, height, leftPadding, topPadding);
 
-        if (baseOverlaySvgElement && regionSvgElement) {
+        this.konvaSvgGenerator.layerRef = this.colorbarLayerRef;
+        const renderWidth = (this.regionLayerRef?.size().width ?? 0) * (this.regionLayerRef?.canvas.pixelRatio ?? 1);
+        const colorbarSvgElement = this.konvaSvgGenerator.generate(width, height, renderWidth + leftPadding, 0);
+
+        if (baseOverlaySvgElement && regionSvgElement && colorbarSvgElement) {
             baseOverlaySvgElement.appendChild(regionSvgElement);
+            baseOverlaySvgElement.appendChild(colorbarSvgElement);
             exportSvgFile(baseOverlaySvgElement);
         }
     };

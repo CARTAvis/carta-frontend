@@ -1,6 +1,7 @@
 import * as React from "react";
 import {Layer, Line, Rect, Stage, Text} from "react-konva";
 import {fonts} from "ast_wrapper";
+import Konva from "konva";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
@@ -23,7 +24,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
     @observable isHovering: boolean = false;
     @observable cursorY: number = -1;
     private mouseEnterHandle;
-    private layerRef = React.createRef<any>();
+    private layerRef: React.MutableRefObject<Konva.Layer> = React.createRef<Konva.Layer>();
 
     private static readonly HoverDelay = 500;
 
@@ -284,7 +285,14 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         return (
             <React.Fragment>
                 <Stage className={"colorbar-stage"} width={stageWidth} height={stageHeight} style={{left: stageLeft, top: stageTop}} onMouseEnter={this.onMouseEnter} onMouseMove={this.handleMouseMove} onMouseLeave={this.onMouseLeave}>
-                    <Layer ref={this.layerRef}>
+                    <Layer
+                        ref={ref => {
+                            this.layerRef.current = ref;
+                            if (AppStore.Instance.activeFrame === this.props.frame) {
+                                AppStore.Instance.svgGenerator.colorbarLayerRef = ref;
+                            }
+                        }}
+                    >
                         {colorbar}
                         {ticks}
                         {numbers}
