@@ -4,7 +4,7 @@ import {Context} from "svgcanvas";
 export class KonvaSvgGenerator {
     layerRef: Konva.Layer | null = null;
 
-    generate = (width: number, height: number, leftPadding: number, topPadding: number): (HTMLElement & SVGElement) | null => {
+    generate = (width: number, height: number, leftOffset: number, topOffset: number): (HTMLElement & SVGElement) | null => {
         if (!this.layerRef) {
             console.error("Konva layer unset.");
             return null;
@@ -12,7 +12,7 @@ export class KonvaSvgGenerator {
 
         const mockCanvasContext = new Context({width, height});
         mockCanvasContext.imageSmoothingEnabled = false;
-        mockCanvasContext.translate(leftPadding, topPadding);
+        mockCanvasContext.translate(leftOffset, topOffset);
         mockCanvasContext.scale(this.layerRef.canvas.pixelRatio);
 
         mockCanvasContext.beginPath();

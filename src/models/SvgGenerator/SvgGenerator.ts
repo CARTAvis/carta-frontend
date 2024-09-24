@@ -23,8 +23,10 @@ export class SvgGenerator {
         const regionSvgElement = this.konvaSvgGenerator.generate(width, height, leftPadding, topPadding);
 
         this.konvaSvgGenerator.layerRef = this.colorbarLayerRef;
-        const renderWidth = (this.regionLayerRef?.size().width ?? 0) * (this.regionLayerRef?.canvas.pixelRatio ?? 1);
-        const colorbarSvgElement = this.konvaSvgGenerator.generate(width, height, renderWidth + leftPadding, 0);
+        const pixelRatio = this.colorbarLayerRef?.canvas.pixelRatio ?? 1;
+        const leftOffset = this.colorbarLayerRef?.getStage().getAttr("container").offsetLeft ?? 0;
+        const topOffset = this.colorbarLayerRef?.getStage().getAttr("container").offsetTop ?? 0;
+        const colorbarSvgElement = this.konvaSvgGenerator.generate(width, height, leftOffset * pixelRatio, topOffset * pixelRatio);
 
         if (baseOverlaySvgElement && regionSvgElement && colorbarSvgElement) {
             baseOverlaySvgElement.appendChild(regionSvgElement);
