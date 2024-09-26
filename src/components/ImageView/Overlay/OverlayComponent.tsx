@@ -70,8 +70,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 const scaleMapping = AST.scaleMap2D(1.0, 1.0 / frame.aspectRatio);
                 const newFrame = AST.frame(2, "Domain=PIXEL");
                 AST.addFrame(tempWcsInfo, 1, scaleMapping, newFrame);
-                AST.setI(tempWcsInfo, "Base", frame.validWcs ? 3 : 2);
-                AST.setI(tempWcsInfo, "Current", frame.validWcs ? 2 : 1);
+                AST.setI(tempWcsInfo, "Base", frame.validWcs || frame.isPVImage || frame.isSwappedZ ? 3 : 2);
+                AST.setI(tempWcsInfo, "Current", frame.validWcs || frame.isPVImage || frame.isSwappedZ ? 2 : 1);
             }
 
             if (frame.isOffsetCoord && OverlayStore.Instance.isWcsCoordinates) {
