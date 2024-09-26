@@ -6,6 +6,9 @@
     .file-menu .#{$ns}-button {
         white-space: nowrap;
         width: 100%;
+        .#{$ns}-button-text {
+            min-width: 3.5em;
+        }
     }
     .#{$ns}-form-group {
         &:first-of-type {
@@ -14,8 +17,8 @@
     }
 
     .#{$ns}-form-group.#{$ns}-inline.file-menu .#{$ns}-label {
-        width: 3em;
-        min-width: 3em;
+        width: 4em;
+        min-width: 4em;
         text-align: right;
     }
 

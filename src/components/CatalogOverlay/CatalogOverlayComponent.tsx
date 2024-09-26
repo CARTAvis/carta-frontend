@@ -758,6 +758,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             <Button text={activeSystem} disabled={!isImageOverlay} rightIcon="double-caret-vertical" data-testid="catalog-system-dropdown" />
                         </Select>
                     </FormGroup>
+                    <FormGroup inline={true} label="Show header">
+                        <Switch checked={catalogWidgetStore.showCatalogHeader} onChange={catalogWidgetStore.toggleCatalogHeader} />
+                    </FormGroup>
 
                     <ButtonGroup className="catalog-map-buttons">
                         <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.SIZE)}>Size</AnchorButton>
@@ -771,7 +774,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     primary={"second"}
                     minSize={`${CatalogWidgetStore.MinTableSeparatorPosition}%`}
                     maxSize={`${CatalogWidgetStore.MaxTableSeparatorPosition}%`}
-                    size={catalogWidgetStore.tableSeparatorPosition}
+                    size={catalogWidgetStore.showCatalogHeader ? catalogWidgetStore.tableSeparatorPosition : "100%"}
                     onChange={this.onTableResize}
                 >
                     <Pane className={"catalog-overlay-column-header-container"}>{this.createHeaderTable()}</Pane>

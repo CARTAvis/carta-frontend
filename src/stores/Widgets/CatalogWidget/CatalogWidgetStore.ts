@@ -43,8 +43,8 @@ export enum CatalogSettingsTabs {
 }
 
 export enum TabDisplayMode {
-    Symbol = "Symbol",
-    Source = "Source"
+    Canvas = "Canvas",
+    World = "World"
 }
 
 export type ValueClip = "size-min" | "size-max" | "angle-min" | "angle-max";
@@ -53,8 +53,8 @@ export class CatalogWidgetStore {
     public static readonly MinOverlaySize = 1;
     public static readonly MaxOverlaySize = 50;
     public static readonly MaxAreaSize = 4000;
-    public static readonly MinTableSeparatorPosition = 5;
-    public static readonly MaxTableSeparatorPosition = 95;
+    public static readonly MinTableSeparatorPosition = 0;
+    public static readonly MaxTableSeparatorPosition = 100;
     public static readonly MinThickness = 1.0;
     public static readonly MaxThickness = 10;
     public static readonly MinAngle = 0;
@@ -131,6 +131,8 @@ export class CatalogWidgetStore {
     @observable angleMax: number;
     @observable angleMin: number;
 
+    @observable showCatalogHeader: boolean;
+
     constructor(catalogFileId: number) {
         makeObservable(this);
         this.catalogFileId = catalogFileId;
@@ -180,7 +182,9 @@ export class CatalogWidgetStore {
         this.isAngularSize = false;
         this.factorToArasec = 1.0;
         this.sizeUnit = AngularSizeUnit.ARCSEC;
-        this.tabDisplayMode = TabDisplayMode.Symbol;
+        this.tabDisplayMode = TabDisplayMode.Canvas;
+
+        this.showCatalogHeader = false;
 
         reaction(
             () => this.sizeMapData,
@@ -576,7 +580,7 @@ export class CatalogWidgetStore {
 
     @action setTabDisplayMode(value: TabDisplayMode) {
         this.tabDisplayMode = value;
-        // value === TabDisplayMode.Source ? this.isAngularSize = true: this.isAngularSize = false; 
+        this.isAngularSize = this.tabDisplayMode === TabDisplayMode.World ? true : false;
     }
 
     @action toggleAbsoluteSize = () => {
@@ -684,6 +688,10 @@ export class CatalogWidgetStore {
             return new Float32Array(0);
         }
     }
+
+    @action toggleCatalogHeader = () => {
+        this.showCatalogHeader = !this.showCatalogHeader;
+    };
 
     orientationArray(): Float32Array {
         let column = this.orientationMapData;
