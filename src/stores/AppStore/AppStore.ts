@@ -2040,6 +2040,7 @@ export class AppStore {
         reaction(
             () => this.activeImage,
             image => {
+                this.widgetsStore.updateRenderConfigSettingsVisibility();
                 if (image) {
                     if (image.type !== ImageType.PV_PREVIEW) {
                         this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
@@ -2605,6 +2606,28 @@ export class AppStore {
                 }
             }
 
+            if (workspace.colorBlendingImages) {
+                workspace.colorBlendingImages.sort((a, b) => a.imageListIndex - b.imageListIndex);
+
+                for (const {imageListIndex, selectedFrameId, alpha} of workspace.colorBlendingImages) {
+                    const colorBlending = this.imageViewConfigStore.createColorBlending();
+                    while (colorBlending.selectedFrames.length) {
+                        colorBlending.deleteSelectedFrame(0);
+                    }
+                    colorBlending.setAlpha(0, alpha[0]);
+
+                    for (let i = 0; i < selectedFrameId.length; i++) {
+                        const frame = this.frameMap.get(frameIdMap.get(selectedFrameId[i]));
+                        if (frame) {
+                            colorBlending.addSelectedFrame(frame);
+                            colorBlending.setAlpha(colorBlending.selectedFrames.length, alpha[i + 1]);
+                        }
+                    }
+
+                    this.reorderFrame(this.imageViewConfigStore.imageNum - 1, imageListIndex, 1);
+                }
+            }
+
             // Sync up raster scaling once all images are loaded and configured
             if (this.rasterScalingReference) {
                 this.rasterScalingReference.renderConfig.updateSiblings();
@@ -2628,6 +2651,7 @@ export class AppStore {
             frontendVersion: CARTA_INFO.version,
             description: "Workspace exported from CARTA",
             files: [],
+            colorBlendingImages: [],
             references: {},
             date: Date.now() / 1000
         };
@@ -2733,6 +2757,11 @@ export class AppStore {
             }
 
             workspace.files.push(workspaceFile);
+        }
+
+        for (const [id, colorBlending] of this.imageViewConfigStore.colorBlendingImageMap) {
+            const index = this.imageViewConfigStore.getImageListIndex(ImageType.COLOR_BLENDING, id);
+            workspace.colorBlendingImages.push({imageListIndex: index, selectedFrameId: colorBlending.selectedFrames.map(f => f.id), alpha: colorBlending.alpha});
         }
 
         if (hasTemporaryFiles) {

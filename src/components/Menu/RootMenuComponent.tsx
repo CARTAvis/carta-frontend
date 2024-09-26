@@ -228,15 +228,31 @@ export class RootMenuComponent extends React.Component {
             );
         }
 
+        let saveImageTooltip: string | React.JSX.Element = "";
+        let hideImageTooltip = true;
+        if (appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY) {
+            saveImageTooltip = "Not allowed in read-only mode";
+            hideImageTooltip = false;
+        } else if (appStore.activeImage?.type !== ImageType.FRAME) {
+            saveImageTooltip = (
+                <span>
+                    Color-blending and PV preview images cannot be saved.
+                    <br />
+                    <small>To save color-blending images, please save as a workspace via the File menu.</small>
+                </span>
+            );
+            hideImageTooltip = false;
+        }
+
         const fileMenu = (
             <Menu>
                 <MenuItem text="Open Image" label={`${modString}O`} disabled={appStore.openFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, false)} />
                 <MenuItem text="Append Image" label={`${modString}L`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)} />
-                <Tooltip content={"Not allowed in read-only mode"} disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY} position={Position.LEFT}>
+                <Tooltip content={saveImageTooltip} disabled={hideImageTooltip} position={Position.LEFT}>
                     <MenuItem
                         text="Save Image"
                         label={`${modString}S`}
-                        disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY}
+                        disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY || appStore.activeImage?.type !== ImageType.FRAME}
                         onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)}
                     />
                 </Tooltip>

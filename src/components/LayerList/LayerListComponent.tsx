@@ -117,11 +117,24 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const appStore = AppStore.Instance;
         const config = appStore.imageViewConfigStore;
         const image = config?.getImage(rowIndex);
-        if (rowIndex < 0 || rowIndex >= config?.imageNum || image?.type === ImageType.COLOR_BLENDING) {
+        if (rowIndex < 0 || rowIndex >= config?.imageNum) {
             return <Cell />;
         }
 
-        const frame = image?.store;
+        const isColorBlending = image?.type === ImageType.COLOR_BLENDING;
+        const frame = isColorBlending ? image.store?.baseFrame : image?.store;
+
+        const rasterVisible = isColorBlending ? image.store.rasterVisible : frame.renderConfig.visible;
+        const toggleRasterVisible = isColorBlending ? image.store.toggleRasterVisible : frame.renderConfig.toggleVisibility;
+
+        const showContourButton = isColorBlending ? image.store.frames.map(f => f.contourConfig.enabled).includes(true) : frame.contourConfig.enabled;
+        const contourVisible = isColorBlending ? image.store.contourVisible : frame.contourConfig.visible;
+        const toggleContourVisible = isColorBlending ? image.store.toggleContourVisible : frame.contourConfig.toggleVisibility;
+
+        const showVectorOverlayButton = isColorBlending ? image.store.frames.map(f => f.vectorOverlayConfig.enabled).includes(true) : frame.vectorOverlayConfig.enabled;
+        const vectorOverlayVisible = isColorBlending ? image.store.vectorOverlayVisible : frame.vectorOverlayConfig.visible;
+        const toggleVectorOverlayVisible = isColorBlending ? image.store.toggleVectorOverlayVisible : frame.vectorOverlayConfig.toggleVisibility;
+
         const className = classNames("row-cell", {active: rowIndex === appStore.activeImageIndex});
         return (
             <Cell className={className}>
@@ -133,16 +146,16 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                                 Raster layer
                                 <br />
                                 <i>
-                                    <small>Click to {frame.renderConfig.visible ? "hide" : "show"}</small>
+                                    <small>Click to {rasterVisible ? "hide" : "show"}</small>
                                 </i>
                             </span>
                         }
                     >
-                        <AnchorButton minimal={true} small={true} active={frame.renderConfig.visible} intent={frame.renderConfig.visible ? "success" : "none"} onClick={frame.renderConfig.toggleVisibility}>
+                        <AnchorButton minimal={true} small={true} active={rasterVisible} intent={rasterVisible ? "success" : "none"} onClick={toggleRasterVisible}>
                             R
                         </AnchorButton>
                     </Tooltip>
-                    {frame.contourConfig.enabled && (
+                    {showContourButton && (
                         <Tooltip
                             position={"bottom"}
                             content={
@@ -150,17 +163,17 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                                     Contour layer
                                     <br />
                                     <i>
-                                        <small>Click to {frame.contourConfig.visible ? "hide" : "show"}</small>
+                                        <small>Click to {contourVisible ? "hide" : "show"}</small>
                                     </i>
                                 </span>
                             }
                         >
-                            <AnchorButton minimal={true} small={true} active={frame.contourConfig.visible} intent={frame.contourConfig.visible ? "success" : "none"} onClick={frame.contourConfig.toggleVisibility}>
+                            <AnchorButton minimal={true} small={true} active={contourVisible} intent={contourVisible ? "success" : "none"} onClick={toggleContourVisible}>
                                 C
                             </AnchorButton>
                         </Tooltip>
                     )}
-                    {frame.vectorOverlayConfig.enabled && (
+                    {showVectorOverlayButton && (
                         <Tooltip
                             position={"bottom"}
                             content={
@@ -168,12 +181,12 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                                     Vector overlay layer
                                     <br />
                                     <i>
-                                        <small>Click to {frame.vectorOverlayConfig.visible ? "hide" : "show"}</small>
+                                        <small>Click to {vectorOverlayVisible ? "hide" : "show"}</small>
                                     </i>
                                 </span>
                             }
                         >
-                            <AnchorButton minimal={true} small={true} active={frame.vectorOverlayConfig.visible} intent={frame.vectorOverlayConfig.visible ? "success" : "none"} onClick={frame.vectorOverlayConfig.toggleVisibility}>
+                            <AnchorButton minimal={true} small={true} active={vectorOverlayVisible} intent={vectorOverlayVisible ? "success" : "none"} onClick={toggleVectorOverlayVisible}>
                                 V
                             </AnchorButton>
                         </Tooltip>
@@ -406,14 +419,33 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const activeImageIndex = appStore.activeImageIndex;
         const visibilityRaster = appStore.frames.map(f => f.renderConfig.visible);
         const visibilityContour = appStore.frames.map(f => f.contourConfig.visible && f.contourConfig.enabled);
-        const visibilityOverlay = appStore.frames.map(f => f.vectorOverlayConfig.visible && f.vectorOverlayConfig.enabled);
+        const visibilityVector = appStore.frames.map(f => f.vectorOverlayConfig.visible && f.vectorOverlayConfig.enabled);
+        const blendingVisibilityRaster = appStore.imageViewConfigStore.colorBlendingImages.map(x => x.rasterVisible);
+        const blendingVisibilityContour = appStore.imageViewConfigStore.colorBlendingImages.map(x => x.contourVisible);
+        const blendingVisibilityVector = appStore.imageViewConfigStore.colorBlendingImages.map(x => x.vectorOverlayVisible);
         const f1 = appStore.frames.map(f => f.spatialReference);
         const f2 = appStore.frames.map(f => f.spectralReference);
         const f3 = appStore.frames.map(f => f.rasterScalingReference);
         const currentSpectralReference = appStore.spectralReference;
         const currentSpatialReference = appStore.spatialReference;
         const currentRasterScalingReference = appStore.rasterScalingReference;
-        const cellRendererDependencies = [frameChannels, frameStokes, activeImageIndex, visibilityRaster, visibilityContour, visibilityOverlay, f1, f2, f3, currentSpectralReference, currentSpatialReference, currentRasterScalingReference];
+        const cellRendererDependencies = [
+            frameChannels,
+            frameStokes,
+            activeImageIndex,
+            visibilityRaster,
+            visibilityContour,
+            visibilityVector,
+            blendingVisibilityRaster,
+            blendingVisibilityContour,
+            blendingVisibilityVector,
+            f1,
+            f2,
+            f3,
+            currentSpectralReference,
+            currentSpatialReference,
+            currentRasterScalingReference
+        ];
 
         return (
             <div className="layer-list-widget">

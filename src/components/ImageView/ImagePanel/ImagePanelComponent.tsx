@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
 import {CursorInfo, CursorInfoVisibility, ImageItem, ImageType, Zoom} from "models";
-import {AnimationMode, AppStore, type FrameStore} from "stores";
+import {AnimationMode, AppStore, ColorBlendingStore, type FrameStore} from "stores";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
 import {CatalogViewGLComponent} from "../CatalogView/CatalogViewGLComponent";
@@ -155,11 +155,15 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                 }
             }
 
+            const showRaster = !isColorBlending || (isColorBlending && (this.props.image.store as ColorBlendingStore).rasterVisible);
+            const showContour = !isColorBlending || (isColorBlending && (this.props.image.store as ColorBlendingStore).contourVisible);
+            const showVector = !isColorBlending || (isColorBlending && (this.props.image.store as ColorBlendingStore).vectorOverlayVisible);
+
             return (
                 <div id={`image-panel-${this.props.column}-${this.props.row}`} className={className} style={style} onWheel={this.onMouseWheel} onMouseDown={this.onMouseDown} onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-                    <RasterViewComponent image={this.props.image} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} row={this.props.row} column={this.props.column} />
-                    <ContourViewComponent frame={this.frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />
-                    <VectorOverlayViewComponent frame={this.frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />
+                    {showRaster && <RasterViewComponent image={this.props.image} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} row={this.props.row} column={this.props.column} />}
+                    {showContour && <ContourViewComponent frame={this.frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />}
+                    {showVector && <VectorOverlayViewComponent frame={this.frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />}
                     {overlayStore?.visible && <OverlayComponent image={this.props.image} overlaySettings={overlayStore} docked={this.props.docked} />}
                     {this.cursorInfoRequired && this.frame.cursorInfo && !isColorBlending && (
                         <CursorOverlayComponent

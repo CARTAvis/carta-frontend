@@ -30,54 +30,6 @@ const CUSTOM_COLOR_MAP_OPTIONS = [...RenderConfigStore.COLOR_MAPS_SELECTED, ...R
 export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
     const items = props.enableAdditionalColor ? CUSTOM_COLOR_MAP_OPTIONS : RenderConfigStore.COLOR_MAPS_SELECTED;
 
-    const renderColormapBlock = (colormap: string) => {
-        const className = "colormap-block";
-        const blockHeight = 15;
-
-        if (colormap === RenderConfigStore.COLOR_MAPS_CUSTOM) {
-            return (
-                <div
-                    className={className}
-                    style={{
-                        transform: `scaleX(${props.inverted ? -1 : 1})`,
-                        height: `${blockHeight}px`,
-                        backgroundImage: `linear-gradient(to right, ${props.customColorStart}, ${props.selectedCustomColor})`,
-                        backgroundSize: `100% 300%`,
-                        backgroundPosition: `0 calc(-300% - ${blockHeight}px)`
-                    }}
-                />
-            );
-        } else if (RenderConfigStore.COLOR_MAPS_MONO.get(colormap)) {
-            return (
-                <div
-                    className={className}
-                    style={{
-                        transform: `scaleX(${props.inverted ? -1 : 1})`,
-                        height: `${blockHeight}px`,
-                        backgroundImage: `linear-gradient(to right, black, ${RenderConfigStore.COLOR_MAPS_MONO.get(colormap)})`,
-                        backgroundSize: `100% 300%`,
-                        backgroundPosition: `0 calc(-300% - ${blockHeight}px)`
-                    }}
-                />
-            );
-        } else {
-            const N = RenderConfigStore.COLOR_MAPS_ALL.length - RenderConfigStore.COLOR_MAPS_MONO.size;
-            const i = RenderConfigStore.COLOR_MAPS_ALL.indexOf(colormap);
-            return (
-                <div
-                    className={className}
-                    style={{
-                        transform: `scaleX(${props.inverted ? -1 : 1})`,
-                        height: `${blockHeight}px`,
-                        backgroundImage: `url(${allMaps})`,
-                        backgroundSize: `100% calc(300% * ${N})`,
-                        backgroundPosition: `0 calc(300% * -${i} - ${blockHeight}px)`
-                    }}
-                />
-            );
-        }
-    };
-
     const renderColormapSelectItem = (colormap: string, {handleClick, modifiers, query}) => {
         const disableAlpha = true;
         const changeDelay = 100;
@@ -102,13 +54,67 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
                 </div>
             );
         } else {
-            return <MenuItem active={modifiers.active} disabled={modifiers.disabled} label={colormap} key={colormap} onClick={handleClick} text={renderColormapBlock(colormap)} />;
+            const colormapBlock = <ColormapBlock colormap={colormap} inverted={props.inverted} customColorStart={props.customColorStart} selectedCustomColor={props.selectedCustomColor} />;
+            return <MenuItem active={modifiers.active} disabled={modifiers.disabled} label={colormap} key={colormap} onClick={handleClick} text="" icon={colormapBlock} />;
         }
     };
 
+    const colormapBlock = <ColormapBlock colormap={props.selectedColormap} inverted={props.inverted} customColorStart={props.customColorStart} selectedCustomColor={props.selectedCustomColor} />;
     return (
         <ColorMapSelect disabled={props.disabled} activeItem={props.selectedColormap} popoverProps={COLORMAP_POPOVER_PROPS} filterable={false} items={items} onItemSelect={props.onColormapSelect} itemRenderer={renderColormapSelectItem}>
-            <Button disabled={props.disabled} text={renderColormapBlock(props.selectedColormap)} rightIcon="double-caret-vertical" alignText={"right"} data-testid="colormap-dropdown" />
+            <Button disabled={props.disabled} text={colormapBlock} rightIcon="double-caret-vertical" alignText={"right"} data-testid="colormap-dropdown" />
         </ColorMapSelect>
     );
+};
+
+export const ColormapBlock = ({colormap, inverted, roundIcon = false, customColorStart, selectedCustomColor}: {colormap: string; inverted: boolean; roundIcon?: boolean; customColorStart?: string; selectedCustomColor?: string}) => {
+    const className = "colormap-block";
+    const blockHeight = 15;
+
+    if (colormap === RenderConfigStore.COLOR_MAPS_CUSTOM) {
+        return (
+            <div
+                className={className}
+                style={{
+                    transform: `scaleX(${inverted ? -1 : 1})`,
+                    height: `${blockHeight}px`,
+                    backgroundImage: `linear-gradient(to right, ${customColorStart}, ${selectedCustomColor})`,
+                    backgroundSize: `100% 300%`,
+                    backgroundPosition: `0 calc(-300% - ${blockHeight}px)`
+                }}
+            />
+        );
+    } else if (RenderConfigStore.COLOR_MAPS_MONO.get(colormap)) {
+        return (
+            <div
+                className={className}
+                style={{
+                    transform: `scaleX(${inverted ? -1 : 1})`,
+                    height: `${blockHeight}px`,
+                    width: roundIcon ? `${blockHeight}px` : undefined,
+                    borderRadius: roundIcon ? `100%` : undefined,
+                    backgroundImage: `linear-gradient(to right, black, ${RenderConfigStore.COLOR_MAPS_MONO.get(colormap)})`,
+                    backgroundSize: `100% 300%`,
+                    backgroundPosition: `0 calc(-300% - ${blockHeight}px)`
+                }}
+            />
+        );
+    } else {
+        const N = RenderConfigStore.COLOR_MAPS_ALL.length - RenderConfigStore.COLOR_MAPS_MONO.size;
+        const i = RenderConfigStore.COLOR_MAPS_ALL.indexOf(colormap);
+        return (
+            <div
+                className={className}
+                style={{
+                    transform: `scaleX(${inverted ? -1 : 1})`,
+                    height: `${blockHeight}px`,
+                    width: roundIcon ? `${blockHeight}px` : undefined,
+                    borderRadius: roundIcon ? `100%` : undefined,
+                    backgroundImage: `url(${allMaps})`,
+                    backgroundSize: `100% calc(300% * ${N})`,
+                    backgroundPosition: `0 calc(300% * -${i} - ${blockHeight}px)`
+                }}
+            />
+        );
+    }
 };

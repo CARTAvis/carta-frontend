@@ -9,6 +9,7 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {AppToaster, ErrorToast, SimpleTableComponentProps} from "components/Shared";
+import {ImageType} from "models";
 import {AppStore, BrowserMode, CatalogProfileStore, DialogId, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
@@ -64,6 +65,22 @@ export class FileBrowserDialogComponent extends React.Component {
                 this.imageArithmeticString = `"${file.fileInfo.name}"`;
             }
             this.imageArithmeticInputRef.current?.focus();
+        }
+    };
+
+    private loadWithColorBlending = async () => {
+        try {
+            await this.loadSelectedFiles();
+
+            const appStore = AppStore.Instance;
+            appStore.frames.forEach(f => appStore.setSpatialMatchingEnabled(f, true));
+            appStore.frames.forEach(f => appStore.setRasterScalingMatchingEnabled(f, false));
+            appStore.frames.forEach(f => f.renderConfig.setPercentileRank(appStore.preferenceStore.percentile));
+            const colorBlendingStore = appStore.imageViewConfigStore.createColorBlending();
+
+            colorBlendingStore.applyColormapSet(appStore.fileBrowserStore.selectedFiles?.length <= 3 ? "RGB" : "Rainbow");
+        } catch (err) {
+            console.error(err);
         }
     };
 
@@ -388,16 +405,38 @@ export class FileBrowserDialogComponent extends React.Component {
                                         <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => appStore.dialogStore.showDialog(DialogId.Stokes)} text={"Load as hypercube"} />
                                     </Tooltip>
                                 )}
+                                {fileBrowserStore.selectedFiles?.length > 1 && (
+                                    <Tooltip content={"Close any existing images and load the images"}>
+                                        <AnchorButton
+                                            intent={Intent.PRIMARY}
+                                            disabled={actionDisabled}
+                                            onClick={this.loadWithColorBlending}
+                                            text={fileBrowserStore.selectedFiles?.length <= 3 ? "Load with RGB blending" : "Load with multi-color blending"}
+                                        />
+                                    </Tooltip>
+                                )}
                             </div>
                         );
                     }
                 }
             case BrowserMode.SaveFile:
                 return (
-                    <Tooltip content={"Save this file"}>
+                    <Tooltip
+                        content={
+                            appStore.activeImage?.type !== ImageType.FRAME ? (
+                                <span>
+                                    Color-blending and PV preview images cannot be saved.
+                                    <br />
+                                    <small>To save color-blending images, please save as a workspace via the File menu.</small>
+                                </span>
+                            ) : (
+                                "Save this file"
+                            )
+                        }
+                    >
                         <AnchorButton
                             intent={Intent.PRIMARY}
-                            disabled={appStore.fileLoading || fileBrowserStore.loadingInfo || appStore.fileSaving || fileBrowserStore.saveFilename.length === 0}
+                            disabled={appStore.fileLoading || fileBrowserStore.loadingInfo || appStore.fileSaving || appStore.activeImage?.type !== ImageType.FRAME || fileBrowserStore.saveFilename.length === 0}
                             onClick={this.handleSaveFileClicked}
                             text="Save"
                         />
