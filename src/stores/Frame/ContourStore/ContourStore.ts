@@ -19,6 +19,8 @@ export class ContourStore {
     // Each vertex is repeated twice
     private static VertexDataElements = 8;
 
+    contourData: Float32Array[] = [];
+
     get hasValidData() {
         if (!this.vertexData) {
             return false;
@@ -70,6 +72,9 @@ export class ContourStore {
 
         this.vertexCount += numVertices;
         this.chunkCount++;
+
+        // TODO: add modes for preserving/deleting CPU data
+        this.contourData.push(vertexData.slice());
     };
 
     private generateBuffers(index: number) {
@@ -105,6 +110,8 @@ export class ContourStore {
             }
             this.vertexBuffers = [];
         }
+
+        this.contourData = [];
     };
 
     bindBuffer(index: number) {

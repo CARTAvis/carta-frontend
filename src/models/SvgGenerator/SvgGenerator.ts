@@ -41,6 +41,15 @@ export class SvgGenerator {
         this.webglSvgGenerator.nanColorHex = nanColorHex;
     };
 
+    setContourData = (contourData: Map<number, Float32Array[]>) => {
+        this.webglSvgGenerator.contourData = contourData;
+    };
+
+    setContourRenderConfig = (width: number, color: string) => {
+        this.webglSvgGenerator.contourWidth = width;
+        this.webglSvgGenerator.contourColor = color;
+    };
+
     exportSvg = async (width: number, height: number, topPadding: number, leftPadding: number, bottomPadding: number, rightPadding: number) => {
         const baseOverlaySvgElement = this.astSvgGenerator.generate(width, height);
 

@@ -24,8 +24,15 @@ export class WebglSvgGenerator {
     scaleMaxVal: number;
     nanColorHex: string;
 
+    // contour data
+    contourData: Map<number, Float32Array[]> = new Map(); // level, chuncks of vertexData
+
+    // contour render config
+    contourWidth: number;
+    contourColor: string;
+
     generate = async (width: number, height: number, topPadding: number, leftPadding: number, bottomPadding: number, rightPadding: number): Promise<HTMLElement & SVGElement> => {
-        const data = this.getRasterDataTrace();
+        const data = [...this.getRasterDataTrace(), ...this.getContourDataTrace()];
 
         const layout = {
             autosize: false,
@@ -126,5 +133,47 @@ export class WebglSvgGenerator {
         };
 
         return [trace, nanTrace];
+    };
+
+    private getContourDataTrace = (): Plotly.Data[] => {
+        const data: Plotly.Data[] = [];
+
+        // for each level
+        this.contourData.forEach((vertexData, level) => {
+            // for each chunck
+            for (let i = 0; i < vertexData.length; i++) {
+                const x: (number | null)[] = [];
+                const y: (number | null)[] = [];
+
+                // for each point
+                for (let j = 0; j < vertexData[i].length; j += 8) {
+                    // check start of line
+                    // TODO: apply workaround for gaps between start and end of closed line
+                    if (vertexData[i][j + 2] === 0) {
+                        x.push(null);
+                        y.push(null);
+                    }
+
+                    // TODO: support spatially matched images
+                    x.push(vertexData[i][j] - 0.5);
+                    y.push(vertexData[i][j + 1] - 0.5);
+                }
+
+                // TODO: support dashed lines
+                // TODO: support color-mapped mode
+                data.push({
+                    x,
+                    y,
+                    mode: "lines",
+                    line: {
+                        width: this.contourWidth,
+                        color: this.contourColor
+                    },
+                    showlegend: false
+                });
+            }
+        });
+
+        return data;
     };
 }

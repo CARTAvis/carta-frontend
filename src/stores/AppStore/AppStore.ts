@@ -216,6 +216,14 @@ export class AppStore {
 
         this.svgGenerator.setRasterRenderConfig(frame.renderConfig.colorscaleArray, frame.renderConfig.scaleMinVal, frame.renderConfig.scaleMaxVal, this.preferenceStore.nanColorHex);
 
+        const contourData = new Map();
+        this.activeFrame.contourStores.forEach((store, level) => contourData.set(level, store.contourData));
+        this.svgGenerator.setContourData(contourData);
+
+        const contourWidth = this.activeFrame.contourConfig.thickness * pixelRatio;
+        const contourColor = `rgb(${this.activeFrame.contourConfig.color.r}, ${this.activeFrame.contourConfig.color.g}, ${this.activeFrame.contourConfig.color.b})`;
+        this.svgGenerator.setContourRenderConfig(contourWidth, contourColor);
+
         const width = this.overlayStore.fullViewWidth * pixelRatio;
         const height = this.overlayStore.fullViewHeight * pixelRatio;
 
