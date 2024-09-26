@@ -34,7 +34,7 @@ import {
     Workspace,
     WorkspaceFile
 } from "models";
-import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryAction, TelemetryService, TileService, TileStreamDetails} from "services";
+import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryAction, TelemetryService, TILE_SIZE, TileService, TileStreamDetails} from "services";
 import {
     AlertStore,
     AnimationMode,
@@ -175,14 +175,55 @@ export class AppStore {
             return;
         }
 
+        this.svgGenerator.setOverlayPlotFunction(() => this.overlayStore.plot(this.activeImage));
+
+        const frame = this.activeFrame;
+        const frameView = frame.requiredFrameView;
+        const imageSize = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
+        const boundedView = {
+            xMin: Math.max(0, frameView.xMin),
+            xMax: Math.min(frameView.xMax, imageSize.x),
+            yMin: Math.max(0, frameView.yMin),
+            yMax: Math.min(frameView.yMax, imageSize.y),
+            mip: frameView.mip
+        };
+        const requiredTiles = GetRequiredTiles(boundedView, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
+        const getTile = encodedCoordinate => TileService.Instance.getTile(encodedCoordinate, frame.frameInfo.fileId, frame.channel, frame.stokes);
+        this.svgGenerator.setRasterTileConfig(requiredTiles, getTile);
+
         const pixelRatio = devicePixelRatio * this.imageRatio;
+        if (frame.spatialReference && frame.spatialTransform) {
+            const spatialRef = frame.spatialReference || frame;
+            const full = spatialRef.requiredFrameView;
+
+            const scaledXMin = (frameView.xMax + frameView.xMin) / 2 - (full.xMax - full.xMin) / 2 / frame.spatialTransform.scale;
+            const scaledXMax = (frameView.xMax + frameView.xMin) / 2 + (full.xMax - full.xMin) / 2 / frame.spatialTransform.scale;
+            const scaledYMin = (frameView.yMax + frameView.yMin) / 2 - (full.yMax - full.yMin) / 2 / frame.spatialTransform.scale;
+            const scaledYMax = (frameView.yMax + frameView.yMin) / 2 + (full.yMax - full.yMin) / 2 / frame.spatialTransform.scale;
+
+            const rotationOrigin = {
+                x: (frame.renderWidth / (scaledXMax - scaledXMin)) * (frame.spatialTransform.origin.x - scaledXMin) * pixelRatio,
+                y: (frame.renderHeight / (scaledYMax - scaledYMin)) * (frame.spatialTransform.origin.y - scaledYMin) * pixelRatio
+            };
+
+            this.svgGenerator.setImageViewConfig(scaledXMin, scaledXMax, scaledYMin, scaledYMax, frameView.mip, {rotationOrigin: rotationOrigin, rotationAngle: -frame.spatialTransform.rotation});
+        } else {
+            this.svgGenerator.setImageViewConfig(frameView.xMin, frameView.xMax, frameView.yMin, frameView.yMax, frameView.mip, {
+                rotationOrigin: {x: 0, y: 0},
+                rotationAngle: 0
+            });
+        }
+
+        this.svgGenerator.setRasterRenderConfig(frame.renderConfig.colorscaleArray, frame.renderConfig.scaleMinVal, frame.renderConfig.scaleMaxVal, this.preferenceStore.nanColorHex);
+
         const width = this.overlayStore.fullViewWidth * pixelRatio;
         const height = this.overlayStore.fullViewHeight * pixelRatio;
-        const leftPadding = this.overlayStore.padding.left * pixelRatio;
-        const topPadding = this.overlayStore.padding.top * pixelRatio;
 
-        this.svgGenerator.setOverlayPlotFunction(() => this.overlayStore.plot(this.activeImage));
-        this.svgGenerator.exportSvg(width, height, leftPadding, topPadding);
+        const topPadding = this.overlayStore.padding.top * pixelRatio;
+        const leftPadding = this.overlayStore.padding.left * pixelRatio;
+        const bottomPadding = this.overlayStore.padding.bottom * pixelRatio;
+        const rightPadding = this.overlayStore.padding.right * pixelRatio;
+        this.svgGenerator.exportSvg(width, height, topPadding, leftPadding, bottomPadding, rightPadding);
     };
 
     private appContainer: HTMLElement;

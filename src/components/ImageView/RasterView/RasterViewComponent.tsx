@@ -297,7 +297,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
         if (rasterTile.data && !frame.isPreview) {
             tileService.uploadTileToGPU(rasterTile);
-            delete rasterTile.data;
+
+            // TODO: add modes for preserving/deleting CPU data
+            // delete rasterTile.data;
         }
 
         if (frame.isPreview && rasterTile.width * rasterTile.height === rasterTile.data.length) {
