@@ -62,7 +62,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
     };
 
     private onClickHelpButton = () => {
-        HelpStore.Instance.openHelpURL(this.props.helpURL)
+        HelpStore.Instance.openHelpURL(this.props.helpURL);
     };
 
     private onResizeStop = (e, direction, elementRef: HTMLDivElement) => {
