@@ -19,7 +19,10 @@ $shadow-color: rgba($blue2, 0.1);
         border: 1px solid $border-color-dark;
     }
     border-radius: 5px;
-    box-shadow: 0 0 0 1px rgba(16, 22, 26, 0.1), 0 4px 8px rgba(16, 22, 26, 0.15), 0 18px 46px 6px rgba(16, 22, 26, 0.15);
+    box-shadow:
+        0 0 0 1px rgba(16, 22, 26, 0.1),
+        0 4px 8px rgba(16, 22, 26, 0.15),
+        0 18px 46px 6px rgba(16, 22, 26, 0.15);
     margin-bottom: 0px;
     overflow: hidden;
     user-select: none;
