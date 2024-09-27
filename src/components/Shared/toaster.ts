@@ -29,12 +29,12 @@ export function ErrorToast(message: string): ToastProps {
     };
 }
 
-export function WarningToast(message: string): ToastProps {
+export function WarningToast(message: string, timeout: number = 30000): ToastProps {
     return {
         icon: "warning-sign",
         intent: "warning",
         message: message,
-        timeout: 30000,
+        timeout: timeout,
         action: {
             onClick: () => copyToClipboard(message),
             icon: "clipboard"

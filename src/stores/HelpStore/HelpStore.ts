@@ -1,5 +1,7 @@
 import {action, makeObservable} from "mobx";
 
+import {AppToaster, WarningToast} from "components/Shared";
+
 export enum HelpURL {
     // Dialogs
     CONTOUR = "https://carta.readthedocs.io/en/latest/image_visualization.html#contour-rendering",
@@ -70,10 +72,8 @@ export class HelpStore {
         return HelpStore.staticInstance;
     }
 
-    //@observable url: HelpURL;
-
     @action openHelpURL = (helpURL: HelpURL) => {
-        //this.url = helpURL;
         window.open(helpURL, "_blank", "width=1024");
+        AppToaster.show(WarningToast("Documentation will open in a new tab. Please ensure any popup blockers are disabled.", 10000));
     };
 }

@@ -1,12 +1,12 @@
 import * as React from "react";
-import {Alert, AnchorButton, Button, Classes, Icon, Intent, Menu, MenuDivider, MenuItem, Popover, Position, Switch, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, Icon, Intent, Menu, MenuDivider, MenuItem, Popover, Position, Switch, Tooltip} from "@blueprintjs/core";
 import {IconName} from "@blueprintjs/icons";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {AppToaster, ExportImageMenuComponent, SuccessToast} from "components/Shared";
+import {AppToaster, ExportImageMenuComponent, SuccessToast, WarningToast} from "components/Shared";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import {CARTA_INFO, ImageType, ImageViewItem, PresetLayout, Snippet} from "models";
 import {ApiService, ConnectionStatus} from "services";
@@ -509,16 +509,6 @@ export class RootMenuComponent extends React.Component {
                     </Menu>
                 </Popover>
                 <ToolbarMenuComponent />
-                <Alert
-                    className={classNames({[Classes.DARK]: appStore.darkTheme})}
-                    isOpen={this.documentationAlertVisible}
-                    onClose={this.handleAlertDismissed}
-                    canEscapeKeyCancel={true}
-                    canOutsideClickCancel={true}
-                    confirmButtonText={"Dismiss"}
-                >
-                    Documentation will open in a new tab. Please ensure any popup blockers are disabled.
-                </Alert>
                 {appStore.showNewRelease && (
                     <Popover content={newReleaseMessage} position={Position.BOTTOM_RIGHT}>
                         <Tooltip content="New release available!" position={Position.BOTTOM_RIGHT}>
@@ -574,15 +564,7 @@ export class RootMenuComponent extends React.Component {
 
     private handleDocumentationClicked = (url: string) => {
         window.open(url, "_blank", "width=1024");
-        if (process.env.REACT_APP_TARGET !== "linux" && process.env.REACT_APP_TARGET !== "darwin") {
-            this.documentationAlertVisible = true;
-            clearTimeout(this.documentationAlertTimeoutHandle);
-            this.documentationAlertTimeoutHandle = setTimeout(() => (this.documentationAlertVisible = false), 10000);
-        }
-    };
-
-    handleAlertDismissed = () => {
-        this.documentationAlertVisible = false;
+        AppToaster.show(WarningToast("Documentation will open in a new tab. Please ensure any popup blockers are disabled.", 10000));
     };
 
     handleImageSelect = (image: ImageViewItem) => {
