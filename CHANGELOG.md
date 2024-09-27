@@ -32,6 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed the catalog load button status after double clicking catalog files ([#2378](https://github.com/CARTAvis/carta-frontend/issues/2378)).
 * Synchronized the value format in the pan and zoom tab in the image view settings widget ([#2235](https://github.com/CARTAvis/carta-frontend/issues/2235)).
 * Fix save image/export regions bug which could cause directory overwrite or deletion ([#1377](https://github.com/CARTAvis/carta-backend/issues/1377)).
+### Changed
+* Changed Alert to Blueprint toast to show popup blocker warning message. Changed in-app help to refer to the online user manual and removed in-app help context from the codebase. ([#2241](https://github.com/CARTAvis/carta-frontend/issues/2241)).
+
 
 ## [4.1.0]
 
