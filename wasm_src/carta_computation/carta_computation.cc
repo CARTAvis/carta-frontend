@@ -266,8 +266,7 @@ float scaleValue(float x, int scaling, float alpha, float gamma) {
     }
 }
 
-void calculateCatalogMap(int mapType, float* data, size_t N, float dataMin, float dataMax, int clipMin, int clipMax, int scaling, float alpha, float gamma, int devicePixelRatio,
-                         bool invert) {
+void calculateCatalogMap(int mapType, float* data, size_t N, float dataMin, float dataMax, float clipMin, float clipMax, int scaling, float alpha, float gamma, float devicePixelRatio, bool invert) {
     float columnMin = scaleValue(dataMin, scaling, alpha, gamma);
     float columnMax = scaleValue(dataMax, scaling, alpha, gamma);
     float range = columnMax - columnMin;

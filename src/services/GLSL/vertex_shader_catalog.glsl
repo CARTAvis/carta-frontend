@@ -23,7 +23,6 @@ uniform bool uAreaMode;
 uniform bool uShowSelectedSource;
 uniform bool uSizeMinorMapEnabled;
 uniform bool uIsImagePixelSize;
-uniform bool uIsAngularSize;
 uniform bool uAreaModeMinor;
 uniform bool uCmapEnabled;
 uniform bool uOmapEnabled;
@@ -35,7 +34,7 @@ uniform float uScaleAdjustment;
 uniform float uZoomLevel;
 uniform float uPixelRatio;
 uniform float uPixelUnitSizeArcsec;
-uniform float uFactorToArcsec;
+// uniform float uFactorToArcsec;
 
 // Control-map based transformation
 uniform int uControlMapEnabled;
@@ -106,11 +105,10 @@ void main() {
     v_minorSize = -1.0;
     v_selected = float(selectedSource.x);
     v_pointSize = uPointSize;
-    v_featherWidth = uFeatherWidth;
-    
-    if (uIsImagePixelSize && !uIsAngularSize) {
+    if (uIsImagePixelSize) {
         v_pointSize = getSize(uPointSize) * uZoomLevel;
-    }
+    }    
+    v_featherWidth = uFeatherWidth;
 
     if (uCmapEnabled) {
         vec4 color = getValueByIndexFromTexture(uColorTexture, dataPointIndex);
@@ -132,10 +130,7 @@ void main() {
         float size = sizeMajor.x;
         if (uIsImagePixelSize) {
             size = size * uZoomLevel;
-            if (uIsAngularSize) {
-                size = size * uFactorToArcsec / uPixelUnitSizeArcsec;
-                if (uShapeType == ELLIPSE_LINED) size *= 2.0;
-            } 
+            if (uShapeType == ELLIPSE_LINED) size *= 2.0;
         } 
 
         if(!isNaN(size)) {
@@ -162,10 +157,7 @@ void main() {
         v_minorSize = sizeMinor.x;
         if (uIsImagePixelSize) {
             v_minorSize = v_minorSize * uZoomLevel;
-            if (uIsAngularSize) {
-                v_minorSize = v_minorSize * uFactorToArcsec / uPixelUnitSizeArcsec;
-                if (uShapeType == ELLIPSE_LINED) v_minorSize *= 2.0;
-            } 
+            if (uShapeType == ELLIPSE_LINED) v_minorSize *= 2.0;
         } 
 
         if (uAreaModeMinor) {

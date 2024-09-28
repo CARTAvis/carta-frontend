@@ -10,7 +10,7 @@ import {CatalogOverlayComponent} from "components";
 import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingSelectComponent} from "components/Shared";
 import {AngularSizeUnit, CatalogOverlay} from "models";
 import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {CatalogOverlayShape, CatalogSettingsTabs, CatalogWidgetStore, TabDisplayMode, ValueClip} from "stores/Widgets";
+import {CatalogDisplayMode, CatalogOverlayShape, CatalogSettingsTabs, CatalogWidgetStore, ValueClip} from "stores/Widgets";
 import {getColorForTheme, SWATCH_COLORS} from "utilities";
 
 import "./CatalogOverlayPlotSettingsPanelComponent.scss";
@@ -384,20 +384,20 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         <Button text={widgetStore.sizeMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical" data-testid="catalog-settings-major-size-column-dropdown" />
                     </Select>
                 </FormGroup>
-                <FormGroup inline={true} label="Minor" labelInfo={`(${widgetStore.sizeUnit})`} disabled={disabledOverlayPanel}>
+                <FormGroup inline={true} label="Minor" labelInfo={`(${widgetStore.sizeUnit})`} disabled={!widgetStore.enableSizeMinorTab}>
                     <Select
                         items={this.axisOption}
                         activeItem={null}
                         onItemSelect={columnName => widgetStore.setSizeMinorMap(columnName)}
                         itemRenderer={this.renderAxisPopOver}
-                        disabled={disabledOverlayPanel}
+                        disabled={!widgetStore.enableSizeMinorTab}
                         popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                         filterable={true}
                         noResults={noResults}
                         itemPredicate={this.filterColumn}
                         resetOnSelect={true}
                     >
-                        <Button text={widgetStore.sizeMinorMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical" />
+                        <Button text={widgetStore.sizeMinorMapColumn} disabled={!widgetStore.enableSizeMinorTab} rightIcon="double-caret-vertical" />
                     </Select>
                 </FormGroup>
                 <FormGroup inline={true} label="Unit">
@@ -610,17 +610,27 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     </Select>
                 </FormGroup>
                 <FormGroup className={"file-menu"} inline={true} label="Mapping" disabled={disabledOverlayPanel}>
-                    <AnchorButton onClick={() => widgetStore.setTabDisplayMode(TabDisplayMode.Canvas)} text={TabDisplayMode.Canvas} outlined={widgetStore.tabDisplayMode === TabDisplayMode.Canvas} disabled={disabledOverlayPanel} />
-                    <AnchorButton onClick={() => widgetStore.setTabDisplayMode(TabDisplayMode.World)} text={TabDisplayMode.World} outlined={widgetStore.tabDisplayMode === TabDisplayMode.World} disabled={disabledOverlayPanel} />
+                    <AnchorButton
+                        onClick={() => widgetStore.setCatalogDisplayMode(CatalogDisplayMode.Canvas)}
+                        text={CatalogDisplayMode.Canvas}
+                        outlined={widgetStore.CatalogDisplayMode === CatalogDisplayMode.Canvas}
+                        disabled={disabledOverlayPanel}
+                    />
+                    <AnchorButton
+                        onClick={() => widgetStore.setCatalogDisplayMode(CatalogDisplayMode.World)}
+                        text={CatalogDisplayMode.World}
+                        outlined={widgetStore.CatalogDisplayMode === CatalogDisplayMode.World}
+                        disabled={disabledOverlayPanel}
+                    />
                 </FormGroup>
                 <Tabs id="catalogSettings" vertical={false} selectedTabId={widgetStore.settingsTabId} onChange={tabId => this.handleSelectedTabChanged(tabId)}>
-                    <Tab id={CatalogSettingsTabs.SIZE} title="Size" panel={widgetStore.tabDisplayMode === TabDisplayMode.Canvas ? sizeMap : angularSizePanel} disabled={disabledOverlayPanel} />
+                    <Tab id={CatalogSettingsTabs.SIZE} title="Size" panel={widgetStore.CatalogDisplayMode === CatalogDisplayMode.Canvas ? sizeMap : angularSizePanel} disabled={disabledOverlayPanel} />
                     <Tab id={CatalogSettingsTabs.COLOR} title="Color" panel={colorMap} disabled={disabledOverlayPanel} data-testid="catalog-settings-color-tab-title" />
                     <Tab
                         id={CatalogSettingsTabs.ORIENTATION}
                         title="Orientation"
                         panel={orientationMap}
-                        disabled={disabledOverlayPanel || widgetStore.tabDisplayMode === TabDisplayMode.World}
+                        disabled={disabledOverlayPanel || widgetStore.CatalogDisplayMode === CatalogDisplayMode.World}
                         data-testid="catalog-settings-orientation-tab-title"
                     />
                 </Tabs>

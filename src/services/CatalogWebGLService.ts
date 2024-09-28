@@ -47,8 +47,6 @@ interface ShaderUniforms {
     SizeMinorMapEnabled: WebGLUniformLocation | null;
     AreaModeMinor: WebGLUniformLocation | null;
     IsImagePixelSize: WebGLUniformLocation | null;
-    FactorToArcsec: WebGLUniformLocation | null;
-    IsAngularSize: WebGLUniformLocation | null;
     // color map
     CmapEnabled: WebGLUniformLocation | null;
     CmapTexture: WebGLUniformLocation | null;
@@ -188,8 +186,6 @@ export class CatalogWebGLService {
                 SizeMajorMapEnabled: this.gl.getUniformLocation(shaderProgram, "uSizeMajorMapEnabled"),
                 SizeMinorMapEnabled: this.gl.getUniformLocation(shaderProgram, "uSizeMinorMapEnabled"),
                 IsImagePixelSize: this.gl.getUniformLocation(shaderProgram, "uIsImagePixelSize"),
-                IsAngularSize: this.gl.getUniformLocation(shaderProgram, "uIsAngularSize"),
-                FactorToArcsec: this.gl.getUniformLocation(shaderProgram, "uFactorToArcsec"),
                 OmapEnabled: this.gl.getUniformLocation(shaderProgram, "uOmapEnabled"),
                 CmapEnabled: this.gl.getUniformLocation(shaderProgram, "uCmapEnabled"),
                 RotationAngle: this.gl.getUniformLocation(shaderProgram, "uRotationAngle"),
