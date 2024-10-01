@@ -62,7 +62,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
     };
 
     private onClickHelpButton = () => {
-        const centerX = this.rnd.draggable.state.x + this.rnd.resizable.size.width * 0.5;
+        const centerX = (this.rnd.draggable.state as any).x + this.rnd.resizable.size.width * 0.5;
         HelpStore.Instance.showHelpDrawer(this.props.helpType, centerX);
     };
 
