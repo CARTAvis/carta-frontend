@@ -728,9 +728,10 @@ export class WidgetsStore {
             const cogPinedButton = this.getControlButton("lm_settings", "settings", "cog").on("click", ev => WidgetsStore.Instance.onCogPinedClick(stack.getActiveContentItem()));
             const nextPageButton = this.getControlButton("lm-image-panel-next", "next image", "step-forward").on("click", this.onNextPageClick);
             const imagePanelButton = this.getControlButton("lm-image-panel", "switch to multi-panel", "square").on("click", this.onImagePanelButtonClick);
+            const channelMapButton = this.getControlButton("lm-channel-map-panel", "switch to channel map", "heat-grid").on("click", this.onChannelMapButtonClick);
             this.updateImagePanelButton();
             const previousPageButton = this.getControlButton("lm-image-panel-previous", "previous image", "step-backward").on("click", this.onPreviousPageClick);
-            stack.header.controlsContainer.prepend([previousPageButton, imagePanelButton, nextPageButton, cogPinedButton, helpButton, unpinButton]);
+            stack.header.controlsContainer.prepend([channelMapButton, previousPageButton, imagePanelButton, nextPageButton, cogPinedButton, helpButton, unpinButton]);
 
             stack.on("activeContentItemChanged", (contentItem: any) => {
                 if (stack && stack.config && stack.header.controlsContainer && stack.config.content.length) {
@@ -925,26 +926,37 @@ export class WidgetsStore {
 
     onImagePanelButtonClick = () => {
         const preferenceStore = PreferenceStore.Instance;
-        if (preferenceStore.imageMultiPanelEnabled) {
-            preferenceStore.setPreference(PreferenceKeys.CHANNEL_MAP_ENABLED, true);
-            AppStore.Instance.channelMapStore.masterFrame?.overlayStore.setIsChannelMap(true); // need to fix
-            this.setImageMultiPanelEnabled(!preferenceStore.imageMultiPanelEnabled);
-        } else if (preferenceStore.channelMapEnabled) {
+        if (preferenceStore.channelMapEnabled) {
+            AppStore.Instance.channelMapStore.masterFrame?.overlayStore.setIsChannelMap(false);
             preferenceStore.setPreference(PreferenceKeys.CHANNEL_MAP_ENABLED, false);
-            AppStore.Instance.channelMapStore.masterFrame?.overlayStore.setIsChannelMap(false); // need to fix
-            this.updateImagePanelButton();
-            // AppStore.Instance.channelMapStore.masterFrame?.overlayStore.clearViewDimension();
         } else {
-            this.setImageMultiPanelEnabled(!preferenceStore.imageMultiPanelEnabled);
+            this.setImageMultiPanelEnabled(!PreferenceStore.Instance.imageMultiPanelEnabled);
         }
-        console.log(preferenceStore.imageMultiPanelEnabled, preferenceStore.channelMapEnabled);
+        // const preferenceStore = PreferenceStore.Instance;
+        // if (preferenceStore.imageMultiPanelEnabled) {
+        //     preferenceStore.setPreference(PreferenceKeys.CHANNEL_MAP_ENABLED, true);
+        //     AppStore.Instance.channelMapStore.masterFrame?.overlayStore.setIsChannelMap(true); // need to fix
+        //     this.setImageMultiPanelEnabled(!preferenceStore.imageMultiPanelEnabled);
+        // } else if (preferenceStore.channelMapEnabled) {
+        //     preferenceStore.setPreference(PreferenceKeys.CHANNEL_MAP_ENABLED, false);
+        //     AppStore.Instance.channelMapStore.masterFrame?.overlayStore.setIsChannelMap(false); // need to fix
+        //     this.updateImagePanelButton();
+        //     // AppStore.Instance.channelMapStore.masterFrame?.overlayStore.clearViewDimension();
+        // } else {
+        //     this.setImageMultiPanelEnabled(!preferenceStore.imageMultiPanelEnabled);
+        // }
+        // console.log(preferenceStore.imageMultiPanelEnabled, preferenceStore.channelMapEnabled);
+    };
+
+    onChannelMapButtonClick = () => {
+        const preferenceStore = PreferenceStore.Instance;
+        preferenceStore.setPreference(PreferenceKeys.CHANNEL_MAP_ENABLED, true);
+        AppStore.Instance.channelMapStore.masterFrame?.overlayStore.setIsChannelMap(true);
     };
 
     setImageMultiPanelEnabled = (multiPanelEnabled: boolean) => {
         const preferenceStore = PreferenceStore.Instance;
         preferenceStore.setPreference(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED, multiPanelEnabled);
-        // AppStore.Instance.channelMapStore.overlayStores?.corner?.setIsChannelMap(!multiPanelEnabled);
-        preferenceStore.setPreference(PreferenceKeys.CHANNEL_MAP_ENABLED, !multiPanelEnabled);
         this.updateImagePanelButton();
     };
 
@@ -958,13 +970,15 @@ export class WidgetsStore {
     };
 
     private getImagePanelButtonTooltip = (imagePanelMode: ImagePanelMode) => {
+        return imagePanelMode === ImagePanelMode.None ? "switch to multi-panel" : "switch to single panel";
         // return PreferenceStore.Instance.channelMapEnabled ? "switch to single-panel" : (imagePanelMode === ImagePanelMode.None ? "switch to multi-panel" : "switch to channel map");
-        return imagePanelMode === ImagePanelMode.None ? (PreferenceStore.Instance.channelMapEnabled ? "switch to single-panel" : "switch to multi-panel") : "switch to channel map";
+        // return imagePanelMode === ImagePanelMode.None ? (PreferenceStore.Instance.channelMapEnabled ? "switch to single-panel" : "switch to multi-panel") : "switch to channel map";
     };
 
     private getImagePanelButtonIcon = (imagePanelMode: ImagePanelMode) => {
+        return imagePanelMode === ImagePanelMode.None ? Classes.iconClass("square") : Classes.iconClass("grid-view");
         // return PreferenceStore.Instance.channelMapEnabled ? "bp3-icon-heat-grid" : (imagePanelMode === ImagePanelMode.None ?  "bp3-icon-square" : "bp3-icon-grid-view");
-        return imagePanelMode === ImagePanelMode.None ? (PreferenceStore.Instance.channelMapEnabled ? Classes.iconClass("heat-grid") : Classes.iconClass("square")) : Classes.iconClass("grid-view");
+        // return imagePanelMode === ImagePanelMode.None ? (PreferenceStore.Instance.channelMapEnabled ? Classes.iconClass("heat-grid") : Classes.iconClass("square")) : Classes.iconClass("grid-view");
     };
 
     onNextPageClick = () => {
@@ -991,6 +1005,7 @@ export class WidgetsStore {
         const appStore = AppStore.Instance;
         const config = appStore.imageViewConfigStore;
         const nextPageButton = $(".lm_goldenlayout")?.find("li.lm-image-panel-next[style!='display:none;']");
+        const preferenceStore = PreferenceStore.Instance;
         if (nextPageButton) {
             nextPageButton.attr("style", config.currentImagePage < config.numImagePages - 1 ? "" : "cursor: not-allowed; opacity: 0.2");
             nextPageButton.attr("title", config.imagePanelMode === ImagePanelMode.None ? "next image" : "next page");
@@ -1000,6 +1015,16 @@ export class WidgetsStore {
         if (previousPageButton) {
             previousPageButton.attr("style", config.currentImagePage > 0 ? "" : "cursor: not-allowed; opacity: 0.2");
             previousPageButton.attr("title", config.imagePanelMode === ImagePanelMode.None ? "previous image" : "previous page");
+        }
+
+        const imagePanelButton = $(".lm_goldenlayout")?.find("li.lm-image-panel[style!='display:none;']");
+        if (imagePanelButton) {
+            imagePanelButton.attr("style", preferenceStore.channelMapEnabled ? "opacity: 0.2" : "");
+        }
+
+        const channelMapButton = $(".lm_goldenlayout")?.find("li.lm-channel-map-panel[style!='display:none;']");
+        if (channelMapButton) {
+            channelMapButton.attr("style", preferenceStore.channelMapEnabled ? "" : "opacity: 0.2");
         }
     };
 

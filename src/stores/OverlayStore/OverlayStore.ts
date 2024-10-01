@@ -1017,44 +1017,22 @@ export class OverlayStore {
     @observable colorbar: OverlayColorbarSettings;
     @observable beam: OverlayBeamSettings;
 
-    public constructor(
-        fullViewWidth?: number,
-        fullViewHeight?: number,
-        base: number = 5,
-        defaultGap: number = 5,
-        labelHidden: boolean = false,
-        numberHidden: boolean = false,
-        isChannelMap: boolean = false,
-        global?: OverlayGlobalSettings,
-        title?: OverlayTitleSettings,
-        grid?: OverlayGridSettings,
-        border?: OverlayBorderSettings,
-        axes?: OverlayAxisSettings,
-        numbers?: OverlayNumberSettings,
-        labels?: OverlayLabelSettings,
-        ticks?: OverlayTickSettings,
-        colorbar?: OverlayColorbarSettings,
-        beam?: OverlayBeamSettings
-    ) {
+    public constructor(fullViewWidth?: number, fullViewHeight?: number, base: number = 5, defaultGap: number = 5) {
         makeObservable(this);
-        // If not provided, it will make new stores, so if we want an overlayStore to have the same stores as others, remember to pass in the stores
-        this.global = global || new OverlayGlobalSettings();
-        this.title = title || new OverlayTitleSettings();
-        this.grid = grid || new OverlayGridSettings();
-        this.border = border || new OverlayBorderSettings();
-        this.axes = axes || new OverlayAxisSettings();
-        this.numbers = numbers || new OverlayNumberSettings();
-        this.labels = labels || new OverlayLabelSettings();
-        this.ticks = ticks || new OverlayTickSettings();
-        this.colorbar = colorbar || new OverlayColorbarSettings();
-        this.beam = beam || new OverlayBeamSettings();
+        this.global = new OverlayGlobalSettings();
+        this.title = new OverlayTitleSettings();
+        this.grid = new OverlayGridSettings();
+        this.border = new OverlayBorderSettings();
+        this.axes = new OverlayAxisSettings();
+        this.numbers = new OverlayNumberSettings();
+        this.labels = new OverlayLabelSettings();
+        this.ticks = new OverlayTickSettings();
+        this.colorbar = new OverlayColorbarSettings();
+        this.beam = new OverlayBeamSettings();
         this._fullViewWidth = fullViewWidth;
         this._fullViewHeight = fullViewHeight;
         this.base = base;
         this.defaultGap = defaultGap;
-        this.labels.hidden = labelHidden;
-        this.numbers.hidden = numberHidden;
-        this.isChannelMap = isChannelMap;
 
         // if the system is manually selected, set new default formats & update active frame's wcs settings
         autorun(() => {

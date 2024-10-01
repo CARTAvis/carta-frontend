@@ -3,10 +3,10 @@ import LRUCache from "mnemonist/lru-cache";
 import {action, computed, makeObservable, observable} from "mobx";
 import {Subject} from "rxjs";
 
-import {Point2D, TileCoordinate} from "models";
+import {FrameView, Point2D, TileCoordinate} from "models";
 import {BackendService, TileWebGLService} from "services";
 import {AppStore, PREVIEW_PV_FILEID} from "stores";
-import {copyToFP32Texture, createFP32Texture, GL2} from "utilities";
+import {copyToFP32Texture, createFP32Texture, GetRequiredTiles, GL2} from "utilities";
 
 import ZFPWorker from "!worker-loader!zfp_wrapper";
 
@@ -286,21 +286,65 @@ export class TileService {
         }
     }
 
-    requestChannelMapTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, compressionQuality: number, channelMapRange: {min: number; max: number}) {
-        if (this.currentlyStreamingChannelRange) this.clearQueueForChannelMap(this.pendingRequests, fileId, this.currentlyStreamingChannelRange);
-        // this.clearRequestQueue(fileId);
-        const newRequests = new Array<TileCoordinate>();
+    findRanges(arr: number[]): {min: number; max: number}[] {
+        arr.sort((a, b) => a - b);
+
+        const ranges: {min: number; max: number}[] = [];
+
+        let start = arr[0];
+
+        for (let i = 1; i <= arr.length; i++) {
+            if (i === arr.length || arr[i] !== arr[i - 1] + 1) {
+                ranges.push({min: start, max: arr[i - 1]});
+                start = arr[i];
+            }
+        }
+
+        return ranges;
+    }
+
+    requestChannelMapTiles(channelMapRange?: {min: number; max: number}) {
         const channelMapStore = AppStore.Instance.channelMapStore;
+        const frame = channelMapStore.showAuxiliaryFrame ? channelMapStore.auxiliaryFrame || channelMapStore.masterFrame : channelMapStore.masterFrame;
+        const fileId = frame.frameInfo.fileId;
+        const stokes = frame.stokes;
+        const requiredChannel = channelMapStore.showAuxiliaryFrame ? channelMapStore.auxiliaryFrameChannel : frame.channel;
+        if (!frame) {
+            return;
+        }
+
+        const reqView = frame.requiredFrameView;
+        const croppedReq: FrameView = {
+            xMin: Math.max(0, reqView.xMin),
+            xMax: Math.min(frame.frameInfo.fileInfoExtended.width, reqView.xMax),
+            yMin: Math.max(0, reqView.yMin),
+            yMax: Math.min(frame.frameInfo.fileInfoExtended.height, reqView.yMax),
+            mip: reqView.mip
+        };
+        const appStore = AppStore.Instance;
+        const imageSize: Point2D = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
+        const tiles = GetRequiredTiles(croppedReq, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
+        // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
+        const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
+        const compressionQuality = bunitVariant.includes(frame.headerUnit as string) ? Math.max(appStore.preferenceStore.imageCompressionQuality, 32) : appStore.preferenceStore.imageCompressionQuality;
+
+        if (this.currentlyStreamingChannelRange) this.clearQueueForChannelMap(this.pendingRequests, fileId, this.currentlyStreamingChannelRange);
         const fullChannelRange = {min: channelMapStore.startChannel, max: channelMapStore.channelRange};
 
-        if (fullChannelRange) {
-            for (let i = fullChannelRange.min; i <= fullChannelRange.max; i++) {
-                const subKey = `${fileId}_${stokes}_${i}` || `0_0_0`;
-                this.pendingSynchronisedTiles.set(subKey, new Set(tiles.map(tile => tile.encode())));
-                this.receivedSynchronisedTiles.delete(subKey);
+        const tileToChannelMap = new Map<TileCoordinate, number[]>();
 
-                const pendingRequestsMap = this.pendingRequests?.get(subKey);
-                for (const tile of tiles) {
+        // Loop through all the required tiles
+        for (const tile of tiles) {
+            tileToChannelMap.set(tile, []);
+
+            // Loop through range of channel
+            if (fullChannelRange) {
+                for (let i = fullChannelRange.min; i <= fullChannelRange.max; i++) {
+                    const subKey = `${fileId}_${stokes}_${i}` || `0_0_0`;
+                    this.pendingSynchronisedTiles.set(subKey, new Set(tiles.map(tile => tile.encode())));
+                    this.receivedSynchronisedTiles.delete(subKey);
+
+                    const pendingRequestsMap = this.pendingRequests?.get(subKey);
                     if (tile.layer < 0) {
                         continue;
                     }
@@ -310,14 +354,6 @@ export class TileService {
                         const compressedTile = this.getCompressedCache(fileId).get(gpuCacheCoordinate);
                         const pendingCompressionMap = this.pendingDecompressions.get(subKey);
                         const tileIsQueuedForDecompression = pendingCompressionMap && Array.from(pendingCompressionMap.values()).some(map => map.has(encodedCoordinate));
-                        // const tileIsQueuedForDecompression = false;
-                        /*still causing problem if it's in pendingCompressionMap,
-                        because we are clearing the request queue, 
-                        so if the tile is in the compression map, we skip requesting, but it won't be rendered after decompression is complete,
-                        because it's absent in the request queue, causing an empty tile
-                        if force-set it as false, and forcefully request it, the previous decompression will be handled instead of the current new request,
-                        which causes wrong tile to show up.
-                        If we do not clear the request queue, and if the tile never gets sent, the tile will remain in the request queue and cannot be removed.*/
 
                         const tileCached = this.cachedTiles?.has(gpuCacheCoordinate);
 
@@ -332,55 +368,78 @@ export class TileService {
                         } else if (tileCached) {
                             this.tileStream.next({tileCount: 1, fileId, channel: i, stokes, flush: false});
                         } else if (!compressedTile) {
-                            const pendingRequest = this.pendingRequests.get(subKey);
-                            if (!pendingRequest) {
-                                this.pendingRequests.set(subKey, new Map<number, boolean>());
+                            const channels = tileToChannelMap.get(tile);
+                            if (!channels) {
+                                tileToChannelMap.set(tile, []);
+                            } else {
+                                channels.push(i);
                             }
-                            this.pendingRequests.get(subKey)?.set(encodedCoordinate, true);
-                            this.updateRemainingTileCount();
-                            newRequests.push(tile);
                         }
                     }
                 }
             }
         }
 
-        if (newRequests.length) {
-            // sort by distance to midpoint and encode
-            const sortedRequests = newRequests
-                .sort((a, b) => {
-                    const aX = focusPoint.x - a.x;
-                    const aY = focusPoint.y - a.y;
-                    const bX = focusPoint.x - b.x;
-                    const bY = focusPoint.y - b.y;
-                    return aX * aX + aY * aY - (bX * bX + bY * bY);
-                })
-                .map(tile => tile.encode())
-                .reduce((acc, current: never) => {
-                    if (!acc.includes(current)) {
-                        acc.push(current);
+        // Loop through all the tiles, divide the channels into ranges, and request the required channel.
+        for (const [tile, channels] of tileToChannelMap) {
+            // Divide channel into ranges.
+            const ranges = this.findRanges(channels);
+
+            for (const range of ranges) {
+                for (let i = range.min; i <= range.max; i++) {
+                    const key = `${fileId}_${stokes}_${i}`;
+                    const pendingRequestsMap = this.pendingRequests.get(key);
+                    if (!pendingRequestsMap) {
+                        this.pendingRequests.set(key, new Map<number, boolean>());
                     }
-                    return acc;
-                }, []);
-
-            for (let i = fullChannelRange.min; i <= fullChannelRange.max; i++) {
-                const subKey = `${fileId}_${stokes}_${i}`;
-                const pendingRequest = this.pendingRequests.get(subKey);
-                if (!pendingRequest) {
-                    this.pendingRequests.set(subKey, new Map<number, boolean>());
+                    this.pendingRequests.get(key)?.set(tile.encode(), true);
+                    console.log(tile);
                 }
-                for (const encodedCoordinate of sortedRequests) {
-                    this.pendingRequests.get(subKey)?.set(encodedCoordinate, true);
+
+                const requestSentSuccessfully = this.backendService.setChannels(fileId, requiredChannel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles: [tile.encode()]}, range, fullChannelRange);
+
+                if (requestSentSuccessfully) {
+                    this.currentlyStreamingChannelRange = fullChannelRange;
                 }
-                this.updateRemainingTileCount();
-            }
-
-            const requestSentSuccessfully = this.backendService.setChannels(fileId, channel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles: sortedRequests}, channelMapRange, fullChannelRange);
-
-            if (requestSentSuccessfully) {
-                this.currentlyStreamingChannelRange = fullChannelRange;
             }
         }
+
+        // if (newRequests.length) {
+        //     // sort by distance to midpoint and encode
+        //     const sortedRequests = newRequests
+        //         .sort((a, b) => {
+        //             const aX = focusPoint.x - a.x;
+        //             const aY = focusPoint.y - a.y;
+        //             const bX = focusPoint.x - b.x;
+        //             const bY = focusPoint.y - b.y;
+        //             return aX * aX + aY * aY - (bX * bX + bY * bY);
+        //         })
+        //         .map(tile => tile.encode())
+        //         .reduce((acc, current: never) => {
+        //             if (!acc.includes(current)) {
+        //                 acc.push(current);
+        //             }
+        //             return acc;
+        //         }, []);
+
+        //     for (let i = fullChannelRange.min; i <= fullChannelRange.max; i++) {
+        //         const subKey = `${fileId}_${stokes}_${i}`;
+        //         const pendingRequest = this.pendingRequests.get(subKey);
+        //         if (!pendingRequest) {
+        //             this.pendingRequests.set(subKey, new Map<number, boolean>());
+        //         }
+        //         for (const encodedCoordinate of sortedRequests) {
+        //             this.pendingRequests.get(subKey)?.set(encodedCoordinate, true);
+        //         }
+        //         this.updateRemainingTileCount();
+        //     }
+
+        //     const requestSentSuccessfully = this.backendService.setChannels(fileId, requiredChannel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles: sortedRequests}, channelMapRange, fullChannelRange);
+
+        //     if (requestSentSuccessfully) {
+        //         this.currentlyStreamingChannelRange = fullChannelRange;
+        //     }
+        // }
     }
 
     updateHiddenFileChannels(fileId: number, channel: number, stokes: number) {
