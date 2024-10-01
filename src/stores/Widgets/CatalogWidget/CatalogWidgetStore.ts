@@ -2,7 +2,7 @@ import {Colors} from "@blueprintjs/core";
 import * as CARTACompute from "carta_computation";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
-import {AngularSizeUnit, CatalogOverlay} from "models";
+import {AngularSize, AngularSizeUnit, CatalogOverlay, FACTOR_TO_ARCSEC} from "models";
 import {CatalogTextureType, CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, PreferenceStore} from "stores";
 import {FrameScaling} from "stores/Frame";
@@ -43,8 +43,14 @@ export enum CatalogSettingsTabs {
 }
 
 export enum CatalogDisplayMode {
-    Canvas = "Canvas",
-    World = "World"
+    CANVAS = "Canvas",
+    WORLD = "World"
+}
+
+export enum CatalogSizeRef {
+    CANVAS = "Canvas",
+    IMAGE = "Image",
+    ANGULAR = "Angular"
 }
 
 export type ValueClip = "size-min" | "size-max" | "angle-min" | "angle-max";
@@ -83,7 +89,7 @@ export class CatalogWidgetStore {
     @observable showSelectedData: boolean;
     @observable catalogTableAutoScroll: boolean;
     @observable catalogPlotType: CatalogPlotType;
-    @observable catalogSize: number;
+    @observable catalogSize: {px: number; angle: number};
     @observable catalogColor: string;
     @observable catalogShape: CatalogOverlayShape;
     @observable xAxis: string;
@@ -92,13 +98,15 @@ export class CatalogWidgetStore {
     @observable highlightColor: string;
     @observable settingsTabId: CatalogSettingsTabs;
     @observable thickness: number;
-    @observable CatalogDisplayMode: CatalogDisplayMode;
+    @observable catalogDisplayMode: CatalogDisplayMode;
+    @observable catalogSizeRef: CatalogSizeRef;
+    @observable showCatalogHeader: boolean;
     // size map
     @observable sizeMapColumn: string;
     @observable sizeColumnMax: {default: number | undefined; clipd: number | undefined};
     @observable sizeColumnMin: {default: number | undefined; clipd: number | undefined};
-    @observable sizeMax: {area: number; diameter: number};
-    @observable sizeMin: {area: number; diameter: number};
+    @observable sizeMax: {area: number; diameter: {px: number; angle: number}};
+    @observable sizeMin: {area: number; diameter: {px: number; angle: number}};
     @observable sizeArea: boolean;
     @observable sizeScalingType: FrameScaling;
     @observable sizeAxisTabId: CatalogSettingsTabs.SIZE_MINOR | CatalogSettingsTabs.SIZE_MAJOR;
@@ -108,8 +116,7 @@ export class CatalogWidgetStore {
     @observable sizeMinorMin: {diameter: number};
     @observable isImagePixelSize: boolean;
     @observable isAngularSize: boolean;
-    @observable factorToArasec: number;
-    @observable sizeUnit: AngularSizeUnit;
+    @observable factorToArasec: AngularSize;
     // size map minor
     @observable sizeMinorMapColumn: string;
     @observable sizeMinorColumnMax: {default: number | undefined; clipd: number | undefined};
@@ -133,8 +140,6 @@ export class CatalogWidgetStore {
     @observable angleMax: number;
     @observable angleMin: number;
 
-    @observable showCatalogHeader: boolean;
-
     constructor(catalogFileId: number) {
         makeObservable(this);
         this.catalogFileId = catalogFileId;
@@ -143,7 +148,7 @@ export class CatalogWidgetStore {
         this.catalogTableAutoScroll = false;
         this.catalogPlotType = CatalogPlotType.ImageOverlay;
         this.catalogColor = Colors.TURQUOISE3;
-        this.catalogSize = 10;
+        this.catalogSize = {px: 10, angle: 10};
         this.catalogShape = CatalogOverlayShape.CIRCLE_LINED;
         this.xAxis = CatalogOverlay.NONE;
         this.yAxis = CatalogOverlay.NONE;
@@ -154,16 +159,16 @@ export class CatalogWidgetStore {
         this.sizeMapColumn = CatalogOverlay.NONE;
         this.sizeArea = false;
         this.sizeScalingType = FrameScaling.LINEAR;
-        this.sizeMin = {area: 100, diameter: 5};
-        this.sizeMax = {area: 200, diameter: 20};
+        this.sizeMin = {area: 100, diameter: {px: 5, angle: 5}};
+        this.sizeMax = {area: 200, diameter: {px: 20, angle: 20}};
         this.sizeColumnMin = {default: undefined, clipd: undefined};
         this.sizeColumnMax = {default: undefined, clipd: undefined};
         this.sizeAxisTabId = CatalogSettingsTabs.SIZE_MAJOR;
         this.sizeMinorMapColumn = CatalogOverlay.NONE;
         this.sizeMinorArea = false;
         this.sizeMinorScalingType = FrameScaling.LINEAR;
-        this.sizeMinorMax = {diameter: 5};
-        this.sizeMinorMin = {diameter: 20};
+        this.sizeMinorMin = {diameter: 5};
+        this.sizeMinorMax = {diameter: 20};
         this.sizeMinorColumnMin = {default: undefined, clipd: undefined};
         this.sizeMinorColumnMax = {default: undefined, clipd: undefined};
         this.colorMapColumn = CatalogOverlay.NONE;
@@ -184,10 +189,9 @@ export class CatalogWidgetStore {
         this.sizeMinorColumnMaxLocked = false;
         this.isImagePixelSize = false;
         this.isAngularSize = false;
-        this.factorToArasec = 1.0;
-        this.sizeUnit = AngularSizeUnit.ARCSEC;
-        this.CatalogDisplayMode = CatalogDisplayMode.Canvas;
-
+        this.factorToArasec = {value: 1.0, unit: AngularSizeUnit.ARCSEC};
+        this.catalogDisplayMode = CatalogDisplayMode.CANVAS;
+        this.catalogSizeRef = CatalogSizeRef.CANVAS;
         this.showCatalogHeader = false;
 
         reaction(
@@ -304,8 +308,8 @@ export class CatalogWidgetStore {
         this.sizeMapColumn = CatalogOverlay.NONE;
         this.sizeArea = false;
         this.sizeScalingType = FrameScaling.LINEAR;
-        this.sizeMin = {area: 50, diameter: 5};
-        this.sizeMax = {area: 200, diameter: 20};
+        this.sizeMin = {area: 50, diameter: {px: 5, angle: 5}};
+        this.sizeMax = {area: 200, diameter: {px: 20, angle: 20}};
         this.sizeColumnMin = {default: undefined, clipd: undefined};
         this.sizeColumnMax = {default: undefined, clipd: undefined};
         this.sizeAxisTabId = CatalogSettingsTabs.SIZE_MAJOR;
@@ -437,7 +441,13 @@ export class CatalogWidgetStore {
         if (areaMode) {
             this.sizeMax.area = val;
         } else {
-            this.sizeMax.diameter = val;
+            if (this.catalogSizeRef === CatalogSizeRef.ANGULAR) {
+                this.sizeMax.diameter.angle = val;
+                this.sizeMax.diameter.px = val * this.pixelArcsecFactor;
+            } else {
+                this.sizeMax.diameter.px = val;
+                this.sizeMax.diameter.angle = val / this.pixelArcsecFactor;
+            }
         }
     }
 
@@ -449,13 +459,19 @@ export class CatalogWidgetStore {
         if (areaMode) {
             this.sizeMin.area = val;
         } else {
-            this.sizeMin.diameter = val;
+            if (this.catalogSizeRef === CatalogSizeRef.ANGULAR) {
+                this.sizeMin.diameter.angle = val;
+                this.sizeMin.diameter.px = val * this.pixelArcsecFactor;
+            } else {
+                this.sizeMin.diameter.px = val;
+                this.sizeMin.diameter.angle = val / this.pixelArcsecFactor;
+            }
         }
     }
 
     @action resetSize() {
-        this.sizeMin = {area: 100, diameter: 5};
-        this.sizeMax = {area: 200, diameter: 20};
+        this.sizeMin = {area: 100, diameter: {px: 5, angle: 5 / this.pixelArcsecFactor}};
+        this.sizeMax = {area: 200, diameter: {px: 20, angle: 20 / this.pixelArcsecFactor}};
         this.sizeMinorMin = {diameter: 5};
         this.sizeMinorMax = {diameter: 20};
     }
@@ -499,7 +515,7 @@ export class CatalogWidgetStore {
             this.sizeMapColumn = coloum;
             this.sizeColumnMin = {default: undefined, clipd: undefined};
             this.sizeColumnMax = {default: undefined, clipd: undefined};
-            if (this.isAngularSize) {
+            if (this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
                 const result = minMaxArray(this.sizeMapData);
                 this.setSizeMax(result.maxVal);
                 this.setSizeMin(result.minVal);
@@ -594,7 +610,7 @@ export class CatalogWidgetStore {
             this.sizeMinorMapColumn = coloum;
             this.sizeMinorColumnMin = {default: undefined, clipd: undefined};
             this.sizeMinorColumnMax = {default: undefined, clipd: undefined};
-            if (this.isAngularSize) {
+            if (this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
                 const result = minMaxArray(this.sizeMinorMapData);
                 this.setMinorSizeMax(result.maxVal);
                 this.setMinorSizeMin(result.minVal);
@@ -610,10 +626,9 @@ export class CatalogWidgetStore {
     }
 
     @action setCatalogDisplayMode(value: CatalogDisplayMode) {
-        this.CatalogDisplayMode = value;
-        if (this.CatalogDisplayMode === CatalogDisplayMode.World) {
-            this.isAngularSize = true;
-            this.isImagePixelSize = true;
+        this.catalogDisplayMode = value;
+        if (this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
+            this.setIsAngularSize(true);
             this.sizeArea = false;
 
             const result = minMaxArray(this.sizeMapData);
@@ -627,38 +642,36 @@ export class CatalogWidgetStore {
                 this.catalogShape = CatalogOverlayShape.CIRCLE_LINED;
             }
         } else {
-            this.isAngularSize = false;
             this.resetSize();
         }
     }
 
-    @action toggleAbsoluteSize = () => {
-        this.isImagePixelSize = !this.isImagePixelSize;
-        if (!this.isImagePixelSize) this.isAngularSize = false;
-    };
-
-    @action setAbsoluteSize(value: boolean) {
+    @action setIsImagePixelSize(value: boolean) {
         this.isImagePixelSize = value;
-        if (!this.isImagePixelSize) this.isAngularSize = false;
+        this.isAngularSize = false;
+    }
+
+    @action setIsAngularSize(value: boolean) {
+        this.isAngularSize = value;
+        if (this.isAngularSize) this.isImagePixelSize = true;
+    }
+
+    @action setCatalogSizeRef(value: CatalogSizeRef) {
+        this.catalogSizeRef = value;
+        if (value === CatalogSizeRef.IMAGE) {
+            this.setIsImagePixelSize(true);
+        } else if (value === CatalogSizeRef.ANGULAR) {
+            this.setIsAngularSize(true);
+            this.setCatalogSize(this.catalogSize.px / this.pixelArcsecFactor);
+            this.setSizeMin(this.sizeMin.diameter.px / this.pixelArcsecFactor);
+            this.setSizeMax(this.sizeMax.diameter.px / this.pixelArcsecFactor);
+        } else {
+            this.setIsImagePixelSize(false);
+        }
     }
 
     @action setFactorToArcsec(unit: AngularSizeUnit) {
-        switch (unit) {
-            case AngularSizeUnit.DEG:
-                this.factorToArasec = 3600;
-                this.sizeUnit = AngularSizeUnit.DEG;
-                break;
-            case AngularSizeUnit.ARCMIN:
-                this.factorToArasec = 60;
-                this.sizeUnit = AngularSizeUnit.ARCMIN;
-                break;
-            case AngularSizeUnit.ARCSEC:
-                this.factorToArasec = 1;
-                this.sizeUnit = AngularSizeUnit.ARCSEC;
-                break;
-            default:
-                break;
-        }
+        this.factorToArasec = {value: FACTOR_TO_ARCSEC.get(unit) as number, unit: unit};
     }
 
     @action setHeaderTableColumnWidts(vals: Array<number>) {
@@ -681,9 +694,27 @@ export class CatalogWidgetStore {
         this.catalogPlotType = type;
     }
 
+    @computed get minOverlaySize(): number {
+        if (this.catalogSizeRef === CatalogSizeRef.ANGULAR) {
+            return CatalogWidgetStore.MinOverlaySize / this.pixelArcsecFactor;
+        }
+        return CatalogWidgetStore.MinOverlaySize;
+    }
+
+    @computed get maxOverlaySize(): number {
+        if (this.catalogSizeRef === CatalogSizeRef.ANGULAR) {
+            return CatalogWidgetStore.MaxOverlaySize / this.pixelArcsecFactor;
+        }
+        return CatalogWidgetStore.MaxOverlaySize;
+    }
+
     @action setCatalogSize(size: number) {
-        if (size >= CatalogWidgetStore.MinOverlaySize && size <= CatalogWidgetStore.MaxOverlaySize) {
-            this.catalogSize = size;
+        if (this.catalogSizeRef === CatalogSizeRef.ANGULAR && size >= CatalogWidgetStore.MinOverlaySize / this.pixelArcsecFactor && size <= CatalogWidgetStore.MaxOverlaySize / this.pixelArcsecFactor) {
+            this.catalogSize.angle = size;
+            this.catalogSize.px = size * this.pixelArcsecFactor;
+        } else if (size >= CatalogWidgetStore.MinOverlaySize && size <= CatalogWidgetStore.MaxOverlaySize) {
+            this.catalogSize.px = size;
+            this.catalogSize.angle = size / this.pixelArcsecFactor;
         }
     }
 
@@ -783,31 +814,30 @@ export class CatalogWidgetStore {
         }
     }
 
-    @computed get pixelAngularFactor(): number {
+    @computed get pixelArcsecFactor(): number {
         const appStore = AppStore.Instance;
         const catalogStore = CatalogStore.Instance;
         const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(this.catalogFileId));
-        const pixelAngularSize = this.isAngularSize ? frame?.spatialReference?.pixelUnitSizeArcsec.x ?? frame?.pixelUnitSizeArcsec.x ?? 1 : 1;
-        const pixelFactor = this.isAngularSize ? this.factorToArasec / pixelAngularSize : 1;
+        const pixelAngularSize = frame?.spatialReference?.pixelUnitSizeArcsec.x ?? frame?.pixelUnitSizeArcsec.x ?? 1;
+        return this.factorToArasec.value / pixelAngularSize;
+    }
 
-        return pixelFactor;
+    @computed get pixelSizeFactor(): number {
+        if (this.isAngularSize) {
+            return this.pixelArcsecFactor;
+        } else if (this.isImagePixelSize) {
+            return 1;
+        } else {
+            return devicePixelRatio * AppStore.Instance.imageRatio;
+        }
     }
 
     sizeArray(): Float32Array {
         let column = this.sizeMapData;
         if (!this.disableSizeMap && column?.length && this.sizeColumnMin.clipd !== undefined && this.sizeColumnMax.clipd !== undefined) {
             const pointSize = this.pointSizebyType;
-            let min = (this.isAngularSize ? 0 : this.sizeArea ? this.shapeSettings?.areaBase : this.shapeSettings?.diameterBase) ?? NaN;
-            return CARTACompute.CalculateCatalogSize(
-                column,
-                this.sizeColumnMin.clipd,
-                this.sizeColumnMax.clipd,
-                pointSize.min + min,
-                pointSize.max + min,
-                this.sizeScalingType,
-                this.sizeArea,
-                devicePixelRatio * AppStore.Instance.imageRatio * this.pixelAngularFactor
-            );
+            let min = (this.isImagePixelSize ? 0 : this.sizeArea ? this.shapeSettings?.areaBase : this.shapeSettings?.diameterBase) ?? NaN;
+            return CARTACompute.CalculateCatalogSize(column, this.sizeColumnMin.clipd, this.sizeColumnMax.clipd, pointSize.min + min, pointSize.max + min, this.sizeScalingType, this.sizeArea, this.pixelSizeFactor);
         }
         return new Float32Array(0);
     }
@@ -816,17 +846,8 @@ export class CatalogWidgetStore {
         let column = this.sizeMinorMapData;
         if (!this.disableSizeMinorMap && column?.length && this.sizeMinorColumnMin.clipd !== undefined && this.sizeMinorColumnMax.clipd !== undefined) {
             const pointSize = this.minorPointSizebyType;
-            let min = (this.isAngularSize ? 0 : this.sizeArea ? this.shapeSettings?.areaBase : this.shapeSettings?.diameterBase) ?? NaN;
-            return CARTACompute.CalculateCatalogSize(
-                column,
-                this.sizeMinorColumnMin.clipd,
-                this.sizeMinorColumnMax.clipd,
-                pointSize.min + min,
-                pointSize.max + min,
-                this.sizeMinorScalingType,
-                this.sizeMinorArea,
-                devicePixelRatio * AppStore.Instance.imageRatio * this.pixelAngularFactor
-            );
+            let min = (this.isImagePixelSize ? 0 : this.sizeArea ? this.shapeSettings?.areaBase : this.shapeSettings?.diameterBase) ?? NaN;
+            return CARTACompute.CalculateCatalogSize(column, this.sizeMinorColumnMin.clipd, this.sizeMinorColumnMax.clipd, pointSize.min + min, pointSize.max + min, this.sizeMinorScalingType, this.sizeMinorArea, this.pixelSizeFactor);
         }
         return new Float32Array(0);
     }
@@ -851,7 +872,8 @@ export class CatalogWidgetStore {
         if (areaMode) {
             return CatalogWidgetStore.MaxAreaSize;
         } else {
-            return CatalogWidgetStore.MaxOverlaySize;
+            // return CatalogWidgetStore.MaxOverlaySize;
+            return this.maxOverlaySize;
         }
     }
 
@@ -859,18 +881,24 @@ export class CatalogWidgetStore {
         if (this.sizeArea) {
             return {min: this.sizeMin.area, max: this.sizeMax.area};
         } else {
-            return {min: this.sizeMin.diameter, max: this.sizeMax.diameter};
+            if (this.catalogSizeRef === CatalogSizeRef.ANGULAR) {
+                return {min: this.sizeMin.diameter.angle, max: this.sizeMax.diameter.angle};
+            }
+            return {min: this.sizeMin.diameter.px, max: this.sizeMax.diameter.px};
         }
     }
 
     @computed get minorPointSizebyType(): {min: number; max: number} {
+        if (this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
+            return {min: this.sizeMinorMin.diameter, max: this.sizeMinorMax.diameter};
+        }
         if (this.sizeMinorArea) {
             return {min: this.sizeMin.area, max: this.sizeMax.area};
         } else {
-            if (this.isAngularSize) {
-                return {min: this.sizeMinorMin.diameter, max: this.sizeMinorMax.diameter};
+            if (this.catalogSizeRef === CatalogSizeRef.ANGULAR) {
+                return {min: this.sizeMin.diameter.angle, max: this.sizeMax.diameter.angle};
             }
-            return {min: this.sizeMin.diameter, max: this.sizeMax.diameter};
+            return {min: this.sizeMin.diameter.px, max: this.sizeMax.diameter.px};
         }
     }
 
@@ -905,7 +933,7 @@ export class CatalogWidgetStore {
         }
         const catalogSize = widgetSettings.catalogSize;
         if (typeof catalogSize === "number" && catalogSize >= CatalogWidgetStore.MinOverlaySize && catalogSize <= CatalogWidgetStore.MaxOverlaySize) {
-            this.catalogSize = catalogSize;
+            this.catalogSize.px = catalogSize;
         }
         this.catalogShape = widgetSettings.catalogShape;
         this.catalogColor = widgetSettings.catalogColor;

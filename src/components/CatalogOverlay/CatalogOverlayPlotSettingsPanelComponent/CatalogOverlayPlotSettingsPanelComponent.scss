@@ -5,7 +5,7 @@
 
     .file-menu .#{$ns}-button {
         white-space: nowrap;
-        width: 100%;
+        width: 95%;
         .#{$ns}-button-text {
             min-width: 3.5em;
         }
@@ -75,5 +75,11 @@
         display: inline-flex;
         width: calc(100% - 3em); // because of the popover, the subtraction is required
         max-width: fit-content;
+    }
+
+    .panel-container {
+        .select-angular-unit {
+            height: 30px !important;
+        }
     }
 }

@@ -59,9 +59,11 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const showSelectedData = catalogWidgetStore.showSelectedData;
             const color = catalogWidgetStore.catalogColor;
             const selectedColor = catalogWidgetStore.highlightColor;
-            const pointSize = catalogWidgetStore.catalogSize;
+            const pointSize = catalogWidgetStore.catalogSize.px;
+            const pointAngularSize = catalogWidgetStore.catalogSize.angle;
             const shape = catalogWidgetStore.catalogShape;
             const thickness = catalogWidgetStore.thickness;
+            const displayMode = catalogWidgetStore.catalogDisplayMode;
             // size
             const sizeMapColumn = catalogWidgetStore.sizeMapColumn;
             const sizeMaxArea = catalogWidgetStore.sizeMax.area;
@@ -73,8 +75,8 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const sizeArea = catalogWidgetStore.sizeArea;
             const sizeScalingType = catalogWidgetStore.sizeScalingType;
             const isImagePixelSize = catalogWidgetStore.isImagePixelSize;
-            // const isAngularSize = catalogWidgetStore.isAngularSize;
-            const factorToArasec = catalogWidgetStore.factorToArasec;
+            const isAngularSize = catalogWidgetStore.isAngularSize;
+            const factorToArasec = catalogWidgetStore.factorToArasec.value;
             // size minor
             const sizeMinorMapColumn = catalogWidgetStore.sizeMinorMapColumn;
             const sizeMinorColumnMaxClipd = catalogWidgetStore.sizeMinorColumnMax.clipd;
@@ -182,7 +184,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 const lineThickness = catalogWidgetStore.thickness * shape.thicknessBase * devicePixelRatio * AppStore.Instance.imageRatio;
                 let color = tinycolor(catalogWidgetStore.catalogColor).toRgb();
                 let selectedSourceColor = tinycolor(catalogWidgetStore.highlightColor).toRgb();
-                let pointSize = catalogWidgetStore.isImagePixelSize ? catalogWidgetStore.catalogSize : catalogWidgetStore.catalogSize + shape.diameterBase;
+                let pointSize = catalogWidgetStore.isImagePixelSize ? catalogWidgetStore.catalogSize.px : catalogWidgetStore.catalogSize.px + shape.diameterBase;
                 this.gl.uniform1f(shaderUniforms.LineThickness, lineThickness);
                 this.gl.uniform1i(shaderUniforms.ShowSelectedSource, catalogWidgetStore.showSelectedData ? 1.0 : 0.0);
                 // frameView
