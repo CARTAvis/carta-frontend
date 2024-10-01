@@ -224,7 +224,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
-    private renderDataColumn(columnName: string, coloumnData: any) {
+    private renderDataColumn(columnName: string, columnData: any) {
         return (
             <Column
                 key={columnName}
@@ -232,7 +232,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 cellRenderer={(rowIndex, columnIndex) => (
                     <Cell className="header-table-cell" key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>
                         <>
-                            <div data-testid={"catalog-header-table-" + rowIndex + "-" + columnIndex}>{coloumnData[rowIndex]}</div>
+                            <div data-testid={"catalog-header-table-" + rowIndex + "-" + columnIndex}>{columnData[rowIndex]}</div>
                         </>
                     </Cell>
                 )}

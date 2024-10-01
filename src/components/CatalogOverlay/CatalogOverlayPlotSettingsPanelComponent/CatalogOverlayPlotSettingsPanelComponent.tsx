@@ -637,7 +637,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         className={Classes.FILL}
                         disabled={disabledOverlayPanel}
                         filterable={false}
-                        items={widgetStore.isAngularSize ? this.catalogOverlayShape.filter(f => f === CatalogOverlayShape.ELLIPSE_LINED || f === CatalogOverlayShape.CIRCLE_LINED) : this.catalogOverlayShape}
+                        items={widgetStore.catalogDisplayMode === CatalogDisplayMode.WORLD ? this.catalogOverlayShape.filter(f => f === CatalogOverlayShape.ELLIPSE_LINED || f === CatalogOverlayShape.CIRCLE_LINED) : this.catalogOverlayShape}
                         activeItem={widgetStore.catalogShape}
                         onItemSelect={item => widgetStore.setCatalogShape(item)}
                         itemRenderer={this.renderShapePopOver}

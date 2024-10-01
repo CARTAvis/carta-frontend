@@ -375,9 +375,9 @@ export class CatalogWidgetStore {
         }
     }
 
-    @action setOrientationMapColumn(coloum: string) {
-        if (this.orientationMapColumn !== coloum) {
-            this.orientationMapColumn = coloum;
+    @action setOrientationMapColumn(column: string) {
+        if (this.orientationMapColumn !== column) {
+            this.orientationMapColumn = column;
             this.orientationMin = {default: undefined, clipd: undefined};
             this.orientationMax = {default: undefined, clipd: undefined};
         }
@@ -417,9 +417,9 @@ export class CatalogWidgetStore {
         }
     }
 
-    @action setColorMapColumn(coloum: string) {
-        if (this.colorMapColumn !== coloum) {
-            this.colorMapColumn = coloum;
+    @action setColorMapColumn(column: string) {
+        if (this.colorMapColumn !== column) {
+            this.colorMapColumn = column;
             this.colorColumnMin = {default: undefined, clipd: undefined};
             this.colorColumnMax = {default: undefined, clipd: undefined};
         }
@@ -510,9 +510,9 @@ export class CatalogWidgetStore {
         this.sizeArea = val;
     }
 
-    @action setSizeMap(coloum: string) {
-        if (this.sizeMapColumn !== coloum) {
-            this.sizeMapColumn = coloum;
+    @action setSizeMap(column: string) {
+        if (this.sizeMapColumn !== column) {
+            this.sizeMapColumn = column;
             this.sizeColumnMin = {default: undefined, clipd: undefined};
             this.sizeColumnMax = {default: undefined, clipd: undefined};
             if (this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
@@ -520,7 +520,7 @@ export class CatalogWidgetStore {
                 this.setSizeMax(result.maxVal);
                 this.setSizeMin(result.minVal);
             }
-            if (coloum === CatalogOverlay.NONE) {
+            if (column === CatalogOverlay.NONE) {
                 this.sizeArea = false;
                 this.sizeColumnMinLocked = false;
                 this.sizeColumnMaxLocked = false;
@@ -605,9 +605,9 @@ export class CatalogWidgetStore {
         this.sizeMinorArea = val;
     }
 
-    @action setSizeMinorMap(coloum: string) {
-        if (this.sizeMinorMapColumn !== coloum) {
-            this.sizeMinorMapColumn = coloum;
+    @action setSizeMinorMap(column: string) {
+        if (this.sizeMinorMapColumn !== column) {
+            this.sizeMinorMapColumn = column;
             this.sizeMinorColumnMin = {default: undefined, clipd: undefined};
             this.sizeMinorColumnMax = {default: undefined, clipd: undefined};
             if (this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
@@ -615,7 +615,7 @@ export class CatalogWidgetStore {
                 this.setMinorSizeMax(result.maxVal);
                 this.setMinorSizeMin(result.minVal);
             }
-            if (coloum === CatalogOverlay.NONE) {
+            if (column === CatalogOverlay.NONE) {
                 this.sizeMinorArea = false;
                 this.sizeMinorColumnMinLocked = false;
                 this.sizeMinorColumnMaxLocked = false;
