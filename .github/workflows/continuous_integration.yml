@@ -10,7 +10,7 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-      - run: npm install --legacy-peer-deps
+      - run: npm install
       - run: npm run checkformat
 
   doc-format-check:
@@ -73,7 +73,7 @@ jobs:
         run: |
           n 18
           n exec 18 node -v
-          n exec 18 npm install --legacy-peer-deps
+          n exec 18 npm install
 
       - name: Production build with node 18
         shell: bash
@@ -112,7 +112,7 @@ jobs:
         run: |
           n 20
           n exec 20 node -v
-          n exec 20 npm install --legacy-peer-deps
+          n exec 20 npm install
 
       - name: Production build with node 20
         shell: bash
