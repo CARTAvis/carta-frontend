@@ -10,7 +10,7 @@ Module.dataHeap = null;
 Module.resultFloat = null;
 Module.dataPtrUint = null;
 Module.dataHeapUint = null;
-Module.debugOutput = false;
+Module.debugOutput = true;
 Module.id = -1;
 
 const zfpDecompress = Module.cwrap("zfpDecompress", "number", ["number", "number", "number", "number", "number", "number"]);
