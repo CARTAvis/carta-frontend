@@ -6,7 +6,7 @@ import {Subject} from "rxjs";
 import {Point2D, TileCoordinate} from "models";
 import {BackendService, TileWebGLService} from "services";
 import {AppStore, PREVIEW_PV_FILEID} from "stores";
-import {copyToFP32Texture, createFP32Texture, GL2} from "utilities";
+import {clamp, copyToFP32Texture, createFP32Texture, GL2} from "utilities";
 
 import ZFPWorker from "!worker-loader!zfp_wrapper";
 
@@ -33,6 +33,10 @@ export interface TileStreamDetails {
 export const TEXTURE_SIZE = 4096;
 export const TILE_SIZE = 256;
 export const MAX_TEXTURES = 8;
+
+const MAX_TILE_WORKERS = 8;
+const MIN_TILE_WORKERS = 1;
+const MAX_TILE_WORKERS_PER_CORE = 0.75;
 
 interface TileMessageArgs {
     width: number | null | undefined;
@@ -89,6 +93,7 @@ export class TileService {
     @action setWorkerReady(index: number) {
         if (index >= 0 && index < this.workersReady.length) {
             this.workersReady[index] = true;
+            this.workers[index].postMessage(["setid", index]);
         }
     }
 
@@ -158,7 +163,7 @@ export class TileService {
         this.tileStream = new Subject<TileStreamDetails>();
         this.backendService.rasterTileStream.subscribe(this.handleStreamedTiles);
         this.backendService.rasterSyncStream.subscribe(this.handleStreamSync);
-        this.workers = new Array<Worker>(Math.min(navigator.hardwareConcurrency || 4, 4));
+        this.workers = new Array<Worker>(clamp((navigator.hardwareConcurrency || 6) * MAX_TILE_WORKERS_PER_CORE, MIN_TILE_WORKERS, MAX_TILE_WORKERS));
         this.workersReady = new Array<boolean>(this.workers.length);
 
         for (let i = 0; i < this.workers.length; i++) {
