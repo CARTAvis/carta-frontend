@@ -150,7 +150,6 @@ export class FrameStore {
     // Region set for the current frame. Accessed via regionSet, to take into account region sharing
     @observable private readonly frameRegionSet: RegionSetStore;
 
-    @observable renderHiDPI: boolean;
     @observable spectralType: SpectralType;
     @observable spectralUnit: SpectralUnit;
     @observable spectralTypeSecondary: SpectralType;
@@ -250,8 +249,8 @@ export class FrameStore {
         }
     }
 
-    @computed get pixelRatio(): number {
-        return this.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0;
+    get pixelRatio(): number {
+        return devicePixelRatio * AppStore.Instance.imageRatio;
     }
 
     @computed get aspectRatio(): number {
@@ -1212,7 +1211,6 @@ export class FrameStore {
         this.validWcs = false;
         this.frameInfo = frameInfo;
         this.initialCenter = {x: (this.frameInfo.fileInfoExtended.width - 1) / 2.0, y: (this.frameInfo.fileInfoExtended.height - 1) / 2.0};
-        this.renderHiDPI = true;
         this.center = {x: 0, y: 0};
         this.stokes = 0;
         this.channel = 0;
