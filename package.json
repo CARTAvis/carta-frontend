@@ -18,9 +18,8 @@
         "@types/node": "^20.14.13",
         "@types/plotly.js": "^2.33.3",
         "@types/prismjs": "^1.26.4",
-        "@types/react": "^17.0.80",
-        "@types/react-color": "^3.0.12",
-        "@types/react-dom": "^17.0.25",
+        "@types/react": "^18.3.12",
+        "@types/react-dom": "^18.3.1",
         "@types/react-plotly.js": "^2.6.3",
         "@types/react-virtualized-auto-sizer": "^1.0.4",
         "@types/react-window": "^1.8.8",
@@ -204,6 +203,8 @@
         "usehooks-ts": "^3.1.0"
     },
     "overrides": {
+        "@types/react": "^18.3.12",
+        "@types/react-dom": "^18.3.1",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
         "typescript": "^5.5.4",
