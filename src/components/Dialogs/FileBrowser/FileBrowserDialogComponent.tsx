@@ -199,7 +199,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 this.overwriteExistingFileAlertVisible = true;
             } else {
                 console.error(err.message);
-                AppToaster.show({icon: "warning-sign", message: err.message, intent: "danger", timeout: 3000});
+                (await AppToaster).show({icon: "warning-sign", message: err.message, intent: "danger", timeout: 3000});
             }
         }
     };
@@ -219,7 +219,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 this.overwriteExistingFileAlertVisible = true;
             } else {
                 console.error(err.message);
-                AppToaster.show(ErrorToast(err.message));
+                (await AppToaster).show(ErrorToast(err.message));
             }
         }
     };
@@ -245,14 +245,14 @@ export class FileBrowserDialogComponent extends React.Component {
                 await this.exportRegion(fileBrowserStore.fileList.directory, filename, true);
             } catch (err) {
                 console.error(err.message);
-                AppToaster.show(ErrorToast(err.message));
+                (await AppToaster).show(ErrorToast(err.message));
             }
         } else if (fileBrowserStore.browserMode === BrowserMode.SaveFile) {
             try {
                 await this.handleSaveFile(true);
             } catch (err) {
                 console.error(err.message);
-                AppToaster.show({icon: "warning-sign", message: err.message, intent: "danger", timeout: 3000});
+                (await AppToaster).show({icon: "warning-sign", message: err.message, intent: "danger", timeout: 3000});
             }
         }
     };

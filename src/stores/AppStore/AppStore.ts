@@ -681,7 +681,7 @@ export class AppStore {
             const ack = yield this.backendService.loadFile(path, filename, hdu, this.fileCounter, imageArithmetic);
             this.fileCounter++;
             if (!this.addFrame(ack, path, imageArithmetic, hdu, false, setAsActive, updateStartingDirectory)) {
-                AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+                (yield AppToaster).show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
             }
             this.endFileLoading();
             this.fileBrowserStore.hideFileBrowser();
@@ -710,10 +710,10 @@ export class AppStore {
             this.fileCounter++;
             const ack: CARTA.IRemoteFileResponse = yield this.backendService.requestRemoteFile(remoteRequest);
             if (!ack.success || !ack.openFileAck) {
-                AppToaster.show({icon: "warning-sign", message: `HiPS data query failed: ${ack.message}`, intent: "danger", timeout: 3000});
+                (yield AppToaster).show({icon: "warning-sign", message: `HiPS data query failed: ${ack.message}`, intent: "danger", timeout: 3000});
             }
             if (!this.addFrame(ack.openFileAck, "", false, "", true, true, false)) {
-                AppToaster.show({icon: "warning-sign", message: "HiPS data query failed: Load file failed.", intent: "danger", timeout: 3000});
+                (yield AppToaster).show({icon: "warning-sign", message: "HiPS data query failed: Load file failed.", intent: "danger", timeout: 3000});
             }
             this.dialogStore.hideDialog(DialogId.OnlineDataQuery);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
@@ -734,7 +734,7 @@ export class AppStore {
             const ack = await this.backendService.loadStokeFiles(stokesFiles, this.fileCounter, CARTA.RenderMode.RASTER);
             this.fileCounter++;
             if (!this.addFrame(ack.openFileAck, directory, false, hdu)) {
-                AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+                (await AppToaster).show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
             }
             this.endFileLoading();
             this.fileBrowserStore.hideFileBrowser();
@@ -814,7 +814,7 @@ export class AppStore {
         const fileId = this.activeFrame.frameInfo.fileId;
         try {
             const ack = yield this.backendService.saveFile(fileId, directory, filename, fileType, regionId, channels, stokes, !shouldDropDegenerateAxes, restFreq, overwrite);
-            AppToaster.show({icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000});
+            (yield AppToaster).show({icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000});
             this.fileBrowserStore.hideFileBrowser();
             this.endFileSaving();
             return ack.fileId;
@@ -1098,11 +1098,11 @@ export class AppStore {
     @flow.bound
     *appendCatalog(directory: string, file: string, previewDataSize: number, type: CARTA.CatalogFileType) {
         if (!this.activeFrame) {
-            AppToaster.show(ErrorToast("Please load the image file"));
+            (yield AppToaster).show(ErrorToast("Please load the image file"));
             throw new Error("No image file");
         }
         if (!(type === CARTA.CatalogFileType.VOTable)) {
-            AppToaster.show(ErrorToast("Catalog type not supported"));
+            (yield AppToaster).show(ErrorToast("Catalog type not supported"));
             throw new Error("Catalog type not supported");
         }
         this.startFileLoading();
@@ -1219,7 +1219,7 @@ export class AppStore {
     @flow.bound
     *importRegion(directory: string, file: string, type: CARTA.FileType | CARTA.CatalogFileType, targetFrame?: FrameStore) {
         if (!(type === CARTA.FileType.CRTF || type === CARTA.FileType.DS9_REG)) {
-            AppToaster.show(ErrorToast("Region type not supported"));
+            (yield AppToaster).show(ErrorToast("Region type not supported"));
             return;
         }
 
@@ -1231,7 +1231,7 @@ export class AppStore {
         }
 
         if (!frame) {
-            AppToaster.show(ErrorToast("No image file"));
+            (yield AppToaster).show(ErrorToast("No image file"));
             return;
         }
 
@@ -1254,7 +1254,7 @@ export class AppStore {
             console.error(err);
             this.fileBrowserStore.setImportingRegions(false);
             this.fileBrowserStore.resetLoadingStates();
-            AppToaster.show(ErrorToast(err));
+            (yield AppToaster).show(ErrorToast(err));
         }
     }
 
@@ -1334,7 +1334,7 @@ export class AppStore {
 
         try {
             yield this.backendService.exportRegion(directory, file, fileType, coordType, frame.frameInfo.fileId, regionStyles, overwrite);
-            AppToaster.show(SuccessToast("saved", `Exported regions for ${frame.filename} using ${coordType === CARTA.CoordinateType.WORLD ? "world" : "pixel"} coordinates`));
+            (yield AppToaster).show(SuccessToast("saved", `Exported regions for ${frame.filename} using ${coordType === CARTA.CoordinateType.WORLD ? "world" : "pixel"} coordinates`));
             this.fileBrowserStore.hideFileBrowser();
         } catch (err) {
             throw err;
@@ -1344,13 +1344,13 @@ export class AppStore {
     /**
      * Deletes all regions including annotations.
      */
-    @action deleteAllRegions = () => {
+    @action deleteAllRegions = async () => {
         this.activeFrame.regionSet.regionMap.forEach(x => {
             if (x.regionId !== CURSOR_REGION_ID) {
                 this.deleteRegion(x);
             }
         });
-        AppToaster.show(SuccessToast("console", `Regions deleted successfully.`, 3000));
+        (await AppToaster).show(SuccessToast("console", `Regions deleted successfully.`, 3000));
     };
 
     /**
@@ -1421,7 +1421,7 @@ export class AppStore {
                             newMomentImage.setSpatialReference(this.spatialReference);
                         }
                     } else {
-                        AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+                        (yield AppToaster).show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
                     }
                 }
             }
@@ -1465,7 +1465,7 @@ export class AppStore {
                     this.fileCounter++;
                     frame.addPvImage(this.frames.find(f => f.frameInfo.fileId === ack.openFileAck.fileId));
                 } else {
-                    AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+                    (yield AppToaster).show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
                 }
             }
             frame.resetPvRequestState();
@@ -1476,7 +1476,7 @@ export class AppStore {
             frame.setIsRequestPVCancelling(false);
             this.endFileLoading();
             console.error(err);
-            AppToaster.show(ErrorToast(err));
+            (yield AppToaster).show(ErrorToast(err));
         }
     }
 
@@ -1501,7 +1501,7 @@ export class AppStore {
                     WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WIDGET_CONFIG.type);
                 }
             } else {
-                AppToaster.show({icon: "warning-sign", message: "Load preview failed.", intent: "danger", timeout: 3000});
+                (yield AppToaster).show({icon: "warning-sign", message: "Load preview failed.", intent: "danger", timeout: 3000});
             }
             frame.resetPvRequestState();
             frame.setIsRequestPVCancelling(false);
@@ -1511,7 +1511,7 @@ export class AppStore {
             frame.resetPvRequestState();
             frame.setIsRequestPVCancelling(false);
             this.endFileLoading();
-            AppToaster.show(ErrorToast(err));
+            (yield AppToaster).show(ErrorToast(err));
         }
     }
 
@@ -1564,7 +1564,7 @@ export class AppStore {
                         this.fileCounter++;
                         frame?.addFittingModelImage(this.getFrame(ack.modelImage.fileId));
                     } else {
-                        AppToaster.show({icon: "warning-sign", message: "Load model image failed.", intent: "danger", timeout: 3000});
+                        (yield AppToaster).show({icon: "warning-sign", message: "Load model image failed.", intent: "danger", timeout: 3000});
                     }
                 }
                 if (ack.residualImage) {
@@ -1572,15 +1572,15 @@ export class AppStore {
                         this.fileCounter++;
                         frame?.addFittingResidualImage(this.getFrame(ack.residualImage.fileId));
                     } else {
-                        AppToaster.show({icon: "warning-sign", message: "Load residual image failed.", intent: "danger", timeout: 3000});
+                        (yield AppToaster).show({icon: "warning-sign", message: "Load residual image failed.", intent: "danger", timeout: 3000});
                     }
                 }
             }
             if (ack.message) {
-                AppToaster.show(WarningToast(`Image fitting: ${ack.message}.`));
+                (yield AppToaster).show(WarningToast(`Image fitting: ${ack.message}.`));
             }
         } catch (err) {
-            AppToaster.show(ErrorToast(`Image fitting failed: ${err}.`));
+            (yield AppToaster).show(ErrorToast(`Image fitting failed: ${err}.`));
         }
 
         this.setActiveImageByFileId(message.fileId);
@@ -1916,21 +1916,21 @@ export class AppStore {
         });
 
         // Display toasts when connection status changes
-        autorun(() => {
+        autorun(async () => {
             const newConnectionStatus = this.backendService.connectionStatus;
             const userString = this.username ? ` as ${this.username}` : "";
             switch (newConnectionStatus) {
                 case ConnectionStatus.ACTIVE:
-                    AppToaster.clear();
+                    (await AppToaster).clear();
                     if (this.backendService.connectionDropped) {
-                        AppToaster.show(WarningToast(`Reconnected to server${userString}. Some errors may occur`));
+                        (await AppToaster).show(WarningToast(`Reconnected to server${userString}. Some errors may occur`));
                     } else {
-                        AppToaster.show(SuccessToast("swap-vertical", `Connected to CARTA server${userString}`));
+                        (await AppToaster).show(SuccessToast("swap-vertical", `Connected to CARTA server${userString}`));
                     }
                     break;
                 case ConnectionStatus.CLOSED:
                     if (this.previousConnectionStatus === ConnectionStatus.ACTIVE || this.previousConnectionStatus === ConnectionStatus.PENDING) {
-                        AppToaster.show(ErrorToast("Disconnected from server"));
+                        (await AppToaster).show(ErrorToast("Disconnected from server"));
                         this.alertStore
                             .showRetryAlert(
                                 "You have been disconnected from the server. Do you want to reconnect? Please note that temporary images such as moment images, PV images, or fitting model/residual images generated via the GUI will be unloaded.",
@@ -2496,7 +2496,7 @@ export class AppStore {
             const workspace: Workspace = yield this.apiService.getWorkspace(name, isKey);
             if (!workspace) {
                 this.loadingWorkspace = false;
-                AppToaster.show({icon: "warning-sign", message: `Could not load workspace "${name}"`, intent: "danger", timeout: 3000});
+                (yield AppToaster).show({icon: "warning-sign", message: `Could not load workspace "${name}"`, intent: "danger", timeout: 3000});
                 return false;
             }
 
@@ -2638,7 +2638,7 @@ export class AppStore {
             return true;
         } catch (err) {
             console.error(err);
-            AppToaster.show({icon: "warning-sign", message: `Could not load workspace "${name}"`, intent: "danger", timeout: 3000});
+            (yield AppToaster).show({icon: "warning-sign", message: `Could not load workspace "${name}"`, intent: "danger", timeout: 3000});
             this.loadingWorkspace = false;
             return false;
         }
@@ -2765,7 +2765,7 @@ export class AppStore {
         }
 
         if (hasTemporaryFiles) {
-            AppToaster.show(WarningToast("The workspace contains generated files. These will not be preserved when reloading."));
+            (yield AppToaster).show(WarningToast("The workspace contains generated files. These will not be preserved when reloading."));
         }
         if (this.activeFrame) {
             workspace.selectedFile = this.activeFrameFileId;
@@ -2782,7 +2782,7 @@ export class AppStore {
         try {
             const success = await this.apiService.clearWorkspace(name);
             if (success) {
-                AppToaster.show(SuccessToast("console", `Workspace ${name} deleted successfully.`, SnippetStore.ToasterTimeout));
+                (await AppToaster).show(SuccessToast("console", `Workspace ${name} deleted successfully.`, SnippetStore.ToasterTimeout));
                 return;
             }
         } catch (err) {
@@ -3039,7 +3039,7 @@ export class AppStore {
 
         if (val) {
             if (!frame.setSpatialReference(this.spatialReference)) {
-                AppToaster.show(WarningToast(`Could not enable spatial matching of ${frame.filename} to reference image ${this.spatialReference.filename}. No valid transform was found.`));
+                (yield AppToaster).show(WarningToast(`Could not enable spatial matching of ${frame.filename} to reference image ${this.spatialReference.filename}. No valid transform was found.`));
             }
         } else {
             const confirmed = yield this.confirmColorBlendingRemoval(frame);
@@ -3109,14 +3109,14 @@ export class AppStore {
         }
     };
 
-    @action setSpectralMatchingEnabled = (frame: FrameStore, val: boolean) => {
+    @action setSpectralMatchingEnabled = async (frame: FrameStore, val: boolean) => {
         if (!frame || frame === this.spectralReference) {
             return;
         }
 
         if (val) {
             if (!frame.setSpectralReference(this.spectralReference)) {
-                AppToaster.show(WarningToast(`Could not enable spectral matching (velocity system) of ${frame.filename} to reference image ${this.spectralReference.filename}. No valid transform was found`));
+                (await AppToaster).show(WarningToast(`Could not enable spectral matching (velocity system) of ${frame.filename} to reference image ${this.spectralReference.filename}. No valid transform was found`));
             }
         } else {
             frame.clearSpectralReference();
@@ -3240,9 +3240,9 @@ export class AppStore {
         }
     };
 
-    decreaseImageRatio = () => {
+    decreaseImageRatio = async () => {
         if (this.imageRatio !== 1 && this.isExportingImage === true) {
-            AppToaster.show(WarningToast(`Exceeded the maximum canvas size; exporting image with ${this.imageRatio - 1}00% resolution instead.`));
+            (await AppToaster).show(WarningToast(`Exceeded the maximum canvas size; exporting image with ${this.imageRatio - 1}00% resolution instead.`));
             this.setImageRatio(this.imageRatio - 1);
         }
     };

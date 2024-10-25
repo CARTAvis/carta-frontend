@@ -218,7 +218,7 @@ export class FileBrowserStore {
             }
         } catch (err) {
             console.log(err);
-            AppToaster.show(ErrorToast(`Error loading file list for directory ${directory}`));
+            (yield AppToaster).show(ErrorToast(`Error loading file list for directory ${directory}`));
         }
         this.loadingList = false;
         this.resetLoadingStates();

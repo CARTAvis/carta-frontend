@@ -111,14 +111,14 @@ export class ApiService {
         }
     };
 
-    private handleAuthLost = () => {
+    private handleAuthLost = async () => {
         if (ApiService.RuntimeConfig.dashboardAddress) {
             this.clearToken();
             const redirectParams = btoa(window.location.search);
             window.open(`${ApiService.RuntimeConfig.dashboardAddress}?redirectParams=${redirectParams}`, "_self");
         } else {
             this.clearToken();
-            AppToaster.show({icon: "warning-sign", message: "Could not authenticate with server", intent: "danger", timeout: 3000});
+            (await AppToaster).show({icon: "warning-sign", message: "Could not authenticate with server", intent: "danger", timeout: 3000});
         }
     };
 
@@ -156,7 +156,7 @@ export class ApiService {
                 const url = `${ApiService.RuntimeConfig.apiAddress}/server/stop`;
                 await this.axiosInstance.post(url);
             } catch (err) {
-                AppToaster.show({icon: "warning-sign", message: "Could not stop CARTA server", intent: "danger", timeout: 3000});
+                (await AppToaster).show({icon: "warning-sign", message: "Could not stop CARTA server", intent: "danger", timeout: 3000});
                 console.log(err);
             }
         }

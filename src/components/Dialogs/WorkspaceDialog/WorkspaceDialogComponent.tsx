@@ -71,14 +71,14 @@ export const WorkspaceDialogComponent = observer(() => {
             try {
                 const res = await appStore.saveWorkspace(name);
                 if (res) {
-                    AppToaster.show(SuccessToast("floppy-disk", "Workspace saved"));
+                    (await AppToaster).show(SuccessToast("floppy-disk", "Workspace saved"));
                     handleCloseClicked();
                     return;
                 }
             } catch (err) {
                 console.log(err);
             }
-            AppToaster.show(ErrorToast("Error saving workspace"));
+            (await AppToaster).show(ErrorToast("Error saving workspace"));
             setIsFetching(false);
         },
         [appStore, handleCloseClicked]
@@ -94,7 +94,7 @@ export const WorkspaceDialogComponent = observer(() => {
             try {
                 const res = await appStore.loadWorkspace(name);
                 if (res) {
-                    AppToaster.show(SuccessToast("floppy-disk", "Workspace loaded"));
+                    (await AppToaster).show(SuccessToast("floppy-disk", "Workspace loaded"));
                     handleCloseClicked();
                     return;
                 }

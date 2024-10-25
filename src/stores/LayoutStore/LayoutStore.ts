@@ -188,9 +188,9 @@ export class LayoutStore {
         }
     }
 
-    private handleSaveResult = (success: boolean) => {
+    private handleSaveResult = async (success: boolean) => {
         if (success) {
-            AppToaster.show(SuccessToast("layout-grid", `Layout ${this.layoutNameToBeSaved} saved successfully.`, LayoutStore.ToasterTimeout));
+            (await AppToaster).show(SuccessToast("layout-grid", `Layout ${this.layoutNameToBeSaved} saved successfully.`, LayoutStore.ToasterTimeout));
             this.currentLayoutName = this.layoutNameToBeSaved;
         } else {
             delete this.layouts[this.layoutNameToBeSaved];
@@ -243,9 +243,9 @@ export class LayoutStore {
         }
     }
 
-    private handleRenameResult = (oldName: string, newName: string, success: boolean) => {
+    private handleRenameResult = async (oldName: string, newName: string, success: boolean) => {
         if (success) {
-            AppToaster.show(SuccessToast("layout-grid", `Layout ${oldName} renamed to ${newName} successfully.`, LayoutStore.ToasterTimeout));
+            (await AppToaster).show(SuccessToast("layout-grid", `Layout ${oldName} renamed to ${newName} successfully.`, LayoutStore.ToasterTimeout));
             if (oldName === this.currentLayoutName) {
                 this.currentLayoutName = newName;
             }
@@ -273,9 +273,9 @@ export class LayoutStore {
         }
     }
 
-    private handleDeleteResult = (layoutName: string, success: boolean) => {
+    private handleDeleteResult = async (layoutName: string, success: boolean) => {
         if (success) {
-            AppToaster.show(SuccessToast("layout-grid", `Layout ${layoutName} deleted successfully.`, LayoutStore.ToasterTimeout));
+            (await AppToaster).show(SuccessToast("layout-grid", `Layout ${layoutName} deleted successfully.`, LayoutStore.ToasterTimeout));
             if (layoutName === this.currentLayoutName) {
                 this.currentLayoutName = "";
             }

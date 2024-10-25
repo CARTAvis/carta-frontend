@@ -139,7 +139,7 @@ export class SnippetStore {
             if (success) {
                 // Silently exit on success if silent flag is set
                 if (!silent) {
-                    AppToaster.show(SuccessToast("console", `Snippet ${name} saved successfully.`, SnippetStore.ToasterTimeout));
+                    (yield AppToaster).show(SuccessToast("console", `Snippet ${name} saved successfully.`, SnippetStore.ToasterTimeout));
                 }
                 return true;
             } else {
@@ -159,7 +159,7 @@ export class SnippetStore {
             if (success) {
                 // Silently exit on success if silent flag is set
                 if (!silent) {
-                    AppToaster.show(SuccessToast("console", `Snippet ${name} deleted successfully.`, SnippetStore.ToasterTimeout));
+                    (yield AppToaster).show(SuccessToast("console", `Snippet ${name} deleted successfully.`, SnippetStore.ToasterTimeout));
                 }
                 return true;
             } else {
