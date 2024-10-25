@@ -1,6 +1,6 @@
 // Based on code from https://github.com/palantir/blueprint/issues/336
 import * as React from "react";
-import * as ReactDOM from "react-dom";
+import {createRoot} from "react-dom/client";
 import {ResizeEnable, Rnd} from "react-rnd";
 import {Button, Classes, Dialog, DialogProps} from "@blueprintjs/core";
 import {observer} from "mobx-react";
@@ -41,7 +41,10 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
             const helpButton = <Button icon="help" minimal={true} onClick={this.onClickHelpButton} />;
             const helpButtonDiv = document.createElement("div") as HTMLDivElement;
             helpButtonDiv.setAttribute("class", "help-button");
-            ReactDOM.render(helpButton, helpButtonDiv);
+
+            const root = createRoot(helpButtonDiv);
+            root.render(helpButton);
+
             const closeButton = this.dd.current.getElementsByClassName(Classes.DIALOG_CLOSE_BUTTON);
             if (closeButton.length > 0) {
                 closeButton[0].before(helpButtonDiv);
