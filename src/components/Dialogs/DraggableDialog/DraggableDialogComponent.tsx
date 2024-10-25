@@ -19,6 +19,7 @@ export class ResizableDialogComponentProps {
     helpType?: HelpType;
     onResizeStop?: (newWidth: number, newHeight: number) => void;
     dialogId: string;
+    children?: React.ReactNode;
 }
 
 @observer
