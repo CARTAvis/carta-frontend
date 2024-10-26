@@ -1868,6 +1868,8 @@ export class AppStore {
         this.initRequirements();
         this.momentToMatch = true;
 
+        this.pixelRatio = devicePixelRatio * this.imageRatio;
+
         AST.onReady.then(
             action(() => {
                 this.setAstReady(true);
@@ -3433,8 +3435,10 @@ export class AppStore {
         });
     };
 
-    // helper function for getting the current devicePixelRatio value
-    get pixelRatio() {
-        return devicePixelRatio;
-    }
+    @observable pixelRatio: number;
+
+    @action setPixelRatio = (pixelRatio: number) => {
+        this.pixelRatio = pixelRatio;
+    };
+
 }

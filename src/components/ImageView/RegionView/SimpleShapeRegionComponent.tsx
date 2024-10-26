@@ -569,7 +569,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
         // trigger re-render when changing devicePixelRatio (switching monitor)
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const pixelRatio = frame.pixelRatio;
+        const pixelRatio = AppStore.Instance.pixelRatio;
 
         if (frame.spatialReference) {
             const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);

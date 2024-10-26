@@ -71,7 +71,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
 
         // trigger re-render when changing devicePixelRatio (switching monitor)
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const pixelRatio = frame.pixelRatio;
+        const pixelRatio = AppStore.Instance.pixelRatio;
 
         if (frame.spatialReference) {
             const pointReferenceImage = region.center;

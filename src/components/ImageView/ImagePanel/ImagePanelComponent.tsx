@@ -64,7 +64,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
             const updateDpr = () => this.setState({pixelRatio: devicePixelRatio * AppStore.Instance.imageRatio});
             let media = matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
             media.addEventListener("change", updateDpr);
-            this.frame.setPixelRatio(this.state.pixelRatio);
+            AppStore.Instance.setPixelRatio(this.state.pixelRatio);
         }
     }
 
