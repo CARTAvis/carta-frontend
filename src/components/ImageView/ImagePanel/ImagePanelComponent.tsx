@@ -29,7 +29,7 @@ interface ImagePanelComponentProps {
 
 @observer
 export class ImagePanelComponent extends React.Component<ImagePanelComponentProps> {
-    state = {pixelRatio: 1.0};
+    state = {pixelRatio: 0.0};
 
     @observable pixelHighlightValue: number = NaN;
     @observable imageToolbarVisible: boolean = false;
