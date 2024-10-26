@@ -281,6 +281,10 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const imageRatio = AppStore.Instance.imageRatio;
 
+        // trigger re-render when changing devicePixelRatio (switching monitor)
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const pixelRatio = frame.pixelRatio;
+
         if (frame.spatialReference) {
             const centerReferenceImage = average2D(controlPoints);
             const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);

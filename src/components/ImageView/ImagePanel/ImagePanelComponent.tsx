@@ -29,6 +29,8 @@ interface ImagePanelComponentProps {
 
 @observer
 export class ImagePanelComponent extends React.Component<ImagePanelComponentProps> {
+    state = {pixelRatio: 1.0};
+
     @observable pixelHighlightValue: number = NaN;
     @observable imageToolbarVisible: boolean = false;
 
@@ -51,10 +53,19 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
 
     componentDidMount() {
         this.fitZoomOfLoadingMultipleFiles();
+        this.setState({pixelRatio: devicePixelRatio * AppStore.Instance.imageRatio});
     }
 
-    componentDidUpdate() {
+    componentDidUpdate(prevProps, prevState) {
         this.fitZoomOfLoadingMultipleFiles();
+
+        // to trigger re-render when changing devicePixelRatio (switching monitor)
+        if (prevState.pixelRatio !== devicePixelRatio * AppStore.Instance.imageRatio) {
+            const updateDpr = () => this.setState({pixelRatio: devicePixelRatio * AppStore.Instance.imageRatio});
+            let media = matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
+            media.addEventListener("change", updateDpr);
+            this.frame.setPixelRatio(this.state.pixelRatio);
+        }
     }
 
     private fitZoomOfLoadingMultipleFiles = () => {

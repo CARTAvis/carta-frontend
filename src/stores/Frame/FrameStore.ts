@@ -249,9 +249,10 @@ export class FrameStore {
         }
     }
 
-    get pixelRatio(): number {
-        return devicePixelRatio * AppStore.Instance.imageRatio;
-    }
+    @observable pixelRatio: number;
+    @action setPixelRatio = (pixelRatio: number) => {
+        this.pixelRatio = pixelRatio;
+    };
 
     @computed get aspectRatio(): number {
         if (isFinite(this.framePixelRatio)) {
@@ -1256,6 +1257,8 @@ export class FrameStore {
 
         this.isOffsetCoord = false;
         this.offsetCenter = null;
+
+        this.pixelRatio = devicePixelRatio;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preferenceStore.astColor;
