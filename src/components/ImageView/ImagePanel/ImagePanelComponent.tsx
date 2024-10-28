@@ -61,18 +61,19 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
 
         // to trigger re-render when changing devicePixelRatio (switching monitor)
         if (prevState.pixelRatio !== devicePixelRatio * AppStore.Instance.imageRatio) {
-            // beware of the order between zoomLevel and pixelRatio.
-            // change the zoomLevel first for re-rendering regions properly.
-            const zoom = (this.frame.zoomLevel * devicePixelRatio) / prevState.pixelRatio;
-            if (zoom) {
-                this.frame.setZoom(zoom, true);
-                this.onRegionViewZoom(zoom);
-            }
-
             const updateDpr = () => this.setState({pixelRatio: devicePixelRatio * AppStore.Instance.imageRatio});
             let media = matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
             media.addEventListener("change", updateDpr);
             AppStore.Instance.setPixelRatio(this.state.pixelRatio);
+
+            // make the rendered image size invariant
+            if (!this.frame.spatialReference) {
+                const zoom = (this.frame.zoomLevel * devicePixelRatio) / prevState.pixelRatio;
+                if (zoom) {
+                    this.frame.setZoom(zoom, true);
+                    this.onRegionViewZoom(zoom);
+                }
+            }
         }
     }
 
