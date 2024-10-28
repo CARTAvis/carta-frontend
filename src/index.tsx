@@ -1,5 +1,4 @@
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 import {createRoot} from "react-dom/client";
 import {FocusStyleManager, OverlaysProvider} from "@blueprintjs/core";
 import axios from "axios";
@@ -27,7 +26,6 @@ FocusStyleManager.onlyShowFocusOnTabs();
 
 // GoldenLayout requires these in the global namespace
 window["React"] = React; // tslint:disable-line
-window["ReactDOM"] = ReactDOM; // tslint:disable-line
 window["createRoot"] = createRoot; // tslint:disable-line
 
 async function fetchConfig() {
