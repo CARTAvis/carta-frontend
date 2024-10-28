@@ -249,7 +249,6 @@ export class FrameStore {
         }
     }
 
-
     @computed get aspectRatio(): number {
         if (isFinite(this.framePixelRatio)) {
             return this.framePixelRatio;

@@ -3440,5 +3440,4 @@ export class AppStore {
     @action setPixelRatio = (pixelRatio: number) => {
         this.pixelRatio = pixelRatio;
     };
-
 }
