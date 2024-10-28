@@ -1868,7 +1868,7 @@ export class AppStore {
         this.initRequirements();
         this.momentToMatch = true;
 
-        this.pixelRatio = devicePixelRatio * this.imageRatio;
+        this.pixelRatio = {current: devicePixelRatio * this.imageRatio, previous: undefined};
 
         AST.onReady.then(
             action(() => {
@@ -2109,6 +2109,34 @@ export class AppStore {
 
         autorun(() => {
             this.activateStatsPanel(this.preferenceStore.statsPanelEnabled);
+        });
+
+        // listen devicePixelRatio
+        let remove = null;
+        const updatePixelRatio = () => {
+            if (remove != null) {
+                remove();
+            }
+            const mqString = `(resolution: ${window.devicePixelRatio}dppx)`;
+            const media = matchMedia(mqString);
+            media.addEventListener("change", updatePixelRatio);
+            remove = () => {
+                media.removeEventListener("change", updatePixelRatio);
+            };
+
+            this.pixelRatio.previous = this.pixelRatio.current;
+            this.pixelRatio.current = devicePixelRatio;
+            this.handleInvariantImageSize();
+        };
+        updatePixelRatio();
+    }
+
+    // to make the image size invariant on screen
+    private handleInvariantImageSize() {
+        this.frames.forEach(frame => {
+            if (frame === this.spatialReference || !this.spatialReference) {
+                frame.setZoom((frame.zoomLevel * this.pixelRatio.current) / this.pixelRatio.previous, true);
+            }
         });
     }
 
@@ -3435,9 +3463,10 @@ export class AppStore {
         });
     };
 
-    @observable pixelRatio: number;
+    // @observable pixelRatio: number;
+    @observable pixelRatio: {current: number; previous: number};
 
-    @action setPixelRatio = (pixelRatio: number) => {
-        this.pixelRatio = pixelRatio;
-    };
+    // @action setPixelRatio = (pixelRatio: number) => {
+    //     this.pixelRatio = pixelRatio;
+    // };
 }
