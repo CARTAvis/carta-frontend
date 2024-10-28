@@ -156,6 +156,7 @@ export class AppStore {
     @observable imageRatio = 1;
     @observable isExportingImage = false;
     @observable private isCanvasUpdated: boolean;
+    @observable pixelRatio: {current: number; previous: number};
 
     // dynamic zIndex
     public zIndexManager = new FloatingObjzIndexManager();
@@ -3462,11 +3463,4 @@ export class AppStore {
             regionProfileStoreMap.get(regionId)?.resetProfilesProgress();
         });
     };
-
-    // @observable pixelRatio: number;
-    @observable pixelRatio: {current: number; previous: number};
-
-    // @action setPixelRatio = (pixelRatio: number) => {
-    //     this.pixelRatio = pixelRatio;
-    // };
 }

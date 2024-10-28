@@ -29,8 +29,6 @@ interface ImagePanelComponentProps {
 
 @observer
 export class ImagePanelComponent extends React.Component<ImagePanelComponentProps> {
-    // state = {pixelRatio: undefined};
-
     @observable pixelHighlightValue: number = NaN;
     @observable imageToolbarVisible: boolean = false;
 
