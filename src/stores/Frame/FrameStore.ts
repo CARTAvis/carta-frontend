@@ -606,44 +606,17 @@ export class FrameStore {
         }
 
         if (this.frameInfo.fileInfoExtended.depth > 1) {
-            const channelInfo = this.channelInfo;
             const spectralType = this.spectralAxis?.type;
-            if (spectralType) {
-                spectralInfo.spectralString = `${spectralType.name} (${this.spectralAxis?.specsys ?? ""}): ${toFixed(channelInfo.values[this.channel], 4)} ${spectralType.unit ?? ""}`;
-                if (spectralType.code === "FREQ") {
-                    // dummy variable to update velocity when the rest freq for spectral transform is changed
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const restFreq = this.restFreqStore.restFreqInHz;
-
-                    const freqVal = channelInfo.values[spectralInfo.channel];
-                    // convert frequency value to unit in GHz
-                    if (this.isSpectralCoordinateConvertible && spectralType.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.FREQ)) {
-                        const freqGHz = this.astSpectralTransform(SpectralType.FREQ, SpectralUnit.GHZ, this.spectralSystem, freqVal);
-                        if (isFinite(freqGHz)) {
-                            spectralInfo.spectralString = `Frequency (${this.spectralSystem}): ${formattedFrequency(freqGHz)}`;
-                        }
-                    }
-                    // convert frequency to volecity
-                    const velocityVal = this.astSpectralTransform(SpectralType.VRAD, SpectralUnit.KMS, this.spectralSystem, freqVal);
-                    if (isFinite(velocityVal)) {
-                        spectralInfo.velocityString = `Velocity: ${toFixed(velocityVal, 4)} km/s`;
-                    }
-                } else if (spectralType.code === "VRAD") {
-                    const velocityVal = channelInfo.values[spectralInfo.channel];
-                    // convert velocity value to unit in km/s
-                    if (this.isSpectralCoordinateConvertible && spectralType.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.VRAD)) {
-                        const volecityKMS = this.astSpectralTransform(SpectralType.VRAD, SpectralUnit.KMS, this.spectralSystem, velocityVal);
-                        if (isFinite(volecityKMS)) {
-                            spectralInfo.spectralString = `Velocity (${this.spectralSystem}): ${toFixed(volecityKMS, 4)} km/s`;
-                        }
-                    }
-                    // convert velocity to frequency
-                    const freqGHz = this.astSpectralTransform(SpectralType.FREQ, SpectralUnit.GHZ, this.spectralSystem, velocityVal);
-                    if (isFinite(freqGHz)) {
-                        spectralInfo.freqString = `Frequency: ${formattedFrequency(freqGHz)}`;
-                    }
-                }
-            }
+            // dummy variable to update velocity when the rest freq for spectral transform is changed
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const channelInfo = this.channelInfo;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const restFreq = this.restFreqStore.restFreqInHz;
+            const {spectralString, velocityString, freqString} = this.getFreqWithChannel(spectralInfo.channel);
+            console.log(spectralString, velocityString, freqString, spectralType.code, "dddd");
+            spectralInfo.spectralString = spectralString;
+            spectralInfo.velocityString = velocityString;
+            spectralInfo.freqString = freqString;
         }
 
         return spectralInfo;
@@ -682,6 +655,43 @@ export class FrameStore {
             config["cdelta2"] = getAngleInRad(this.pixelUnitSizeArcsec.y);
         }
         return config;
+    }
+
+    getFreqWithChannel(channel: number) {
+        const result: {spectralString: string; velocityString: string; freqString: string} = {spectralString: "", velocityString: "", freqString: ""};
+        const spectralType = this.spectralAxis?.type;
+        result.spectralString = `${spectralType.name} (${this.spectralAxis?.specsys ?? ""}): ${toFixed(this.channelInfo.values[channel], 4)} ${spectralType.unit ?? ""}`;
+        if (spectralType.code === "FREQ") {
+            const freqVal = this.channelInfo.values[channel];
+            // convert frequency value to unit in GHz
+            if (this.isSpectralCoordinateConvertible && this.spectralAxis?.type.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.FREQ)) {
+                const freqGHz = this.astSpectralTransform(SpectralType.FREQ, SpectralUnit.GHZ, this.spectralSystem, freqVal);
+                if (isFinite(freqGHz)) {
+                    result.spectralString = `Frequency (${this.spectralSystem}): ${formattedFrequency(freqGHz)}`;
+                }
+            }
+            // convert frequency to volecity
+            const velocityVal = this.astSpectralTransform(SpectralType.VRAD, SpectralUnit.KMS, this.spectralSystem, freqVal);
+            if (isFinite(velocityVal)) {
+                result.velocityString = `Velocity: ${toFixed(velocityVal, 4)} km/s`;
+            }
+        } else if (spectralType.code === "VRAD") {
+            const velocityVal = this.channelInfo.values[channel];
+            // convert velocity value to unit in km/s
+            if (this.isSpectralCoordinateConvertible && this.spectralAxis?.type.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.VRAD)) {
+                const velocityKMS = this.astSpectralTransform(SpectralType.VRAD, SpectralUnit.KMS, this.spectralSystem, velocityVal);
+                if (isFinite(velocityKMS)) {
+                    result.spectralString = `Velocity (${this.spectralSystem}): ${toFixed(velocityKMS, 4)} km/s`;
+                }
+            }
+            // convert velocity to frequency
+            const freqGHz = this.astSpectralTransform(SpectralType.FREQ, SpectralUnit.GHZ, this.spectralSystem, velocityVal);
+            if (isFinite(freqGHz)) {
+                result.freqString = `Frequency: ${formattedFrequency(freqGHz)}`;
+            }
+        }
+
+        return result;
     }
 
     // Dir X axis number from the header

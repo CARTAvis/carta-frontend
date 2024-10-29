@@ -496,10 +496,10 @@ export class BackendService {
     }
 
     @action("set channels")
-    setChannels(fileId: number, channel: number, stokes: number, requiredTiles: CARTA.IAddRequiredTiles, _channelRange?: CARTA.IIntBounds, currentRange?: CARTA.IIntBounds): boolean {
+    setChannels(fileId: number, channel: number | undefined, stokes: number, requiredTiles: CARTA.IAddRequiredTiles, _channelRange?: CARTA.IIntBounds | undefined, currentRange?: CARTA.IIntBounds): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
             const channelRange: CARTA.IIntBounds | null = _channelRange || null;
-            const message = CARTA.SetImageChannels.create({fileId, channel, stokes, requiredTiles, channelRange});
+            const message = CARTA.SetImageChannels.create({fileId, channel, stokes, requiredTiles, channelRange, currentRange});
             this.logEvent(CARTA.EventType.SET_IMAGE_CHANNELS, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.SET_IMAGE_CHANNELS, CARTA.SetImageChannels.encode(message).finish())) {
                 return true;
@@ -614,9 +614,9 @@ export class BackendService {
     }
 
     @action("add required tiles")
-    addRequiredTiles(fileId: number, tiles: Array<number>, quality: number): boolean {
+    addRequiredTiles(fileId: number, tiles: Array<number>, quality: number, currentTiles?: number[]): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.AddRequiredTiles.create({fileId, tiles, compressionQuality: quality, compressionType: CARTA.CompressionType.ZFP});
+            const message = CARTA.AddRequiredTiles.create({fileId, tiles, compressionQuality: quality, compressionType: CARTA.CompressionType.ZFP, currentTiles});
             this.logEvent(CARTA.EventType.ADD_REQUIRED_TILES, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.ADD_REQUIRED_TILES, CARTA.AddRequiredTiles.encode(message).finish())) {
                 return true;
@@ -667,6 +667,17 @@ export class BackendService {
 
     @action("animation flow control")
     sendAnimationFlowControl(message: CARTA.IAnimationFlowControl) {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            this.logEvent(CARTA.EventType.ANIMATION_FLOW_CONTROL, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.ANIMATION_FLOW_CONTROL, CARTA.AnimationFlowControl.encode(message).finish())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @action("channel map flow control")
+    sendChannelMapFlowControl(message: CARTA.IAnimationFlowControl) {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
             this.logEvent(CARTA.EventType.ANIMATION_FLOW_CONTROL, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.ANIMATION_FLOW_CONTROL, CARTA.AnimationFlowControl.encode(message).finish())) {

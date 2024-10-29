@@ -303,6 +303,30 @@ export class TileService {
         return ranges;
     }
 
+    groupTiles(map: Map<TileCoordinate, number[]>): Map<TileCoordinate[], number[]> {
+        const groupedMap = new Map<string, TileCoordinate[]>();
+        const result = new Map<TileCoordinate[], number[]>();
+
+        for (const [tile, numbers] of map) {
+            const sorted = numbers.sort((a, b) => a - b);
+            // console.log("cccc", sorted);
+            const key = JSON.stringify(sorted); // Convert number[] to a string key
+            if (!groupedMap.has(key)) {
+                groupedMap.set(key, []);
+            }
+
+            groupedMap.get(key)!.push(tile);
+        }
+
+        // Create the final Map<Tile[], number[]>
+        for (const [key, tiles] of groupedMap.entries()) {
+            const numbers = JSON.parse(key); // Parse the stringified numbers back to number[]
+            result.set(tiles, numbers);
+        }
+
+        return result;
+    }
+
     requestChannelMapTiles(channelMapRange?: {min: number; max: number}) {
         const channelMapStore = AppStore.Instance.channelMapStore;
         const frame = channelMapStore.showAuxiliaryFrame ? channelMapStore.auxiliaryFrame || channelMapStore.masterFrame : channelMapStore.masterFrame;
@@ -324,12 +348,14 @@ export class TileService {
         const appStore = AppStore.Instance;
         const imageSize: Point2D = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
         const tiles = GetRequiredTiles(croppedReq, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
+        const currentTiles = tiles.map(tile => tile.encode());
         // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
         const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
         const compressionQuality = bunitVariant.includes(frame.headerUnit as string) ? Math.max(appStore.preferenceStore.imageCompressionQuality, 32) : appStore.preferenceStore.imageCompressionQuality;
 
-        if (this.currentlyStreamingChannelRange) this.clearQueueForChannelMap(this.pendingRequests, fileId, this.currentlyStreamingChannelRange);
+        // Clear pendingRequests map for previous range
         const fullChannelRange = {min: channelMapStore.startChannel, max: channelMapStore.channelRange};
+        if (this.currentlyStreamingChannelRange) this.clearQueueForChannelMap(this.pendingRequests, fileId, fullChannelRange, currentTiles);
 
         const tileToChannelMap = new Map<TileCoordinate, number[]>();
 
@@ -369,41 +395,69 @@ export class TileService {
                             this.tileStream.next({tileCount: 1, fileId, channel: i, stokes, flush: false});
                         } else if (!compressedTile) {
                             const channels = tileToChannelMap.get(tile);
-                            if (!channels) {
-                                tileToChannelMap.set(tile, []);
-                            } else {
-                                channels.push(i);
-                            }
+                            channels?.push(i);
                         }
                     }
                 }
             }
         }
 
-        // Loop through all the tiles, divide the channels into ranges, and request the required channel.
-        for (const [tile, channels] of tileToChannelMap) {
+        // Groups tiles that are required by same channels
+        const tilesToChannelMap = this.groupTiles(tileToChannelMap);
+
+        // Loop through all the grouped tiles array, divide the channels into ranges, and request the required channel.
+        for (const [groupedTiles, channels] of tilesToChannelMap) {
             // Divide channel into ranges.
             const ranges = this.findRanges(channels);
 
-            for (const range of ranges) {
-                for (let i = range.min; i <= range.max; i++) {
-                    const key = `${fileId}_${stokes}_${i}`;
-                    const pendingRequestsMap = this.pendingRequests.get(key);
-                    if (!pendingRequestsMap) {
-                        this.pendingRequests.set(key, new Map<number, boolean>());
+            if (ranges.length) {
+                for (const range of ranges) {
+                    for (let i = range.min; i <= range.max; i++) {
+                        const key = `${fileId}_${stokes}_${i}`;
+                        const pendingRequestsMap = this.pendingRequests.get(key);
+                        if (!pendingRequestsMap) {
+                            this.pendingRequests.set(key, new Map<number, boolean>());
+                        }
+                        for (const tile of groupedTiles) {
+                            this.pendingRequests.get(key)?.set(tile.encode(), true);
+                        }
                     }
-                    this.pendingRequests.get(key)?.set(tile.encode(), true);
-                    console.log(tile);
-                }
 
-                const requestSentSuccessfully = this.backendService.setChannels(fileId, requiredChannel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles: [tile.encode()]}, range, fullChannelRange);
+                    this.updateRemainingTileCount();
 
-                if (requestSentSuccessfully) {
-                    this.currentlyStreamingChannelRange = fullChannelRange;
+                    const requestSentSuccessfully = this.backendService.setChannels(
+                        fileId,
+                        requiredChannel,
+                        stokes,
+                        {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles: groupedTiles.map(tile => tile.encode()), currentTiles},
+                        range,
+                        fullChannelRange
+                    );
+                    console.log("jjjjjj", "full channel range: ", fullChannelRange, "requesting range: ", range, "requesting tile: ", groupedTiles, "full tile range: ", currentTiles, "message sent successfully: ", requestSentSuccessfully);
+
+                    if (requestSentSuccessfully) {
+                        this.currentlyStreamingChannelRange = fullChannelRange;
+                    }
                 }
             }
+            // else {
+            //     // This is suggested by Pam to send a fullChannelRange without requesting tiles to keep the backend channel range updated.
+            //     const requestSentSuccessfully = this.backendService.setChannels(
+            //         fileId,
+            //         undefined,
+            //         stokes,
+            //         {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, currentTiles},
+            //         undefined,
+            //         fullChannelRange
+            //     );
+
+            //     if (requestSentSuccessfully) {
+            //         this.currentlyStreamingChannelRange = fullChannelRange;
+            //     }
+            // }
         }
 
+        // const sortedRequests = Array.from(tileToChannelMap.keys()).map(tile => tile.encode());
         // if (newRequests.length) {
         //     // sort by distance to midpoint and encode
         //     const sortedRequests = newRequests
@@ -422,23 +476,24 @@ export class TileService {
         //             return acc;
         //         }, []);
 
-        //     for (let i = fullChannelRange.min; i <= fullChannelRange.max; i++) {
-        //         const subKey = `${fileId}_${stokes}_${i}`;
-        //         const pendingRequest = this.pendingRequests.get(subKey);
-        //         if (!pendingRequest) {
-        //             this.pendingRequests.set(subKey, new Map<number, boolean>());
-        //         }
-        //         for (const encodedCoordinate of sortedRequests) {
-        //             this.pendingRequests.get(subKey)?.set(encodedCoordinate, true);
-        //         }
-        //         this.updateRemainingTileCount();
+        // for (let i = fullChannelRange.min; i <= fullChannelRange.max; i++) {
+        //     const subKey = `${fileId}_${stokes}_${i}`;
+        //     const pendingRequest = this.pendingRequests.get(subKey);
+        //     if (!pendingRequest) {
+        //         this.pendingRequests.set(subKey, new Map<number, boolean>());
         //     }
-
-        //     const requestSentSuccessfully = this.backendService.setChannels(fileId, requiredChannel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles: sortedRequests}, channelMapRange, fullChannelRange);
-
-        //     if (requestSentSuccessfully) {
-        //         this.currentlyStreamingChannelRange = fullChannelRange;
+        //     for (const encodedCoordinate of sortedRequests) {
+        //         this.pendingRequests.get(subKey)?.set(encodedCoordinate, true);
         //     }
+        // }
+        // console.log(sortedRequests, fullChannelRange)
+        // const currentTiles = Array.from(tileToChannelMap.keys()).map(tile => tile.encode());
+        // this.backendService.addRequiredTiles(fileId, currentTiles, compressionQuality, currentTiles);
+        // const requestSentSuccessfully = this.backendService.setChannels(fileId, requiredChannel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles: sortedRequests}, fullChannelRange, fullChannelRange);
+
+        // if (requestSentSuccessfully) {
+        //     this.currentlyStreamingChannelRange = fullChannelRange;
+        // }
         // }
     }
 
@@ -496,9 +551,9 @@ export class TileService {
         this.updateRemainingTileCount();
     }
 
-    clearQueueForChannelMap(map: Map<string | undefined, any>, fileId: number, channelRange: {min: number; max: number}) {
+    clearQueueForChannelMap(map: Map<string | undefined, Map<number, boolean>>, fileId: number, currentChannelRange: {min: number; max: number}, currentTileRange: number[]) {
         // Clear all requests with the given file ID within the channel range
-        this.pendingRequests.forEach((value, key) => {
+        map.forEach((value, key) => {
             if (!key) {
                 return;
             }
@@ -508,8 +563,18 @@ export class TileService {
             }
             const keyFileId = parseInt(splitKey[0]);
             const channel = parseInt(splitKey[splitKey.length - 1]);
-            if (keyFileId === fileId && isFinite(channel) && channel >= 0 && channel >= channelRange.min && channel <= channelRange.max) {
+            if (keyFileId === fileId && isFinite(channel) && channel >= 0 && channel <= currentChannelRange.min && channel >= currentChannelRange.max) {
+                // Delete all that is outside current range
                 map.delete(key);
+            }
+
+            if (keyFileId === fileId && isFinite(channel) && channel >= 0 && channel >= currentChannelRange.min && channel <= currentChannelRange.max) {
+                for (const tile of value.keys()) {
+                    console.log(tile);
+                    if (!currentTileRange.includes(tile)) {
+                        value.delete(tile);
+                    }
+                }
             }
         });
 
@@ -611,6 +676,14 @@ export class TileService {
     private handleStreamedTiles = (tileMessage: CARTA.IRasterTileData) => {
         const key = `${tileMessage.fileId}_${tileMessage.stokes}_${tileMessage.channel}`;
 
+        // Flow control
+        const flowControlMessage: CARTA.IChannelMapFlowControl = {
+            fileId: tileMessage.fileId,
+            receivedChannel: tileMessage.channel
+        };
+
+        // this.backendService.sendChannelMapFlowControl(flowControlMessage);
+
         this.cummulativeTile = this.cummulativeTile + 1;
         // const tile = tileMessage.tiles[0]
         // console.log('qqqq requesting receiving', key, TileCoordinate.Encode(tile.x, tile.y, tile.layer), this.pendingRequests.get(key)?.has(TileCoordinate.Encode(tile.x, tile.y, tile.layer)), this.pendingRequests.get(key), this.cummulativeTile)
@@ -626,10 +699,10 @@ export class TileService {
             return;
         }
 
-        // if (appStore.preferenceStore.channelMapEnabled && !appStore.channelMapStore.channelArray.includes(tileMessage?.channel ?? NaN)) {
-        //     console.log(`Skipping stale tile during channel map for key=${key}`);
-        //     return;
-        // }
+        if (appStore.preferenceStore.channelMapEnabled && !appStore.channelMapStore.channelArray.includes(tileMessage?.channel ?? NaN)) {
+            console.log(`Skipping stale tile during channel map for key=${key}`);
+            return;
+        }
 
         if (this.animationEnabled && tileMessage.animationId !== this.backendService.animationId && !this.syncIdMap.has(tileMessage.syncId ?? NaN)) {
             console.log(`Skipping stale tile during animation Message animation_id: ${tileMessage.animationId}. Service animation_id: ${this.backendService.animationId}`);
@@ -656,7 +729,7 @@ export class TileService {
             const pendingRequestsMap = this.pendingRequests.get(key);
             const channelMapStore = AppStore.Instance.channelMapStore;
             const fullChannelRange = {min: channelMapStore.startChannel, max: channelMapStore.channelRange};
-            const channel = tileMessage.channel || -1;
+            const channel = tileMessage.channel ?? -1;
 
             if (pendingRequestsMap?.has(encodedCoordinate) || this.animationEnabled || (channel >= 0 && channel >= fullChannelRange.min && channel <= fullChannelRange.max)) {
                 if (pendingRequestsMap) {

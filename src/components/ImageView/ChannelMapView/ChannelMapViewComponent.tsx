@@ -172,7 +172,6 @@ export class ChannelMapStore {
             newOverlay.border = overlay.border;
             newOverlay.axes = overlay.axes;
             newOverlay.numbers = overlay.numbers;
-            newOverlay.labels = overlay.labels;
             newOverlay.ticks = overlay.ticks;
             newOverlay.colorbar = overlay.colorbar;
             newOverlay.beam = overlay.beam;

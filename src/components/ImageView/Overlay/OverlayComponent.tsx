@@ -82,13 +82,17 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         if (this.props.channel !== undefined && this.channelNumberCanvas) {
             requestAnimationFrame(() => {
                 const destCanvas = this.channelNumberCanvas.getContext("2d", {willReadFrequently: true});
+                const frame = AppStore.Instance.channelMapStore.masterFrame;
                 this.channelNumberCanvas.width = this.props.overlaySettings.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
                 this.channelNumberCanvas.height = this.props.overlaySettings.viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
                 destCanvas.font = "24px Arial";
                 destCanvas.fillStyle = "red";
                 destCanvas.textAlign = "left";
                 destCanvas.textBaseline = "top";
-                destCanvas.fillText(`${this.props.channel}`, this.props.overlaySettings.paddingLeft * devicePixelRatio * AppStore.Instance.imageRatio + 10, 10);
+                const {spectralString, velocityString, freqString} = frame.getFreqWithChannel(this.props.channel);
+                const infoString = spectralString || velocityString || freqString;
+                destCanvas.fillText(`Channel: ${this.props.channel}`, this.props.overlaySettings.paddingLeft * devicePixelRatio * AppStore.Instance.imageRatio + 10, 10);
+                // destCanvas.fillText(`${infoString}`, this.props.overlaySettings.paddingLeft * devicePixelRatio * AppStore.Instance.imageRatio + 10, 35);
             });
         }
     }
@@ -116,8 +120,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                   mip: 1
               }
             : frame.spatialReference
-            ? frame.spatialReference.requiredFrameView
-            : frame.requiredFrameView;
+              ? frame.spatialReference.requiredFrameView
+              : frame.requiredFrameView;
         if (wcsInfo && frameView && this.canvas && !this.props.refCanvas) {
             // Take aspect ratio scaling into account
             const tempWcsInfo = AST.copy(wcsInfo);
