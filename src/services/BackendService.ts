@@ -679,8 +679,8 @@ export class BackendService {
     @action("channel map flow control")
     sendChannelMapFlowControl(message: CARTA.IAnimationFlowControl) {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            this.logEvent(CARTA.EventType.ANIMATION_FLOW_CONTROL, this.eventCounter, message, false);
-            if (this.sendEvent(CARTA.EventType.ANIMATION_FLOW_CONTROL, CARTA.AnimationFlowControl.encode(message).finish())) {
+            this.logEvent(CARTA.EventType.CHANNEL_MAP_FLOW_CONTROL, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.CHANNEL_MAP_FLOW_CONTROL, CARTA.ChannelMapFlowControl.encode(message).finish())) {
                 return true;
             }
         }

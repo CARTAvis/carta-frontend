@@ -682,7 +682,7 @@ export class TileService {
             receivedChannel: tileMessage.channel
         };
 
-        // this.backendService.sendChannelMapFlowControl(flowControlMessage);
+        this.backendService.sendChannelMapFlowControl(flowControlMessage);
 
         this.cummulativeTile = this.cummulativeTile + 1;
         // const tile = tileMessage.tiles[0]
