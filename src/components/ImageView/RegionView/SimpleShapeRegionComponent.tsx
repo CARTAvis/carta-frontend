@@ -563,12 +563,9 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         let shapeNode: React.ReactNode;
         const centerReferenceImage = region.center;
 
-        // trigger re-render when exporting images
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const imageRatio = AppStore.Instance.imageRatio;
-
-        // trigger re-render when changing devicePixelRatio (switching monitor)
+        // trigger re-render when exporting images and changing devicePixelRatio (switching monitor)
         /* eslint-disable @typescript-eslint/no-unused-vars */
+        const imageRatio = AppStore.Instance.imageRatio;
         const pixelRatio = AppStore.Instance.pixelRatio;
         const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
         /* eslint-enable @typescript-eslint/no-unused-vars */

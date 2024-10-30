@@ -156,7 +156,7 @@ export class AppStore {
     @observable imageRatio = 1;
     @observable isExportingImage = false;
     @observable private isCanvasUpdated: boolean;
-    @observable pixelRatio: {current: number; previous: number};
+    @observable pixelRatio: number;
 
     // dynamic zIndex
     public zIndexManager = new FloatingObjzIndexManager();
@@ -1869,7 +1869,7 @@ export class AppStore {
         this.initRequirements();
         this.momentToMatch = true;
 
-        this.pixelRatio = {current: devicePixelRatio, previous: undefined};
+        this.pixelRatio = devicePixelRatio;
 
         AST.onReady.then(
             action(() => {
@@ -2125,18 +2125,17 @@ export class AppStore {
                 media.removeEventListener("change", updatePixelRatio);
             };
 
-            this.pixelRatio.previous = this.pixelRatio.current;
-            this.pixelRatio.current = devicePixelRatio;
-            this.handleInvariantImageSize();
+            this.handleInvariantImageSize(this.pixelRatio);
+            this.pixelRatio = devicePixelRatio;
         };
         updatePixelRatio();
     }
 
     // to make the image size invariant on screen
-    private handleInvariantImageSize() {
+    private handleInvariantImageSize(prevPixelRatio: number) {
         this.frames.forEach(frame => {
             if (frame === this.spatialReference || !this.spatialReference) {
-                frame.setZoom((frame.zoomLevel * this.pixelRatio.current) / this.pixelRatio.previous, true);
+                frame.setZoom((frame.zoomLevel * devicePixelRatio) / prevPixelRatio, true);
             }
         });
     }
