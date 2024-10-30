@@ -156,7 +156,7 @@ export class AppStore {
     @observable imageRatio = 1;
     @observable isExportingImage = false;
     @observable private isCanvasUpdated: boolean;
-    @observable pixelRatio: number;
+    @observable private devicePixelRatio: number;
 
     // dynamic zIndex
     public zIndexManager = new FloatingObjzIndexManager();
@@ -512,6 +512,10 @@ export class AppStore {
             frameMap.set(frame, group);
         }
         return frameMap;
+    }
+
+    @computed get pixelRatio(): number {
+        return this.devicePixelRatio * this.imageRatio;
     }
 
     /**
@@ -1869,7 +1873,7 @@ export class AppStore {
         this.initRequirements();
         this.momentToMatch = true;
 
-        this.pixelRatio = devicePixelRatio;
+        this.devicePixelRatio = devicePixelRatio;
 
         AST.onReady.then(
             action(() => {
@@ -2125,7 +2129,7 @@ export class AppStore {
                 media.removeEventListener("change", updatePixelRatio);
             };
 
-            this.handleDevicePixelRatioChange(this.pixelRatio);
+            this.handleDevicePixelRatioChange(this.devicePixelRatio);
         };
         updatePixelRatio();
     }
@@ -2142,7 +2146,7 @@ export class AppStore {
             previewFrameStore.setZoom((previewFrameStore.zoomLevel * devicePixelRatio) / prevPixelRatio, true);
         });
 
-        this.pixelRatio = devicePixelRatio;
+        this.devicePixelRatio = devicePixelRatio;
     }
 
     // region Subscription handlers
@@ -3262,10 +3266,9 @@ export class AppStore {
     };
 
     updateLayerPixelRatio = layerRef => {
-        const pixelRatio = devicePixelRatio * this.imageRatio;
         const canvas = layerRef?.current?.getCanvas();
-        if (canvas && canvas.pixelRatio !== pixelRatio) {
-            canvas.setPixelRatio(pixelRatio);
+        if (canvas && canvas.pixelRatio !== this.pixelRatio) {
+            canvas.setPixelRatio(this.pixelRatio);
         }
     };
 
