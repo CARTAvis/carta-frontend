@@ -1869,7 +1869,7 @@ export class AppStore {
         this.initRequirements();
         this.momentToMatch = true;
 
-        this.pixelRatio = {current: devicePixelRatio * this.imageRatio, previous: undefined};
+        this.pixelRatio = {current: devicePixelRatio, previous: undefined};
 
         AST.onReady.then(
             action(() => {
