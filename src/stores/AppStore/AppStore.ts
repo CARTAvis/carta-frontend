@@ -2125,16 +2125,15 @@ export class AppStore {
                 media.removeEventListener("change", updatePixelRatio);
             };
 
-            this.handleInvariantImageSize(this.pixelRatio);
-            this.pixelRatio = devicePixelRatio;
+            this.handleDevicePixelRatioChange(this.pixelRatio);
         };
         updatePixelRatio();
     }
 
-    // to make the image size invariant on screen
-    private handleInvariantImageSize(prevPixelRatio: number) {
+    // update devicePixelRatio and make the image size invariant on screen
+    @action private handleDevicePixelRatioChange(prevPixelRatio: number) {
         this.frames.forEach(frame => {
-            if (frame === this.spatialReference || !this.spatialReference) {
+            if (frame === this.spatialReference || !frame.spatialReference) {
                 frame.setZoom((frame.zoomLevel * devicePixelRatio) / prevPixelRatio, true);
             }
         });
@@ -2142,6 +2141,8 @@ export class AppStore {
         this.previewFrames.forEach((previewFrameStore, previewFrameId) => {
             previewFrameStore.setZoom((previewFrameStore.zoomLevel * devicePixelRatio) / prevPixelRatio, true);
         });
+
+        this.pixelRatio = devicePixelRatio;
     }
 
     // region Subscription handlers
