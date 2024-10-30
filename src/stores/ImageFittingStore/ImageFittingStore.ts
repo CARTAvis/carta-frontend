@@ -367,7 +367,7 @@ export class ImageFittingStore {
                 })
             );
             newRegions?.forEach(r => r?.setDashLength(2));
-            (await AppToaster).show(SuccessToast("tick", `Created ${params?.length} ellipse regions.`));
+            AppToaster.show(SuccessToast("tick", `Created ${params?.length} ellipse regions.`));
         } catch (err) {
             console.log(err);
         }

@@ -78,7 +78,7 @@ export class CodeSnippetDialogComponent extends React.Component {
         if (snippetStore.validInput && !snippetStore.isExecuting) {
             const success = await snippetStore.executeCurrentSnippet();
             if (!success) {
-                (await AppToaster).show(WarningToast("Error encountered while executing snippet. See JavaScript console for details."));
+                AppToaster.show(WarningToast("Error encountered while executing snippet. See JavaScript console for details."));
             }
         }
         this.tryRefocusEditor();

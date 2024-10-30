@@ -148,7 +148,7 @@ export class PreferenceDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         try {
             await copyToClipboard(appStore.telemetryService.decodedUserId);
-            (await AppToaster).show(SuccessToast("clipboard", "Copied user ID to clipboard."));
+            AppToaster.show(SuccessToast("clipboard", "Copied user ID to clipboard."));
         } catch (err) {
             console.log(err);
         }

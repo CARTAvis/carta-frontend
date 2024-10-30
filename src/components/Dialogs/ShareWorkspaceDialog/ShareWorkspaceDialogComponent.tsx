@@ -51,7 +51,7 @@ export const ShareWorkspaceDialogComponent = observer(() => {
             setShareKey(shareKey);
         } catch (err) {
             console.log(err);
-            (await AppToaster).show(WarningToast("Could not generate a sharing link."));
+            AppToaster.show(WarningToast("Could not generate a sharing link."));
         }
     };
 

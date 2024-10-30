@@ -79,11 +79,11 @@ export class CatalogApiService {
         } catch (error) {
             if (axios.isCancel(error)) {
                 if (error?.message) {
-                    (await AppToaster).show(WarningToast(error?.message));
+                    AppToaster.show(WarningToast(error?.message));
                 }
                 CatalogApiService.Instance.resetCancelTokenSource(CatalogDatabase.VIZIER);
             } else if (error?.message) {
-                (await AppToaster).show(ErrorToast(error.message));
+                AppToaster.show(ErrorToast(error.message));
             } else {
                 console.log("Vizier Resource Error: " + error);
             }
@@ -110,11 +110,11 @@ export class CatalogApiService {
         } catch (error) {
             if (axios.isCancel(error)) {
                 if (error?.message) {
-                    (await AppToaster).show(WarningToast(error?.message));
+                    AppToaster.show(WarningToast(error?.message));
                 }
                 CatalogApiService.Instance.resetCancelTokenSource(CatalogDatabase.VIZIER);
             } else if (error?.message) {
-                (await AppToaster).show(ErrorToast(error.message));
+                AppToaster.show(ErrorToast(error.message));
             } else {
                 console.log("VizieR Table Error: " + error);
             }
@@ -174,7 +174,7 @@ export class CatalogApiService {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         if (!frame) {
-            (await AppToaster).show(ErrorToast("Please load the image file"));
+            AppToaster.show(ErrorToast("Please load the image file"));
             throw new Error("No image file");
         }
 
@@ -207,11 +207,11 @@ export class CatalogApiService {
         } catch (error) {
             if (axios.isCancel(error)) {
                 if (error?.message) {
-                    (await AppToaster).show(WarningToast(error?.message));
+                    AppToaster.show(WarningToast(error?.message));
                 }
                 CatalogApiService.Instance.resetCancelTokenSource(CatalogDatabase.SIMBAD);
             } else if (error?.message) {
-                (await AppToaster).show(ErrorToast(error.message));
+                AppToaster.show(ErrorToast(error.message));
             } else {
                 console.log("Append Simbad Error: " + error);
             }
