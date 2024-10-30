@@ -2138,6 +2138,10 @@ export class AppStore {
                 frame.setZoom((frame.zoomLevel * devicePixelRatio) / prevPixelRatio, true);
             }
         });
+
+        this.previewFrames.forEach((previewFrameStore, previewFrameId) => {
+            previewFrameStore.setZoom((previewFrameStore.zoomLevel * devicePixelRatio) / prevPixelRatio, true);
+        });
     }
 
     // region Subscription handlers
