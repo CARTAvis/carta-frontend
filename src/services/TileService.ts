@@ -433,8 +433,6 @@ export class TileService {
                         range,
                         fullChannelRange
                     );
-                    console.log("jjjjjj", "full channel range: ", fullChannelRange, "requesting range: ", range, "requesting tile: ", groupedTiles, "full tile range: ", currentTiles, "message sent successfully: ", requestSentSuccessfully);
-
                     if (requestSentSuccessfully) {
                         this.currentlyStreamingChannelRange = fullChannelRange;
                     }
@@ -670,19 +668,19 @@ export class TileService {
             // mark the channel as complete
             this.completedChannels.set(key, true);
             this.syncIdMap.set(syncMessage.syncId, true);
+
+            // Flow control
+            const flowControlMessage: CARTA.IChannelMapFlowControl = {
+                fileId: syncMessage.fileId,
+                receivedChannel: syncMessage.channel
+            };
+
+            this.backendService.sendChannelMapFlowControl(flowControlMessage);
         }
     };
 
     private handleStreamedTiles = (tileMessage: CARTA.IRasterTileData) => {
         const key = `${tileMessage.fileId}_${tileMessage.stokes}_${tileMessage.channel}`;
-
-        // Flow control
-        const flowControlMessage: CARTA.IChannelMapFlowControl = {
-            fileId: tileMessage.fileId,
-            receivedChannel: tileMessage.channel
-        };
-
-        this.backendService.sendChannelMapFlowControl(flowControlMessage);
 
         this.cummulativeTile = this.cummulativeTile + 1;
         // const tile = tileMessage.tiles[0]
