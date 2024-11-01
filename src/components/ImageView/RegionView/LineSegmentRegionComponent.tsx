@@ -277,11 +277,10 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         let anchors = null;
         let newAnchor = null;
         let pointArray: Array<number>;
-        // trigger re-render when exporting images and changing devicePixelRatio (switching monitor)
-        /* eslint-disable @typescript-eslint/no-unused-vars */
         const imageRatio = AppStore.Instance.imageRatio;
+        // trigger re-render when exporting images and changing devicePixelRatio (switching monitor)
+        /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
         const pixelRatio = AppStore.Instance.pixelRatio;
-        /* eslint-enable @typescript-eslint/no-unused-vars */
 
         if (frame.spatialReference) {
             const centerReferenceImage = average2D(controlPoints);

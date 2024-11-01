@@ -514,6 +514,9 @@ export class AppStore {
         return frameMap;
     }
 
+    /**
+     * This is devicePixelRatio * imageRatio, which is used to make image rendering consistent across different devices.
+     */
     @computed get pixelRatio(): number {
         return this.devicePixelRatio * this.imageRatio;
     }
@@ -2135,15 +2138,15 @@ export class AppStore {
     }
 
     // update devicePixelRatio and make the image size invariant on screen
-    @action private handleDevicePixelRatioChange(prevPixelRatio: number) {
+    @action private handleDevicePixelRatioChange(prevDevicePixelRatio: number) {
         this.frames.forEach(frame => {
             if (frame === this.spatialReference || !frame.spatialReference) {
-                frame.setZoom((frame.zoomLevel * devicePixelRatio) / prevPixelRatio, true);
+                frame.setZoom((frame.zoomLevel * devicePixelRatio) / prevDevicePixelRatio, true);
             }
         });
 
         this.previewFrames.forEach((previewFrameStore, previewFrameId) => {
-            previewFrameStore.setZoom((previewFrameStore.zoomLevel * devicePixelRatio) / prevPixelRatio, true);
+            previewFrameStore.setZoom((previewFrameStore.zoomLevel * devicePixelRatio) / prevDevicePixelRatio, true);
         });
 
         this.devicePixelRatio = devicePixelRatio;

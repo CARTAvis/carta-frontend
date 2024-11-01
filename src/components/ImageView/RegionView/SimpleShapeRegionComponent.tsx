@@ -565,7 +565,6 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
         // trigger re-render when exporting images and changing devicePixelRatio (switching monitor)
         /* eslint-disable @typescript-eslint/no-unused-vars */
-        const imageRatio = AppStore.Instance.imageRatio;
         const pixelRatio = AppStore.Instance.pixelRatio;
         const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
         /* eslint-enable @typescript-eslint/no-unused-vars */
