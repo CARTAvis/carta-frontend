@@ -41,7 +41,7 @@
         "idb": "^8.0.0",
         "jest-canvas-mock": "^2.5.2",
         "jwt-decode": "^4.0.0",
-        "konva": "^8.4.3",
+        "konva": "^9.3.16",
         "lodash": "^4.17.15",
         "mnemonist": "^0.39.8",
         "mobx": "^6.13.1",
