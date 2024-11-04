@@ -150,7 +150,6 @@ export class FrameStore {
     // Region set for the current frame. Accessed via regionSet, to take into account region sharing
     @observable private readonly frameRegionSet: RegionSetStore;
 
-    @observable renderHiDPI: boolean;
     @observable spectralType: SpectralType;
     @observable spectralUnit: SpectralUnit;
     @observable spectralTypeSecondary: SpectralType;
@@ -250,10 +249,6 @@ export class FrameStore {
         }
     }
 
-    @computed get pixelRatio(): number {
-        return this.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0;
-    }
-
     @computed get aspectRatio(): number {
         if (isFinite(this.framePixelRatio)) {
             return this.framePixelRatio;
@@ -272,8 +267,9 @@ export class FrameStore {
     // Frame view of center = initial center && zoom = 1
     @computed get unitFrameView(): FrameView {
         // Required image dimensions
-        const imageWidth = (this.pixelRatio * this.renderWidth) / this.aspectRatio;
-        const imageHeight = this.pixelRatio * this.renderHeight;
+        const appStore = AppStore.Instance;
+        const imageWidth = (appStore.pixelRatio * this.renderWidth) / this.aspectRatio;
+        const imageHeight = appStore.pixelRatio * this.renderHeight;
 
         const mipAdjustment = PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0;
         const mipExact = Math.max(1.0, mipAdjustment);
@@ -329,8 +325,8 @@ export class FrameStore {
             }
 
             // Required image dimensions
-            const imageWidth = (this.pixelRatio * this.renderWidth) / this.zoomLevel / this.aspectRatio;
-            const imageHeight = (this.pixelRatio * this.renderHeight) / this.zoomLevel;
+            const imageWidth = (AppStore.Instance.pixelRatio * this.renderWidth) / this.zoomLevel / this.aspectRatio;
+            const imageHeight = (AppStore.Instance.pixelRatio * this.renderHeight) / this.zoomLevel;
 
             const mipAdjustment = PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0;
             const mipExact = Math.max(1.0, mipAdjustment / this.zoomLevel);
@@ -1024,7 +1020,7 @@ export class FrameStore {
         if (imageWidth <= 0) {
             return 1.0;
         }
-        return (this.renderWidth * this.pixelRatio) / this.aspectRatio / imageWidth;
+        return (this.renderWidth * AppStore.Instance.pixelRatio) / this.aspectRatio / imageWidth;
     }
 
     @computed
@@ -1033,7 +1029,7 @@ export class FrameStore {
         if (imageHeight <= 0) {
             return 1.0;
         }
-        return (this.renderHeight * this.pixelRatio) / imageHeight;
+        return (this.renderHeight * AppStore.Instance.pixelRatio) / imageHeight;
     }
 
     @computed get contourProgress(): number {
@@ -1212,7 +1208,6 @@ export class FrameStore {
         this.validWcs = false;
         this.frameInfo = frameInfo;
         this.initialCenter = {x: (this.frameInfo.fileInfoExtended.width - 1) / 2.0, y: (this.frameInfo.fileInfoExtended.height - 1) / 2.0};
-        this.renderHiDPI = true;
         this.center = {x: 0, y: 0};
         this.stokes = 0;
         this.channel = 0;
@@ -2552,7 +2547,7 @@ export class FrameStore {
 
     @action zoomToSizeX = (x: number): boolean => {
         if (x > 0 && isFinite(x)) {
-            this.setZoom((this.renderWidth * this.pixelRatio) / this.aspectRatio / x);
+            this.setZoom((this.renderWidth * AppStore.Instance.pixelRatio) / this.aspectRatio / x);
             return true;
         }
         return false;
@@ -2564,7 +2559,7 @@ export class FrameStore {
 
     @action zoomToSizeY = (y: number): boolean => {
         if (y > 0 && isFinite(y)) {
-            this.setZoom((this.renderHeight * this.pixelRatio) / y);
+            this.setZoom((this.renderHeight * AppStore.Instance.pixelRatio) / y);
             return true;
         }
         return false;
@@ -2694,8 +2689,8 @@ export class FrameStore {
             const {minPoint, maxPoint} = minMax2D(corners);
             const rangeX = maxPoint.x - minPoint.x;
             const rangeY = maxPoint.y - minPoint.y;
-            const zoomX = (this.spatialReference.renderWidth * this.pixelRatio) / rangeX;
-            const zoomY = (this.spatialReference.renderHeight * this.pixelRatio) / rangeY;
+            const zoomX = (this.spatialReference.renderWidth * AppStore.Instance.pixelRatio) / rangeX;
+            const zoomY = (this.spatialReference.renderHeight * AppStore.Instance.pixelRatio) / rangeY;
             const zoom = Math.min(zoomX, zoomY);
             this.spatialReference.setZoom(zoom, true);
             return zoom;
