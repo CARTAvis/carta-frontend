@@ -388,7 +388,7 @@ export class TileService {
                     if (!tileCached && compressedTile) {
                         // if this is in pendingCompressionMap, then we redo the decompression to avoid the tile being stuck in pendingDecompressionMap.
                         const pendingSyncId: number | undefined = Array.from(pendingCompressionMap?.keys() ?? []).find(syncId => pendingCompressionMap?.get(syncId)?.has(encodedCoordinate));
-                        if (isFinite(pendingSyncId)) {
+                        if (isFinite(pendingSyncId as number)) {
                             // Remove the syncId from the pendingDecompressionMap, because the syncing tile group may be outdated, so we just decompress all the tiles in that syncing group one by one.
                             pendingCompressionMap?.delete(pendingSyncId as number);
                             this.syncIdMap.delete(pendingSyncId as number);
