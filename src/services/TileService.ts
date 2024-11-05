@@ -387,12 +387,12 @@ export class TileService {
                     }
                     if (!tileCached && compressedTile) {
                         // if this is in pendingCompressionMap, then we redo the decompression to avoid the tile being stuck in pendingDecompressionMap.
-                        const pendingSyncId = Array.from(pendingCompressionMap?.keys() ?? []).find(syncId => pendingCompressionMap?.get(syncId)?.has(encodedCoordinate));
+                        const pendingSyncId: number | undefined = Array.from(pendingCompressionMap?.keys() ?? []).find(syncId => pendingCompressionMap?.get(syncId)?.has(encodedCoordinate));
                         if (isFinite(pendingSyncId)) {
                             // Remove the syncId from the pendingDecompressionMap, because the syncing tile group may be outdated, so we just decompress all the tiles in that syncing group one by one.
-                            pendingCompressionMap?.delete(pendingSyncId);
-                            this.syncIdMap.delete(pendingSyncId);
-                            this.syncIdTileCountMap.delete(pendingSyncId);
+                            pendingCompressionMap?.delete(pendingSyncId as number);
+                            this.syncIdMap.delete(pendingSyncId as number);
+                            this.syncIdTileCountMap.delete(pendingSyncId as number);
                         }
                         // If the tile is not in the cache, and it is not in the pendingDecompressionMap, but we have it's compressed tile cached, then we decompress it.
                         if (!pendingCompressionMap) {
@@ -408,7 +408,7 @@ export class TileService {
                         // If none of the above, then we request the tile from the backend.
                     } else if (!compressedTile) {
                         const channels = tileToChannelMap.get(tile);
-                        channels.push(i);
+                        (channels as number[]).push(i);
                     }
                 }
             }
@@ -808,7 +808,10 @@ export class TileService {
             console.warn("Problem decompressing tile!");
             return;
         }
-        pendingCompressionMap.get(syncId)?.set(tileCoordinate, true);
+
+        if (syncId) {
+            pendingCompressionMap.get(syncId as number)?.set(tileCoordinate, true);
+        }
 
         const eventArgs: TileMessageArgs = {
             fileId,
