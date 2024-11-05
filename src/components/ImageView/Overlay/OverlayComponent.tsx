@@ -90,7 +90,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 destCanvas.textAlign = "left";
                 destCanvas.textBaseline = "top";
                 const {spectralString, velocityString, freqString} = frame.getFreqWithChannel(this.props.channel);
-                const infoString = spectralString || velocityString || freqString;
+                // const infoString = spectralString || velocityString || freqString;
                 destCanvas.fillText(`Channel: ${this.props.channel}`, this.props.overlaySettings.paddingLeft * devicePixelRatio * AppStore.Instance.imageRatio + 10, 10);
                 // destCanvas.fillText(`${infoString}`, this.props.overlaySettings.paddingLeft * devicePixelRatio * AppStore.Instance.imageRatio + 10, 35);
             });

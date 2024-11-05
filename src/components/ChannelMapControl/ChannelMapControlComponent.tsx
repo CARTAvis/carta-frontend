@@ -158,7 +158,7 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
 
         return (
             <div className="channel-map-control-containers">
-                {!appStore.preferenceStore.channelMapEnabled && <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />}
+                {!appStore.preferenceStore.channelMapEnabled && <NonIdealState icon={"folder-open"} title={"Channel map not enabled"} description={"Enable channel map using the menu"} />}
                 {appStore.preferenceStore.channelMapEnabled &&
                     activeFrame &&
                     this.width > 0 && ( // temporary fix for broken range slider, issue #1078

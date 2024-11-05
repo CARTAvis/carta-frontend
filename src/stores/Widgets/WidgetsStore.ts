@@ -932,20 +932,6 @@ export class WidgetsStore {
         } else {
             this.setImageMultiPanelEnabled(!PreferenceStore.Instance.imageMultiPanelEnabled);
         }
-        // const preferenceStore = PreferenceStore.Instance;
-        // if (preferenceStore.imageMultiPanelEnabled) {
-        //     preferenceStore.setPreference(PreferenceKeys.CHANNEL_MAP_ENABLED, true);
-        //     AppStore.Instance.channelMapStore.masterFrame?.overlayStore.setIsChannelMap(true); // need to fix
-        //     this.setImageMultiPanelEnabled(!preferenceStore.imageMultiPanelEnabled);
-        // } else if (preferenceStore.channelMapEnabled) {
-        //     preferenceStore.setPreference(PreferenceKeys.CHANNEL_MAP_ENABLED, false);
-        //     AppStore.Instance.channelMapStore.masterFrame?.overlayStore.setIsChannelMap(false); // need to fix
-        //     this.updateImagePanelButton();
-        //     // AppStore.Instance.channelMapStore.masterFrame?.overlayStore.clearViewDimension();
-        // } else {
-        //     this.setImageMultiPanelEnabled(!preferenceStore.imageMultiPanelEnabled);
-        // }
-        // console.log(preferenceStore.imageMultiPanelEnabled, preferenceStore.channelMapEnabled);
     };
 
     onChannelMapButtonClick = () => {
