@@ -681,16 +681,7 @@ export class CatalogWidgetStore {
         if (!this.disableSizeMap && column?.length && this.sizeColumnMin.clipd !== undefined && this.sizeColumnMax.clipd !== undefined) {
             const pointSize = this.pointSizebyType;
             let min = (this.sizeArea ? this.shapeSettings?.areaBase : this.shapeSettings?.diameterBase) ?? NaN;
-            return CARTACompute.CalculateCatalogSize(
-                column,
-                this.sizeColumnMin.clipd,
-                this.sizeColumnMax.clipd,
-                pointSize.min + min,
-                pointSize.max + min,
-                this.sizeScalingType,
-                this.sizeArea,
-                devicePixelRatio * AppStore.Instance.imageRatio
-            );
+            return CARTACompute.CalculateCatalogSize(column, this.sizeColumnMin.clipd, this.sizeColumnMax.clipd, pointSize.min + min, pointSize.max + min, this.sizeScalingType, this.sizeArea, AppStore.Instance.pixelRatio);
         }
         return new Float32Array(0);
     }
@@ -708,7 +699,7 @@ export class CatalogWidgetStore {
                 pointSize.max + min,
                 this.sizeMinorScalingType,
                 this.sizeMinorArea,
-                devicePixelRatio * AppStore.Instance.imageRatio
+                AppStore.Instance.pixelRatio
             );
         }
         return new Float32Array(0);
