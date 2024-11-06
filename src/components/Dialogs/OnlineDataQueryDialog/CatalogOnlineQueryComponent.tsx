@@ -5,7 +5,7 @@ import FuzzySearch from "fuzzy-search";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {ClearableNumericInputComponent, SafeNumericInput} from "components/Shared";
+import {ClearableNumericInputComponent, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {CatalogApiService, CatalogDatabase} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, NUMBER_FORMAT_LABEL, RadiusUnits, SystemType, VizierItem} from "stores";
 import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
@@ -223,7 +223,7 @@ export class CatalogQueryComponent extends React.Component {
 
         return (
             <div className="catalog-query-panel">
-                {configBoard}
+                <ScrollShadow>{configBoard}</ScrollShadow>
                 <Overlay2 autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={disable} usePortal={false}>
                     <div className="query-loading-overlay">
                         <Spinner intent={Intent.PRIMARY} size={30} value={null} />
