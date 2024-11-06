@@ -237,7 +237,9 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createShiftmapPixelFrameset(AstFrameSet* wcsin
 
 EMSCRIPTEN_KEEPALIVE AstFrameSet* initDummyFrame()
 {
-    AstFrameSet* frameSet = astFrameSet(astFrame(2, "Label(1)=X Coordinate,Label(2)=Y Coordinate,Domain=GRID"), "");
+    double offsets[] = {0, 0};
+    AstFrameSet* frameSet = astFrameSet(astFrame(2, ""), "");
+    astAddFrame(frameSet, 1, astShiftMap(2, offsets, ""), astFrame(2, "Label(1)=X Coordinate,Label(2)=Y Coordinate,Domain=PIXEL"));
     return frameSet;
 }
 
