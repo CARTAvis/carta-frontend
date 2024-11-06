@@ -49,6 +49,7 @@ export class ChannelMapStore {
         this.overlayStores.outer.setBase(0);
         this.overlayStores.outer.setDefaultGap(0);
         this.overlayStores.outer.isChannelMap = true;
+        // channel map base, defaultGap
     }
 
     @observable masterFrame: FrameStore;
@@ -164,7 +165,6 @@ export class ChannelMapStore {
             newOverlay.numbers.hidden = false;
             newOverlay.isChannelMap = true;
             newOverlay.global = overlay.global;
-            newOverlay.title = overlay.title;
             newOverlay.grid = overlay.grid;
             newOverlay.border = overlay.border;
             newOverlay.axes = overlay.axes;
@@ -216,7 +216,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     const colorBarSetting = AppStore.Instance.overlayStore.colorbar;
     const titleSetting = outerOverlay?.title;
     const titleOffset = titleSetting?.visible ? titleSetting?.fontSize : 0;
-    const colorbarOffset = colorBarSetting.stageWidth;
+    const colorbarOffset = frame?.overlayStore.colorbar.visible ? colorBarSetting.stageWidth : 0;
     const cursorInfoOffset = isFinite(cursorOverlayRef.current?.divElement.clientHeight) ? cursorOverlayRef.current?.divElement.clientHeight : 0;
     const toolbarOffset = 30 + 10 + 10; // overlayPadding bottom + height of button + 10 for aesthetic
 
@@ -226,7 +226,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     const [catalogViewGLComponentRef, setCatalogViewGLComponentRef] = React.useState<CatalogViewGLComponent>();
 
     const heightOffset = (colorBarSetting.position === "right" ? 0 : colorbarOffset) + cursorInfoOffset + toolbarOffset + titleOffset;
-    const widthOffset = colorBarSetting.position === "right" ? colorbarOffset : 5; // 40 is for the number and label width of the ast grid
+    const widthOffset = (colorBarSetting.position === "right" ? colorbarOffset : 0) + 5;
     const channelMapViewWidth = props.renderWidth - widthOffset;
     const channelMapViewHeight = props.renderHeight - heightOffset;
 
@@ -240,7 +240,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
 
     const overlayStore = channelMapStore.overlayStore(Math.floor(imageRenderWidth), Math.floor(imageRenderHeight));
     const overlayWidth = Math.floor(channelMapViewWidth);
-    const overlayHeight = Math.floor(props.renderHeight - toolbarOffset - cursorInfoOffset + (colorBarSetting.position === "right" ? 0 : colorbarOffset));
+    const overlayHeight = Math.floor(props.renderHeight - toolbarOffset - cursorInfoOffset - (colorBarSetting.position === "bottom" ? colorbarOffset : 0));
     if (outerOverlay && isFinite(overlayWidth) && isFinite(overlayHeight)) {
         outerOverlay.setViewDimension(overlayWidth, overlayHeight);
         outerOverlay.numbers.setVisible(false);
@@ -494,10 +494,12 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                 <ColorbarComponent
                     frame={frame}
                     onCursorHoverValueChanged={props.channelMapStore.setPixelHighlightValue}
-                    width={channelMapViewWidth}
-                    height={channelMapViewHeight}
-                    top={frame.overlayStore.colorbar.position === "bottom" ? cursorInfoOffset + channelMapViewHeight + titleOffset : cursorInfoOffset}
-                    length={frame.overlayStore.colorbar.position === "right" ? channelMapViewHeight - outerOffset : channelMapViewWidth - outerOffset - 20}
+                    width={props.renderWidth}
+                    height={props.renderHeight}
+                    leftOffset={frame.overlayStore.colorbar.position === "right" ? 0 : outerOffset}
+                    left={frame.overlayStore.colorbar.position === "right" ? channelMapViewWidth : 0}
+                    top={frame.overlayStore.colorbar.position === "bottom" ? cursorInfoOffset + channelMapViewHeight + titleOffset : cursorInfoOffset + titleOffset}
+                    length={frame.overlayStore.colorbar.position === "right" ? channelMapViewHeight - outerOffset : channelMapViewWidth - outerOffset}
                 />
             )}
             <ToolbarComponent

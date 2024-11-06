@@ -18,6 +18,8 @@ export interface ColorbarComponentProps {
     width?: number;
     height?: number;
     top?: number;
+    left?: number;
+    leftOffset?: number;
     length?: number;
 }
 
@@ -69,7 +71,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
     componentDidUpdate() {
         AppStore.Instance.resetImageRatio();
-        this.props.frame.colorbarStore.setHeight(AppStore.Instance.overlayStore?.colorbar.height(this.props.frame, this.props.length));
+        this.props.frame.colorbarStore.setHeight(this.props.length ?? AppStore.Instance.overlayStore?.colorbar.height(this.props.frame, this.props.length));
     }
 
     private handleMouseMove = event => {
@@ -77,20 +79,21 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const frame = this.props.frame;
         const renderConfig = frame?.renderConfig;
         const colorbarSettings = appStore.overlayStore?.colorbar;
+        const yOffset = this.props.leftOffset ?? colorbarSettings.yOffset(frame);
         if (!renderConfig || !colorbarSettings) {
             return;
         }
 
         const stage = event.target.getStage();
         let point = colorbarSettings.position === "right" ? stage.getPointerPosition().y : stage.getPointerPosition().x;
-        let scaledPos = point - colorbarSettings.yOffset(frame);
+        let scaledPos = point - yOffset;
         if (colorbarSettings.position === "right") {
             scaledPos = colorbarSettings.height(this.props.frame, this.props.length) - scaledPos;
         }
         scaledPos /= colorbarSettings.height(this.props.frame, this.props.length);
         scaledPos = clamp(scaledPos, 0.0, 1.0);
         // Recalculate clamped point position
-        point = clamp(point, colorbarSettings.yOffset(frame), colorbarSettings.yOffset(frame) + colorbarSettings.height(this.props.frame, this.props.length));
+        point = clamp(point, yOffset, yOffset + colorbarSettings.height(this.props.frame, this.props.length));
         // Lock to mid-pixel for sharp lines
         point = Math.floor(point) + 0.5;
 
@@ -111,6 +114,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const viewHeight = this.props.height || (frame.isPreview ? frame.previewOverlayStore.viewHeight : frame.overlayStore.viewHeight);
         const viewWidth = this.props.width || (frame.isPreview ? frame.previewOverlayStore.viewWidth : frame.overlayStore.viewWidth);
         const colorbarSettingsHeight = this.props.length || colorbarSettings.height(frame, this.props.length);
+        const yOffset = this.props.leftOffset ?? colorbarSettings.yOffset(frame);
 
         appStore.updateLayerPixelRatio(this.layerRef);
 
@@ -129,22 +133,22 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         let stageTop = 0;
         let stageLeft = 0;
         let rectX = colorbarSettings.offset + (isOnePixBorder ? 0.5 / devicePixelRatio : 0);
-        let rectY = colorbarSettings.yOffset(frame) - (isOnePixBorder && (isIntPosition(colorbarSettings.yOffset(frame)) ? 0.5 / devicePixelRatio : 0));
+        let rectY = yOffset - (isOnePixBorder && (isIntPosition(yOffset) ? 0.5 / devicePixelRatio : 0));
         let rectWidth = colorbarSettings.width;
-        let rectHeight = colorbarSettingsHeight + (isOnePixBorder && (!isIntPosition(colorbarSettingsHeight) ? (isIntPosition(colorbarSettings.yOffset(frame)) ? 0.5 : -0.5) / devicePixelRatio : 0));
+        let rectHeight = colorbarSettingsHeight + (isOnePixBorder && (!isIntPosition(colorbarSettingsHeight) ? (isIntPosition(yOffset) ? 0.5 : -0.5) / devicePixelRatio : 0));
         let rectGradientStart = {x: 0, y: 0};
         let rectGradientEnd = {x: 0, y: colorbarSettingsHeight};
         let labelXPos = colorbarSettings.rightBorderPos + colorbarSettings.numberWidth + colorbarSettings.textGap;
-        let labelYPos = colorbarSettings.yOffset(frame);
+        let labelYPos = yOffset;
         let hoverBarPosition = [colorbarSettings.offset, this.cursorY, colorbarSettings.rightBorderPos, this.cursorY];
 
         // adjust stage position
         if (colorbarSettings.position === "right") {
-            stageLeft = this.props.width || frame.overlayStore.padding.left + frame.renderWidth;
+            stageLeft = this.props.left ?? frame.overlayStore.padding.left + frame.renderWidth;
             stageTop = this.props.top || 0;
         } else if (colorbarSettings.position === "bottom") {
             stageTop = this.props.top || viewHeight - frame.overlayStore.colorbarHoverInfoHeight - colorbarSettings.stageWidth;
-        } else if (colorbarSettings.position === "top" && frame.overlayStore.title.show) {
+        } else if (colorbarSettings.position === "top" && frame.overlayStore.title.show && !this.props.top) {
             stageTop = frame.overlayStore.padding.top - colorbarSettings.stageWidth;
         } else if (colorbarSettings.position === "top" && this.props.top) {
             stageTop = this.props.top;
@@ -155,7 +159,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
             stageHeight = stageWidth;
             stageWidth = viewWidth;
             rectY = rectX;
-            rectX = colorbarSettings.yOffset(frame) + (isOnePixBorder && (isIntPosition(colorbarSettings.yOffset(frame)) ? 0.5 / devicePixelRatio : 0));
+            rectX = yOffset + (isOnePixBorder && (isIntPosition(yOffset) ? 0.5 / devicePixelRatio : 0));
             [rectWidth, rectHeight] = [rectHeight, rectWidth];
             [rectGradientStart.x, rectGradientStart.y, rectGradientEnd.x, rectGradientEnd.y] = [rectGradientEnd.y, rectGradientEnd.x, rectGradientStart.y, rectGradientStart.x];
             [labelXPos, labelYPos] = [labelYPos, labelXPos];
@@ -187,7 +191,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         let numbers = [];
         if (colorbarSettings.tickVisible || colorbarSettings.numberVisible) {
             const texts = frame.colorbarStore.texts;
-            const positions = frame.colorbarStore.positions;
+            const positions = frame.colorbarStore.positions(yOffset);
 
             for (let i = 0; i < positions.length; i++) {
                 if (colorbarSettings.tickVisible) {

@@ -60,18 +60,20 @@ export class ColorbarStore {
         }
     }
 
-    @computed get positions(): number[] {
-        const colorbar = this.overlayStore.colorbar;
-        if (!this.roundedNumbers || !this.frame || !isFinite(colorbar.yOffset(this.frame))) {
-            return [];
-        }
-        const scaleMinVal = this.frame?.renderConfig?.scaleMinVal;
-        const scaleMaxVal = this.frame?.renderConfig?.scaleMaxVal;
-        if (colorbar.position === "right") {
-            return this.roundedNumbers.numbers.map(x => colorbar.yOffset(this.frame) + (colorbar.height(this.frame, this.height) * (scaleMaxVal - x)) / (scaleMaxVal - scaleMinVal));
-        } else {
-            return this.roundedNumbers.numbers.map(x => colorbar.yOffset(this.frame) + (colorbar.height(this.frame, this.height) * (x - scaleMinVal)) / (scaleMaxVal - scaleMinVal));
-        }
+    @computed get positions() {
+        return (yOffset: number): number[] => {
+            const colorbar = this.overlayStore.colorbar;
+            if (!this.roundedNumbers || !this.frame || !isFinite(yOffset)) {
+                return [];
+            }
+            const scaleMinVal = this.frame?.renderConfig?.scaleMinVal;
+            const scaleMaxVal = this.frame?.renderConfig?.scaleMaxVal;
+            if (colorbar.position === "right") {
+                return this.roundedNumbers.numbers.map(x => yOffset + (colorbar.height(this.frame, this.height) * (scaleMaxVal - x)) / (scaleMaxVal - scaleMinVal));
+            } else {
+                return this.roundedNumbers.numbers.map(x => yOffset + (colorbar.height(this.frame, this.height) * (x - scaleMinVal)) / (scaleMaxVal - scaleMinVal));
+            }
+        };
     }
 
     private static GetOrder = (x: number): number => {
