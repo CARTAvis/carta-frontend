@@ -1,0 +1,45 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+.scroll-shadow {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+
+    background:
+        radial-gradient(farthest-side at 50% 0, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0)) center top,
+        radial-gradient(farthest-side at 50% 100%, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0)) center bottom;
+
+    background-repeat: no-repeat;
+    background-size:
+        100% 14px,
+        100% 14px;
+    background-attachment: scroll, scroll;
+
+    .scroll-shadow-cover {
+        overflow: auto;
+
+        background:
+            linear-gradient($pt-app-background-color 30%, rgba(255, 255, 255, 0)) center top,
+            linear-gradient(rgba(255, 255, 255, 0), $pt-app-background-color 70%) center bottom;
+
+        background-repeat: no-repeat;
+        background-size:
+            100% 40px,
+            100% 40px;
+        background-attachment: local, local;
+    }
+}
+
+.#{$ns}-dark .scroll-shadow-cover {
+    overflow: auto;
+
+    background:
+        linear-gradient($pt-dark-app-background-color 30%, rgba(255, 255, 255, 0)) center top,
+        linear-gradient(rgba(255, 255, 255, 0), $pt-dark-app-background-color 70%) center bottom;
+
+    background-repeat: no-repeat;
+    background-size:
+        100% 40px,
+        100% 40px;
+    background-attachment: local, local;
+}
