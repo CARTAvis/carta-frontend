@@ -107,16 +107,16 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     renderCanvas = () => {
         const settings = this.props.overlaySettings;
         const frame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image.store?.baseFrame : this.props.image?.store;
-        const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
+        const appStore = AppStore.Instance;
 
         const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoShifted : frame.wcsInfo;
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
         const frameView = this.props.unScaled
             ? {
-                  xMin: settings.padding.left * pixelRatio,
-                  xMax: this.props.overlaySettings.viewWidth * pixelRatio - settings.padding.right * pixelRatio,
-                  yMin: settings.padding.bottom * pixelRatio,
-                  yMax: this.props.overlaySettings.viewHeight * pixelRatio - settings.padding.top * pixelRatio,
+                  xMin: settings.padding.left * appStore.pixelRatio,
+                  xMax: this.props.overlaySettings.viewWidth * appStore.pixelRatio - settings.padding.right * appStore.pixelRatio,
+                  yMin: settings.padding.bottom * appStore.pixelRatio,
+                  yMax: this.props.overlaySettings.viewHeight * appStore.pixelRatio - settings.padding.top * appStore.pixelRatio,
                   mip: 1
               }
             : frame.spatialReference
@@ -168,12 +168,12 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     frameView.xMax,
                     frameView.yMin / frame.aspectRatio,
                     frameView.yMax / frame.aspectRatio,
-                    this.props.overlaySettings.viewWidth * pixelRatio,
-                    this.props.overlaySettings.viewHeight * pixelRatio,
-                    settings.padding.left * pixelRatio,
-                    settings.padding.right * pixelRatio,
-                    settings.padding.top * pixelRatio,
-                    settings.padding.bottom * pixelRatio,
+                    this.props.overlaySettings.viewWidth * appStore.pixelRatio,
+                    this.props.overlaySettings.viewHeight * appStore.pixelRatio,
+                    settings.padding.left * appStore.pixelRatio,
+                    settings.padding.right * appStore.pixelRatio,
+                    settings.padding.top * appStore.pixelRatio,
+                    settings.padding.bottom * appStore.pixelRatio,
                     styleString
                 );
             };

@@ -270,9 +270,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
 
         const appStore = AppStore.Instance;
-        const pixelRatio = devicePixelRatio * appStore.imageRatio;
-        const requiredWidth = Math.max(1, renderWidth * pixelRatio);
-        const requiredHeight = Math.max(1, renderHeight * pixelRatio);
+        const requiredWidth = Math.max(1, renderWidth * appStore.pixelRatio);
+        const requiredHeight = Math.max(1, renderHeight * appStore.pixelRatio);
 
         const tileRenderService = webGLService;
         const gl = webGLService.gl;
@@ -291,12 +290,17 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     public updateUniforms(frame: FrameStore, webGLService: TileWebGLService, renderWidth: number, renderHeight: number, pixelHighlightValue: number) {
         const appStore = AppStore.Instance;
-        const renderConfig = frame.renderConfig;
-        const pixelRatio = devicePixelRatio * appStore.imageRatio;
-        const gl = webGLService.gl;
         const shaderUniforms = webGLService.shaderUniforms;
+        const tileRenderService = webGLService;
+        const renderConfig = frame.renderConfig;
+        const gl = webGLService.gl;
 
         if (renderConfig && shaderUniforms) {
+            if (renderConfig.colorMapIndex === -1) {
+                tileRenderService.setCustomGradientUniforms(renderConfig.customColormapHexEnd, renderConfig.customColormapHexStart);
+            } else if (renderConfig.colorMapIndex >= 79) {
+                tileRenderService.setCustomGradientUniforms(renderConfig.monoColormapHex);
+            }
             gl.uniform1f(shaderUniforms.MinVal, renderConfig.scaleMinVal);
             gl.uniform1f(shaderUniforms.MaxVal, renderConfig.scaleMaxVal);
             gl.uniform1i(shaderUniforms.CmapIndex, renderConfig.colorMapIndex);
@@ -307,8 +311,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             gl.uniform1i(shaderUniforms.UseSmoothedBiasContrast, appStore.preferenceStore.useSmoothedBiasContrast ? 1 : 0);
             gl.uniform1f(shaderUniforms.Gamma, renderConfig.gamma);
             gl.uniform1f(shaderUniforms.Alpha, renderConfig.alpha);
-            gl.uniform1f(shaderUniforms.CanvasWidth, renderWidth * pixelRatio);
-            gl.uniform1f(shaderUniforms.CanvasHeight, renderHeight * pixelRatio);
+            gl.uniform1f(shaderUniforms.CanvasWidth, renderWidth * appStore.pixelRatio);
+            gl.uniform1f(shaderUniforms.CanvasHeight, renderHeight * appStore.pixelRatio);
 
             const nanColor = tinycolor(appStore.preferenceStore.nanColorHex).setAlpha(appStore.preferenceStore.nanAlpha);
             if (nanColor.isValid()) {
@@ -529,13 +533,12 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         let zoom;
         let zoomFactor = 1.0;
         let aspectRatio = 1.0;
-        const pixelRatio = devicePixelRatio * appStore.imageRatio;
         if (frame.spatialReference) {
             zoomFactor = frame.spatialTransform.scale;
-            zoom = (frame.spatialReference.zoomLevel / pixelRatio) * zoomFactor;
+            zoom = (frame.spatialReference.zoomLevel / appStore.pixelRatio) * zoomFactor;
         } else {
             aspectRatio = frame.aspectRatio;
-            zoom = frame.zoomLevel / pixelRatio;
+            zoom = frame.zoomLevel / appStore.pixelRatio;
         }
 
         const pixelGridZoomLow = 6.0;
