@@ -49,9 +49,8 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         }
 
         const appStore = AppStore.Instance;
-        const pixelRatio = devicePixelRatio * appStore.imageRatio;
-        const requiredWidth = Math.max(1, frame.renderWidth * pixelRatio);
-        const requiredHeight = Math.max(1, frame.renderHeight * pixelRatio);
+        const requiredWidth = Math.max(1, frame.renderWidth * appStore.pixelRatio);
+        const requiredHeight = Math.max(1, frame.renderHeight * appStore.pixelRatio);
 
         // Resize and clear the canvas if needed
         if (frame?.isRenderable && (this.canvas.width !== requiredWidth || this.canvas.height !== requiredHeight)) {
@@ -67,14 +66,14 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
             this.canvas.height = requiredHeight;
         }
         // Otherwise just clear it
-        const xOffset = this.props.column * frame.renderWidth * pixelRatio;
+        const xOffset = this.props.column * frame.renderWidth * appStore.pixelRatio;
         // y-axis is inverted
-        const yOffset = (appStore.imageViewConfigStore.numImageRows - 1 - this.props.row) * frame.renderHeight * pixelRatio;
-        this.gl.viewport(xOffset, yOffset, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio);
+        const yOffset = (appStore.imageViewConfigStore.numImageRows - 1 - this.props.row) * frame.renderHeight * appStore.pixelRatio;
+        this.gl.viewport(xOffset, yOffset, frame.renderWidth * appStore.pixelRatio, frame.renderHeight * appStore.pixelRatio);
         this.gl.clearColor(0, 0, 0, 0);
         // Clear a scissored rectangle limited to the current frame
         this.gl.enable(GL2.SCISSOR_TEST);
-        this.gl.scissor(xOffset, yOffset, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio);
+        this.gl.scissor(xOffset, yOffset, frame.renderWidth * appStore.pixelRatio, frame.renderHeight * appStore.pixelRatio);
         const clearMask = GL2.COLOR_BUFFER_BIT | GL2.DEPTH_BUFFER_BIT | GL2.STENCIL_BUFFER_BIT;
         this.gl.clear(clearMask);
         this.gl.disable(GL2.SCISSOR_TEST);
@@ -105,7 +104,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
 
     private renderFrameVectorOverlay = (frame: FrameStore, baseFrame: FrameStore) => {
         const shaderUniforms = this.vectorOverlayWebGLService.shaderUniforms;
-        const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
+        const appStore = AppStore.Instance;
         const isActive = frame === baseFrame;
 
         if (baseFrame.spatialReference) {
@@ -167,9 +166,9 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         }
 
         this.gl.uniform1i(shaderUniforms.DataTexture, 0);
-        this.gl.uniform1f(shaderUniforms.CanvasSpaceLineWidth, pixelRatio * frame.vectorOverlayConfig.thickness);
+        this.gl.uniform1f(shaderUniforms.CanvasSpaceLineWidth, appStore.pixelRatio * frame.vectorOverlayConfig.thickness);
         const baseScale = baseFrame.spatialTransform?.scale ?? 1.0;
-        this.gl.uniform1f(shaderUniforms.FeatherWidth, pixelRatio / baseScale);
+        this.gl.uniform1f(shaderUniforms.FeatherWidth, appStore.pixelRatio / baseScale);
         if (isFinite(frame.vectorOverlayConfig.rotationOffset)) {
             this.gl.uniform1f(shaderUniforms.RotationOffset, (frame.vectorOverlayConfig.rotationOffset * Math.PI) / 180.0);
         } else {
@@ -182,20 +181,20 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         if (frame.vectorOverlayConfig.angularSource === VectorOverlaySource.None) {
             this.gl.uniform1f(shaderUniforms.IntensityMin, intensityMin);
             this.gl.uniform1f(shaderUniforms.IntensityMax, intensityMax);
-            this.gl.uniform1f(shaderUniforms.LengthMin, frame.vectorOverlayConfig.lengthMin * pixelRatio);
-            this.gl.uniform1f(shaderUniforms.LengthMax, frame.vectorOverlayConfig.lengthMax * pixelRatio);
+            this.gl.uniform1f(shaderUniforms.LengthMin, frame.vectorOverlayConfig.lengthMin * appStore.pixelRatio);
+            this.gl.uniform1f(shaderUniforms.LengthMax, frame.vectorOverlayConfig.lengthMax * appStore.pixelRatio);
             this.gl.uniform1i(shaderUniforms.IntensityPlot, 1);
         } else if (frame.vectorOverlayConfig.intensitySource === VectorOverlaySource.None) {
             this.gl.uniform1f(shaderUniforms.IntensityMin, 0);
             this.gl.uniform1f(shaderUniforms.IntensityMax, 1);
-            this.gl.uniform1f(shaderUniforms.LengthMin, frame.vectorOverlayConfig.lengthMax * pixelRatio);
-            this.gl.uniform1f(shaderUniforms.LengthMax, frame.vectorOverlayConfig.lengthMax * pixelRatio);
+            this.gl.uniform1f(shaderUniforms.LengthMin, frame.vectorOverlayConfig.lengthMax * appStore.pixelRatio);
+            this.gl.uniform1f(shaderUniforms.LengthMax, frame.vectorOverlayConfig.lengthMax * appStore.pixelRatio);
             this.gl.uniform1i(shaderUniforms.IntensityPlot, 0);
         } else {
             this.gl.uniform1f(shaderUniforms.IntensityMin, intensityMin);
             this.gl.uniform1f(shaderUniforms.IntensityMax, intensityMax);
-            this.gl.uniform1f(shaderUniforms.LengthMin, frame.vectorOverlayConfig.lengthMin * pixelRatio);
-            this.gl.uniform1f(shaderUniforms.LengthMax, frame.vectorOverlayConfig.lengthMax * pixelRatio);
+            this.gl.uniform1f(shaderUniforms.LengthMin, frame.vectorOverlayConfig.lengthMin * appStore.pixelRatio);
+            this.gl.uniform1f(shaderUniforms.LengthMax, frame.vectorOverlayConfig.lengthMax * appStore.pixelRatio);
             this.gl.uniform1i(shaderUniforms.IntensityPlot, 0);
         }
 
