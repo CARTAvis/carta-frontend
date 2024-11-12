@@ -37,6 +37,7 @@ export enum PreferenceKeys {
     GLOBAL_AUTOLAUNCH = "autoLaunch",
     GLOBAL_FILE_FILTER_MODE = "fileFilterMode",
     GLOBAL_LAYOUT = "layout",
+    GLOBAL_IS_SMART_LAYOUT = "isSmartLayout",
     GLOBAL_CURSOR_POSITION = "cursorPosition",
     GLOBAL_ZOOM_MODE = "zoomMode",
     GLOBAL_ZOOM_POINT = "zoomPoint",
@@ -164,6 +165,7 @@ const DEFAULTS = {
         autoLaunch: true,
         fileFilterMode: FileFilterMode.Content,
         layout: PresetLayout.DEFAULT,
+        isSmartLayout: false,
         cursorPosition: CursorPosition.TRACKING,
         zoomMode: Zoom.FIT,
         zoomPoint: ZoomPoint.CURSOR,
@@ -741,6 +743,11 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.LATEST_RELEASE) ?? DEFAULTS.SILENT.latestRelease;
     }
 
+    // getter for smart layout setting
+    @computed get isSmartLayout(): boolean {
+        return this.preferences.get(PreferenceKeys.GLOBAL_IS_SMART_LAYOUT) ?? DEFAULTS.GLOBAL.isSmartLayout;
+    }
+
     /**
      * Sets the preference parameter
      *
@@ -813,6 +820,7 @@ export class PreferenceStore {
             PreferenceKeys.GLOBAL_AUTOLAUNCH,
             PreferenceKeys.GLOBAL_FILE_FILTER_MODE,
             PreferenceKeys.GLOBAL_LAYOUT,
+            PreferenceKeys.GLOBAL_IS_SMART_LAYOUT,
             PreferenceKeys.GLOBAL_CURSOR_POSITION,
             PreferenceKeys.GLOBAL_ZOOM_MODE,
             PreferenceKeys.GLOBAL_ZOOM_POINT,

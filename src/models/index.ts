@@ -20,6 +20,7 @@ export * from "./Point2D/Point2D";
 export * from "./PolarizationDefinition/PolarizationDefinition";
 export * from "./RegionCreationMode/RegionCreationMode";
 export * from "./Snippet/Snippet";
+export * from "./Spatial/SpatialDefinition";
 export * from "./Spectral/SpectralDefinition";
 export * from "./Spectral/SpectralInfo";
 export * from "./StatisticsDefinition/StatisticsDefinition";

@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Alert, AnchorButton, Breadcrumb, BreadcrumbProps, Breadcrumbs, Button, ButtonGroup, Classes, DialogProps, Icon, InputGroup, Intent, Menu, MenuItem, Popover, Position, TabId, Tooltip} from "@blueprintjs/core";
+import {Alert, AnchorButton, Breadcrumb, BreadcrumbProps, Breadcrumbs, Button, ButtonGroup, Classes, DialogProps, FormGroup, Icon, InputGroup, Intent, Menu, MenuItem, Popover, Position, Switch, TabId, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import * as _ from "lodash";
@@ -9,8 +9,8 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {AppToaster, ErrorToast, SimpleTableComponentProps} from "components/Shared";
-import {ImageType} from "models";
-import {AppStore, BrowserMode, CatalogProfileStore, DialogId, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
+import {ImageType, PresetLayout} from "models";
+import {AlertStore, AppStore, BrowserMode, CatalogProfileStore, DialogId, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, LayoutStore, PreferenceKeys, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
 import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
@@ -43,8 +43,8 @@ export class FileBrowserDialogComponent extends React.Component {
         FileBrowserStore.Instance.setSelectedTab(newId);
     };
 
-    @action private handleFileClicked = (file: ISelectedFile) => {
-        FileBrowserStore.Instance.selectFile(file);
+    @action private handleFileClicked = async (file: ISelectedFile) => {
+        await FileBrowserStore.Instance.selectFile(file);
         if (this.enableImageArithmetic) {
             // Check if the existing string has a trailing quote or not
             const quoteRegex = /(["'])+/gm;
@@ -66,6 +66,8 @@ export class FileBrowserDialogComponent extends React.Component {
             }
             this.imageArithmeticInputRef.current?.focus();
         }
+
+        LayoutStore.Instance.matchLayoutMap();
     };
 
     private loadWithColorBlending = async () => {
@@ -140,6 +142,9 @@ export class FileBrowserDialogComponent extends React.Component {
         const fileBrowserStore = appStore.fileBrowserStore;
         let frame: FrameStore;
 
+        const layoutStore = LayoutStore.Instance;
+        const preferenceStore = PreferenceStore.Instance;
+
         // Ignore load
         switch (fileBrowserStore.browserMode) {
             case BrowserMode.RegionExport:
@@ -152,6 +157,17 @@ export class FileBrowserDialogComponent extends React.Component {
         if (fileBrowserStore.browserMode === BrowserMode.File) {
             const frames = appStore.frames;
             if (!(forceAppend || fileBrowserStore.appendingFrame) || !frames.length) {
+                if (layoutStore.isSmartLayout && layoutStore.currentLayoutMapIndex !== null && layoutStore.layoutExists(layoutStore.smartLayoutName)) {
+                    // should show some warning if the smart layout is not applied
+                    layoutStore.applyLayout(layoutStore.smartLayoutName);
+                } else {
+                    if (!layoutStore.applyLayout(preferenceStore.layout)) {
+                        AlertStore.Instance.showAlert(`Applying preference layout "${preferenceStore.layout}" failed! Resetting preference layout to default.`);
+                        layoutStore.applyLayout(PresetLayout.DEFAULT);
+                        preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
+                    }
+                }
+
                 frame = yield appStore.openFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
             } else {
                 frame = yield appStore.appendFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
@@ -270,6 +286,11 @@ export class FileBrowserDialogComponent extends React.Component {
         const fileBrowserStore = FileBrowserStore.Instance;
         fileBrowserStore.cancelRequestingFileList();
         fileBrowserStore.resetLoadingStates();
+    };
+
+    private handleSmartLayout = () => {
+        LayoutStore.Instance.toogleSmartLayout();
+        PreferenceStore.Instance.setPreference(PreferenceKeys.GLOBAL_IS_SMART_LAYOUT, LayoutStore.Instance.isSmartLayout);
     };
 
     @action handleFilterStringInputChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
@@ -396,7 +417,12 @@ export class FileBrowserDialogComponent extends React.Component {
                         );
                     } else {
                         return (
-                            <div>
+                            <div className="footer-sub">
+                                <FormGroup inline={true} label="Smart Layout">
+                                    <Tooltip content={"Apply data type associated layout"}>
+                                        <Switch checked={LayoutStore.Instance.isSmartLayout} onChange={() => this.handleSmartLayout()} />
+                                    </Tooltip>
+                                </FormGroup>
                                 <Tooltip content={"Close any existing images and load this image"}>
                                     <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={actionFunction} text={actionText} />
                                 </Tooltip>

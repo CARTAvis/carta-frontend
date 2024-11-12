@@ -23,7 +23,6 @@ import {
     ImageType,
     ImageViewItem,
     Point2D,
-    PresetLayout,
     RegionId,
     SpectralType,
     Theme,
@@ -1795,14 +1794,15 @@ export class AppStore {
                 await this.connectToServer();
                 await this.fileBrowserStore.restoreStartingDirectory();
                 await this.layoutStore.fetchLayouts();
+                await this.layoutStore.fetchLayoutMap();
                 await this.snippetStore.fetchSnippets();
 
                 this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
-                if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
-                    AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
-                    this.layoutStore.applyLayout(PresetLayout.DEFAULT);
-                    this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
-                }
+                // if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
+                //     AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
+                //     this.layoutStore.applyLayout(PresetLayout.DEFAULT);
+                //     this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
+                // }
                 await this.loadDefaultFiles();
                 this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
                 this.updateASTColors();

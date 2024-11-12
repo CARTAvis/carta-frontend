@@ -41,6 +41,27 @@ export const IsSpectralTypeSupported = (typeStr: string): boolean => {
     return Object.values(SpectralType).includes(normalizedStr as SpectralType) && normalizedStr !== SpectralType.CHANNEL;
 };
 
+export enum CtypeSpectral {
+    VRAD = "VRAD",
+    VOPT = "VOPT",
+    FREQ = "FREQ",
+    WAVE = "WAVE",
+    AWAV = "AWAV",
+    CHANNEL = "CHANNEL",
+    NATIVE = "NATIVE",
+    ENER = "ENER",
+    WAVN = "WAVN",
+    ZOPT = "ZOPT",
+    VELO = "VELO",
+    BETA = "BETA"
+    // what's beta?
+}
+
+export const IsSpectralCtype = (typeStr: string): boolean => {
+    const normalizedStr = typeStr?.toUpperCase();
+    return Object.values(CtypeSpectral).includes(normalizedStr as CtypeSpectral);
+};
+
 export const SPECTRAL_MATCHING_TYPES: SpectralType[] = Object.values(SpectralType);
 export function IsSpectralMatchingTypeValid(type: SpectralType) {
     return type && SPECTRAL_MATCHING_TYPES.includes(type);

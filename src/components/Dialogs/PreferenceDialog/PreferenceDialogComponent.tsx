@@ -181,6 +181,11 @@ export class PreferenceDialogComponent extends React.Component {
                         <option value={FileFilterMode.All}>All files</option>
                     </HTMLSelect>
                 </FormGroup>
+                {/* <FormGroup inline={true} label="Smart Layout">
+                        <Tooltip content={"Apply data type associated layout"}>
+                            <Switch checked={preference.isSmartLayout} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_IS_SMART_LAYOUT, ev.currentTarget.value)} />
+                        </Tooltip>
+                    </FormGroup> */}
                 <FormGroup inline={true} label="Initial layout">
                     <HTMLSelect value={preference.layout} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_LAYOUT, ev.currentTarget.value)}>
                         {layoutStore.orderedLayoutNames.map(layout => (

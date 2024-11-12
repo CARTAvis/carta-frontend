@@ -1,12 +1,12 @@
 import * as React from "react";
-import {AnchorButton, Classes, DialogProps, FormGroup, InputGroup, Intent, Position, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Classes, DialogProps, FormGroup, HTMLSelect, InputGroup, Intent, Label, Position, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {PresetLayout} from "models";
-import {AppStore, DialogId, HelpType} from "stores";
+import {AppStore, DialogId, HelpType, LayoutDialogMode} from "stores";
 
 import "./SaveLayoutDialogComponent.scss";
 
@@ -25,6 +25,12 @@ export class SaveLayoutDialogComponent extends React.Component {
         super(props);
         makeObservable(this);
     }
+
+    private titleMap = new Map<LayoutDialogMode, string>([
+        [LayoutDialogMode.Save, "Save Layout"],
+        [LayoutDialogMode.Rename, "Rename Layout"],
+        [LayoutDialogMode.SmartLayout, "Smart Layout"]
+    ]);
 
     private handleInput = (ev: React.FormEvent<HTMLInputElement>) => {
         this.layoutName = ev.currentTarget.value;
@@ -66,6 +72,17 @@ export class SaveLayoutDialogComponent extends React.Component {
         this.clearInput();
     };
 
+    private saveLayoutMap = async () => {
+        // keep layoutName before it is cleared in saveLayout()
+        const layoutName = this.layoutName.trim();
+
+        await this.saveLayout();
+
+        const appStore = AppStore.Instance;
+        appStore.dialogStore.hideDialog(DialogId.Layout);
+        await appStore.layoutStore.saveLayoutMap(layoutName);
+    };
+
     @computed get isEmpty(): boolean {
         return !this.layoutName?.trim();
     }
@@ -74,10 +91,92 @@ export class SaveLayoutDialogComponent extends React.Component {
         return this.layoutName.match(/^[^~`!*()\-+=[.'?<>/|\\:;&]+$/)?.length > 0;
     }
 
+    private renderLayoutDialogBody = (mode: LayoutDialogMode) => {
+        const layoutStore = AppStore.Instance.layoutStore;
+
+        switch (mode) {
+            case LayoutDialogMode.Save:
+                return (
+                    <div className={Classes.DIALOG_BODY}>
+                        <FormGroup inline={true} label="Save current layout as:">
+                            <Tooltip isOpen={!this.isEmpty && !this.validName} position={Position.BOTTOM_LEFT} content={"Layout name should not contain ~, `, !, *, (, ), -, +, =, [, ., ', ?, <, >, /, |, \\, :, ; or &"}>
+                                <InputGroup className="layout-name-input" placeholder="Enter layout name" value={this.layoutName} autoFocus={true} onChange={this.handleInput} onKeyDown={this.handleKeyDown} />
+                            </Tooltip>
+                        </FormGroup>
+                    </div>
+                );
+            case LayoutDialogMode.Rename:
+                return (
+                    <div className={Classes.DIALOG_BODY}>
+                        <FormGroup inline={true} label={`Rename ${layoutStore.oldLayoutName} to:`}>
+                            <Tooltip isOpen={!this.isEmpty && !this.validName} position={Position.BOTTOM_LEFT} content={"Layout name should not contain ~, `, !, *, (, ), -, +, =, [, ., ', ?, <, >, /, |, \\, :, ; or &"}>
+                                <InputGroup className="layout-name-input" placeholder="Enter layout name" value={this.layoutName} autoFocus={true} onChange={this.handleInput} onKeyDown={this.handleKeyDown} />
+                            </Tooltip>
+                        </FormGroup>
+                    </div>
+                );
+            case LayoutDialogMode.SmartLayout:
+                return (
+                    <div className={Classes.DIALOG_BODY}>
+                        <Label>{`Associate data type (${layoutStore.currentLayoutMapCtype})`}</Label>
+                    </div>
+                );
+            default:
+                return "";
+        }
+    };
+
+    private renderLayoutDialogFooter = (mode: LayoutDialogMode) => {
+        const layoutStore = AppStore.Instance.layoutStore;
+
+        switch (mode) {
+            case LayoutDialogMode.Save:
+                return (
+                    <div className={Classes.DIALOG_FOOTER}>
+                        <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                            <Tooltip content="Save as smart layout" disabled={!this.isEmpty}>
+                                <AnchorButton intent={Intent.PRIMARY} onClick={this.saveLayoutMap} text={"Smart Layout"} disabled={this.isEmpty || !this.validName || layoutStore.currentLayoutMapCtype.length === 0} />
+                            </Tooltip>
+                            <Tooltip content="Layout name cannot be empty!" disabled={!this.isEmpty}>
+                                <AnchorButton intent={Intent.PRIMARY} onClick={this.saveLayout} text={"Save"} disabled={this.isEmpty || !this.validName} />
+                            </Tooltip>
+                        </div>
+                    </div>
+                );
+            case LayoutDialogMode.Rename:
+                return (
+                    <div className={Classes.DIALOG_FOOTER}>
+                        <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                            <Tooltip content="Layout name cannot be empty!" disabled={!this.isEmpty}>
+                                <AnchorButton intent={Intent.PRIMARY} onClick={this.renameLayout} text={"Rename"} disabled={this.isEmpty || !this.validName} />
+                            </Tooltip>
+                        </div>
+                    </div>
+                );
+            case LayoutDialogMode.SmartLayout:
+                return (
+                    <div className={Classes.DIALOG_FOOTER}>
+                        <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                            <FormGroup inline={true} label="to Layout:">
+                                <HTMLSelect value={layoutStore.smartLayoutName} onChange={ev => layoutStore.saveLayoutMap(ev.currentTarget.value)}>
+                                    {layoutStore.orderedLayoutNames.map(layout => (
+                                        <option key={layout} value={layout}>
+                                            {layout}
+                                        </option>
+                                    ))}
+                                </HTMLSelect>
+                            </FormGroup>
+                        </div>
+                    </div>
+                );
+            default:
+                return "";
+        }
+    };
+
     render() {
         const appStore = AppStore.Instance;
         const className = classNames("preference-dialog", {[Classes.DARK]: appStore.darkTheme});
-        const isSave = appStore.layoutStore.isSave;
 
         const dialogProps: DialogProps = {
             icon: "layout-grid",
@@ -86,8 +185,11 @@ export class SaveLayoutDialogComponent extends React.Component {
             canOutsideClickClose: false,
             lazy: true,
             isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Layout),
-            title: isSave ? "Save Layout" : `Rename Layout`
+            title: this.titleMap.get(appStore.layoutStore.layoutDialogMode)
         };
+
+        const dialogBody = this.renderLayoutDialogBody(appStore.layoutStore.layoutDialogMode);
+        const dialogFooter = this.renderLayoutDialogFooter(appStore.layoutStore.layoutDialogMode);
 
         return (
             <DraggableDialogComponent
@@ -100,20 +202,25 @@ export class SaveLayoutDialogComponent extends React.Component {
                 enableResizing={true}
                 dialogId={DialogId.Layout}
             >
-                <div className={Classes.DIALOG_BODY}>
-                    <FormGroup inline={true} label={isSave ? "Save current layout as:" : `Rename ${appStore.layoutStore.oldLayoutName} to:`}>
+                {/* <div className={Classes.DIALOG_BODY}> */}
+                {/* <FormGroup inline={true} label={isSave ? "Save current layout as:" : `Rename ${appStore.layoutStore.oldLayoutName} to:`}>
                         <Tooltip isOpen={!this.isEmpty && !this.validName} position={Position.BOTTOM_LEFT} content={"Layout name should not contain ~, `, !, *, (, ), -, +, =, [, ., ', ?, <, >, /, |, \\, :, ; or &"}>
                             <InputGroup className="layout-name-input" placeholder="Enter layout name" value={this.layoutName} autoFocus={true} onChange={this.handleInput} onKeyDown={this.handleKeyDown} />
                         </Tooltip>
-                    </FormGroup>
-                </div>
-                <div className={Classes.DIALOG_FOOTER}>
+                    </FormGroup> */}
+                {/* </div> */}
+                {dialogBody}
+                {/* <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                        <Tooltip content="Save as smart layout" disabled={!this.isEmpty}>
+                            <AnchorButton intent={Intent.PRIMARY} onClick={this.saveLayoutMap} text={"Smart Layout"} disabled={this.isEmpty || !this.validName || appStore.layoutStore.currentLayoutMapCtype.length === 0} />
+                        </Tooltip>
                         <Tooltip content="Layout name cannot be empty!" disabled={!this.isEmpty}>
                             <AnchorButton intent={Intent.PRIMARY} onClick={isSave ? this.saveLayout : this.renameLayout} text={isSave ? "Save" : "Rename"} disabled={this.isEmpty || !this.validName} />
                         </Tooltip>
                     </div>
-                </div>
+                </div> */}
+                {dialogFooter}
             </DraggableDialogComponent>
         );
     }

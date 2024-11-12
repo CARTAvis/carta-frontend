@@ -1,12 +1,20 @@
 import * as GoldenLayout from "golden-layout";
-import {action, computed, flow, makeObservable, observable} from "mobx";
+import {action, autorun, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
-import {LayoutConfig, PresetLayout} from "models";
+import {IsSpatialCtype, IsSpectralCtype, LayoutConfig, PresetLayout} from "models";
 import {ApiService} from "services";
-import {AlertStore, AppStore, DialogId} from "stores";
+import {AlertStore, AppStore, DialogId, FileBrowserStore, PreferenceStore} from "stores";
 
 const MAX_LAYOUT = 10;
+export const LAYOUT_MAP_NAME = "LayoutMap";
+
+export enum LayoutDialogMode {
+    Hidden,
+    Save,
+    Rename,
+    SmartLayout
+}
 
 export class LayoutStore {
     private static staticInstance: LayoutStore;
@@ -21,12 +29,26 @@ export class LayoutStore {
     public static readonly ToasterTimeout = 1500;
     private layoutNameToBeSaved: string;
 
+    public static layoutMap = "LayoutMap";
+
     // self-defined structure: {layoutName: config, layoutName: config, ...}
     @observable dockedLayout: GoldenLayout | null;
     @observable currentLayoutName: string;
     @observable private layouts: any;
     @observable supportsServer: boolean;
     @observable oldLayoutName: string | undefined;
+    @observable existLayoutMap: any;
+    @observable layoutDialogMode: LayoutDialogMode | undefined;
+
+    // File type associated layout
+    @observable isSmartLayout: boolean;
+    @observable smartLayoutName: string | null;
+    @observable currentLayoutMapCtype: any; // type needs to be changed
+    @observable currentLayoutMapIndex: number | null;
+
+    @action toogleSmartLayout = () => {
+        this.isSmartLayout = !this.isSmartLayout;
+    };
 
     @computed get isSave(): boolean {
         return !this.oldLayoutName;
@@ -39,6 +61,17 @@ export class LayoutStore {
         this.supportsServer = false;
         this.oldLayoutName = "";
         this.initLayoutsFromPresets();
+
+        // this.existLayoutMap = {};
+        // this.isSmartLayout = PreferenceStore.Instance.isSmartLayout;
+        this.smartLayoutName = null;
+        this.currentLayoutMapCtype = [];
+        this.currentLayoutMapIndex = null;
+        this.layoutDialogMode = undefined;
+
+        autorun(() => {
+            this.isSmartLayout = PreferenceStore.Instance.isSmartLayout;
+        });
     }
 
     public layoutExists = (layoutName: string): boolean => {
@@ -63,6 +96,15 @@ export class LayoutStore {
             }
         } catch (err) {
             AlertStore.Instance.showAlert("Loading user-defined layout failed!");
+            console.log(err);
+        }
+    }
+
+    @flow.bound *fetchLayoutMap() {
+        try {
+            this.existLayoutMap = yield ApiService.Instance.getLayoutMaps();
+        } catch (err) {
+            AlertStore.Instance.showAlert("Loading layout map failed!");
             console.log(err);
         }
     }
@@ -187,6 +229,93 @@ export class LayoutStore {
             }
         }
     }
+
+    @flow.bound *saveLayoutMap(layoutName: string) {
+        const appStore = AppStore.Instance;
+
+        if (!layoutName || this.currentLayoutMapCtype.length === 0) {
+            appStore.alertStore.showAlert("Save layout map failed! Empty layouts or name.");
+            return;
+        }
+
+        const confirmed = yield appStore.alertStore.showInteractiveAlert(`Associate data type (${this.currentLayoutMapCtype}) to layout: ${layoutName}`);
+        if (confirmed) {
+            try {
+                // const success = yield appStore.apiService.setLayoutMap(LAYOUT_MAP_NAME, {
+                yield appStore.apiService.setLayoutMap(LAYOUT_MAP_NAME, {
+                    layoutMap: [{ctype: FileBrowserStore.Instance.fileInfoForLayout.ctype, layoutName: layoutName}]
+                });
+                this.smartLayoutName = layoutName;
+                // if (success) {
+                //     this.handleSaveResult(success);
+                // }
+                yield this.fetchLayoutMap();
+                this.matchLayoutMap();
+                if (this.isSmartLayout && this.currentLayoutMapIndex !== null && this.layoutExists(this.smartLayoutName)) {
+                    this.applyLayout(this.smartLayoutName);
+                }
+            } catch (err) {
+                console.log(err);
+                // this.handleSaveResult(false);
+            }
+        }
+    }
+
+    @action matchLayoutMap() {
+        const fileBrowserStore = AppStore.Instance.fileBrowserStore;
+        const ctypes = fileBrowserStore.fileInfoForLayout.ctype;
+
+        this.currentLayoutMapCtype = ctypes;
+        this.currentLayoutMapIndex = null;
+
+        if (typeof this.existLayoutMap.layoutMap !== "undefined" && this.existLayoutMap.layoutMap.length > 0) {
+            let ctypeMatched: boolean[] = [];
+            let layoutMap: any;
+
+            for (let i = 0; i < this.existLayoutMap.layoutMap.length; i++) {
+                layoutMap = this.existLayoutMap.layoutMap[i];
+                if (layoutMap.ctype.length === ctypes.length) {
+                    // determine the spatial and spectral axis
+                    ctypes.forEach((ctype: string) => {
+                        let value: string = IsSpatialCtype(ctype) ? "SPATIAL" : IsSpectralCtype(ctype) ? "SPECTRAL" : ctype;
+                        ctypeMatched.push(layoutMap.ctype.includes(value));
+                    });
+
+                    // in case that the first two dimensions are non-spatial data
+                    const allMatched = ctypeMatched.every((c: any) => c === true);
+                    if (allMatched) {
+                        console.log("matched layout name", layoutMap.layoutName);
+                        // save matched layoutName and index
+                        this.smartLayoutName = layoutMap.layoutName;
+                        this.currentLayoutMapIndex = i;
+                        break;
+                    } else {
+                        // for the case that the first two dimensions are spatial data
+                        if (ctypes.length >= 3) {
+                            ctypeMatched.splice(0, 2);
+                        }
+
+                        if (ctypeMatched.every((c: any) => c === true)) {
+                            console.log("matched layout name", layoutMap.layoutName);
+                            // save matched layoutName and index
+                            this.smartLayoutName = layoutMap.layoutName;
+                            this.currentLayoutMapIndex = i;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // no matched layout
+        if (this.currentLayoutMapIndex === null) {
+            console.log("no matched layout");
+        }
+    }
+
+    @action setLayoutDialogMode = (mode: LayoutDialogMode) => {
+        this.layoutDialogMode = mode;
+    };
 
     private handleSaveResult = (success: boolean) => {
         if (success) {

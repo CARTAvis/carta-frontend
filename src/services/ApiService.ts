@@ -4,6 +4,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 
 import {AppToaster} from "components/Shared";
 import {LayoutConfig, Snippet, Workspace, WorkspaceListItem} from "models";
+import {LayoutStore} from "stores";
 
 const preferencesSchema = require("models/preferences_schema_2.json");
 const snippetSchema = require("models/snippet_schema_1.json");
@@ -354,6 +355,72 @@ export class ApiService {
             try {
                 const obj = JSON.parse(localStorage.getItem("savedLayouts") ?? "{}");
                 obj[layoutName] = layout;
+                localStorage.setItem("savedLayouts", JSON.stringify(obj));
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+    };
+
+    public getLayoutMaps = async () => {
+        let savedLayouts: {[name: string]: any};
+        if (ApiService.RuntimeConfig.apiAddress) {
+            try {
+                const url = `${ApiService.RuntimeConfig.apiAddress}/database/layouts`;
+                const response = await this.axiosInstance.get(url);
+                if (response?.data?.success) {
+                    savedLayouts = response.data.layouts;
+                } else {
+                    return undefined;
+                }
+            } catch (err) {
+                console.log(err);
+                return undefined;
+            }
+        } else {
+            try {
+                savedLayouts = JSON.parse(localStorage.getItem("savedLayouts") ?? "{}");
+            } catch (err) {
+                console.log(err);
+                return undefined;
+            }
+        }
+        if (savedLayouts) {
+            return Object.keys(savedLayouts).includes("LayoutMap") ? savedLayouts["LayoutMap"] : [];
+        } else {
+            return undefined;
+        }
+    };
+
+    public setLayoutMap = async (layoutName: string, layout: any): Promise<boolean> => {
+        if (ApiService.RuntimeConfig.apiAddress) {
+            try {
+                const existLayoutMap = await this.getLayoutMaps();
+
+                if (typeof existLayoutMap.layoutMap !== "undefined" && existLayoutMap.layoutMap.length > 0) {
+                    const currentLayoutMapIndex = LayoutStore.Instance.currentLayoutMapIndex;
+
+                    if (currentLayoutMapIndex !== null) {
+                        existLayoutMap.layoutMap.splice(currentLayoutMapIndex, 1);
+                    }
+
+                    existLayoutMap.layoutMap.forEach(item => {
+                        layout["layoutMap"].push(item);
+                    });
+                }
+
+                const url = `${ApiService.RuntimeConfig.apiAddress}/database/layout`;
+                const response = await this.axiosInstance.put(url, {layoutName, layout});
+                return response?.data?.success;
+            } catch (err) {
+                console.log(err);
+                return false;
+            }
+        } else {
+            try {
+                const obj = JSON.parse(localStorage.getItem("savedLayouts") ?? "{}");
+                obj["layoutMap"] = layout;
                 localStorage.setItem("savedLayouts", JSON.stringify(obj));
                 return true;
             } catch (err) {

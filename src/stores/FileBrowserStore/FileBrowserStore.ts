@@ -4,7 +4,7 @@ import {action, autorun, computed, flow, makeObservable, observable} from "mobx"
 
 import {FileInfoType} from "components";
 import {AppToaster, ErrorToast} from "components/Shared";
-import {Freq, FrequencyUnit, ImageType, LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
+import {Freq, FrequencyUnit, ImageType, IsSpatialCtype, IsSpectralCtype, LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
 import {BackendService} from "services";
 import {AppStore, DialogId, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
 import {RegionStore} from "stores/Frame";
@@ -398,7 +398,7 @@ export class FileBrowserStore {
         return type;
     };
 
-    @action selectFile = (file: ISelectedFile) => {
+    @action selectFile = async (file: ISelectedFile) => {
         const fileList = this.getfileListByMode;
         this.selectedFile = file.fileInfo;
 
@@ -407,7 +407,7 @@ export class FileBrowserStore {
         }
 
         if (this.browserMode === BrowserMode.File) {
-            this.getFileInfo(fileList?.directory, file.fileInfo?.name, file.hdu);
+            await this.getFileInfo(fileList?.directory, file.fileInfo?.name, file.hdu);
         } else if (this.browserMode === BrowserMode.SaveFile) {
             this.getFileInfo(fileList?.directory, file.fileInfo?.name, file.hdu);
             this.saveFilename = file.fileInfo?.name;
@@ -825,5 +825,39 @@ export class FileBrowserStore {
 
     @computed get exportAnnotationNum(): number {
         return this.exportRegionIndexes?.reduce((accum, exportIndex, i) => accum + (AppStore.Instance.activeFrame.regionSet.regions[exportIndex]?.isAnnotation ? 1 : 0), 0);
+    }
+
+    @computed get fileInfoForLayout(): {ctype: string[]; naxis: string[]} {
+        let ctypes: string[] = [];
+        let naxes: string[] = [];
+
+        if (this.fileInfoExtended?.headerEntries) {
+            this.fileInfoExtended.headerEntries.forEach(header => {
+                if (header.name?.substring(0, 5) === "CTYPE") {
+                    const value: string = IsSpatialCtype(`${header.value}`) ? "SPATIAL" : IsSpectralCtype(`${header.value}`) ? "SPECTRAL" : `${header.value}`;
+                    ctypes.push(value);
+                }
+                if (header.name?.substring(0, 5) === "NAXIS") {
+                    naxes.push(`${header.value}`);
+                }
+            });
+
+            // the first element is the number of axes, remove it
+            naxes.splice(0, 1);
+
+            if (naxes.length !== ctypes.length) {
+                const minLen = Math.min(naxes.length, ctypes.length);
+                naxes = naxes.slice(0, minLen);
+                ctypes = ctypes.slice(0, minLen);
+            }
+
+            // remove axes with size = 1
+            const indx = naxes.map((n, i) => (n === "1" ? i : -1)).filter(i => i !== -1);
+            indx.reverse().forEach(i => {
+                ctypes.splice(i, 1);
+                naxes.splice(i, 1);
+            });
+        }
+        return {ctype: ctypes, naxis: naxes};
     }
 }

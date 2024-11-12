@@ -10,7 +10,7 @@ import {AppToaster, ExportImageMenuComponent, SuccessToast} from "components/Sha
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import {CARTA_INFO, ImageType, ImageViewItem, PresetLayout, Snippet} from "models";
 import {ApiService, ConnectionStatus} from "services";
-import {AppStore, BrowserMode, DialogId, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
+import {AppStore, BrowserMode, DialogId, LayoutDialogMode, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
 import {copyToClipboard, toFixed} from "utilities";
 
 import {WorkspaceDialogMode} from "../Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
@@ -314,11 +314,18 @@ export class RootMenuComponent extends React.Component {
                             </React.Fragment>
                         )}
                     </MenuItem>
-                    <MenuItem text="Save Layout" onClick={() => appStore.dialogStore.showDialog(DialogId.Layout)} />
+                    <MenuItem text="Save Layout" onClick={() => appStore.dialogStore.showDialog(DialogId.Layout, {layoutDialogMode: LayoutDialogMode.Save})} />
                     <MenuItem text="Rename Layout" disabled={!userLayouts || userLayouts.length <= 0}>
                         {userLayouts &&
                             userLayouts.length > 0 &&
-                            userLayouts.map(value => <MenuItem key={value} text={value} active={value === appStore.layoutStore.currentLayoutName} onClick={() => appStore.dialogStore.showDialog(DialogId.Layout, {oldLayoutName: value})} />)}
+                            userLayouts.map(value => (
+                                <MenuItem
+                                    key={value}
+                                    text={value}
+                                    active={value === appStore.layoutStore.currentLayoutName}
+                                    onClick={() => appStore.dialogStore.showDialog(DialogId.Layout, {oldLayoutName: value, layoutDialogMode: LayoutDialogMode.Rename})}
+                                />
+                            ))}
                     </MenuItem>
                     <MenuItem text="Delete Layout" disabled={!userLayouts || userLayouts.length <= 0}>
                         {userLayouts &&
@@ -337,6 +344,18 @@ export class RootMenuComponent extends React.Component {
                                 />
                             ))}
                     </MenuItem>
+                    {/* <Tooltip content="Associate data type to the exist layout" position={Position.TOP}>
+                    <MenuItem text="Smart Layout" disabled={!userLayouts || userLayouts.length <= 0 || layoutStore.currentLayoutMapCtype.length === 0}>
+                        {userLayouts &&
+                            userLayouts.length > 0 &&
+                            userLayouts.map(value => <MenuItem key={value} text={value} active={value === appStore.layoutStore.smartLayoutName} onClick={() => appStore.layoutStore.saveLayoutMap(value)} />)}
+                        </MenuItem>
+                    </Tooltip> */}
+                    <MenuItem
+                        text="Smart Layout"
+                        disabled={!userLayouts || userLayouts.length <= 0 || layoutStore.currentLayoutMapCtype.length === 0}
+                        onClick={() => appStore.dialogStore.showDialog(DialogId.Layout, {layoutDialogMode: LayoutDialogMode.SmartLayout})}
+                    />
                 </MenuItem>
                 {imageItems.length > 0 && (
                     <MenuItem text="Images" icon={"multi-select"}>
