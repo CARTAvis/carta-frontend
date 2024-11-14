@@ -4,7 +4,7 @@ import {action, makeObservable, observable} from "mobx";
 import {FileInfoType} from "components";
 import {WorkspaceDialogMode} from "components/Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
 import {Snippet} from "models";
-import {AppStore, LayoutDialogMode, SnippetStore} from "stores";
+import {AppStore, SnippetStore} from "stores";
 
 export enum DialogId {
     About = "about-dialog",
@@ -26,14 +26,12 @@ export enum DialogId {
 }
 
 interface showDialogOptions {
-    oldLayoutName?: string;
     mode?: WorkspaceDialogMode;
     url?: string;
     title?: string;
     snippet?: Snippet;
     name?: string;
     newSnippet?: boolean;
-    layoutDialogMode?: LayoutDialogMode;
 }
 
 export class DialogStore {
@@ -77,17 +75,6 @@ export class DialogStore {
             this.zIndexManager.updateIndexOnSelect(id);
         } else if (!this.dialogVisible.get(id)) {
             switch (id) {
-                case DialogId.Layout:
-                    const layoutStore = AppStore.Instance.layoutStore;
-                    if (options?.layoutDialogMode) {
-                        layoutStore.setLayoutDialogMode(options?.layoutDialogMode);
-                    }
-
-                    this.dialogVisible.set(DialogId.Layout, true);
-                    layoutStore.setOldLayoutName(options?.oldLayoutName);
-                    this.zIndexManager.assignIndex(DialogId.Layout);
-                    break;
-
                 case DialogId.Workspace:
                     this.hideDialog(DialogId.FileBrowser);
                     if (options?.mode) {

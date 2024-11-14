@@ -60,13 +60,13 @@ export class LayoutStore {
         this.dockedLayout = null;
         this.layouts = {};
         this.supportsServer = false;
-        this.oldLayoutName = "";
+        this.oldLayoutName = ""; // for rename
         this.initLayoutsFromPresets();
 
         // this.existLayoutMap = {};
         // this.isSmartLayout = PreferenceStore.Instance.isSmartLayout;
         this.smartLayoutName = null;
-        this.previousLayoutName = null;
+        this.previousLayoutName = null; // for exchange between previous and current layouts
         this.currentLayoutMapCtype = [];
         this.currentLayoutMapIndex = null;
         this.layoutDialogMode = undefined;
@@ -75,6 +75,15 @@ export class LayoutStore {
             this.isSmartLayout = PreferenceStore.Instance.isSmartLayout;
         });
     }
+
+    @action showLayoutDialog = (mode: LayoutDialogMode, oldLayoutName?: string) => {
+        this.setLayoutDialogMode(mode);
+        console.log("layoutDialogMode", this.layoutDialogMode);
+        if (mode === LayoutDialogMode.Rename) {
+            this.setOldLayoutName(oldLayoutName);
+        }
+        AppStore.Instance.dialogStore.showDialog(DialogId.Layout);
+    };
 
     public layoutExists = (layoutName: string): boolean => {
         return layoutName.length > 0 && this.allLayoutNames.includes(layoutName);

@@ -314,18 +314,11 @@ export class RootMenuComponent extends React.Component {
                             </React.Fragment>
                         )}
                     </MenuItem>
-                    <MenuItem text="Save Layout" onClick={() => appStore.dialogStore.showDialog(DialogId.Layout, {layoutDialogMode: LayoutDialogMode.Save})} />
+                    <MenuItem text="Save Layout" onClick={() => appStore.layoutStore.showLayoutDialog(LayoutDialogMode.Save)} />
                     <MenuItem text="Rename Layout" disabled={!userLayouts || userLayouts.length <= 0}>
                         {userLayouts &&
                             userLayouts.length > 0 &&
-                            userLayouts.map(value => (
-                                <MenuItem
-                                    key={value}
-                                    text={value}
-                                    active={value === appStore.layoutStore.currentLayoutName}
-                                    onClick={() => appStore.dialogStore.showDialog(DialogId.Layout, {oldLayoutName: value, layoutDialogMode: LayoutDialogMode.Rename})}
-                                />
-                            ))}
+                            userLayouts.map(value => <MenuItem key={value} text={value} active={value === appStore.layoutStore.currentLayoutName} onClick={() => appStore.layoutStore.showLayoutDialog(LayoutDialogMode.Rename, value)} />)}
                     </MenuItem>
                     <MenuItem text="Delete Layout" disabled={!userLayouts || userLayouts.length <= 0}>
                         {userLayouts &&
@@ -351,11 +344,7 @@ export class RootMenuComponent extends React.Component {
                             userLayouts.map(value => <MenuItem key={value} text={value} active={value === appStore.layoutStore.smartLayoutName} onClick={() => appStore.layoutStore.saveLayoutMap(value)} />)}
                         </MenuItem>
                     </Tooltip> */}
-                    <MenuItem
-                        text="Smart Layout"
-                        disabled={!userLayouts || userLayouts.length <= 0 || layoutStore.currentLayoutMapCtype.length === 0}
-                        onClick={() => appStore.dialogStore.showDialog(DialogId.Layout, {layoutDialogMode: LayoutDialogMode.SmartLayout})}
-                    />
+                    <MenuItem text="Smart Layout" disabled={!userLayouts || userLayouts.length <= 0 || layoutStore.currentLayoutMapCtype.length === 0} onClick={() => appStore.layoutStore.showLayoutDialog(LayoutDialogMode.SmartLayout)} />
                 </MenuItem>
                 {imageItems.length > 0 && (
                     <MenuItem text="Images" icon={"multi-select"}>

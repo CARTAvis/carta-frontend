@@ -201,24 +201,7 @@ export class SaveLayoutDialogComponent extends React.Component {
                 enableResizing={true}
                 dialogId={DialogId.Layout}
             >
-                {/* <div className={Classes.DIALOG_BODY}> */}
-                {/* <FormGroup inline={true} label={isSave ? "Save current layout as:" : `Rename ${appStore.layoutStore.oldLayoutName} to:`}>
-                        <Tooltip isOpen={!this.isEmpty && !this.validName} position={Position.BOTTOM_LEFT} content={"Layout name should not contain ~, `, !, *, (, ), -, +, =, [, ., ', ?, <, >, /, |, \\, :, ; or &"}>
-                            <InputGroup className="layout-name-input" placeholder="Enter layout name" value={this.layoutName} autoFocus={true} onChange={this.handleInput} onKeyDown={this.handleKeyDown} />
-                        </Tooltip>
-                    </FormGroup> */}
-                {/* </div> */}
                 {dialogBody}
-                {/* <div className={Classes.DIALOG_FOOTER}>
-                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <Tooltip content="Save as smart layout" disabled={!this.isEmpty}>
-                            <AnchorButton intent={Intent.PRIMARY} onClick={this.saveLayoutMap} text={"Smart Layout"} disabled={this.isEmpty || !this.validName || appStore.layoutStore.currentLayoutMapCtype.length === 0} />
-                        </Tooltip>
-                        <Tooltip content="Layout name cannot be empty!" disabled={!this.isEmpty}>
-                            <AnchorButton intent={Intent.PRIMARY} onClick={isSave ? this.saveLayout : this.renameLayout} text={isSave ? "Save" : "Rename"} disabled={this.isEmpty || !this.validName} />
-                        </Tooltip>
-                    </div>
-                </div> */}
                 {dialogFooter}
             </DraggableDialogComponent>
         );
