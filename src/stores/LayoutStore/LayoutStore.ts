@@ -2,7 +2,7 @@ import * as GoldenLayout from "golden-layout";
 import {action, autorun, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
-import {IsSpatialCtype, IsSpectralCtype, LayoutConfig, PresetLayout} from "models";
+import {LayoutConfig, PresetLayout} from "models";
 import {ApiService} from "services";
 import {AlertStore, AppStore, DialogId, PreferenceStore} from "stores";
 
@@ -63,8 +63,6 @@ export class LayoutStore {
         this.oldLayoutName = ""; // for rename
         this.initLayoutsFromPresets();
 
-        // this.existLayoutMap = {};
-        // this.isSmartLayout = PreferenceStore.Instance.isSmartLayout;
         this.smartLayoutName = null;
         this.previousLayoutName = null; // for exchange between previous and current layouts
         this.currentLayoutMapCtype = [];
@@ -84,32 +82,38 @@ export class LayoutStore {
         this.currentLayoutMapIndex = null;
 
         if (typeof this.existLayoutMap.layoutMap !== "undefined" && this.existLayoutMap.layoutMap.length > 0) {
-            let ctypeMatched: boolean[] = [];
-            let layoutMap: any;
-
             for (let i = 0; i < this.existLayoutMap.layoutMap.length; i++) {
-                layoutMap = this.existLayoutMap.layoutMap[i];
+                let first2Dim: boolean[] = [];
+                let first2DimR: boolean[] = []; // for swapped first two dimensions
+                let RestDim: boolean[] = [];
+
+                let layoutMap = this.existLayoutMap.layoutMap[i];
+
+                const restCtypelayoutMap = [...layoutMap.ctype];
+                const restCtypeData = [...ctypes];
+
                 if (layoutMap.ctype.length === ctypes.length) {
-                    for (let j = 0; j < ctypes.length; j++) {
-                        let value: string = IsSpatialCtype(ctypes[j]) ? "SPATIAL" : IsSpectralCtype(ctypes[j]) ? "SPECTRAL" : ctypes[j];
-                        ctypeMatched.push(layoutMap.ctype.includes(value));
+                    // separate the first two dimensions and the rest
+                    const first2CtypeLayoutMap = restCtypelayoutMap.splice(0, 2);
+                    const first2CtypeLayoutMapR = first2CtypeLayoutMap.reverse();
+                    const first2CtypeData = restCtypeData.splice(0, 2);
+
+                    // first two dimensions match
+                    for (let j = 0; j < 2; j++) {
+                        first2Dim.push(first2CtypeLayoutMap[j] === first2CtypeData[j]);
+                        first2DimR.push(first2CtypeLayoutMapR[j] === first2CtypeData[j]);
                     }
+                    const isFirst2DimMatch = first2Dim.every((c: any) => c === true);
+                    const isFirst2DimMatchR = first2DimR.every((c: any) => c === true);
 
-                    // in case that the first two dimensions are non-spatial data
-                    const allMatched = ctypeMatched.every((c: any) => c === true);
-                    if (allMatched) {
-                        console.log("matched layout name", layoutMap.layoutName);
-                        // save matched layoutName and index
-                        this.smartLayoutName = layoutMap.layoutName;
-                        this.currentLayoutMapIndex = i;
-                        break;
-                    } else {
-                        // for the case that the first two dimensions are spatial data
-                        if (ctypes.length >= 3) {
-                            ctypeMatched.splice(0, 2);
+                    if (isFirst2DimMatch || isFirst2DimMatchR) {
+                        // the rest of dimensions match
+                        for (let j = 0; j < restCtypeData.length; j++) {
+                            RestDim.push(restCtypelayoutMap.includes(restCtypeData[j]));
                         }
+                        const isRestDimMatch = RestDim.every((c: any) => c === true);
 
-                        if (ctypeMatched.every((c: any) => c === true)) {
+                        if (isRestDimMatch) {
                             console.log("matched layout name", layoutMap.layoutName);
                             // save matched layoutName and index
                             this.smartLayoutName = layoutMap.layoutName;

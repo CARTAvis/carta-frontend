@@ -1,16 +1,5 @@
-// export enum CtypeSpatial{
-//     RA = "RA",
-//     DEC = "DEC",
-//     GLON = "GLON",
-//     GLAT = "GLAT",
-//     x = "x",
-//     y = "y",
-//     b = "b",
-//     l = "l"
-// }
-
 // export const CtypeSpatial = ["RA", "DEC", "GLON", "GLAT", "x", "y", "b", "l"];
-const CtypeSpatial = ["RA", "DEC", "GLON", "GLAT"];
+const CtypeSpatial = ["RA", "DEC", "GLON", "GLAT", "OFFSET"];
 
 export const IsSpatialCtype = (ctype: string): boolean => {
     const normalizedStr = ctype?.toUpperCase();
