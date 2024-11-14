@@ -79,7 +79,6 @@ export class SaveLayoutDialogComponent extends React.Component {
         await this.saveLayout();
 
         const appStore = AppStore.Instance;
-        appStore.dialogStore.hideDialog(DialogId.Layout);
         await appStore.layoutStore.saveLayoutMap(layoutName);
     };
 
