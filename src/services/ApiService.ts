@@ -362,6 +362,28 @@ export class ApiService {
         }
     };
 
+    public clearLayout = async (layoutName: string) => {
+        if (ApiService.RuntimeConfig.apiAddress) {
+            try {
+                const url = `${ApiService.RuntimeConfig.apiAddress}/database/layout`;
+                const response = await this.axiosInstance.delete(url, {data: {layoutName}});
+                return response?.data?.success;
+            } catch (err) {
+                console.log(err);
+                return false;
+            }
+        } else {
+            try {
+                const obj = JSON.parse(localStorage.getItem("savedLayouts") ?? "{}");
+                delete obj[layoutName];
+                localStorage.setItem("savedLayouts", JSON.stringify(obj));
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+    };
+
     public getLayoutMaps = async () => {
         let savedLayouts: {[name: string]: any};
         if (ApiService.RuntimeConfig.apiAddress) {
@@ -399,7 +421,6 @@ export class ApiService {
                 let layout = {layoutMap: JSON.parse(JSON.stringify(existLayoutMap.layoutMap))};
 
                 if (typeof existLayoutMap.layoutMap !== "undefined" && existLayoutMap.layoutMap.length > 0) {
-                    // const currentLayoutMapIndex = LayoutStore.Instance.currentLayoutMapIndex;
                     index !== null ? layout.layoutMap.splice(index, 1, layoutMap["layoutMap"][0]) : layout.layoutMap.splice(0, 0, layoutMap["layoutMap"][0]);
                 }
 
@@ -427,7 +448,6 @@ export class ApiService {
             try {
                 const existLayoutMap = await this.getLayoutMaps();
                 let layout = {layoutMap: JSON.parse(JSON.stringify(existLayoutMap.layoutMap))};
-
                 layout.layoutMap.splice(index, 1);
 
                 const url = `${ApiService.RuntimeConfig.apiAddress}/database/layout`;
@@ -441,28 +461,6 @@ export class ApiService {
             try {
                 const obj = JSON.parse(localStorage.getItem("savedLayouts") ?? "{}");
                 delete obj["layoutMap"][index];
-                localStorage.setItem("savedLayouts", JSON.stringify(obj));
-                return true;
-            } catch (err) {
-                return false;
-            }
-        }
-    };
-
-    public clearLayout = async (layoutName: string) => {
-        if (ApiService.RuntimeConfig.apiAddress) {
-            try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/layout`;
-                const response = await this.axiosInstance.delete(url, {data: {layoutName}});
-                return response?.data?.success;
-            } catch (err) {
-                console.log(err);
-                return false;
-            }
-        } else {
-            try {
-                const obj = JSON.parse(localStorage.getItem("savedLayouts") ?? "{}");
-                delete obj[layoutName];
                 localStorage.setItem("savedLayouts", JSON.stringify(obj));
                 return true;
             } catch (err) {

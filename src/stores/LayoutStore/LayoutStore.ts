@@ -4,7 +4,7 @@ import {action, autorun, computed, flow, makeObservable, observable} from "mobx"
 import {AppToaster, SuccessToast} from "components/Shared";
 import {IsSpatialCtype, IsSpectralCtype, LayoutConfig, PresetLayout} from "models";
 import {ApiService} from "services";
-import {AlertStore, AppStore, DialogId, FileBrowserStore, PreferenceStore} from "stores";
+import {AlertStore, AppStore, DialogId, PreferenceStore} from "stores";
 
 const MAX_LAYOUT = 10;
 export const LAYOUT_MAP_NAME = "LayoutMap";
@@ -40,7 +40,7 @@ export class LayoutStore {
     @observable existLayoutMap: any;
     @observable layoutDialogMode: LayoutDialogMode | undefined;
 
-    // File type associated layout
+    // Data type associated layout
     @observable isSmartLayout: boolean;
     @observable smartLayoutName: string | null;
     @observable previousLayoutName: string | null;
@@ -76,9 +76,63 @@ export class LayoutStore {
         });
     }
 
+    @action matchLayoutMap() {
+        const fileBrowserStore = AppStore.Instance.fileBrowserStore;
+        const ctypes = fileBrowserStore.fileInfoForLayout.ctype;
+
+        this.currentLayoutMapCtype = ctypes;
+        this.currentLayoutMapIndex = null;
+
+        if (typeof this.existLayoutMap.layoutMap !== "undefined" && this.existLayoutMap.layoutMap.length > 0) {
+            let ctypeMatched: boolean[] = [];
+            let layoutMap: any;
+
+            for (let i = 0; i < this.existLayoutMap.layoutMap.length; i++) {
+                layoutMap = this.existLayoutMap.layoutMap[i];
+                if (layoutMap.ctype.length === ctypes.length) {
+                    for (let j = 0; j < ctypes.length; j++) {
+                        let value: string = IsSpatialCtype(ctypes[j]) ? "SPATIAL" : IsSpectralCtype(ctypes[j]) ? "SPECTRAL" : ctypes[j];
+                        ctypeMatched.push(layoutMap.ctype.includes(value));
+                    }
+
+                    // in case that the first two dimensions are non-spatial data
+                    const allMatched = ctypeMatched.every((c: any) => c === true);
+                    if (allMatched) {
+                        console.log("matched layout name", layoutMap.layoutName);
+                        // save matched layoutName and index
+                        this.smartLayoutName = layoutMap.layoutName;
+                        this.currentLayoutMapIndex = i;
+                        break;
+                    } else {
+                        // for the case that the first two dimensions are spatial data
+                        if (ctypes.length >= 3) {
+                            ctypeMatched.splice(0, 2);
+                        }
+
+                        if (ctypeMatched.every((c: any) => c === true)) {
+                            console.log("matched layout name", layoutMap.layoutName);
+                            // save matched layoutName and index
+                            this.smartLayoutName = layoutMap.layoutName;
+                            this.currentLayoutMapIndex = i;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // no matched layout
+        if (this.currentLayoutMapIndex === null) {
+            console.log("no matched layout");
+        }
+    }
+
+    @action setLayoutDialogMode = (mode: LayoutDialogMode) => {
+        this.layoutDialogMode = mode;
+    };
+
     @action showLayoutDialog = (mode: LayoutDialogMode, oldLayoutName?: string) => {
         this.setLayoutDialogMode(mode);
-        console.log("layoutDialogMode", this.layoutDialogMode);
         if (mode === LayoutDialogMode.Rename) {
             this.setOldLayoutName(oldLayoutName);
         }
@@ -248,6 +302,16 @@ export class LayoutStore {
         }
     }
 
+    private handleSaveResult = (success: boolean) => {
+        if (success) {
+            AppToaster.show(SuccessToast("layout-grid", `Layout ${this.layoutNameToBeSaved} saved successfully.`, LayoutStore.ToasterTimeout));
+            this.currentLayoutName = this.layoutNameToBeSaved;
+        } else {
+            delete this.layouts[this.layoutNameToBeSaved];
+            AlertStore.Instance.showAlert("Saving user-defined layout failed! ");
+        }
+    };
+
     @flow.bound *saveLayoutMap(layoutName: string) {
         const appStore = AppStore.Instance;
 
@@ -259,146 +323,32 @@ export class LayoutStore {
         const confirmed = yield appStore.alertStore.showInteractiveAlert(`Associate data type (${this.currentLayoutMapCtype}) to layout: ${layoutName}`);
         if (confirmed) {
             try {
-                const currentLayoutMapIndex = LayoutStore.Instance.currentLayoutMapIndex;
-                // const success = yield appStore.apiService.setLayoutMap(LAYOUT_MAP_NAME, {
-                yield appStore.apiService.setLayoutMap(
+                const success = yield appStore.apiService.setLayoutMap(
                     LAYOUT_MAP_NAME,
                     {
-                        layoutMap: [{ctype: FileBrowserStore.Instance.fileInfoForLayout.ctype, layoutName: layoutName}]
+                        layoutMap: [{ctype: this.currentLayoutMapCtype, layoutName: layoutName}]
                     },
-                    currentLayoutMapIndex
+                    this.currentLayoutMapIndex
                 );
-                this.smartLayoutName = layoutName;
-                appStore.dialogStore.hideDialog(DialogId.Layout);
-                // if (success) {
-                //     this.handleSaveResult(success);
-                // }
-                yield this.fetchLayoutMap();
-                this.matchLayoutMap();
-                if (this.isSmartLayout && this.currentLayoutMapIndex !== null && this.layoutExists(this.smartLayoutName)) {
-                    this.applyLayout(this.smartLayoutName);
+
+                if (success) {
+                    AppToaster.show(SuccessToast("layout-grid", `Data type (${this.currentLayoutMapCtype}) is associated with layout ${layoutName}`, LayoutStore.ToasterTimeout));
+
+                    this.smartLayoutName = layoutName;
+                    appStore.dialogStore.hideDialog(DialogId.Layout);
+
+                    yield this.fetchLayoutMap(); // update LayoutMap.json
+                    this.matchLayoutMap();
+                    if (this.isSmartLayout && this.currentLayoutMapIndex !== null && this.layoutExists(this.smartLayoutName)) {
+                        this.applyLayout(this.smartLayoutName);
+                    }
                 }
             } catch (err) {
                 console.log(err);
-                // this.handleSaveResult(false);
+                AppToaster.show(SuccessToast("layout-grid", `Data type (${this.currentLayoutMapCtype}) fails to associated with layout ${layoutName}`, LayoutStore.ToasterTimeout));
             }
         }
     }
-
-    @flow.bound *renameLayoutMap(oldName: string, newName: string) {
-        const appStore = AppStore.Instance;
-
-        try {
-            for (let i = 0; i < this.existLayoutMap.layoutMap.length; i++) {
-                if (this.existLayoutMap.layoutMap[i].layoutName === oldName) {
-                    // const success = yield appStore.apiService.setLayoutMap(LAYOUT_MAP_NAME, {
-                    //     layoutMap: [{ctype: this.existLayoutMap.layoutMap[i].ctype, layoutName: newName}]
-                    // }, i);
-                    yield appStore.apiService.setLayoutMap(
-                        LAYOUT_MAP_NAME,
-                        {
-                            layoutMap: [{ctype: this.existLayoutMap.layoutMap[i].ctype, layoutName: newName}]
-                        },
-                        i
-                    );
-                }
-            }
-            // if (success) {
-            //     this.handleSaveResult(success);
-            // }
-            yield this.fetchLayoutMap();
-            this.matchLayoutMap();
-        } catch (err) {
-            console.log(err);
-            // this.handleSaveResult(false);
-        }
-    }
-
-    @flow.bound *deleteLayoutMap(layoutName: string) {
-        const appStore = AppStore.Instance;
-
-        try {
-            for (let i = this.existLayoutMap.layoutMap.length - 1; i >= 0; i--) {
-                if (this.existLayoutMap.layoutMap[i].layoutName === layoutName) {
-                    // const success = appStore.apiService.clearLayoutMap(LAYOUT_MAP_NAME, i);
-                    yield appStore.apiService.clearLayoutMap(LAYOUT_MAP_NAME, i);
-                }
-            }
-            // if (success) {
-            //     this.handleSaveResult(success);
-            // }
-            yield this.fetchLayoutMap();
-            this.matchLayoutMap();
-        } catch (err) {
-            console.log(err);
-            // this.handleSaveResult(false);
-        }
-    }
-
-    @action matchLayoutMap() {
-        const fileBrowserStore = AppStore.Instance.fileBrowserStore;
-        const ctypes = fileBrowserStore.fileInfoForLayout.ctype;
-
-        this.currentLayoutMapCtype = ctypes;
-        this.currentLayoutMapIndex = null;
-
-        if (typeof this.existLayoutMap.layoutMap !== "undefined" && this.existLayoutMap.layoutMap.length > 0) {
-            let ctypeMatched: boolean[] = [];
-            let layoutMap: any;
-
-            for (let i = 0; i < this.existLayoutMap.layoutMap.length; i++) {
-                layoutMap = this.existLayoutMap.layoutMap[i];
-                if (layoutMap.ctype.length === ctypes.length) {
-                    for (let j = 0; j < ctypes.length; j++) {
-                        let value: string = IsSpatialCtype(ctypes[j]) ? "SPATIAL" : IsSpectralCtype(ctypes[j]) ? "SPECTRAL" : ctypes[j];
-                        ctypeMatched.push(layoutMap.ctype.includes(value));
-                    }
-
-                    // in case that the first two dimensions are non-spatial data
-                    const allMatched = ctypeMatched.every((c: any) => c === true);
-                    if (allMatched) {
-                        console.log("matched layout name", layoutMap.layoutName);
-                        // save matched layoutName and index
-                        this.smartLayoutName = layoutMap.layoutName;
-                        this.currentLayoutMapIndex = i;
-                        break;
-                    } else {
-                        // for the case that the first two dimensions are spatial data
-                        if (ctypes.length >= 3) {
-                            ctypeMatched.splice(0, 2);
-                        }
-
-                        if (ctypeMatched.every((c: any) => c === true)) {
-                            console.log("matched layout name", layoutMap.layoutName);
-                            // save matched layoutName and index
-                            this.smartLayoutName = layoutMap.layoutName;
-                            this.currentLayoutMapIndex = i;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        // no matched layout
-        if (this.currentLayoutMapIndex === null) {
-            console.log("no matched layout");
-        }
-    }
-
-    @action setLayoutDialogMode = (mode: LayoutDialogMode) => {
-        this.layoutDialogMode = mode;
-    };
-
-    private handleSaveResult = (success: boolean) => {
-        if (success) {
-            AppToaster.show(SuccessToast("layout-grid", `Layout ${this.layoutNameToBeSaved} saved successfully.`, LayoutStore.ToasterTimeout));
-            this.currentLayoutName = this.layoutNameToBeSaved;
-        } else {
-            delete this.layouts[this.layoutNameToBeSaved];
-            AlertStore.Instance.showAlert("Saving user-defined layout failed! ");
-        }
-    };
 
     @flow.bound *renameLayout(oldName: string, newName: string) {
         const appStore = AppStore.Instance;
@@ -431,13 +381,14 @@ export class LayoutStore {
         if (!PresetLayout.isPreset(this.layoutNameToBeSaved)) {
             try {
                 const success = yield appStore.apiService.setLayout(newName, configToSave);
-                yield this.renameLayoutMap(oldName, newName);
+
                 if (success) {
                     const success = yield appStore.apiService.clearLayout(oldName);
                     if (success) {
                         delete this.layouts[oldName];
                     }
                     this.handleRenameResult(oldName, newName, success);
+                    yield this.renameLayoutMap(oldName, newName);
                 }
             } catch (err) {
                 console.log(err);
@@ -456,6 +407,36 @@ export class LayoutStore {
             AlertStore.Instance.showAlert("Renaming user-defined layout failed!");
         }
     };
+
+    @flow.bound *renameLayoutMap(oldName: string, newName: string) {
+        try {
+            const appStore = AppStore.Instance;
+            let successArr: any[] = [];
+
+            for (let i = 0; i < this.existLayoutMap.layoutMap.length; i++) {
+                if (this.existLayoutMap.layoutMap[i].layoutName === oldName) {
+                    const success = yield appStore.apiService.setLayoutMap(
+                        LAYOUT_MAP_NAME,
+                        {
+                            layoutMap: [{ctype: this.existLayoutMap.layoutMap[i].ctype, layoutName: newName}]
+                        },
+                        i
+                    );
+                    successArr.push(success);
+                }
+            }
+
+            const success = successArr.every((s: boolean) => s === true);
+            if (success) {
+                yield this.fetchLayoutMap();
+                this.matchLayoutMap();
+            } else {
+                AlertStore.Instance.showAlert("Updating layout name in LayoutMap failed!");
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    }
 
     @flow.bound *deleteLayout(layoutName: string) {
         const appStore = AppStore.Instance;
@@ -487,4 +468,28 @@ export class LayoutStore {
             AlertStore.Instance.showAlert("Deleting user-defined layout failed!");
         }
     };
+
+    @flow.bound *deleteLayoutMap(layoutName: string) {
+        try {
+            const appStore = AppStore.Instance;
+            let successArr: any[] = [];
+
+            for (let i = this.existLayoutMap.layoutMap.length - 1; i >= 0; i--) {
+                if (this.existLayoutMap.layoutMap[i].layoutName === layoutName) {
+                    const success = yield appStore.apiService.clearLayoutMap(LAYOUT_MAP_NAME, i);
+                    successArr.push(success);
+                }
+            }
+
+            const success = successArr.every((s: boolean) => s === true);
+            if (success) {
+                yield this.fetchLayoutMap();
+                this.matchLayoutMap();
+            } else {
+                AlertStore.Instance.showAlert("Deleting layout in LayoutMap failed!");
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    }
 }
