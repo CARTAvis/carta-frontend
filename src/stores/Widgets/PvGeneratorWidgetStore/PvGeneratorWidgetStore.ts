@@ -4,7 +4,7 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {SpectralSystem} from "models";
 import {TelemetryAction, TelemetryService} from "services";
-import {AppStore, PreferenceStore} from "stores";
+import {AppStore, PreferenceKeys, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {length2D} from "utilities";
 
@@ -155,6 +155,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
 
     @action setKeep = (bool: boolean) => {
         this.keep = bool;
+        PreferenceStore.Instance.setPreference(PreferenceKeys.PV_KEEP, bool);
     };
 
     @action setSpectralRange = (range: CARTA.IIntBounds) => {
@@ -193,8 +194,8 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         super(RegionsType.LINE);
         makeObservable(this);
         this.width = 3;
-        this.reverse = false;
-        this.keep = false;
+        this.reverse = PreferenceStore.Instance.isPVAxesOrderReverse;
+        this.keep = PreferenceStore.Instance.isPVKeep;
         this.regionIdMap.set(ACTIVE_FILE_ID, RegionId.NONE);
         reaction(
             () => this.effectiveFrame?.channelValueBounds,

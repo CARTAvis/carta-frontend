@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 import {MemoryUnit, TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {Point2D, SpectralSystem} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpType, PreferenceKeys, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
 import {PVAxis, PvGeneratorWidgetStore, RegionId} from "stores/Widgets";
 import {toFixed} from "utilities";
 
@@ -214,10 +214,13 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     };
 
     private handleAxesOrderChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
+        const preferenceStore = PreferenceStore.Instance
         if (this.axesOrder["reverse"] === changeEvent.target.value) {
             this.widgetStore.setReverse(true);
+            preferenceStore.setPreference(PreferenceKeys.PV_AXES_ORDER_REVERSE, true);
         } else {
             this.widgetStore.setReverse(false);
+            preferenceStore.setPreference(PreferenceKeys.PV_AXES_ORDER_REVERSE, false);
         }
     };
 
@@ -371,10 +374,11 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                     </FormGroup>
                 )}
                 <FormGroup className="label-info-group" inline={true} label="Axes order">
-                    <HTMLSelect options={Object.values(this.axesOrder)} onChange={this.handleAxesOrderChanged} />
+                    <HTMLSelect value={this.axesOrder[this.widgetStore.reverse?"reverse":"default"]} options={Object.values(this.axesOrder)} onChange={this.handleAxesOrderChanged} />
                 </FormGroup>
                 <FormGroup inline={true} label={"Keep previous PV image(s)"}>
                     <Switch
+                        checked={this.widgetStore.keep}
                         onChange={event => {
                             const e = event.target as HTMLInputElement;
                             this.widgetStore.setKeep(e.checked);

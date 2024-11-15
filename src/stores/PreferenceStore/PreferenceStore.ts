@@ -120,6 +120,9 @@ export enum PreferenceKeys {
     PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT = "pvPreviewCubeSizeLimit",
     PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT = "pvPreviewCubeSizeLimitUnit",
 
+    PV_AXES_ORDER_REVERSE = "pvAxesOrderReverse",
+    PV_KEEP = "pvKeep",
+
     LOG_EVENT = "logEventList",
 
     CATALOG_DISPLAYED_COLUMN_SIZE = "catalogDisplayedColumnSize",
@@ -254,6 +257,10 @@ const DEFAULTS = {
         limitOverlayRedraw: true,
         pvPreviewCubeSizeLimit: 1,
         pvPreviewCubeSizeLimitUnit: MemoryUnit.GB
+    },
+    PV: {
+        pvAxesOrderReverse: false,
+        pvKeep: false
     },
     LOG_EVENT: {
         eventLoggingEnabled: []
@@ -629,6 +636,14 @@ export class PreferenceStore {
 
     @computed get pvPreivewCubeSizeLimitUnit(): string {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT) ?? DEFAULTS.PERFORMANCE.pvPreviewCubeSizeLimitUnit;
+    }
+
+    @computed get isPVAxesOrderReverse(): boolean {
+        return this.preferences.get(PreferenceKeys.PV_AXES_ORDER_REVERSE) ?? DEFAULTS.PV.pvAxesOrderReverse;
+    }
+
+    @computed get isPVKeep(): boolean {
+        return this.preferences.get(PreferenceKeys.PV_KEEP) ?? DEFAULTS.PV.pvKeep;
     }
 
     @computed get isSelectingAllLogEvents(): boolean {
