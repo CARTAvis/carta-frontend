@@ -205,7 +205,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo
     return wcsInfoTransformed;
 }
 
-EMSCRIPTEN_KEEPALIVE AstFrameSet* createShiftmapFrameset(AstFrameSet* wcsinfo, double offsetX, double offsetY)
+EMSCRIPTEN_KEEPALIVE AstFrameSet* createShiftmapFrameset(AstFrameSet* wcsinfo, double offsetX, double offsetY, double pixelOffsetX, double pixelOffsetY)
 {
     AstFrameSet* wcsinfoShifted = static_cast<AstFrameSet*> astCopy(wcsinfo);
 
@@ -214,23 +214,15 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createShiftmapFrameset(AstFrameSet* wcsinfo, d
     AstShiftMap* shiftMap = astShiftMap(2, offset, "");
 
     // remapping
-    astRemapFrame(wcsinfoShifted, AST__CURRENT, shiftMap);
+    astRemapFrame(wcsinfoShifted, 2, shiftMap);
 
-    AstSkyFrame *skyframe = static_cast<AstSkyFrame*>astGetFrame(wcsinfoShifted, AST__CURRENT);
+    AstSkyFrame *skyframe = static_cast<AstSkyFrame*>astGetFrame(wcsinfoShifted, 2);
     astSet(skyframe, "SkyRefIs=Origin");
 
-    return wcsinfoShifted;
-}
-
-EMSCRIPTEN_KEEPALIVE AstFrameSet* createShiftmapPixelFrameset(AstFrameSet* wcsinfo, double offsetX, double offsetY)
-{
-    AstFrameSet* wcsinfoShifted = static_cast<AstFrameSet*> astCopy(wcsinfo);
-
-    // 2D shifts
-    double offset[] = {-offsetX, -offsetY};
-    AstShiftMap* shiftMap = astShiftMap(2, offset, "");
-
-    astAddFrame(wcsinfoShifted, AST__BASE, shiftMap, astFrame(2, "Label(1)=X Coordinate,Label(2)=Y Coordinate,Domain=GRID"));
+    // 2D pixel shifts
+    double pixelOffset[] = {-pixelOffsetX, -pixelOffsetY};
+    AstShiftMap* pixelShiftMap = astShiftMap(2, pixelOffset, "");
+    astAddFrame(wcsinfoShifted, AST__BASE, pixelShiftMap, astFrame(2, "Label(1)=X Coordinate,Label(2)=Y Coordinate,Domain=GRID"));
 
     return wcsinfoShifted;
 }

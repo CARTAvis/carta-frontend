@@ -1511,7 +1511,8 @@ export class FrameStore {
                     // Use base frame for image coordinates
                     AST.setI(this.wcsInfo, "Current", 1);
                     if (this.wcsInfoShifted) {
-                        AST.setI(this.wcsInfoShifted, "Current", 1);
+                        // Use third frame for shifted image coordinates
+                        AST.setI(this.wcsInfoShifted, "Current", 3);
                     }
                 } else {
                     AST.setI(this.wcsInfo, "Current", 2);
@@ -2187,21 +2188,23 @@ export class FrameStore {
     @action private createWcsInfoShifted = () => {
         if (this.spatialReference) {
             this.spatialReference.createWcsInfoShifted();
-        } else if (this.wcsInfo && this.offsetCenter) {
-            if (this.overlayStore.isWcsCoordinates) {
+        } else {
+            if (this.wcsInfo && this.offsetCenter) {
+                if (this.wcsInfoShifted) {
+                    AST.deleteObject(this.wcsInfoShifted);
+                }
+
                 const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.offsetCenter);
 
                 if (centerInRad) {
-                    this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, centerInRad.x, centerInRad.y);
+                    this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, centerInRad.x, centerInRad.y, this.offsetCenter.x, this.offsetCenter.y);
                     for (const frame of this.secondarySpatialImages) {
                         const frameCenterInRad = getUnformattedWCSPoint(frame.wcsInfo, frame.offsetCenter);
                         if (frame.isOffsetCoord && frameCenterInRad) {
-                            frame.wcsInfoShifted = AST.createShiftmapFrameset(frame.wcsInfo, frameCenterInRad.x, frameCenterInRad.y);
+                            frame.wcsInfoShifted = AST.createShiftmapFrameset(frame.wcsInfo, frameCenterInRad.x, frameCenterInRad.y, this.offsetCenter.x, this.offsetCenter.y);
                         }
                     }
                 }
-            } else {
-                this.wcsInfoShifted = AST.createShiftmapPixelFrameset(this.wcsInfo, this.offsetCenter.x, this.offsetCenter.y);
             }
         }
     };
@@ -2848,7 +2851,7 @@ export class FrameStore {
         if (this.isOffsetCoord && !this.wcsInfoShifted) {
             const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.center);
             if (centerInRad) {
-                this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, centerInRad.x, centerInRad.y);
+                this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, centerInRad.x, centerInRad.y, this.offsetCenter.x, this.offsetCenter.y);
             }
         }
 
