@@ -496,4 +496,32 @@ export class LayoutStore {
             console.log(err);
         }
     }
+
+    @flow.bound *setAllLayoutMapDefault() {
+        try {
+            const appStore = AppStore.Instance;
+            let successArr: any[] = [];
+
+            for (let i = 0; i < this.existLayoutMap.layoutMap.length; i++) {
+                const success = yield appStore.apiService.setLayoutMap(
+                    LAYOUT_MAP_NAME,
+                    {
+                        layoutMap: [{ctype: this.existLayoutMap.layoutMap[i].ctype, layoutName: PreferenceStore.Instance.layout}]
+                    },
+                    i
+                );
+                successArr.push(success);
+            }
+
+            const success = successArr.every((s: boolean) => s === true);
+            if (success) {
+                yield this.fetchLayoutMap();
+                this.matchLayoutMap();
+            } else {
+                AlertStore.Instance.showAlert("Reset all LayoutMap to default failed!");
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    }
 }
