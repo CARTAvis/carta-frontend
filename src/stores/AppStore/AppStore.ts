@@ -156,6 +156,7 @@ export class AppStore {
     @observable imageRatio = 1;
     @observable isExportingImage = false;
     @observable private isCanvasUpdated: boolean;
+    @observable private devicePixelRatio: number;
 
     // dynamic zIndex
     public zIndexManager = new FloatingObjzIndexManager();
@@ -511,6 +512,13 @@ export class AppStore {
             frameMap.set(frame, group);
         }
         return frameMap;
+    }
+
+    /**
+     * This is devicePixelRatio * imageRatio, which is used to make image rendering consistent across different devices.
+     */
+    @computed get pixelRatio(): number {
+        return this.devicePixelRatio * this.imageRatio;
     }
 
     /**
@@ -1868,6 +1876,8 @@ export class AppStore {
         this.initRequirements();
         this.momentToMatch = true;
 
+        this.devicePixelRatio = devicePixelRatio;
+
         AST.onReady.then(
             action(() => {
                 this.setAstReady(true);
@@ -2108,6 +2118,38 @@ export class AppStore {
         autorun(() => {
             this.activateStatsPanel(this.preferenceStore.statsPanelEnabled);
         });
+
+        // listen devicePixelRatio
+        let remove = null;
+        const updatePixelRatio = () => {
+            if (remove != null) {
+                remove();
+            }
+            const mqString = `(resolution: ${window.devicePixelRatio}dppx)`;
+            const media = matchMedia(mqString);
+            media.addEventListener("change", updatePixelRatio);
+            remove = () => {
+                media.removeEventListener("change", updatePixelRatio);
+            };
+
+            this.handleDevicePixelRatioChange(this.devicePixelRatio);
+        };
+        updatePixelRatio();
+    }
+
+    // update devicePixelRatio and make the image size invariant on screen
+    @action private handleDevicePixelRatioChange(prevDevicePixelRatio: number) {
+        this.frames.forEach(frame => {
+            if (frame === this.spatialReference || !frame.spatialReference) {
+                frame.setZoom((frame.zoomLevel * devicePixelRatio) / prevDevicePixelRatio, true);
+            }
+        });
+
+        this.previewFrames.forEach((previewFrameStore, previewFrameId) => {
+            previewFrameStore.setZoom((previewFrameStore.zoomLevel * devicePixelRatio) / prevDevicePixelRatio, true);
+        });
+
+        this.devicePixelRatio = devicePixelRatio;
     }
 
     // region Subscription handlers
@@ -3227,10 +3269,9 @@ export class AppStore {
     };
 
     updateLayerPixelRatio = layerRef => {
-        const pixelRatio = devicePixelRatio * this.imageRatio;
         const canvas = layerRef?.current?.getCanvas();
-        if (canvas && canvas.pixelRatio !== pixelRatio) {
-            canvas.setPixelRatio(pixelRatio);
+        if (canvas && canvas.pixelRatio !== this.pixelRatio) {
+            canvas.setPixelRatio(this.pixelRatio);
         }
     };
 
@@ -3432,9 +3473,4 @@ export class AppStore {
             regionProfileStoreMap.get(regionId)?.resetProfilesProgress();
         });
     };
-
-    // helper function for getting the current devicePixelRatio value
-    get pixelRatio() {
-        return devicePixelRatio;
-    }
 }

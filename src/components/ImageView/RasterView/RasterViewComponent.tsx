@@ -92,7 +92,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const shaderUniforms = frame.isPreview ? PreviewWebGLService.Instance.shaderUniforms : TileWebGLService.Instance.shaderUniforms;
         const tileRenderService = frame.isPreview ? PreviewWebGLService.Instance : TileWebGLService.Instance;
         const renderConfig = frame.renderConfig;
-        const pixelRatio = devicePixelRatio * appStore.imageRatio;
 
         if (renderConfig && shaderUniforms) {
             if (renderConfig.colorMapIndex === -1) {
@@ -110,8 +109,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.uniform1i(shaderUniforms.UseSmoothedBiasContrast, appStore.preferenceStore.useSmoothedBiasContrast ? 1 : 0);
             this.gl.uniform1f(shaderUniforms.Gamma, renderConfig.gamma);
             this.gl.uniform1f(shaderUniforms.Alpha, renderConfig.alpha);
-            this.gl.uniform1f(shaderUniforms.CanvasWidth, frame.renderWidth * pixelRatio);
-            this.gl.uniform1f(shaderUniforms.CanvasHeight, frame.renderHeight * pixelRatio);
+            this.gl.uniform1f(shaderUniforms.CanvasWidth, frame.renderWidth * appStore.pixelRatio);
+            this.gl.uniform1f(shaderUniforms.CanvasHeight, frame.renderHeight * appStore.pixelRatio);
 
             const nanColor = tinycolor(appStore.preferenceStore.nanColorHex).setAlpha(appStore.preferenceStore.nanAlpha);
             if (nanColor.isValid()) {
@@ -141,9 +140,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
 
         const appStore = AppStore.Instance;
-        const pixelRatio = devicePixelRatio * appStore.imageRatio;
-        const requiredWidth = Math.max(1, frame.renderWidth * pixelRatio);
-        const requiredHeight = Math.max(1, frame.renderHeight * pixelRatio);
+        const requiredWidth = Math.max(1, frame.renderWidth * appStore.pixelRatio);
+        const requiredHeight = Math.max(1, frame.renderHeight * appStore.pixelRatio);
 
         const tileRenderService = frame.isPreview ? PreviewWebGLService.Instance : TileWebGLService.Instance;
         // Resize and clear the canvas if needed
@@ -163,16 +161,15 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         // Only clear and render if we're in animation or tiled mode
         if (frame?.isRenderable) {
             const appStore = AppStore.Instance;
-            const pixelRatio = devicePixelRatio * appStore.imageRatio;
-            const xOffset = this.props.column * frame.renderWidth * pixelRatio;
+            const xOffset = this.props.column * frame.renderWidth * appStore.pixelRatio;
             // y-axis is inverted
-            const yOffset = this.gl.canvas.height - frame.renderHeight * (this.props.row + 1) * pixelRatio;
-            this.gl.viewport(xOffset, yOffset, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio);
+            const yOffset = this.gl.canvas.height - frame.renderHeight * (this.props.row + 1) * appStore.pixelRatio;
+            this.gl.viewport(xOffset, yOffset, frame.renderWidth * appStore.pixelRatio, frame.renderHeight * appStore.pixelRatio);
             this.gl.enable(GL2.DEPTH_TEST);
 
             // Clear a scissored rectangle limited to the current frame
             this.gl.enable(GL2.SCISSOR_TEST);
-            this.gl.scissor(xOffset, yOffset, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio);
+            this.gl.scissor(xOffset, yOffset, frame.renderWidth * appStore.pixelRatio, frame.renderHeight * appStore.pixelRatio);
             this.gl.clear(GL2.COLOR_BUFFER_BIT | GL2.DEPTH_BUFFER_BIT);
             this.gl.disable(GL2.SCISSOR_TEST);
 
@@ -355,13 +352,12 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         let zoom;
         let zoomFactor = 1.0;
         let aspectRatio = 1.0;
-        const pixelRatio = devicePixelRatio * appStore.imageRatio;
         if (frame.spatialReference) {
             zoomFactor = frame.spatialTransform.scale;
-            zoom = (frame.spatialReference.zoomLevel / pixelRatio) * zoomFactor;
+            zoom = (frame.spatialReference.zoomLevel / appStore.pixelRatio) * zoomFactor;
         } else {
             aspectRatio = frame.aspectRatio;
-            zoom = frame.zoomLevel / pixelRatio;
+            zoom = frame.zoomLevel / appStore.pixelRatio;
         }
 
         const pixelGridZoomLow = 6.0;
