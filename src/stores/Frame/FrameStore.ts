@@ -31,6 +31,7 @@ import {
     SpectralUnit,
     STANDARD_POLARIZATIONS,
     STANDARD_SPECTRAL_TYPE_SETS,
+    TileCoordinate,
     Transform2D,
     WCSPoint2D,
     ZoomPoint
@@ -62,6 +63,7 @@ import {
     getHeaderNumericValue,
     getPixelSize,
     getPixelValueFromWCS,
+    GetRequiredTiles,
     getTransformedChannel,
     getUnformattedWCSPoint,
     getValueFromArcsecString,
@@ -354,6 +356,27 @@ export class FrameStore {
                 mip: mipRoundedPow2
             };
         }
+    }
+
+    @computed get requiredTiles(): [TileCoordinate[], Point2D] {
+        // Calculate new required frame view (cropped to file size)
+        const reqView = this.requiredFrameView;
+
+        const croppedReq: FrameView = {
+            xMin: Math.max(0, reqView.xMin),
+            xMax: Math.min(this.frameInfo.fileInfoExtended.width, reqView.xMax),
+            yMin: Math.max(0, reqView.yMin),
+            yMax: Math.min(this.frameInfo.fileInfoExtended.height, reqView.yMax),
+            mip: reqView.mip
+        };
+        const imageSize: Point2D = {x: this.frameInfo.fileInfoExtended.width, y: this.frameInfo.fileInfoExtended.height};
+        const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
+        const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
+        // TODO: dynamic tile size
+        const tileSizeFullRes = reqView.mip * TILE_SIZE;
+        const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
+
+        return [tiles, midPointTileCoords];
     }
 
     @computed get fovSize(): Point2D {

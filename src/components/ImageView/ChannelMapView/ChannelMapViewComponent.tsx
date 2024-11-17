@@ -287,12 +287,11 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                 ]
             ) => {
                 if (frame && channelMapStore.masterFrame && frame?.requiredFrameView) {
-                    const reqView = frame.requiredFrameView;
-                    const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
-                    const tileSizeFullRes = reqView.mip * 256;
-                    const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
-
-                    TileService.Instance.requestChannelMapTiles(midPointTileCoords);
+                    const [tiles, midPointTileCoords] = frame.requiredTiles;
+                    const preferenceStore = AppStore.Instance.preferenceStore;
+                    const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
+                    const compressionQuality = bunitVariant.includes(frame.headerUnit) ? Math.max(preferenceStore.imageCompressionQuality, 32) : preferenceStore.imageCompressionQuality;
+                    TileService.Instance.requestChannelMapTiles(tiles, midPointTileCoords, compressionQuality);
                 }
             }
         );

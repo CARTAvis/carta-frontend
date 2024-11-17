@@ -3,10 +3,10 @@ import LRUCache from "mnemonist/lru-cache";
 import {action, computed, makeObservable, observable} from "mobx";
 import {Subject} from "rxjs";
 
-import {FrameView, Point2D, TileCoordinate} from "models";
+import {Point2D, TileCoordinate} from "models";
 import {BackendService, TileWebGLService} from "services";
 import {AppStore, PREVIEW_PV_FILEID} from "stores";
-import {copyToFP32Texture, createFP32Texture, GetRequiredTiles, GL2} from "utilities";
+import {copyToFP32Texture, createFP32Texture, GL2} from "utilities";
 
 import ZFPWorker from "!worker-loader!zfp_wrapper";
 
@@ -340,31 +340,16 @@ export class TileService {
         return result;
     }
 
-    requestChannelMapTiles(focusPoint: Point2D, pageFliped: boolean = false) {
+    requestChannelMapTiles(tiles: TileCoordinate[], focusPoint: Point2D, compressionQuality: number, pageFliped: boolean = false) {
         const channelMapStore = AppStore.Instance.channelMapStore;
         const frame = channelMapStore.showAuxiliaryFrame ? channelMapStore.auxiliaryFrame || channelMapStore.masterFrame : channelMapStore.masterFrame;
-        const fileId = frame.frameInfo.fileId;
-        const stokes = frame.stokes;
-        const requiredChannel = channelMapStore.showAuxiliaryFrame ? channelMapStore.auxiliaryFrameChannel : frame.channel;
         if (!frame) {
             return;
         }
-
-        const reqView = frame.requiredFrameView;
-        const croppedReq: FrameView = {
-            xMin: Math.max(0, reqView.xMin),
-            xMax: Math.min(frame.frameInfo.fileInfoExtended.width, reqView.xMax),
-            yMin: Math.max(0, reqView.yMin),
-            yMax: Math.min(frame.frameInfo.fileInfoExtended.height, reqView.yMax),
-            mip: reqView.mip
-        };
-        const appStore = AppStore.Instance;
-        const imageSize: Point2D = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
-        const tiles = GetRequiredTiles(croppedReq, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
+        const fileId = frame.frameInfo.fileId;
+        const stokes = frame.stokes;
+        const requiredChannel = channelMapStore.showAuxiliaryFrame ? channelMapStore.auxiliaryFrameChannel : frame.channel;
         const currentTiles = tiles.map(tile => tile.encode());
-        // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
-        const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
-        const compressionQuality = bunitVariant.includes(frame.headerUnit as string) ? Math.max(appStore.preferenceStore.imageCompressionQuality, 32) : appStore.preferenceStore.imageCompressionQuality;
 
         // Clear pendingRequests map for previous range
         const fullChannelRange = {min: channelMapStore.startChannel, max: channelMapStore.channelRange};

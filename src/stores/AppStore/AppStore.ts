@@ -1727,23 +1727,7 @@ export class AppStore {
             frame.channel = update.channel;
             frame.stokes = update.stokes;
             if (this.imageViewConfigStore.visibleFrames.includes(frame) && !this.preferenceStore.channelMapEnabled) {
-                // Calculate new required frame view (cropped to file size)
-                const reqView = frame.requiredFrameView;
-
-                const croppedReq: FrameView = {
-                    xMin: Math.max(0, reqView.xMin),
-                    xMax: Math.min(frame.frameInfo.fileInfoExtended.width, reqView.xMax),
-                    yMin: Math.max(0, reqView.yMin),
-                    yMax: Math.min(frame.frameInfo.fileInfoExtended.height, reqView.yMax),
-                    mip: reqView.mip
-                };
-                const imageSize: Point2D = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
-                const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
-                const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
-                // TODO: dynamic tile size
-                const tileSizeFullRes = reqView.mip * 256;
-                const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
-
+                const [tiles, midPointTileCoords] = frame.requiredTiles;
                 // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
                 const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
                 const compressionQuality = bunitVariant.includes(frame.headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
