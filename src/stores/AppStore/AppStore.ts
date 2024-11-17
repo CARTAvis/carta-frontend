@@ -10,7 +10,6 @@ import * as Path from "path-browserify";
 import * as Semver from "semver";
 
 import {getImageViewCanvas, ImageViewLayer, PvGeneratorComponent} from "components";
-import {ChannelMapStore} from "components/ImageView/ChannelMapView/ChannelMapViewComponent";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import {
     CARTA_INFO,
@@ -43,6 +42,7 @@ import {
     CatalogProfileStore,
     CatalogStore,
     CatalogUpdateMode,
+    ChannelMapStore,
     DialogId,
     DialogStore,
     FileBrowserStore,

@@ -367,7 +367,7 @@ export class TileService {
                 for (const tile of tiles) {
                     const subKey = `${fileId}_${stokes}_${i}` || `0_0_0`;
                     this.pendingSynchronisedTiles?.set(subKey, new Set(tiles.map(tile => tile.encode())));
-                    this.receivedSynchronisedTiles.delete(subKey);
+                    this.receivedSynchronisedTiles?.delete(subKey);
 
                     if (tile.layer < 0) {
                         continue;
