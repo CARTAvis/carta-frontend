@@ -286,8 +286,13 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     prevSpatialReference
                 ]
             ) => {
-                if (channelMapStore.masterFrame) {
-                    TileService.Instance.requestChannelMapTiles();
+                if (frame && channelMapStore.masterFrame && frame?.requiredFrameView) {
+                    const reqView = frame.requiredFrameView;
+                    const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
+                    const tileSizeFullRes = reqView.mip * 256;
+                    const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
+
+                    TileService.Instance.requestChannelMapTiles(midPointTileCoords);
                 }
             }
         );
