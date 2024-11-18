@@ -383,9 +383,8 @@ export class ImageFittingStore {
         let rotation = 0;
         const baseFrame = frame.spatialReference ?? frame;
         let center = baseFrame.center;
-        const pixelRatio = baseFrame.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0;
-        const imageWidth = (pixelRatio * baseFrame.renderWidth) / baseFrame.zoomLevel / baseFrame.aspectRatio;
-        const imageHeight = (pixelRatio * baseFrame.renderHeight) / baseFrame.zoomLevel;
+        const imageWidth = (AppStore.Instance.pixelRatio * baseFrame.renderWidth) / baseFrame.zoomLevel / baseFrame.aspectRatio;
+        const imageHeight = (AppStore.Instance.pixelRatio * baseFrame.renderHeight) / baseFrame.zoomLevel;
         let size = {x: imageWidth, y: imageHeight};
 
         // transform from the base frame to the effective frame
