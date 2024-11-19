@@ -59,8 +59,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const showSelectedData = catalogWidgetStore.showSelectedData;
             const color = catalogWidgetStore.catalogColor;
             const selectedColor = catalogWidgetStore.highlightColor;
-            const pointSize = catalogWidgetStore.catalogSize.px;
-            const pointAngularSize = catalogWidgetStore.catalogSize.angle;
+            const pointSize = catalogWidgetStore.catalogSize;
             const shape = catalogWidgetStore.catalogShape;
             const thickness = catalogWidgetStore.thickness;
             const displayMode = catalogWidgetStore.catalogDisplayMode;
@@ -184,7 +183,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 const lineThickness = catalogWidgetStore.thickness * shape.thicknessBase * AppStore.Instance.pixelRatio;
                 let color = tinycolor(catalogWidgetStore.catalogColor).toRgb();
                 let selectedSourceColor = tinycolor(catalogWidgetStore.highlightColor).toRgb();
-                let pointSize = catalogWidgetStore.isImagePixelSize ? catalogWidgetStore.catalogSize.px : catalogWidgetStore.catalogSize.px + shape.diameterBase;
+                let pointSize = catalogWidgetStore.isImagePixelSize ? catalogWidgetStore.catalogSize : catalogWidgetStore.catalogSize + shape.diameterBase;
                 this.gl.uniform1f(shaderUniforms.LineThickness, lineThickness);
                 this.gl.uniform1i(shaderUniforms.ShowSelectedSource, catalogWidgetStore.showSelectedData ? 1.0 : 0.0);
                 // frameView
@@ -228,7 +227,6 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 this.gl.uniform1f(shaderUniforms.RotationAngle, rotationAngle);
                 this.gl.uniform1f(shaderUniforms.ZoomLevel, sourceFrame?.spatialReference?.zoomLevel ?? sourceFrame?.zoomLevel);
                 this.gl.uniform1f(shaderUniforms.PixelRatio, sourceFrame?.spatialReference?.aspectRatio ?? sourceFrame?.aspectRatio);
-                this.gl.uniform1f(shaderUniforms.PixelUnitSizeArcsec, sourceFrame?.spatialReference?.pixelUnitSizeArcsec.x ?? sourceFrame?.pixelUnitSizeArcsec.x);
 
                 // size
                 this.gl.uniform1i(shaderUniforms.SizeMajorMapEnabled, 0);

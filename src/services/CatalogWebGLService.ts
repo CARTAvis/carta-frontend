@@ -27,7 +27,6 @@ interface ShaderUniforms {
     ScaleAdjustment: WebGLUniformLocation | null;
     ZoomLevel: WebGLUniformLocation | null;
     PixelRatio: WebGLUniformLocation | null;
-    PixelUnitSizeArcsec: WebGLUniformLocation | null;
     // spatial matching
     ControlMapEnabled: WebGLUniformLocation | null;
     ControlMapSize: WebGLUniformLocation | null;
@@ -194,7 +193,6 @@ export class CatalogWebGLService {
                 ScaleAdjustment: this.gl.getUniformLocation(shaderProgram, "uScaleAdjustment"),
                 ZoomLevel: this.gl.getUniformLocation(shaderProgram, "uZoomLevel"),
                 PixelRatio: this.gl.getUniformLocation(shaderProgram, "uPixelRatio"),
-                PixelUnitSizeArcsec: this.gl.getUniformLocation(shaderProgram, "uPixelUnitSizeArcsec"),
                 // spatial matching
                 ControlMapEnabled: this.gl.getUniformLocation(shaderProgram, "uControlMapEnabled"),
                 ControlMapSize: this.gl.getUniformLocation(shaderProgram, "uControlMapSize"),
