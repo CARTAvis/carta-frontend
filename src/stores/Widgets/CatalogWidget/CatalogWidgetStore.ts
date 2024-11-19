@@ -519,7 +519,7 @@ export class CatalogWidgetStore {
             this.sizeMinorMax.area = val;
         } else {
             this.sizeMinorMax.diameter = val; // val is in pixel
-        }        
+        }
     }
 
     @action setMinorSizeMin(val: number) {
@@ -528,7 +528,7 @@ export class CatalogWidgetStore {
             this.sizeMinorMin.area = val;
         } else {
             this.sizeMinorMin.diameter = val; // val is in pixel
-        }        
+        }
     }
 
     @action setSizeMinorColumnMax(val: number, type: "default" | "clipd") {
@@ -725,7 +725,6 @@ export class CatalogWidgetStore {
 
     @computed get isAngularSize(): boolean {
         return this.catalogSizeRef === CatalogSizeRef.ANGULAR || this.catalogDisplayMode === CatalogDisplayMode.WORLD || this.catalogDisplayMode !== CatalogDisplayMode.CANVAS;
-
     }
 
     @computed get orientationMapData(): Float32Array {
@@ -854,7 +853,7 @@ export class CatalogWidgetStore {
         if (this.sizeArea) {
             return {min: this.sizeMin.area, max: this.sizeMax.area};
         } else {
-            return {min: this.sizeMin.diameter, max: this.sizeMax.diameter};
+            return {min: this.sizeMin.diameter / this.pixelSizeFactor, max: this.sizeMax.diameter / this.pixelSizeFactor};
         }
     }
 
@@ -862,7 +861,7 @@ export class CatalogWidgetStore {
         if (this.sizeMinorArea) {
             return {min: this.sizeMinorMin.area, max: this.sizeMinorMax.area};
         } else {
-            return {min: this.sizeMinorMin.diameter, max: this.sizeMinorMax.diameter};
+            return {min: this.sizeMinorMin.diameter / this.pixelSizeFactor, max: this.sizeMinorMax.diameter / this.pixelSizeFactor};
         }
     }
 

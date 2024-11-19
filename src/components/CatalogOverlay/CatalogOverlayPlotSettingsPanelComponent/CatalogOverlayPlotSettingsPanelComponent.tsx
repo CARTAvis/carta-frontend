@@ -312,8 +312,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             min={widgetStore.minOverlaySize}
                             max={widgetStore.maxOverlaySize}
                             clampValueOnBlur={true}
-                            value={widgetStore.catalogSizeRef === CatalogSizeRef.ANGULAR ? widgetStore.catalogSize / widgetStore.pixelSizeFactor : widgetStore.catalogSize}
-                            stepSize={widgetStore.catalogSizeRef === CatalogSizeRef.ANGULAR ? 0.5 / widgetStore.pixelSizeFactor : 0.5}
+                            value={widgetStore.catalogSize / widgetStore.pixelSizeFactor}
+                            stepSize={0.5 / widgetStore.pixelSizeFactor}
                             onValueChange={(value: number) => widgetStore.setCatalogSize(value)}
                             data-testid="catalog-settings-size-input"
                         />
@@ -701,14 +701,16 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         switch (type) {
             case "size-min":
                 if (isFinite(val) && val !== pointSize.min && val < pointSize.max && val >= CatalogWidgetStore.SizeMapMin) {
-                    widgetStore.sizeAxisTabId === CatalogSettingsTabs.SIZE_MINOR ? widgetStore.setMinorSizeMin(val) : widgetStore.setSizeMin(val);
+                    const inputVal = val * widgetStore.pixelSizeFactor;
+                    widgetStore.sizeAxisTabId === CatalogSettingsTabs.SIZE_MINOR ? widgetStore.setMinorSizeMin(inputVal) : widgetStore.setSizeMin(inputVal);
                 } else {
                     ev.currentTarget.value = pointSize.min.toString();
                 }
                 break;
             case "size-max":
                 if (isFinite(val) && val !== pointSize.max && val > pointSize.min && val <= widgetStore.maxPointSizebyType) {
-                    widgetStore.sizeAxisTabId === CatalogSettingsTabs.SIZE_MINOR ? widgetStore.setMinorSizeMax(val) : widgetStore.setSizeMax(val);
+                    const inputVal = val * widgetStore.pixelSizeFactor;
+                    widgetStore.sizeAxisTabId === CatalogSettingsTabs.SIZE_MINOR ? widgetStore.setMinorSizeMax(inputVal) : widgetStore.setSizeMax(inputVal);
                 } else {
                     ev.currentTarget.value = pointSize.max.toString();
                 }
