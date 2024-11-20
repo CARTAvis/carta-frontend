@@ -100,7 +100,6 @@ export class CatalogWidgetStore {
     @observable thickness: number;
     @observable catalogDisplayMode: CatalogDisplayMode;
     @observable catalogSizeRef: CatalogSizeRef;
-    @observable showCatalogHeader: boolean;
     // size map
     @observable sizeMapColumn: string;
     @observable sizeColumnMax: {default: number | undefined; clipd: number | undefined};
@@ -188,7 +187,6 @@ export class CatalogWidgetStore {
         this.factorToArasec = {value: 1.0, unit: AngularSizeUnit.ARCSEC};
         this.catalogDisplayMode = CatalogDisplayMode.CANVAS;
         this.catalogSizeRef = CatalogSizeRef.CANVAS;
-        this.showCatalogHeader = false;
 
         reaction(
             () => this.sizeMapData,
@@ -736,10 +734,6 @@ export class CatalogWidgetStore {
             return new Float32Array(0);
         }
     }
-
-    @action toggleCatalogHeader = () => {
-        this.showCatalogHeader = !this.showCatalogHeader;
-    };
 
     orientationArray(): Float32Array {
         let column = this.orientationMapData;
