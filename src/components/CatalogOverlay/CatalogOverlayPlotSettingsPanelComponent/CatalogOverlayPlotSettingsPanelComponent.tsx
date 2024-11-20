@@ -563,7 +563,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 <FormGroup label={"Scaling"} inline={true} disabled={disableOrientationMap}>
                     <ScalingSelectComponent selectedItem={widgetStore.orientationScalingType} onItemSelect={type => widgetStore.setOrientationScalingType(type)} disabled={disableOrientationMap} />
                 </FormGroup>
-                <Collapse isOpen={disableOrientationMap}>
+                <Collapse isOpen={!disableOrientationMap}>
                     <FormGroup inline={true} label="Orientation" labelInfo="(degree)" disabled={disableOrientationMap}>
                         <div className="parameter-container">
                             <FormGroup inline={true} label="Min">
