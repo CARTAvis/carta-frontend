@@ -156,7 +156,6 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
 
     @action setKeep = (bool: boolean) => {
         this.keep = bool;
-        PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_PV_KEEP, bool);
     };
 
     @action setSpectralRange = (range: CARTA.IIntBounds) => {
@@ -196,7 +195,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         makeObservable(this);
         this.width = 3;
         this.reverse = PreferenceStore.Instance.isPVAxesOrderReverse;
-        this.keep = PreferenceStore.Instance.isPVKeep;
+        this.keep = false;
         this.regionIdMap.set(ACTIVE_FILE_ID, RegionId.NONE);
         reaction(
             () => this.effectiveFrame?.channelValueBounds,

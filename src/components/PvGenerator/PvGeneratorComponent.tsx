@@ -375,7 +375,6 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                 </FormGroup>
                 <FormGroup inline={true} label={"Keep previous PV image(s)"}>
                     <Switch
-                        checked={this.widgetStore.keep}
                         onChange={event => {
                             const e = event.target as HTMLInputElement;
                             this.widgetStore.setKeep(e.checked);
