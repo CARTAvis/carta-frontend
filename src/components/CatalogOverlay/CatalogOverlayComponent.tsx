@@ -779,7 +779,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                         </Select>
                     </FormGroup>
                     <FormGroup inline={true} label="Show header">
-                        {/* <Switch checked={catalogWidgetStore.tableSeparatorPosition !== "100%"} onChange={catalogWidgetStore.toggleCatalogHeader} /> */}
                         <Switch checked={this.isShowHeader} onChange={this.handleHideHeader} />
                     </FormGroup>
 
