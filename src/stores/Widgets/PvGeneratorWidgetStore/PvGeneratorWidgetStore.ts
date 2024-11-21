@@ -151,6 +151,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
 
     @action setReverse = (bool: boolean) => {
         this.reverse = bool;
+        PreferenceStore.Instance.setPreference(PreferenceKeys.PV_AXES_ORDER_REVERSE, bool);
     };
 
     @action setKeep = (bool: boolean) => {
