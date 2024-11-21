@@ -214,7 +214,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     };
 
     private handleAxesOrderChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        const preferenceStore = PreferenceStore.Instance
+        const preferenceStore = PreferenceStore.Instance;
         if (this.axesOrder["reverse"] === changeEvent.target.value) {
             this.widgetStore.setReverse(true);
             preferenceStore.setPreference(PreferenceKeys.PV_AXES_ORDER_REVERSE, true);
@@ -374,7 +374,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                     </FormGroup>
                 )}
                 <FormGroup className="label-info-group" inline={true} label="Axes order">
-                    <HTMLSelect value={this.axesOrder[this.widgetStore.reverse?"reverse":"default"]} options={Object.values(this.axesOrder)} onChange={this.handleAxesOrderChanged} />
+                    <HTMLSelect value={this.axesOrder[this.widgetStore.reverse ? "reverse" : "default"]} options={Object.values(this.axesOrder)} onChange={this.handleAxesOrderChanged} />
                 </FormGroup>
                 <FormGroup inline={true} label={"Keep previous PV image(s)"}>
                     <Switch
