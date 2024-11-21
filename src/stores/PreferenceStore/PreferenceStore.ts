@@ -32,6 +32,8 @@ import {parseBoolean} from "utilities";
 export enum PreferenceKeys {
     SILENT_FILE_SORTING_STRING = "fileSortingString",
     SILENT_FILE_FILTERING_TYPE = "fileFilteringType",
+    SILENT_PV_AXES_ORDER_REVERSE = "pvAxesOrderReverse",
+    SILENT_PV_KEEP = "pvKeep",
 
     GLOBAL_THEME = "theme",
     GLOBAL_AUTOLAUNCH = "autoLaunch",
@@ -120,9 +122,6 @@ export enum PreferenceKeys {
     PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT = "pvPreviewCubeSizeLimit",
     PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT = "pvPreviewCubeSizeLimitUnit",
 
-    PV_AXES_ORDER_REVERSE = "pvAxesOrderReverse",
-    PV_KEEP = "pvKeep",
-
     LOG_EVENT = "logEventList",
 
     CATALOG_DISPLAYED_COLUMN_SIZE = "catalogDisplayedColumnSize",
@@ -160,7 +159,9 @@ const DEFAULTS = {
         imagePanelColumns: 2,
         imagePanelRows: 2,
         checkNewRelease: true,
-        latestRelease: "v" + CARTA_INFO.version
+        latestRelease: "v" + CARTA_INFO.version,
+        pvAxesOrderReverse: false,
+        pvKeep: false
     },
     GLOBAL: {
         theme: Theme.AUTO,
@@ -257,10 +258,6 @@ const DEFAULTS = {
         limitOverlayRedraw: true,
         pvPreviewCubeSizeLimit: 1,
         pvPreviewCubeSizeLimitUnit: MemoryUnit.GB
-    },
-    PV: {
-        pvAxesOrderReverse: false,
-        pvKeep: false
     },
     LOG_EVENT: {
         eventLoggingEnabled: []
@@ -639,11 +636,11 @@ export class PreferenceStore {
     }
 
     @computed get isPVAxesOrderReverse(): boolean {
-        return this.preferences.get(PreferenceKeys.PV_AXES_ORDER_REVERSE) ?? DEFAULTS.PV.pvAxesOrderReverse;
+        return this.preferences.get(PreferenceKeys.SILENT_PV_AXES_ORDER_REVERSE) ?? DEFAULTS.SILENT.pvAxesOrderReverse;
     }
 
     @computed get isPVKeep(): boolean {
-        return this.preferences.get(PreferenceKeys.PV_KEEP) ?? DEFAULTS.PV.pvKeep;
+        return this.preferences.get(PreferenceKeys.SILENT_PV_KEEP) ?? DEFAULTS.SILENT.pvKeep;
     }
 
     @computed get isSelectingAllLogEvents(): boolean {
@@ -815,7 +812,9 @@ export class PreferenceStore {
             PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED,
             PreferenceKeys.IMAGE_PANEL_MODE,
             PreferenceKeys.IMAGE_PANEL_COLUMNS,
-            PreferenceKeys.IMAGE_PANEL_ROWS
+            PreferenceKeys.IMAGE_PANEL_ROWS,
+            PreferenceKeys.SILENT_PV_AXES_ORDER_REVERSE,
+            PreferenceKeys.SILENT_PV_KEEP
         ]);
     };
 

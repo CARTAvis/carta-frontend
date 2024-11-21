@@ -151,12 +151,12 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
 
     @action setReverse = (bool: boolean) => {
         this.reverse = bool;
-        PreferenceStore.Instance.setPreference(PreferenceKeys.PV_AXES_ORDER_REVERSE, bool);
+        PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_PV_AXES_ORDER_REVERSE, bool);
     };
 
     @action setKeep = (bool: boolean) => {
         this.keep = bool;
-        PreferenceStore.Instance.setPreference(PreferenceKeys.PV_KEEP, bool);
+        PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_PV_KEEP, bool);
     };
 
     @action setSpectralRange = (range: CARTA.IIntBounds) => {
