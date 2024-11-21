@@ -1932,7 +1932,7 @@ export class FrameStore {
         let cursorPosWCS, cursorPosFormatted;
         let precisionX = 0;
         let precisionY = 0;
-        if ((this.validWcs || this.isYX || this.isPVImage || this.isUVImage || this.isSwappedZ) && this.overlayStore.isWcsCoordinates) {
+        if (((this.validWcs || this.isYX) && this.overlayStore.isWcsCoordinates) || this.isPVImage || this.isUVImage || this.isSwappedZ) {
             // We need to compare X and Y coordinates in both directions
             // to avoid a confusing drop in precision at rounding threshold
             const offsetBlock = [

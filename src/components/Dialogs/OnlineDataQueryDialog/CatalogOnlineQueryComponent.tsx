@@ -238,7 +238,7 @@ export class CatalogQueryComponent extends React.Component {
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => CatalogApiService.Instance.cancelQuery(configStore.catalogDB)} text={"Cancel"} />
                         {configStore.enableLoadVizier ? <AnchorButton intent={Intent.PRIMARY} disabled={disable} onClick={() => this.loadVizierCatalogs()} text={"Load selected"} /> : null}
-                        <Tooltip content={"Pleace select WCS coordinates"} disabled={!appStore.overlayStore.isImgCoordinates} position={Position.BOTTOM} hoverOpenDelay={300}>
+                        <Tooltip content={"Please select WCS coordinates"} disabled={!appStore.overlayStore.isImgCoordinates} position={Position.BOTTOM} hoverOpenDelay={300}>
                             <AnchorButton intent={Intent.SUCCESS} disabled={disable || !appStore.overlayStore.isImgCoordinates} onClick={() => this.query()} text={"Query"} />
                         </Tooltip>
                     </div>

@@ -5,7 +5,7 @@ import * as _ from "lodash";
 import {observer} from "mobx-react";
 
 import {CursorInfo, ImageItem, ImageType, SPECTRAL_TYPE_STRING} from "models";
-import {AppStore, OverlayStore, PreferenceStore, SystemType} from "stores";
+import {AppStore, OverlayStore, PreferenceStore} from "stores";
 
 import "./OverlayComponent.scss";
 
@@ -214,7 +214,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             const formatStringX = this.props.overlaySettings.numbers.formatStringX;
             const formatStyingY = this.props.overlaySettings.numbers.formatStringY;
             const explicitSystem = this.props.overlaySettings.global.explicitSystem;
-            if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined && explicitSystem !== SystemType.Image && frame.validWcs) {
+            if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined && OverlayStore.Instance.isWcsCoordinates && frame.validWcs) {
                 AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY}, System=${explicitSystem},` + dirAxesSetting);
             }
         }
