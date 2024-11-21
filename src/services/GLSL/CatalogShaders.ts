@@ -31,7 +31,6 @@ const vertexMacros = `
 #define COS_45 0.70710678118
 #define SIN_60 0.86602540378
 
-
 #define LINEAR 0
 #define LOG 1
 #define SQRT 2

@@ -33,7 +33,6 @@ uniform vec2 uRangeScale;
 uniform float uScaleAdjustment;
 uniform float uZoomLevel;
 uniform float uPixelRatio;
-// uniform float uFactorToArcsec;
 
 // Control-map based transformation
 uniform int uControlMapEnabled;

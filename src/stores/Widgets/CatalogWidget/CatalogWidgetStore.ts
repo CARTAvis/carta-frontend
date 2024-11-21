@@ -110,8 +110,8 @@ export class CatalogWidgetStore {
     @observable sizeMapColumn: string;
     @observable sizeColumnMax: {default: number | undefined; clipd: number | undefined};
     @observable sizeColumnMin: {default: number | undefined; clipd: number | undefined};
-    @observable sizeMax: {area: number; diameter: number}; // in pixel
-    @observable sizeMin: {area: number; diameter: number}; // in pixel
+    @observable sizeMax: {area: number; diameter: number};
+    @observable sizeMin: {area: number; diameter: number};
     @observable sizeArea: boolean;
     @observable sizeScalingType: FrameScaling;
     @observable sizeAxisTabId: CatalogSettingsTabs.SIZE_MINOR | CatalogSettingsTabs.SIZE_MAJOR;
@@ -122,8 +122,8 @@ export class CatalogWidgetStore {
     @observable sizeMinorMapColumn: string;
     @observable sizeMinorColumnMax: {default: number | undefined; clipd: number | undefined};
     @observable sizeMinorColumnMin: {default: number | undefined; clipd: number | undefined};
-    @observable sizeMinorMax: {area: number; diameter: number}; // in pixel
-    @observable sizeMinorMin: {area: number; diameter: number}; // in pixel
+    @observable sizeMinorMax: {area: number; diameter: number};
+    @observable sizeMinorMin: {area: number; diameter: number};
     @observable sizeMinorArea: boolean;
     @observable sizeMinorScalingType: FrameScaling;
     @observable sizeMinorColumnMinLocked: boolean;

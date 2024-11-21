@@ -30,9 +30,9 @@ enum HeaderTableColumnName {
 
 @observer
 export class CatalogOverlayComponent extends React.Component<WidgetProps> {
-    @observable catalogTableRef: Table2 = undefined;
-    @observable height: number;
-    @observable width: number;
+    @observable private catalogTableRef: Table2 = undefined;
+    @observable private height: number;
+    @observable private width: number;
 
     @observable private isShowHeader: boolean = true;
     private prevSplitSize: number;
@@ -206,7 +206,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const viewportRect = ref.locator.getViewportRect();
         ref.updateViewportRect(viewportRect);
         // fixed bug for blueprint table, first column overlap with row index
-        // triger table update
+        // trigger table update
         if (docked) {
             ref.scrollToRegion(Regions.column(0));
         }
