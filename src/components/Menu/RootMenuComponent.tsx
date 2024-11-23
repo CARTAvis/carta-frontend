@@ -337,14 +337,11 @@ export class RootMenuComponent extends React.Component {
                                 />
                             ))}
                     </MenuItem>
-                    {/* <Tooltip content="Associate data type to the exist layout" position={Position.TOP}>
-                    <MenuItem text="Smart Layout" disabled={!userLayouts || userLayouts.length <= 0 || layoutStore.currentLayoutMapCtype.length === 0}>
-                        {userLayouts &&
-                            userLayouts.length > 0 &&
-                            userLayouts.map(value => <MenuItem key={value} text={value} active={value === appStore.layoutStore.smartLayoutName} onClick={() => appStore.layoutStore.saveLayoutMap(value)} />)}
-                        </MenuItem>
-                    </Tooltip> */}
-                    <MenuItem text="Smart Layout" disabled={!userLayouts || userLayouts.length <= 0 || layoutStore.currentLayoutMapCtype.length === 0} onClick={() => appStore.layoutStore.showLayoutDialog(LayoutDialogMode.SmartLayout)} />
+                    <MenuItem
+                        text="Dynamic Layout"
+                        disabled={!userLayouts || userLayouts.length <= 0 || layoutStore.currentLayoutMapCtype.length === 0}
+                        onClick={() => appStore.layoutStore.showLayoutDialog(LayoutDialogMode.DynamicLayout)}
+                    />
                 </MenuItem>
                 {imageItems.length > 0 && (
                     <MenuItem text="Images" icon={"multi-select"}>

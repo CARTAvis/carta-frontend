@@ -13,7 +13,7 @@ export enum LayoutDialogMode {
     Hidden,
     Save,
     Rename,
-    SmartLayout
+    DynamicLayout
 }
 
 export class LayoutStore {
@@ -37,18 +37,18 @@ export class LayoutStore {
     @observable private layouts: any;
     @observable supportsServer: boolean;
     @observable oldLayoutName: string | undefined;
-    @observable existLayoutMap: any;
     @observable layoutDialogMode: LayoutDialogMode | undefined;
 
     // Data type associated layout
-    @observable isSmartLayout: boolean;
-    @observable smartLayoutName: string | null;
-    @observable previousLayoutName: string | null;
+    @observable isDynamicLayout: boolean;
+    @observable existLayoutMap: any;
+    @observable dynamicLayoutName: string | null;
     @observable currentLayoutMapCtype: any; // type needs to be changed
     @observable currentLayoutMapIndex: number | null;
+    @observable selectedLayoutMapIndex: number | null;
 
-    @action toogleSmartLayout = () => {
-        this.isSmartLayout = !this.isSmartLayout;
+    @action toogleDynamicLayout = () => {
+        this.isDynamicLayout = !this.isDynamicLayout;
     };
 
     @computed get isSave(): boolean {
@@ -63,14 +63,15 @@ export class LayoutStore {
         this.oldLayoutName = ""; // for rename
         this.initLayoutsFromPresets();
 
-        this.smartLayoutName = null;
-        this.previousLayoutName = null; // for exchange between previous and current layouts
+        this.dynamicLayoutName = null;
         this.currentLayoutMapCtype = [];
         this.currentLayoutMapIndex = null;
         this.layoutDialogMode = undefined;
+        // this.selectedLayoutMapIndex = null;
 
         autorun(() => {
-            this.isSmartLayout = PreferenceStore.Instance.isSmartLayout;
+            this.isDynamicLayout = PreferenceStore.Instance.isDynamicLayout;
+            this.selectedLayoutMapIndex = this.currentLayoutMapIndex;
         });
     }
 
@@ -116,7 +117,7 @@ export class LayoutStore {
                         if (isRestDimMatch) {
                             console.log("matched layout name", layoutMap.layoutName);
                             // save matched layoutName and index
-                            this.smartLayoutName = layoutMap.layoutName;
+                            this.dynamicLayoutName = layoutMap.layoutName;
                             this.currentLayoutMapIndex = i;
                             break;
                         }
@@ -130,6 +131,10 @@ export class LayoutStore {
             console.log("no matched layout");
         }
     }
+
+    @action selectLayoutMap = (index: number) => {
+        this.selectedLayoutMapIndex = index;
+    };
 
     @action setLayoutDialogMode = (mode: LayoutDialogMode) => {
         this.layoutDialogMode = mode;
@@ -205,13 +210,6 @@ export class LayoutStore {
     }
 
     @action applyLayout = (layoutName: string): boolean => {
-        // for exchanging between previous and current layouts
-        if (!this.previousLayoutName) {
-            this.previousLayoutName = PreferenceStore.Instance.layout;
-        } else if (this.previousLayoutName !== this.currentLayoutName) {
-            this.previousLayoutName = this.currentLayoutName;
-        }
-
         if (!layoutName || !this.layoutExists(layoutName)) {
             AlertStore.Instance.showAlert(`Applying layout failed! Layout ${layoutName} not found.`);
             return false;
@@ -316,40 +314,41 @@ export class LayoutStore {
         }
     };
 
-    @flow.bound *saveLayoutMap(layoutName: string) {
+    @flow.bound *saveLayoutMap(layoutName: string, layoutMapIndex: number) {
         const appStore = AppStore.Instance;
+        const layoutMapCtype = layoutMapIndex !== null ? this.existLayoutMap.layoutMap[layoutMapIndex].ctype : this.currentLayoutMapCtype;
 
-        if (!layoutName || this.currentLayoutMapCtype.length === 0) {
+        if (!layoutName || layoutMapCtype.length === 0) {
             appStore.alertStore.showAlert("Save layout map failed! Empty layouts or name.");
             return;
         }
 
-        const confirmed = yield appStore.alertStore.showInteractiveAlert(`Associate data type (${this.currentLayoutMapCtype}) to layout: ${layoutName}`);
+        const confirmed = yield appStore.alertStore.showInteractiveAlert(`Associate data type (${layoutMapCtype}) to layout: ${layoutName}`);
         if (confirmed) {
             try {
                 const success = yield appStore.apiService.setLayoutMap(
                     LAYOUT_MAP_NAME,
                     {
-                        layoutMap: [{ctype: this.currentLayoutMapCtype, layoutName: layoutName}]
+                        layoutMap: [{ctype: layoutMapCtype, layoutName: layoutName}]
                     },
-                    this.currentLayoutMapIndex
+                    layoutMapIndex
                 );
 
                 if (success) {
-                    AppToaster.show(SuccessToast("layout-grid", `Data type (${this.currentLayoutMapCtype}) is associated with layout ${layoutName}`, LayoutStore.ToasterTimeout));
+                    AppToaster.show(SuccessToast("layout-grid", `Data type (${layoutMapCtype}) is associated with layout ${layoutName}`, LayoutStore.ToasterTimeout));
 
-                    this.smartLayoutName = layoutName;
+                    this.dynamicLayoutName = layoutName;
                     appStore.dialogStore.hideDialog(DialogId.Layout);
 
                     yield this.fetchLayoutMap(); // update LayoutMap.json
                     this.matchLayoutMap();
-                    if (this.isSmartLayout && this.currentLayoutMapIndex !== null && this.layoutExists(this.smartLayoutName)) {
-                        this.applyLayout(this.smartLayoutName);
+                    if (this.isDynamicLayout && layoutMapIndex !== null && this.layoutExists(this.dynamicLayoutName) && this.currentLayoutMapIndex === layoutMapIndex) {
+                        this.applyLayout(this.dynamicLayoutName);
                     }
                 }
             } catch (err) {
                 console.log(err);
-                AppToaster.show(SuccessToast("layout-grid", `Data type (${this.currentLayoutMapCtype}) fails to associated with layout ${layoutName}`, LayoutStore.ToasterTimeout));
+                AppToaster.show(SuccessToast("layout-grid", `Data type (${layoutMapCtype}) fails to associated with layout ${layoutName}`, LayoutStore.ToasterTimeout));
             }
         }
     }

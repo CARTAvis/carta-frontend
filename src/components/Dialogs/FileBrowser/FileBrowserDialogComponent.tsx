@@ -157,9 +157,9 @@ export class FileBrowserDialogComponent extends React.Component {
         if (fileBrowserStore.browserMode === BrowserMode.File) {
             const frames = appStore.frames;
             if (!(forceAppend || fileBrowserStore.appendingFrame) || !frames.length) {
-                if (layoutStore.isSmartLayout && layoutStore.currentLayoutMapIndex !== null && layoutStore.layoutExists(layoutStore.smartLayoutName)) {
-                    // should show some warning if the smart layout is not applied
-                    layoutStore.applyLayout(layoutStore.smartLayoutName);
+                if (layoutStore.isDynamicLayout && layoutStore.currentLayoutMapIndex !== null && layoutStore.layoutExists(layoutStore.dynamicLayoutName)) {
+                    // should show some warning if the dynamic layout is not applied
+                    layoutStore.applyLayout(layoutStore.dynamicLayoutName);
                 } else {
                     if (!layoutStore.applyLayout(preferenceStore.layout)) {
                         AlertStore.Instance.showAlert(`Applying preference layout "${preferenceStore.layout}" failed! Resetting preference layout to default.`);
@@ -288,9 +288,9 @@ export class FileBrowserDialogComponent extends React.Component {
         fileBrowserStore.resetLoadingStates();
     };
 
-    private handleSmartLayout = () => {
-        LayoutStore.Instance.toogleSmartLayout();
-        PreferenceStore.Instance.setPreference(PreferenceKeys.GLOBAL_IS_SMART_LAYOUT, LayoutStore.Instance.isSmartLayout);
+    private handleDynamicLayout = () => {
+        LayoutStore.Instance.toogleDynamicLayout();
+        PreferenceStore.Instance.setPreference(PreferenceKeys.GLOBAL_IS_DYNAMIC_LAYOUT, LayoutStore.Instance.isDynamicLayout);
     };
 
     @action handleFilterStringInputChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
@@ -418,9 +418,9 @@ export class FileBrowserDialogComponent extends React.Component {
                     } else {
                         return (
                             <div className="footer-sub">
-                                <FormGroup inline={true} label="Smart Layout">
+                                <FormGroup inline={true} label="Dynamic Layout">
                                     <Tooltip content={"Apply data type associated layout"}>
-                                        <Switch checked={LayoutStore.Instance.isSmartLayout} onChange={() => this.handleSmartLayout()} />
+                                        <Switch checked={LayoutStore.Instance.isDynamicLayout} onChange={() => this.handleDynamicLayout()} />
                                     </Tooltip>
                                 </FormGroup>
                                 <Tooltip content={"Close any existing images and load this image"}>

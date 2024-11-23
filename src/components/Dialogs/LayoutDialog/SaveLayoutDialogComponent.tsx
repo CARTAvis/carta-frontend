@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Classes, DialogProps, FormGroup, HTMLSelect, InputGroup, Intent, Label, Position, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Classes, DialogProps, FormGroup, HTMLSelect, InputGroup, Intent, Position, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -29,7 +29,7 @@ export class SaveLayoutDialogComponent extends React.Component {
     private titleMap = new Map<LayoutDialogMode, string>([
         [LayoutDialogMode.Save, "Save Layout"],
         [LayoutDialogMode.Rename, "Rename Layout"],
-        [LayoutDialogMode.SmartLayout, "Smart Layout"]
+        [LayoutDialogMode.DynamicLayout, "Dynamic Layout"]
     ]);
 
     private handleInput = (ev: React.FormEvent<HTMLInputElement>) => {
@@ -72,14 +72,14 @@ export class SaveLayoutDialogComponent extends React.Component {
         this.clearInput();
     };
 
-    private saveLayoutMap = async () => {
+    private handleSaveLayoutMap = async () => {
         // keep layoutName before it is cleared in saveLayout()
         const layoutName = this.layoutName.trim();
 
         await this.saveLayout();
 
-        const appStore = AppStore.Instance;
-        await appStore.layoutStore.saveLayoutMap(layoutName);
+        const layoutStore = AppStore.Instance.layoutStore;
+        await layoutStore.saveLayoutMap(layoutName, layoutStore.currentLayoutMapIndex);
     };
 
     @computed get isEmpty(): boolean {
@@ -114,10 +114,22 @@ export class SaveLayoutDialogComponent extends React.Component {
                         </FormGroup>
                     </div>
                 );
-            case LayoutDialogMode.SmartLayout:
+            case LayoutDialogMode.DynamicLayout:
+                const index = layoutStore.selectedLayoutMapIndex;
+                const showedCtype = index !== null ? layoutStore.existLayoutMap.layoutMap[index].ctype : layoutStore.currentLayoutMapCtype;
+                const ctypeList =
+                    layoutStore.currentLayoutMapIndex !== null ? layoutStore.existLayoutMap.layoutMap.map(layout => layout.ctype) : [layoutStore.currentLayoutMapCtype, ...layoutStore.existLayoutMap.layoutMap.map(layout => layout.ctype)];
                 return (
                     <div className={Classes.DIALOG_BODY}>
-                        <Label>{`Associate data type (${layoutStore.currentLayoutMapCtype})`}</Label>
+                        <FormGroup inline={true} label="Associate data type">
+                            <HTMLSelect value={showedCtype} onChange={ev => layoutStore.selectLayoutMap(ev.currentTarget.selectedIndex)}>
+                                {ctypeList.map(layout => (
+                                    <option key={layout} value={layout}>
+                                        {`${layout}`}
+                                    </option>
+                                ))}
+                            </HTMLSelect>
+                        </FormGroup>
                     </div>
                 );
             default:
@@ -130,11 +142,12 @@ export class SaveLayoutDialogComponent extends React.Component {
 
         switch (mode) {
             case LayoutDialogMode.Save:
+                layoutStore.selectLayoutMap(layoutStore.currentLayoutMapIndex);
                 return (
                     <div className={Classes.DIALOG_FOOTER}>
                         <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                            <Tooltip content="Save as smart layout" disabled={!this.isEmpty}>
-                                <AnchorButton intent={Intent.PRIMARY} onClick={this.saveLayoutMap} text={"Smart Layout"} disabled={this.isEmpty || !this.validName || layoutStore.currentLayoutMapCtype.length === 0} />
+                            <Tooltip content="Save as dynamic layout" disabled={!this.isEmpty}>
+                                <AnchorButton intent={Intent.PRIMARY} onClick={this.handleSaveLayoutMap} text={"Dynamic Layout"} disabled={this.isEmpty || !this.validName || layoutStore.currentLayoutMapCtype.length === 0} />
                             </Tooltip>
                             <Tooltip content="Layout name cannot be empty!" disabled={!this.isEmpty}>
                                 <AnchorButton intent={Intent.PRIMARY} onClick={this.saveLayout} text={"Save"} disabled={this.isEmpty || !this.validName} />
@@ -152,12 +165,14 @@ export class SaveLayoutDialogComponent extends React.Component {
                         </div>
                     </div>
                 );
-            case LayoutDialogMode.SmartLayout:
+            case LayoutDialogMode.DynamicLayout:
+                const index = layoutStore.selectedLayoutMapIndex;
+                const showedLayoutName = index !== null ? layoutStore.existLayoutMap.layoutMap[index].layoutName : layoutStore.currentLayoutName;
                 return (
                     <div className={Classes.DIALOG_FOOTER}>
                         <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                            <FormGroup inline={true} label="to Layout:">
-                                <HTMLSelect value={layoutStore.smartLayoutName} onChange={ev => layoutStore.saveLayoutMap(ev.currentTarget.value)}>
+                            <FormGroup inline={true} disabled={index === null} label="to Layout:">
+                                <HTMLSelect value={showedLayoutName} onChange={ev => layoutStore.saveLayoutMap(ev.currentTarget.value, layoutStore.selectedLayoutMapIndex)}>
                                     {layoutStore.orderedLayoutNames.map(layout => (
                                         <option key={layout} value={layout}>
                                             {layout}
