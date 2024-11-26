@@ -66,8 +66,6 @@ export class FileBrowserDialogComponent extends React.Component {
             }
             this.imageArithmeticInputRef.current?.focus();
         }
-
-        LayoutStore.Instance.matchLayoutMap();
     };
 
     private loadWithColorBlending = async () => {

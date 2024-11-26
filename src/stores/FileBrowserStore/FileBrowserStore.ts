@@ -90,6 +90,10 @@ export class FileBrowserStore {
 
     private extendedDelayHandle: any;
 
+    @observable selectedFilesHeaderInfo: {ctype: any[]; naxis: any[]; dim: number[]};
+    @observable isHighDimPriority: boolean;
+    @observable selectedFilesHeaderEntries: any[];
+
     constructor() {
         makeObservable(this);
         this.exportCoordinateType = CARTA.CoordinateType.WORLD;
@@ -109,6 +113,9 @@ export class FileBrowserStore {
                 this.setSaveRestFreq(Object.assign({}, activeFrame.restFreqStore.customRestFreq));
             }
         });
+
+        this.selectedFilesHeaderEntries = [];
+        this.isHighDimPriority = false;
     }
 
     @observable selectedFiles: ISelectedFile[];
@@ -580,9 +587,75 @@ export class FileBrowserStore {
         this.saveSpectralEnd = end;
     };
 
-    @action setSelectedFiles = (selection: ISelectedFile[]) => {
+    @action setSelectedFiles = async (selection: ISelectedFile[]) => {
         this.selectedFiles = selection;
+
+        // for dynamic layout
+        await this.setSelectedFilesHeaderInfo();
+        AppStore.Instance.layoutStore.matchLayoutMap();
     };
+
+    @action private async setSelectedFilesHeaderInfo() {
+        const backendService = BackendService.Instance;
+        this.selectedFilesHeaderEntries = [];
+
+        const filesDim: number[] = [];
+        const filesCtype: any[] = [];
+        const filesNaxis: any[] = [];
+        for (let i = 0; i < this.selectedFiles.length; i++) {
+            const res = await backendService.getFileInfo(this.fileList?.directory, this.selectedFiles[i].fileInfo?.name, this.selectedFiles[i].hdu);
+
+            if (res.fileInfo && res.fileInfoExtended) {
+                const HDUList = Object.keys(res.fileInfoExtended ?? {});
+                const fileInfo = HDUList?.length >= 1 ? res.fileInfoExtended[HDUList[0]] : res.fileInfoExtended;
+
+                let ctypes: string[] = [];
+                let naxes: string[] = [];
+
+                (fileInfo.headerEntries as any[]).forEach(header => {
+                    if (header.name?.substring(0, 5) === "CTYPE") {
+                        const value: string = IsSpatialCtype(`${header.value}`) ? "SPATIAL" : IsSpectralCtype(`${header.value}`) ? "SPECTRAL" : `${header.value}`;
+                        ctypes.push(value);
+                    }
+
+                    if (header.name?.substring(0, 5) === "NAXIS") {
+                        naxes.push(`${header.value}`);
+                    }
+                });
+
+                // the first element is the number of axes, remove it
+                naxes.splice(0, 1);
+
+                if (naxes.length !== ctypes.length) {
+                    const minLen = Math.min(naxes.length, ctypes.length);
+                    naxes = naxes.slice(0, minLen);
+                    ctypes = ctypes.slice(0, minLen);
+                }
+
+                // remove axes with size = 1
+                const indx = naxes.map((n, i) => (n === "1" ? i : -1)).filter(i => i !== -1);
+                indx.reverse().forEach(i => {
+                    ctypes.splice(i, 1);
+                    naxes.splice(i, 1);
+                });
+
+                filesDim.push(naxes.length);
+                filesCtype.push(ctypes);
+                filesNaxis.push(naxes);
+            }
+        }
+
+        this.selectedFilesHeaderInfo = {ctype: filesCtype, naxis: filesNaxis, dim: filesDim};
+    }
+
+    @computed get priorityFileIndex() {
+        if (this.isHighDimPriority) {
+            const maxDim = Math.max(...this.selectedFilesHeaderInfo.dim);
+            return this.selectedFilesHeaderInfo.dim.findIndex(dim => dim === maxDim);
+        } else {
+            return 0;
+        }
+    }
 
     @action showLoadingDialog = () => {
         this.isLoadingDialogOpen = true;
@@ -825,39 +898,5 @@ export class FileBrowserStore {
 
     @computed get exportAnnotationNum(): number {
         return this.exportRegionIndexes?.reduce((accum, exportIndex, i) => accum + (AppStore.Instance.activeFrame.regionSet.regions[exportIndex]?.isAnnotation ? 1 : 0), 0);
-    }
-
-    @computed get fileInfoForLayout(): {ctype: string[]; naxis: string[]} {
-        let ctypes: string[] = [];
-        let naxes: string[] = [];
-
-        if (this.fileInfoExtended?.headerEntries) {
-            this.fileInfoExtended.headerEntries.forEach(header => {
-                if (header.name?.substring(0, 5) === "CTYPE") {
-                    const value: string = IsSpatialCtype(`${header.value}`) ? "SPATIAL" : IsSpectralCtype(`${header.value}`) ? "SPECTRAL" : `${header.value}`;
-                    ctypes.push(value);
-                }
-                if (header.name?.substring(0, 5) === "NAXIS") {
-                    naxes.push(`${header.value}`);
-                }
-            });
-
-            // the first element is the number of axes, remove it
-            naxes.splice(0, 1);
-
-            if (naxes.length !== ctypes.length) {
-                const minLen = Math.min(naxes.length, ctypes.length);
-                naxes = naxes.slice(0, minLen);
-                ctypes = ctypes.slice(0, minLen);
-            }
-
-            // remove axes with size = 1
-            const indx = naxes.map((n, i) => (n === "1" ? i : -1)).filter(i => i !== -1);
-            indx.reverse().forEach(i => {
-                ctypes.splice(i, 1);
-                naxes.splice(i, 1);
-            });
-        }
-        return {ctype: ctypes, naxis: naxes};
     }
 }
