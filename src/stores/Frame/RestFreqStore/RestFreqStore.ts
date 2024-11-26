@@ -32,14 +32,25 @@ export class RestFreqStore {
         this.customRestFreq = defaultRestFreq;
     }
 
+    /**
+     * Customize the rest frequency value. Set unit using {@link setCustomUnit}.
+     * @param val - Value of rest frequency.
+     */
     @action setCustomVal = (val: number) => {
         this.customRestFreq.value = val;
     };
 
+    /**
+     * Set the unit of the rest frequency. Customize the rest frequency value using {@link setCustomVal}.
+     * @param val - Unit of rest frequency in {@link FrequencyUnit}.
+     */
     @action setCustomUnit = (val: FrequencyUnit) => {
         this.customRestFreq.unit = val;
     };
 
+    /**
+     * Reset the rest frequency to the value and unit of the header.
+     */
     @action restoreDefaults = () => {
         this.customRestFreq = this.headerRestFreq;
     };
