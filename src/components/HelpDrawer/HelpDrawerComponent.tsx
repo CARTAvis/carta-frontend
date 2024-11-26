@@ -62,7 +62,7 @@ const CATALOG_SETTINGS_ORIENTATION_HELP_CONTENT_URL = `https://carta.readthedocs
 const SPECTRAL_LINE_QUERY_HELP_CONTENT_URL = `https://carta.readthedocs.io/en/${url_version}/analysis_tools.html#spectral-line-query`;
 const PV_GENERATOR_HELP_CONTENT_URL = `https://carta.readthedocs.io/en/${url_version}/analysis_tools.html#position-velocity-pv-generator`;
 const CURSOR_INFO_HELP_CONTENT_URL = `https://carta.readthedocs.io/en/${url_version}/analysis_tools.html#cursor-info-widget`;
- 
+
 const HELP_CONTENT_MAP = new Map<HelpType, string>([
     // Dialog
     [HelpType.CONTOUR, CONTOUR_HELP_CONTENT_URL],
@@ -139,7 +139,7 @@ export class HelpDrawerComponent extends React.Component {
         return (
             <Drawer {...drawerProps}>
                 <div className={Classes.DRAWER_BODY}>
-                    <iframe src={HELP_CONTENT_MAP.get(helpStore.type)} loading='eager'></iframe>
+                    <iframe src={HELP_CONTENT_MAP.get(helpStore.type)} loading="eager"></iframe>
                 </div>
             </Drawer>
         );
