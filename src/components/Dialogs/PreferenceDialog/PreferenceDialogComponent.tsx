@@ -161,6 +161,12 @@ export class PreferenceDialogComponent extends React.Component {
         PreferenceStore.Instance.setPreference(PreferenceKeys.GLOBAL_IS_DYNAMIC_LAYOUT, layoutStore.isDynamicLayout);
     };
 
+    private handleHighDimPriority = () => {
+        const layoutStore = AppStore.Instance.layoutStore;
+        layoutStore.toggleHighDimPriority();
+        PreferenceStore.Instance.setPreference(PreferenceKeys.GLOBAL_IS_HIGH_DIM_PRIORITY, layoutStore.isHighDimPriority);
+    };
+
     public render() {
         const appStore = AppStore.Instance;
         const preference = appStore.preferenceStore;
@@ -558,7 +564,7 @@ export class PreferenceDialogComponent extends React.Component {
                     </Tooltip>
                 </FormGroup>
                 <FormGroup inline={true} label="Higher Dimension Priority">
-                    <Switch checked={layoutStore.isHighDimPriority} onChange={() => layoutStore.toggleHighDimPriority()} />
+                    <Switch checked={layoutStore.isHighDimPriority} onChange={() => this.handleHighDimPriority()} />
                 </FormGroup>
 
                 <FormGroup inline={true} label="Dynamic Layout Map">

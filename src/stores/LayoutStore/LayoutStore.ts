@@ -103,10 +103,10 @@ export class LayoutStore {
         this.currentLayoutMapIndex = null;
         this.layoutDialogMode = undefined;
         this.existLayoutMap = null;
-        this.isHighDimPriority = true;
 
         autorun(() => {
             this.isDynamicLayout = PreferenceStore.Instance.isDynamicLayout;
+            this.isHighDimPriority = PreferenceStore.Instance.isHighDimPriority;
             this.selectedLayoutMapIndex = this.currentLayoutMapIndex;
         });
     }
