@@ -418,11 +418,9 @@ export class ApiService {
         if (ApiService.RuntimeConfig.apiAddress) {
             try {
                 const existLayoutMap = await this.getLayoutMaps();
-                let layout = {layoutMap: JSON.parse(JSON.stringify(existLayoutMap.layoutMap))};
+                let layout = {layoutMap: JSON.parse(JSON.stringify(existLayoutMap.layoutMap ?? []))};
 
-                if (typeof existLayoutMap.layoutMap !== "undefined" && existLayoutMap.layoutMap.length > 0) {
-                    index !== null ? layout.layoutMap.splice(index, 1, layoutMap["layoutMap"][0]) : layout.layoutMap.splice(0, 0, layoutMap["layoutMap"][0]);
-                }
+                layout.layoutMap.length > 0 ? (index !== null ? layout.layoutMap.splice(index, 1, layoutMap["layoutMap"][0]) : layout.layoutMap.splice(0, 0, layoutMap["layoutMap"][0])) : (layout = layoutMap);
 
                 const url = `${ApiService.RuntimeConfig.apiAddress}/database/layout`;
                 const response = await this.axiosInstance.put(url, {layoutName, layout});

@@ -589,8 +589,11 @@ export class FileBrowserStore {
         this.selectedFiles = selection;
 
         // for dynamic layout
-        await this.setSelectedFilesHeaderInfo();
-        AppStore.Instance.layoutStore.matchLayoutMap();
+        const layoutStore = AppStore.Instance.layoutStore;
+        if (layoutStore.isDynamicLayout) {
+            await this.setSelectedFilesHeaderInfo();
+            layoutStore.matchLayoutMap();
+        }
     };
 
     @action private async setSelectedFilesHeaderInfo() {

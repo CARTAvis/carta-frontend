@@ -50,30 +50,31 @@ export class LayoutStore {
 
     @computed get dialogShowedCtype(): string {
         const index = this.selectedLayoutMapIndex;
-        if (this.existLayoutMap) {
-            return index === null ? (this.currentLayoutMapCtype.length > 0 ? this.currentLayoutMapCtype : this.existLayoutMap.layoutMap[0].ctype) : this.existLayoutMap.layoutMap[index].ctype;
-        } else {
-            return "";
+        let output = "";
+        if (this.existLayoutMap && this.existLayoutMap.layoutMap) {
+            output = index === null ? (this.currentLayoutMapCtype.length > 0 ? this.currentLayoutMapCtype : this.existLayoutMap.layoutMap[0].ctype) : this.existLayoutMap.layoutMap[index].ctype;
         }
+        return output;
     }
 
     @computed get dialogShowedLayoutName(): string {
         const index = this.selectedLayoutMapIndex;
-        if (this.existLayoutMap) {
-            return index === null ? (this.currentLayoutMapCtype.length > 0 ? this.currentLayoutName : this.existLayoutMap.layoutMap[0].layoutName) : this.existLayoutMap.layoutMap[index].layoutName;
-        } else {
-            return "";
+        let output = "";
+        if (this.existLayoutMap && this.existLayoutMap.layoutMap) {
+            output = index === null ? (this.currentLayoutMapCtype.length > 0 ? this.currentLayoutName : this.existLayoutMap.layoutMap[0].layoutName) : this.existLayoutMap.layoutMap[index].layoutName;
         }
+        return output;
     }
 
     @computed get dialogShowedCtypeList(): string[] {
-        if (this.existLayoutMap) {
-            return this.currentLayoutMapIndex === null && this.currentLayoutMapCtype.length > 0
-                ? [this.currentLayoutMapCtype, ...this.existLayoutMap.layoutMap.map(layout => layout.ctype)]
-                : this.existLayoutMap.layoutMap.map(layout => layout.ctype);
-        } else {
-            return [];
+        let output: string[] = [];
+        if (this.existLayoutMap && this.existLayoutMap.layoutMap) {
+            output =
+                this.currentLayoutMapIndex === null && this.currentLayoutMapCtype.length > 0
+                    ? [this.currentLayoutMapCtype, ...this.existLayoutMap.layoutMap.map(layout => layout.ctype)]
+                    : this.existLayoutMap.layoutMap.map(layout => layout.ctype);
         }
+        return output;
     }
 
     @computed get isSave(): boolean {
@@ -396,9 +397,11 @@ export class LayoutStore {
                     appStore.dialogStore.hideDialog(DialogId.Layout);
 
                     yield this.fetchLayoutMap(); // update LayoutMap.json
-                    this.matchLayoutMap();
-                    if (this.isDynamicLayout && layoutMapIndex !== null && this.layoutExists(this.dynamicLayoutName) && this.currentLayoutMapIndex === layoutMapIndex) {
-                        this.applyLayout(this.dynamicLayoutName);
+                    if (this.isDynamicLayout) {
+                        this.matchLayoutMap();
+                        if (this.isDynamicLayout && layoutMapIndex !== null && this.layoutExists(this.dynamicLayoutName) && this.currentLayoutMapIndex === layoutMapIndex) {
+                            this.applyLayout(this.dynamicLayoutName);
+                        }
                     }
                 }
             } catch (err) {
