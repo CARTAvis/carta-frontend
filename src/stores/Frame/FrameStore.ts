@@ -3238,23 +3238,13 @@ export class FrameStore {
 
         // Using the 'yield' keyword of generator functions to wait for decompressed raster data from other WebWorker thread.
         // next() will be called in setPreviewPVRasterData, which will be called in the onmessage() function after receiving the decompressed data from other worker thread.u
-        yield TileService.Instance.decompressRender3DRasterData(render3DData);
-
-        // Make sure histogram functions work correctly with PV
-        if (render3DData.histogram) {
-            this.renderConfig.setPreviewHistogramMax(null);
-            this.renderConfig.setPreviewHistogramMin(null);
-            this.renderConfig.updateCubeHistogram(render3DData.histogram, this.renderConfig.cubeHistogramProgress);
-        } else {
-            this.renderConfig.setPreviewHistogramMax(render3DData.histogramBounds?.max);
-            this.renderConfig.setPreviewHistogramMin(render3DData.histogramBounds?.min);
-        }
+        yield TileService.Instance.decompressRender3DData(render3DData);
 
         console.log(`Updating render3D data for frame ${this.frameInfo.fileId}`);
 
-        const newFrameInfo = {...this.frameInfo};
-        newFrameInfo.fileInfoExtended = new CARTA.FileInfoExtended(render3DData.imageInfo);
-        this.setFrameInfo(newFrameInfo);
+        // const newFrameInfo = {...this.frameInfo};
+        // newFrameInfo.fileInfoExtended = new CARTA.FileInfoExtended(render3DData.imageInfo);
+        // this.setFrameInfo(newFrameInfo);
 
         // Update wcsInfo
         const astFrameSet = this.initPVFrame();

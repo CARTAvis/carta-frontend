@@ -793,11 +793,11 @@ export class BackendService {
         }
     }
 
-    closeRender3D(render3DId: number) {
+    closeRender3D(viewerId: number) {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
-            const message = CARTA.CloseRender3D.create({render3DId});
+            const message = CARTA.CloseRender3D.create({viewerId});
             this.logEvent(CARTA.EventType.CLOSE_RENDER3D, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.CLOSE_RENDER3D, CARTA.CloseRender3D.encode(message).finish())) {
                 return true;

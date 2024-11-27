@@ -54,6 +54,26 @@
         //     }
         }
 
+        .rebin-select {
+            display: flex;
+            flex-direction: row;
+
+            .#{$ns}-input-group {
+                width: 65px;
+            }
+
+            .#{$ns}-form-group {
+                margin-right: 5px;
+                margin-bottom: 0px;
+                .#{$ns}-label {
+                    margin: 0px;
+                    min-width: 2em;
+                    width: 2em;
+                    text-align: left;
+                }
+            }
+        }
+
         .generate-button {
             float: right;
             display: flex;

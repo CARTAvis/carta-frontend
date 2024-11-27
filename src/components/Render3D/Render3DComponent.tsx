@@ -32,6 +32,9 @@ enum IsoSurfaceTabs {
 
 @observer
 export class Render3DComponent extends React.Component<WidgetProps> {
+
+    @observable isValidSpectralRange: boolean = true;
+
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "render-3d",
@@ -196,31 +199,35 @@ export class Render3DComponent extends React.Component<WidgetProps> {
 
     private onVisualizeButtonClicked = () => {
         this.widgetStore.requestRender3D(this.props.id);
-    }
+    };
+
+    @action setisValidSpectralRange = (bool: boolean) => {
+        this.isValidSpectralRange = bool;
+    };
 
     private handleSpectralRangeChanged = (value: number, max: boolean) => {
         //TODO
-        // if (max) {
-        //     this.widgetStore.setSpectralRange({min: this.widgetStore.range?.min, max: value ?? null});
-        // } else {
-        //     this.widgetStore.setSpectralRange({min: value ?? null, max: this.widgetStore.range?.max});
-        // }
+        if (max) {
+            this.widgetStore.setSpectralRange({min: this.widgetStore.range?.min, max: value ?? null});
+        } else {
+            this.widgetStore.setSpectralRange({min: value ?? null, max: this.widgetStore.range?.max});
+        }
 
-        // const frame = this.widgetStore.effectiveFrame;
-        // let channelIndexMin = frame.findChannelIndexByValue(this.widgetStore.range?.min);
-        // let channelIndexMax = frame.findChannelIndexByValue(this.widgetStore.range?.max);
+        const frame = this.widgetStore.effectiveFrame;
+        let channelIndexMin = frame.findChannelIndexByValue(this.widgetStore.range?.min);
+        let channelIndexMax = frame.findChannelIndexByValue(this.widgetStore.range?.max);
 
-        // if (channelIndexMin > channelIndexMax) {
-        //     const holder = channelIndexMax;
-        //     channelIndexMax = channelIndexMin;
-        //     channelIndexMin = holder;
-        // }
+        if (channelIndexMin > channelIndexMax) {
+            const holder = channelIndexMax;
+            channelIndexMax = channelIndexMin;
+            channelIndexMin = holder;
+        }
 
-        // if (isFinite(this.widgetStore.range?.min) && isFinite(this.widgetStore.range?.max) && channelIndexMin < channelIndexMax && channelIndexMax < frame.numChannels) {
-        //     this.setisValidSpectralRange(true);
-        // } else {
-        //     this.setisValidSpectralRange(false);
-        // }
+        if (isFinite(this.widgetStore.range?.min) && isFinite(this.widgetStore.range?.max) && channelIndexMin < channelIndexMax && channelIndexMax < frame.numChannels) {
+            this.setisValidSpectralRange(true);
+        } else {
+            this.setisValidSpectralRange(false);
+        }
     };
 
     render() {
@@ -423,6 +430,30 @@ export class Render3DComponent extends React.Component<WidgetProps> {
                             </div>
                         </FormGroup>
                     )}
+                    <FormGroup className="label-info-group" inline={true} label="Rebin" labelInfo={`(px)`}>
+                        <div className="rebin-select">
+                            <FormGroup inline={true} label={"XY"}>
+                                <SafeNumericInput
+                                    min={1}
+                                    max={Math.ceil(Math.max(this.widgetStore.effectiveFrame?.frameInfo.fileInfoExtended.height, this.widgetStore.effectiveFrame?.frameInfo.fileInfoExtended.width) / 2) || 1}
+                                    stepSize={1}
+                                    value={this.widgetStore.xyRebin}
+                                    onValueChange={value => this.widgetStore.setXYRebin(value)}
+                                    data-testid="render3d-rebin-xy-input"
+                                />
+                            </FormGroup>
+                            <FormGroup inline={true} label={"Z"}>
+                                <SafeNumericInput
+                                    min={1}
+                                    max={Math.ceil(this.widgetStore.effectiveFrame?.frameInfo.fileInfoExtended.depth / 2) || 1}
+                                    stepSize={1}
+                                    value={this.widgetStore.zRebin}
+                                    onValueChange={value => this.widgetStore.setZRebin(value)}
+                                    data-testid="render3d-rebin-z-input"
+                                />
+                            </FormGroup>
+                        </div>
+                    </FormGroup>
                 <Divider />
                 <Tabs defaultSelectedTabId={Render3DTabs.IsoSurfaces} renderActiveTabPanelOnly={false}>
                         <Tab id={Render3DTabs.IsoSurfaces} title="Iso-surfaces" panel={isoSurfacesPanel} panelClassName="render-3d-isosurfaces-panel" data-testid="render-3d-isosurfaces-tab-title" />

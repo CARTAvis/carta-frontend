@@ -3,12 +3,21 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {LineSettings, PlotType} from "components/Shared";
-import {AppStore} from "stores";
+import {AppStore, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
+import {ACTIVE_FILE_ID} from "stores/Widgets";
 
 import {RegionId, RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
 export class Render3DWidgetStore extends RegionWidgetStore {
+
+    // request parameters
+    @observable xyRebin: number = 1;
+    @observable zRebin: number = 1;
+    @observable keep: boolean;
+    @observable range: CARTA.IIntBounds = {min: this.effectiveFrame?.channelValueBounds?.min, max: this.effectiveFrame?.channelValueBounds?.max};
+
+    // ------------
 
     @observable markerTextVisible: boolean;
     @observable meanRmsVisible: boolean;
@@ -26,10 +35,6 @@ export class Render3DWidgetStore extends RegionWidgetStore {
     @observable primaryLineColor: string;
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
-
-    // Generate Levels
-    @observable range: CARTA.IIntBounds = {min: this.effectiveFrame?.channelValueBounds?.min, max: this.effectiveFrame?.channelValueBounds?.max};
-    @observable keep: boolean;
 
     @observable render3DFrame: FrameStore | null;
 
@@ -106,13 +111,11 @@ export class Render3DWidgetStore extends RegionWidgetStore {
         this.cursorX = cursorVal;
     };
 
-    @action requestRender3D = (render3DGeneratorId?: string) => {
-        console.log("Requesting Render3D");
+    @action requestRender3D = (render3DGeneratorId: string) => {
         const frame = this.effectiveFrame;
         if (!frame) {
             return;
         }
-        console.log(this.effectiveRegion);
         let channelIndexMin = frame.findChannelIndexByValue(this.range.min);
         let channelIndexMax = frame.findChannelIndexByValue(this.range.max);
 
@@ -127,23 +130,23 @@ export class Render3DWidgetStore extends RegionWidgetStore {
             }
             channelIndexMin = channelIndexMax - 1;
         }
-        if (frame && this.effectiveRegion) {
+        if (frame) {
             console.log("Requesting Render3D with region ID: " + this.effectiveRegionId);
             const requestMessage: CARTA.IRender3DRequest = {
                 fileId: frame.frameInfo.fileId,
                 regionId: this.effectiveRegionId,
-                imageBounds: {
-                    xMin: 0,
-                    xMax: frame.frameInfo.fileInfoExtended.width,
-                    yMin: 0,
-                    yMax: frame.frameInfo.fileInfoExtended.height
-                },
+                viewerId: parseInt(render3DGeneratorId.split("-")[2]),
                 spectralRange: isFinite(channelIndexMin) && isFinite(channelIndexMax) ? {min: channelIndexMin, max: channelIndexMax} : null,
-                keep: this.keep,
+                rebinXy: this.xyRebin,
+                rebinZ: this.zRebin,
+                compressionQuality: PreferenceStore.Instance.imageCompressionQuality || 11,
+                compressionType: CARTA.CompressionType.ZFP,
+                keep: this.keep
             }
-            console.log(render3DGeneratorId);
             if (render3DGeneratorId) {
                 console.log("Requesting Render3D with generator ID: " + render3DGeneratorId);
+                console.log(requestMessage);
+                console.log('frama' + frame);
                 AppStore.Instance.requestRender3D(requestMessage, frame, render3DGeneratorId);
             }
         }
@@ -155,10 +158,22 @@ export class Render3DWidgetStore extends RegionWidgetStore {
         }
     };
 
+    @action setKeep = (bool: boolean) => {
+        this.keep = bool;
+    };
+
+    @action setXYRebin = (val: number) => {
+        this.xyRebin = val;
+    };
+
+    @action setZRebin = (val: number) => {
+        this.zRebin = val;
+    };
+
     constructor() {
         super(RegionsType.CLOSED);
         makeObservable(this);
-        // this.regionIdMap.set(ACTIVE_FILE_ID, RegionId.ACTIVE);
+        this.regionIdMap.set(ACTIVE_FILE_ID, RegionId.ACTIVE);
         this.logScaleY = true;
         this.plotType = PlotType.STEPS;
         this.markerTextVisible = true;

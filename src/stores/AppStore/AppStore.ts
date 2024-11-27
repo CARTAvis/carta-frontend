@@ -1556,10 +1556,14 @@ export class AppStore {
             return;
         }
         try {
+            console.log("start_try")
             this.startFileLoading();
             const ack = yield this.backendService.requestRender3D(message);
+            // the code stops awaiting for a response from the backend.
             this.restartTaskProgress();
+            console.log("requestRender3D ack =", ack);
             if (!ack.cancel && ack.render3dData) {
+                console.log("requestRender3D")
                 const render3DWidgetStore = WidgetsStore.Instance.render3DWidgets.get(id);
                 if (render3DWidgetStore.render3DFrame) {
                     render3DWidgetStore.render3DFrame.updateRender3DDataGenerator = render3DWidgetStore.render3DFrame.updateRender3DData(ack.render3dData);
@@ -1577,6 +1581,7 @@ export class AppStore {
             // frame.setIsRequestPVCancelling(false);
             this.endFileLoading();
         } catch (err) {
+            alert("requestRender3D error" + err);
             frame.resetRender3DRequestState();
             // frame.setIsRequestPVCancelling(false);
             this.endFileLoading();
