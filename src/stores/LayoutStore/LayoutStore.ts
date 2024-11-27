@@ -67,7 +67,7 @@ export class LayoutStore {
     }
 
     @computed get dialogShowedCtypeList(): string[] {
-        let output: string[] = [];
+        let output: string[] = [this.currentLayoutMapCtype ?? []];
         if (this.existLayoutMap && this.existLayoutMap.layoutMap) {
             output =
                 this.currentLayoutMapIndex === null && this.currentLayoutMapCtype.length > 0
