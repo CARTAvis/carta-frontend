@@ -13,7 +13,7 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, SuccessToast} from "components/Shared";
 import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {TelemetryMode} from "services";
-import {AppStore, BeamType, DialogId, HelpType, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, BeamType, DialogId, FileBrowserStore, HelpType, PreferenceKeys, PreferenceStore} from "stores";
 import {ContourGeneratorType, FrameScaling, RegionStore, RenderConfigStore} from "stores/Frame";
 import {copyToClipboard, SWATCH_COLORS} from "utilities";
 
@@ -25,6 +25,7 @@ enum PreferenceDialogTabs {
     CONTOUR_CONFIG,
     VECTOR_OVERLAY_CONFIG,
     WCS_OVERLAY_CONFIG,
+    LAYOUT,
     REGION,
     ANNOTATION,
     PERFORMANCE,
@@ -154,6 +155,12 @@ export class PreferenceDialogComponent extends React.Component {
         }
     };
 
+    private handleDynamicLayout = () => {
+        const layoutStore = AppStore.Instance.layoutStore;
+        layoutStore.toogleDynamicLayout();
+        PreferenceStore.Instance.setPreference(PreferenceKeys.GLOBAL_IS_DYNAMIC_LAYOUT, layoutStore.isDynamicLayout);
+    };
+
     public render() {
         const appStore = AppStore.Instance;
         const preference = appStore.preferenceStore;
@@ -181,11 +188,6 @@ export class PreferenceDialogComponent extends React.Component {
                         <option value={FileFilterMode.All}>All files</option>
                     </HTMLSelect>
                 </FormGroup>
-                {/* <FormGroup inline={true} label="Dynamic Layout">
-                        <Tooltip content={"Apply data type associated layout"}>
-                            <Switch checked={preference.isDynamicLayout} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_IS_DYNAMIC_LAYOUT, ev.currentTarget.value)} />
-                        </Tooltip>
-                    </FormGroup> */}
                 <FormGroup inline={true} label="Initial layout">
                     <HTMLSelect value={preference.layout} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_LAYOUT, ev.currentTarget.value)}>
                         {layoutStore.orderedLayoutNames.map(layout => (
@@ -547,6 +549,42 @@ export class PreferenceDialogComponent extends React.Component {
                 </option>
             );
         });
+
+        const layoutPanel = (
+            <React.Fragment>
+                <FormGroup inline={true} label="Dynamic Layout">
+                    <Tooltip content={"Apply data the type associated layout"}>
+                        <Switch checked={layoutStore.isDynamicLayout} onChange={() => this.handleDynamicLayout()} />
+                    </Tooltip>
+                </FormGroup>
+                <FormGroup inline={true} label="Higher Dimension Priority">
+                    <Switch checked={FileBrowserStore.Instance.isHighDimPriority} onChange={() => FileBrowserStore.Instance.toggleHighDimPriority()} />
+                </FormGroup>
+
+                <FormGroup inline={true} label="Dynamic Layout Map">
+                    <FormGroup inline={true} className="layout-map" label="Data type:">
+                        <Tooltip content="Associate the data to a exist layout.">
+                            <HTMLSelect value={layoutStore.dialogShowedCtype} onChange={ev => layoutStore.selectLayoutMap(ev.currentTarget.selectedIndex)}>
+                                {layoutStore.dialogShowedCtypeList.map(layout => (
+                                    <option key={layout} value={layout}>
+                                        {`${layout}`}
+                                    </option>
+                                ))}
+                            </HTMLSelect>
+                        </Tooltip>
+                    </FormGroup>
+                    <FormGroup inline={true} className="layout-map" label="Layout:">
+                        <HTMLSelect value={layoutStore.dialogShowedLayoutName} onChange={ev => layoutStore.saveLayoutMap(ev.currentTarget.value, layoutStore.selectedLayoutMapIndex)}>
+                            {layoutStore.orderedLayoutNames.map(layout => (
+                                <option key={layout} value={layout}>
+                                    {layout}
+                                </option>
+                            ))}
+                        </HTMLSelect>
+                    </FormGroup>
+                </FormGroup>
+            </React.Fragment>
+        );
 
         const regionSettingsPanel = (
             <React.Fragment>
@@ -920,6 +958,7 @@ export class PreferenceDialogComponent extends React.Component {
                         <Tab id={PreferenceDialogTabs.CONTOUR_CONFIG} title="Contour Configuration" panel={contourConfigPanel} />
                         <Tab id={PreferenceDialogTabs.VECTOR_OVERLAY_CONFIG} title="Vector Overlay Configuration" panel={vectorOverlayConfigPanel} />
                         <Tab id={PreferenceDialogTabs.WCS_OVERLAY_CONFIG} title="WCS and Image Overlay" panel={overlayConfigPanel} />
+                        <Tab id={PreferenceDialogTabs.LAYOUT} title="Layout" panel={layoutPanel} />
                         <Tab id={PreferenceDialogTabs.CATALOG} title="Catalog" panel={catalogPanel} />
                         <Tab id={PreferenceDialogTabs.REGION} title="Region" panel={regionSettingsPanel} />
                         <Tab id={PreferenceDialogTabs.ANNOTATION} title="Annotation" panel={annotationSettingsPanel} />

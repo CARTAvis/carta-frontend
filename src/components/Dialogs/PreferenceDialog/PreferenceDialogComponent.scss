@@ -86,6 +86,19 @@
         }
     }
 
+    .layout-map {
+        .#{$ns}-label {
+            min-width: 5em;
+        }
+        .#{$ns}-form-content {
+            .#{$ns}-html-select select,
+            .#{$ns}-select select {
+                overflow: hidden;
+                width: 100%;
+            }
+        }
+    }
+
     .#{$ns}-html-select select,
     .#{$ns}-select select {
         width: auto;

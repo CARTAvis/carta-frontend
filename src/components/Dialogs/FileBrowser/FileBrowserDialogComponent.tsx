@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Alert, AnchorButton, Breadcrumb, BreadcrumbProps, Breadcrumbs, Button, ButtonGroup, Classes, DialogProps, FormGroup, Icon, InputGroup, Intent, Menu, MenuItem, Popover, Position, Switch, TabId, Tooltip} from "@blueprintjs/core";
+import {Alert, AnchorButton, Breadcrumb, BreadcrumbProps, Breadcrumbs, Button, ButtonGroup, Classes, DialogProps, Icon, InputGroup, Intent, Menu, MenuItem, Popover, Position, TabId, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import * as _ from "lodash";
@@ -286,11 +286,6 @@ export class FileBrowserDialogComponent extends React.Component {
         fileBrowserStore.resetLoadingStates();
     };
 
-    private handleDynamicLayout = () => {
-        LayoutStore.Instance.toogleDynamicLayout();
-        PreferenceStore.Instance.setPreference(PreferenceKeys.GLOBAL_IS_DYNAMIC_LAYOUT, LayoutStore.Instance.isDynamicLayout);
-    };
-
     @action handleFilterStringInputChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
         this.fileFilterString = ev.target.value;
         this.setFilterString(this.fileFilterString);
@@ -416,11 +411,6 @@ export class FileBrowserDialogComponent extends React.Component {
                     } else {
                         return (
                             <div className="footer-sub">
-                                <FormGroup inline={true} label="Dynamic Layout">
-                                    <Tooltip content={"Apply data type associated layout"}>
-                                        <Switch checked={LayoutStore.Instance.isDynamicLayout} onChange={() => this.handleDynamicLayout()} />
-                                    </Tooltip>
-                                </FormGroup>
                                 <Tooltip content={"Close any existing images and load this image"}>
                                     <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={actionFunction} text={actionText} />
                                 </Tooltip>

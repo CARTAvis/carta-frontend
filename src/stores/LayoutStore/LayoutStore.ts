@@ -41,7 +41,7 @@ export class LayoutStore {
 
     // Data type associated layout
     @observable isDynamicLayout: boolean;
-    @observable existLayoutMap: any;
+    @observable existLayoutMap: any | null;
     @observable dynamicLayoutName: string | null;
     @observable currentLayoutMapCtype: any; // type needs to be changed
     @observable currentLayoutMapIndex: number | null;
@@ -50,6 +50,34 @@ export class LayoutStore {
     @action toogleDynamicLayout = () => {
         this.isDynamicLayout = !this.isDynamicLayout;
     };
+
+    @computed get dialogShowedCtype(): string {
+        const index = this.selectedLayoutMapIndex;
+        if (this.existLayoutMap) {
+            return index === null ? (this.currentLayoutMapCtype.length > 0 ? this.currentLayoutMapCtype : this.existLayoutMap.layoutMap[0].ctype) : this.existLayoutMap.layoutMap[index].ctype;
+        } else {
+            return "";
+        }
+    }
+
+    @computed get dialogShowedLayoutName(): string {
+        const index = this.selectedLayoutMapIndex;
+        if (this.existLayoutMap) {
+            return index === null ? (this.currentLayoutMapCtype.length > 0 ? this.currentLayoutName : this.existLayoutMap.layoutMap[0].layoutName) : this.existLayoutMap.layoutMap[index].layoutName;
+        } else {
+            return "";
+        }
+    }
+
+    @computed get dialogShowedCtypeList(): string[] {
+        if (this.existLayoutMap) {
+            return this.currentLayoutMapIndex === null && this.currentLayoutMapCtype.length > 0
+                ? [this.currentLayoutMapCtype, ...this.existLayoutMap.layoutMap.map(layout => layout.ctype)]
+                : this.existLayoutMap.layoutMap.map(layout => layout.ctype);
+        } else {
+            return [];
+        }
+    }
 
     @computed get isSave(): boolean {
         return !this.oldLayoutName;
@@ -67,7 +95,7 @@ export class LayoutStore {
         this.currentLayoutMapCtype = [];
         this.currentLayoutMapIndex = null;
         this.layoutDialogMode = undefined;
-        // this.selectedLayoutMapIndex = null;
+        this.existLayoutMap = null;
 
         autorun(() => {
             this.isDynamicLayout = PreferenceStore.Instance.isDynamicLayout;
@@ -136,7 +164,7 @@ export class LayoutStore {
     }
 
     @action selectLayoutMap = (index: number) => {
-        this.selectedLayoutMapIndex = index;
+        this.selectedLayoutMapIndex = this.currentLayoutMapIndex === null && this.currentLayoutMapCtype.length > 0 ? (index - 1 < 0 ? null : index - 1) : index;
     };
 
     @action setLayoutDialogMode = (mode: LayoutDialogMode) => {

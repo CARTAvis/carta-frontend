@@ -90,6 +90,11 @@ export class SaveLayoutDialogComponent extends React.Component {
         return this.layoutName.match(/^[^~`!*()\-+=[.'?<>/|\\:;&]+$/)?.length > 0;
     }
 
+    @computed get enableDynamicLayoutSave(): boolean {
+        const layoutStore = AppStore.Instance.layoutStore;
+        return layoutStore.currentLayoutMapCtype.length > 0 && !!AppStore.Instance.activeFrame;
+    }
+
     private renderLayoutDialogBody = (mode: LayoutDialogMode) => {
         const layoutStore = AppStore.Instance.layoutStore;
 
@@ -115,20 +120,19 @@ export class SaveLayoutDialogComponent extends React.Component {
                     </div>
                 );
             case LayoutDialogMode.DynamicLayout:
-                const index = layoutStore.selectedLayoutMapIndex;
-                const showedCtype = index !== null ? layoutStore.existLayoutMap.layoutMap[index].ctype : layoutStore.currentLayoutMapCtype;
-                const ctypeList =
-                    layoutStore.currentLayoutMapIndex !== null ? layoutStore.existLayoutMap.layoutMap.map(layout => layout.ctype) : [layoutStore.currentLayoutMapCtype, ...layoutStore.existLayoutMap.layoutMap.map(layout => layout.ctype)];
+                const className = classNames(Classes.DIALOG_BODY, "layout-map");
                 return (
-                    <div className={Classes.DIALOG_BODY}>
-                        <FormGroup inline={true} label="Associate data type">
-                            <HTMLSelect value={showedCtype} onChange={ev => layoutStore.selectLayoutMap(ev.currentTarget.selectedIndex)}>
-                                {ctypeList.map(layout => (
-                                    <option key={layout} value={layout}>
-                                        {`${layout}`}
-                                    </option>
-                                ))}
-                            </HTMLSelect>
+                    <div className={className}>
+                        <FormGroup inline={true} label="Data type:">
+                            <Tooltip content="Associate the data type to a exist layout.">
+                                <HTMLSelect value={layoutStore.dialogShowedCtype} onChange={ev => layoutStore.selectLayoutMap(ev.currentTarget.selectedIndex)}>
+                                    {layoutStore.dialogShowedCtypeList.map(layout => (
+                                        <option key={layout} value={layout}>
+                                            {`${layout}`}
+                                        </option>
+                                    ))}
+                                </HTMLSelect>
+                            </Tooltip>
                         </FormGroup>
                     </div>
                 );
@@ -146,8 +150,8 @@ export class SaveLayoutDialogComponent extends React.Component {
                 return (
                     <div className={Classes.DIALOG_FOOTER}>
                         <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                            <Tooltip content="Save as dynamic layout" disabled={!this.isEmpty}>
-                                <AnchorButton intent={Intent.PRIMARY} onClick={this.handleSaveLayoutMap} text={"Dynamic Layout"} disabled={this.isEmpty || !this.validName || layoutStore.currentLayoutMapCtype.length === 0} />
+                            <Tooltip content={`Save layout and associate it with data type (${layoutStore.currentLayoutMapCtype})`} disabled={!this.isEmpty}>
+                                <AnchorButton intent={Intent.PRIMARY} onClick={this.handleSaveLayoutMap} text={"Dynamic Layout"} disabled={this.isEmpty || !this.validName || !this.enableDynamicLayoutSave} />
                             </Tooltip>
                             <Tooltip content="Layout name cannot be empty!" disabled={!this.isEmpty}>
                                 <AnchorButton intent={Intent.PRIMARY} onClick={this.saveLayout} text={"Save"} disabled={this.isEmpty || !this.validName} />
@@ -166,13 +170,11 @@ export class SaveLayoutDialogComponent extends React.Component {
                     </div>
                 );
             case LayoutDialogMode.DynamicLayout:
-                const index = layoutStore.selectedLayoutMapIndex;
-                const showedLayoutName = index !== null ? layoutStore.existLayoutMap.layoutMap[index].layoutName : layoutStore.currentLayoutName;
                 return (
                     <div className={Classes.DIALOG_FOOTER}>
                         <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                            <FormGroup inline={true} disabled={index === null} label="to Layout:">
-                                <HTMLSelect value={showedLayoutName} onChange={ev => layoutStore.saveLayoutMap(ev.currentTarget.value, layoutStore.selectedLayoutMapIndex)}>
+                            <FormGroup inline={true} label="Layout:">
+                                <HTMLSelect value={layoutStore.dialogShowedLayoutName} onChange={ev => layoutStore.saveLayoutMap(ev.currentTarget.value, layoutStore.selectedLayoutMapIndex)}>
                                     {layoutStore.orderedLayoutNames.map(layout => (
                                         <option key={layout} value={layout}>
                                             {layout}

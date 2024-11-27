@@ -115,7 +115,7 @@ export class FileBrowserStore {
         });
 
         this.selectedFilesHeaderEntries = [];
-        this.isHighDimPriority = false;
+        this.isHighDimPriority = true;
     }
 
     @observable selectedFiles: ISelectedFile[];
@@ -656,6 +656,10 @@ export class FileBrowserStore {
             return 0;
         }
     }
+
+    @action toggleHighDimPriority = () => {
+        this.isHighDimPriority = !this.isHighDimPriority;
+    };
 
     @action showLoadingDialog = () => {
         this.isLoadingDialogOpen = true;

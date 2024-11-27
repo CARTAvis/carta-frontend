@@ -1,4 +1,22 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .layout-name-input {
     margin: 3px;
     user-select: none;
+}
+
+.layout-map {
+    .#{$ns}-form-group.#{$ns}-inline {
+        justify-content: right;
+    }
+    .#{$ns}-label {
+        min-width: 4em;
+    }
+    .#{$ns}-form-content {
+        .#{$ns}-html-select select,
+        .#{$ns}-select select {
+            overflow: hidden;
+            width: 100%;
+        }
+    }
 }
