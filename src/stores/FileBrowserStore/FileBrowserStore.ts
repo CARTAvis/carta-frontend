@@ -91,7 +91,6 @@ export class FileBrowserStore {
     private extendedDelayHandle: any;
 
     @observable selectedFilesHeaderInfo: {ctype: any[]; naxis: any[]; dim: number[]};
-    @observable isHighDimPriority: boolean;
     @observable selectedFilesHeaderEntries: any[];
 
     constructor() {
@@ -115,7 +114,6 @@ export class FileBrowserStore {
         });
 
         this.selectedFilesHeaderEntries = [];
-        this.isHighDimPriority = true;
     }
 
     @observable selectedFiles: ISelectedFile[];
@@ -647,19 +645,6 @@ export class FileBrowserStore {
 
         this.selectedFilesHeaderInfo = {ctype: filesCtype, naxis: filesNaxis, dim: filesDim};
     }
-
-    @computed get priorityFileIndex() {
-        if (this.isHighDimPriority) {
-            const maxDim = Math.max(...this.selectedFilesHeaderInfo.dim);
-            return this.selectedFilesHeaderInfo.dim.findIndex(dim => dim === maxDim);
-        } else {
-            return 0;
-        }
-    }
-
-    @action toggleHighDimPriority = () => {
-        this.isHighDimPriority = !this.isHighDimPriority;
-    };
 
     @action showLoadingDialog = () => {
         this.isLoadingDialogOpen = true;

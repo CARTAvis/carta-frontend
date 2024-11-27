@@ -41,15 +41,12 @@ export class LayoutStore {
 
     // Data type associated layout
     @observable isDynamicLayout: boolean;
+    @observable isHighDimPriority: boolean;
     @observable existLayoutMap: any | null;
     @observable dynamicLayoutName: string | null;
     @observable currentLayoutMapCtype: any; // type needs to be changed
     @observable currentLayoutMapIndex: number | null;
     @observable selectedLayoutMapIndex: number | null;
-
-    @action toogleDynamicLayout = () => {
-        this.isDynamicLayout = !this.isDynamicLayout;
-    };
 
     @computed get dialogShowedCtype(): string {
         const index = this.selectedLayoutMapIndex;
@@ -83,6 +80,16 @@ export class LayoutStore {
         return !this.oldLayoutName;
     }
 
+    @computed get priorityFileIndexes() {
+        const fileBrowserStore = AppStore.Instance.fileBrowserStore;
+
+        let sortWithIndex = fileBrowserStore.selectedFilesHeaderInfo.dim.map((value, index) => ({index: index, value: value}));
+        if (this.isHighDimPriority) {
+            sortWithIndex.sort((a, b) => b.value - a.value);
+        }
+        return sortWithIndex.map(item => item.index);
+    }
+
     private constructor() {
         makeObservable<LayoutStore, "layouts">(this);
         this.dockedLayout = null;
@@ -96,6 +103,7 @@ export class LayoutStore {
         this.currentLayoutMapIndex = null;
         this.layoutDialogMode = undefined;
         this.existLayoutMap = null;
+        this.isHighDimPriority = true;
 
         autorun(() => {
             this.isDynamicLayout = PreferenceStore.Instance.isDynamicLayout;
@@ -103,56 +111,72 @@ export class LayoutStore {
         });
     }
 
+    @action toogleDynamicLayout = () => {
+        this.isDynamicLayout = !this.isDynamicLayout;
+    };
+
+    @action toggleHighDimPriority = () => {
+        this.isHighDimPriority = !this.isHighDimPriority;
+    };
+
     @action matchLayoutMap() {
         const fileBrowserStore = AppStore.Instance.fileBrowserStore;
 
         if (fileBrowserStore.selectedFiles.length > 0) {
-            const ctypes = fileBrowserStore.selectedFilesHeaderInfo.ctype[fileBrowserStore.priorityFileIndex];
+            for (let k = 0; k < this.priorityFileIndexes.length; k++) {
+                const index = this.priorityFileIndexes[k];
+                const ctypes = fileBrowserStore.selectedFilesHeaderInfo.ctype[index];
 
-            this.currentLayoutMapCtype = ctypes;
-            this.currentLayoutMapIndex = null;
+                this.currentLayoutMapCtype = ctypes;
+                this.currentLayoutMapIndex = null;
 
-            if (typeof this.existLayoutMap.layoutMap !== "undefined" && this.existLayoutMap.layoutMap.length > 0) {
-                for (let i = 0; i < this.existLayoutMap.layoutMap.length; i++) {
-                    let first2Dim: boolean[] = [];
-                    let first2DimR: boolean[] = []; // for swapped first two dimensions
-                    let RestDim: boolean[] = [];
+                if (typeof this.existLayoutMap.layoutMap !== "undefined" && this.existLayoutMap.layoutMap.length > 0) {
+                    for (let i = 0; i < this.existLayoutMap.layoutMap.length; i++) {
+                        let first2Dim: boolean[] = [];
+                        let first2DimR: boolean[] = []; // for swapped first two dimensions
+                        let RestDim: boolean[] = [];
 
-                    let layoutMap = this.existLayoutMap.layoutMap[i];
+                        let layoutMap = this.existLayoutMap.layoutMap[i];
 
-                    const restCtypelayoutMap = [...layoutMap.ctype];
-                    const restCtypeData = [...ctypes];
+                        const restCtypelayoutMap = [...layoutMap.ctype];
+                        const restCtypeData = [...ctypes];
 
-                    if (layoutMap.ctype.length === ctypes.length) {
-                        // separate the first two dimensions and the rest
-                        const first2CtypeLayoutMap = restCtypelayoutMap.splice(0, 2);
-                        const first2CtypeLayoutMapR = first2CtypeLayoutMap.reverse();
-                        const first2CtypeData = restCtypeData.splice(0, 2);
+                        if (layoutMap.ctype.length === ctypes.length) {
+                            // separate the first two dimensions and the rest
+                            const first2CtypeLayoutMap = restCtypelayoutMap.splice(0, 2);
+                            const first2CtypeLayoutMapR = first2CtypeLayoutMap.reverse();
+                            const first2CtypeData = restCtypeData.splice(0, 2);
 
-                        // first two dimensions match
-                        for (let j = 0; j < 2; j++) {
-                            first2Dim.push(first2CtypeLayoutMap[j] === first2CtypeData[j]);
-                            first2DimR.push(first2CtypeLayoutMapR[j] === first2CtypeData[j]);
-                        }
-                        const isFirst2DimMatch = first2Dim.every((c: any) => c === true);
-                        const isFirst2DimMatchR = first2DimR.every((c: any) => c === true);
-
-                        if (isFirst2DimMatch || isFirst2DimMatchR) {
-                            // the rest of dimensions match
-                            for (let j = 0; j < restCtypeData.length; j++) {
-                                RestDim.push(restCtypelayoutMap.includes(restCtypeData[j]));
+                            // first two dimensions match
+                            for (let j = 0; j < 2; j++) {
+                                first2Dim.push(first2CtypeLayoutMap[j] === first2CtypeData[j]);
+                                first2DimR.push(first2CtypeLayoutMapR[j] === first2CtypeData[j]);
                             }
-                            const isRestDimMatch = RestDim.every((c: any) => c === true);
+                            const isFirst2DimMatch = first2Dim.every((c: any) => c === true);
+                            const isFirst2DimMatchR = first2DimR.every((c: any) => c === true);
 
-                            if (isRestDimMatch) {
-                                console.log("matched layout name", layoutMap.layoutName);
-                                // save matched layoutName and index
-                                this.dynamicLayoutName = layoutMap.layoutName;
-                                this.currentLayoutMapIndex = i;
-                                break;
+                            if (isFirst2DimMatch || isFirst2DimMatchR) {
+                                // the rest of dimensions match
+                                for (let j = 0; j < restCtypeData.length; j++) {
+                                    RestDim.push(restCtypelayoutMap.includes(restCtypeData[j]));
+                                }
+                                const isRestDimMatch = RestDim.every((c: any) => c === true);
+
+                                if (isRestDimMatch) {
+                                    console.log("matched layout name", layoutMap.layoutName);
+                                    // save matched layoutName and index
+                                    this.dynamicLayoutName = layoutMap.layoutName;
+                                    this.currentLayoutMapIndex = i;
+                                    break;
+                                }
                             }
                         }
                     }
+                }
+
+                // matching next data type if no matched layout
+                if (this.currentLayoutMapIndex !== null) {
+                    break;
                 }
             }
 

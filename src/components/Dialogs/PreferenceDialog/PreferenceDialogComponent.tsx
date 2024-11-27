@@ -13,7 +13,7 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, SuccessToast} from "components/Shared";
 import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {TelemetryMode} from "services";
-import {AppStore, BeamType, DialogId, FileBrowserStore, HelpType, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, BeamType, DialogId, HelpType, PreferenceKeys, PreferenceStore} from "stores";
 import {ContourGeneratorType, FrameScaling, RegionStore, RenderConfigStore} from "stores/Frame";
 import {copyToClipboard, SWATCH_COLORS} from "utilities";
 
@@ -558,7 +558,7 @@ export class PreferenceDialogComponent extends React.Component {
                     </Tooltip>
                 </FormGroup>
                 <FormGroup inline={true} label="Higher Dimension Priority">
-                    <Switch checked={FileBrowserStore.Instance.isHighDimPriority} onChange={() => FileBrowserStore.Instance.toggleHighDimPriority()} />
+                    <Switch checked={layoutStore.isHighDimPriority} onChange={() => layoutStore.toggleHighDimPriority()} />
                 </FormGroup>
 
                 <FormGroup inline={true} label="Dynamic Layout Map">
