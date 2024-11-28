@@ -23,6 +23,7 @@ import {
     ImageType,
     ImageViewItem,
     Point2D,
+    PresetLayout,
     RegionId,
     SpectralType,
     Theme,
@@ -43,6 +44,7 @@ import {
     CatalogUpdateMode,
     DialogId,
     DialogStore,
+    DynamicLayoutStore,
     FileBrowserStore,
     HelpStore,
     HipsQueryStore,
@@ -112,6 +114,7 @@ export class AppStore {
     readonly fileBrowserStore: FileBrowserStore;
     readonly helpStore: HelpStore;
     readonly layoutStore: LayoutStore;
+    readonly dynamicLayoutStore: DynamicLayoutStore;
     readonly snippetStore: SnippetStore;
     readonly logStore: LogStore;
     readonly overlayStore: OverlayStore;
@@ -1802,15 +1805,15 @@ export class AppStore {
                 await this.connectToServer();
                 await this.fileBrowserStore.restoreStartingDirectory();
                 await this.layoutStore.fetchLayouts();
-                await this.layoutStore.fetchLayoutMap();
+                await this.dynamicLayoutStore.fetchLayoutMap();
                 await this.snippetStore.fetchSnippets();
 
                 this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
-                // if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
-                //     AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
-                //     this.layoutStore.applyLayout(PresetLayout.DEFAULT);
-                //     this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
-                // }
+                if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
+                    AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
+                    this.layoutStore.applyLayout(PresetLayout.DEFAULT);
+                    this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
+                }
                 await this.loadDefaultFiles();
                 this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
                 this.updateASTColors();
@@ -1859,6 +1862,7 @@ export class AppStore {
         this.fileBrowserStore = FileBrowserStore.Instance;
         this.helpStore = HelpStore.Instance;
         this.layoutStore = LayoutStore.Instance;
+        this.dynamicLayoutStore = DynamicLayoutStore.Instance;
         this.snippetStore = SnippetStore.Instance;
         this.logStore = LogStore.Instance;
         this.preferenceStore = PreferenceStore.Instance;

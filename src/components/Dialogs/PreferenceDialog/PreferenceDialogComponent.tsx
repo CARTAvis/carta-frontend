@@ -156,21 +156,22 @@ export class PreferenceDialogComponent extends React.Component {
     };
 
     private handleDynamicLayout = () => {
-        const layoutStore = AppStore.Instance.layoutStore;
-        layoutStore.toogleDynamicLayout();
-        PreferenceStore.Instance.setPreference(PreferenceKeys.GLOBAL_IS_DYNAMIC_LAYOUT, layoutStore.isDynamicLayout);
+        const dynamicLayoutStore = AppStore.Instance.dynamicLayoutStore;
+        dynamicLayoutStore.toogleDynamicLayout();
+        PreferenceStore.Instance.setPreference(PreferenceKeys.GLOBAL_IS_DYNAMIC_LAYOUT, dynamicLayoutStore.isDynamicLayout);
     };
 
     private handleHighDimPriority = () => {
-        const layoutStore = AppStore.Instance.layoutStore;
-        layoutStore.toggleHighDimPriority();
-        PreferenceStore.Instance.setPreference(PreferenceKeys.GLOBAL_IS_HIGH_DIM_PRIORITY, layoutStore.isHighDimPriority);
+        const dynamicLayoutStore = AppStore.Instance.dynamicLayoutStore;
+        dynamicLayoutStore.toggleHighDimPriority();
+        PreferenceStore.Instance.setPreference(PreferenceKeys.GLOBAL_IS_HIGH_DIM_PRIORITY, dynamicLayoutStore.isHighDimPriority);
     };
 
     public render() {
         const appStore = AppStore.Instance;
         const preference = appStore.preferenceStore;
         const layoutStore = appStore.layoutStore;
+        const dynamicLayoutStore = appStore.dynamicLayoutStore;
 
         const globalPanel = (
             <React.Fragment>
@@ -560,18 +561,18 @@ export class PreferenceDialogComponent extends React.Component {
             <React.Fragment>
                 <FormGroup inline={true} label="Dynamic Layout">
                     <Tooltip content={"Apply data the type associated layout"}>
-                        <Switch checked={layoutStore.isDynamicLayout} onChange={() => this.handleDynamicLayout()} />
+                        <Switch checked={dynamicLayoutStore.isDynamicLayout} onChange={() => this.handleDynamicLayout()} />
                     </Tooltip>
                 </FormGroup>
                 <FormGroup inline={true} label="Higher Dimension Priority">
-                    <Switch checked={layoutStore.isHighDimPriority} onChange={() => this.handleHighDimPriority()} />
+                    <Switch checked={dynamicLayoutStore.isHighDimPriority} onChange={() => this.handleHighDimPriority()} />
                 </FormGroup>
 
                 <FormGroup inline={true} label="Dynamic Layout Map">
                     <FormGroup inline={true} className="layout-map" label="Data type:">
                         <Tooltip content="Associate the data to a exist layout.">
-                            <HTMLSelect value={layoutStore.dialogShowedCtype} onChange={ev => layoutStore.selectLayoutMap(ev.currentTarget.selectedIndex)}>
-                                {layoutStore.dialogShowedCtypeList.map(dataType => (
+                            <HTMLSelect value={dynamicLayoutStore.dialogShowedCtype} onChange={ev => dynamicLayoutStore.selectLayoutMap(ev.currentTarget.selectedIndex)}>
+                                {dynamicLayoutStore.dialogShowedCtypeList.map(dataType => (
                                     <option key={dataType} value={dataType}>
                                         {`(${dataType})`}
                                     </option>
@@ -580,7 +581,7 @@ export class PreferenceDialogComponent extends React.Component {
                         </Tooltip>
                     </FormGroup>
                     <FormGroup inline={true} className="layout-map" label="Layout:">
-                        <HTMLSelect value={layoutStore.dialogShowedLayoutName} onChange={ev => layoutStore.saveLayoutMap(ev.currentTarget.value, layoutStore.selectedLayoutMapIndex)}>
+                        <HTMLSelect value={dynamicLayoutStore.dialogShowedLayoutName} onChange={ev => dynamicLayoutStore.saveLayoutMap(ev.currentTarget.value, dynamicLayoutStore.selectedLayoutMapIndex)}>
                             {layoutStore.orderedLayoutNames.map(layout => (
                                 <option key={layout} value={layout}>
                                     {layout}

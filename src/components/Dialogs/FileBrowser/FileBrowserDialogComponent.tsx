@@ -10,7 +10,7 @@ import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {AppToaster, ErrorToast, SimpleTableComponentProps} from "components/Shared";
 import {ImageType, PresetLayout} from "models";
-import {AlertStore, AppStore, BrowserMode, CatalogProfileStore, DialogId, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, LayoutStore, PreferenceKeys, PreferenceStore} from "stores";
+import {AlertStore, AppStore, BrowserMode, CatalogProfileStore, DialogId, DynamicLayoutStore, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, LayoutStore, PreferenceKeys, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
 import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
@@ -141,6 +141,7 @@ export class FileBrowserDialogComponent extends React.Component {
         let frame: FrameStore;
 
         const layoutStore = LayoutStore.Instance;
+        const dynamicLayoutStore = DynamicLayoutStore.Instance;
         const preferenceStore = PreferenceStore.Instance;
 
         // Ignore load
@@ -155,9 +156,9 @@ export class FileBrowserDialogComponent extends React.Component {
         if (fileBrowserStore.browserMode === BrowserMode.File) {
             const frames = appStore.frames;
             if (!(forceAppend || fileBrowserStore.appendingFrame) || !frames.length) {
-                if (layoutStore.isDynamicLayout && layoutStore.currentLayoutMapIndex !== null && layoutStore.layoutExists(layoutStore.dynamicLayoutName)) {
+                if (dynamicLayoutStore.isDynamicLayout && dynamicLayoutStore.currentLayoutMapIndex !== null && layoutStore.layoutExists(dynamicLayoutStore.dynamicLayoutName)) {
                     // should show some warning if the dynamic layout is not applied
-                    layoutStore.applyLayout(layoutStore.dynamicLayoutName);
+                    layoutStore.applyLayout(dynamicLayoutStore.dynamicLayoutName);
                 } else {
                     if (!layoutStore.applyLayout(preferenceStore.layout)) {
                         AlertStore.Instance.showAlert(`Applying preference layout "${preferenceStore.layout}" failed! Resetting preference layout to default.`);

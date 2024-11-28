@@ -291,6 +291,7 @@ export class RootMenuComponent extends React.Component {
 
         const presetLayouts: string[] = PresetLayout.PRESETS;
         const layoutStore = appStore.layoutStore;
+        const dynamicLayouts = appStore.dynamicLayoutStore;
         const userLayouts: string[] = layoutStore.userLayoutNames;
 
         const viewMenu = (
@@ -339,9 +340,9 @@ export class RootMenuComponent extends React.Component {
                     </MenuItem>
                     <MenuItem
                         text="Dynamic Layout"
-                        disabled={layoutStore.currentLayoutMapCtype.length === 0}
+                        disabled={dynamicLayouts.currentLayoutMapCtype.length === 0}
                         onClick={() => {
-                            layoutStore.selectLayoutMap(layoutStore.currentLayoutMapIndex);
+                            dynamicLayouts.selectLayoutMap(dynamicLayouts.currentLayoutMapIndex);
                             appStore.layoutStore.showLayoutDialog(LayoutDialogMode.DynamicLayout);
                         }}
                     />
