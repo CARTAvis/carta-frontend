@@ -4,7 +4,7 @@ import {action, autorun, computed, flow, makeObservable, observable} from "mobx"
 
 import {FileInfoType} from "components";
 import {AppToaster, ErrorToast} from "components/Shared";
-import {Freq, FrequencyUnit, ImageType, IsSpatialCtype, IsSpectralCtype, LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
+import {determineCtypeAbbr, Freq, FrequencyUnit, ImageType, LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
 import {BackendService} from "services";
 import {AppStore, DialogId, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
 import {RegionStore} from "stores/Frame";
@@ -615,7 +615,7 @@ export class FileBrowserStore {
 
                 (fileInfo.headerEntries as any[]).forEach(header => {
                     if (header.name?.substring(0, 5) === "CTYPE") {
-                        const value: string = IsSpatialCtype(`${header.value}`) ? "SPATIAL" : IsSpectralCtype(`${header.value}`) ? "SPECTRAL" : `${header.value}`;
+                        const value: string = determineCtypeAbbr(`${header.value}`);
                         ctypes.push(value);
                     }
 

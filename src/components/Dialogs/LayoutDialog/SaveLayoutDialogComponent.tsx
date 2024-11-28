@@ -126,9 +126,9 @@ export class SaveLayoutDialogComponent extends React.Component {
                         <FormGroup inline={true} label="Data type:">
                             <Tooltip content="Associate the data type to a exist layout.">
                                 <HTMLSelect value={layoutStore.dialogShowedCtype} onChange={ev => layoutStore.selectLayoutMap(ev.currentTarget.selectedIndex)}>
-                                    {layoutStore.dialogShowedCtypeList.map(layout => (
-                                        <option key={layout} value={layout}>
-                                            {`${layout}`}
+                                    {layoutStore.dialogShowedCtypeList.map(dataType => (
+                                        <option key={dataType} value={dataType}>
+                                            {`(${dataType})`}
                                         </option>
                                     ))}
                                 </HTMLSelect>
