@@ -1,6 +1,6 @@
 import * as React from "react";
 import {ColorResult} from "react-color";
-import {AnchorButton, Button, Callout, Checkbox, Classes, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Callout, Checkbox, Classes, DialogProps, FormGroup, HTMLSelect, HTMLTable, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -195,7 +195,7 @@ export class PreferenceDialogComponent extends React.Component {
                         <option value={FileFilterMode.All}>All files</option>
                     </HTMLSelect>
                 </FormGroup>
-                <FormGroup inline={true} label="Initial layout">
+                {/* <FormGroup inline={true} label="Initial layout">
                     <HTMLSelect value={preference.layout} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_LAYOUT, ev.currentTarget.value)}>
                         {layoutStore.orderedLayoutNames.map(layout => (
                             <option key={layout} value={layout}>
@@ -203,7 +203,7 @@ export class PreferenceDialogComponent extends React.Component {
                             </option>
                         ))}
                     </HTMLSelect>
-                </FormGroup>
+                </FormGroup> */}
                 <FormGroup inline={true} label="Initial cursor position">
                     <RadioGroup selectedValue={preference.cursorPosition} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_CURSOR_POSITION, ev.currentTarget.value)} inline={true}>
                         <Radio label="Fixed" value={CursorPosition.FIXED} />
@@ -557,38 +557,67 @@ export class PreferenceDialogComponent extends React.Component {
             );
         });
 
+        let layoutMapRow = [];
+        if (dynamicLayoutStore.isExistLayoutMap) {
+            dynamicLayoutStore.existLayoutMap.layoutMap.forEach((layoutMap, index) => {
+                layoutMapRow.push(
+                    <tr key={index}>
+                        <td>
+                            (
+                            {layoutMap.ctype.map((ctype, index) => {
+                                const showedCtype = index !== 0 ? "," + ctype : ctype;
+                                return (
+                                    <Tooltip position="bottom" content={ctype}>
+                                        <span>{showedCtype}</span>
+                                    </Tooltip>
+                                );
+                            })}
+                            )
+                        </td>
+                        <td>
+                            <HTMLSelect value={layoutMap.layoutName} disabled={!dynamicLayoutStore.isExistLayoutMap} onChange={ev => dynamicLayoutStore.saveLayoutMap(ev.currentTarget.value, index)}>
+                                {dynamicLayoutStore.dialogShowedLayoutNameList.map(layout => (
+                                    <option key={layout} value={layout}>
+                                        {layout}
+                                    </option>
+                                ))}
+                            </HTMLSelect>
+                        </td>
+                    </tr>
+                );
+            });
+        }
+
         const layoutPanel = (
             <React.Fragment>
-                <FormGroup inline={true} label="Dynamic Layout">
+                <FormGroup inline={true} label="Initial layout">
+                    <HTMLSelect value={preference.layout} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_LAYOUT, ev.currentTarget.value)}>
+                        {layoutStore.orderedLayoutNames.map(layout => (
+                            <option key={layout} value={layout}>
+                                {layout}
+                            </option>
+                        ))}
+                    </HTMLSelect>
+                </FormGroup>
+                <FormGroup inline={true} label="Dynamic layout">
                     <Tooltip content={"Apply data the type associated layout"}>
                         <Switch checked={dynamicLayoutStore.isDynamicLayout} onChange={() => this.handleDynamicLayout()} />
                     </Tooltip>
                 </FormGroup>
-                <FormGroup inline={true} label="Higher Dimension Priority">
+                <FormGroup inline={true} label="Higher dimension priority">
                     <Switch checked={dynamicLayoutStore.isHighDimPriority} onChange={() => this.handleHighDimPriority()} />
                 </FormGroup>
 
-                <FormGroup inline={true} label="Dynamic Layout Map">
-                    <FormGroup inline={true} className="layout-map" label="Data type:">
-                        <Tooltip content="Associate the data to a exist layout.">
-                            <HTMLSelect value={dynamicLayoutStore.dialogShowedCtype} onChange={ev => dynamicLayoutStore.selectLayoutMap(ev.currentTarget.selectedIndex)}>
-                                {dynamicLayoutStore.dialogShowedCtypeList.map(dataType => (
-                                    <option key={dataType} value={dataType}>
-                                        {`(${dataType})`}
-                                    </option>
-                                ))}
-                            </HTMLSelect>
-                        </Tooltip>
-                    </FormGroup>
-                    <FormGroup inline={true} className="layout-map" label="Layout:">
-                        <HTMLSelect value={dynamicLayoutStore.dialogShowedLayoutName} onChange={ev => dynamicLayoutStore.saveLayoutMap(ev.currentTarget.value, dynamicLayoutStore.selectedLayoutMapIndex)}>
-                            {layoutStore.orderedLayoutNames.map(layout => (
-                                <option key={layout} value={layout}>
-                                    {layout}
-                                </option>
-                            ))}
-                        </HTMLSelect>
-                    </FormGroup>
+                <FormGroup inline={true} label="Dynamic layout map">
+                    <HTMLTable data-testid="dynamic-layout-table">
+                        <thead>
+                            <tr>
+                                <th>Data type</th>
+                                <th>Layout</th>
+                            </tr>
+                        </thead>
+                        <tbody>{layoutMapRow}</tbody>
+                    </HTMLTable>
                 </FormGroup>
             </React.Fragment>
         );

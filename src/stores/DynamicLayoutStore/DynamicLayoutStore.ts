@@ -4,6 +4,7 @@ import {AppToaster, SuccessToast} from "components/Shared";
 import {ApiService} from "services";
 import {AlertStore, AppStore, DialogId, LAYOUT_MAP_NAME, LayoutStore, PreferenceStore} from "stores";
 
+const INITIAL_LAYOUT_ITEM = "Initial Layout";
 export class DynamicLayoutStore {
     private static staticInstance: DynamicLayoutStore;
 
@@ -20,12 +21,20 @@ export class DynamicLayoutStore {
     @observable dynamicLayoutName: string | null;
     @observable currentLayoutMapCtype: any; // type needs to be changed
     @observable currentLayoutMapIndex: number | null;
-    @observable selectedLayoutMapIndex: number | null;
+    @observable selectedLayoutMapIndex: number | null; // for the dropdown selection
+
+    @computed get isExistLayoutMap(): boolean {
+        if (this.existLayoutMap && this.existLayoutMap.layoutMap) {
+            return this.existLayoutMap.layoutMap.length > 0;
+        } else {
+            return false;
+        }
+    }
 
     @computed get dialogShowedCtype(): string {
         const index = this.selectedLayoutMapIndex;
         let output = "";
-        if (this.existLayoutMap && this.existLayoutMap.layoutMap) {
+        if (this.isExistLayoutMap) {
             output = index === null ? (this.currentLayoutMapCtype.length > 0 ? this.currentLayoutMapCtype : this.existLayoutMap.layoutMap[0].ctype) : this.existLayoutMap.layoutMap[index].ctype;
         }
         return output;
@@ -34,7 +43,7 @@ export class DynamicLayoutStore {
     @computed get dialogShowedLayoutName(): string {
         const index = this.selectedLayoutMapIndex;
         let output = "";
-        if (this.existLayoutMap && this.existLayoutMap.layoutMap) {
+        if (this.isExistLayoutMap) {
             output = index === null ? (this.currentLayoutMapCtype.length > 0 ? LayoutStore.Instance.currentLayoutName : this.existLayoutMap.layoutMap[0].layoutName) : this.existLayoutMap.layoutMap[index].layoutName;
         }
         return output;
@@ -42,13 +51,17 @@ export class DynamicLayoutStore {
 
     @computed get dialogShowedCtypeList(): string[] {
         let output: string[] = [this.currentLayoutMapCtype ?? []];
-        if (this.existLayoutMap && this.existLayoutMap.layoutMap) {
+        if (this.isExistLayoutMap) {
             output =
                 this.currentLayoutMapIndex === null && this.currentLayoutMapCtype.length > 0
                     ? [this.currentLayoutMapCtype, ...this.existLayoutMap.layoutMap.map(layout => layout.ctype)]
                     : this.existLayoutMap.layoutMap.map(layout => layout.ctype);
         }
         return output;
+    }
+
+    @computed get dialogShowedLayoutNameList(): string[] {
+        return [INITIAL_LAYOUT_ITEM, ...LayoutStore.Instance.orderedLayoutNames];
     }
 
     @computed get priorityFileIndexes() {
@@ -72,7 +85,7 @@ export class DynamicLayoutStore {
         autorun(() => {
             this.isDynamicLayout = PreferenceStore.Instance.isDynamicLayout;
             this.isHighDimPriority = PreferenceStore.Instance.isHighDimPriority;
-            this.selectedLayoutMapIndex = this.currentLayoutMapIndex;
+            this.selectedLayoutMapIndex = this.currentLayoutMapIndex ? this.currentLayoutMapIndex : this.isExistLayoutMap ? 0 : null;
         });
     }
 
@@ -167,11 +180,16 @@ export class DynamicLayoutStore {
 
     @flow.bound *saveLayoutMap(layoutName: string, layoutMapIndex: number) {
         const appStore = AppStore.Instance;
-        const layoutStore = LayoutStore.Instance;
+        const layoutStore = appStore.layoutStore;
         const layoutMapCtype = layoutMapIndex !== null ? this.existLayoutMap.layoutMap[layoutMapIndex].ctype : this.currentLayoutMapCtype;
 
         if (!layoutName || layoutMapCtype.length === 0) {
             appStore.alertStore.showAlert("Save layout map failed! Empty layouts or name.");
+            return;
+        }
+
+        if (layoutName === INITIAL_LAYOUT_ITEM) {
+            yield this.deleteLayoutMap(this.existLayoutMap.layoutMap[layoutMapIndex].layoutName);
             return;
         }
 
