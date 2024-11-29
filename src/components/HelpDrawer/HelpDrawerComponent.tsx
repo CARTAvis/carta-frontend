@@ -9,7 +9,7 @@ import {HelpType} from "stores/HelpStore/HelpStore";
 import "./HelpDrawerComponent.scss";
 
 const url_version = "5.0";
-const url_prefix = `https://carta.readthedocs.io/en/${url_version}/`;
+const url_prefix = `https://carta.readthedocs.io/en/${url_version}`;
 
 // note for v5-beta release: URLs are not final. The readthedocs user manual needs a major reorganization of topics to support online in-app help
 // dialog URLs
