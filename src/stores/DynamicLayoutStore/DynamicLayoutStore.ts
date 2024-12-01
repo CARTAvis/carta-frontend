@@ -24,11 +24,7 @@ export class DynamicLayoutStore {
     @observable selectedLayoutMapIndex: number | null; // for the dropdown selection
 
     @computed get isExistLayoutMap(): boolean {
-        if (this.existLayoutMap && this.existLayoutMap.layoutMap) {
-            return this.existLayoutMap.layoutMap.length > 0;
-        } else {
-            return false;
-        }
+        return this.existLayoutMap && this.existLayoutMap.layoutMap ? this.existLayoutMap.layoutMap.length > 0 : false;
     }
 
     @computed get dialogShowedCtype(): string {

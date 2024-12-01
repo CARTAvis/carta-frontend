@@ -1,11 +1,11 @@
 import * as React from "react";
-import {AnchorButton, Classes, DialogProps, FormGroup, HTMLSelect, InputGroup, Intent, Position, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Classes, DialogProps, FormGroup, HTMLSelect, HTMLTable, InputGroup, Intent, Position, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {PresetLayout} from "models";
+import {determineCtypeName, PresetLayout} from "models";
 import {AppStore, DialogId, HelpType, LayoutDialogMode} from "stores";
 
 import "./SaveLayoutDialogComponent.scss";
@@ -29,7 +29,7 @@ export class SaveLayoutDialogComponent extends React.Component {
     private titleMap = new Map<LayoutDialogMode, string>([
         [LayoutDialogMode.Save, "Save Layout"],
         [LayoutDialogMode.Rename, "Rename Layout"],
-        [LayoutDialogMode.DynamicLayout, "Dynamic Layout"]
+        [LayoutDialogMode.DynamicLayout, "Dynamic Layout Map"]
     ]);
 
     private handleInput = (ev: React.FormEvent<HTMLInputElement>) => {
@@ -97,7 +97,7 @@ export class SaveLayoutDialogComponent extends React.Component {
 
     private renderLayoutDialogBody = (mode: LayoutDialogMode) => {
         const layoutStore = AppStore.Instance.layoutStore;
-        const dynamicLayoutStore = AppStore.Instance.dynamicLayoutStore;
+        // const dynamicLayoutStore = AppStore.Instance.dynamicLayoutStore;
 
         switch (mode) {
             case LayoutDialogMode.Save:
@@ -120,23 +120,23 @@ export class SaveLayoutDialogComponent extends React.Component {
                         </FormGroup>
                     </div>
                 );
-            case LayoutDialogMode.DynamicLayout:
-                const className = classNames(Classes.DIALOG_BODY, "layout-map");
-                return (
-                    <div className={className}>
-                        <FormGroup inline={true} label="Data type:">
-                            <Tooltip content="Associate the data type to a exist layout.">
-                                <HTMLSelect value={dynamicLayoutStore.dialogShowedCtype} disabled={!dynamicLayoutStore.isExistLayoutMap} onChange={ev => dynamicLayoutStore.selectLayoutMap(ev.currentTarget.selectedIndex)}>
-                                    {dynamicLayoutStore.dialogShowedCtypeList.map(dataType => (
-                                        <option key={dataType} value={dataType}>
-                                            {`(${dataType})`}
-                                        </option>
-                                    ))}
-                                </HTMLSelect>
-                            </Tooltip>
-                        </FormGroup>
-                    </div>
-                );
+            // case LayoutDialogMode.DynamicLayout:
+            //     const className = classNames(Classes.DIALOG_BODY, "layout-map");
+            //     return (
+            //         <div className={className}>
+            //             <FormGroup inline={true} label="Data type:">
+            //                 <Tooltip content="Associate the data type to a exist layout.">
+            //                     <HTMLSelect value={dynamicLayoutStore.dialogShowedCtype} disabled={!dynamicLayoutStore.isExistLayoutMap} onChange={ev => dynamicLayoutStore.selectLayoutMap(ev.currentTarget.selectedIndex)}>
+            //                         {dynamicLayoutStore.dialogShowedCtypeList.map(dataType => (
+            //                             <option key={dataType} value={dataType}>
+            //                                 {`(${dataType})`}
+            //                             </option>
+            //                         ))}
+            //                     </HTMLSelect>
+            //                 </Tooltip>
+            //             </FormGroup>
+            //         </div>
+            //     );
             default:
                 return "";
         }
@@ -170,26 +170,26 @@ export class SaveLayoutDialogComponent extends React.Component {
                         </div>
                     </div>
                 );
-            case LayoutDialogMode.DynamicLayout:
-                return (
-                    <div className={Classes.DIALOG_FOOTER}>
-                        <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                            <FormGroup inline={true} label="Layout:">
-                                <HTMLSelect
-                                    value={dynamicLayoutStore.dialogShowedLayoutName}
-                                    disabled={!dynamicLayoutStore.isExistLayoutMap}
-                                    onChange={ev => dynamicLayoutStore.saveLayoutMap(ev.currentTarget.value, dynamicLayoutStore.selectedLayoutMapIndex)}
-                                >
-                                    {dynamicLayoutStore.dialogShowedLayoutNameList.map(layout => (
-                                        <option key={layout} value={layout}>
-                                            {layout}
-                                        </option>
-                                    ))}
-                                </HTMLSelect>
-                            </FormGroup>
-                        </div>
-                    </div>
-                );
+            // case LayoutDialogMode.DynamicLayout:
+            //     return (
+            //         <div className={Classes.DIALOG_FOOTER}>
+            //             <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+            //                 <FormGroup inline={true} label="Layout:">
+            //                     <HTMLSelect
+            //                         value={dynamicLayoutStore.dialogShowedLayoutName}
+            //                         disabled={!dynamicLayoutStore.isExistLayoutMap}
+            //                         onChange={ev => dynamicLayoutStore.saveLayoutMap(ev.currentTarget.value, dynamicLayoutStore.selectedLayoutMapIndex)}
+            //                     >
+            //                         {dynamicLayoutStore.dialogShowedLayoutNameList.map(layout => (
+            //                             <option key={layout} value={layout}>
+            //                                 {layout}
+            //                             </option>
+            //                         ))}
+            //                     </HTMLSelect>
+            //                 </FormGroup>
+            //             </div>
+            //         </div>
+            //     );
             default:
                 return "";
         }
@@ -197,7 +197,7 @@ export class SaveLayoutDialogComponent extends React.Component {
 
     render() {
         const appStore = AppStore.Instance;
-        const className = classNames("preference-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("layout-dialog", {[Classes.DARK]: appStore.darkTheme});
 
         const dialogProps: DialogProps = {
             icon: "layout-grid",
@@ -209,23 +209,89 @@ export class SaveLayoutDialogComponent extends React.Component {
             title: this.titleMap.get(appStore.layoutStore.layoutDialogMode)
         };
 
-        const dialogBody = this.renderLayoutDialogBody(appStore.layoutStore.layoutDialogMode);
-        const dialogFooter = this.renderLayoutDialogFooter(appStore.layoutStore.layoutDialogMode);
+        if (appStore.layoutStore.layoutDialogMode === LayoutDialogMode.DynamicLayout) {
+            return (
+                <DraggableDialogComponent
+                    dialogProps={dialogProps}
+                    helpType={HelpType.SAVE_LAYOUT}
+                    defaultWidth={SaveLayoutDialogComponent.DefaultWidth}
+                    defaultHeight={SaveLayoutDialogComponent.DefaultHeight}
+                    minWidth={SaveLayoutDialogComponent.MinWidth}
+                    minHeight={SaveLayoutDialogComponent.MinHeight}
+                    enableResizing={true}
+                    dialogId={DialogId.Layout}
+                >
+                    {LayoutMapComponent()}
+                </DraggableDialogComponent>
+            );
+        } else {
+            const dialogBody = this.renderLayoutDialogBody(appStore.layoutStore.layoutDialogMode);
+            const dialogFooter = this.renderLayoutDialogFooter(appStore.layoutStore.layoutDialogMode);
 
-        return (
-            <DraggableDialogComponent
-                dialogProps={dialogProps}
-                helpType={HelpType.SAVE_LAYOUT}
-                defaultWidth={SaveLayoutDialogComponent.DefaultWidth}
-                defaultHeight={SaveLayoutDialogComponent.DefaultHeight}
-                minWidth={SaveLayoutDialogComponent.MinWidth}
-                minHeight={SaveLayoutDialogComponent.MinHeight}
-                enableResizing={true}
-                dialogId={DialogId.Layout}
-            >
-                {dialogBody}
-                {dialogFooter}
-            </DraggableDialogComponent>
-        );
+            return (
+                <DraggableDialogComponent
+                    dialogProps={dialogProps}
+                    helpType={HelpType.SAVE_LAYOUT}
+                    defaultWidth={SaveLayoutDialogComponent.DefaultWidth}
+                    defaultHeight={SaveLayoutDialogComponent.DefaultHeight}
+                    minWidth={SaveLayoutDialogComponent.MinWidth}
+                    minHeight={SaveLayoutDialogComponent.MinHeight}
+                    enableResizing={true}
+                    dialogId={DialogId.Layout}
+                >
+                    {dialogBody}
+                    {dialogFooter}
+                </DraggableDialogComponent>
+            );
+        }
     }
 }
+
+export const LayoutMapComponent = () => {
+    const dynamicLayoutStore = AppStore.Instance.dynamicLayoutStore;
+
+    let layoutMapRow = [];
+    if (dynamicLayoutStore.isExistLayoutMap) {
+        dynamicLayoutStore.existLayoutMap.layoutMap.forEach((layoutMap, index) => {
+            layoutMapRow.push(
+                <tr key={index}>
+                    <td>
+                        <FormGroup>
+                            (
+                            {layoutMap.ctype.map((ctype, index) => {
+                                const showedCtype = index !== 0 ? "," + ctype : ctype;
+                                return (
+                                    <Tooltip position="bottom" content={determineCtypeName(ctype)}>
+                                        <span>{showedCtype}</span>
+                                    </Tooltip>
+                                );
+                            })}
+                            )
+                        </FormGroup>
+                    </td>
+                    <td>
+                        <HTMLSelect value={layoutMap.layoutName} disabled={!dynamicLayoutStore.isExistLayoutMap} onChange={ev => dynamicLayoutStore.saveLayoutMap(ev.currentTarget.value, index)}>
+                            {dynamicLayoutStore.dialogShowedLayoutNameList.map(layout => (
+                                <option key={layout} value={layout}>
+                                    {layout}
+                                </option>
+                            ))}
+                        </HTMLSelect>
+                    </td>
+                </tr>
+            );
+        });
+    }
+
+    return (
+        <HTMLTable data-testid="dynamic-layout-table">
+            <thead>
+                <tr>
+                    <th>Data type</th>
+                    <th>Layout</th>
+                </tr>
+            </thead>
+            <tbody>{layoutMapRow}</tbody>
+        </HTMLTable>
+    );
+};

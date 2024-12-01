@@ -1,6 +1,6 @@
 import * as React from "react";
 import {ColorResult} from "react-color";
-import {AnchorButton, Button, Callout, Checkbox, Classes, DialogProps, FormGroup, HTMLSelect, HTMLTable, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Callout, Checkbox, Classes, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -9,7 +9,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
-import {DraggableDialogComponent} from "components/Dialogs";
+import {DraggableDialogComponent, LayoutMapComponent} from "components/Dialogs";
 import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, SuccessToast} from "components/Shared";
 import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {TelemetryMode} from "services";
@@ -557,37 +557,6 @@ export class PreferenceDialogComponent extends React.Component {
             );
         });
 
-        let layoutMapRow = [];
-        if (dynamicLayoutStore.isExistLayoutMap) {
-            dynamicLayoutStore.existLayoutMap.layoutMap.forEach((layoutMap, index) => {
-                layoutMapRow.push(
-                    <tr key={index}>
-                        <td>
-                            (
-                            {layoutMap.ctype.map((ctype, index) => {
-                                const showedCtype = index !== 0 ? "," + ctype : ctype;
-                                return (
-                                    <Tooltip position="bottom" content={ctype}>
-                                        <span>{showedCtype}</span>
-                                    </Tooltip>
-                                );
-                            })}
-                            )
-                        </td>
-                        <td>
-                            <HTMLSelect value={layoutMap.layoutName} disabled={!dynamicLayoutStore.isExistLayoutMap} onChange={ev => dynamicLayoutStore.saveLayoutMap(ev.currentTarget.value, index)}>
-                                {dynamicLayoutStore.dialogShowedLayoutNameList.map(layout => (
-                                    <option key={layout} value={layout}>
-                                        {layout}
-                                    </option>
-                                ))}
-                            </HTMLSelect>
-                        </td>
-                    </tr>
-                );
-            });
-        }
-
         const layoutPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Initial layout">
@@ -607,17 +576,8 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Higher dimension priority">
                     <Switch checked={dynamicLayoutStore.isHighDimPriority} onChange={() => this.handleHighDimPriority()} />
                 </FormGroup>
-
-                <FormGroup inline={true} label="Dynamic layout map">
-                    <HTMLTable data-testid="dynamic-layout-table">
-                        <thead>
-                            <tr>
-                                <th>Data type</th>
-                                <th>Layout</th>
-                            </tr>
-                        </thead>
-                        <tbody>{layoutMapRow}</tbody>
-                    </HTMLTable>
+                <FormGroup inline={true} label="Dynamic layout map" className="layoutMap-dialog">
+                    {LayoutMapComponent()}
                 </FormGroup>
             </React.Fragment>
         );

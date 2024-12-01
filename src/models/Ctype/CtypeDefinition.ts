@@ -26,3 +26,23 @@ export const determineCtypeAbbr = (ctype: string): string => {
 
     return ctype;
 };
+
+export const determineCtypeName = (abbr: string): string => {
+    if (abbr === "XY") {
+        return "Spatial";
+    }
+
+    if (abbr === "Z") {
+        return "Spectral";
+    }
+
+    if (abbr === "T") {
+        return "Time";
+    }
+
+    if (abbr === "P") {
+        return "Stokes";
+    }
+
+    return abbr;
+};
