@@ -62,7 +62,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} {
         const frame = AppStore.Instance.activeFrame;
         if (frame && frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
-            const histogram = AppStore.Instance.preferenceStore.channelMapEnabled && !frame.isPreview ? frame.renderConfig.channelMapHistogram : frame.renderConfig.histogram;
+            const histogram = AppStore.Instance.channelMapStore.channelMapEnabled && !frame.isPreview ? frame.renderConfig.channelMapHistogram : frame.renderConfig.histogram;
             let minIndex = 0;
             let maxIndex = histogram.bins.length - 1;
 
@@ -421,7 +421,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     key={rank}
                     onClick={() => this.handlePercentileRankClick(rank)}
                     active={frame.renderConfig.selectedPercentileVal === rank}
-                    disabled={appStore.preferenceStore.channelMapEnabled}
+                    disabled={appStore.channelMapStore.channelMapEnabled}
                     data-testid={"clip-button-" + rank}
                 >
                     {`${rank}%`}

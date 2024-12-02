@@ -123,16 +123,16 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
 
     public render() {
         const appStore = AppStore.Instance;
-        const frame = appStore.preferenceStore.channelMapEnabled && appStore.channelMapStore.masterFrame ? appStore.channelMapStore.masterFrame : appStore.activeFrame;
+        const frame = appStore.channelMapStore.channelMapEnabled && appStore.channelMapStore.masterFrame ? appStore.channelMapStore.masterFrame : appStore.activeFrame;
         const overlayStore = appStore.overlayStore;
         const global = overlayStore.global;
-        const title = appStore.preferenceStore.channelMapEnabled ? appStore.channelMapStore.overlayStores.outer.title : frame.overlayStore.title;
+        const title = appStore.channelMapStore.channelMapEnabled ? appStore.channelMapStore.overlayStores.outer.title : frame.overlayStore.title;
         const grid = overlayStore.grid;
         const border = frame.overlayStore.border;
         const ticks = frame.overlayStore.ticks;
         const axes = overlayStore.axes;
         const numbers = frame.overlayStore.numbers;
-        const labels = appStore.preferenceStore.channelMapEnabled ? appStore.channelMapStore.overlayStores.outer.labels : frame.overlayStore.labels;
+        const labels = appStore.channelMapStore.channelMapEnabled ? appStore.channelMapStore.overlayStores.outer.labels : frame.overlayStore.labels;
         const colorbar = frame.overlayStore.colorbar;
         const beam = overlayStore.beam;
         const beamSettings = beam.settingsForDisplay;

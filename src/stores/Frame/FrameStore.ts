@@ -265,7 +265,7 @@ export class FrameStore {
     @computed get overlayStore(): OverlayStore {
         if (this.isPreview) {
             return this.previewOverlayStore;
-        } else if (AppStore.Instance.preferenceStore.channelMapEnabled && this.channelMapOverlayStore) {
+        } else if (AppStore.Instance.channelMapStore.channelMapEnabled && this.channelMapOverlayStore) {
             return this.channelMapOverlayStore;
         } else {
             return this._overlayStore;
@@ -442,7 +442,7 @@ export class FrameStore {
         const overlayStore = this.isPreview ? this.previewOverlayStore : this.overlayStore;
         return AppStore.Instance.channelMapStore.overlayStores &&
             AppStore.Instance.channelMapStore.overlayStores.corner &&
-            AppStore.Instance.preferenceStore.channelMapEnabled &&
+            AppStore.Instance.channelMapStore.channelMapEnabled &&
             AppStore.Instance.channelMapStore.overlayStores.corner?.renderWidth &&
             !this.isPreview
             ? AppStore.Instance.channelMapStore.overlayStores.corner?.renderWidth
@@ -455,7 +455,7 @@ export class FrameStore {
         return AppStore.Instance.channelMapStore.overlayStores &&
             AppStore.Instance.channelMapStore.overlayStores.corner &&
             AppStore.Instance.channelMapStore.overlayStores.corner &&
-            AppStore.Instance.preferenceStore.channelMapEnabled &&
+            AppStore.Instance.channelMapStore.channelMapEnabled &&
             AppStore.Instance.channelMapStore.overlayStores.corner?.renderHeight &&
             !this.isPreview
             ? AppStore.Instance.channelMapStore.overlayStores.corner?.renderHeight
@@ -2829,7 +2829,7 @@ export class FrameStore {
         this.contourConfig.setEnabled(true);
 
         const channelRange =
-            preferenceStore.channelMapEnabled &&
+            channelMapStore.channelMapEnabled &&
             (channelMapStore.singleChannelContour ? {min: channelMapStore.singleContourChannel, max: channelMapStore.singleContourChannel} : {min: channelMapStore.startChannel, max: channelMapStore.channelRange});
 
         // TODO: Allow a different reference frame

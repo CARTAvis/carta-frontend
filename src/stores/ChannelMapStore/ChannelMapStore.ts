@@ -1,6 +1,7 @@
 import {throttle} from "lodash";
 import {action, computed, makeObservable, observable} from "mobx";
 
+import {ImageItem, ImageType} from "models";
 import {TileService} from "services";
 import {AppStore, FrameStore, OverlayStore} from "stores";
 
@@ -38,6 +39,14 @@ export class ChannelMapStore {
     @observable singleChannelContour: boolean = true;
     @observable singleContourChannel: number = 0;
     @observable overlayStores: {corner: OverlayStore; outer: OverlayStore};
+    @observable channelMapEnabled: boolean = false;
+
+    @observable showChannelString: boolean = false;
+    @observable showSpectralString: boolean = false;
+    @observable showVelocityString: boolean = false;
+    @observable showChannelStringLabel: boolean = false;
+    @observable showSpectralStringLabel: boolean = false;
+    @observable showVelocityStringLabel: boolean = false;
 
     @action throttledRequestChannels = throttle((frame: FrameStore) => {
         const [tiles, midPointTileCoords] = frame.requiredTiles;
@@ -62,6 +71,10 @@ export class ChannelMapStore {
         const frames = appStore.frames.filter(frame => frame.frameInfo.fileId !== masterFrame.frameInfo.fileId);
         frames.forEach(frame => appStore.tileService.handleFileClosed(frame.frameInfo.fileId));
     }
+
+    @action setChannelMapEnabled = (enabled: boolean) => {
+        this.channelMapEnabled = enabled;
+    };
 
     @action setAuxiliaryFrame(frame: FrameStore) {
         this._auxiliaryFrame = frame;
@@ -133,6 +146,30 @@ export class ChannelMapStore {
         this.singleContourChannel = channel;
     };
 
+    @action setShowChannelString = (show: boolean) => {
+        this.showChannelString = show;
+    };
+
+    @action setShowSpectralString = (show: boolean) => {
+        this.showSpectralString = show;
+    };
+
+    @action setShowVelocityString = (show: boolean) => {
+        this.showVelocityString = show;
+    };
+
+    @action setShowChannelStringLabel = (show: boolean) => {
+        this.showChannelStringLabel = show;
+    };
+
+    @action setShowSpectralStringLabel = (show: boolean) => {
+        this.showSpectralStringLabel = show;
+    };
+
+    @action setShowVelocityStringLabel = (show: boolean) => {
+        this.showVelocityStringLabel = show;
+    };
+
     public overlayStore(imageRenderWidth?: number, imageRenderHeight?: number) {
         const overlay = AppStore.Instance.overlayStore;
         if (imageRenderWidth && imageRenderHeight) {
@@ -173,7 +210,7 @@ export class ChannelMapStore {
     @computed get channelArray(): number[] {
         const channelArray = [];
         for (let i = this.startChannel; i < this.startChannel + this.numChannels; i += 1) {
-            if (i > this.masterFrame.frameInfo.fileInfoExtended.depth - 1) {
+            if (i > this.masterFrame?.frameInfo?.fileInfoExtended.depth - 1) {
                 break;
             }
             channelArray.push(i);
@@ -187,5 +224,12 @@ export class ChannelMapStore {
         } else {
             return this._auxiliaryFrame;
         }
+    }
+
+    @computed get masterImage(): ImageItem {
+        return {
+            type: ImageType.FRAME,
+            store: this.showAuxiliaryFrame && this.auxiliaryFrame ? this.auxiliaryFrame : this.masterFrame
+        };
     }
 }

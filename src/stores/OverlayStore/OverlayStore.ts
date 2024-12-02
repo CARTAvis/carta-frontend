@@ -1193,7 +1193,7 @@ export class OverlayStore {
     }
 
     @computed get titleGap() {
-        return this.defaultGap * 2 + (!this.isChannelMap && this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0);
+        return this.defaultGap * 2 + (this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0);
     }
 
     @computed get cumulativeLabelGap() {
@@ -1203,11 +1203,11 @@ export class OverlayStore {
     }
 
     @computed get numberWidth(): number {
-        return this.isChannelMap || this.showNumbers ? this.defaultGap + this.numbers.fontSize : 0;
+        return this.showNumbers ? this.defaultGap + this.numbers.fontSize : 0;
     }
 
     @computed get labelWidth(): number {
-        return this.isChannelMap || this.labels.show ? this.defaultGap + this.labels.fontSize : 0;
+        return this.labels.show ? this.defaultGap + this.labels.fontSize : 0;
     }
 
     @computed get colorbarHoverInfoHeight(): number {

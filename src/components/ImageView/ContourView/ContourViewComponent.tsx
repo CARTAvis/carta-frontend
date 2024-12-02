@@ -243,8 +243,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
                 // Update buffers
                 for (let i = 0; i < contourStore.chunkCount; i++) {
-                    contourStore.bindBuffer(i, channel || frame.requiredChannel);
-                    const numVertices = contourStore.numGeneratedVertices.get(channel || frame.requiredChannel)?.[i];
+                    contourStore.bindBuffer(i, channel ?? frame.requiredChannel);
+                    const numVertices = contourStore.numGeneratedVertices.get(channel ?? frame.requiredChannel)?.[i];
                     this.gl.vertexAttribPointer(this.contourWebGLService.vertexPositionAttribute, 3, GL2.FLOAT, false, 16, 0);
                     this.gl.vertexAttribPointer(this.contourWebGLService.vertexNormalAttribute, 2, GL2.SHORT, false, 16, 12);
                     this.gl.drawArrays(GL2.TRIANGLE_STRIP, 0, numVertices);

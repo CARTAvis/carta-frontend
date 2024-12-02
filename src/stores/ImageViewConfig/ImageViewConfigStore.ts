@@ -199,7 +199,7 @@ export class ImageViewConfigStore {
 
     /** The number of columns in the image view widget. */
     @computed get numImageColumns() {
-        if (PreferenceStore.Instance.channelMapEnabled) {
+        if (AppStore.Instance.channelMapStore.channelMapEnabled) {
             return 1;
         }
 
@@ -215,7 +215,7 @@ export class ImageViewConfigStore {
 
     /** The number of rows in the image view widget. */
     @computed get numImageRows() {
-        if (PreferenceStore.Instance.channelMapEnabled) {
+        if (AppStore.Instance.channelMapStore.channelMapEnabled) {
             return 1;
         }
 

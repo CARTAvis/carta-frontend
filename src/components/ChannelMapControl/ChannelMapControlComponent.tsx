@@ -1,6 +1,6 @@
 import * as React from "react";
 import ReactResizeDetector from "react-resize-detector";
-import {Button, ButtonGroup, FormGroup, HTMLSelect, NonIdealState, Position, Slider, Switch, Tooltip} from "@blueprintjs/core";
+import {Button, ButtonGroup, Checkbox, FormGroup, HTMLSelect, NonIdealState, Position, Slider, Switch, Tooltip} from "@blueprintjs/core";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
@@ -106,65 +106,66 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => channelMapSettings.setMasterFrame(AppStore.Instance.getFrame(parseInt(event.currentTarget.value)))}
                     />
                 </FormGroup>
-                <FormGroup className="channel-map-control-label" inline={true} label="Start Channel">
+                <FormGroup className="channel-map-control-label" inline={true} label="Start channel">
                     <SafeNumericInput placeholder="Start channel" value={channelMapSettings.startChannel} min={0} max={numChannels - 1} onValueChange={onChannelChanged} />
                 </FormGroup>
-                <FormGroup className="channel-map-control-label" inline={true} label="Number of Columns">
+                <FormGroup className="channel-map-control-label" inline={true} label="Number of columns">
                     <SafeNumericInput placeholder="Number of columns" min={1} max={10} value={channelMapSettings.numColumns} stepSize={1} onValueChange={(value: number) => channelMapSettings.setNumColumns(value)} />
                 </FormGroup>
-                <FormGroup className="channel-map-control-label" inline={true} label="Number of Rows">
+                <FormGroup className="channel-map-control-label" inline={true} label="Number of rows">
                     <SafeNumericInput placeholder="Number of rows" min={1} max={10} value={channelMapSettings.numRows} stepSize={1} onValueChange={(value: number) => channelMapSettings.setNumRows(value)} />
                 </FormGroup>
-                <FormGroup className="channel-map-control-label" inline={true} label="Single Channel Contour">
-                    <Switch checked={channelMapSettings.singleChannelContour} onChange={ev => channelMapSettings.setSingleChannelContour(ev.currentTarget.checked)} />
+                <FormGroup className="channel-map-control-label" inline={true} label="Show channel string">
+                    <div style={{display: "flex", alignItems: "center"}}>
+                        <Switch checked={channelMapSettings.showChannelString} onChange={ev => channelMapSettings.setShowChannelString(ev.currentTarget.checked)} />
+                        {channelMapSettings.showChannelString && (
+                            <Checkbox
+                                checked={channelMapSettings.showChannelStringLabel}
+                                onChange={(ev: React.ChangeEvent<HTMLInputElement>) => channelMapSettings.setShowChannelStringLabel(ev.currentTarget.checked)}
+                                label="Show label"
+                                style={{marginLeft: "10px"}}
+                            />
+                        )}
+                    </div>
                 </FormGroup>
-                <FormGroup className="channel-map-control-label" inline={true} label="Contour Channel" disabled={!channelMapSettings.singleChannelContour}>
-                    <SafeNumericInput
-                        placeholder="Contour Channel"
-                        disabled={!channelMapSettings.singleChannelContour}
-                        min={0}
-                        max={channelMapSettings.masterFrame?.frameInfo.fileInfoExtended.depth - 1 || 0}
-                        value={channelMapSettings.singleContourChannel}
-                        stepSize={1}
-                        onValueChange={(value: number) => channelMapSettings.setSingleContourChannel(value)}
-                    />
+                <FormGroup className="channel-map-control-label" inline={true} label="Show spectral string">
+                    <div style={{display: "flex", alignItems: "center"}}>
+                        <Switch checked={channelMapSettings.showSpectralString} onChange={ev => channelMapSettings.setShowSpectralString(ev.currentTarget.checked)} />
+                        {channelMapSettings.showSpectralString && (
+                            <Checkbox
+                                checked={channelMapSettings.showSpectralStringLabel}
+                                onChange={(ev: React.ChangeEvent<HTMLInputElement>) => channelMapSettings.setShowSpectralStringLabel(ev.currentTarget.checked)}
+                                label="Show label"
+                                style={{marginLeft: "10px"}}
+                            />
+                        )}
+                    </div>
                 </FormGroup>
-                <FormGroup className="channel-map-control-label" inline={true} label="Auxiliary Frame Visible">
-                    <Switch checked={channelMapSettings.showAuxiliaryFrame} onChange={ev => channelMapSettings.setShowAuxiliaryFrame(ev.currentTarget.checked)} />
-                </FormGroup>
-                <FormGroup className="channel-map-control-label" inline={true} label="Auxiliary Frame Channel" disabled={!channelMapSettings.showAuxiliaryFrame}>
-                    <SafeNumericInput
-                        placeholder="Auxiliary Frame Channel"
-                        disabled={!channelMapSettings.showAuxiliaryFrame}
-                        min={0}
-                        max={channelMapSettings.auxiliaryFrame?.frameInfo.fileInfoExtended.depth - 1 || 0}
-                        value={channelMapSettings.auxiliaryFrameChannel}
-                        stepSize={1}
-                        onValueChange={(value: number) => channelMapSettings.setAuxiliaryFrameChannel(value)}
-                    />
-                </FormGroup>
-                <FormGroup className="channel-map-control-label" inline={true} label="Auxiliary Image" disabled={!channelMapSettings.showAuxiliaryFrame}>
-                    <HTMLSelect
-                        options={channelMapSettings.masterFrame?.spatialSiblings.map(matchedFrame => {
-                            return {label: matchedFrame.filename, value: matchedFrame.frameInfo.fileId};
-                        })}
-                        value={channelMapSettings.masterFrame ? channelMapSettings.auxiliaryFrame?.filename : -1}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => channelMapSettings.setAuxiliaryFrame(AppStore.Instance.getFrame(parseInt(event.currentTarget.value)))}
-                        disabled={!channelMapSettings.showAuxiliaryFrame}
-                    />
+                <FormGroup className="channel-map-control-label" inline={true} label="Show velocity string">
+                    <div style={{display: "flex", alignItems: "center"}}>
+                        <Switch checked={channelMapSettings.showVelocityString} onChange={ev => channelMapSettings.setShowVelocityString(ev.currentTarget.checked)} />
+                        {channelMapSettings.showVelocityString && (
+                            <Checkbox
+                                checked={channelMapSettings.showVelocityStringLabel}
+                                onChange={(ev: React.ChangeEvent<HTMLInputElement>) => channelMapSettings.setShowVelocityStringLabel(ev.currentTarget.checked)}
+                                label="Show label"
+                                style={{marginLeft: "10px"}}
+                            />
+                        )}
+                    </div>
                 </FormGroup>
             </div>
         );
 
         return (
             <div className="channel-map-control-containers">
-                {!appStore.preferenceStore.channelMapEnabled && <NonIdealState icon={"folder-open"} title={"Channel map not enabled"} description={"Enable channel map using the menu"} />}
-                {appStore.preferenceStore.channelMapEnabled &&
+                {!appStore.channelMapStore.channelMapEnabled && <NonIdealState icon={"folder-open"} title={"Channel map not enabled"} description={"Enable channel map using the menu"} />}
+                {appStore.channelMapStore.channelMapEnabled &&
                     activeFrame &&
                     this.width > 0 && ( // temporary fix for broken range slider, issue #1078
                         <div className="channel-map-sliders">
-                            {appStore.preferenceStore.channelMapEnabled && appStore.channelMapStore.masterFrame && channelMapControl}
-                            {appStore.preferenceStore.channelMapEnabled && appStore.channelMapStore.masterFrame && channelMapPanel}
+                            {appStore.channelMapStore.channelMapEnabled && appStore.channelMapStore.masterFrame && channelMapControl}
+                            {appStore.channelMapStore.channelMapEnabled && appStore.channelMapStore.masterFrame && channelMapPanel}
                         </div>
                     )}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>

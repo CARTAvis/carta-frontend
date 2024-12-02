@@ -925,18 +925,18 @@ export class WidgetsStore {
     };
 
     onImagePanelButtonClick = () => {
-        const preferenceStore = PreferenceStore.Instance;
-        if (preferenceStore.channelMapEnabled) {
+        const channelMapStore = AppStore.Instance.channelMapStore;
+        if (channelMapStore.channelMapEnabled) {
             AppStore.Instance.channelMapStore.masterFrame?.overlayStore.setIsChannelMap(false);
-            preferenceStore.setPreference(PreferenceKeys.CHANNEL_MAP_ENABLED, false);
+            channelMapStore.setChannelMapEnabled(false);
         } else {
             this.setImageMultiPanelEnabled(!PreferenceStore.Instance.imageMultiPanelEnabled);
         }
     };
 
     onChannelMapButtonClick = () => {
-        const preferenceStore = PreferenceStore.Instance;
-        preferenceStore.setPreference(PreferenceKeys.CHANNEL_MAP_ENABLED, true);
+        const channelMapStore = AppStore.Instance.channelMapStore;
+        channelMapStore.setChannelMapEnabled(true);
         AppStore.Instance.channelMapStore.masterFrame?.overlayStore.setIsChannelMap(true);
     };
 
@@ -991,7 +991,7 @@ export class WidgetsStore {
         const appStore = AppStore.Instance;
         const config = appStore.imageViewConfigStore;
         const nextPageButton = $(".lm_goldenlayout")?.find("li.lm-image-panel-next[style!='display:none;']");
-        const preferenceStore = PreferenceStore.Instance;
+        const channelMapStore = AppStore.Instance.channelMapStore;
         if (nextPageButton) {
             nextPageButton.attr("style", config.currentImagePage < config.numImagePages - 1 ? "" : "cursor: not-allowed; opacity: 0.2");
             nextPageButton.attr("title", config.imagePanelMode === ImagePanelMode.None ? "next image" : "next page");
@@ -1005,12 +1005,12 @@ export class WidgetsStore {
 
         const imagePanelButton = $(".lm_goldenlayout")?.find("li.lm-image-panel[style!='display:none;']");
         if (imagePanelButton) {
-            imagePanelButton.attr("style", preferenceStore.channelMapEnabled ? "opacity: 0.2" : "");
+            imagePanelButton.attr("style", channelMapStore.channelMapEnabled ? "opacity: 0.2" : "");
         }
 
         const channelMapButton = $(".lm_goldenlayout")?.find("li.lm-channel-map-panel[style!='display:none;']");
         if (channelMapButton) {
-            channelMapButton.attr("style", preferenceStore.channelMapEnabled ? "" : "opacity: 0.2");
+            channelMapButton.attr("style", channelMapStore.channelMapEnabled ? "" : "opacity: 0.2");
         }
     };
 

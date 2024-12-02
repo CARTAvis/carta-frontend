@@ -6,7 +6,7 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ImageType, Point2D, Zoom} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, Padding, PreferenceStore, WidgetProps} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpType, Padding, WidgetProps} from "stores";
 import {toFixed} from "utilities";
 
 import {ChannelMapViewComponent} from "./ChannelMapView/ChannelMapViewComponent";
@@ -189,17 +189,11 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             return [];
         }
 
-        return PreferenceStore.Instance.channelMapEnabled
+        return appStore.channelMapStore.channelMapEnabled
             ? [
-                  <div id={`image-panel`} key={"channel-map"}>
-                      <ChannelMapViewComponent
-                          frame={config.visibleFrames[0]}
-                          docked={this.props.docked}
-                          channelMapStore={channelMapStore}
-                          renderWidth={appStore.overlayStore.fullViewWidth}
-                          renderHeight={appStore.overlayStore.fullViewHeight}
-                      />
-                  </div>
+                  //   <div id={`image-panel`} key={"channel-map"}>
+                  <ChannelMapViewComponent frame={config.visibleFrames[0]} docked={this.props.docked} channelMapStore={channelMapStore} renderWidth={appStore.overlayStore.fullViewWidth} renderHeight={appStore.overlayStore.fullViewHeight} />
+                  //   </div>
               ]
             : visibleImages.map((image, index) => {
                   const column = index % config.numImageColumns;

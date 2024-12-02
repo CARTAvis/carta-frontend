@@ -82,17 +82,38 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         if (this.props.channel !== undefined && this.channelNumberCanvas) {
             requestAnimationFrame(() => {
                 const destCanvas = this.channelNumberCanvas.getContext("2d", {willReadFrequently: true});
-                // const frame = AppStore.Instance.channelMapStore.masterFrame;
+                const frame = AppStore.Instance.channelMapStore.masterFrame;
+                const channelMapStore = AppStore.Instance.channelMapStore;
                 this.channelNumberCanvas.width = this.props.overlaySettings.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
                 this.channelNumberCanvas.height = this.props.overlaySettings.viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
-                destCanvas.font = "24px Arial";
+                const {spectralString, velocityString} = frame.getFreqWithChannel(this.props.channel);
+                const longestString = Math.max(spectralString.length, velocityString.length);
+                const fontSize = this.channelNumberCanvas.width / (longestString * 0.8);
+                destCanvas.font = `${fontSize}px Arial`;
                 destCanvas.fillStyle = "red";
                 destCanvas.textAlign = "left";
                 destCanvas.textBaseline = "top";
-                // const {spectralString, velocityString, freqString} = frame.getFreqWithChannel(this.props.channel);
-                // const infoString = spectralString || velocityString || freqString;
-                destCanvas.fillText(`Channel: ${this.props.channel}`, this.props.overlaySettings.paddingLeft * devicePixelRatio * AppStore.Instance.imageRatio + 10, 10);
-                // destCanvas.fillText(`${infoString}`, this.props.overlaySettings.paddingLeft * devicePixelRatio * AppStore.Instance.imageRatio + 10, 35);
+                const x = this.props.overlaySettings.paddingLeft * devicePixelRatio * AppStore.Instance.imageRatio + 10;
+                let y = fontSize * 0.5;
+
+                if (channelMapStore.showChannelString) {
+                    destCanvas.fillText(`${channelMapStore.showChannelStringLabel ? "Channel: " : ""}${this.props.channel}`, x, y);
+                    y += fontSize * 1.5;
+                }
+                if (channelMapStore.showSpectralString) {
+                    const spectralLabelMatch = spectralString.match(/^[^:]+:\s*/);
+                    const spectralLabel = channelMapStore.showSpectralStringLabel && spectralLabelMatch ? spectralLabelMatch[0] : "";
+                    const spectralValue = spectralString.replace(/^[^:]+:\s*/, "");
+                    destCanvas.fillText(`${spectralLabel}${spectralValue}`, x, y);
+                    y += fontSize * 1.5;
+                }
+                if (channelMapStore.showVelocityString) {
+                    const velocityLabelMatch = velocityString.match(/^[^:]+:\s*/);
+                    const velocityLabel = channelMapStore.showVelocityStringLabel && velocityLabelMatch ? velocityLabelMatch[0] : "";
+                    const velocityValue = velocityString.replace(/^[^:]+:\s*/, "");
+                    destCanvas.fillText(`${velocityLabel}${velocityValue}`, x, y);
+                    y += fontSize * 1.5;
+                }
             });
         }
     }
@@ -262,6 +283,12 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const channelMapNumRows = AppStore.Instance.channelMapStore.numRows;
         const channelMapMasterFrame = AppStore.Instance.channelMapStore.masterFrame;
         const channelMapChannelNum = AppStore.Instance.channelMapStore.numChannels;
+        const channelMapShowChannelString = AppStore.Instance.channelMapStore.showChannelString;
+        const channelMapShowChannelStringLabel = AppStore.Instance.channelMapStore.showChannelStringLabel;
+        const channelMapShowSpectralString = AppStore.Instance.channelMapStore.showSpectralString;
+        const channelMapShowSpectralStringLabel = AppStore.Instance.channelMapStore.showSpectralStringLabel;
+        const channelMapShowVelocityString = AppStore.Instance.channelMapStore.showVelocityString;
+        const channelMapShowVelocityStringLabel = AppStore.Instance.channelMapStore.showVelocityStringLabel;
         const offsetCoord = frame.isOffsetCoord;
         const offsetWcs = frame.wcsInfoShifted;
 

@@ -54,15 +54,14 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     appStore.imageViewConfigStore.numImageRows,
                     this.props.pixelHighlightValue,
                     this.props.tileBasedRender,
-                    this.props.channel || baseFrame.channel,
+                    this.props.channel ?? baseFrame.channel,
                     this.props.rasterData
                 );
             }
         }
 
         this.sub = this.props.tileService.tileStream.subscribe(tileMessage => {
-            // sometimes the renderHeight is 0, and still figuring out why
-            ((!isFinite(this.props.channel?.length) && (!AppStore.Instance.preferenceStore.channelMapEnabled || (this.props.image.store as FrameStore).isPreview)) || this.props.channel.includes(tileMessage.channel)) &&
+            ((!isFinite(this.props.channel?.length) && (!AppStore.Instance.channelMapStore.channelMapEnabled || (this.props.image.store as FrameStore).isPreview)) || this.props.channel.includes(tileMessage.channel)) &&
                 requestAnimationFrame(() =>
                     this.updateCanvas(
                         this.props.image,
@@ -76,7 +75,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                         appStore.imageViewConfigStore.numImageRows,
                         this.props.pixelHighlightValue,
                         this.props.tileBasedRender,
-                        this.props.channel || baseFrame.channel,
+                        this.props.channel ?? baseFrame.channel,
                         this.props.rasterData
                     )
                 );
@@ -91,7 +90,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     componentWillUnmount(): void {
         this.sub && this.sub.unsubscribe();
     }
-
     componentDidUpdate() {
         const appStore = AppStore.Instance;
         const baseFrame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image?.store?.baseFrame : this.props.image?.store;
@@ -108,7 +106,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 appStore.imageViewConfigStore.numImageRows,
                 this.props.pixelHighlightValue,
                 this.props.tileBasedRender,
-                this.props.channel || baseFrame.channel,
+                this.props.channel ?? baseFrame.channel,
                 this.props.rasterData
             )
         );
@@ -348,7 +346,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         channel: number,
         rasterData?: Float32Array
     ) {
-        // Only clear and render if we're in animation or tiled mode
         if (frame?.isRenderable) {
             const appStore = AppStore.Instance;
             const pixelRatio = devicePixelRatio * appStore.imageRatio;
@@ -561,6 +558,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         gl.drawArrays(GL2.TRIANGLE_STRIP, 0, 4);
     }
 
+    private getRef = ref => {
+        this.canvas = ref;
+    };
+
     render() {
         // dummy values to trigger React's componentDidUpdate()
         /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -616,7 +617,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 <canvas
                     className={`raster-canvas`}
                     id="raster-canvas"
-                    ref={ref => (this.canvas = ref)}
+                    ref={this.getRef}
                     style={{
                         top: padding.top,
                         left: this.props.left ?? padding.left,

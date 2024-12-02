@@ -25,11 +25,16 @@ class CursorOverlayProps {
     currentStokes?: string;
     cursorValueToPercentage?: boolean;
     isPreview?: boolean;
+    visible?: boolean;
 }
 
 @observer
 export class CursorOverlayComponent extends React.Component<CursorOverlayProps> {
     @observable divElement: HTMLDivElement;
+
+    private getRef = ref => {
+        this.divElement = ref;
+    };
 
     render() {
         const cursorInfo = this.props.cursorInfo;
@@ -90,7 +95,7 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
         const className = classNames("cursor-overlay-div", {docked: this.props.docked});
 
         return (
-            <div ref={ref => (this.divElement = ref)} className={className} style={styleProps} data-testid="viewer-cursor-info-bar">
+            <div ref={this.getRef} className={className} style={{...styleProps, visibility: this.props.visible ? "visible" : "hidden"}} data-testid="viewer-cursor-info-bar">
                 <span>{infoStrings.length ? infoStrings.join("; ") : "\u00a0"}</span>
             </div>
         );
