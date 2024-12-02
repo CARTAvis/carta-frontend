@@ -140,7 +140,14 @@ export class HelpDrawerComponent extends React.Component {
         return (
             <Drawer {...drawerProps}>
                 <div className={Classes.DRAWER_BODY}>
-                    <iframe src={HELP_CONTENT_MAP.get(helpStore.type) ?? ""} loading="eager" title={helpStore.type ?? ""}></iframe>
+                    <iframe
+                        src={HELP_CONTENT_MAP.get(helpStore.type) ?? ""}
+                        loading="eager"
+                        //sandbox="allow-scripts allow-same-origin"
+                        //referrerPolicy="same-origin"
+                        //allow="camera 'none'; microphone 'none'; geolocation 'none'"
+                        title={helpStore.type ?? ""}
+                    ></iframe>
                 </div>
             </Drawer>
         );
