@@ -23,6 +23,7 @@ import {
     RegionListComponent,
     // add render 3d
     Render3DComponent,
+    Render3DViewerComponent,
     RenderConfigComponent,
     RenderConfigSettingsPanelComponent,
     SpatialProfilerComponent,
@@ -429,6 +430,8 @@ export class WidgetsStore {
             // add render 3d
             case Render3DComponent.WIDGET_CONFIG.type:
                 return Render3DComponent.WIDGET_CONFIG;
+            case Render3DViewerComponent.WIDGET_CONFIG.type:
+                return Render3DViewerComponent.WIDGET_CONFIG;
             case SpatialProfilerComponent.WIDGET_CONFIG.type:
                 return SpatialProfilerComponent.WIDGET_CONFIG;
             case SpectralProfilerComponent.WIDGET_CONFIG.type:
@@ -472,7 +475,7 @@ export class WidgetsStore {
                 return RenderConfigSettingsPanelComponent.WIDGET_CONFIG;
             // add render 3d
             case Render3DComponent.WIDGET_CONFIG.type:
-                return PvPreviewComponent.WIDGET_CONFIG;
+                return Render3DViewerComponent.WIDGET_CONFIG;
             case HistogramComponent.WIDGET_CONFIG.type:
                 return HistogramSettingsPanelComponent.WIDGET_CONFIG;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
@@ -1366,7 +1369,7 @@ export class WidgetsStore {
         const id = this.addFloatingSettingsWidget(null, parentId, defaultConfig.type);
         if (id !== null) {
             const config = new WidgetConfig(id, defaultConfig);
-            config.title = parentType === PvGeneratorComponent.WIDGET_CONFIG.type ? title : title + " Settings";
+            config.title = (parentType === PvGeneratorComponent.WIDGET_CONFIG.type || parentType === Render3DComponent.WIDGET_CONFIG.type) ? title : title + " Settings";
             config.parentId = parentId;
             config.parentType = parentType;
             if (config.id) {
@@ -1587,7 +1590,6 @@ export class WidgetsStore {
         if (!id) {
             id = this.getNextId(Render3DComponent.WIDGET_CONFIG.type);
         }
-
         if (id) {
             this.render3DWidgets.set(id, new Render3DWidgetStore());
         }

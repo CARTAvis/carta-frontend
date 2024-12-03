@@ -206,7 +206,6 @@ export class Render3DComponent extends React.Component<WidgetProps> {
     };
 
     private handleSpectralRangeChanged = (value: number, max: boolean) => {
-        //TODO
         if (max) {
             this.widgetStore.setSpectralRange({min: this.widgetStore.range?.min, max: value ?? null});
         } else {

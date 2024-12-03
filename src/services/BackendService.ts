@@ -82,6 +82,7 @@ export class BackendService {
     readonly errorStream: Subject<CARTA.ErrorData>;
     readonly spatialProfileStream: Subject<CARTA.SpatialProfileData>;
     readonly spectralProfileStream: Subject<CARTA.SpectralProfileData>;
+    readonly render3DStream: Subject<CARTA.Render3DData>;
     readonly statsStream: Subject<CARTA.RegionStatsData>;
     readonly contourStream: Subject<CARTA.ContourImageData>;
     readonly catalogStream: Subject<CARTA.CatalogFilterResponse>;
@@ -110,6 +111,7 @@ export class BackendService {
         this.errorStream = new Subject<CARTA.ErrorData>();
         this.spatialProfileStream = new Subject<CARTA.SpatialProfileData>();
         this.spectralProfileStream = new Subject<CARTA.SpectralProfileData>();
+        this.render3DStream = new Subject<CARTA.Render3DData>();
         this.statsStream = new Subject<CARTA.RegionStatsData>();
         this.contourStream = new Subject<CARTA.ContourImageData>();
         this.scriptingStream = new Subject<CARTA.ScriptingRequest>();
@@ -144,6 +146,8 @@ export class BackendService {
             [CARTA.EventType.ERROR_DATA, {messageClass: CARTA.ErrorData, handler: this.onStreamedErrorData}],
             [CARTA.EventType.SPATIAL_PROFILE_DATA, {messageClass: CARTA.SpatialProfileData, handler: this.onStreamedSpatialProfileData}],
             [CARTA.EventType.SPECTRAL_PROFILE_DATA, {messageClass: CARTA.SpectralProfileData, handler: this.onStreamedSpectralProfileData}],
+            [CARTA.EventType.RENDER3D_DATA, {messageClass: CARTA.Render3DData, handler: this.onStreamedRender3DData}],
+            [CARTA.EventType.RENDER3D_RESPONSE, {messageClass: CARTA.Render3DResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.REGION_STATS_DATA, {messageClass: CARTA.RegionStatsData, handler: this.onStreamedRegionStatsData}],
             [CARTA.EventType.CONTOUR_IMAGE_DATA, {messageClass: CARTA.ContourImageData, handler: this.onStreamedContourData}],
             [CARTA.EventType.CATALOG_FILTER_RESPONSE, {messageClass: CARTA.CatalogFilterResponse, handler: this.onStreamedCatalogData}],
@@ -1006,6 +1010,10 @@ export class BackendService {
 
     private onStreamedSpectralProfileData(_eventId: number, spectralProfileData: CARTA.SpectralProfileData) {
         this.spectralProfileStream.next(spectralProfileData);
+    }
+
+    private onStreamedRender3DData(_eventId: number, render3DData: CARTA.Render3DData) {
+        this.render3DStream.next(render3DData);
     }
 
     private onStreamedRegionStatsData(_eventId: number, regionStatsData: CARTA.RegionStatsData) {

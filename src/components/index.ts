@@ -23,6 +23,7 @@ export * from "./PvGenerator/PvPreviewComponent";
 export * from "./RegionList/RegionListComponent";
 // add render 3d
 export * from "./Render3D/Render3DComponent";
+export * from "./Render3D/Render3DViewerComponent";
 export * from "./RenderConfig/RenderConfigComponent";
 export * from "./RenderConfig/RenderConfigSettingsPanelComponent/RenderConfigSettingsPanelComponent";
 export * from "./SpatialProfiler/SpatialProfilerComponent";

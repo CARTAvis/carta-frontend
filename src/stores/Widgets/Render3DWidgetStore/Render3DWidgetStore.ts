@@ -22,21 +22,24 @@ export class Render3DWidgetStore extends RegionWidgetStore {
     @observable markerTextVisible: boolean;
     @observable meanRmsVisible: boolean;
     @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number};
-    // secondary settings
+
+    // histogram secondary settings
     @observable minX: number | undefined;
     @observable maxX: number | undefined;
     @observable minY: number | undefined;
     @observable maxY: number | undefined;
     @observable cursorX: number;
 
-    // settings
+    // histogram settings
     @observable logScaleY: boolean;
     @observable plotType: PlotType;
     @observable primaryLineColor: string;
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
 
+    // render3d
     @observable render3DFrame: FrameStore | null;
+    @observable render3DViewer: string | null;
 
     @computed get regionOptions(): OptionProps[] {
         const appStore = AppStore.Instance;
@@ -147,7 +150,7 @@ export class Render3DWidgetStore extends RegionWidgetStore {
                 console.log("Requesting Render3D with generator ID: " + render3DGeneratorId);
                 console.log(requestMessage);
                 console.log('frama' + frame);
-                AppStore.Instance.requestRender3D(requestMessage, frame, render3DGeneratorId);
+                AppStore.Instance.requestRender3D(requestMessage, frame, this.keep,render3DGeneratorId);
             }
         }
     };
@@ -215,14 +218,22 @@ export class Render3DWidgetStore extends RegionWidgetStore {
         this.linePlotInitXYBoundaries = {minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal};
     }
 
-    @action setRender3DFrame = (frame: FrameStore) => {
-        this.render3DFrame = frame;
-    };
+    @action setRender3DViewer = (id: string) => {
+        this.render3DViewer = id;
+    }
 
-    @action removeRender3DFrame = (id: number) => {
-        AppStore.Instance.removeRender3DFrame(id);
-        this.render3DFrame = null;
-    };
+    @action removeRender3DViewer = () => {
+        this.render3DViewer = null;
+    }
+
+    // @action setRender3DFrame = (frame: FrameStore) => {
+    //     this.render3DFrame = frame;
+    // };
+
+    // @action removeRender3DFrame = (id: number) => {
+    //     AppStore.Instance.removeRender3DFrame(id);
+    //     this.render3DFrame = null;
+    // };
 
     public toConfig = () => {
         return {
