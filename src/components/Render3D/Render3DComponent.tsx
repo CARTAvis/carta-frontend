@@ -1,12 +1,13 @@
 import * as React from "react";
 // import ReactResizeDetector from "react-resize-detector";
-import {AnchorButton, Colors, Divider, FormGroup,  NonIdealState, Position, Tab, Tabs, TagInput, Tooltip} from "@blueprintjs/core";
+import {Alert, AnchorButton, Classes, Colors, Divider, FormGroup,  NonIdealState, Position, Tab, Tabs, TagInput, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
+import classNames from "classnames";
 import * as _ from "lodash";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react"; 
 
-// import {TaskProgressDialogComponent} from "components/Dialogs";
+import {TaskProgressDialogComponent} from "components/Dialogs";
 import {LinePlotComponent, LinePlotComponentProps, RegionSelectorComponent, SafeNumericInput} from "components/Shared";
 import {Point2D} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
@@ -33,8 +34,6 @@ enum IsoSurfaceTabs {
 @observer
 export class Render3DComponent extends React.Component<WidgetProps> {
 
-    @observable isValidSpectralRange: boolean = true;
-
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "render-3d",
@@ -53,6 +52,8 @@ export class Render3DComponent extends React.Component<WidgetProps> {
 
     @observable width: number;
     @observable height: number;
+    @observable isValidSpectralRange: boolean = true;
+    @observable showCubeHistogramAlert: boolean;
 
     // Generate levels
     @observable levels: number[];
@@ -73,46 +74,46 @@ export class Render3DComponent extends React.Component<WidgetProps> {
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
+        this.showCubeHistogramAlert = true;
 
-        const appStore = AppStore.Instance;
-        // Check if this widget hasn't been assigned an ID yet
-        if (!props.docked && props.id === Render3DComponent.WIDGET_CONFIG.type) {
-            // Assign the next unique ID
-            const id = appStore.widgetsStore.addRender3DWidget();
-            appStore.widgetsStore.changeWidgetId(props.id, id);
-        } else {
-            if (!appStore.widgetsStore.render3DWidgets.has(this.props.id)) {
-                console.log(`can't find store for widget with id=${this.props.id}`);
-                appStore.widgetsStore.render3DWidgets.set(this.props.id, new Render3DWidgetStore());
+        autorun(() => {
+            const appStore = AppStore.Instance;
+            // // check if histogram is cached
+            // const dataSource = appStore.render3DDataSource;
+            // if (dataSource) {
+            //     const newHist = dataSource.renderConfig.contourHistogram;
+            //     if (newHist !== this.cachedHistogram) {
+            //         this.cachedHistogram = newHist;
+            //         this.widgetStore.clearXYBounds();
+            //     }
+            // }
+            // Check if this widget hasn't been assigned an ID yet
+            if (!props.docked && props.id === Render3DComponent.WIDGET_CONFIG.type) {
+                // Assign the next unique ID
+                const id = appStore.widgetsStore.addRender3DWidget();
+                appStore.widgetsStore.changeWidgetId(props.id, id);
+            } else {
+                if (!appStore.widgetsStore.render3DWidgets.has(this.props.id)) {
+                    console.log(`can't find store for widget with id=${this.props.id}`);
+                    appStore.widgetsStore.render3DWidgets.set(this.props.id, new Render3DWidgetStore());
+                }
             }
-        }
 
-        // Generate levels
-        this.setDefaultContourParameters();
+            // Generate levels
+            this.setDefaultContourParameters();
+        });
     }
 
     @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} {
         const widgetStore = this.widgetStore;
-        const frame = widgetStore.effectiveFrame;
-        const appStore = AppStore.Instance;
-        // const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
-        // const regionId = this.widgetStore.effectiveRegionId;
-        if (frame && frame.renderConfig) {
-            frame.renderConfig.setUseCubeHistogram(true);
-            if (frame.renderConfig.cubeHistogramProgress < 1.0) {
-                appStore.requestCubeHistogram();
-                // if (fileId && regionId) {
-                //     appStore.requestCubeHistogram(fileId, regionId);
-                // } else {
-                //     appStore.requestCubeHistogram();
-                // }
-                // maybe the else is not necessary, seems to work with regionId=-1
-                // Appstore setHistogramRequirements
-            }
-        }
+        const dataSource = AppStore.Instance.render3DDataSource;
+        if (dataSource && dataSource.renderConfig.contourHistogram && dataSource.renderConfig.contourHistogram.bins && dataSource.renderConfig.contourHistogram.bins.length) {
 
-        if (frame && frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {    
-            const histogram = frame.renderConfig.histogram;
+            if (!dataSource.renderConfig.useCubeHistogram) {
+                this.showCubeHistogramAlert = true;
+            }
+            
+            const histogram = dataSource.renderConfig.histogram;
             let minIndex = 0;
             let maxIndex = histogram.bins.length - 1;
 
@@ -157,7 +158,7 @@ export class Render3DComponent extends React.Component<WidgetProps> {
     // Generate levels
     @action setDefaultContourParameters() {
         const appStore = AppStore.Instance;
-        const dataSource = appStore.contourDataSource;
+        const dataSource = appStore.render3DDataSource;
         if (dataSource) {
             this.levels = dataSource.contourConfig.levels.slice();
             // this.smoothingMode = dataSource.contourConfig.smoothingMode;
@@ -168,6 +169,32 @@ export class Render3DComponent extends React.Component<WidgetProps> {
             // this.smoothingFactor = appStore.preferenceStore.contourSmoothingFactor;
         }
     }
+
+    private handleAlertCancel = () => {
+        this.showCubeHistogramAlert = false;
+    };
+
+    private handleAlertConfirm = () => {
+        const appStore = AppStore.Instance;
+        const dataSource = appStore.render3DDataSource;
+        if (dataSource && dataSource.renderConfig) {
+            dataSource.renderConfig.setUseCubeHistogram(true);
+            if (dataSource.renderConfig.cubeHistogramProgress < 1.0) {
+                appStore.requestCubeHistogram(dataSource.frameInfo.fileId);
+            }
+        }
+        this.showCubeHistogramAlert = false;
+    };
+
+    private handleCubeHistogramCancelled = () => {
+        const appStore = AppStore.Instance;
+        const dataSource = appStore.render3DDataSource;
+        // remove content of this IF
+        if (dataSource && dataSource.renderConfig) {
+            dataSource.renderConfig.setUseCubeHistogramContours(false);
+        }
+        appStore.cancelCubeHistogramRequest(dataSource.frameInfo.fileId);
+    };
 
     @action private handleLevelAdded = (values: string[]) => {
         try {
@@ -231,7 +258,7 @@ export class Render3DComponent extends React.Component<WidgetProps> {
 
     render() {
         const appStore = AppStore.Instance;
-        const frame = this.widgetStore.effectiveFrame;
+        const dataSource = appStore.render3DDataSource;
         // const fileInfo = frame ? `${appStore.getFrameIndex(frame.frameInfo.fileId)}: ${frame.filename}` : undefined;
         // const regionInfo = this.widgetStore.effectiveRegionInfo;
 
@@ -240,15 +267,15 @@ export class Render3DComponent extends React.Component<WidgetProps> {
         //     selectedValue = this.widgetStore.regionIdMap.get(this.widgetStore.effectiveFrame.frameInfo.fileId);
         // }
 
-        if (!frame || !this.widgetStore) {
+        if (!dataSource || !this.widgetStore) {
             return (
                 <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
             );
         }
 
         let unit = "";
-        if (frame && frame.headerUnit) {
-            unit = frame.headerUnit;
+        if (dataSource && dataSource.headerUnit) {
+            unit = dataSource.headerUnit;
         }
 
         let linePlotProps: LinePlotComponentProps = {
@@ -273,7 +300,7 @@ export class Render3DComponent extends React.Component<WidgetProps> {
             zeroLineWidth: 2
         }
 
-        if (frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
+        if (dataSource.renderConfig.histogram && dataSource.renderConfig.histogram.bins && dataSource.renderConfig.histogram.bins.length) {
             const currentPlotData = this.plotData;
             if (currentPlotData) {
                 linePlotProps.data = currentPlotData.values;
@@ -319,9 +346,9 @@ export class Render3DComponent extends React.Component<WidgetProps> {
             linePlotProps.markers = [];
         }
 
-        if (this.widgetStore.meanRmsVisible && frame.renderConfig.contourHistogram && frame.renderConfig.contourHistogram.stdDev > 0) {
+        if (this.widgetStore.meanRmsVisible && dataSource.renderConfig.contourHistogram && dataSource.renderConfig.contourHistogram.stdDev > 0) {
             linePlotProps.markers.push({
-                value: frame.renderConfig.contourHistogram.mean,
+                value: dataSource.renderConfig.contourHistogram.mean,
                 id: "marker-mean",
                 draggable: false,
                 horizontal: false,
@@ -330,11 +357,11 @@ export class Render3DComponent extends React.Component<WidgetProps> {
             });
 
             linePlotProps.markers.push({
-                value: frame.renderConfig.contourHistogram.mean,
+                value: dataSource.renderConfig.contourHistogram.mean,
                 id: "marker-rms",
                 draggable: false,
                 horizontal: false,
-                width: frame.renderConfig.contourHistogram.stdDev,
+                width: dataSource.renderConfig.contourHistogram.stdDev,
                 opacity: 0.2,
                 color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
             });
@@ -371,7 +398,7 @@ export class Render3DComponent extends React.Component<WidgetProps> {
                 <div className="histogram-plot">
                     <LinePlotComponent {...linePlotProps} />
                 </div>
-                <IsoSurfaceGeneratorPanelComponent frame={frame} generatorType={appStore.preferenceStore.contourGeneratorType} onLevelsGenerated={this.handleLevelsGenerated} />
+                <IsoSurfaceGeneratorPanelComponent frame={dataSource} generatorType={appStore.preferenceStore.contourGeneratorType} onLevelsGenerated={this.handleLevelsGenerated} />
                 <div className="contour-level-panel-levels" data-testid="contour-config-level-input-form">
                     <FormGroup label={"Levels"} inline={true}>
                         <TagInput
@@ -386,6 +413,17 @@ export class Render3DComponent extends React.Component<WidgetProps> {
                         />
                     </FormGroup>
                 </div>
+                <Alert className={classNames({[Classes.DARK]: appStore.darkTheme})} icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>
+                    <p>Calculating a cube histogram may take a long time, depending on the size of the file. Are you sure you want to continue?</p>
+                </Alert>
+                <TaskProgressDialogComponent
+                    isOpen={dataSource.renderConfig.useCubeHistogramContours && dataSource.renderConfig.cubeHistogramProgress < 1.0}
+                    progress={dataSource.renderConfig.cubeHistogramProgress}
+                    timeRemaining={appStore.estimatedTaskRemainingTime}
+                    cancellable={true}
+                    onCancel={this.handleCubeHistogramCancelled}
+                    text={"Calculating cube histogram"}
+                />
             </div>
         );
 
@@ -417,8 +455,8 @@ export class Render3DComponent extends React.Component<WidgetProps> {
                     <div className="spectral-profiler-toolbar">
                         <RegionSelectorComponent widgetStore={this.widgetStore} />
                     </div>
-                    {frame && frame.numChannels > 1 && (
-                        <FormGroup label="Range" inline={true} labelInfo={`(${frame.spectralUnit})`}>
+                    {dataSource && dataSource.numChannels > 1 && (
+                        <FormGroup label="Range" inline={true} labelInfo={`(${dataSource.spectralUnit})`}>
                             <div className="range-select">
                                 <FormGroup label="From" inline={true}>
                                     <SafeNumericInput value={this.widgetStore.range?.min} buttonPosition="none" onValueChange={value => this.handleSpectralRangeChanged(value, false)} data-testid="render-3d-spectral-range-from-input" />

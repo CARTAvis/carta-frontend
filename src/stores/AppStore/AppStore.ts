@@ -135,6 +135,8 @@ export class AppStore {
     @observable activeImage: ImageItem = null;
     @observable hoveredFrame: FrameStore = null;
     @observable contourDataSource: FrameStore = null;
+    // render3d
+    @observable render3DDataSource: FrameStore = null;
     @observable syncContourToFrame = true;
     @observable syncFrameToContour = true;
     @observable activeWorkspace: Workspace;
@@ -569,6 +571,7 @@ export class AppStore {
             this.setSpatialReference(this.frames[0]);
             this.setRasterScalingReference(this.frames[0]);
             this.setContourDataSource(this.frames[0]);
+            this.setRender3DDataSource(this.frames[0]);
         }
 
         // Use this image as a spectral reference if it has a spectral axis and there isn't an existing spectral reference
@@ -3058,6 +3061,10 @@ export class AppStore {
             this.updateActiveImageByFrame(frame);
         }
     };
+
+    @action setRender3DDataSource = (frame: FrameStore) => {
+        this.render3DDataSource = frame;
+    }
 
     @computed get frameLockedToContour() {
         return this.syncFrameToContour && this.syncContourToFrame;
