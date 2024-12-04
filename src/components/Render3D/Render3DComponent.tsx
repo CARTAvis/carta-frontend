@@ -81,7 +81,7 @@ export class Render3DComponent extends React.Component<WidgetProps> {
             // // check if histogram is cached
             // const dataSource = appStore.render3DDataSource;
             // if (dataSource) {
-            //     const newHist = dataSource.renderConfig.contourHistogram;
+            //     const newHist = dataSource.renderConfig.isoSurfaceHistogram;
             //     if (newHist !== this.cachedHistogram) {
             //         this.cachedHistogram = newHist;
             //         this.widgetStore.clearXYBounds();
@@ -107,13 +107,14 @@ export class Render3DComponent extends React.Component<WidgetProps> {
     @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} {
         const widgetStore = this.widgetStore;
         const dataSource = AppStore.Instance.render3DDataSource;
-        if (dataSource && dataSource.renderConfig.contourHistogram && dataSource.renderConfig.contourHistogram.bins && dataSource.renderConfig.contourHistogram.bins.length) {
+        if (dataSource && dataSource.renderConfig.isoSurfaceHistogram && dataSource.renderConfig.isoSurfaceHistogram.bins && dataSource.renderConfig.isoSurfaceHistogram.bins.length) {
 
-            if (!dataSource.renderConfig.useCubeHistogram) {
+            // FIX THIS, MAYBE MOVE SOMEWHERE ELSE
+            if (!dataSource.renderConfig.useCubeHistogramRender3D) {
                 this.showCubeHistogramAlert = true;
             }
             
-            const histogram = dataSource.renderConfig.histogram;
+            const histogram = dataSource.renderConfig.isoSurfaceHistogram;
             let minIndex = 0;
             let maxIndex = histogram.bins.length - 1;
 
@@ -170,19 +171,19 @@ export class Render3DComponent extends React.Component<WidgetProps> {
         }
     }
 
-    private handleAlertCancel = () => {
-        this.showCubeHistogramAlert = false;
-    };
-
     private handleAlertConfirm = () => {
         const appStore = AppStore.Instance;
         const dataSource = appStore.render3DDataSource;
         if (dataSource && dataSource.renderConfig) {
-            dataSource.renderConfig.setUseCubeHistogram(true);
+            dataSource.renderConfig.setUseCubeHistogramRender3D(true);
             if (dataSource.renderConfig.cubeHistogramProgress < 1.0) {
                 appStore.requestCubeHistogram(dataSource.frameInfo.fileId);
             }
         }
+        this.showCubeHistogramAlert = false;
+    };
+
+    private handleAlertCancel = () => {
         this.showCubeHistogramAlert = false;
     };
 
@@ -191,7 +192,7 @@ export class Render3DComponent extends React.Component<WidgetProps> {
         const dataSource = appStore.render3DDataSource;
         // remove content of this IF
         if (dataSource && dataSource.renderConfig) {
-            dataSource.renderConfig.setUseCubeHistogramContours(false);
+            dataSource.renderConfig.setUseCubeHistogramRender3D(false);
         }
         appStore.cancelCubeHistogramRequest(dataSource.frameInfo.fileId);
     };
@@ -346,9 +347,9 @@ export class Render3DComponent extends React.Component<WidgetProps> {
             linePlotProps.markers = [];
         }
 
-        if (this.widgetStore.meanRmsVisible && dataSource.renderConfig.contourHistogram && dataSource.renderConfig.contourHistogram.stdDev > 0) {
+        if (this.widgetStore.meanRmsVisible && dataSource.renderConfig.isoSurfaceHistogram && dataSource.renderConfig.isoSurfaceHistogram.stdDev > 0) {
             linePlotProps.markers.push({
-                value: dataSource.renderConfig.contourHistogram.mean,
+                value: dataSource.renderConfig.isoSurfaceHistogram.mean,
                 id: "marker-mean",
                 draggable: false,
                 horizontal: false,
@@ -357,11 +358,11 @@ export class Render3DComponent extends React.Component<WidgetProps> {
             });
 
             linePlotProps.markers.push({
-                value: dataSource.renderConfig.contourHistogram.mean,
+                value: dataSource.renderConfig.isoSurfaceHistogram.mean,
                 id: "marker-rms",
                 draggable: false,
                 horizontal: false,
-                width: dataSource.renderConfig.contourHistogram.stdDev,
+                width: dataSource.renderConfig.isoSurfaceHistogram.stdDev,
                 opacity: 0.2,
                 color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
             });
@@ -417,7 +418,7 @@ export class Render3DComponent extends React.Component<WidgetProps> {
                     <p>Calculating a cube histogram may take a long time, depending on the size of the file. Are you sure you want to continue?</p>
                 </Alert>
                 <TaskProgressDialogComponent
-                    isOpen={dataSource.renderConfig.useCubeHistogramContours && dataSource.renderConfig.cubeHistogramProgress < 1.0}
+                    isOpen={dataSource.renderConfig.useCubeHistogramRender3D && dataSource.renderConfig.cubeHistogramProgress < 1.0}
                     progress={dataSource.renderConfig.cubeHistogramProgress}
                     timeRemaining={appStore.estimatedTaskRemainingTime}
                     cancellable={true}

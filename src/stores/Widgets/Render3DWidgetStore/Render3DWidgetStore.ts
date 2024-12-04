@@ -148,8 +148,6 @@ export class Render3DWidgetStore extends RegionWidgetStore {
             }
             if (render3DGeneratorId) {
                 console.log("Requesting Render3D with generator ID: " + render3DGeneratorId);
-                console.log(requestMessage);
-                console.log('frama' + frame);
                 AppStore.Instance.requestRender3D(requestMessage, frame, this.keep,render3DGeneratorId);
             }
         }

@@ -2503,6 +2503,7 @@ export class FrameStore {
         if (this.requiredStokes !== stokes) {
             this.renderConfig.setUseCubeHistogram(false);
             this.renderConfig.setUseCubeHistogramContours(false);
+            this.renderConfig.setUseCubeHistogramRender3D(false);
             this.renderConfig.updateCubeHistogram(null, 0);
         }
 

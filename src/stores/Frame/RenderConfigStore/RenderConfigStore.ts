@@ -188,6 +188,7 @@ export class RenderConfigStore {
     @observable cubeHistogram: CARTA.IHistogram;
     @observable useCubeHistogram: boolean;
     @observable useCubeHistogramContours: boolean;
+    @observable useCubeHistogramRender3D: boolean;
     @observable cubeHistogramProgress: number;
     @observable selectedPercentile: number[];
     @observable histChannel: number;
@@ -321,6 +322,7 @@ export class RenderConfigStore {
     }
 
     @computed get isoSurfaceHistogram() {
+        // THIS WAS LIKE CONTOUR, ERROR?
         return this.cubeHistogram;
     }
 
@@ -375,6 +377,10 @@ export class RenderConfigStore {
      */
     @action setUseCubeHistogramContours = (val: boolean) => {
         this.useCubeHistogramContours = val;
+    };
+
+    @action setUseCubeHistogramRender3D = (val: boolean) => {
+        this.useCubeHistogramRender3D = val;
     };
 
     @computed get histogramMin() {
@@ -643,6 +649,7 @@ export class RenderConfigStore {
         // TODO: Handle cube histograms properly. For now, default to false
         this.useCubeHistogram = false;
         this.useCubeHistogramContours = false;
+        this.useCubeHistogramRender3D = false;
         this.updateSiblings();
     };
 }

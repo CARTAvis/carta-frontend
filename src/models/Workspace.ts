@@ -17,6 +17,7 @@ export interface WorkspaceRenderConfig {
     inverted?: boolean;
     useCubeHistogram?: boolean;
     useCubeHistogramContours?: boolean;
+    useCubeHistogramRender3D?: boolean;
     selectedPercentile?: number[];
     scaleMin?: number[];
     scaleMax?: number[];

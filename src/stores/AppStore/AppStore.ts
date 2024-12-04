@@ -1448,6 +1448,7 @@ export class AppStore {
     //         this.restartTaskProgress();
     //     }
     // };
+
     @action requestCubeHistogram = (fileId: number = -1) => {
         const frame = this.getFrame(fileId);
         if (frame && frame.renderConfig.cubeHistogramProgress < 1.0) {
@@ -2327,7 +2328,7 @@ export class AppStore {
             const updatedFrame = this.getFrame(regionHistogramData.fileId);
             if (updatedFrame) {
                 const cubeHist = regionHistogramData.histograms;
-                if (cubeHist && (updatedFrame.renderConfig.useCubeHistogram || updatedFrame.renderConfig.useCubeHistogramContours)) {
+                if (cubeHist && (updatedFrame.renderConfig.useCubeHistogram || updatedFrame.renderConfig.useCubeHistogramContours || updatedFrame.renderConfig.useCubeHistogramRender3D)) {
                     updatedFrame.renderConfig.updateCubeHistogram(cubeHist, regionHistogramData.progress);
                     this.updateTaskProgress(regionHistogramData.progress);
                 }
@@ -2871,7 +2872,7 @@ export class AppStore {
             }
 
             // Render config (TODO: A more extensible way of saving/loading state for simple stores)
-            const {scaling, colorMap, bias, contrast, gamma, alpha, inverted, useCubeHistogram, useCubeHistogramContours, selectedPercentile, scaleMin, scaleMax, visible} = frame.renderConfig;
+            const {scaling, colorMap, bias, contrast, gamma, alpha, inverted, useCubeHistogram, useCubeHistogramContours, useCubeHistogramRender3D, selectedPercentile, scaleMin, scaleMax, visible} = frame.renderConfig;
             workspaceFile.renderConfig = {
                 scaling,
                 colorMap,
@@ -2882,6 +2883,7 @@ export class AppStore {
                 inverted,
                 useCubeHistogram,
                 useCubeHistogramContours,
+                useCubeHistogramRender3D,
                 selectedPercentile,
                 scaleMin,
                 scaleMax,
