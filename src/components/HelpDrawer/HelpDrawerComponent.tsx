@@ -143,8 +143,6 @@ export class HelpDrawerComponent extends React.Component {
                     <iframe
                         src={HELP_CONTENT_MAP.get(helpStore.type) ?? ""}
                         loading="eager"
-                        sandbox="allow-scripts allow-same-origin"
-                        referrerPolicy="same-origin"
                         allow="camera 'none'; microphone 'none'; geolocation 'none'"
                         title={helpStore.type ?? ""}
                     ></iframe>
