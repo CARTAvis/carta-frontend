@@ -108,11 +108,6 @@ export class Render3DComponent extends React.Component<WidgetProps> {
         const widgetStore = this.widgetStore;
         const dataSource = AppStore.Instance.render3DDataSource;
         if (dataSource && dataSource.renderConfig.isoSurfaceHistogram && dataSource.renderConfig.isoSurfaceHistogram.bins && dataSource.renderConfig.isoSurfaceHistogram.bins.length) {
-
-            // FIX THIS, MAYBE MOVE SOMEWHERE ELSE
-            if (!dataSource.renderConfig.useCubeHistogramRender3D) {
-                this.showCubeHistogramAlert = true;
-            }
             
             const histogram = dataSource.renderConfig.isoSurfaceHistogram;
             let minIndex = 0;
@@ -301,34 +296,32 @@ export class Render3DComponent extends React.Component<WidgetProps> {
             zeroLineWidth: 2
         }
 
-        if (dataSource.renderConfig.histogram && dataSource.renderConfig.histogram.bins && dataSource.renderConfig.histogram.bins.length) {
-            const currentPlotData = this.plotData;
-            if (currentPlotData) {
-                linePlotProps.data = currentPlotData.values;
+        const currentPlotData = this.plotData;
+        if (currentPlotData) {
+            linePlotProps.data = currentPlotData.values;
 
-                // set line color
-                linePlotProps.lineColor = getColorForTheme(this.widgetStore.primaryLineColor);
+            // set line color
+            linePlotProps.lineColor = getColorForTheme(this.widgetStore.primaryLineColor);
 
-                // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
-                if (this.widgetStore.isAutoScaledX) {
-                    linePlotProps.xMin = currentPlotData.xMin;
-                    linePlotProps.xMax = currentPlotData.xMax;
-                } else {
-                    linePlotProps.xMin = this.widgetStore.minX;
-                    linePlotProps.xMax = this.widgetStore.maxX;
-                }
+            // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
+            if (this.widgetStore.isAutoScaledX) {
+                linePlotProps.xMin = currentPlotData.xMin;
+                linePlotProps.xMax = currentPlotData.xMax;
+            } else {
+                linePlotProps.xMin = this.widgetStore.minX;
+                linePlotProps.xMax = this.widgetStore.maxX;
+            }
 
-                if (this.widgetStore.isAutoScaledY) {
-                    linePlotProps.yMin = currentPlotData.yMin;
-                    linePlotProps.yMax = currentPlotData.yMax;
-                } else {
-                    linePlotProps.yMin = this.widgetStore.minY;
-                    linePlotProps.yMax = this.widgetStore.maxY;
-                }
-                // Fix log plot min bounds for entries with zeros in them
-                if (this.widgetStore.logScaleY && linePlotProps.yMin <= 0) {
-                    linePlotProps.yMin = 0.5;
-                }
+            if (this.widgetStore.isAutoScaledY) {
+                linePlotProps.yMin = currentPlotData.yMin;
+                linePlotProps.yMax = currentPlotData.yMax;
+            } else {
+                linePlotProps.yMin = this.widgetStore.minY;
+                linePlotProps.yMax = this.widgetStore.maxY;
+            }
+            // Fix log plot min bounds for entries with zeros in them
+            if (this.widgetStore.logScaleY && linePlotProps.yMin <= 0) {
+                linePlotProps.yMin = 0.5;
             }
         }
 
