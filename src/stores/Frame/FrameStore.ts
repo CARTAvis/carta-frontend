@@ -2848,6 +2848,21 @@ export class FrameStore {
             this.spatialReference = null;
             return false;
         }
+
+        // Disable spatial matching in image coordinates if images cannot be matched in world coordinates
+        if (this.overlayStore.isImgCoordinates) {
+            AST.setI(this.wcsInfo, "Current", 2);
+            AST.setI(frame.wcsInfo, "Current", 2);
+            const wcsSpatialMapping = AST.getSpatialMapping(this.wcsInfo, frame.wcsInfo);
+            AST.setI(this.wcsInfo, "Current", 1);
+            AST.setI(frame.wcsInfo, "Current", 1);
+
+            if (!wcsSpatialMapping) {
+                console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
+                this.spatialReference = null;
+                return false;
+            }
+        }
         this.spatialReference = frame;
         console.log(`Setting spatial reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
 
