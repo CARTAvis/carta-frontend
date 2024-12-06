@@ -352,7 +352,7 @@ export class TileService {
         return result;
     }
 
-    requestChannelMapTiles(tiles: TileCoordinate[], focusPoint: Point2D, compressionQuality: number, pageFliped: boolean = false) {
+    async requestChannelMapTiles(tiles: TileCoordinate[], focusPoint: Point2D, compressionQuality: number, pageFliped: boolean = false) {
         const channelMapStore = AppStore.Instance.channelMapStore;
         const frame = channelMapStore.showAuxiliaryFrame ? channelMapStore.auxiliaryFrame || channelMapStore.masterFrame : channelMapStore.masterFrame;
         if (!frame) {
@@ -515,7 +515,7 @@ export class TileService {
         // }
     }
 
-    updateHiddenFileChannels(fileId: number, channel: number, stokes: number, channelMapEnabled?: boolean) {
+    async updateHiddenFileChannels(fileId: number, channel: number, stokes: number, channelMapEnabled?: boolean) {
         if (!channelMapEnabled) {
             this.clearCompressedCache(fileId);
             this.clearGPUCache(fileId);
@@ -716,7 +716,7 @@ export class TileService {
         }
     };
 
-    private handleStreamedTiles = (tileMessage: CARTA.IRasterTileData) => {
+    private handleStreamedTiles = async (tileMessage: CARTA.IRasterTileData) => {
         const key = `${tileMessage.fileId}_${tileMessage.stokes}_${tileMessage.channel}`;
 
         this.cummulativeTile = this.cummulativeTile + 1;
