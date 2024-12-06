@@ -34,6 +34,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     const frame = channelMapStore.masterFrame;
     const image = channelMapStore.masterImage;
     const outerOverlay = channelMapStore.overlayStores.outer;
+    const cornerOverlay = channelMapStore.overlayStores.corner;
     const colorBarSetting = AppStore.Instance.overlayStore.colorbar;
     const colorbarOffset = outerOverlay?.colorbar.visible ? colorBarSetting.stageWidth + frame?.overlayStore?.colorbarHoverInfoHeight : 0;
 
@@ -107,6 +108,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         channelMapStore.singleContourChannel,
         channelMapStore.masterFrame?.spatialReference,
         channelMapStore.channelMapEnabled,
+        channelMapStore.masterFrame?.channel,
         outerOverlay?.colorbar.position
     ]);
 
@@ -171,7 +173,8 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         channelMapStore.auxiliaryFrameChannel,
         channelMapStore.singleChannelContour,
         channelMapStore.singleContourChannel,
-        channelMapStore.masterFrame?.spatialReference
+        channelMapStore.masterFrame?.spatialReference,
+        channelMapStore.masterFrame?.channel
     ]);
 
     const onMouseEnter = () => {
@@ -364,10 +367,10 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     onCursorHoverValueChanged={props.channelMapStore.setPixelHighlightValue}
                     width={props.renderWidth}
                     height={props.renderHeight}
-                    leftOffset={frame.overlayStore.colorbar.position === "right" ? outerOverlay.paddingTop : leftOuterOffset}
+                    leftOffset={frame.overlayStore.colorbar.position === "right" ? cornerOverlay?.paddingTop : leftOuterOffset}
                     left={frame.overlayStore.colorbar.position === "right" ? channelMapViewWidth : 0}
                     top={frame.overlayStore.colorbar.position === "bottom" ? channelMapViewHeight : frame.overlayStore.colorbar.position === "right" ? 0 : outerOverlay.paddingTop}
-                    length={frame.overlayStore.colorbar.position === "right" ? channelMapViewHeight - bottomOuterOffset : channelMapViewWidth - leftOuterOffset}
+                    length={frame.overlayStore.colorbar.position === "right" ? channelMapViewHeight - bottomOuterOffset : channelMapViewWidth - leftOuterOffset - cornerOverlay?.paddingRight}
                 />
             )}
             <ToolbarComponent

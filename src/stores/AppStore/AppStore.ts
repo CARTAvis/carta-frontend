@@ -1726,14 +1726,14 @@ export class AppStore {
 
             frame.channel = update.channel;
             frame.stokes = update.stokes;
-            if (this.imageViewConfigStore.visibleFrames.includes(frame)) {
+            if (this.imageViewConfigStore.visibleFrames.includes(frame) && !this.channelMapStore.channelMapEnabled) {
                 const [tiles, midPointTileCoords] = frame.requiredTiles;
                 // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
                 const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
                 const compressionQuality = bunitVariant.includes(frame.headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
                 this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, compressionQuality, true);
             } else {
-                this.tileService.updateHiddenFileChannels(frame.frameInfo.fileId, frame.channel, frame.stokes);
+                this.tileService.updateHiddenFileChannels(frame.frameInfo.fileId, frame.channel, frame.stokes, this.channelMapStore.channelMapEnabled);
             }
         }
     };
@@ -2215,6 +2215,9 @@ export class AppStore {
         if (regionHistogramData.regionId === -1 && !regionHistogramData.config.fixedNumBins && !regionHistogramData.config.fixedBounds) {
             const key = `${regionHistogramData.fileId}_${regionHistogramData.stokes}_${regionHistogramData.channel}`;
             this.pendingChannelHistograms.set(key, regionHistogramData);
+            if (this.channelMapStore.channelMapEnabled) {
+                this.updateHistogram(regionHistogramData.fileId, regionHistogramData.stokes, regionHistogramData.channel, true);
+            }
         } else if (regionHistogramData.regionId === -2) {
             // Update cube histogram if it is still required
             const updatedFrame = this.getFrame(regionHistogramData.fileId);
@@ -2258,8 +2261,12 @@ export class AppStore {
             }
         }
 
+        this.updateHistogram(tileStreamDetails.fileId, tileStreamDetails.stokes, tileStreamDetails.channel);
+    };
+
+    updateHistogram = (fileId: number, stokes: number, channel: number, updateChannelMapHistogram?: boolean) => {
         // Apply pending channel histogram
-        const key = `${tileStreamDetails.fileId}_${tileStreamDetails.stokes}_${tileStreamDetails.channel}`;
+        const key = `${fileId}_${stokes}_${channel}`;
         const pendingHistogram = this.pendingChannelHistograms.get(key);
         if (pendingHistogram?.histograms) {
             const updatedFrame = this.getFrame(pendingHistogram.fileId);
@@ -2269,10 +2276,10 @@ export class AppStore {
                 updatedFrame.renderConfig.setStokesIndex(stokesIndex);
                 updatedFrame.renderConfig.setHistChannel(pendingHistogram.channel);
                 updatedFrame.renderConfig.updateChannelHistogram(channelHist);
-                updatedFrame.channel = tileStreamDetails.channel;
-                updatedFrame.stokes = tileStreamDetails.stokes;
+                updatedFrame.channel = channel;
+                updatedFrame.stokes = stokes;
 
-                if (pendingHistogram.channel === 0) {
+                if (updateChannelMapHistogram || !updatedFrame.renderConfig.channelMapHistogram) {
                     updatedFrame.renderConfig.updateChannelMapHistogram(channelHist);
                 }
             }

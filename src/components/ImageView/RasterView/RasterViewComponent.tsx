@@ -236,7 +236,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             if (frame) {
                 const histStokesIndex = frame.renderConfig.stokesIndex;
                 const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histChannel : undefined;
-                if ((frame.renderConfig.useCubeHistogram || frame.channel === histChannel || frame.isPreview) && (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)) {
+                if (
+                    (frame.renderConfig.useCubeHistogram || frame.channel === histChannel || frame.isPreview || (AppStore.Instance.channelMapStore.channelMapEnabled && frame.renderConfig.channelMapHistogram)) &&
+                    (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)
+                ) {
                     this.updateUniforms(frame, webGLService, overlayStore.renderWidth, overlayStore.renderHeight, pixelHighlightValue);
                     if (isFinite((channel as number[]).length)) {
                         this.renderMultipleCanvas(frame, webGLService, tileService, canvas, tileBasedRender, channel as number[], rasterData);

@@ -451,7 +451,7 @@ export class TileService {
                 );
 
                 const tiles = groupedTiles;
-                const requestSentSuccessfully = this.backendService.setChannels(fileId, requiredChannel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles, currentTiles}, range, fullChannelRange);
+                const requestSentSuccessfully = this.backendService.setChannels(fileId, requiredChannel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles, currentTiles}, true, range, fullChannelRange);
                 if (requestSentSuccessfully) {
                     this.currentlyStreamingChannelRange = fullChannelRange;
                     this.currentlyStreamingTileRange = currentTiles;
@@ -515,11 +515,13 @@ export class TileService {
         // }
     }
 
-    updateHiddenFileChannels(fileId: number, channel: number, stokes: number) {
-        this.clearCompressedCache(fileId);
-        this.clearGPUCache(fileId);
+    updateHiddenFileChannels(fileId: number, channel: number, stokes: number, channelMapEnabled?: boolean) {
+        if (!channelMapEnabled) {
+            this.clearCompressedCache(fileId);
+            this.clearGPUCache(fileId);
+        }
         this.channelMap.set(fileId, {channel, stokes});
-        this.backendService.setChannels(fileId, channel, stokes, {});
+        this.backendService.setChannels(fileId, channel, stokes, {}, channelMapEnabled);
     }
 
     clearGPUCache(fileId: number | null | undefined) {
