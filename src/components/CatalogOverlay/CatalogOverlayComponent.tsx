@@ -188,7 +188,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const catalogWidgetStore = this.widgetStore;
         this.height = height;
         this.width = width;
-        this.prevSplitSize = 0.6 * (this.height - 130); // initial split size
+        this.prevSplitSize = parseFloat(catalogWidgetStore.tableSeparatorPosition); // initial split size in percentage
 
         // fixed bug from blueprintjs, only display 4 rows. catalog name missing (in PR #1104) fixed after package update.
         if (profileStore && this.catalogHeaderTableRef) {
@@ -580,10 +580,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         // update table if resizing happend)
         const position = clamp(Math.floor((newSize / (this.height - 130)) * 100), CatalogWidgetStore.MinTableSeparatorPosition, CatalogWidgetStore.MaxTableSeparatorPosition);
 
-        position === 100 ? (this.isShowHeader = false) : (this.isShowHeader = true);
+        this.isShowHeader = position === 100 ? false : true;
         // save the previous split size but avoid the header size smaller than 40%
         if (position < 60) {
-            this.prevSplitSize = newSize;
+            this.prevSplitSize = position;
         }
 
         if (position <= CatalogWidgetStore.MaxTableSeparatorPosition && position >= CatalogWidgetStore.MinTableSeparatorPosition) {
@@ -600,11 +600,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     };
 
     private handleHideHeader = () => {
-        if (this.widgetStore.tableSeparatorPosition !== "100%") {
-            this.onTableResize(this.height - 130); // hide header
-        } else {
-            this.onTableResize(this.prevSplitSize);
-        }
+        const splizSize = this.widgetStore.tableSeparatorPosition !== "100%" ? this.height - 130 : (this.prevSplitSize / 100) * (this.height - 130);
+        this.onTableResize(splizSize);
     };
 
     private renderSystemPopOver = (system: CatalogSystemType, itemProps: ItemRendererProps) => {

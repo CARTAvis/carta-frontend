@@ -2,7 +2,7 @@ import {Colors} from "@blueprintjs/core";
 import * as CARTACompute from "carta_computation";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
-import {AngularSize, AngularSizeUnit, CatalogOverlay, FACTOR_TO_ARCSEC} from "models";
+import {AngularSizeUnit, CatalogOverlay, FACTOR_TO_ARCSEC} from "models";
 import {CatalogTextureType, CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, PreferenceStore} from "stores";
 import {FrameScaling} from "stores/Frame";
@@ -43,7 +43,7 @@ export enum CatalogSettingsTabs {
 }
 
 /**
- * Display catalog sources on the canvas coordinate or world coordinate
+ * Display catalog sources on fix or mapped sizes (Canvas) or on their angular sizes (World)
  */
 export enum CatalogDisplayMode {
     CANVAS = "Canvas",
@@ -117,7 +117,7 @@ export class CatalogWidgetStore {
     @observable sizeAxisTabId: CatalogSettingsTabs.SIZE_MINOR | CatalogSettingsTabs.SIZE_MAJOR;
     @observable sizeColumnMinLocked: boolean;
     @observable sizeColumnMaxLocked: boolean;
-    @observable factorToArasec: AngularSize;
+    @observable sizeAngularUnit: AngularSizeUnit;
     // size map minor
     @observable sizeMinorMapColumn: string;
     @observable sizeMinorColumnMax: {default: number | undefined; clipd: number | undefined};
@@ -190,7 +190,7 @@ export class CatalogWidgetStore {
         this.sizeColumnMaxLocked = false;
         this.sizeMinorColumnMinLocked = false;
         this.sizeMinorColumnMaxLocked = false;
-        this.factorToArasec = {value: 1.0, unit: AngularSizeUnit.ARCSEC};
+        this.sizeAngularUnit = AngularSizeUnit.ARCSEC;
         this.catalogDisplayMode = CatalogDisplayMode.CANVAS;
         this.catalogSizeRef = CatalogSizeRef.CANVAS;
 
@@ -346,7 +346,7 @@ export class CatalogWidgetStore {
 
     /**
      * Set the maximum orientation value
-     * @param max - number : max degree of orientation
+     * @param max - max degree of orientation
      */
     @action setAngleMax(max: number) {
         this.angleMax = clamp(max, CatalogWidgetStore.MinAngle, CatalogWidgetStore.MaxAngle);
@@ -354,7 +354,7 @@ export class CatalogWidgetStore {
 
     /**
      * Set the minimum orientation value
-     * @param min - number : min degree of orientation
+     * @param min - min degree of orientation
      */
     @action setAngleMin(min: number) {
         this.angleMin = clamp(min, CatalogWidgetStore.MinAngle, CatalogWidgetStore.MaxAngle);
@@ -362,8 +362,8 @@ export class CatalogWidgetStore {
 
     /**
      * Set the maximum value for orientation mapping data
-     * @param val - number : maximum orientation degree for mapping data
-     * @param type - string : "default" or "clipd"
+     * @param val - maximum orientation degree for mapping data
+     * @param type - "default" or "clipd"
      */
     @action setOrientationMax(val: number, type: "default" | "clipd") {
         if (type === "default") {
@@ -376,8 +376,8 @@ export class CatalogWidgetStore {
 
     /**
      * Set the minimum value for orientation mapping data
-     * @param val - number : minimum orientation degree for mapping data
-     * @param type - string : "default" or "clipd"
+     * @param val - minimum orientation degree for mapping data
+     * @param type - "default" or "clipd"
      */
     @action setOrientationMin(val: number, type: "default" | "clipd") {
         if (type === "default") {
@@ -390,7 +390,7 @@ export class CatalogWidgetStore {
 
     /**
      * Reset the orientation value for mapping data to default
-     * @param type - string : "min" or "max"
+     * @param type - "min" or "max"
      */
     @action resetOrientationValue(type: "min" | "max") {
         if (type === "min") {
@@ -402,7 +402,7 @@ export class CatalogWidgetStore {
 
     /**
      * Select the column for orientation data
-     * @param column - string : column name of orientation data
+     * @param column - column name of orientation data
      */
     @action setOrientationMapColumn(column: string) {
         if (this.orientationMapColumn !== column) {
@@ -414,7 +414,7 @@ export class CatalogWidgetStore {
 
     /**
      * Set the scaling type for orientation data
-     * @param type - {@link FrameScaling} : scaling type for orientation data
+     * @param type - scaling type for orientation data
      */
     @action setOrientationScalingType(type: FrameScaling) {
         this.orientationScalingType = type;
@@ -430,8 +430,8 @@ export class CatalogWidgetStore {
 
     /**
      * Set the maximum value for color mapping data
-     * @param val - number : maximum value for color mapping data
-     * @param type - string : "default" or "clipd"
+     * @param val - maximum value for color mapping data
+     * @param type - "default" or "clipd"
      */
     @action setColorColumnMax(val: number, type: "default" | "clipd") {
         if (type === "default") {
@@ -444,8 +444,8 @@ export class CatalogWidgetStore {
 
     /**
      * Set the minimum value for color mapping data
-     * @param val - number : minimum value for color mapping data
-     * @param type - string : "default" or "clipd"
+     * @param val - minimum value for color mapping data
+     * @param type - "default" or "clipd"
      */
     @action setColorColumnMin(val: number, type: "default" | "clipd") {
         if (type === "default") {
@@ -458,7 +458,7 @@ export class CatalogWidgetStore {
 
     /**
      * Reset the maximum or minimum values for color mapping data to default
-     * @param type - string : "min" or "max"
+     * @param type - "min" or "max"
      */
     @action resetColorColumnValue(type: "min" | "max") {
         if (type === "min") {
@@ -470,7 +470,7 @@ export class CatalogWidgetStore {
 
     /**
      * Select the column for color mapping data
-     * @param column - string : column name of color mapping data
+     * @param column - column name of color mapping data
      */
     @action setColorMapColumn(column: string) {
         if (this.colorMapColumn !== column) {
@@ -482,7 +482,7 @@ export class CatalogWidgetStore {
 
     /**
      * Set the scaling type for color mapping data
-     * @param type - {@link FrameScaling} : scaling type for color mapping data
+     * @param type - scaling type for color mapping data
      */
     @action setColorScalingType(type: FrameScaling) {
         this.colorScalingType = type;
@@ -490,7 +490,7 @@ export class CatalogWidgetStore {
 
     /**
      * Set the colormap
-     * @param colorMap - string : colormap name
+     * @param colorMap - colormap name
      */
     @action setColorMap(colorMap: string) {
         this.colorMap = colorMap;
@@ -498,7 +498,7 @@ export class CatalogWidgetStore {
 
     /**
      * Set the maximum catalog source size
-     * @param val - number : maximum size of catalog source in pixel or square pixel
+     * @param val - maximum size of catalog source in pixel or square pixel
      */
     @action setSizeMax(val: number) {
         let areaMode = this.sizeArea;
@@ -511,7 +511,7 @@ export class CatalogWidgetStore {
 
     /**
      * Set the minimum catalog source size
-     * @param val - number : minimum size of catalog source in pixel or square pixel
+     * @param val - minimum size of catalog source in pixel or square pixel
      */
     @action setSizeMin(val: number) {
         let areaMode = this.sizeArea;
@@ -534,8 +534,8 @@ export class CatalogWidgetStore {
 
     /**
      * Set the maximum value for size mapping data
-     * @param val - number : maximum value for size mapping data
-     * @param type - string : "default" or "clipd"
+     * @param val - maximum value for size mapping data
+     * @param type - "default" or "clipd"
      */
     @action setSizeColumnMax(val: number, type: "default" | "clipd") {
         if (type === "default") {
@@ -548,8 +548,8 @@ export class CatalogWidgetStore {
 
     /**
      * Set the minimum value for size mapping data
-     * @param val - number : minimum value for size mapping data
-     * @param type - string : "default" or "clipd"
+     * @param val - minimum value for size mapping data
+     * @param type - "default" or "clipd"
      */
     @action setSizeColumnMin(val: number, type: "default" | "clipd") {
         if (type === "default") {
@@ -562,7 +562,7 @@ export class CatalogWidgetStore {
 
     /**
      * Reset the maximum or minimum values for size mapping data to default
-     * @param type - string : "min" or "max"
+     * @param type - "min" or "max"
      */
     @action resetSizeColumnValue(type: "min" | "max") {
         if (type === "min") {
@@ -574,7 +574,7 @@ export class CatalogWidgetStore {
 
     /**
      * Set the scaling type for size mapping
-     * @param type - {@link FrameScaling} : scaling type for size mapping
+     * @param type - scaling type for size mapping
      */
     @action setSizeScalingType(type: FrameScaling) {
         this.sizeScalingType = type;
@@ -590,7 +590,7 @@ export class CatalogWidgetStore {
 
     /**
      * Select the size mapping column
-     * @param column - string : column name for size mapping
+     * @param column - column name for size mapping
      */
     @action setSizeMap(column: string) {
         if (this.sizeMapColumn !== column) {
@@ -619,7 +619,7 @@ export class CatalogWidgetStore {
 
     /**
      * Set the maximum minor axis of catalog source
-     * @param val - number : maximum minor axis of catalog source in pixel or square pixel
+     * @param val - maximum minor axis of catalog source in pixel or square pixel
      */
     @action setMinorSizeMax(val: number) {
         let areaMode = this.sizeMinorArea;
@@ -632,7 +632,7 @@ export class CatalogWidgetStore {
 
     /**
      * Set the minimum minor axis of catalog source
-     * @param val - number : minimum minor axis of catalog source in pixel or square pixel
+     * @param val - minimum minor axis of catalog source in pixel or square pixel
      */
     @action setMinorSizeMin(val: number) {
         let areaMode = this.sizeMinorArea;
@@ -645,8 +645,8 @@ export class CatalogWidgetStore {
 
     /**
      * Set the maximum value for minor size mapping data
-     * @param val - number : maximum value for minor size mapping data
-     * @param type - string : "default" or "clipd"
+     * @param val - maximum value for minor size mapping data
+     * @param type - "default" or "clipd"
      */
     @action setSizeMinorColumnMax(val: number, type: "default" | "clipd") {
         if (type === "default") {
@@ -659,8 +659,8 @@ export class CatalogWidgetStore {
 
     /**
      * Set the minimum value of minor axis for size mapping data
-     * @param val - number : minimum value of minor axis for size mapping data
-     * @param type - string : "default" or "clipd"
+     * @param val - minimum value of minor axis for size mapping data
+     * @param type - "default" or "clipd"
      */
     @action setSizeMinorColumnMin(val: number, type: "default" | "clipd") {
         if (type === "default") {
@@ -673,7 +673,7 @@ export class CatalogWidgetStore {
 
     /**
      * Reset the maximum or minimum values of minor axis for size mapping data to default
-     * @param type - string : "min" or "max"
+     * @param type - "min" or "max"
      */
     @action resetSizeMinorColumnValue(type: "min" | "max") {
         if (type === "min") {
@@ -713,7 +713,7 @@ export class CatalogWidgetStore {
 
     /**
      * Set the scaling type of minor axis for size mapping
-     * @param type - {@link FrameScaling} : scaling type of minor axis for size mapping
+     * @param type - scaling type of minor axis for size mapping
      */
     @action setSizeMinorScalingType(type: FrameScaling) {
         this.sizeMinorScalingType = type;
@@ -729,7 +729,7 @@ export class CatalogWidgetStore {
 
     /**
      * Select the column for minor axis size mapping
-     * @param column - string : column name for minor axis size mapping
+     * @param column - column name for minor axis size mapping
      */
     @action setSizeMinorMap(column: string) {
         if (this.sizeMinorMapColumn !== column) {
@@ -783,12 +783,8 @@ export class CatalogWidgetStore {
         this.catalogSizeRef = value;
     }
 
-    /**
-     * Set the unit of size mapping data
-     * @param unit - {@link AngularSizeUnit} : unit of size mapping data
-     */
-    @action setFactorToArcsec(unit: AngularSizeUnit) {
-        this.factorToArasec = {value: FACTOR_TO_ARCSEC.get(unit) as number, unit: unit};
+    @action setSizeAngularUnit(unit: AngularSizeUnit) {
+        this.sizeAngularUnit = unit;
     }
 
     @action setHeaderTableColumnWidts(vals: Array<number>) {
@@ -827,7 +823,7 @@ export class CatalogWidgetStore {
 
     /**
      * Set the size of catalog source
-     * @param size - number : size of catalog source in pixel or arcsec
+     * @param size - size of catalog source in pixel or arcsec
      */
     @action setCatalogSize(size: number) {
         if (this.catalogSizeRef === CatalogSizeRef.ANGULAR && size >= CatalogWidgetStore.MinOverlaySize / this.pixelArcsecFactor && size <= CatalogWidgetStore.MaxOverlaySize / this.pixelArcsecFactor) {
@@ -839,7 +835,7 @@ export class CatalogWidgetStore {
 
     /**
      * Set the color of catalog source
-     * @param color - string : color of catalog source
+     * @param color - color of catalog source
      */
     @action setCatalogColor(color: string) {
         this.catalogColor = color;
@@ -870,7 +866,7 @@ export class CatalogWidgetStore {
 
     /**
      * Set the color of highlighted catalog source
-     * @param color - string : color of highlight
+     * @param color - color of highlight
      */
     @action setHighlightColor(color: string) {
         this.highlightColor = color;
@@ -883,7 +879,7 @@ export class CatalogWidgetStore {
 
     /**
      * Set the thickness of catalog source
-     * @param val - number : thickness of catalog source
+     * @param val - thickness of catalog source
      */
     @action setThickness(val: number) {
         this.thickness = clamp(val, CatalogWidgetStore.MinThickness, CatalogWidgetStore.MaxThickness);
@@ -900,11 +896,11 @@ export class CatalogWidgetStore {
      * Boolean: if the catalog source is in angular size
      */
     @computed get isAngularSize(): boolean {
-        return this.catalogSizeRef === CatalogSizeRef.ANGULAR || this.catalogDisplayMode === CatalogDisplayMode.WORLD || this.catalogDisplayMode !== CatalogDisplayMode.CANVAS;
+        return this.catalogSizeRef === CatalogSizeRef.ANGULAR || this.catalogDisplayMode === CatalogDisplayMode.WORLD;
     }
 
     /**
-     * Interpolated orientation data for catalog sources
+     * orientation data for catalog sources
      */
     @computed get orientationMapData(): Float32Array {
         const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
@@ -925,7 +921,7 @@ export class CatalogWidgetStore {
     }
 
     /**
-     * Interpolated color data for catalog sources
+     * color data for catalog sources
      */
     @computed get colorMapData(): Float32Array {
         const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
@@ -946,7 +942,7 @@ export class CatalogWidgetStore {
     }
 
     /**
-     * Interpolated size data for catalog sources
+     * Size data for catalog sources
      */
     @computed get sizeMapData(): Float32Array {
         const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
@@ -959,7 +955,7 @@ export class CatalogWidgetStore {
     }
 
     /**
-     * Interpolated minor size data for catalog sources
+     * Minor size data for catalog sources
      */
     @computed get sizeMinorMapData(): Float32Array {
         const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
@@ -976,7 +972,8 @@ export class CatalogWidgetStore {
         const catalogStore = CatalogStore.Instance;
         const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(this.catalogFileId));
         const pixelAngularSize = frame?.spatialReference?.pixelUnitSizeArcsec.x ?? frame?.pixelUnitSizeArcsec.x ?? 1;
-        return this.factorToArasec.value / pixelAngularSize;
+        // return this.factorToArasec.value / pixelAngularSize;
+        return (FACTOR_TO_ARCSEC.get(this.sizeAngularUnit) ?? 1) / pixelAngularSize;
     }
 
     /**
@@ -997,6 +994,7 @@ export class CatalogWidgetStore {
         if (!this.disableSizeMap && column?.length && this.sizeColumnMin.clipd !== undefined && this.sizeColumnMax.clipd !== undefined) {
             const pointSize = this.pointSizebyType;
             let min = (this.isImagePixelSize ? 0 : this.sizeArea ? this.shapeSettings?.areaBase : this.shapeSettings?.diameterBase) ?? NaN;
+            console.log("gg", this.pixelSizeFactor, this.sizeColumnMax.clipd, pointSize.max, column);
             return CARTACompute.CalculateCatalogSize(column, this.sizeColumnMin.clipd, this.sizeColumnMax.clipd, pointSize.min + min, pointSize.max + min, this.sizeScalingType, this.sizeArea, this.pixelSizeFactor);
         }
         return new Float32Array(0);
@@ -1040,7 +1038,8 @@ export class CatalogWidgetStore {
         if (this.sizeArea) {
             return {min: this.sizeMin.area, max: this.sizeMax.area};
         } else {
-            return {min: this.sizeMin.diameter / this.pixelSizeFactor, max: this.sizeMax.diameter / this.pixelSizeFactor};
+            const factor = this.catalogDisplayMode === CatalogDisplayMode.WORLD ? 1 : this.pixelSizeFactor;
+            return {min: this.sizeMin.diameter / factor, max: this.sizeMax.diameter / factor};
         }
     }
 

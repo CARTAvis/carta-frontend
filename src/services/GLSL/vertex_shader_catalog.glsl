@@ -70,7 +70,7 @@ float getSquareSideByArea(float area, float minorSize) {
     }
 }
 
-float getSize(float pointSize) {
+float tuneSymSize(float pointSize) {
     if (uShapeType == BOX_FILLED || uShapeType == BOX_LINED || uShapeType == X_FILLED || uShapeType == X_LINED) {
         return pointSize / COS_45;
     } else if (uShapeType == TRIANGLE_FILLED_UP || uShapeType == TRIANGLE_LINED_UP || uShapeType == TRIANGLE_FILLED_DOWN || uShapeType == TRIANGLE_LINED_DOWN) {
@@ -104,7 +104,7 @@ void main() {
     v_selected = float(selectedSource.x);
     v_pointSize = uPointSize;
     if (uIsImagePixelSize) {
-        v_pointSize = getSize(uPointSize) * uZoomLevel;
+        v_pointSize = tuneSymSize(uPointSize) * uZoomLevel;
     }    
     v_featherWidth = uFeatherWidth;
 
