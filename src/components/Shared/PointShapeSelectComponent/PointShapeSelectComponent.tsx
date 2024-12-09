@@ -10,7 +10,7 @@ export const PointShapeSelectComponent = observer((props: {handleChange: (pointS
     const appStore = AppStore.Instance;
     const preference = appStore.preferenceStore;
 
-    const iconWrapper = (path: React.SVGProps<SVGPathElement>, color: string, fill: boolean, strokeWidth = 2, viewboxDefault = 16) => {
+    const iconWrapper = (path: React.ReactNode, color: string, fill: boolean, strokeWidth = 2, viewboxDefault = 16) => {
         let fillColor = color;
         if (!fill) {
             fillColor = "none";
