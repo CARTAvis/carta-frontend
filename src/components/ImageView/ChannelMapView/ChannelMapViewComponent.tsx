@@ -18,6 +18,8 @@ import {RegionViewComponent} from "../RegionView/RegionViewComponent";
 import {ToolbarComponent} from "../Toolbar/ToolbarComponent";
 import {VectorOverlayViewComponent} from "../VectorOverlayView/VectorOverlayView";
 
+import {ChannelMapLabelComponent} from "./ChannelMapLabelComponent";
+
 export class ChannelMapViewComponentProps {
     frame: FrameStore;
     docked: boolean;
@@ -29,7 +31,6 @@ export class ChannelMapViewComponentProps {
 export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = observer((props: ChannelMapViewComponentProps) => {
     const regionViewRef = React.useRef<RegionViewComponent>();
     const cursorOverlayRef = React.useRef<CursorOverlayComponent>();
-    const toolbarRef = React.useRef<ToolbarComponent>();
     const channelMapStore = props.channelMapStore;
     const frame = channelMapStore.masterFrame;
     const image = channelMapStore.masterImage;
@@ -309,6 +310,17 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                             refCanvas={column === 0 && (row === channelMapStore.numRows - 1 || row === lastRow) ? undefined : overlayComponentRef?.canvas}
                         />
                     )}
+                    <ChannelMapLabelComponent
+                        image={{
+                            type: ImageType.FRAME,
+                            store: channelMapStore.showAuxiliaryFrame && channelMapStore.auxiliaryFrame ? channelMapStore.auxiliaryFrame : frame
+                        }}
+                        overlaySettings={overlayStore}
+                        top={overlayComponentTop}
+                        left={overlayComponentLeft}
+                        docked={props.docked}
+                        channel={channelMapStore.showAuxiliaryFrame ? channelMapStore.auxiliaryFrameChannel : channel}
+                    />
                     <CatalogViewGLComponent
                         key={`catalog-view-component-${index}`}
                         ref={ref => {
@@ -341,7 +353,15 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
 
     return frame ? (
         <div id={`image-panel`} key={"channel-map"} onMouseOver={onMouseEnter} onMouseLeave={onMouseLeave}>
-            <div style={{top: outerOverlay?.paddingTop + (frame.overlayStore.colorbar.position === "top" ? colorbarOffset : 0), left: leftOuterOffset, position: "absolute"}}>
+            <div
+                style={{
+                    top: outerOverlay?.paddingTop + (frame.overlayStore.colorbar.position === "top" ? colorbarOffset : 0),
+                    left: leftOuterOffset,
+                    width: channelMapViewWidth - leftOuterOffset,
+                    height: channelMapViewHeight - bottomOuterOffset,
+                    position: "absolute"
+                }}
+            >
                 {overlayComponents}
                 <BeamProfileOverlayComponent frame={frame} top={imageRenderHeight * (channelMapStore.numRows - 1)} left={0} docked={props.docked} padding={10} />
                 <RasterViewComponent
@@ -360,6 +380,34 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     tileBasedRender={true}
                     channel={channelMapStore.showAuxiliaryFrame && channelMapStore.auxiliaryFrame ? channelMapStore.channelArray.map(channel => channelMapStore.auxiliaryFrameChannel) : channelMapStore.channelArray}
                 />
+                <CursorOverlayComponent
+                    ref={ref => (cursorOverlayRef.current = ref)}
+                    cursorInfo={frame.cursorInfo}
+                    cursorValue={frame.cursorInfo.isInsideImage ? frame.cursorValue.value : undefined}
+                    isValueCurrent={frame.isCursorValueCurrent}
+                    spectralInfo={frame.spectralInfo}
+                    width={channelMapViewWidth - leftOuterOffset}
+                    left={0}
+                    right={0}
+                    docked={props.docked}
+                    unit={frame.requiredUnit}
+                    top={0}
+                    currentStokes={AppStore.Instance.activeFrame?.requiredPolarizationInfo}
+                    cursorValueToPercentage={frame.requiredUnit === "%"}
+                    isPreview={frame.isPreview}
+                    visible={imageToolbarVisible}
+                />
+                <ToolbarComponent
+                    docked={props.docked}
+                    visible={imageToolbarVisible}
+                    frame={frame}
+                    activeLayer={AppStore.Instance.activeLayer}
+                    onActiveLayerChange={AppStore.Instance.updateActiveLayer}
+                    onRegionViewZoom={zoom => onRegionViewZoom(frame, zoom)}
+                    onZoomToFit={() => fitZoomFrameAndRegion(frame)}
+                    bottom={0}
+                    right={0}
+                />
             </div>
             {frame.overlayStore.colorbar.visible && (
                 <ColorbarComponent
@@ -373,35 +421,6 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     length={frame.overlayStore.colorbar.position === "right" ? channelMapViewHeight - bottomOuterOffset : channelMapViewWidth - leftOuterOffset - cornerOverlay?.paddingRight}
                 />
             )}
-            <ToolbarComponent
-                ref={ref => (toolbarRef.current = ref)}
-                docked={props.docked}
-                visible={imageToolbarVisible}
-                frame={frame}
-                activeLayer={AppStore.Instance.activeLayer}
-                onActiveLayerChange={AppStore.Instance.updateActiveLayer}
-                onRegionViewZoom={zoom => onRegionViewZoom(frame, zoom)}
-                onZoomToFit={() => fitZoomFrameAndRegion(frame)}
-                bottom={colorbarOffset}
-                right={0}
-            />
-            <CursorOverlayComponent
-                ref={ref => (cursorOverlayRef.current = ref)}
-                cursorInfo={frame.cursorInfo}
-                cursorValue={frame.cursorInfo.isInsideImage ? frame.cursorValue.value : undefined}
-                isValueCurrent={frame.isCursorValueCurrent}
-                spectralInfo={frame.spectralInfo}
-                width={frame?.overlayStore.renderWidth}
-                left={0}
-                right={0}
-                docked={props.docked}
-                unit={frame.requiredUnit}
-                top={0}
-                currentStokes={AppStore.Instance.activeFrame?.requiredPolarizationInfo}
-                cursorValueToPercentage={frame.requiredUnit === "%"}
-                isPreview={frame.isPreview}
-                visible={imageToolbarVisible}
-            />
             <OverlayComponent
                 key={`overlay-view-component-outer`}
                 image={{

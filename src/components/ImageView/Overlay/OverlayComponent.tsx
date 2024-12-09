@@ -26,7 +26,6 @@ export class OverlayComponentProps {
 @observer
 export class OverlayComponent extends React.Component<OverlayComponentProps> {
     canvas: HTMLCanvasElement;
-    channelNumberCanvas: HTMLCanvasElement;
 
     componentDidMount() {
         this.updateImage();
@@ -77,44 +76,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             } else {
                 requestAnimationFrame(this.renderCanvas);
             }
-        }
-
-        if (this.props.channel !== undefined && this.channelNumberCanvas) {
-            requestAnimationFrame(() => {
-                const destCanvas = this.channelNumberCanvas.getContext("2d", {willReadFrequently: true});
-                const frame = AppStore.Instance.channelMapStore.masterFrame;
-                const channelMapStore = AppStore.Instance.channelMapStore;
-                this.channelNumberCanvas.width = this.props.overlaySettings.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
-                this.channelNumberCanvas.height = this.props.overlaySettings.viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
-                const {spectralString, velocityString} = frame.getFreqWithChannel(this.props.channel);
-                const longestString = Math.max(spectralString.length, velocityString.length);
-                const fontSize = this.channelNumberCanvas.width / (longestString * 0.8);
-                destCanvas.font = `${fontSize}px Arial`;
-                destCanvas.fillStyle = "red";
-                destCanvas.textAlign = "left";
-                destCanvas.textBaseline = "top";
-                const x = this.props.overlaySettings.paddingLeft * devicePixelRatio * AppStore.Instance.imageRatio + 10;
-                let y = fontSize * 0.5;
-
-                if (channelMapStore.showChannelString) {
-                    destCanvas.fillText(`${channelMapStore.showChannelStringLabel ? "Channel: " : ""}${this.props.channel}`, x, y);
-                    y += fontSize * 1.5;
-                }
-                if (channelMapStore.showSpectralString) {
-                    const spectralLabelMatch = spectralString.match(/^[^:]+:\s*/);
-                    const spectralLabel = channelMapStore.showSpectralStringLabel && spectralLabelMatch ? spectralLabelMatch[0] : "";
-                    const spectralValue = spectralString.replace(/^[^:]+:\s*/, "");
-                    destCanvas.fillText(`${spectralLabel}${spectralValue}`, x, y);
-                    y += fontSize * 1.5;
-                }
-                if (channelMapStore.showVelocityString) {
-                    const velocityLabelMatch = velocityString.match(/^[^:]+:\s*/);
-                    const velocityLabel = channelMapStore.showVelocityStringLabel && velocityLabelMatch ? velocityLabelMatch[0] : "";
-                    const velocityValue = velocityString.replace(/^[^:]+:\s*/, "");
-                    destCanvas.fillText(`${velocityLabel}${velocityValue}`, x, y);
-                    y += fontSize * 1.5;
-                }
-            });
         }
     }
 
@@ -239,11 +200,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     throttledRenderCanvas = _.throttle(this.renderCanvas, 50);
 
     private getRef = ref => {
-        if (ref?.id === "channel-number-canvas") {
-            this.channelNumberCanvas = ref;
-        } else {
-            this.canvas = ref;
-        }
+        this.canvas = ref;
     };
 
     render() {
@@ -332,13 +289,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     id="overlay-canvas"
                     ref={this.getRef}
                     key={`overlay-canvas-${frame.frameInfo.fileId}-${this.props.channel}`}
-                />
-                <canvas
-                    className={className}
-                    style={{top: this.props.top || 0, left: this.props.left || 0, width: w, height: h}}
-                    id="channel-number-canvas"
-                    ref={this.getRef}
-                    key={`channel-number-canvas-${frame.frameInfo.fileId}-${this.props.channel}`}
                 />
             </>
         );
