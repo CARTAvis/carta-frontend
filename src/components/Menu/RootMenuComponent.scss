@@ -39,6 +39,10 @@
     }
 }
 
+.#{$ns}-dark .root-menu .root-menu-entry {
+    background-color: $dark-gray4 !important;
+}
+
 .snippet-run-button {
     min-height: 20px !important;
     min-width: 20px;
