@@ -43,7 +43,7 @@ export enum CatalogSettingsTabs {
 }
 
 /**
- * Display catalog sources on fix or mapped sizes (Canvas) or on their angular sizes (World)
+ * Display catalog sources with single or mapped sizes (Canvas) or their angular sizes (World)
  */
 export enum CatalogDisplayMode {
     CANVAS = "Canvas",
@@ -51,7 +51,7 @@ export enum CatalogDisplayMode {
 }
 
 /**
- * Catalog source size on the screen pixel, image pixel, or angular size
+ * Catalog source size on the screen pixel or image pixel (angular size)
  */
 export enum CatalogSizeRef {
     CANVAS = "Canvas",
