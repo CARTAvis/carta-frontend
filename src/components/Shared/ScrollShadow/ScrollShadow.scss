@@ -43,7 +43,3 @@
         @include scroll-shadow-cover-background($pt-dark-app-background-color);
     }
 }
-
-.floating-widget .#{$ns}-dark .scroll-shadow-cover {
-    @include scroll-shadow-cover-background($dark-gray3);
-}

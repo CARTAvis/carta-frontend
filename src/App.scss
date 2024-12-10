@@ -20,7 +20,7 @@ body {
     z-index: -100;
     user-select: none;
     .#{$ns}-dark {
-        background-color: $dark-gray3;
+        background-color: $pt-dark-app-background-color;
     }
 }
 
