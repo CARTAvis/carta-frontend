@@ -2,7 +2,7 @@ import * as AST from "ast_wrapper";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 
 import {WCSType} from "models";
-import {AppStore, PreferenceStore} from "stores";
+import {AlertStore, AppStore, PreferenceStore} from "stores";
 import {FrameStore, OverlayBeamStore, WCS_PRECISION} from "stores/Frame";
 import {clamp, getColorForTheme, toFixed} from "utilities";
 
@@ -153,8 +153,17 @@ export class OverlayGlobalSettings {
         this.labelType = labelType;
     }
 
-    @action setSystem(system: SystemType) {
-        this.system = system;
+    @action async setSystem(system: SystemType) {
+        const frames = AppStore.Instance.frames;
+        if ((this.system === SystemType.Image) !== (system === SystemType.Image) && frames.map(f => f.spatialReference !== null).includes(true)) {
+            const confirm = await AlertStore.Instance.showInteractiveAlert("Switching between WCS/IMG will dismiss spatial matching!");
+            if (confirm) {
+                frames.forEach(f => f.clearSpatialReference());
+                this.system = system;
+            }
+        } else {
+            this.system = system;
+        }
     }
 
     @action setDefaultSystem(system: SystemType) {
