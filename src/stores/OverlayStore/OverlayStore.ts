@@ -156,7 +156,7 @@ export class OverlayGlobalSettings {
     @action async setSystem(system: SystemType) {
         const frames = AppStore.Instance.frames;
         if ((this.system === SystemType.Image) !== (system === SystemType.Image) && frames.map(f => f.spatialReference !== null).includes(true)) {
-            const confirm = await AlertStore.Instance.showInteractiveAlert("Switching between WCS/IMG will dismiss spatial matching!");
+            const confirm = await AlertStore.Instance.showInteractiveAlert("Switching system between world and image coordinates will disable spatial matching.");
             if (confirm) {
                 frames.forEach(f => f.clearSpatialReference());
                 this.system = system;
