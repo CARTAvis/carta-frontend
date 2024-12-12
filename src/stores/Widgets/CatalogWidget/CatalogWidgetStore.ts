@@ -46,17 +46,11 @@ export enum CatalogSettingsTabs {
  * Display catalog sources with single or mapped sizes (Canvas) or their angular sizes (World)
  */
 export enum CatalogDisplayMode {
-    CANVAS = "Canvas",
-    WORLD = "World"
+    CANVAS = "Custom",
+    WORLD = "Angular size"
 }
 
-/**
- * Catalog source size on the screen pixel or image pixel (angular size)
- */
-export enum CatalogSizeRef {
-    CANVAS = "Canvas",
-    IMAGE = "Image"
-}
+export const CatalogSizeUnits = ["screen px", "image px", ...Object.values(AngularSizeUnit)];
 
 export type ValueClip = "size-min" | "size-max" | "angle-min" | "angle-max";
 
@@ -104,7 +98,6 @@ export class CatalogWidgetStore {
     @observable settingsTabId: CatalogSettingsTabs;
     @observable thickness: number;
     @observable catalogDisplayMode: CatalogDisplayMode;
-    @observable catalogSizeRef: CatalogSizeRef;
     // size map
     @observable sizeMapColumn: string;
     @observable sizeColumnMax: {default: number | undefined; clipd: number | undefined};
@@ -117,6 +110,7 @@ export class CatalogWidgetStore {
     @observable sizeColumnMinLocked: boolean;
     @observable sizeColumnMaxLocked: boolean;
     @observable sizeUnit: AngularSizeUnit | string;
+    @observable angularSizeUnit: AngularSizeUnit;
     // size map minor
     @observable sizeMinorMapColumn: string;
     @observable sizeMinorColumnMax: {default: number | undefined; clipd: number | undefined};
@@ -189,9 +183,9 @@ export class CatalogWidgetStore {
         this.sizeColumnMaxLocked = false;
         this.sizeMinorColumnMinLocked = false;
         this.sizeMinorColumnMaxLocked = false;
-        this.sizeUnit = "pixel";
+        this.sizeUnit = "screen px";
+        this.angularSizeUnit = AngularSizeUnit.ARCSEC;
         this.catalogDisplayMode = CatalogDisplayMode.CANVAS;
-        this.catalogSizeRef = CatalogSizeRef.CANVAS;
 
         reaction(
             () => this.sizeMapData,
@@ -775,15 +769,19 @@ export class CatalogWidgetStore {
     }
 
     /**
-     * Set the catalog source size reference
-     * @param value - {@link CatalogSizeRef} : size reference of catalog source
+     * Set unit for catalog source size
+     * @param unit - unit of catalog source size ({@link CatalogSizeUnits})
      */
-    @action setCatalogSizeRef(value: CatalogSizeRef) {
-        this.catalogSizeRef = value;
-    }
-
     @action setSizeUnit(unit: AngularSizeUnit | string) {
         this.sizeUnit = unit;
+    }
+
+    /**
+     * Set angular unit for catalog source size in world coordinates
+     * @param unit - unit of catalog source size ({@link AngularSizeUnit})
+     */
+    @action setAngularSizeUnit(unit: AngularSizeUnit) {
+        this.angularSizeUnit = unit;
     }
 
     @action setHeaderTableColumnWidts(vals: Array<number>) {
@@ -884,18 +882,18 @@ export class CatalogWidgetStore {
      * Boolean: if the catalog source is in image pixel
      */
     @computed get isImagePixelSize(): boolean {
-        return this.catalogSizeRef !== CatalogSizeRef.CANVAS || this.catalogDisplayMode !== CatalogDisplayMode.CANVAS;
+        return this.sizeUnit !== "screen px" || this.catalogDisplayMode === CatalogDisplayMode.WORLD;
     }
 
     /**
      * Boolean: if the catalog source is in angular size
      */
     @computed get isAngularSize(): boolean {
-        return (this.catalogSizeRef === CatalogSizeRef.IMAGE && this.sizeUnit !== "pixel") || this.catalogDisplayMode === CatalogDisplayMode.WORLD;
+        return (this.sizeUnit !== "screen px" && this.sizeUnit !== "image px") || this.catalogDisplayMode === CatalogDisplayMode.WORLD;
     }
 
     /**
-     * orientation data for catalog sources
+     * Orientation data for catalog sources
      */
     @computed get orientationMapData(): Float32Array {
         const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
@@ -916,7 +914,7 @@ export class CatalogWidgetStore {
     }
 
     /**
-     * color data for catalog sources
+     * Color data for catalog sources
      */
     @computed get colorMapData(): Float32Array {
         const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
@@ -967,7 +965,8 @@ export class CatalogWidgetStore {
         const catalogStore = CatalogStore.Instance;
         const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(this.catalogFileId));
         const pixelAngularSize = frame?.spatialReference?.pixelUnitSizeArcsec.x ?? frame?.pixelUnitSizeArcsec.x ?? 1;
-        return this.isAngularSize ? (FACTOR_TO_ARCSEC.get(this.sizeUnit as AngularSizeUnit) ?? 1) / pixelAngularSize : 1;
+        const sizeUnit = this.catalogDisplayMode === CatalogDisplayMode.WORLD ? this.angularSizeUnit : this.sizeUnit;
+        return this.isAngularSize ? (FACTOR_TO_ARCSEC.get(sizeUnit as AngularSizeUnit) ?? 1) / pixelAngularSize : 1;
     }
 
     /**

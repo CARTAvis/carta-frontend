@@ -22,10 +22,18 @@
         text-align: right;
     }
 
-    .#{$ns}-form-group.#{$ns}-inline .#{$ns}-label {
-        width: 8em;
-        min-width: 8em;
-        text-align: right;
+    .#{$ns}-form-group.#{$ns}-inline {
+        .#{$ns}-label {
+            width: 8em;
+            min-width: 8em;
+            text-align: right;
+        }
+        .#{$ns}-form-content {
+            margin: 0 3px;
+        }
+        .#{$ns}-button-group {
+            width: 90%;
+        }
     }
 
     .#{$ns}-numeric-input {

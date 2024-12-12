@@ -76,6 +76,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const isImagePixelSize = catalogWidgetStore.isImagePixelSize;
             const isAngularSize = catalogWidgetStore.isAngularSize;
             const sizeUnit = catalogWidgetStore.sizeUnit;
+            const angularSizeUnit = catalogWidgetStore.angularSizeUnit;
             // size minor
             const sizeMinorMapColumn = catalogWidgetStore.sizeMinorMapColumn;
             const sizeMinorColumnMaxClipd = catalogWidgetStore.sizeMinorColumnMax.clipd;
