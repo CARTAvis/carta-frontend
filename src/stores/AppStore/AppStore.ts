@@ -603,6 +603,9 @@ export class AppStore {
                 this.setSpectralMatchingEnabled(newFrame, true);
             }
             if (this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL && this.spatialReference !== newFrame) {
+                if (this.overlayStore.isImgCoordinates) {
+                    AST.setI(newFrame.wcsInfo, "Current", 1);
+                }
                 this.setSpatialMatchingEnabled(newFrame, true);
             }
             if (this.preferenceStore.autoWCSMatching & WCSMatchingType.RASTER && this.rasterScalingReference !== newFrame) {
