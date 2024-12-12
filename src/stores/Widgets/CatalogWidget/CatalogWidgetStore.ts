@@ -50,8 +50,6 @@ export enum CatalogDisplayMode {
     WORLD = "Angular size"
 }
 
-export const CatalogSizeUnits = ["screen px", "image px", ...Object.values(AngularSizeUnit)];
-
 export type ValueClip = "size-min" | "size-max" | "angle-min" | "angle-max";
 
 export class CatalogWidgetStore {
@@ -98,6 +96,7 @@ export class CatalogWidgetStore {
     @observable settingsTabId: CatalogSettingsTabs;
     @observable thickness: number;
     @observable catalogDisplayMode: CatalogDisplayMode;
+    catalogSizeUnits: string[];
     // size map
     @observable sizeMapColumn: string;
     @observable sizeColumnMax: {default: number | undefined; clipd: number | undefined};
@@ -186,6 +185,7 @@ export class CatalogWidgetStore {
         this.sizeUnit = "screen px";
         this.angularSizeUnit = AngularSizeUnit.ARCSEC;
         this.catalogDisplayMode = CatalogDisplayMode.CANVAS;
+        this.catalogSizeUnits = ["screen px", "image px", ...Object.values(AngularSizeUnit)];
 
         reaction(
             () => this.sizeMapData,

@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 import {CatalogOverlayComponent} from "components";
 import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingSelectComponent} from "components/Shared";
 import {AngularSizeUnit, CatalogOverlay} from "models";
-import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogSizeUnits, CatalogStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {CatalogDisplayMode, CatalogOverlayShape, CatalogSettingsTabs, CatalogWidgetStore, ValueClip} from "stores/Widgets";
 import {getColorForTheme, SWATCH_COLORS} from "utilities";
 
@@ -314,7 +314,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     <Collapse className="select-angular-unit" isOpen={widgetStore.disableSizeMap}>
                         <FormGroup inline={true}>
                             <Select
-                                items={CatalogSizeUnits}
+                                items={widgetStore.catalogSizeUnits}
                                 activeItem={null}
                                 onItemSelect={units => widgetStore.setSizeUnit(units)}
                                 itemRenderer={this.renderUnitPopOver}
@@ -362,7 +362,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         <Collapse className="select-angular-unit" isOpen={!widgetStore.sizeArea}>
                             <FormGroup inline={true}>
                                 <Select
-                                    items={CatalogSizeUnits}
+                                    items={widgetStore.catalogSizeUnits}
                                     activeItem={null}
                                     onItemSelect={units => widgetStore.setSizeUnit(units)}
                                     itemRenderer={this.renderUnitPopOver}
@@ -392,7 +392,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         <Collapse className="select-angular-unit" isOpen={!widgetStore.sizeArea}>
                             <FormGroup inline={true}>
                                 <Select
-                                    items={CatalogSizeUnits}
+                                    items={widgetStore.catalogSizeUnits}
                                     activeItem={null}
                                     onItemSelect={units => widgetStore.setSizeUnit(units)}
                                     itemRenderer={this.renderUnitPopOver}
