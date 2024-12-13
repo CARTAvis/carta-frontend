@@ -63,6 +63,11 @@ body {
     margin-right: -1px !important;
 }
 
+// overwrite blueprint table dark theme background to the widget background
+.#{$ns}-dark .#{$ns}-table-quadrant {
+    background-color: $pt-dark-app-background-color !important;
+}
+
 // hide plotly tips
 body {
     div.plotly-notifier {
