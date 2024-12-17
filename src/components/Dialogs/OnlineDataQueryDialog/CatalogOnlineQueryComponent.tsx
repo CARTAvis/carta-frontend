@@ -144,9 +144,7 @@ export class CatalogQueryComponent extends React.Component {
                 </FormGroup>
                 <FormGroup inline={false} label="Center coordinates" disabled={disable}>
                     <Select
-                        items={Object.keys(SystemType)
-                            .map(key => SystemType[key])
-                            .filter(sys => sys !== SystemType.Image)}
+                        items={Object.values(SystemType).filter(sys => sys !== SystemType.Image)}
                         activeItem={null}
                         onItemSelect={type => appStore.overlayStore.global.setSystem(type)}
                         itemRenderer={this.renderSysTypePopOver}
