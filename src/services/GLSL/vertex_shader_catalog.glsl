@@ -128,7 +128,6 @@ void main() {
         float size = sizeMajor.x;
         if (uIsImagePixelSize) {
             size = tuneSize(size) * uZoomLevel;
-            if (uShapeType == ELLIPSE_LINED) size *= 2.0;
         } 
 
         if(!isNaN(size)) {
