@@ -1366,6 +1366,8 @@ export class FrameStore {
             }
         }
 
+        this.updateWcsSystem(this.overlayStore.numbers.formatStringX, this.overlayStore.numbers.formatStringY, this.overlayStore.global.explicitSystem); // for image coordinates selected
+
         if (!this.wcsInfo) {
             this.logStore.addWarning(`Problem processing headers in file ${this.filename} for AST`, ["ast"]);
             this.wcsInfo = AST.initDummyFrame();
