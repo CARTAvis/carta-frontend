@@ -168,8 +168,9 @@ void main() {
     if (uShapeType == ELLIPSE_LINED) {
         if (uIsImagePixelSize) {
             v_featherWidth = v_pointSize;
+        } else {
+            v_featherWidth = v_pointSize / 50.0 * 15.0 + 0.7;
         }
-        else v_featherWidth = v_pointSize / 50.0 * 15.0 + 0.7;
     }
 
     vec2 offset = getOffsetFromId(gl_VertexID);
