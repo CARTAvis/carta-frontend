@@ -127,7 +127,7 @@ void main() {
         vec4 sizeMajor = getValueByIndexFromTexture(uSizeTexture, dataPointIndex);
         float size = sizeMajor.x;
         if (uIsImagePixelSize) {
-            size = size * uZoomLevel;
+            size = tuneSymSize(size) * uZoomLevel;
             if (uShapeType == ELLIPSE_LINED) size *= 2.0;
         } 
 
@@ -154,7 +154,7 @@ void main() {
         vec4 sizeMinor = getValueByIndexFromTexture(uSizeMinorTexture, dataPointIndex);
         v_minorSize = sizeMinor.x;
         if (uIsImagePixelSize) {
-            v_minorSize = v_minorSize * uZoomLevel;
+            v_minorSize = tuneSymSize(v_minorSize) * uZoomLevel;
             if (uShapeType == ELLIPSE_LINED) v_minorSize *= 2.0;
         } 
 
