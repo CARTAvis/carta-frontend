@@ -70,7 +70,7 @@ float getSquareSideByArea(float area, float minorSize) {
     }
 }
 
-float tuneSymSize(float pointSize) {
+float tuneSize(float pointSize) {
     if (uShapeType == BOX_FILLED || uShapeType == BOX_LINED || uShapeType == X_FILLED || uShapeType == X_LINED) {
         return pointSize / COS_45;
     } else if (uShapeType == TRIANGLE_FILLED_UP || uShapeType == TRIANGLE_LINED_UP || uShapeType == TRIANGLE_FILLED_DOWN || uShapeType == TRIANGLE_LINED_DOWN) {
@@ -104,7 +104,7 @@ void main() {
     v_selected = float(selectedSource.x);
     v_pointSize = uPointSize;
     if (uIsImagePixelSize) {
-        v_pointSize = tuneSymSize(uPointSize) * uZoomLevel;
+        v_pointSize = tuneSize(uPointSize) * uZoomLevel;
     }    
     v_featherWidth = uFeatherWidth;
 
@@ -127,7 +127,7 @@ void main() {
         vec4 sizeMajor = getValueByIndexFromTexture(uSizeTexture, dataPointIndex);
         float size = sizeMajor.x;
         if (uIsImagePixelSize) {
-            size = tuneSymSize(size) * uZoomLevel;
+            size = tuneSize(size) * uZoomLevel;
             if (uShapeType == ELLIPSE_LINED) size *= 2.0;
         } 
 
@@ -154,8 +154,7 @@ void main() {
         vec4 sizeMinor = getValueByIndexFromTexture(uSizeMinorTexture, dataPointIndex);
         v_minorSize = sizeMinor.x;
         if (uIsImagePixelSize) {
-            v_minorSize = tuneSymSize(v_minorSize) * uZoomLevel;
-            if (uShapeType == ELLIPSE_LINED) v_minorSize *= 2.0;
+            v_minorSize = tuneSize(v_minorSize) * uZoomLevel;
         } 
 
         if (uAreaModeMinor) {

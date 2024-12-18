@@ -576,7 +576,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return <MenuItem key={plotType} text={plotType} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
-    private onTableResize = (newSize: number) => {
+    @action private onTableResize = (newSize: number) => {
         // update table if resizing happend)
         const position = clamp(Math.floor((newSize / (this.height - 130)) * 100), CatalogWidgetStore.MinTableSeparatorPosition, CatalogWidgetStore.MaxTableSeparatorPosition);
 

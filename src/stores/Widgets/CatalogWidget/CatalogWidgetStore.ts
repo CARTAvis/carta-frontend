@@ -415,7 +415,7 @@ export class CatalogWidgetStore {
 
     /**
      * Set the colormap direction
-     * @param val - boolean : true for inverted colormap, false for normal colormap
+     * @param val - true for inverted colormap, false for normal colormap
      */
     @action setColorMapDirection(val: boolean) {
         this.invertedColorMap = val;
@@ -575,7 +575,7 @@ export class CatalogWidgetStore {
 
     /**
      * Set the size mapping depending on the area or diameter
-     * @param val - boolean : true for area, false for diameter
+     * @param val - true for area, false for diameter
      */
     @action setSizeArea(val: boolean) {
         this.sizeArea = val;
@@ -714,7 +714,7 @@ export class CatalogWidgetStore {
 
     /**
      * Set the minor axis mapping depending on the area or diameter
-     * @param val - boolean : true for area, false for diameter
+     * @param val - true for area, false for diameter
      */
     @action setSizeMinorArea(val: boolean) {
         this.sizeMinorArea = val;
@@ -746,7 +746,7 @@ export class CatalogWidgetStore {
 
     /**
      * Set the catalog source display mode
-     * @param value - {@link CatalogDisplayMode} : display mode of catalog source
+     * @param value - display mode of catalog source
      */
     @action setCatalogDisplayMode(value: CatalogDisplayMode) {
         this.catalogDisplayMode = value;
@@ -836,7 +836,7 @@ export class CatalogWidgetStore {
 
     /**
      * Set the shape of catalog source
-     * @param shape - {@link CatalogOverlayShape} : shape of catalog source
+     * @param shape - shape of catalog source
      */
     @action setCatalogShape(shape: CatalogOverlayShape) {
         this.catalogShape = shape;
@@ -879,14 +879,14 @@ export class CatalogWidgetStore {
     }
 
     /**
-     * Boolean: if the catalog source is in image pixel
+     * If the catalog source is in image pixel
      */
     @computed get isImagePixelSize(): boolean {
         return this.canvasSizeUnit !== "screen px" || this.catalogDisplayMode === CatalogDisplayMode.WORLD;
     }
 
     /**
-     * Boolean: if the catalog source is in angular size
+     * If the catalog source is in angular size
      */
     @computed get isAngularSize(): boolean {
         return (this.canvasSizeUnit !== "screen px" && this.canvasSizeUnit !== "image px") || this.catalogDisplayMode === CatalogDisplayMode.WORLD;
