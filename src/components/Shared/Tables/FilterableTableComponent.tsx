@@ -353,7 +353,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         return (
             <Table2
                 className={className}
-                ref={table.updateTableRef ? ref => table.updateTableRef(ref) : null}
+                ref={table.updateTableRef ?? null}
                 numRows={table.numVisibleRows}
                 renderMode={RenderMode.BATCH}
                 enableRowReordering={false}
