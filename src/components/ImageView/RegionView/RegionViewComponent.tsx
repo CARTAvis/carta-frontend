@@ -758,7 +758,6 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: Regi
             const regionSet = this.props.frame?.regionSet;
             return regions.map(r => {
                 const commonProps = {
-                    key: r.regionId,
                     region: r,
                     frame: this.props.frame,
                     layerWidth: this.props.width,
@@ -770,11 +769,11 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: Regi
                 };
 
                 if (r.regionType === CARTA.RegionType.POINT || r.regionType === CARTA.RegionType.ANNPOINT) {
-                    return <PointRegionComponent {...commonProps} />;
+                    return <PointRegionComponent {...commonProps} key={r.regionId} />;
                 } else if (r.regionType === CARTA.RegionType.ANNCOMPASS) {
-                    return <CompassAnnotation {...commonProps} />;
+                    return <CompassAnnotation {...commonProps} key={r.regionId} />;
                 } else if (r.regionType === CARTA.RegionType.ANNRULER) {
-                    return <RulerAnnotation {...commonProps} />;
+                    return <RulerAnnotation {...commonProps} key={r.regionId} />;
                 } else {
                     const allProps = {
                         ...commonProps,
@@ -788,9 +787,9 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: Regi
                         r.regionType === CARTA.RegionType.ANNLINE ||
                         r.regionType === CARTA.RegionType.ANNVECTOR ||
                         r.regionType === CARTA.RegionType.ANNPOLYLINE ? (
-                        <LineSegmentRegionComponent {...allProps} />
+                        <LineSegmentRegionComponent {...allProps} key={r.regionId} />
                     ) : (
-                        <SimpleShapeRegionComponent {...allProps} />
+                        <SimpleShapeRegionComponent {...allProps} key={r.regionId} />
                     );
                 }
             });

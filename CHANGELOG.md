@@ -35,6 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fix incorrect rendering of image view when moving the window to monitors with different screen resolution ([[#2285](https://github.com/CARTAvis/carta-frontend/issues/2285)])
 ### Changed
 * Changed in-app help context to the online readthedocs user manual ([#2241](https://github.com/CARTAvis/carta-frontend/issues/2241)).
+* Fixed the unit label of the y axis for flux density in the spectral profiles ([#2355](https://github.com/CARTAvis/carta-frontend/issues/2355)).
+* Axes order of the PV diagram becomes a sticky parameter ([#2402](https://github.com/CARTAvis/carta-frontend/issues/2402)).
 
 
 ## [4.1.0]
