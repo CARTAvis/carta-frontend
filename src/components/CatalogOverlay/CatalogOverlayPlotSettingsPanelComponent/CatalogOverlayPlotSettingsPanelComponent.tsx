@@ -15,7 +15,7 @@ import {getColorForTheme, SWATCH_COLORS} from "utilities";
 
 import "./CatalogOverlayPlotSettingsPanelComponent.scss";
 
-const IconWrapper = (path: React.SVGProps<SVGPathElement>, color: string, fill: boolean, strokeWidth = 2, viewboxDefault = 16) => {
+const IconWrapper = (path: React.ReactNode, color: string, fill: boolean, strokeWidth = 2, viewboxDefault = 16) => {
     let fillColor = color;
     if (!fill) {
         fillColor = "none";

@@ -730,8 +730,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
                 if (this.profileSelectionStore.isStatsTypeFluxDensityOnly && this.profileSelectionStore.isCoordinatesPangleOnly) {
                     return "";
-                } else if (this.profileSelectionStore.isStatsTypeFluxDensityOnly) {
-                    return unitString && FindIntensityUnitType(unitString) === IntensityUnitType.Kelvin ? "K" : "Jy";
+                } else if (this.profileSelectionStore.isStatsTypeFluxDensityOnly && unitString) {
+                    return FindIntensityUnitType(unitString) === IntensityUnitType.Kelvin ? unitString : unitString.substring(0, unitString.indexOf("/"));
                 } else if (this.profileSelectionStore.isStatsTypeSumSqOnly) {
                     return `(${unitString})^2`;
                 } else {
