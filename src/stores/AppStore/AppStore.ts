@@ -560,9 +560,8 @@ export class AppStore {
         };
         this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfo.type, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes, generated);
 
-        console.log("before constructor");
         let newFrame = new FrameStore(frameInfo);
-        console.log("after constructor");
+
         // Place frame in frame array (replace frame with the same ID if it exists)
         const existingFrameIndex = this.imageViewConfigStore.getImageListIndex(ImageType.FRAME, ack.fileId);
         if (existingFrameIndex !== -1) {
