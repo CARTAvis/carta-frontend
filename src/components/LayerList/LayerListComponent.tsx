@@ -1,12 +1,12 @@
 import * as React from "react";
 import {CSSProperties} from "react";
-import ReactResizeDetector from "react-resize-detector";
 import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, ColumnHeaderCell, MenuContext, RowHeaderCell, SelectionModes, Table2} from "@blueprintjs/table";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
+import {ResizeDetector} from "components/Shared";
 import {ImageItem, ImageType} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
 import {LayerListSettingsTabs} from "stores/Widgets";
@@ -406,9 +406,11 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
         if (imageNum <= 0) {
             return (
-                <div className="layer-list-widget">
-                    <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;<ReactResizeDetector handleWidth handleHeight onResize={this.onResize}></ReactResizeDetector>
-                </div>
+                <ResizeDetector onResize={this.onResize}>
+                    <div className="layer-list-widget">
+                        <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
+                    </div>
+                </ResizeDetector>
             );
         }
 
@@ -448,32 +450,33 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         ];
 
         return (
-            <div className="layer-list-widget">
-                {this.width > 0 && (
-                    <Table2
-                        numRows={imageNum}
-                        rowHeaderCellRenderer={this.rowHeaderCellRenderer}
-                        enableRowHeader={true}
-                        enableRowReordering={true}
-                        enableRowResizing={false}
-                        selectionModes={SelectionModes.ROWS_ONLY}
-                        enableMultipleSelection={true}
-                        onRowsReordered={this.handleFileReordered}
-                        columnWidths={this.columnWidths}
-                        enableColumnResizing={true}
-                        onColumnWidthChanged={this.onColumnWidthsChange}
-                        bodyContextMenuRenderer={this.contextMenuRenderer}
-                        cellRendererDependencies={cellRendererDependencies}
-                    >
-                        <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.fileNameRenderer} />
-                        <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.typeRenderer} />
-                        <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.matchingRenderer} />
-                        <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.channelRenderer} />
-                        <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.stokesRenderer} />
-                    </Table2>
-                )}
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}></ReactResizeDetector>
-            </div>
+            <ResizeDetector onResize={this.onResize}>
+                <div className="layer-list-widget">
+                    {this.width > 0 && (
+                        <Table2
+                            numRows={imageNum}
+                            rowHeaderCellRenderer={this.rowHeaderCellRenderer}
+                            enableRowHeader={true}
+                            enableRowReordering={true}
+                            enableRowResizing={false}
+                            selectionModes={SelectionModes.ROWS_ONLY}
+                            enableMultipleSelection={true}
+                            onRowsReordered={this.handleFileReordered}
+                            columnWidths={this.columnWidths}
+                            enableColumnResizing={true}
+                            onColumnWidthChanged={this.onColumnWidthsChange}
+                            bodyContextMenuRenderer={this.contextMenuRenderer}
+                            cellRendererDependencies={cellRendererDependencies}
+                        >
+                            <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.fileNameRenderer} />
+                            <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.typeRenderer} />
+                            <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.matchingRenderer} />
+                            <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.channelRenderer} />
+                            <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.stokesRenderer} />
+                        </Table2>
+                    )}
+                </div>
+            </ResizeDetector>
         );
     }
 }

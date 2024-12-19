@@ -1,5 +1,4 @@
 import * as React from "react";
-import ReactResizeDetector from "react-resize-detector";
 import {Classes, NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -7,7 +6,7 @@ import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, ResizeDetector} from "components/Shared";
 import {Point2D, POLARIZATIONS} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
@@ -342,18 +341,19 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         const className = classNames("histogram-widget", {[Classes.DARK]: appStore.darkTheme});
 
         return (
-            <div className={className}>
-                <div className="histogram-container">
-                    <HistogramToolbarComponent widgetStore={this.widgetStore} />
-                    <div className="histogram-plot">
-                        <LinePlotComponent {...this.currentLinePlotProps} />
-                    </div>
-                    <div>
-                        <ProfilerInfoComponent info={this.genProfilerInfo(unit)} />
+            <ResizeDetector onResize={this.onResize} throttleTime={1000}>
+                <div className={className}>
+                    <div className="histogram-container">
+                        <HistogramToolbarComponent widgetStore={this.widgetStore} />
+                        <div className="histogram-plot">
+                            <LinePlotComponent {...this.currentLinePlotProps} />
+                        </div>
+                        <div>
+                            <ProfilerInfoComponent info={this.genProfilerInfo(unit)} />
+                        </div>
                     </div>
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}></ReactResizeDetector>
-            </div>
+            </ResizeDetector>
         );
     }
 }

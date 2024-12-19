@@ -1,5 +1,4 @@
 import * as React from "react";
-import ReactResizeDetector from "react-resize-detector";
 import SplitPane, {Pane} from "react-split-pane";
 import {Classes, Colors, NonIdealState} from "@blueprintjs/core";
 import classNames from "classnames";
@@ -7,7 +6,7 @@ import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, PlotType, SmoothingType} from "components/Shared";
+import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, PlotType, ResizeDetector, SmoothingType} from "components/Shared";
 import {Point2D, SpectralType} from "models";
 import {AnimatorStore, AppStore, DefaultWidgetConfig, FittingContinuum, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {MultiPlotData, SpectralProfileWidgetStore} from "stores/Widgets";
@@ -537,28 +536,29 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         const className = classNames("spectral-profiler-widget", {[Classes.DARK]: appStore.darkTheme, "linked-to-widget-highlighted": this.widgetStore.isHighlighted});
 
         return (
-            <div className={className}>
-                <div className="profile-container">
-                    <div className="profile-toolbar">
-                        <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} id={this.props.id} />
+            <ResizeDetector onResize={this.onResize} throttleTime={33}>
+                <div className={className}>
+                    <div className="profile-container">
+                        <div className="profile-toolbar">
+                            <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} id={this.props.id} />
+                        </div>
+                        <SplitPane
+                            className="body-split-pane"
+                            split="horizontal"
+                            primary={"second"}
+                            defaultSize={clamp(this.plotData?.numProfiles > 0 ? this.plotData.numProfiles * 20 : INFO_HEIGHT_MIN, INFO_HEIGHT_MIN, INFO_HEIGHT_MAX)}
+                            minSize={INFO_HEIGHT_MIN}
+                        >
+                            <Pane className={"line-plot-container"}>
+                                <LinePlotComponent {...linePlotProps} />
+                            </Pane>
+                            <Pane className={"info-container"}>
+                                <SpectralProfilerInfoComponent profileInfo={this.genProfilerInfo()} />
+                            </Pane>
+                        </SplitPane>
                     </div>
-                    <SplitPane
-                        className="body-split-pane"
-                        split="horizontal"
-                        primary={"second"}
-                        defaultSize={clamp(this.plotData?.numProfiles > 0 ? this.plotData.numProfiles * 20 : INFO_HEIGHT_MIN, INFO_HEIGHT_MIN, INFO_HEIGHT_MAX)}
-                        minSize={INFO_HEIGHT_MIN}
-                    >
-                        <Pane className={"line-plot-container"}>
-                            <LinePlotComponent {...linePlotProps} />
-                        </Pane>
-                        <Pane className={"info-container"}>
-                            <SpectralProfilerInfoComponent profileInfo={this.genProfilerInfo()} />
-                        </Pane>
-                    </SplitPane>
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33} />
-            </div>
+            </ResizeDetector>
         );
     }
 }
