@@ -1,6 +1,5 @@
 import * as React from "react";
 import Plot from "react-plotly.js";
-import ReactResizeDetector from "react-resize-detector";
 import {AnchorButton, Button, Classes, Colors, FormGroup, Intent, MenuItem, NonIdealState, PopoverPosition, Switch, Tooltip} from "@blueprintjs/core";
 import {ItemPredicate, ItemRendererProps, Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
@@ -11,7 +10,7 @@ import {action, autorun, computed, makeObservable, observable, reaction, runInAc
 import {observer} from "mobx-react";
 import * as Plotly from "plotly.js";
 
-import {ClearableNumericInputComponent, ProfilerInfoComponent} from "components/Shared";
+import {ClearableNumericInputComponent, ProfilerInfoComponent, ResizeDetector} from "components/Shared";
 import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, CatalogUpdateMode, DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
 import {Border, CatalogPlotType, CatalogPlotWidgetStore, CatalogPlotWidgetStoreProps, CatalogWidgetStore, DragMode, XBorder} from "stores/Widgets";
 import {minMaxArray, toFixed, TypedArray} from "utilities";
@@ -947,47 +946,48 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
 
         return (
-            <div className={"catalog-plot"}>
-                <div className={"catalog-plot-option"}>
-                    {renderFileSelect}
-                    {renderXSelect}
-                    {isHistogramPlot && renderHistogramBins}
-                    {isHistogramPlot && renderHistogramLog}
-                    {isScatterPlot && renderYSelect}
-                    {renderStatisticSelect}
-                </div>
-                <div className={`${spikeLineClass} ${isScatterPlot && devicePixelRatio > 1 ? catalogScatterClass : ""}`} data-testid={"catalog-" + (isScatterPlot ? "scatter" : "histogram") + "-plot"}>
-                    <Plot
-                        data={data}
-                        layout={layout}
-                        config={config}
-                        onHover={this.onHover}
-                        onDoubleClick={this.onDoubleClick}
-                        onRelayout={this.onRelayout}
-                        onSelected={this.onLassoSelected}
-                        onDeselect={this.onDeselect}
-                        onClick={this.onSingleSourceClick}
-                        onInitialized={this.updateHistogramYrange}
-                        onUpdate={this.updateHistogramYrange}
-                        style={{transform: isScatterPlot ? `scale(${scale})` : "scale(1)", transformOrigin: "top left"}}
-                    />
-                </div>
-                <div className={Classes.DIALOG_FOOTER}>
-                    <div className="scatter-info" data-testid="catalog-plot-info">
-                        <ProfilerInfoComponent info={infoStrings} type="pre-line" separator="newLine" />
+            <ResizeDetector onResize={this.onResize} throttleTime={33}>
+                <div className={"catalog-plot"}>
+                    <div className={"catalog-plot-option"}>
+                        {renderFileSelect}
+                        {renderXSelect}
+                        {isHistogramPlot && renderHistogramBins}
+                        {isHistogramPlot && renderHistogramLog}
+                        {isScatterPlot && renderYSelect}
+                        {renderStatisticSelect}
                     </div>
-                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <Tooltip content={"Show only selected sources at image and table viewer"}>
-                            <FormGroup label={"Selected only"} inline={true} disabled={disabled}>
-                                <Switch checked={catalogWidgetStore.showSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled} />
-                            </FormGroup>
-                        </Tooltip>
-                        {isScatterPlot && renderLinearRegressionButton}
-                        <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={disabled || !profileStore.isFileBasedCatalog} data-testid="catalog-plot-widget-plot-button" />
+                    <div className={`${spikeLineClass} ${isScatterPlot && devicePixelRatio > 1 ? catalogScatterClass : ""}`} data-testid={"catalog-" + (isScatterPlot ? "scatter" : "histogram") + "-plot"}>
+                        <Plot
+                            data={data}
+                            layout={layout}
+                            config={config}
+                            onHover={this.onHover}
+                            onDoubleClick={this.onDoubleClick}
+                            onRelayout={this.onRelayout}
+                            onSelected={this.onLassoSelected}
+                            onDeselect={this.onDeselect}
+                            onClick={this.onSingleSourceClick}
+                            onInitialized={this.updateHistogramYrange}
+                            onUpdate={this.updateHistogramYrange}
+                            style={{transform: isScatterPlot ? `scale(${scale})` : "scale(1)", transformOrigin: "top left"}}
+                        />
+                    </div>
+                    <div className={Classes.DIALOG_FOOTER}>
+                        <div className="scatter-info" data-testid="catalog-plot-info">
+                            <ProfilerInfoComponent info={infoStrings} type="pre-line" separator="newLine" />
+                        </div>
+                        <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                            <Tooltip content={"Show only selected sources at image and table viewer"}>
+                                <FormGroup label={"Selected only"} inline={true} disabled={disabled}>
+                                    <Switch checked={catalogWidgetStore.showSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled} />
+                                </FormGroup>
+                            </Tooltip>
+                            {isScatterPlot && renderLinearRegressionButton}
+                            <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={disabled || !profileStore.isFileBasedCatalog} data-testid="catalog-plot-widget-plot-button" />
+                        </div>
                     </div>
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
-            </div>
+            </ResizeDetector>
         );
     }
 }
