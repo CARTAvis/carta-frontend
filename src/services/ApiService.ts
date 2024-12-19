@@ -407,8 +407,9 @@ export class ApiService {
                 return undefined;
             }
         }
+
         if (savedLayouts) {
-            return Object.keys(savedLayouts).includes("LayoutMap") ? savedLayouts["LayoutMap"] : [];
+            return Object.keys(savedLayouts).includes("LayoutMapping") ? savedLayouts["LayoutMapping"] : [];
         } else {
             return undefined;
         }

@@ -7,7 +7,6 @@ import {ApiService} from "services";
 import {AlertStore, AppStore, DialogId} from "stores";
 
 const MAX_LAYOUT = 10;
-export const LAYOUT_MAP_NAME = "LayoutMap";
 
 export enum LayoutDialogMode {
     Hidden,

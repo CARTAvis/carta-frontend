@@ -251,7 +251,7 @@ export const LayoutMapComponent = () => {
     const dyLayoutStore = AppStore.Instance.dynamicLayoutStore;
 
     let layoutMapRow = [];
-    if (dyLayoutStore.isExistLayoutMap) {
+    if (dyLayoutStore.dialogShowedCtypeList.length > 0) {
         dyLayoutStore.dialogShowedCtypeList.forEach((layoutCtypes, index) => {
             layoutMapRow.push(
                 <tr key={index}>
