@@ -3,10 +3,10 @@ import {Classes, NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import * as _ from "lodash";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, ResizeDetector} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
 import {Point2D, POLARIZATIONS} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
@@ -37,9 +37,6 @@ export class HistogramComponent extends React.Component<WidgetProps> {
 
     private cachedFrame: FrameStore;
     private currentLinePlotProps: LinePlotComponentProps;
-
-    @observable width: number;
-    @observable height: number;
 
     @computed get widgetStore(): HistogramWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
@@ -191,11 +188,6 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         }
     }
 
-    @action onResize = (width: number, height: number) => {
-        this.width = width;
-        this.height = height;
-    };
-
     onGraphCursorMoved = _.throttle(x => {
         this.widgetStore.setCursor(x);
     }, 100);
@@ -341,19 +333,17 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         const className = classNames("histogram-widget", {[Classes.DARK]: appStore.darkTheme});
 
         return (
-            <ResizeDetector onResize={this.onResize} throttleTime={1000}>
-                <div className={className}>
-                    <div className="histogram-container">
-                        <HistogramToolbarComponent widgetStore={this.widgetStore} />
-                        <div className="histogram-plot">
-                            <LinePlotComponent {...this.currentLinePlotProps} />
-                        </div>
-                        <div>
-                            <ProfilerInfoComponent info={this.genProfilerInfo(unit)} />
-                        </div>
+            <div className={className}>
+                <div className="histogram-container">
+                    <HistogramToolbarComponent widgetStore={this.widgetStore} />
+                    <div className="histogram-plot">
+                        <LinePlotComponent {...this.currentLinePlotProps} />
+                    </div>
+                    <div>
+                        <ProfilerInfoComponent info={this.genProfilerInfo(unit)} />
                     </div>
                 </div>
-            </ResizeDetector>
+            </div>
         );
     }
 }
