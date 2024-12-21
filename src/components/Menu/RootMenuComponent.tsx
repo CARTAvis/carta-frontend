@@ -340,9 +340,9 @@ export class RootMenuComponent extends React.Component {
                     </MenuItem>
                     <MenuItem
                         text="Dynamic Layout"
-                        disabled={dynamicLayoutStore.currentLayoutMapCtype.length === 0 && !dynamicLayoutStore.isExistLayoutMap}
+                        disabled={dynamicLayoutStore.currentLayoutMappingCtype.length === 0 && !dynamicLayoutStore.isMappingExisted}
                         onClick={() => {
-                            dynamicLayoutStore.selectLayoutMap(dynamicLayoutStore.currentLayoutMapIndex);
+                            dynamicLayoutStore.selectLayoutMap(dynamicLayoutStore.currentLayoutMappingIndex);
                             appStore.layoutStore.showLayoutDialog(LayoutDialogMode.DynamicLayout);
                         }}
                     />

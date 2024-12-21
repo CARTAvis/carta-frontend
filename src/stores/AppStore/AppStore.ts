@@ -1805,7 +1805,7 @@ export class AppStore {
                 await this.connectToServer();
                 await this.fileBrowserStore.restoreStartingDirectory();
                 await this.layoutStore.fetchLayouts();
-                await this.dynamicLayoutStore.fetchLayoutMap();
+                await this.dynamicLayoutStore.fetchLayoutMapping();
                 await this.snippetStore.fetchSnippets();
 
                 this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);

@@ -415,14 +415,9 @@ export class ApiService {
         }
     };
 
-    public setLayoutMap = async (layoutName: string, layoutMap: any, index: number | null): Promise<boolean> => {
+    public setLayoutMap = async (layoutName: string, layout: any): Promise<boolean> => {
         if (ApiService.RuntimeConfig.apiAddress) {
             try {
-                const existLayoutMap = await this.getLayoutMaps();
-                let layout = {layoutMap: JSON.parse(JSON.stringify(existLayoutMap.layoutMap ?? []))};
-
-                layout.layoutMap.length > 0 ? (index !== null ? layout.layoutMap.splice(index, 1, layoutMap["layoutMap"][0]) : layout.layoutMap.splice(0, 0, layoutMap["layoutMap"][0])) : (layout = layoutMap);
-
                 const url = `${ApiService.RuntimeConfig.apiAddress}/database/layout`;
                 const response = await this.axiosInstance.put(url, {layoutName, layout});
                 return response?.data?.success;
@@ -433,33 +428,7 @@ export class ApiService {
         } else {
             try {
                 const obj = JSON.parse(localStorage.getItem("savedLayouts") ?? "{}");
-                obj["layoutMap"] = layoutMap;
-                localStorage.setItem("savedLayouts", JSON.stringify(obj));
-                return true;
-            } catch (err) {
-                return false;
-            }
-        }
-    };
-
-    public clearLayoutMap = async (layoutName: string, index: number): Promise<boolean> => {
-        if (ApiService.RuntimeConfig.apiAddress) {
-            try {
-                const existLayoutMap = await this.getLayoutMaps();
-                let layout = {layoutMap: JSON.parse(JSON.stringify(existLayoutMap.layoutMap))};
-                layout.layoutMap.splice(index, 1);
-
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/layout`;
-                const response = await this.axiosInstance.put(url, {layoutName, layout});
-                return response?.data?.success;
-            } catch (err) {
-                console.log(err);
-                return false;
-            }
-        } else {
-            try {
-                const obj = JSON.parse(localStorage.getItem("savedLayouts") ?? "{}");
-                delete obj["layoutMap"][index];
+                obj["layoutMap"] = layout;
                 localStorage.setItem("savedLayouts", JSON.stringify(obj));
                 return true;
             } catch (err) {

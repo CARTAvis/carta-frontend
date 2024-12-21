@@ -259,7 +259,7 @@ export class LayoutStore {
                         delete this.layouts[oldName];
                     }
                     this.handleRenameResult(oldName, newName, success);
-                    yield dynamicLayout.renameLayoutMap(oldName, newName);
+                    yield dynamicLayout.modifyLayoutMapping(oldName, newName);
                 }
             } catch (err) {
                 console.log(err);
@@ -290,7 +290,7 @@ export class LayoutStore {
 
         try {
             const success = yield appStore.apiService.clearLayout(layoutName);
-            yield dynamicLayout.deleteLayoutMap(layoutName);
+            yield dynamicLayout.modifyLayoutMapping(layoutName);
             if (success) {
                 delete this.layouts[layoutName];
             }
