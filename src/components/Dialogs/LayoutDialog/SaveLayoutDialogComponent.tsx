@@ -79,7 +79,6 @@ export class SaveLayoutDialogComponent extends React.Component {
         await this.saveLayout();
 
         const dyLayoutStore = AppStore.Instance.dynamicLayoutStore;
-        // await dyLayoutStore.saveLayoutMapping(layoutName, dyLayoutStore.currentLayoutMappingIndex);
         await dyLayoutStore.saveLayoutMapping(layoutName, dyLayoutStore.currentLayoutMappingCtype);
     };
 
