@@ -90,7 +90,6 @@ export class FileBrowserStore {
 
     private extendedDelayHandle: any;
 
-    @observable selectedFilesHeaderInfo: {ctype: any[]; naxis: any[]; dim: number[]};
     @observable selectedFilesHeaderEntries: any[];
 
     constructor() {
@@ -590,7 +589,9 @@ export class FileBrowserStore {
 
         // for dynamic layout
         const dynamicLayoutStore = AppStore.Instance.dynamicLayoutStore;
-        if (dynamicLayoutStore.isDynamicLayout) {
+        dynamicLayoutStore.selectedFiles = selection;
+
+        if (PreferenceStore.Instance.isDynamicLayout) {
             await this.setSelectedFilesHeaderInfo();
             dynamicLayoutStore.matchLayoutMapping();
         }
@@ -598,6 +599,7 @@ export class FileBrowserStore {
 
     @action private async setSelectedFilesHeaderInfo() {
         const backendService = BackendService.Instance;
+        const dynamicLayoutStore = AppStore.Instance.dynamicLayoutStore;
         this.selectedFilesHeaderEntries = [];
 
         const filesDim: number[] = [];
@@ -647,7 +649,7 @@ export class FileBrowserStore {
             filesNaxis.push(naxes);
         }
 
-        this.selectedFilesHeaderInfo = {ctype: filesCtype, naxis: filesNaxis, dim: filesDim};
+        dynamicLayoutStore.selectedFilesHeaderInfo = {ctype: filesCtype, naxis: filesNaxis, dim: filesDim};
     }
 
     @action showLoadingDialog = () => {

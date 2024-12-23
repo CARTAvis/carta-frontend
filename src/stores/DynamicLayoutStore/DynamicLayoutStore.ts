@@ -1,8 +1,8 @@
-import {action, autorun, computed, flow, makeObservable, observable} from "mobx";
+import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
 import {ApiService} from "services";
-import {AlertStore, AppStore, DialogId, LayoutStore, PreferenceStore} from "stores";
+import {AlertStore, AppStore, DialogId, ISelectedFile, LayoutStore, PreferenceStore} from "stores";
 
 export const INITIAL_LAYOUT_ITEM = "Initial Layout";
 const LAYOUT_MAPPING_FILE_NAME = "LayoutMapping";
@@ -17,8 +17,8 @@ export class DynamicLayoutStore {
         return DynamicLayoutStore.staticInstance;
     }
 
-    @observable isDynamicLayout: boolean;
-    @observable isHighDimPriority: boolean;
+    @observable selectedFiles: ISelectedFile[];
+    @observable selectedFilesHeaderInfo: {ctype: any[]; naxis: any[]; dim: number[]};
     @observable existLayoutMapping: any | null;
     @observable dynamicLayoutName: string | null;
     @observable dynamicLayoutCtype: string | null;
@@ -70,10 +70,8 @@ export class DynamicLayoutStore {
     }
 
     @computed get priorityFileIndexes() {
-        const fileBrowserStore = AppStore.Instance.fileBrowserStore;
-
-        let sortWithIndex = fileBrowserStore.selectedFilesHeaderInfo.dim.map((value, index) => ({index: index, value: value}));
-        if (this.isHighDimPriority) {
+        let sortWithIndex = this.selectedFilesHeaderInfo.dim.map((value, index) => ({index: index, value: value}));
+        if (PreferenceStore.Instance.isHighDimPriority) {
             sortWithIndex.sort((a, b) => b.value - a.value);
         }
         return sortWithIndex.map(item => item.index);
@@ -82,28 +80,14 @@ export class DynamicLayoutStore {
     constructor() {
         makeObservable(this);
 
+        this.selectedFiles = [];
         this.dynamicLayoutName = null;
         this.dynamicLayoutCtype = null;
         this.existLayoutMapping = null;
-
-        autorun(() => {
-            this.isDynamicLayout = PreferenceStore.Instance.isDynamicLayout;
-            this.isHighDimPriority = PreferenceStore.Instance.isHighDimPriority;
-        });
     }
 
-    @action toogleDynamicLayout = () => {
-        this.isDynamicLayout = !this.isDynamicLayout;
-    };
-
-    @action toggleHighDimPriority = () => {
-        this.isHighDimPriority = !this.isHighDimPriority;
-    };
-
     @action matchLayoutMapping() {
-        const fileBrowserStore = AppStore.Instance.fileBrowserStore;
-
-        if (fileBrowserStore.selectedFiles.length <= 0) {
+        if (this.selectedFiles.length <= 0) {
             // console.log("no selected files");
             return;
         }
@@ -114,10 +98,10 @@ export class DynamicLayoutStore {
         }
 
         const index = this.priorityFileIndexes[0]; // always use the first priority index
-        const ctypes = fileBrowserStore.selectedFilesHeaderInfo.ctype[index];
+        const ctypes = this.selectedFilesHeaderInfo.ctype[index];
 
         this.dynamicLayoutName = null;
-        this.dynamicLayoutCtype = [...fileBrowserStore.selectedFilesHeaderInfo.ctype[index]].join(",");
+        this.dynamicLayoutCtype = [...this.selectedFilesHeaderInfo.ctype[index]].join(",");
 
         for (let i = 0; i < Object.keys(this.existLayoutMapping).length; i++) {
             let first2Dim: boolean[] = [];
@@ -188,7 +172,7 @@ export class DynamicLayoutStore {
                     yield this.modifyLayoutMapping(this.existLayoutMapping[layoutMappingCtype]);
                     this.dynamicLayoutName = PreferenceStore.Instance.layout;
 
-                    if (this.isDynamicLayout && layoutStore.layoutExists(this.dynamicLayoutName) && this.dynamicLayoutCtype === layoutMappingCtype) {
+                    if (PreferenceStore.Instance.isDynamicLayout && layoutStore.layoutExists(this.dynamicLayoutName) && this.dynamicLayoutCtype === layoutMappingCtype) {
                         appStore.dialogStore.hideDialog(DialogId.Layout);
                         layoutStore.applyLayout(this.dynamicLayoutName);
                     }
@@ -223,7 +207,7 @@ export class DynamicLayoutStore {
             yield this.fetchLayoutMapping();
             this.matchLayoutMapping();
 
-            if (this.isDynamicLayout && layoutStore.layoutExists(this.dynamicLayoutName) && this.dynamicLayoutCtype === layoutMappingCtype) {
+            if (PreferenceStore.Instance.isDynamicLayout && layoutStore.layoutExists(this.dynamicLayoutName) && this.dynamicLayoutCtype === layoutMappingCtype) {
                 appStore.dialogStore.hideDialog(DialogId.Layout);
                 layoutStore.applyLayout(this.dynamicLayoutName);
             }

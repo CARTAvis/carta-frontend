@@ -155,23 +155,10 @@ export class PreferenceDialogComponent extends React.Component {
         }
     };
 
-    private handleDynamicLayout = () => {
-        const dynamicLayoutStore = AppStore.Instance.dynamicLayoutStore;
-        dynamicLayoutStore.toogleDynamicLayout();
-        PreferenceStore.Instance.setPreference(PreferenceKeys.GLOBAL_IS_DYNAMIC_LAYOUT, dynamicLayoutStore.isDynamicLayout);
-    };
-
-    private handleHighDimPriority = () => {
-        const dynamicLayoutStore = AppStore.Instance.dynamicLayoutStore;
-        dynamicLayoutStore.toggleHighDimPriority();
-        PreferenceStore.Instance.setPreference(PreferenceKeys.GLOBAL_IS_HIGH_DIM_PRIORITY, dynamicLayoutStore.isHighDimPriority);
-    };
-
     public render() {
         const appStore = AppStore.Instance;
         const preference = appStore.preferenceStore;
         const layoutStore = appStore.layoutStore;
-        const dynamicLayoutStore = appStore.dynamicLayoutStore;
 
         const globalPanel = (
             <React.Fragment>
@@ -560,13 +547,15 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Dynamic layout">
-                    <Tooltip content={"Apply data the type associated layout"}>
-                        <Switch checked={dynamicLayoutStore.isDynamicLayout} onChange={() => this.handleDynamicLayout()} />
+                    <Tooltip content={"Apply a linked layout when loaded images based on data type"}>
+                        <Switch checked={preference.isDynamicLayout} onChange={() => preference.setPreference(PreferenceKeys.GLOBAL_IS_DYNAMIC_LAYOUT, !preference.isDynamicLayout)} />
                     </Tooltip>
                 </FormGroup>
-                <Collapse isOpen={dynamicLayoutStore.isDynamicLayout}>
+                <Collapse isOpen={preference.isDynamicLayout}>
                     <FormGroup inline={true} label="Higher dimension priority">
-                        <Switch checked={dynamicLayoutStore.isHighDimPriority} onChange={() => this.handleHighDimPriority()} />
+                        <Tooltip content={"When disable, the dynamic layout will depend on the last selected file among multiple selected files."}>
+                            <Switch checked={preference.isHighDimPriority} onChange={() => preference.setPreference(PreferenceKeys.GLOBAL_IS_HIGH_DIM_PRIORITY, !preference.isHighDimPriority)} />
+                        </Tooltip>
                     </FormGroup>
                     <FormGroup inline={true} className="layoutMap-dialog">
                         {LayoutMappingComponent()}

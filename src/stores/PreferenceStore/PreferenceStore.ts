@@ -168,7 +168,7 @@ const DEFAULTS = {
         autoLaunch: true,
         fileFilterMode: FileFilterMode.Content,
         layout: PresetLayout.DEFAULT,
-        isDynamicLayout: true,
+        isDynamicLayout: false,
         isHighDimPriority: true,
         cursorPosition: CursorPosition.TRACKING,
         zoomMode: Zoom.FIT,
