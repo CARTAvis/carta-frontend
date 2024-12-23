@@ -99,16 +99,17 @@ export class DynamicLayoutStore {
     @action toggleHighDimPriority = () => {
         this.isHighDimPriority = !this.isHighDimPriority;
     };
-    @action matchLayoutMap() {
+
+    @action matchLayoutMapping() {
         const fileBrowserStore = AppStore.Instance.fileBrowserStore;
 
         if (fileBrowserStore.selectedFiles.length <= 0) {
-            console.log("no selected files");
+            // console.log("no selected files");
             return;
         }
 
         if (!this.isMappingExisted) {
-            console.log("no exist layout mapping");
+            console.log("no existing layout mapping");
             return;
         }
 
@@ -120,41 +121,42 @@ export class DynamicLayoutStore {
 
         for (let i = 0; i < Object.keys(this.existLayoutMapping).length; i++) {
             let first2Dim: boolean[] = [];
-            let first2DimR: boolean[] = []; // for swapped first two dimensions
             let RestDim: boolean[] = [];
 
-            const restCtypelayoutMap = Object.keys(this.existLayoutMapping)[i].split(",");
-            const restCtypeData = [...ctypes];
+            const ctypeLayoutMapping = Object.keys(this.existLayoutMapping)[i].split(",");
 
-            if (Object.keys(this.existLayoutMapping)[i].split(",").length === ctypes.length) {
-                // separate the first two dimensions and the rest
-                const first2CtypeLayoutMap = restCtypelayoutMap.splice(0, 2);
-                // const first2CtypeLayoutMapR = first2CtypeLayoutMap.reverse();
-                const first2CtypeData = restCtypeData.splice(0, 2);
+            // skip if the number of dimensions is not matched
+            if (ctypeLayoutMapping.length !== ctypes.length) {
+                continue;
+            }
 
-                // first two dimensions match
+            // first two dimensions matching
+            let isFisrtTwoMatched: boolean = false;
+            for (let k = 0; k < 2; k++) {
+                first2Dim = [];
                 for (let j = 0; j < 2; j++) {
-                    first2Dim.push(first2CtypeLayoutMap[j] === first2CtypeData[j]);
-                    // first2DimR.push(first2CtypeLayoutMapR[j] === first2CtypeData[j]);
-                    first2DimR.push(first2CtypeLayoutMap[2 - j] === first2CtypeData[j]);
+                    first2Dim.push(ctypeLayoutMapping[Math.abs(j - k)] === ctypes[j]);
                 }
-                const isFirst2DimMatch = first2Dim.every((c: any) => c === true);
-                const isFirst2DimMatchR = first2DimR.every((c: any) => c === true);
 
-                if (isFirst2DimMatch || isFirst2DimMatchR) {
-                    // the rest of dimensions match
-                    for (let j = 0; j < restCtypeData.length; j++) {
-                        RestDim.push(restCtypelayoutMap.includes(restCtypeData[j]));
-                    }
-                    const isRestDimMatch = RestDim.every((c: any) => c === true);
+                isFisrtTwoMatched = first2Dim.every((c: any) => c === true);
 
-                    if (isRestDimMatch) {
-                        // console.log("matched layout name", layoutMap.layoutName);
-                        console.log("matched layout name", Object.values(this.existLayoutMapping)[i]);
-                        // save matched layoutName
-                        this.dynamicLayoutName = Object.values(this.existLayoutMapping)[i] as string;
-                        break;
-                    }
+                // skip inverse order if matched
+                if (isFisrtTwoMatched) {
+                    break;
+                }
+            }
+
+            if (isFisrtTwoMatched) {
+                // the rest of dimensions matching
+                for (let j = 2; j < ctypes.length; j++) {
+                    RestDim.push(ctypeLayoutMapping.includes(ctypes[j]));
+                }
+
+                // save matched layoutName if matched
+                if (RestDim.every((c: any) => c === true)) {
+                    this.dynamicLayoutName = Object.values(this.existLayoutMapping)[i] as string;
+                    console.log("matched layout name", this.dynamicLayoutName);
+                    break;
                 }
             }
         }
@@ -219,7 +221,7 @@ export class DynamicLayoutStore {
         if (success) {
             AppToaster.show(SuccessToast("layout-grid", `Apply layout ${layoutName} to data type (${layoutMappingCtype}).`, LayoutStore.ToasterTimeout));
             yield this.fetchLayoutMapping();
-            this.matchLayoutMap();
+            this.matchLayoutMapping();
 
             if (this.isDynamicLayout && layoutStore.layoutExists(this.dynamicLayoutName) && this.dynamicLayoutCtype === layoutMappingCtype) {
                 appStore.dialogStore.hideDialog(DialogId.Layout);
@@ -248,7 +250,7 @@ export class DynamicLayoutStore {
             const success = yield appStore.apiService.setLayoutMap(LAYOUT_MAPPING_FILE_NAME, layoutMapping);
             if (success) {
                 yield this.fetchLayoutMapping();
-                this.matchLayoutMap();
+                this.matchLayoutMapping();
             } else {
                 AlertStore.Instance.showAlert("Updating layout name in LayoutMap failed!");
             }
