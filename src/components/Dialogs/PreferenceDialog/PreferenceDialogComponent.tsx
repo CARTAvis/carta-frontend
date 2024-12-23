@@ -9,7 +9,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
-import {DraggableDialogComponent, LayoutMapComponent} from "components/Dialogs";
+import {DraggableDialogComponent, LayoutMappingComponent} from "components/Dialogs";
 import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, SuccessToast} from "components/Shared";
 import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {TelemetryMode} from "services";
@@ -577,7 +577,7 @@ export class PreferenceDialogComponent extends React.Component {
                     <Switch checked={dynamicLayoutStore.isHighDimPriority} onChange={() => this.handleHighDimPriority()} />
                 </FormGroup>
                 <FormGroup inline={true} label="Dynamic layout map" className="layoutMap-dialog">
-                    {LayoutMapComponent()}
+                    {LayoutMappingComponent()}
                 </FormGroup>
             </React.Fragment>
         );
