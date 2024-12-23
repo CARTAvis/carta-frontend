@@ -635,7 +635,7 @@ export class FileBrowserStore {
             const minLen = Math.min(Object.keys(tempNaxes).length - extraNaxis, Object.keys(tempCtypes).length);
 
             for (let j = 1; j <= minLen; j++) {
-                // remove axes with size = 1
+                // skip axes with size = 1
                 if (tempNaxes[`NAXIS${j}`] !== "1") {
                     ctypes.push(tempCtypes[`CTYPE${j}`]);
                     naxes.push(tempNaxes[`NAXIS${j}`]);

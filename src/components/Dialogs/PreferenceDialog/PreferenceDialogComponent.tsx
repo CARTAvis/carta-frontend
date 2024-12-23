@@ -1,6 +1,6 @@
 import * as React from "react";
 import {ColorResult} from "react-color";
-import {AnchorButton, Button, Callout, Checkbox, Classes, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Callout, Checkbox, Classes, Collapse, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -195,15 +195,6 @@ export class PreferenceDialogComponent extends React.Component {
                         <option value={FileFilterMode.All}>All files</option>
                     </HTMLSelect>
                 </FormGroup>
-                {/* <FormGroup inline={true} label="Initial layout">
-                    <HTMLSelect value={preference.layout} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_LAYOUT, ev.currentTarget.value)}>
-                        {layoutStore.orderedLayoutNames.map(layout => (
-                            <option key={layout} value={layout}>
-                                {layout}
-                            </option>
-                        ))}
-                    </HTMLSelect>
-                </FormGroup> */}
                 <FormGroup inline={true} label="Initial cursor position">
                     <RadioGroup selectedValue={preference.cursorPosition} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_CURSOR_POSITION, ev.currentTarget.value)} inline={true}>
                         <Radio label="Fixed" value={CursorPosition.FIXED} />
@@ -573,12 +564,14 @@ export class PreferenceDialogComponent extends React.Component {
                         <Switch checked={dynamicLayoutStore.isDynamicLayout} onChange={() => this.handleDynamicLayout()} />
                     </Tooltip>
                 </FormGroup>
-                <FormGroup inline={true} label="Higher dimension priority">
-                    <Switch checked={dynamicLayoutStore.isHighDimPriority} onChange={() => this.handleHighDimPriority()} />
-                </FormGroup>
-                <FormGroup inline={true} label="Dynamic layout map" className="layoutMap-dialog">
-                    {LayoutMappingComponent()}
-                </FormGroup>
+                <Collapse isOpen={dynamicLayoutStore.isDynamicLayout}>
+                    <FormGroup inline={true} label="Higher dimension priority">
+                        <Switch checked={dynamicLayoutStore.isHighDimPriority} onChange={() => this.handleHighDimPriority()} />
+                    </FormGroup>
+                    <FormGroup inline={true} className="layoutMap-dialog">
+                        {LayoutMappingComponent()}
+                    </FormGroup>
+                </Collapse>
             </React.Fragment>
         );
 

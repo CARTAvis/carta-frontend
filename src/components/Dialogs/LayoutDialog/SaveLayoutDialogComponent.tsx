@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {determineCtypeName, PresetLayout} from "models";
-import {AppStore, DialogId, HelpType, LayoutDialogMode} from "stores";
+import {AppStore, DialogId, HelpType, INITIAL_LAYOUT_ITEM, LayoutDialogMode} from "stores";
 
 import "./SaveLayoutDialogComponent.scss";
 
@@ -150,7 +150,7 @@ export class SaveLayoutDialogComponent extends React.Component {
                 return (
                     <div className={Classes.DIALOG_FOOTER}>
                         <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                            <Tooltip content={`Save layout and associate it with data type (${dyLayoutStore.dynamicLayoutCtype})`} disabled={!this.isEmpty}>
+                            <Tooltip content={`Apply layout when images with type (${dyLayoutStore.dynamicLayoutCtype}) are loaded`} disabled={!this.isEmpty}>
                                 <AnchorButton intent={Intent.PRIMARY} onClick={this.handleSaveLayoutMap} text={"Dynamic Layout"} disabled={this.isEmpty || !this.validName || !this.enableDynamicLayoutSave} />
                             </Tooltip>
                             <Tooltip content="Layout name cannot be empty!" disabled={!this.isEmpty}>
@@ -276,6 +276,9 @@ export const LayoutMappingComponent = () => {
                                 </option>
                             ))}
                         </HTMLSelect>
+                    </td>
+                    <td>
+                        <AnchorButton icon="trash" onClick={() => dyLayoutStore.saveLayoutMapping(INITIAL_LAYOUT_ITEM, layoutCtypes)} />
                     </td>
                 </tr>
             );

@@ -4,7 +4,7 @@ import {AppToaster, SuccessToast} from "components/Shared";
 import {ApiService} from "services";
 import {AlertStore, AppStore, DialogId, LayoutStore, PreferenceStore} from "stores";
 
-const INITIAL_LAYOUT_ITEM = "Initial Layout";
+export const INITIAL_LAYOUT_ITEM = "Initial Layout";
 const LAYOUT_MAPPING_FILE_NAME = "LayoutMapping";
 
 export class DynamicLayoutStore {

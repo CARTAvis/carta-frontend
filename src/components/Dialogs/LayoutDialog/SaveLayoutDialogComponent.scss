@@ -5,32 +5,11 @@
     user-select: none;
 }
 
-// .layout-map {
-//     .#{$ns}-form-group.#{$ns}-inline {
-//         justify-content: right;
-//     }
-//     .#{$ns}-label {
-//         min-width: 4em;
-//     }
-//     .#{$ns}-form-content {
-//         .#{$ns}-html-select select,
-//         .#{$ns}-select select {
-//             overflow: hidden;
-//             width: 100%;
-//         }
-//     }
-// }
-
 .layout-dialog {
-    // .layout-name-input {
-    //     margin: 3px;
-    //     user-select: none;
-    // }
-
     thead {
         display: block;
         th {
-            width: 180px;
+            width: 160px;
         }
     }
 
@@ -41,7 +20,7 @@
         tr {
             display: flex;
             td {
-                width: 180px;
+                width: 160px;
                 .#{$ns}-form-group {
                     margin: 6px;
                 }
