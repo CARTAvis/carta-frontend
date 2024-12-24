@@ -99,7 +99,6 @@ export class SaveLayoutDialogComponent extends React.Component {
 
     private renderLayoutDialogBody = (mode: LayoutDialogMode) => {
         const layoutStore = AppStore.Instance.layoutStore;
-        // const dyLayoutStore = AppStore.Instance.dynamicLayoutStore;
 
         switch (mode) {
             case LayoutDialogMode.Save:
@@ -214,11 +213,23 @@ export class SaveLayoutDialogComponent extends React.Component {
 }
 
 export const LayoutMappingComponent = () => {
+    const layoutStore = AppStore.Instance.layoutStore;
     const dyLayoutStore = AppStore.Instance.dynamicLayoutStore;
+    const activeFrame = AppStore.Instance.activeFrame;
+
+    let ctypeList: string[] | any[] = [activeFrame?.dynamicLayoutCtype ?? ""];
+    let layoutNameList: string[] | any[] = [activeFrame?.dynamicLayoutName ?? ""];
+    
+    if (dyLayoutStore.isMappingExisted) {
+        const ctypes = Object.keys(dyLayoutStore.existLayoutMapping).slice(1);
+        const names = Object.values(dyLayoutStore.existLayoutMapping).slice(1);
+        ctypeList = activeFrame ? (ctypes.includes(activeFrame.dynamicLayoutCtype) ? ctypes : [activeFrame.dynamicLayoutCtype, ...ctypes]) : ctypes;
+        layoutNameList = activeFrame ? (ctypes.includes(activeFrame.dynamicLayoutCtype) ? names : [activeFrame.dynamicLayoutName, ...names]) : names;
+    }
 
     let rows = [];
-    if (dyLayoutStore.dialogShowedCtypeList[0] !== "") {
-        dyLayoutStore.dialogShowedCtypeList.forEach((layoutCtypes, index) => {
+    if (ctypeList[0] !== "") {
+        ctypeList.forEach((layoutCtypes, index) => {
             rows.push(
                 <tr key={index}>
                     <td>
@@ -236,8 +247,8 @@ export const LayoutMappingComponent = () => {
                         </FormGroup>
                     </td>
                     <td>
-                        <HTMLSelect value={dyLayoutStore.dialogShowedLayoutNameList[index]} onChange={ev => dyLayoutStore.saveLayoutMapping(ev.currentTarget.value, layoutCtypes)}>
-                            {dyLayoutStore.dialogLayoutOptions.map(layout => (
+                        <HTMLSelect value={layoutNameList[index]} onChange={ev => dyLayoutStore.saveLayoutMapping(ev.currentTarget.value, layoutCtypes)}>
+                            {[INITIAL_LAYOUT_ITEM, ...layoutStore.orderedLayoutNames].map(layout => (
                                 <option key={layout} value={layout}>
                                     {layout}
                                 </option>

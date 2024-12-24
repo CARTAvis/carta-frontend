@@ -24,34 +24,7 @@ export class DynamicLayoutStore {
     @observable dynamicLayoutCtype: string | null;
 
     @computed get isMappingExisted(): boolean {
-        return this.existLayoutMapping ? Object.keys(this.existLayoutMapping).length > 0 : false;
-    }
-
-    @computed get dialogShowedCtypeList(): string[] {
-        const activeFrame = AppStore.Instance.activeFrame;
-
-        let output: string[] | any[] = [""];
-        if (this.isMappingExisted) {
-            const ctypes = Object.keys(this.existLayoutMapping).slice(1);
-            output = activeFrame ? (ctypes.includes(activeFrame.dynamicLayoutCtype) ? ctypes : [activeFrame.dynamicLayoutCtype, ...ctypes]) : ctypes;
-        }
-        return output;
-    }
-
-    @computed get dialogShowedLayoutNameList(): string[] {
-        const activeFrame = AppStore.Instance.activeFrame;
-
-        let output: string[] | any[] = [""];
-        if (this.isMappingExisted) {
-            const ctypes = Object.keys(this.existLayoutMapping);
-            const names = Object.values(this.existLayoutMapping).slice(1);
-            output = activeFrame ? (ctypes.includes(activeFrame.dynamicLayoutCtype) ? names : [activeFrame.dynamicLayoutName, ...names]) : names;
-        }
-        return output;
-    }
-
-    @computed get dialogLayoutOptions(): string[] {
-        return [INITIAL_LAYOUT_ITEM, ...LayoutStore.Instance.orderedLayoutNames];
+        return this.existLayoutMapping ? Object.keys(this.existLayoutMapping).length > 1 : false;
     }
 
     @computed get priorityFileIndexes() {
