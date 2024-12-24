@@ -38,7 +38,7 @@ export enum PreferenceKeys {
     GLOBAL_AUTOLAUNCH = "autoLaunch",
     GLOBAL_FILE_FILTER_MODE = "fileFilterMode",
     GLOBAL_LAYOUT = "layout",
-    GLOBAL_IS_DYNAMIC_LAYOUT = "isDynamicLayout",
+    GLOBAL_DYNAMIC_LAYOUT_ENABLE = "dynamicLayoutEnable",
     GLOBAL_IS_HIGH_DIM_PRIORITY = "isHighDimPriority",
     GLOBAL_CURSOR_POSITION = "cursorPosition",
     GLOBAL_ZOOM_MODE = "zoomMode",
@@ -168,7 +168,7 @@ const DEFAULTS = {
         autoLaunch: true,
         fileFilterMode: FileFilterMode.Content,
         layout: PresetLayout.DEFAULT,
-        isDynamicLayout: false,
+        dynamicLayoutEnable: false,
         isHighDimPriority: true,
         cursorPosition: CursorPosition.TRACKING,
         zoomMode: Zoom.FIT,
@@ -752,8 +752,8 @@ export class PreferenceStore {
     }
 
     // getter for dynamic layout setting
-    @computed get isDynamicLayout(): boolean {
-        return this.preferences.get(PreferenceKeys.GLOBAL_IS_DYNAMIC_LAYOUT) ?? DEFAULTS.GLOBAL.isDynamicLayout;
+    @computed get dynamicLayoutEnable(): boolean {
+        return this.preferences.get(PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT_ENABLE) ?? DEFAULTS.GLOBAL.dynamicLayoutEnable;
     }
 
     // getter for file priority for dynamic layout setting
@@ -834,7 +834,7 @@ export class PreferenceStore {
             PreferenceKeys.GLOBAL_AUTOLAUNCH,
             PreferenceKeys.GLOBAL_FILE_FILTER_MODE,
             PreferenceKeys.GLOBAL_LAYOUT,
-            PreferenceKeys.GLOBAL_IS_DYNAMIC_LAYOUT,
+            PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT_ENABLE,
             PreferenceKeys.GLOBAL_IS_HIGH_DIM_PRIORITY,
             PreferenceKeys.GLOBAL_CURSOR_POSITION,
             PreferenceKeys.GLOBAL_ZOOM_MODE,

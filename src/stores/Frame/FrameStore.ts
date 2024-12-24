@@ -9,6 +9,7 @@ import {
     COMPUTED_POLARIZATIONS,
     ControlMap,
     CursorInfo,
+    DetermineCtypeAbbr,
     FrameView,
     FULL_POLARIZATIONS,
     GenCoordinateLabel,
@@ -1183,6 +1184,36 @@ export class FrameStore {
         const cursorPosImage = this.cursorInfo.posImageSpace;
         const cursorValue = {position: cursorPosImage, channel: 0, value: this.previewPVRasterData ? this.previewPVRasterData[Math.round(cursorPosImage.y) * this.frameInfo.fileInfoExtended.width + Math.round(cursorPosImage.x)] : NaN};
         return cursorValue;
+    }
+
+    @computed get activeFrameCtype(): string {
+        let tempCtypes = {};
+        let tempNaxes = {};
+        let ctypes: string[] = [];
+
+        this.frameInfo.fileInfoExtended.headerEntries.forEach(header => {
+            if (header.name?.substring(0, 5) === "CTYPE") {
+                const value: string = DetermineCtypeAbbr(`${header.value}`);
+                tempCtypes[header.name] = value;
+            }
+
+            if (header.name?.substring(0, 5) === "NAXIS") {
+                tempNaxes[header.name] = `${header.value}`;
+            }
+        });
+
+        // deal with that CTYPE and NAXIS have different dimensions
+        const extraNaxis = Object.keys(tempNaxes).includes("NAXIS") ? 1 : 0; // for 'NAXIS' itself
+        const minLen = Math.min(Object.keys(tempNaxes).length - extraNaxis, Object.keys(tempCtypes).length);
+
+        for (let j = 1; j <= minLen; j++) {
+            // skip axes with size = 1
+            if (tempNaxes[`NAXIS${j}`] !== "1") {
+                ctypes.push(tempCtypes[`CTYPE${j}`]);
+            }
+        }
+
+        return ctypes.join(",");
     }
 
     constructor(frameInfo: FrameInfo) {

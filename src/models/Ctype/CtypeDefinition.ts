@@ -3,7 +3,7 @@ const ctypeSpectral = ["VRAD", "VOPT", "FREQ", "WAVE", "AWAV", "CHANNEL", "NATIV
 const ctypeTime = ["TIME"];
 const ctypeStokes = ["STOKES"];
 
-export const determineCtypeAbbr = (ctype: string): string => {
+export const DetermineCtypeAbbr = (ctype: string): string => {
     const normalizedStr = ctype.toUpperCase();
 
     for (let i = 0; i < ctypeSpatial.length; i++) {

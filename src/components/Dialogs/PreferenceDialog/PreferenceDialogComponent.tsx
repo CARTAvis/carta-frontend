@@ -548,10 +548,10 @@ export class PreferenceDialogComponent extends React.Component {
                 </FormGroup>
                 <FormGroup inline={true} label="Dynamic layout">
                     <Tooltip content={"Apply a linked layout when loaded images based on data type"}>
-                        <Switch checked={preference.isDynamicLayout} onChange={() => preference.setPreference(PreferenceKeys.GLOBAL_IS_DYNAMIC_LAYOUT, !preference.isDynamicLayout)} />
+                        <Switch checked={preference.dynamicLayoutEnable} onChange={() => preference.setPreference(PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT_ENABLE, !preference.dynamicLayoutEnable)} />
                     </Tooltip>
                 </FormGroup>
-                <Collapse isOpen={preference.isDynamicLayout}>
+                <Collapse isOpen={preference.dynamicLayoutEnable}>
                     <FormGroup inline={true} label="Higher dimension priority">
                         <Tooltip content={"When disable, the dynamic layout will depend on the last selected file among multiple selected files."}>
                             <Switch checked={preference.isHighDimPriority} onChange={() => preference.setPreference(PreferenceKeys.GLOBAL_IS_HIGH_DIM_PRIORITY, !preference.isHighDimPriority)} />

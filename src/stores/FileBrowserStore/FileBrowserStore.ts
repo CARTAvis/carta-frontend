@@ -4,7 +4,7 @@ import {action, autorun, computed, flow, makeObservable, observable} from "mobx"
 
 import {FileInfoType} from "components";
 import {AppToaster, ErrorToast} from "components/Shared";
-import {determineCtypeAbbr, Freq, FrequencyUnit, ImageType, LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
+import {DetermineCtypeAbbr, Freq, FrequencyUnit, ImageType, LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
 import {BackendService} from "services";
 import {AppStore, DialogId, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
 import {RegionStore} from "stores/Frame";
@@ -90,8 +90,6 @@ export class FileBrowserStore {
 
     private extendedDelayHandle: any;
 
-    @observable selectedFilesHeaderEntries: any[];
-
     constructor() {
         makeObservable(this);
         this.exportCoordinateType = CARTA.CoordinateType.WORLD;
@@ -111,8 +109,6 @@ export class FileBrowserStore {
                 this.setSaveRestFreq(Object.assign({}, activeFrame.restFreqStore.customRestFreq));
             }
         });
-
-        this.selectedFilesHeaderEntries = [];
     }
 
     @observable selectedFiles: ISelectedFile[];
@@ -591,7 +587,7 @@ export class FileBrowserStore {
         const dynamicLayoutStore = AppStore.Instance.dynamicLayoutStore;
         dynamicLayoutStore.selectedFiles = selection;
 
-        if (PreferenceStore.Instance.isDynamicLayout) {
+        if (PreferenceStore.Instance.dynamicLayoutEnable) {
             await this.setSelectedFilesHeaderInfo();
             dynamicLayoutStore.matchLayoutMapping();
         }
@@ -600,7 +596,6 @@ export class FileBrowserStore {
     @action private async setSelectedFilesHeaderInfo() {
         const backendService = BackendService.Instance;
         const dynamicLayoutStore = AppStore.Instance.dynamicLayoutStore;
-        this.selectedFilesHeaderEntries = [];
 
         const filesDim: number[] = [];
         const filesCtype: any[] = [];
@@ -623,7 +618,7 @@ export class FileBrowserStore {
 
             (fileInfo.headerEntries as any[]).forEach(header => {
                 if (header.name?.substring(0, 5) === "CTYPE") {
-                    const value: string = determineCtypeAbbr(`${header.value}`);
+                    const value: string = DetermineCtypeAbbr(`${header.value}`);
                     tempCtypes[header.name] = value;
                 }
 

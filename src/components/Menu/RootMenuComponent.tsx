@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Alert, AnchorButton, Button, Classes, Icon, Intent, Menu, MenuDivider, MenuItem, Popover, Position, Switch, Tooltip} from "@blueprintjs/core";
+import {Alert, AnchorButton, Button, Classes, Collapse, Icon, Intent, Menu, MenuDivider, MenuItem, Popover, Position, Switch, Tooltip} from "@blueprintjs/core";
 import {IconName} from "@blueprintjs/icons";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -10,7 +10,7 @@ import {AppToaster, ExportImageMenuComponent, SuccessToast} from "components/Sha
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import {CARTA_INFO, ImageType, ImageViewItem, PresetLayout, Snippet} from "models";
 import {ApiService, ConnectionStatus} from "services";
-import {AppStore, BrowserMode, DialogId, LayoutDialogMode, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
+import {AppStore, BrowserMode, DialogId, LayoutDialogMode, PreferenceKeys, PreferenceStore, SnippetStore, WidgetsStore, WidgetType} from "stores";
 import {copyToClipboard, toFixed} from "utilities";
 
 import {WorkspaceDialogMode} from "../Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
@@ -338,13 +338,15 @@ export class RootMenuComponent extends React.Component {
                                 />
                             ))}
                     </MenuItem>
-                    <MenuItem
-                        text="Dynamic Layout"
-                        disabled={!dynamicLayoutStore.dynamicLayoutCtype && !dynamicLayoutStore.isMappingExisted}
-                        onClick={() => {
-                            appStore.layoutStore.showLayoutDialog(LayoutDialogMode.DynamicLayout);
-                        }}
-                    />
+                    <Collapse isOpen={PreferenceStore.Instance.dynamicLayoutEnable}>
+                        <MenuItem
+                            text="Dynamic Layout"
+                            disabled={!dynamicLayoutStore.dynamicLayoutCtype && !dynamicLayoutStore.isMappingExisted}
+                            onClick={() => {
+                                appStore.layoutStore.showLayoutDialog(LayoutDialogMode.DynamicLayout);
+                            }}
+                        />
+                    </Collapse>
                 </MenuItem>
                 {imageItems.length > 0 && (
                     <MenuItem text="Images" icon={"multi-select"}>

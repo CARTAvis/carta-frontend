@@ -27,24 +27,6 @@ export class DynamicLayoutStore {
         return this.existLayoutMapping ? Object.keys(this.existLayoutMapping).length > 0 : false;
     }
 
-    // @computed get dialogShowedCtype(): string {
-    //     const index = this.selectedLayoutMappingIndex;
-    //     let output = "";
-    //     if (this.isMappingExisted) {
-    //         output = index === null ? (this.dynamicLayoutCtype.length > 0 ? this.dynamicLayoutCtype : this.existLayoutMapping.layoutMap[0].ctype) : this.existLayoutMapping.layoutMap[index].ctype;
-    //     }
-    //     return output;
-    // }
-
-    // @computed get dialogShowedLayoutName(): string {
-    //     const index = this.selectedLayoutMappingIndex;
-    //     let output = "";
-    //     if (this.isMappingExisted) {
-    //         output = index === null ? (this.dynamicLayoutCtype.length > 0 ? LayoutStore.Instance.currentLayoutName : this.existLayoutMapping.layoutMap[0].layoutName) : this.existLayoutMapping.layoutMap[index].layoutName;
-    //     }
-    //     return output;
-    // }
-
     @computed get dialogShowedCtypeList(): string[] {
         let output: string[] | any[] = [this.dynamicLayoutCtype ?? ""];
         if (this.isMappingExisted) {
@@ -88,7 +70,6 @@ export class DynamicLayoutStore {
 
     @action matchLayoutMapping() {
         if (this.selectedFiles.length <= 0) {
-            // console.log("no selected files");
             return;
         }
 
@@ -166,13 +147,13 @@ export class DynamicLayoutStore {
 
         // set layoutName to INITIAL_LAYOUT_ITEM to delete layout mapping
         if (layoutName === INITIAL_LAYOUT_ITEM) {
-            const confirmed = yield appStore.alertStore.showInteractiveAlert(`Do you want to delete dynamic Layout for data type (${layoutMappingCtype})?`);
+            const confirmed = yield appStore.alertStore.showInteractiveAlert(`Do you want to set ${INITIAL_LAYOUT_ITEM} for data type (${layoutMappingCtype})?`);
             if (confirmed) {
                 try {
                     yield this.modifyLayoutMapping(this.existLayoutMapping[layoutMappingCtype]);
                     this.dynamicLayoutName = PreferenceStore.Instance.layout;
 
-                    if (PreferenceStore.Instance.isDynamicLayout && layoutStore.layoutExists(this.dynamicLayoutName) && this.dynamicLayoutCtype === layoutMappingCtype) {
+                    if (PreferenceStore.Instance.dynamicLayoutEnable && layoutStore.layoutExists(this.dynamicLayoutName) && this.dynamicLayoutCtype === layoutMappingCtype) {
                         appStore.dialogStore.hideDialog(DialogId.Layout);
                         layoutStore.applyLayout(this.dynamicLayoutName);
                     }
@@ -207,7 +188,7 @@ export class DynamicLayoutStore {
             yield this.fetchLayoutMapping();
             this.matchLayoutMapping();
 
-            if (PreferenceStore.Instance.isDynamicLayout && layoutStore.layoutExists(this.dynamicLayoutName) && this.dynamicLayoutCtype === layoutMappingCtype) {
+            if (PreferenceStore.Instance.dynamicLayoutEnable && layoutStore.layoutExists(this.dynamicLayoutName) && this.dynamicLayoutCtype === layoutMappingCtype) {
                 appStore.dialogStore.hideDialog(DialogId.Layout);
                 layoutStore.applyLayout(this.dynamicLayoutName);
             }
