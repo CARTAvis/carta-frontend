@@ -28,8 +28,6 @@ export class LayoutStore {
     public static readonly ToasterTimeout = 1500;
     private layoutNameToBeSaved: string;
 
-    public static layoutMap = "LayoutMap";
-
     // self-defined structure: {layoutName: config, layoutName: config, ...}
     @observable dockedLayout: GoldenLayout | null;
     @observable currentLayoutName: string;

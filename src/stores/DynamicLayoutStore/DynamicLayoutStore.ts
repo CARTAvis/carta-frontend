@@ -134,7 +134,7 @@ export class DynamicLayoutStore {
 
     @flow.bound *fetchLayoutMapping() {
         try {
-            this.existLayoutMapping = yield ApiService.Instance.getLayoutMaps();
+            this.existLayoutMapping = yield ApiService.Instance.getLayoutMapping();
         } catch (err) {
             AlertStore.Instance.showAlert("Loading layout map failed!");
             console.log(err);
@@ -182,7 +182,7 @@ export class DynamicLayoutStore {
         });
         layoutMapping[layoutMappingCtype] = layoutName;
 
-        const success = yield appStore.apiService.setLayoutMap(LAYOUT_MAPPING_FILE_NAME, layoutMapping);
+        const success = yield appStore.apiService.setLayoutMapping(LAYOUT_MAPPING_FILE_NAME, layoutMapping);
         if (success) {
             AppToaster.show(SuccessToast("layout-grid", `Apply layout ${layoutName} to data type (${layoutMappingCtype}).`, LayoutStore.ToasterTimeout));
             yield this.fetchLayoutMapping();
@@ -212,7 +212,7 @@ export class DynamicLayoutStore {
                 });
             }
 
-            const success = yield appStore.apiService.setLayoutMap(LAYOUT_MAPPING_FILE_NAME, layoutMapping);
+            const success = yield appStore.apiService.setLayoutMapping(LAYOUT_MAPPING_FILE_NAME, layoutMapping);
             if (success) {
                 yield this.fetchLayoutMapping();
                 this.matchLayoutMapping();

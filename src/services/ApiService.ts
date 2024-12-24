@@ -384,7 +384,7 @@ export class ApiService {
         }
     };
 
-    public getLayoutMaps = async () => {
+    public getLayoutMapping = async () => {
         let savedLayouts: {[name: string]: any};
         if (ApiService.RuntimeConfig.apiAddress) {
             try {
@@ -415,7 +415,7 @@ export class ApiService {
         }
     };
 
-    public setLayoutMap = async (layoutName: string, layout: any): Promise<boolean> => {
+    public setLayoutMapping = async (layoutName: string, layout: any): Promise<boolean> => {
         if (ApiService.RuntimeConfig.apiAddress) {
             try {
                 const url = `${ApiService.RuntimeConfig.apiAddress}/database/layout`;
@@ -428,7 +428,7 @@ export class ApiService {
         } else {
             try {
                 const obj = JSON.parse(localStorage.getItem("savedLayouts") ?? "{}");
-                obj["layoutMap"] = layout;
+                obj["layoutMapping"] = layout;
                 localStorage.setItem("savedLayouts", JSON.stringify(obj));
                 return true;
             } catch (err) {

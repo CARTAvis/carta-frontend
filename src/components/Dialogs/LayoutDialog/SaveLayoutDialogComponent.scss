@@ -5,11 +5,11 @@
     user-select: none;
 }
 
-.layout-dialog {
+.layoutMapping-dialog {
     thead {
         display: block;
         th {
-            width: 160px;
+            width: 120px;
         }
     }
 
@@ -18,13 +18,20 @@
         overflow: auto;
         height: 100px;
         tr {
-            display: flex;
             td {
-                width: 160px;
                 .#{$ns}-form-group {
                     margin: 6px;
                 }
             }
+        }
+    }
+
+    .#{$ns}-popover-target {
+        span {
+            display: block;
+            max-width: 2em;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
     }
 }

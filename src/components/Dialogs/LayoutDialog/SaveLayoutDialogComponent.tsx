@@ -16,8 +16,8 @@ const KEYCODE_ENTER = 13;
 export class SaveLayoutDialogComponent extends React.Component {
     private static readonly DefaultWidth = 400;
     private static readonly DefaultHeight = 185;
-    private static readonly MinWidth = 300;
-    private static readonly MinHeight = 150;
+    private static readonly MinWidth = 400;
+    private static readonly MinHeight = 185;
 
     @observable private layoutName: string = "";
 
@@ -163,7 +163,7 @@ export class SaveLayoutDialogComponent extends React.Component {
 
     render() {
         const appStore = AppStore.Instance;
-        const className = classNames("layout-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("layoutMapping-dialog", {[Classes.DARK]: appStore.darkTheme});
 
         const dialogProps: DialogProps = {
             icon: "layout-grid",
@@ -216,10 +216,10 @@ export class SaveLayoutDialogComponent extends React.Component {
 export const LayoutMappingComponent = () => {
     const dyLayoutStore = AppStore.Instance.dynamicLayoutStore;
 
-    let layoutMapRow = [];
+    let rows = [];
     if (dyLayoutStore.dialogShowedCtypeList[0] !== "") {
         dyLayoutStore.dialogShowedCtypeList.forEach((layoutCtypes, index) => {
-            layoutMapRow.push(
+            rows.push(
                 <tr key={index}>
                     <td>
                         <FormGroup>
@@ -260,7 +260,7 @@ export const LayoutMappingComponent = () => {
                     <th>Layout</th>
                 </tr>
             </thead>
-            <tbody>{layoutMapRow}</tbody>
+            <tbody>{rows}</tbody>
         </HTMLTable>
     );
 };

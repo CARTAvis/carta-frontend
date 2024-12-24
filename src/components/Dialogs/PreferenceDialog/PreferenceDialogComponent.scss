@@ -93,9 +93,7 @@
 
     user-select: none !important;
 
-    .layoutMap-dialog {
-        justify-content: space-evenly;
-
+    .layoutMapping {
         .bp5-html-table {
             width: 100%;
         }
@@ -109,14 +107,21 @@
 
         tbody {
             display: block;
-
             tr {
                 td {
-                    width: 120px;
                     .#{$ns}-form-group {
                         margin: 6px;
                     }
                 }
+            }
+        }
+
+        .#{$ns}-popover-target {
+            span {
+                display: block;
+                max-width: 2em;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
         }
     }
