@@ -219,7 +219,7 @@ export const LayoutMappingComponent = () => {
 
     let ctypeList: string[] | any[] = [activeFrame?.dynamicLayoutCtype ?? ""];
     let layoutNameList: string[] | any[] = [activeFrame?.dynamicLayoutName ?? ""];
-    
+
     if (dyLayoutStore.isMappingExisted) {
         const ctypes = Object.keys(dyLayoutStore.existLayoutMapping).slice(1);
         const names = Object.values(dyLayoutStore.existLayoutMapping).slice(1);
