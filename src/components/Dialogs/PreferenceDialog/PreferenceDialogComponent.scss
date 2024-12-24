@@ -94,6 +94,8 @@
     user-select: none !important;
 
     .layoutMapping {
+        justify-content: space-evenly;
+
         .bp5-html-table {
             width: 100%;
         }
@@ -101,7 +103,8 @@
         thead {
             display: block;
             th {
-                width: 120px;
+                padding-left: 7px !important;
+                min-width: 120px;
             }
         }
 
@@ -109,6 +112,8 @@
             display: block;
             tr {
                 td {
+                    min-width: 120px;
+                    padding-left: 5px;
                     .#{$ns}-form-group {
                         margin: 6px;
                     }
@@ -119,7 +124,7 @@
         .#{$ns}-popover-target {
             span {
                 display: block;
-                max-width: 2em;
+                max-width: 1.8em;
                 overflow: hidden;
                 text-overflow: ellipsis;
             }

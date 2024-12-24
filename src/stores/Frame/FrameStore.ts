@@ -36,7 +36,7 @@ import {
     ZoomPoint
 } from "models";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE, TileService} from "services";
-import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore, SystemType} from "stores";
+import {AnimatorStore, AppStore, ASTSettingsString, INITIAL_LAYOUT_ITEM, LogStore, OverlayStore, PreferenceStore, SystemType} from "stores";
 import {
     CENTER_POINT_INDEX,
     ColorbarStore,
@@ -1186,7 +1186,7 @@ export class FrameStore {
         return cursorValue;
     }
 
-    @computed get activeFrameCtype(): string {
+    @computed get dynamicLayoutCtype(): string {
         let tempCtypes = {};
         let tempNaxes = {};
         let ctypes: string[] = [];
@@ -1214,6 +1214,11 @@ export class FrameStore {
         }
 
         return ctypes.join(",");
+    }
+
+    @computed get dynamicLayoutName(): string {
+        const dyLayoutStore = AppStore.Instance.dynamicLayoutStore;
+        return dyLayoutStore.existLayoutMapping[this.dynamicLayoutCtype] ?? INITIAL_LAYOUT_ITEM;
     }
 
     constructor(frameInfo: FrameInfo) {

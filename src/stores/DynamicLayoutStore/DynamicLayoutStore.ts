@@ -20,7 +20,7 @@ export class DynamicLayoutStore {
     @observable selectedFiles: ISelectedFile[];
     @observable selectedFilesHeaderInfo: {ctype: any[]; naxis: any[]; dim: number[]};
     @observable existLayoutMapping: any | null;
-    @observable dynamicLayoutName: string | null;
+    @observable dynamicLayoutName: string;
     @observable dynamicLayoutCtype: string | null;
 
     @computed get isMappingExisted(): boolean {
@@ -28,21 +28,24 @@ export class DynamicLayoutStore {
     }
 
     @computed get dialogShowedCtypeList(): string[] {
-        let output: string[] | any[] = [this.dynamicLayoutCtype ?? ""];
+        const activeFrame = AppStore.Instance.activeFrame;
+
+        let output: string[] | any[] = [""];
         if (this.isMappingExisted) {
             const ctypes = Object.keys(this.existLayoutMapping).slice(1);
-            output = this.dynamicLayoutCtype ? (ctypes.includes(this.dynamicLayoutCtype) ? ctypes : [this.dynamicLayoutCtype, ...ctypes]) : ctypes;
+            output = activeFrame ? (ctypes.includes(activeFrame.dynamicLayoutCtype) ? ctypes : [activeFrame.dynamicLayoutCtype, ...ctypes]) : ctypes;
         }
         return output;
     }
 
     @computed get dialogShowedLayoutNameList(): string[] {
-        const layoutStore = AppStore.Instance.layoutStore;
-        let output: string[] | any[] = [layoutStore.currentLayoutName ?? ""];
+        const activeFrame = AppStore.Instance.activeFrame;
+
+        let output: string[] | any[] = [""];
         if (this.isMappingExisted) {
             const ctypes = Object.keys(this.existLayoutMapping);
             const names = Object.values(this.existLayoutMapping).slice(1);
-            output = this.dynamicLayoutCtype ? (ctypes.includes(this.dynamicLayoutCtype) ? names : [this.dynamicLayoutName, ...names]) : names;
+            output = activeFrame ? (ctypes.includes(activeFrame.dynamicLayoutCtype) ? names : [activeFrame.dynamicLayoutName, ...names]) : names;
         }
         return output;
     }
@@ -63,7 +66,7 @@ export class DynamicLayoutStore {
         makeObservable(this);
 
         this.selectedFiles = [];
-        this.dynamicLayoutName = null;
+        this.dynamicLayoutName = INITIAL_LAYOUT_ITEM;
         this.dynamicLayoutCtype = null;
         this.existLayoutMapping = null;
     }
@@ -81,7 +84,7 @@ export class DynamicLayoutStore {
         const index = this.priorityFileIndexes[0]; // always use the first priority index
         const ctypes = this.selectedFilesHeaderInfo.ctype[index];
 
-        this.dynamicLayoutName = null;
+        this.dynamicLayoutName = INITIAL_LAYOUT_ITEM;
         this.dynamicLayoutCtype = [...this.selectedFilesHeaderInfo.ctype[index]].join(",");
 
         for (let i = 0; i < Object.keys(this.existLayoutMapping).length; i++) {
@@ -128,7 +131,7 @@ export class DynamicLayoutStore {
 
         // no matched layout
         if (!this.dynamicLayoutName) {
-            console.log("no matched layout");
+            console.log("No matched layout. Use Initial Layout.");
         }
     }
 

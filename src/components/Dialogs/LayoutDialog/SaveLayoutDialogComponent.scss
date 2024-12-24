@@ -9,7 +9,7 @@
     thead {
         display: block;
         th {
-            width: 120px;
+            min-width: 120px;
         }
     }
 
@@ -19,6 +19,8 @@
         height: 100px;
         tr {
             td {
+                min-width: 120px;
+                padding-left: 7px !important;
                 .#{$ns}-form-group {
                     margin: 6px;
                 }
@@ -29,7 +31,7 @@
     .#{$ns}-popover-target {
         span {
             display: block;
-            max-width: 2em;
+            max-width: 1.8em;
             overflow: hidden;
             text-overflow: ellipsis;
         }

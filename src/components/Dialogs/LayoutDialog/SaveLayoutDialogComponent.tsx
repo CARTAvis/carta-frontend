@@ -81,7 +81,7 @@ export class SaveLayoutDialogComponent extends React.Component {
         await this.saveLayout();
 
         const dyLayoutStore = appStore.dynamicLayoutStore;
-        await dyLayoutStore.saveLayoutMapping(layoutName, appStore.activeFrame.activeFrameCtype);
+        await dyLayoutStore.saveLayoutMapping(layoutName, appStore.activeFrame.dynamicLayoutCtype);
     };
 
     @computed get isEmpty(): boolean {
