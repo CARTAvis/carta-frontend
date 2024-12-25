@@ -33,7 +33,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         [SystemType.FK4, "FK4"],
         [SystemType.Galactic, "GAL"],
         [SystemType.Ecliptic, "ECL"],
-        [SystemType.ICRS, "ICRS"]
+        [SystemType.ICRS, "ICRS"],
+        [SystemType.Image, "IMG"]
     ]);
 
     private static readonly CoordinateSystemTooltip = new Map<SystemType, string>([
@@ -174,6 +175,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.Galactic)} onClick={() => this.handleCoordinateSystemClicked(SystemType.Galactic)} />
                 <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.Ecliptic)} onClick={() => this.handleCoordinateSystemClicked(SystemType.Ecliptic)} />
                 <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.ICRS)} onClick={() => this.handleCoordinateSystemClicked(SystemType.ICRS)} />
+                <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.Image)} onClick={() => this.handleCoordinateSystemClicked(SystemType.Image)} />
                 <FormGroup inline={false} className="offset-group">
                     <Switch className="offset-switch" disabled={frame.isPVImage || frame.isSwappedZ || frame.isUVImage} checked={frame.isOffsetCoord} onChange={frame.toggleOffsetCoord} label="Offset" />
                     <Collapse isOpen={frame.isOffsetCoord}>

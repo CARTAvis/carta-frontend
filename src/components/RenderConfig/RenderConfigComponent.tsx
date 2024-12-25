@@ -7,7 +7,7 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, SafeNumericInput} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {ImageType, Point2D} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore, RenderConfigStore} from "stores/Frame";
@@ -454,22 +454,24 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     </div>
                 )}
                 <div className="options-container">
-                    <HistogramConfigComponent
-                        darkTheme={appStore.darkTheme}
-                        renderConfig={frame.renderConfig}
-                        onCubeHistogramSelected={this.handleCubeHistogramSelected}
-                        showHistogramSelect={frame.frameInfo.fileInfoExtended.depth > 1}
-                        disableHistogramSelect={appStore.animatorStore.animationActive}
-                        warnOnCubeHistogram={(frame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) === 0}
-                    />
-                    <FormGroup label={"Clip min"} inline={true}>
-                        <SafeNumericInput value={frame.renderConfig.scaleMinVal} selectAllOnFocus={true} buttonPosition={"none"} onBlur={this.handleScaleMinChange} onKeyDown={this.handleScaleMinChange} data-testid="clip-min-input" />
-                    </FormGroup>
-                    <FormGroup label={"Clip max"} inline={true}>
-                        <SafeNumericInput value={frame.renderConfig.scaleMaxVal} selectAllOnFocus={true} buttonPosition={"none"} onBlur={this.handleScaleMaxChange} onKeyDown={this.handleScaleMaxChange} data-testid="clip-max-input" />
-                    </FormGroup>
-                    <ColormapConfigComponent renderConfig={frame.renderConfig} />
-                    {this.width < histogramCutoff && percentileSelectDiv}
+                    <ScrollShadow>
+                        <HistogramConfigComponent
+                            darkTheme={appStore.darkTheme}
+                            renderConfig={frame.renderConfig}
+                            onCubeHistogramSelected={this.handleCubeHistogramSelected}
+                            showHistogramSelect={frame.frameInfo.fileInfoExtended.depth > 1}
+                            disableHistogramSelect={appStore.animatorStore.animationActive}
+                            warnOnCubeHistogram={(frame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) === 0}
+                        />
+                        <FormGroup label={"Clip min"} inline={true}>
+                            <SafeNumericInput value={frame.renderConfig.scaleMinVal} selectAllOnFocus={true} buttonPosition={"none"} onBlur={this.handleScaleMinChange} onKeyDown={this.handleScaleMinChange} data-testid="clip-min-input" />
+                        </FormGroup>
+                        <FormGroup label={"Clip max"} inline={true}>
+                            <SafeNumericInput value={frame.renderConfig.scaleMaxVal} selectAllOnFocus={true} buttonPosition={"none"} onBlur={this.handleScaleMaxChange} onKeyDown={this.handleScaleMaxChange} data-testid="clip-max-input" />
+                        </FormGroup>
+                        <ColormapConfigComponent renderConfig={frame.renderConfig} />
+                        {this.width < histogramCutoff && percentileSelectDiv}
+                    </ScrollShadow>
                 </div>
                 <TaskProgressDialogComponent
                     isOpen={frame.renderConfig.useCubeHistogram && frame.renderConfig.cubeHistogramProgress < 1.0}
