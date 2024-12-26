@@ -8,7 +8,7 @@ import moment from "moment/moment";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {WorkspaceListItem} from "models";
-import {AppStore, DialogId, HelpType} from "stores";
+import {AlertStore, AppStore, DialogId, HelpType} from "stores";
 
 import {AppToaster, ErrorToast, SuccessToast} from "../../Shared";
 
@@ -64,6 +64,12 @@ export const WorkspaceDialogComponent = observer(() => {
     const saveWorkspace = useCallback(
         async (name: string) => {
             if (!name) {
+                return;
+            }
+
+            // TODO: to be removed after storing SystemType in workspace
+            if (appStore.overlayStore.isImgCoordinates && appStore.frames.map(frame => frame.spatialReference !== null).includes(true)) {
+                AlertStore.Instance.showAlert("Saving workspace failed: not supporting spatial matching in image cooordinates.");
                 return;
             }
 

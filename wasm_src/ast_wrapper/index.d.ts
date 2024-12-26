@@ -56,7 +56,7 @@ export function addFrame(frameSet: FrameSet, index: number, map: Mapping, frame:
 export function setI(obj: AstObject, attrib: string, value: number): void;
 export function setD(obj: AstObject, attrib: string, value: number): void;
 export function createTransformedFrameset(frameSet: FrameSet, offsetX: number, offsetY: number, angle: number, originX: number, originY: number, scaleX: number, scaleY: number);
-export function createShiftmapFrameset(frameSet: FrameSet, offsetX: number, offsetY: number);
+export function createShiftmapFrameset(frameSet: FrameSet, offsetX: number, offsetY: number, pixelOffsetX: number, pixelOffsetY: number);
 // Not exported fillTransformGrid()
 export function makeSwappedFrameSet(originFrameSet: FrameSet, dirAxis: number, spectralAxis: number, pixelZ: number, nsample: number): FrameSet;
 

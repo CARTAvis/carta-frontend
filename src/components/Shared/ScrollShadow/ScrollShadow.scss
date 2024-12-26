@@ -1,0 +1,45 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+@mixin scroll-shadow-background($highlight-color) {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background:
+        radial-gradient(farthest-side at 50% 0, rgba($highlight-color, 0.2), rgba($highlight-color, 0)) center top,
+        radial-gradient(farthest-side at 50% 100%, rgba($highlight-color, 0.2), rgba($highlight-color, 0)) center bottom;
+    background-repeat: no-repeat;
+    background-size:
+        100% 14px,
+        100% 14px;
+    background-attachment: scroll, scroll;
+}
+
+@mixin scroll-shadow-cover-background($widget-background-color) {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background:
+        linear-gradient($widget-background-color 30%, rgba(255, 255, 255, 0)) center top,
+        linear-gradient(rgba(255, 255, 255, 0), $widget-background-color 70%) center bottom;
+    background-repeat: no-repeat;
+    background-size:
+        100% 40px,
+        100% 40px;
+    background-attachment: local, local;
+}
+
+.scroll-shadow {
+    @include scroll-shadow-background(black);
+
+    .scroll-shadow-cover {
+        @include scroll-shadow-cover-background($pt-app-background-color);
+    }
+}
+
+.#{$ns}-dark .scroll-shadow {
+    @include scroll-shadow-background(white);
+
+    .scroll-shadow-cover {
+        @include scroll-shadow-cover-background($pt-dark-app-background-color);
+    }
+}

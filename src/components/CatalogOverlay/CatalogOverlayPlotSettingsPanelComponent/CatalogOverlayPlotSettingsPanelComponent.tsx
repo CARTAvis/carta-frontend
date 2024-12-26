@@ -1,13 +1,12 @@
 import * as React from "react";
 import {AnchorButton, Button, ButtonGroup, Classes, Collapse, FormGroup, Icon, MenuItem, PopoverPosition, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {ItemPredicate, ItemRendererProps, Select} from "@blueprintjs/select";
-import classNames from "classnames";
 import FuzzySearch from "fuzzy-search";
 import {action, autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {CatalogOverlayComponent} from "components";
-import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingSelectComponent} from "components/Shared";
+import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingSelectComponent, ScrollShadow} from "components/Shared";
 import {AngularSizeUnit, CatalogOverlay} from "models";
 import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {CatalogDisplayMode, CatalogOverlayShape, CatalogSettingsTabs, CatalogWidgetStore, ValueClip} from "stores/Widgets";
@@ -128,7 +127,9 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     };
 
     public render() {
-        const appStore = AppStore.Instance;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const darkTheme = AppStore.Instance.darkTheme;
+
         const widgetStore = this.widgetStore;
         const catalogStore = CatalogStore.Instance;
         const catalogFileIds = catalogStore.activeCatalogFiles;
@@ -696,8 +697,6 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             </div>
         );
 
-        const className = classNames("catalog-settings", {[Classes.DARK]: appStore.darkTheme});
-
         const showTabs = () => {
             if (widgetStore.catalogDisplayMode === CatalogDisplayMode.WORLD) {
                 return (
@@ -718,7 +717,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         };
 
         return (
-            <div className={className}>
+            <ScrollShadow>
+            <div className={"catalog-settings"}>
                 <FormGroup className={"file-menu"} inline={true} label="File" disabled={disabledOverlayPanel}>
                     <Select
                         className={Classes.FILL}
@@ -765,7 +765,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     </ButtonGroup>
                 </FormGroup>
                 {showTabs()}
-            </div>
+                </div>
+                </ScrollShadow>
         );
     }
 
