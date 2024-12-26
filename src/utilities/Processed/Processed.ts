@@ -2,7 +2,7 @@ import * as CARTACompute from "carta_computation";
 import {CARTA} from "carta-protobuf";
 
 export type TypedArray = Int8Array | Uint8Array | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array;
-export type ColumnArray = Array<string> | Array<boolean> | Array<number>;
+export type ColumnArray = Array<string | null | undefined> | Array<boolean | undefined> | Array<number | undefined>;
 
 export interface ProcessedSpatialProfile extends CARTA.ISpatialProfile {
     values: Float32Array | null;

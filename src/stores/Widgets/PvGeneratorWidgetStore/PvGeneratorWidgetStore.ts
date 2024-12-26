@@ -4,7 +4,7 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {SpectralSystem} from "models";
 import {TelemetryAction, TelemetryService} from "services";
-import {AppStore, PreferenceStore} from "stores";
+import {AppStore, PreferenceKeys, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {length2D} from "utilities";
 
@@ -23,8 +23,8 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     @observable xyRebin: number = 1;
     @observable zRebin: number = 1;
     @observable previewRegionId: number;
-    @observable previewFrame: FrameStore;
-    @observable pvCutRegionId: number;
+    @observable previewFrame: FrameStore | null;
+    @observable pvCutRegionId: number | null;
 
     @computed get regionOptions(): OptionProps[] {
         const appStore = AppStore.Instance;
@@ -33,7 +33,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
             const selectedFrame = appStore.getFrame(this.fileId);
             if (selectedFrame?.regionSet) {
                 const validRegionOptions = selectedFrame.regionSet.regions
-                    ?.filter(r => !r.isTemporary && r.regionType === CARTA.RegionType.LINE)
+                    ?.filter(r => !r.isTemporary && (r.regionType === CARTA.RegionType.LINE || r.regionType === CARTA.RegionType.POLYLINE))
                     ?.map(region => {
                         return {value: region?.regionId, label: region?.nameString};
                     });
@@ -76,6 +76,10 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
 
     @action requestPV = (preview: boolean = false, pvGeneratorId?: string) => {
         const frame = this.effectiveFrame;
+        if (!frame) {
+            return;
+        }
+
         let channelIndexMin = frame.findChannelIndexByValue(this.range.min);
         let channelIndexMax = frame.findChannelIndexByValue(this.range.max);
 
@@ -98,19 +102,20 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
                 spectralRange: isFinite(channelIndexMin) && isFinite(channelIndexMax) ? {min: channelIndexMin, max: channelIndexMax} : null,
                 reverse: this.reverse,
                 keep: this.keep,
-                previewSettings: preview
-                    ? {
-                          previewId: parseInt(pvGeneratorId.split("-")[2]),
-                          regionId: this.effectivePreviewRegionId,
-                          rebinXy: this.xyRebin,
-                          rebinZ: this.zRebin,
-                          imageCompressionQuality: PreferenceStore.Instance.imageCompressionQuality || 11,
-                          animationCompressionQuality: PreferenceStore.Instance.animationCompressionQuality || 9,
-                          compressionType: CARTA.CompressionType.ZFP
-                      }
-                    : undefined
+                previewSettings:
+                    preview && pvGeneratorId
+                        ? {
+                              previewId: parseInt(pvGeneratorId.split("-")[2]),
+                              regionId: this.effectivePreviewRegionId,
+                              rebinXy: this.xyRebin,
+                              rebinZ: this.zRebin,
+                              imageCompressionQuality: PreferenceStore.Instance.imageCompressionQuality || 11,
+                              animationCompressionQuality: PreferenceStore.Instance.animationCompressionQuality || 9,
+                              compressionType: CARTA.CompressionType.ZFP
+                          }
+                        : undefined
             };
-            if (preview) {
+            if (preview && pvGeneratorId) {
                 AppStore.Instance.requestPreviewPV(requestMessage, frame, pvGeneratorId);
             } else {
                 AppStore.Instance.requestPV(requestMessage, frame, this.keep);
@@ -133,15 +138,11 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     };
 
     @action setSpectralCoordinate = (coordStr: string) => {
-        if (this.effectiveFrame.setSpectralCoordinate(coordStr)) {
-            return;
-        }
+        this.effectiveFrame?.setSpectralCoordinate(coordStr);
     };
 
     @action setSpectralSystem = (specsys: SpectralSystem) => {
-        if (this.effectiveFrame.setSpectralSystem(specsys)) {
-            return;
-        }
+        this.effectiveFrame?.setSpectralSystem(specsys);
     };
 
     @action setWidth = (val: number) => {
@@ -150,6 +151,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
 
     @action setReverse = (bool: boolean) => {
         this.reverse = bool;
+        PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_PV_AXES_ORDER_REVERSE, bool);
     };
 
     @action setKeep = (bool: boolean) => {
@@ -157,7 +159,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     };
 
     @action setSpectralRange = (range: CARTA.IIntBounds) => {
-        if (isFinite(range.min) && isFinite(range.max)) {
+        if (isFinite(range.min ?? NaN) && isFinite(range.max ?? NaN)) {
             this.range = range;
         }
     };
@@ -192,7 +194,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         super(RegionsType.LINE);
         makeObservable(this);
         this.width = 3;
-        this.reverse = false;
+        this.reverse = PreferenceStore.Instance.isPVAxesOrderReverse;
         this.keep = false;
         this.regionIdMap.set(ACTIVE_FILE_ID, RegionId.NONE);
         reaction(

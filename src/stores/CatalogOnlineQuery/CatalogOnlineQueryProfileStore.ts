@@ -24,8 +24,8 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
         this.catalogControlHeader = this.initCatalogControlHeader;
         this.numVisibleRows = catalogInfo.dataSize;
 
-        const coordinateSystem = catalogInfo.fileInfo.coosys[0];
-        const system = AbstractCatalogProfileStore.getCatalogSystem(coordinateSystem.system);
+        const coordinateSystem = catalogInfo.fileInfo.coosys?.[0];
+        const system = AbstractCatalogProfileStore.getCatalogSystem(coordinateSystem?.system);
         this.catalogCoordinateSystem = {
             system: system,
             equinox: null,
@@ -92,12 +92,12 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
 
     @action resetFilterRequest(filterConfigs?: CARTA.FilterConfig[]) {
         this.initFilterIndexMap();
-        filterConfigs.forEach(filterConfig => {
+        filterConfigs?.forEach(filterConfig => {
             const header = this.catalogControlHeader.get(filterConfig.columnName);
-            const dataIndex = header.dataIndex;
-            if (dataIndex > -1 && header.display) {
+            const dataIndex = header?.dataIndex;
+            if (dataIndex !== undefined && dataIndex > -1 && header?.display) {
                 const catalogColumn = this.catalogOriginalData.get(dataIndex);
-                switch (catalogColumn.dataType) {
+                switch (catalogColumn?.dataType) {
                     case CARTA.ColumnType.String:
                         const columnDataString = catalogColumn.data as string[];
                         if (filterConfig.subString !== "") {
@@ -108,7 +108,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
                         break;
 
                     default:
-                        const columnDataNumber = catalogColumn.data as [];
+                        const columnDataNumber = catalogColumn?.data as [];
                         this.filterIndexMap = this.filterColumnData(columnDataNumber, filterConfig);
                         break;
                 }

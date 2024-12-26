@@ -63,3 +63,20 @@
         }
     }
 }
+
+.#{$ns}-form-group.offset-group {
+    border: 2px;
+    margin: 0 0 0 5px;
+    .#{$ns}-form-content {
+        display: inline-flex;
+        align-items: center;
+        .#{$ns}-popover-target {
+            margin-left: 5px;
+        }
+    }
+
+    .offset-switch {
+        margin: 0 !important;
+        padding: 6px 0 6px 38px;
+    }
+}

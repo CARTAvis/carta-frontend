@@ -1,12 +1,12 @@
 import * as React from "react";
-import {Button, Classes, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
+import {Button, Classes, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Position, Switch, Tab, TabId, Tabs, Tooltip} from "@blueprintjs/core";
 import {ItemRenderer, Select} from "@blueprintjs/select";
 import * as AST from "ast_wrapper";
 import classNames from "classnames";
 import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, InputType, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
+import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, InputType, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
 import {ImagePanelMode} from "models";
 import {AppStore, BeamType, DefaultWidgetConfig, HelpType, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
 import {ColorbarStore, CoordinateMode} from "stores/Frame";
@@ -146,7 +146,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const frame = appStore.activeFrame;
         const isPVImage = frame?.isPVImage;
 
-        const getFovInfoString = (value: number, valueWcs: string) => {
+        const getInfoString = (value: number, valueWcs: string) => {
             return this.panAndZoomCoord === CoordinateMode.Image ? `WCS: ${valueWcs}` : `Image: ${toFixed(value, 3)} px`;
         };
         const fovLabelInfo = this.panAndZoomCoord === CoordinateMode.Image ? "(px)" : "";
@@ -165,7 +165,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         onChangeWcs={val => frame?.setCenterWcs(val, frame?.centerWCS?.y)}
                         wcsDisabled={isPVImage}
                     />
-                    <span className="info-string">{getFovInfoString(frame?.center?.x, frame?.centerWCS?.x)}</span>
+                    <span className="info-string">{getInfoString(frame?.center?.x, frame?.centerWCS?.x)}</span>
                 </FormGroup>
                 <FormGroup inline={true} label="Center (Y)" labelInfo={fovLabelInfo}>
                     <CoordNumericInput
@@ -177,7 +177,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         onChangeWcs={val => frame?.setCenterWcs(frame?.centerWCS?.x, val)}
                         wcsDisabled={isPVImage}
                     />
-                    <span className="info-string">{getFovInfoString(frame?.center?.y, frame?.centerWCS?.y)}</span>
+                    <span className="info-string">{getInfoString(frame?.center?.y, frame?.centerWCS?.y)}</span>
                 </FormGroup>
                 <FormGroup inline={true} label="Size (X)" labelInfo={fovLabelInfo}>
                     <CoordNumericInput
@@ -190,7 +190,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         wcsDisabled={isPVImage}
                         customPlaceholder="Width"
                     />
-                    <span className="info-string">{getFovInfoString(frame?.fovSize?.x, frame?.fovSizeWCS?.x)}</span>
+                    <span className="info-string">{getInfoString(frame?.fovSize?.x, frame?.fovSizeWCS?.x)}</span>
                 </FormGroup>
                 <FormGroup inline={true} label="Size (Y)" labelInfo={fovLabelInfo}>
                     <CoordNumericInput
@@ -203,8 +203,42 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         wcsDisabled={isPVImage}
                         customPlaceholder="Height"
                     />
-                    <span className="info-string">{getFovInfoString(frame?.fovSize?.y, frame?.fovSizeWCS?.y)}</span>
+                    <span className="info-string">{getInfoString(frame?.fovSize?.y, frame?.fovSizeWCS?.y)}</span>
                 </FormGroup>
+                <FormGroup inline={true} label="Offset coordinates">
+                    <Switch checked={frame?.isOffsetCoord} disabled={frame?.isPVImage || frame?.isSwappedZ || frame?.isUVImage} onChange={frame?.toggleOffsetCoord} />
+                    <Collapse isOpen={frame?.isOffsetCoord}>
+                        <Tooltip content="Set offset to current view center" position={Position.BOTTOM} hoverOpenDelay={300}>
+                            <Button icon="locate" disabled={!frame?.isOffsetCoord} onClick={() => frame?.updateOffsetCenter()} />
+                        </Tooltip>
+                    </Collapse>
+                </FormGroup>
+                <Collapse isOpen={frame?.isOffsetCoord}>
+                    <FormGroup inline={true} label="Offset center (X)" labelInfo={fovLabelInfo}>
+                        <CoordNumericInput
+                            coord={this.panAndZoomCoord}
+                            inputType={InputType.XCoord}
+                            value={frame?.offsetCenter?.x}
+                            onChange={val => frame?.setOffsetCenter(val, frame?.offsetCenter?.y)}
+                            valueWcs={frame?.offsetCenterWCS?.x}
+                            onChangeWcs={val => frame?.setOffsetCenterWcs(val, frame?.offsetCenterWCS?.y)}
+                            wcsDisabled={isPVImage}
+                        />
+                        <span className="info-string">{getInfoString(frame?.offsetCenter?.x, frame?.offsetCenterWCS?.x)}</span>
+                    </FormGroup>
+                    <FormGroup inline={true} label="Offset center (Y)" labelInfo={fovLabelInfo}>
+                        <CoordNumericInput
+                            coord={this.panAndZoomCoord}
+                            inputType={InputType.YCoord}
+                            value={frame?.offsetCenter?.y}
+                            onChange={val => frame?.setOffsetCenter(frame?.offsetCenter?.x, val)}
+                            valueWcs={frame?.offsetCenterWCS?.y}
+                            onChangeWcs={val => frame?.setOffsetCenterWcs(frame?.offsetCenterWCS?.x, val)}
+                            wcsDisabled={isPVImage}
+                        />
+                        <span className="info-string">{getInfoString(frame?.offsetCenter?.y, frame?.offsetCenterWCS?.y)}</span>
+                    </FormGroup>
+                </Collapse>
             </div>
         );
 
@@ -279,7 +313,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 </FormGroup>
                 <Collapse isOpen={title.customText}>
                     <FormGroup inline={true} label="Text" labelInfo="(Current image only)" disabled={!title.visible}>
-                        <InputGroup disabled={!title.visible} value={appStore.activeFrame?.titleCustomText} placeholder="Enter title text" onChange={ev => appStore.activeFrame?.setTitleCustomText(ev.currentTarget.value)} />
+                        <InputGroup disabled={!title.visible} value={appStore.activeImage?.store?.titleCustomText} placeholder="Enter title text" onChange={ev => appStore.activeImage?.store?.setTitleCustomText(ev.currentTarget.value)} />
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Custom color" disabled={!title.visible}>
@@ -774,18 +808,18 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         return (
             <div className={className}>
                 <Tabs id="imageViewSettingsTabs" vertical={true} selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
-                    <Tab id={ImageViewSettingsPanelTabs.PAN_AND_ZOOM} title={ImageViewSettingsPanelTabs.PAN_AND_ZOOM} panel={panAndZoomPanel} />
-                    <Tab id={ImageViewSettingsPanelTabs.GLOBAL} title={ImageViewSettingsPanelTabs.GLOBAL} panel={globalPanel} />
-                    <Tab id={ImageViewSettingsPanelTabs.TITLE} title={ImageViewSettingsPanelTabs.TITLE} panel={titlePanel} />
-                    <Tab id={ImageViewSettingsPanelTabs.TICKS} title={ImageViewSettingsPanelTabs.TICKS} panel={ticksPanel} />
-                    <Tab id={ImageViewSettingsPanelTabs.GRIDS} title={ImageViewSettingsPanelTabs.GRIDS} panel={gridPanel} data-testid="image-view-settings-grid-tab-title" />
-                    <Tab id={ImageViewSettingsPanelTabs.BORDER} title={ImageViewSettingsPanelTabs.BORDER} panel={borderPanel} />
-                    <Tab id={ImageViewSettingsPanelTabs.AXES} title={ImageViewSettingsPanelTabs.AXES} panel={axesPanel} />
-                    <Tab id={ImageViewSettingsPanelTabs.NUMBERS} title={ImageViewSettingsPanelTabs.NUMBERS} panel={numbersPanel} />
-                    <Tab id={ImageViewSettingsPanelTabs.LABELS} title={ImageViewSettingsPanelTabs.LABELS} panel={labelsPanel} />
-                    <Tab id={ImageViewSettingsPanelTabs.COLORBAR} title={ImageViewSettingsPanelTabs.COLORBAR} panel={colorbarPanel} />
-                    <Tab id={ImageViewSettingsPanelTabs.BEAM} title={ImageViewSettingsPanelTabs.BEAM} panel={beamPanel} disabled={appStore.frameNum <= 0} />
-                    <Tab id={ImageViewSettingsPanelTabs.CONVERSION} title={ImageViewSettingsPanelTabs.CONVERSION} panel={spectralPanel} disabled={!isPVImage} />
+                    <Tab id={ImageViewSettingsPanelTabs.PAN_AND_ZOOM} title={ImageViewSettingsPanelTabs.PAN_AND_ZOOM} panel={<ScrollShadow>{panAndZoomPanel}</ScrollShadow>} />
+                    <Tab id={ImageViewSettingsPanelTabs.GLOBAL} title={ImageViewSettingsPanelTabs.GLOBAL} panel={<ScrollShadow>{globalPanel}</ScrollShadow>} />
+                    <Tab id={ImageViewSettingsPanelTabs.TITLE} title={ImageViewSettingsPanelTabs.TITLE} panel={<ScrollShadow>{titlePanel}</ScrollShadow>} />
+                    <Tab id={ImageViewSettingsPanelTabs.TICKS} title={ImageViewSettingsPanelTabs.TICKS} panel={<ScrollShadow>{ticksPanel}</ScrollShadow>} />
+                    <Tab id={ImageViewSettingsPanelTabs.GRIDS} title={ImageViewSettingsPanelTabs.GRIDS} panel={<ScrollShadow>{gridPanel}</ScrollShadow>} data-testid="image-view-settings-grid-tab-title" />
+                    <Tab id={ImageViewSettingsPanelTabs.BORDER} title={ImageViewSettingsPanelTabs.BORDER} panel={<ScrollShadow>{borderPanel}</ScrollShadow>} />
+                    <Tab id={ImageViewSettingsPanelTabs.AXES} title={ImageViewSettingsPanelTabs.AXES} panel={<ScrollShadow>{axesPanel}</ScrollShadow>} />
+                    <Tab id={ImageViewSettingsPanelTabs.NUMBERS} title={ImageViewSettingsPanelTabs.NUMBERS} panel={<ScrollShadow>{numbersPanel}</ScrollShadow>} />
+                    <Tab id={ImageViewSettingsPanelTabs.LABELS} title={ImageViewSettingsPanelTabs.LABELS} panel={<ScrollShadow>{labelsPanel}</ScrollShadow>} />
+                    <Tab id={ImageViewSettingsPanelTabs.COLORBAR} title={ImageViewSettingsPanelTabs.COLORBAR} panel={<ScrollShadow>{colorbarPanel}</ScrollShadow>} />
+                    <Tab id={ImageViewSettingsPanelTabs.BEAM} title={ImageViewSettingsPanelTabs.BEAM} panel={<ScrollShadow>{beamPanel}</ScrollShadow>} disabled={appStore.frameNum <= 0} />
+                    <Tab id={ImageViewSettingsPanelTabs.CONVERSION} title={ImageViewSettingsPanelTabs.CONVERSION} panel={<ScrollShadow>{spectralPanel}</ScrollShadow>} disabled={!isPVImage} />
                 </Tabs>
             </div>
         );

@@ -145,7 +145,7 @@ export class ProfileSmoothingStore {
         return (this.gaussianKernel - 1) / (2 * this.gaussianSigma);
     }
 
-    private getLocalStartEndIndexes(fullLength: number, xMinIndex: number, xMaxIndex: number, kernelSize: number) {
+    private getLocalStartEndIndexes(fullLength: number, xMinIndex: number | undefined, xMaxIndex: number, kernelSize: number) {
         let h: number, j: number;
         if (kernelSize % 2 === 1) {
             h = (kernelSize - 1) / 2;
@@ -154,15 +154,15 @@ export class ProfileSmoothingStore {
             h = kernelSize / 2 - 1;
             j = kernelSize / 2;
         }
-        const startSmoothing = xMinIndex < h ? 0 : xMinIndex - h;
+        const startSmoothing = (xMinIndex ?? NaN) < h ? 0 : (xMinIndex ?? NaN) - h;
         const endSmoothing = xMaxIndex + j > fullLength - 1 ? fullLength - 1 : xMaxIndex + j;
-        const smoothedStart = xMinIndex < h ? xMinIndex : h;
-        const smoothedEnd = smoothedStart + xMaxIndex - xMinIndex;
+        const smoothedStart = (xMinIndex ?? NaN) < h ? xMinIndex : h;
+        const smoothedEnd = (smoothedStart ?? NaN) + xMaxIndex - (xMinIndex ?? NaN);
         return {startSmoothing, endSmoothing, smoothedStart, smoothedEnd};
     }
 
-    private getLocalGroupStartEndIndexes(fullLength: number, xMinIndex: number, xMaxIndex: number, width: number) {
-        let firstGroupStartIndex = xMinIndex % width === 0 ? xMinIndex : xMinIndex - (xMinIndex % width);
+    private getLocalGroupStartEndIndexes(fullLength: number, xMinIndex: number | undefined, xMaxIndex: number, width: number) {
+        let firstGroupStartIndex = (xMinIndex ?? NaN) % width === 0 ? xMinIndex : (xMinIndex ?? NaN) - ((xMinIndex ?? NaN) % width);
         let lastGroupEndIndex = xMaxIndex % width === width - 1 ? xMaxIndex : xMaxIndex - (xMaxIndex % width) + (width - 1);
         if (lastGroupEndIndex > fullLength - 1) {
             lastGroupEndIndex = fullLength - 1;
@@ -170,8 +170,8 @@ export class ProfileSmoothingStore {
         return {firstIndex: firstGroupStartIndex, lastIndex: lastGroupEndIndex};
     }
 
-    getSmoothingValues(x: number[], y: Float32Array | Float64Array, xMinIndex?: number, xMaxIndex?: number): {x: number[]; y: Float32Array | Float64Array} {
-        let smoothingYs: Float32Array | Float64Array;
+    getSmoothingValues(x: number[], y: Float32Array | Float64Array, xMinIndex?: number, xMaxIndex?: number): {x: number[]; y: Float32Array | Float64Array | undefined} {
+        let smoothingYs: Float32Array | Float64Array | undefined;
         let smoothingXs = x;
         if (this.type === SmoothingType.BOXCAR) {
             if ((xMinIndex || xMaxIndex === 0) && xMaxIndex) {
@@ -244,6 +244,9 @@ export class ProfileSmoothingStore {
             return [];
         }
         const smoothingValues = this.getSmoothingValues(x, y, xMinIndex, xMaxIndex);
+        if (!smoothingValues.y) {
+            return [];
+        }
         let smoothingArray: Point2D[] = new Array(smoothingValues.x.length);
 
         for (let i = 0; i < smoothingValues.x.length; i++) {

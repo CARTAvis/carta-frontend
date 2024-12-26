@@ -10,7 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added support for changing the depth order of floating widget and dialog on select ([#2307](https://github.com/CARTAvis/carta-frontend/pull/2307)).
 * Added the raster matching setting to the preference and improved the raster matching function ([#2004](https://github.com/CARTAvis/carta-frontend/issues/2004) and [#1959](https://github.com/CARTAvis/carta-frontend/issues/1959)).
 * Added support for sorting the spectral line table ([#2262](https://github.com/CARTAvis/carta-frontend/issues/2262)).
-* Added additional mono-color colormaps with a customized option for the raster image ([#2300](https://github.com/CARTAvis/carta-frontend/issues/2300))
+* Added additional mono-color colormaps with a customized option for the raster image ([#2300](https://github.com/CARTAvis/carta-frontend/issues/2300)).
+* Added support for PV image generation using polyline ([#2302](https://github.com/CARTAvis/carta-frontend/issues/2302)).
+* Added support for multi-color blending ([#1204](https://github.com/CARTAvis/carta-frontend/issues/1204)).
+* Added support for showing relative coordinates in image view ([[#681](https://github.com/CARTAvis/carta-frontend/issues/681)])
+* Added a button for deleting all regions ([#1040](https://github.com/CARTAvis/carta-frontend/issues/1040)).
+* Added support for loading remote FITS files from the hips2fits server ([#1379](https://github.com/CARTAvis/carta-backend/issues/1379)).
+* Supported the customized rest frequency for the moment maps ([[#2396](https://github.com/CARTAvis/carta-frontend/issues/2396)]).
+* Supported image coordinates for images with valid WCS headers ([[#2366](https://github.com/CARTAvis/carta-frontend/issues/2366)]).
 ### Fixed
 * Fixed ruler annotation matching bug ([#2242](https://github.com/CARTAvis/carta-frontend/issues/2242)).
 * Fixed compass and ruler annotations update bug in the spatially matched image when changing the coordinate ([#2270](https://github.com/CARTAvis/carta-frontend/issues/2270)).
@@ -21,7 +28,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed a bug when applying a filter to the shifted frequency column in the spectral line query widget ([#2326](https://github.com/CARTAvis/carta-frontend/issues/2326)).
 * Improved the cursor interaction area in the image view widget ([#1794](https://github.com/CARTAvis/carta-frontend/issues/1794)).
 * Fixed saving or opening CASA image with a trailing slash using the URL parameter or the snippets ([#1816](https://github.com/CARTAvis/carta-frontend/issues/1816) and [#1357](https://github.com/CARTAvis/carta-backend/issues/1357)).
-* Upgrading blueprintjs from v3 to v5 ([#2029](https://github.com/CARTAvis/carta-frontend/issues/1395)). 
+* Fixed the incorrect coordinate system when loading or appending images after a coordinate system being specified ([#582](https://github.com/CARTAvis/carta-frontend/issues/582)).
+* Upgraded blueprintjs from v3 to v5 ([#2029](https://github.com/CARTAvis/carta-frontend/issues/1395)).
+* Fixed the catalog load button status after double clicking catalog files ([#2378](https://github.com/CARTAvis/carta-frontend/issues/2378)).
+* Synchronized the value format in the pan and zoom tab in the image view settings widget ([#2235](https://github.com/CARTAvis/carta-frontend/issues/2235)).
+* Fix save image/export regions bug which could cause directory overwrite or deletion ([#1377](https://github.com/CARTAvis/carta-backend/issues/1377)).
+* Fix incorrect rendering of image view when moving the window to monitors with different screen resolution ([[#2285](https://github.com/CARTAvis/carta-frontend/issues/2285)])
+### Changed
+* Changed the limitation of plotting up-to-10 profiles in the spectral profiler multi-profile mode to up-to-16 ([#2440](https://github.com/CARTAvis/carta-frontend/issues/2440))
+* Fixed the unit label of the y axis for flux density in the spectral profiles ([#2355](https://github.com/CARTAvis/carta-frontend/issues/2355)).
+* Axes order of the PV diagram becomes a sticky parameter ([#2402](https://github.com/CARTAvis/carta-frontend/issues/2402)).
 
 ## [4.1.0]
 

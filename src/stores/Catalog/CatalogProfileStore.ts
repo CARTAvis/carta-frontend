@@ -19,7 +19,7 @@ export enum CatalogUpdateMode {
     PlotsUpdate = "PlotsUpdate"
 }
 
-export type ControlHeader = {columnIndex: number; dataIndex: number; display: boolean; filter: string; columnWidth: number | null};
+export type ControlHeader = {columnIndex: number | undefined; dataIndex: number | undefined; display: boolean | undefined; filter: string; columnWidth: number | null | undefined};
 
 export class CatalogProfileStore extends AbstractCatalogProfileStore {
     public static readonly InitTableRows = 50;
@@ -51,7 +51,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         this.filterDataSize = undefined;
         this.maxRows = catalogInfo.dataSize;
 
-        const coordinateSystem = catalogInfo.fileInfo.coosys[0];
+        const coordinateSystem = catalogInfo.fileInfo.coosys?.[0];
 
         if (coordinateSystem) {
             const system = AbstractCatalogProfileStore.getCatalogSystem(coordinateSystem.system);
@@ -206,8 +206,8 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         this.maxRows = maxRows;
     }
 
-    @computed get initCatalogFilterRequest(): CARTA.CatalogFilterRequest {
-        let catalogFilter: CARTA.CatalogFilterRequest = new CARTA.CatalogFilterRequest();
+    @computed get initCatalogFilterRequest(): CARTA.ICatalogFilterRequest {
+        let catalogFilter: CARTA.ICatalogFilterRequest = new CARTA.CatalogFilterRequest();
         let imageBounds: CARTA.CatalogImageBounds = new CARTA.CatalogImageBounds();
         let previewDatasize = CatalogProfileStore.InitTableRows;
         catalogFilter.fileId = this.catalogInfo.fileId;
@@ -253,7 +253,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
     }
 
     @computed get shouldUpdateData(): boolean {
-        if (isFinite(this.filterDataSize)) {
+        if (this.filterDataSize !== undefined && isFinite(this.filterDataSize)) {
             return this.subsetEndIndex < this.filterDataSize && this.subsetEndIndex < this.maxRows;
         } else {
             return this.subsetEndIndex < this.catalogInfo.dataSize && this.subsetEndIndex < this.maxRows;
@@ -261,9 +261,9 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
     }
 
     @computed get columnIndices(): Array<number> {
-        let indices = [];
+        let indices: number[] = [];
         this.catalogControlHeader.forEach((value, key) => {
-            if (value.display) {
+            if (value.display && value.columnIndex !== undefined) {
                 indices.push(value.columnIndex);
             }
         });

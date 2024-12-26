@@ -1,7 +1,7 @@
 import axios, {AxiosInstance} from "axios";
 import {CARTA} from "carta-protobuf";
 import {DBSchema, IDBPDatabase, openDB} from "idb";
-import jwt_decode from "jwt-decode";
+import {jwtDecode} from "jwt-decode";
 import {computed, flow, makeObservable, observable} from "mobx";
 import {v1 as uuidv1} from "uuid";
 
@@ -118,7 +118,7 @@ export class TelemetryService {
             try {
                 const res = yield this.axiosInstance.get("/api/token");
                 token = res.data?.token;
-                const decodedObject = jwt_decode(token) as any;
+                const decodedObject = jwtDecode(token) as any;
                 if (decodedObject?.uuid) {
                     yield preferences.setPreference(PreferenceKeys.TELEMETRY_UUID, token);
                     console.log(`Generated new telemetry ID ${decodedObject.uuid}. This will only be used if telemetry consent is given.`);
@@ -138,7 +138,7 @@ export class TelemetryService {
         }
 
         try {
-            const decodedObject: {uuid?: string} = jwt_decode(token);
+            const decodedObject: {uuid?: string} = jwtDecode(token);
             if (decodedObject?.uuid) {
                 this.uuid = decodedObject.uuid;
             }

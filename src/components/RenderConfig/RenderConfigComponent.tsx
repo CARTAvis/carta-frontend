@@ -7,8 +7,8 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, SafeNumericInput} from "components/Shared";
-import {Point2D} from "models";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, SafeNumericInput, ScrollShadow} from "components/Shared";
+import {ImageType, Point2D} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore, RenderConfigStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
@@ -16,6 +16,7 @@ import {clamp, getColorForTheme, scaleValue, toExponential, toFixed} from "utili
 
 import {MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
+import {ColorBlendingConfigComponent} from "./ColorBlendingConfigComponent/ColorBlendingConfigComponent";
 import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
 import {HistogramConfigComponent} from "./HistogramConfigComponent/HistogramConfigComponent";
 
@@ -30,7 +31,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         return {
             id: "render-config",
             type: "render-config",
-            minWidth: 250,
+            minWidth: 350,
             minHeight: 225,
             defaultWidth: 650,
             defaultHeight: 225,
@@ -246,15 +247,26 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
     render() {
         const appStore = AppStore.Instance;
-        const frame = appStore.activeFrame;
+        const image = appStore.activeImage;
 
-        if (!frame || !this.widgetStore) {
+        if (!image || !this.widgetStore) {
             return (
                 <div className="render-config-container">
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </div>
             );
         }
+
+        if (image.type === ImageType.COLOR_BLENDING) {
+            return (
+                <>
+                    <ColorBlendingConfigComponent widgetWidth={this.width} />
+                    <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}></ReactResizeDetector>
+                </>
+            );
+        }
+
+        const frame = image.store;
 
         let unitString = "Value";
         if (frame && frame.requiredUnit) {
@@ -442,22 +454,24 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     </div>
                 )}
                 <div className="options-container">
-                    <HistogramConfigComponent
-                        darkTheme={appStore.darkTheme}
-                        renderConfig={frame.renderConfig}
-                        onCubeHistogramSelected={this.handleCubeHistogramSelected}
-                        showHistogramSelect={frame.frameInfo.fileInfoExtended.depth > 1}
-                        disableHistogramSelect={appStore.animatorStore.animationActive}
-                        warnOnCubeHistogram={(frame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) === 0}
-                    />
-                    <FormGroup label={"Clip min"} inline={true}>
-                        <SafeNumericInput value={frame.renderConfig.scaleMinVal} selectAllOnFocus={true} buttonPosition={"none"} onBlur={this.handleScaleMinChange} onKeyDown={this.handleScaleMinChange} data-testid="clip-min-input" />
-                    </FormGroup>
-                    <FormGroup label={"Clip max"} inline={true}>
-                        <SafeNumericInput value={frame.renderConfig.scaleMaxVal} selectAllOnFocus={true} buttonPosition={"none"} onBlur={this.handleScaleMaxChange} onKeyDown={this.handleScaleMaxChange} data-testid="clip-max-input" />
-                    </FormGroup>
-                    <ColormapConfigComponent renderConfig={frame.renderConfig} />
-                    {this.width < histogramCutoff && percentileSelectDiv}
+                    <ScrollShadow>
+                        <HistogramConfigComponent
+                            darkTheme={appStore.darkTheme}
+                            renderConfig={frame.renderConfig}
+                            onCubeHistogramSelected={this.handleCubeHistogramSelected}
+                            showHistogramSelect={frame.frameInfo.fileInfoExtended.depth > 1}
+                            disableHistogramSelect={appStore.animatorStore.animationActive}
+                            warnOnCubeHistogram={(frame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) === 0}
+                        />
+                        <FormGroup label={"Clip min"} inline={true}>
+                            <SafeNumericInput value={frame.renderConfig.scaleMinVal} selectAllOnFocus={true} buttonPosition={"none"} onBlur={this.handleScaleMinChange} onKeyDown={this.handleScaleMinChange} data-testid="clip-min-input" />
+                        </FormGroup>
+                        <FormGroup label={"Clip max"} inline={true}>
+                            <SafeNumericInput value={frame.renderConfig.scaleMaxVal} selectAllOnFocus={true} buttonPosition={"none"} onBlur={this.handleScaleMaxChange} onKeyDown={this.handleScaleMaxChange} data-testid="clip-max-input" />
+                        </FormGroup>
+                        <ColormapConfigComponent renderConfig={frame.renderConfig} />
+                        {this.width < histogramCutoff && percentileSelectDiv}
+                    </ScrollShadow>
                 </div>
                 <TaskProgressDialogComponent
                     isOpen={frame.renderConfig.useCubeHistogram && frame.renderConfig.cubeHistogramProgress < 1.0}

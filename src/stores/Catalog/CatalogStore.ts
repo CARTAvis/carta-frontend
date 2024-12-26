@@ -95,7 +95,7 @@ export class CatalogStore {
                     }
                     break;
             }
-            this.catalogCounts.set(fileId, this.catalogCounts.get(fileId) + xData.length);
+            this.catalogCounts.set(fileId, (this.catalogCounts.get(fileId) ?? NaN) + xData.length);
             CatalogWebGLService.Instance.updatePositionArray(fileId, position, startIndex * 2);
         }
     }
@@ -116,9 +116,9 @@ export class CatalogStore {
         CatalogWebGLService.Instance.clearTexture(fileId);
         // update associated image
         const frame = AppStore.Instance.getFrame(this.getFrameIdByCatalogId(fileId));
-        const fileIds = this.imageAssociatedCatalogId.get(frame?.frameInfo.fileId);
-        let associatedCatalogId = [];
-        if (fileIds) {
+        const fileIds = frame ? this.imageAssociatedCatalogId.get(frame.frameInfo.fileId) : undefined;
+        let associatedCatalogId: number[] = [];
+        if (frame && fileIds) {
             associatedCatalogId = fileIds.filter(catalogFileId => {
                 return catalogFileId !== fileId;
             });
@@ -160,8 +160,8 @@ export class CatalogStore {
         }
     };
 
-    getImageIdByCatalog(catalogFileId: number) {
-        let imageFileId = undefined;
+    getImageIdByCatalog(catalogFileId: number): number | undefined {
+        let imageFileId: number | undefined = undefined;
         this.imageAssociatedCatalogId.forEach((catalogFileList, imageId) => {
             if (catalogFileList.includes(catalogFileId)) {
                 imageFileId = imageId;
@@ -185,7 +185,9 @@ export class CatalogStore {
     @action clearCatalogPlotsByFileId(fileId: number) {
         this.catalogPlots.forEach((catalogWidgetMap, _componentId) => {
             const widgetId = catalogWidgetMap.get(fileId);
-            WidgetsStore.Instance.catalogPlotWidgets.delete(widgetId);
+            if (widgetId) {
+                WidgetsStore.Instance.catalogPlotWidgets.delete(widgetId);
+            }
             catalogWidgetMap.delete(fileId);
         });
     }
@@ -236,12 +238,12 @@ export class CatalogStore {
         const visibleCatalogMap = new Map<FrameStore, number[]>();
 
         /// TODO: this should be cleaned up a bit
-        for (const frame of appStore.visibleFrames) {
+        for (const frame of appStore.imageViewConfigStore.visibleFrames) {
             const imageId = frame.frameInfo.fileId;
-            let associatedCatalogIds = [...this.imageAssociatedCatalogId.get(imageId)];
+            let associatedCatalogIds = [...(this.imageAssociatedCatalogId.get(imageId) ?? [])];
             frame.spatialSiblings?.forEach(frame => {
-                const catalogs = [...this.imageAssociatedCatalogId.get(frame.frameInfo.fileId)];
-                associatedCatalogIds = [...new Set([].concat(...[associatedCatalogIds, catalogs]))].filter(catalogFileId => {
+                const catalogs = [...(this.imageAssociatedCatalogId.get(frame.frameInfo.fileId) ?? [])];
+                associatedCatalogIds = [...new Set(([] as number[]).concat(...[associatedCatalogIds, catalogs]))].filter(catalogFileId => {
                     return this.catalogGLData.has(catalogFileId);
                 });
             });
@@ -283,21 +285,23 @@ export class CatalogStore {
             const catalogProfileStore = this.catalogProfileStores.get(catalogFileId);
             if (catalogProfileStore) {
                 const catalogFile = catalogProfileStore.catalogInfo;
-                fileList.set(catalogFile.fileId, catalogFile.fileInfo.name);
+                if (catalogFile.fileInfo.name) {
+                    fileList.set(catalogFile.fileId, catalogFile.fileInfo.name);
+                }
             }
         });
         return fileList;
     }
 
     // catalog widget store
-    getCatalogWidgetStore(fileId: number): CatalogWidgetStore {
+    getCatalogWidgetStore(fileId: number): CatalogWidgetStore | undefined {
         const widgetsStore = WidgetsStore.Instance;
         if (this.catalogWidgets.has(fileId)) {
             const widgetStoreId = this.catalogWidgets.get(fileId);
-            return widgetsStore.catalogWidgets.get(widgetStoreId);
+            return widgetStoreId ? widgetsStore.catalogWidgets.get(widgetStoreId) : undefined;
         } else {
             const widgetId = widgetsStore.addCatalogWidget(fileId);
-            return widgetsStore.catalogWidgets.get(widgetId);
+            return widgetId ? widgetsStore.catalogWidgets.get(widgetId) : undefined;
         }
     }
 
@@ -320,6 +324,9 @@ export class CatalogStore {
             let yFraction = CatalogStore.GetFractionFromUnit(yUnit.toLocaleLowerCase());
 
             let wcsCopy = AST.copy(wcsInfo);
+            if (wcsCopy !== 0 && AppStore.Instance.overlayStore.isImgCoordinates) {
+                AST.setI(wcsCopy, "Current", 2);
+            }
             let system = "System=" + catalogFrame;
             AST.set(wcsCopy, system);
             if (catalogFrame === CatalogSystemType.FK4) {

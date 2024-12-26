@@ -52,6 +52,9 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* getFrameFromFitsChan(AstFitsChan* fitschan, bo
         return nullptr;
     }
 
+    AstFrame* pixFrame = static_cast<AstFrame*> astGetFrame(frameSet, 1);
+    astSet(pixFrame, "Label(1)=X coordinate (pixel),Label(2)=Y coordinate (pixel)");
+
     // work around for missing CTYPE1 & CTYPE2
     if (checkSkyDomain) {
         const char *domain = astGetC(frameSet, "Domain");
@@ -104,7 +107,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* getSkyFrameSet(AstFrameSet* frameSet)
     }
 
     // Create 2D base frame
-    AstFrame *baseframe = astFrame(2, "Title=Pixel Coordinates,Domain=GRID,Label(1)=Pixel axis 1,Label(2)=Pixel axis 2");
+    AstFrame *baseframe = astFrame(2, "Title=Pixel Coordinates,Domain=GRID,Label(1)=X coordinate (pixel),Label(2)=Y coordinate (pixel)");
     if (!baseframe)
     {
         cout << "Create 2D base frame failed." << endl;
@@ -180,10 +183,10 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo
         return nullptr;
     }
 
-    AstFrame* pixFrame = static_cast<AstFrame*> astGetFrame(wcsinfo, 1);
+    AstFrame* pixFrame = static_cast<AstFrame*> astGetFrame(wcsinfo, AST__BASE);
     AstFrame* pixFrameCopy = static_cast<AstFrame*> astCopy(pixFrame);
-    AstFrame* skyFrame = static_cast<AstFrame*> astGetFrame(wcsinfo, 2);
-    AstMapping* pixToSkyMapping = static_cast<AstMapping*> astGetMapping(wcsinfo, 1, 2);
+    AstFrame* skyFrame = static_cast<AstFrame*> astGetFrame(wcsinfo, AST__CURRENT);
+    AstMapping* pixToSkyMapping = static_cast<AstMapping*> astGetMapping(wcsinfo, AST__BASE, AST__CURRENT);
     AstFrameSet* wcsInfoTransformed = astFrameSet(pixFrame, "");
 
     // 2D shifts
@@ -202,55 +205,38 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo
     return wcsInfoTransformed;
 }
 
+EMSCRIPTEN_KEEPALIVE AstFrameSet* createShiftmapFrameset(AstFrameSet* wcsinfo, double offsetX, double offsetY, double pixelOffsetX, double pixelOffsetY)
+{
+    AstFrameSet* wcsinfoShifted = static_cast<AstFrameSet*> astCopy(wcsinfo);
+
+    // 2D shifts
+    double offset[] = {-offsetX, -offsetY};
+    AstShiftMap* shiftMap = astShiftMap(2, offset, "");
+
+    // remapping
+    astRemapFrame(wcsinfoShifted, 2, shiftMap);
+
+    AstSkyFrame *skyframe = static_cast<AstSkyFrame*>astGetFrame(wcsinfoShifted, 2);
+    astSet(skyframe, "SkyRefIs=Origin");
+
+    // 2D pixel shifts
+    double pixelOffset[] = {-pixelOffsetX, -pixelOffsetY};
+    AstShiftMap* pixelShiftMap = astShiftMap(2, pixelOffset, "");
+    astAddFrame(wcsinfoShifted, AST__BASE, pixelShiftMap, astFrame(2, "Label(1)=X offset coordinate (pixel),Label(2)=Y offset coordinate (pixel),Domain=GRID"));
+
+    return wcsinfoShifted;
+}
+
 EMSCRIPTEN_KEEPALIVE AstFrameSet* initDummyFrame()
 {
-    double offsets[] = {-1, -1};
+    double offsets[] = {0, 0};
     AstFrameSet* frameSet = astFrameSet(astFrame(2, ""), "");
-    astAddFrame(frameSet, 1, astShiftMap(2, offsets, ""), astFrame(2, "Label(1)=X Coordinate,Label(2)=Y Coordinate,Domain=PIXEL"));
+    astAddFrame(frameSet, 1, astShiftMap(2, offsets, ""), astFrame(2, "Label(1)=X coordinate (pixel),Label(2)=Y coordinate (pixel),Domain=PIXEL"));
     return frameSet;
 }
 
-void plotDistText(AstFrameSet* wcsinfo, AstPlot* plot, double* start, double* finish)
-{
-    double dist = astDistance(wcsinfo, start, finish);
-    double middle[2];
-    astOffset(plot, start, finish, dist / 2, middle);
-    float up[] = {0.0f, 1.0f}; // horizontal text
-    string distString;
-    const char* unit = astGetC(wcsinfo, "Unit(1)");
-    if (strstr(unit, "degree") != nullptr || strstr(unit, "hh:mm:s") != nullptr)
-    {
-        if (dist < M_PI / 180.0 / 60.0)
-        {
-            distString = to_string(dist * 180.0 / M_PI * 3600.0);
-            distString += '"';
-        }
-        else if (dist < M_PI / 180.0)
-        {
-            distString = to_string(dist * 180.0 / M_PI * 60.0);
-            distString += "'";
-        }
-        else
-        {
-            distString = to_string(dist * 180.0 / M_PI);
-            distString += "\u00B0";
-        }
-    }
-    else
-    {
-        distString = to_string(dist);
-        if (unit[0] == '\0') {
-            distString += "pix";
-        }
-    }
-    const char* distChar = distString.c_str();
-
-    astText(plot, distChar, middle, up, "TC");
-}
-
 EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double imageX2, double imageY1, double imageY2, double width, double height,
-                                        double paddingLeft, double paddingRight, double paddingTop, double paddingBottom, const char* args,
-                                        bool showCurve, bool isPVImage, double curveX1, double curveY1, double curveX2, double curveY2)
+                                        double paddingLeft, double paddingRight, double paddingTop, double paddingBottom, const char* args)
 {
     if (!wcsinfo)
     {
@@ -277,32 +263,6 @@ EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double i
     plot = astPlot(wcsinfo, gbox, pbox, args);
     astBBuf(plot);
     astGrid(plot);
-
-    if (showCurve)
-    {
-        const double x[] = {curveX1, curveX2};
-        const double y[] = {curveY1, curveY2};
-        double xtran[2];
-        double ytran[2];
-        astTran2(wcsinfo, 2, x, y, 1, xtran, ytran);
-        
-        double in[2][4] = {{xtran[0], xtran[1], xtran[1], xtran[0]}, {ytran[0], ytran[1], ytran[0], ytran[0]}};
-        const double* inPtr = in[0];
-        astPolyCurve(plot, 4, 2, 4, inPtr);
-
-        double start[] = {xtran[0], ytran[0]};
-        double finish[] = {xtran[1], ytran[1]};
-        if (isPVImage)
-        {
-            double corner[] = {xtran[1], ytran[0]};
-            plotDistText(wcsinfo, plot, start, corner);
-            plotDistText(wcsinfo, plot, finish, corner);
-        }
-        else
-        {
-            plotDistText(wcsinfo, plot, start, finish);
-        }        
-    }
 
     astEBuf(plot);
     astAnnul(plot);

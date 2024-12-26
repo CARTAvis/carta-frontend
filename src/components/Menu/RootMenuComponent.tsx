@@ -8,10 +8,9 @@ import {observer} from "mobx-react";
 
 import {AppToaster, ExportImageMenuComponent, SuccessToast} from "components/Shared";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
-import {CARTA_INFO, PresetLayout, Snippet} from "models";
+import {CARTA_INFO, ImageType, ImageViewItem, PresetLayout, Snippet} from "models";
 import {ApiService, ConnectionStatus} from "services";
 import {AppStore, BrowserMode, DialogId, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
-import {FrameStore} from "stores/Frame";
 import {copyToClipboard, toFixed} from "utilities";
 
 import {WorkspaceDialogMode} from "../Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
@@ -229,19 +228,36 @@ export class RootMenuComponent extends React.Component {
             );
         }
 
+        let saveImageTooltip: string | React.JSX.Element = "";
+        let hideImageTooltip = true;
+        if (appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY) {
+            saveImageTooltip = "Not allowed in read-only mode";
+            hideImageTooltip = false;
+        } else if (appStore.activeImage?.type !== ImageType.FRAME) {
+            saveImageTooltip = (
+                <span>
+                    Color-blending and PV preview images cannot be saved.
+                    <br />
+                    <small>To save color-blending images, please save as a workspace via the File menu.</small>
+                </span>
+            );
+            hideImageTooltip = false;
+        }
+
         const fileMenu = (
             <Menu>
                 <MenuItem text="Open Image" label={`${modString}O`} disabled={appStore.openFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, false)} />
                 <MenuItem text="Append Image" label={`${modString}L`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)} />
-                <Tooltip content={"Not allowed in read-only mode"} disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY} position={Position.LEFT}>
+                <Tooltip content={saveImageTooltip} disabled={hideImageTooltip} position={Position.LEFT}>
                     <MenuItem
                         text="Save Image"
                         label={`${modString}S`}
-                        disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY}
+                        disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY || appStore.activeImage?.type !== ImageType.FRAME}
                         onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)}
                     />
                 </Tooltip>
-                <MenuItem text="Close Image" label={`${modString}W`} disabled={appStore.appendFileDisabled} onClick={() => appStore.closeCurrentFile(true)} />
+                <MenuItem text="Close Image" label={`${modString}W`} disabled={appStore.appendFileDisabled || appStore.activeImage?.type === ImageType.PV_PREVIEW} onClick={() => appStore.closeCurrentFile(true)} />
+                <MenuItem text="Multi-Color Blending" disabled={appStore.frameNum < 1} onClick={appStore.imageViewConfigStore.createColorBlending} />
                 <MenuDivider />
                 <MenuItem text="Import Regions" disabled={!appStore.activeFrame} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)} />
                 <Tooltip
@@ -268,8 +284,9 @@ export class RootMenuComponent extends React.Component {
             </Menu>
         );
 
-        let layerItems = appStore.frames.map(frame => {
-            return <MenuItem text={frame.filename} active={appStore.activeFrame && appStore.activeFrame.frameInfo.fileId === frame.frameInfo.fileId} key={frame.frameInfo.fileId} onClick={() => this.handleFrameSelect(frame)} />;
+        const imageItems = Array.from(Array(appStore.imageViewConfigStore.imageNum).keys()).map(index => {
+            const image = appStore.imageViewConfigStore.getImage(index);
+            return <MenuItem text={image.store.filename} active={appStore.activeImageIndex === index} key={index} onClick={() => this.handleImageSelect(image)} />;
         });
 
         const presetLayouts: string[] = PresetLayout.PRESETS;
@@ -321,19 +338,19 @@ export class RootMenuComponent extends React.Component {
                             ))}
                     </MenuItem>
                 </MenuItem>
-                {layerItems.length > 0 && (
+                {imageItems.length > 0 && (
                     <MenuItem text="Images" icon={"multi-select"}>
-                        {layerItems}
+                        {imageItems}
                         <MenuDivider />
-                        <MenuItem text="Previous Image" icon={"step-backward"} disabled={layerItems.length < 2} onClick={appStore.prevFrame} />
-                        <MenuItem text="Next Image" icon={"step-forward"} disabled={layerItems.length < 2} onClick={appStore.nextFrame} />
+                        <MenuItem text="Previous Image" icon={"step-backward"} disabled={imageItems.length < 2} onClick={appStore.prevImage} />
+                        <MenuItem text="Next Image" icon={"step-forward"} disabled={imageItems.length < 2} onClick={appStore.nextImage} />
                     </MenuItem>
                 )}
                 <MenuItem text="File Header" icon={"app-header"} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.FileInfo)} />
                 <MenuItem text="Contours" icon={<CustomIcon icon="contour" />} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.Contour)} />
                 <MenuItem text="Vector Overlay" icon={<CustomIcon icon="vectorOverlay" />} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.Vector)} />
                 <MenuItem text="Image Fitting" icon={<CustomIcon icon="imageFitting" />} disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.Fitting)} />
-                <MenuItem text="Online Catalog Query" icon="geosearch" disabled={!appStore.activeFrame} onClick={() => appStore.dialogStore.showDialog(DialogId.CatalogQuery)} />
+                <MenuItem text="Online Data Query" icon="geosearch" onClick={() => appStore.dialogStore.showDialog(DialogId.OnlineDataQuery)} />
                 {appStore.preferenceStore.codeSnippetsEnabled && <MenuItem text="Code Snippets" icon={"console"} onClick={() => appStore.dialogStore.showDialog(DialogId.Snippet)} />}
             </Menu>
         );
@@ -568,12 +585,12 @@ export class RootMenuComponent extends React.Component {
         this.documentationAlertVisible = false;
     };
 
-    handleFrameSelect = (frame: FrameStore) => {
+    handleImageSelect = (image: ImageViewItem) => {
         const appStore = AppStore.Instance;
-        if (appStore.activeFrame && appStore.activeFrame === frame) {
+        if (appStore.activeImage && appStore.activeImage === image) {
             return;
         } else {
-            appStore.setActiveFrame(frame);
+            appStore.updateActiveImage(image);
         }
     };
 }

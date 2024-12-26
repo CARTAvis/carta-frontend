@@ -32,6 +32,7 @@ import {parseBoolean} from "utilities";
 export enum PreferenceKeys {
     SILENT_FILE_SORTING_STRING = "fileSortingString",
     SILENT_FILE_FILTERING_TYPE = "fileFilteringType",
+    SILENT_PV_AXES_ORDER_REVERSE = "pvAxesOrderReverse",
 
     GLOBAL_THEME = "theme",
     GLOBAL_AUTOLAUNCH = "autoLaunch",
@@ -151,13 +152,14 @@ const DEFAULTS = {
         fileSortingString: "-date",
         fileFilteringType: FileFilteringType.Fuzzy,
         pixelGridVisible: false,
-        pixelGridColor: "#FFFFFF",
+        pixelGridColor: "#ffffff",
         imageMultiPanelEnabled: false,
         imagePanelMode: ImagePanelMode.Dynamic,
         imagePanelColumns: 2,
         imagePanelRows: 2,
         checkNewRelease: true,
-        latestRelease: "v" + CARTA_INFO.version
+        latestRelease: "v" + CARTA_INFO.version,
+        pvAxesOrderReverse: false
     },
     GLOBAL: {
         theme: Theme.AUTO,
@@ -223,7 +225,7 @@ const DEFAULTS = {
         cursorInfoVisible: CursorInfoVisibility.ActiveImage
     },
     REGION: {
-        regionColor: "#2EE6D6",
+        regionColor: "#2ee6d6",
         regionLineWidth: 2,
         regionDashLength: 0,
         regionType: CARTA.RegionType.RECTANGLE,
@@ -231,7 +233,7 @@ const DEFAULTS = {
         regionSize: 30
     },
     ANNOTATION: {
-        annotationColor: "#FFBA01",
+        annotationColor: "#ffba01",
         annotationLineWidth: 2,
         annotationDashLength: 0,
         annotationType: CARTA.RegionType.ANNRECTANGLE,
@@ -631,6 +633,10 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT) ?? DEFAULTS.PERFORMANCE.pvPreviewCubeSizeLimitUnit;
     }
 
+    @computed get isPVAxesOrderReverse(): boolean {
+        return this.preferences.get(PreferenceKeys.SILENT_PV_AXES_ORDER_REVERSE) ?? DEFAULTS.SILENT.pvAxesOrderReverse;
+    }
+
     @computed get isSelectingAllLogEvents(): boolean {
         return this.preferences.get(PreferenceKeys.LOG_EVENT)?.length === Event.EVENT_NUMBER;
     }
@@ -800,7 +806,8 @@ export class PreferenceStore {
             PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED,
             PreferenceKeys.IMAGE_PANEL_MODE,
             PreferenceKeys.IMAGE_PANEL_COLUMNS,
-            PreferenceKeys.IMAGE_PANEL_ROWS
+            PreferenceKeys.IMAGE_PANEL_ROWS,
+            PreferenceKeys.SILENT_PV_AXES_ORDER_REVERSE
         ]);
     };
 

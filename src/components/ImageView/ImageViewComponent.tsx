@@ -16,25 +16,26 @@ import "./ImageViewComponent.scss";
 export enum ImageViewLayer {
     RegionCreating = "regionCreating",
     Catalog = "catalog",
-    RegionMoving = "regionMoving",
-    DistanceMeasuring = "distanceMeasuring"
+    RegionMoving = "regionMoving"
 }
 
 export function getImageViewCanvas(padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
     const appStore = AppStore.Instance;
+    const config = appStore.imageViewConfigStore;
+    const overlay = appStore.overlayStore;
+
     const imageViewCanvas = document.createElement("canvas") as HTMLCanvasElement;
-    const pixelRatio = devicePixelRatio * appStore.imageRatio;
-    imageViewCanvas.width = appStore.overlayStore.fullViewWidth * pixelRatio;
-    imageViewCanvas.height = appStore.overlayStore.fullViewHeight * pixelRatio;
+    imageViewCanvas.width = overlay.fullViewWidth * appStore.pixelRatio;
+    imageViewCanvas.height = overlay.fullViewHeight * appStore.pixelRatio;
     const ctx = imageViewCanvas.getContext("2d");
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, imageViewCanvas.width, imageViewCanvas.height);
-    appStore.visibleFrames.forEach((frame, index) => {
-        const column = index % appStore.numImageColumns;
-        const row = Math.floor(index / appStore.numImageColumns);
+    config.visibleImages.forEach((frame, index) => {
+        const column = index % config.numImageColumns;
+        const row = Math.floor(index / config.numImageColumns);
         const panelCanvas = getPanelCanvas(column, row, padding, colorbarPosition, backgroundColor);
         if (panelCanvas) {
-            ctx.drawImage(panelCanvas, appStore.overlayStore.viewWidth * column * pixelRatio, appStore.overlayStore.viewHeight * row * pixelRatio);
+            ctx.drawImage(panelCanvas, overlay.viewWidth * column * appStore.pixelRatio, overlay.viewHeight * row * appStore.pixelRatio);
         }
     });
 
@@ -60,7 +61,7 @@ export function getPanelCanvas(column: number, row: number, padding: Padding, co
     const beamProfileCanvas = panelElement.find(".beam-profile-stage")?.children()?.children("canvas")?.[0] as HTMLCanvasElement;
     const regionCanvas = panelElement.find(".region-stage")?.children()?.children("canvas")?.[0] as HTMLCanvasElement;
 
-    const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
+    const appStore = AppStore.Instance;
     const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
     composedCanvas.width = overlayCanvas.width;
     composedCanvas.height = overlayCanvas.height;
@@ -68,23 +69,23 @@ export function getPanelCanvas(column: number, row: number, padding: Padding, co
     const ctx = composedCanvas.getContext("2d");
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
-    ctx.drawImage(rasterCanvas, padding.left * pixelRatio, padding.top * pixelRatio);
-    ctx.drawImage(contourCanvas, padding.left * pixelRatio, padding.top * pixelRatio);
-    ctx.drawImage(vectorOverlayCanvas, padding.left * pixelRatio, padding.top * pixelRatio);
+    ctx.drawImage(rasterCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
+    ctx.drawImage(contourCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
+    ctx.drawImage(vectorOverlayCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
     if (colorbarCanvas) {
         let xPos, yPos;
         switch (colorbarPosition) {
             case "top":
                 xPos = 0;
-                yPos = padding.top * pixelRatio - colorbarCanvas.height;
+                yPos = padding.top * appStore.pixelRatio - colorbarCanvas.height;
                 break;
             case "bottom":
                 xPos = 0;
-                yPos = overlayCanvas.height - colorbarCanvas.height - AppStore.Instance.overlayStore.colorbarHoverInfoHeight * pixelRatio;
+                yPos = overlayCanvas.height - colorbarCanvas.height - AppStore.Instance.overlayStore.colorbarHoverInfoHeight * appStore.pixelRatio;
                 break;
             case "right":
             default:
-                xPos = padding.left * pixelRatio + rasterCanvas.width;
+                xPos = padding.left * appStore.pixelRatio + rasterCanvas.width;
                 yPos = 0;
                 break;
         }
@@ -92,18 +93,18 @@ export function getPanelCanvas(column: number, row: number, padding: Padding, co
     }
 
     if (beamProfileCanvas) {
-        ctx.drawImage(beamProfileCanvas, padding.left * pixelRatio, padding.top * pixelRatio);
+        ctx.drawImage(beamProfileCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
     }
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(overlayCanvas, 0, 0);
 
     if (catalogCanvas) {
-        ctx.drawImage(catalogCanvas, padding.left * pixelRatio, padding.top * pixelRatio);
+        ctx.drawImage(catalogCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
     }
 
     if (regionCanvas) {
-        ctx.drawImage(regionCanvas, padding.left * pixelRatio, padding.top * pixelRatio);
+        ctx.drawImage(regionCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
     }
 
     return composedCanvas;
@@ -156,7 +157,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
         autorun(() => {
             const imageSize = {x: appStore.overlayStore.renderWidth, y: appStore.overlayStore.renderHeight};
-            const imageGridSize = {x: appStore.numImageColumns, y: appStore.numImageRows};
+            const imageGridSize = {x: appStore.imageViewConfigStore.numImageColumns, y: appStore.imageViewConfigStore.numImageRows};
             // Compare to cached image size to prevent duplicate events when changing frames
             const imageSizeChanged = !this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y;
             const gridSizeChanged = !this.cachedGridSize || this.cachedGridSize.x !== imageGridSize.x || this.cachedGridSize.y !== imageGridSize.y;
@@ -176,21 +177,23 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
     @computed get panels() {
         const appStore = AppStore.Instance;
-        const visibleFrames = appStore.visibleFrames;
+        const config = appStore.imageViewConfigStore;
+        const visibleImages = config.visibleImages;
         this.imagePanelRefs = [];
-        if (!visibleFrames) {
+        if (!visibleImages) {
             return [];
         }
-        return visibleFrames.map((frame, index) => {
-            const column = index % appStore.numImageColumns;
-            const row = Math.floor(index / appStore.numImageColumns);
+        return visibleImages.map((image, index) => {
+            const column = index % config.numImageColumns;
+            const row = Math.floor(index / config.numImageColumns);
 
-            return <ImagePanelComponent ref={this.collectImagePanelRef} key={frame.frameInfo.fileId} docked={this.props.docked} frame={frame} row={row} column={column} />;
+            return <ImagePanelComponent ref={this.collectImagePanelRef} key={`${image?.type}-${image?.store?.id}`} docked={this.props.docked} image={image} row={row} column={column} />;
         });
     }
 
     render() {
         const appStore = AppStore.Instance;
+        const config = appStore.imageViewConfigStore;
 
         let divContents: React.ReactNode | React.ReactNode[];
         if (!this.panels.length) {
@@ -200,7 +203,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         } else {
             const effectiveImageSize = {x: Math.floor(appStore.overlayStore.renderWidth), y: Math.floor(appStore.overlayStore.renderHeight)};
             const ratio = effectiveImageSize.x / effectiveImageSize.y;
-            const gridSize = {x: appStore.numImageColumns, y: appStore.numImageRows};
+            const gridSize = {x: config.numImageColumns, y: config.numImageRows};
 
             let gridSizeNode: React.ReactNode;
             if (gridSize.x * gridSize.y > 1) {
@@ -225,7 +228,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
         return (
             <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
-                <div className="image-view-div" style={{gridTemplateColumns: `repeat(${appStore.numImageColumns}, auto)`, gridTemplateRows: `repeat(${appStore.numImageRows}, 1fr)`}} data-testid="viewer-div">
+                <div className="image-view-div" style={{gridTemplateColumns: `repeat(${config.numImageColumns}, auto)`, gridTemplateRows: `repeat(${config.numImageRows}, 1fr)`}} data-testid="viewer-div">
                     {divContents}
                 </div>
             </ReactResizeDetector>

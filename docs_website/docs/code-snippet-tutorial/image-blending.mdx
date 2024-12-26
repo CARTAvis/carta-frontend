@@ -1,0 +1,57 @@
+---
+sidebar_position: 8
+---
+
+# Image blending
+
+Actions related to color blended images.
+
+## Creating color blended images
+
+<ApiLink path="/.-stores/class/ImageViewConfigStore/#createColorBlending">`createColorBlending`</ApiLink> creates a color blended image with a base layer from the spatial reference image and at most nine other layers from the spatially matched
+images.
+
+```javascript
+// Open three images
+const file1 = await app.openFile("image_r.fits");
+const file2 = await app.appendFile("image_g.fits");
+const file3 = await app.appendFile("image_b.fits");
+
+// Match images
+file2.setSpatialReference(file1);
+file3.setSpatialReference(file1);
+
+// Create a color blended image
+const colorBlendingStore = app.imageViewConfigStore.createColorBlending();
+console.log(colorBlendingStore.frames.length); // 3
+```
+
+<ApiLink path="/.-stores/class/ImageViewConfigStore/#removeColorBlending">`removeColorBlending`</ApiLink> closes a color blended image.
+
+```javascript
+app.imageViewConfigStore.removeColorBlending(colorBlendingStore);
+```
+
+## Color blending configuration
+
+The configuration of the color blended image is accessible via <ApiLink path="/.-stores/class/ColorBlendingStore">`ColorBlendingStore`</ApiLink>.
+
+```javascript
+// Add a new layer
+const file4 = await app.appendFile(path, "new_image.fits");
+file4.setSpatialReference(file1);
+colorBlendingStore.addSelectedFrame(file4);
+
+// Delete a layer
+colorBlendingStore.deleteSelectedFrame(2); // The fourth layer (the third selected layer)
+
+// Set alpha
+colorBlendingStore.setAlpha(0, 0.5); // The base layer
+colorBlendingStore.setAlpha(1, 0.7); // The second layer
+```
+
+Render configuration of each layer can be modified using <ApiLink path="/.-stores/class/RenderConfigStore">`renderConfig`</ApiLink>. The configuration is synchronized with the loaded image.
+
+```javascript
+colorBlendingStore.frames[0].renderConfig.setColorMap("gray");
+```

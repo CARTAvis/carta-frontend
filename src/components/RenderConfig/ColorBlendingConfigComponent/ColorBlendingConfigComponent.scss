@@ -1,0 +1,74 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+.color-blending-config {
+    padding: 10px;
+    height: 100%;
+    overflow: auto;
+
+    .heading {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+
+        h6 {
+            height: 30px;
+            display: flex;
+            align-items: center;
+            margin: 0;
+        }
+
+        .#{$ns}-button-group {
+            margin-left: auto;
+        }
+    }
+
+    .layer-config {
+        .#{$ns}-label {
+            min-width: 60px;
+            width: 60px;
+        }
+
+        .#{$ns}-form-content {
+            max-width: calc(100% - 70px); // layer-config w - label w
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+
+            .image-text {
+                line-height: 30px;
+                padding-left: 10px;
+            }
+
+            .image-column {
+                height: 30px;
+                min-width: 120px;
+                width: 120px;
+            }
+
+            .alpha-settings {
+                min-width: 160px;
+                max-width: 100%;
+                flex: 1 1 200px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+
+                .alpha-slider {
+                    margin-right: 10px;
+                }
+
+                .alpha-input input {
+                    width: 60px;
+                }
+            }
+        }
+    }
+}
+
+.colormap-set-blocks {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+}

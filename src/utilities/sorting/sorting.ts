@@ -5,13 +5,13 @@ import {ProcessedColumnData} from "utilities";
 
 export function getSortedIndexMap(
     controlHeader: Map<string, ControlHeader>,
-    sortingInfo: {columnName: string; sortingType: CARTA.SortingType},
+    sortingInfo: {columnName: string | null; sortingType: CARTA.SortingType | null},
     sortedIndexMap: Array<number>,
     hasFilter: boolean,
     numVisibleRows: number,
     sortData: Map<number, ProcessedColumnData>
 ): number[] {
-    const dataIndex = controlHeader.get(sortingInfo.columnName)?.dataIndex;
+    const dataIndex = controlHeader.get(sortingInfo.columnName ?? "")?.dataIndex;
 
     if (dataIndex !== undefined && dataIndex >= 0) {
         let direction = 0;

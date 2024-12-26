@@ -7,7 +7,7 @@ import {action, autorun, computed, makeObservable, observable, runInAction} from
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
-import {LinePlotComponent, LinePlotComponentProps, SafeNumericInput, SCALING_POPOVER_PROPS} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, SafeNumericInput, SCALING_POPOVER_PROPS, ScrollShadow} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import {Point2D} from "models";
 import {AppStore, DialogId, HelpType} from "stores";
@@ -487,28 +487,30 @@ export class ContourDialogComponent extends React.Component {
                 dialogId={DialogId.Contour}
             >
                 <div className={Classes.DIALOG_BODY}>
-                    <FormGroup className={"source-menu"} inline={true} label="Data source">
-                        <DataSourceSelect
-                            activeItem={dataSource}
-                            onItemSelect={appStore.setContourDataSource}
-                            popoverProps={{minimal: true, position: "bottom"}}
-                            filterable={false}
-                            items={appStore.frames}
-                            itemRenderer={this.renderDataSourceSelectItem}
-                            disabled={appStore.animatorStore.animationActive}
-                            fill={true}
-                        >
-                            <Button text={dataSource.filename} rightIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.animationActive} />
-                        </DataSourceSelect>
-                        <Tooltip content={appStore.frameLockedToContour ? "Data source is locked to active image" : "Data source is independent of active image"}>
-                            <AnchorButton className="lock-button" icon={appStore.frameLockedToContour ? "lock" : "unlock"} minimal={true} onClick={appStore.toggleFrameContourLock} />
-                        </Tooltip>
-                    </FormGroup>
-                    <Tabs defaultSelectedTabId={ContourDialogTabs.Levels} renderActiveTabPanelOnly={false}>
-                        <Tab id={ContourDialogTabs.Levels} title="Levels" panel={levelPanel} panelClassName="contour-level-panel" data-testid="contour-dailog-level-tab-title" />
-                        <Tab id={ContourDialogTabs.Configuration} title="Configuration" panel={configPanel} panelClassName="contour-config-panel" data-testid="contour-dailog-config-tab-title" />
-                        <Tab id={ContourDialogTabs.Styling} title="Styling" panel={<ContourStylePanelComponent frame={dataSource} darkTheme={appStore.darkTheme} />} data-testid="contour-dailog-styling-tab-title" />
-                    </Tabs>
+                    <ScrollShadow>
+                        <FormGroup className={"source-menu"} inline={true} label="Data source">
+                            <DataSourceSelect
+                                activeItem={dataSource}
+                                onItemSelect={appStore.setContourDataSource}
+                                popoverProps={{minimal: true, position: "bottom"}}
+                                filterable={false}
+                                items={appStore.frames}
+                                itemRenderer={this.renderDataSourceSelectItem}
+                                disabled={appStore.animatorStore.animationActive}
+                                fill={true}
+                            >
+                                <Button text={dataSource.filename} rightIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.animationActive} />
+                            </DataSourceSelect>
+                            <Tooltip content={appStore.frameLockedToContour ? "Data source is locked to active image" : "Data source is independent of active image"}>
+                                <AnchorButton className="lock-button" icon={appStore.frameLockedToContour ? "lock" : "unlock"} minimal={true} onClick={appStore.toggleFrameContourLock} />
+                            </Tooltip>
+                        </FormGroup>
+                        <Tabs defaultSelectedTabId={ContourDialogTabs.Levels} renderActiveTabPanelOnly={false}>
+                            <Tab id={ContourDialogTabs.Levels} title="Levels" panel={levelPanel} panelClassName="contour-level-panel" data-testid="contour-dailog-level-tab-title" />
+                            <Tab id={ContourDialogTabs.Configuration} title="Configuration" panel={configPanel} panelClassName="contour-config-panel" data-testid="contour-dailog-config-tab-title" />
+                            <Tab id={ContourDialogTabs.Styling} title="Styling" panel={<ContourStylePanelComponent frame={dataSource} darkTheme={appStore.darkTheme} />} data-testid="contour-dailog-styling-tab-title" />
+                        </Tabs>
+                    </ScrollShadow>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>

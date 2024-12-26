@@ -12,7 +12,7 @@ export enum RadiusUnits {
     ARCSECONDS = "arcsec"
 }
 
-export type VizierItem = {name: string; description: string};
+export type VizierItem = {name: string | null; description: string | null};
 
 export class CatalogOnlineQueryConfigStore {
     private static staticInstance: CatalogOnlineQueryConfigStore;
@@ -25,7 +25,7 @@ export class CatalogOnlineQueryConfigStore {
     @observable searchRadius: number;
     @observable coordsType: CatalogSystemType;
     @observable coordsFormat: NumberFormatType;
-    @observable centerPixelCoord: {x: string; y: string};
+    @observable centerPixelCoord: {x: string | undefined; y: string | undefined};
     @observable maxObject: number;
     @observable enablePointSelection: boolean;
     @observable radiusUnits: RadiusUnits;
@@ -53,6 +53,8 @@ export class CatalogOnlineQueryConfigStore {
         this.vizierSelectedTableName = [];
         this.vizierResource = new Map();
         this.vizierKeyWords = "";
+
+        this.resetSearchRadius();
 
         reaction(
             () => AppStore.Instance.activeFrame,
@@ -258,7 +260,7 @@ export class CatalogOnlineQueryConfigStore {
 
     @computed get searchRadiusInDegree(): number {
         const activeFrame = this.activeFrame;
-        if (activeFrame) {
+        if (activeFrame?.validWcs && OverlayStore.Instance.isWcsCoordinates) {
             const requiredFrameView = activeFrame.requiredFrameView;
             const diagonal1 = this.calculateDistanceFromPixelCoord({x: requiredFrameView.xMax, y: requiredFrameView.yMax}, {x: requiredFrameView.xMin, y: requiredFrameView.yMin}, true);
             const diagonal2 = this.calculateDistanceFromPixelCoord({x: requiredFrameView.xMin, y: requiredFrameView.yMax}, {x: requiredFrameView.xMax, y: requiredFrameView.yMin}, true);
@@ -287,9 +289,9 @@ export class CatalogOnlineQueryConfigStore {
         return this.vizierResource.size !== 0 && this.catalogDB === CatalogDatabase.VIZIER;
     }
 
-    @computed get selectedVizierSource(): VizierResource[] {
-        const resources = [];
-        this.vizierSelectedTableName.forEach(table => resources.push(this.vizierResource.get(table.name)));
+    @computed get selectedVizierSource(): (VizierResource | undefined)[] {
+        const resources: (VizierResource | undefined)[] = [];
+        this.vizierSelectedTableName.forEach(table => resources.push(table.name === null ? undefined : this.vizierResource.get(table.name)));
         return resources;
     }
 
@@ -308,10 +310,10 @@ export class CatalogOnlineQueryConfigStore {
         return tables;
     }
 
-    convertToDeg(pixelCoords: Point2D, system?: SystemType): {x: string; y: string} {
+    convertToDeg(pixelCoords: Point2D, system?: SystemType): {x: string | undefined; y: string | undefined} {
         const frame = this.activeFrame;
         const overlay = OverlayStore.Instance;
-        let p: {x: string; y: string} = {x: undefined, y: undefined};
+        let p: {x: string | undefined; y: string | undefined} = {x: undefined, y: undefined};
         if (frame && overlay) {
             const precision = overlay.numbers.customPrecision ? overlay.numbers.precision : "*";
             const format = `${NumberFormatType.Degrees}.${precision}`;
@@ -331,10 +333,10 @@ export class CatalogOnlineQueryConfigStore {
         return p;
     }
 
-    convertToPixel(coords: Point2D): Point2D {
+    convertToPixel(coords: Point2D): {x: number | undefined; y: number | undefined} | null {
         const frame = this.activeFrame;
         const overlay = OverlayStore.Instance;
-        let p: {x: number; y: number} = {x: undefined, y: undefined};
+        let p: {x: number | undefined; y: number | undefined} | null = {x: undefined, y: undefined};
         if (frame && overlay) {
             const precision = overlay.numbers.customPrecision ? overlay.numbers.precision : "*";
             const format = `${NumberFormatType.Degrees}.${precision}`;

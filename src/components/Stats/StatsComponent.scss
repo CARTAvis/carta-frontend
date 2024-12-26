@@ -44,6 +44,8 @@
             user-select: text;
             thead {
                 &.dark-theme {
+                    background: $dark-gray4;
+
                     tr {
                         th {
                             border-top: 1px solid $dark-gray4;
@@ -80,7 +82,7 @@
                 background: $white;
 
                 &.dark-theme {
-                    background: $dark-gray2;
+                    background: $dark-gray3;
 
                     tr {
                         td {

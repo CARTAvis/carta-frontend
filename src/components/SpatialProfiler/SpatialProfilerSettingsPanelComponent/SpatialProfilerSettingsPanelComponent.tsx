@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {autorun, computed} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, SafeNumericInput, SmoothingSettingsComponent} from "components/Shared";
+import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, SafeNumericInput, ScrollShadow, SmoothingSettingsComponent} from "components/Shared";
 import {LineKey} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {RegionId, SpatialProfileWidgetStore} from "stores/Widgets";
@@ -193,21 +193,23 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
             handleYMaxChange: this.handleYMaxChange
         };
         return (
-            <div className="spatial-profiler-settings">
-                <Tabs id="spatialSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
-                    <Tab id={SpatialProfilerSettingsTabs.STYLING} title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps} />} />
-                    <Tab id={SpatialProfilerSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore} />} />
-                    <Tab
-                        id={SpatialProfilerSettingsTabs.COMPUTATION}
-                        title="Computation"
-                        panel={
-                            <FormGroup label={"Width"} inline={true}>
-                                <SafeNumericInput min={1} max={20} stepSize={1} disabled={!widgetStore.effectiveRegion} value={lineRegionSampleWidth} onValueChange={value => widgetStore.setLineRegionSampleWidth(value)} />
-                            </FormGroup>
-                        }
-                    />
-                </Tabs>
-            </div>
+            <ScrollShadow>
+                <div className="spatial-profiler-settings">
+                    <Tabs id="spatialSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
+                        <Tab id={SpatialProfilerSettingsTabs.STYLING} title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps} />} />
+                        <Tab id={SpatialProfilerSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore} />} />
+                        <Tab
+                            id={SpatialProfilerSettingsTabs.COMPUTATION}
+                            title="Computation"
+                            panel={
+                                <FormGroup label={"Width"} inline={true}>
+                                    <SafeNumericInput min={1} max={20} stepSize={1} disabled={!widgetStore.effectiveRegion} value={lineRegionSampleWidth} onValueChange={value => widgetStore.setLineRegionSampleWidth(value)} />
+                                </FormGroup>
+                            }
+                        />
+                    </Tabs>
+                </div>
+            </ScrollShadow>
         );
     }
 }
