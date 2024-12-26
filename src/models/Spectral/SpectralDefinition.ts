@@ -57,7 +57,12 @@ export enum SpectralUnit {
     MM = "mm",
     UM = "um",
     NM = "nm",
-    ANGSTROM = "Angstrom"
+    ANGSTROM = "Angstrom",
+    MSQUARE = "m^2",
+    MMSQUARE = "mm^2",
+    UMSQUARE = "um^2",
+    NMSQUARE = "nm^2",
+    ANGSTROMSQUARE = "Angstrom^2"
 }
 
 export enum FrequencyUnit {
