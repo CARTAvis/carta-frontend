@@ -1017,7 +1017,7 @@ export class OverlayStore {
     @observable colorbar: OverlayColorbarSettings;
     @observable beam: OverlayBeamSettings;
 
-    public constructor(fullViewWidth?: number, fullViewHeight?: number, base: number = 5, defaultGap: number = 5) {
+    public constructor(fullViewWidth?: number, fullViewHeight?: number, base: number = 1, defaultGap: number = 2) {
         makeObservable(this);
         this.global = new OverlayGlobalSettings();
         this.title = new OverlayTitleSettings();
@@ -1161,7 +1161,7 @@ export class OverlayStore {
     };
 
     @computed get labelsHidden() {
-        return this.labels.hidden && this.numbers.hidden && this.title.hidden && this.isChannelMap;
+        return this.labels.hidden && this.numbers.hidden && this.title.hidden;
     }
 
     public styleString(frame?: FrameStore) {
@@ -1184,12 +1184,51 @@ export class OverlayStore {
         return astString.toString();
     }
 
+    public channelMapInnerStyleString(frame?: FrameStore) {
+        let astString = new ASTSettingsString();
+        astString.addSection(this.global.styleString(frame));
+        astString.addSection(this.grid.styleString);
+        astString.addSection(this.border.styleString);
+        astString.addSection(this.ticks.styleString);
+        astString.addSection(this.axes.styleString);
+        astString.addSection(this.numbers.styleString);
+        astString.add("DrawTitle", false);
+        astString.add("TextLab", false);
+        astString.add("LabelUp", 0);
+        astString.add("TitleGap", 0);
+        astString.add("NumLabGap", this.defaultGap / this.minSize(frame));
+        astString.add("TextLabGap", 0);
+        astString.add("TextGapType", "plot");
+        return astString.toString();
+    }
+
+    public channelMapOuterStyleString(frame?: FrameStore) {
+        let astString = new ASTSettingsString();
+        astString.addSection(this.global.styleString(frame));
+        astString.addSection(this.title.styleString);
+        astString.addSection(this.labels.styleString);
+        astString.add("Grid", false);
+        astString.add("Border", false);
+        astString.add("MajTickLen(1)", 0);
+        astString.add("MinTickLen(1)", 0);
+        astString.add("MajTickLen(2)", 0);
+        astString.add("MinTickLen(2)", 0);
+        astString.add("DrawAxes", false);
+        astString.add("NumLab", false);
+        astString.add("LabelUp", 0);
+        astString.add("TitleGap", this.titleGap / Math.min(this.fullViewWidth - this.paddingLeft - this.paddingRight, this.fullViewHeight - this.paddingTop - this.paddingBottom));
+        astString.add("NumLabGap", 0);
+        astString.add("TextLabGap", this.cumulativeLabelGap / Math.min(this.fullViewWidth - this.paddingLeft - this.paddingRight, this.fullViewHeight - this.paddingTop - this.paddingBottom));
+        astString.add("TextGapType", "plot");
+        return astString.toString();
+    }
+
     @action minSize(frame?: FrameStore) {
         return Math.min(this.renderWidth || frame.renderWidth, this.renderHeight || frame.renderHeight);
     }
 
     @computed get showNumbers() {
-        return this.isChannelMap || (this.numbers.show && this.global.labelType === LabelType.Exterior);
+        return this.numbers.show && this.global.labelType === LabelType.Exterior;
     }
 
     @computed get titleGap() {
@@ -1219,11 +1258,11 @@ export class OverlayStore {
     }
 
     @computed get paddingRight(): number {
-        return this.base + (!this.isChannelMap && this.colorbar.visible && this.colorbar.position === "right" ? this.colorbar.totalWidth : 0);
+        return this.base + (this.colorbar.visible && this.colorbar.position === "right" ? this.colorbar.totalWidth : 0);
     }
 
     @computed get paddingTop(): number {
-        return this.base + (this.title.show ? this.titleGap + this.title.fontSize : !this.isChannelMap && this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0);
+        return this.base + (this.title.show ? this.titleGap + this.title.fontSize : this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0);
     }
 
     @computed get paddingBottom(): number {
@@ -1249,12 +1288,80 @@ export class OverlayStore {
     }
 
     @computed get renderWidth() {
-        const renderWidth = this.viewWidth - this.paddingLeft - this.paddingRight;
+        let renderWidth;
+        if (AppStore.Instance.channelMapStore.channelMapEnabled) {
+            renderWidth = (this.fullViewWidth - this.paddingLeft - this.paddingRight - this.numberWidth) / AppStore.Instance.channelMapStore.numColumns;
+        } else {
+            renderWidth = this.viewWidth - this.paddingLeft - this.paddingRight;
+        }
         return renderWidth > 1 ? renderWidth : 1; // return value > 1 to prevent crashing
     }
 
     @computed get renderHeight() {
-        const renderHeight = this.viewHeight - this.paddingTop - this.paddingBottom;
+        let renderHeight;
+        if (AppStore.Instance.channelMapStore.channelMapEnabled) {
+            renderHeight = (this.fullViewHeight - this.paddingTop - this.paddingBottom - this.numberWidth) / AppStore.Instance.channelMapStore.numRows;
+        } else {
+            renderHeight = this.viewHeight - this.paddingTop - this.paddingBottom;
+        }
         return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
+    }
+
+    @computed get channelMapInnerPadding(): (type: "left" | "bottom" | "corner" | "inner") => Padding {
+        const paddingLeft = this.paddingLeft;
+        const paddingBottom = this.paddingBottom;
+        return (type: "left" | "bottom" | "corner" | "inner") => {
+            switch (type) {
+                case "left":
+                    return {
+                        left: paddingLeft,
+                        right: this.base,
+                        top: this.base,
+                        bottom: this.base
+                    };
+                case "bottom":
+                    return {
+                        left: this.base,
+                        right: this.base,
+                        top: this.base,
+                        bottom: paddingBottom
+                    };
+                case "corner":
+                    return {
+                        left: paddingLeft,
+                        right: this.base,
+                        top: this.base,
+                        bottom: paddingBottom
+                    };
+                case "inner":
+                    return {
+                        left: this.base,
+                        right: this.base,
+                        top: this.base,
+                        bottom: this.base
+                    };
+                default:
+                    return {
+                        left: paddingLeft,
+                        right: this.base,
+                        top: this.base,
+                        bottom: paddingBottom
+                    };
+            }
+        };
+    }
+
+    @computed get channelMapInnerWidth() {
+        return (renderWidth: number, type: "left" | "bottom" | "corner" | "inner") => {
+            const padding = this.channelMapInnerPadding(type);
+            return renderWidth - padding.left - padding.right;
+        };
+    }
+
+    @computed get channelMapInnerHeight() {
+        return (renderHeight: number, type: "left" | "bottom" | "corner" | "inner") => {
+            const padding = this.channelMapInnerPadding(type);
+            return renderHeight - padding.bottom - padding.top;
+        };
     }
 }

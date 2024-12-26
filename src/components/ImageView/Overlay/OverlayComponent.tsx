@@ -16,11 +16,13 @@ export class OverlayComponentProps {
     top?: number;
     left?: number;
     refCanvas?: any;
-    channel?: number;
-    unScaled?: boolean;
     onClicked?: (cursorInfo: CursorInfo) => void;
     onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
-    thisIs?: string;
+    thisIs?: "left" | "bottom" | "corner" | "inner";
+    width?: number;
+    height?: number;
+    type?: "channel-map-inner" | "channel-map-outer";
+    unScaled?: boolean;
 }
 
 @observer
@@ -46,31 +48,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     updateImage() {
         AppStore.Instance.resetImageRatio();
-        const thisIs = this.props.thisIs;
-        const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
-        const paddingLeft = this.props.overlaySettings.padding.left * pixelRatio;
-        const paddingBottom = this.props.overlaySettings.padding.bottom * pixelRatio;
-        if (this.props.refCanvas && this.canvas) {
-            requestAnimationFrame(() => {
-                if (!(this.props.refCanvas && this.canvas)) {
-                    return;
-                }
-                this.updateImageDimensions();
-                const destCanvas = this.canvas.getContext("2d", {willReadFrequently: true});
-                const w = this.props.refCanvas.width;
-                const h = this.props.refCanvas.height;
-                const destWidth = this.canvas.width - (thisIs === "left" || thisIs === "corner" ? 0 : paddingLeft);
-                const destHeight = this.canvas.height - (thisIs === "bottom" || thisIs === "corner" ? 0 : paddingBottom);
-                destCanvas.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                if (thisIs === "left") {
-                    destCanvas.drawImage(this.props.refCanvas, 0, 0, w, h - paddingBottom, 0, 0, destWidth, destHeight);
-                } else if (thisIs === "bottom") {
-                    destCanvas.drawImage(this.props.refCanvas, paddingLeft, 0, w - paddingLeft, h, paddingLeft, 0, destWidth, destHeight);
-                } else if (thisIs === "inner") {
-                    destCanvas.drawImage(this.props.refCanvas, paddingLeft, 0, w - paddingLeft, h - paddingBottom, paddingLeft, 0, destWidth, destHeight);
-                }
-            });
-        } else if (this.canvas && !this.props.refCanvas) {
+        if (this.canvas && !this.props.refCanvas) {
             if (PreferenceStore.Instance.limitOverlayRedraw) {
                 this.throttledRenderCanvas();
             } else {
@@ -81,8 +59,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     updateImageDimensions() {
         if (this.canvas) {
-            this.canvas.width = this.props.overlaySettings.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
-            this.canvas.height = this.props.overlaySettings.viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
+            this.canvas.width = (this.props.width ?? this.props.overlaySettings.viewWidth) * devicePixelRatio * AppStore.Instance.imageRatio;
+            this.canvas.height = (this.props.height ?? this.props.overlaySettings.viewHeight) * devicePixelRatio * AppStore.Instance.imageRatio;
         }
     }
 
@@ -90,15 +68,16 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const settings = this.props.overlaySettings;
         const frame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image.store?.baseFrame : this.props.image?.store;
         const appStore = AppStore.Instance;
+        const padding = this.props.type === "channel-map-inner" ? settings.channelMapInnerPadding(this.props.thisIs) : settings.padding;
 
         const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoShifted : frame.wcsInfo;
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
         const frameView = this.props.unScaled
             ? {
-                  xMin: settings.padding.left * appStore.pixelRatio,
-                  xMax: this.props.overlaySettings.viewWidth * appStore.pixelRatio - settings.padding.right * appStore.pixelRatio,
-                  yMin: settings.padding.bottom * appStore.pixelRatio,
-                  yMax: this.props.overlaySettings.viewHeight * appStore.pixelRatio - settings.padding.top * appStore.pixelRatio,
+                  xMin: padding.left * appStore.pixelRatio,
+                  xMax: (this.props.width ?? this.props.overlaySettings.viewWidth) * appStore.pixelRatio - padding.right * appStore.pixelRatio,
+                  yMin: padding.bottom * appStore.pixelRatio,
+                  yMax: (this.props.height ?? this.props.overlaySettings.viewHeight) * appStore.pixelRatio - padding.top * appStore.pixelRatio,
                   mip: 1
               }
             : frame.spatialReference
@@ -150,17 +129,25 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     frameView.xMax,
                     frameView.yMin / frame.aspectRatio,
                     frameView.yMax / frame.aspectRatio,
-                    this.props.overlaySettings.viewWidth * appStore.pixelRatio,
-                    this.props.overlaySettings.viewHeight * appStore.pixelRatio,
-                    settings.padding.left * appStore.pixelRatio,
-                    settings.padding.right * appStore.pixelRatio,
-                    settings.padding.top * appStore.pixelRatio,
-                    settings.padding.bottom * appStore.pixelRatio,
+                    (this.props.width ?? this.props.overlaySettings.viewWidth) * appStore.pixelRatio,
+                    (this.props.height ?? this.props.overlaySettings.viewHeight) * appStore.pixelRatio,
+                    padding.left * appStore.pixelRatio,
+                    padding.right * appStore.pixelRatio,
+                    padding.top * appStore.pixelRatio,
+                    padding.bottom * appStore.pixelRatio,
                     styleString
                 );
             };
 
-            let currentStyleString = settings.styleString(frame);
+            let currentStyleString;
+
+            if (this.props.type === "channel-map-inner") {
+                currentStyleString = settings.channelMapInnerStyleString(frame);
+            } else if (this.props.type === "channel-map-outer") {
+                currentStyleString = settings.channelMapOuterStyleString(frame);
+            } else {
+                currentStyleString = settings.styleString(frame);
+            }
 
             // Override the AST tolerance during motion
             if (frame.moving) {
@@ -186,6 +173,12 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             }
 
             plot(currentStyleString);
+            console.log(this.canvas.id, currentStyleString);
+            // Outer Labelling=Exterior, Color=0, Tol=0.02, DrawTitle=0, Font(Title)=2, Size(Title)=18, Grid=0, Width(Grid)=1, Border=0, Width(Border)=1, TickAll=1, Width(Ticks)=1, MinTickLen=0.00, MajTickLen=0.00, DrawAxes=0, Width(Axes)=1, NumLab=0, Font(NumLab)=0, Size(NumLab)=12, TextLab=1, Font(TextLab)=0, Size(TextLab)=15, LabelUp=0, TitleGap=0, NumLabGap=0, TextLabGap=0.018808777429467086, TextGapType=plot, Title=S255_IR_sci.spw29.cube.I.pbcor.fits
+
+            // Inner Labelling=Exterior, Color=0, Tol=0.02, System=ICRS, Equinox=2000, DrawTitle=0, Font(Title)=2, Size(Title)=18, Grid=0, Width(Grid)=1, Border=1, Width(Border)=1, TickAll=1, Width(Ticks)=1, MinTickLen=0.01, MajTickLen=0.02, DrawAxes=0, Width(Axes)=1, NumLab=1, Font(NumLab)=0, Size(NumLab)=12, TextLab=0, Font(TextLab)=0, Size(TextLab)=15, LabelUp=0, TitleGap=0.012861736334405145, NumLabGap=0.006430868167202572, TextLabGap=0.05144694533762058, TextGapType=plot, Title=S255_IR_sci.spw29.cube.I.pbcor.fits
+
+            // Regular Labelling=Exterior, Color=0, Tol=0.02, System=ICRS, Equinox=2000, DrawTitle=0, Font(Title)=2, Size(Title)=18, Grid=0, Width(Grid)=1, Border=1, Width(Border)=1, TickAll=1, Width(Ticks)=1, MinTickLen=0.01, MajTickLen=0.02, DrawAxes=0, Width(Axes)=1, NumLab=1, Font(NumLab)=0, Size(NumLab)=12, TextLab=1, Font(TextLab)=0, Size(TextLab)=15, LabelUp=0, TitleGap=0.016181229773462782, NumLabGap=0.008090614886731391, TextLabGap=0.03559870550161812, TextGapType=plot, Title=S255_IR_sci.spw29.cube.I.pbcor.fits
 
             if (/No grid curves can be drawn for axis/.test(AST.getLastErrorMessage())) {
                 // Try to re-plot without the grid
@@ -208,8 +201,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const refFrame = frame.spatialReference ?? frame;
         // changing the frame view, padding or width/height triggers a re-render
 
-        const w = this.props.overlaySettings?.viewWidth;
-        const h = this.props.overlaySettings?.viewHeight;
+        const w = this.props.width ?? this.props.overlaySettings?.viewWidth;
+        const h = this.props.height ?? this.props.overlaySettings?.viewHeight;
         // Dummy variables for triggering re-render
         /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
         const styleString = this.props.overlaySettings.styleString;
@@ -285,10 +278,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             <>
                 <canvas
                     className={className}
-                    style={{top: this.props.top || 0, left: this.props.left || 0, width: w, height: h}}
+                    style={{top: this.props.top || 0, left: this.props.left || 0, width: w, height: h, border: "1px solid green"}}
                     id="overlay-canvas"
                     ref={this.getRef}
-                    key={`overlay-canvas-${frame.frameInfo.fileId}-${this.props.channel}`}
+                    key={`overlay-canvas-${frame.frameInfo.fileId}`}
                 />
             </>
         );

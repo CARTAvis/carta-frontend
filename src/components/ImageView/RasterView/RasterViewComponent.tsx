@@ -14,7 +14,6 @@ import "./RasterViewComponent.scss";
 
 export class RasterViewComponentProps {
     docked: boolean;
-    overlayStore: OverlayStore;
     image: ImageItem;
     pixelHighlightValue: number;
     renderWidth?: number;
@@ -47,7 +46,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     this.props.webGLService,
                     this.props.tileService,
                     this.canvas,
-                    this.props.overlayStore,
+                    appStore.overlayStore,
                     this.props.column,
                     this.props.row,
                     appStore.imageViewConfigStore.numImageColumns,
@@ -68,7 +67,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                         this.props.webGLService,
                         this.props.tileService,
                         this.canvas,
-                        this.props.overlayStore,
+                        appStore.overlayStore,
                         this.props.column,
                         this.props.row,
                         appStore.imageViewConfigStore.numImageColumns,
@@ -99,7 +98,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 this.props.webGLService,
                 this.props.tileService,
                 this.canvas,
-                this.props.overlayStore,
+                appStore.overlayStore,
                 this.props.column,
                 this.props.row,
                 appStore.imageViewConfigStore.numImageColumns,
@@ -116,7 +115,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     //     this.props.channel,
     //     this.props.column,
     //     baseFrame,
-    //     this.props.overlayStore,
+    //     appStore.overlayStore,
     //     this.props.rasterData,
     //     this.props.row,
     //     this.props.tileBasedRender,
@@ -160,17 +159,17 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         channels.forEach((channel, index) => {
             const appStore = AppStore.Instance;
             const channelMapStore = appStore.channelMapStore;
+            const overlayStore = appStore.overlayStore;
             const column = index % channelMapStore.numColumns;
             const row = Math.floor(index / channelMapStore.numColumns);
-            const overlayStore = channelMapStore.overlayStores.corner;
 
             const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
-            const renderWidth = w / pixelRatio / channelMapStore.numColumns;
-            const renderHeight = h / pixelRatio / channelMapStore.numRows;
-            const xOffset = column * renderWidth * pixelRatio + overlayStore.base;
-            const yOffset = webGLService.gl.canvas.height - renderHeight * (row + 1) * pixelRatio + overlayStore.base * 2 * pixelRatio;
+            let width = Math.floor(w / pixelRatio / channelMapStore.numColumns);
+            let height = Math.floor(h / pixelRatio / channelMapStore.numRows);
 
-            this.renderCanvas(frame, webGLService, tileService, xOffset, yOffset, overlayStore.renderWidth, overlayStore.renderHeight, tileBasedRender, channel, rasterData);
+            let xOffset = column * width * pixelRatio;
+            let yOffset = webGLService.gl.canvas.height - height * (row + 1) * pixelRatio;
+            this.renderCanvas(frame, webGLService, tileService, xOffset, yOffset + overlayStore.base * pixelRatio, width - overlayStore.base, height - overlayStore.base, tileBasedRender, channel, rasterData);
         });
     };
 
@@ -612,7 +611,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
-        const padding = this.props.overlayStore.padding;
+        const padding = appStore.overlayStore.padding;
         const className = classNames(`raster-div`, {docked: this.props.docked});
 
         return (
@@ -624,8 +623,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     style={{
                         top: padding.top,
                         left: this.props.left ?? padding.left,
-                        width: baseFrame?.isRenderable ? this.props.renderWidth || this.props.overlayStore.renderWidth || 1 : 1,
-                        height: baseFrame?.isRenderable ? this.props.renderHeight || this.props.overlayStore.renderHeight || 1 : 1
+                        width: baseFrame?.isRenderable ? this.props.renderWidth || appStore.overlayStore.renderWidth || 1 : 1,
+                        height: baseFrame?.isRenderable ? this.props.renderHeight || appStore.overlayStore.renderHeight || 1 : 1
                     }}
                 />
             </div>

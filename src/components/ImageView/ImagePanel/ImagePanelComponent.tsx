@@ -166,7 +166,6 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                     {showRaster && (
                         <RasterViewComponent
                             image={this.props.image}
-                            overlayStore={overlayStore}
                             webGLService={frame.isPreview ? PreviewWebGLService.Instance : TileWebGLService.Instance}
                             tileService={TileService.Instance}
                             docked={this.props.docked}

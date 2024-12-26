@@ -929,6 +929,7 @@ export class WidgetsStore {
         if (channelMapStore.channelMapEnabled) {
             AppStore.Instance.channelMapStore.masterFrame?.overlayStore.setIsChannelMap(false);
             channelMapStore.setChannelMapEnabled(false);
+            // active frame may need to send a setChannel (with channelMapEnabled field as false) request so the frontend can backend can clear the channel map data
         } else {
             this.setImageMultiPanelEnabled(!PreferenceStore.Instance.imageMultiPanelEnabled);
         }
@@ -957,14 +958,10 @@ export class WidgetsStore {
 
     private getImagePanelButtonTooltip = (imagePanelMode: ImagePanelMode) => {
         return imagePanelMode === ImagePanelMode.None ? "switch to multi-panel" : "switch to single panel";
-        // return PreferenceStore.Instance.channelMapEnabled ? "switch to single-panel" : (imagePanelMode === ImagePanelMode.None ? "switch to multi-panel" : "switch to channel map");
-        // return imagePanelMode === ImagePanelMode.None ? (PreferenceStore.Instance.channelMapEnabled ? "switch to single-panel" : "switch to multi-panel") : "switch to channel map";
     };
 
     private getImagePanelButtonIcon = (imagePanelMode: ImagePanelMode) => {
         return imagePanelMode === ImagePanelMode.None ? Classes.iconClass("square") : Classes.iconClass("grid-view");
-        // return PreferenceStore.Instance.channelMapEnabled ? "bp3-icon-heat-grid" : (imagePanelMode === ImagePanelMode.None ?  "bp3-icon-square" : "bp3-icon-grid-view");
-        // return imagePanelMode === ImagePanelMode.None ? (PreferenceStore.Instance.channelMapEnabled ? Classes.iconClass("heat-grid") : Classes.iconClass("square")) : Classes.iconClass("grid-view");
     };
 
     onNextPageClick = () => {

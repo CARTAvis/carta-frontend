@@ -22,11 +22,11 @@ export class ChannelMapStore {
         this.startChannel = 0;
         this.numColumns = 2;
         this.numRows = 2;
-        this.overlayStores = {corner: undefined, outer: new OverlayStore(0, 0)};
-        this.overlayStores.outer.labels = AppStore.Instance.overlayStore.labels;
-        this.overlayStores.outer.setBase(0);
-        this.overlayStores.outer.setDefaultGap(0);
-        this.overlayStores.outer.isChannelMap = true;
+        this.overlayStores = {corner: undefined, outer: undefined};
+        // this.overlayStores.outer.labels = AppStore.Instance.overlayStore.labels;
+        // this.overlayStores.outer.setBase(0);
+        // this.overlayStores.outer.setDefaultGap(0);
+        // this.overlayStores.outer.isChannelMap = true;
     }
 
     @observable masterFrame: FrameStore;
@@ -56,12 +56,9 @@ export class ChannelMapStore {
         TileService.Instance.requestChannelMapTiles(tiles, midPointTileCoords, compressionQuality);
     }, 100);
 
-    @action setOverlayStores(overlayStore: OverlayStore) {
-        this.overlayStores.corner = overlayStore;
-    }
-
     @action updateOverlayStoreSize(width: number, height: number) {
-        this.overlayStores?.corner?.setViewDimension(width + this.overlayStores?.corner?.paddingLeft, height + this.overlayStores.corner?.paddingBottom);
+        const overlayStore = AppStore.Instance.overlayStore;
+        this.overlayStores?.corner?.setViewDimension(width + overlayStore.paddingLeft + overlayStore.paddingRight, height + overlayStore.paddingTop + overlayStore.paddingBottom);
     }
 
     @action setMasterFrame(masterFrame: FrameStore) {
@@ -169,35 +166,6 @@ export class ChannelMapStore {
     @action setShowVelocityStringLabel = (show: boolean) => {
         this.showVelocityStringLabel = show;
     };
-
-    public overlayStore(imageRenderWidth?: number, imageRenderHeight?: number) {
-        const overlay = AppStore.Instance.overlayStore;
-        if (imageRenderWidth && imageRenderHeight) {
-            this.updateOverlayStoreSize(imageRenderWidth, imageRenderHeight);
-        }
-
-        if (this.overlayStores?.corner) {
-            this.setOverlayStores(this.overlayStores?.corner);
-        } else {
-            const newOverlay = new OverlayStore(imageRenderWidth, imageRenderHeight);
-            newOverlay.setBase(1);
-            newOverlay.setDefaultGap(2);
-            newOverlay.labels.hidden = true;
-            newOverlay.numbers.hidden = false;
-            newOverlay.isChannelMap = true;
-            newOverlay.global = overlay.global;
-            newOverlay.grid = overlay.grid;
-            newOverlay.border = overlay.border;
-            newOverlay.axes = overlay.axes;
-            newOverlay.numbers = overlay.numbers;
-            newOverlay.ticks = overlay.ticks;
-            newOverlay.colorbar = overlay.colorbar;
-            newOverlay.beam = overlay.beam;
-            this.setOverlayStores(newOverlay);
-        }
-
-        return this.overlayStores.corner;
-    }
 
     @computed get numChannels(): number {
         return this.numColumns * this.numRows;

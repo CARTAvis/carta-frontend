@@ -265,8 +265,8 @@ export class FrameStore {
     @computed get overlayStore(): OverlayStore {
         if (this.isPreview) {
             return this.previewOverlayStore;
-        } else if (AppStore.Instance.channelMapStore.channelMapEnabled && this.channelMapOverlayStore) {
-            return this.channelMapOverlayStore;
+            // } else if (AppStore.Instance.channelMapStore.channelMapEnabled && this.channelMapOverlayStore) {
+            //     return this.channelMapOverlayStore;
         } else {
             return this._overlayStore;
         }
@@ -438,28 +438,28 @@ export class FrameStore {
 
     @computed get renderWidth() {
         //need change, ok, we need a way to get this removed from here, and pass in overlaystore where needed
-        // return AppStore.Instance.overlayStore.previewRenderWidth(this.previewViewWidth) || AppStore.Instance.overlayStore.renderWidth;
-        const overlayStore = this.isPreview ? this.previewOverlayStore : this.overlayStore;
-        return AppStore.Instance.channelMapStore.overlayStores &&
-            AppStore.Instance.channelMapStore.overlayStores.corner &&
-            AppStore.Instance.channelMapStore.channelMapEnabled &&
-            AppStore.Instance.channelMapStore.overlayStores.corner?.renderWidth &&
-            !this.isPreview
-            ? AppStore.Instance.channelMapStore.overlayStores.corner?.renderWidth
-            : overlayStore.renderWidth;
+        return AppStore.Instance.overlayStore.renderWidth;
+        // const overlayStore = this.isPreview ? this.previewOverlayStore : this.overlayStore;
+        // return AppStore.Instance.channelMapStore.overlayStores &&
+        //     AppStore.Instance.channelMapStore.overlayStores.corner &&
+        //     AppStore.Instance.channelMapStore.channelMapEnabled &&
+        //     AppStore.Instance.channelMapStore.overlayStores.corner?.renderWidth &&
+        //     !this.isPreview
+        //     ? AppStore.Instance.channelMapStore.overlayStores.corner?.renderWidth
+        //     : overlayStore.renderWidth;
     }
 
     @computed get renderHeight() {
-        // return AppStore.Instance.overlayStore.previewRenderHeight(this.previewViewHeight) || AppStore.Instance.overlayStore.renderHeight;
-        const overlayStore = this.isPreview ? this.previewOverlayStore : this.overlayStore;
-        return AppStore.Instance.channelMapStore.overlayStores &&
-            AppStore.Instance.channelMapStore.overlayStores.corner &&
-            AppStore.Instance.channelMapStore.overlayStores.corner &&
-            AppStore.Instance.channelMapStore.channelMapEnabled &&
-            AppStore.Instance.channelMapStore.overlayStores.corner?.renderHeight &&
-            !this.isPreview
-            ? AppStore.Instance.channelMapStore.overlayStores.corner?.renderHeight
-            : overlayStore.renderHeight;
+        return AppStore.Instance.overlayStore.renderHeight;
+        // const overlayStore = this.isPreview ? this.previewOverlayStore : this.overlayStore;
+        // return AppStore.Instance.channelMapStore.overlayStores &&
+        //     AppStore.Instance.channelMapStore.overlayStores.corner &&
+        //     AppStore.Instance.channelMapStore.overlayStores.corner &&
+        //     AppStore.Instance.channelMapStore.channelMapEnabled &&
+        //     AppStore.Instance.channelMapStore.overlayStores.corner?.renderHeight &&
+        //     !this.isPreview
+        //     ? AppStore.Instance.channelMapStore.overlayStores.corner?.renderHeight
+        //     : overlayStore.renderHeight;
     }
 
     @computed get isRenderable() {
@@ -1286,7 +1286,7 @@ export class FrameStore {
     constructor(frameInfo: FrameInfo) {
         makeObservable(this);
         this._overlayStore = AppStore.Instance.overlayStore;
-        this.channelMapOverlayStore = AppStore.Instance.channelMapStore.overlayStores.corner;
+        // this.channelMapOverlayStore = AppStore.Instance.channelMapStore.overlayStores.corner;
         this.previewOverlayStore = new OverlayStore(PvPreviewComponent.WIDGET_CONFIG.defaultWidth, PvPreviewComponent.WIDGET_CONFIG.defaultHeight);
         this.logStore = LogStore.Instance;
         this.backendService = BackendService.Instance;

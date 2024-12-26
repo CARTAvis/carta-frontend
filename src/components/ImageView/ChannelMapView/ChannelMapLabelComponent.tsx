@@ -9,9 +9,11 @@ export class ChannelMapLabelComponentProps {
     overlaySettings: OverlayStore;
     image: ImageItem;
     docked: boolean;
-    top?: number;
-    left?: number;
-    channel?: number;
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+    channel: number;
 }
 
 @observer
@@ -35,8 +37,8 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
                 const destCanvas = this.canvas.getContext("2d", {willReadFrequently: true});
                 const frame = AppStore.Instance.channelMapStore.masterFrame;
                 const channelMapStore = AppStore.Instance.channelMapStore;
-                this.canvas.width = this.props.overlaySettings.viewWidth * pixelRatio;
-                this.canvas.height = this.props.overlaySettings.viewHeight * pixelRatio;
+                this.canvas.width = this.props.width * pixelRatio;
+                this.canvas.height = this.props.height * pixelRatio;
                 const {spectralString, velocityString} = frame.getFreqWithChannel(this.props.channel);
                 const longestString = Math.max(spectralString.length, velocityString.length);
                 const fontSize = this.canvas.width / (longestString * 0.8);
@@ -44,7 +46,7 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
                 destCanvas.fillStyle = "red";
                 destCanvas.textAlign = "left";
                 destCanvas.textBaseline = "top";
-                const x = this.props.overlaySettings.paddingLeft * devicePixelRatio * AppStore.Instance.imageRatio + 10;
+                const x = 10;
                 let y = fontSize * 0.5;
 
                 if (channelMapStore.showChannelString) {
@@ -71,8 +73,8 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
 
     updateImageDimensions() {
         if (this.canvas) {
-            this.canvas.width = this.props.overlaySettings.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
-            this.canvas.height = this.props.overlaySettings.viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
+            this.canvas.width = this.props.width * devicePixelRatio * AppStore.Instance.imageRatio;
+            this.canvas.height = this.props.height * devicePixelRatio * AppStore.Instance.imageRatio;
         }
     }
 
@@ -85,8 +87,8 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
         const refFrame = frame.spatialReference ?? frame;
         // changing the frame view, padding or width/height triggers a re-render
 
-        const w = this.props.overlaySettings?.viewWidth;
-        const h = this.props.overlaySettings?.viewHeight;
+        const w = this.props.width;
+        const h = this.props.height;
         // Dummy variables for triggering re-render
         /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
         const styleString = this.props.overlaySettings.styleString;
