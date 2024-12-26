@@ -325,7 +325,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         if (this.props.markers) {
             if (marker && marker.dragMove) {
                 let newPositionDataSpace;
-                let deltaOffset; // Handle a sudden jump of offset when the marker is dragged out of the canvas space (Konva resets the offset value)
+                let deltaOffset; // Prevent a sudden jump of offset when the marker is dragged out of the canvas space (Konva resets the offset value)
                 if (marker.horizontal) {
                     deltaOffset = this.cachedDragOffset !== undefined ? ev.evt.offsetY - this.cachedDragOffset : 0;
                     if (Math.abs(deltaOffset) > this.chartArea.height * 0.5) {
