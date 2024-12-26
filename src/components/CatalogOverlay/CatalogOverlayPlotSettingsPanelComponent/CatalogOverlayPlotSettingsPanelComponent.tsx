@@ -718,55 +718,57 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
         return (
             <ScrollShadow>
-            <div className={"catalog-settings"}>
-                <FormGroup className={"file-menu"} inline={true} label="File" disabled={disabledOverlayPanel}>
-                    <Select
-                        className={Classes.FILL}
-                        disabled={disabledOverlayPanel}
-                        filterable={false}
-                        items={catalogFileItems}
-                        activeItem={this.catalogFileId}
-                        onItemSelect={this.handleCatalogFileChange}
-                        itemRenderer={this.renderFileIdPopOver}
-                        popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
-                        fill={true}
-                    >
-                        <Button text={activeFileName} rightIcon="double-caret-vertical" disabled={disabledOverlayPanel} />
-                    </Select>
-                </FormGroup>
-                <FormGroup className={"file-menu"} inline={true} label="Shape" disabled={disabledOverlayPanel}>
-                    <Select
-                        className={Classes.FILL}
-                        disabled={disabledOverlayPanel}
-                        filterable={false}
-                        items={widgetStore.catalogDisplayMode === CatalogDisplayMode.WORLD ? this.catalogOverlayShape.filter(f => f === CatalogOverlayShape.ELLIPSE_LINED || f === CatalogOverlayShape.CIRCLE_LINED) : this.catalogOverlayShape}
-                        activeItem={widgetStore.catalogShape}
-                        onItemSelect={item => widgetStore.setCatalogShape(item)}
-                        itemRenderer={this.renderShapePopOver}
-                        popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
-                    >
-                        <Button icon={this.getCatalogShape(widgetStore.catalogShape)} rightIcon="double-caret-vertical" disabled={disabledOverlayPanel} data-testid="catalog-settings-shape-dropdown" />
-                    </Select>
-                </FormGroup>
-                <FormGroup className={"file-menu"} inline={true} label="Mode" disabled={disabledOverlayPanel}>
-                    <ButtonGroup>
-                        <AnchorButton
-                            onClick={() => widgetStore.setCatalogDisplayMode(CatalogDisplayMode.CANVAS)}
-                            text={CatalogDisplayMode.CANVAS}
-                            active={widgetStore.catalogDisplayMode === CatalogDisplayMode.CANVAS}
+                <div className={"catalog-settings"}>
+                    <FormGroup className={"file-menu"} inline={true} label="File" disabled={disabledOverlayPanel}>
+                        <Select
+                            className={Classes.FILL}
                             disabled={disabledOverlayPanel}
-                        />
-                        <AnchorButton
-                            onClick={() => widgetStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD)}
-                            text={CatalogDisplayMode.WORLD}
-                            active={widgetStore.catalogDisplayMode === CatalogDisplayMode.WORLD}
+                            filterable={false}
+                            items={catalogFileItems}
+                            activeItem={this.catalogFileId}
+                            onItemSelect={this.handleCatalogFileChange}
+                            itemRenderer={this.renderFileIdPopOver}
+                            popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
+                            fill={true}
+                        >
+                            <Button text={activeFileName} rightIcon="double-caret-vertical" disabled={disabledOverlayPanel} />
+                        </Select>
+                    </FormGroup>
+                    <FormGroup className={"file-menu"} inline={true} label="Shape" disabled={disabledOverlayPanel}>
+                        <Select
+                            className={Classes.FILL}
                             disabled={disabledOverlayPanel}
-                        />
-                    </ButtonGroup>
-                </FormGroup>
-                {showTabs()}
+                            filterable={false}
+                            items={
+                                widgetStore.catalogDisplayMode === CatalogDisplayMode.WORLD ? this.catalogOverlayShape.filter(f => f === CatalogOverlayShape.ELLIPSE_LINED || f === CatalogOverlayShape.CIRCLE_LINED) : this.catalogOverlayShape
+                            }
+                            activeItem={widgetStore.catalogShape}
+                            onItemSelect={item => widgetStore.setCatalogShape(item)}
+                            itemRenderer={this.renderShapePopOver}
+                            popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
+                        >
+                            <Button icon={this.getCatalogShape(widgetStore.catalogShape)} rightIcon="double-caret-vertical" disabled={disabledOverlayPanel} data-testid="catalog-settings-shape-dropdown" />
+                        </Select>
+                    </FormGroup>
+                    <FormGroup className={"file-menu"} inline={true} label="Mode" disabled={disabledOverlayPanel}>
+                        <ButtonGroup>
+                            <AnchorButton
+                                onClick={() => widgetStore.setCatalogDisplayMode(CatalogDisplayMode.CANVAS)}
+                                text={CatalogDisplayMode.CANVAS}
+                                active={widgetStore.catalogDisplayMode === CatalogDisplayMode.CANVAS}
+                                disabled={disabledOverlayPanel}
+                            />
+                            <AnchorButton
+                                onClick={() => widgetStore.setCatalogDisplayMode(CatalogDisplayMode.WORLD)}
+                                text={CatalogDisplayMode.WORLD}
+                                active={widgetStore.catalogDisplayMode === CatalogDisplayMode.WORLD}
+                                disabled={disabledOverlayPanel}
+                            />
+                        </ButtonGroup>
+                    </FormGroup>
+                    {showTabs()}
                 </div>
-                </ScrollShadow>
+            </ScrollShadow>
         );
     }
 
