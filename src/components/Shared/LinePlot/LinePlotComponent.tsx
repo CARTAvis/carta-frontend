@@ -161,6 +161,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     @observable selectionBoxEnd = {x: 0, y: 0};
     @observable isMouseEntered = false;
     @observable isMarkerDragging = false;
+    @observable isDraggableCancel = false;
+    @observable cachedDragOffset: number = undefined;
 
     @computed get isSelecting() {
         return this.interactionMode === InteractionMode.SELECTING;
@@ -315,18 +317,37 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     @action onMarkerDragEnd = () => {
         this.isMarkerDragging = false;
+        this.isDraggableCancel = false;
+        this.cachedDragOffset = undefined;
     };
 
     onMarkerDragged = (ev, marker: LineMarker) => {
         if (this.props.markers) {
             if (marker && marker.dragMove) {
                 let newPositionDataSpace;
+                let deltaOffset; // Handle a sudden jump of offset when the marker is dragged out of the canvas space (Konva resets the offset value)
                 if (marker.horizontal) {
-                    // Prevent dragging out of canvas space
-                    newPositionDataSpace = this.getValueForPixelY(clamp(ev.evt.offsetY, this.chartArea.top, this.chartArea.bottom), this.props.logY);
+                    deltaOffset = this.cachedDragOffset !== undefined ? ev.evt.offsetY - this.cachedDragOffset : 0;
+                    if (Math.abs(deltaOffset) > this.chartArea.height * 0.5) {
+                        newPositionDataSpace = deltaOffset > 0 ? this.getCanvasSpaceY(this.chartArea.top) : this.getValueForPixelY(this.chartArea.bottom);
+                        this.isDraggableCancel = true;
+                    } else {
+                        // Prevent dragging out of chartArea, since the canvas space is slightly longer
+                        newPositionDataSpace = this.getValueForPixelY(clamp(ev.evt.offsetY, this.chartArea.top, this.chartArea.bottom), this.props.logY);
+
+                        this.cachedDragOffset = ev.evt.offsetY;
+                    }
                 } else {
-                    // Prevent dragging out of canvas space
-                    newPositionDataSpace = this.getValueForPixelX(clamp(ev.evt.offsetX, this.chartArea.left, this.chartArea.right));
+                    deltaOffset = this.cachedDragOffset !== undefined ? ev.evt.offsetX - this.cachedDragOffset : 0;
+                    if (Math.abs(deltaOffset) > this.chartArea.width * 0.5) {
+                        newPositionDataSpace = deltaOffset < 0 ? this.getValueForPixelX(this.chartArea.right) : this.getValueForPixelX(this.chartArea.left);
+                        this.isDraggableCancel = true;
+                    } else {
+                        // Prevent dragging out of chartArea, since the canvas space is slightly wider
+                        newPositionDataSpace = this.getValueForPixelX(clamp(ev.evt.offsetX, this.chartArea.left, this.chartArea.right));
+
+                        this.cachedDragOffset = ev.evt.offsetX;
+                    }
                 }
                 marker.dragMove(newPositionDataSpace);
             }
@@ -824,7 +845,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     key={marker.id + "-draggable"}
                     x={valueCanvasSpace}
                     y={0}
-                    draggable={true}
+                    draggable={true && !this.isDraggableCancel}
                     dragBoundFunc={pos => this.dragBoundsFuncVertical(pos, marker)}
                     onDragStart={this.onMarkerDragStart}
                     onDragEnd={this.onMarkerDragEnd}
