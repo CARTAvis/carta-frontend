@@ -1,11 +1,11 @@
 import * as React from "react";
-import {AnchorButton, Classes, Collapse, DialogProps, FormGroup, HTMLSelect, HTMLTable, InputGroup, Intent, Position, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Classes, Collapse, DialogProps, FormGroup, HTMLSelect, HTMLTable, InputGroup, Intent, Position, Switch, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {determineCtypeName, PresetLayout} from "models";
+import {DetermineCtypeName, PresetLayout} from "models";
 import {AppStore, DialogId, HelpType, INITIAL_LAYOUT_ITEM, LayoutDialogMode, PreferenceStore} from "stores";
 
 import "./SaveLayoutDialogComponent.scss";
@@ -20,6 +20,7 @@ export class SaveLayoutDialogComponent extends React.Component {
     private static readonly MinHeight = 185;
 
     @observable private layoutName: string = "";
+    @observable private saveDynamicLayoutEnable: boolean = false;
 
     constructor(props: any) {
         super(props);
@@ -48,6 +49,7 @@ export class SaveLayoutDialogComponent extends React.Component {
 
     private saveLayout = async () => {
         const appStore = AppStore.Instance;
+        const dyLayoutStore = appStore.dynamicLayoutStore;
 
         appStore.dialogStore.hideDialog(DialogId.Layout);
         appStore.layoutStore.setLayoutToBeSaved(this.layoutName.trim());
@@ -58,10 +60,16 @@ export class SaveLayoutDialogComponent extends React.Component {
                 const confirmed = await appStore.alertStore.showInteractiveAlert(`Are you sure to overwrite the existing layout ${this.layoutName}?`);
                 if (confirmed) {
                     await appStore.layoutStore.saveLayout();
+                    if (this.saveDynamicLayoutEnable) {
+                        await dyLayoutStore.saveLayoutMapping(this.layoutName, appStore.activeFrame.dynamicLayoutCtype);
+                    }
                 }
             }
         } else {
             await appStore.layoutStore.saveLayout();
+            if (this.saveDynamicLayoutEnable) {
+                await dyLayoutStore.saveLayoutMapping(this.layoutName, appStore.activeFrame.dynamicLayoutCtype);
+            }
         }
         this.clearInput();
     };
@@ -72,17 +80,9 @@ export class SaveLayoutDialogComponent extends React.Component {
         this.clearInput();
     };
 
-    private handleSaveLayoutMapping = async () => {
-        const appStore = AppStore.Instance;
-
-        // keep layoutName before it is cleared in saveLayout()
-        const layoutName = this.layoutName.trim();
-
-        await this.saveLayout();
-
-        const dyLayoutStore = appStore.dynamicLayoutStore;
-        await dyLayoutStore.saveLayoutMapping(layoutName, appStore.activeFrame.dynamicLayoutCtype);
-    };
+    private toggleSaveDynamicLayoutEnable() {
+        this.saveDynamicLayoutEnable = !this.saveDynamicLayoutEnable;
+    }
 
     @computed get isEmpty(): boolean {
         return !this.layoutName?.trim();
@@ -127,7 +127,7 @@ export class SaveLayoutDialogComponent extends React.Component {
     };
 
     private renderLayoutDialogFooter = (mode: LayoutDialogMode) => {
-        const dyLayoutStore = AppStore.Instance.dynamicLayoutStore;
+        const activeFrame = AppStore.Instance.activeFrame;
 
         switch (mode) {
             case LayoutDialogMode.Save:
@@ -135,8 +135,10 @@ export class SaveLayoutDialogComponent extends React.Component {
                     <div className={Classes.DIALOG_FOOTER}>
                         <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                             <Collapse isOpen={PreferenceStore.Instance.dynamicLayoutEnable}>
-                                <Tooltip content={`Apply layout when images with type (${dyLayoutStore.dynamicLayoutCtype}) are loaded`} disabled={!this.isEmpty}>
-                                    <AnchorButton intent={Intent.PRIMARY} onClick={this.handleSaveLayoutMapping} text={"Dynamic Layout"} disabled={this.isEmpty || !this.validName || !this.enableDynamicLayoutSave} />
+                                <Tooltip content={`Apply layout when images with type (${activeFrame?.dynamicLayoutCtype}) are loaded`} disabled={!activeFrame}>
+                                    <FormGroup inline={true} disabled={!activeFrame} label="Save as dynamic layout">
+                                        <Switch checked={this.saveDynamicLayoutEnable} disabled={!activeFrame} onChange={ev => this.toggleSaveDynamicLayoutEnable()} />
+                                    </FormGroup>
                                 </Tooltip>
                             </Collapse>
                             <Tooltip content="Layout name cannot be empty!" disabled={!this.isEmpty}>
@@ -162,7 +164,7 @@ export class SaveLayoutDialogComponent extends React.Component {
 
     render() {
         const appStore = AppStore.Instance;
-        const className = classNames("layoutMapping-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("preference-dialog", {[Classes.DARK]: appStore.darkTheme});
 
         const dialogProps: DialogProps = {
             icon: "layout-grid",
@@ -221,8 +223,8 @@ export const LayoutMappingComponent = () => {
     let layoutNameList: string[] | any[] = [activeFrame?.dynamicLayoutName ?? ""];
 
     if (dyLayoutStore.isMappingExisted) {
-        const ctypes = Object.keys(dyLayoutStore.existLayoutMapping).slice(1);
-        const names = Object.values(dyLayoutStore.existLayoutMapping).slice(1);
+        const ctypes = Object.keys(dyLayoutStore.existLayoutMapping);
+        const names = Object.values(dyLayoutStore.existLayoutMapping);
         ctypeList = activeFrame ? (ctypes.includes(activeFrame.dynamicLayoutCtype) ? ctypes : [activeFrame.dynamicLayoutCtype, ...ctypes]) : ctypes;
         layoutNameList = activeFrame ? (ctypes.includes(activeFrame.dynamicLayoutCtype) ? names : [activeFrame.dynamicLayoutName, ...names]) : names;
     }
@@ -230,21 +232,28 @@ export const LayoutMappingComponent = () => {
     let rows = [];
     if (ctypeList[0] !== "") {
         ctypeList.forEach((layoutCtypes, index) => {
+            let ctypeDescription = layoutCtypes
+                .split(",")
+                .map((ctype, idx) => {
+                    return DetermineCtypeName(ctype);
+                })
+                .join(",");
+
             rows.push(
                 <tr key={index}>
                     <td>
-                        <FormGroup>
-                            (
-                            {layoutCtypes.split(",").map((ctype, idx) => {
-                                const showedCtype = idx !== 0 ? "," + ctype : ctype;
-                                return (
-                                    <Tooltip position="bottom" content={determineCtypeName(ctype)}>
-                                        <span>{showedCtype}</span>
-                                    </Tooltip>
-                                );
-                            })}
-                            )
-                        </FormGroup>
+                        <Tooltip position="bottom" content={`(${ctypeDescription.replaceAll(",", ", ")})`}>
+                            <FormGroup>
+                                (
+                                {layoutCtypes
+                                    .replace(/\s+/g, "")
+                                    .split(",")
+                                    .map((ctype, idx) => {
+                                        return idx !== 0 ? ", " + ctype : ctype;
+                                    })}
+                                )
+                            </FormGroup>
+                        </Tooltip>
                     </td>
                     <td>
                         <HTMLSelect value={layoutNameList[index]} onChange={ev => dyLayoutStore.saveLayoutMapping(ev.currentTarget.value, layoutCtypes)}>

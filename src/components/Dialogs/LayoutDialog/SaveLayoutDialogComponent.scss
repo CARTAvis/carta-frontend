@@ -1,39 +1,4 @@
-@import "~@blueprintjs/core/lib/scss/variables.scss";
-
 .layout-name-input {
     margin: 3px;
     user-select: none;
-}
-
-.layoutMapping-dialog {
-    thead {
-        display: block;
-        th {
-            min-width: 120px;
-        }
-    }
-
-    tbody {
-        display: block;
-        overflow: auto;
-        height: 100px;
-        tr {
-            td {
-                min-width: 120px;
-                padding-left: 7px !important;
-                .#{$ns}-form-group {
-                    margin: 6px;
-                }
-            }
-        }
-    }
-
-    .#{$ns}-popover-target {
-        span {
-            display: block;
-            max-width: 1.8em;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-    }
 }

@@ -384,59 +384,6 @@ export class ApiService {
         }
     };
 
-    public getLayoutMapping = async () => {
-        let savedLayouts: {[name: string]: any};
-        if (ApiService.RuntimeConfig.apiAddress) {
-            try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/layouts`;
-                const response = await this.axiosInstance.get(url);
-                if (response?.data?.success) {
-                    savedLayouts = response.data.layouts;
-                } else {
-                    return undefined;
-                }
-            } catch (err) {
-                console.log(err);
-                return undefined;
-            }
-        } else {
-            try {
-                savedLayouts = JSON.parse(localStorage.getItem("savedLayouts") ?? "{}");
-            } catch (err) {
-                console.log(err);
-                return undefined;
-            }
-        }
-
-        if (savedLayouts) {
-            return Object.keys(savedLayouts).includes("LayoutMapping") ? savedLayouts["LayoutMapping"] : [];
-        } else {
-            return undefined;
-        }
-    };
-
-    public setLayoutMapping = async (layoutName: string, layout: any): Promise<boolean> => {
-        if (ApiService.RuntimeConfig.apiAddress) {
-            try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/layout`;
-                const response = await this.axiosInstance.put(url, {layoutName, layout});
-                return response?.data?.success;
-            } catch (err) {
-                console.log(err);
-                return false;
-            }
-        } else {
-            try {
-                const obj = JSON.parse(localStorage.getItem("savedLayouts") ?? "{}");
-                obj["layoutMapping"] = layout;
-                localStorage.setItem("savedLayouts", JSON.stringify(obj));
-                return true;
-            } catch (err) {
-                return false;
-            }
-        }
-    };
-
     public getSnippets = async () => {
         let savedSnippets: {[name: string]: Snippet};
         if (ApiService.RuntimeConfig.apiAddress) {
