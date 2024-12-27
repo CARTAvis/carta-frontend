@@ -271,12 +271,20 @@ export class FittingDialogComponent extends React.Component {
                                 <Tooltip
                                     content={
                                         <span>
-                                            Clear existing fitting results and fit the current channel of the image{" "}
+                                            Fit the current channel of the image
                                             {!fittingStore.validParams && (
                                                 <span>
                                                     <br />
                                                     <i>
                                                         <small>Initial values will be auto generated.</small>
+                                                    </i>
+                                                </span>
+                                            )}
+                                            {fittingStore.effectiveFrame?.fittingResult !== "" && (
+                                                <span>
+                                                    <br />
+                                                    <i>
+                                                        <small>Existing fitting results will be replaced.</small>
                                                     </i>
                                                 </span>
                                             )}
