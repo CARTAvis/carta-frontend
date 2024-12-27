@@ -268,7 +268,23 @@ export class FittingDialogComponent extends React.Component {
                                 <Tooltip content="Clear fitting parameters" position={Position.BOTTOM}>
                                     <AnchorButton intent={Intent.WARNING} onClick={fittingStore.clearComponents} text="Clear" />
                                 </Tooltip>
-                                <Tooltip content="Clear existing fitting results and fit the current channel of the image" position={Position.BOTTOM} disabled={fittingStore.fitDisabled}>
+                                <Tooltip
+                                    content={
+                                        <span>
+                                            Clear existing fitting results and fit the current channel of the image{" "}
+                                            {!fittingStore.validParams && (
+                                                <span>
+                                                    <br />
+                                                    <i>
+                                                        <small>Initial values will be auto generated.</small>
+                                                    </i>
+                                                </span>
+                                            )}
+                                        </span>
+                                    }
+                                    position={Position.BOTTOM}
+                                    disabled={fittingStore.fitDisabled}
+                                >
                                     <AnchorButton intent={Intent.PRIMARY} onClick={fittingStore.fitImage} text="Fit" disabled={fittingStore.fitDisabled} data-testid="image-fitting-fit-button" />
                                 </Tooltip>
                             </div>

@@ -147,12 +147,15 @@ export class ImageFittingStore {
         return null;
     }
 
+    @computed get validParams() {
+        return this.components.every(c => c.validParams === true);
+    }
+
     @computed get fitDisabled() {
         const fileId = this.effectiveFrame?.frameInfo?.fileId;
         const validFileId = fileId !== undefined && isFinite(fileId) && fileId >= 0;
         const allFixed = this.components.every(c => c.allFixed === true);
-        const validParams = this.components.every(c => c.validParams === true);
-        return !validFileId || allFixed || (this.components.length > 1 && !validParams) || this.isFitting;
+        return !validFileId || allFixed || this.isFitting;
     }
 
     constructor() {
