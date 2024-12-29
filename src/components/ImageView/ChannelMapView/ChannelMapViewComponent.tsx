@@ -4,7 +4,6 @@ import {autorun, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {CursorInfo, ImageType} from "models";
-import {TileService, TileWebGLService} from "services";
 import {AppStore, ChannelMapStore, FrameStore} from "stores";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
@@ -44,25 +43,11 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     const [catalogViewGLComponentRef, setCatalogViewGLComponentRef] = React.useState<CatalogViewGLComponent>();
     const [imageToolbarVisible, setImageToolbarVisible] = React.useState(false);
 
-    // const heightOffset = colorBarSetting.position === "right" ? 0 : colorbarOffset;
-    // const widthOffset = colorBarSetting.position === "right" ? colorbarOffset : 0;
     const channelMapViewWidth = props.renderWidth - overlayStore.paddingRight - overlayStore.paddingLeft;
     const channelMapViewHeight = props.renderHeight - overlayStore.paddingBottom - overlayStore.paddingTop;
 
-    // const numberOffset = overlayStore.numberWidth || 0;
-    // const leftOuterOffset = overlayStore.paddingLeft + numberOffset;
-    // const bottomOuterOffset = overlayStore.paddingBottom + numberOffset + overlayStore.paddingTop;
-    // const leftOuterOffset = overlayStore.paddingLeft;
-    // const bottomOuterOffset = overlayStore.paddingBottom;
-    // const imageRenderWidth = Math.floor(overlayStore.renderWidth);
-    // const imageRenderHeight = Math.floor(overlayStore.renderHeight);
-    // const imageRenderWidth = Math.floor((channelMapViewWidth - overlayStore.paddingLeft) / channelMapStore.numColumns);
-    // const imageRenderHeight = Math.floor((channelMapViewHeight - overlayStore.paddingBottom) / channelMapStore.numRows);
     const imageRenderWidth = Math.floor(channelMapViewWidth / channelMapStore.numColumns);
     const imageRenderHeight = Math.floor(channelMapViewHeight / channelMapStore.numRows);
-    console.log("imageRenderWidth", imageRenderWidth, "imageRenderHeight", imageRenderHeight, channelMapViewWidth, channelMapViewHeight);
-
-    // const overlayStore = channelMapStore.overlayStore(Math.floor(imageRenderWidth), Math.floor(imageRenderHeight));
 
     React.useEffect(() => {
         const disposer = reaction(
@@ -294,8 +279,6 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                 <RasterViewComponent
                     key={`raster-view-component-${channelMapStore.showAuxiliaryFrame && channelMapStore.auxiliaryFrame ? "auxiliary" : "channel-map"}`}
                     image={image}
-                    webGLService={TileWebGLService.Instance}
-                    tileService={TileService.Instance}
                     docked={props.docked}
                     pixelHighlightValue={props.channelMapStore.pixelHighlightValue}
                     renderWidth={channelMapViewWidth}
@@ -406,7 +389,6 @@ const ChannelMapInnerOverlayComponent = ({
     const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
     const setCornerOverlay = () => {
-        console.log("setCornerOverlay", overlayComponentRef?.canvas);
         const left = overlayComponentLeft - overlayStore.paddingLeft;
 
         return (
@@ -430,8 +412,6 @@ const ChannelMapInnerOverlayComponent = ({
                 width={Math.floor(imageRenderWidth) + overlayStore.paddingLeft}
                 height={Math.floor(imageRenderHeight) + overlayStore.paddingBottom}
                 type={"channel-map-inner"}
-                // unScaled={true}
-                // channel={channelMapStore.showAuxiliaryFrame ? channelMapStore.auxiliaryFrameChannel : channel}
             />
         );
     };
@@ -463,17 +443,12 @@ const ChannelMapInnerOverlayComponent = ({
                 const ctx = canvas.getContext("2d");
                 if (ctx) {
                     requestAnimationFrame(() => {
-                        console.log("canvas", canvas);
                         const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
                         canvas.width = width * pixelRatio;
                         canvas.height = height * pixelRatio;
                         const destCanvas = canvas.getContext("2d", {willReadFrequently: true});
                         const w = overlayComponentRef.canvas.width;
                         const h = overlayComponentRef.canvas.height;
-                        // const destWidth = canvas.width - (thisIs === "left" || thisIs === "corner" ? 0 : paddingLeft);
-                        // const destHeight = canvas.height - (thisIs === "bottom" || thisIs === "corner" ? 0 : paddingBottom);
-                        // const destWidth = overlayStore.channelMapInnerWidth(canvas.width / pixelRatio, thisIs) * pixelRatio;
-                        // const destHeight = overlayStore.channelMapInnerHeight(canvas.height / pixelRatio, thisIs) * pixelRatio;
                         const destWidth = canvas.width;
                         const destHeight = canvas.height;
                         const cornerPaddingLeft = overlayStore.paddingLeft * pixelRatio;
@@ -486,13 +461,6 @@ const ChannelMapInnerOverlayComponent = ({
                         } else if (thisIs === "inner") {
                             destCanvas.drawImage(overlayComponentRef.canvas, cornerPaddingLeft, 0, w - cornerPaddingLeft, h - cornerPaddingBottom, 0, 0, destWidth, destHeight);
                         }
-                        // if (thisIs === "left") {
-                        //     destCanvas.drawImage(overlayComponentRef.canvas, 0, 0, w, h - overlayStore.paddingBottom, 0, 0, destWidth, destHeight);
-                        // } else if (thisIs === "bottom") {
-                        //     destCanvas.drawImage(overlayComponentRef.canvas, overlayStore.paddingLeft, 0, w - overlayStore.paddingLeft, h, overlayStore.paddingLeft, 0, destWidth, destHeight);
-                        // } else if (thisIs === "inner") {
-                        //     destCanvas.drawImage(overlayComponentRef.canvas, overlayStore.paddingLeft, 0, w - overlayStore.paddingLeft, h - overlayStore.paddingBottom, overlayStore.paddingLeft, 0, destWidth, destHeight);
-                        // }
                     });
                 }
             }

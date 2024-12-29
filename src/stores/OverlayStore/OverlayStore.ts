@@ -1065,12 +1065,10 @@ export class OverlayStore {
 
     @computed get fullViewWidth() {
         return this._fullViewWidth;
-        // return this.isChannelMap ? this._fullViewWidth : this.imageViewerSettingStore.fullViewWidth;
     }
 
     @computed get fullViewHeight() {
         return this._fullViewHeight;
-        // return this.isChannelMap ? this._fullViewHeight : this.imageViewerSettingStore.fullViewHeight;
     }
     /**
      * Hide or show the overlay.
@@ -1278,7 +1276,6 @@ export class OverlayStore {
         };
     }
 
-    // We have to choose between custom view size or default view size. If fullViewWidth and fullViewHeight are defined, then we use them, otherwise, use imageViewerSetting.
     @computed get viewWidth() {
         return Math.floor(this.fullViewWidth / AppStore.Instance.imageViewConfigStore.numImageColumns);
     }

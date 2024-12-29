@@ -5,7 +5,6 @@ import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
 import {CursorInfo, CursorInfoVisibility, ImageItem, ImageType, Zoom} from "models";
-import {PreviewWebGLService, TileService, TileWebGLService} from "services";
 import {AnimationMode, AppStore, ColorBlendingStore, type FrameStore} from "stores";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
@@ -166,8 +165,6 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                     {showRaster && (
                         <RasterViewComponent
                             image={this.props.image}
-                            webGLService={frame.isPreview ? PreviewWebGLService.Instance : TileWebGLService.Instance}
-                            tileService={TileService.Instance}
                             docked={this.props.docked}
                             pixelHighlightValue={this.pixelHighlightValue}
                             row={this.props.row}

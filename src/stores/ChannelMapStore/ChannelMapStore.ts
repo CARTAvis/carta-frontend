@@ -23,10 +23,6 @@ export class ChannelMapStore {
         this.numColumns = 2;
         this.numRows = 2;
         this.overlayStores = {corner: undefined, outer: undefined};
-        // this.overlayStores.outer.labels = AppStore.Instance.overlayStore.labels;
-        // this.overlayStores.outer.setBase(0);
-        // this.overlayStores.outer.setDefaultGap(0);
-        // this.overlayStores.outer.isChannelMap = true;
     }
 
     @observable masterFrame: FrameStore;

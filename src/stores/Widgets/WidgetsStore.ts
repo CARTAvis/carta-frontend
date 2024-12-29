@@ -971,7 +971,6 @@ export class WidgetsStore {
         if (config.imageNum > firstIndexInNextPage) {
             appStore.setActiveImageByIndex(firstIndexInNextPage);
         }
-        // If channel map, and next page clicked
     };
 
     onPreviousPageClick = () => {
@@ -981,7 +980,6 @@ export class WidgetsStore {
             const firstIndexInPreviousPage = (config.currentImagePage - 1) * config.imagesPerPage;
             appStore.setActiveImageByIndex(firstIndexInPreviousPage);
         }
-        // If channel map, and previous page clicked
     };
 
     updateImagePanelPageButtons = () => {

@@ -65,7 +65,7 @@ import {
 } from "stores";
 import {CompassAnnotationStore, CURSOR_REGION_ID, FrameInfo, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
-import {DEFAULT_COLOR, distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
+import {distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
 
 import GitCommit from "../../static/gitInfo";
 
@@ -963,7 +963,6 @@ export class AppStore {
             this.histogramRequirements.delete(fileId);
 
             this.tileService.handleFileClosed(fileId);
-            // this.channelMapTileService.handleFileClosed(fileId);
             this.telemetryService.addFileCloseEntry(fileId);
 
             if (this.backendService.closeFile(fileId)) {
@@ -1023,13 +1022,12 @@ export class AppStore {
                 } else {
                     // update overlay defaults from the last frame
                     if (removedFrameIsLastFrame) {
-                        frame.overlayStore.setDefaultsFromFrame(this.frames[this.frames.length - 1]);
+                        this.overlayStore.setDefaultsFromFrame(this.frames[this.frames.length - 1]);
                     }
                 }
 
                 // TODO: check this
                 this.tileService.handleFileClosed(fileId);
-                // this.channelMapTileService.handleFileClosed(fileId);
                 // Clean up if frame has associated catalog files
                 if (this.catalogNum) {
                     CatalogStore.Instance.closeAssociatedCatalog(fileId);
@@ -1063,7 +1061,6 @@ export class AppStore {
                 const fileId = frame.frameInfo.fileId;
                 this.telemetryService.addFileCloseEntry(fileId);
                 this.tileService.handleFileClosed(fileId);
-                // this.channelMapTileService.handleFileClosed(fileId);
                 if (this.catalogNum) {
                     CatalogStore.Instance.closeAssociatedCatalog(fileId);
                 }
@@ -1632,13 +1629,13 @@ export class AppStore {
         if (this.astReady) {
             const astColors = [
                 getColorForTheme(this.overlayStore.global.color),
-                getColorForTheme(this.activeFrame?.overlayStore.title.color),
+                getColorForTheme(this.overlayStore.title.color),
                 getColorForTheme(this.overlayStore.grid.color),
-                getColorForTheme(this.activeFrame?.overlayStore.border.color),
-                getColorForTheme(this.activeFrame?.overlayStore.ticks.color),
+                getColorForTheme(this.overlayStore.border.color),
+                getColorForTheme(this.overlayStore.ticks.color),
                 getColorForTheme(this.overlayStore.axes.color),
-                getColorForTheme(this.activeFrame?.overlayStore.numbers.color || DEFAULT_COLOR),
-                getColorForTheme(this.activeFrame?.overlayStore.labels.color || DEFAULT_COLOR)
+                getColorForTheme(this.overlayStore.numbers.color),
+                getColorForTheme(this.overlayStore.labels.color)
             ];
             AST.setColors(astColors);
         }
@@ -1839,7 +1836,6 @@ export class AppStore {
         // Assign service instances
         this.backendService = BackendService.Instance;
         this.tileService = TileService.Instance;
-        // this.channelMapTileService = ChannelMapTileService.Instance;
         this.scriptingService = ScriptingService.Instance;
         this.apiService = ApiService.Instance;
         this.telemetryService = TelemetryService.Instance;
@@ -2084,7 +2080,6 @@ export class AppStore {
         this.backendService.momentProgressStream.subscribe(this.handleMomentProgressStream);
         this.backendService.scriptingStream.subscribe(this.handleScriptingRequest);
         this.tileService.tileStream.subscribe(this.handleTileStream);
-        // this.channelMapTileService.tileStream.subscribe(this.handleTileStream);
         this.backendService.listProgressStream.subscribe(this.handleFileProgressStream);
         this.backendService.pvProgressStream.subscribe(this.handlePvProgressStream);
         this.backendService.fittingProgressStream.subscribe(this.handleFittingProgressStream);
@@ -3258,7 +3253,7 @@ export class AppStore {
             this.setImageRatio(imageRatio);
             this.waitForImageData().then(() => {
                 const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : this.darkTheme ? "rgba(0, 0, 0, 1)" : Colors.WHITE;
-                const composedCanvas = getImageViewCanvas(this.activeFrame.overlayStore.padding, this.activeFrame.overlayStore.colorbar.position, backgroundColor);
+                const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
                 if (composedCanvas) {
                     composedCanvas.toBlob(blob => {
                         const link = document.createElement("a") as HTMLAnchorElement;
@@ -3297,7 +3292,7 @@ export class AppStore {
     // Is this method still being used? Probably for python scripting?
     getImageDataUrl = (backgroundColor: string) => {
         if (this.activeFrame) {
-            const composedCanvas = getImageViewCanvas(this.activeFrame.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
+            const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
             if (composedCanvas) {
                 return composedCanvas.toDataURL();
             }

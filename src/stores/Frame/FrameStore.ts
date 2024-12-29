@@ -265,8 +265,6 @@ export class FrameStore {
     @computed get overlayStore(): OverlayStore {
         if (this.isPreview) {
             return this.previewOverlayStore;
-            // } else if (AppStore.Instance.channelMapStore.channelMapEnabled && this.channelMapOverlayStore) {
-            //     return this.channelMapOverlayStore;
         } else {
             return this._overlayStore;
         }
@@ -437,29 +435,13 @@ export class FrameStore {
     }
 
     @computed get renderWidth() {
-        //need change, ok, we need a way to get this removed from here, and pass in overlaystore where needed
-        return AppStore.Instance.overlayStore.renderWidth;
-        // const overlayStore = this.isPreview ? this.previewOverlayStore : this.overlayStore;
-        // return AppStore.Instance.channelMapStore.overlayStores &&
-        //     AppStore.Instance.channelMapStore.overlayStores.corner &&
-        //     AppStore.Instance.channelMapStore.channelMapEnabled &&
-        //     AppStore.Instance.channelMapStore.overlayStores.corner?.renderWidth &&
-        //     !this.isPreview
-        //     ? AppStore.Instance.channelMapStore.overlayStores.corner?.renderWidth
-        //     : overlayStore.renderWidth;
+        const overlayStore = this.isPreview ? this.previewOverlayStore : this.overlayStore;
+        return overlayStore.renderWidth;
     }
 
     @computed get renderHeight() {
-        return AppStore.Instance.overlayStore.renderHeight;
-        // const overlayStore = this.isPreview ? this.previewOverlayStore : this.overlayStore;
-        // return AppStore.Instance.channelMapStore.overlayStores &&
-        //     AppStore.Instance.channelMapStore.overlayStores.corner &&
-        //     AppStore.Instance.channelMapStore.overlayStores.corner &&
-        //     AppStore.Instance.channelMapStore.channelMapEnabled &&
-        //     AppStore.Instance.channelMapStore.overlayStores.corner?.renderHeight &&
-        //     !this.isPreview
-        //     ? AppStore.Instance.channelMapStore.overlayStores.corner?.renderHeight
-        //     : overlayStore.renderHeight;
+        const overlayStore = this.isPreview ? this.previewOverlayStore : this.overlayStore;
+        return overlayStore.renderHeight;
     }
 
     @computed get isRenderable() {
@@ -625,14 +607,13 @@ export class FrameStore {
         }
 
         if (this.frameInfo.fileInfoExtended.depth > 1) {
-            const spectralType = this.spectralAxis?.type;
             // dummy variable to update velocity when the rest freq for spectral transform is changed
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            /* eslint-disable @typescript-eslint/no-unused-vars */
+            const spectralType = this.spectralAxis?.type;
             const channelInfo = this.channelInfo;
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const restFreq = this.restFreqStore.restFreqInHz;
+            /* eslint-disable @typescript-eslint/no-unused-vars */
             const {spectralString, velocityString, freqString} = this.getFreqWithChannel(spectralInfo.channel);
-            console.log(spectralString, velocityString, freqString, spectralType.code, "dddd");
             spectralInfo.spectralString = spectralString;
             spectralInfo.velocityString = velocityString;
             spectralInfo.freqString = freqString;

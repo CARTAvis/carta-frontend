@@ -173,12 +173,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             }
 
             plot(currentStyleString);
-            console.log(this.canvas.id, currentStyleString);
-            // Outer Labelling=Exterior, Color=0, Tol=0.02, DrawTitle=0, Font(Title)=2, Size(Title)=18, Grid=0, Width(Grid)=1, Border=0, Width(Border)=1, TickAll=1, Width(Ticks)=1, MinTickLen=0.00, MajTickLen=0.00, DrawAxes=0, Width(Axes)=1, NumLab=0, Font(NumLab)=0, Size(NumLab)=12, TextLab=1, Font(TextLab)=0, Size(TextLab)=15, LabelUp=0, TitleGap=0, NumLabGap=0, TextLabGap=0.018808777429467086, TextGapType=plot, Title=S255_IR_sci.spw29.cube.I.pbcor.fits
-
-            // Inner Labelling=Exterior, Color=0, Tol=0.02, System=ICRS, Equinox=2000, DrawTitle=0, Font(Title)=2, Size(Title)=18, Grid=0, Width(Grid)=1, Border=1, Width(Border)=1, TickAll=1, Width(Ticks)=1, MinTickLen=0.01, MajTickLen=0.02, DrawAxes=0, Width(Axes)=1, NumLab=1, Font(NumLab)=0, Size(NumLab)=12, TextLab=0, Font(TextLab)=0, Size(TextLab)=15, LabelUp=0, TitleGap=0.012861736334405145, NumLabGap=0.006430868167202572, TextLabGap=0.05144694533762058, TextGapType=plot, Title=S255_IR_sci.spw29.cube.I.pbcor.fits
-
-            // Regular Labelling=Exterior, Color=0, Tol=0.02, System=ICRS, Equinox=2000, DrawTitle=0, Font(Title)=2, Size(Title)=18, Grid=0, Width(Grid)=1, Border=1, Width(Border)=1, TickAll=1, Width(Ticks)=1, MinTickLen=0.01, MajTickLen=0.02, DrawAxes=0, Width(Axes)=1, NumLab=1, Font(NumLab)=0, Size(NumLab)=12, TextLab=1, Font(TextLab)=0, Size(TextLab)=15, LabelUp=0, TitleGap=0.016181229773462782, NumLabGap=0.008090614886731391, TextLabGap=0.03559870550161812, TextGapType=plot, Title=S255_IR_sci.spw29.cube.I.pbcor.fits
 
             if (/No grid curves can be drawn for axis/.test(AST.getLastErrorMessage())) {
                 // Try to re-plot without the grid
@@ -287,23 +281,3 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         );
     }
 }
-
-/* Fix channel map overlay problem
-    Global:
-        In enable multi-panel, the preferenceStore.channelMapEnabled should be changed accordingly.
-        In multi-panel, there are raster bug. Might be related to viewWidth and height not changing.
-        Changing interior and exterior labelling do not update.
-    Title:
-        When title is enabled in channel map, it should not be rendered for each channel view.
-    Border:
-        Border is not shown for top and right because of base = 0 for overlayStore.
-    Number:
-        Number toggle is not working.
-        Font and font size are not working.
-        Color is not working.
-        Precision is not working.
-    Label:
-        Nothing is working.
-    Colorbar:
-        The tick mark is not extended to the entire colorbar.
-*/
