@@ -20,7 +20,7 @@ body {
     z-index: -100;
     user-select: none;
     .#{$ns}-dark {
-        background-color: $dark-gray3;
+        background-color: $pt-dark-app-background-color;
     }
 }
 
@@ -61,6 +61,11 @@ body {
 .#{$ns}-dark .#{$ns}-button-group:not(.#{$ns}-minimal) > .#{$ns}-popover-wrapper:not(:last-child) .#{$ns}-button,
 .#{$ns}-dark .#{$ns}-button-group:not(.#{$ns}-minimal) > .#{$ns}-button:not(:last-child) {
     margin-right: -1px !important;
+}
+
+// overwrite blueprint table dark theme background to the widget background
+.#{$ns}-dark .#{$ns}-table-quadrant {
+    background-color: $pt-dark-app-background-color !important;
 }
 
 // hide plotly tips

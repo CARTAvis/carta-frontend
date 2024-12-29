@@ -6,7 +6,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {MemoryUnit, TaskProgressDialogComponent} from "components/Dialogs";
-import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
+import {SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
 import {Point2D, SpectralSystem} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
 import {PVAxis, PvGeneratorWidgetStore, RegionId} from "stores/Widgets";
@@ -371,7 +371,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                     </FormGroup>
                 )}
                 <FormGroup className="label-info-group" inline={true} label="Axes order">
-                    <HTMLSelect options={Object.values(this.axesOrder)} onChange={this.handleAxesOrderChanged} />
+                    <HTMLSelect value={this.axesOrder[this.widgetStore.reverse ? "reverse" : "default"]} options={Object.values(this.axesOrder)} onChange={this.handleAxesOrderChanged} />
                 </FormGroup>
                 <FormGroup inline={true} label={"Keep previous PV image(s)"}>
                     <Switch
@@ -431,19 +431,21 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         );
 
         return (
-            <div className="pv-generator-widget">
-                <div className="pv-generator-panel">{pvImagePanel}</div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
-                <TaskProgressDialogComponent
-                    isOpen={frame?.isRequestingPV && frame.requestingPVProgress < 1}
-                    progress={frame ? frame.requestingPVProgress : 0}
-                    timeRemaining={appStore.estimatedTaskRemainingTime}
-                    cancellable={true}
-                    onCancel={this.widgetStore.requestingPVCancelled(this.props.id)}
-                    text={"Generating PV"}
-                    isCancelling={frame?.isRequestPVCancelling}
-                />
-            </div>
+            <ScrollShadow>
+                <div className="pv-generator-widget">
+                    <div className="pv-generator-panel">{pvImagePanel}</div>
+                    <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
+                    <TaskProgressDialogComponent
+                        isOpen={frame?.isRequestingPV && frame.requestingPVProgress < 1}
+                        progress={frame ? frame.requestingPVProgress : 0}
+                        timeRemaining={appStore.estimatedTaskRemainingTime}
+                        cancellable={true}
+                        onCancel={this.widgetStore.requestingPVCancelled(this.props.id)}
+                        text={"Generating PV"}
+                        isCancelling={frame?.isRequestPVCancelling}
+                    />
+                </div>
+            </ScrollShadow>
         );
     }
 }

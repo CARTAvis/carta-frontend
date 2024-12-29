@@ -3,7 +3,7 @@ import {Tab, Tabs} from "@blueprintjs/core";
 import {autorun, computed} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps} from "components/Shared";
+import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScrollShadow} from "components/Shared";
 import {LineKey} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {HistogramWidgetStore} from "stores/Widgets";
@@ -28,7 +28,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
             type: "floating-settings",
             minWidth: 280,
             minHeight: 225,
-            defaultWidth: 350,
+            defaultWidth: 375,
             defaultHeight: 320,
             title: "histogram-settings",
             isCloseable: true,
@@ -182,12 +182,14 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
         };
 
         return (
-            <div className="histogram-settings-panel">
-                <Tabs id="histogramSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
-                    <Tab id={HistogramSettingsTabs.CONFIG} panelClassName="config-tab-panel" title="Configuration" panel={<HistogramConfigPanelComponent widgetStore={widgetStore} />} />
-                    <Tab id={HistogramSettingsTabs.STYLING} panelClassName="styling-tab-panel" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps} />} />
-                </Tabs>
-            </div>
+            <ScrollShadow>
+                <div className="histogram-settings-panel">
+                    <Tabs id="histogramSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
+                        <Tab id={HistogramSettingsTabs.CONFIG} panelClassName="config-tab-panel" title="Configuration" panel={<HistogramConfigPanelComponent widgetStore={widgetStore} />} />
+                        <Tab id={HistogramSettingsTabs.STYLING} panelClassName="styling-tab-panel" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps} />} />
+                    </Tabs>
+                </div>
+            </ScrollShadow>
         );
     }
 }

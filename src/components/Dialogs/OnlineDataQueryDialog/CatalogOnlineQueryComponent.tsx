@@ -5,7 +5,7 @@ import FuzzySearch from "fuzzy-search";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {ClearableNumericInputComponent, SafeNumericInput} from "components/Shared";
+import {ClearableNumericInputComponent, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {CatalogApiService, CatalogDatabase} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, NUMBER_FORMAT_LABEL, RadiusUnits, SystemType, VizierItem} from "stores";
 import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
@@ -144,7 +144,7 @@ export class CatalogQueryComponent extends React.Component {
                 </FormGroup>
                 <FormGroup inline={false} label="Center coordinates" disabled={disable}>
                     <Select
-                        items={Object.keys(SystemType).map(key => SystemType[key])}
+                        items={Object.values(SystemType).filter(sys => sys !== SystemType.Image)}
                         activeItem={null}
                         onItemSelect={type => appStore.overlayStore.global.setSystem(type)}
                         itemRenderer={this.renderSysTypePopOver}
@@ -223,7 +223,7 @@ export class CatalogQueryComponent extends React.Component {
 
         return (
             <div className="catalog-query-panel">
-                {configBoard}
+                <ScrollShadow>{configBoard}</ScrollShadow>
                 <Overlay2 autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={disable} usePortal={false}>
                     <div className="query-loading-overlay">
                         <Spinner intent={Intent.PRIMARY} size={30} value={null} />
@@ -236,7 +236,9 @@ export class CatalogQueryComponent extends React.Component {
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => CatalogApiService.Instance.cancelQuery(configStore.catalogDB)} text={"Cancel"} />
                         {configStore.enableLoadVizier ? <AnchorButton intent={Intent.PRIMARY} disabled={disable} onClick={() => this.loadVizierCatalogs()} text={"Load selected"} /> : null}
-                        <AnchorButton intent={Intent.SUCCESS} disabled={disable} onClick={() => this.query()} text={"Query"} />
+                        <Tooltip content={"Please select WCS coordinates"} disabled={appStore.overlayStore.isWcsCoordinates} position={Position.BOTTOM} hoverOpenDelay={300}>
+                            <AnchorButton intent={Intent.SUCCESS} disabled={disable || appStore.overlayStore.isImgCoordinates} onClick={() => this.query()} text={"Query"} />
+                        </Tooltip>
                     </div>
                 </div>
             </div>

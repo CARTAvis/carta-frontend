@@ -20,6 +20,8 @@ export const SWATCH_COLORS = [
     Colors.FOREST3,
     Colors.GOLD3,
     Colors.CERULEAN3,
+    Colors.ROSE3,
+    Colors.VERMILION3,
     Colors.LIGHT_GRAY3,
     Colors.DARK_GRAY3,
     Colors.WHITE,
@@ -27,13 +29,12 @@ export const SWATCH_COLORS = [
 ];
 export const DEFAULT_COLOR = SWATCH_COLORS[0];
 
-const SELECTABLE_COLORS = ["blue", "orange", "green", "red", "violet", "sepia", "indigo", "gray", "lime", "turquoise", "forest", "gold", "cobalt", "light_gray", "dark_gray", "white", "black"];
+const SELECTABLE_COLORS = ["blue", "orange", "green", "red", "violet", "sepia", "indigo", "gray", "lime", "turquoise", "forest", "gold", "cerulean", "rose", "vermilion", "light_gray", "dark_gray"];
 export const AUTO_COLOR_OPTIONS = SELECTABLE_COLORS.map(color => {
     return `auto-${color}`;
 });
 
-// SUPPORTED_COLORS are supported since ver. 1.4, and rose/vermilion are removed from selectable colors due to similar to red
-const SUPPORTED_COLORS = [...SELECTABLE_COLORS, "rose", "vermilion"];
+const SUPPORTED_COLORS = [...SELECTABLE_COLORS, "white", "black"];
 
 // Supported auto colors are in pattern "auto-blue", "auto-orange", "auto-green"...etc
 // Validate with regex ^auto-(blue|orange|green...)$

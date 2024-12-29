@@ -5,6 +5,7 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
+import {ScrollShadow} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore, DialogId, HelpType} from "stores";
 import {RegionStore} from "stores/Frame";
@@ -151,7 +152,9 @@ export class RegionDialogComponent extends React.Component {
                 enableResizing={true}
                 dialogId={DialogId.Region}
             >
-                <div className={Classes.DIALOG_BODY}>{bodyContent}</div>
+                <div className={Classes.DIALOG_BODY}>
+                    <ScrollShadow>{bodyContent}</ScrollShadow>
+                </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         {tooltips}

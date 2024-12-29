@@ -2,7 +2,7 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 
 import {Point2D, SPECTRAL_DEFAULT_UNIT, SpectralType, WCSPoint2D} from "models";
-import {NumberFormatType} from "stores";
+import {NumberFormatType, OverlayStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {add2D, magDir2D, polygonPerimeter, rotate2D, scale2D, subtract2D, trimFitsComment} from "utilities";
 
@@ -77,10 +77,20 @@ export function getFormattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: Po
 
 export function getUnformattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: Point2D) {
     if (astTransform) {
+        if (OverlayStore.Instance.isImgCoordinates) {
+            // need second frame(WCS frame) in the frame to get WCS point
+            AST.setI(astTransform, "Current", 2);
+        }
+
         const equinox = AST.getString(astTransform, "System") === "FK4" ? "1950.0" : "2000.0";
         AST.set(astTransform, `Equinox=${equinox}`);
         const pointWCS = transformPoint(astTransform, pixelCoords);
         const normVals = AST.normalizeCoordinates(astTransform, pointWCS.x, pointWCS.y);
+
+        if (OverlayStore.Instance.isImgCoordinates) {
+            AST.setI(astTransform, "Current", 1);
+        }
+
         if (normVals) {
             return normVals;
         }

@@ -131,6 +131,6 @@ export const CoordNumericInput = ({coord, inputType, value, onChange, valueWcs, 
     if (coord === CoordinateMode.Image) {
         return <ImageCoordNumericInput inputType={inputType} value={value} onChange={onChange} disabled={disabled} customPlaceholder={customPlaceholder} />;
     } else {
-        return <WcsCoordNumericInput inputType={inputType} valueWcs={valueWcs} onChangeWcs={onChangeWcs} disabled={disabled || wcsDisabled} customPlaceholder={customPlaceholder} />;
+        return <WcsCoordNumericInput inputType={inputType} valueWcs={valueWcs} onChangeWcs={onChangeWcs} disabled={disabled || wcsDisabled || AppStore.Instance.overlayStore.isImgCoordinates} customPlaceholder={customPlaceholder} />;
     }
 };
