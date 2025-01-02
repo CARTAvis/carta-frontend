@@ -301,6 +301,7 @@ export class RootMenuComponent extends React.Component {
                     <MenuItem text="Light" icon={"flash"} onClick={appStore.setLightTheme} />
                     <MenuItem text="Dark" icon={"moon"} onClick={appStore.setDarkTheme} />
                 </MenuItem>
+                <MenuItem text="Layout dialog" onClick={() => appStore.layoutStore.showLayoutDialog(LayoutDialogMode.Layout)} />
                 <MenuItem text="Layouts" icon={"page-layout"} disabled={layoutStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}>
                     <MenuItem text="Existing Layouts" disabled={!presetLayouts && !userLayouts}>
                         {presetLayouts &&

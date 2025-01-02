@@ -12,7 +12,8 @@ export enum LayoutDialogMode {
     Hidden,
     Save,
     Rename,
-    DynamicLayout
+    DynamicLayout,
+    Layout
 }
 
 export class LayoutStore {

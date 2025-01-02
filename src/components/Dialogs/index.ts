@@ -8,6 +8,7 @@ export * from "./FileBrowser/ImageSave/ImageSaveComponent";
 export * from "./FileBrowser/RegionSelect/RegionSelectComponent";
 export * from "./FileInfoDialog/FileInfoDialogComponent";
 export * from "./FittingDialog/FittingDialogComponent";
+export * from "./LayoutDialog/LayoutDialogComponent";
 export * from "./LayoutDialog/SaveLayoutDialogComponent";
 export * from "./OnlineDataQueryDialog/OnlineDataQueryDialogComponent";
 export * from "./PreferenceDialog/PreferenceDialogComponent";
