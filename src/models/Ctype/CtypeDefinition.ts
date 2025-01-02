@@ -27,7 +27,7 @@ export const DetermineCtypeAbbr = (ctype: string): string => {
     return ctype;
 };
 
-export const determineCtypeName = (abbr: string): string => {
+export const DetermineCtypeName = (abbr: string): string => {
     if (abbr === "XY") {
         return "Spatial";
     }

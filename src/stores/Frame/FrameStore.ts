@@ -1218,7 +1218,7 @@ export class FrameStore {
 
     @computed get dynamicLayoutName(): string {
         const dyLayoutStore = AppStore.Instance.dynamicLayoutStore;
-        return dyLayoutStore.existLayoutMapping[this.dynamicLayoutCtype] ?? INITIAL_LAYOUT_ITEM;
+        return dyLayoutStore.isMappingExisted ? (dyLayoutStore.existLayoutMapping[this.dynamicLayoutCtype] ?? INITIAL_LAYOUT_ITEM) : INITIAL_LAYOUT_ITEM;
     }
 
     constructor(frameInfo: FrameInfo) {
