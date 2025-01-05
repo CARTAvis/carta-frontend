@@ -1,6 +1,6 @@
 import * as React from "react";
 import {NonIdealState} from "@blueprintjs/core";
-import {autorun, reaction} from "mobx";
+import {autorun} from "mobx";
 import {observer} from "mobx-react";
 
 import {CursorInfo, ImageType} from "models";
@@ -48,71 +48,6 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
 
     const imageRenderWidth = Math.floor(channelMapViewWidth / channelMapStore.numColumns);
     const imageRenderHeight = Math.floor(channelMapViewHeight / channelMapStore.numRows);
-
-    React.useEffect(() => {
-        const disposer = reaction(
-            () => [
-                channelMapStore.startChannel,
-                channelMapStore.channelRange,
-                channelMapStore,
-                channelMapStore.masterFrame,
-                channelMapStore.numColumns,
-                channelMapStore.numRows,
-                channelMapStore.masterFrame?.center,
-                channelMapStore.masterFrame?.requiredFrameView,
-                channelMapStore.masterFrame?.zoomLevel,
-                channelMapStore.auxiliaryFrame,
-                channelMapStore.auxiliaryFrameChannel,
-                channelMapStore.singleChannelContour,
-                channelMapStore.singleContourChannel,
-                channelMapStore.masterFrame?.spatialReference
-            ],
-            (
-                [startChannel, endChannel, _channelMapStore, masterFrame, numColumns, numRows, center, requiredFrameView, zoomLevel, auxiliaryFrame, auxiliaryFrameChannel, singleChannelContour, singleContourChannel, spatialReference],
-                [
-                    prevStartChannel,
-                    prevEndChannel,
-                    prevChannelMapStore,
-                    prevMasterFrame,
-                    prevNumColumns,
-                    prevNumRows,
-                    prevCenter,
-                    prevRequiredFrameView,
-                    prevZoomLevel,
-                    prevAuxiliaryFrame,
-                    prevAuxiliaryFrameChannel,
-                    prevSingleChannelContour,
-                    prevSingleContourChannel,
-                    prevSpatialReference
-                ]
-            ) => {
-                if (frame && channelMapStore && frame?.requiredFrameView) {
-                    channelMapStore.throttledRequestChannels(frame);
-                }
-            }
-        );
-
-        return () => {
-            disposer();
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [
-        channelMapStore.startChannel,
-        channelMapStore.channelRange,
-        channelMapStore,
-        channelMapStore.masterFrame,
-        channelMapStore.numColumns,
-        channelMapStore.numRows,
-        channelMapStore.masterFrame?.center,
-        channelMapStore.masterFrame?.requiredFrameView,
-        channelMapStore.masterFrame?.zoomLevel,
-        channelMapStore.auxiliaryFrame,
-        channelMapStore.auxiliaryFrameChannel,
-        channelMapStore.singleChannelContour,
-        channelMapStore.singleContourChannel,
-        channelMapStore.masterFrame?.spatialReference,
-        channelMapStore.masterFrame?.channel
-    ]);
 
     const onMouseEnter = () => {
         setImageToolbarVisible(true);

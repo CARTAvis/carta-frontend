@@ -751,7 +751,7 @@ export class WidgetsStore {
 
                     // show/hide image panel buttons
                     $(stackHeaderControlButtons)
-                        ?.find("li.lm-image-panel-next, li.lm-image-panel, li.lm-image-panel-previous")
+                        ?.find("li.lm-image-panel-next, li.lm-image-panel, li.lm-image-panel-previous, li.lm-channel-map-panel")
                         ?.attr("style", component === "image-view" ? "" : "display:none;");
 
                     // disable unpin button when active tab is image-view

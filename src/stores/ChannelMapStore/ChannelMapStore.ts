@@ -1,5 +1,5 @@
 import {throttle} from "lodash";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 
 import {ImageItem, ImageType} from "models";
 import {TileService} from "services";
@@ -23,6 +23,28 @@ export class ChannelMapStore {
         this.numColumns = 2;
         this.numRows = 2;
         this.overlayStores = {corner: undefined, outer: undefined};
+
+        autorun(() => {
+            if (this.masterFrame && this.masterFrame?.requiredFrameView && this.channelMapEnabled) {
+                /* eslint-disable @typescript-eslint/no-unused-vars */
+                const startChannel = this.startChannel;
+                const numColumns = this.numColumns;
+                const numRows = this.numRows;
+                const channelRange = this.channelRange;
+                const center = this.masterFrame.center;
+                const requiredFrameView = this.masterFrame.requiredFrameView;
+                const requiredTiles = this.masterFrame.requiredTiles;
+                const zoomLevel = this.masterFrame.zoomLevel;
+                const auxiliaryFrame = this.auxiliaryFrame;
+                const auxiliaryFrameChannel = this.auxiliaryFrameChannel;
+                const singleChannelContour = this.singleChannelContour;
+                const singleContourChannel = this.singleContourChannel;
+                const spatialReference = this.masterFrame.spatialReference;
+                const channel = this.masterFrame.channel;
+                /* eslint-disable @typescript-eslint/no-unused-vars */
+                this.throttledRequestChannels(this.masterFrame);
+            }
+        });
     }
 
     @observable masterFrame: FrameStore;
