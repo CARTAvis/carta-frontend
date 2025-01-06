@@ -1,13 +1,12 @@
 import * as React from "react";
 import {AnchorButton, Button, ButtonGroup, Classes, FormGroup, Icon, MenuItem, PopoverPosition, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {ItemPredicate, ItemRendererProps, Select} from "@blueprintjs/select";
-import classNames from "classnames";
 import FuzzySearch from "fuzzy-search";
 import {action, autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {CatalogOverlayComponent} from "components";
-import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingSelectComponent} from "components/Shared";
+import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingSelectComponent, ScrollShadow} from "components/Shared";
 import {CatalogOverlay} from "models";
 import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {CatalogOverlayShape, CatalogSettingsTabs, CatalogWidgetStore, ValueClip} from "stores/Widgets";
@@ -128,7 +127,9 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     };
 
     public render() {
-        const appStore = AppStore.Instance;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const darkTheme = AppStore.Instance.darkTheme;
+
         const widgetStore = this.widgetStore;
         const catalogStore = CatalogStore.Instance;
         const catalogFileIds = catalogStore.activeCatalogFiles;
@@ -499,45 +500,46 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 />
             </div>
         );
-        const className = classNames("catalog-settings", {[Classes.DARK]: appStore.darkTheme});
 
         return (
-            <div className={className}>
-                <FormGroup className={"file-menu"} inline={true} label="File" disabled={disabledOverlayPanel}>
-                    <Select
-                        className={Classes.FILL}
-                        disabled={disabledOverlayPanel}
-                        filterable={false}
-                        items={catalogFileItems}
-                        activeItem={this.catalogFileId}
-                        onItemSelect={this.handleCatalogFileChange}
-                        itemRenderer={this.renderFileIdPopOver}
-                        popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
-                        fill={true}
-                    >
-                        <Button text={activeFileName} rightIcon="double-caret-vertical" disabled={disabledOverlayPanel} />
-                    </Select>
-                </FormGroup>
-                <FormGroup className={"file-menu"} inline={true} label="Shape" disabled={disabledOverlayPanel}>
-                    <Select
-                        className={Classes.FILL}
-                        disabled={disabledOverlayPanel}
-                        filterable={false}
-                        items={this.catalogOverlayShape}
-                        activeItem={widgetStore.catalogShape}
-                        onItemSelect={item => widgetStore.setCatalogShape(item)}
-                        itemRenderer={this.renderShapePopOver}
-                        popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
-                    >
-                        <Button icon={this.getCatalogShape(widgetStore.catalogShape)} rightIcon="double-caret-vertical" disabled={disabledOverlayPanel} data-testid="catalog-settings-shape-dropdown" />
-                    </Select>
-                </FormGroup>
-                <Tabs id="catalogSettings" vertical={false} selectedTabId={widgetStore.settingsTabId} onChange={tabId => this.handleSelectedTabChanged(tabId)}>
-                    <Tab id={CatalogSettingsTabs.SIZE} title="Size" panel={sizeMap} disabled={disabledOverlayPanel} />
-                    <Tab id={CatalogSettingsTabs.COLOR} title="Color" panel={colorMap} disabled={disabledOverlayPanel} data-testid="catalog-settings-color-tab-title" />
-                    <Tab id={CatalogSettingsTabs.ORIENTATION} title="Orientation" panel={orientationMap} disabled={disabledOverlayPanel} data-testid="catalog-settings-orientation-tab-title" />
-                </Tabs>
-            </div>
+            <ScrollShadow>
+                <div className="catalog-settings">
+                    <FormGroup className={"file-menu"} inline={true} label="File" disabled={disabledOverlayPanel}>
+                        <Select
+                            className={Classes.FILL}
+                            disabled={disabledOverlayPanel}
+                            filterable={false}
+                            items={catalogFileItems}
+                            activeItem={this.catalogFileId}
+                            onItemSelect={this.handleCatalogFileChange}
+                            itemRenderer={this.renderFileIdPopOver}
+                            popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
+                            fill={true}
+                        >
+                            <Button text={activeFileName} rightIcon="double-caret-vertical" disabled={disabledOverlayPanel} />
+                        </Select>
+                    </FormGroup>
+                    <FormGroup className={"file-menu"} inline={true} label="Shape" disabled={disabledOverlayPanel}>
+                        <Select
+                            className={Classes.FILL}
+                            disabled={disabledOverlayPanel}
+                            filterable={false}
+                            items={this.catalogOverlayShape}
+                            activeItem={widgetStore.catalogShape}
+                            onItemSelect={item => widgetStore.setCatalogShape(item)}
+                            itemRenderer={this.renderShapePopOver}
+                            popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
+                        >
+                            <Button icon={this.getCatalogShape(widgetStore.catalogShape)} rightIcon="double-caret-vertical" disabled={disabledOverlayPanel} data-testid="catalog-settings-shape-dropdown" />
+                        </Select>
+                    </FormGroup>
+                    <Tabs id="catalogSettings" vertical={false} selectedTabId={widgetStore.settingsTabId} onChange={tabId => this.handleSelectedTabChanged(tabId)}>
+                        <Tab id={CatalogSettingsTabs.SIZE} title="Size" panel={sizeMap} disabled={disabledOverlayPanel} />
+                        <Tab id={CatalogSettingsTabs.COLOR} title="Color" panel={colorMap} disabled={disabledOverlayPanel} data-testid="catalog-settings-color-tab-title" />
+                        <Tab id={CatalogSettingsTabs.ORIENTATION} title="Orientation" panel={orientationMap} disabled={disabledOverlayPanel} data-testid="catalog-settings-orientation-tab-title" />
+                    </Tabs>
+                </div>
+            </ScrollShadow>
         );
     }
 

@@ -174,8 +174,8 @@
             }
 
             .#{$ns}-tab-panel {
-                width: calc(100% - 125px);
-                height: calc(100% - 15px);
+                width: calc(100% - 140px); // widget width - tab list width
+                height: calc(100% - 15px); // panel height - bottom padding
                 padding-left: 10px;
 
                 .fitting-result-pre {

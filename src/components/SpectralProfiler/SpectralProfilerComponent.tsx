@@ -1,6 +1,6 @@
 import * as React from "react";
 import SplitPane, {Pane} from "react-split-pane";
-import {Classes, Colors, NonIdealState} from "@blueprintjs/core";
+import {Colors, NonIdealState} from "@blueprintjs/core";
 import classNames from "classnames";
 import * as _ from "lodash";
 import {autorun, computed, makeObservable} from "mobx";
@@ -525,7 +525,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
         }
 
-        const className = classNames("spectral-profiler-widget", {[Classes.DARK]: appStore.darkTheme, "linked-to-widget-highlighted": this.widgetStore.isHighlighted});
+        const className = classNames("spectral-profiler-widget", {"linked-to-widget-highlighted": this.widgetStore.isHighlighted});
 
         return (
             <div className={className}>

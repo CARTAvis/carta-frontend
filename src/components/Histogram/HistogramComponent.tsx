@@ -1,7 +1,6 @@
 import * as React from "react";
-import {Classes, NonIdealState} from "@blueprintjs/core";
+import {NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import classNames from "classnames";
 import * as _ from "lodash";
 import {autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
@@ -330,10 +329,8 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             this.currentLinePlotProps = linePlotProps;
         }
 
-        const className = classNames("histogram-widget", {[Classes.DARK]: appStore.darkTheme});
-
         return (
-            <div className={className}>
+            <div className="histogram-widget">
                 <div className="histogram-container">
                     <HistogramToolbarComponent widgetStore={this.widgetStore} />
                     <div className="histogram-plot">

@@ -96,3 +96,17 @@
         padding-top: 6px;
     }
 }
+
+.#{$ns}-dark {
+    .header-comment {
+        color: $pt-dark-text-color-disabled !important;
+    }
+
+    .info-highlight {
+        color: black !important;
+    }
+
+    .info-highlight-selected {
+        color: black !important;
+    }
+}
