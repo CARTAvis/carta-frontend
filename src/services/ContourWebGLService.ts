@@ -94,7 +94,7 @@ export class ContourWebGLService {
         this.gl.uniform1i(this.shaderUniforms.CmapTexture, 0);
     }
 
-    public constructor() {
+    private constructor() {
         this.gl = initWebGL2();
         if (!this.gl) {
             return;

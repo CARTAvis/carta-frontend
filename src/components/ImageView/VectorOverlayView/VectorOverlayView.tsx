@@ -3,7 +3,7 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {VectorOverlayWebGLService} from "services";
-import {AppStore, OverlayStore} from "stores";
+import {AppStore} from "stores";
 import {FrameStore, RenderConfigStore, VectorOverlaySource} from "stores/Frame";
 import {GL2, rotate2D, scale2D, subtract2D} from "utilities";
 
@@ -14,49 +14,31 @@ export interface VectorOverlayViewComponentProps {
     frame: FrameStore;
     row: number;
     column: number;
-    top?: number;
-    left?: number;
-    refCanvas?: HTMLCanvasElement;
-    overlayStore?: OverlayStore;
 }
 
 @observer
 export class VectorOverlayViewComponent extends React.Component<VectorOverlayViewComponentProps> {
-    public canvas: HTMLCanvasElement;
+    private canvas: HTMLCanvasElement;
     private gl: WebGL2RenderingContext;
     private vectorOverlayWebGLService: VectorOverlayWebGLService;
 
     componentDidMount() {
         this.vectorOverlayWebGLService = VectorOverlayWebGLService.Instance;
         this.gl = this.vectorOverlayWebGLService.gl;
-        this.updateImage();
+        if (this.canvas) {
+            this.updateCanvas();
+        }
     }
 
     componentDidUpdate() {
-        this.updateImage();
-    }
-
-    private updateImage() {
         const appStore = AppStore.Instance;
+
         appStore.resetImageRatio();
 
-        if (this.props.refCanvas && this.canvas) {
-            requestAnimationFrame(() => {
-                if (!(this.props.refCanvas && this.canvas)) {
-                    return;
-                }
-                const destCanvas = this.canvas.getContext("2d", {willReadFrequently: true});
-                const w = this.props.refCanvas.width;
-                const h = this.props.refCanvas.height;
-                destCanvas.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                destCanvas.drawImage(this.props.refCanvas, 0, 0, w, h, 0, 0, this.canvas.width, this.canvas.height);
-            });
-        } else if (this.canvas && !this.props.refCanvas) {
-            const baseFrame = this.props.frame;
-            const vectorOverlayFrames = appStore.vectorOverlayFrames?.get(baseFrame);
-            if (vectorOverlayFrames?.every(f => f?.vectorOverlayStore?.isComplete)) {
-                requestAnimationFrame(this.updateCanvas);
-            }
+        const baseFrame = this.props.frame;
+        const vectorOverlayFrames = appStore.vectorOverlayFrames?.get(baseFrame);
+        if (vectorOverlayFrames?.every(f => f?.vectorOverlayStore?.isComplete)) {
+            requestAnimationFrame(this.updateCanvas);
         }
     }
 
@@ -269,7 +251,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         }
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
-        const padding = this.props.overlayStore?.padding || baseFrame.overlayStore.padding;
+        const padding = appStore.overlayStore.padding;
         const className = classNames("vector-overlay-div", {docked: this.props.docked});
 
         return (
@@ -279,8 +261,8 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
                     className="vector-overlay-canvas"
                     ref={this.getRef}
                     style={{
-                        top: (this.props.top || 0) + padding.top,
-                        left: (this.props.left || 0) + padding.left,
+                        top: padding.top,
+                        left: padding.left,
                         width: baseFrame ? baseFrame.renderWidth || 1 : 1,
                         height: baseFrame ? baseFrame.renderHeight || 1 : 1
                     }}

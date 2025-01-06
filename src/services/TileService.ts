@@ -352,13 +352,13 @@ export class TileService {
 
     async requestChannelMapTiles(tiles: TileCoordinate[], focusPoint: Point2D, compressionQuality: number, pageFliped: boolean = false) {
         const channelMapStore = AppStore.Instance.channelMapStore;
-        const frame = channelMapStore.showAuxiliaryFrame ? channelMapStore.auxiliaryFrame || channelMapStore.masterFrame : channelMapStore.masterFrame;
+        const frame = channelMapStore.masterFrame;
         if (!frame) {
             return;
         }
         const fileId = frame.frameInfo.fileId;
         const stokes = frame.stokes;
-        const requiredChannel = channelMapStore.showAuxiliaryFrame ? channelMapStore.auxiliaryFrameChannel : frame.channel;
+        const requiredChannel = frame.channel;
         const currentTiles = tiles.map(tile => tile.encode());
 
         // Clear pendingRequests map for previous range

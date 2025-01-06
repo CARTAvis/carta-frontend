@@ -35,10 +35,6 @@ export class ChannelMapStore {
                 const requiredFrameView = this.masterFrame.requiredFrameView;
                 const requiredTiles = this.masterFrame.requiredTiles;
                 const zoomLevel = this.masterFrame.zoomLevel;
-                const auxiliaryFrame = this.auxiliaryFrame;
-                const auxiliaryFrameChannel = this.auxiliaryFrameChannel;
-                const singleChannelContour = this.singleChannelContour;
-                const singleContourChannel = this.singleContourChannel;
                 const spatialReference = this.masterFrame.spatialReference;
                 const channel = this.masterFrame.channel;
                 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -48,14 +44,9 @@ export class ChannelMapStore {
     }
 
     @observable masterFrame: FrameStore;
-    @observable _auxiliaryFrame: FrameStore;
-    @observable auxiliaryFrameChannel: number = 0;
     @observable startChannel: number = 0;
     @observable numColumns: number;
     @observable numRows: number;
-    @observable showAuxiliaryFrame: boolean = false;
-    @observable singleChannelContour: boolean = true;
-    @observable singleContourChannel: number = 0;
     @observable overlayStores: {corner: OverlayStore; outer: OverlayStore};
     @observable channelMapEnabled: boolean = false;
 
@@ -91,10 +82,6 @@ export class ChannelMapStore {
         this.channelMapEnabled = enabled;
     };
 
-    @action setAuxiliaryFrame(frame: FrameStore) {
-        this._auxiliaryFrame = frame;
-    }
-
     @action setStartChannel(startChannel: number) {
         // Add checks for valid startChannel number for the masterFrame
         if (startChannel < 0 || startChannel > this.masterFrame.frameInfo.fileInfoExtended.depth) {
@@ -127,10 +114,6 @@ export class ChannelMapStore {
         }
     }
 
-    @action setAuxiliaryFrameChannel(channel: number) {
-        this.auxiliaryFrameChannel = channel;
-    }
-
     @action setNumColumns(numColumns: number) {
         if (isFinite(numColumns) && numColumns > 0) {
             this.numColumns = numColumns;
@@ -147,18 +130,6 @@ export class ChannelMapStore {
         if (!AppStore.Instance.isExportingImage) {
             this.pixelHighlightValue = val;
         }
-    };
-
-    @action setShowAuxiliaryFrame = (show: boolean) => {
-        this.showAuxiliaryFrame = show;
-    };
-
-    @action setSingleChannelContour = (singleChannel: boolean) => {
-        this.singleChannelContour = singleChannel;
-    };
-
-    @action setSingleContourChannel = (channel: number) => {
-        this.singleContourChannel = channel;
     };
 
     @action setShowChannelString = (show: boolean) => {
@@ -204,18 +175,10 @@ export class ChannelMapStore {
         return channelArray;
     }
 
-    @computed get auxiliaryFrame(): FrameStore {
-        if (!this._auxiliaryFrame && this.masterFrame?.spatialSiblings[0]) {
-            return this.masterFrame?.spatialSiblings[0];
-        } else {
-            return this._auxiliaryFrame;
-        }
-    }
-
     @computed get masterImage(): ImageItem {
         return {
             type: ImageType.FRAME,
-            store: this.showAuxiliaryFrame && this.auxiliaryFrame ? this.auxiliaryFrame : this.masterFrame
+            store: this.masterFrame
         };
     }
 }

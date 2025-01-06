@@ -94,7 +94,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const tileRenderService = baseFrame.isPreview ? PreviewWebGLService.Instance : TileWebGLService.Instance;
         const gl = tileRenderService.gl;
         const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
-        const overlayStore = AppStore.Instance.overlayStore;
+        const overlayStore = baseFrame.overlayStore;
         const renderWidth = this.props.renderWidth || overlayStore.renderWidth;
         const renderHeight = this.props.renderHeight || overlayStore.renderHeight;
         const column = this.props.column;
@@ -522,7 +522,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
-        const padding = appStore.overlayStore.padding;
+        const padding = baseFrame.overlayStore.padding;
         const className = classNames(`raster-div`, {docked: this.props.docked});
 
         return (

@@ -1091,45 +1091,11 @@ export class FrameStore {
         let totalProgress = 0;
         this.contourStores.forEach((contourStore, level) => {
             if (this.contourConfig.levels.indexOf(level) !== -1) {
-                totalProgress += contourStore.progress.get(this.requiredChannel); // need to be updated
+                totalProgress += contourStore.progress; // need to be updated
             }
         });
 
         return totalProgress / (this.contourConfig.levels ? this.contourConfig.levels.length : 1);
-    }
-
-    @computed get channelMapContourProgress(): number {
-        let totalProgress = 0;
-        const channelArray = [];
-        for (let i = this.contourConfig.requestedChannelMapContourRange.min; i <= this.contourConfig.requestedChannelMapContourRange.max; i++) {
-            channelArray.push(i);
-        }
-        this.contourStores.forEach((contourStore, level) => {
-            if (this.contourConfig.levels.indexOf(level) !== -1) {
-                channelArray.forEach(channel => {
-                    totalProgress += contourStore.progress.has(channel) ? contourStore.progress.get(channel) : 0;
-                });
-            }
-        });
-
-        return totalProgress / (this.contourConfig.levels ? this.contourConfig.levels.length * channelArray.length : 1);
-    }
-
-    @computed get isChannelMapContourComplete(): boolean {
-        let isComplete = true;
-        const channelArray = [];
-        for (let i = this.contourConfig.requestedChannelMapContourRange.min; i <= this.contourConfig.requestedChannelMapContourRange.max; i++) {
-            channelArray.push(i);
-        }
-        this.contourStores.forEach(contourStore => {
-            for (const channel of channelArray) {
-                if (!contourStore.isComplete(channel)) {
-                    isComplete = false;
-                }
-            }
-        });
-
-        return isComplete;
     }
 
     @computed get stokesOptions(): {value: number; label: string}[] {
@@ -2520,10 +2486,10 @@ export class FrameStore {
                 this.contourStores.set(contourSet.level, contourStore);
             }
 
-            if (contourStore.progress.has(processedData.channel) && !contourStore.isComplete(processedData.channel) && processedData.progress > 0) {
-                contourStore.addContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress, processedData.channel);
+            if (!contourStore.isComplete && processedData.progress > 0) {
+                contourStore.addContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
             } else {
-                contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress, processedData.channel);
+                contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
             }
         }
 
@@ -2830,12 +2796,7 @@ export class FrameStore {
         }
 
         const preferenceStore = PreferenceStore.Instance;
-        const channelMapStore = AppStore.Instance.channelMapStore;
         this.contourConfig.setEnabled(true);
-
-        const channelRange =
-            channelMapStore.channelMapEnabled &&
-            (channelMapStore.singleChannelContour ? {min: channelMapStore.singleContourChannel, max: channelMapStore.singleContourChannel} : {min: channelMapStore.startChannel, max: channelMapStore.channelRange});
 
         // TODO: Allow a different reference frame
         const contourParameters: CARTA.ISetContourParameters = {
@@ -2852,11 +2813,9 @@ export class FrameStore {
             },
             decimationFactor: preferenceStore.contourDecimation,
             compressionLevel: preferenceStore.contourCompressionLevel,
-            contourChunkSize: preferenceStore.contourChunkSize,
-            channelRange
+            contourChunkSize: preferenceStore.contourChunkSize
         };
         this.backendService.setContourParameters(contourParameters);
-        this.contourConfig.setRequestedChannelMapContourRange(channelRange);
     };
 
     @action clearContours = (updateBackend: boolean = true) => {

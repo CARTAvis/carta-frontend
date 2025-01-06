@@ -7,15 +7,12 @@ import {CursorInfo, ImageType} from "models";
 import {AppStore, ChannelMapStore, FrameStore} from "stores";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
-import {CatalogViewGLComponent} from "../CatalogView/CatalogViewGLComponent";
 import {ColorbarComponent} from "../Colorbar/ColorbarComponent";
-import {ContourViewComponent} from "../ContourView/ContourViewComponent";
 import {CursorOverlayComponent} from "../CursorOverlay/CursorOverlayComponent";
 import {OverlayComponent} from "../Overlay/OverlayComponent";
 import {RasterViewComponent} from "../RasterView/RasterViewComponent";
 import {RegionViewComponent} from "../RegionView/RegionViewComponent";
 import {ToolbarComponent} from "../Toolbar/ToolbarComponent";
-import {VectorOverlayViewComponent} from "../VectorOverlayView/VectorOverlayView";
 
 import {ChannelMapLabelComponent} from "./ChannelMapLabelComponent";
 
@@ -38,9 +35,6 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     const colorbarOffset = overlayStore.colorbar.visible ? colorBarSetting.stageWidth + frame?.overlayStore?.colorbarHoverInfoHeight : 0;
 
     const [overlayComponentRef, setOverlayComponentRef] = React.useState<OverlayComponent>();
-    const [contourCanvasRef, setContourCanvasRef] = React.useState<ContourViewComponent>();
-    const [vectorOverlayViewComponentRef, setVectorOverlayViewComponentRef] = React.useState<VectorOverlayViewComponent>();
-    const [catalogViewGLComponentRef, setCatalogViewGLComponentRef] = React.useState<CatalogViewGLComponent>();
     const [imageToolbarVisible, setImageToolbarVisible] = React.useState(false);
 
     const channelMapViewWidth = props.renderWidth - overlayStore.paddingRight - overlayStore.paddingLeft;
@@ -118,35 +112,6 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         return (
             channel < channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth && (
                 <div key={index} onClick={() => channelMapStore.masterFrame.setChannel(channel)} style={{top: overlayComponentTop}}>
-                    <ContourViewComponent
-                        key={`contour-view-component-${index}`}
-                        overlayStore={overlayStore}
-                        ref={ref => {
-                            if (row === 0 && column === 0) setContourCanvasRef(ref);
-                        }}
-                        frame={frame}
-                        channel={channelMapStore.singleChannelContour ? channelMapStore.singleContourChannel : channel}
-                        docked={props.docked}
-                        row={0}
-                        column={0}
-                        top={overlayComponentTop}
-                        left={overlayComponentLeft}
-                        refCanvas={!(row === 0 && column === 0) && channelMapStore.singleChannelContour ? contourCanvasRef?.canvas : undefined} // if set to one contour, turn on, if contour per channel, turn off.
-                    />
-                    <VectorOverlayViewComponent
-                        key={`vector-view-component-${index}`}
-                        ref={ref => {
-                            if (row === 0 && column === 0) setVectorOverlayViewComponentRef(ref);
-                        }}
-                        overlayStore={overlayStore}
-                        frame={frame}
-                        docked={props.docked}
-                        row={row}
-                        column={column}
-                        top={overlayComponentTop}
-                        left={overlayComponentLeft}
-                        refCanvas={row === 0 && column === 0 ? undefined : vectorOverlayViewComponentRef?.canvas}
-                    />
                     <ChannelMapInnerOverlayComponent
                         index={index}
                         frame={frame}
@@ -159,7 +124,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     <ChannelMapLabelComponent
                         image={{
                             type: ImageType.FRAME,
-                            store: channelMapStore.showAuxiliaryFrame && channelMapStore.auxiliaryFrame ? channelMapStore.auxiliaryFrame : frame
+                            store: frame
                         }}
                         overlaySettings={overlayStore}
                         top={imageTop}
@@ -167,19 +132,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                         width={overlayStore.channelMapInnerWidth(width, thisIs)}
                         height={overlayStore.channelMapInnerHeight(height, thisIs)}
                         docked={props.docked}
-                        channel={channelMapStore.showAuxiliaryFrame ? channelMapStore.auxiliaryFrameChannel : channel}
-                    />
-                    <CatalogViewGLComponent
-                        key={`catalog-view-component-${index}`}
-                        ref={ref => {
-                            if (row === 0 && column === 0) setCatalogViewGLComponentRef(ref);
-                        }}
-                        frame={frame}
-                        docked={props.docked}
-                        top={overlayComponentTop}
-                        left={overlayComponentLeft}
-                        overlayStore={overlayStore}
-                        refCanvas={row === 0 && column === 0 ? undefined : catalogViewGLComponentRef?.canvas}
+                        channel={channel}
                     />
                     <RegionViewComponent
                         key={`region-view-component-${index}`}
@@ -212,7 +165,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
             >
                 {overlayComponents}
                 <RasterViewComponent
-                    key={`raster-view-component-${channelMapStore.showAuxiliaryFrame && channelMapStore.auxiliaryFrame ? "auxiliary" : "channel-map"}`}
+                    key={"raster-view-component-channel-map"}
                     image={image}
                     docked={props.docked}
                     pixelHighlightValue={props.channelMapStore.pixelHighlightValue}
@@ -222,7 +175,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     column={0}
                     left={overlayStore.paddingLeft}
                     tileBasedRender={true}
-                    channel={channelMapStore.showAuxiliaryFrame && channelMapStore.auxiliaryFrame ? channelMapStore.channelArray.map(channel => channelMapStore.auxiliaryFrameChannel) : channelMapStore.channelArray}
+                    channel={channelMapStore.channelArray}
                 />
 
                 <BeamProfileOverlayComponent frame={frame} top={imageRenderHeight * (channelMapStore.numRows - 1)} left={overlayStore.paddingLeft} docked={props.docked} padding={10} />
@@ -338,7 +291,7 @@ const ChannelMapInnerOverlayComponent = ({
                 thisIs={"corner"}
                 image={{
                     type: ImageType.FRAME,
-                    store: channelMapStore.showAuxiliaryFrame && channelMapStore.auxiliaryFrame ? channelMapStore.auxiliaryFrame : frame
+                    store: frame
                 }}
                 overlaySettings={overlayStore}
                 top={overlayComponentTop}
@@ -417,10 +370,6 @@ const ChannelMapInnerOverlayComponent = ({
         channelMapStore.masterFrame?.center,
         channelMapStore.masterFrame?.requiredFrameView,
         channelMapStore.masterFrame?.zoomLevel,
-        channelMapStore.auxiliaryFrame,
-        channelMapStore.auxiliaryFrameChannel,
-        channelMapStore.singleChannelContour,
-        channelMapStore.singleContourChannel,
         channelMapStore.masterFrame?.spatialReference,
         channelMapStore.masterFrame?.channel
     ]);

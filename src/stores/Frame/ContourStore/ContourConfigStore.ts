@@ -33,7 +33,6 @@ export class ContourConfigStore {
     @observable dashMode: ContourDashMode;
     @observable thickness: number;
     @observable visible: boolean;
-    @observable requestedChannelMapContourRange: {min: number; max: number};
 
     private readonly preferenceStore: PreferenceStore;
 
@@ -53,7 +52,6 @@ export class ContourConfigStore {
         this.thickness = this.preferenceStore.contourThickness;
         this.dashMode = ContourDashMode.NegativeOnly;
         this.visible = true;
-        this.requestedChannelMapContourRange = {min: 0, max: 0};
     }
 
     @action setEnabled(val: boolean) {
@@ -100,10 +98,6 @@ export class ContourConfigStore {
 
     @action setVisible = (visible: boolean) => {
         this.visible = visible;
-    };
-
-    @action setRequestedChannelMapContourRange = (channelRange: {min: number; max: number}) => {
-        this.requestedChannelMapContourRange = channelRange;
     };
 
     @action toggleVisibility = () => {

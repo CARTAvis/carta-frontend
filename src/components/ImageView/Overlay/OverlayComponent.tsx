@@ -270,13 +270,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         return (
             <>
-                <canvas
-                    className={className}
-                    style={{top: this.props.top || 0, left: this.props.left || 0, width: w, height: h, border: "1px solid green"}}
-                    id="overlay-canvas"
-                    ref={this.getRef}
-                    key={`overlay-canvas-${frame.frameInfo.fileId}`}
-                />
+                <canvas className={className} style={{top: this.props.top || 0, left: this.props.left || 0, width: w, height: h}} id="overlay-canvas" ref={this.getRef} key={`overlay-canvas-${frame.frameInfo.fileId}`} />
             </>
         );
     }

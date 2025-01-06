@@ -1,10 +1,9 @@
 import * as React from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
-import {Subscription} from "rxjs";
 
 import {ContourWebGLService} from "services";
-import {AnimatorStore, AppStore, OverlayStore} from "stores";
+import {AnimatorStore, AppStore} from "stores";
 import {ContourDashMode, FrameStore, RenderConfigStore} from "stores/Frame";
 import {ceilToPower, GL2, rotate2D, scale2D, subtract2D} from "utilities";
 
@@ -15,55 +14,28 @@ export interface ContourViewComponentProps {
     frame: FrameStore;
     row: number;
     column: number;
-    refCanvas?: HTMLCanvasElement;
-    top?: number;
-    left?: number;
-    overlayStore?: OverlayStore;
-    channel?: number;
 }
 
 @observer
 export class ContourViewComponent extends React.Component<ContourViewComponentProps> {
-    public canvas: HTMLCanvasElement;
+    private canvas: HTMLCanvasElement;
     private gl: WebGL2RenderingContext;
     private contourWebGLService: ContourWebGLService;
-    private sub: Subscription;
 
     componentDidMount() {
         this.contourWebGLService = ContourWebGLService.Instance;
         this.gl = this.contourWebGLService.gl;
-        this.updateImage();
-    }
-
-    componentWillUnmount(): void {
-        this.sub && this.sub.unsubscribe();
+        const contourStream = AppStore.Instance.backendService.contourStream;
+        this.triggerUpdate();
+        if (this.canvas) {
+            contourStream.subscribe(this.triggerUpdate);
+        }
     }
 
     componentDidUpdate() {
-        this.updateImage();
-    }
-
-    private updateImage = () => {
         AppStore.Instance.resetImageRatio();
-        if (this.canvas && this.props.refCanvas && this.props.channel !== undefined) {
-            requestAnimationFrame(() => {
-                if (!(this.props.refCanvas && this.canvas)) {
-                    return;
-                }
-                const destCanvas = this.canvas.getContext("2d", {willReadFrequently: true});
-                const w = this.props.refCanvas.width;
-                const h = this.props.refCanvas.height;
-                destCanvas.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                destCanvas.drawImage(this.props.refCanvas, 0, 0, w, h, 0, 0, this.canvas.width, this.canvas.height);
-            });
-        } else if (!this.props.refCanvas && this.canvas) {
-            const contourStream = AppStore.Instance.backendService.contourStream;
-            this.triggerUpdate();
-            if (this.canvas) {
-                this.sub = contourStream.subscribe(this.triggerUpdate);
-            }
-        }
-    };
+        this.triggerUpdate();
+    }
 
     private triggerUpdate = () => {
         const animatorStore = AnimatorStore.Instance;
@@ -123,7 +95,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             if (contourFrames) {
                 // Render back-to-front to preserve ordering
                 for (let i = contourFrames.length - 1; i >= 0; --i) {
-                    this.renderFrameContours(contourFrames[i], baseFrame, this.props.channel);
+                    this.renderFrameContours(contourFrames[i], baseFrame);
                 }
             }
             // draw in 2d canvas
@@ -132,11 +104,10 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             const h = this.canvas.height;
             ctx.clearRect(0, 0, w, h);
             ctx.drawImage(this.gl.canvas, this.props.column * w, this.props.row * h, w, h, 0, 0, w, h);
-            // ctx.drawImage(this.gl.canvas, 0, 0, w, h, 0, 0, w, h);
         }
     };
 
-    private renderFrameContours = (frame: FrameStore, baseFrame: FrameStore, channel?: number) => {
+    private renderFrameContours = (frame: FrameStore, baseFrame: FrameStore) => {
         const isActive = frame === baseFrame;
         let lineThickness: number;
         let dashFactor: number;
@@ -243,8 +214,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
                 // Update buffers
                 for (let i = 0; i < contourStore.chunkCount; i++) {
-                    contourStore.bindBuffer(i, channel ?? frame.requiredChannel);
-                    const numVertices = contourStore.numGeneratedVertices.get(channel ?? frame.requiredChannel)?.[i];
+                    contourStore.bindBuffer(i);
+                    const numVertices = contourStore.numGeneratedVertices[i];
                     this.gl.vertexAttribPointer(this.contourWebGLService.vertexPositionAttribute, 3, GL2.FLOAT, false, 16, 0);
                     this.gl.vertexAttribPointer(this.contourWebGLService.vertexNormalAttribute, 2, GL2.SHORT, false, 16, 12);
                     this.gl.drawArrays(GL2.TRIANGLE_STRIP, 0, numVertices);
@@ -282,18 +253,18 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         }
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
-        const padding = this.props.overlayStore?.padding || baseFrame.overlayStore.padding;
+        const padding = appStore.overlayStore.padding;
         const className = classNames("contour-div", {docked: this.props.docked});
 
         return (
             <div className={className}>
                 <canvas
-                    id={`contour-canvas-${this.props.channel}`}
+                    id="contour-canvas"
                     className="contour-canvas"
                     ref={this.getRef}
                     style={{
-                        top: (this.props.top || 0) + padding.top,
-                        left: (this.props.left || 0) + padding.left,
+                        top: padding.top,
+                        left: padding.left,
                         width: baseFrame ? baseFrame.renderWidth || 1 : 1,
                         height: baseFrame ? baseFrame.renderHeight || 1 : 1
                     }}
