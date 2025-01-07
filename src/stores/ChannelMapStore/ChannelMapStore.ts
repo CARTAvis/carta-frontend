@@ -62,7 +62,7 @@ export class ChannelMapStore {
         const preferenceStore = AppStore.Instance.preferenceStore;
         const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
         const compressionQuality = bunitVariant.includes(frame.headerUnit) ? Math.max(preferenceStore.imageCompressionQuality, 32) : preferenceStore.imageCompressionQuality;
-        TileService.Instance.requestChannelMapTiles(tiles, midPointTileCoords, compressionQuality);
+        TileService.Instance.requestChannelMapTiles(tiles, this.masterFrame, midPointTileCoords, compressionQuality, {min: this.startChannel, max: this.channelRange});
     }, 100);
 
     @action updateOverlayStoreSize(width: number, height: number) {

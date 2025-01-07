@@ -5,7 +5,7 @@ import {Subject} from "rxjs";
 
 import {Point2D, TileCoordinate} from "models";
 import {BackendService, TileWebGLService} from "services";
-import {AppStore, PREVIEW_PV_FILEID} from "stores";
+import {AppStore, FrameStore, PREVIEW_PV_FILEID} from "stores";
 import {copyToFP32Texture, createFP32Texture, GL2} from "utilities";
 
 import ZFPWorker from "!worker-loader!zfp_wrapper";
@@ -85,8 +85,6 @@ export class TileService {
 
     @observable remainingTiles: number;
     @observable workersReady: boolean[];
-
-    @observable cummulativeTile: number = 0;
 
     @computed get zfpReady() {
         return this.workersReady && this.workersReady.every(v => v);
@@ -233,7 +231,7 @@ export class TileService {
             const pendingCompressionMap = this.pendingDecompressions.get(key);
             const tileIsQueuedForDecompression = pendingCompressionMap && Array.from(pendingCompressionMap.values()).some(map => map.has(encodedCoordinate));
             const tileCached = this.cachedTiles?.has(gpuCacheCoordinate);
-            if (this.pendingRequests.has(key) && this.pendingRequests.get(key)?.has(encodedCoordinate) && !tileCached && !compressedTile) {
+            if (this.pendingRequests.has(key) && this.pendingRequests.get(key)?.has(encodedCoordinate)) {
                 continue;
             }
 
@@ -249,6 +247,18 @@ export class TileService {
                 newRequests.push(tile);
             }
         }
+
+        const pendingRequestsMap = this.pendingRequests?.get(key);
+
+        if (!pendingRequestsMap) {
+            this.pendingRequests.set(key, new Map<number, boolean>());
+        }
+        for (const tile of newRequests) {
+            const encodedCoordinate = tile.encode();
+            this.pendingRequests.get(key)?.set(encodedCoordinate, true);
+        }
+        this.updateRemainingTileCount();
+
         return newRequests;
     }
 
@@ -264,16 +274,6 @@ export class TileService {
         }
 
         const newRequests = this.getRequiredRequestTiles(tiles, fileId, channel, stokes);
-        const pendingRequestsMap = this.pendingRequests?.get(key);
-
-        if (!pendingRequestsMap) {
-            this.pendingRequests.set(key, new Map<number, boolean>());
-        }
-        for (const tile of newRequests) {
-            const encodedCoordinate = tile.encode();
-            this.pendingRequests.get(key)?.set(encodedCoordinate, true);
-        }
-        this.updateRemainingTileCount();
 
         if (newRequests.length) {
             // sort by distance to midpoint and encode
@@ -314,11 +314,11 @@ export class TileService {
         return ranges;
     }
 
-    groupTiles(map: Map<number, TileCoordinate[]>, focusPoint: Point2D): Map<{min: number; max: number}, number[]> {
+    groupChannels(channelToTilesMap: Map<number, TileCoordinate[]>, focusPoint: Point2D): Map<{min: number; max: number}, number[]> {
         const groupedMap = new Map<string, number[]>();
         const result = new Map<{min: number; max: number}, number[]>();
 
-        for (const [channel, tiles] of map.entries()) {
+        for (const [channel, tiles] of channelToTilesMap.entries()) {
             const tileString = JSON.stringify(
                 tiles
                     .sort((a, b) => {
@@ -350,9 +350,7 @@ export class TileService {
         return result;
     }
 
-    async requestChannelMapTiles(tiles: TileCoordinate[], focusPoint: Point2D, compressionQuality: number, pageFliped: boolean = false) {
-        const channelMapStore = AppStore.Instance.channelMapStore;
-        const frame = channelMapStore.masterFrame;
+    requestChannelMapTiles(tiles: TileCoordinate[], frame: FrameStore, focusPoint: Point2D, compressionQuality: number, fullChannelRange: {min: number; max: number}, pageFliped: boolean = false) {
         if (!frame) {
             return;
         }
@@ -361,47 +359,28 @@ export class TileService {
         const requiredChannel = frame.channel;
         const currentTiles = tiles.map(tile => tile.encode());
 
-        // Clear pendingRequests map for previous range
-        const fullChannelRange = {min: channelMapStore.startChannel, max: channelMapStore.channelRange};
-        if (this.currentlyStreamingChannelRange && this.currentlyStreamingTileRange)
-            this.clearQueueForChannelMap(this.pendingRequests, fileId, fullChannelRange, currentTiles, this.currentlyStreamingChannelRange, this.currentlyStreamingTileRange);
+        if (this.currentlyStreamingChannelRange && this.currentlyStreamingTileRange) this.clearQueueForChannelMap(this.pendingRequests, fileId, fullChannelRange);
 
-        const tileToChannelMap = new Map<number, TileCoordinate[]>();
+        const channelToTilesMap = new Map<number, TileCoordinate[]>();
 
         if (fullChannelRange) {
             // Loop through range of channel
             for (let i = fullChannelRange.min; i <= fullChannelRange.max; i++) {
-                tileToChannelMap.set(i, []);
+                channelToTilesMap.set(i, []);
 
                 const newRequests = this.getRequiredRequestTiles(tiles, fileId, i, stokes);
                 if (newRequests.length) {
-                    tileToChannelMap.set(i, newRequests);
+                    channelToTilesMap.set(i, newRequests);
                 }
             }
         }
 
         // Groups channels that require the same tiles
-        const channelsToTilesMap = this.groupTiles(tileToChannelMap, focusPoint);
+        const channelsToTilesMap = this.groupChannels(channelToTilesMap, focusPoint);
 
         // Loop through all the grouped tiles array, divide the channels into ranges, and request the required channel.
         for (const [range, groupedTiles] of channelsToTilesMap) {
             if (groupedTiles.length) {
-                for (let i = range.min; i <= range.max; i++) {
-                    const key = `${fileId}_${stokes}_${i}`;
-                    this.pendingSynchronisedTiles?.set(key, new Set(groupedTiles));
-                    this.receivedSynchronisedTiles?.delete(key);
-
-                    const pendingRequestsMap = this.pendingRequests.get(key);
-                    if (!pendingRequestsMap) {
-                        this.pendingRequests.set(key, new Map<number, boolean>());
-                    }
-                    for (const encodedTile of groupedTiles) {
-                        this.pendingRequests.get(key)?.set(encodedTile, true);
-                    }
-                }
-
-                this.updateRemainingTileCount();
-
                 const tiles = groupedTiles;
                 const requestSentSuccessfully = this.backendService.setChannels(fileId, requiredChannel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles, currentTiles}, true, range, fullChannelRange);
                 if (requestSentSuccessfully) {
@@ -412,7 +391,7 @@ export class TileService {
         }
     }
 
-    async updateHiddenFileChannels(fileId: number, channel: number, stokes: number, channelMapEnabled?: boolean) {
+    updateHiddenFileChannels(fileId: number, channel: number, stokes: number, channelMapEnabled?: boolean) {
         if (!channelMapEnabled) {
             this.clearCompressedCache(fileId);
             this.clearGPUCache(fileId);
@@ -468,34 +447,10 @@ export class TileService {
         this.updateRemainingTileCount();
     }
 
-    clearQueueForChannelMap(
-        map: Map<string | undefined, Map<number, boolean>>,
-        fileId: number,
-        currentChannelRange: {min: number; max: number},
-        currentTileRange: number[],
-        previousChannelRange: {min: number; max: number},
-        previousTileRange: number[]
-    ) {
-        // Clear all requests with the given file ID within the channel range
-        let channelRangeIntersection = {
-            min: Math.max(currentChannelRange.min, previousChannelRange.min),
-            max: Math.min(currentChannelRange.max, previousChannelRange.max)
-        };
-
-        if (channelRangeIntersection.min > channelRangeIntersection.max) {
-            channelRangeIntersection = currentChannelRange;
-        }
-
-        map.forEach((value, key) => {
+    clearQueueForChannelMap(pendingRequests: Map<string | undefined, Map<number, boolean>>, fileId: number, currentChannelRange: {min: number; max: number}) {
+        pendingRequests.forEach((value, key) => {
             if (!key) {
                 return;
-            }
-
-            for (const tile of currentTileRange) {
-                if (!previousTileRange.includes(tile)) {
-                    map.delete(key);
-                    return;
-                }
             }
             const splitKey = key?.split("_");
             if (splitKey.length <= 0) {
@@ -504,8 +459,8 @@ export class TileService {
             const keyFileId = parseInt(splitKey[0]);
             const channel = parseInt(splitKey[splitKey.length - 1]);
             if (keyFileId === fileId && isFinite(channel) && channel >= 0) {
-                if (channel < channelRangeIntersection.min || channel > channelRangeIntersection.max) {
-                    map.delete(key);
+                if (channel < currentChannelRange.min || channel > currentChannelRange.max) {
+                    pendingRequests.delete(key);
                 }
             }
         });
@@ -540,10 +495,10 @@ export class TileService {
         }
     }
 
-    uploadTileToGPU(tile: RasterTile, gl) {
+    uploadTileToGPU(tile: RasterTile) {
         const textureParameters = this.getTileTextureParameters(tile);
         if (textureParameters.texture && tile.width && tile.height && tile.data) {
-            copyToFP32Texture(gl, textureParameters.texture, tile.data, GL2.TEXTURE0, tile.width, tile.height, textureParameters.offset.x, textureParameters.offset.y);
+            copyToFP32Texture(this.gl, textureParameters.texture, tile.data, GL2.TEXTURE0, tile.width, tile.height, textureParameters.offset.x, textureParameters.offset.y);
         }
     }
 
@@ -613,10 +568,9 @@ export class TileService {
         }
     };
 
-    private handleStreamedTiles = async (tileMessage: CARTA.IRasterTileData) => {
+    private handleStreamedTiles = (tileMessage: CARTA.IRasterTileData) => {
         const key = `${tileMessage.fileId}_${tileMessage.stokes}_${tileMessage.channel}`;
 
-        this.cummulativeTile = this.cummulativeTile + 1;
         if (tileMessage.compressionType !== CARTA.CompressionType.NONE && tileMessage.compressionType !== CARTA.CompressionType.ZFP) {
             console.error("Unsupported compression type");
         }

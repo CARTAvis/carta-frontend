@@ -383,7 +383,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
 
         if (rasterTile.data && tileBasedRender) {
-            tileService.uploadTileToGPU(rasterTile, gl);
+            tileService.uploadTileToGPU(rasterTile);
             delete rasterTile.data;
         }
 
