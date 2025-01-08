@@ -1185,15 +1185,14 @@ export class FrameStore {
         const cursorValue = {position: cursorPosImage, channel: 0, value: this.previewPVRasterData ? this.previewPVRasterData[Math.round(cursorPosImage.y) * this.frameInfo.fileInfoExtended.width + Math.round(cursorPosImage.x)] : NaN};
         return cursorValue;
     }
-
-    @computed get dynamicLayoutCtype(): string {
-        const info = FileCtypeInfo(this.frameInfo.fileInfoExtended.headerEntries ?? null);
-        return info.ctype;
-    }
-
-    @computed get dynamicLayoutName(): string {
+    
+    @computed get dynamicLayout(): {ctype: string; ctypeName: string; layoutName: string} {
         const dyLayoutStore = AppStore.Instance.dynamicLayoutStore;
-        return dyLayoutStore.isMappingExisted ? (dyLayoutStore.existLayoutMapping[this.dynamicLayoutCtype] ?? INITIAL_LAYOUT_ITEM) : INITIAL_LAYOUT_ITEM;
+
+        const info = FileCtypeInfo(this.frameInfo.fileInfoExtended.headerEntries);
+        const layoutName = dyLayoutStore.isMappingExisted ? (dyLayoutStore.existLayoutMapping[info.ctype] ?? INITIAL_LAYOUT_ITEM) : INITIAL_LAYOUT_ITEM;
+
+        return {ctype: info.ctype, ctypeName: info.name, layoutName: layoutName};
     }
 
     constructor(frameInfo: FrameInfo) {

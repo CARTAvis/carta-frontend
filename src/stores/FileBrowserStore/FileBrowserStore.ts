@@ -585,7 +585,6 @@ export class FileBrowserStore {
 
         // for dynamic layout
         const dynamicLayoutStore = AppStore.Instance.dynamicLayoutStore;
-        dynamicLayoutStore.selectedFiles = selection;
 
         if (PreferenceStore.Instance.dynamicLayoutEnable) {
             await this.selectedFilesCtypeInfo();
@@ -610,50 +609,11 @@ export class FileBrowserStore {
 
             const HDUList = Object.keys(res.fileInfoExtended ?? {});
             const fileInfo = HDUList?.length >= 1 ? res.fileInfoExtended[HDUList[0]] : res.fileInfoExtended;
+            const ctypeInfo = FileCtypeInfo(fileInfo.headerEntries);
 
-            // let tempCtypes = {};
-            // let tempNaxes = {};
-            // let ctypes: any[] = [];
-
-            // (fileInfo.headerEntries as any[]).forEach(header => {
-            //     if (header.name?.substring(0, 5) === "CTYPE") {
-            //         const value = DetermineCtypeAbbr(`${header.value}`);
-            //         tempCtypes[header.name] = value;
-            //     }
-
-            //     if (header.name?.substring(0, 5) === "NAXIS") {
-            //         tempNaxes[header.name] = `${header.value}`;
-            //     }
-            // });
-
-            // // deal with that CTYPE and NAXIS have different dimensions
-            // const extraNaxis = Object.keys(tempNaxes).includes("NAXIS") ? 1 : 0; // for 'NAXIS' itself
-            // const minLen = Math.min(Object.keys(tempNaxes).length - extraNaxis, Object.keys(tempCtypes).length);
-
-            // for (let j = 1; j <= minLen; j++) {
-            //     // skip axes with size = 1
-            //     if (tempNaxes[`NAXIS${j}`] !== "1") {
-            //         ctypes.push(tempCtypes[`CTYPE${j}`]);
-            //     }
-            // }
-
-            // // sort CTYPE
-            // const first2D = ctypes.splice(0, 2);
-            // first2D.sort((a, b) => a.rank - b.rank);
-            // ctypes.sort((a, b) => a.rank - b.rank);
-
-            // const sortedCtype = ctypes.length > 0 ? [first2D.map(item => item.abbr), ctypes.map(item => item.abbr)] : [first2D.map(item => item.abbr)];
-            // const sortedCtypeName = ctypes.length > 0 ? [first2D.map(item => item.name), ctypes.map(item => item.name)] : [first2D.map(item => item.name)];
-
-            // filesCtype.push(sortedCtype.join(","));
-            // filesCtypeName.push(sortedCtypeName.join(", "));
-            // filesCtypeRank.push(ctypes.length > 0 ? ctypes[ctypes.length-1].rank : first2D[first2D.length-1].rank);
-
-            const info = FileCtypeInfo(fileInfo.headerEntries ?? null);
-
-            filesCtype.push(info.ctype);
-            filesCtypeName.push(info.name);
-            filesCtypeRank.push(info.rank);
+            filesCtype.push(ctypeInfo.ctype);
+            filesCtypeName.push(ctypeInfo.name);
+            filesCtypeRank.push(ctypeInfo.rank);
         }
 
         return {ctype: filesCtype, name: filesCtypeName, rank: filesCtypeRank};

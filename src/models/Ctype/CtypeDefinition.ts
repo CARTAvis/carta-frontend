@@ -36,6 +36,11 @@ export const DetermineCtypeAbbr = (ctype: string): {abbr: string; name: string; 
 
 
 export function FileCtypeInfo(headerEntries: CARTA.IFileInfoExtended | CARTA.IHeaderEntry[] | null): {ctype: string; name: string; rank: number} {
+    
+    if (headerEntries === null) {
+        return {ctype: "", name: "", rank: 0};
+    }
+    
     let tempCtypes = {};
     let tempNaxes = {};
     let ctypes: any[] = [];

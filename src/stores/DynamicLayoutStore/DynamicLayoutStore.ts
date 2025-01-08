@@ -2,7 +2,7 @@ import {computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
 import {ApiService} from "services";
-import {AlertStore, AppStore, DialogId, ISelectedFile, LayoutStore, PreferenceStore} from "stores";
+import {AlertStore, AppStore, DialogId, LayoutStore, PreferenceStore} from "stores";
 
 export const INITIAL_LAYOUT_ITEM = "Initial Layout";
 const DYNAMIC_LAYOUT = "dynamicLayout";
@@ -17,9 +17,8 @@ export class DynamicLayoutStore {
         return DynamicLayoutStore.staticInstance;
     }
 
-    @observable selectedFiles: ISelectedFile[];
     @observable existLayoutMapping: any | null;
-    @observable dynamicLayoutName: string;
+    @observable dynamicLayoutName: string | null;
     @observable dynamicLayoutCtype: string | null;
 
     @computed get isMappingExisted(): boolean {
@@ -40,7 +39,6 @@ export class DynamicLayoutStore {
     constructor() {
         makeObservable(this);
 
-        this.selectedFiles = [];
         this.dynamicLayoutName = null;
         this.dynamicLayoutCtype = null;
         this.existLayoutMapping = {};
@@ -49,7 +47,7 @@ export class DynamicLayoutStore {
     @flow.bound *matchLayoutMapping() {
         const FileBrowserStore = AppStore.Instance.fileBrowserStore;
 
-        if (this.selectedFiles.length <= 0) {
+        if (FileBrowserStore.selectedFiles.length <= 0) {
             return;
         }
 
@@ -62,7 +60,7 @@ export class DynamicLayoutStore {
         const index = this.priorityFileIndexes(selectedFilesCtypes)[0]; // always use the first priority index
 
         this.dynamicLayoutCtype = selectedFilesCtypes.ctype[index];
-        this.dynamicLayoutName = this.existLayoutMapping[this.dynamicLayoutCtype] ?? null;
+        this.dynamicLayoutName = this.existLayoutMapping[this.dynamicLayoutCtype] ? this.existLayoutMapping[this.dynamicLayoutCtype].layoutName : null;
 
         if (this.dynamicLayoutName === null) {
             console.log("No matched layout. Use Initial Layout.");
@@ -79,7 +77,7 @@ export class DynamicLayoutStore {
         }
     }
 
-    @flow.bound *saveLayoutMapping(layoutName: string, layoutMappingCtype: string) {
+    @flow.bound *saveLayoutMapping(layoutName: string, layoutMappingCtype: string, ctypeName?: string) {
         const appStore = AppStore.Instance;
         const layoutStore = appStore.layoutStore;
 
@@ -88,7 +86,7 @@ export class DynamicLayoutStore {
             const confirmed = yield appStore.alertStore.showInteractiveAlert(`Do you want to set ${INITIAL_LAYOUT_ITEM} for data type (${layoutMappingCtype})?`);
             if (confirmed) {
                 try {
-                    yield this.modifyLayoutMapping(this.existLayoutMapping[layoutMappingCtype], "", layoutMappingCtype);
+                    yield this.modifyLayoutMapping(this.existLayoutMapping[layoutMappingCtype].layoutName, "", layoutMappingCtype);
                     this.dynamicLayoutName = PreferenceStore.Instance.layout;
 
                     if (PreferenceStore.Instance.dynamicLayoutEnable && layoutStore.layoutExists(this.dynamicLayoutName) && this.dynamicLayoutCtype === layoutMappingCtype) {
@@ -114,7 +112,7 @@ export class DynamicLayoutStore {
                 layoutMapping[ctype] = this.existLayoutMapping[ctype];
             });
         }
-        layoutMapping[layoutMappingCtype] = layoutName;
+        layoutMapping[layoutMappingCtype] = {layoutName: layoutName, ctypeName: ctypeName};
 
         const success = yield appStore.apiService.setPreference(DYNAMIC_LAYOUT, layoutMapping);
         if (success) {
@@ -136,7 +134,7 @@ export class DynamicLayoutStore {
             let layoutMapping = {};
             if (newLayoutName !== "") {
                 Object.keys(this.existLayoutMapping).forEach(ctype => {
-                    layoutMapping[ctype] = this.existLayoutMapping[ctype] === layoutName ? newLayoutName : this.existLayoutMapping[ctype];
+                    layoutMapping[ctype] = this.existLayoutMapping[ctype].layoutName === layoutName ? {layoutName: newLayoutName, ctypeName: this.existLayoutMapping[ctype].ctypeName} : {layoutName: this.existLayoutMapping[ctype].layoutName, ctypeName: this.existLayoutMapping[ctype].ctypeName};
                 });
             } else if (layoutMappingCtype) {
                 Object.keys(this.existLayoutMapping).forEach(ctype => {
