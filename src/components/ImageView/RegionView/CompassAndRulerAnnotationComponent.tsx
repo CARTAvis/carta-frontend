@@ -276,6 +276,8 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     const shapeRef = React.useRef();
     const mousePoint = React.useRef({x: 0, y: 0});
     const distanceTextRef = React.useRef<Konva.Text>();
+    const xTextRef = React.useRef<Konva.Text>();
+    const yTextRef = React.useRef<Konva.Text>();
 
     const frame = props.frame;
     const region = props.region as RulerAnnotationStore;
@@ -436,10 +438,14 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
     const [textOffsetX, setTextOffsetX] = React.useState(0);
+    const [xTextOffsetX, setXTextOffsetX] = React.useState(0);
+    const [yTextOffsetX, setYTextOffsetX] = React.useState(0);
 
     React.useEffect(() => {
         setTextOffsetX((region.textOffset.x * imageRatio * initialZoomLevel.current) / zoomLevel + distanceTextRef?.current?.textWidth / 2);
-    }, [imageRatio, zoomLevel, region.textOffset.x]);
+        setXTextOffsetX((region.xTextOffset.x * imageRatio * initialZoomLevel.current) / zoomLevel + xTextRef?.current?.textWidth / 2);
+        setYTextOffsetX((region.yTextOffset.x * imageRatio * initialZoomLevel.current) / zoomLevel + yTextRef?.current?.textWidth / 2);
+    }, [imageRatio, zoomLevel, region.textOffset.x, region.xTextOffset.x, region.yTextOffset.x]);
 
     return (
         <>
@@ -510,33 +516,33 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                     fontStyle={region.fontStyle}
                 />
                 <Text
-                    ref={distanceTextRef}
+                    ref={xTextRef}
                     x={xCenterPoints.x}
                     y={xCenterPoints.y}
-                    offsetX={textOffsetX}
-                    offsetY={(region.textOffset.y * imageRatio * initialZoomLevel.current) / zoomLevel}
+                    offsetX={xTextOffsetX}
+                    offsetY={(region.xTextOffset.y * imageRatio * initialZoomLevel.current) / zoomLevel}
                     text={xDistanceText}
                     stroke={region.color}
                     fill={region.color}
                     strokeWidth={(0.5 * imageRatio) / zoomLevel}
                     strokeScaleEnabled={false}
-                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
+                    opacity={region.auxiliaryTextVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
                     fontSize={(region.fontSize * imageRatio) / zoomLevel}
                     fontFamily={region.font}
                     fontStyle={region.fontStyle}
                 />
                 <Text
-                    ref={distanceTextRef}
+                    ref={yTextRef}
                     x={yCenterPoints.x}
                     y={yCenterPoints.y}
-                    offsetX={textOffsetX}
-                    offsetY={(region.textOffset.y * imageRatio * initialZoomLevel.current) / zoomLevel}
+                    offsetX={yTextOffsetX}
+                    offsetY={(region.yTextOffset.y * imageRatio * initialZoomLevel.current) / zoomLevel}
                     text={yDistanceText}
                     stroke={region.color}
                     fill={region.color}
                     strokeWidth={(0.5 * imageRatio) / zoomLevel}
                     strokeScaleEnabled={false}
-                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
+                    opacity={region.auxiliaryTextVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
                     fontSize={(region.fontSize * imageRatio) / zoomLevel}
                     fontFamily={region.font}
                     fontStyle={region.fontStyle}

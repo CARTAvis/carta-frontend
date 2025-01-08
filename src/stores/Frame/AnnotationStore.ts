@@ -423,7 +423,10 @@ export class RulerAnnotationStore extends RegionStore {
     @observable font: Font = Font.HELVETICA;
     @observable auxiliaryLineVisible: boolean = true;
     @observable auxiliaryLineDashLength: number = 0;
+    @observable auxiliaryTextVisible: boolean = true;
     @observable textOffset: Point2D = {x: 0, y: 0};
+    @observable xTextOffset: Point2D = {x: 0, y: 0};
+    @observable yTextOffset: Point2D = {x: 0, y: 0};
 
     constructor(
         backendService: BackendService,
@@ -480,11 +483,34 @@ export class RulerAnnotationStore extends RegionStore {
         this.modifiedTimestamp = performance.now();
     };
 
+    @action setAuxiliaryTextVisible = (isVisible: boolean) => {
+        this.auxiliaryTextVisible = isVisible;
+        this.modifiedTimestamp = performance.now();
+    };
+
     @action setTextOffset = (offset: number, isX: boolean) => {
         if (isX) {
             this.textOffset = {...this.textOffset, x: offset};
         } else {
             this.textOffset = {...this.textOffset, y: offset};
+        }
+        this.modifiedTimestamp = performance.now();
+    };
+
+    @action setXTextOffset = (offset: number, isX: boolean) => {
+        if (isX) {
+            this.xTextOffset = {...this.xTextOffset, x: offset};
+        } else {
+            this.xTextOffset = {...this.xTextOffset, y: offset};
+        }
+        this.modifiedTimestamp = performance.now();
+    };
+
+    @action setYTextOffset = (offset: number, isX: boolean) => {
+        if (isX) {
+            this.yTextOffset = {...this.yTextOffset, x: offset};
+        } else {
+            this.yTextOffset = {...this.yTextOffset, y: offset};
         }
         this.modifiedTimestamp = performance.now();
     };
@@ -532,7 +558,10 @@ export class RulerAnnotationStore extends RegionStore {
             font: this.font,
             auxiliaryLineVisible: this.auxiliaryLineVisible,
             auxiliaryLineDashLength: this.auxiliaryLineDashLength,
-            textOffset: this.textOffset
+            auxiliaryTextVisible: this.auxiliaryTextVisible,
+            textOffset: this.textOffset,
+            xTextOffset: this.xTextOffset,
+            yTextOffset: this.yTextOffset
         };
     };
 
@@ -545,13 +574,28 @@ export class RulerAnnotationStore extends RegionStore {
         };
     };
 
-    public initializeStyles = (annotationStyles: {fontSize: number; fontStyle: FontStyle; font: Font; auxiliaryLineVisible: boolean; auxiliaryLineDashLength: number; textOffset: Point2D}) => {
+    public initializeStyles = (annotationStyles: {
+        fontSize: number;
+        fontStyle: FontStyle;
+        font: Font;
+        auxiliaryLineVisible: boolean;
+        auxiliaryLineDashLength: number;
+        auxiliaryTextVisible: boolean;
+        textOffset: Point2D;
+        xTextOffset: Point2D;
+        yTextOffset: Point2D;
+    }) => {
         this.setFontSize(annotationStyles.fontSize ?? this.fontSize);
         this.setFontStyle(annotationStyles.fontStyle ?? this.fontStyle);
         this.setFont(annotationStyles.font ?? this.font);
         this.setAuxiliaryLineVisible(annotationStyles.auxiliaryLineVisible ?? this.auxiliaryLineVisible);
         this.setAuxiliaryLineDashLength(annotationStyles.auxiliaryLineDashLength ?? this.auxiliaryLineDashLength);
+        this.setAuxiliaryTextVisible(annotationStyles.auxiliaryTextVisible ?? this.auxiliaryTextVisible);
         this.setTextOffset(annotationStyles.textOffset?.x ?? this.textOffset.x, true);
         this.setTextOffset(annotationStyles.textOffset?.y ?? this.textOffset.y, false);
+        this.setXTextOffset(annotationStyles.xTextOffset?.x ?? this.xTextOffset.x, true);
+        this.setXTextOffset(annotationStyles.xTextOffset?.y ?? this.xTextOffset.y, false);
+        this.setYTextOffset(annotationStyles.yTextOffset?.x ?? this.yTextOffset.x, true);
+        this.setYTextOffset(annotationStyles.yTextOffset?.y ?? this.yTextOffset.y, false);
     };
 }
