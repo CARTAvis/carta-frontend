@@ -283,10 +283,10 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                                 onValueChange={value => (region as RulerAnnotationStore).setXTextOffset(value, false)}
                             />
                         </FormGroup>
-                        <FormGroup inline={true} label="Y Label Y offset" labelInfo="(px)">
+                        <FormGroup inline={true} label="Y Label X offset" labelInfo="(px)">
                             <SafeNumericInput
                                 disabled={!(region as RulerAnnotationStore).auxiliaryTextVisible}
-                                placeholder="Y Label Y offset"
+                                placeholder="Y Label X offset"
                                 min={-50}
                                 max={RegionStore.MAX_DASH_LENGTH}
                                 value={(region as RulerAnnotationStore).yTextOffset.x}
