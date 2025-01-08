@@ -1,4 +1,4 @@
-import {action, computed, flow, makeObservable, observable} from "mobx";
+import {computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
 import {ApiService} from "services";
@@ -18,7 +18,6 @@ export class DynamicLayoutStore {
     }
 
     @observable selectedFiles: ISelectedFile[];
-    @observable selectedFilesHeaderInfo: {ctype: any[]; naxis: any[]; dim: number[]};
     @observable existLayoutMapping: any | null;
     @observable dynamicLayoutName: string;
     @observable dynamicLayoutCtype: string | null;
@@ -27,24 +26,29 @@ export class DynamicLayoutStore {
         return this.existLayoutMapping ? Object.keys(this.existLayoutMapping).length > 0 : false;
     }
 
-    @computed get priorityFileIndexes() {
-        let sortWithIndex = this.selectedFilesHeaderInfo.dim.map((value, index) => ({index: index, value: value}));
+    private priorityFileIndexes(selectedFilesCtypes: {ctype: string[]; name: string[]; rank: number[]}): number[] {
+        let sortByDim = selectedFilesCtypes.ctype.map((item, index) => ({index: index, value: item.split(",").length, rank: selectedFilesCtypes.rank[index]}));
+
+        // sort by dimension first. if the dimension is the same, then sort by rank (see CtypeDefinition.ts)
         if (PreferenceStore.Instance.isHighDimPriority) {
-            sortWithIndex.sort((a, b) => b.value - a.value);
+            sortByDim.sort((a, b) => (b.value === a.value ? b.rank - a.rank : b.value - a.value));
         }
-        return sortWithIndex.map(item => item.index);
+
+        return sortByDim.map(item => item.index);
     }
 
     constructor() {
         makeObservable(this);
 
         this.selectedFiles = [];
-        this.dynamicLayoutName = INITIAL_LAYOUT_ITEM;
+        this.dynamicLayoutName = null;
         this.dynamicLayoutCtype = null;
         this.existLayoutMapping = {};
     }
 
-    @action matchLayoutMapping() {
+    @flow.bound *matchLayoutMapping() {
+        const FileBrowserStore = AppStore.Instance.fileBrowserStore;
+
         if (this.selectedFiles.length <= 0) {
             return;
         }
@@ -54,56 +58,18 @@ export class DynamicLayoutStore {
             return;
         }
 
-        const index = this.priorityFileIndexes[0]; // always use the first priority index
-        const ctypes = this.selectedFilesHeaderInfo.ctype[index];
+        const selectedFilesCtypes = yield FileBrowserStore.selectedFilesCtypeInfo();
+        const index = this.priorityFileIndexes(selectedFilesCtypes)[0]; // always use the first priority index
 
-        this.dynamicLayoutName = INITIAL_LAYOUT_ITEM;
-        this.dynamicLayoutCtype = [...this.selectedFilesHeaderInfo.ctype[index]].join(",");
+        this.dynamicLayoutCtype = selectedFilesCtypes.ctype[index];
+        this.dynamicLayoutName = this.existLayoutMapping[this.dynamicLayoutCtype] ?? null;
 
-        for (let i = 0; i < Object.keys(this.existLayoutMapping).length; i++) {
-            let first2Dim: boolean[] = [];
-            let RestDim: boolean[] = [];
-
-            const ctypeLayoutMapping = Object.keys(this.existLayoutMapping)[i].split(",");
-
-            // skip if the number of dimensions are not matched
-            if (ctypeLayoutMapping.length !== ctypes.length) {
-                continue;
-            }
-
-            // first two dimensions matching
-            let isFisrtTwoMatched: boolean = false;
-            for (let k = 0; k < 2; k++) {
-                first2Dim = [];
-                for (let j = 0; j < 2; j++) {
-                    first2Dim.push(ctypeLayoutMapping[Math.abs(j - k)] === ctypes[j]);
-                }
-
-                isFisrtTwoMatched = first2Dim.every((c: any) => c === true);
-
-                // skip inverse order if matched
-                if (isFisrtTwoMatched) {
-                    break;
-                }
-            }
-
-            if (isFisrtTwoMatched) {
-                // the rest of dimensions matching
-                for (let j = 2; j < ctypes.length; j++) {
-                    RestDim.push(ctypeLayoutMapping.includes(ctypes[j]));
-                }
-
-                // save matched layoutName if matched
-                if (RestDim.every((c: any) => c === true)) {
-                    this.dynamicLayoutName = Object.values(this.existLayoutMapping)[i] as string;
-                    console.log("matched layout name", this.dynamicLayoutName);
-                    break;
-                }
-            }
+        if (this.dynamicLayoutName === null) {
+            console.log("No matched layout. Use Initial Layout.");
+            this.dynamicLayoutName = INITIAL_LAYOUT_ITEM;
+        } else {
+            console.log("matched layout name", this.dynamicLayoutName);
         }
-
-        // no matched layout
-        console.log("No matched layout. Use Initial Layout.");
     }
 
     @flow.bound *fetchLayoutMapping() {
@@ -122,7 +88,7 @@ export class DynamicLayoutStore {
             const confirmed = yield appStore.alertStore.showInteractiveAlert(`Do you want to set ${INITIAL_LAYOUT_ITEM} for data type (${layoutMappingCtype})?`);
             if (confirmed) {
                 try {
-                    yield this.modifyLayoutMapping(this.existLayoutMapping[layoutMappingCtype]);
+                    yield this.modifyLayoutMapping(this.existLayoutMapping[layoutMappingCtype], "", layoutMappingCtype);
                     this.dynamicLayoutName = PreferenceStore.Instance.layout;
 
                     if (PreferenceStore.Instance.dynamicLayoutEnable && layoutStore.layoutExists(this.dynamicLayoutName) && this.dynamicLayoutCtype === layoutMappingCtype) {
@@ -153,8 +119,8 @@ export class DynamicLayoutStore {
         const success = yield appStore.apiService.setPreference(DYNAMIC_LAYOUT, layoutMapping);
         if (success) {
             AppToaster.show(SuccessToast("layout-grid", `Apply layout ${layoutName} to data type (${layoutMappingCtype}).`, LayoutStore.ToasterTimeout));
-            yield this.fetchLayoutMapping();
-            this.matchLayoutMapping();
+            this.existLayoutMapping = layoutMapping;
+            yield this.matchLayoutMapping();
 
             if (PreferenceStore.Instance.dynamicLayoutEnable && layoutStore.layoutExists(this.dynamicLayoutName) && this.dynamicLayoutCtype === layoutMappingCtype) {
                 appStore.dialogStore.hideDialog(DialogId.Layout);
@@ -163,7 +129,7 @@ export class DynamicLayoutStore {
         }
     }
 
-    @flow.bound *modifyLayoutMapping(layoutName: string, newLayoutName: string = "") {
+    @flow.bound *modifyLayoutMapping(layoutName: string, newLayoutName: string = "", layoutMappingCtype?: string) {
         try {
             const appStore = AppStore.Instance;
 
@@ -172,9 +138,9 @@ export class DynamicLayoutStore {
                 Object.keys(this.existLayoutMapping).forEach(ctype => {
                     layoutMapping[ctype] = this.existLayoutMapping[ctype] === layoutName ? newLayoutName : this.existLayoutMapping[ctype];
                 });
-            } else {
+            } else if (layoutMappingCtype) {
                 Object.keys(this.existLayoutMapping).forEach(ctype => {
-                    if (this.existLayoutMapping[ctype] !== layoutName) {
+                    if (ctype !== layoutMappingCtype) {
                         layoutMapping[ctype] = this.existLayoutMapping[ctype];
                     }
                 });
@@ -182,7 +148,7 @@ export class DynamicLayoutStore {
 
             const success = yield appStore.apiService.setPreference(DYNAMIC_LAYOUT, layoutMapping);
             if (success) {
-                yield this.fetchLayoutMapping();
+                this.existLayoutMapping = layoutMapping;
                 this.matchLayoutMapping();
             } else {
                 AlertStore.Instance.showAlert("Updating layout name in LayoutMap failed!");
@@ -193,8 +159,6 @@ export class DynamicLayoutStore {
     }
 
     deleteAllLayoutMapping() {
-        Object.keys(this.existLayoutMapping).forEach(ctype => {
-            this.modifyLayoutMapping(this.existLayoutMapping[ctype]);
-        });
+        this.existLayoutMapping = {};
     }
 }

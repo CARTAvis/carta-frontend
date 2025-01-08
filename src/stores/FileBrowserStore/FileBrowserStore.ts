@@ -4,7 +4,7 @@ import {action, autorun, computed, flow, makeObservable, observable} from "mobx"
 
 import {FileInfoType} from "components";
 import {AppToaster, ErrorToast} from "components/Shared";
-import {DetermineCtypeAbbr, Freq, FrequencyUnit, ImageType, LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
+import {FileCtypeInfo, Freq, FrequencyUnit, ImageType, LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
 import {BackendService} from "services";
 import {AppStore, DialogId, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
 import {RegionStore} from "stores/Frame";
@@ -588,21 +588,21 @@ export class FileBrowserStore {
         dynamicLayoutStore.selectedFiles = selection;
 
         if (PreferenceStore.Instance.dynamicLayoutEnable) {
-            await this.setSelectedFilesHeaderInfo();
+            await this.selectedFilesCtypeInfo();
             dynamicLayoutStore.matchLayoutMapping();
         }
     };
 
-    @action private async setSelectedFilesHeaderInfo() {
+    @flow.bound
+    *selectedFilesCtypeInfo() {
         const backendService = BackendService.Instance;
-        const dynamicLayoutStore = AppStore.Instance.dynamicLayoutStore;
 
-        const filesDim: number[] = [];
-        const filesCtype: any[] = [];
-        const filesNaxis: any[] = [];
+        const filesCtype: string[] = [];
+        let filesCtypeName: string[] = [];
+        let filesCtypeRank: number[] = [];
 
         for (let i = 0; i < this.selectedFiles.length; i++) {
-            const res = await backendService.getFileInfo(this.fileList?.directory, this.selectedFiles[i].fileInfo?.name, this.selectedFiles[i].hdu);
+            const res = yield backendService.getFileInfo(this.fileList?.directory, this.selectedFiles[i].fileInfo?.name, this.selectedFiles[i].hdu);
 
             if (!res.fileInfo || !res.fileInfoExtended) {
                 continue;
@@ -611,40 +611,52 @@ export class FileBrowserStore {
             const HDUList = Object.keys(res.fileInfoExtended ?? {});
             const fileInfo = HDUList?.length >= 1 ? res.fileInfoExtended[HDUList[0]] : res.fileInfoExtended;
 
-            let tempCtypes = {};
-            let tempNaxes = {};
-            let ctypes: string[] = [];
-            let naxes: string[] = [];
+            // let tempCtypes = {};
+            // let tempNaxes = {};
+            // let ctypes: any[] = [];
 
-            (fileInfo.headerEntries as any[]).forEach(header => {
-                if (header.name?.substring(0, 5) === "CTYPE") {
-                    const value: string = DetermineCtypeAbbr(`${header.value}`);
-                    tempCtypes[header.name] = value;
-                }
+            // (fileInfo.headerEntries as any[]).forEach(header => {
+            //     if (header.name?.substring(0, 5) === "CTYPE") {
+            //         const value = DetermineCtypeAbbr(`${header.value}`);
+            //         tempCtypes[header.name] = value;
+            //     }
 
-                if (header.name?.substring(0, 5) === "NAXIS") {
-                    tempNaxes[header.name] = `${header.value}`;
-                }
-            });
+            //     if (header.name?.substring(0, 5) === "NAXIS") {
+            //         tempNaxes[header.name] = `${header.value}`;
+            //     }
+            // });
 
-            // deal with that CTYPE and NAXIS have different dimensions
-            const extraNaxis = Object.keys(tempNaxes).includes("NAXIS") ? 1 : 0; // for 'NAXIS' itself
-            const minLen = Math.min(Object.keys(tempNaxes).length - extraNaxis, Object.keys(tempCtypes).length);
+            // // deal with that CTYPE and NAXIS have different dimensions
+            // const extraNaxis = Object.keys(tempNaxes).includes("NAXIS") ? 1 : 0; // for 'NAXIS' itself
+            // const minLen = Math.min(Object.keys(tempNaxes).length - extraNaxis, Object.keys(tempCtypes).length);
 
-            for (let j = 1; j <= minLen; j++) {
-                // skip axes with size = 1
-                if (tempNaxes[`NAXIS${j}`] !== "1") {
-                    ctypes.push(tempCtypes[`CTYPE${j}`]);
-                    naxes.push(tempNaxes[`NAXIS${j}`]);
-                }
-            }
+            // for (let j = 1; j <= minLen; j++) {
+            //     // skip axes with size = 1
+            //     if (tempNaxes[`NAXIS${j}`] !== "1") {
+            //         ctypes.push(tempCtypes[`CTYPE${j}`]);
+            //     }
+            // }
 
-            filesDim.push(naxes.length);
-            filesCtype.push(ctypes);
-            filesNaxis.push(naxes);
+            // // sort CTYPE
+            // const first2D = ctypes.splice(0, 2);
+            // first2D.sort((a, b) => a.rank - b.rank);
+            // ctypes.sort((a, b) => a.rank - b.rank);
+
+            // const sortedCtype = ctypes.length > 0 ? [first2D.map(item => item.abbr), ctypes.map(item => item.abbr)] : [first2D.map(item => item.abbr)];
+            // const sortedCtypeName = ctypes.length > 0 ? [first2D.map(item => item.name), ctypes.map(item => item.name)] : [first2D.map(item => item.name)];
+
+            // filesCtype.push(sortedCtype.join(","));
+            // filesCtypeName.push(sortedCtypeName.join(", "));
+            // filesCtypeRank.push(ctypes.length > 0 ? ctypes[ctypes.length-1].rank : first2D[first2D.length-1].rank);
+
+            const info = FileCtypeInfo(fileInfo.headerEntries ?? null);
+
+            filesCtype.push(info.ctype);
+            filesCtypeName.push(info.name);
+            filesCtypeRank.push(info.rank);
         }
 
-        dynamicLayoutStore.selectedFilesHeaderInfo = {ctype: filesCtype, naxis: filesNaxis, dim: filesDim};
+        return {ctype: filesCtype, name: filesCtypeName, rank: filesCtypeRank};
     }
 
     @action showLoadingDialog = () => {

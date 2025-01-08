@@ -5,7 +5,7 @@ import {computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {DetermineCtypeName, PresetLayout} from "models";
+import {DetermineCtypeAbbr, PresetLayout} from "models";
 import {AppStore, DialogId, HelpType, INITIAL_LAYOUT_ITEM, LayoutDialogMode, PreferenceStore} from "stores";
 
 import "./SaveLayoutDialogComponent.scss";
@@ -235,7 +235,7 @@ export const LayoutMappingComponent = () => {
             let ctypeDescription = layoutCtypes
                 .split(",")
                 .map((ctype, idx) => {
-                    return DetermineCtypeName(ctype);
+                    return DetermineCtypeAbbr(ctype);
                 })
                 .join(",");
 
