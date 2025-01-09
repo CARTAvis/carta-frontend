@@ -314,37 +314,22 @@ export class TileService {
         return ranges;
     }
 
-    groupChannels(channelToTilesMap: Map<number, TileCoordinate[]>, focusPoint: Point2D): Map<{min: number; max: number}, number[]> {
-        const groupedMap = new Map<string, number[]>();
+    groupChannels(channelToTilesMap: Map<number, number[]>): Map<{min: number; max: number}, number[]> {
         const result = new Map<{min: number; max: number}, number[]>();
+        let previousTileString = "";
+        let currentRange: {min: number; max: number} | null = null;
 
         for (const [channel, tiles] of channelToTilesMap.entries()) {
-            const tileString = JSON.stringify(
-                tiles
-                    .sort((a, b) => {
-                        const aX = focusPoint.x - a.x;
-                        const aY = focusPoint.y - a.y;
-                        const bX = focusPoint.x - b.x;
-                        const bY = focusPoint.y - b.y;
-                        return aX * aX + aY * aY - (bX * bX + bY * bY);
-                    })
-                    .map(tile => tile.encode())
-            ); // Convert TileCoordinate to a string
+            const tileString = JSON.stringify(tiles); // Convert TileCoordinate to a string
 
-            if (!groupedMap.has(tileString)) {
-                groupedMap.set(tileString, []);
+            if (tileString === previousTileString && currentRange) {
+                currentRange.max = channel;
+            } else {
+                currentRange = {min: channel, max: channel};
+                result.set(currentRange, tiles);
             }
 
-            groupedMap.get(tileString)!.push(channel);
-        }
-
-        // Create the final Map<number[], TileCoordinate[]>
-        for (const [tileString, channels] of groupedMap.entries()) {
-            const ranges = this.findRanges(channels);
-            for (const range of ranges) {
-                const tiles = JSON.parse(tileString); // Parse the stringified numbers back to TileCoordinate[]
-                result.set(range, tiles);
-            }
+            previousTileString = tileString;
         }
 
         return result;
@@ -375,8 +360,23 @@ export class TileService {
             }
         }
 
+        const sortedChannelToTilesMap = new Map<number, number[]>();
+
+        channelToTilesMap.forEach((tiles, key) => {
+            const sortedTiles = tiles
+                .sort((a, b) => {
+                    const aX = focusPoint.x - a.x;
+                    const aY = focusPoint.y - a.y;
+                    const bX = focusPoint.x - b.x;
+                    const bY = focusPoint.y - b.y;
+                    return aX * aX + aY * aY - (bX * bX + bY * bY);
+                })
+                .map(tile => tile.encode());
+            sortedChannelToTilesMap.set(key, sortedTiles);
+        });
+
         // Groups channels that require the same tiles
-        const channelsToTilesMap = this.groupChannels(channelToTilesMap, focusPoint);
+        const channelsToTilesMap = this.groupChannels(sortedChannelToTilesMap);
 
         // Loop through all the grouped tiles array, divide the channels into ranges, and request the required channel.
         for (const [range, groupedTiles] of channelsToTilesMap) {
