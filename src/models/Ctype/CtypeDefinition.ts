@@ -34,13 +34,11 @@ export const DetermineCtypeAbbr = (ctype: string): {abbr: string; name: string; 
     return {abbr: `${normalizedStr[0]}...`, name: ctype, rank: 5};
 };
 
-
 export function FileCtypeInfo(headerEntries: CARTA.IFileInfoExtended | CARTA.IHeaderEntry[] | null): {ctype: string; name: string; rank: number} {
-    
     if (headerEntries === null) {
         return {ctype: "", name: "", rank: 0};
     }
-    
+
     let tempCtypes = {};
     let tempNaxes = {};
     let ctypes: any[] = [];
@@ -78,7 +76,6 @@ export function FileCtypeInfo(headerEntries: CARTA.IFileInfoExtended | CARTA.IHe
     const ctype = sortedCtype.join(",");
     const ctypeName = sortedCtypeName.join(", ");
     const ctypeRank = ctypes.length > 0 ? ctypes[ctypes.length - 1].rank : first2D[first2D.length - 1].rank;
-    
 
     return {ctype: ctype, name: ctypeName, rank: ctypeRank};
 }

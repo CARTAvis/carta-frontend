@@ -156,8 +156,7 @@ export class FileBrowserDialogComponent extends React.Component {
         if (fileBrowserStore.browserMode === BrowserMode.File) {
             const frames = appStore.frames;
             if (!(forceAppend || fileBrowserStore.appendingFrame) || !frames.length) {
-                if (PreferenceStore.Instance.dynamicLayoutEnable && layoutStore.layoutExists(dynamicLayoutStore.dynamicLayoutName)) {
-                    // should show some warning if the dynamic layout is not applied
+                if (PreferenceStore.Instance.dynamicLayoutEnable && dynamicLayoutStore.dynamicLayoutName && layoutStore.layoutExists(dynamicLayoutStore.dynamicLayoutName)) {
                     layoutStore.applyLayout(dynamicLayoutStore.dynamicLayoutName);
                 } else {
                     if (!layoutStore.applyLayout(preferenceStore.layout)) {

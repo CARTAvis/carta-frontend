@@ -1,4 +1,48 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .layout-name-input {
     margin: 3px;
     user-select: none;
+}
+
+.layoutMapping {
+    justify-content: space-evenly;
+
+    .bp5-html-table {
+        width: 100%;
+    }
+
+    thead {
+        display: block;
+        th {
+            padding-left: 7px !important;
+            min-width: 120px;
+        }
+    }
+
+    tbody {
+        display: block;
+        tr {
+            td {
+                min-width: 120px;
+                padding-left: 5px;
+                .#{$ns}-form-group {
+                    margin: 6px;
+                }
+            }
+        }
+    }
+
+    .#{$ns}-popover-target {
+        span {
+            display: block;
+            max-width: 2em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+
+    &.active {
+        font-weight: bold;
+    }
 }

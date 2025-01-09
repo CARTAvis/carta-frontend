@@ -47,7 +47,7 @@ export class DynamicLayoutStore {
     @flow.bound *matchLayoutMapping() {
         const FileBrowserStore = AppStore.Instance.fileBrowserStore;
 
-        if (FileBrowserStore.selectedFiles.length <= 0) {
+        if (!FileBrowserStore.selectedFiles) {
             return;
         }
 
@@ -120,9 +120,9 @@ export class DynamicLayoutStore {
             this.existLayoutMapping = layoutMapping;
             yield this.matchLayoutMapping();
 
-            if (PreferenceStore.Instance.dynamicLayoutEnable && layoutStore.layoutExists(this.dynamicLayoutName) && this.dynamicLayoutCtype === layoutMappingCtype) {
+            if (PreferenceStore.Instance.dynamicLayoutEnable && layoutStore.layoutExists(layoutName) && this.dynamicLayoutCtype === layoutMappingCtype) {
                 appStore.dialogStore.hideDialog(DialogId.Layout);
-                layoutStore.applyLayout(this.dynamicLayoutName);
+                layoutStore.applyLayout(layoutName);
             }
         }
     }
@@ -134,7 +134,10 @@ export class DynamicLayoutStore {
             let layoutMapping = {};
             if (newLayoutName !== "") {
                 Object.keys(this.existLayoutMapping).forEach(ctype => {
-                    layoutMapping[ctype] = this.existLayoutMapping[ctype].layoutName === layoutName ? {layoutName: newLayoutName, ctypeName: this.existLayoutMapping[ctype].ctypeName} : {layoutName: this.existLayoutMapping[ctype].layoutName, ctypeName: this.existLayoutMapping[ctype].ctypeName};
+                    layoutMapping[ctype] =
+                        this.existLayoutMapping[ctype].layoutName === layoutName
+                            ? {layoutName: newLayoutName, ctypeName: this.existLayoutMapping[ctype].ctypeName}
+                            : {layoutName: this.existLayoutMapping[ctype].layoutName, ctypeName: this.existLayoutMapping[ctype].ctypeName};
                 });
             } else if (layoutMappingCtype) {
                 Object.keys(this.existLayoutMapping).forEach(ctype => {

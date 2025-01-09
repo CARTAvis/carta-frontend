@@ -1185,7 +1185,7 @@ export class FrameStore {
         const cursorValue = {position: cursorPosImage, channel: 0, value: this.previewPVRasterData ? this.previewPVRasterData[Math.round(cursorPosImage.y) * this.frameInfo.fileInfoExtended.width + Math.round(cursorPosImage.x)] : NaN};
         return cursorValue;
     }
-    
+
     @computed get dynamicLayout(): {ctype: string; ctypeName: string; layoutName: string} {
         const dyLayoutStore = AppStore.Instance.dynamicLayoutStore;
 

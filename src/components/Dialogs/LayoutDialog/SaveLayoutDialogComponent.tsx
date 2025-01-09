@@ -93,11 +93,6 @@ export class SaveLayoutDialogComponent extends React.Component {
         return this.layoutName.match(/^[^~`!*()\-+=[.'?<>/|\\:;&]+$/)?.length > 0;
     }
 
-    @computed get enableDynamicLayoutSave(): boolean {
-        const dyLayoutStore = AppStore.Instance.dynamicLayoutStore;
-        return dyLayoutStore.dynamicLayoutCtype && !!AppStore.Instance.activeFrame;
-    }
-
     private renderLayoutDialogBody = (mode: LayoutDialogMode) => {
         const layoutStore = AppStore.Instance.layoutStore;
 
@@ -226,8 +221,12 @@ export const LayoutMappingComponent = () => {
 
     if (dyLayoutStore.isMappingExisted) {
         const ctypes = Object.keys(dyLayoutStore.existLayoutMapping).reverse();
-        const layoutNames = Object.keys(dyLayoutStore.existLayoutMapping).map(ctype => dyLayoutStore.existLayoutMapping[ctype].layoutName).reverse();
-        const ctypeNames = Object.keys(dyLayoutStore.existLayoutMapping).map(ctype => dyLayoutStore.existLayoutMapping[ctype].ctypeName).reverse();
+        const layoutNames = Object.keys(dyLayoutStore.existLayoutMapping)
+            .map(ctype => dyLayoutStore.existLayoutMapping[ctype].layoutName)
+            .reverse();
+        const ctypeNames = Object.keys(dyLayoutStore.existLayoutMapping)
+            .map(ctype => dyLayoutStore.existLayoutMapping[ctype].ctypeName)
+            .reverse();
 
         ctypeList = activeFrame ? (ctypes.includes(activeFrame.dynamicLayout.ctype) ? ctypes : [activeFrame.dynamicLayout.ctype, ...ctypes]) : ctypes;
         layoutNameList = activeFrame ? (ctypes.includes(activeFrame.dynamicLayout.ctype) ? layoutNames : [activeFrame.dynamicLayout.layoutName, ...layoutNames]) : layoutNames;
@@ -237,14 +236,13 @@ export const LayoutMappingComponent = () => {
     let rows = [];
     if (ctypeList[0] !== "") {
         ctypeList.forEach((layoutCtypes, index) => {
+            const className = classNames("layoutMapping", {active: layoutCtypes === activeFrame?.dynamicLayout.ctype});
 
             rows.push(
                 <tr key={index}>
-                    <td>
+                    <td className={className}>
                         <Tooltip position="bottom" content={`(${ctypeNameList[index].replaceAll(",", ", ")})`}>
-                            <FormGroup>
-                                ({layoutCtypes.replaceAll(",", ", ")})
-                            </FormGroup>
+                            <FormGroup>({layoutCtypes.replaceAll(",", ", ")})</FormGroup>
                         </Tooltip>
                     </td>
                     <td>
