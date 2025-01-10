@@ -1,4 +1,4 @@
-import {computed, flow, makeObservable, observable} from "mobx";
+import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
 import {AppStore, DialogId, PreferenceKeys, PreferenceStore} from "stores";
@@ -87,8 +87,9 @@ export class DynamicLayoutStore {
             return;
         }
 
-        if (!layoutStore.layoutExists(layoutName)) {
-            appStore.alertStore.showAlert(`Save layout map failed! No ${layoutName} layout existed.`);
+        // show alert if no other alert is shown
+        if (!layoutStore.layoutExists(layoutName) && appStore.alertStore.alertVisible === false) {
+            appStore.alertStore.showAlert(`Fail to save (${layoutMappingCtype}): ${layoutName}! No ${layoutName} layout existed.`);
             return;
         }
 
@@ -112,7 +113,7 @@ export class DynamicLayoutStore {
         }
     }
 
-    @flow.bound *modifyLayoutMapping(layoutName: string, newLayoutName: string = "", layoutMappingCtype?: string) {
+    @action modifyLayoutMapping(layoutName: string, newLayoutName: string = "", layoutMappingCtype?: string) {
         const preferenceStore = PreferenceStore.Instance;
 
         try {
