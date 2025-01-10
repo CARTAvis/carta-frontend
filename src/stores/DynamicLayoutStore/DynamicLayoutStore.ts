@@ -31,8 +31,9 @@ export class DynamicLayoutStore {
     }
 
     matchLayoutMapping(selectedFilesCtypes: any) {
-        const FileBrowserStore = AppStore.Instance.fileBrowserStore;
-        const preferenceStore = PreferenceStore.Instance;
+        const appStore = AppStore.Instance;
+        const FileBrowserStore = appStore.fileBrowserStore;
+        const preferenceStore = appStore.preferenceStore;
 
         if (!FileBrowserStore.selectedFiles) {
             return;
@@ -64,7 +65,7 @@ export class DynamicLayoutStore {
     @flow.bound *saveLayoutMapping(layoutName: string, layoutMappingCtype: string, ctypeName?: string) {
         const appStore = AppStore.Instance;
         const layoutStore = appStore.layoutStore;
-        const preferenceStore = PreferenceStore.Instance;
+        const preferenceStore = appStore.preferenceStore;
 
         // set layoutName to INITIAL_LAYOUT_ITEM to delete layout mapping
         if (layoutName === INITIAL_LAYOUT_ITEM) {
@@ -91,18 +92,23 @@ export class DynamicLayoutStore {
             return;
         }
 
-        let layoutMapping = {};
-        if (this.isMappingExisted) {
-            Object.keys(preferenceStore.existLayoutMapping).forEach(ctype => {
-                layoutMapping[ctype] = preferenceStore.existLayoutMapping[ctype];
-            });
-        }
-        layoutMapping[layoutMappingCtype] = {layoutName: layoutName, ctypeName: ctypeName};
+        try {
+            let layoutMapping = {};
+            if (this.isMappingExisted) {
+                Object.keys(preferenceStore.existLayoutMapping).forEach(ctype => {
+                    layoutMapping[ctype] = preferenceStore.existLayoutMapping[ctype];
+                });
+            }
+            layoutMapping[layoutMappingCtype] = {layoutName: layoutName, ctypeName: ctypeName};
 
-        preferenceStore.setPreference(PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT, layoutMapping);
-        if (PreferenceStore.Instance.dynamicLayoutEnable && layoutStore.layoutExists(layoutName) && appStore.activeFrame.dynamicLayout.ctype === layoutMappingCtype) {
-            appStore.dialogStore.hideDialog(DialogId.Layout);
-            layoutStore.applyLayout(layoutName);
+            preferenceStore.setPreference(PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT, layoutMapping);
+            if (PreferenceStore.Instance.dynamicLayoutEnable && layoutStore.layoutExists(layoutName) && appStore.activeFrame.dynamicLayout.ctype === layoutMappingCtype) {
+                appStore.dialogStore.hideDialog(DialogId.Layout);
+                layoutStore.applyLayout(layoutName);
+            }
+        } catch (err) {
+            console.log(err);
+            AppToaster.show(SuccessToast("layout-grid", `Fail to save (${layoutMappingCtype}): ${layoutName}.`, DynamicLayoutStore.ToasterTimeout));
         }
     }
 
@@ -129,6 +135,7 @@ export class DynamicLayoutStore {
             preferenceStore.setPreference(PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT, layoutMapping);
         } catch (err) {
             console.log(err);
+            AppToaster.show(SuccessToast("layout-grid", `Fail to modify (${layoutMappingCtype}): ${layoutName}.`, DynamicLayoutStore.ToasterTimeout));
         }
     }
 }

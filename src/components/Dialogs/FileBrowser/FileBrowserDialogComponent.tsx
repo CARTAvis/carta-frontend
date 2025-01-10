@@ -9,8 +9,8 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {AppToaster, ErrorToast, SimpleTableComponentProps} from "components/Shared";
-import {ImageType, PresetLayout} from "models";
-import {AlertStore, AppStore, BrowserMode, CatalogProfileStore, DialogId, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, LayoutStore, PreferenceKeys, PreferenceStore} from "stores";
+import {ImageType} from "models";
+import {AppStore, BrowserMode, CatalogProfileStore, DialogId, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
 import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
@@ -43,7 +43,7 @@ export class FileBrowserDialogComponent extends React.Component {
         FileBrowserStore.Instance.setSelectedTab(newId);
     };
 
-    @flow.bound private handleFileClicked(file: ISelectedFile) {
+    @action private handleFileClicked = (file: ISelectedFile) => {
         FileBrowserStore.Instance.selectFile(file);
         if (this.enableImageArithmetic) {
             // Check if the existing string has a trailing quote or not
@@ -66,7 +66,7 @@ export class FileBrowserDialogComponent extends React.Component {
             }
             this.imageArithmeticInputRef.current?.focus();
         }
-    }
+    };
 
     private loadWithColorBlending = async () => {
         try {
@@ -87,8 +87,6 @@ export class FileBrowserDialogComponent extends React.Component {
     private loadSelectedFiles = async () => {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
-        const dyLayoutStore = appStore.dynamicLayoutStore;
-        const layoutStore = appStore.layoutStore;
 
         if (fileBrowserStore.selectedFiles.length > 1) {
             appStore.setLoadingMultipleFiles(true);
@@ -101,9 +99,6 @@ export class FileBrowserDialogComponent extends React.Component {
             }
             appStore.setLoadingMultipleFiles(false);
 
-            if (PreferenceStore.Instance.dynamicLayoutEnable && dyLayoutStore.dynamicLayoutName && layoutStore.layoutExists(dyLayoutStore.dynamicLayoutName)) {
-                layoutStore.applyLayout(dyLayoutStore.dynamicLayoutName);
-            }
         } else {
             await this.loadFile({fileInfo: fileBrowserStore.selectedFile, hdu: fileBrowserStore.selectedHDU});
         }
@@ -147,8 +142,8 @@ export class FileBrowserDialogComponent extends React.Component {
         const fileBrowserStore = appStore.fileBrowserStore;
         let frame: FrameStore;
 
-        const layoutStore = LayoutStore.Instance;
-        const preferenceStore = PreferenceStore.Instance;
+        const layoutStore = appStore.layoutStore;
+        const dyLayoutStore = appStore.dynamicLayoutStore;
 
         // Ignore load
         switch (fileBrowserStore.browserMode) {
@@ -162,10 +157,9 @@ export class FileBrowserDialogComponent extends React.Component {
         if (fileBrowserStore.browserMode === BrowserMode.File) {
             const frames = appStore.frames;
             if (!(forceAppend || fileBrowserStore.appendingFrame) || !frames.length) {
-                if (!layoutStore.applyLayout(preferenceStore.layout)) {
-                    AlertStore.Instance.showAlert(`Applying preference layout "${preferenceStore.layout}" failed! Resetting preference layout to default.`);
-                    layoutStore.applyLayout(PresetLayout.DEFAULT);
-                    preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
+
+                if (PreferenceStore.Instance.dynamicLayoutEnable && dyLayoutStore.dynamicLayoutName && layoutStore.layoutExists(dyLayoutStore.dynamicLayoutName)) {
+                    layoutStore.applyLayout(dyLayoutStore.dynamicLayoutName);
                 }
 
                 frame = yield appStore.openFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
@@ -412,7 +406,7 @@ export class FileBrowserDialogComponent extends React.Component {
                         );
                     } else {
                         return (
-                            <div className="footer-sub">
+                            <div>
                                 <Tooltip content={"Close any existing images and load this image"}>
                                     <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={actionFunction} text={actionText} />
                                 </Tooltip>
