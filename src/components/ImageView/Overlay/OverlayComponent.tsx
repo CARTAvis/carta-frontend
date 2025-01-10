@@ -227,12 +227,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const channelMapNumRows = AppStore.Instance.channelMapStore.numRows;
         const channelMapMasterFrame = AppStore.Instance.channelMapStore.masterFrame;
         const channelMapChannelNum = AppStore.Instance.channelMapStore.numChannels;
-        const channelMapShowChannelString = AppStore.Instance.channelMapStore.showChannelString;
-        const channelMapShowChannelStringLabel = AppStore.Instance.channelMapStore.showChannelStringLabel;
-        const channelMapShowSpectralString = AppStore.Instance.channelMapStore.showSpectralString;
-        const channelMapShowSpectralStringLabel = AppStore.Instance.channelMapStore.showSpectralStringLabel;
-        const channelMapShowVelocityString = AppStore.Instance.channelMapStore.showVelocityString;
-        const channelMapShowVelocityStringLabel = AppStore.Instance.channelMapStore.showVelocityStringLabel;
         const offsetCoord = frame.isOffsetCoord;
         const offsetWcs = frame.wcsInfoShifted;
 

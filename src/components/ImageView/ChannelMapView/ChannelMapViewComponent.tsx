@@ -277,8 +277,8 @@ const ChannelMapInnerOverlayComponent = observer(
 
         const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
-        const setCornerOverlay = () => {
-            const left = overlayComponentLeft - overlayStore.paddingLeft;
+        const getCornerOverlay = () => {
+            const left = overlayComponentLeft;
 
             return (
                 <OverlayComponent
@@ -304,7 +304,6 @@ const ChannelMapInnerOverlayComponent = observer(
                 />
             );
         };
-        const cornerOverlay = setCornerOverlay();
         let width = Math.floor(channelMapViewWidth / channelMapStore.numColumns);
         let height = Math.floor(channelMapViewHeight / channelMapStore.numRows);
 
@@ -382,7 +381,7 @@ const ChannelMapInnerOverlayComponent = observer(
         return (
             <>
                 {column === 0 && (row === channelMapStore.numRows - 1 || row === lastRow) ? (
-                    cornerOverlay
+                    getCornerOverlay()
                 ) : (
                     <canvas key={`overlay-view-component-${index}`} id={`${column}_${row}`} style={{position: "absolute", top: overlayComponentTop, left: overlayComponentLeft, width: width, height: height, zIndex: 2}} ref={getRef} />
                 )}
