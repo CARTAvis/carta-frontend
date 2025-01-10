@@ -98,7 +98,6 @@ export class FileBrowserDialogComponent extends React.Component {
                 }
             }
             appStore.setLoadingMultipleFiles(false);
-
         } else {
             await this.loadFile({fileInfo: fileBrowserStore.selectedFile, hdu: fileBrowserStore.selectedHDU});
         }
@@ -157,7 +156,6 @@ export class FileBrowserDialogComponent extends React.Component {
         if (fileBrowserStore.browserMode === BrowserMode.File) {
             const frames = appStore.frames;
             if (!(forceAppend || fileBrowserStore.appendingFrame) || !frames.length) {
-
                 if (PreferenceStore.Instance.dynamicLayoutEnable && dyLayoutStore.dynamicLayoutName && layoutStore.layoutExists(dyLayoutStore.dynamicLayoutName)) {
                     layoutStore.applyLayout(dyLayoutStore.dynamicLayoutName);
                 }
