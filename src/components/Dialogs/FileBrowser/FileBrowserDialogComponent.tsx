@@ -10,7 +10,7 @@ import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {AppToaster, ErrorToast, SimpleTableComponentProps} from "components/Shared";
 import {ImageType, PresetLayout} from "models";
-import {AlertStore, AppStore, BrowserMode, CatalogProfileStore, DialogId, DynamicLayoutStore, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, LayoutStore, PreferenceKeys, PreferenceStore} from "stores";
+import {AlertStore, AppStore, BrowserMode, CatalogProfileStore, DialogId, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, LayoutStore, PreferenceKeys, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
 import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
@@ -43,8 +43,8 @@ export class FileBrowserDialogComponent extends React.Component {
         FileBrowserStore.Instance.setSelectedTab(newId);
     };
 
-    @action private handleFileClicked = async (file: ISelectedFile) => {
-        await FileBrowserStore.Instance.selectFile(file);
+    @flow.bound private handleFileClicked(file: ISelectedFile) {
+        FileBrowserStore.Instance.selectFile(file);
         if (this.enableImageArithmetic) {
             // Check if the existing string has a trailing quote or not
             const quoteRegex = /(["'])+/gm;
@@ -66,7 +66,7 @@ export class FileBrowserDialogComponent extends React.Component {
             }
             this.imageArithmeticInputRef.current?.focus();
         }
-    };
+    }
 
     private loadWithColorBlending = async () => {
         try {
@@ -87,6 +87,9 @@ export class FileBrowserDialogComponent extends React.Component {
     private loadSelectedFiles = async () => {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
+        const dyLayoutStore = appStore.dynamicLayoutStore;
+        const layoutStore = appStore.layoutStore;
+
         if (fileBrowserStore.selectedFiles.length > 1) {
             appStore.setLoadingMultipleFiles(true);
             for (let i = 0; i < fileBrowserStore.selectedFiles.length; i++) {
@@ -97,6 +100,10 @@ export class FileBrowserDialogComponent extends React.Component {
                 }
             }
             appStore.setLoadingMultipleFiles(false);
+
+            if (PreferenceStore.Instance.dynamicLayoutEnable && dyLayoutStore.dynamicLayoutName && layoutStore.layoutExists(dyLayoutStore.dynamicLayoutName)) {
+                layoutStore.applyLayout(dyLayoutStore.dynamicLayoutName);
+            }
         } else {
             await this.loadFile({fileInfo: fileBrowserStore.selectedFile, hdu: fileBrowserStore.selectedHDU});
         }
@@ -141,7 +148,6 @@ export class FileBrowserDialogComponent extends React.Component {
         let frame: FrameStore;
 
         const layoutStore = LayoutStore.Instance;
-        const dynamicLayoutStore = DynamicLayoutStore.Instance;
         const preferenceStore = PreferenceStore.Instance;
 
         // Ignore load
@@ -156,14 +162,10 @@ export class FileBrowserDialogComponent extends React.Component {
         if (fileBrowserStore.browserMode === BrowserMode.File) {
             const frames = appStore.frames;
             if (!(forceAppend || fileBrowserStore.appendingFrame) || !frames.length) {
-                if (PreferenceStore.Instance.dynamicLayoutEnable && dynamicLayoutStore.dynamicLayoutName && layoutStore.layoutExists(dynamicLayoutStore.dynamicLayoutName)) {
-                    layoutStore.applyLayout(dynamicLayoutStore.dynamicLayoutName);
-                } else {
-                    if (!layoutStore.applyLayout(preferenceStore.layout)) {
-                        AlertStore.Instance.showAlert(`Applying preference layout "${preferenceStore.layout}" failed! Resetting preference layout to default.`);
-                        layoutStore.applyLayout(PresetLayout.DEFAULT);
-                        preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
-                    }
+                if (!layoutStore.applyLayout(preferenceStore.layout)) {
+                    AlertStore.Instance.showAlert(`Applying preference layout "${preferenceStore.layout}" failed! Resetting preference layout to default.`);
+                    layoutStore.applyLayout(PresetLayout.DEFAULT);
+                    preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
                 }
 
                 frame = yield appStore.openFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);

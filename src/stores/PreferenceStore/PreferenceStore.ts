@@ -40,6 +40,7 @@ export enum PreferenceKeys {
     GLOBAL_LAYOUT = "layout",
     GLOBAL_DYNAMIC_LAYOUT_ENABLE = "dynamicLayoutEnable",
     GLOBAL_IS_HIGH_DIM_PRIORITY = "isHighDimPriority",
+    GLOBAL_DYNAMIC_LAYOUT = "dynamicLayout",
     GLOBAL_CURSOR_POSITION = "cursorPosition",
     GLOBAL_ZOOM_MODE = "zoomMode",
     GLOBAL_ZOOM_POINT = "zoomPoint",
@@ -170,6 +171,7 @@ const DEFAULTS = {
         layout: PresetLayout.DEFAULT,
         dynamicLayoutEnable: false,
         isHighDimPriority: true,
+        existLayoutMapping: [],
         cursorPosition: CursorPosition.TRACKING,
         zoomMode: Zoom.FIT,
         zoomPoint: ZoomPoint.CURSOR,
@@ -759,6 +761,11 @@ export class PreferenceStore {
     // getter for file priority for dynamic layout setting
     @computed get isHighDimPriority(): boolean {
         return this.preferences.get(PreferenceKeys.GLOBAL_IS_HIGH_DIM_PRIORITY) ?? DEFAULTS.GLOBAL.isHighDimPriority;
+    }
+
+    // getter for file priority for dynamic layout setting
+    @computed get existLayoutMapping(): boolean {
+        return this.preferences.get(PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT) ?? DEFAULTS.GLOBAL.existLayoutMapping;
     }
 
     /**

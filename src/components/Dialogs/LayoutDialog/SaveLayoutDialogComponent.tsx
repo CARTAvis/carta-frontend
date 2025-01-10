@@ -211,21 +211,23 @@ export class SaveLayoutDialogComponent extends React.Component {
 }
 
 export const LayoutMappingComponent = () => {
-    const layoutStore = AppStore.Instance.layoutStore;
-    const dyLayoutStore = AppStore.Instance.dynamicLayoutStore;
-    const activeFrame = AppStore.Instance.activeFrame;
+    const appsStore = AppStore.Instance;
+    const layoutStore = appsStore.layoutStore;
+    const dyLayoutStore = appsStore.dynamicLayoutStore;
+    const preferenceStore = appsStore.preferenceStore;
+    const activeFrame = appsStore.activeFrame;
 
     let ctypeList: string[] | any[] = [activeFrame?.dynamicLayout.ctype ?? ""];
     let layoutNameList: string[] | any[] = [activeFrame?.dynamicLayout.layoutName ?? ""];
     let ctypeNameList: string[] | any[] = [activeFrame?.dynamicLayout.ctypeName ?? ""];
 
     if (dyLayoutStore.isMappingExisted) {
-        const ctypes = Object.keys(dyLayoutStore.existLayoutMapping).reverse();
-        const layoutNames = Object.keys(dyLayoutStore.existLayoutMapping)
-            .map(ctype => dyLayoutStore.existLayoutMapping[ctype].layoutName)
+        const ctypes = Object.keys(preferenceStore.existLayoutMapping).reverse();
+        const layoutNames = Object.keys(preferenceStore.existLayoutMapping)
+            .map(ctype => preferenceStore.existLayoutMapping[ctype].layoutName)
             .reverse();
-        const ctypeNames = Object.keys(dyLayoutStore.existLayoutMapping)
-            .map(ctype => dyLayoutStore.existLayoutMapping[ctype].ctypeName)
+        const ctypeNames = Object.keys(preferenceStore.existLayoutMapping)
+            .map(ctype => preferenceStore.existLayoutMapping[ctype].ctypeName)
             .reverse();
 
         ctypeList = activeFrame ? (ctypes.includes(activeFrame.dynamicLayout.ctype) ? ctypes : [activeFrame.dynamicLayout.ctype, ...ctypes]) : ctypes;

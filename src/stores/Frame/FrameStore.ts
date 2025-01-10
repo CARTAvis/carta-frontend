@@ -1188,9 +1188,10 @@ export class FrameStore {
 
     @computed get dynamicLayout(): {ctype: string; ctypeName: string; layoutName: string} {
         const dyLayoutStore = AppStore.Instance.dynamicLayoutStore;
+        const preferenceStore = AppStore.Instance.preferenceStore;
 
         const info = FileCtypeInfo(this.frameInfo.fileInfoExtended.headerEntries);
-        const layoutName = dyLayoutStore.isMappingExisted ? (dyLayoutStore.existLayoutMapping[info.ctype] ?? INITIAL_LAYOUT_ITEM) : INITIAL_LAYOUT_ITEM;
+        const layoutName = dyLayoutStore.isMappingExisted ? (preferenceStore.existLayoutMapping[info.ctype] ?? INITIAL_LAYOUT_ITEM) : INITIAL_LAYOUT_ITEM;
 
         return {ctype: info.ctype, ctypeName: info.name, layoutName: layoutName};
     }

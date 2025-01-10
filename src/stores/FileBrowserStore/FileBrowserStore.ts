@@ -580,20 +580,17 @@ export class FileBrowserStore {
         this.saveSpectralEnd = end;
     };
 
-    @action setSelectedFiles = async (selection: ISelectedFile[]) => {
+    @flow.bound *setSelectedFiles(selection: ISelectedFile[]) {
         this.selectedFiles = selection;
 
         // for dynamic layout
-        const dynamicLayoutStore = AppStore.Instance.dynamicLayoutStore;
-
         if (PreferenceStore.Instance.dynamicLayoutEnable) {
-            await this.selectedFilesCtypeInfo();
-            dynamicLayoutStore.matchLayoutMapping();
+            const selectedFilesCtypes = yield this.selectedFilesCtypeInfo();
+            AppStore.Instance.dynamicLayoutStore.matchLayoutMapping(selectedFilesCtypes);
         }
-    };
+    }
 
-    @flow.bound
-    *selectedFilesCtypeInfo() {
+    @flow.bound *selectedFilesCtypeInfo() {
         const backendService = BackendService.Instance;
 
         const filesCtype: string[] = [];
