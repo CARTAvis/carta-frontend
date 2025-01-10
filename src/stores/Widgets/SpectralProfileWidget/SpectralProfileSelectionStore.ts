@@ -29,7 +29,7 @@ interface SpectralConfig extends CARTA.SetSpectralRequirements.ISpectralConfig {
     regionId: number | null;
 }
 
-const MAXIMUM_PROFILES = 10;
+const MAXIMUM_PROFILES = 16;
 
 type Profile = {
     channelValues: number[];

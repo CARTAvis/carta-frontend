@@ -324,6 +324,9 @@ export class CatalogStore {
             let yFraction = CatalogStore.GetFractionFromUnit(yUnit.toLocaleLowerCase());
 
             let wcsCopy = AST.copy(wcsInfo);
+            if (wcsCopy !== 0 && AppStore.Instance.overlayStore.isImgCoordinates) {
+                AST.setI(wcsCopy, "Current", 2);
+            }
             let system = "System=" + catalogFrame;
             AST.set(wcsCopy, system);
             if (catalogFrame === CatalogSystemType.FK4) {
