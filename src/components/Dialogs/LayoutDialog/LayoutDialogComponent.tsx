@@ -1,12 +1,13 @@
 import * as React from "react";
+import {CSSProperties} from "react";
 import {AnchorButton, ButtonGroup, Classes, Collapse, DialogProps, FormGroup, HTMLSelect, HTMLTable, InputGroup, Intent, Position, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
-import {computed, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScrollShadow} from "components/Shared";
-import {DetermineCtypeName, PresetLayout} from "models";
+import {PresetLayout} from "models";
 import {AppStore, DialogId, HelpType, INITIAL_LAYOUT_ITEM, LayoutDialogMode, PreferenceKeys, PreferenceStore} from "stores";
 
 import "./LayoutDialogComponent.scss";
@@ -24,6 +25,7 @@ export class LayoutDialogComponent extends React.Component {
     @observable private layoutRename: string = "";
     @observable private saveDynamicLayoutEnable: boolean = false;
     @observable private isRename: boolean = false;
+    @observable private hoverLayoutName: string = "";
 
     @computed get isEmpty(): boolean {
         return this.isRename ? !this.layoutRename?.trim() : !this.layoutName?.trim();
@@ -34,13 +36,21 @@ export class LayoutDialogComponent extends React.Component {
         return name.match(/^[^~`!*()\-+=[.'?<>/|\\:;&]+$/)?.length > 0;
     }
 
+    @action onMouseEnter = (layoutName: any) => {
+        this.hoverLayoutName = layoutName;
+    };
+
+    @action onMouseLeave = () => {
+        this.hoverLayoutName = "";
+    };
+
     constructor(props: any) {
         super(props);
         makeObservable(this);
     }
 
     private handleInput = (ev: React.FormEvent<HTMLInputElement>) => {
-        this.isRename ? this.layoutRename = ev.currentTarget.value : this.layoutName = ev.currentTarget.value;
+        this.isRename ? (this.layoutRename = ev.currentTarget.value) : (this.layoutName = ev.currentTarget.value);
     };
 
     private clearInput = () => {
@@ -68,14 +78,14 @@ export class LayoutDialogComponent extends React.Component {
                 if (confirmed) {
                     await appStore.layoutStore.saveLayout();
                     if (this.saveDynamicLayoutEnable) {
-                        await dyLayoutStore.saveLayoutMapping(this.layoutName, appStore.activeFrame.dynamicLayoutCtype);
+                        await dyLayoutStore.saveLayoutMapping(this.layoutName, appStore.activeFrame.dynamicLayout.ctype);
                     }
                 }
             }
         } else {
             await appStore.layoutStore.saveLayout();
             if (this.saveDynamicLayoutEnable) {
-                await dyLayoutStore.saveLayoutMapping(this.layoutName, appStore.activeFrame.dynamicLayoutCtype);
+                await dyLayoutStore.saveLayoutMapping(this.layoutName, appStore.activeFrame.dynamicLayout.ctype);
             }
         }
         this.clearInput();
@@ -97,10 +107,10 @@ export class LayoutDialogComponent extends React.Component {
 
         const layoutRenameInput = (layoutName: string) => {
             return (
-            <Tooltip isOpen={!this.isEmpty && !this.validName} position={Position.BOTTOM_LEFT} content={"Layout name should not contain ~, `, !, *, (, ), -, +, =, [, ., ', ?, <, >, /, |, \\, :, ; or &"}>
-                <InputGroup className="layout-name-input" placeholder={layoutName} value={this.layoutRename} autoFocus={true} onChange={this.handleInput} onKeyDown={this.handleKeyDown} />
+                <Tooltip isOpen={!this.isEmpty && !this.validName} position={Position.BOTTOM_LEFT} content={"Layout name should not contain ~, `, !, *, (, ), -, +, =, [, ., ', ?, <, >, /, |, \\, :, ; or &"}>
+                    <InputGroup className="layout-name-input" placeholder={layoutName} value={this.layoutRename} autoFocus={true} onChange={this.handleInput} onKeyDown={this.handleKeyDown} />
                 </Tooltip>
-            )
+            );
         };
 
         const saveLayoutRow = () => {
@@ -118,9 +128,9 @@ export class LayoutDialogComponent extends React.Component {
                             <AnchorButton intent={Intent.PRIMARY} onClick={this.saveLayout} text={"Save"} disabled={this.isEmpty || !this.validName} />
                         </Tooltip>
                         <Collapse isOpen={PreferenceStore.Instance.dynamicLayoutEnable}>
-                            <Tooltip content={`Apply layout when images with type (${activeFrame?.dynamicLayoutCtype}) are loaded`} disabled={!activeFrame}>
+                            <Tooltip content={`Apply layout when images with type (${activeFrame?.dynamicLayout.ctype}) are loaded`} disabled={!activeFrame}>
                                 <FormGroup inline={true} disabled={!activeFrame || this.isEmpty}>
-                                    <Switch innerLabel="Dyn"checked={this.saveDynamicLayoutEnable} disabled={!activeFrame || this.isEmpty} onChange={() => this.toggleSaveDynamicLayoutEnable()} />
+                                    <Switch innerLabel="Dyn" checked={this.saveDynamicLayoutEnable} disabled={!activeFrame || this.isEmpty} onChange={() => this.toggleSaveDynamicLayoutEnable()} />
                                 </FormGroup>
                             </Tooltip>
                         </Collapse>
@@ -131,78 +141,88 @@ export class LayoutDialogComponent extends React.Component {
 
         const rows = layoutStore.orderedLayoutNames.map((layoutName, index) => {
             const appStore = AppStore.Instance;
+            const className = classNames("layout-name-input", {active: this.editingLayoutName === layoutName});
+
+            const styleProps: CSSProperties = {
+                opacity: this.hoverLayoutName === layoutName ? 1 : 0,
+                backgroundColor: "transparent"
+            };
+
             return (
-                <tr key={index}>
-                    <td>{this.editingLayoutName === layoutName? layoutRenameInput(layoutName) : layoutName}</td>
+                <tr key={index} onMouseOver={() => this.onMouseEnter(layoutName)} onMouseLeave={this.onMouseLeave}>
+                    <td className={className}>
+                        <FormGroup>{this.editingLayoutName === layoutName ? layoutRenameInput(layoutName) : layoutName}</FormGroup>
+                    </td>
                     <td>
-                    <ButtonGroup>
-                        <AnchorButton onClick={() => layoutStore.applyLayout(layoutName)}>Apply</AnchorButton>
-                            <AnchorButton icon="edit" onClick={() => {
-                                this.editingLayoutName = this.editingLayoutName === layoutName ? "" : layoutName;
-                                this.isRename = true;
-                            }} disabled={PresetLayout.PRESETS.includes(layoutName)} active={this.editingLayoutName === layoutName} />
-                        <AnchorButton icon="trash" onClick={() => {
-                            layoutStore.deleteLayout(layoutName)
-                            if (layoutName === appStore.preferenceStore.layout) {
-                                appStore.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
-                            }
-                            }} disabled={PresetLayout.PRESETS.includes(layoutName)} />
-                    </ButtonGroup>
+                        <ButtonGroup style={styleProps}>
+                            <AnchorButton onClick={() => layoutStore.applyLayout(layoutName)}>Apply</AnchorButton>
+                            <AnchorButton
+                                icon="edit"
+                                onClick={() => {
+                                    this.editingLayoutName = this.editingLayoutName === layoutName ? "" : layoutName;
+                                    this.isRename = true;
+                                }}
+                                disabled={PresetLayout.PRESETS.includes(layoutName)}
+                                active={this.editingLayoutName === layoutName}
+                            />
+                            <AnchorButton
+                                icon="trash"
+                                onClick={() => {
+                                    layoutStore.deleteLayout(layoutName);
+                                    if (layoutName === appStore.preferenceStore.layout) {
+                                        appStore.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
+                                    }
+                                }}
+                                disabled={PresetLayout.PRESETS.includes(layoutName)}
+                            />
+                        </ButtonGroup>
                     </td>
                 </tr>
             );
         });
 
-        return (
-            <HTMLTable data-testid="layout-table">
-                {[saveLayoutRow(), ...rows]}
-            </HTMLTable>
-        );
+        return <HTMLTable data-testid="layout-table">{[saveLayoutRow(), ...rows]}</HTMLTable>;
     };
 
     private LayoutMappingComponent = () => {
-        const layoutStore = AppStore.Instance.layoutStore;
-        const dyLayoutStore = AppStore.Instance.dynamicLayoutStore;
-        const activeFrame = AppStore.Instance.activeFrame;
+        const appsStore = AppStore.Instance;
+        const layoutStore = appsStore.layoutStore;
+        const dyLayoutStore = appsStore.dynamicLayoutStore;
+        const preferenceStore = appsStore.preferenceStore;
+        const activeFrame = appsStore.activeFrame;
 
-        let ctypeList: string[] | any[] = [activeFrame?.dynamicLayoutCtype ?? ""];
-        let layoutNameList: string[] | any[] = [activeFrame?.dynamicLayoutName ?? ""];
+        let ctypeList: string[] | any[] = [activeFrame?.dynamicLayout.ctype ?? ""];
+        let layoutNameList: string[] | any[] = [activeFrame?.dynamicLayout.layoutName ?? ""];
+        let ctypeNameList: string[] | any[] = [activeFrame?.dynamicLayout.ctypeName ?? ""];
 
         if (dyLayoutStore.isMappingExisted) {
-            const ctypes = Object.keys(dyLayoutStore.existLayoutMapping);
-            const names = Object.values(dyLayoutStore.existLayoutMapping);
-            ctypeList = activeFrame ? (ctypes.includes(activeFrame.dynamicLayoutCtype) ? ctypes : [activeFrame.dynamicLayoutCtype, ...ctypes]) : ctypes;
-            layoutNameList = activeFrame ? (ctypes.includes(activeFrame.dynamicLayoutCtype) ? names : [activeFrame.dynamicLayoutName, ...names]) : names;
+            const ctypes = Object.keys(preferenceStore.existLayoutMapping).reverse();
+            const layoutNames = Object.keys(preferenceStore.existLayoutMapping)
+                .map(ctype => preferenceStore.existLayoutMapping[ctype].layoutName)
+                .reverse();
+            const ctypeNames = Object.keys(preferenceStore.existLayoutMapping)
+                .map(ctype => preferenceStore.existLayoutMapping[ctype].ctypeName)
+                .reverse();
+
+            ctypeList = activeFrame ? (ctypes.includes(activeFrame.dynamicLayout.ctype) ? ctypes : [activeFrame.dynamicLayout.ctype, ...ctypes]) : ctypes;
+            layoutNameList = activeFrame ? (ctypes.includes(activeFrame.dynamicLayout.ctype) ? layoutNames : [activeFrame.dynamicLayout.layoutName, ...layoutNames]) : layoutNames;
+            ctypeNameList = activeFrame ? (ctypes.includes(activeFrame.dynamicLayout.ctype) ? ctypeNames : [activeFrame.dynamicLayout.ctypeName, ...ctypeNames]) : ctypeNames;
         }
 
         let rows = [];
         if (ctypeList[0] !== "") {
             ctypeList.forEach((layoutCtypes, index) => {
-                let ctypeDescription = layoutCtypes
-                    .split(",")
-                    .map((ctype, idx) => {
-                        return DetermineCtypeName(ctype);
-                    })
-                    .join(",");
+                const className = classNames("layoutMapping", {active: layoutCtypes === activeFrame?.dynamicLayout.ctype});
 
                 rows.push(
                     <tr key={index}>
-                        <td>
-                            <Tooltip position="bottom" content={`(${ctypeDescription.replaceAll(",", ", ")})`}>
-                                <FormGroup>
-                                    (
-                                    {layoutCtypes
-                                        .replace(/\s+/g, "")
-                                        .split(",")
-                                        .map((ctype, idx) => {
-                                            return idx !== 0 ? ", " + ctype : ctype;
-                                        })}
-                                    )
-                                </FormGroup>
+                        <td className={className}>
+                            <Tooltip position="bottom" content={`(${ctypeNameList[index].replaceAll(",", ", ")})`}>
+                                <FormGroup>({layoutCtypes.replaceAll(",", ", ")})</FormGroup>
                             </Tooltip>
                         </td>
-                        <td>
-                            <HTMLSelect value={layoutNameList[index]} onChange={ev => dyLayoutStore.saveLayoutMapping(ev.currentTarget.value, layoutCtypes)}>
+                        <td className={className}>
+                            <HTMLSelect value={layoutNameList[index]} onChange={ev => dyLayoutStore.saveLayoutMapping(ev.currentTarget.value, layoutCtypes, ctypeNameList[index])}>
                                 {[INITIAL_LAYOUT_ITEM, ...layoutStore.orderedLayoutNames].map(layout => (
                                     <option key={layout} value={layout}>
                                         {layout}
@@ -210,7 +230,7 @@ export class LayoutDialogComponent extends React.Component {
                                 ))}
                             </HTMLSelect>
                         </td>
-                        <td>
+                        <td className={className}>
                             <AnchorButton icon="trash" onClick={() => dyLayoutStore.saveLayoutMapping(INITIAL_LAYOUT_ITEM, layoutCtypes)} />
                         </td>
                     </tr>
@@ -235,18 +255,16 @@ export class LayoutDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const preferenceStore = appStore.preferenceStore;
         if (!preferenceStore.dynamicLayoutEnable) {
-            return (
-                <ScrollShadow>{this.layoutComponent()}</ScrollShadow>
-            )
+            return <ScrollShadow>{this.layoutComponent()}</ScrollShadow>;
         } else {
             return (
                 <Tabs>
                     <Tab id={LayoutDialogMode.Layout} title="Layout" panel={<ScrollShadow>{this.layoutComponent()}</ScrollShadow>} />
                     <Tab id={LayoutDialogMode.DynamicLayout} title="Dynamic layout" panel={<ScrollShadow>{this.LayoutMappingComponent()}</ScrollShadow>} />
                 </Tabs>
-            )
+            );
         }
-    }
+    };
 
     render() {
         const appStore = AppStore.Instance;
@@ -273,9 +291,7 @@ export class LayoutDialogComponent extends React.Component {
                 enableResizing={true}
                 dialogId={DialogId.LayoutDialog}
             >
-                <div className={Classes.DIALOG_BODY}>
-                    {this.showDialog()}
-                </div>
+                <div className={Classes.DIALOG_BODY}>{this.showDialog()}</div>
             </DraggableDialogComponent>
         );
     }
