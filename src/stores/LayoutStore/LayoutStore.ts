@@ -48,6 +48,8 @@ export class LayoutStore {
         this.supportsServer = false;
         this.oldLayoutName = ""; // for rename
         this.initLayoutsFromPresets();
+
+        this.layoutDialogMode = LayoutDialogMode.Layout;
     }
 
     @action setLayoutDialogMode = (mode: LayoutDialogMode) => {

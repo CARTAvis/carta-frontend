@@ -1,0 +1,28 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+.layout-dialog {
+    .#{$ns}-dialog-body {
+        .#{$ns}-tabs {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+
+            .#{$ns}-tab-panel {
+                flex: 1;
+                min-height: 0;
+            }
+        }
+
+    .save-layout-row {
+        display: inline-flex;
+        
+        .#{$ns}-button {
+            margin: 5px;
+        }
+
+        .#{$ns}-form-group {
+            margin: 5px;
+        }
+    }
+}
+}
