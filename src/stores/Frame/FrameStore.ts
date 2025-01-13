@@ -9,7 +9,7 @@ import {
     COMPUTED_POLARIZATIONS,
     ControlMap,
     CursorInfo,
-    DetermineCtypeAbbr,
+    FileCtypeInfo,
     FrameView,
     FULL_POLARIZATIONS,
     GenCoordinateLabel,
@@ -1186,39 +1186,14 @@ export class FrameStore {
         return cursorValue;
     }
 
-    @computed get dynamicLayoutCtype(): string {
-        let tempCtypes = {};
-        let tempNaxes = {};
-        let ctypes: string[] = [];
-
-        this.frameInfo.fileInfoExtended.headerEntries.forEach(header => {
-            if (header.name?.substring(0, 5) === "CTYPE") {
-                const value: string = DetermineCtypeAbbr(`${header.value}`);
-                tempCtypes[header.name] = value;
-            }
-
-            if (header.name?.substring(0, 5) === "NAXIS") {
-                tempNaxes[header.name] = `${header.value}`;
-            }
-        });
-
-        // deal with that CTYPE and NAXIS have different dimensions
-        const extraNaxis = Object.keys(tempNaxes).includes("NAXIS") ? 1 : 0; // for 'NAXIS' itself
-        const minLen = Math.min(Object.keys(tempNaxes).length - extraNaxis, Object.keys(tempCtypes).length);
-
-        for (let j = 1; j <= minLen; j++) {
-            // skip axes with size = 1
-            if (tempNaxes[`NAXIS${j}`] !== "1") {
-                ctypes.push(tempCtypes[`CTYPE${j}`]);
-            }
-        }
-
-        return ctypes.join(",");
-    }
-
-    @computed get dynamicLayoutName(): string {
+    @computed get dynamicLayout(): {ctype: string; ctypeName: string; layoutName: string} {
         const dyLayoutStore = AppStore.Instance.dynamicLayoutStore;
-        return dyLayoutStore.isMappingExisted ? (dyLayoutStore.existLayoutMapping[this.dynamicLayoutCtype] ?? INITIAL_LAYOUT_ITEM) : INITIAL_LAYOUT_ITEM;
+        const preferenceStore = AppStore.Instance.preferenceStore;
+
+        const info = FileCtypeInfo(this.frameInfo.fileInfoExtended.headerEntries);
+        const layoutName = dyLayoutStore.isMappingExisted ? (preferenceStore.existLayoutMapping[info.ctype] ?? INITIAL_LAYOUT_ITEM) : INITIAL_LAYOUT_ITEM;
+
+        return {ctype: info.ctype, ctypeName: info.name, layoutName: layoutName};
     }
 
     constructor(frameInfo: FrameInfo) {

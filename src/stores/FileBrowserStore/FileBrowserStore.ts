@@ -4,7 +4,7 @@ import {action, autorun, computed, flow, makeObservable, observable} from "mobx"
 
 import {FileInfoType} from "components";
 import {AppToaster, ErrorToast} from "components/Shared";
-import {DetermineCtypeAbbr, Freq, FrequencyUnit, ImageType, LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
+import {FileCtypeInfo, Freq, FrequencyUnit, ImageType, LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
 import {BackendService} from "services";
 import {AppStore, DialogId, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
 import {RegionStore} from "stores/Frame";
@@ -580,29 +580,25 @@ export class FileBrowserStore {
         this.saveSpectralEnd = end;
     };
 
-    @action setSelectedFiles = async (selection: ISelectedFile[]) => {
+    @flow.bound *setSelectedFiles(selection: ISelectedFile[]) {
         this.selectedFiles = selection;
 
         // for dynamic layout
-        const dynamicLayoutStore = AppStore.Instance.dynamicLayoutStore;
-        dynamicLayoutStore.selectedFiles = selection;
-
         if (PreferenceStore.Instance.dynamicLayoutEnable) {
-            await this.setSelectedFilesHeaderInfo();
-            dynamicLayoutStore.matchLayoutMapping();
+            const selectedFilesCtypes = yield this.selectedFilesCtypeInfo();
+            AppStore.Instance.dynamicLayoutStore.matchLayoutMapping(selectedFilesCtypes);
         }
-    };
+    }
 
-    @action private async setSelectedFilesHeaderInfo() {
+    @flow.bound *selectedFilesCtypeInfo() {
         const backendService = BackendService.Instance;
-        const dynamicLayoutStore = AppStore.Instance.dynamicLayoutStore;
 
-        const filesDim: number[] = [];
-        const filesCtype: any[] = [];
-        const filesNaxis: any[] = [];
+        const filesCtype: string[] = [];
+        let filesCtypeName: string[] = [];
+        let filesCtypeRank: number[] = [];
 
         for (let i = 0; i < this.selectedFiles.length; i++) {
-            const res = await backendService.getFileInfo(this.fileList?.directory, this.selectedFiles[i].fileInfo?.name, this.selectedFiles[i].hdu);
+            const res = yield backendService.getFileInfo(this.fileList?.directory, this.selectedFiles[i].fileInfo?.name, this.selectedFiles[i].hdu);
 
             if (!res.fileInfo || !res.fileInfoExtended) {
                 continue;
@@ -610,41 +606,14 @@ export class FileBrowserStore {
 
             const HDUList = Object.keys(res.fileInfoExtended ?? {});
             const fileInfo = HDUList?.length >= 1 ? res.fileInfoExtended[HDUList[0]] : res.fileInfoExtended;
+            const ctypeInfo = FileCtypeInfo(fileInfo.headerEntries);
 
-            let tempCtypes = {};
-            let tempNaxes = {};
-            let ctypes: string[] = [];
-            let naxes: string[] = [];
-
-            (fileInfo.headerEntries as any[]).forEach(header => {
-                if (header.name?.substring(0, 5) === "CTYPE") {
-                    const value: string = DetermineCtypeAbbr(`${header.value}`);
-                    tempCtypes[header.name] = value;
-                }
-
-                if (header.name?.substring(0, 5) === "NAXIS") {
-                    tempNaxes[header.name] = `${header.value}`;
-                }
-            });
-
-            // deal with that CTYPE and NAXIS have different dimensions
-            const extraNaxis = Object.keys(tempNaxes).includes("NAXIS") ? 1 : 0; // for 'NAXIS' itself
-            const minLen = Math.min(Object.keys(tempNaxes).length - extraNaxis, Object.keys(tempCtypes).length);
-
-            for (let j = 1; j <= minLen; j++) {
-                // skip axes with size = 1
-                if (tempNaxes[`NAXIS${j}`] !== "1") {
-                    ctypes.push(tempCtypes[`CTYPE${j}`]);
-                    naxes.push(tempNaxes[`NAXIS${j}`]);
-                }
-            }
-
-            filesDim.push(naxes.length);
-            filesCtype.push(ctypes);
-            filesNaxis.push(naxes);
+            filesCtype.push(ctypeInfo.ctype);
+            filesCtypeName.push(ctypeInfo.name);
+            filesCtypeRank.push(ctypeInfo.rank);
         }
 
-        dynamicLayoutStore.selectedFilesHeaderInfo = {ctype: filesCtype, naxis: filesNaxis, dim: filesDim};
+        return {ctype: filesCtype, name: filesCtypeName, rank: filesCtypeRank};
     }
 
     @action showLoadingDialog = () => {

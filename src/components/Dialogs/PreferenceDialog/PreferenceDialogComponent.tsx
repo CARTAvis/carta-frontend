@@ -557,9 +557,11 @@ export class PreferenceDialogComponent extends React.Component {
                             <Switch checked={preference.isHighDimPriority} onChange={() => preference.setPreference(PreferenceKeys.GLOBAL_IS_HIGH_DIM_PRIORITY, !preference.isHighDimPriority)} />
                         </Tooltip>
                     </FormGroup>
-                    <FormGroup inline={true} className="layoutMapping">
-                        {LayoutMappingComponent()}
-                    </FormGroup>
+                    <Collapse isOpen={appStore.dynamicLayoutStore.isMappingExisted || !!appStore.activeFrame}>
+                        <FormGroup inline={true} className="layoutMapping">
+                            {LayoutMappingComponent()}
+                        </FormGroup>
+                    </Collapse>
                 </Collapse>
             </React.Fragment>
         );
