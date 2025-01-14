@@ -622,6 +622,7 @@ export class OverlayLabelSettings {
     @observable color: string;
     @observable font: number;
     @observable fontSize: number;
+    @observable raDecReference: boolean;
     @observable customText: boolean;
     @observable customLabelX: string;
     @observable customLabelY: string;
@@ -634,6 +635,7 @@ export class OverlayLabelSettings {
         this.font = 0;
         this.customColor = false;
         this.color = AST_DEFAULT_COLOR;
+        this.raDecReference = true;
         this.customText = false;
         this.customLabelX = "";
         this.customLabelY = "";
@@ -679,6 +681,10 @@ export class OverlayLabelSettings {
 
     @action setFontSize(fontSize: number) {
         this.fontSize = fontSize;
+    }
+
+    @action setRaDecReference(raDecReference: boolean) {
+        this.raDecReference = raDecReference;
     }
 
     @action setCustomText = (val: boolean) => {
