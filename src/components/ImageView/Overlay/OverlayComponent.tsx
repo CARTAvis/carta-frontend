@@ -108,6 +108,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     settings.padding.right * appStore.pixelRatio,
                     settings.padding.top * appStore.pixelRatio,
                     settings.padding.bottom * appStore.pixelRatio,
+                    settings.global.explicitSystem,
                     styleString
                 );
             };
