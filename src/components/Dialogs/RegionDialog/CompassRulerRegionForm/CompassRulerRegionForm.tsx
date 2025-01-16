@@ -6,13 +6,14 @@ import {observer} from "mobx-react";
 
 import {CoordinateComponent, CoordNumericInput, InputType, SafeNumericInput} from "components/Shared";
 import {Point2D, WCSPoint2D} from "models";
+import {AppStore} from "stores";
 import {CompassAnnotationStore, CoordinateMode, FrameStore, RegionStore} from "stores/Frame";
 import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
 const KEYCODE_ENTER = 13;
 
 @observer
-export class CompassRulerRegionForm extends React.Component<{region: RegionStore; frame: FrameStore; wcsInfo: AST.FrameSet}> {
+export class CompassRulerRegionForm extends React.Component<{region: RegionStore; wcsInfo: AST.FrameSet}> {
     private handleNameChange = (formEvent: React.FormEvent<HTMLInputElement>) => {
         this.props.region.setName(formEvent.currentTarget.value);
     };
@@ -28,6 +29,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
     private handleValueChange = (WCSStart: WCSPoint2D, WCSFinish: WCSPoint2D, isX: boolean, finish?: boolean, pixel?: boolean) => {
         const region = this.props.region;
         const wcsInfo = this.props.wcsInfo;
+        const appStore = AppStore.Instance;
         if (pixel) {
             return (value: number): boolean => {
                 if (!isFinite(value)) {
@@ -49,7 +51,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                 if (!wcsInfo) {
                     return false;
                 }
-                if (isX && isWCSStringFormatValid(value, this.props.frame.overlayStore.numbers.formatTypeX)) {
+                if (isX && isWCSStringFormatValid(value, appStore.overlayStore.numbers.formatTypeX)) {
                     if (finish) {
                         const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, x: value});
                         region?.setControlPoint(1, finishPixelFromWCS);
@@ -58,7 +60,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                         region?.setControlPoint(0, startPixelFromWCS);
                     }
                     return true;
-                } else if (!isX && isWCSStringFormatValid(value, this.props.frame.overlayStore.numbers.formatTypeY)) {
+                } else if (!isX && isWCSStringFormatValid(value, appStore.overlayStore.numbers.formatTypeY)) {
                     if (finish) {
                         const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, y: value});
                         region?.setControlPoint(1, finishPixelFromWCS);
@@ -102,9 +104,10 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
     render() {
         // dummy variables related to wcs to trigger re-render
         /* eslint-disable @typescript-eslint/no-unused-vars */
-        const system = this.props.frame.overlayStore.global.explicitSystem;
-        const formatX = this.props.frame.overlayStore.numbers.formatTypeX;
-        const formatY = this.props.frame.overlayStore.numbers.formatTypeY;
+        const appStore = AppStore.Instance;
+        const system = appStore.overlayStore.global.explicitSystem;
+        const formatX = appStore.overlayStore.numbers.formatTypeX;
+        const formatY = appStore.overlayStore.numbers.formatTypeY;
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
         const region = this.props.region;

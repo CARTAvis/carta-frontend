@@ -312,7 +312,7 @@ export class CatalogOnlineQueryConfigStore {
 
     convertToDeg(pixelCoords: Point2D, system?: SystemType): {x: string | undefined; y: string | undefined} {
         const frame = this.activeFrame;
-        const overlay = frame.overlayStore;
+        const overlay = AppStore.Instance.overlayStore;
         let p: {x: string | undefined; y: string | undefined} = {x: undefined, y: undefined};
         if (frame && overlay) {
             const precision = overlay.numbers.customPrecision ? overlay.numbers.precision : "*";
@@ -335,7 +335,7 @@ export class CatalogOnlineQueryConfigStore {
 
     convertToPixel(coords: Point2D): {x: number | undefined; y: number | undefined} | null {
         const frame = this.activeFrame;
-        const overlay = frame.overlayStore;
+        const overlay = AppStore.Instance.overlayStore;
         let p: {x: number | undefined; y: number | undefined} | null = {x: undefined, y: undefined};
         if (frame && overlay) {
             const precision = overlay.numbers.customPrecision ? overlay.numbers.precision : "*";

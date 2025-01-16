@@ -74,7 +74,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     };
 
     handleCoordinateSystemClicked = (coordinateSystem: SystemType) => {
-        this.props.frame.overlayStore.global.setSystem(coordinateSystem);
+        AppStore.Instance.overlayStore.global.setSystem(coordinateSystem);
         this.props.frame.updateOffsetCenter();
     };
 
@@ -117,7 +117,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     render() {
         const appStore = AppStore.Instance;
-        const overlay = this.props.frame.overlayStore;
+        const overlay = AppStore.Instance.overlayStore;
         const frame = this.props.frame;
         const grid = overlay.grid;
 

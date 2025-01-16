@@ -927,7 +927,7 @@ export class WidgetsStore {
     onImagePanelButtonClick = () => {
         const channelMapStore = AppStore.Instance.channelMapStore;
         if (channelMapStore.channelMapEnabled) {
-            AppStore.Instance.channelMapStore.masterFrame?.overlayStore.setIsChannelMap(false);
+            AppStore.Instance.overlayStore.setIsChannelMap(false);
             channelMapStore.setChannelMapEnabled(false);
             // active frame may need to send a setChannel (with channelMapEnabled field as false) request so the frontend can backend can clear the channel map data
         } else {
@@ -938,7 +938,7 @@ export class WidgetsStore {
     onChannelMapButtonClick = () => {
         const channelMapStore = AppStore.Instance.channelMapStore;
         channelMapStore.setChannelMapEnabled(true);
-        AppStore.Instance.channelMapStore.masterFrame?.overlayStore.setIsChannelMap(true);
+        AppStore.Instance.overlayStore.setIsChannelMap(true);
     };
 
     setImageMultiPanelEnabled = (multiPanelEnabled: boolean) => {

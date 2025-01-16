@@ -250,8 +250,8 @@ export class ImageFittingStore {
             const errorString = fixed ? "" : " \u00b1 " + toExponential(error ?? NaN, 12);
             return `${param} = ${valueString}${errorString}${unit ? ` (${unit})` : ""}${fixed ? " (fixed)" : ""}\n`;
         };
-        const formatTypeX = frame.overlayStore.numbers?.formatTypeX;
-        const formatTypeY = frame.overlayStore.numbers?.formatTypeY;
+        const formatTypeX = AppStore.Instance.overlayStore.numbers?.formatTypeX;
+        const formatTypeY = AppStore.Instance.overlayStore.numbers?.formatTypeY;
         const showIntegratedFlux = integratedFluxValues.length === values.length && integratedFluxErrors.length === values.length && (frame.requiredUnit === "Jy/pixel" || frame.requiredUnit === "Jy/beam");
 
         for (let i = 0; i < values.length; i++) {
@@ -623,7 +623,7 @@ export class ImageFittingIndividualStore {
     }
 
     setCenterXWcs = (val: string): boolean => {
-        if (!isWCSStringFormatValid(val, AppStore.Instance.imageFittingStore?.effectiveFrame?.overlayStore.numbers.formatTypeX)) {
+        if (!isWCSStringFormatValid(val, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
             return false;
         }
         const wcsInfo = AppStore.Instance.imageFittingStore?.effectiveFrame?.wcsInfoForTransformation;
@@ -644,7 +644,7 @@ export class ImageFittingIndividualStore {
     };
 
     setCenterYWcs = (val: string): boolean => {
-        if (!isWCSStringFormatValid(val, AppStore.Instance.imageFittingStore?.effectiveFrame?.overlayStore.numbers.formatTypeY)) {
+        if (!isWCSStringFormatValid(val, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
             return false;
         }
         const wcsInfo = AppStore.Instance.imageFittingStore?.effectiveFrame?.wcsInfoForTransformation;

@@ -482,9 +482,9 @@ export class RegionWcsCenter extends React.Component<{region: RegionStore; frame
     public render() {
         // dummy variables related to wcs to trigger re-render
         /* eslint-disable @typescript-eslint/no-unused-vars */
-        const system = this.props.frame.overlayStore.global.explicitSystem;
-        const formatX = this.props.frame.overlayStore.numbers.formatTypeX;
-        const formatY = this.props.frame.overlayStore.numbers.formatTypeY;
+        const system = AppStore.Instance.overlayStore.global.explicitSystem;
+        const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
+        const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
         const frame = this.props.frame;

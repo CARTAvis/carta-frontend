@@ -79,7 +79,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const frame = this.props.frame;
         const renderConfig = frame?.renderConfig;
         const colorbarSettings = appStore.overlayStore?.colorbar;
-        const yOffset = this.props.leftOffset ?? colorbarSettings.yOffset(frame);
+        const yOffset = this.props.leftOffset ?? colorbarSettings.yOffset;
         if (!renderConfig || !colorbarSettings) {
             return;
         }
@@ -109,12 +109,13 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
     render() {
         const appStore = AppStore.Instance;
+        const overlayStore = appStore.overlayStore;
         const frame = this.props.frame;
         const colorbarSettings = appStore.overlayStore.colorbar;
-        const viewHeight = this.props.height || (frame.isPreview ? frame.previewOverlayStore.viewHeight : frame.overlayStore.viewHeight);
-        const viewWidth = this.props.width || (frame.isPreview ? frame.previewOverlayStore.viewWidth : frame.overlayStore.viewWidth);
+        const viewHeight = this.props.height || (frame.isPreview ? frame.previewViewHeight : overlayStore.viewHeight);
+        const viewWidth = this.props.width || (frame.isPreview ? frame.previewViewWidth : overlayStore.viewWidth);
         const colorbarSettingsHeight = this.props.length || colorbarSettings.height(frame, this.props.length);
-        const yOffset = this.props.leftOffset ?? colorbarSettings.yOffset(frame);
+        const yOffset = this.props.leftOffset ?? colorbarSettings.yOffset;
 
         appStore.updateLayerPixelRatio(this.layerRef);
 
@@ -144,12 +145,12 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
         // adjust stage position
         if (colorbarSettings.position === "right") {
-            stageLeft = this.props.left ?? frame.overlayStore.padding.left + frame.renderWidth;
+            stageLeft = this.props.left ?? overlayStore.padding.left + frame.renderWidth;
             stageTop = this.props.top || 0;
         } else if (colorbarSettings.position === "bottom") {
-            stageTop = this.props.top || viewHeight - frame.overlayStore.colorbarHoverInfoHeight - colorbarSettings.stageWidth;
-        } else if (colorbarSettings.position === "top" && frame.overlayStore.title.show && !this.props.top) {
-            stageTop = frame.overlayStore.padding.top - colorbarSettings.stageWidth;
+            stageTop = this.props.top || viewHeight - overlayStore.colorbarHoverInfoHeight - colorbarSettings.stageWidth;
+        } else if (colorbarSettings.position === "top" && overlayStore.title.show && !this.props.top) {
+            stageTop = overlayStore.padding.top - colorbarSettings.stageWidth;
         } else if (colorbarSettings.position === "top" && this.props.top) {
             stageTop = this.props.top;
         }

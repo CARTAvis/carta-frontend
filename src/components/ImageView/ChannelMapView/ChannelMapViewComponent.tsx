@@ -32,7 +32,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     const image = channelMapStore.masterImage;
     const overlayStore = AppStore.Instance.overlayStore;
     const colorBarSetting = overlayStore.colorbar;
-    const colorbarOffset = overlayStore.colorbar.visible ? colorBarSetting.stageWidth + frame?.overlayStore?.colorbarHoverInfoHeight : 0;
+    const colorbarOffset = overlayStore.colorbar.visible ? colorBarSetting.stageWidth + overlayStore?.colorbarHoverInfoHeight : 0;
 
     const [overlayComponentRef, setOverlayComponentRef] = React.useState<OverlayComponent>();
     const [imageToolbarVisible, setImageToolbarVisible] = React.useState(false);
@@ -173,8 +173,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     renderHeight={channelMapViewHeight}
                     row={0}
                     column={0}
-                    left={overlayStore.paddingLeft}
-                    tileBasedRender={true}
+                    leftPadding={overlayStore.paddingLeft}
                     channel={channelMapStore.channelArray}
                 />
 
@@ -208,16 +207,16 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     right={0}
                 />
             </div>
-            {frame.overlayStore.colorbar.visible && (
+            {overlayStore.colorbar.visible && (
                 <ColorbarComponent
                     frame={frame}
                     onCursorHoverValueChanged={props.channelMapStore.setPixelHighlightValue}
                     width={props.renderWidth}
                     height={props.renderHeight}
-                    leftOffset={frame.overlayStore.colorbar.position === "right" ? overlayStore.paddingTop : overlayStore.paddingLeft}
-                    left={frame.overlayStore.colorbar.position === "right" ? props.renderWidth - overlayStore.paddingRight : 0}
-                    top={frame.overlayStore.colorbar.position === "bottom" ? props.renderHeight - colorbarOffset : frame.overlayStore.colorbar.position === "right" ? 0 : overlayStore.paddingTop - colorbarOffset}
-                    length={frame.overlayStore.colorbar.position === "right" ? channelMapViewHeight : channelMapViewWidth}
+                    leftOffset={overlayStore.colorbar.position === "right" ? overlayStore.paddingTop : overlayStore.paddingLeft}
+                    left={overlayStore.colorbar.position === "right" ? props.renderWidth - overlayStore.paddingRight : 0}
+                    top={overlayStore.colorbar.position === "bottom" ? props.renderHeight - colorbarOffset : overlayStore.colorbar.position === "right" ? 0 : overlayStore.paddingTop - colorbarOffset}
+                    length={overlayStore.colorbar.position === "right" ? channelMapViewHeight : channelMapViewWidth}
                 />
             )}
             <OverlayComponent

@@ -385,7 +385,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
 
         let astString = new ASTSettingsString();
-        astString.add("System", this.frame.overlayStore.global.explicitSystem);
+        astString.add("System", AppStore.Instance.overlayStore.global.explicitSystem);
 
         if (this.widgetStore.isXProfile) {
             for (let i = 0; i < ticks.length; i++) {

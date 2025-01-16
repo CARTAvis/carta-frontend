@@ -906,11 +906,9 @@ export class OverlayColorbarSettings {
         this.gradientVisible = visible;
     };
 
-    @computed get yOffset() {
-        return (frame?: FrameStore) => {
-            const padding = frame?.overlayStore?.padding || AppStore.Instance?.overlayStore?.padding;
-            return this.position === "right" ? padding?.top : padding?.left;
-        };
+    @computed get yOffset(): number {
+        const padding = AppStore.Instance?.overlayStore?.padding;
+        return this.position === "right" ? padding?.top : padding?.left;
     }
 
     @computed get height() {
@@ -918,7 +916,7 @@ export class OverlayColorbarSettings {
             if (length) {
                 return length;
             }
-            const overlayStore = frame?.overlayStore || AppStore.Instance?.overlayStore;
+            const overlayStore = AppStore.Instance.overlayStore;
             return this.position === "right" ? frame?.renderHeight || overlayStore?.renderHeight : frame?.renderWidth || overlayStore?.renderWidth;
         };
     }
@@ -1381,5 +1379,25 @@ export class OverlayStore {
 
     @computed get isImgCoordinates() {
         return this.global.explicitSystem === SystemType.Image;
+    }
+
+    @computed get previewRenderWidth() {
+        return (viewWidth: number) => {
+            if (!viewWidth) {
+                return undefined;
+            }
+            const renderWidth = viewWidth - this.paddingLeft - this.paddingRight;
+            return renderWidth > 1 ? renderWidth : 1; // return value > 1 to prevent crashing
+        };
+    }
+
+    @computed get previewRenderHeight() {
+        return (viewHeight: number) => {
+            if (!viewHeight) {
+                return undefined;
+            }
+            const renderHeight = viewHeight - this.paddingTop - this.paddingBottom;
+            return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
+        };
     }
 }

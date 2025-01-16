@@ -151,7 +151,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
 
     // Dummy variables for triggering re-render
     /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
-    const system = props.frame.overlayStore.global.explicitSystem;
+    const system = AppStore.Instance.overlayStore.global.explicitSystem;
     const darktheme = AppStore.Instance.darkTheme;
     const title = frame.titleCustomText;
     const pixelRatio = AppStore.Instance.pixelRatio;
@@ -421,7 +421,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
 
     // Dummy variables for triggering re-render
     /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
-    const system = props.frame.overlayStore.global.explicitSystem;
+    const system = AppStore.Instance.overlayStore.global.explicitSystem;
     const darktheme = AppStore.Instance.darkTheme;
     const title = frame.titleCustomText;
     const pixelRatio = AppStore.Instance.pixelRatio;

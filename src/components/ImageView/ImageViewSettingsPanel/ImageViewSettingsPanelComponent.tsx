@@ -126,14 +126,14 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const frame = appStore.channelMapStore.channelMapEnabled && appStore.channelMapStore.masterFrame ? appStore.channelMapStore.masterFrame : appStore.activeFrame;
         const overlayStore = appStore.overlayStore;
         const global = overlayStore.global;
-        const title = frame.overlayStore.title;
+        const title = overlayStore.title;
         const grid = overlayStore.grid;
-        const border = frame.overlayStore.border;
-        const ticks = frame.overlayStore.ticks;
+        const border = overlayStore.border;
+        const ticks = overlayStore.ticks;
         const axes = overlayStore.axes;
-        const numbers = frame.overlayStore.numbers;
-        const labels = frame.overlayStore.labels;
-        const colorbar = frame.overlayStore.colorbar;
+        const numbers = overlayStore.numbers;
+        const labels = overlayStore.labels;
+        const colorbar = overlayStore.colorbar;
         const beam = overlayStore.beam;
         const beamSettings = beam.settingsForDisplay;
         const preferences = appStore.preferenceStore;
@@ -771,7 +771,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <SafeNumericInput
                         placeholder="Position (X)"
                         min={0}
-                        max={frame.overlayStore.renderWidth}
+                        max={AppStore.Instance.overlayStore.renderWidth}
                         value={beamSettings.shiftX}
                         stepSize={5}
                         minorStepSize={1}
@@ -783,7 +783,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <SafeNumericInput
                         placeholder="Position (Y)"
                         min={0}
-                        max={frame.overlayStore.renderHeight}
+                        max={AppStore.Instance.overlayStore.renderHeight}
                         value={beamSettings.shiftY}
                         stepSize={5}
                         minorStepSize={1}
