@@ -1,6 +1,6 @@
 import * as React from "react";
 import {NonIdealState} from "@blueprintjs/core";
-import {autorun} from "mobx";
+import _ from "lodash";
 import {observer} from "mobx-react";
 
 import {CursorInfo, ImageType} from "models";
@@ -323,39 +323,39 @@ const ChannelMapInnerOverlayComponent = observer(
             }
         };
 
-        React.useEffect(() => {
-            const disposer = autorun(() => {
-                const canvas = canvasRef.current;
-                if (canvas && overlayComponentRef?.canvas) {
-                    const ctx = canvas.getContext("2d");
-                    if (ctx) {
-                        requestAnimationFrame(() => {
-                            const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
-                            canvas.width = width * pixelRatio;
-                            canvas.height = height * pixelRatio;
-                            const destCanvas = canvas.getContext("2d", {willReadFrequently: true});
-                            const w = overlayComponentRef.canvas.width;
-                            const h = overlayComponentRef.canvas.height;
-                            const destWidth = canvas.width;
-                            const destHeight = canvas.height;
-                            const cornerPaddingLeft = overlayStore.paddingLeft * pixelRatio;
-                            const cornerPaddingBottom = overlayStore.paddingBottom * pixelRatio;
-                            destCanvas.clearRect(0, 0, canvas.width, canvas.height);
-                            if (thisIs === "left") {
-                                destCanvas.drawImage(overlayComponentRef.canvas, 0, 0, w, h - cornerPaddingBottom, 0, 0, destWidth, destHeight);
-                            } else if (thisIs === "bottom") {
-                                destCanvas.drawImage(overlayComponentRef.canvas, cornerPaddingLeft, 0, w - cornerPaddingLeft, h, 0, 0, destWidth, destHeight);
-                            } else if (thisIs === "inner") {
-                                destCanvas.drawImage(overlayComponentRef.canvas, cornerPaddingLeft, 0, w - cornerPaddingLeft, h - cornerPaddingBottom, 0, 0, destWidth, destHeight);
-                            }
-                        });
-                    }
+        const draw = () => {
+            const canvas = canvasRef.current;
+            if (canvas && overlayComponentRef?.canvas) {
+                const ctx = canvas.getContext("2d");
+                if (ctx) {
+                    requestAnimationFrame(() => {
+                        const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
+                        canvas.width = width * pixelRatio;
+                        canvas.height = height * pixelRatio;
+                        const destCanvas = canvas.getContext("2d", {willReadFrequently: true});
+                        const w = overlayComponentRef.canvas.width;
+                        const h = overlayComponentRef.canvas.height;
+                        const destWidth = canvas.width;
+                        const destHeight = canvas.height;
+                        const cornerPaddingLeft = overlayStore.paddingLeft * pixelRatio;
+                        const cornerPaddingBottom = overlayStore.paddingBottom * pixelRatio;
+                        destCanvas.clearRect(0, 0, canvas.width, canvas.height);
+                        if (thisIs === "left") {
+                            destCanvas.drawImage(overlayComponentRef.canvas, 0, 0, w, h - cornerPaddingBottom, 0, 0, destWidth, destHeight);
+                        } else if (thisIs === "bottom") {
+                            destCanvas.drawImage(overlayComponentRef.canvas, cornerPaddingLeft, 0, w - cornerPaddingLeft, h, 0, 0, destWidth, destHeight);
+                        } else if (thisIs === "inner") {
+                            destCanvas.drawImage(overlayComponentRef.canvas, cornerPaddingLeft, 0, w - cornerPaddingLeft, h - cornerPaddingBottom, 0, 0, destWidth, destHeight);
+                        }
+                    });
                 }
-            });
+            }
+        };
 
-            return () => {
-                disposer();
-            };
+        const throttledDraw = _.throttle(draw, 50);
+
+        React.useEffect(() => {
+            throttledDraw();
         }, [
             overlayComponentRef,
             width,
@@ -374,7 +374,31 @@ const ChannelMapInnerOverlayComponent = observer(
             channelMapStore.masterFrame?.zooming,
             channelMapStore.masterFrame?.zoomLevel,
             channelMapStore.masterFrame?.spatialReference,
-            channelMapStore.masterFrame?.channel
+            channelMapStore.masterFrame?.channel,
+            channelMapStore.masterFrame?.isOffsetCoord,
+            channelMapStore.masterFrame?.wcsInfoShifted,
+            overlayStore.styleString,
+            overlayStore.padding,
+            channelMapStore.masterFrame?.moving,
+            overlayStore.global.system,
+            overlayStore.global.color,
+            overlayStore.title.color,
+            overlayStore.grid.color,
+            overlayStore.border.color,
+            overlayStore.ticks.color,
+            overlayStore.axes.color,
+            overlayStore.numbers.color,
+            overlayStore.labels.color,
+            AppStore.Instance.darkTheme,
+            overlayStore.title.customText ? channelMapStore.masterFrame?.titleCustomText : channelMapStore.masterFrame?.filename,
+            AppStore.Instance.imageRatio,
+            overlayStore.title.styleString,
+            overlayStore.grid.styleString,
+            overlayStore.border.styleString,
+            overlayStore.ticks.styleString,
+            overlayStore.axes.styleString,
+            overlayStore.numbers.styleString,
+            overlayStore.labels.styleString
         ]);
 
         return (
