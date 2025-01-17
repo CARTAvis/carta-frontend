@@ -184,83 +184,16 @@ export class LayoutDialogComponent extends React.Component {
         return <HTMLTable data-testid="layout-table">{[saveLayoutRow(), ...rows]}</HTMLTable>;
     };
 
-    private LayoutMappingComponent = () => {
-        const appsStore = AppStore.Instance;
-        const layoutStore = appsStore.layoutStore;
-        const dyLayoutStore = appsStore.dynamicLayoutStore;
-        const preferenceStore = appsStore.preferenceStore;
-        const activeFrame = appsStore.activeFrame;
-
-        let ctypeList: string[] | any[] = [activeFrame?.dynamicLayout.ctype ?? ""];
-        let layoutNameList: string[] | any[] = [activeFrame?.dynamicLayout.layoutName ?? ""];
-        let ctypeNameList: string[] | any[] = [activeFrame?.dynamicLayout.ctypeName ?? ""];
-
-        if (dyLayoutStore.isMappingExisted) {
-            const ctypes = Object.keys(preferenceStore.existLayoutMapping).reverse();
-            const layoutNames = Object.keys(preferenceStore.existLayoutMapping)
-                .map(ctype => preferenceStore.existLayoutMapping[ctype].layoutName)
-                .reverse();
-            const ctypeNames = Object.keys(preferenceStore.existLayoutMapping)
-                .map(ctype => preferenceStore.existLayoutMapping[ctype].ctypeName)
-                .reverse();
-
-            ctypeList = activeFrame ? (ctypes.includes(activeFrame.dynamicLayout.ctype) ? ctypes : [activeFrame.dynamicLayout.ctype, ...ctypes]) : ctypes;
-            layoutNameList = activeFrame ? (ctypes.includes(activeFrame.dynamicLayout.ctype) ? layoutNames : [activeFrame.dynamicLayout.layoutName, ...layoutNames]) : layoutNames;
-            ctypeNameList = activeFrame ? (ctypes.includes(activeFrame.dynamicLayout.ctype) ? ctypeNames : [activeFrame.dynamicLayout.ctypeName, ...ctypeNames]) : ctypeNames;
-        }
-
-        let rows = [];
-        if (ctypeList[0] !== "") {
-            ctypeList.forEach((layoutCtypes, index) => {
-                const className = classNames("layoutMapping", {active: layoutCtypes === activeFrame?.dynamicLayout.ctype});
-
-                rows.push(
-                    <tr key={index}>
-                        <td className={className}>
-                            <Tooltip position="bottom" content={`(${ctypeNameList[index].replaceAll(",", ", ")})`}>
-                                <FormGroup>({layoutCtypes.replaceAll(",", ", ")})</FormGroup>
-                            </Tooltip>
-                        </td>
-                        <td className={className}>
-                            <HTMLSelect value={layoutNameList[index]} onChange={ev => dyLayoutStore.saveLayoutMapping(ev.currentTarget.value, layoutCtypes, ctypeNameList[index])}>
-                                {[INITIAL_LAYOUT_ITEM, ...layoutStore.orderedLayoutNames].map(layout => (
-                                    <option key={layout} value={layout}>
-                                        {layout}
-                                    </option>
-                                ))}
-                            </HTMLSelect>
-                        </td>
-                        <td className={className}>
-                            <AnchorButton icon="trash" onClick={() => dyLayoutStore.saveLayoutMapping(INITIAL_LAYOUT_ITEM, layoutCtypes)} />
-                        </td>
-                    </tr>
-                );
-            });
-        }
-
-        return (
-            <HTMLTable data-testid="dynamic-layout-table">
-                <thead>
-                    <tr>
-                        <th>Data type</th>
-                        <th>Layout</th>
-                    </tr>
-                </thead>
-                <tbody>{rows}</tbody>
-            </HTMLTable>
-        );
-    };
-
     private showDialog = () => {
         const appStore = AppStore.Instance;
         const preferenceStore = appStore.preferenceStore;
-        if (!preferenceStore.dynamicLayoutEnable) {
+        if (!preferenceStore.dynamicLayoutEnable || !appStore.activeFrame) {
             return <ScrollShadow>{this.layoutComponent()}</ScrollShadow>;
         } else {
             return (
                 <Tabs>
                     <Tab id={LayoutDialogMode.Layout} title="Layout" panel={<ScrollShadow>{this.layoutComponent()}</ScrollShadow>} />
-                    <Tab id={LayoutDialogMode.DynamicLayout} title="Dynamic layout" panel={<ScrollShadow>{this.LayoutMappingComponent()}</ScrollShadow>} />
+                    <Tab id={LayoutDialogMode.DynamicLayout} title="Dynamic layout" panel={<ScrollShadow>{LayoutMappingComponent()}</ScrollShadow>} />
                 </Tabs>
             );
         }
@@ -296,3 +229,68 @@ export class LayoutDialogComponent extends React.Component {
         );
     }
 }
+
+export const LayoutMappingComponent = () => {
+    const appsStore = AppStore.Instance;
+    const layoutStore = appsStore.layoutStore;
+    const dyLayoutStore = appsStore.dynamicLayoutStore;
+    const preferenceStore = appsStore.preferenceStore;
+    const activeFrame = appsStore.activeFrame;
+
+    let ctypeList: string[] | any[] = [activeFrame?.dynamicLayout.ctype ?? ""];
+    let layoutNameList: string[] | any[] = [activeFrame?.dynamicLayout.layoutName ?? ""];
+    let ctypeNameList: string[] | any[] = [activeFrame?.dynamicLayout.ctypeName ?? ""];
+
+    if (dyLayoutStore.isMappingExisted) {
+        const ctypes = Object.keys(preferenceStore.existLayoutMapping).reverse();
+        const layoutNames = Object.keys(preferenceStore.existLayoutMapping)
+            .map(ctype => preferenceStore.existLayoutMapping[ctype].layoutName)
+            .reverse();
+        const ctypeNames = Object.keys(preferenceStore.existLayoutMapping)
+            .map(ctype => preferenceStore.existLayoutMapping[ctype].ctypeName)
+            .reverse();
+
+        ctypeList = activeFrame ? (ctypes.includes(activeFrame.dynamicLayout.ctype) ? ctypes : [activeFrame.dynamicLayout.ctype, ...ctypes]) : ctypes;
+        layoutNameList = activeFrame ? (ctypes.includes(activeFrame.dynamicLayout.ctype) ? layoutNames : [activeFrame.dynamicLayout.layoutName, ...layoutNames]) : layoutNames;
+        ctypeNameList = activeFrame ? (ctypes.includes(activeFrame.dynamicLayout.ctype) ? ctypeNames : [activeFrame.dynamicLayout.ctypeName, ...ctypeNames]) : ctypeNames;
+    }
+
+    let rows = [];
+    if (ctypeList[0] !== "") {
+        ctypeList.forEach((layoutCtypes, index) => {
+            const className = classNames("layout-mapping", {active: layoutCtypes === activeFrame?.dynamicLayout.ctype});
+
+            rows.push(
+                <tr key={index}>
+                    <td className={className}>
+                        <Tooltip position="bottom" content={`(${ctypeNameList[index].replaceAll(",", ", ")})`}>
+                            <FormGroup>({layoutCtypes.replaceAll(",", ", ")})</FormGroup>
+                        </Tooltip>
+                    </td>
+                    <td className={className}>
+                        <HTMLSelect value={layoutNameList[index]} onChange={ev => dyLayoutStore.saveLayoutMapping(ev.currentTarget.value, layoutCtypes, ctypeNameList[index])}>
+                            {[INITIAL_LAYOUT_ITEM, ...layoutStore.orderedLayoutNames].map(layout => (
+                                <option key={layout} value={layout}>
+                                    {layout}
+                                </option>
+                            ))}
+                        </HTMLSelect>
+                        <AnchorButton icon="trash" onClick={() => dyLayoutStore.saveLayoutMapping(INITIAL_LAYOUT_ITEM, layoutCtypes)} />
+                    </td>
+                </tr>
+            );
+        });
+    }
+
+    return (
+        <HTMLTable data-testid="dynamic-layout-table">
+            <thead>
+                <tr>
+                    <th>Data type</th>
+                    <th>Layout</th>
+                </tr>
+            </thead>
+            <tbody>{rows}</tbody>
+        </HTMLTable>
+    );
+};

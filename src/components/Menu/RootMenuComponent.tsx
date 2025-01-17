@@ -8,9 +8,9 @@ import {observer} from "mobx-react";
 
 import {AppToaster, ExportImageMenuComponent, SuccessToast} from "components/Shared";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
-import {CARTA_INFO, ImageType, ImageViewItem, PresetLayout, Snippet} from "models";
+import {CARTA_INFO, ImageType, ImageViewItem, Snippet} from "models";
 import {ApiService, ConnectionStatus} from "services";
-import {AppStore, BrowserMode, DialogId, LayoutDialogMode, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
+import {AppStore, BrowserMode, DialogId, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
 import {copyToClipboard, toFixed} from "utilities";
 
 import {WorkspaceDialogMode} from "../Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
@@ -289,9 +289,9 @@ export class RootMenuComponent extends React.Component {
             return <MenuItem text={image.store.filename} active={appStore.activeImageIndex === index} key={index} onClick={() => this.handleImageSelect(image)} />;
         });
 
-        const presetLayouts: string[] = PresetLayout.PRESETS;
-        const layoutStore = appStore.layoutStore;
-        const userLayouts: string[] = layoutStore.userLayoutNames;
+        // const presetLayouts: string[] = PresetLayout.PRESETS;
+        // const layoutStore = appStore.layoutStore;
+        // const userLayouts: string[] = layoutStore.userLayoutNames;
 
         const viewMenu = (
             <Menu>
@@ -301,7 +301,7 @@ export class RootMenuComponent extends React.Component {
                     <MenuItem text="Dark" icon={"moon"} onClick={appStore.setDarkTheme} />
                 </MenuItem>
                 <MenuItem text="Layout dialog" icon={"page-layout"} onClick={() => AppStore.Instance.dialogStore.showDialog(DialogId.LayoutDialog)} />
-                <MenuItem text="Layouts" icon={"page-layout"} disabled={layoutStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}>
+                {/* <MenuItem text="Layouts" icon={"page-layout"} disabled={layoutStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}>
                     <MenuItem text="Existing Layouts" disabled={!presetLayouts && !userLayouts}>
                         {presetLayouts &&
                             presetLayouts.length > 0 &&
@@ -338,7 +338,7 @@ export class RootMenuComponent extends React.Component {
                                 />
                             ))}
                     </MenuItem>
-                </MenuItem>
+                </MenuItem> */}
                 {imageItems.length > 0 && (
                     <MenuItem text="Images" icon={"multi-select"}>
                         {imageItems}

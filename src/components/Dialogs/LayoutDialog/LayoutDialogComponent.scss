@@ -2,17 +2,24 @@
 
 .layout-dialog {
     .#{$ns}-dialog-body {
+        .#{$ns}-form-group {
+            margin: 6px;
+        }
+
+        .#{$ns}-html-table {
+            width: 90%;
+        }
+
         .layout-name-input {
             margin: 6px;
             user-select: none;
 
             &.active {
-                .#{$ns}-form-group {
-                    margin: 0px;
-                }
+                .#{$ns}-form-group,
                 .#{$ns}-input-group {
                     margin: 0px;
                 }
+
                 .#{$ns}-input {
                     padding-left: 6px;
                 }
@@ -24,67 +31,12 @@
             flex-direction: column;
             height: 100%;
 
-            .#{$ns}-tab-panel {
-                flex: 1;
-                min-height: 0;
-            }
-
-            .#{$ns}-form-group {
-                margin: 6px;
-            }
-
             .#{$ns}-button {
-                margin-left: 5px;
-                margin-right: 5px;
+                margin: 0px 5px;
             }
 
             td {
-                padding-top: 5px;
-                padding-bottom: 5px;
-            }
-
-            .layoutMapping {
-                justify-content: space-evenly;
-
-                padding: 11px 11px 11px 5px;
-
-                .#{$ns}-html-table {
-                    width: 100%;
-                }
-
-                thead {
-                    display: block;
-                    // th {
-                    //     padding-left: 7px !important;
-                    //     min-width: 120px;
-                    // }
-                }
-
-                tbody {
-                    display: block;
-                    tr {
-                        td {
-                            min-width: 120px;
-                            padding: 11px 11px 11px 5px;
-                            // .#{$ns}-form-group {
-                            //     margin: 6px;
-                            // }
-                        }
-                    }
-                }
-
-                .#{$ns}-popover-target {
-                    span {
-                        display: block;
-                        max-width: 2em;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                    }
-                }
-
-                &.active {
-                    font-weight: bold;
-                }
+                padding: 5px 11px;
             }
         }
 
@@ -94,10 +46,40 @@
             .#{$ns}-button {
                 margin: 5px;
             }
-
-            .#{$ns}-form-group {
-                margin: 5px;
-            }
         }
+    }
+}
+
+.layout-mapping {
+    padding: 11px 11px 5px 5px !important;
+
+    .#{$ns}-form-group {
+        margin: 6px !important;
+    }
+
+    .#{$ns}-button {
+        margin: 0px 5px;
+    }
+
+    thead,
+    tbody {
+        display: block;
+    }
+
+    // tbody {
+    //     display: block;
+    // }
+
+    .#{$ns}-popover-target {
+        span {
+            display: block;
+            max-width: 2em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+
+    &.active {
+        font-weight: bold;
     }
 }
