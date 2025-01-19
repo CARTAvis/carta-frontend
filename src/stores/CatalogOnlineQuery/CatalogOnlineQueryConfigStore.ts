@@ -54,6 +54,8 @@ export class CatalogOnlineQueryConfigStore {
         this.vizierResource = new Map();
         this.vizierKeyWords = "";
 
+        this.resetSearchRadius();
+
         reaction(
             () => AppStore.Instance.activeFrame,
             () => {
@@ -258,7 +260,7 @@ export class CatalogOnlineQueryConfigStore {
 
     @computed get searchRadiusInDegree(): number {
         const activeFrame = this.activeFrame;
-        if (activeFrame) {
+        if (activeFrame?.validWcs && OverlayStore.Instance.isWcsCoordinates) {
             const requiredFrameView = activeFrame.requiredFrameView;
             const diagonal1 = this.calculateDistanceFromPixelCoord({x: requiredFrameView.xMax, y: requiredFrameView.yMax}, {x: requiredFrameView.xMin, y: requiredFrameView.yMin}, true);
             const diagonal2 = this.calculateDistanceFromPixelCoord({x: requiredFrameView.xMin, y: requiredFrameView.yMax}, {x: requiredFrameView.xMax, y: requiredFrameView.yMin}, true);

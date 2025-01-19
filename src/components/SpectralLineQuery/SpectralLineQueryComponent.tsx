@@ -4,7 +4,6 @@ import SplitPane, {Pane} from "react-split-pane";
 import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay2, Popover, Position, Spinner, Switch, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
-import classNames from "classnames";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
@@ -253,9 +252,12 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     render() {
         const appStore = AppStore.Instance;
         const widgetStore = this.widgetStore;
+
+        /* eslint-disable @typescript-eslint/no-unused-vars */
         // trigger re-render of SpectralLineQueryComponent while reset filter string
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const filters = widgetStore.filters;
+        const darkTheme = appStore.darkTheme;
+        /* eslint-enable @typescript-eslint/no-unused-vars */
 
         const inputByRange = (
             <React.Fragment>
@@ -397,7 +399,6 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             queryResultTableProps.sortedIndexMap = widgetStore.sortedIndexMap;
         }
 
-        const className = classNames("spectral-line-query-widget", {[Classes.DARK]: appStore.darkTheme});
         const isSelectedLinesUnderLimit = widgetStore.numSelectedLines <= PLOT_LINES_LIMIT;
 
         const hint = (
@@ -415,7 +416,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         const plotTip = <span>Plot lines to selected profiler{hint}</span>;
 
         return (
-            <div className={className}>
+            <div className="spectral-line-query-widget">
                 <div className={Classes.DIALOG_BODY}>
                     {queryPanel}
                     <SplitPane className="body-split-pane" split="horizontal" primary={"second"} defaultSize={"60%"} minSize={"5%"} onChange={this.onTableResize}>

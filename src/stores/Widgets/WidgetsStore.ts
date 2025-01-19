@@ -756,6 +756,8 @@ export class WidgetsStore {
                             ?.find("li.lm_settings")
                             ?.attr("data-testid", config.id + "-header-settings-button");
                     }
+
+                    this.updateRenderConfigSettingsVisibility();
                 }
             });
         });
@@ -958,6 +960,18 @@ export class WidgetsStore {
         if (previousPageButton) {
             previousPageButton.attr("style", config.currentImagePage > 0 ? "" : "cursor: not-allowed; opacity: 0.2");
             previousPageButton.attr("title", config.imagePanelMode === ImagePanelMode.None ? "previous image" : "previous page");
+        }
+    };
+
+    /** Hides the settings buttons of docked render config widgets when color blending images are active. */
+    updateRenderConfigSettingsVisibility = () => {
+        const isBlending = AppStore.Instance.activeImage?.type === ImageType.COLOR_BLENDING;
+        const layout = AppStore.Instance.layoutStore?.dockedLayout;
+        const renderConfigWidgets = layout?.root?.getItemsByFilter((item: any) => item.config.component === RenderConfigComponent.WIDGET_CONFIG.type && !item.container.isHidden) ?? [];
+        for (const widget of renderConfigWidgets) {
+            $(widget.parent.element)
+                ?.find("li.lm_settings")
+                ?.attr("style", isBlending ? "display:none;" : "");
         }
     };
 

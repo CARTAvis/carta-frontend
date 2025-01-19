@@ -8,6 +8,7 @@ export interface PopoverSettingsComponentProps {
     contentWidth: number;
     onShowClicked?: () => void;
     onHideClicked?: () => void;
+    children?: React.ReactNode;
 }
 
 export class PopoverSettingsComponent extends React.Component<PopoverSettingsComponentProps> {

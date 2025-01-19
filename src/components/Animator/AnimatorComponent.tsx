@@ -5,7 +5,7 @@ import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {SafeNumericInput} from "components/Shared";
+import {SafeNumericInput, ScrollShadow} from "components/Shared";
 import {AnimationMode, AnimatorStore, AppStore, DefaultWidgetConfig, HelpType, PlayMode, WidgetProps} from "stores";
 
 import "./AnimatorComponent.scss";
@@ -410,24 +410,26 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
         return (
             <div className="animator-widget">
-                {!activeFrame && <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />}
-                {activeFrame && (
-                    <div className={playbackClass}>
-                        {playbackButtons}
-                        {playbackModeButton}
-                        {numericControl}
-                    </div>
-                )}
-                {activeFrame &&
-                    this.width > 0 && ( // temporary fix for broken range slider, issue #1078
-                        <div className="animator-sliders">
-                            {imageSlider}
-                            {channelSlider}
-                            {channelRangeSlider}
-                            {stokesSlider}
+                <ScrollShadow>
+                    {!activeFrame && <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />}
+                    {activeFrame && (
+                        <div className={playbackClass}>
+                            {playbackButtons}
+                            {playbackModeButton}
+                            {numericControl}
                         </div>
                     )}
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
+                    {activeFrame &&
+                        this.width > 0 && ( // temporary fix for broken range slider, issue #1078
+                            <div className="animator-sliders">
+                                {imageSlider}
+                                {channelSlider}
+                                {channelRangeSlider}
+                                {stokesSlider}
+                            </div>
+                        )}
+                    <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
+                </ScrollShadow>
             </div>
         );
     }

@@ -166,11 +166,11 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ANNRECTANGLE
                 ? {x: Math.max(1e-3, w), y: Math.max(1e-3, h)}
                 : region.regionType === CARTA.RegionType.ANNTEXT
-                ? {
-                      x: Math.max(1e-3, anchor === "top" || anchor === "bottom" ? w : (w * zoomLevel) / AppStore.Instance.imageRatio),
-                      y: Math.max(1e-3, anchor === "left" || anchor === "right" ? h : (h * zoomLevel) / AppStore.Instance.imageRatio)
-                  }
-                : {y: Math.max(1e-3, w), x: Math.max(1e-3, h)};
+                  ? {
+                        x: Math.max(1e-3, anchor === "top" || anchor === "bottom" ? w : (w * zoomLevel) / AppStore.Instance.imageRatio),
+                        y: Math.max(1e-3, anchor === "left" || anchor === "right" ? h : (h * zoomLevel) / AppStore.Instance.imageRatio)
+                    }
+                  : {y: Math.max(1e-3, w), x: Math.max(1e-3, h)};
         region.setControlPoints([newCenter, newSize]);
     };
 
@@ -219,8 +219,8 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ANNRECTANGLE
                 ? {x: Math.max(1e-3, w), y: Math.max(1e-3, h)}
                 : region.regionType === CARTA.RegionType.ANNTEXT
-                ? {x: Math.max(1e-3, !keepAspect && isAnchorY ? w : (w * zoomLevel) / AppStore.Instance.imageRatio), y: Math.max(1e-3, !keepAspect && isAnchorX ? h : (h * zoomLevel) / AppStore.Instance.imageRatio)}
-                : {y: Math.max(1e-3, w), x: Math.max(1e-3, h)};
+                  ? {x: Math.max(1e-3, !keepAspect && isAnchorY ? w : (w * zoomLevel) / AppStore.Instance.imageRatio), y: Math.max(1e-3, !keepAspect && isAnchorX ? h : (h * zoomLevel) / AppStore.Instance.imageRatio)}
+                  : {y: Math.max(1e-3, w), x: Math.max(1e-3, h)};
         region.setSize(newSize);
     };
 
@@ -429,8 +429,8 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ANNRECTANGLE
                 ? {x: region.size.x / 2, y: region.size.y / 2}
                 : region.regionType === CARTA.RegionType.ANNTEXT
-                ? {x: (region.size.x * AppStore.Instance.imageRatio) / zoomLevel / (2 * (frame.spatialTransform?.scale || 1)), y: (region.size.y * AppStore.Instance.imageRatio) / zoomLevel / (2 * (frame.spatialTransform?.scale || 1))}
-                : {x: region.size.y, y: region.size.x};
+                  ? {x: (region.size.x * AppStore.Instance.imageRatio) / zoomLevel / (2 * (frame.spatialTransform?.scale || 1)), y: (region.size.y * AppStore.Instance.imageRatio) / zoomLevel / (2 * (frame.spatialTransform?.scale || 1))}
+                  : {x: region.size.y, y: region.size.x};
         let anchorConfigs = [
             {anchor: "top", offset: {x: 0, y: offset.y}},
             {anchor: "bottom", offset: {x: 0, y: -offset.y}},
@@ -563,9 +563,11 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         let shapeNode: React.ReactNode;
         const centerReferenceImage = region.center;
 
-        // trigger re-render when exporting images
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const imageRatio = AppStore.Instance.imageRatio;
+        // trigger re-render when exporting images and changing devicePixelRatio (switching monitor)
+        /* eslint-disable @typescript-eslint/no-unused-vars */
+        const pixelRatio = AppStore.Instance.pixelRatio;
+        const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
+        /* eslint-enable @typescript-eslint/no-unused-vars */
 
         if (frame.spatialReference) {
             const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);

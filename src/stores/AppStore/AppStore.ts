@@ -46,6 +46,7 @@ import {
     DialogStore,
     FileBrowserStore,
     HelpStore,
+    HipsQueryStore,
     ImageFittingStore,
     ImageViewConfigStore,
     LayoutStore,
@@ -118,6 +119,8 @@ export class AppStore {
     readonly preferenceStore: PreferenceStore;
     readonly widgetsStore: WidgetsStore;
     readonly imageFittingStore: ImageFittingStore;
+    /** Management of HiPS data queries. */
+    readonly hipsQueryStore = HipsQueryStore.Instance;
     /** Configuration of the images in the image view widget. */
     readonly imageViewConfigStore = ImageViewConfigStore.Instance;
 
@@ -153,6 +156,7 @@ export class AppStore {
     @observable imageRatio = 1;
     @observable isExportingImage = false;
     @observable private isCanvasUpdated: boolean;
+    @observable private devicePixelRatio: number;
 
     // dynamic zIndex
     public zIndexManager = new FloatingObjzIndexManager();
@@ -511,6 +515,13 @@ export class AppStore {
     }
 
     /**
+     * This is devicePixelRatio * imageRatio, which is used to make image rendering consistent across different devices.
+     */
+    @computed get pixelRatio(): number {
+        return this.devicePixelRatio * this.imageRatio;
+    }
+
+    /**
      * Adds a frame to the frame array based on the provided parameters.
      *
      * @param ack - The ack message received after opening a file.
@@ -695,6 +706,36 @@ export class AppStore {
         }
     }
 
+    /**
+     * Loads a file by HiPS data queries and adds it as a frame.
+     * @param remoteRequest - Parameters for the query.
+     * @returns The added frame.
+     * @throws If there is an error loading the file.
+     */
+    @flow.bound *loadRemoteFile(remoteRequest: CARTA.IRemoteFileRequest) {
+        try {
+            remoteRequest.fileId = this.fileCounter;
+            this.fileCounter++;
+            const ack: CARTA.IRemoteFileResponse = yield this.backendService.requestRemoteFile(remoteRequest);
+            if (!ack.success || !ack.openFileAck) {
+                AppToaster.show({icon: "warning-sign", message: `HiPS data query failed: ${ack.message}`, intent: "danger", timeout: 3000});
+            }
+            if (!this.addFrame(ack.openFileAck, "", false, "", true, true, false)) {
+                AppToaster.show({icon: "warning-sign", message: "HiPS data query failed: Load file failed.", intent: "danger", timeout: 3000});
+            }
+            this.dialogStore.hideDialog(DialogId.OnlineDataQuery);
+            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
+            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
+            WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
+            // Ensure loading finishes before next file is added
+            yield this.delay(10);
+            return this.getFrame(ack.openFileAck.fileId);
+        } catch (err) {
+            this.alertStore.showAlert(`HiPS data query failed: ${err}`);
+            throw err;
+        }
+    }
+
     loadConcatStokes = async (stokesFiles: CARTA.IStokesFile[], directory: string, hdu: string) => {
         this.startFileLoading();
         try {
@@ -773,21 +814,19 @@ export class AppStore {
     }
 
     @flow.bound
-    *saveFile(directory: string, filename: string, fileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], shouldDropDegenerateAxes?: boolean, restFreq?: number) {
+    *saveFile(directory: string, filename: string, fileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], shouldDropDegenerateAxes?: boolean, restFreq?: number, overwrite: boolean = false) {
         if (!this.activeFrame) {
             throw new Error("No active image");
         }
         this.startFileSaving();
         const fileId = this.activeFrame.frameInfo.fileId;
         try {
-            const ack = yield this.backendService.saveFile(fileId, directory, filename, fileType, regionId, channels, stokes, !shouldDropDegenerateAxes, restFreq);
+            const ack = yield this.backendService.saveFile(fileId, directory, filename, fileType, regionId, channels, stokes, !shouldDropDegenerateAxes, restFreq, overwrite);
             AppToaster.show({icon: "saved", message: `${filename} saved.`, intent: "success", timeout: 3000});
             this.fileBrowserStore.hideFileBrowser();
             this.endFileSaving();
             return ack.fileId;
         } catch (err) {
-            console.error(err);
-            AppToaster.show({icon: "warning-sign", message: err, intent: "danger", timeout: 3000});
             this.endFileSaving();
             throw err;
         }
@@ -1260,10 +1299,11 @@ export class AppStore {
      * @param coordType - The coordinate system used in the exported region file.
      * @param fileType - The type of the exported region file.
      * @param exportRegions - The indices of the regions to be exported.
+     * @param overwrite - Whether to allow overwriting existing files.
      * @param targetFrame - The target frame containing the regions. If not provided, the active frame is used.
      */
     @flow.bound
-    *exportRegions(directory: string, file: string, coordType: CARTA.CoordinateType, fileType: RegionFileType, exportRegions: number[], targetFrame?: FrameStore) {
+    *exportRegions(directory: string, file: string, coordType: CARTA.CoordinateType, fileType: RegionFileType, exportRegions: number[], overwrite: boolean = false, targetFrame?: FrameStore) {
         const frame = targetFrame ?? this.activeFrame;
         // Prevent exporting if only the cursor region exists
         if (!frame?.regionSet?.regions || frame.regionSet.regions.length <= 1 || exportRegions?.length < 1) {
@@ -1301,12 +1341,11 @@ export class AppStore {
         }
 
         try {
-            yield this.backendService.exportRegion(directory, file, fileType, coordType, frame.frameInfo.fileId, regionStyles);
+            yield this.backendService.exportRegion(directory, file, fileType, coordType, frame.frameInfo.fileId, regionStyles, overwrite);
             AppToaster.show(SuccessToast("saved", `Exported regions for ${frame.filename} using ${coordType === CARTA.CoordinateType.WORLD ? "world" : "pixel"} coordinates`));
             this.fileBrowserStore.hideFileBrowser();
         } catch (err) {
-            console.error(err);
-            AppToaster.show(ErrorToast(err));
+            throw err;
         }
     }
 
@@ -1837,6 +1876,8 @@ export class AppStore {
         this.initRequirements();
         this.momentToMatch = true;
 
+        this.devicePixelRatio = devicePixelRatio;
+
         AST.onReady.then(
             action(() => {
                 this.setAstReady(true);
@@ -2009,6 +2050,7 @@ export class AppStore {
         reaction(
             () => this.activeImage,
             image => {
+                this.widgetsStore.updateRenderConfigSettingsVisibility();
                 if (image) {
                     if (image.type !== ImageType.PV_PREVIEW) {
                         this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
@@ -2076,6 +2118,38 @@ export class AppStore {
         autorun(() => {
             this.activateStatsPanel(this.preferenceStore.statsPanelEnabled);
         });
+
+        // listen devicePixelRatio
+        let remove = null;
+        const updatePixelRatio = () => {
+            if (remove != null) {
+                remove();
+            }
+            const mqString = `(resolution: ${window.devicePixelRatio}dppx)`;
+            const media = matchMedia(mqString);
+            media.addEventListener("change", updatePixelRatio);
+            remove = () => {
+                media.removeEventListener("change", updatePixelRatio);
+            };
+
+            this.handleDevicePixelRatioChange(this.devicePixelRatio);
+        };
+        updatePixelRatio();
+    }
+
+    // update devicePixelRatio and make the image size invariant on screen
+    @action private handleDevicePixelRatioChange(prevDevicePixelRatio: number) {
+        this.frames.forEach(frame => {
+            if (frame === this.spatialReference || !frame.spatialReference) {
+                frame.setZoom((frame.zoomLevel * devicePixelRatio) / prevDevicePixelRatio, true);
+            }
+        });
+
+        this.previewFrames.forEach((previewFrameStore, previewFrameId) => {
+            previewFrameStore.setZoom((previewFrameStore.zoomLevel * devicePixelRatio) / prevDevicePixelRatio, true);
+        });
+
+        this.devicePixelRatio = devicePixelRatio;
     }
 
     // region Subscription handlers
@@ -2574,6 +2648,28 @@ export class AppStore {
                 }
             }
 
+            if (workspace.colorBlendingImages) {
+                workspace.colorBlendingImages.sort((a, b) => a.imageListIndex - b.imageListIndex);
+
+                for (const {imageListIndex, selectedFrameId, alpha} of workspace.colorBlendingImages) {
+                    const colorBlending = this.imageViewConfigStore.createColorBlending();
+                    while (colorBlending.selectedFrames.length) {
+                        colorBlending.deleteSelectedFrame(0);
+                    }
+                    colorBlending.setAlpha(0, alpha[0]);
+
+                    for (let i = 0; i < selectedFrameId.length; i++) {
+                        const frame = this.frameMap.get(frameIdMap.get(selectedFrameId[i]));
+                        if (frame) {
+                            colorBlending.addSelectedFrame(frame);
+                            colorBlending.setAlpha(colorBlending.selectedFrames.length, alpha[i + 1]);
+                        }
+                    }
+
+                    this.reorderFrame(this.imageViewConfigStore.imageNum - 1, imageListIndex, 1);
+                }
+            }
+
             // Sync up raster scaling once all images are loaded and configured
             if (this.rasterScalingReference) {
                 this.rasterScalingReference.renderConfig.updateSiblings();
@@ -2597,6 +2693,7 @@ export class AppStore {
             frontendVersion: CARTA_INFO.version,
             description: "Workspace exported from CARTA",
             files: [],
+            colorBlendingImages: [],
             references: {},
             date: Date.now() / 1000
         };
@@ -2702,6 +2799,11 @@ export class AppStore {
             }
 
             workspace.files.push(workspaceFile);
+        }
+
+        for (const [id, colorBlending] of this.imageViewConfigStore.colorBlendingImageMap) {
+            const index = this.imageViewConfigStore.getImageListIndex(ImageType.COLOR_BLENDING, id);
+            workspace.colorBlendingImages.push({imageListIndex: index, selectedFrameId: colorBlending.selectedFrames.map(f => f.id), alpha: colorBlending.alpha});
         }
 
         if (hasTemporaryFiles) {
@@ -3167,10 +3269,9 @@ export class AppStore {
     };
 
     updateLayerPixelRatio = layerRef => {
-        const pixelRatio = devicePixelRatio * this.imageRatio;
         const canvas = layerRef?.current?.getCanvas();
-        if (canvas && canvas.pixelRatio !== pixelRatio) {
-            canvas.setPixelRatio(pixelRatio);
+        if (canvas && canvas.pixelRatio !== this.pixelRatio) {
+            canvas.setPixelRatio(this.pixelRatio);
         }
     };
 
@@ -3372,9 +3473,4 @@ export class AppStore {
             regionProfileStoreMap.get(regionId)?.resetProfilesProgress();
         });
     };
-
-    // helper function for getting the current devicePixelRatio value
-    get pixelRatio() {
-        return devicePixelRatio;
-    }
 }

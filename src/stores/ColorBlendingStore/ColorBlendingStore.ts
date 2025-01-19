@@ -1,6 +1,20 @@
 import {action, computed, makeAutoObservable, observable, reaction} from "mobx";
+import tinycolor from "tinycolor2";
 
-import {AppStore, type FrameStore} from "stores";
+import {AppStore, type FrameStore, RenderConfigStore} from "stores";
+import {getColorsForValues} from "utilities";
+
+/** The configuration of a colormap set. Can either be a single gradient colormap or a collection of multiple colormaps. */
+type ColormapSetConfig =
+    | {
+          type: "gradient";
+          colormap: string;
+          inverted: boolean;
+      }
+    | {
+          type: "collection";
+          colormaps: readonly string[];
+      };
 
 /** Configuration of a color blended image. */
 export class ColorBlendingStore {
@@ -8,6 +22,14 @@ export class ColorBlendingStore {
     readonly id: number;
     /** The filename of the color blended image. */
     readonly filename: string;
+    /** Available colormap sets used for blending. The keys are the names of the sets, and the values are the configuration of the set. */
+    static readonly ColormapSets: ReadonlyMap<string, ColormapSetConfig> = new Map([
+        ["RGB", {type: "collection", colormaps: ["Red", "Green", "Blue"]}],
+        ["CMY", {type: "collection", colormaps: ["Magenta", "Yellow", "Cyan"]}],
+        ["Rainbow", {type: "gradient", colormap: "rainbow", inverted: true}]
+    ]);
+    /** The default limit for the number of layers during initialization. */
+    static readonly DefaultLayerLimit = 10;
 
     /** The custom title shown in the image view overlay. */
     @observable titleCustomText: string;
@@ -15,6 +37,12 @@ export class ColorBlendingStore {
     @observable selectedFrames: FrameStore[];
     /** The alpha values of all the layers */
     @observable alpha: number[];
+    /** The visibility of the blended raster image. */
+    @observable rasterVisible = true;
+    /** The visibility of all the contours. */
+    @observable contourVisible = true;
+    /** The visibility of all the vector overlays. */
+    @observable vectorOverlayVisible = true;
 
     /**
      * Sets the custom title shown in the image view overlay.
@@ -84,6 +112,21 @@ export class ColorBlendingStore {
         this.alpha = this.alpha.slice();
     };
 
+    /** Hides or shows the blended raster image. */
+    @action toggleRasterVisible = () => {
+        this.rasterVisible = !this.rasterVisible;
+    };
+
+    /** Hides or shows all the contours. */
+    @action toggleContourVisible = () => {
+        this.contourVisible = !this.contourVisible;
+    };
+
+    /** Hides or shows all the vector overlays. */
+    @action toggleVectorOverlayVisible = () => {
+        this.vectorOverlayVisible = !this.vectorOverlayVisible;
+    };
+
     /** The frame from the base layer. */
     @computed get baseFrame(): FrameStore {
         return AppStore.Instance.spatialReference;
@@ -98,7 +141,7 @@ export class ColorBlendingStore {
         this.id = id;
         this.filename = `Color Blending ${id + 1}`;
         this.titleCustomText = this.filename;
-        this.selectedFrames = this.baseFrame?.secondarySpatialImages?.slice(0, 2) ?? [];
+        this.selectedFrames = this.baseFrame?.secondarySpatialImages?.slice(0, ColorBlendingStore.DefaultLayerLimit - 1) ?? [];
         this.alpha = new Array(this.selectedFrames.length + 1).fill(1);
         makeAutoObservable(this);
 
@@ -117,6 +160,64 @@ export class ColorBlendingStore {
             }
         );
     }
+
+    /**
+     * Applies the specified colormap set to the layers. Frames with raster scaling matching enabled are skipped.
+     * - If the colormap set is a single gradient colormap, it interpolates colors along the gradient for each frame.
+     * - If the colormap set is a collection of multiple colormaps, it interpolates between the indexes and selects a colormap from the collection to match the number of frames.
+     * @param set - The name of the colormap set to apply. Must be a key in the `ColorBlendingStore.ColormapSets` map.
+     */
+    applyColormapSet = (set: string) => {
+        const colormapSetConfig = ColorBlendingStore.ColormapSets.get(set);
+        if (!colormapSetConfig) {
+            console.error("Invalid colormap set name.");
+            return;
+        }
+
+        const rasterUnmatchedFrames = this.frames.filter(f => !f.rasterScalingReference);
+        const frameNum = rasterUnmatchedFrames.length;
+
+        if (colormapSetConfig.type === "gradient") {
+            const gradient = getColorsForValues(colormapSetConfig.colormap);
+            const getHex = (index: number): string => "#" + tinycolor({r: gradient.color[index * 4], g: gradient.color[index * 4 + 1], b: gradient.color[index * 4 + 2], a: gradient.color[index * 4 + 3]}).toHex();
+
+            for (let i = 0; i < frameNum; i++) {
+                let index;
+                if (frameNum === 1) {
+                    index = colormapSetConfig.inverted ? gradient.size - 1 : 0;
+                } else {
+                    index = Math.round(((colormapSetConfig.inverted ? frameNum - 1 - i : i) * (gradient.size - 1)) / (frameNum - 1));
+                }
+                const hex = getHex(index);
+
+                let isExistingSingleColor = false;
+                for (const [key, val] of RenderConfigStore.COLOR_MAPS_MONO) {
+                    if (val === hex) {
+                        rasterUnmatchedFrames[i].renderConfig.setColorMap(key);
+                        isExistingSingleColor = true;
+                        break;
+                    }
+                }
+
+                if (!isExistingSingleColor) {
+                    rasterUnmatchedFrames[i].renderConfig.setCustomHexEnd(hex);
+                    rasterUnmatchedFrames[i].renderConfig.setColorMap(RenderConfigStore.COLOR_MAPS_CUSTOM);
+                }
+            }
+        } else {
+            const colormaps = colormapSetConfig.colormaps;
+            for (let i = 0; i < frameNum; i++) {
+                let index;
+                if (frameNum === 1) {
+                    index = 0;
+                } else {
+                    index = Math.round((i * (colormaps.length - 1)) / (frameNum - 1));
+                }
+
+                rasterUnmatchedFrames[i].renderConfig.setColorMap(colormaps[index]);
+            }
+        }
+    };
 
     private isValidFrame = (frame: FrameStore): boolean => {
         if (!frame || !this.baseFrame?.secondarySpatialImages?.includes(frame)) {

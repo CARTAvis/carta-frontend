@@ -753,7 +753,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (AppStore.Instance.darkTheme) {
             gridColor = Colors.DARK_GRAY5;
             lableColor = Colors.LIGHT_GRAY5;
-            themeColor = Colors.DARK_GRAY3;
+            themeColor = Colors.DARK_GRAY2;
             markerColor = Colors.GRAY4;
             spikeLineClass = "catalog-plotly-dark";
         }

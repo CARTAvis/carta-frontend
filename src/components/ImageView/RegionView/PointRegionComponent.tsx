@@ -65,9 +65,11 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
         let centerPixelSpace: Point2D;
         let rotation: number;
 
-        // trigger re-render when exporting images
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const imageRatio = AppStore.Instance.imageRatio;
+        // trigger re-render when exporting images and  changing devicePixelRatio (switching monitor)
+        /* eslint-disable @typescript-eslint/no-unused-vars */
+        const pixelRatio = AppStore.Instance.pixelRatio;
+        const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
+        /* eslint-enable @typescript-eslint/no-unused-vars */
 
         if (frame.spatialReference) {
             const pointReferenceImage = region.center;
