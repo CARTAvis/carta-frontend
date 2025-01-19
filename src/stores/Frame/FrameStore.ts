@@ -3,6 +3,7 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
 
+import {PvPreviewComponent} from "components";
 import {
     CatalogControlMap,
     ChannelInfo,
@@ -336,6 +337,7 @@ export class FrameStore {
             const mipLog2 = Math.log2(mipExact);
             const mipLog2Rounded = Math.round(mipLog2);
             const mipRoundedPow2 = Math.pow(2, mipLog2Rounded);
+            console.log(imageWidth, imageHeight, this.center);
             return {
                 xMin: this.center.x - imageWidth / 2.0,
                 xMax: this.center.x + imageWidth / 2.0,
@@ -426,12 +428,12 @@ export class FrameStore {
 
     @computed get renderWidth() {
         const overlayStore = AppStore.Instance.overlayStore;
-        return this.isPreview ? overlayStore.previewRenderWidth(this.previewViewWidth) : overlayStore.renderWidth;
+        return this.isPreview ? overlayStore.previewRenderWidth(this.previewViewWidth ?? PvPreviewComponent.WIDGET_CONFIG.defaultWidth) : overlayStore.renderWidth;
     }
 
     @computed get renderHeight() {
         const overlayStore = AppStore.Instance.overlayStore;
-        return this.isPreview ? overlayStore.previewRenderHeight(this.previewViewHeight) : overlayStore.renderHeight;
+        return this.isPreview ? overlayStore.previewRenderHeight(this.previewViewHeight ?? PvPreviewComponent.WIDGET_CONFIG.defaultHeight) : overlayStore.renderHeight;
     }
 
     @computed get isRenderable() {
