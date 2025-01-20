@@ -539,7 +539,7 @@ export class WidgetsStore {
     };
 
     private addWidgetByType = (widgetType: string, widgetSettings: object | null = null): string => {
-        let itemId;
+        let itemId: string | null = null;
         switch (widgetType) {
             case ImageViewComponent.WIDGET_CONFIG.type:
                 itemId = ImageViewComponent.WIDGET_CONFIG.id;

@@ -1,6 +1,6 @@
 import * as React from "react";
 import ReactResizeDetector from "react-resize-detector";
-import {NonIdealState, Spinner} from "@blueprintjs/core";
+import {Button, NonIdealState, Spinner} from "@blueprintjs/core";
 import $ from "jquery";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -133,8 +133,12 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
     @observable showRatioIndicator: boolean = false;
 
+    @computed get isDisabled() {
+        return this.props.docked && AppStore.Instance.layoutStore.pipActive;
+    }
+
     onResize = (width: number, height: number) => {
-        if (width > 0 && height > 0) {
+        if (!this.isDisabled && width > 0 && height > 0) {
             const appStore = AppStore.Instance;
             const requiresAutoFit = appStore.preferenceStore.zoomMode === Zoom.FIT && appStore.overlayStore.fullViewWidth <= 1 && appStore.overlayStore.fullViewHeight <= 1;
             appStore.setImageViewDimensions(width, height);
@@ -156,6 +160,10 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         const appStore = AppStore.Instance;
 
         autorun(() => {
+            if (this.isDisabled) {
+                return;
+            }
+
             const imageSize = {x: appStore.overlayStore.renderWidth, y: appStore.overlayStore.renderHeight};
             const imageGridSize = {x: appStore.imageViewConfigStore.numImageColumns, y: appStore.imageViewConfigStore.numImageRows};
             // Compare to cached image size to prevent duplicate events when changing frames
@@ -196,7 +204,9 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         const config = appStore.imageViewConfigStore;
 
         let divContents: React.ReactNode | React.ReactNode[];
-        if (!this.panels.length) {
+        if (this.isDisabled) {
+            divContents = <NonIdealState icon={"share"} title={"Image viewer is open in an external window"} action={<Button onClick={appStore.layoutStore.disablePip}>Open here instead</Button>} />;
+        } else if (!this.panels.length) {
             divContents = <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;
         } else if (!appStore.astReady) {
             divContents = <NonIdealState icon={<Spinner className="astLoadingSpinner" />} title={"Loading AST Library"} />;

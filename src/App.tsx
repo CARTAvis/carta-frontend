@@ -1,11 +1,11 @@
 import * as React from "react";
-import * as ReactDOM from "react-dom";
+import {createRoot} from "react-dom/client";
 import ReactResizeDetector from "react-resize-detector";
 import {Alert, Button, Classes, Intent} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {FloatingWidgetComponent, FloatingWidgetManagerComponent, getWidgetContent, UIControllerComponent} from "components";
+import {FloatingWidgetManagerComponent, ImageViewComponent, UIControllerComponent} from "components";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {ApiService} from "services";
 import {AlertStore, AlertType, AppStore} from "stores";
@@ -20,16 +20,9 @@ const PipRenderer = observer(() => {
     const appStore = AppStore.Instance;
     const className = classNames("App", {[Classes.DARK]: appStore.darkTheme});
 
-    const w = appStore.widgetsStore.floatingWidgets?.[0];
-    if (!w) {
-        return null;
-    }
-
     return (
-        <div className={className} style={{zIndex: 100}}>
-            <FloatingWidgetComponent isSelected={true} key={"pip"} widgetConfig={w} zIndex={1} showPinButton={false} floatingWidgets={1} pinnedWindow={true}>
-                {getWidgetContent(w)}
-            </FloatingWidgetComponent>
+        <div className={className}>
+            <ImageViewComponent id="image-view" docked={false} />
         </div>
     );
 });
@@ -98,7 +91,8 @@ export class App extends React.Component {
         const appStore = AppStore.Instance;
         const pipWindow = await appStore.layoutStore.activatePip();
         if (pipWindow) {
-            ReactDOM.render(<PipRenderer />, pipWindow.document.getElementById("pip-root") as HTMLElement);
+            const root = createRoot(pipWindow.document.getElementById("pip-root") as HTMLElement);
+            root.render(<PipRenderer />);
         }
     }
 
@@ -111,7 +105,7 @@ export class App extends React.Component {
 
         return (
             <div className={className}>
-                {!appStore.layoutStore.pipActive && (
+                {appStore.layoutStore.canUsePip && !appStore.layoutStore.pipActive && (
                     <div className="pip-button">
                         <Button icon="trophy" onClick={this.openWindow} />
                     </div>

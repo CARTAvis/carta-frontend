@@ -156,7 +156,12 @@ export class AppStore {
     @observable imageRatio = 1;
     @observable isExportingImage = false;
     @observable private isCanvasUpdated: boolean;
-    @observable private devicePixelRatio: number;
+    @observable private mainWindowPixelRatio: number;
+    @observable private pipPixelRatio: number | undefined;
+
+    @computed get imagePixelRatio(): number {
+        return this.pipPixelRatio || this.mainWindowPixelRatio;
+    }
 
     // dynamic zIndex
     public zIndexManager = new FloatingObjzIndexManager();
@@ -518,7 +523,7 @@ export class AppStore {
      * This is devicePixelRatio * imageRatio, which is used to make image rendering consistent across different devices.
      */
     @computed get pixelRatio(): number {
-        return this.devicePixelRatio * this.imageRatio;
+        return this.imagePixelRatio * this.imageRatio;
     }
 
     /**
@@ -1386,7 +1391,11 @@ export class AppStore {
     @action requestCubeHistogram = (fileId: number = -1) => {
         const frame = this.getFrame(fileId);
         if (frame && frame.renderConfig.cubeHistogramProgress < 1.0) {
-            this.backendService.setHistogramRequirements({fileId: frame.frameInfo.fileId, regionId: -2, histograms: [{channel: -2, fixedNumBins: false, numBins: -1, fixedBounds: false, bounds: {min: 0, max: 0}}]});
+            this.backendService.setHistogramRequirements({
+                fileId: frame.frameInfo.fileId,
+                regionId: -2,
+                histograms: [{channel: -2, fixedNumBins: false, numBins: -1, fixedBounds: false, bounds: {min: 0, max: 0}}]
+            });
             this.restartTaskProgress();
         }
     };
@@ -1876,7 +1885,7 @@ export class AppStore {
         this.initRequirements();
         this.momentToMatch = true;
 
-        this.devicePixelRatio = devicePixelRatio;
+        this.mainWindowPixelRatio = devicePixelRatio;
 
         AST.onReady.then(
             action(() => {
@@ -2119,37 +2128,60 @@ export class AppStore {
             this.activateStatsPanel(this.preferenceStore.statsPanelEnabled);
         });
 
-        // listen devicePixelRatio
-        let remove = null;
-        const updatePixelRatio = () => {
-            if (remove != null) {
-                remove();
-            }
-            const mqString = `(resolution: ${window.devicePixelRatio}dppx)`;
-            const media = matchMedia(mqString);
-            media.addEventListener("change", updatePixelRatio);
-            remove = () => {
-                media.removeEventListener("change", updatePixelRatio);
-            };
+        // listen for device pixel ratio changes on main window
+        const mqString = `(resolution: ${window.devicePixelRatio}dppx)`;
+        const media = matchMedia(mqString);
+        media.addEventListener("change", () => this.handleDevicePixelRatioChange(window));
 
-            this.handleDevicePixelRatioChange(this.devicePixelRatio);
-        };
-        updatePixelRatio();
+        autorun(() => {
+            if (this.layoutStore.pipActive && this.layoutStore.pipRef) {
+                console.log(`adding listener for device pixel ratio changes on pic-in-pic window`);
+                // listen for device pixel ratio changes on pic-in-pic window
+                const mqString = `(resolution: ${this.layoutStore.pipRef.devicePixelRatio}dppx)`;
+                console.log(mqString);
+                const media = this.layoutStore.pipRef.matchMedia(mqString);
+                const eventHandler = () => {
+                    console.log("changed!");
+                    this.handleDevicePixelRatioChange(this.layoutStore.pipRef);
+                };
+                media.addEventListener("change", eventHandler);
+
+                // Remove handler when
+                this.layoutStore.pipRef.addEventListener("pagehide", () => {
+                    media.removeEventListener("change", eventHandler);
+                    this.pipPixelRatio = undefined;
+                });
+            }
+        });
     }
 
     // update devicePixelRatio and make the image size invariant on screen
-    @action private handleDevicePixelRatioChange(prevDevicePixelRatio: number) {
-        this.frames.forEach(frame => {
-            if (frame === this.spatialReference || !frame.spatialReference) {
-                frame.setZoom((frame.zoomLevel * devicePixelRatio) / prevDevicePixelRatio, true);
-            }
-        });
+    @action private handleDevicePixelRatioChange(w: Window) {
+        let prevDevicePixelRatio = w === window ? this.mainWindowPixelRatio : this.pipPixelRatio;
+        let newPixelRatio = w.devicePixelRatio;
 
-        this.previewFrames.forEach((previewFrameStore, previewFrameId) => {
-            previewFrameStore.setZoom((previewFrameStore.zoomLevel * devicePixelRatio) / prevDevicePixelRatio, true);
-        });
+        if (w === window) {
+            this.mainWindowPixelRatio = newPixelRatio;
+        } else {
+            this.pipPixelRatio = newPixelRatio;
+        }
 
-        this.devicePixelRatio = devicePixelRatio;
+        const isPipWindow = w !== window;
+        const pipWindowActive = !!this.pipPixelRatio;
+
+        if (isPipWindow || !pipWindowActive) {
+            console.debug(`Updating pixel ratio from ${prevDevicePixelRatio} to ${newPixelRatio}`);
+
+            this.frames.forEach(frame => {
+                if (frame === this.spatialReference || !frame.spatialReference) {
+                    frame.setZoom((frame.zoomLevel * newPixelRatio) / prevDevicePixelRatio, true);
+                }
+            });
+
+            this.previewFrames.forEach((previewFrameStore, previewFrameId) => {
+                previewFrameStore.setZoom((previewFrameStore.zoomLevel * newPixelRatio) / prevDevicePixelRatio, true);
+            });
+        }
     }
 
     // region Subscription handlers

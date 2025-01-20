@@ -1,5 +1,5 @@
 import * as GoldenLayout from "golden-layout";
-import {action, computed, flow, makeObservable, observable} from "mobx";
+import {action, computed, flow, makeObservable, observable, runInAction} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
 import {LayoutConfig, PresetLayout} from "models";
@@ -24,14 +24,20 @@ export class LayoutStore {
     // self-defined structure: {layoutName: config, layoutName: config, ...}
     @observable dockedLayout: GoldenLayout | null;
     @observable currentLayoutName: string;
-    @observable private layouts: any;
+    @observable private readonly layouts: any;
     @observable supportsServer: boolean;
     @observable oldLayoutName: string | undefined;
     @observable pipActive: boolean;
-    public pipRef: Window;
+    public pipRef: Window | undefined;
 
     @computed get isSave(): boolean {
         return !this.oldLayoutName;
+    }
+
+    get canUsePip(): boolean {
+        // @ts-ignore
+        const documentPictureInPicture = window.documentPictureInPicture;
+        return !!documentPictureInPicture;
     }
 
     private constructor() {
@@ -44,19 +50,18 @@ export class LayoutStore {
         this.initLayoutsFromPresets();
     }
 
-    public activatePip = async () => {
+    // Note: we can't run this as a flow, because `requestWindow` requires user activation and can't be run as a callback
+    activatePip = async () => {
         const appStore = AppStore.Instance;
         if (this.pipActive) {
             return undefined;
         }
 
-        // @ts-ignore
-        const documentPictureInPicture = window.documentPictureInPicture;
-
         try {
-            const pipWindow: Window = await documentPictureInPicture.requestWindow({
-                width: "500",
-                height: "500"
+            // @ts-ignore
+            const pipWindow: Window = await window.documentPictureInPicture.requestWindow({
+                width: appStore.overlayStore.viewWidth,
+                height: appStore.overlayStore.viewHeight
             });
 
             const pipDiv = pipWindow.document.createElement("div");
@@ -77,6 +82,7 @@ export class LayoutStore {
                     link.type = styleSheet.type;
                     // @ts-ignore
                     link.media = styleSheet.media;
+                    // @ts-ignore
                     link.href = styleSheet.href;
                     pipWindow.document.head.appendChild(link);
                 }
@@ -84,18 +90,23 @@ export class LayoutStore {
 
             pipDiv.setAttribute("id", "pip-root");
             pipWindow.document.body.append(pipDiv);
-            pipWindow.addEventListener("pagehide", event => {
-                this.pipActive = false;
-                this.pipRef = undefined;
+            pipWindow.addEventListener("pagehide", this.disablePip);
+
+            runInAction(() => {
+                this.pipActive = true;
+                this.pipRef = pipWindow;
             });
-            appStore.layoutStore.pipActive = true;
-            this.pipActive = true;
-            this.pipRef = pipWindow;
             return pipWindow;
         } catch (error) {
-            console.log(error);
+            console.warn(error);
             return undefined;
         }
+    };
+
+    @action disablePip = () => {
+        this.pipRef?.close();
+        this.pipActive = false;
+        this.pipRef = undefined;
     };
 
     public layoutExists = (layoutName: string): boolean => {

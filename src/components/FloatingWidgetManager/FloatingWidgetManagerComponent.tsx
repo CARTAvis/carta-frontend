@@ -35,8 +35,6 @@ import {AppStore, CatalogStore, WidgetConfig, WidgetsStore} from "stores";
 
 export function getWidgetContent(widgetConfig: WidgetConfig) {
     switch (widgetConfig.type) {
-        case ImageViewComponent.WIDGET_CONFIG.type:
-            return <ImageViewComponent id={widgetConfig.id} docked={false} />;
         case LayerListComponent.WIDGET_CONFIG.type:
             return <LayerListComponent id={widgetConfig.id} docked={false} />;
         case LogComponent.WIDGET_CONFIG.type:
@@ -172,10 +170,6 @@ export class FloatingWidgetManagerComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
         let widgetConfigs = WidgetsStore.Instance.floatingWidgets;
-
-        if (appStore.layoutStore.pipActive) {
-            widgetConfigs = widgetConfigs.slice(1);
-        }
         const zIndexManager = appStore.zIndexManager;
 
         return (
