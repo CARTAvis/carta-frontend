@@ -1,6 +1,6 @@
 import * as React from "react";
-import {Alert, Button, Classes, Intent} from "@blueprintjs/core";
 import {createRoot} from "react-dom/client";
+import {Alert, Button, Classes, Intent} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
