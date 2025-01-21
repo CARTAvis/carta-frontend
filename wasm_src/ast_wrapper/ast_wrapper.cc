@@ -25,8 +25,6 @@ void astPutErr_(int status_value, const char* message)
 }
 
 #include <iostream>
-#include <string.h>
-#include <emscripten.h>
 
 using namespace std;
 
