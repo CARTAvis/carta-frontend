@@ -538,44 +538,58 @@ export class WidgetsStore {
         }
     };
 
-    private addWidgetByType = (widgetType: string, widgetSettings: object | null = null): string | null => {
-        let itemId: string;
+    private addWidgetByType = (widgetType: string, widgetSettings: object | null = null): string => {
+        let itemId;
         switch (widgetType) {
             case ImageViewComponent.WIDGET_CONFIG.type:
-                return ImageViewComponent.WIDGET_CONFIG.id;
+                itemId = ImageViewComponent.WIDGET_CONFIG.id;
+                break;
             case RenderConfigComponent.WIDGET_CONFIG.type:
-                return this.addRenderConfigWidget(null, widgetSettings);
+                itemId = this.addRenderConfigWidget(null, widgetSettings);
+                break;
             case SpatialProfilerComponent.WIDGET_CONFIG.type:
-                return this.addSpatialProfileWidget(null, widgetSettings);
+                itemId = this.addSpatialProfileWidget(null, widgetSettings);
+                break;
             case SpectralProfilerComponent.WIDGET_CONFIG.type:
-                return this.addSpectralProfileWidget(null, widgetSettings);
+                itemId = this.addSpectralProfileWidget(null, widgetSettings);
+                break;
             case StatsComponent.WIDGET_CONFIG.type:
-                return this.addStatsWidget();
+                itemId = this.addStatsWidget();
+                break;
             case HistogramComponent.WIDGET_CONFIG.type:
-                return this.addHistogramWidget(null, widgetSettings);
+                itemId = this.addHistogramWidget(null, widgetSettings);
+                break;
             case AnimatorComponent.WIDGET_CONFIG.type:
-                return this.addAnimatorWidget();
+                itemId = this.addAnimatorWidget();
+                break;
             case LayerListComponent.WIDGET_CONFIG.type:
-                return this.addLayerListWidget();
+                itemId = this.addLayerListWidget();
+                break;
             case LogComponent.WIDGET_CONFIG.type:
-                return this.addLogWidget();
+                itemId = this.addLogWidget();
+                break;
             case RegionListComponent.WIDGET_CONFIG.type:
-                return this.addRegionListWidget();
+                itemId = this.addRegionListWidget();
+                break;
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
-                return this.addStokesWidget(null, widgetSettings);
+                itemId = this.addStokesWidget(null, widgetSettings);
+                break;
             case SpectralLineQueryComponent.WIDGET_CONFIG.type:
-                return this.addSpectralLineQueryWidget();
+                itemId = this.addSpectralLineQueryWidget();
+                break;
             case CursorInfoComponent.WIDGET_CONFIG.type:
-                return this.addCursorInfoWidget();
+                itemId = this.addCursorInfoWidget();
+                break;
             case PvGeneratorComponent.WIDGET_CONFIG.type:
-                return this.addPvGeneratorWidget();
+                itemId = this.addPvGeneratorWidget();
+                break;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
                 itemId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
                 CatalogStore.Instance.catalogProfiles.set(itemId, 1);
                 if (widgetSettings) {
                     this.addCatalogWidget(widgetSettings["catalogFileId"], null, widgetSettings);
                 }
-                return itemId;
+                break;
             case CatalogPlotType.D2Scatter:
                 const scatterProps: CatalogPlotWidgetStoreProps = {
                     xColumnName: "None",
@@ -585,7 +599,7 @@ export class WidgetsStore {
                 itemId = this.addCatalogPlotWidget(scatterProps);
                 const scatterComponentId = this.getNextComponentId(CatalogPlotComponent.WIDGET_CONFIG);
                 CatalogStore.Instance.setCatalogPlots(scatterComponentId, 1, itemId);
-                return itemId;
+                break;
             case CatalogPlotType.Histogram:
                 const histogramProps: CatalogPlotWidgetStoreProps = {
                     xColumnName: "None",
@@ -595,14 +609,16 @@ export class WidgetsStore {
                 itemId = this.addCatalogPlotWidget(histogramProps);
                 const histogramComponentId = this.getNextComponentId(CatalogPlotComponent.WIDGET_CONFIG);
                 CatalogStore.Instance.setCatalogPlots(histogramComponentId, 1, itemId);
-                return itemId;
+                break;
             default:
                 // Remove it from the floating widget array, while preserving its store
                 if (this.floatingWidgets.find(w => w.id === widgetType)) {
                     this.removeFloatingWidget(widgetType, true);
                 }
-                return null;
+                itemId = null;
+                break;
         }
+        return itemId;
     };
 
     public removeFloatingWidgets = () => {

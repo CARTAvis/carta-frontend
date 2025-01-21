@@ -1,6 +1,5 @@
 import * as React from "react";
 import {CSSProperties} from "react";
-import ReactResizeDetector from "react-resize-detector";
 import {FixedSizeList, ListOnItemsRenderedProps} from "react-window";
 import {AnchorButton, ButtonGroup, Classes, Icon, NonIdealState, Position, Spinner, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
@@ -8,6 +7,7 @@ import classNames from "classnames";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
+import {ResizeDetector} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore, BrowserMode, DefaultWidgetConfig, DialogId, DialogStore, FileBrowserStore, HelpType, WidgetProps} from "stores";
 import {FrameStore, RegionsOpacity, RegionStore, WCS_PRECISION} from "stores/Frame";
@@ -176,19 +176,21 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         if (!frame) {
             return (
-                <div className="region-list-widget">
-                    <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
-                    <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} />
-                </div>
+                <ResizeDetector onResize={this.onResize}>
+                    <div className="region-list-widget">
+                        <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
+                    </div>
+                </ResizeDetector>
             );
         }
 
         if (appStore.fileBrowserStore.isLoadingDialogOpen) {
             return (
-                <div className="region-list-widget">
-                    <NonIdealState icon={<Spinner />} title={"Loading regions"} description={"Region list will be shown when regions have been loaded"} />
-                    <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} />
-                </div>
+                <ResizeDetector onResize={this.onResize}>
+                    <div className="region-list-widget">
+                        <NonIdealState icon={<Spinner />} title={"Loading regions"} description={"Region list will be shown when regions have been loaded"} />
+                    </div>
+                </ResizeDetector>
             );
         }
 
@@ -454,25 +456,26 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         };
 
         return (
-            <div className="region-list-widget">
-                <div className={classNames("region-list-table", {[Classes.DARK]: darkTheme})} data-testid="region-list-table">
-                    <FixedSizeList itemSize={RegionListComponent.HEADER_ROW_HEIGHT} height={RegionListComponent.HEADER_ROW_HEIGHT} itemCount={1} width="100%" className="list-header">
-                        {headerRenderer(this.regionsVisibility, this.regionsLock)}
-                    </FixedSizeList>
-                    <FixedSizeList
-                        onItemsRendered={this.onListRendered}
-                        height={tableHeight - RegionListComponent.HEADER_ROW_HEIGHT - padding * 2}
-                        itemCount={this.validRegions.length}
-                        itemSize={RegionListComponent.ROW_HEIGHT}
-                        width="100%"
-                        ref={this.listRef}
-                    >
-                        {rowRenderer}
-                    </FixedSizeList>
+            <ResizeDetector onResize={this.onResize}>
+                <div className="region-list-widget">
+                    <div className={classNames("region-list-table", {[Classes.DARK]: darkTheme})} data-testid="region-list-table">
+                        <FixedSizeList itemSize={RegionListComponent.HEADER_ROW_HEIGHT} height={RegionListComponent.HEADER_ROW_HEIGHT} itemCount={1} width="100%" className="list-header">
+                            {headerRenderer(this.regionsVisibility, this.regionsLock)}
+                        </FixedSizeList>
+                        <FixedSizeList
+                            onItemsRendered={this.onListRendered}
+                            height={tableHeight - RegionListComponent.HEADER_ROW_HEIGHT - padding * 2}
+                            itemCount={this.validRegions.length}
+                            itemSize={RegionListComponent.ROW_HEIGHT}
+                            width="100%"
+                            ref={this.listRef}
+                        >
+                            {rowRenderer}
+                        </FixedSizeList>
+                    </div>
+                    {floatRenderer()}
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} />
-                {floatRenderer()}
-            </div>
+            </ResizeDetector>
         );
     }
 }

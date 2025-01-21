@@ -1,12 +1,12 @@
 import * as React from "react";
-import {createRoot} from "react-dom/client";
-import ReactResizeDetector from "react-resize-detector";
 import {Alert, Button, Classes, Intent} from "@blueprintjs/core";
+import {createRoot} from "react-dom/client";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {FloatingWidgetManagerComponent, ImageViewComponent, UIControllerComponent} from "components";
 import {TaskProgressDialogComponent} from "components/Dialogs";
+import {ResizeDetector} from "components/Shared";
 import {ApiService} from "services";
 import {AlertStore, AlertType, AppStore} from "stores";
 
@@ -29,6 +29,8 @@ const PipRenderer = observer(() => {
 
 @observer
 export class App extends React.Component {
+    private appContainerRef: React.MutableRefObject<HTMLDivElement | null> = React.createRef<HTMLDivElement>();
+
     // GoldenLayout resize handler
     onContainerResize = (width, height) => {
         const appStore = AppStore.Instance;
@@ -87,6 +89,11 @@ export class App extends React.Component {
         }
     };
 
+    private setAppContainerRef = (ref: HTMLDivElement | null) => {
+        this.appContainerRef.current = ref;
+        AppStore.Instance.setAppContainer(ref);
+    };
+
     async openWindow() {
         const appStore = AppStore.Instance;
         const pipWindow = await appStore.layoutStore.activatePip();
@@ -119,9 +126,9 @@ export class App extends React.Component {
                     cancellable={false}
                     text={appStore.resumingSession ? "Resuming session..." : "Loading workspace..."}
                 />
-                <div className={glClassName} ref={ref => appStore.setAppContainer(ref)}>
-                    <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize} refreshMode={"throttle"} refreshRate={200}></ReactResizeDetector>
-                </div>
+                <ResizeDetector onResize={this.onContainerResize} throttleTime={200} targetRef={this.appContainerRef}>
+                    <div className={glClassName} ref={this.setAppContainerRef} />
+                </ResizeDetector>
                 <HotkeyTargetContainer />
                 <FloatingWidgetManagerComponent />
             </div>

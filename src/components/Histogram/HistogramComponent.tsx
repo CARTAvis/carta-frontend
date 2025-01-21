@@ -1,9 +1,8 @@
 import * as React from "react";
-import ReactResizeDetector from "react-resize-detector";
 import {NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
@@ -37,9 +36,6 @@ export class HistogramComponent extends React.Component<WidgetProps> {
 
     private cachedFrame: FrameStore;
     private currentLinePlotProps: LinePlotComponentProps;
-
-    @observable width: number;
-    @observable height: number;
 
     @computed get widgetStore(): HistogramWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
@@ -190,11 +186,6 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             this.widgetStore.clearXYBounds();
         }
     }
-
-    @action onResize = (width: number, height: number) => {
-        this.width = width;
-        this.height = height;
-    };
 
     onGraphCursorMoved = _.throttle(x => {
         this.widgetStore.setCursor(x);
@@ -349,7 +340,6 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                         <ProfilerInfoComponent info={this.genProfilerInfo(unit)} />
                     </div>
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}></ReactResizeDetector>
             </div>
         );
     }
