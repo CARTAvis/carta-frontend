@@ -1724,10 +1724,10 @@ export class AppStore {
                 const reqView = frame.requiredFrameView;
 
                 const croppedReq: FrameView = {
-                    xMin: Math.max(0, reqView.xMin),
-                    xMax: Math.min(frame.frameInfo.fileInfoExtended.width, reqView.xMax),
-                    yMin: Math.max(0, reqView.yMin),
-                    yMax: Math.min(frame.frameInfo.fileInfoExtended.height, reqView.yMax),
+                    xMin: Math.max(-0.5, reqView.xMin),
+                    xMax: Math.min(frame.frameInfo.fileInfoExtended.width - 0.5, reqView.xMax),
+                    yMin: Math.max(-0.5, reqView.yMin),
+                    yMax: Math.min(frame.frameInfo.fileInfoExtended.height - 0.5, reqView.yMax),
                     mip: reqView.mip
                 };
                 const imageSize: Point2D = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
@@ -1972,11 +1972,11 @@ export class AppStore {
                 const viewUpdates: ViewUpdate[] = [];
                 for (const frame of this.imageViewConfigStore.visibleFrames) {
                     const reqView = frame.requiredFrameView;
-                    let croppedReq: FrameView = {
-                        xMin: Math.max(0, reqView.xMin),
-                        xMax: Math.min(frame.frameInfo.fileInfoExtended.width, reqView.xMax),
-                        yMin: Math.max(0, reqView.yMin),
-                        yMax: Math.min(frame.frameInfo.fileInfoExtended.height, reqView.yMax),
+                    const croppedReq: FrameView = {
+                        xMin: Math.max(-0.5, reqView.xMin),
+                        xMax: Math.min(frame.frameInfo.fileInfoExtended.width - 0.5, reqView.xMax),
+                        yMin: Math.max(-0.5, reqView.yMin),
+                        yMax: Math.min(frame.frameInfo.fileInfoExtended.height - 0.5, reqView.yMax),
                         mip: reqView.mip
                     };
 
