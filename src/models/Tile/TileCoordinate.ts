@@ -60,7 +60,7 @@ export class TileCoordinate {
     }
 
     public static GetFileId(encodedCoordinateWithFileIdAndChannel: bigint): number {
-        return Math.floor(Number(encodedCoordinateWithFileIdAndChannel / TileCoordinate.FileIdOffset));
+        return Number((encodedCoordinateWithFileIdAndChannel >> BigInt(32)) & BigInt("0xFFFF"));
     }
 
     public static GetChannel(encodedCoordinateWithFileIdAndChannel: bigint): number {

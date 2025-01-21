@@ -28,7 +28,9 @@ test("returns identical round trip coordinates", () => {
         const encodedValWithId = TileCoordinate.AddFileIdAndChannel(coordinate.encode(), id, channel);
         const roundTripCoordinateWithId = TileCoordinate.Decode(TileCoordinate.RemoveFileIdAndChannel(encodedValWithId));
         const roundTripId = TileCoordinate.GetFileId(encodedValWithId);
+        const roundTripChannel = TileCoordinate.GetChannel(encodedValWithId);
         expect(roundTripCoordinateWithId).toEqual(coordinate);
+        expect(roundTripChannel).toEqual(channel);
         expect(roundTripId).toEqual(id);
     }
 });
