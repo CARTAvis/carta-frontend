@@ -1,10 +1,9 @@
 import * as React from "react";
-import ReactResizeDetector from "react-resize-detector";
 import SplitPane, {Pane} from "react-split-pane";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import classNames from "classnames";
 import * as _ from "lodash";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, PlotType, SmoothingType} from "components/Shared";
@@ -37,9 +36,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             helpType: HelpType.SPECTRAL_PROFILER
         };
     }
-
-    @observable width: number;
-    @observable height: number;
 
     @computed get widgetStore(): SpectralProfileWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
@@ -95,11 +91,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             appStore.widgetsStore.setWidgetTitle(this.props.id, title);
         });
     }
-
-    @action private onResize = (width: number, height: number) => {
-        this.width = width;
-        this.height = height;
-    };
 
     onChannelChanged = (x: number) => {
         const frame = this.widgetStore.effectiveFrame;
@@ -557,7 +548,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         </Pane>
                     </SplitPane>
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33} />
             </div>
         );
     }

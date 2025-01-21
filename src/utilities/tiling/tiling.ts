@@ -58,7 +58,7 @@ export function GetRequiredTiles(frameView: FrameView, imageSize: Point2D, tileS
     }
 
     // Check if view is out of image range
-    if (frameView.xMax < 0 || frameView.xMin > imageSize.x || frameView.yMax < 0 || frameView.yMin > imageSize.y) {
+    if (frameView.xMax < -0.5 || frameView.xMin > imageSize.x - 0.5 || frameView.yMax < -0.5 || frameView.yMin > imageSize.y - 0.5) {
         return [];
     }
 
@@ -68,10 +68,10 @@ export function GetRequiredTiles(frameView: FrameView, imageSize: Point2D, tileS
     }
 
     const boundedFrameView: FrameView = {
-        xMin: Math.max(0, frameView.xMin),
-        xMax: Math.min(frameView.xMax, imageSize.x),
-        yMin: Math.max(0, frameView.yMin),
-        yMax: Math.min(frameView.yMax, imageSize.y),
+        xMin: Math.max(-0.5, frameView.xMin),
+        xMax: Math.min(frameView.xMax, imageSize.x - 0.5),
+        yMin: Math.max(-0.5, frameView.yMin),
+        yMax: Math.min(frameView.yMax, imageSize.y - 0.5),
         mip: frameView.mip
     };
 
@@ -80,10 +80,10 @@ export function GetRequiredTiles(frameView: FrameView, imageSize: Point2D, tileS
         y: frameView.mip * tileSize.y
     };
 
-    const xStart = Math.floor(boundedFrameView.xMin / adjustedTileSize.x);
-    const xEnd = Math.ceil(boundedFrameView.xMax / adjustedTileSize.x);
-    const yStart = Math.floor(boundedFrameView.yMin / adjustedTileSize.y);
-    const yEnd = Math.ceil(boundedFrameView.yMax / adjustedTileSize.y);
+    const xStart = Math.floor((boundedFrameView.xMin + 0.5) / adjustedTileSize.x);
+    const xEnd = Math.ceil((boundedFrameView.xMax + 0.5) / adjustedTileSize.x);
+    const yStart = Math.floor((boundedFrameView.yMin + 0.5) / adjustedTileSize.y);
+    const yEnd = Math.ceil((boundedFrameView.yMax + 0.5) / adjustedTileSize.y);
 
     const numTilesX = xEnd - xStart;
     const numTilesY = yEnd - yStart;
