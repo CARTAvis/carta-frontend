@@ -102,7 +102,6 @@ export class AppStore {
     // Backend services
     readonly backendService: BackendService;
     readonly tileService: TileService;
-    // readonly channelMapTileService: ChannelMapTileService;
     readonly scriptingService: ScriptingService;
     readonly apiService: ApiService;
     readonly telemetryService: TelemetryService;
@@ -1794,7 +1793,6 @@ export class AppStore {
                 await this.snippetStore.fetchSnippets();
 
                 this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
-                // this.channelMapTileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
                 if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
                     AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
                     this.layoutStore.applyLayout(PresetLayout.DEFAULT);
@@ -3289,7 +3287,6 @@ export class AppStore {
         }
     };
 
-    // Is this method still being used? Probably for python scripting?
     getImageDataUrl = (backgroundColor: string) => {
         if (this.activeFrame) {
             const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);

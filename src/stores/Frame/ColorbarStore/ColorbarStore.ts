@@ -1,6 +1,6 @@
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {AppStore, OverlayStore} from "stores";
+import {OverlayStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {clamp} from "utilities";
 
@@ -12,7 +12,7 @@ export class ColorbarStore {
     constructor(frame: FrameStore) {
         makeObservable(this);
         this.frame = frame;
-        this.overlayStore = AppStore.Instance.overlayStore;
+        this.overlayStore = OverlayStore.Instance;
     }
 
     @action setHeight = (height: number) => {

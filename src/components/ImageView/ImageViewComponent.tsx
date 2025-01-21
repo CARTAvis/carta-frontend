@@ -206,7 +206,6 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         } else if (!appStore.astReady) {
             divContents = <NonIdealState icon={<Spinner className="astLoadingSpinner" />} title={"Loading AST Library"} />;
         } else {
-            // need to update here, should not use visibleFrames
             const effectiveImageSize = {x: Math.floor(appStore.overlayStore.renderWidth), y: Math.floor(appStore.overlayStore.renderHeight)};
             const ratio = effectiveImageSize.x / effectiveImageSize.y;
             const gridSize = {x: config.numImageColumns, y: config.numImageRows};

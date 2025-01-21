@@ -236,7 +236,7 @@ export class WidgetsStore {
             WidgetType.ChannelMapControl,
             {
                 isCustomIcon: false,
-                icon: "star",
+                icon: "heat-grid",
                 onClick: () => WidgetsStore.Instance.createFloatingChannelMapControlWidget(),
                 widgetConfig: ChannelMapControlComponent.WIDGET_CONFIG
             }
@@ -927,9 +927,7 @@ export class WidgetsStore {
     onImagePanelButtonClick = () => {
         const channelMapStore = AppStore.Instance.channelMapStore;
         if (channelMapStore.channelMapEnabled) {
-            AppStore.Instance.overlayStore.setIsChannelMap(false);
             channelMapStore.setChannelMapEnabled(false);
-            // active frame may need to send a setChannel (with channelMapEnabled field as false) request so the frontend can backend can clear the channel map data
         } else {
             this.setImageMultiPanelEnabled(!PreferenceStore.Instance.imageMultiPanelEnabled);
         }
@@ -938,7 +936,6 @@ export class WidgetsStore {
     onChannelMapButtonClick = () => {
         const channelMapStore = AppStore.Instance.channelMapStore;
         channelMapStore.setChannelMapEnabled(true);
-        AppStore.Instance.overlayStore.setIsChannelMap(true);
     };
 
     setImageMultiPanelEnabled = (multiPanelEnabled: boolean) => {

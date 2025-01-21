@@ -84,7 +84,7 @@ export class RegionDialogComponent extends React.Component {
             switch (region.regionType) {
                 case CARTA.RegionType.POINT:
                 case CARTA.RegionType.ANNPOINT:
-                    configurationPanel = <PointRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
+                    configurationPanel = <PointRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
                     editableRegion = true;
                     break;
                 case CARTA.RegionType.RECTANGLE:

@@ -8,11 +8,11 @@ import {observer} from "mobx-react";
 import {CoordinateComponent, CoordNumericInput, InputType} from "components/Shared";
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
-import {CoordinateMode, FrameStore, PointAnnotationStore, RegionStore} from "stores/Frame";
+import {CoordinateMode, PointAnnotationStore, RegionStore} from "stores/Frame";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
 @observer
-export class PointRegionForm extends React.Component<{region: RegionStore; frame: FrameStore; wcsInfo: AST.FrameSet}> {
+export class PointRegionForm extends React.Component<{region: RegionStore; wcsInfo: AST.FrameSet}> {
     private static readonly REGION_PIXEL_EPS = 1.0e-3;
 
     @computed get centerWCS(): WCSPoint2D {

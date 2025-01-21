@@ -1009,14 +1009,12 @@ export class OverlayStore {
     @observable visible: boolean = true;
 
     // View size options
-    @observable _fullViewWidth: number;
-    @observable _fullViewHeight: number;
+    @observable fullViewWidth: number;
+    @observable fullViewHeight: number;
     @observable base: number;
     @observable defaultGap: number;
-    @observable isChannelMap: boolean;
 
     // Individual settings
-    // @observable imageViewerSettingStore: ImageViewerSettingStore;
     @observable global: OverlayGlobalSettings;
     @observable title: OverlayTitleSettings;
     @observable grid: OverlayGridSettings;
@@ -1040,8 +1038,8 @@ export class OverlayStore {
         this.ticks = new OverlayTickSettings();
         this.colorbar = new OverlayColorbarSettings();
         this.beam = new OverlayBeamSettings();
-        this._fullViewWidth = fullViewWidth;
-        this._fullViewHeight = fullViewHeight;
+        this.fullViewWidth = fullViewWidth;
+        this.fullViewHeight = fullViewHeight;
         this.base = base;
         this.defaultGap = defaultGap;
 
@@ -1074,13 +1072,6 @@ export class OverlayStore {
         });
     }
 
-    @computed get fullViewWidth() {
-        return this._fullViewWidth;
-    }
-
-    @computed get fullViewHeight() {
-        return this._fullViewHeight;
-    }
     /**
      * Hide or show the overlay.
      * @param visible - Visibility of the overlay.
@@ -1090,8 +1081,8 @@ export class OverlayStore {
     }
 
     @action setViewDimension = (width: number, height: number) => {
-        this._fullViewWidth = width;
-        this._fullViewHeight = height;
+        this.fullViewWidth = width;
+        this.fullViewHeight = height;
     };
 
     @action setBase = (base: number) => {
@@ -1100,10 +1091,6 @@ export class OverlayStore {
 
     @action setDefaultGap = (defaultGap: number) => {
         this.defaultGap = defaultGap;
-    };
-
-    @action setIsChannelMap = (isChannelMap: boolean) => {
-        this.isChannelMap = isChannelMap;
     };
 
     @action setFormatsFromSystem() {
@@ -1373,14 +1360,6 @@ export class OverlayStore {
         };
     }
 
-    @computed get isWcsCoordinates() {
-        return this.global.explicitSystem !== SystemType.Image;
-    }
-
-    @computed get isImgCoordinates() {
-        return this.global.explicitSystem === SystemType.Image;
-    }
-
     @computed get previewRenderWidth() {
         return (viewWidth: number) => {
             if (!viewWidth) {
@@ -1399,5 +1378,13 @@ export class OverlayStore {
             const renderHeight = viewHeight - this.paddingTop - this.paddingBottom;
             return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
         };
+    }
+
+    @computed get isWcsCoordinates() {
+        return this.global.explicitSystem !== SystemType.Image;
+    }
+
+    @computed get isImgCoordinates() {
+        return this.global.explicitSystem === SystemType.Image;
     }
 }

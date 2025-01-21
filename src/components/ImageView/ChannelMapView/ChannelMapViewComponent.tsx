@@ -20,7 +20,7 @@ export class ChannelMapViewComponentProps {
     frame: FrameStore;
     docked: boolean;
     channelMapStore: ChannelMapStore;
-    renderWidth: number; // width/height of the area where channel map is showing
+    renderWidth: number;
     renderHeight: number;
 }
 
@@ -92,13 +92,11 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
             width += overlayStore.paddingLeft;
             height += overlayStore.paddingBottom;
             overlayComponentLeft -= overlayStore.paddingLeft;
-            // imageLeft += overlayStore.paddingLeft;
         } else if (column === 0) {
             thisIs = "left";
             width += overlayStore.paddingLeft;
             height += overlayStore.base;
             overlayComponentLeft -= overlayStore.paddingLeft;
-            // imageLeft += overlayStore.paddingLeft;
         } else if (row === channelMapStore.numRows - 1 || row === lastRow || (row === lastRow - 1 && column > columnOfLastFrame)) {
             thisIs = "bottom";
             width += overlayStore.base;
@@ -156,8 +154,6 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         <div id={`image-panel`} key={"channel-map"} onMouseOver={onMouseEnter} onMouseLeave={onMouseLeave}>
             <div
                 style={{
-                    // top: overlayStore.paddingTop,
-                    // left: overlayStore.paddingLeft,
                     width: channelMapViewWidth,
                     height: channelMapViewHeight,
                     position: "absolute"
@@ -354,9 +350,8 @@ const ChannelMapInnerOverlayComponent = observer(
 
         const throttledDraw = _.throttle(draw, 50);
 
-        React.useEffect(() => {
-            throttledDraw();
-        }, [
+        const dependencies = [
+            throttledDraw,
             overlayComponentRef,
             width,
             height,
@@ -399,7 +394,11 @@ const ChannelMapInnerOverlayComponent = observer(
             overlayStore.axes.styleString,
             overlayStore.numbers.styleString,
             overlayStore.labels.styleString
-        ]);
+        ];
+
+        React.useEffect(() => {
+            throttledDraw();
+        }, dependencies);
 
         return (
             <>

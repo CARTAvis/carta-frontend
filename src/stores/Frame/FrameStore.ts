@@ -37,7 +37,7 @@ import {
     ZoomPoint
 } from "models";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE, TileService} from "services";
-import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore, SystemType} from "stores";
+import {AnimatorStore, AppStore, ASTSettingsString, LogStore, PreferenceStore, SystemType} from "stores";
 import {
     CENTER_POINT_INDEX,
     ColorbarStore,
@@ -111,8 +111,6 @@ export class FrameStore {
     private readonly catalogControlMaps: Map<FrameStore, CatalogControlMap>;
     private readonly framePixelRatio: number;
     private readonly backendService: BackendService;
-    public readonly _overlayStore: OverlayStore;
-    public readonly channelMapOverlayStore: OverlayStore;
     private readonly logStore: LogStore;
     private readonly initialCenter: Point2D;
     public readonly pixelUnitSizeArcsec: Point2D;
@@ -289,7 +287,7 @@ export class FrameStore {
         };
     }
 
-    @computed get requiredFrameView() {
+    @computed get requiredFrameView(): FrameView {
         // use spatial reference frame to calculate frame view, if it exists
         if (this.spatialReference) {
             // Required view of reference frame
@@ -337,7 +335,6 @@ export class FrameStore {
             const mipLog2 = Math.log2(mipExact);
             const mipLog2Rounded = Math.round(mipLog2);
             const mipRoundedPow2 = Math.pow(2, mipLog2Rounded);
-            console.log(imageWidth, imageHeight, this.center);
             return {
                 xMin: this.center.x - imageWidth / 2.0,
                 xMax: this.center.x + imageWidth / 2.0,
@@ -1224,7 +1221,6 @@ export class FrameStore {
 
     constructor(frameInfo: FrameInfo) {
         makeObservable(this);
-        this._overlayStore = AppStore.Instance.overlayStore;
         this.logStore = LogStore.Instance;
         this.backendService = BackendService.Instance;
         const preferenceStore = PreferenceStore.Instance;
