@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added support for loading remote FITS files from the hips2fits server ([#1379](https://github.com/CARTAvis/carta-backend/issues/1379)).
 * Supported the customized rest frequency for the moment maps ([#2396](https://github.com/CARTAvis/carta-frontend/issues/2396)).
 * Supported image coordinates for images with valid WCS headers ([#2366](https://github.com/CARTAvis/carta-frontend/issues/2366)).
+* Supported plotting with unit wavelength ^ 2 in z profile and Stokes analysis widgets ([#1685](https://github.com/CARTAvis/carta-frontend/issues/1685)).
 ### Fixed
 * Fixed ruler annotation matching bug ([#2242](https://github.com/CARTAvis/carta-frontend/issues/2242)).
 * Fixed compass and ruler annotations update bug in the spatially matched image when changing the coordinate ([#2270](https://github.com/CARTAvis/carta-frontend/issues/2270)).
