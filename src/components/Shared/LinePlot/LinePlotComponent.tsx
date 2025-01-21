@@ -3,6 +3,7 @@ import {Arrow, Group, Layer, Line, Rect, Stage, Text} from "react-konva";
 import ReactResizeDetector from "react-resize-detector";
 import {Colors} from "@blueprintjs/core";
 import {Chart, ChartArea, Tick} from "chart.js";
+import Konva from "konva";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
@@ -317,23 +318,21 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         this.isMarkerDragging = false;
     };
 
-    onMarkerDragged = (ev, marker: LineMarker) => {
+    onMarkerDragged = (ev: Konva.KonvaEventObject<DragEvent>, marker: LineMarker) => {
         if (this.props.markers) {
             if (marker && marker.dragMove) {
                 let newPositionDataSpace;
                 if (marker.horizontal) {
-                    // Prevent dragging out of canvas space
-                    newPositionDataSpace = this.getValueForPixelY(clamp(ev.evt.offsetY, this.chartArea.top, this.chartArea.bottom), this.props.logY);
+                    newPositionDataSpace = this.getValueForPixelY(ev.target.getAbsolutePosition().y, this.props.logY);
                 } else {
-                    // Prevent dragging out of canvas space
-                    newPositionDataSpace = this.getValueForPixelX(clamp(ev.evt.offsetX, this.chartArea.left, this.chartArea.right));
+                    newPositionDataSpace = this.getValueForPixelX(ev.target.getAbsolutePosition().x);
                 }
                 marker.dragMove(newPositionDataSpace);
             }
         }
         // Cursor move updates
         if (this.props.graphCursorMoved) {
-            const cursorPosGraphSpace = this.getValueForPixelX(ev.evt.offsetX);
+            const cursorPosGraphSpace = this.getValueForPixelX(ev.target.getAbsolutePosition().x);
             this.props.graphCursorMoved(cursorPosGraphSpace);
         }
     };
