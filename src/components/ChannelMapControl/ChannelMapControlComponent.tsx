@@ -1,10 +1,9 @@
 import * as React from "react";
-import ReactResizeDetector from "react-resize-detector";
 import {Button, ButtonGroup, Checkbox, FormGroup, HTMLSelect, NonIdealState, Position, Slider, Switch, Tooltip} from "@blueprintjs/core";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {SafeNumericInput} from "components/Shared";
+import {ResizeDetector, SafeNumericInput} from "components/Shared";
 import {AppStore, DefaultWidgetConfig, WidgetProps} from "stores";
 
 import "./ChannelMapControlComponent.scss";
@@ -158,18 +157,19 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
         );
 
         return (
-            <div className="channel-map-control-containers">
-                {!appStore.channelMapStore.channelMapEnabled && <NonIdealState icon={"folder-open"} title={"Channel map not enabled"} description={"Enable channel map using the menu"} />}
-                {appStore.channelMapStore.channelMapEnabled &&
-                    activeFrame &&
-                    this.width > 0 && ( // temporary fix for broken range slider, issue #1078
-                        <div className="channel-map-sliders">
-                            {appStore.channelMapStore.channelMapEnabled && appStore.channelMapStore.masterFrame && channelMapControl}
-                            {appStore.channelMapStore.channelMapEnabled && appStore.channelMapStore.masterFrame && channelMapPanel}
-                        </div>
-                    )}
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
-            </div>
+            <ResizeDetector onResize={this.onResize} throttleTime={33}>
+                <div className="channel-map-control-containers">
+                    {!appStore.channelMapStore.channelMapEnabled && <NonIdealState icon={"folder-open"} title={"Channel map not enabled"} description={"Enable channel map using the menu"} />}
+                    {appStore.channelMapStore.channelMapEnabled &&
+                        activeFrame &&
+                        this.width > 0 && ( // temporary fix for broken range slider, issue #1078
+                            <div className="channel-map-sliders">
+                                {appStore.channelMapStore.channelMapEnabled && appStore.channelMapStore.masterFrame && channelMapControl}
+                                {appStore.channelMapStore.channelMapEnabled && appStore.channelMapStore.masterFrame && channelMapPanel}
+                            </div>
+                        )}
+                </div>
+            </ResizeDetector>
         );
     }
 }
