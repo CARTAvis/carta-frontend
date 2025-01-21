@@ -350,10 +350,10 @@ export class FrameStore {
         const reqView = this.requiredFrameView;
 
         const croppedReq: FrameView = {
-            xMin: Math.max(0, reqView.xMin),
-            xMax: Math.min(this.frameInfo.fileInfoExtended.width, reqView.xMax),
-            yMin: Math.max(0, reqView.yMin),
-            yMax: Math.min(this.frameInfo.fileInfoExtended.height, reqView.yMax),
+            xMin: Math.max(-0.5, reqView.xMin),
+            xMax: Math.min(this.frameInfo.fileInfoExtended.width - 0.5, reqView.xMax),
+            yMin: Math.max(-0.5, reqView.yMin),
+            yMax: Math.min(this.frameInfo.fileInfoExtended.height - 0.5, reqView.yMax),
             mip: reqView.mip
         };
         const imageSize: Point2D = {x: this.frameInfo.fileInfoExtended.width, y: this.frameInfo.fileInfoExtended.height};
