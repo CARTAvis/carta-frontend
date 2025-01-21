@@ -350,7 +350,9 @@ const ChannelMapInnerOverlayComponent = observer(
 
         const throttledDraw = _.throttle(draw, 50);
 
-        const dependencies = [
+        React.useEffect(() => {
+            throttledDraw();
+        }, [
             throttledDraw,
             overlayComponentRef,
             width,
@@ -394,11 +396,7 @@ const ChannelMapInnerOverlayComponent = observer(
             overlayStore.axes.styleString,
             overlayStore.numbers.styleString,
             overlayStore.labels.styleString
-        ];
-
-        React.useEffect(() => {
-            throttledDraw();
-        }, dependencies);
+        ]);
 
         return (
             <>
