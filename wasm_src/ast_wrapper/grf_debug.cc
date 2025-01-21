@@ -55,7 +55,7 @@ void applyFont(int primType)
 
     EM_ASM_({
         var font = Module.fonts[$0];
-        font = font.replace("{size}", $1 * devicePixelRatio + "px");
+        font = font.replace("{size}", $1 * app.imagePixelRatio + "px");
         Module.gridContext.font = font;
     }, index, height);
 }
@@ -359,7 +359,7 @@ int astGBBuf(void)
     numColors = EM_ASM_INT({return Module.colors.length;});
     numFonts = EM_ASM_INT({return Module.fonts.length;});
     EM_ASM_({
-        Module.gridContext.lineWidth = $0 * devicePixelRatio;
+        Module.gridContext.lineWidth = $0 * app.imagePixelRatio;
         Module.gridContext.font = Module.fonts[0];
         Module.gridContext.clearRect(0, 0, Module.gridContext.canvas.width, Module.gridContext.canvas.height);
     }, lineThickness);

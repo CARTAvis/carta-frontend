@@ -1,5 +1,5 @@
 import * as GoldenLayout from "golden-layout";
-import {action, computed, flow, makeObservable, observable, runInAction} from "mobx";
+import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
 import {LayoutConfig, PresetLayout} from "models";
@@ -27,17 +27,9 @@ export class LayoutStore {
     @observable private readonly layouts: any;
     @observable supportsServer: boolean;
     @observable oldLayoutName: string | undefined;
-    @observable pipActive: boolean;
-    public pipRef: Window | undefined;
 
     @computed get isSave(): boolean {
         return !this.oldLayoutName;
-    }
-
-    get canUsePip(): boolean {
-        // @ts-ignore
-        const documentPictureInPicture = window.documentPictureInPicture;
-        return !!documentPictureInPicture;
     }
 
     private constructor() {
@@ -46,68 +38,8 @@ export class LayoutStore {
         this.layouts = {};
         this.supportsServer = false;
         this.oldLayoutName = "";
-        this.pipActive = false;
         this.initLayoutsFromPresets();
     }
-
-    // Note: we can't run this as a flow, because `requestWindow` requires user activation and can't be run as a callback
-    activatePip = async () => {
-        const appStore = AppStore.Instance;
-        if (this.pipActive) {
-            return undefined;
-        }
-
-        try {
-            // @ts-ignore
-            const pipWindow: Window = await window.documentPictureInPicture.requestWindow({
-                width: appStore.overlayStore.viewWidth,
-                height: appStore.overlayStore.viewHeight
-            });
-
-            const pipDiv = pipWindow.document.createElement("div");
-
-            // Copy style sheets over from the initial document
-            // so that the player looks the same.
-            [...document.styleSheets].forEach(styleSheet => {
-                try {
-                    const cssRules = [...styleSheet.cssRules].map(rule => rule.cssText).join("");
-                    const style = document.createElement("style");
-
-                    style.textContent = cssRules;
-                    pipWindow.document.head.appendChild(style);
-                } catch (e) {
-                    const link = document.createElement("link");
-
-                    link.rel = "stylesheet";
-                    link.type = styleSheet.type;
-                    // @ts-ignore
-                    link.media = styleSheet.media;
-                    // @ts-ignore
-                    link.href = styleSheet.href;
-                    pipWindow.document.head.appendChild(link);
-                }
-            });
-
-            pipDiv.setAttribute("id", "pip-root");
-            pipWindow.document.body.append(pipDiv);
-            pipWindow.addEventListener("pagehide", this.disablePip);
-
-            runInAction(() => {
-                this.pipActive = true;
-                this.pipRef = pipWindow;
-            });
-            return pipWindow;
-        } catch (error) {
-            console.warn(error);
-            return undefined;
-        }
-    };
-
-    @action disablePip = () => {
-        this.pipRef?.close();
-        this.pipActive = false;
-        this.pipRef = undefined;
-    };
 
     public layoutExists = (layoutName: string): boolean => {
         return layoutName.length > 0 && this.allLayoutNames.includes(layoutName);

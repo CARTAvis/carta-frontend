@@ -96,7 +96,7 @@ export class App extends React.Component {
 
     async openWindow() {
         const appStore = AppStore.Instance;
-        const pipWindow = await appStore.layoutStore.activatePip();
+        const pipWindow = await appStore.activatePip();
         if (pipWindow) {
             const root = createRoot(pipWindow.document.getElementById("pip-root") as HTMLElement);
             root.render(<PipRenderer />);
@@ -112,7 +112,7 @@ export class App extends React.Component {
 
         return (
             <div className={className}>
-                {appStore.layoutStore.canUsePip && !appStore.layoutStore.pipActive && (
+                {appStore.canUsePip && !appStore.pipActive && (
                     <div className="pip-button">
                         <Button icon="trophy" onClick={this.openWindow} />
                     </div>

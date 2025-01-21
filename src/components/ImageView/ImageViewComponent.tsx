@@ -134,10 +134,12 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     @observable showRatioIndicator: boolean = false;
 
     @computed get isDisabled() {
-        return this.props.docked && AppStore.Instance.layoutStore.pipActive;
+        return this.props.docked && AppStore.Instance.pipActive;
     }
 
     onResize = (width: number, height: number) => {
+        console.debug(`Resized to ${width}x${height}`);
+
         if (!this.isDisabled && width > 0 && height > 0) {
             const appStore = AppStore.Instance;
             const requiresAutoFit = appStore.preferenceStore.zoomMode === Zoom.FIT && appStore.overlayStore.fullViewWidth <= 1 && appStore.overlayStore.fullViewHeight <= 1;
@@ -205,7 +207,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
         let divContents: React.ReactNode | React.ReactNode[];
         if (this.isDisabled) {
-            divContents = <NonIdealState icon={"share"} title={"Image viewer is open in an external window"} action={<Button onClick={appStore.layoutStore.disablePip}>Open here instead</Button>} />;
+            divContents = <NonIdealState icon={"share"} title={"Image viewer is open in an external window"} action={<Button onClick={appStore.disablePip}>Open here instead</Button>} />;
         } else if (!this.panels.length) {
             divContents = <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;
         } else if (!appStore.astReady) {

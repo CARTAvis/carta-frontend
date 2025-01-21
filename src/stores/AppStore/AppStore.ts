@@ -5,7 +5,7 @@ import * as CARTACompute from "carta_computation";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import Long from "long";
-import {action, autorun, computed, flow, makeObservable, observable, ObservableMap, reaction, when} from "mobx";
+import {action, autorun, computed, flow, makeObservable, observable, ObservableMap, reaction, runInAction, when} from "mobx";
 import * as Path from "path-browserify";
 import * as Semver from "semver";
 
@@ -157,7 +157,17 @@ export class AppStore {
     @observable isExportingImage = false;
     @observable private isCanvasUpdated: boolean;
     @observable private mainWindowPixelRatio: number;
+
+    // Picture-in-picture functionality
     @observable private pipPixelRatio: number | undefined;
+    @observable pipActive: boolean;
+    public pipRef: Window | undefined;
+
+    get canUsePip(): boolean {
+        // @ts-ignore
+        const documentPictureInPicture = window.documentPictureInPicture;
+        return !!documentPictureInPicture;
+    }
 
     @computed get imagePixelRatio(): number {
         return this.pipPixelRatio || this.mainWindowPixelRatio;
@@ -1886,6 +1896,7 @@ export class AppStore {
         this.momentToMatch = true;
 
         this.mainWindowPixelRatio = devicePixelRatio;
+        this.pipActive = false;
 
         AST.onReady.then(
             action(() => {
@@ -2134,26 +2145,86 @@ export class AppStore {
         media.addEventListener("change", () => this.handleDevicePixelRatioChange(window));
 
         autorun(() => {
-            if (this.layoutStore.pipActive && this.layoutStore.pipRef) {
+            if (this.pipActive && this.pipRef) {
                 console.log(`adding listener for device pixel ratio changes on pic-in-pic window`);
                 // listen for device pixel ratio changes on pic-in-pic window
-                const mqString = `(resolution: ${this.layoutStore.pipRef.devicePixelRatio}dppx)`;
+                const mqString = `(resolution: ${this.pipRef.devicePixelRatio}dppx)`;
                 console.log(mqString);
-                const media = this.layoutStore.pipRef.matchMedia(mqString);
+                const media = this.pipRef.matchMedia(mqString);
                 const eventHandler = () => {
                     console.log("changed!");
-                    this.handleDevicePixelRatioChange(this.layoutStore.pipRef);
+                    this.handleDevicePixelRatioChange(this.pipRef);
                 };
                 media.addEventListener("change", eventHandler);
 
                 // Remove handler when
-                this.layoutStore.pipRef.addEventListener("pagehide", () => {
+                this.pipRef.addEventListener("pagehide", () => {
                     media.removeEventListener("change", eventHandler);
                     this.pipPixelRatio = undefined;
                 });
             }
         });
     }
+
+    // Note: we can't run this as a flow, because `requestWindow` requires user activation and can't be run as a callback
+    activatePip = async () => {
+        const appStore = AppStore.Instance;
+        if (this.pipActive) {
+            return undefined;
+        }
+
+        try {
+            // @ts-ignore
+            const pipWindow: Window = await window.documentPictureInPicture.requestWindow({
+                width: appStore.overlayStore.viewWidth,
+                height: appStore.overlayStore.viewHeight
+            });
+
+            const pipDiv = pipWindow.document.createElement("div");
+
+            // Copy style sheets over from the initial document
+            // so that the player looks the same.
+            [...document.styleSheets].forEach(styleSheet => {
+                try {
+                    const cssRules = [...styleSheet.cssRules].map(rule => rule.cssText).join("");
+                    const style = document.createElement("style");
+
+                    style.textContent = cssRules;
+                    pipWindow.document.head.appendChild(style);
+                } catch (e) {
+                    const link = document.createElement("link");
+
+                    link.rel = "stylesheet";
+                    link.type = styleSheet.type;
+                    // @ts-ignore
+                    link.media = styleSheet.media;
+                    // @ts-ignore
+                    link.href = styleSheet.href;
+                    pipWindow.document.head.appendChild(link);
+                }
+            });
+
+            pipDiv.setAttribute("id", "pip-root");
+            pipWindow.document.body.append(pipDiv);
+            pipWindow.addEventListener("pagehide", this.disablePip);
+
+            runInAction(() => {
+                this.pipActive = true;
+                this.pipRef = pipWindow;
+                this.pipPixelRatio = pipWindow.devicePixelRatio;
+            });
+            return pipWindow;
+        } catch (error) {
+            console.warn(error);
+            return undefined;
+        }
+    };
+
+    @action disablePip = () => {
+        this.pipRef?.close();
+        this.pipActive = false;
+        this.pipRef = undefined;
+    };
 
     // update devicePixelRatio and make the image size invariant on screen
     @action private handleDevicePixelRatioChange(w: Window) {
