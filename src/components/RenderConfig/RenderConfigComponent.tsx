@@ -1,5 +1,4 @@
 import * as React from "react";
-import ReactResizeDetector from "react-resize-detector";
 import {Button, ButtonGroup, Colors, FormGroup, HTMLSelect, NonIdealState, OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
@@ -7,7 +6,7 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, SafeNumericInput, ScrollShadow} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {ImageType, Point2D} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore, RenderConfigStore} from "stores/Frame";
@@ -259,10 +258,9 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
         if (image.type === ImageType.COLOR_BLENDING) {
             return (
-                <>
+                <ResizeDetector onResize={this.onResize} throttleTime={1000}>
                     <ColorBlendingConfigComponent widgetWidth={this.width} />
-                    <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}></ReactResizeDetector>
-                </>
+                </ResizeDetector>
             );
         }
 
@@ -443,46 +441,61 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         }
 
         return (
-            <div className="render-config-container">
-                {this.width > histogramCutoff && (
-                    <div className="histogram-container">
-                        {displayRankButtons ? percentileButtonsDiv : percentileSelectDiv}
-                        <div className="histogram-plot">
-                            <LinePlotComponent {...linePlotProps} />
-                            {this.width >= histogramCutoff && <ProfilerInfoComponent info={this.genProfilerInfo()} />}
+            <ResizeDetector onResize={this.onResize} throttleTime={1000}>
+                <div className="render-config-container">
+                    {this.width > histogramCutoff && (
+                        <div className="histogram-container">
+                            {displayRankButtons ? percentileButtonsDiv : percentileSelectDiv}
+                            <div className="histogram-plot">
+                                <LinePlotComponent {...linePlotProps} />
+                                {this.width >= histogramCutoff && <ProfilerInfoComponent info={this.genProfilerInfo()} />}
+                            </div>
                         </div>
+                    )}
+                    <div className="options-container">
+                        <ScrollShadow>
+                            <HistogramConfigComponent
+                                darkTheme={appStore.darkTheme}
+                                renderConfig={frame.renderConfig}
+                                onCubeHistogramSelected={this.handleCubeHistogramSelected}
+                                showHistogramSelect={frame.frameInfo.fileInfoExtended.depth > 1}
+                                disableHistogramSelect={appStore.animatorStore.animationActive}
+                                warnOnCubeHistogram={(frame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) === 0}
+                            />
+                            <FormGroup label={"Clip min"} inline={true}>
+                                <SafeNumericInput
+                                    value={frame.renderConfig.scaleMinVal}
+                                    selectAllOnFocus={true}
+                                    buttonPosition={"none"}
+                                    onBlur={this.handleScaleMinChange}
+                                    onKeyDown={this.handleScaleMinChange}
+                                    data-testid="clip-min-input"
+                                />
+                            </FormGroup>
+                            <FormGroup label={"Clip max"} inline={true}>
+                                <SafeNumericInput
+                                    value={frame.renderConfig.scaleMaxVal}
+                                    selectAllOnFocus={true}
+                                    buttonPosition={"none"}
+                                    onBlur={this.handleScaleMaxChange}
+                                    onKeyDown={this.handleScaleMaxChange}
+                                    data-testid="clip-max-input"
+                                />
+                            </FormGroup>
+                            <ColormapConfigComponent renderConfig={frame.renderConfig} />
+                            {this.width < histogramCutoff && percentileSelectDiv}
+                        </ScrollShadow>
                     </div>
-                )}
-                <div className="options-container">
-                    <ScrollShadow>
-                        <HistogramConfigComponent
-                            darkTheme={appStore.darkTheme}
-                            renderConfig={frame.renderConfig}
-                            onCubeHistogramSelected={this.handleCubeHistogramSelected}
-                            showHistogramSelect={frame.frameInfo.fileInfoExtended.depth > 1}
-                            disableHistogramSelect={appStore.animatorStore.animationActive}
-                            warnOnCubeHistogram={(frame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) === 0}
-                        />
-                        <FormGroup label={"Clip min"} inline={true}>
-                            <SafeNumericInput value={frame.renderConfig.scaleMinVal} selectAllOnFocus={true} buttonPosition={"none"} onBlur={this.handleScaleMinChange} onKeyDown={this.handleScaleMinChange} data-testid="clip-min-input" />
-                        </FormGroup>
-                        <FormGroup label={"Clip max"} inline={true}>
-                            <SafeNumericInput value={frame.renderConfig.scaleMaxVal} selectAllOnFocus={true} buttonPosition={"none"} onBlur={this.handleScaleMaxChange} onKeyDown={this.handleScaleMaxChange} data-testid="clip-max-input" />
-                        </FormGroup>
-                        <ColormapConfigComponent renderConfig={frame.renderConfig} />
-                        {this.width < histogramCutoff && percentileSelectDiv}
-                    </ScrollShadow>
+                    <TaskProgressDialogComponent
+                        isOpen={frame.renderConfig.useCubeHistogram && frame.renderConfig.cubeHistogramProgress < 1.0}
+                        progress={frame.renderConfig.cubeHistogramProgress}
+                        timeRemaining={appStore.estimatedTaskRemainingTime}
+                        cancellable={true}
+                        onCancel={this.handleCubeHistogramCancelled}
+                        text={"Calculating cube histogram"}
+                    />
                 </div>
-                <TaskProgressDialogComponent
-                    isOpen={frame.renderConfig.useCubeHistogram && frame.renderConfig.cubeHistogramProgress < 1.0}
-                    progress={frame.renderConfig.cubeHistogramProgress}
-                    timeRemaining={appStore.estimatedTaskRemainingTime}
-                    cancellable={true}
-                    onCancel={this.handleCubeHistogramCancelled}
-                    text={"Calculating cube histogram"}
-                />
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}></ReactResizeDetector>
-            </div>
+            </ResizeDetector>
         );
     }
 }

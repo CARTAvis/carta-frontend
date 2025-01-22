@@ -1,10 +1,10 @@
 import * as React from "react";
-import ReactResizeDetector from "react-resize-detector";
 import {NonIdealState, Spinner} from "@blueprintjs/core";
 import $ from "jquery";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
+import {ResizeDetector} from "components/Shared";
 import {Point2D, Zoom} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, Padding, WidgetProps} from "stores";
 import {toFixed} from "utilities";
@@ -227,11 +227,11 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         }
 
         return (
-            <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
+            <ResizeDetector onResize={this.onResize} throttleTime={33}>
                 <div className="image-view-div" style={{gridTemplateColumns: `repeat(${config.numImageColumns}, auto)`, gridTemplateRows: `repeat(${config.numImageRows}, 1fr)`}} data-testid="viewer-div">
                     {divContents}
                 </div>
-            </ReactResizeDetector>
+            </ResizeDetector>
         );
     }
 }

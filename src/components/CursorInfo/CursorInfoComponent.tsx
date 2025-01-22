@@ -1,11 +1,10 @@
 import * as React from "react";
-import ReactResizeDetector from "react-resize-detector";
 import {NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {SimpleTableComponent} from "components/Shared";
+import {ResizeDetector, SimpleTableComponent} from "components/Shared";
 import {ImageType} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
 import {FrameStore} from "stores/Frame";
@@ -178,24 +177,25 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
         ]);
 
         return (
-            <div className="cursor-info-widget">
-                {this.width > 0 && ( // prevent row index header not rendering
-                    <SimpleTableComponent
-                        dataset={columnsData}
-                        columnHeaders={columnHeaders}
-                        numVisibleRows={imageNum}
-                        columnWidths={this.columnWidths}
-                        onColumnWidthChanged={this.onColumnWidthChanged}
-                        enableGhostCells={false}
-                        defaultRowHeight={40}
-                        isIndexZero={true}
-                        boldIndex={[appStore.activeImageIndex]}
-                        tooltipIndex={0}
-                        cellRendererDependencies={[imageNames, values, systems, worldCoords, imageCoords, zCoords, channels, stokes]}
-                    />
-                )}
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}></ReactResizeDetector>
-            </div>
+            <ResizeDetector onResize={this.onResize}>
+                <div className="cursor-info-widget">
+                    {this.width > 0 && ( // prevent row index header not rendering
+                        <SimpleTableComponent
+                            dataset={columnsData}
+                            columnHeaders={columnHeaders}
+                            numVisibleRows={imageNum}
+                            columnWidths={this.columnWidths}
+                            onColumnWidthChanged={this.onColumnWidthChanged}
+                            enableGhostCells={false}
+                            defaultRowHeight={40}
+                            isIndexZero={true}
+                            boldIndex={[appStore.activeImageIndex]}
+                            tooltipIndex={0}
+                            cellRendererDependencies={[imageNames, values, systems, worldCoords, imageCoords, zCoords, channels, stokes]}
+                        />
+                    )}
+                </div>
+            </ResizeDetector>
         );
     }
 }

@@ -1,13 +1,12 @@
 import * as React from "react";
 import {Arrow, Group, Layer, Line, Rect, Stage, Text} from "react-konva";
-import ReactResizeDetector from "react-resize-detector";
 import {Colors} from "@blueprintjs/core";
 import {Chart, ChartArea, Tick} from "chart.js";
 import Konva from "konva";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {PlotType} from "components/Shared";
+import {PlotType, ResizeDetector} from "components/Shared";
 import {Point2D} from "models";
 import {AppStore} from "stores";
 import {clamp, exportTsvFile, getTimestamp, toExponential} from "utilities";
@@ -1073,41 +1072,42 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     render() {
         return (
-            <div
-                className={"line-plot-component"}
-                style={{cursor: this.cursorShape}}
-                onKeyDown={this.onKeyDown}
-                onMouseEnter={this.onMouseEnter}
-                onMouseMove={this.onMouseMove}
-                onMouseLeave={this.onMouseLeave}
-                tabIndex={0}
-                data-testid="profiler-plot"
-            >
-                <ReactResizeDetector handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
-                {this.width > 0 && this.height > 0 && <PlotContainerComponent {...this.props} plotRefUpdated={this.onPlotRefUpdated} chartAreaUpdated={this.updateChart} width={this.width} height={this.height} />}
-                {this.width > 0 && this.height > 0 && (
-                    <Stage
-                        className={"annotation-stage"}
-                        ref={ref => (this.stageRef = ref)}
-                        width={this.width}
-                        height={this.height}
-                        onMouseDown={this.onStageMouseDown}
-                        onMouseUp={this.onStageMouseUp}
-                        onContextMenu={this.onStageRightClick}
-                        onMouseMove={this.onStageMouseMove}
-                        onWheel={this.onStageWheel}
-                    >
-                        <Layer>
-                            {this.genLines()}
-                            {this.genSelectionRect()}
-                            {this.genInsideBoxes()}
-                            {this.genInsideTexts()}
-                            {this.genBorderRect()}
-                        </Layer>
-                    </Stage>
-                )}
-                {(this.props.data !== undefined || this.props.multiPlotPropsMap?.size > 0) && <ToolbarComponent darkMode={this.props.darkMode} visible={this.isMouseEntered} exportImage={this.exportImage} exportData={this.exportData} />}
-            </div>
+            <ResizeDetector onResize={this.resize} throttleTime={33}>
+                <div
+                    className={"line-plot-component"}
+                    style={{cursor: this.cursorShape}}
+                    onKeyDown={this.onKeyDown}
+                    onMouseEnter={this.onMouseEnter}
+                    onMouseMove={this.onMouseMove}
+                    onMouseLeave={this.onMouseLeave}
+                    tabIndex={0}
+                    data-testid="profiler-plot"
+                >
+                    {this.width > 0 && this.height > 0 && <PlotContainerComponent {...this.props} plotRefUpdated={this.onPlotRefUpdated} chartAreaUpdated={this.updateChart} width={this.width} height={this.height} />}
+                    {this.width > 0 && this.height > 0 && (
+                        <Stage
+                            className={"annotation-stage"}
+                            ref={ref => (this.stageRef = ref)}
+                            width={this.width}
+                            height={this.height}
+                            onMouseDown={this.onStageMouseDown}
+                            onMouseUp={this.onStageMouseUp}
+                            onContextMenu={this.onStageRightClick}
+                            onMouseMove={this.onStageMouseMove}
+                            onWheel={this.onStageWheel}
+                        >
+                            <Layer>
+                                {this.genLines()}
+                                {this.genSelectionRect()}
+                                {this.genInsideBoxes()}
+                                {this.genInsideTexts()}
+                                {this.genBorderRect()}
+                            </Layer>
+                        </Stage>
+                    )}
+                    {(this.props.data !== undefined || this.props.multiPlotPropsMap?.size > 0) && <ToolbarComponent darkMode={this.props.darkMode} visible={this.isMouseEntered} exportImage={this.exportImage} exportData={this.exportData} />}
+                </div>
+            </ResizeDetector>
         );
     }
 }
