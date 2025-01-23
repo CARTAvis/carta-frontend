@@ -454,36 +454,38 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     )}
                     <div className="options-container">
                         <ScrollShadow>
-                            <HistogramConfigComponent
-                                darkTheme={appStore.darkTheme}
-                                renderConfig={frame.renderConfig}
-                                onCubeHistogramSelected={this.handleCubeHistogramSelected}
-                                showHistogramSelect={frame.frameInfo.fileInfoExtended.depth > 1}
-                                disableHistogramSelect={appStore.animatorStore.animationActive}
-                                warnOnCubeHistogram={(frame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) === 0}
-                            />
-                            <FormGroup label={"Clip min"} inline={true}>
-                                <SafeNumericInput
-                                    value={frame.renderConfig.scaleMinVal}
-                                    selectAllOnFocus={true}
-                                    buttonPosition={"none"}
-                                    onBlur={this.handleScaleMinChange}
-                                    onKeyDown={this.handleScaleMinChange}
-                                    data-testid="clip-min-input"
+                            <div className="options-form">
+                                <HistogramConfigComponent
+                                    darkTheme={appStore.darkTheme}
+                                    renderConfig={frame.renderConfig}
+                                    onCubeHistogramSelected={this.handleCubeHistogramSelected}
+                                    showHistogramSelect={frame.frameInfo.fileInfoExtended.depth > 1}
+                                    disableHistogramSelect={appStore.animatorStore.animationActive}
+                                    warnOnCubeHistogram={(frame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) === 0}
                                 />
-                            </FormGroup>
-                            <FormGroup label={"Clip max"} inline={true}>
-                                <SafeNumericInput
-                                    value={frame.renderConfig.scaleMaxVal}
-                                    selectAllOnFocus={true}
-                                    buttonPosition={"none"}
-                                    onBlur={this.handleScaleMaxChange}
-                                    onKeyDown={this.handleScaleMaxChange}
-                                    data-testid="clip-max-input"
-                                />
-                            </FormGroup>
-                            <ColormapConfigComponent renderConfig={frame.renderConfig} />
-                            {this.width < histogramCutoff && percentileSelectDiv}
+                                <FormGroup label={"Clip min"} inline={true}>
+                                    <SafeNumericInput
+                                        value={frame.renderConfig.scaleMinVal}
+                                        selectAllOnFocus={true}
+                                        buttonPosition={"none"}
+                                        onBlur={this.handleScaleMinChange}
+                                        onKeyDown={this.handleScaleMinChange}
+                                        data-testid="clip-min-input"
+                                    />
+                                </FormGroup>
+                                <FormGroup label={"Clip max"} inline={true}>
+                                    <SafeNumericInput
+                                        value={frame.renderConfig.scaleMaxVal}
+                                        selectAllOnFocus={true}
+                                        buttonPosition={"none"}
+                                        onBlur={this.handleScaleMaxChange}
+                                        onKeyDown={this.handleScaleMaxChange}
+                                        data-testid="clip-max-input"
+                                    />
+                                </FormGroup>
+                                <ColormapConfigComponent renderConfig={frame.renderConfig} />
+                                {this.width < histogramCutoff && percentileSelectDiv}
+                            </div>
                         </ScrollShadow>
                     </div>
                     <TaskProgressDialogComponent
