@@ -1026,7 +1026,7 @@ export class OverlayStore {
     @observable colorbar: OverlayColorbarSettings;
     @observable beam: OverlayBeamSettings;
 
-    public constructor(fullViewWidth?: number, fullViewHeight?: number, base: number = 1, defaultGap: number = 2) {
+    public constructor(fullViewWidth?: number, fullViewHeight?: number, base: number = 5, defaultGap: number = 5) {
         makeObservable(this);
         this.global = new OverlayGlobalSettings();
         this.title = new OverlayTitleSettings();
@@ -1285,7 +1285,7 @@ export class OverlayStore {
     @computed get renderWidth() {
         let renderWidth;
         if (AppStore.Instance.channelMapStore.channelMapEnabled) {
-            renderWidth = (this.fullViewWidth - this.paddingLeft - this.paddingRight - this.numberWidth) / AppStore.Instance.channelMapStore.numColumns;
+            renderWidth = (this.fullViewWidth - this.paddingLeft - this.paddingRight) / AppStore.Instance.channelMapStore.numColumns - this.base;
         } else {
             renderWidth = this.viewWidth - this.paddingLeft - this.paddingRight;
         }
@@ -1295,7 +1295,7 @@ export class OverlayStore {
     @computed get renderHeight() {
         let renderHeight;
         if (AppStore.Instance.channelMapStore.channelMapEnabled) {
-            renderHeight = (this.fullViewHeight - this.paddingTop - this.paddingBottom - this.numberWidth) / AppStore.Instance.channelMapStore.numRows;
+            renderHeight = (this.fullViewHeight - this.paddingTop - this.paddingBottom) / AppStore.Instance.channelMapStore.numRows - this.base;
         } else {
             renderHeight = this.viewHeight - this.paddingTop - this.paddingBottom;
         }

@@ -72,17 +72,16 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         channels.forEach((channel, index) => {
             const appStore = AppStore.Instance;
             const channelMapStore = appStore.channelMapStore;
-            const overlayStore = appStore.overlayStore;
             const column = index % channelMapStore.numColumns;
             const row = Math.floor(index / channelMapStore.numColumns);
 
             const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
-            let width = Math.floor(w / pixelRatio / channelMapStore.numColumns);
-            let height = Math.floor(h / pixelRatio / channelMapStore.numRows);
+            let width = w / pixelRatio / channelMapStore.numColumns;
+            let height = h / pixelRatio / channelMapStore.numRows;
 
             let xOffset = column * width * pixelRatio;
             let yOffset = this.gl.canvas.height - height * (row + 1) * pixelRatio;
-            this.renderCanvas(frame, xOffset, yOffset + overlayStore.base * pixelRatio, width - overlayStore.base, height - overlayStore.base, channel);
+            this.renderCanvas(frame, xOffset, yOffset, frame.renderWidth, frame.renderHeight, channel);
         });
     };
 

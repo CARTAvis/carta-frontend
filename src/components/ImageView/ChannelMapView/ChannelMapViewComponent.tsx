@@ -40,9 +40,6 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     const channelMapViewWidth = props.renderWidth - overlayStore.paddingRight - overlayStore.paddingLeft;
     const channelMapViewHeight = props.renderHeight - overlayStore.paddingBottom - overlayStore.paddingTop;
 
-    const imageRenderWidth = Math.floor(channelMapViewWidth / channelMapStore.numColumns);
-    const imageRenderHeight = Math.floor(channelMapViewHeight / channelMapStore.numRows);
-
     const onMouseEnter = () => {
         setImageToolbarVisible(true);
     };
@@ -78,34 +75,37 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         const lastRow = Math.floor((channelMapStore.channelArray.length - 1) / channelMapStore.numColumns);
         const columnOfLastFrame = channelMapStore.channelArray.length - lastRow * channelMapStore.numColumns - 1;
 
-        let overlayComponentTop = imageRenderHeight * row;
-        let overlayComponentLeft = imageRenderWidth * column + overlayStore.paddingLeft;
-        let imageTop = overlayComponentTop + overlayStore.paddingTop;
-        let imageLeft = overlayComponentLeft;
+        let imageViewWidth = channelMapViewWidth / channelMapStore.numColumns;
+        let imageViewHeight = channelMapViewHeight / channelMapStore.numRows;
+
+        let overlayComponentTop = imageViewHeight * row + overlayStore.paddingTop;
+        let overlayComponentLeft = imageViewWidth * column + overlayStore.paddingLeft;
 
         let thisIs: "corner" | "left" | "bottom" | "inner";
-        let width = imageRenderWidth;
-        let height = imageRenderHeight;
 
         if (column === 0 && (row === channelMapStore.numRows - 1 || row === lastRow)) {
             thisIs = "corner";
-            width += overlayStore.paddingLeft;
-            height += overlayStore.paddingBottom;
-            overlayComponentLeft -= overlayStore.paddingLeft;
+            imageViewWidth += overlayStore.paddingLeft;
+            imageViewHeight += overlayStore.paddingBottom;
         } else if (column === 0) {
             thisIs = "left";
-            width += overlayStore.paddingLeft;
-            height += overlayStore.base;
-            overlayComponentLeft -= overlayStore.paddingLeft;
+            imageViewWidth += overlayStore.paddingLeft;
+            imageViewHeight += overlayStore.base;
         } else if (row === channelMapStore.numRows - 1 || row === lastRow || (row === lastRow - 1 && column > columnOfLastFrame)) {
             thisIs = "bottom";
-            width += overlayStore.base;
-            height += overlayStore.paddingBottom;
+            imageViewWidth += overlayStore.base;
+            imageViewHeight += overlayStore.paddingBottom;
         } else {
             thisIs = "inner";
-            width += overlayStore.base;
-            height += overlayStore.base;
+            imageViewWidth += overlayStore.base;
+            imageViewHeight += overlayStore.base;
         }
+
+        let imageTop = overlayComponentTop + overlayStore.channelMapInnerPadding(thisIs).top;
+        let imageLeft = overlayComponentLeft;
+
+        const imageRenderWidth = frame.renderWidth;
+        const imageRenderHeight = frame.renderHeight;
 
         return (
             channel < channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth && (
@@ -127,16 +127,16 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                         overlaySettings={overlayStore}
                         top={imageTop}
                         left={imageLeft}
-                        width={overlayStore.channelMapInnerWidth(width, thisIs)}
-                        height={overlayStore.channelMapInnerHeight(height, thisIs)}
+                        width={imageRenderWidth}
+                        height={imageRenderHeight}
                         docked={props.docked}
                         channel={channel}
                     />
                     <RegionViewComponent
                         key={`region-view-component-${index}`}
                         frame={frame}
-                        width={overlayStore.channelMapInnerWidth(width, thisIs)}
-                        height={overlayStore.channelMapInnerHeight(height, thisIs)}
+                        width={imageRenderWidth - 2}
+                        height={imageRenderHeight - 2}
                         top={imageTop}
                         left={imageLeft}
                         onClickToCenter={cursorInfo => onClickToCenter(frame, cursorInfo)}
@@ -154,8 +154,8 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         <div id={`image-panel`} key={"channel-map"} onMouseOver={onMouseEnter} onMouseLeave={onMouseLeave}>
             <div
                 style={{
-                    width: channelMapViewWidth,
-                    height: channelMapViewHeight,
+                    width: props.renderWidth - overlayStore.paddingRight,
+                    height: props.renderHeight - overlayStore.paddingBottom,
                     position: "absolute"
                 }}
             >
@@ -173,19 +173,19 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     channel={channelMapStore.channelArray}
                 />
 
-                <BeamProfileOverlayComponent frame={frame} top={imageRenderHeight * (channelMapStore.numRows - 1)} left={overlayStore.paddingLeft} docked={props.docked} padding={10} />
+                <BeamProfileOverlayComponent frame={frame} top={Math.floor(channelMapViewHeight / channelMapStore.numRows) * (channelMapStore.numRows - 1)} left={overlayStore.paddingLeft} docked={props.docked} padding={10} />
                 <CursorOverlayComponent
                     ref={ref => (cursorOverlayRef.current = ref)}
                     cursorInfo={frame.cursorInfo}
                     cursorValue={frame.cursorInfo.isInsideImage ? frame.cursorValue.value : undefined}
                     isValueCurrent={frame.isCursorValueCurrent}
                     spectralInfo={frame.spectralInfo}
-                    width={imageRenderWidth * channelMapStore.numColumns + overlayStore.paddingLeft + overlayStore.paddingRight}
+                    width={props.renderWidth - overlayStore.base}
                     left={overlayStore.paddingLeft}
                     right={overlayStore.paddingRight}
                     docked={props.docked}
                     unit={frame.requiredUnit}
-                    top={overlayStore.paddingTop}
+                    top={overlayStore.paddingTop + overlayStore.base}
                     currentStokes={AppStore.Instance.activeFrame?.requiredPolarizationInfo}
                     cursorValueToPercentage={frame.requiredUnit === "%"}
                     isPreview={frame.isPreview}
@@ -209,10 +209,10 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     onCursorHoverValueChanged={props.channelMapStore.setPixelHighlightValue}
                     width={props.renderWidth}
                     height={props.renderHeight}
-                    leftOffset={overlayStore.colorbar.position === "right" ? overlayStore.paddingTop : overlayStore.paddingLeft}
+                    leftOffset={overlayStore.colorbar.position === "right" ? overlayStore.paddingTop * 2 : overlayStore.paddingLeft}
                     left={overlayStore.colorbar.position === "right" ? props.renderWidth - overlayStore.paddingRight : 0}
                     top={overlayStore.colorbar.position === "bottom" ? props.renderHeight - colorbarOffset : overlayStore.colorbar.position === "right" ? 0 : overlayStore.paddingTop - colorbarOffset}
-                    length={overlayStore.colorbar.position === "right" ? channelMapViewHeight : channelMapViewWidth}
+                    length={overlayStore.colorbar.position === "right" ? channelMapViewHeight - overlayStore.paddingTop : channelMapViewWidth}
                 />
             )}
             <OverlayComponent
@@ -264,8 +264,8 @@ const ChannelMapInnerOverlayComponent = observer(
 
         const channelMapViewWidth = renderWidth - overlayStore.paddingLeft - overlayStore.paddingRight;
         const channelMapViewHeight = renderHeight - overlayStore.paddingBottom - overlayStore.paddingTop;
-        const imageRenderWidth = Math.floor(channelMapViewWidth / channelMapStore.numColumns);
-        const imageRenderHeight = Math.floor(channelMapViewHeight / channelMapStore.numRows);
+        const imageRenderWidth = channelMapViewWidth / channelMapStore.numColumns;
+        const imageRenderHeight = channelMapViewHeight / channelMapStore.numRows;
         let overlayComponentTop = imageRenderHeight * row + overlayStore.paddingTop;
         let overlayComponentLeft = imageRenderWidth * column + overlayStore.paddingLeft;
         let thisIs: "corner" | "left" | "bottom" | "inner";
@@ -293,8 +293,8 @@ const ChannelMapInnerOverlayComponent = observer(
                     top={overlayComponentTop}
                     left={left}
                     docked={docked}
-                    width={Math.floor(imageRenderWidth) + overlayStore.paddingLeft}
-                    height={Math.floor(imageRenderHeight) + overlayStore.paddingBottom}
+                    width={imageRenderWidth + overlayStore.paddingLeft}
+                    height={imageRenderHeight + overlayStore.paddingBottom}
                     type={"channel-map-inner"}
                 />
             );
