@@ -57,7 +57,12 @@ export enum SpectralUnit {
     MM = "mm",
     UM = "um",
     NM = "nm",
-    ANGSTROM = "Angstrom"
+    ANGSTROM = "Angstrom",
+    M_SQUARE = "m^2",
+    MM_SQUARE = "mm^2",
+    UM_SQUARE = "um^2",
+    NM_SQUARE = "nm^2",
+    ANGSTROM_SQUARE = "Angstrom^2"
 }
 
 export enum FrequencyUnit {
@@ -134,11 +139,21 @@ export const SPECTRAL_COORDS_SUPPORTED = new Map<string, {type: SpectralType; un
     [GenCoordinateLabel(SpectralType.WAVE, SpectralUnit.UM), {type: SpectralType.WAVE, unit: SpectralUnit.UM}],
     [GenCoordinateLabel(SpectralType.WAVE, SpectralUnit.NM), {type: SpectralType.WAVE, unit: SpectralUnit.NM}],
     [GenCoordinateLabel(SpectralType.WAVE, SpectralUnit.ANGSTROM), {type: SpectralType.WAVE, unit: SpectralUnit.ANGSTROM}],
+    [GenCoordinateLabel(SpectralType.WAVE, SpectralUnit.M_SQUARE), {type: SpectralType.WAVE, unit: SpectralUnit.M_SQUARE}],
+    [GenCoordinateLabel(SpectralType.WAVE, SpectralUnit.MM_SQUARE), {type: SpectralType.WAVE, unit: SpectralUnit.MM_SQUARE}],
+    [GenCoordinateLabel(SpectralType.WAVE, SpectralUnit.UM_SQUARE), {type: SpectralType.WAVE, unit: SpectralUnit.UM_SQUARE}],
+    [GenCoordinateLabel(SpectralType.WAVE, SpectralUnit.NM_SQUARE), {type: SpectralType.WAVE, unit: SpectralUnit.NM_SQUARE}],
+    [GenCoordinateLabel(SpectralType.WAVE, SpectralUnit.ANGSTROM_SQUARE), {type: SpectralType.WAVE, unit: SpectralUnit.ANGSTROM_SQUARE}],
     [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.M), {type: SpectralType.AWAV, unit: SpectralUnit.M}],
     [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.MM), {type: SpectralType.AWAV, unit: SpectralUnit.MM}],
     [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.UM), {type: SpectralType.AWAV, unit: SpectralUnit.UM}],
     [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.NM), {type: SpectralType.AWAV, unit: SpectralUnit.NM}],
     [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.ANGSTROM), {type: SpectralType.AWAV, unit: SpectralUnit.ANGSTROM}],
+    [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.M_SQUARE), {type: SpectralType.AWAV, unit: SpectralUnit.M_SQUARE}],
+    [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.MM_SQUARE), {type: SpectralType.AWAV, unit: SpectralUnit.MM_SQUARE}],
+    [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.UM_SQUARE), {type: SpectralType.AWAV, unit: SpectralUnit.UM_SQUARE}],
+    [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.NM_SQUARE), {type: SpectralType.AWAV, unit: SpectralUnit.NM_SQUARE}],
+    [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.ANGSTROM_SQUARE), {type: SpectralType.AWAV, unit: SpectralUnit.ANGSTROM_SQUARE}],
     ["Channel", {type: SpectralType.CHANNEL, unit: null}]
 ]);
 

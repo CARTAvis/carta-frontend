@@ -1,11 +1,11 @@
 import * as React from "react";
 import {Group, Layer, Line, Rect, Ring, Stage} from "react-konva";
-import ReactResizeDetector from "react-resize-detector";
 import {Colors} from "@blueprintjs/core";
 import {Chart, ChartArea, Tick} from "chart.js";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
+import {ResizeDetector} from "components/Shared";
 import {InteractionMode, ZoomMode} from "components/Shared/LinePlot/LinePlotComponent";
 import {MultiPlotProps, PlotContainerComponent, TickType} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
@@ -571,28 +571,29 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     render() {
         return (
-            <div
-                className={"scatter-plot-component"}
-                style={{cursor: this.isPanning ? "move" : "crosshair"}}
-                onKeyDown={this.onKeyDown}
-                onMouseEnter={this.onMouseEnter}
-                onMouseMove={this.onMouseMove}
-                onMouseLeave={this.onMouseLeave}
-                tabIndex={0}
-            >
-                <ReactResizeDetector handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
-                {this.width > 0 && this.height > 0 && <PlotContainerComponent {...this.props} plotRefUpdated={this.onPlotRefUpdated} chartAreaUpdated={this.updateChart} width={this.width} height={this.height} />}
-                {this.width > 0 && this.height > 0 && (
-                    <Stage className={"annotation-stage"} width={this.width} height={this.height} onMouseMove={this.onStageMouseMove} onMouseDown={this.onStageMouseDown} onMouseUp={this.onStageMouseUp} onWheel={this.onStageWheel}>
-                        <Layer>
-                            {this.genIndicator()}
-                            {this.genBorderRect()}
-                            {this.genSelectionRect()}
-                        </Layer>
-                    </Stage>
-                )}
-                {(this.props.data !== undefined || this.props.multiPlotPropsMap?.size > 0) && <ToolbarComponent darkMode={this.props.darkMode} visible={this.isMouseEntered} exportImage={this.exportImage} exportData={this.exportData} />}
-            </div>
+            <ResizeDetector onResize={this.resize} throttleTime={33}>
+                <div
+                    className={"scatter-plot-component"}
+                    style={{cursor: this.isPanning ? "move" : "crosshair"}}
+                    onKeyDown={this.onKeyDown}
+                    onMouseEnter={this.onMouseEnter}
+                    onMouseMove={this.onMouseMove}
+                    onMouseLeave={this.onMouseLeave}
+                    tabIndex={0}
+                >
+                    {this.width > 0 && this.height > 0 && <PlotContainerComponent {...this.props} plotRefUpdated={this.onPlotRefUpdated} chartAreaUpdated={this.updateChart} width={this.width} height={this.height} />}
+                    {this.width > 0 && this.height > 0 && (
+                        <Stage className={"annotation-stage"} width={this.width} height={this.height} onMouseMove={this.onStageMouseMove} onMouseDown={this.onStageMouseDown} onMouseUp={this.onStageMouseUp} onWheel={this.onStageWheel}>
+                            <Layer>
+                                {this.genIndicator()}
+                                {this.genBorderRect()}
+                                {this.genSelectionRect()}
+                            </Layer>
+                        </Stage>
+                    )}
+                    {(this.props.data !== undefined || this.props.multiPlotPropsMap?.size > 0) && <ToolbarComponent darkMode={this.props.darkMode} visible={this.isMouseEntered} exportImage={this.exportImage} exportData={this.exportData} />}
+                </div>
+            </ResizeDetector>
         );
     }
 }
