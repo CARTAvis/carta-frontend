@@ -22,7 +22,6 @@ export class ChannelMapStore {
         this.startChannel = 0;
         this.numColumns = 2;
         this.numRows = 2;
-        this.overlayStores = {corner: undefined, outer: undefined};
 
         autorun(() => {
             if (this.masterFrame && this.masterFrame?.requiredFrameView && this.channelMapEnabled) {
@@ -30,7 +29,7 @@ export class ChannelMapStore {
                 const startChannel = this.startChannel;
                 const numColumns = this.numColumns;
                 const numRows = this.numRows;
-                const channelRange = this.channelRange;
+                const channelRange = this.endChannel;
                 const center = this.masterFrame.center;
                 const requiredFrameView = this.masterFrame.requiredFrameView;
                 const requiredTiles = this.masterFrame.requiredTiles;
@@ -61,14 +60,9 @@ export class ChannelMapStore {
         const [tiles, midPointTileCoords] = frame.requiredTiles;
         const preferenceStore = AppStore.Instance.preferenceStore;
         const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
-        const compressionQuality = bunitVariant.includes(frame.headerUnit) ? Math.max(preferenceStore.imageCompressionQuality, 32) : preferenceStore.imageCompressionQuality;
-        TileService.Instance.requestChannelMapTiles(tiles, this.masterFrame, midPointTileCoords, compressionQuality, {min: this.startChannel, max: this.channelRange});
+        const compressionQuality = frame.headerUnit && bunitVariant.includes(frame.headerUnit) ? Math.max(preferenceStore.imageCompressionQuality, 32) : preferenceStore.imageCompressionQuality;
+        TileService.Instance.requestChannelMapTiles(tiles, this.masterFrame, midPointTileCoords, compressionQuality, {min: this.startChannel, max: this.endChannel});
     }, 100);
-
-    @action updateOverlayStoreSize(width: number, height: number) {
-        const overlayStore = AppStore.Instance.overlayStore;
-        this.overlayStores?.corner?.setViewDimension(width + overlayStore.paddingLeft + overlayStore.paddingRight, height + overlayStore.paddingTop + overlayStore.paddingBottom);
-    }
 
     @action setMasterFrame(masterFrame: FrameStore) {
         this.masterFrame = masterFrame;
@@ -160,12 +154,12 @@ export class ChannelMapStore {
         return this.numColumns * this.numRows;
     }
 
-    @computed get channelRange(): number {
+    @computed get endChannel(): number {
         return Math.min(this.startChannel + this.numChannels - 1, this.masterFrame?.frameInfo?.fileInfoExtended?.depth - 1);
     }
 
     @computed get channelArray(): number[] {
-        const channelArray = [];
+        const channelArray: number[] = [];
         for (let i = this.startChannel; i < this.startChannel + this.numChannels; i += 1) {
             if (i > this.masterFrame?.frameInfo?.fileInfoExtended.depth - 1) {
                 break;

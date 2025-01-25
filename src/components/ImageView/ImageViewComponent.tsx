@@ -180,14 +180,13 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         const appStore = AppStore.Instance;
         const config = appStore.imageViewConfigStore;
         const visibleImages = config.visibleImages;
-        const channelMapStore = appStore.channelMapStore;
         this.imagePanelRefs = [];
         if (!visibleImages) {
             return [];
         }
 
         return appStore.channelMapStore.channelMapEnabled
-            ? [<ChannelMapViewComponent frame={config.visibleFrames[0]} docked={this.props.docked} channelMapStore={channelMapStore} renderWidth={appStore.overlayStore.fullViewWidth} renderHeight={appStore.overlayStore.fullViewHeight} />]
+            ? [<ChannelMapViewComponent docked={this.props.docked} />]
             : visibleImages.map((image, index) => {
                   const column = index % config.numImageColumns;
                   const row = Math.floor(index / config.numImageColumns);

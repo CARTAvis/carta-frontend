@@ -24,8 +24,6 @@ export class RasterViewComponentProps {
     channel?: number[];
 }
 
-const Float32Max = 3.402823466e38;
-
 @observer
 export class RasterViewComponent extends React.Component<RasterViewComponentProps> {
     private sub: Subscription;
@@ -79,8 +77,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             let width = w / pixelRatio / channelMapStore.numColumns;
             let height = h / pixelRatio / channelMapStore.numRows;
 
-            let xOffset = column * width * pixelRatio;
-            let yOffset = this.gl.canvas.height - height * (row + 1) * pixelRatio;
+            let xOffset = Math.ceil(column * width * pixelRatio);
+            let yOffset = Math.ceil(this.gl.canvas.height - height * (row + 1) * pixelRatio);
             this.renderCanvas(frame, xOffset, yOffset, frame.renderWidth, frame.renderHeight, channel);
         });
     };
@@ -217,7 +215,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             if (isFinite(pixelHighlightValue) && !appStore.isExportingImage) {
                 this.gl.uniform1f(shaderUniforms.PixelHighlightVal, pixelHighlightValue);
             } else {
-                this.gl.uniform1f(shaderUniforms.PixelHighlightVal, -Float32Max);
+                this.gl.uniform1f(shaderUniforms.PixelHighlightVal, -RasterViewComponent.Float32Max);
             }
         }
     }

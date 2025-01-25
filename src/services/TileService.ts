@@ -34,7 +34,7 @@ export interface TileStreamDetails {
 export const TEXTURE_SIZE = 4096;
 export const TILE_SIZE = 256;
 export const MAX_TEXTURES = 8;
-export const SINGLE_TILE_DECOMPRESION_SYNC_ID = -1;
+const SINGLE_TILE_DECOMPRESION_SYNC_ID = -1;
 
 interface TileMessageArgs {
     width: number | null | undefined;
@@ -52,7 +52,7 @@ interface TileMessageArgs {
 }
 
 export class TileService {
-    protected static staticInstance: TileService;
+    private static staticInstance: TileService;
 
     static get Instance() {
         if (!TileService.staticInstance) {
@@ -140,7 +140,7 @@ export class TileService {
         this.lruCapacitySystem = lruCapacitySystem;
     };
 
-    protected constructor() {
+    private constructor() {
         makeObservable(this);
         this.backendService = BackendService.Instance;
         this.gl = TileWebGLService.Instance.gl;
@@ -297,36 +297,19 @@ export class TileService {
         }
     }
 
-    findRanges(arr: number[]): {min: number; max: number}[] {
-        arr.sort((a, b) => a - b);
-
-        const ranges: {min: number; max: number}[] = [];
-
-        let start = arr[0];
-
-        for (let i = 1; i <= arr.length; i++) {
-            if (i === arr.length || arr[i] !== arr[i - 1] + 1) {
-                ranges.push({min: start, max: arr[i - 1]});
-                start = arr[i];
-            }
-        }
-
-        return ranges;
-    }
-
-    groupChannels(channelToTilesMap: Map<number, number[]>): Map<{min: number; max: number}, number[]> {
-        const result = new Map<{min: number; max: number}, number[]>();
+    groupChannels(channelToTilesArray: {channel: number; tiles: number[]}[]): {range: {min: number; max: number}; tiles: number[]}[] {
+        const result: {range: {min: number; max: number}; tiles: number[]}[] = [];
         let previousTileString = "";
         let currentRange: {min: number; max: number} | null = null;
 
-        for (const [channel, tiles] of channelToTilesMap.entries()) {
+        for (const {channel, tiles} of channelToTilesArray) {
             const tileString = JSON.stringify(tiles); // Convert TileCoordinate to a string
 
-            if (tileString === previousTileString && currentRange) {
+            if (tileString === previousTileString && currentRange && channel === currentRange.max + 1) {
                 currentRange.max = channel;
             } else {
                 currentRange = {min: channel, max: channel};
-                result.set(currentRange, tiles);
+                result.push({range: currentRange, tiles});
             }
 
             previousTileString = tileString;
@@ -346,23 +329,17 @@ export class TileService {
 
         if (this.currentlyStreamingChannelRange && this.currentlyStreamingTileRange) this.clearQueueForChannelMap(this.pendingRequests, fileId, fullChannelRange);
 
-        const channelToTilesMap = new Map<number, TileCoordinate[]>();
+        const channelToTilesArray: {channel: number; tiles: TileCoordinate[]}[] = [];
 
         if (fullChannelRange) {
             // Loop through range of channel
             for (let i = fullChannelRange.min; i <= fullChannelRange.max; i++) {
-                channelToTilesMap.set(i, []);
-
                 const newRequests = this.getRequiredRequestTiles(tiles, fileId, i, stokes);
-                if (newRequests.length) {
-                    channelToTilesMap.set(i, newRequests);
-                }
+                channelToTilesArray.push({channel: i, tiles: newRequests});
             }
         }
 
-        const sortedChannelToTilesMap = new Map<number, number[]>();
-
-        channelToTilesMap.forEach((tiles, key) => {
+        const sortedChannelToTilesArray = channelToTilesArray.map(({channel, tiles}) => {
             const sortedTiles = tiles
                 .sort((a, b) => {
                     const aX = focusPoint.x - a.x;
@@ -372,16 +349,14 @@ export class TileService {
                     return aX * aX + aY * aY - (bX * bX + bY * bY);
                 })
                 .map(tile => tile.encode());
-            sortedChannelToTilesMap.set(key, sortedTiles);
+            return {channel, tiles: sortedTiles};
         });
 
         // Groups channels that require the same tiles
-        const channelsToTilesMap = this.groupChannels(sortedChannelToTilesMap);
+        const channelsToTilesArray = this.groupChannels(sortedChannelToTilesArray);
 
-        // Loop through all the grouped tiles array, divide the channels into ranges, and request the required channel.
-        for (const [range, groupedTiles] of channelsToTilesMap) {
-            if (groupedTiles.length) {
-                const tiles = groupedTiles;
+        for (const {range, tiles} of channelsToTilesArray) {
+            if (tiles.length) {
                 const requestSentSuccessfully = this.backendService.setChannels(fileId, requiredChannel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles, currentTiles}, true, range, fullChannelRange);
                 if (requestSentSuccessfully) {
                     this.currentlyStreamingChannelRange = fullChannelRange;

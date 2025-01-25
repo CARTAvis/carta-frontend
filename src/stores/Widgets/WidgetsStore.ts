@@ -935,7 +935,7 @@ export class WidgetsStore {
 
     onChannelMapButtonClick = () => {
         const channelMapStore = AppStore.Instance.channelMapStore;
-        channelMapStore.setChannelMapEnabled(true);
+        channelMapStore.setChannelMapEnabled(!channelMapStore.channelMapEnabled);
     };
 
     setImageMultiPanelEnabled = (multiPanelEnabled: boolean) => {

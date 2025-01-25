@@ -1,7 +1,6 @@
 import * as React from "react";
 import {CSSProperties} from "react";
 import classNames from "classnames";
-import {observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {CursorInfo, SpectralInfo} from "models";
@@ -30,12 +29,6 @@ class CursorOverlayProps {
 
 @observer
 export class CursorOverlayComponent extends React.Component<CursorOverlayProps> {
-    @observable divElement: HTMLDivElement;
-
-    private getRef = ref => {
-        this.divElement = ref;
-    };
-
     render() {
         const cursorInfo = this.props.cursorInfo;
         let infoStrings: string[] = [];
@@ -95,7 +88,7 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
         const className = classNames("cursor-overlay-div", {docked: this.props.docked});
 
         return (
-            <div ref={this.getRef} className={className} style={{...styleProps, visibility: this.props.visible === false ? "hidden" : "visible"}} data-testid="viewer-cursor-info-bar">
+            <div className={className} style={{...styleProps, visibility: this.props.visible === false ? "hidden" : "visible"}} data-testid="viewer-cursor-info-bar">
                 <span>{infoStrings.length ? infoStrings.join("; ") : "\u00a0"}</span>
             </div>
         );

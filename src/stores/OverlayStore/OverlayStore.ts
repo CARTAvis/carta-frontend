@@ -1011,8 +1011,6 @@ export class OverlayStore {
     // View size options
     @observable fullViewWidth: number;
     @observable fullViewHeight: number;
-    @observable base: number;
-    @observable defaultGap: number;
 
     // Individual settings
     @observable global: OverlayGlobalSettings;
@@ -1026,7 +1024,7 @@ export class OverlayStore {
     @observable colorbar: OverlayColorbarSettings;
     @observable beam: OverlayBeamSettings;
 
-    public constructor(fullViewWidth?: number, fullViewHeight?: number, base: number = 5, defaultGap: number = 5) {
+    private constructor() {
         makeObservable(this);
         this.global = new OverlayGlobalSettings();
         this.title = new OverlayTitleSettings();
@@ -1038,10 +1036,8 @@ export class OverlayStore {
         this.ticks = new OverlayTickSettings();
         this.colorbar = new OverlayColorbarSettings();
         this.beam = new OverlayBeamSettings();
-        this.fullViewWidth = fullViewWidth;
-        this.fullViewHeight = fullViewHeight;
-        this.base = base;
-        this.defaultGap = defaultGap;
+        this.fullViewWidth = 1;
+        this.fullViewHeight = 1;
 
         // if the system is manually selected, set new default formats & update active frame's wcs settings
         autorun(() => {
@@ -1083,14 +1079,6 @@ export class OverlayStore {
     @action setViewDimension = (width: number, height: number) => {
         this.fullViewWidth = width;
         this.fullViewHeight = height;
-    };
-
-    @action setBase = (base: number) => {
-        this.base = base;
-    };
-
-    @action setDefaultGap = (defaultGap: number) => {
-        this.defaultGap = defaultGap;
     };
 
     @action setFormatsFromSystem() {
@@ -1225,6 +1213,14 @@ export class OverlayStore {
 
     @computed get showNumbers() {
         return this.numbers.show && this.global.labelType === LabelType.Exterior;
+    }
+
+    @computed get base() {
+        return 5;
+    }
+
+    @computed get defaultGap() {
+        return 5;
     }
 
     @computed get titleGap() {

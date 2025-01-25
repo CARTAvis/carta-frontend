@@ -1,10 +1,11 @@
 import * as React from "react";
-import {Button, ButtonGroup, Checkbox, FormGroup, HTMLSelect, NonIdealState, Position, Slider, Switch, Tooltip} from "@blueprintjs/core";
+import {Button, ButtonGroup, Checkbox, FormGroup, HTMLSelect, Label, NonIdealState, Position, Slider, Switch, Tooltip} from "@blueprintjs/core";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector, SafeNumericInput} from "components/Shared";
 import {AppStore, DefaultWidgetConfig, WidgetProps} from "stores";
+import {clamp} from "utilities";
 
 import "./ChannelMapControlComponent.scss";
 
@@ -36,6 +37,14 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
+    @action onChannelChanged = (val: number) => {
+        const channelMapSettings = AppStore.Instance.channelMapStore;
+        const frame = channelMapSettings.masterFrame;
+        if (frame) {
+            channelMapSettings.setStartChannel(clamp(val, 0, frame.frameInfo.fileInfoExtended.depth));
+        }
+    };
+
     public render() {
         const appStore = AppStore.Instance;
         const activeFrame = appStore.activeFrame;
@@ -43,47 +52,34 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
         const numChannels = channelMapSettings.masterFrame ? channelMapSettings.masterFrame.frameInfo.fileInfoExtended.depth : 10;
         const iconOnly = this.width < 300;
 
-        const onChannelChanged = (val: number) => {
-            const frame = channelMapSettings.masterFrame;
-            if (frame) {
-                if (val < 0) {
-                    val += frame.frameInfo.fileInfoExtended.depth;
-                }
-                if (val >= frame.frameInfo.fileInfoExtended.depth) {
-                    val = 0;
-                }
-                channelMapSettings.setStartChannel(val);
-            }
-        };
-
         const channelMapControl = (
             <div className="channel-map-control-container">
                 <div className="channel-map-channel-control">
                     <ButtonGroup fill={true} className="channel-map-channel-control-buttons">
                         <Tooltip content="Previous page" position={Position.TOP}>
-                            <Button icon={"chevron-backward"} onClick={() => appStore.channelMapStore.setPrevPage()} data-testid="">
+                            <Button icon={"chevron-backward"} onClick={() => appStore.channelMapStore.setPrevPage()}>
                                 {!iconOnly && "Page"}
                             </Button>
                         </Tooltip>
                         <Tooltip content="Previous channel" position={Position.TOP}>
-                            <Button icon={"step-backward"} onClick={() => appStore.channelMapStore.setPrevChannel()} data-testid="">
+                            <Button icon={"step-backward"} onClick={() => appStore.channelMapStore.setPrevChannel()}>
                                 {!iconOnly && "Channel"}
                             </Button>
                         </Tooltip>
                         <Tooltip content="Next channel" position={Position.TOP}>
-                            <Button icon={"step-forward"} onClick={() => appStore.channelMapStore.setNextChannel()} data-testid="">
+                            <Button icon={"step-forward"} onClick={() => appStore.channelMapStore.setNextChannel()}>
                                 {!iconOnly && "Channel"}
                             </Button>
                         </Tooltip>
                         <Tooltip content="Next page" position={Position.TOP}>
-                            <Button icon={"chevron-forward"} onClick={() => appStore.channelMapStore.setNextPage()} data-testid="">
+                            <Button icon={"chevron-forward"} onClick={() => appStore.channelMapStore.setNextPage()}>
                                 {!iconOnly && "Page"}
                             </Button>
                         </Tooltip>
                     </ButtonGroup>
                 </div>
-                <div className="channel-map-start-channel-slider" data-testid="">
-                    <label className="channel-map-control-label bp5-label">Start Channel</label>
+                <div className="channel-map-start-channel-slider">
+                    <Label className="channel-map-control-label">Start channel</Label>
                     <Slider
                         min={0}
                         max={appStore.channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth}
@@ -106,7 +102,7 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                     />
                 </FormGroup>
                 <FormGroup className="channel-map-control-label" inline={true} label="Start channel">
-                    <SafeNumericInput placeholder="Start channel" value={channelMapSettings.startChannel} min={0} max={numChannels - 1} onValueChange={onChannelChanged} />
+                    <SafeNumericInput placeholder="Start channel" value={channelMapSettings.startChannel} min={0} max={numChannels - 1} onValueChange={this.onChannelChanged} />
                 </FormGroup>
                 <FormGroup className="channel-map-control-label" inline={true} label="Number of columns">
                     <SafeNumericInput placeholder="Number of columns" min={1} max={10} value={channelMapSettings.numColumns} stepSize={1} onValueChange={(value: number) => channelMapSettings.setNumColumns(value)} />

@@ -1,11 +1,10 @@
 import * as React from "react";
 import * as AST from "ast_wrapper";
 import classNames from "classnames";
-import * as _ from "lodash";
 import {observer} from "mobx-react";
 
 import {CursorInfo, ImageItem, ImageType, SPECTRAL_TYPE_STRING} from "models";
-import {AppStore, OverlayStore, PreferenceStore} from "stores";
+import {AppStore, OverlayStore} from "stores";
 
 import "./OverlayComponent.scss";
 
@@ -15,10 +14,9 @@ export class OverlayComponentProps {
     docked: boolean;
     top?: number;
     left?: number;
-    refCanvas?: any;
     onClicked?: (cursorInfo: CursorInfo) => void;
     onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
-    thisIs?: "left" | "bottom" | "corner" | "inner";
+    overlayType?: "left" | "bottom" | "corner" | "inner";
     width?: number;
     height?: number;
     type?: "channel-map-inner" | "channel-map-outer";
@@ -37,24 +35,9 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         this.updateImage();
     }
 
-    componentWillUnmount(): void {
-        if (this.props.refCanvas) {
-            const destCanvas = this.canvas.getContext("2d");
-            const w = this.props.refCanvas.width;
-            const h = this.props.refCanvas.height;
-            destCanvas.clearRect(0, 0, w, h);
-        }
-    }
-
     updateImage() {
         AppStore.Instance.resetImageRatio();
-        if (this.canvas && !this.props.refCanvas) {
-            if (PreferenceStore.Instance.limitOverlayRedraw) {
-                this.throttledRenderCanvas();
-            } else {
-                requestAnimationFrame(this.renderCanvas);
-            }
-        }
+        requestAnimationFrame(this.renderCanvas);
     }
 
     updateImageDimensions() {
@@ -69,7 +52,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const settings = this.props.overlaySettings;
         const frame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image.store?.baseFrame : this.props.image?.store;
         const appStore = AppStore.Instance;
-        const padding = this.props.type === "channel-map-inner" ? settings.channelMapInnerPadding(this.props.thisIs) : settings.padding;
+        const padding = this.props.type === "channel-map-inner" ? settings.channelMapInnerPadding(this.props.overlayType) : settings.padding;
 
         const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoShifted : frame.wcsInfo;
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
@@ -84,7 +67,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             : frame.spatialReference
               ? frame.spatialReference.requiredFrameView
               : frame.requiredFrameView;
-        if (wcsInfo && frameView && this.canvas && !this.props.refCanvas) {
+        if (wcsInfo && frameView && this.canvas) {
             // Take aspect ratio scaling into account
             const tempWcsInfo = AST.copy(wcsInfo);
             if (!tempWcsInfo) {
@@ -185,8 +168,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         }
     };
 
-    throttledRenderCanvas = _.throttle(this.renderCanvas, 50);
-
     private getRef = ref => {
         this.canvas = ref;
     };
@@ -231,42 +212,33 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const offsetCoord = frame.isOffsetCoord;
         const offsetWcs = frame.wcsInfoShifted;
 
-        if (!this.props.refCanvas) {
-            if (frame.isSwappedZ) {
-                const requiredChannel = frame.requiredChannel;
-            }
-            /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
-
-            // Trigger switching AST overlay axis for PV image
-            const spectralAxisSetting =
-                `${frame.spectralType ? `System(${frame.spectral})=${frame.spectralType},` : ""}` +
-                `${frame.spectralUnit ? `Unit(${frame.spectral})=${frame.spectralUnit},` : ""}` +
-                `${frame.spectralSystem ? `StdOfRest=${frame.spectralSystem},` : ""}` +
-                `${frame.restFreqStore.restFreqInHz ? `RestFreq=${frame.restFreqStore.restFreqInHz} Hz,` : ""}` +
-                `${frame.spectralType && frame.spectralSystem ? `Label(${frame.spectral})=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`;
-
-            const dirAxesSetting = `${frame.dirX > 2 || frame.dirXLabel === "" ? "" : `Label(${frame.dirX})=${frame.dirXLabel},`} ${frame.dirY > 2 || frame.dirYLabel === "" ? "" : `Label(${frame.dirY})=${frame.dirYLabel},`}`;
-
-            if (frame.isPVImage && frame.spectralAxis?.valid) {
-                AST.set(frame.wcsInfo, spectralAxisSetting);
-            } else if (frame.isSwappedZ && frame.spectralAxis?.valid) {
-                AST.set(frame.wcsInfo, spectralAxisSetting + dirAxesSetting);
-            } else {
-                const formatStringX = this.props.overlaySettings.numbers.formatStringX;
-                const formatStyingY = this.props.overlaySettings.numbers.formatStringY;
-                const explicitSystem = this.props.overlaySettings.global.explicitSystem;
-                if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined && OverlayStore.Instance.isWcsCoordinates && frame.validWcs) {
-                    AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY}, System=${explicitSystem},` + dirAxesSetting);
-                }
+        if (frame.isSwappedZ) {
+            const requiredChannel = frame.requiredChannel;
+        }
+        /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
+        // Trigger switching AST overlay axis for PV image
+        const spectralAxisSetting =
+            `${frame.spectralType ? `System(${frame.spectral})=${frame.spectralType},` : ""}` +
+            `${frame.spectralUnit ? `Unit(${frame.spectral})=${frame.spectralUnit},` : ""}` +
+            `${frame.spectralSystem ? `StdOfRest=${frame.spectralSystem},` : ""}` +
+            `${frame.restFreqStore.restFreqInHz ? `RestFreq=${frame.restFreqStore.restFreqInHz} Hz,` : ""}` +
+            `${frame.spectralType && frame.spectralSystem ? `Label(${frame.spectral})=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`;
+        const dirAxesSetting = `${frame.dirX > 2 || frame.dirXLabel === "" ? "" : `Label(${frame.dirX})=${frame.dirXLabel},`} ${frame.dirY > 2 || frame.dirYLabel === "" ? "" : `Label(${frame.dirY})=${frame.dirYLabel},`}`;
+        if (frame.isPVImage && frame.spectralAxis?.valid) {
+            AST.set(frame.wcsInfo, spectralAxisSetting);
+        } else if (frame.isSwappedZ && frame.spectralAxis?.valid) {
+            AST.set(frame.wcsInfo, spectralAxisSetting + dirAxesSetting);
+        } else {
+            const formatStringX = this.props.overlaySettings.numbers.formatStringX;
+            const formatStyingY = this.props.overlaySettings.numbers.formatStringY;
+            const explicitSystem = this.props.overlaySettings.global.explicitSystem;
+            if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined && OverlayStore.Instance.isWcsCoordinates && frame.validWcs) {
+                AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY}, System=${explicitSystem},` + dirAxesSetting);
             }
         }
 
         const className = classNames("overlay-canvas", {docked: this.props.docked});
 
-        return (
-            <>
-                <canvas className={className} style={{top: this.props.top || 0, left: this.props.left || 0, width: w, height: h}} id="overlay-canvas" ref={this.getRef} key={`overlay-canvas-${frame.frameInfo.fileId}`} />
-            </>
-        );
+        return <canvas className={className} style={{top: this.props.top || 0, left: this.props.left || 0, width: w, height: h}} id="overlay-canvas" ref={this.getRef} key={`overlay-canvas-${frame.frameInfo.fileId}`} />;
     }
 }
