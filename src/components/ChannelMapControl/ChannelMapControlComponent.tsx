@@ -1,9 +1,9 @@
 import * as React from "react";
-import {Button, ButtonGroup, Checkbox, FormGroup, HTMLSelect, Label, NonIdealState, Position, Slider, Switch, Tooltip} from "@blueprintjs/core";
+import {Button, ButtonGroup, Checkbox, FormGroup, HTMLSelect, Position, Slider, Switch, Tooltip} from "@blueprintjs/core";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {ResizeDetector, SafeNumericInput} from "components/Shared";
+import {ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {AppStore, DefaultWidgetConfig, WidgetProps} from "stores";
 import {clamp} from "utilities";
 
@@ -15,7 +15,7 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
         return {
             id: "channel-map-control",
             type: "channel-map-control",
-            minWidth: 250,
+            minWidth: 450,
             minHeight: 200,
             defaultWidth: 480,
             defaultHeight: 600,
@@ -78,8 +78,12 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                         </Tooltip>
                     </ButtonGroup>
                 </div>
-                <div className="channel-map-start-channel-slider">
-                    <Label className="channel-map-control-label">Start channel</Label>
+            </div>
+        );
+
+        const channelMapPanel = (
+            <div className="channel-map-control-container">
+                <FormGroup className="channel-map-control-label" inline={true} label="Start channel">
                     <Slider
                         min={0}
                         max={appStore.channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth}
@@ -88,12 +92,7 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                         value={appStore.channelMapStore.startChannel}
                         onChange={channel => appStore.channelMapStore.setStartChannel(channel)}
                     />
-                </div>
-            </div>
-        );
-
-        const channelMapPanel = (
-            <div className="channel-map-control-container">
+                </FormGroup>
                 <FormGroup className="channel-map-control-label" inline={true} label="Image">
                     <HTMLSelect
                         options={appStore.frameNames}
@@ -154,17 +153,16 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
 
         return (
             <ResizeDetector onResize={this.onResize} throttleTime={33}>
-                <div className="channel-map-control-containers">
-                    {!appStore.channelMapStore.channelMapEnabled && <NonIdealState icon={"folder-open"} title={"Channel map not enabled"} description={"Enable channel map using the menu"} />}
-                    {appStore.channelMapStore.channelMapEnabled &&
-                        activeFrame &&
-                        this.width > 0 && ( // temporary fix for broken range slider, issue #1078
+                <ScrollShadow>
+                    <div className="channel-map-control-containers">
+                        {activeFrame && (
                             <div className="channel-map-sliders">
-                                {appStore.channelMapStore.channelMapEnabled && appStore.channelMapStore.masterFrame && channelMapControl}
-                                {appStore.channelMapStore.channelMapEnabled && appStore.channelMapStore.masterFrame && channelMapPanel}
+                                {channelMapControl}
+                                {channelMapPanel}
                             </div>
                         )}
-                </div>
+                    </div>
+                </ScrollShadow>
             </ResizeDetector>
         );
     }

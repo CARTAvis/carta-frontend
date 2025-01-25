@@ -103,8 +103,8 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         let imageTop = overlayComponentTop + overlayStore.channelMapInnerPadding(overlayType).top;
         let imageLeft = overlayComponentLeft;
 
-        const imageRenderWidth = frame.renderWidth;
-        const imageRenderHeight = frame.renderHeight;
+        const imageRenderWidth = frame?.renderWidth;
+        const imageRenderHeight = frame?.renderHeight;
 
         return (
             channel < channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth && (
@@ -230,7 +230,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
             />
         </div>
     ) : (
-        <NonIdealState />
+        <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
     );
 });
 
