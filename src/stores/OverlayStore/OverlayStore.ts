@@ -1216,6 +1216,9 @@ export class OverlayStore {
     }
 
     @computed get base() {
+        if (AppStore.Instance.channelMapStore.channelMapEnabled) {
+            return 2;
+        }
         return 5;
     }
 

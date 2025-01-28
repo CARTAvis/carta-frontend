@@ -291,14 +291,14 @@ const ChannelMapInnerOverlayComponent = observer(
                     top={overlayComponentTop}
                     left={left}
                     docked={docked}
-                    width={imageRenderWidth + overlayStore.paddingLeft}
-                    height={imageRenderHeight + overlayStore.paddingBottom}
+                    width={Math.ceil(imageRenderWidth) + overlayStore.paddingLeft}
+                    height={Math.ceil(imageRenderHeight) + overlayStore.paddingBottom}
                     type={"channel-map-inner"}
                 />
             );
         };
-        let width = Math.floor(channelMapViewWidth / channelMapStore.numColumns);
-        let height = Math.floor(channelMapViewHeight / channelMapStore.numRows);
+        let width = channelMapViewWidth / channelMapStore.numColumns;
+        let height = channelMapViewHeight / channelMapStore.numRows;
 
         if (column === 0) {
             overlayType = "left";

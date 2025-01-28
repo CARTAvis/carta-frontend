@@ -73,13 +73,12 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             const column = index % channelMapStore.numColumns;
             const row = Math.floor(index / channelMapStore.numColumns);
 
-            const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
-            let width = w / pixelRatio / channelMapStore.numColumns;
-            let height = h / pixelRatio / channelMapStore.numRows;
+            let width = w / channelMapStore.numColumns;
+            let height = h / channelMapStore.numRows;
 
-            let xOffset = Math.ceil(column * width * pixelRatio);
-            let yOffset = Math.ceil(this.gl.canvas.height - height * (row + 1) * pixelRatio);
-            this.renderCanvas(frame, xOffset, yOffset, frame.renderWidth, frame.renderHeight, channel);
+            let xOffset = Math.ceil(column * width);
+            let yOffset = Math.ceil(this.gl.canvas.height - height * (row + 1));
+            this.renderCanvas(frame, xOffset, yOffset, Math.floor(frame.renderWidth), Math.floor(frame.renderHeight), channel);
         });
     };
 
@@ -131,7 +130,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     (frame.renderConfig.useCubeHistogram || frame.channel === histChannel || frame.isPreview || (AppStore.Instance.channelMapStore.channelMapEnabled && frame.renderConfig.channelMapHistogram)) &&
                     (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)
                 ) {
-                    this.updateUniforms(frame, frame.renderWidth, frame.renderHeight, this.props.pixelHighlightValue);
+                    this.updateUniforms(frame, Math.floor(frame.renderWidth), Math.floor(frame.renderHeight), this.props.pixelHighlightValue);
                     if (channel && isFinite((channel as number[]).length)) {
                         this.renderMultipleCanvas(frame);
                     } else {
