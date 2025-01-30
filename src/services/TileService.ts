@@ -318,7 +318,7 @@ export class TileService {
         return result;
     }
 
-    requestChannelMapTiles(tiles: TileCoordinate[], frame: FrameStore, focusPoint: Point2D, compressionQuality: number, fullChannelRange: {min: number; max: number}, pageFliped: boolean = false) {
+    requestChannelMapTiles(tiles: TileCoordinate[], frame: FrameStore, focusPoint: Point2D, compressionQuality: number, fullChannelRange: {min: number; max: number}) {
         if (!frame) {
             return;
         }
@@ -327,7 +327,7 @@ export class TileService {
         const requiredChannel = frame.channel;
         const currentTiles = tiles.map(tile => tile.encode());
 
-        if (this.currentlyStreamingChannelRange && this.currentlyStreamingTileRange) this.clearQueueForChannelMap(this.pendingRequests, fileId, fullChannelRange);
+        if (this.currentlyStreamingChannelRange && this.currentlyStreamingTileRange) this.clearQueueForChannelMap(this.pendingRequests, fileId, fullChannelRange, currentTiles, this.currentlyStreamingTileRange);
 
         const channelToTilesArray: {channel: number; tiles: TileCoordinate[]}[] = [];
 
@@ -422,10 +422,16 @@ export class TileService {
         this.updateRemainingTileCount();
     }
 
-    clearQueueForChannelMap(pendingRequests: Map<string | undefined, Map<number, boolean>>, fileId: number, currentChannelRange: {min: number; max: number}) {
+    clearQueueForChannelMap(pendingRequests: Map<string | undefined, Map<number, boolean>>, fileId: number, currentChannelRange: {min: number; max: number}, currentTileRange: number[], previousTileRange: number[]) {
         pendingRequests.forEach((value, key) => {
             if (!key) {
                 return;
+            }
+            for (const tile of currentTileRange) {
+                if (!previousTileRange.includes(tile)) {
+                    pendingRequests.delete(key);
+                    return;
+                }
             }
             const splitKey = key?.split("_");
             if (splitKey.length <= 0) {
