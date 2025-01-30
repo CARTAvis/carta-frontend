@@ -54,25 +54,28 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
 
         const channelMapControl = (
             <div className="channel-map-control-container">
+                <FormGroup className="channel-map-control-label" inline={true} label="Enable channel map mode">
+                    <Switch checked={channelMapSettings.channelMapEnabled} onChange={ev => channelMapSettings.setChannelMapEnabled(ev.currentTarget.checked)} />
+                </FormGroup>
                 <div className="channel-map-channel-control">
                     <ButtonGroup fill={true} className="channel-map-channel-control-buttons">
-                        <Tooltip content="Previous page" position={Position.TOP}>
-                            <Button icon={"chevron-backward"} onClick={() => appStore.channelMapStore.setPrevPage()}>
+                        <Tooltip content="Previous page" position={Position.TOP} disabled={!channelMapSettings.channelMapEnabled}>
+                            <Button icon={"chevron-backward"} onClick={() => appStore.channelMapStore.setPrevPage()} disabled={!channelMapSettings.channelMapEnabled}>
                                 {!iconOnly && "Page"}
                             </Button>
                         </Tooltip>
-                        <Tooltip content="Previous channel" position={Position.TOP}>
-                            <Button icon={"step-backward"} onClick={() => appStore.channelMapStore.setPrevChannel()}>
+                        <Tooltip content="Previous channel" position={Position.TOP} disabled={!channelMapSettings.channelMapEnabled}>
+                            <Button icon={"step-backward"} onClick={() => appStore.channelMapStore.setPrevChannel()} disabled={!channelMapSettings.channelMapEnabled}>
                                 {!iconOnly && "Channel"}
                             </Button>
                         </Tooltip>
-                        <Tooltip content="Next channel" position={Position.TOP}>
-                            <Button icon={"step-forward"} onClick={() => appStore.channelMapStore.setNextChannel()}>
+                        <Tooltip content="Next channel" position={Position.TOP} disabled={!channelMapSettings.channelMapEnabled}>
+                            <Button icon={"step-forward"} onClick={() => appStore.channelMapStore.setNextChannel()} disabled={!channelMapSettings.channelMapEnabled}>
                                 {!iconOnly && "Channel"}
                             </Button>
                         </Tooltip>
-                        <Tooltip content="Next page" position={Position.TOP}>
-                            <Button icon={"chevron-forward"} onClick={() => appStore.channelMapStore.setNextPage()}>
+                        <Tooltip content="Next page" position={Position.TOP} disabled={!channelMapSettings.channelMapEnabled}>
+                            <Button icon={"chevron-forward"} onClick={() => appStore.channelMapStore.setNextPage()} disabled={!channelMapSettings.channelMapEnabled}>
                                 {!iconOnly && "Page"}
                             </Button>
                         </Tooltip>
@@ -83,7 +86,7 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
 
         const channelMapPanel = (
             <div className="channel-map-control-container">
-                <FormGroup className="channel-map-control-label" inline={true} label="Start channel">
+                <FormGroup className="channel-map-control-label" inline={true} label="Start channel" disabled={!channelMapSettings.channelMapEnabled}>
                     <Slider
                         min={0}
                         max={appStore.channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth}
@@ -91,59 +94,80 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                         labelStepSize={Math.max(appStore.channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth / appStore.channelMapStore.numChannels, appStore.channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth / 5)}
                         value={appStore.channelMapStore.startChannel}
                         onChange={channel => appStore.channelMapStore.setStartChannel(channel)}
+                        disabled={!channelMapSettings.channelMapEnabled}
                     />
                 </FormGroup>
-                <FormGroup className="channel-map-control-label" inline={true} label="Image">
+                <FormGroup className="channel-map-control-label" inline={true} label="Image" disabled={!channelMapSettings.channelMapEnabled}>
                     <HTMLSelect
                         options={appStore.frameNames}
                         value={channelMapSettings.masterFrame ? appStore.frames.indexOf(channelMapSettings.masterFrame) : -1}
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => channelMapSettings.setMasterFrame(AppStore.Instance.getFrame(parseInt(event.currentTarget.value)))}
+                        disabled={!channelMapSettings.channelMapEnabled}
                     />
                 </FormGroup>
-                <FormGroup className="channel-map-control-label" inline={true} label="Start channel">
-                    <SafeNumericInput placeholder="Start channel" value={channelMapSettings.startChannel} min={0} max={numChannels - 1} onValueChange={this.onChannelChanged} />
+                <FormGroup className="channel-map-control-label" inline={true} label="Start channel" disabled={!channelMapSettings.channelMapEnabled}>
+                    <SafeNumericInput placeholder="Start channel" value={channelMapSettings.startChannel} min={0} max={numChannels - 1} onValueChange={this.onChannelChanged} disabled={!channelMapSettings.channelMapEnabled} />
                 </FormGroup>
-                <FormGroup className="channel-map-control-label" inline={true} label="Number of columns">
-                    <SafeNumericInput placeholder="Number of columns" min={1} max={10} value={channelMapSettings.numColumns} stepSize={1} onValueChange={(value: number) => channelMapSettings.setNumColumns(value)} />
+                <FormGroup className="channel-map-control-label" inline={true} label="Number of columns" disabled={!channelMapSettings.channelMapEnabled}>
+                    <SafeNumericInput
+                        placeholder="Number of columns"
+                        min={1}
+                        max={10}
+                        value={channelMapSettings.numColumns}
+                        stepSize={1}
+                        onValueChange={(value: number) => channelMapSettings.setNumColumns(value)}
+                        disabled={!channelMapSettings.channelMapEnabled}
+                    />
                 </FormGroup>
-                <FormGroup className="channel-map-control-label" inline={true} label="Number of rows">
-                    <SafeNumericInput placeholder="Number of rows" min={1} max={10} value={channelMapSettings.numRows} stepSize={1} onValueChange={(value: number) => channelMapSettings.setNumRows(value)} />
+                <FormGroup className="channel-map-control-label" inline={true} label="Number of rows" disabled={!channelMapSettings.channelMapEnabled}>
+                    <SafeNumericInput
+                        placeholder="Number of rows"
+                        min={1}
+                        max={10}
+                        value={channelMapSettings.numRows}
+                        stepSize={1}
+                        onValueChange={(value: number) => channelMapSettings.setNumRows(value)}
+                        disabled={!channelMapSettings.channelMapEnabled}
+                    />
                 </FormGroup>
-                <FormGroup className="channel-map-control-label" inline={true} label="Show channel string">
+                <FormGroup className="channel-map-control-label" inline={true} label="Show channel string" disabled={!channelMapSettings.channelMapEnabled}>
                     <div style={{display: "flex", alignItems: "center"}}>
-                        <Switch checked={channelMapSettings.showChannelString} onChange={ev => channelMapSettings.setShowChannelString(ev.currentTarget.checked)} />
+                        <Switch checked={channelMapSettings.showChannelString} onChange={ev => channelMapSettings.setShowChannelString(ev.currentTarget.checked)} disabled={!channelMapSettings.channelMapEnabled} />
                         {channelMapSettings.showChannelString && (
                             <Checkbox
                                 checked={channelMapSettings.showChannelStringLabel}
                                 onChange={(ev: React.ChangeEvent<HTMLInputElement>) => channelMapSettings.setShowChannelStringLabel(ev.currentTarget.checked)}
                                 label="Show label"
                                 style={{marginLeft: "10px"}}
+                                disabled={!channelMapSettings.channelMapEnabled}
                             />
                         )}
                     </div>
                 </FormGroup>
-                <FormGroup className="channel-map-control-label" inline={true} label="Show spectral string">
+                <FormGroup className="channel-map-control-label" inline={true} label="Show spectral string" disabled={!channelMapSettings.channelMapEnabled}>
                     <div style={{display: "flex", alignItems: "center"}}>
-                        <Switch checked={channelMapSettings.showSpectralString} onChange={ev => channelMapSettings.setShowSpectralString(ev.currentTarget.checked)} />
+                        <Switch checked={channelMapSettings.showSpectralString} onChange={ev => channelMapSettings.setShowSpectralString(ev.currentTarget.checked)} disabled={!channelMapSettings.channelMapEnabled} />
                         {channelMapSettings.showSpectralString && (
                             <Checkbox
                                 checked={channelMapSettings.showSpectralStringLabel}
                                 onChange={(ev: React.ChangeEvent<HTMLInputElement>) => channelMapSettings.setShowSpectralStringLabel(ev.currentTarget.checked)}
                                 label="Show label"
                                 style={{marginLeft: "10px"}}
+                                disabled={!channelMapSettings.channelMapEnabled}
                             />
                         )}
                     </div>
                 </FormGroup>
-                <FormGroup className="channel-map-control-label" inline={true} label="Show velocity string">
+                <FormGroup className="channel-map-control-label" inline={true} label="Show velocity string" disabled={!channelMapSettings.channelMapEnabled}>
                     <div style={{display: "flex", alignItems: "center"}}>
-                        <Switch checked={channelMapSettings.showVelocityString} onChange={ev => channelMapSettings.setShowVelocityString(ev.currentTarget.checked)} />
+                        <Switch checked={channelMapSettings.showVelocityString} onChange={ev => channelMapSettings.setShowVelocityString(ev.currentTarget.checked)} disabled={!channelMapSettings.channelMapEnabled} />
                         {channelMapSettings.showVelocityString && (
                             <Checkbox
                                 checked={channelMapSettings.showVelocityStringLabel}
                                 onChange={(ev: React.ChangeEvent<HTMLInputElement>) => channelMapSettings.setShowVelocityStringLabel(ev.currentTarget.checked)}
                                 label="Show label"
                                 style={{marginLeft: "10px"}}
+                                disabled={!channelMapSettings.channelMapEnabled}
                             />
                         )}
                     </div>
