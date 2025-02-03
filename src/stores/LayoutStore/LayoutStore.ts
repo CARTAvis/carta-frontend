@@ -161,6 +161,7 @@ export class LayoutStore {
         if (this.dockedLayout) {
             appStore.widgetsStore.initLayoutWithWidgets(this.dockedLayout);
             this.dockedLayout.init();
+            appStore.widgetsStore.updateImageWidgetTitle(this.dockedLayout);
         }
         this.currentLayoutName = layoutName;
 
