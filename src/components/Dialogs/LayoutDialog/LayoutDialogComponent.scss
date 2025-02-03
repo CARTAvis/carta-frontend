@@ -16,10 +16,16 @@
 
         .#{$ns}-form-group {
             margin: 6px;
+            max-width: 180px;
+
+            .#{$ns}-form-content {
+                text-overflow: ellipsis;
+                overflow: hidden;
+            }
         }
 
         .#{$ns}-html-table {
-            width: 95%;
+            width: 98%;
         }
 
         .layout-name-input {
@@ -53,7 +59,12 @@
 
     .#{$ns}-form-group {
         margin: 6px !important;
-        width: 6em;
+        width: 8em;
+
+        .#{$ns}-form-content {
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
     }
 
     .#{$ns}-button {
@@ -64,14 +75,15 @@
         span {
             display: block;
             max-width: 2em;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
     }
 
     .#{$ns}-html-select {
         max-width: 170px;
-        overflow: hidden;
+        select {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
     }
 
     &.active {

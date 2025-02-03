@@ -15,9 +15,9 @@ import "./LayoutDialogComponent.scss";
 const KEYCODE_ENTER = 13;
 @observer
 export class LayoutDialogComponent extends React.Component {
-    private static readonly DefaultWidth = 400;
+    private static readonly DefaultWidth = 425;
     private static readonly DefaultHeight = 600;
-    private static readonly MinWidth = 400;
+    private static readonly MinWidth = 425;
     private static readonly MinHeight = 600;
 
     @observable private editingLayoutName: string = "";
