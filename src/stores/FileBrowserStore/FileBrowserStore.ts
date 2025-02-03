@@ -398,7 +398,7 @@ export class FileBrowserStore {
         return type;
     };
 
-    @action selectFile = async (file: ISelectedFile) => {
+    @action selectFile = (file: ISelectedFile) => {
         const fileList = this.getfileListByMode;
         this.selectedFile = file.fileInfo;
 
@@ -407,7 +407,7 @@ export class FileBrowserStore {
         }
 
         if (this.browserMode === BrowserMode.File) {
-            await this.getFileInfo(fileList?.directory, file.fileInfo?.name, file.hdu);
+            this.getFileInfo(fileList?.directory, file.fileInfo?.name, file.hdu);
         } else if (this.browserMode === BrowserMode.SaveFile) {
             this.getFileInfo(fileList?.directory, file.fileInfo?.name, file.hdu);
             this.saveFilename = file.fileInfo?.name;
@@ -586,7 +586,9 @@ export class FileBrowserStore {
         // for dynamic layout
         if (PreferenceStore.Instance.dynamicLayoutEnable) {
             const selectedFilesCtypes = yield this.selectedFilesCtypeInfo();
-            AppStore.Instance.dynamicLayoutStore.matchLayoutMapping(selectedFilesCtypes);
+            if (this.selectedFiles) {
+                AppStore.Instance.dynamicLayoutStore.matchLayoutMapping(selectedFilesCtypes);
+            }
         }
     }
 

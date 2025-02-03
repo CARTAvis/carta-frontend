@@ -291,7 +291,7 @@ export class LayoutStore {
 
         try {
             const success = yield appStore.apiService.clearLayout(layoutName);
-            yield dynamicLayout.modifyLayoutMapping(layoutName);
+            yield dynamicLayout.deleteLayoutMappingByLayoutName(layoutName);
             if (success) {
                 delete this.layouts[layoutName];
             }

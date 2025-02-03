@@ -6,33 +6,51 @@ const ctypeTime = ["TIME"];
 const ctypeStokes = ["STOKES"];
 const ctypeRM = ["RM"]; // Rotation Measure
 
-export const DetermineCtypeAbbr = (ctype: string): {abbr: string; name: string; rank: number} => {
+export const DetermineCtypeAbbr = (ctype: string): {abbr: string; rank: number} => {
     const normalizedStr = ctype.toUpperCase();
 
     for (let i = 0; i < ctypeSpatial.length; i++) {
         if (normalizedStr.includes(ctypeSpatial[i])) {
-            return {abbr: "XY", name: "Spatial", rank: 0};
+            return {abbr: "XY", rank: 0};
         }
     }
 
     if (ctypeSpectral.includes(normalizedStr)) {
-        return {abbr: "Z", name: "Spectral", rank: 1};
+        return {abbr: "Z", rank: 1};
     }
 
     if (ctypeStokes.includes(normalizedStr)) {
-        return {abbr: "P", name: "Stokes", rank: 2};
+        return {abbr: "P", rank: 2};
     }
 
     if (ctypeTime.includes(normalizedStr)) {
-        return {abbr: "T", name: "Time", rank: 3};
+        return {abbr: "T", rank: 3};
     }
 
     if (ctypeRM.includes(normalizedStr)) {
-        return {abbr: "RM", name: "Rotation Measure", rank: 4};
+        return {abbr: "RM", rank: 4};
     }
 
-    return {abbr: `${normalizedStr[0]}...`, name: ctype, rank: 5};
+    return {abbr: normalizedStr, rank: 5};
 };
+
+export const CtypeName = new Map<string, string>([
+    ["XY", "Spatial"],
+    ["Z", "Spectral"],
+    ["P", "Stokes"],
+    ["T", "Time"],
+    ["RM", "Rotation Measure"]
+]);
+
+export function CtypeAbbrToName(ctypes: string): string {
+    let ctypeName: string[] = [];
+
+    ctypes.split(",").forEach(ctype => {
+        ctypeName.push(CtypeName.has(ctype) ? (CtypeName.get(ctype) as string) : ctype);
+    });
+
+    return ctypeName.join(", ");
+}
 
 export function FileCtypeInfo(headerEntries: CARTA.IFileInfoExtended | CARTA.IHeaderEntry[] | null): {ctype: string; name: string; rank: number} {
     if (headerEntries === null) {

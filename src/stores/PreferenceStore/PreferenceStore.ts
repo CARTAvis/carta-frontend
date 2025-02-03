@@ -764,7 +764,7 @@ export class PreferenceStore {
     }
 
     // getter for file priority for dynamic layout setting
-    @computed get existLayoutMapping(): boolean {
+    @computed get existLayoutMapping(): Object {
         return this.preferences.get(PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT) ?? DEFAULTS.GLOBAL.existLayoutMapping;
     }
 
