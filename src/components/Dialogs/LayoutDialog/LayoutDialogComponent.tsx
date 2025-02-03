@@ -210,24 +210,22 @@ export class LayoutDialogComponent extends React.Component {
 
         if (preferenceStore.dynamicLayoutEnable && (appStore.activeFrame || appStore.dynamicLayoutStore.isMappingExisted)) {
             return (
-                <Tabs>
-                    <Tab id={LayoutDialogMode.Layout} title="Layout" panel={<ScrollShadow>{this.layoutComponent()}</ScrollShadow>} />
-                    <Tab
-                        id={LayoutDialogMode.DynamicLayout}
-                        title="Dynamic layout"
-                        panel={
-                            <ScrollShadow>
-                                <LayoutMappingComponent orderedLayoutNames={layoutStore.orderedLayoutNames} existLayoutMapping={preferenceStore.existLayoutMapping} activeFrame={appStore.activeFrame} />
-                            </ScrollShadow>
-                        }
-                    />
-                </Tabs>
+                <ScrollShadow>
+                    <Tabs>
+                        <Tab id={LayoutDialogMode.Layout} title="Layout" panel={this.layoutComponent()} />
+                        <Tab
+                            id={LayoutDialogMode.DynamicLayout}
+                            title="Dynamic layout"
+                            panel={<LayoutMappingComponent orderedLayoutNames={layoutStore.orderedLayoutNames} existLayoutMapping={preferenceStore.existLayoutMapping} activeFrame={appStore.activeFrame} />}
+                        />
+                    </Tabs>
+                </ScrollShadow>
             );
         } else {
             return (
-                <div>
-                    <ScrollShadow>{this.layoutComponent()}</ScrollShadow>
-                </div>
+                <ScrollShadow>
+                    <div>{this.layoutComponent()}</div>
+                </ScrollShadow>
             );
         }
     };
