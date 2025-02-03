@@ -86,7 +86,7 @@ export class FileBrowserDialogComponent extends React.Component {
 
     private loadSelectedFiles = async () => {
         const appStore = AppStore.Instance;
-        const fileBrowserStore = appStore.fileBrowserStore;
+        const {fileBrowserStore, layoutStore, dynamicLayoutStore} = appStore;
 
         if (fileBrowserStore.selectedFiles.length > 1) {
             appStore.setLoadingMultipleFiles(true);
@@ -100,6 +100,10 @@ export class FileBrowserDialogComponent extends React.Component {
             appStore.setLoadingMultipleFiles(false);
         } else {
             await this.loadFile({fileInfo: fileBrowserStore.selectedFile, hdu: fileBrowserStore.selectedHDU});
+        }
+
+        if (PreferenceStore.Instance.dynamicLayoutEnable && dynamicLayoutStore.dynamicLayoutName && layoutStore.layoutExists(dynamicLayoutStore.dynamicLayoutName)) {
+            layoutStore.applyLayout(dynamicLayoutStore.dynamicLayoutName);
         }
     };
 
@@ -141,9 +145,6 @@ export class FileBrowserDialogComponent extends React.Component {
         const fileBrowserStore = appStore.fileBrowserStore;
         let frame: FrameStore;
 
-        const layoutStore = appStore.layoutStore;
-        const dyLayoutStore = appStore.dynamicLayoutStore;
-
         // Ignore load
         switch (fileBrowserStore.browserMode) {
             case BrowserMode.RegionExport:
@@ -156,10 +157,6 @@ export class FileBrowserDialogComponent extends React.Component {
         if (fileBrowserStore.browserMode === BrowserMode.File) {
             const frames = appStore.frames;
             if (!(forceAppend || fileBrowserStore.appendingFrame) || !frames.length) {
-                if (PreferenceStore.Instance.dynamicLayoutEnable && dyLayoutStore.dynamicLayoutName && layoutStore.layoutExists(dyLayoutStore.dynamicLayoutName)) {
-                    layoutStore.applyLayout(dyLayoutStore.dynamicLayoutName);
-                }
-
                 frame = yield appStore.openFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
             } else {
                 frame = yield appStore.appendFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
@@ -775,7 +772,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 onSortingChanged={fileBrowserStore.setSortingConfig}
                                 onFileClicked={this.handleFileClicked}
                                 onSelectionChanged={fileBrowserStore.setSelectedFiles}
-                                onFileDoubleClicked={this.loadFile}
+                                onFileDoubleClicked={this.loadSelectedFiles}
                                 onFolderClicked={this.handleFolderClicked}
                                 onListCancelled={this.handleFileListRequestCancelled}
                             />

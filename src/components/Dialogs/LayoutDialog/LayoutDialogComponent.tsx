@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScrollShadow} from "components/Shared";
 import {CtypeAbbrToName, PresetLayout} from "models";
-import {AppStore, DialogId, HelpType, INITIAL_LAYOUT_ITEM, LayoutDialogMode, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, DialogId, FrameStore, HelpType, INITIAL_LAYOUT_ITEM, LayoutDialogMode, PreferenceKeys, PreferenceStore} from "stores";
 
 import "./LayoutDialogComponent.scss";
 
@@ -206,7 +206,7 @@ export class LayoutDialogComponent extends React.Component {
 
     private showDialog = () => {
         const appStore = AppStore.Instance;
-        const preferenceStore = appStore.preferenceStore;
+        const {preferenceStore, layoutStore} = appStore;
 
         if (preferenceStore.dynamicLayoutEnable && (appStore.activeFrame || appStore.dynamicLayoutStore.isMappingExisted)) {
             return (
@@ -217,7 +217,7 @@ export class LayoutDialogComponent extends React.Component {
                         title="Dynamic layout"
                         panel={
                             <ScrollShadow>
-                                <LayoutMappingComponent />
+                                <LayoutMappingComponent orderedLayoutNames={layoutStore.orderedLayoutNames} existLayoutMapping={preferenceStore.existLayoutMapping} activeFrame={appStore.activeFrame} />
                             </ScrollShadow>
                         }
                     />
@@ -263,18 +263,23 @@ export class LayoutDialogComponent extends React.Component {
     }
 }
 
-function LayoutMappingRow({ctypes, layoutName}: {ctypes: string, layoutName: string}) {
+function LayoutMappingRow({ctypes, layoutName}: {ctypes: string; layoutName: string}) {
     const appsStore = AppStore.Instance;
     const {dynamicLayoutStore: dyLayoutStore, layoutStore, activeFrame} = appsStore;
-    
+
     const className = classNames("layout-mapping", {
         active: ctypes === activeFrame?.dynamicLayout.ctype
     });
-    
+
     const [selectedLayout, setSelectedLayout] = React.useState(layoutName);
-    
+
     const ctypeName = CtypeAbbrToName(ctypes);
-    const NormCtype = ctypes.split(",").map(ctype => {return ctype.length > 2 ? `${ctype[0]}..` : ctype}).join(", ");
+    const NormCtype = ctypes
+        .split(",")
+        .map(ctype => {
+            return ctype.length > 2 ? `${ctype[0]}..` : ctype;
+        })
+        .join(", ");
 
     return (
         <tr>
@@ -308,43 +313,44 @@ function LayoutMappingRow({ctypes, layoutName}: {ctypes: string, layoutName: str
     );
 }
 
-export const LayoutMappingComponent = () => {
+interface LayoutMappingComponentProps {
+    orderedLayoutNames: string[];
+    existLayoutMapping: Object;
+    activeFrame: FrameStore;
+}
+
+export const LayoutMappingComponent = React.memo((props: LayoutMappingComponentProps) => {
     const appsStore = AppStore.Instance;
-    const {dynamicLayoutStore: dyLayoutStore, layoutStore, preferenceStore, activeFrame} = appsStore;
+    const {dynamicLayoutStore: dyLayoutStore, preferenceStore, activeFrame} = appsStore;
 
-    const render = React.useMemo(() => {
-        
-        let ctypeList = [activeFrame?.dynamicLayout.ctype ?? ""];
-        let layoutNameList = [activeFrame?.dynamicLayout.layoutName ?? ""];
+    let ctypeList = [activeFrame?.dynamicLayout.ctype ?? ""];
+    let layoutNameList = [activeFrame?.dynamicLayout.layoutName ?? ""];
 
-        if (dyLayoutStore.isMappingExisted) {
-            const ctypes = Object.keys(preferenceStore.existLayoutMapping).reverse();
-            const layoutNames = ctypes.map(ctype => preferenceStore.existLayoutMapping[ctype]);
+    if (dyLayoutStore.isMappingExisted) {
+        const ctypes = Object.keys(preferenceStore.existLayoutMapping).reverse();
+        const layoutNames = ctypes.map(ctype => preferenceStore.existLayoutMapping[ctype]);
 
-            ctypeList = activeFrame ? (ctypes.includes(activeFrame.dynamicLayout.ctype) ? ctypes : [activeFrame.dynamicLayout.ctype, ...ctypes]) : ctypes;
-            layoutNameList = activeFrame ? (ctypes.includes(activeFrame.dynamicLayout.ctype) ? layoutNames : [activeFrame.dynamicLayout.layoutName, ...layoutNames]) : layoutNames;
-        }
+        ctypeList = activeFrame ? (ctypes.includes(activeFrame.dynamicLayout.ctype) ? ctypes : [activeFrame.dynamicLayout.ctype, ...ctypes]) : ctypes;
+        layoutNameList = activeFrame ? (ctypes.includes(activeFrame.dynamicLayout.ctype) ? layoutNames : [activeFrame.dynamicLayout.layoutName, ...layoutNames]) : layoutNames;
+    }
 
-        const LayoutMappingRows = () => {
-            return ctypeList.map((layoutCtypes, index) => {
-                return <LayoutMappingRow ctypes={layoutCtypes} layoutName={layoutNameList[index]} />;
-            });
-        };
+    const LayoutMappingRows = () => {
+        return ctypeList.map((layoutCtypes, index) => {
+            return <LayoutMappingRow ctypes={layoutCtypes} layoutName={layoutNameList[index]} />;
+        });
+    };
 
-        return (
-            <HTMLTable data-testid="dynamic-layout-table">
-                <thead>
-                    <tr>
-                        <th>Data type</th>
-                        <th>Layout</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <LayoutMappingRows />
-                </tbody>
-            </HTMLTable>
-        );
-    }, [JSON.stringify(layoutStore.orderedLayoutNames), JSON.stringify(preferenceStore.existLayoutMapping), activeFrame]);
-
-    return render;
-};
+    return (
+        <HTMLTable data-testid="dynamic-layout-table">
+            <thead>
+                <tr>
+                    <th>Data type</th>
+                    <th>Layout</th>
+                </tr>
+            </thead>
+            <tbody>
+                <LayoutMappingRows />
+            </tbody>
+        </HTMLTable>
+    );
+});

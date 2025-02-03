@@ -60,19 +60,17 @@ export class DynamicLayoutStore {
     @flow.bound *saveLayoutMapping(layoutName: string, layoutMappingCtype: string) {
         const appStore = AppStore.Instance;
         const layoutStore = appStore.layoutStore;
-        const preferenceStore = appStore.preferenceStore;
+        const preference = appStore.preferenceStore;
 
         // set layoutName to INITIAL_LAYOUT_ITEM to delete layout mapping
         if (layoutName === INITIAL_LAYOUT_ITEM) {
             const confirmed = yield appStore.alertStore.showInteractiveAlert(`Do you want to set ${INITIAL_LAYOUT_ITEM} for data type (${layoutMappingCtype})?`);
             if (confirmed) {
                 try {
-                    // delete preferenceStore.existLayoutMapping[layoutMappingCtype];
-                    // preferenceStore.setPreference(PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT, JSON.parse(JSON.stringify(preferenceStore.existLayoutMapping)));
                     this.deleteLayoutMapping(layoutMappingCtype);
-                    this.dynamicLayoutName = PreferenceStore.Instance.layout;
+                    this.dynamicLayoutName = preference.layout;
 
-                    if (PreferenceStore.Instance.dynamicLayoutEnable && layoutStore.layoutExists(this.dynamicLayoutName) && appStore.activeFrame?.dynamicLayout.ctype === layoutMappingCtype) {
+                    if (preference.dynamicLayoutEnable && layoutStore.layoutExists(this.dynamicLayoutName) && appStore.activeFrame?.dynamicLayout.ctype === layoutMappingCtype) {
                         appStore.dialogStore.hideDialog(DialogId.Layout);
                         layoutStore.applyLayout(this.dynamicLayoutName);
                     }
@@ -91,9 +89,9 @@ export class DynamicLayoutStore {
         }
 
         try {
-            preferenceStore.existLayoutMapping[layoutMappingCtype] = layoutName;
+            preference.existLayoutMapping[layoutMappingCtype] = layoutName;
 
-            preferenceStore.setPreference(PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT, JSON.parse(JSON.stringify(preferenceStore.existLayoutMapping)));
+            preference.setPreference(PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT, JSON.parse(JSON.stringify(preference.existLayoutMapping)));
             if (PreferenceStore.Instance.dynamicLayoutEnable && layoutStore.layoutExists(layoutName) && appStore.activeFrame?.dynamicLayout.ctype === layoutMappingCtype) {
                 layoutStore.applyLayout(layoutName);
             }
@@ -104,16 +102,16 @@ export class DynamicLayoutStore {
     }
 
     @action modifyLayoutMapping(layoutName: string, newLayoutName: string) {
-        const preferenceStore = PreferenceStore.Instance;
+        const preference = PreferenceStore.Instance;
 
         try {
-            Object.keys(preferenceStore.existLayoutMapping).forEach(ctype => {
-                if (preferenceStore.existLayoutMapping[ctype] === layoutName) {
-                    preferenceStore.existLayoutMapping[ctype] = newLayoutName;
+            Object.keys(preference.existLayoutMapping).forEach(ctype => {
+                if (preference.existLayoutMapping[ctype] === layoutName) {
+                    preference.existLayoutMapping[ctype] = newLayoutName;
                 }
             });
 
-            preferenceStore.setPreference(PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT, JSON.parse(JSON.stringify(preferenceStore.existLayoutMapping)));
+            preference.setPreference(PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT, JSON.parse(JSON.stringify(preference.existLayoutMapping)));
         } catch (err) {
             console.log(err);
             AppToaster.show(ErrorToast(`Fail to modify the layout mapping with ${layoutName} to ${newLayoutName}.`));
@@ -121,16 +119,16 @@ export class DynamicLayoutStore {
     }
 
     @action deleteLayoutMappingByLayoutName(layoutName: string) {
-        const preferenceStore = PreferenceStore.Instance;
+        const preference = PreferenceStore.Instance;
 
         try {
-            Object.keys(preferenceStore.existLayoutMapping).forEach(ctype => {
-                if (preferenceStore.existLayoutMapping[ctype] === layoutName) {
-                    delete preferenceStore.existLayoutMapping[ctype];
+            Object.keys(preference.existLayoutMapping).forEach(ctype => {
+                if (preference.existLayoutMapping[ctype] === layoutName) {
+                    delete preference.existLayoutMapping[ctype];
                 }
             });
 
-            preferenceStore.setPreference(PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT, JSON.parse(JSON.stringify(preferenceStore.existLayoutMapping)));
+            preference.setPreference(PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT, JSON.parse(JSON.stringify(preference.existLayoutMapping)));
         } catch (err) {
             console.log(err);
             AppToaster.show(ErrorToast(`Fail to delete the layout mapping with layout name: ${layoutName}.`));
@@ -138,12 +136,11 @@ export class DynamicLayoutStore {
     }
 
     @action deleteLayoutMapping(layoutMappingCtype: string) {
-        const preferenceStore = PreferenceStore.Instance;
+        const preference = PreferenceStore.Instance;
 
         try {
-            delete preferenceStore.existLayoutMapping[layoutMappingCtype];
-            preferenceStore.setPreference(PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT, JSON.parse(JSON.stringify(preferenceStore.existLayoutMapping)));
-            
+            delete preference.existLayoutMapping[layoutMappingCtype];
+            preference.setPreference(PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT, JSON.parse(JSON.stringify(preference.existLayoutMapping)));
         } catch (err) {
             console.log(err);
             AppToaster.show(ErrorToast(`Fail to delete the layout mapping: ${layoutMappingCtype}.`));

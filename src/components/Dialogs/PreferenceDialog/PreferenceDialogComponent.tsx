@@ -558,7 +558,7 @@ export class PreferenceDialogComponent extends React.Component {
                         </Tooltip>
                     </FormGroup>
                     <Collapse isOpen={appStore.dynamicLayoutStore.isMappingExisted || !!appStore.activeFrame}>
-                        <LayoutMappingComponent />
+                        <LayoutMappingComponent orderedLayoutNames={layoutStore.orderedLayoutNames} existLayoutMapping={preference.existLayoutMapping} activeFrame={appStore.activeFrame} />
                     </Collapse>
                 </Collapse>
             </React.Fragment>
