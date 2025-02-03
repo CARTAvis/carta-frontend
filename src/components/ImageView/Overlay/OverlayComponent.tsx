@@ -108,6 +108,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     settings.padding.right * appStore.pixelRatio,
                     settings.padding.top * appStore.pixelRatio,
                     settings.padding.bottom * appStore.pixelRatio,
+                    settings.labels.raDecReference ? settings.global.explicitSystem : "",
                     styleString
                 );
             };
@@ -181,6 +182,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const darktheme = AppStore.Instance.darkTheme;
         const title = this.props.overlaySettings.title.customText ? this.props.image?.store?.titleCustomText : this.props.image?.store?.filename;
         const ratio = AppStore.Instance.imageRatio;
+        const raDecReference = this.props.overlaySettings.labels.raDecReference;
         const titleStyleString = this.props.overlaySettings.title.styleString;
         const gridStyleString = this.props.overlaySettings.grid.styleString;
         const borderStyleString = this.props.overlaySettings.border.styleString;

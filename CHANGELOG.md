@@ -13,12 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added additional mono-color colormaps with a customized option for the raster image ([#2300](https://github.com/CARTAvis/carta-frontend/issues/2300)).
 * Added support for PV image generation using polyline ([#2302](https://github.com/CARTAvis/carta-frontend/issues/2302)).
 * Added support for multi-color blending ([#1204](https://github.com/CARTAvis/carta-frontend/issues/1204)).
-* Added support for showing relative coordinates in image view ([#681](https://github.com/CARTAvis/carta-frontend/issues/681))
+* Added support for showing relative coordinates in image view ([#681](https://github.com/CARTAvis/carta-frontend/issues/681)).
 * Added a button for deleting all regions ([#1040](https://github.com/CARTAvis/carta-frontend/issues/1040)).
 * Added support for loading remote FITS files from the hips2fits server ([#1379](https://github.com/CARTAvis/carta-backend/issues/1379)).
 * Supported the customized rest frequency for the moment maps ([#2396](https://github.com/CARTAvis/carta-frontend/issues/2396)).
 * Supported image coordinates for images with valid WCS headers ([#2366](https://github.com/CARTAvis/carta-frontend/issues/2366)).
 * Supported plotting with unit wavelength ^ 2 in z profile and Stokes analysis widgets ([#1685](https://github.com/CARTAvis/carta-frontend/issues/1685)).
+* Supported showing the coordinate system reference for RA and Dec labels in the image view panel.
 ### Fixed
 * Fixed ruler annotation matching bug ([#2242](https://github.com/CARTAvis/carta-frontend/issues/2242)).
 * Fixed compass and ruler annotations update bug in the spatially matched image when changing the coordinate ([#2270](https://github.com/CARTAvis/carta-frontend/issues/2270)).
@@ -33,13 +34,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Upgraded blueprintjs from v3 to v5 ([#2029](https://github.com/CARTAvis/carta-frontend/issues/1395)).
 * Fixed the catalog load button status after double clicking catalog files ([#2378](https://github.com/CARTAvis/carta-frontend/issues/2378)).
 * Synchronized the value format in the pan and zoom tab in the image view settings widget ([#2235](https://github.com/CARTAvis/carta-frontend/issues/2235)).
-* Fix save image/export regions bug which could cause directory overwrite or deletion ([#1377](https://github.com/CARTAvis/carta-backend/issues/1377)).
-* Fix incorrect rendering of image view when moving the window to monitors with different screen resolution ([#2285](https://github.com/CARTAvis/carta-frontend/issues/2285))
-* Fix the sudden jump of dragged-out marks ([#152](https://github.com/CARTAvis/carta-frontend/issues/152)).
+* Fixed save image/export regions bug which could cause directory overwrite or deletion ([#1377](https://github.com/CARTAvis/carta-backend/issues/1377)).
+* Fixed incorrect rendering of image view when moving the window to monitors with different screen resolution ([#2285](https://github.com/CARTAvis/carta-frontend/issues/2285)).
+* Fixed the sudden jump of dragged-out marks ([#152](https://github.com/CARTAvis/carta-frontend/issues/152)).
 * Fixed missing raster images when panning images to the top edge and right edge ([#948](https://github.com/CARTAvis/carta-frontend/issues/948)).
 * Fixed incorrect image viewer title after changing a layout ([#2379](https://github.com/CARTAvis/carta-frontend/issues/2379)).
 ### Changed
-* Changed the limitation of plotting up-to-10 profiles in the spectral profiler multi-profile mode to up-to-16 ([#2440](https://github.com/CARTAvis/carta-frontend/issues/2440))
+* Changed the limitation of plotting up-to-10 profiles in the spectral profiler multi-profile mode to up-to-16 ([#2440](https://github.com/CARTAvis/carta-frontend/issues/2440)).
 * Fixed the unit label of the y axis for flux density in the spectral profiles ([#2355](https://github.com/CARTAvis/carta-frontend/issues/2355)).
 * Axes order of the PV diagram becomes a sticky parameter ([#2402](https://github.com/CARTAvis/carta-frontend/issues/2402)).
 
