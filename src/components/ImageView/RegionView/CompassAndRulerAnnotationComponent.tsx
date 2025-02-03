@@ -417,13 +417,16 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
         hypotenusePointArray[i + 1] = point.y - mousePoint.current.y;
     }
 
-    const xCenterPointIndex = Math.floor(xPointArray.length / 2) % 2 === 0 ? Math.floor(xPointArray.length / 2) : Math.floor(xPointArray.length / 2) + 1;
-    const xCenterPoints = {x: xPointArray[xCenterPointIndex], y: xPointArray[xCenterPointIndex + 1]};
-    const xDistanceText = getDistanceText(frame.wcsInfo, secondaryImagePointStart, {x: secondaryImagePointFinish.x, y: secondaryImagePointStart.y});
+    let xCenterPoints, xDistanceText, yCenterPoints, yDistanceText;
+    if (region.auxiliaryTextVisible) {
+        const xCenterPointIndex = Math.floor(xPointArray.length / 2) % 2 === 0 ? Math.floor(xPointArray.length / 2) : Math.floor(xPointArray.length / 2) + 1;
+        xCenterPoints = {x: xPointArray[xCenterPointIndex], y: xPointArray[xCenterPointIndex + 1]};
+        xDistanceText = getDistanceText(frame.wcsInfo, secondaryImagePointStart, {x: secondaryImagePointFinish.x, y: secondaryImagePointStart.y});
 
-    const yCenterPointIndex = Math.floor(yPointArray.length / 2) % 2 === 0 ? Math.floor(yPointArray.length / 2) : Math.floor(yPointArray.length / 2) + 1;
-    const yCenterPoints = {x: yPointArray[yCenterPointIndex], y: yPointArray[yCenterPointIndex + 1]};
-    const yDistanceText = getDistanceText(frame.wcsInfo, {x: secondaryImagePointFinish.x, y: secondaryImagePointStart.y}, secondaryImagePointFinish);
+        const yCenterPointIndex = Math.floor(yPointArray.length / 2) % 2 === 0 ? Math.floor(yPointArray.length / 2) : Math.floor(yPointArray.length / 2) + 1;
+        yCenterPoints = {x: yPointArray[yCenterPointIndex], y: yPointArray[yCenterPointIndex + 1]};
+        yDistanceText = getDistanceText(frame.wcsInfo, {x: secondaryImagePointFinish.x, y: secondaryImagePointStart.y}, secondaryImagePointFinish);
+    }
 
     const centerPointIndex = Math.floor(hypotenusePointArray.length / 2) % 2 === 0 ? Math.floor(hypotenusePointArray.length / 2) : Math.floor(hypotenusePointArray.length / 2) + 1;
     const centerPoints = {x: hypotenusePointArray[centerPointIndex], y: hypotenusePointArray[centerPointIndex + 1]};
@@ -443,9 +446,11 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
 
     React.useEffect(() => {
         setTextOffsetX((region.textOffset.x * imageRatio * initialZoomLevel.current) / zoomLevel + distanceTextRef?.current?.textWidth / 2);
-        setXTextOffsetX((region.xTextOffset.x * imageRatio * initialZoomLevel.current) / zoomLevel + xTextRef?.current?.textWidth / 2);
-        setYTextOffsetX((region.yTextOffset.x * imageRatio * initialZoomLevel.current) / zoomLevel + yTextRef?.current?.textWidth / 2);
-    }, [imageRatio, zoomLevel, region.textOffset.x, region.xTextOffset.x, region.yTextOffset.x]);
+        if (region.auxiliaryTextVisible) {
+            setXTextOffsetX((region.xTextOffset.x * imageRatio * initialZoomLevel.current) / zoomLevel + xTextRef?.current?.textWidth / 2);
+            setYTextOffsetX((region.yTextOffset.x * imageRatio * initialZoomLevel.current) / zoomLevel + yTextRef?.current?.textWidth / 2);
+        }
+    }, [imageRatio, zoomLevel, region.textOffset.x, region.auxiliaryTextVisible, region.xTextOffset.x, region.yTextOffset.x]);
 
     return (
         <>
@@ -515,38 +520,42 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                     fontFamily={region.font}
                     fontStyle={region.fontStyle}
                 />
-                <Text
-                    ref={xTextRef}
-                    x={xCenterPoints.x}
-                    y={xCenterPoints.y}
-                    offsetX={xTextOffsetX}
-                    offsetY={(region.xTextOffset.y * imageRatio * initialZoomLevel.current) / zoomLevel}
-                    text={xDistanceText}
-                    stroke={region.color}
-                    fill={region.color}
-                    strokeWidth={(0.5 * imageRatio) / zoomLevel}
-                    strokeScaleEnabled={false}
-                    opacity={region.auxiliaryTextVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
-                    fontSize={(region.fontSize * imageRatio) / zoomLevel}
-                    fontFamily={region.font}
-                    fontStyle={region.fontStyle}
-                />
-                <Text
-                    ref={yTextRef}
-                    x={yCenterPoints.x}
-                    y={yCenterPoints.y}
-                    offsetX={yTextOffsetX}
-                    offsetY={(region.yTextOffset.y * imageRatio * initialZoomLevel.current) / zoomLevel}
-                    text={yDistanceText}
-                    stroke={region.color}
-                    fill={region.color}
-                    strokeWidth={(0.5 * imageRatio) / zoomLevel}
-                    strokeScaleEnabled={false}
-                    opacity={region.auxiliaryTextVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
-                    fontSize={(region.fontSize * imageRatio) / zoomLevel}
-                    fontFamily={region.font}
-                    fontStyle={region.fontStyle}
-                />
+                {region.auxiliaryTextVisible && (
+                    <>
+                        <Text
+                            ref={xTextRef}
+                            x={xCenterPoints.x}
+                            y={xCenterPoints.y}
+                            offsetX={xTextOffsetX}
+                            offsetY={(region.xTextOffset.y * imageRatio * initialZoomLevel.current) / zoomLevel}
+                            text={xDistanceText}
+                            stroke={region.color}
+                            fill={region.color}
+                            strokeWidth={(0.5 * imageRatio) / zoomLevel}
+                            strokeScaleEnabled={false}
+                            opacity={region.auxiliaryTextVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
+                            fontSize={(region.fontSize * imageRatio) / zoomLevel}
+                            fontFamily={region.font}
+                            fontStyle={region.fontStyle}
+                        />
+                        <Text
+                            ref={yTextRef}
+                            x={yCenterPoints.x}
+                            y={yCenterPoints.y}
+                            offsetX={yTextOffsetX}
+                            offsetY={(region.yTextOffset.y * imageRatio * initialZoomLevel.current) / zoomLevel}
+                            text={yDistanceText}
+                            stroke={region.color}
+                            fill={region.color}
+                            strokeWidth={(0.5 * imageRatio) / zoomLevel}
+                            strokeScaleEnabled={false}
+                            opacity={region.auxiliaryTextVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
+                            fontSize={(region.fontSize * imageRatio) / zoomLevel}
+                            fontFamily={region.font}
+                            fontStyle={region.fontStyle}
+                        />
+                    </>
+                )}
                 {/* This is an invisible shape in the empty area of the region to facilite clicking and dragging. */}
                 {region.auxiliaryLineVisible && <Line closed points={[xPointArray[0], xPointArray[1], hypotenusePointArray[0], hypotenusePointArray[1], yPointArray[0], yPointArray[1]]} opacity={0} />}
             </Group>

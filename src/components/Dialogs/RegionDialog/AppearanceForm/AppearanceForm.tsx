@@ -259,12 +259,16 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                             />
                         </FormGroup>
                         <FormGroup inline={true} label="Show auxiliary labels">
-                            <Switch checked={(region as RulerAnnotationStore).auxiliaryTextVisible} onChange={(ev: React.ChangeEvent<HTMLInputElement>) => (region as RulerAnnotationStore).setAuxiliaryTextVisible(ev.target.checked)} />
+                            <Switch
+                                disabled={!(region as RulerAnnotationStore).auxiliaryLineVisible}
+                                checked={(region as RulerAnnotationStore).auxiliaryTextVisible}
+                                onChange={(ev: React.ChangeEvent<HTMLInputElement>) => (region as RulerAnnotationStore).setAuxiliaryTextVisible(ev.target.checked)}
+                            />
                         </FormGroup>
-                        <FormGroup inline={true} label="X Label X offset" labelInfo="(px)">
+                        <FormGroup inline={true} label="X label X offset" labelInfo="(px)">
                             <SafeNumericInput
                                 disabled={!(region as RulerAnnotationStore).auxiliaryTextVisible}
-                                placeholder="X Label X offset"
+                                placeholder="X label X offset"
                                 min={-50}
                                 max={RegionStore.MAX_DASH_LENGTH}
                                 value={(region as RulerAnnotationStore).xTextOffset.x}
@@ -272,10 +276,10 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                                 onValueChange={value => (region as RulerAnnotationStore).setXTextOffset(value, true)}
                             />
                         </FormGroup>
-                        <FormGroup inline={true} label="X Label Y offset" labelInfo="(px)">
+                        <FormGroup inline={true} label="X label Y offset" labelInfo="(px)">
                             <SafeNumericInput
                                 disabled={!(region as RulerAnnotationStore).auxiliaryTextVisible}
-                                placeholder="X Label Y offset"
+                                placeholder="X label Y offset"
                                 min={-50}
                                 max={RegionStore.MAX_DASH_LENGTH}
                                 value={(region as RulerAnnotationStore).xTextOffset.y}
@@ -283,10 +287,10 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                                 onValueChange={value => (region as RulerAnnotationStore).setXTextOffset(value, false)}
                             />
                         </FormGroup>
-                        <FormGroup inline={true} label="Y Label X offset" labelInfo="(px)">
+                        <FormGroup inline={true} label="Y label X offset" labelInfo="(px)">
                             <SafeNumericInput
                                 disabled={!(region as RulerAnnotationStore).auxiliaryTextVisible}
-                                placeholder="Y Label X offset"
+                                placeholder="Y label X offset"
                                 min={-50}
                                 max={RegionStore.MAX_DASH_LENGTH}
                                 value={(region as RulerAnnotationStore).yTextOffset.x}
@@ -294,10 +298,10 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                                 onValueChange={value => (region as RulerAnnotationStore).setYTextOffset(value, true)}
                             />
                         </FormGroup>
-                        <FormGroup inline={true} label="Y Label Y offset" labelInfo="(px)">
+                        <FormGroup inline={true} label="Y label Y offset" labelInfo="(px)">
                             <SafeNumericInput
                                 disabled={!(region as RulerAnnotationStore).auxiliaryTextVisible}
-                                placeholder="Y Label Y offset"
+                                placeholder="Y label Y offset"
                                 min={-50}
                                 max={RegionStore.MAX_DASH_LENGTH}
                                 value={(region as RulerAnnotationStore).yTextOffset.y}

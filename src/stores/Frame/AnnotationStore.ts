@@ -475,6 +475,9 @@ export class RulerAnnotationStore extends RegionStore {
 
     @action setAuxiliaryLineVisible = (isVisible: boolean) => {
         this.auxiliaryLineVisible = isVisible;
+        if (!isVisible) {
+            this.setAuxiliaryTextVisible(false);
+        }
         this.modifiedTimestamp = performance.now();
     };
 
