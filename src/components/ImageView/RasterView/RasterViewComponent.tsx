@@ -183,10 +183,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private renderTiledCanvas(frame) {
         const imageSize = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
         const boundedView: FrameView = {
-            xMin: Math.max(0, frame.requiredFrameView.xMin),
-            xMax: Math.min(frame.requiredFrameView.xMax, imageSize.x),
-            yMin: Math.max(0, frame.requiredFrameView.yMin),
-            yMax: Math.min(frame.requiredFrameView.yMax, imageSize.y),
+            xMin: Math.max(-0.5, frame.requiredFrameView.xMin),
+            xMax: Math.min(frame.requiredFrameView.xMax, imageSize.x - 0.5),
+            yMin: Math.max(-0.5, frame.requiredFrameView.yMin),
+            yMax: Math.min(frame.requiredFrameView.yMax, imageSize.y - 0.5),
             mip: frame.requiredFrameView.mip
         };
 

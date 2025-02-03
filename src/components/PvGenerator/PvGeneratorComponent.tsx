@@ -1,5 +1,4 @@
 import * as React from "react";
-import ReactResizeDetector from "react-resize-detector";
 import {AnchorButton, FormGroup, HTMLSelect, Position, Switch, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
@@ -65,9 +64,6 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         }
         return bitValue;
     };
-
-    @observable width: number;
-    @observable height: number;
 
     @computed get widgetStore(): PvGeneratorWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
@@ -181,11 +177,6 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             }
         }
     }
-
-    @action private onResize = (width: number, height: number) => {
-        this.width = width;
-        this.height = height;
-    };
 
     @action setisValidSpectralRange = (bool: boolean) => {
         this.isValidSpectralRange = bool;
@@ -434,7 +425,6 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             <ScrollShadow>
                 <div className="pv-generator-widget">
                     <div className="pv-generator-panel">{pvImagePanel}</div>
-                    <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
                     <TaskProgressDialogComponent
                         isOpen={frame?.isRequestingPV && frame.requestingPVProgress < 1}
                         progress={frame ? frame.requestingPVProgress : 0}
