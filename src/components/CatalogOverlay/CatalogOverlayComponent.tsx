@@ -747,37 +747,37 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
         return (
             <ResizeDetector onResize={this.onResize} throttleTime={33}>
-            <div className={"catalog-overlay"}>
-                <div className={"catalog-overlay-filter-settings"}>
-                    <FormGroup inline={true} label="File">
-                        <Select
-                            className={Classes.FILL}
-                            filterable={false}
-                            items={catalogFileItems}
-                            activeItem={this.catalogFileId}
-                            onItemSelect={this.handleCatalogFileChange}
-                            itemRenderer={this.renderFileIdPopOver}
-                            popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
-                        >
-                            <Button text={this.catalogFileId} rightIcon="double-caret-vertical" data-testid="catalog-file-dropdown" />
-                        </Select>
-                    </FormGroup>
-                    <FormGroup className="catalog-system" disabled={!isImageOverlay} inline={true} label="System">
-                        <Select
-                            filterable={false}
-                            items={systemOptions}
-                            activeItem={profileStore.catalogCoordinateSystem.system}
-                            onItemSelect={system => profileStore.setCatalogCoordinateSystem(system)}
-                            itemRenderer={this.renderSystemPopOver}
-                            disabled={!isImageOverlay}
-                            popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
-                        >
-                            <Button text={activeSystem} disabled={!isImageOverlay} rightIcon="double-caret-vertical" data-testid="catalog-system-dropdown" />
-                        </Select>
-                    </FormGroup>
-                    <FormGroup inline={true} label="Show header">
-                        <Switch checked={this.isShowHeader} onChange={this.handleHideHeader} />
-                    </FormGroup>
+                <div className={"catalog-overlay"}>
+                    <div className={"catalog-overlay-filter-settings"}>
+                        <FormGroup inline={true} label="File">
+                            <Select
+                                className={Classes.FILL}
+                                filterable={false}
+                                items={catalogFileItems}
+                                activeItem={this.catalogFileId}
+                                onItemSelect={this.handleCatalogFileChange}
+                                itemRenderer={this.renderFileIdPopOver}
+                                popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
+                            >
+                                <Button text={this.catalogFileId} rightIcon="double-caret-vertical" data-testid="catalog-file-dropdown" />
+                            </Select>
+                        </FormGroup>
+                        <FormGroup className="catalog-system" disabled={!isImageOverlay} inline={true} label="System">
+                            <Select
+                                filterable={false}
+                                items={systemOptions}
+                                activeItem={profileStore.catalogCoordinateSystem.system}
+                                onItemSelect={system => profileStore.setCatalogCoordinateSystem(system)}
+                                itemRenderer={this.renderSystemPopOver}
+                                disabled={!isImageOverlay}
+                                popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
+                            >
+                                <Button text={activeSystem} disabled={!isImageOverlay} rightIcon="double-caret-vertical" data-testid="catalog-system-dropdown" />
+                            </Select>
+                        </FormGroup>
+                        <FormGroup inline={true} label="Show header">
+                            <Switch checked={this.isShowHeader} onChange={this.handleHideHeader} />
+                        </FormGroup>
 
                         <ButtonGroup className="catalog-map-buttons">
                             <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.SIZE)}>Size</AnchorButton>

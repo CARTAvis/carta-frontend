@@ -402,6 +402,12 @@ export class CatalogWidgetStore {
             this.orientationMapColumn = column;
             this.orientationMin = {default: undefined, clipd: undefined};
             this.orientationMax = {default: undefined, clipd: undefined};
+
+            if (this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
+                const result = minMaxArray(this.orientationMapData);
+                this.setAngleMax(result.maxVal);
+                this.setAngleMin(result.minVal);
+            }
         }
     }
 
@@ -759,6 +765,9 @@ export class CatalogWidgetStore {
             const minorResult = minMaxArray(this.sizeMinorMapData);
             this.setMinorSizeMax(minorResult.maxVal);
             this.setMinorSizeMin(minorResult.minVal);
+            const resultOrientation = minMaxArray(this.orientationMapData);
+            this.setAngleMax(resultOrientation.maxVal);
+            this.setAngleMin(resultOrientation.minVal);
 
             if (this.catalogShape !== CatalogOverlayShape.ELLIPSE_LINED) {
                 this.catalogShape = CatalogOverlayShape.CIRCLE_LINED;

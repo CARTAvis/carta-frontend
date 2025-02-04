@@ -58,9 +58,9 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         return {
             id: "catalog-overlay-floating-settings",
             type: "floating-settings",
-            minWidth: 400,
+            minWidth: 420,
             minHeight: 250,
-            defaultWidth: 350,
+            defaultWidth: 420,
             defaultHeight: 560,
             title: "catalog-overlay-settings",
             isCloseable: true,
@@ -625,23 +625,23 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
         const orientationMap = (
             <div className="panel-container">
-                <FormGroup inline={true} label="Column" disabled={disabledOverlayPanel}>
+                <FormGroup inline={true} label="Column" disabled={disabledOverlayPanel || widgetStore.isAngularSize}>
                     <Select
                         items={this.axisOption}
                         activeItem={null}
                         onItemSelect={columnName => widgetStore.setOrientationMapColumn(columnName)}
                         itemRenderer={this.renderAxisPopOver}
-                        disabled={disabledOverlayPanel}
+                        disabled={disabledOverlayPanel || widgetStore.isAngularSize}
                         popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                         filterable={true}
                         noResults={noResults}
                         itemPredicate={this.filterColumn}
                         resetOnSelect={true}
                     >
-                        <Button text={widgetStore.orientationMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical" data-testid="catalog-settings-orientation-column-dropdown" />
+                        <Button text={widgetStore.orientationMapColumn} disabled={disabledOverlayPanel || widgetStore.isAngularSize} rightIcon="double-caret-vertical" data-testid="catalog-settings-orientation-column-dropdown" />
                     </Select>
                 </FormGroup>
-                <Collapse isOpen={!disableOrientationMap}>
+                <Collapse isOpen={!disableOrientationMap && !widgetStore.isAngularSize}>
                     <FormGroup label={"Scaling"} inline={true} disabled={disableOrientationMap}>
                         <ScalingSelectComponent selectedItem={widgetStore.orientationScalingType} onItemSelect={type => widgetStore.setOrientationScalingType(type)} disabled={disableOrientationMap} />
                     </FormGroup>
@@ -697,25 +697,6 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             </div>
         );
 
-        const showTabs = () => {
-            if (widgetStore.catalogDisplayMode === CatalogDisplayMode.WORLD) {
-                return (
-                    <Tabs id="catalogSettings" vertical={false} selectedTabId={widgetStore.settingsTabId} onChange={tabId => this.handleSelectedTabChanged(tabId)}>
-                        <Tab id={CatalogSettingsTabs.SIZE} title="Size" panel={angularSizePanel} disabled={disabledOverlayPanel} />
-                        <Tab id={CatalogSettingsTabs.COLOR} title="Color" panel={colorMap} disabled={disabledOverlayPanel} data-testid="catalog-settings-color-tab-title" />
-                    </Tabs>
-                );
-            } else {
-                return (
-                    <Tabs id="catalogSettings" vertical={false} selectedTabId={widgetStore.settingsTabId} onChange={tabId => this.handleSelectedTabChanged(tabId)}>
-                        <Tab id={CatalogSettingsTabs.SIZE} title="Size" panel={widgetStore.catalogDisplayMode === CatalogDisplayMode.CANVAS ? sizeMap : angularSizePanel} disabled={disabledOverlayPanel} />
-                        <Tab id={CatalogSettingsTabs.COLOR} title="Color" panel={colorMap} disabled={disabledOverlayPanel} data-testid="catalog-settings-color-tab-title" />
-                        <Tab id={CatalogSettingsTabs.ORIENTATION} title="Orientation" panel={orientationMap} disabled={disabledOverlayPanel} data-testid="catalog-settings-orientation-tab-title" />
-                    </Tabs>
-                );
-            }
-        };
-
         return (
             <ScrollShadow>
                 <div className={"catalog-settings"}>
@@ -766,7 +747,11 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             />
                         </ButtonGroup>
                     </FormGroup>
-                    {showTabs()}
+                    <Tabs id="catalogSettings" vertical={false} selectedTabId={widgetStore.settingsTabId} onChange={tabId => this.handleSelectedTabChanged(tabId)}>
+                        <Tab id={CatalogSettingsTabs.SIZE} title="Size" panel={widgetStore.catalogDisplayMode === CatalogDisplayMode.WORLD ? angularSizePanel : sizeMap} disabled={disabledOverlayPanel} />
+                        <Tab id={CatalogSettingsTabs.COLOR} title="Color" panel={colorMap} disabled={disabledOverlayPanel} data-testid="catalog-settings-color-tab-title" />
+                        <Tab id={CatalogSettingsTabs.ORIENTATION} title="Orientation" panel={orientationMap} disabled={disabledOverlayPanel} data-testid="catalog-settings-orientation-tab-title" />
+                    </Tabs>
                 </div>
             </ScrollShadow>
         );
