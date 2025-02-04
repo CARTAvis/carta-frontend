@@ -20,6 +20,7 @@ import {
     PvPreviewComponent,
     RegionListComponent,
     Render3DComponent,
+    Render3DViewerComponent,
     RenderConfigComponent,
     RenderConfigSettingsPanelComponent,
     SpatialProfilerComponent,
@@ -47,6 +48,8 @@ export class FloatingWidgetManagerComponent extends React.Component {
 
     onFloatingWidgetClosed = (widget: WidgetConfig) => {
         const widgetsStore = WidgetsStore.Instance;
+        // Render3DComponent .type is render-3d
+        // Render3DViewerComponent .type is render3d-viewer
         switch (widget.type) {
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
                 // remove widget component only
@@ -62,6 +65,7 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 widgetsStore.removeFloatingWidget(widget.id);
                 break;
             case PvPreviewComponent.WIDGET_CONFIG.type:
+                console.log("Removing PvGenerator with ID: " + widget.id);
                 widgetsStore.pvGeneratorWidgets.get(widget.parentId)?.removePreviewFrame(parseInt(widget.parentId.split("-")[2]));
                 widgetsStore.removeFloatingWidget(widget.id);
                 break;
@@ -69,7 +73,16 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 widgetsStore.pvGeneratorWidgets.get(widget.id)?.removePreviewFrame(parseInt(widget.id.split("-")[2]));
                 widgetsStore.removeFloatingWidget(widget.id);
                 break;
+            case Render3DViewerComponent.WIDGET_CONFIG.type:
+                console.log("Removing Render3DViewer with ID: " + widget.id);
+                console.log("Current Render3DWidgets: ", widgetsStore.render3DWidgets);
+                widgetsStore.render3DWidgets.get(widget.parentId)?.removeRender3DViewer(parseInt(widget.id.split("-")[2]));
+                widgetsStore.removeFloatingWidget(widget.id);
+                break;
             case Render3DComponent.WIDGET_CONFIG.type:
+                console.log("Removing Render3DComponent with ID: " + widget.id);
+                console.log("Current Render3DWidgets: ", widgetsStore.render3DWidgets);
+                widgetsStore.render3DWidgets.get(widget.id)?.removeRender3DViewer(parseInt(widget.id.split("-")[2]));
                 widgetsStore.removeFloatingWidget(widget.id);
                 break;
             default:

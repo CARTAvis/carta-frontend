@@ -1036,6 +1036,7 @@ export class WidgetsStore {
             const isCatalogTable = config.component === CatalogOverlayComponent.WIDGET_CONFIG.type;
             const isCatalogPlot = config.component === CatalogPlotComponent.WIDGET_CONFIG.type;
             const isPvPreview = config.component === PvPreviewComponent.WIDGET_CONFIG.type;
+            const isRender3D = config.component === Render3DComponent.WIDGET_CONFIG.type;
             // Clean up removed widget's store (ignoring items that have been floated)
             const id = config.id as string;
             if (config.component !== "floated" && !isCatalogTable && !isCatalogPlot) {
@@ -1058,6 +1059,13 @@ export class WidgetsStore {
                 const regexPattern = /pv-generator-(\d+)/;
                 const pvGeneratorId = id.match(regexPattern);
                 this.pvGeneratorWidgets.get(pvGeneratorId?.[0] ?? "")?.removePreviewFrame(parseInt(id.split("-")[2]));
+            }
+
+            // remove render3d frane for current render3d widget
+            if (isRender3D) {
+                const regexPattern = /render3d-viewer-(\d+)/;
+                const render3DId = id.match(regexPattern);
+                this.render3DWidgets.get(render3DId?.[0] ?? "")?.removeRender3DViewer(parseInt(id.split("-")[2]));
             }
         }
     };

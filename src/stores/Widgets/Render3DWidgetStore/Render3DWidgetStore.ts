@@ -220,18 +220,10 @@ export class Render3DWidgetStore extends RegionWidgetStore {
         this.render3DViewer = id;
     }
 
-    @action removeRender3DViewer = () => {
+    @action removeRender3DViewer = (id: number) => {
+        AppStore.Instance.removeRender3DViewer(id);
         this.render3DViewer = null;
     }
-
-    // @action setRender3DFrame = (frame: FrameStore) => {
-    //     this.render3DFrame = frame;
-    // };
-
-    // @action removeRender3DFrame = (id: number) => {
-    //     AppStore.Instance.removeRender3DFrame(id);
-    //     this.render3DFrame = null;
-    // };
 
     public toConfig = () => {
         return {

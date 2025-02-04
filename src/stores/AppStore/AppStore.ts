@@ -979,19 +979,7 @@ export class AppStore {
 
             this.widgetsStore.pvGeneratorWidgets.get(pvGeneratorWidgetId)?.removePreviewFrame(parseInt(pvGeneratorWidgetId.split("-")[2]));
 
-            // clear render3d frames
-            // const render3DFrame = this.render3DFrames.get(fileId);
-            // let render3DWidgetId;
-
-            // for (const [key, value] of this.widgetsStore.render3DWidgets) {
-            //     if (_.isEqual(value?.render3DFrame, render3DFrame)) {
-            //         render3DWidgetId = key;
-            //     }
-            // }
-
-            // this.widgetsStore.render3DWidgets.get(render3DWidgetId)?.removeRender3DFrame(parseInt(render3DWidgetId.split("-")[2]));
             this.widgetsStore.removeFloatingWidget(pvGeneratorWidgetId);
-            this.render3DFrames.delete(fileId);
 
             // clear existing requirements for the frame
             this.spectralRequirements.delete(fileId);
@@ -1094,7 +1082,7 @@ export class AppStore {
                 this.widgetsStore.removeFloatingWidget(key);
             });
             this.render3DFrames.forEach((render3DFrameStore, render3DFrameId) => {
-                this.removeRender3DFrame(render3DFrameId);
+                this.removeRender3DViewer(render3DFrameId);
             });
             this.widgetsStore.render3DWidgets.forEach((value, key) => {
                 this.widgetsStore.removeFloatingWidget(key);
@@ -1120,6 +1108,7 @@ export class AppStore {
      */
     @action removePreviewFrame = (previewId: number) => {
         if (this.previewFrames.delete(previewId)) {
+            console.log("Removing preview frame", previewId);
             this.backendService.closePvPreview(previewId);
             this.setActiveImage(this.imageViewConfigStore.visibleImages[0]);
         }
@@ -1129,11 +1118,19 @@ export class AppStore {
      * Closes a Render3D frame.
      * @param render3DId - The file id of the image cube from which the Render3D was created.
      */
-    @action removeRender3DFrame = (render3DId: number) => {
-        if (this.render3DFrames.delete(render3DId)) {
-            this.backendService.closeRender3D(render3DId);
-            this.setActiveImage(this.imageViewConfigStore.visibleImages[0]);
+    @action removeRender3DViewer = (render3DId: number) => {
+        console.log("(1) Removing Render3D frame", render3DId);
+        const iter = this.render3DFrames.keys();
+        console.log(iter.next().value);
+        while (iter.next().value) {
+            console.log(" has Render3D frame? ", iter.next().value);
         }
+        this.backendService.closeRender3D(render3DId);
+        // if (this.render3DFrames.delete(render3DId)) {
+        //     console.log("(2) Removing Render3D frame", render3DId);
+        //     this.backendService.closeRender3D(render3DId);
+        //     this.setActiveImage(this.imageViewConfigStore.visibleImages[0]);
+        // }
     };
 
     /**
@@ -1572,17 +1569,6 @@ export class AppStore {
                     render3DWidgetStore.setRender3DViewer(id)
                     WidgetsStore.Instance.createFloatingSettingsWidget("3D Rendering Viewer", id, Render3DComponent.WIDGET_CONFIG.type);
                 }
-
-                // this is only to compile. MUST CHANGE, see above
-                // if (render3DWidgetStore.render3DFrame) {
-                //     render3DWidgetStore.render3DFrame.updateRender3DDataGenerator = render3DWidgetStore.render3DFrame.updateRender3DData(ack.render3dData);
-                //     // The initial next() function call executes the FrameStore.updateRender3DData until the first yield keyword
-                //     render3DWidgetStore.render3DFrame.updateRender3DDataGenerator.next();
-                // } else {
-                //     // No need of frame for now (also widgetstore)
-                //     // render3DWidgetStore.setRender3DFrame(this.addRender3DFrame(ack.render3DData, this.fileBrowserStore.startingDirectory, ""));
-                //     WidgetsStore.Instance.createFloatingSettingsWidget("3D Rendering Viewer", id, Render3DComponent.WIDGET_CONFIG.type);
-                // }  
             } else {
                 AppToaster.show({icon: "warning-sign", message: "Load 3D renderig failed.", intent: "danger", timeout: 3000});
             }
@@ -1597,31 +1583,6 @@ export class AppStore {
             AppToaster.show(ErrorToast(err));
         }
     }
-
-    // handleRender3DStream = (Render3DData: CARTA.Render3DData) => {
-    //     const frame = this.frames.find(frame => frame.frameInfo.fileId === spectralProfileData.fileId);
-    //     if (frame) {
-    //         let frameMap = this.spectralProfiles.get(spectralProfileData.fileId);
-    //         if (!frameMap) {
-    //             frameMap = new ObservableMap<number, SpectralProfileStore>();
-    //             this.spectralProfiles.set(spectralProfileData.fileId, frameMap);
-    //         }
-    //         let profileStore = frameMap.get(spectralProfileData.regionId);
-    //         if (!profileStore) {
-    //             profileStore = new SpectralProfileStore(spectralProfileData.fileId, spectralProfileData.regionId);
-    //             frameMap.set(spectralProfileData.regionId, profileStore);
-    //         }
-
-    //         if (spectralProfileData.progress >= 1 && spectralProfileData.regionId !== CURSOR_REGION_ID && !this.animatorStore.animationActive) {
-    //             const region = frame.getRegion(spectralProfileData.regionId);
-    //             TelemetryService.Instance.addSpectralProfileEntry(spectralProfileData.profiles.length, region.regionType, region.regionId, region.size.x, region.size.y, frame.frameInfo.fileInfoExtended.depth);
-    //         }
-
-    //         for (let profile of spectralProfileData.profiles) {
-    //             profileStore.setProfile(ProtobufProcessing.ProcessSpectralProfile(profile, spectralProfileData.progress));
-    //         }
-    //     }
-    // };
 
     @flow.bound *requestPreviewPV(message: CARTA.IPvRequest, frame: FrameStore, id: string) {
         if (!message || !frame) {
@@ -2216,7 +2177,7 @@ export class AppStore {
         // Subscribe to frontend streams
         this.backendService.spatialProfileStream.subscribe(this.handleSpatialProfileStream);
         this.backendService.spectralProfileStream.subscribe(this.handleSpectralProfileStream);
-        // this.backendService.render3DStream.subscribe(this.handleRender3DStream);
+        this.backendService.render3DStream.subscribe(this.handleRender3DStream);
         this.backendService.histogramStream.subscribe(this.handleRegionHistogramStream);
         this.backendService.contourStream.subscribe(this.handleContourImageStream);
         this.backendService.catalogStream.subscribe(this.handleCatalogFilterStream);
@@ -2295,6 +2256,19 @@ export class AppStore {
             for (let profile of spectralProfileData.profiles) {
                 profileStore.setProfile(ProtobufProcessing.ProcessSpectralProfile(profile, spectralProfileData.progress));
             }
+        }
+    };
+
+    handleRender3DStream = (Render3DData: CARTA.Render3DData) => {
+        if (!Render3DData.width && !Render3DData.height && !Render3DData.depth && !Render3DData.imageData) {
+            return;
+        }
+        const previewFrame = this.widgetsStore.pvGeneratorWidgets.get(PvGeneratorComponent.WIDGET_CONFIG.id + "-" + Render3DData.viewerId)?.previewFrame;
+
+        if (previewFrame) {
+            // previewFrame.updatePreviewDataGenerator = previewFrame.updatePreviewData(Render3DData);
+            // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
+            previewFrame.updatePreviewDataGenerator.next();
         }
     };
 

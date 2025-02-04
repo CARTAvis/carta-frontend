@@ -16,8 +16,8 @@ interface Render3DViewerDialogProps {
 export class Render3DViewerComponent extends React.Component<Render3DViewerDialogProps> {
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
-            id: "render3d-viewer",
-            type: "render3d-viewer",
+            id: "render-3d-viewer",
+            type: "render-3d-viewer",
             minWidth: 300,
             minHeight: 300,
             defaultWidth: 600,

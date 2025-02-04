@@ -797,19 +797,6 @@ export class BackendService {
         }
     }
 
-    closeRender3D(viewerId: number) {
-        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            throw new Error("Not connected");
-        } else {
-            const message = CARTA.CloseRender3D.create({viewerId});
-            this.logEvent(CARTA.EventType.CLOSE_RENDER3D, this.eventCounter, message, false);
-            if (this.sendEvent(CARTA.EventType.CLOSE_RENDER3D, CARTA.CloseRender3D.encode(message).finish())) {
-                return true;
-            }
-            throw new Error("Could not send event");
-        }
-    }
-
     async requestRemoteFile(message: CARTA.IRemoteFileRequest): Promise<CARTA.IRemoteFileResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
@@ -860,6 +847,19 @@ export class BackendService {
             const message = CARTA.ClosePvPreview.create({previewId});
             this.logEvent(CARTA.EventType.CLOSE_PV_PREVIEW, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.CLOSE_PV_PREVIEW, CARTA.ClosePvPreview.encode(message).finish())) {
+                return true;
+            }
+            throw new Error("Could not send event");
+        }
+    }
+
+    closeRender3D(viewerId: number) {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            throw new Error("Not connected");
+        } else {
+            const message = CARTA.CloseRender3D.create({viewerId});
+            this.logEvent(CARTA.EventType.CLOSE_RENDER3D, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.CLOSE_RENDER3D, CARTA.CloseRender3D.encode(message).finish())) {
                 return true;
             }
             throw new Error("Could not send event");
