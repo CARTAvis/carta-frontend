@@ -1,5 +1,4 @@
 import * as React from "react";
-import ReactResizeDetector from "react-resize-detector";
 import SplitPane, {Pane} from "react-split-pane";
 import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay2, Popover, Position, Spinner, Switch, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
@@ -7,7 +6,7 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {FilterableTableComponent, FilterableTableComponentProps, SafeNumericInput} from "components/Shared";
+import {FilterableTableComponent, FilterableTableComponentProps, ResizeDetector, SafeNumericInput} from "components/Shared";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {RedshiftType, SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit, SpectralLineQueryWidgetStore} from "stores/Widgets";
 
@@ -416,40 +415,41 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         const plotTip = <span>Plot lines to selected profiler{hint}</span>;
 
         return (
-            <div className="spectral-line-query-widget">
-                <div className={Classes.DIALOG_BODY}>
-                    {queryPanel}
-                    <SplitPane className="body-split-pane" split="horizontal" primary={"second"} defaultSize={"60%"} minSize={"5%"} onChange={this.onTableResize}>
-                        <Pane className={"header-table-container"}>{this.width > 0 && this.createHeaderTable()}</Pane>
-                        <Pane className={"result-table-container"}>
-                            {redshiftPanel}
-                            <div className="result-table">{this.width > 0 && <FilterableTableComponent {...queryResultTableProps} />}</div>
-                        </Pane>
-                    </SplitPane>
+            <ResizeDetector onResize={this.onResize} throttleTime={33}>
+                <div className="spectral-line-query-widget">
+                    <div className={Classes.DIALOG_BODY}>
+                        {queryPanel}
+                        <SplitPane className="body-split-pane" split="horizontal" primary={"second"} defaultSize={"60%"} minSize={"5%"} onChange={this.onTableResize}>
+                            <Pane className={"header-table-container"}>{this.width > 0 && this.createHeaderTable()}</Pane>
+                            <Pane className={"result-table-container"}>
+                                {redshiftPanel}
+                                <div className="result-table">{this.width > 0 && <FilterableTableComponent {...queryResultTableProps} />}</div>
+                            </Pane>
+                        </SplitPane>
+                    </div>
+                    <div className={Classes.DIALOG_FOOTER}>
+                        <div className="result-table-info" data-testid="spectral-line-query-result-info">
+                            <pre>{widgetStore.resultTableInfo}</pre>
+                        </div>
+                        <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                            <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral profiler"}>
+                                {widgetMenu}
+                            </FormGroup>
+                            <AnchorButton text="Apply filter" intent={Intent.SUCCESS} disabled={widgetStore.numDataRows <= 0 || !widgetStore.hasFilter} onClick={this.handleFilter} />
+                            <AnchorButton text="Reset filter" intent={Intent.WARNING} onClick={this.handleResetFilter} />
+                            <Tooltip content={plotTip} position={Position.BOTTOM}>
+                                <AnchorButton text="Plot" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || widgetStore.filterResult.size <= 0 || !isSelectedWidgetExisted || !isSelectedLinesUnderLimit} onClick={this.handlePlot} />
+                            </Tooltip>
+                            <AnchorButton text="Clear plot" disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.filterResult.size <= 0} onClick={this.handleClear} />
+                        </div>
+                    </div>
+                    <Overlay2 className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={widgetStore.isQuerying} usePortal={false}>
+                        <div className="query-loading-overlay" data-testid="spectral-line-query-loading-icon">
+                            <Spinner intent={Intent.PRIMARY} size={30} value={null} />
+                        </div>
+                    </Overlay2>
                 </div>
-                <div className={Classes.DIALOG_FOOTER}>
-                    <div className="result-table-info" data-testid="spectral-line-query-result-info">
-                        <pre>{widgetStore.resultTableInfo}</pre>
-                    </div>
-                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral profiler"}>
-                            {widgetMenu}
-                        </FormGroup>
-                        <AnchorButton text="Apply filter" intent={Intent.SUCCESS} disabled={widgetStore.numDataRows <= 0 || !widgetStore.hasFilter} onClick={this.handleFilter} />
-                        <AnchorButton text="Reset filter" intent={Intent.WARNING} onClick={this.handleResetFilter} />
-                        <Tooltip content={plotTip} position={Position.BOTTOM}>
-                            <AnchorButton text="Plot" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || widgetStore.filterResult.size <= 0 || !isSelectedWidgetExisted || !isSelectedLinesUnderLimit} onClick={this.handlePlot} />
-                        </Tooltip>
-                        <AnchorButton text="Clear plot" disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.filterResult.size <= 0} onClick={this.handleClear} />
-                    </div>
-                </div>
-                <Overlay2 className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={widgetStore.isQuerying} usePortal={false}>
-                    <div className="query-loading-overlay" data-testid="spectral-line-query-loading-icon">
-                        <Spinner intent={Intent.PRIMARY} size={30} value={null} />
-                    </div>
-                </Overlay2>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
-            </div>
+            </ResizeDetector>
         );
     }
 }

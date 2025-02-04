@@ -1,5 +1,4 @@
 import * as React from "react";
-import ReactResizeDetector from "react-resize-detector";
 import {Colors, FormGroup, HTMLSelect, NonIdealState} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
@@ -8,7 +7,7 @@ import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, ResizeDetector, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {Point2D, POLARIZATIONS} from "models";
 import {AppStore, ASTSettingsString, DefaultWidgetConfig, HelpType, OverlayStore, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
@@ -713,25 +712,26 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
 
         return (
-            <div className={"spatial-profiler-widget"}>
-                <div className="profile-container">
-                    <div className="profile-toolbar">
-                        <RegionSelectorComponent widgetStore={widgetStore} />
-                        {widgetStore.effectiveFrame?.hasStokes && (
-                            <FormGroup label={"Polarization"} inline={true}>
-                                <HTMLSelect value={widgetStore.selectedStokes} options={widgetStore.stokesOptions} onChange={ev => widgetStore.setSelectedStokes(ev.currentTarget.value)} />
-                            </FormGroup>
-                        )}
-                    </div>
-                    <div className="profile-plot">
-                        <LinePlotComponent {...linePlotProps} />
-                    </div>
-                    <div className="profile-info" data-testid={(isXProfile ? "x" : "y") + "-profiler-info"}>
-                        <ProfilerInfoComponent info={this.genProfilerInfo()} />
+            <ResizeDetector onResize={this.onResize} throttleTime={33}>
+                <div className={"spatial-profiler-widget"}>
+                    <div className="profile-container">
+                        <div className="profile-toolbar">
+                            <RegionSelectorComponent widgetStore={widgetStore} />
+                            {widgetStore.effectiveFrame?.hasStokes && (
+                                <FormGroup label={"Polarization"} inline={true}>
+                                    <HTMLSelect value={widgetStore.selectedStokes} options={widgetStore.stokesOptions} onChange={ev => widgetStore.setSelectedStokes(ev.currentTarget.value)} />
+                                </FormGroup>
+                            )}
+                        </div>
+                        <div className="profile-plot">
+                            <LinePlotComponent {...linePlotProps} />
+                        </div>
+                        <div className="profile-info" data-testid={(isXProfile ? "x" : "y") + "-profiler-info"}>
+                            <ProfilerInfoComponent info={this.genProfilerInfo()} />
+                        </div>
                     </div>
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
-            </div>
+            </ResizeDetector>
         );
     }
 }

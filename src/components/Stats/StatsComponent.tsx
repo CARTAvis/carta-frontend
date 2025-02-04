@@ -1,12 +1,11 @@
 import * as React from "react";
-import ReactResizeDetector from "react-resize-detector";
 import {FormGroup, HTMLSelect, HTMLTable, NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {RegionSelectorComponent} from "components/Shared";
+import {RegionSelectorComponent, ResizeDetector} from "components/Shared";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {FULL_POLARIZATIONS, POLARIZATIONS} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
@@ -288,19 +287,20 @@ export class StatsComponent extends React.Component<WidgetProps> {
         const className = classNames("stats-widget", {"dark-theme": appStore.darkTheme});
 
         return (
-            <div className={className}>
-                <div className="stats-toolbar">
-                    <RegionSelectorComponent widgetStore={this.widgetStore} />
-                    <FormGroup label={"Polarization"} inline={true} disabled={!enableStokesSelect}>
-                        <HTMLSelect className={stokesClassName} value={widgetStore.coordinate} options={coordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect} data-testid="polarization-dropdown" />
-                    </FormGroup>
+            <ResizeDetector onResize={this.onResize}>
+                <div className={className}>
+                    <div className="stats-toolbar">
+                        <RegionSelectorComponent widgetStore={this.widgetStore} />
+                        <FormGroup label={"Polarization"} inline={true} disabled={!enableStokesSelect}>
+                            <HTMLSelect className={stokesClassName} value={widgetStore.coordinate} options={coordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect} data-testid="polarization-dropdown" />
+                        </FormGroup>
+                    </div>
+                    <div className="stats-display" onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+                        {formContent}
+                        {exportDataComponent}
+                    </div>
                 </div>
-                <div className="stats-display" onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-                    {formContent}
-                    {exportDataComponent}
-                </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}></ReactResizeDetector>
-            </div>
+            </ResizeDetector>
         );
     }
 }
