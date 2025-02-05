@@ -518,7 +518,7 @@ export class RulerAnnotationStore extends RegionStore {
         this.modifiedTimestamp = performance.now();
     };
 
-    public getCurveApproximation(wcsInfo: AST.FrameSet, mapping?: AST.Mapping): {xApproximatePoints: number[]; yApproximatePoints: number[]; hypotenuseApproximatePoints: number[]} {
+    public getCurveApproximation(wcsInfo: AST.FrameSet, mapping?: AST.Mapping): {xApproximatePoints: number[]; yApproximatePoints: number[]; hypotenuseApproximatePoints: number[]; corner: Point2D} {
         let xApproximatePoints;
         let yApproximatePoints;
         let hypotenuseApproximatePoints;
@@ -551,7 +551,7 @@ export class RulerAnnotationStore extends RegionStore {
         yApproximatePoints = AST.getGeodesicPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, finish, corner);
         hypotenuseApproximatePoints = AST.getGeodesicPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, start, finish);
 
-        return {xApproximatePoints, yApproximatePoints, hypotenuseApproximatePoints};
+        return {xApproximatePoints, yApproximatePoints, hypotenuseApproximatePoints, corner: transformPoint(wcsInfo, corner, false)};
     }
 
     public getAnnotationStyles = () => {

@@ -395,6 +395,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     const xApproxPoints = approxPoints.xApproximatePoints;
     const yApproxPoints = approxPoints.yApproximatePoints;
     const hypotenuseApproxPoints = approxPoints.hypotenuseApproximatePoints;
+    const cornerPoint = approxPoints.corner;
     const xPointArray = Array<number>(xApproxPoints.length);
     const yPointArray = Array<number>(yApproxPoints.length);
     const hypotenusePointArray = Array<number>(hypotenuseApproxPoints.length);
@@ -421,11 +422,11 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     if (region.auxiliaryTextVisible) {
         const xCenterPointIndex = Math.floor(xPointArray.length / 2) % 2 === 0 ? Math.floor(xPointArray.length / 2) : Math.floor(xPointArray.length / 2) + 1;
         xCenterPoints = {x: xPointArray[xCenterPointIndex], y: xPointArray[xCenterPointIndex + 1]};
-        xDistanceText = getDistanceText(frame.wcsInfo, secondaryImagePointStart, {x: secondaryImagePointFinish.x, y: secondaryImagePointStart.y});
+        xDistanceText = getDistanceText(frame.wcsInfo, secondaryImagePointStart, cornerPoint);
 
         const yCenterPointIndex = Math.floor(yPointArray.length / 2) % 2 === 0 ? Math.floor(yPointArray.length / 2) : Math.floor(yPointArray.length / 2) + 1;
         yCenterPoints = {x: yPointArray[yCenterPointIndex], y: yPointArray[yCenterPointIndex + 1]};
-        yDistanceText = getDistanceText(frame.wcsInfo, {x: secondaryImagePointFinish.x, y: secondaryImagePointStart.y}, secondaryImagePointFinish);
+        yDistanceText = getDistanceText(frame.wcsInfo, cornerPoint, secondaryImagePointFinish);
     }
 
     const centerPointIndex = Math.floor(hypotenusePointArray.length / 2) % 2 === 0 ? Math.floor(hypotenusePointArray.length / 2) : Math.floor(hypotenusePointArray.length / 2) + 1;
