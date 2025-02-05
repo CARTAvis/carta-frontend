@@ -35,9 +35,8 @@
             flex-direction: row;
 
             .#{$ns}-form-group {
-                margin-right: 10px;
+                margin: 0px;
                 .#{$ns}-label {
-                    margin: 0px;
                     width: 3em;
                 }
             }
@@ -50,6 +49,19 @@
 
         .moment-generate {
             float: right;
+        }
+
+        .freq-input {
+            display: flex;
+            flex-direction: row;
+
+            .#{$ns}-form-group {
+                margin-right: 10px;
+                .#{$ns}-input-group {
+                    min-width: 130px;
+                    width: 130px;
+                }
+            }
         }
     }
 }

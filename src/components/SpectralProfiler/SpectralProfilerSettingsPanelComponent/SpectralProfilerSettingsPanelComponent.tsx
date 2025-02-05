@@ -3,7 +3,7 @@ import {FormGroup, HTMLSelect, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {autorun, computed} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
+import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScrollShadow, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {MultiProfileCategory, SpectralProfileWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
@@ -177,42 +177,44 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
         const isMultiProfileActive = widgetStore.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
         return (
-            <div className="spectral-settings">
-                <Tabs id="spectralSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
-                    <Tab
-                        id={SpectralProfilerSettingsTabs.CONVERSION}
-                        panelClassName="conversion-tab-panel"
-                        title="Conversion"
-                        panel={
-                            <React.Fragment>
-                                <SpectralSettingsComponent
-                                    frame={widgetStore.effectiveFrame}
-                                    onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
-                                    onSpectralCoordinateChangeSecondary={widgetStore.setSpectralCoordinateSecondary}
-                                    onSpectralSystemChange={widgetStore.setSpectralSystem}
-                                    secondaryAxisCursorInfoVisible={widgetStore.secondaryAxisCursorInfoVisible}
-                                    disable={widgetStore.effectiveFrame?.isPVImage}
-                                />
-                                <FormGroup label={"Intensity unit"} inline={true}>
-                                    <HTMLSelect
-                                        value={isMultiProfileActive ? widgetStore.intensityUnit : widgetStore.effectiveFrame?.intensityUnit}
-                                        options={widgetStore.isIntensityConvertible ? widgetStore.intensityOptions : [widgetStore.effectiveFrame?.headerUnit]}
-                                        onChange={ev => (isMultiProfileActive ? widgetStore.setMultiProfileIntensityUnit(ev.currentTarget.value) : widgetStore.effectiveFrame.setIntensityUnit(ev.currentTarget.value))}
-                                        data-testid="spectral-profiler-settings-intensity-unit-dropdown"
+            <ScrollShadow>
+                <div className="spectral-settings">
+                    <Tabs id="spectralSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
+                        <Tab
+                            id={SpectralProfilerSettingsTabs.CONVERSION}
+                            panelClassName="conversion-tab-panel"
+                            title="Conversion"
+                            panel={
+                                <React.Fragment>
+                                    <SpectralSettingsComponent
+                                        frame={widgetStore.effectiveFrame}
+                                        onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
+                                        onSpectralCoordinateChangeSecondary={widgetStore.setSpectralCoordinateSecondary}
+                                        onSpectralSystemChange={widgetStore.setSpectralSystem}
+                                        secondaryAxisCursorInfoVisible={widgetStore.secondaryAxisCursorInfoVisible}
+                                        disable={widgetStore.effectiveFrame?.isPVImage}
                                     />
-                                </FormGroup>
-                                <FormGroup inline={true} label={"Secondary info"}>
-                                    <Switch checked={widgetStore.secondaryAxisCursorInfoVisible} onChange={event => widgetStore.setSecondaryAxisCursorInfoVisible(event.currentTarget.checked as boolean)} />
-                                </FormGroup>
-                            </React.Fragment>
-                        }
-                    />
-                    <Tab id={SpectralProfilerSettingsTabs.STYLING} panelClassName="styling-tab-panel" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps} />} />
-                    <Tab id={SpectralProfilerSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore} disableColorAndLineWidth={widgetStore.profileNum > 1} />} />
-                    <Tab id={SpectralProfilerSettingsTabs.MOMENTS} panelClassName="moment-tab-panel" title="Moments" panel={<MomentGeneratorComponent widgetStore={widgetStore} />} />
-                    <Tab id={SpectralProfilerSettingsTabs.FITTING} panelClassName="fitting-tab-panel" title="Fitting" panel={<ProfileFittingComponent fittingStore={widgetStore.fittingStore} widgetStore={widgetStore} />} />
-                </Tabs>
-            </div>
+                                    <FormGroup label={"Intensity unit"} inline={true}>
+                                        <HTMLSelect
+                                            value={isMultiProfileActive ? widgetStore.intensityUnit : widgetStore.effectiveFrame?.intensityUnit}
+                                            options={widgetStore.isIntensityConvertible ? widgetStore.intensityOptions : [widgetStore.effectiveFrame?.headerUnit]}
+                                            onChange={ev => (isMultiProfileActive ? widgetStore.setMultiProfileIntensityUnit(ev.currentTarget.value) : widgetStore.effectiveFrame.setIntensityUnit(ev.currentTarget.value))}
+                                            data-testid="spectral-profiler-settings-intensity-unit-dropdown"
+                                        />
+                                    </FormGroup>
+                                    <FormGroup inline={true} label={"Secondary info"}>
+                                        <Switch checked={widgetStore.secondaryAxisCursorInfoVisible} onChange={event => widgetStore.setSecondaryAxisCursorInfoVisible(event.currentTarget.checked as boolean)} />
+                                    </FormGroup>
+                                </React.Fragment>
+                            }
+                        />
+                        <Tab id={SpectralProfilerSettingsTabs.STYLING} panelClassName="styling-tab-panel" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps} />} />
+                        <Tab id={SpectralProfilerSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore} disableColorAndLineWidth={widgetStore.profileNum > 1} />} />
+                        <Tab id={SpectralProfilerSettingsTabs.MOMENTS} panelClassName="moment-tab-panel" title="Moments" panel={<MomentGeneratorComponent widgetStore={widgetStore} />} />
+                        <Tab id={SpectralProfilerSettingsTabs.FITTING} panelClassName="fitting-tab-panel" title="Fitting" panel={<ProfileFittingComponent fittingStore={widgetStore.fittingStore} widgetStore={widgetStore} />} />
+                    </Tabs>
+                </div>
+            </ScrollShadow>
         );
     }
 }

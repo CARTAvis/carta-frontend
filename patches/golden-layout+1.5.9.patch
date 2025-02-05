@@ -1,0 +1,24 @@
+diff --git a/node_modules/golden-layout/dist/goldenlayout.js b/node_modules/golden-layout/dist/goldenlayout.js
+index 736f9ec..9c59284 100644
+--- a/node_modules/golden-layout/dist/goldenlayout.js
++++ b/node_modules/golden-layout/dist/goldenlayout.js
+@@ -5265,7 +5265,9 @@ lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
+ 	 * @returns {void}
+ 	 */
+ 	_render: function() {
+-		this._reactComponent = ReactDOM.render( this._getReactComponent(), this._container.getElement()[ 0 ] );
++		this._reactRoot = createRoot( this._container.getElement()[ 0  ] );
++		this._reactRoot.render( this._getReactComponent() );
++		this._reactComponent = this._getReactComponent();
+ 		this._originalComponentWillUpdate = this._reactComponent.componentWillUpdate || function() {
+ 			};
+ 		this._reactComponent.componentWillUpdate = this._onUpdate.bind( this );
+@@ -5281,7 +5283,7 @@ lm.utils.copy( lm.utils.ReactComponentHandler.prototype, {
+ 	 * @returns {void}
+ 	 */
+ 	_destroy: function() {
+-		ReactDOM.unmountComponentAtNode( this._container.getElement()[ 0 ] );
++		this._reactRoot.unmount();
+ 		this._container.off( 'open', this._render, this );
+ 		this._container.off( 'destroy', this._destroy, this );
+ 	},

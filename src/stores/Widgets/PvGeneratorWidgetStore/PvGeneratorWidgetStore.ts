@@ -4,7 +4,7 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {SpectralSystem} from "models";
 import {TelemetryAction, TelemetryService} from "services";
-import {AppStore, PreferenceStore} from "stores";
+import {AppStore, PreferenceKeys, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {length2D} from "utilities";
 
@@ -151,6 +151,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
 
     @action setReverse = (bool: boolean) => {
         this.reverse = bool;
+        PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_PV_AXES_ORDER_REVERSE, bool);
     };
 
     @action setKeep = (bool: boolean) => {
@@ -193,7 +194,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         super(RegionsType.LINE);
         makeObservable(this);
         this.width = 3;
-        this.reverse = false;
+        this.reverse = PreferenceStore.Instance.isPVAxesOrderReverse;
         this.keep = false;
         this.regionIdMap.set(ACTIVE_FILE_ID, RegionId.NONE);
         reaction(

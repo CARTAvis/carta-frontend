@@ -1,10 +1,12 @@
 import React from "react";
-import ReactResizeDetector from "react-resize-detector";
 import {observer} from "mobx-react";
 
 import {ImagePanelComponent} from "components/ImageView/ImagePanel/ImagePanelComponent";
+import {ResizeDetector} from "components/Shared";
 import {ImageType} from "models";
 import {DefaultWidgetConfig, WidgetsStore} from "stores";
+
+import "./PvPreviewComponent.scss";
 
 interface PVPreviewDialogProps {
     id: string;
@@ -33,10 +35,11 @@ export class PvPreviewComponent extends React.Component<PVPreviewDialogProps> {
         const frame = WidgetsStore?.Instance.pvGeneratorWidgets?.get(this.props.id)?.previewFrame;
 
         return (
-            <>
-                <ImagePanelComponent key={this.props.id} docked={false} image={{type: ImageType.PV_PREVIEW, store: frame}} row={0} column={0} />;
-                <ReactResizeDetector handleWidth handleHeight onResize={frame.onResizePreviewWidget} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
-            </>
+            <ResizeDetector onResize={frame.onResizePreviewWidget} throttleTime={33}>
+                <div className="pv-preview-widget">
+                    <ImagePanelComponent key={this.props.id} docked={false} image={{type: ImageType.PV_PREVIEW, store: frame}} row={0} column={0} />
+                </div>
+            </ResizeDetector>
         );
     }
 }

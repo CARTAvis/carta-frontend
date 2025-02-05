@@ -17,7 +17,6 @@
     "noImplicitThis": true,
     "noImplicitAny": false,
     "strictNullChecks": false,
-    "suppressImplicitAnyIndexErrors": true,
     "noUnusedLocals": false,
     "forceConsistentCasingInFileNames": true,
     "experimentalDecorators": true,

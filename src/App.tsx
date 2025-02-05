@@ -1,11 +1,11 @@
 import * as React from "react";
-import ReactResizeDetector from "react-resize-detector";
 import {Alert, Classes, Intent} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {FloatingWidgetManagerComponent, UIControllerComponent} from "components";
 import {TaskProgressDialogComponent} from "components/Dialogs";
+import {ResizeDetector} from "components/Shared";
 import {ApiService} from "services";
 import {AlertStore, AlertType, AppStore} from "stores";
 
@@ -17,6 +17,8 @@ import "./layout-theme.scss";
 
 @observer
 export class App extends React.Component {
+    private appContainerRef: React.MutableRefObject<HTMLDivElement | null> = React.createRef<HTMLDivElement>();
+
     // GoldenLayout resize handler
     onContainerResize = (width, height) => {
         const appStore = AppStore.Instance;
@@ -75,6 +77,11 @@ export class App extends React.Component {
         }
     };
 
+    private setAppContainerRef = (ref: HTMLDivElement | null) => {
+        this.appContainerRef.current = ref;
+        AppStore.Instance.setAppContainer(ref);
+    };
+
     public render() {
         const appStore = AppStore.Instance;
         const className = classNames("App", {[Classes.DARK]: appStore.darkTheme});
@@ -93,9 +100,9 @@ export class App extends React.Component {
                     cancellable={false}
                     text={appStore.resumingSession ? "Resuming session..." : "Loading workspace..."}
                 />
-                <div className={glClassName} ref={ref => appStore.setAppContainer(ref)}>
-                    <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize} refreshMode={"throttle"} refreshRate={200}></ReactResizeDetector>
-                </div>
+                <ResizeDetector onResize={this.onContainerResize} throttleTime={200} targetRef={this.appContainerRef}>
+                    <div className={glClassName} ref={this.setAppContainerRef} />
+                </ResizeDetector>
                 <HotkeyTargetContainer />
                 <FloatingWidgetManagerComponent />
             </div>

@@ -2,7 +2,7 @@ import * as AST from "ast_wrapper";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 
 import {WCSType} from "models";
-import {AppStore, PreferenceStore} from "stores";
+import {AlertStore, AppStore, PreferenceStore} from "stores";
 import {FrameStore, OverlayBeamStore, WCS_PRECISION} from "stores/Frame";
 import {clamp, getColorForTheme, toFixed} from "utilities";
 
@@ -32,7 +32,8 @@ export enum SystemType {
     FK4 = "FK4",
     FK5 = "FK5",
     Galactic = "GALACTIC",
-    ICRS = "ICRS"
+    ICRS = "ICRS",
+    Image = "CARTESIAN"
 }
 
 export enum NumberFormatType {
@@ -99,9 +100,12 @@ export class OverlayGlobalSettings {
         astString.add("Labelling", this.labelType);
         astString.add("Color", AstColorsIndex.GLOBAL);
         astString.add("Tol", toFixed(this.tolerance / 100, 2), this.tolerance >= 0.001); // convert to fraction
-        astString.add("System", this.explicitSystem);
+        const isWcsFrameAndSystem = typeof this.explicitSystem !== "undefined" && this.explicitSystem !== SystemType.Image && frame.validWcs;
+        if (isWcsFrameAndSystem) {
+            astString.add("System", this.explicitSystem);
+        }
 
-        if ((frame?.isXY || frame?.isYX) && !frame?.isPVImage && typeof this.explicitSystem !== "undefined") {
+        if ((frame?.isXY || frame?.isYX) && !frame?.isPVImage && isWcsFrameAndSystem) {
             if (this.system === SystemType.FK4) {
                 astString.add("Equinox", "1950");
             } else {
@@ -149,8 +153,17 @@ export class OverlayGlobalSettings {
         this.labelType = labelType;
     }
 
-    @action setSystem(system: SystemType) {
-        this.system = system;
+    @action async setSystem(system: SystemType) {
+        const frames = AppStore.Instance.frames;
+        if ((this.system === SystemType.Image) !== (system === SystemType.Image) && frames.map(f => f.spatialReference !== null).includes(true)) {
+            const confirm = await AlertStore.Instance.showInteractiveAlert("Switching system between world and image coordinates will disable spatial matching.");
+            if (confirm) {
+                frames.forEach(f => f.clearSpatialReference());
+                this.system = system;
+            }
+        } else {
+            this.system = system;
+        }
     }
 
     @action setDefaultSystem(system: SystemType) {
@@ -609,6 +622,7 @@ export class OverlayLabelSettings {
     @observable color: string;
     @observable font: number;
     @observable fontSize: number;
+    @observable raDecReference: boolean;
     @observable customText: boolean;
     @observable customLabelX: string;
     @observable customLabelY: string;
@@ -621,6 +635,7 @@ export class OverlayLabelSettings {
         this.font = 0;
         this.customColor = false;
         this.color = AST_DEFAULT_COLOR;
+        this.raDecReference = true;
         this.customText = false;
         this.customLabelX = "";
         this.customLabelY = "";
@@ -666,6 +681,10 @@ export class OverlayLabelSettings {
 
     @action setFontSize(fontSize: number) {
         this.fontSize = fontSize;
+    }
+
+    @action setRaDecReference(raDecReference: boolean) {
+        this.raDecReference = raDecReference;
     }
 
     @action setCustomText = (val: boolean) => {
@@ -1021,7 +1040,7 @@ export class OverlayStore {
         autorun(() => {
             this.setFormatsFromSystem();
             AppStore.Instance.frames.forEach(frame => {
-                if (frame?.validWcs && frame?.wcsInfoForTransformation && this.global.explicitSystem) {
+                if (frame?.validWcs && frame?.wcsInfoForTransformation && this.global.explicitSystem && this.global.explicitSystem !== SystemType.Image) {
                     AST.set(frame.wcsInfoForTransformation, `System=${this.global.explicitSystem}`);
                 }
             });
@@ -1243,5 +1262,13 @@ export class OverlayStore {
             const renderHeight = viewHeight - this.paddingTop - this.paddingBottom;
             return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
         };
+    }
+
+    @computed get isWcsCoordinates() {
+        return this.global.explicitSystem !== SystemType.Image;
+    }
+
+    @computed get isImgCoordinates() {
+        return this.global.explicitSystem === SystemType.Image;
     }
 }
