@@ -143,7 +143,7 @@ export class CatalogWidgetStore {
         this.catalogTableAutoScroll = false;
         this.catalogPlotType = CatalogPlotType.ImageOverlay;
         this.catalogColor = Colors.TURQUOISE3;
-        this.catalogSize = 10;
+        this.catalogSize = 10.0;
         this.catalogShape = CatalogOverlayShape.CIRCLE_LINED;
         this.xAxis = CatalogOverlay.NONE;
         this.yAxis = CatalogOverlay.NONE;
@@ -982,10 +982,11 @@ export class CatalogWidgetStore {
      * The pixel size factor if plotting angular size (factor-to-arcsec / arcsec)
      */
     @computed get pixelSizeFactor(): number {
-        if (this.isAngularSize) {
-            return this.pixelArcsecFactor;
-        }
-        return 1;
+        // if (this.isAngularSize) {
+        //     return this.pixelArcsecFactor;
+        // }
+        // return 1;
+        return this.isAngularSize ? this.pixelArcsecFactor : 1;
     }
 
     sizeArray(): Float32Array {

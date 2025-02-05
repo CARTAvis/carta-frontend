@@ -415,15 +415,16 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         const sizeMap = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Size" disabled={disabledOverlayPanel}>
-                    <Tooltip disabled={disabledOverlayPanel || !widgetStore.disableSizeMap} content={`${widgetStore.minOverlaySize} ~ ${widgetStore.maxOverlaySize}`}>
+                    <Tooltip disabled={disabledOverlayPanel || !widgetStore.disableSizeMap} content={`${widgetStore.minOverlaySize.toPrecision(3)} ~ ${widgetStore.maxOverlaySize.toPrecision(3)}`}>
                         <SafeNumericInput
                             placeholder="Size"
                             disabled={disabledOverlayPanel || !widgetStore.disableSizeMap}
                             min={widgetStore.minOverlaySize}
                             max={widgetStore.maxOverlaySize}
                             clampValueOnBlur={true}
-                            value={widgetStore.showedCatalogSize}
+                            value={widgetStore.showedCatalogSize.toPrecision(6)}
                             stepSize={0.5 / widgetStore.pixelSizeFactor}
+                            minorStepSize={0.001 / widgetStore.pixelSizeFactor}
                             onValueChange={(value: number) => widgetStore.setCatalogSize(value)}
                             data-testid="catalog-settings-size-input"
                         />

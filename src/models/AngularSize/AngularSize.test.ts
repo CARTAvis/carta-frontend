@@ -68,7 +68,7 @@ describe("AngularSize", () => {
             expect(FACTOR_TO_ARCSEC.get(AngularSizeUnit.DEG)).toEqual(3600);
             expect(FACTOR_TO_ARCSEC.get(AngularSizeUnit.ARCMIN)).toEqual(60);
             expect(FACTOR_TO_ARCSEC.get(AngularSizeUnit.ARCSEC)).toEqual(1);
-            expect(FACTOR_TO_ARCSEC.get(AngularSizeUnit.MILLIARCSEC)).toEqual(1e3);
+            expect(FACTOR_TO_ARCSEC.get(AngularSizeUnit.MILLIARCSEC)).toEqual(0.001);
         });
     });
 });
