@@ -152,8 +152,8 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                         <FormGroup inline={true} label="X" labelInfo="(px)">
                             <SafeNumericInput
                                 placeholder="North label X offset"
-                                min={-50}
-                                max={RegionStore.MAX_DASH_LENGTH}
+                                min={RegionStore.MIN_LABEL_OFFSET}
+                                max={RegionStore.MAX_LABEL_OFFSET}
                                 value={(this.props.region as CompassAnnotationStore).northTextOffset.x}
                                 stepSize={0.5}
                                 onValueChange={value => (this.props.region as CompassAnnotationStore).setNorthTextOffset(value, true)}
@@ -162,8 +162,8 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                         <FormGroup inline={true} label="Y" labelInfo="(px)">
                             <SafeNumericInput
                                 placeholder="North label Y offset"
-                                min={-50}
-                                max={RegionStore.MAX_DASH_LENGTH}
+                                min={RegionStore.MIN_LABEL_OFFSET}
+                                max={RegionStore.MAX_LABEL_OFFSET}
                                 value={(this.props.region as CompassAnnotationStore).northTextOffset.y}
                                 stepSize={0.5}
                                 onValueChange={value => (this.props.region as CompassAnnotationStore).setNorthTextOffset(value, false)}
@@ -173,8 +173,8 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                         <FormGroup inline={true} label="X" labelInfo="(px)">
                             <SafeNumericInput
                                 placeholder="East label X offset"
-                                min={-50}
-                                max={RegionStore.MAX_DASH_LENGTH}
+                                min={RegionStore.MIN_LABEL_OFFSET}
+                                max={RegionStore.MAX_LABEL_OFFSET}
                                 value={(this.props.region as CompassAnnotationStore).eastTextOffset.x}
                                 stepSize={0.5}
                                 onValueChange={value => (this.props.region as CompassAnnotationStore).setEastTextOffset(value, true)}
@@ -183,8 +183,8 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                         <FormGroup inline={true} label="Y" labelInfo="(px)">
                             <SafeNumericInput
                                 placeholder="East label Y offset"
-                                min={-50}
-                                max={RegionStore.MAX_DASH_LENGTH}
+                                min={RegionStore.MIN_LABEL_OFFSET}
+                                max={RegionStore.MAX_LABEL_OFFSET}
                                 value={(this.props.region as CompassAnnotationStore).eastTextOffset.y}
                                 stepSize={0.5}
                                 onValueChange={value => (this.props.region as CompassAnnotationStore).setEastTextOffset(value, false)}
@@ -241,8 +241,8 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                         <FormGroup inline={true} label="Text X offset" labelInfo="(px)">
                             <SafeNumericInput
                                 placeholder="Text X offset"
-                                min={-50}
-                                max={RegionStore.MAX_DASH_LENGTH}
+                                min={RegionStore.MIN_LABEL_OFFSET}
+                                max={RegionStore.MAX_LABEL_OFFSET}
                                 value={(region as RulerAnnotationStore).textOffset.x}
                                 stepSize={1}
                                 onValueChange={value => (region as RulerAnnotationStore).setTextOffset(value, true)}
@@ -251,8 +251,8 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                         <FormGroup inline={true} label="Text Y offset" labelInfo="(px)">
                             <SafeNumericInput
                                 placeholder="Text Y offset"
-                                min={-50}
-                                max={RegionStore.MAX_DASH_LENGTH}
+                                min={RegionStore.MIN_LABEL_OFFSET}
+                                max={RegionStore.MAX_LABEL_OFFSET}
                                 value={(region as RulerAnnotationStore).textOffset.y}
                                 stepSize={1}
                                 onValueChange={value => (region as RulerAnnotationStore).setTextOffset(value, false)}
@@ -269,8 +269,8 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                             <SafeNumericInput
                                 disabled={!(region as RulerAnnotationStore).auxiliaryTextVisible}
                                 placeholder="X label X offset"
-                                min={-50}
-                                max={RegionStore.MAX_DASH_LENGTH}
+                                min={RegionStore.MIN_LABEL_OFFSET}
+                                max={RegionStore.MAX_LABEL_OFFSET}
                                 value={(region as RulerAnnotationStore).xTextOffset.x}
                                 stepSize={1}
                                 onValueChange={value => (region as RulerAnnotationStore).setXTextOffset(value, true)}
@@ -280,8 +280,8 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                             <SafeNumericInput
                                 disabled={!(region as RulerAnnotationStore).auxiliaryTextVisible}
                                 placeholder="X label Y offset"
-                                min={-50}
-                                max={RegionStore.MAX_DASH_LENGTH}
+                                min={RegionStore.MIN_LABEL_OFFSET}
+                                max={RegionStore.MAX_LABEL_OFFSET}
                                 value={(region as RulerAnnotationStore).xTextOffset.y}
                                 stepSize={1}
                                 onValueChange={value => (region as RulerAnnotationStore).setXTextOffset(value, false)}
@@ -291,8 +291,8 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                             <SafeNumericInput
                                 disabled={!(region as RulerAnnotationStore).auxiliaryTextVisible}
                                 placeholder="Y label X offset"
-                                min={-50}
-                                max={RegionStore.MAX_DASH_LENGTH}
+                                min={RegionStore.MIN_LABEL_OFFSET}
+                                max={RegionStore.MAX_LABEL_OFFSET}
                                 value={(region as RulerAnnotationStore).yTextOffset.x}
                                 stepSize={1}
                                 onValueChange={value => (region as RulerAnnotationStore).setYTextOffset(value, true)}
@@ -302,8 +302,8 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                             <SafeNumericInput
                                 disabled={!(region as RulerAnnotationStore).auxiliaryTextVisible}
                                 placeholder="Y label Y offset"
-                                min={-50}
-                                max={RegionStore.MAX_DASH_LENGTH}
+                                min={RegionStore.MIN_LABEL_OFFSET}
+                                max={RegionStore.MAX_LABEL_OFFSET}
                                 value={(region as RulerAnnotationStore).yTextOffset.y}
                                 stepSize={1}
                                 onValueChange={value => (region as RulerAnnotationStore).setYTextOffset(value, false)}
