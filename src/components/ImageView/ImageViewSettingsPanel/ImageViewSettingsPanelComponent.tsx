@@ -6,7 +6,7 @@ import classNames from "classnames";
 import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, InputType, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
+import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, InputType, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
 import {ImagePanelMode} from "models";
 import {AppStore, BeamType, DefaultWidgetConfig, HelpType, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
 import {ColorbarStore, CoordinateMode} from "stores/Frame";
@@ -503,13 +503,16 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         );
 
         const labelsPanel = (
-            <div className="panel-container">
+            <div className="panel-labels">
                 <FormGroup inline={true} label="Visible">
                     <Switch checked={labels.visible} onChange={ev => labels.setVisible(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} className="font-group" label="Font" disabled={!labels.visible}>
                     {this.fontSelect(labels.visible, labels.font, labels.setFont)}
                     <SafeNumericInput min={7} max={96} placeholder="Font size" value={labels.fontSize} disabled={!labels.visible} onValueChange={(value: number) => labels.setFontSize(value)} />
+                </FormGroup>
+                <FormGroup inline={true} label="Show RA/Dec reference" disabled={!labels.visible}>
+                    <Switch checked={labels.raDecReference} disabled={!labels.visible} onChange={ev => labels.setRaDecReference(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom text" disabled={!labels.visible}>
                     <Switch checked={labels.customText} disabled={!labels.visible} onChange={ev => labels.setCustomText(ev.currentTarget.checked)} />
@@ -808,18 +811,18 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         return (
             <div className={className}>
                 <Tabs id="imageViewSettingsTabs" vertical={true} selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
-                    <Tab id={ImageViewSettingsPanelTabs.PAN_AND_ZOOM} title={ImageViewSettingsPanelTabs.PAN_AND_ZOOM} panel={panAndZoomPanel} />
-                    <Tab id={ImageViewSettingsPanelTabs.GLOBAL} title={ImageViewSettingsPanelTabs.GLOBAL} panel={globalPanel} />
-                    <Tab id={ImageViewSettingsPanelTabs.TITLE} title={ImageViewSettingsPanelTabs.TITLE} panel={titlePanel} />
-                    <Tab id={ImageViewSettingsPanelTabs.TICKS} title={ImageViewSettingsPanelTabs.TICKS} panel={ticksPanel} />
-                    <Tab id={ImageViewSettingsPanelTabs.GRIDS} title={ImageViewSettingsPanelTabs.GRIDS} panel={gridPanel} data-testid="image-view-settings-grid-tab-title" />
-                    <Tab id={ImageViewSettingsPanelTabs.BORDER} title={ImageViewSettingsPanelTabs.BORDER} panel={borderPanel} />
-                    <Tab id={ImageViewSettingsPanelTabs.AXES} title={ImageViewSettingsPanelTabs.AXES} panel={axesPanel} />
-                    <Tab id={ImageViewSettingsPanelTabs.NUMBERS} title={ImageViewSettingsPanelTabs.NUMBERS} panel={numbersPanel} />
-                    <Tab id={ImageViewSettingsPanelTabs.LABELS} title={ImageViewSettingsPanelTabs.LABELS} panel={labelsPanel} />
-                    <Tab id={ImageViewSettingsPanelTabs.COLORBAR} title={ImageViewSettingsPanelTabs.COLORBAR} panel={colorbarPanel} />
-                    <Tab id={ImageViewSettingsPanelTabs.BEAM} title={ImageViewSettingsPanelTabs.BEAM} panel={beamPanel} disabled={appStore.frameNum <= 0} />
-                    <Tab id={ImageViewSettingsPanelTabs.CONVERSION} title={ImageViewSettingsPanelTabs.CONVERSION} panel={spectralPanel} disabled={!isPVImage} />
+                    <Tab id={ImageViewSettingsPanelTabs.PAN_AND_ZOOM} title={ImageViewSettingsPanelTabs.PAN_AND_ZOOM} panel={<ScrollShadow>{panAndZoomPanel}</ScrollShadow>} />
+                    <Tab id={ImageViewSettingsPanelTabs.GLOBAL} title={ImageViewSettingsPanelTabs.GLOBAL} panel={<ScrollShadow>{globalPanel}</ScrollShadow>} />
+                    <Tab id={ImageViewSettingsPanelTabs.TITLE} title={ImageViewSettingsPanelTabs.TITLE} panel={<ScrollShadow>{titlePanel}</ScrollShadow>} />
+                    <Tab id={ImageViewSettingsPanelTabs.TICKS} title={ImageViewSettingsPanelTabs.TICKS} panel={<ScrollShadow>{ticksPanel}</ScrollShadow>} />
+                    <Tab id={ImageViewSettingsPanelTabs.GRIDS} title={ImageViewSettingsPanelTabs.GRIDS} panel={<ScrollShadow>{gridPanel}</ScrollShadow>} data-testid="image-view-settings-grid-tab-title" />
+                    <Tab id={ImageViewSettingsPanelTabs.BORDER} title={ImageViewSettingsPanelTabs.BORDER} panel={<ScrollShadow>{borderPanel}</ScrollShadow>} />
+                    <Tab id={ImageViewSettingsPanelTabs.AXES} title={ImageViewSettingsPanelTabs.AXES} panel={<ScrollShadow>{axesPanel}</ScrollShadow>} />
+                    <Tab id={ImageViewSettingsPanelTabs.NUMBERS} title={ImageViewSettingsPanelTabs.NUMBERS} panel={<ScrollShadow>{numbersPanel}</ScrollShadow>} />
+                    <Tab id={ImageViewSettingsPanelTabs.LABELS} title={ImageViewSettingsPanelTabs.LABELS} panel={<ScrollShadow>{labelsPanel}</ScrollShadow>} />
+                    <Tab id={ImageViewSettingsPanelTabs.COLORBAR} title={ImageViewSettingsPanelTabs.COLORBAR} panel={<ScrollShadow>{colorbarPanel}</ScrollShadow>} />
+                    <Tab id={ImageViewSettingsPanelTabs.BEAM} title={ImageViewSettingsPanelTabs.BEAM} panel={<ScrollShadow>{beamPanel}</ScrollShadow>} disabled={appStore.frameNum <= 0} />
+                    <Tab id={ImageViewSettingsPanelTabs.CONVERSION} title={ImageViewSettingsPanelTabs.CONVERSION} panel={<ScrollShadow>{spectralPanel}</ScrollShadow>} disabled={!isPVImage} />
                 </Tabs>
             </div>
         );

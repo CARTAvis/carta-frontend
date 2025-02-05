@@ -43,15 +43,15 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     updateImageDimensions() {
         if (this.canvas) {
             const frame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image.store?.baseFrame : this.props.image?.store;
-            this.canvas.width = (frame?.isPreview ? frame?.previewViewWidth : this.props.overlaySettings.viewWidth) * devicePixelRatio * AppStore.Instance.imageRatio;
-            this.canvas.height = (frame?.isPreview ? frame?.previewViewHeight : this.props.overlaySettings.viewHeight) * devicePixelRatio * AppStore.Instance.imageRatio;
+            this.canvas.width = (frame?.isPreview ? frame?.previewViewWidth : this.props.overlaySettings.viewWidth) * AppStore.Instance.pixelRatio;
+            this.canvas.height = (frame?.isPreview ? frame?.previewViewHeight : this.props.overlaySettings.viewHeight) * AppStore.Instance.pixelRatio;
         }
     }
 
     renderCanvas = () => {
         const settings = this.props.overlaySettings;
         const frame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image.store?.baseFrame : this.props.image?.store;
-        const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
+        const appStore = AppStore.Instance;
 
         const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoShifted : frame.wcsInfo;
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
@@ -70,11 +70,11 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 const scaleMapping = AST.scaleMap2D(1.0, 1.0 / frame.aspectRatio);
                 const newFrame = AST.frame(2, "Domain=PIXEL");
                 AST.addFrame(tempWcsInfo, 1, scaleMapping, newFrame);
-                AST.setI(tempWcsInfo, "Base", 3);
-                AST.setI(tempWcsInfo, "Current", 2);
+                AST.setI(tempWcsInfo, "Base", frame.isOffsetCoord ? 4 : 3);
+                AST.setI(tempWcsInfo, "Current", frame.isOffsetCoord && OverlayStore.Instance.isImgCoordinates ? 3 : 2);
             }
 
-            if (frame.isOffsetCoord) {
+            if (frame.isOffsetCoord && OverlayStore.Instance.isWcsCoordinates) {
                 const fovSizeInArcsec = frame.getWcsSizeInArcsec(frame.fovSize);
                 const viewSize = fovSizeInArcsec.x > fovSizeInArcsec.y ? fovSizeInArcsec.y : fovSizeInArcsec.x;
                 const factor = 2; // jump factor
@@ -102,12 +102,13 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     frameView.xMax,
                     frameView.yMin / frame.aspectRatio,
                     frameView.yMax / frame.aspectRatio,
-                    (frame.isPreview ? frame?.previewViewWidth : this.props.overlaySettings.viewWidth) * pixelRatio,
-                    (frame.isPreview ? frame?.previewViewHeight : this.props.overlaySettings.viewHeight) * pixelRatio,
-                    settings.padding.left * pixelRatio,
-                    settings.padding.right * pixelRatio,
-                    settings.padding.top * pixelRatio,
-                    settings.padding.bottom * pixelRatio,
+                    (frame.isPreview ? frame?.previewViewWidth : this.props.overlaySettings.viewWidth) * appStore.pixelRatio,
+                    (frame.isPreview ? frame?.previewViewHeight : this.props.overlaySettings.viewHeight) * appStore.pixelRatio,
+                    settings.padding.left * appStore.pixelRatio,
+                    settings.padding.right * appStore.pixelRatio,
+                    settings.padding.top * appStore.pixelRatio,
+                    settings.padding.bottom * appStore.pixelRatio,
+                    settings.labels.raDecReference ? settings.global.explicitSystem : "",
                     styleString
                 );
             };
@@ -181,6 +182,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const darktheme = AppStore.Instance.darkTheme;
         const title = this.props.overlaySettings.title.customText ? this.props.image?.store?.titleCustomText : this.props.image?.store?.filename;
         const ratio = AppStore.Instance.imageRatio;
+        const raDecReference = this.props.overlaySettings.labels.raDecReference;
         const titleStyleString = this.props.overlaySettings.title.styleString;
         const gridStyleString = this.props.overlaySettings.grid.styleString;
         const borderStyleString = this.props.overlaySettings.border.styleString;
@@ -214,7 +216,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             const formatStringX = this.props.overlaySettings.numbers.formatStringX;
             const formatStyingY = this.props.overlaySettings.numbers.formatStringY;
             const explicitSystem = this.props.overlaySettings.global.explicitSystem;
-            if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined) {
+            if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined && OverlayStore.Instance.isWcsCoordinates && frame.validWcs) {
                 AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY}, System=${explicitSystem},` + dirAxesSetting);
             }
         }

@@ -154,6 +154,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
     const system = AppStore.Instance.overlayStore.global.explicitSystem;
     const darktheme = AppStore.Instance.darkTheme;
     const title = frame.titleCustomText;
+    const pixelRatio = AppStore.Instance.pixelRatio;
     /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
     const updateOffset = () => {
@@ -423,6 +424,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     const system = AppStore.Instance.overlayStore.global.explicitSystem;
     const darktheme = AppStore.Instance.darkTheme;
     const title = frame.titleCustomText;
+    const pixelRatio = AppStore.Instance.pixelRatio;
     /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
     const [textOffsetX, setTextOffsetX] = React.useState(0);

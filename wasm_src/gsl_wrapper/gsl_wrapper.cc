@@ -551,11 +551,11 @@ char * EMSCRIPTEN_KEEPALIVE fitting(
             index = gsl_matrix_get(parameterIndexes, i, 2);
             fwhm = gsl_vector_get(x, index);
             fwhmError = sqrt(residualVariance * gsl_matrix_get(covar, index, index));
-            snprintf(logBuffer + strlen(logBuffer), sizeof(logBuffer) - strlen(logBuffer), " fwhm%zu                = %.12e @yUnit \u00b1 %.12e (%.3g%%)\n", i + 1, fwhm, fwhmError, 100 * fwhmError / abs(fwhm));
+            snprintf(logBuffer + strlen(logBuffer), sizeof(logBuffer) - strlen(logBuffer), " fwhm%zu                = %.12e @xUnit \u00b1 %.12e (%.3g%%)\n", i + 1, fwhm, fwhmError, 100 * fwhmError / abs(fwhm));
         } else {
             fwhm = inputs[i][2];
             fwhmError = NAN;
-            snprintf(logBuffer + strlen(logBuffer), sizeof(logBuffer) - strlen(logBuffer), " fwhm%zu        (fixed) = %.12e @yUnit\n", i + 1, fwhm);
+            snprintf(logBuffer + strlen(logBuffer), sizeof(logBuffer) - strlen(logBuffer), " fwhm%zu        (fixed) = %.12e @xUnit\n", i + 1, fwhm);
         }
 
         if (function == 0) {

@@ -93,4 +93,10 @@
             }
         }
     }
+
+    .panel-labels {
+        .#{$ns}-label {
+            width: 12em;
+        }
+    }
 }

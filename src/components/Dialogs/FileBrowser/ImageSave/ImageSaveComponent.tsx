@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
-import {ClearableNumericInputComponent, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
+import {ClearableNumericInputComponent, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
 import {FrequencyUnit, ImageType, SpectralSystem} from "models";
 import {AppStore, FileBrowserStore} from "stores";
 
@@ -158,75 +158,77 @@ export class ImageSaveComponent extends React.Component {
             <React.Fragment>
                 {activeFrame && (
                     <div className="file-save">
-                        <FormGroup className="file-name" label={"Source"} inline={true}>
-                            <Text className="text" ellipsize={true} title={activeFrame.frameInfo.fileInfo.name}>
-                                {activeFrame.frameInfo.fileInfo.name}
-                            </Text>
-                        </FormGroup>
-                        <FormGroup className="region-select" label={"Region"} inline={true}>
-                            <HTMLSelect value={fileBrowser.saveRegionId} onChange={this.handleRegionChanged} options={regionOptions} />
-                        </FormGroup>
-                        {numChannels > 1 && (
-                            <React.Fragment>
-                                <div className="coordinate-select">
-                                    <SpectralSettingsComponent frame={activeFrame} onSpectralCoordinateChange={this.updateSpectralCoordinate} onSpectralSystemChange={this.updateSpectralSystem} disable={false} customLabel="Range unit" />
-                                </div>
-                                <div className="range-select">
-                                    <FormGroup label={"Range from"} inline={true}>
-                                        <SafeNumericInput
-                                            value={fileBrowser.saveSpectralStart}
-                                            buttonPosition="none"
-                                            placeholder="First channel"
-                                            onValueChange={this.handleSaveSpectralRangeStartChanged}
-                                            majorStepSize={null}
-                                            stepSize={majorStepSize}
-                                            minorStepSize={null}
-                                            selectAllOnIncrement={true}
-                                            intent={this.validSaveSpectralRangeStart ? Intent.NONE : Intent.DANGER}
-                                        />
-                                        <Label>{activeFrame.spectralUnit ? `(${activeFrame.spectralUnit})` : ""}</Label>
+                        <ScrollShadow>
+                            <FormGroup className="file-name" label={"Source"} inline={true}>
+                                <Text className="text" ellipsize={true} title={activeFrame.frameInfo.fileInfo.name}>
+                                    {activeFrame.frameInfo.fileInfo.name}
+                                </Text>
+                            </FormGroup>
+                            <FormGroup className="region-select" label={"Region"} inline={true}>
+                                <HTMLSelect value={fileBrowser.saveRegionId} onChange={this.handleRegionChanged} options={regionOptions} />
+                            </FormGroup>
+                            {numChannels > 1 && (
+                                <React.Fragment>
+                                    <div className="coordinate-select">
+                                        <SpectralSettingsComponent frame={activeFrame} onSpectralCoordinateChange={this.updateSpectralCoordinate} onSpectralSystemChange={this.updateSpectralSystem} disable={false} customLabel="Range unit" />
+                                    </div>
+                                    <div className="range-select">
+                                        <FormGroup label={"Range from"} inline={true}>
+                                            <SafeNumericInput
+                                                value={fileBrowser.saveSpectralStart}
+                                                buttonPosition="none"
+                                                placeholder="First channel"
+                                                onValueChange={this.handleSaveSpectralRangeStartChanged}
+                                                majorStepSize={null}
+                                                stepSize={majorStepSize}
+                                                minorStepSize={null}
+                                                selectAllOnIncrement={true}
+                                                intent={this.validSaveSpectralRangeStart ? Intent.NONE : Intent.DANGER}
+                                            />
+                                            <Label>{activeFrame.spectralUnit ? `(${activeFrame.spectralUnit})` : ""}</Label>
+                                        </FormGroup>
+                                        <FormGroup label={"Range to"} inline={true}>
+                                            <SafeNumericInput
+                                                value={fileBrowser.saveSpectralEnd}
+                                                buttonPosition="none"
+                                                placeholder="Last channel"
+                                                onValueChange={this.handleSaveSpectralRangeEndChanged}
+                                                majorStepSize={null}
+                                                stepSize={majorStepSize}
+                                                minorStepSize={null}
+                                                selectAllOnIncrement={true}
+                                                intent={this.validSaveSpectralRangeEnd ? Intent.NONE : Intent.DANGER}
+                                            />
+                                            <Label>{activeFrame.spectralUnit ? `(${activeFrame.spectralUnit})` : ""}</Label>
+                                        </FormGroup>
+                                    </div>
+                                </React.Fragment>
+                            )}
+                            {activeFrame.hasStokes && (
+                                <div className="stokes-select">
+                                    <FormGroup label={"Polarization"} inline={true}>
+                                        <HTMLSelect value={fileBrowser.saveStokesOption || ""} options={this.stokesOptions} onChange={(event: React.FormEvent<HTMLSelectElement>) => this.updateStokes(parseInt(event.currentTarget.value))} />
                                     </FormGroup>
-                                    <FormGroup label={"Range to"} inline={true}>
-                                        <SafeNumericInput
-                                            value={fileBrowser.saveSpectralEnd}
-                                            buttonPosition="none"
-                                            placeholder="Last channel"
-                                            onValueChange={this.handleSaveSpectralRangeEndChanged}
-                                            majorStepSize={null}
-                                            stepSize={majorStepSize}
-                                            minorStepSize={null}
-                                            selectAllOnIncrement={true}
-                                            intent={this.validSaveSpectralRangeEnd ? Intent.NONE : Intent.DANGER}
-                                        />
-                                        <Label>{activeFrame.spectralUnit ? `(${activeFrame.spectralUnit})` : ""}</Label>
-                                    </FormGroup>
                                 </div>
-                            </React.Fragment>
-                        )}
-                        {activeFrame.hasStokes && (
-                            <div className="stokes-select">
-                                <FormGroup label={"Polarization"} inline={true}>
-                                    <HTMLSelect value={fileBrowser.saveStokesOption || ""} options={this.stokesOptions} onChange={(event: React.FormEvent<HTMLSelectElement>) => this.updateStokes(parseInt(event.currentTarget.value))} />
-                                </FormGroup>
-                            </div>
-                        )}
-                        {activeFrame.isRestFreqEditable && (
-                            <div className="freq-input">
-                                <ClearableNumericInputComponent
-                                    label="Rest frequency"
-                                    value={fileBrowser.saveRestFreq.value}
-                                    placeholder="Rest frequency"
-                                    selectAllOnFocus={true}
-                                    onValueChanged={fileBrowser.setSaveRestFreqVal}
-                                    onValueCleared={fileBrowser.resetSaveRestFreq}
-                                    resetDisabled={activeFrame.restFreqStore.resetDisable}
-                                    tooltipContent={activeFrame.restFreqStore.defaultInfo}
-                                    tooltipPlacement={"bottom"}
-                                />
-                                <HTMLSelect options={Object.values(FrequencyUnit)} value={fileBrowser.saveRestFreq.unit} onChange={ev => fileBrowser.setSaveRestFreqUnit(ev.currentTarget.value as FrequencyUnit)} />
-                            </div>
-                        )}
-                        <Switch className="drop-degenerate" checked={fileBrowser.shouldDropDegenerateAxes} label="Drop degenerate axes" onChange={this.onChangeShouldDropDegenerateAxes} />
+                            )}
+                            {activeFrame.isRestFreqEditable && (
+                                <div className="freq-input">
+                                    <ClearableNumericInputComponent
+                                        label="Rest frequency"
+                                        value={fileBrowser.saveRestFreq.value}
+                                        placeholder="Rest frequency"
+                                        selectAllOnFocus={true}
+                                        onValueChanged={fileBrowser.setSaveRestFreqVal}
+                                        onValueCleared={fileBrowser.resetSaveRestFreq}
+                                        resetDisabled={activeFrame.restFreqStore.resetDisable}
+                                        tooltipContent={activeFrame.restFreqStore.defaultInfo}
+                                        tooltipPlacement={"bottom"}
+                                    />
+                                    <HTMLSelect options={Object.values(FrequencyUnit)} value={fileBrowser.saveRestFreq.unit} onChange={ev => fileBrowser.setSaveRestFreqUnit(ev.currentTarget.value as FrequencyUnit)} />
+                                </div>
+                            )}
+                            <Switch className="drop-degenerate" checked={fileBrowser.shouldDropDegenerateAxes} label="Drop degenerate axes" onChange={this.onChangeShouldDropDegenerateAxes} />
+                        </ScrollShadow>
                     </div>
                 )}
             </React.Fragment>

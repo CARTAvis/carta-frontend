@@ -1,5 +1,4 @@
 import * as React from "react";
-import ReactResizeDetector from "react-resize-detector";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {ChartArea} from "chart.js";
@@ -7,7 +6,7 @@ import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, ScatterPlotComponent, ScatterPlotComponentProps, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, ResizeDetector, ScatterPlotComponent, ScatterPlotComponentProps, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {Point2D, SpectralColorMap, SpectralType} from "models";
 import {AnimatorStore, AppStore, DefaultWidgetConfig, HelpType, SpectralProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
@@ -1259,29 +1258,30 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         }
 
         return (
-            <div className={"stokes-widget"}>
-                <div className={className}>
-                    <div className="profile-plot-toolbar">
-                        <StokesAnalysisToolbarComponent widgetStore={this.widgetStore} id={this.props.id} />
-                    </div>
-                    <div className="profile-plot-qup">
-                        <div className="profile-plot-qu">
-                            <LinePlotComponent {...quLinePlotProps} />
+            <ResizeDetector onResize={this.onResize} throttleTime={33}>
+                <div className={"stokes-widget"}>
+                    <div className={className}>
+                        <div className="profile-plot-toolbar">
+                            <StokesAnalysisToolbarComponent widgetStore={this.widgetStore} id={this.props.id} />
                         </div>
-                        <div className="profile-plot-pi">
-                            <LinePlotComponent {...piLinePlotProps} />
+                        <div className="profile-plot-qup">
+                            <div className="profile-plot-qu">
+                                <LinePlotComponent {...quLinePlotProps} />
+                            </div>
+                            <div className="profile-plot-pi">
+                                <LinePlotComponent {...piLinePlotProps} />
+                            </div>
+                            <div className="profile-plot-pa">
+                                <LinePlotComponent {...paLinePlotProps} />
+                            </div>
                         </div>
-                        <div className="profile-plot-pa">
-                            <LinePlotComponent {...paLinePlotProps} />
+                        <div className="profile-plot-qvsu">
+                            <ScatterPlotComponent {...quScatterPlotProps} />
                         </div>
+                        <ProfilerInfoComponent info={this.genProfilerInfo()} />
                     </div>
-                    <div className="profile-plot-qvsu">
-                        <ScatterPlotComponent {...quScatterPlotProps} />
-                    </div>
-                    <ProfilerInfoComponent info={this.genProfilerInfo()} />
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
-            </div>
+            </ResizeDetector>
         );
     }
 }

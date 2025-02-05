@@ -32,6 +32,7 @@ import {parseBoolean} from "utilities";
 export enum PreferenceKeys {
     SILENT_FILE_SORTING_STRING = "fileSortingString",
     SILENT_FILE_FILTERING_TYPE = "fileFilteringType",
+    SILENT_PV_AXES_ORDER_REVERSE = "pvAxesOrderReverse",
 
     GLOBAL_THEME = "theme",
     GLOBAL_AUTOLAUNCH = "autoLaunch",
@@ -157,7 +158,8 @@ const DEFAULTS = {
         imagePanelColumns: 2,
         imagePanelRows: 2,
         checkNewRelease: true,
-        latestRelease: "v" + CARTA_INFO.version
+        latestRelease: "v" + CARTA_INFO.version,
+        pvAxesOrderReverse: false
     },
     GLOBAL: {
         theme: Theme.AUTO,
@@ -631,6 +633,10 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT) ?? DEFAULTS.PERFORMANCE.pvPreviewCubeSizeLimitUnit;
     }
 
+    @computed get isPVAxesOrderReverse(): boolean {
+        return this.preferences.get(PreferenceKeys.SILENT_PV_AXES_ORDER_REVERSE) ?? DEFAULTS.SILENT.pvAxesOrderReverse;
+    }
+
     @computed get isSelectingAllLogEvents(): boolean {
         return this.preferences.get(PreferenceKeys.LOG_EVENT)?.length === Event.EVENT_NUMBER;
     }
@@ -800,7 +806,8 @@ export class PreferenceStore {
             PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED,
             PreferenceKeys.IMAGE_PANEL_MODE,
             PreferenceKeys.IMAGE_PANEL_COLUMNS,
-            PreferenceKeys.IMAGE_PANEL_ROWS
+            PreferenceKeys.IMAGE_PANEL_ROWS,
+            PreferenceKeys.SILENT_PV_AXES_ORDER_REVERSE
         ]);
     };
 

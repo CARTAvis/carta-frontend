@@ -6,7 +6,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {ClearableNumericInputComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
+import {ClearableNumericInputComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore, DialogId, HelpType} from "stores";
 import {FrameStore, VectorOverlaySource} from "stores/Frame";
@@ -424,24 +424,26 @@ export class VectorOverlayDialogComponent extends React.Component {
                 dialogId={DialogId.Vector}
             >
                 <div className={Classes.DIALOG_BODY}>
-                    <FormGroup inline={true} label="Data source">
-                        <DataSourceSelect
-                            activeItem={dataSource}
-                            onItemSelect={appStore.updateActiveImageByFrame}
-                            popoverProps={{minimal: true, position: "bottom"}}
-                            filterable={false}
-                            items={appStore.frames}
-                            itemRenderer={this.renderDataSourceSelectItem}
-                            disabled={appStore.animatorStore.animationActive}
-                            fill={true}
-                        >
-                            <Button text={dataSource.filename} rightIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.animationActive} />
-                        </DataSourceSelect>
-                    </FormGroup>
-                    <Tabs defaultSelectedTabId={VectorOverlayDialogTabs.Configuration} renderActiveTabPanelOnly={false}>
-                        <Tab id={VectorOverlayDialogTabs.Configuration} title="Configuration" panel={configPanel} panelClassName="vector-overlay-config-panel" data-testid="vector-field-configuration-tab" />
-                        <Tab id={VectorOverlayDialogTabs.Styling} title="Styling" panel={stylingPanel} panelClassName="vector-overlay-styling-panel" data-testid="vector-field-styling-tab" />
-                    </Tabs>
+                    <ScrollShadow>
+                        <FormGroup inline={true} label="Data source">
+                            <DataSourceSelect
+                                activeItem={dataSource}
+                                onItemSelect={appStore.updateActiveImageByFrame}
+                                popoverProps={{minimal: true, position: "bottom"}}
+                                filterable={false}
+                                items={appStore.frames}
+                                itemRenderer={this.renderDataSourceSelectItem}
+                                disabled={appStore.animatorStore.animationActive}
+                                fill={true}
+                            >
+                                <Button text={dataSource.filename} rightIcon="double-caret-vertical" alignText={"right"} disabled={appStore.animatorStore.animationActive} />
+                            </DataSourceSelect>
+                        </FormGroup>
+                        <Tabs defaultSelectedTabId={VectorOverlayDialogTabs.Configuration} renderActiveTabPanelOnly={false}>
+                            <Tab id={VectorOverlayDialogTabs.Configuration} title="Configuration" panel={configPanel} panelClassName="vector-overlay-config-panel" data-testid="vector-field-configuration-tab" />
+                            <Tab id={VectorOverlayDialogTabs.Styling} title="Styling" panel={stylingPanel} panelClassName="vector-overlay-styling-panel" data-testid="vector-field-styling-tab" />
+                        </Tabs>
+                    </ScrollShadow>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>

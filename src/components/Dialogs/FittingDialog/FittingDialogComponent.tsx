@@ -6,7 +6,7 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
-import {ClearableNumericInputComponent, CoordinateComponent, CoordNumericInput, ImageCoordNumericInput, InputType, SafeNumericInput} from "components/Shared";
+import {ClearableNumericInputComponent, CoordinateComponent, CoordNumericInput, ImageCoordNumericInput, InputType, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore, DialogId, HelpType} from "stores";
@@ -183,81 +183,83 @@ export class FittingDialogComponent extends React.Component {
                 <SplitPane split="horizontal" defaultSize="50%">
                     <div className="upper-pane">
                         <div className={classNames(Classes.DIALOG_BODY, "unpinned-input-panel")}>
-                            <FormGroup label="Region" inline={true}>
-                                <HTMLSelect value={fittingStore.selectedRegionId} options={fittingStore.regionOptions} onChange={ev => fittingStore.setSelectedRegionId(parseInt(ev.target.value))} />
-                            </FormGroup>
-                            <FormGroup label="Components" inline={true}>
-                                <SafeNumericInput
-                                    className="components-input"
-                                    selectAllOnFocus={true}
-                                    value={fittingStore.components.length}
-                                    min={1}
-                                    max={20}
-                                    stepSize={1}
-                                    // wait for onBlur events of the inputs
-                                    // TODO: find a better way to handle this; one solution is to update the inputs with all keydown events
-                                    onValueChange={val => setTimeout(() => fittingStore.setComponents(Math.round(val)), 0)}
-                                    data-testid="image-fitting-component-input"
+                            <ScrollShadow>
+                                <FormGroup label="Region" inline={true}>
+                                    <HTMLSelect value={fittingStore.selectedRegionId} options={fittingStore.regionOptions} onChange={ev => fittingStore.setSelectedRegionId(parseInt(ev.target.value))} />
+                                </FormGroup>
+                                <FormGroup label="Components" inline={true}>
+                                    <SafeNumericInput
+                                        className="components-input"
+                                        selectAllOnFocus={true}
+                                        value={fittingStore.components.length}
+                                        min={1}
+                                        max={20}
+                                        stepSize={1}
+                                        // wait for onBlur events of the inputs
+                                        // TODO: find a better way to handle this; one solution is to update the inputs with all keydown events
+                                        onValueChange={val => setTimeout(() => fittingStore.setComponents(Math.round(val)), 0)}
+                                        data-testid="image-fitting-component-input"
+                                    />
+                                    {fittingStore.components.length > 1 && (
+                                        <>
+                                            <Slider
+                                                value={fittingStore.selectedComponentIndex + 1}
+                                                min={1}
+                                                stepSize={1}
+                                                max={fittingStore.components.length}
+                                                showTrackFill={false}
+                                                // wait for onBlur events of the inputs
+                                                // TODO: find a better way to handle this; one solution is to update the inputs with all keydown events
+                                                onChange={val => setTimeout(() => fittingStore.setSelectedComponentIndex(val - 1), 0)}
+                                                disabled={fittingStore.components.length <= 1}
+                                            />
+                                            <Tooltip content="Delete current component">
+                                                <AnchorButton icon={"trash"} onClick={fittingStore.deleteSelectedComponent} />
+                                            </Tooltip>
+                                        </>
+                                    )}
+                                </FormGroup>
+                                <FormGroup label="Coordinate" inline={true}>
+                                    <CoordinateComponent selectedValue={this.coord} onChange={this.setCoord} disableCoordinate={!fittingStore.effectiveFrame.hasSquarePixels} />
+                                </FormGroup>
+                                <FormGroup label="Center" inline={true} labelInfo={pixUnitString}>
+                                    {this.renderParamCoordInput(InputType.XCoord, component?.center?.x, "Center X", component?.setCenterX, component?.centerWcs?.x, component?.setCenterXWcs)}
+                                    {this.renderLockButton(component?.centerFixed?.x, component?.toggleCenterXFixed, "center-x")}
+                                    {this.renderParamCoordInput(InputType.YCoord, component?.center?.y, "Center Y", component?.setCenterY, component?.centerWcs?.y, component?.setCenterYWcs)}
+                                    {this.renderLockButton(component?.centerFixed?.y, component?.toggleCenterYFixed, "center-y")}
+                                    {this.renderInfoString(component?.center, component?.centerWcs)}
+                                </FormGroup>
+                                <FormGroup label="Amplitude" inline={true} labelInfo={<span title={imageUnitString}>{imageUnitString}</span>}>
+                                    {this.renderParamInput(component?.amplitude, "Amplitude", component?.setAmplitude)}
+                                    {this.renderLockButton(component?.amplitudeFixed, component?.toggleAmplitudeFixed, "amplitude")}
+                                </FormGroup>
+                                <FormGroup label="FWHM" inline={true} labelInfo={pixUnitString}>
+                                    {this.renderParamCoordInput(InputType.Size, component?.fwhm?.x, "Major axis", component?.setFwhmX, component?.fwhmWcs?.x, component?.setFwhmXWcs)}
+                                    {this.renderLockButton(component?.fwhmFixed?.x, component?.toggleFwhmXFixed, "fwhm-x")}
+                                    {this.renderParamCoordInput(InputType.Size, component?.fwhm?.y, "Minor axis", component?.setFwhmY, component?.fwhmWcs?.y, component?.setFwhmYWcs)}
+                                    {this.renderLockButton(component?.fwhmFixed?.y, component?.toggleFwhmYFixed, "fwhm-y")}
+                                    {this.renderInfoString(component?.fwhm, component?.fwhmWcs)}
+                                </FormGroup>
+                                <FormGroup label="P.A." inline={true} labelInfo="(deg)">
+                                    {this.renderParamInput(component?.pa, "Position angle", component?.setPa)}
+                                    {this.renderLockButton(component?.paFixed, component?.togglePaFixed, "pa")}
+                                </FormGroup>
+                                <Divider />
+                                <ClearableNumericInputComponent
+                                    label="Background"
+                                    inline={true}
+                                    labelInfo={<span title={imageUnitString}>{imageUnitString}</span>}
+                                    value={fittingStore.backgroundOffset}
+                                    placeholder="Offset"
+                                    onValueChanged={fittingStore.setBackgroundOffset}
+                                    onValueCleared={fittingStore.resetBackgroundOffset}
+                                    showTooltip={false}
+                                    additionalFormContent={<AnchorButton className="lock-button" onClick={fittingStore.toggleBackgroundOffsetFixed} icon={fittingStore.backgroundOffsetFixed ? "lock" : "unlock"} />}
                                 />
-                                {fittingStore.components.length > 1 && (
-                                    <>
-                                        <Slider
-                                            value={fittingStore.selectedComponentIndex + 1}
-                                            min={1}
-                                            stepSize={1}
-                                            max={fittingStore.components.length}
-                                            showTrackFill={false}
-                                            // wait for onBlur events of the inputs
-                                            // TODO: find a better way to handle this; one solution is to update the inputs with all keydown events
-                                            onChange={val => setTimeout(() => fittingStore.setSelectedComponentIndex(val - 1), 0)}
-                                            disabled={fittingStore.components.length <= 1}
-                                        />
-                                        <Tooltip content="Delete current component">
-                                            <AnchorButton icon={"trash"} onClick={fittingStore.deleteSelectedComponent} />
-                                        </Tooltip>
-                                    </>
-                                )}
-                            </FormGroup>
-                            <FormGroup label="Coordinate" inline={true}>
-                                <CoordinateComponent selectedValue={this.coord} onChange={this.setCoord} disableCoordinate={!fittingStore.effectiveFrame.hasSquarePixels} />
-                            </FormGroup>
-                            <FormGroup label="Center" inline={true} labelInfo={pixUnitString}>
-                                {this.renderParamCoordInput(InputType.XCoord, component?.center?.x, "Center X", component?.setCenterX, component?.centerWcs?.x, component?.setCenterXWcs)}
-                                {this.renderLockButton(component?.centerFixed?.x, component?.toggleCenterXFixed, "center-x")}
-                                {this.renderParamCoordInput(InputType.YCoord, component?.center?.y, "Center Y", component?.setCenterY, component?.centerWcs?.y, component?.setCenterYWcs)}
-                                {this.renderLockButton(component?.centerFixed?.y, component?.toggleCenterYFixed, "center-y")}
-                                {this.renderInfoString(component?.center, component?.centerWcs)}
-                            </FormGroup>
-                            <FormGroup label="Amplitude" inline={true} labelInfo={<span title={imageUnitString}>{imageUnitString}</span>}>
-                                {this.renderParamInput(component?.amplitude, "Amplitude", component?.setAmplitude)}
-                                {this.renderLockButton(component?.amplitudeFixed, component?.toggleAmplitudeFixed, "amplitude")}
-                            </FormGroup>
-                            <FormGroup label="FWHM" inline={true} labelInfo={pixUnitString}>
-                                {this.renderParamCoordInput(InputType.Size, component?.fwhm?.x, "Major axis", component?.setFwhmX, component?.fwhmWcs?.x, component?.setFwhmXWcs)}
-                                {this.renderLockButton(component?.fwhmFixed?.x, component?.toggleFwhmXFixed, "fwhm-x")}
-                                {this.renderParamCoordInput(InputType.Size, component?.fwhm?.y, "Minor axis", component?.setFwhmY, component?.fwhmWcs?.y, component?.setFwhmYWcs)}
-                                {this.renderLockButton(component?.fwhmFixed?.y, component?.toggleFwhmYFixed, "fwhm-y")}
-                                {this.renderInfoString(component?.fwhm, component?.fwhmWcs)}
-                            </FormGroup>
-                            <FormGroup label="P.A." inline={true} labelInfo="(deg)">
-                                {this.renderParamInput(component?.pa, "Position angle", component?.setPa)}
-                                {this.renderLockButton(component?.paFixed, component?.togglePaFixed, "pa")}
-                            </FormGroup>
-                            <Divider />
-                            <ClearableNumericInputComponent
-                                label="Background"
-                                inline={true}
-                                labelInfo={<span title={imageUnitString}>{imageUnitString}</span>}
-                                value={fittingStore.backgroundOffset}
-                                placeholder="Offset"
-                                onValueChanged={fittingStore.setBackgroundOffset}
-                                onValueCleared={fittingStore.resetBackgroundOffset}
-                                showTooltip={false}
-                                additionalFormContent={<AnchorButton className="lock-button" onClick={fittingStore.toggleBackgroundOffsetFixed} icon={fittingStore.backgroundOffsetFixed ? "lock" : "unlock"} />}
-                            />
-                            <FormGroup label="Solver" inline={true}>
-                                <HTMLSelect value={fittingStore.solverType} options={fittingStore.solverOptions} onChange={ev => fittingStore.setSolverType(parseInt(ev.target.value))} />
-                            </FormGroup>
+                                <FormGroup label="Solver" inline={true}>
+                                    <HTMLSelect value={fittingStore.solverType} options={fittingStore.solverOptions} onChange={ev => fittingStore.setSolverType(parseInt(ev.target.value))} />
+                                </FormGroup>
+                            </ScrollShadow>
                         </div>
                         <div className={Classes.DIALOG_FOOTER}>
                             <div className={Classes.DIALOG_FOOTER_ACTIONS}>
