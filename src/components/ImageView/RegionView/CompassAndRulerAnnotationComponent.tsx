@@ -375,7 +375,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
             }
         } else {
             distString = distance.toString();
-            if (unit[0] === "\0") {
+            if (unit[0] === "\0" || unit.trim() === "") {
                 distString += "pix";
             }
         }
@@ -389,7 +389,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     const canvasPosStart = transformedImageToCanvasPos(secondaryImagePointStart, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
     const canvasPosFinish = transformedImageToCanvasPos(secondaryImagePointFinish, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
 
-    const wcsInfo = frame?.validWcs ? frame.wcsInfoForTransformation : frame.wcsInfo; // calculate pixel distance for no valid WCS data images
+    const wcsInfo = frame?.validWcs && AppStore.Instance.overlayStore.isWcsCoordinates ? frame.wcsInfoForTransformation : frame.wcsInfo; // calculate pixel distance for no valid WCS data images
     const approxPoints = region.getCurveApproximation(wcsInfo, frame.spatialTransformAST);
 
     const xApproxPoints = approxPoints.xApproximatePoints;
