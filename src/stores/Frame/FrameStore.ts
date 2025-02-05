@@ -1312,6 +1312,13 @@ export class FrameStore {
         } else if (this.isSwappedZ) {
             const astFrameSet = this.initSpectralVsDirectionFrame();
             if (astFrameSet) {
+                // update default system from the header
+                const entries = this.frameInfo.fileInfoExtended.headerEntries;
+                const skySystem = entries.find(entry => entry.name.includes("RADESYS"))?.value;
+                if (Object.values(SystemType).includes(skySystem as SystemType)) {
+                    this.overlayStore.global.setDefaultSystem(skySystem as SystemType);
+                }
+
                 this.spectralFrame = AST.getSpectralFrame(astFrameSet);
                 this.wcsInfo3D = AST.copy(astFrameSet);
                 this.updateDirAxisInfo();
