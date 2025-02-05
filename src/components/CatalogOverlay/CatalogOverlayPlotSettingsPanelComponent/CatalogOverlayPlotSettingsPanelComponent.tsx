@@ -516,7 +516,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         <Button text={widgetStore.worldSizeUnit} disabled={!widgetStore.isAngularSize} rightIcon="double-caret-vertical" />
                     </Select>
                 </FormGroup>
-                <FormGroup inline={true} label="PA" labelInfo="(deg)" disabled={disabledOverlayPanel}>
+                {/* <FormGroup inline={true} label="PA" labelInfo="(deg)" disabled={disabledOverlayPanel}>
                     <Select
                         items={this.axisOption}
                         activeItem={null}
@@ -531,7 +531,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     >
                         <Button text={widgetStore.orientationMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical" data-testid="catalog-settings-orientation-column-dropdown" />
                     </Select>
-                </FormGroup>
+                </FormGroup> */}
                 <FormGroup inline={true} label="Thickness" disabled={disabledOverlayPanel}>
                     <Tooltip disabled={disabledOverlayPanel} content={`${CatalogWidgetStore.MinThickness} ~ ${CatalogWidgetStore.MaxThickness}`}>
                         <SafeNumericInput
@@ -626,20 +626,20 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
         const orientationMap = (
             <div className="panel-container">
-                <FormGroup inline={true} label="Column" disabled={disabledOverlayPanel || widgetStore.isAngularSize}>
+                <FormGroup inline={true} label={widgetStore.isAngularSize ? "P.A." : "Column"} labelInfo={widgetStore.isAngularSize ? "(deg)" : ""} disabled={disabledOverlayPanel}>
                     <Select
                         items={this.axisOption}
                         activeItem={null}
                         onItemSelect={columnName => widgetStore.setOrientationMapColumn(columnName)}
                         itemRenderer={this.renderAxisPopOver}
-                        disabled={disabledOverlayPanel || widgetStore.isAngularSize}
+                        disabled={disabledOverlayPanel}
                         popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                         filterable={true}
                         noResults={noResults}
                         itemPredicate={this.filterColumn}
                         resetOnSelect={true}
                     >
-                        <Button text={widgetStore.orientationMapColumn} disabled={disabledOverlayPanel || widgetStore.isAngularSize} rightIcon="double-caret-vertical" data-testid="catalog-settings-orientation-column-dropdown" />
+                        <Button text={widgetStore.orientationMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical" data-testid="catalog-settings-orientation-column-dropdown" />
                     </Select>
                 </FormGroup>
                 <Collapse isOpen={!disableOrientationMap && !widgetStore.isAngularSize}>
