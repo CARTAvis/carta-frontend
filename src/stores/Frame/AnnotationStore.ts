@@ -421,6 +421,7 @@ export class RulerAnnotationStore extends RegionStore {
     @observable fontSize: number = 13;
     @observable fontStyle: FontStyle = FontStyle.NORMAL;
     @observable font: Font = Font.HELVETICA;
+    @observable decimals: number = 6;
     @observable auxiliaryLineVisible: boolean = true;
     @observable auxiliaryLineDashLength: number = 0;
     @observable auxiliaryTextVisible: boolean = true;
@@ -470,6 +471,11 @@ export class RulerAnnotationStore extends RegionStore {
 
     @action setFont = (font: Font) => {
         this.font = font;
+        this.modifiedTimestamp = performance.now();
+    };
+
+    @action setDecimals = (decimals: number) => {
+        this.decimals = decimals;
         this.modifiedTimestamp = performance.now();
     };
 

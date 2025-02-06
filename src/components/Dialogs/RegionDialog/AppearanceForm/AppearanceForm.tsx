@@ -224,6 +224,9 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                 )}
                 {region.regionType === CARTA.RegionType.ANNRULER && (
                     <>
+                        <FormGroup inline={true} label="Number of decimals">
+                            <SafeNumericInput placeholder="Number of decimals" min={0} max={6} value={(region as RulerAnnotationStore).decimals} stepSize={1} onValueChange={value => (region as RulerAnnotationStore).setDecimals(value)} />
+                        </FormGroup>
                         <FormGroup inline={true} label="Show auxiliary lines">
                             <Switch checked={(region as RulerAnnotationStore).auxiliaryLineVisible} onChange={(ev: React.ChangeEvent<HTMLInputElement>) => (region as RulerAnnotationStore).setAuxiliaryLineVisible(ev.target.checked)} />
                         </FormGroup>

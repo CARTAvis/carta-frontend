@@ -364,17 +364,17 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
         let distString: string;
         if (unit.includes("degree") || unit.includes("hh:mm:s")) {
             if (distance < Math.PI / 180.0 / 60.0) {
-                distString = (((distance * 180.0) / Math.PI) * 3600.0).toFixed(6).toString();
+                distString = (((distance * 180.0) / Math.PI) * 3600.0).toFixed(region.decimals).toString();
                 distString += '"';
             } else if (distance < Math.PI / 180.0) {
-                distString = (((distance * 180.0) / Math.PI) * 60.0).toFixed(6).toString();
+                distString = (((distance * 180.0) / Math.PI) * 60.0).toFixed(region.decimals).toString();
                 distString += "'";
             } else {
-                distString = ((distance * 180.0) / Math.PI).toFixed(6).toString();
+                distString = ((distance * 180.0) / Math.PI).toFixed(region.decimals).toString();
                 distString += "\u00B0";
             }
         } else {
-            distString = distance.toString();
+            distString = distance.toFixed(region.decimals).toString();
             if (unit[0] === "\0" || unit.trim() === "") {
                 distString += "pix";
             }
