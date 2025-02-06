@@ -64,11 +64,11 @@ export class ChannelMapStore {
         TileService.Instance.requestChannelMapTiles(tiles, this.masterFrame, midPointTileCoords, compressionQuality, {min: this.startChannel, max: this.endChannel});
     }, 100);
 
-    @action setMasterFrame(masterFrame: FrameStore) {
-        this.masterFrame = masterFrame;
+    @action setMasterFrame(masterFrame?: FrameStore) {
+        this.masterFrame = masterFrame as FrameStore;
 
         const appStore = AppStore.Instance;
-        const frames = appStore.frames.filter(frame => frame.frameInfo.fileId !== masterFrame.frameInfo.fileId);
+        const frames = appStore.frames.filter(frame => frame.frameInfo.fileId !== masterFrame?.frameInfo?.fileId);
         frames.forEach(frame => appStore.tileService.handleFileClosed(frame.frameInfo.fileId));
     }
 

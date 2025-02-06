@@ -563,7 +563,9 @@ export class AppStore {
         this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfo.type, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes, generated);
 
         let newFrame = new FrameStore(frameInfo);
-        this.channelMapStore.setMasterFrame(newFrame);
+        if (!newFrame.isPVImage && newFrame.frameInfo.fileInfoExtended.depth > 1) {
+            this.channelMapStore.setMasterFrame(newFrame);
+        }
 
         // Place frame in frame array (replace frame with the same ID if it exists)
         const existingFrameIndex = this.imageViewConfigStore.getImageListIndex(ImageType.FRAME, ack.fileId);
@@ -1000,6 +1002,13 @@ export class AppStore {
                     } else {
                         this.clearSpectralReference();
                     }
+                }
+
+                // Clean up if frame is used in channel map
+                if (this.channelMapStore.masterFrame?.frameInfo.fileId === fileId) {
+                    const firstImage = this.imageViewConfigStore.imageNum ? this.imageViewConfigStore.getImage(0) : null;
+                    const firstFrame = (firstImage?.store as FrameStore)?.frameInfo.fileInfoExtended.depth > 1 ? (firstImage.store as FrameStore) : null;
+                    this.channelMapStore.setMasterFrame(firstFrame);
                 }
 
                 if (removedFrameIsRasterScalingReference) {
@@ -2208,7 +2217,7 @@ export class AppStore {
         if (regionHistogramData.regionId === -1 && !regionHistogramData.config.fixedNumBins && !regionHistogramData.config.fixedBounds) {
             const key = `${regionHistogramData.fileId}_${regionHistogramData.stokes}_${regionHistogramData.channel}`;
             this.pendingChannelHistograms.set(key, regionHistogramData);
-            if (this.channelMapStore.channelMapEnabled) {
+            if (this.channelMapStore.channelMapEnabled && regionHistogramData.channel === 0) {
                 this.updateHistogram(regionHistogramData.fileId, regionHistogramData.stokes, regionHistogramData.channel, true);
             }
         } else if (regionHistogramData.regionId === -2) {
@@ -2276,7 +2285,9 @@ export class AppStore {
                     updatedFrame.renderConfig.updateChannelMapHistogram(channelHist);
                 }
             }
-            this.pendingChannelHistograms.delete(key);
+            if (!updateChannelMapHistogram) {
+                this.pendingChannelHistograms.delete(key);
+            }
         }
     };
 

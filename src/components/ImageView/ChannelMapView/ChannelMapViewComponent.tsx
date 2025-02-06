@@ -107,7 +107,8 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         const imageRenderHeight = frame?.renderHeight;
 
         return (
-            channel < channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth && (
+            channel < channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth &&
+            channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth > 1 && (
                 <div key={index} onClick={() => channelMapStore.masterFrame.setChannel(channel)} style={{top: overlayComponentTop}}>
                     <ChannelMapInnerOverlayComponent
                         index={index}
@@ -134,10 +135,10 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     <RegionViewComponent
                         key={`region-view-component-${index}`}
                         frame={frame}
-                        width={imageRenderWidth - 2}
-                        height={imageRenderHeight - 2}
-                        top={imageTop}
-                        left={imageLeft}
+                        width={imageRenderWidth}
+                        height={imageRenderHeight}
+                        top={imageTop - 1} // -1 to offset the border width
+                        left={imageLeft - 1}
                         onClickToCenter={cursorInfo => onClickToCenter(frame, cursorInfo)}
                         overlaySettings={overlayStore}
                         dragPanningEnabled={appStore.preferenceStore.dragPanning}

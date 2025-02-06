@@ -99,9 +99,9 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                 </FormGroup>
                 <FormGroup className="channel-map-control-label" inline={true} label="Image" disabled={!channelMapSettings.channelMapEnabled}>
                     <HTMLSelect
-                        options={appStore.frameNames}
+                        options={appStore.frameNames.filter(frame => appStore.getFrame(frame.value as number).frameInfo.fileInfoExtended.depth > 1)}
                         value={channelMapSettings.masterFrame ? appStore.frames.indexOf(channelMapSettings.masterFrame) : -1}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => channelMapSettings.setMasterFrame(AppStore.Instance.getFrame(parseInt(event.currentTarget.value)))}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => channelMapSettings.setMasterFrame(appStore.getFrame(parseInt(event.currentTarget.value)))}
                         disabled={!channelMapSettings.channelMapEnabled}
                     />
                 </FormGroup>
@@ -144,7 +144,7 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                         )}
                     </div>
                 </FormGroup>
-                <FormGroup className="channel-map-control-label" inline={true} label="Show spectral string" disabled={!channelMapSettings.channelMapEnabled}>
+                <FormGroup className="channel-map-control-label" inline={true} label="Show frequency string" disabled={!channelMapSettings.channelMapEnabled}>
                     <div style={{display: "flex", alignItems: "center"}}>
                         <Switch checked={channelMapSettings.showSpectralString} onChange={ev => channelMapSettings.setShowSpectralString(ev.currentTarget.checked)} disabled={!channelMapSettings.channelMapEnabled} />
                         {channelMapSettings.showSpectralString && (

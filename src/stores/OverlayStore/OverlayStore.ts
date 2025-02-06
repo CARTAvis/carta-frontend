@@ -1208,7 +1208,7 @@ export class OverlayStore {
     }
 
     @action minSize(frame?: FrameStore) {
-        return Math.min(this.renderWidth || frame.renderWidth, this.renderHeight || frame.renderHeight);
+        return Math.min(frame.renderWidth, frame.renderHeight);
     }
 
     @computed get showNumbers() {
