@@ -1,11 +1,11 @@
 import * as React from "react";
-import ReactResizeDetector from "react-resize-detector";
 import {NonIdealState} from "@blueprintjs/core";
 import * as _ from "lodash";
 import {action, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotComponent, LinePlotComponentProps} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, ResizeDetector} from "components/Shared";
+// import {ResizeDetector} from "components/Shared/ResizeDetector/ResizeDetector";
 import {Point2D} from "models";
 import {AppStore} from "stores";
 import {Render3DWidgetStore} from "stores/Widgets";
@@ -146,8 +146,9 @@ export class IsoSurfaceComponent extends React.Component<{widgetStore: Render3DW
         return (
             <div className="isosurface-levels-panel">
                 <div className="histogram-plot">
-                    <LinePlotComponent {...linePlotProps} />
-                    <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}></ReactResizeDetector>
+                    <ResizeDetector onResize={this.onResize} throttleTime={33}>
+                        <LinePlotComponent {...linePlotProps} />
+                    </ResizeDetector>
                 </div>
             </div>            
         );

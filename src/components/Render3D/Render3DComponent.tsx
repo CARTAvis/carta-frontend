@@ -1,5 +1,4 @@
 import * as React from "react";
-// import ReactResizeDetector from "react-resize-detector";
 import {Alert, AnchorButton, Classes, Colors, Divider, FormGroup,  NonIdealState, Position, Tab, Tabs, TagInput, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
