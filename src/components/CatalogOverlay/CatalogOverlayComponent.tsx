@@ -34,7 +34,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @observable private width: number;
 
     @observable private isShowHeader: boolean = true;
-    private prevSplitSize: number;
+    private prevPosition: number = 60;
 
     private catalogHeaderTableRef: Table2 = undefined;
     private catalogFileNames: Map<number, string>;
@@ -187,7 +187,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const catalogWidgetStore = this.widgetStore;
         this.height = height;
         this.width = width;
-        this.prevSplitSize = parseFloat(catalogWidgetStore.tableSeparatorPosition); // initial split size in percentage
 
         // fixed bug from blueprintjs, only display 4 rows. catalog name missing (in PR #1104) fixed after package update.
         if (profileStore && this.catalogHeaderTableRef) {
@@ -575,32 +574,19 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return <MenuItem key={plotType} text={plotType} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
-    @action private onTableResize = (newSize: number) => {
-        // update table if resizing happend)
-        const position = clamp(Math.floor((newSize / (this.height - 130)) * 100), CatalogWidgetStore.MinTableSeparatorPosition, CatalogWidgetStore.MaxTableSeparatorPosition);
-
-        this.isShowHeader = position === 100 ? false : true;
-        // save the previous split size but avoid the header size smaller than 40%
-        if (position < 60) {
-            this.prevSplitSize = position;
-        }
-
-        if (position <= CatalogWidgetStore.MaxTableSeparatorPosition && position >= CatalogWidgetStore.MinTableSeparatorPosition) {
-            this.widgetStore.setTableSeparatorPosition(`${position}%`);
+    @action private handleSplitChange = (newSize: number) => {
+        let position = clamp(Math.floor((newSize / (this.height - 120)) * 100), CatalogWidgetStore.MinTableSeparatorPosition, CatalogWidgetStore.MaxTableSeparatorPosition);
+        if (position) {
+            this.isShowHeader = position === 100 ? false : true;
+            this.prevPosition = position < 60 ? position : 60;
             PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION, `${position}%`);
-        }
-        const profileStore = this.profileStore;
-        if (profileStore && this.catalogHeaderTableRef) {
-            this.updateTableSize(this.catalogHeaderTableRef, false);
-        }
-        if (profileStore && this.catalogTableRef) {
-            this.updateTableSize(this.catalogTableRef, false);
         }
     };
 
-    private handleHideHeader = () => {
-        const splizSize = this.widgetStore.tableSeparatorPosition !== "100%" ? this.height - 130 : (this.prevSplitSize / 100) * (this.height - 130);
-        this.onTableResize(splizSize);
+    @action private handleHideHeader = () => {
+        const position = this.widgetStore.tableSeparatorPosition !== "100%" ? 100 : this.prevPosition;
+        this.isShowHeader = position === 100 ? false : true;
+        this.widgetStore.setTableSeparatorPosition(`${position}%`);
     };
 
     private renderSystemPopOver = (system: CatalogSystemType, itemProps: ItemRendererProps) => {
@@ -792,7 +778,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                         minSize={`${CatalogWidgetStore.MinTableSeparatorPosition}%`}
                         maxSize={`${CatalogWidgetStore.MaxTableSeparatorPosition}%`}
                         size={catalogWidgetStore.tableSeparatorPosition}
-                        onChange={this.onTableResize}
+                        onDragFinished={this.handleSplitChange}
+                        onResizerDoubleClick={this.handleHideHeader}
                     >
                         <Pane className={"catalog-overlay-column-header-container"}>{this.createHeaderTable()}</Pane>
                         <Pane className={"catalog-overlay-data-container"}>
