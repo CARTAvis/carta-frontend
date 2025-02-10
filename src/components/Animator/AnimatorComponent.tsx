@@ -1,11 +1,10 @@
 import * as React from "react";
-import ReactResizeDetector from "react-resize-detector";
 import {AnchorButton, Button, ButtonGroup, Classes, ControlGroup, HTMLSelect, IconName, Menu, MenuItem, NonIdealState, NumberRange, Popover, Position, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {SafeNumericInput, ScrollShadow} from "components/Shared";
+import {ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {AnimationMode, AnimatorStore, AppStore, DefaultWidgetConfig, HelpType, PlayMode, WidgetProps} from "stores";
 
 import "./AnimatorComponent.scss";
@@ -409,28 +408,29 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         );
 
         return (
-            <div className="animator-widget">
-                <ScrollShadow>
-                    {!activeFrame && <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />}
-                    {activeFrame && (
-                        <div className={playbackClass}>
-                            {playbackButtons}
-                            {playbackModeButton}
-                            {numericControl}
-                        </div>
-                    )}
-                    {activeFrame &&
-                        this.width > 0 && ( // temporary fix for broken range slider, issue #1078
-                            <div className="animator-sliders">
-                                {imageSlider}
-                                {channelSlider}
-                                {channelRangeSlider}
-                                {stokesSlider}
+            <ResizeDetector onResize={this.onResize} throttleTime={33}>
+                <div className="animator-widget">
+                    <ScrollShadow>
+                        {!activeFrame && <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />}
+                        {activeFrame && (
+                            <div className={playbackClass}>
+                                {playbackButtons}
+                                {playbackModeButton}
+                                {numericControl}
                             </div>
                         )}
-                    <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
-                </ScrollShadow>
-            </div>
+                        {activeFrame &&
+                            this.width > 0 && ( // temporary fix for broken range slider, issue #1078
+                                <div className="animator-sliders">
+                                    {imageSlider}
+                                    {channelSlider}
+                                    {channelRangeSlider}
+                                    {stokesSlider}
+                                </div>
+                            )}
+                    </ScrollShadow>
+                </div>
+            </ResizeDetector>
         );
     }
 }
