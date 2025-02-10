@@ -41,7 +41,7 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
         const channelMapSettings = AppStore.Instance.channelMapStore;
         const frame = channelMapSettings.masterFrame;
         if (frame) {
-            channelMapSettings.setStartChannel(clamp(val, 0, frame.frameInfo.fileInfoExtended.depth));
+            channelMapSettings.setStartChannel(clamp(val, 0, frame.frameInfo.fileInfoExtended.depth - 1));
         }
     };
 

@@ -1,10 +1,11 @@
 import * as React from "react";
 import * as AST from "ast_wrapper";
 import classNames from "classnames";
+import * as _ from "lodash";
 import {observer} from "mobx-react";
 
 import {CursorInfo, ImageItem, ImageType, SPECTRAL_TYPE_STRING} from "models";
-import {AppStore, OverlayStore} from "stores";
+import {AppStore, OverlayStore, PreferenceStore} from "stores";
 
 import "./OverlayComponent.scss";
 
@@ -16,7 +17,6 @@ export class OverlayComponentProps {
     left?: number;
     onClicked?: (cursorInfo: CursorInfo) => void;
     onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
-    overlayType?: "left" | "bottom" | "corner" | "inner";
     width?: number;
     height?: number;
     type?: "channel-map-inner" | "channel-map-outer";
@@ -37,7 +37,11 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     updateImage() {
         AppStore.Instance.resetImageRatio();
-        requestAnimationFrame(this.renderCanvas);
+        if (PreferenceStore.Instance.limitOverlayRedraw) {
+            this.throttledRenderCanvas();
+        } else {
+            requestAnimationFrame(this.renderCanvas);
+        }
     }
 
     updateImageDimensions() {
@@ -52,7 +56,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const settings = this.props.overlaySettings;
         const frame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image.store?.baseFrame : this.props.image?.store;
         const appStore = AppStore.Instance;
-        const padding = this.props.type === "channel-map-inner" ? settings.channelMapInnerPadding(this.props.overlayType) : settings.padding;
+        const padding = this.props.type === "channel-map-inner" ? settings.channelMapInnerPadding("corner") : settings.padding;
 
         const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoShifted : frame.wcsInfo;
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
@@ -167,6 +171,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             AST.clearLastErrorMessage();
         }
     };
+
+    throttledRenderCanvas = _.throttle(this.renderCanvas, 50);
 
     private getRef = ref => {
         this.canvas = ref;

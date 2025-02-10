@@ -1230,9 +1230,6 @@ export class OverlayStore {
     }
 
     @computed get base() {
-        if (AppStore.Instance.channelMapStore.channelMapEnabled) {
-            return 2;
-        }
         return 5;
     }
 
@@ -1356,20 +1353,6 @@ export class OverlayStore {
                         bottom: paddingBottom
                     };
             }
-        };
-    }
-
-    @computed get channelMapInnerWidth() {
-        return (renderWidth: number, type: "left" | "bottom" | "corner" | "inner") => {
-            const padding = this.channelMapInnerPadding(type);
-            return renderWidth - padding.left - padding.right;
-        };
-    }
-
-    @computed get channelMapInnerHeight() {
-        return (renderHeight: number, type: "left" | "bottom" | "corner" | "inner") => {
-            const padding = this.channelMapInnerPadding(type);
-            return renderHeight - padding.bottom - padding.top;
         };
     }
 

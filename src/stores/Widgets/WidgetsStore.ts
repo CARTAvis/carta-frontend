@@ -728,7 +728,7 @@ export class WidgetsStore {
             const cogPinedButton = this.getControlButton("lm_settings", "settings", "cog").on("click", ev => WidgetsStore.Instance.onCogPinedClick(stack.getActiveContentItem()));
             const nextPageButton = this.getControlButton("lm-image-panel-next", "next image", "step-forward").on("click", this.onNextPageClick);
             const imagePanelButton = this.getControlButton("lm-image-panel", "switch to multi-panel", "square").on("click", this.onImagePanelButtonClick);
-            const channelMapButton = this.getControlButton("lm-channel-map-panel", "switch to channel map", "heat-grid").on("click", this.onChannelMapButtonClick);
+            const channelMapButton = this.getControlButton("lm-channel-map-panel", "enable/disable channel map", "heat-grid").on("click", this.onChannelMapButtonClick);
             this.updateImagePanelButton();
             const previousPageButton = this.getControlButton("lm-image-panel-previous", "previous image", "step-backward").on("click", this.onPreviousPageClick);
             stack.header.controlsContainer.prepend([channelMapButton, previousPageButton, imagePanelButton, nextPageButton, cogPinedButton, helpButton, unpinButton]);
@@ -998,11 +998,6 @@ export class WidgetsStore {
         const imagePanelButton = $(".lm_goldenlayout")?.find("li.lm-image-panel[style!='display:none;']");
         if (imagePanelButton) {
             imagePanelButton.attr("style", channelMapStore.channelMapEnabled ? "opacity: 0.2" : "");
-        }
-
-        const channelMapButton = $(".lm_goldenlayout")?.find("li.lm-channel-map-panel[style!='display:none;']");
-        if (channelMapButton) {
-            channelMapButton.attr("style", channelMapStore.channelMapEnabled ? "" : "opacity: 0.2");
         }
     };
 

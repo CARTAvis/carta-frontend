@@ -3,7 +3,7 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 
 import {ImageItem, ImageType} from "models";
 import {TileService} from "services";
-import {AppStore, FrameStore, OverlayStore} from "stores";
+import {AppStore, FrameStore} from "stores";
 
 export class ChannelMapStore {
     private static staticInstance: ChannelMapStore;
@@ -46,7 +46,6 @@ export class ChannelMapStore {
     @observable startChannel: number = 0;
     @observable numColumns: number;
     @observable numRows: number;
-    @observable overlayStores: {corner: OverlayStore; outer: OverlayStore};
     @observable channelMapEnabled: boolean = false;
 
     @observable showChannelString: boolean = false;
@@ -74,7 +73,7 @@ export class ChannelMapStore {
 
     @action setStartChannel(startChannel: number) {
         // Add checks for valid startChannel number for the masterFrame
-        if (startChannel < 0 || startChannel > this.masterFrame.frameInfo.fileInfoExtended.depth) {
+        if (startChannel < 0 || startChannel > this.masterFrame.frameInfo.fileInfoExtended.depth - 1) {
             return;
         }
         this.startChannel = startChannel;

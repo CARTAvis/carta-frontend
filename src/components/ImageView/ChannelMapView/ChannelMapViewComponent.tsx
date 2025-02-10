@@ -85,20 +85,12 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
 
         if (column === 0 && (row === channelMapStore.numRows - 1 || row === lastRow)) {
             overlayType = "corner";
-            imageViewWidth += overlayStore.paddingLeft;
-            imageViewHeight += overlayStore.paddingBottom;
         } else if (column === 0) {
             overlayType = "left";
-            imageViewWidth += overlayStore.paddingLeft;
-            imageViewHeight += overlayStore.base;
         } else if (row === channelMapStore.numRows - 1 || row === lastRow || (row === lastRow - 1 && column > columnOfLastFrame)) {
             overlayType = "bottom";
-            imageViewWidth += overlayStore.base;
-            imageViewHeight += overlayStore.paddingBottom;
         } else {
             overlayType = "inner";
-            imageViewWidth += overlayStore.base;
-            imageViewHeight += overlayStore.base;
         }
 
         let imageTop = overlayComponentTop + overlayStore.channelMapInnerPadding(overlayType).top;
@@ -292,7 +284,6 @@ const ChannelMapInnerOverlayComponent = observer(
                             ref.canvas.id = `${column}_${row}`;
                         }
                     }}
-                    overlayType={"corner"}
                     image={{
                         type: ImageType.FRAME,
                         store: frame
