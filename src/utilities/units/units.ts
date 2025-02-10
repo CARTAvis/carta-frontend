@@ -171,3 +171,7 @@ export function getValueFromArcsecString(formattedString: string): number | null
     }
     return null;
 }
+
+export function pixelToFluxDensityUnit(pixelUnit: string): string {
+    return pixelUnit.replace(/\/beam/i, "");
+}

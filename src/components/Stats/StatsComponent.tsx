@@ -10,7 +10,7 @@ import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarCompon
 import {FULL_POLARIZATIONS, POLARIZATIONS} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {StatsWidgetStore} from "stores/Widgets";
-import {exportTsvFile, toExponential} from "utilities";
+import {exportTsvFile, pixelToFluxDensityUnit, toExponential} from "utilities";
 
 import "./StatsComponent.scss";
 
@@ -174,7 +174,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
                 } else if (type === CARTA.StatsType.SumSq) {
                     unitString = `(${unit})^2`;
                 } else if (type === CARTA.StatsType.FluxDensity) {
-                    unitString = unit.replace(/\/beam/i, "");
+                    unitString = pixelToFluxDensityUnit(unit);
                 } else {
                     unitString = unit;
                 }
