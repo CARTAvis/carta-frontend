@@ -139,8 +139,8 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                         frame={frame}
                         width={imageRenderWidth}
                         height={imageRenderHeight}
-                        top={imageTop - 1} // -1 to offset the border width
-                        left={imageLeft - 1}
+                        top={imageTop - (channel === channelMapStore.masterFrame.requiredChannel ? 1 : 0)}
+                        left={imageLeft - (channel === channelMapStore.masterFrame.requiredChannel ? 1 : 0)}
                         onClickToCenter={cursorInfo => onClickToCenter(frame, cursorInfo)}
                         overlaySettings={overlayStore}
                         dragPanningEnabled={appStore.preferenceStore.dragPanning}

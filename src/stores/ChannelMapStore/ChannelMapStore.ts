@@ -64,7 +64,7 @@ export class ChannelMapStore {
         TileService.Instance.requestChannelMapTiles(tiles, this.masterFrame, midPointTileCoords, compressionQuality, {min: this.startChannel, max: this.endChannel});
     }, 100);
 
-    @action setMasterFrame(masterFrame?: FrameStore) {
+    @action setMasterFrame(masterFrame?: FrameStore | undefined) {
         this.masterFrame = masterFrame as FrameStore;
     }
 

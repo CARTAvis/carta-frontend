@@ -102,7 +102,7 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                 </FormGroup>
                 <FormGroup className="channel-map-control-label" inline={true} label="Image" disabled={!channelMapSettings.channelMapEnabled}>
                     <HTMLSelect
-                        value={-1}
+                        value={appStore.channelMapStore.masterFrame?.frameInfo.fileId.toString()}
                         options={[...(AppStore.Instance.frameNames ?? [])]}
                         onChange={ev => appStore.setActiveImageByFileId(parseInt(ev.currentTarget.value))}
                         disabled={!channelMapSettings.channelMapEnabled}
