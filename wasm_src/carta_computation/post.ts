@@ -1,5 +1,3 @@
-import TypedArray = NodeJS.TypedArray;
-
 declare var Module: any;
 declare var addOnPostRun: any;
 
@@ -15,15 +13,17 @@ Module.srcAllocated = 0;
 Module.srcPtr = 0;
 Module.destAllocated = 0;
 Module.destPtr = 0;
+Module.runtimeInit = false;
 
 addOnPostRun(function () {
     console.log("Zstd WebAssembly module loaded");
+    Module.runtimeInit = true;
 });
 
 Module.ZstdReady = false;
 
 Module.onReady = new Promise(function (func) {
-    if (Module["calledRun"]) {
+    if (Module.runtimeInit) {
         func(Module);
     } else {
         const old = Module["onRuntimeInitialized"];
@@ -32,23 +32,15 @@ Module.onReady = new Promise(function (func) {
                 old();
             }
             func(Module);
+            Module.runtimeInit = true;
         };
     }
     Module.ZstdReady = true;
 });
 
-type TypedJSArray =
-    | Uint8Array
-    | Uint8ClampedArray
-    | Uint16Array
-    | Uint32Array
-    | Int8Array
-    | Int16Array
-    | Int32Array
-    | Float32Array
-    | Float64Array;
+type TypedJSArray = Uint8Array | Uint8ClampedArray | Uint16Array | Uint32Array | Int8Array | Int16Array | Int32Array | Float32Array | Float64Array;
 
-function resizeAndFillBuffers(src: TypedJSArray, destSize) {
+function resizeAndFillBuffers(src: TypedJSArray, destSize: number) {
     const srcSize = src.byteLength;
 
     // resize src if buffer is not big enough
@@ -74,7 +66,7 @@ Module.Decompress = (src: Uint8Array, destSize: number): Uint8Array => {
     resizeAndFillBuffers(src, destSize);
 
     const destHeap = new Uint8Array(Module.HEAPU8.buffer, Module.destPtr, destSize);
-    const result = decompress(Module.destPtr, destSize, Module.srcPtr, srcSize);
+    decompress(Module.destPtr, destSize, Module.srcPtr, srcSize);
     return destHeap.slice();
 };
 
@@ -82,7 +74,7 @@ Module.Decode = (src: Uint8Array, destSize: number, decimationFactor: number): F
     const srcSize = src.byteLength;
     resizeAndFillBuffers(src, destSize);
 
-    const result = decompress(Module.destPtr, destSize, Module.srcPtr, srcSize);
+    decompress(Module.destPtr, destSize, Module.srcPtr, srcSize);
     const destHeapFloat = new Float32Array(Module.HEAPU8.buffer, Module.destPtr, destSize / 4);
     decodeArray(Module.destPtr, destSize, decimationFactor);
     return destHeapFloat.slice();
@@ -121,7 +113,7 @@ Module.CalculateCatalogSize = (data: Float32Array, min: number, max: number, siz
     const float32 = new Float32Array(Module.HEAPF32.buffer, dataOnWasmHeap, N);
     Module._free(dataOnWasmHeap);
     return float32.slice();
-}
+};
 
 Module.CalculateCatalogColor = (data: Float32Array, invert: boolean, min: number, max: number, scaling: number, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
     const N = data.length;
@@ -134,7 +126,7 @@ Module.CalculateCatalogColor = (data: Float32Array, invert: boolean, min: number
     const float32 = new Float32Array(Module.HEAPF32.buffer, dataOnWasmHeap, N);
     Module._free(dataOnWasmHeap);
     return float32.slice();
-}
+};
 
 Module.CalculateCatalogOrientation = (data: Float32Array, min: number, max: number, angleMin: number, angleMax: number, scaling: number, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
     const N = data.length;
@@ -147,7 +139,7 @@ Module.CalculateCatalogOrientation = (data: Float32Array, min: number, max: numb
     const float32 = new Float32Array(Module.HEAPF32.buffer, dataOnWasmHeap, N);
     Module._free(dataOnWasmHeap);
     return float32.slice();
-}
+};
 
 Module.ConvertInt64Array = (data: Uint8Array, signed: boolean): Float64Array => {
     const N = data.byteLength / 8;
@@ -163,6 +155,6 @@ Module.ConvertInt64Array = (data: Uint8Array, signed: boolean): Float64Array => 
     const result = destHeap.slice();
     Module._free(srcPtr);
     return result;
-}
+};
 
 module.exports = Module;
