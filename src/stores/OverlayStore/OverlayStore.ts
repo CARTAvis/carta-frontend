@@ -1200,9 +1200,9 @@ export class OverlayStore {
         astString.add("DrawAxes", false);
         astString.add("NumLab", false);
         astString.add("LabelUp", 0);
-        astString.add("TitleGap", this.titleGap / Math.min(this.fullViewWidth - this.paddingLeft - this.paddingRight, this.fullViewHeight - this.paddingTop - this.paddingBottom));
+        astString.add("TitleGap", this.titleGap / Math.min(this.renderWidth, this.renderHeight));
         astString.add("NumLabGap", 0);
-        astString.add("TextLabGap", this.cumulativeLabelGap / Math.min(this.fullViewWidth - this.paddingLeft - this.paddingRight, this.fullViewHeight - this.paddingTop - this.paddingBottom));
+        astString.add("TextLabGap", this.cumulativeLabelGap / Math.min(this.renderWidth, this.renderHeight));
         astString.add("TextGapType", "plot");
         return astString.toString();
     }

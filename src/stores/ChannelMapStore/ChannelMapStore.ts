@@ -66,10 +66,6 @@ export class ChannelMapStore {
 
     @action setMasterFrame(masterFrame?: FrameStore) {
         this.masterFrame = masterFrame as FrameStore;
-
-        const appStore = AppStore.Instance;
-        const frames = appStore.frames.filter(frame => frame.frameInfo.fileId !== masterFrame?.frameInfo?.fileId);
-        frames.forEach(frame => appStore.tileService.handleFileClosed(frame.frameInfo.fileId));
     }
 
     @action setChannelMapEnabled = (enabled: boolean) => {

@@ -2059,6 +2059,7 @@ export class AppStore {
                         if (this.syncContourToFrame) {
                             this.contourDataSource = frame;
                         }
+                        this.channelMapStore.setMasterFrame(frame);
                     }
                 } else {
                     this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);

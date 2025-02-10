@@ -649,7 +649,7 @@ export class FrameStore {
     getFreqWithChannel(channel: number) {
         const result: {spectralString: string; velocityString: string; freqString: string} = {spectralString: "", velocityString: "", freqString: ""};
         const spectralType = this.spectralAxis?.type;
-        if (!spectralType) {
+        if (!spectralType || !this.channelInfo) {
             return {spectralString: "", velocityString: "", freqString: ""};
         }
         result.spectralString = `${spectralType.name} (${this.spectralAxis?.specsys ?? ""}): ${toFixed(this.channelInfo.values[channel], 4)} ${spectralType.unit ?? ""}`;
