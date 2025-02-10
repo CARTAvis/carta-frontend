@@ -14,14 +14,14 @@ if [ $VERSION == "3" ]; then
     if [ -d "./emscripten.simg" ]; then
         echo "Using existing singularity container"
     else
-        singularity build --sandbox emscripten.simg docker://emscripten/emsdk:3.1.71
+        singularity build --sandbox emscripten.simg docker://emscripten/emsdk:4.0.3
     fi
     singularity exec --writable emscripten.simg npm run build-libs
 else
-    if singularity check emsdk-3.1.71.simg ; then
+    if singularity check emsdk-4.0.3.simg ; then
         echo "Using existing singularity container"
     else
-        singularity pull docker://emscripten/emsdk:3.1.71
+        singularity pull docker://emscripten/emsdk:4.0.3
     fi
     echo "Building WebAssembly libraries using singularity"
     singularity exec emsdk-3.1.71.simg npm run build-libs
