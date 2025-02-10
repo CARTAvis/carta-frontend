@@ -1,12 +1,11 @@
 import * as React from "react";
-import ReactResizeDetector from "react-resize-detector";
 import {AnchorButton, FormGroup, HTMLSelect, Position, Switch, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {MemoryUnit, TaskProgressDialogComponent} from "components/Dialogs";
-import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
+import {SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
 import {Point2D, SpectralSystem} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
 import {PVAxis, PvGeneratorWidgetStore, RegionId} from "stores/Widgets";
@@ -65,9 +64,6 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         }
         return bitValue;
     };
-
-    @observable width: number;
-    @observable height: number;
 
     @computed get widgetStore(): PvGeneratorWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
@@ -181,11 +177,6 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             }
         }
     }
-
-    @action private onResize = (width: number, height: number) => {
-        this.width = width;
-        this.height = height;
-    };
 
     @action setisValidSpectralRange = (bool: boolean) => {
         this.isValidSpectralRange = bool;
@@ -431,19 +422,20 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         );
 
         return (
-            <div className="pv-generator-widget">
-                <div className="pv-generator-panel">{pvImagePanel}</div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
-                <TaskProgressDialogComponent
-                    isOpen={frame?.isRequestingPV && frame.requestingPVProgress < 1}
-                    progress={frame ? frame.requestingPVProgress : 0}
-                    timeRemaining={appStore.estimatedTaskRemainingTime}
-                    cancellable={true}
-                    onCancel={this.widgetStore.requestingPVCancelled(this.props.id)}
-                    text={"Generating PV"}
-                    isCancelling={frame?.isRequestPVCancelling}
-                />
-            </div>
+            <ScrollShadow>
+                <div className="pv-generator-widget">
+                    <div className="pv-generator-panel">{pvImagePanel}</div>
+                    <TaskProgressDialogComponent
+                        isOpen={frame?.isRequestingPV && frame.requestingPVProgress < 1}
+                        progress={frame ? frame.requestingPVProgress : 0}
+                        timeRemaining={appStore.estimatedTaskRemainingTime}
+                        cancellable={true}
+                        onCancel={this.widgetStore.requestingPVCancelled(this.props.id)}
+                        text={"Generating PV"}
+                        isCancelling={frame?.isRequestPVCancelling}
+                    />
+                </div>
+            </ScrollShadow>
         );
     }
 }
