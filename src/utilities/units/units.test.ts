@@ -10,7 +10,11 @@ describe("pixelToFluxDensityUnit", () => {
         expect(pixelToFluxDensityUnit("Jy/pixel")).toBe("Jy");
     });
 
-    it("returns the original string if '/beam' is not present", () => {
+    it("converts pixel unit K to Jy", () => {
+        expect(pixelToFluxDensityUnit("K")).toBe("Jy");
+    });
+
+    it("returns the original unit string for other units", () => {
         expect(pixelToFluxDensityUnit("Jy")).toBe("Jy");
     });
 });
