@@ -7,6 +7,7 @@ describe("pixelToFluxDensityUnit", () => {
         expect(pixelToFluxDensityUnit("Jy/beam")).toBe("Jy");
         expect(pixelToFluxDensityUnit("Jy/arcsec^2")).toBe("Jy");
         expect(pixelToFluxDensityUnit("MJy/sr")).toBe("MJy");
+        expect(pixelToFluxDensityUnit("Jy/pixel")).toBe("Jy");
     });
 
     it("returns the original string if '/beam' is not present", () => {
