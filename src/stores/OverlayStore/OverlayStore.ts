@@ -1357,21 +1357,25 @@ export class OverlayStore {
     }
 
     @computed get previewRenderWidth() {
+        const paddingLeft = this.paddingLeft;
+        const paddingRight = this.paddingRight;
         return (viewWidth: number) => {
             if (!viewWidth) {
                 return undefined;
             }
-            const renderWidth = viewWidth - this.paddingLeft - this.paddingRight;
+            const renderWidth = viewWidth - paddingLeft - paddingRight;
             return renderWidth > 1 ? renderWidth : 1; // return value > 1 to prevent crashing
         };
     }
 
     @computed get previewRenderHeight() {
+        const paddingTop = this.paddingTop;
+        const paddingBottom = this.paddingBottom;
         return (viewHeight: number) => {
             if (!viewHeight) {
                 return undefined;
             }
-            const renderHeight = viewHeight - this.paddingTop - this.paddingBottom;
+            const renderHeight = viewHeight - paddingTop - paddingBottom;
             return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
         };
     }

@@ -3255,6 +3255,8 @@ export class FrameStore {
     @action onResizePreviewWidget = (width: number, height: number) => {
         this.previewViewWidth = width;
         this.previewViewHeight = height;
+
+        this.fitZoom();
     };
 
     @action setFrameInfo = (frameInfo: FrameInfo) => {
