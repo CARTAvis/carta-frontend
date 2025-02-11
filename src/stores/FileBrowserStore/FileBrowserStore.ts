@@ -586,7 +586,7 @@ export class FileBrowserStore {
         // for dynamic layout
         if (PreferenceStore.Instance.dynamicLayoutEnable) {
             const selectedFilesCtypes = yield this.selectedFilesCtypeInfo();
-            if (this.selectedFiles) {
+            if (this.selectedFiles.length > 0) {
                 AppStore.Instance.dynamicLayoutStore.matchLayoutMapping(selectedFilesCtypes);
             }
         }

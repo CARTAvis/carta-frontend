@@ -15,7 +15,6 @@ export enum DialogId {
     FileBrowser = "file-browser-dialog",
     FileInfo = "file-info-dialog",
     Fitting = "fitting-dialog",
-    Layout = "save-layout-dialog",
     LayoutDialog = "layout-dialog",
     Preference = "preference-dialog",
     Region = "region-dialog",

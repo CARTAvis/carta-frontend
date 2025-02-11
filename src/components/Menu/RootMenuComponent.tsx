@@ -296,7 +296,7 @@ export class RootMenuComponent extends React.Component {
                     <MenuItem text="Light" icon={"flash"} onClick={appStore.setLightTheme} />
                     <MenuItem text="Dark" icon={"moon"} onClick={appStore.setDarkTheme} />
                 </MenuItem>
-                <MenuItem text="Layout dialog" icon={"page-layout"} onClick={() => AppStore.Instance.dialogStore.showDialog(DialogId.LayoutDialog)} />
+                <MenuItem text="Layout" icon={"page-layout"} onClick={() => AppStore.Instance.dialogStore.showDialog(DialogId.LayoutDialog)} />
                 {imageItems.length > 0 && (
                     <MenuItem text="Images" icon={"multi-select"}>
                         {imageItems}

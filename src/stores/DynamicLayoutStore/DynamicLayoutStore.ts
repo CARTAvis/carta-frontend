@@ -1,7 +1,7 @@
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, ErrorToast} from "components/Shared";
-import {AppStore, DialogId, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, PreferenceKeys, PreferenceStore} from "stores";
 
 export const INITIAL_LAYOUT_ITEM = "Initial Layout";
 
@@ -71,7 +71,6 @@ export class DynamicLayoutStore {
                     this.dynamicLayoutName = preference.layout;
 
                     if (preference.dynamicLayoutEnable && layoutStore.layoutExists(this.dynamicLayoutName) && appStore.activeFrame?.dynamicLayout.ctype === layoutMappingCtype) {
-                        appStore.dialogStore.hideDialog(DialogId.Layout);
                         layoutStore.applyLayout(this.dynamicLayoutName);
                     }
                 } catch (err) {

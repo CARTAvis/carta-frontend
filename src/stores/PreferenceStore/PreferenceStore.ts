@@ -171,7 +171,7 @@ const DEFAULTS = {
         layout: PresetLayout.DEFAULT,
         dynamicLayoutEnable: false,
         isHighDimPriority: true,
-        existLayoutMapping: [],
+        existLayoutMapping: {},
         cursorPosition: CursorPosition.TRACKING,
         zoomMode: Zoom.FIT,
         zoomPoint: ZoomPoint.CURSOR,
@@ -764,7 +764,7 @@ export class PreferenceStore {
     }
 
     // getter for file priority for dynamic layout setting
-    @computed get existLayoutMapping(): Object {
+    @computed get existLayoutMapping(): {[key: string]: string} {
         return this.preferences.get(PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT) ?? DEFAULTS.GLOBAL.existLayoutMapping;
     }
 
@@ -842,6 +842,7 @@ export class PreferenceStore {
             PreferenceKeys.GLOBAL_FILE_FILTER_MODE,
             PreferenceKeys.GLOBAL_LAYOUT,
             PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT_ENABLE,
+            PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT,
             PreferenceKeys.GLOBAL_IS_HIGH_DIM_PRIORITY,
             PreferenceKeys.GLOBAL_CURSOR_POSITION,
             PreferenceKeys.GLOBAL_ZOOM_MODE,
