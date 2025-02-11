@@ -85,7 +85,7 @@ export function FileCtypeInfo(headerEntries: CARTA.IFileInfoExtended | CARTA.IHe
 
     // if all axes have size = 1, use the last dimension ctype
     if (ctypes.length === 0) {
-        tempCtypes[`CTYPE${minLen}`].abbr = "SinglePixel"+tempCtypes[`CTYPE${minLen}`].abbr;
+        tempCtypes[`CTYPE${minLen}`].abbr = "SinglePixel" + tempCtypes[`CTYPE${minLen}`].abbr;
         ctypes.push(tempCtypes[`CTYPE${minLen}`]);
     }
 

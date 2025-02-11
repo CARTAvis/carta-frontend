@@ -255,7 +255,15 @@ export class LayoutDialogComponent extends React.Component {
                 enableResizing={true}
                 dialogId={DialogId.LayoutDialog}
             >
-                <div className={Classes.DIALOG_BODY} onClick={ev => { this.onMouseClick(); ev.stopPropagation();}}>{this.showDialog()}</div>
+                <div
+                    className={Classes.DIALOG_BODY}
+                    onClick={ev => {
+                        this.onMouseClick();
+                        ev.stopPropagation();
+                    }}
+                >
+                    {this.showDialog()}
+                </div>
             </DraggableDialogComponent>
         );
     }
