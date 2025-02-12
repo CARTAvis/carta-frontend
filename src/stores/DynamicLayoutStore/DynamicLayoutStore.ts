@@ -90,7 +90,7 @@ export class DynamicLayoutStore {
         try {
             preference.existLayoutMapping[layoutMappingCtype] = layoutName;
 
-            preference.setPreference(PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT, JSON.parse(JSON.stringify(preference.existLayoutMapping)));
+            preference.setPreference(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT, JSON.parse(JSON.stringify(preference.existLayoutMapping)));
             if (PreferenceStore.Instance.dynamicLayoutEnable && layoutStore.layoutExists(layoutName) && appStore.activeFrame?.dynamicLayout.ctype === layoutMappingCtype) {
                 layoutStore.applyLayout(layoutName);
             }
@@ -110,7 +110,7 @@ export class DynamicLayoutStore {
                 }
             });
 
-            preference.setPreference(PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT, JSON.parse(JSON.stringify(preference.existLayoutMapping)));
+            preference.setPreference(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT, JSON.parse(JSON.stringify(preference.existLayoutMapping)));
         } catch (err) {
             console.log(err);
             AppToaster.show(ErrorToast(`Fail to modify the layout mapping with ${layoutName} to ${newLayoutName}.`));
@@ -127,7 +127,7 @@ export class DynamicLayoutStore {
                 }
             });
 
-            preference.setPreference(PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT, JSON.parse(JSON.stringify(preference.existLayoutMapping)));
+            preference.setPreference(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT, JSON.parse(JSON.stringify(preference.existLayoutMapping)));
         } catch (err) {
             console.log(err);
             AppToaster.show(ErrorToast(`Fail to delete the layout mapping with layout name: ${layoutName}.`));
@@ -139,7 +139,7 @@ export class DynamicLayoutStore {
 
         try {
             delete preference.existLayoutMapping[layoutMappingCtype];
-            preference.setPreference(PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT, JSON.parse(JSON.stringify(preference.existLayoutMapping)));
+            preference.setPreference(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT, JSON.parse(JSON.stringify(preference.existLayoutMapping)));
         } catch (err) {
             console.log(err);
             AppToaster.show(ErrorToast(`Fail to delete the layout mapping: ${layoutMappingCtype}.`));

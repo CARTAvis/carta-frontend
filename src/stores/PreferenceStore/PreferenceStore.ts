@@ -37,10 +37,6 @@ export enum PreferenceKeys {
     GLOBAL_THEME = "theme",
     GLOBAL_AUTOLAUNCH = "autoLaunch",
     GLOBAL_FILE_FILTER_MODE = "fileFilterMode",
-    GLOBAL_LAYOUT = "layout",
-    GLOBAL_DYNAMIC_LAYOUT_ENABLE = "dynamicLayoutEnable",
-    GLOBAL_IS_HIGH_DIM_PRIORITY = "isHighDimPriority",
-    GLOBAL_DYNAMIC_LAYOUT = "dynamicLayout",
     GLOBAL_CURSOR_POSITION = "cursorPosition",
     GLOBAL_ZOOM_MODE = "zoomMode",
     GLOBAL_ZOOM_POINT = "zoomPoint",
@@ -94,6 +90,11 @@ export enum PreferenceKeys {
     WCS_OVERLAY_BEAM_TYPE = "beamType",
     WCS_OVERLAY_BEAM_WIDTH = "beamWidth",
     WCS_OVERLAY_CURSOR_INFO = "cursorInfoVisible",
+
+    LAYOUT = "layout",
+    LAYOUT_DYNAMIC_LAYOUT_ENABLE = "dynamicLayoutEnable",
+    LAYOUT_IS_HIGH_DIM_PRIORITY = "isHighDimPriority",
+    LAYOUT_DYNAMIC_LAYOUT = "dynamicLayout",
 
     REGION_COLOR = "regionColor",
     REGION_LINE_WIDTH = "regionLineWidth",
@@ -168,10 +169,6 @@ const DEFAULTS = {
         theme: Theme.AUTO,
         autoLaunch: true,
         fileFilterMode: FileFilterMode.Content,
-        layout: PresetLayout.DEFAULT,
-        dynamicLayoutEnable: false,
-        isHighDimPriority: true,
-        existLayoutMapping: {},
         cursorPosition: CursorPosition.TRACKING,
         zoomMode: Zoom.FIT,
         zoomPoint: ZoomPoint.CURSOR,
@@ -229,6 +226,12 @@ const DEFAULTS = {
         beamType: BeamType.Open,
         beamWidth: 1,
         cursorInfoVisible: CursorInfoVisibility.ActiveImage
+    },
+    LAYOUT: {
+        layout: PresetLayout.DEFAULT,
+        dynamicLayoutEnable: false,
+        isHighDimPriority: true,
+        existLayoutMapping: {}
     },
     REGION: {
         regionColor: "#2ee6d6",
@@ -323,10 +326,6 @@ export class PreferenceStore {
 
     @computed get fileFilteringType(): FileFilteringType {
         return this.preferences.get(PreferenceKeys.SILENT_FILE_FILTERING_TYPE) ?? DEFAULTS.SILENT.fileFilteringType;
-    }
-
-    @computed get layout(): string {
-        return this.preferences.get(PreferenceKeys.GLOBAL_LAYOUT) ?? DEFAULTS.GLOBAL.layout;
     }
 
     @computed get cursorPosition(): string {
@@ -753,19 +752,23 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.LATEST_RELEASE) ?? DEFAULTS.SILENT.latestRelease;
     }
 
+    @computed get layout(): string {
+        return this.preferences.get(PreferenceKeys.LAYOUT) ?? DEFAULTS.LAYOUT.layout;
+    }
+
     // getter for dynamic layout setting
     @computed get dynamicLayoutEnable(): boolean {
-        return this.preferences.get(PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT_ENABLE) ?? DEFAULTS.GLOBAL.dynamicLayoutEnable;
+        return this.preferences.get(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT_ENABLE) ?? DEFAULTS.LAYOUT.dynamicLayoutEnable;
     }
 
     // getter for file priority for dynamic layout setting
     @computed get isHighDimPriority(): boolean {
-        return this.preferences.get(PreferenceKeys.GLOBAL_IS_HIGH_DIM_PRIORITY) ?? DEFAULTS.GLOBAL.isHighDimPriority;
+        return this.preferences.get(PreferenceKeys.LAYOUT_IS_HIGH_DIM_PRIORITY) ?? DEFAULTS.LAYOUT.isHighDimPriority;
     }
 
     // getter for file priority for dynamic layout setting
     @computed get existLayoutMapping(): {[key: string]: string} {
-        return this.preferences.get(PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT) ?? DEFAULTS.GLOBAL.existLayoutMapping;
+        return this.preferences.get(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT) ?? DEFAULTS.LAYOUT.existLayoutMapping;
     }
 
     /**
@@ -840,10 +843,6 @@ export class PreferenceStore {
             PreferenceKeys.GLOBAL_THEME,
             PreferenceKeys.GLOBAL_AUTOLAUNCH,
             PreferenceKeys.GLOBAL_FILE_FILTER_MODE,
-            PreferenceKeys.GLOBAL_LAYOUT,
-            PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT_ENABLE,
-            PreferenceKeys.GLOBAL_DYNAMIC_LAYOUT,
-            PreferenceKeys.GLOBAL_IS_HIGH_DIM_PRIORITY,
             PreferenceKeys.GLOBAL_CURSOR_POSITION,
             PreferenceKeys.GLOBAL_ZOOM_MODE,
             PreferenceKeys.GLOBAL_ZOOM_POINT,
@@ -926,6 +925,13 @@ export class PreferenceStore {
             PreferenceKeys.WCS_OVERLAY_WCS_TYPE,
             PreferenceKeys.WCS_OVERLAY_CURSOR_INFO
         ]);
+    };
+
+    /**
+     * Reset the layout settings
+     */
+    @action resetLayoutSettings = () => {
+        this.clearPreferences([PreferenceKeys.LAYOUT, PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT_ENABLE, PreferenceKeys.LAYOUT_IS_HIGH_DIM_PRIORITY]);
     };
 
     /**
@@ -1034,7 +1040,7 @@ export class PreferenceStore {
         if (!localStorage.getItem("preferences")) {
             const stringKeys = [
                 PreferenceKeys.GLOBAL_THEME,
-                PreferenceKeys.GLOBAL_LAYOUT,
+                PreferenceKeys.LAYOUT,
                 PreferenceKeys.GLOBAL_CURSOR_POSITION,
                 PreferenceKeys.GLOBAL_ZOOM_MODE,
                 PreferenceKeys.GLOBAL_ZOOM_POINT,

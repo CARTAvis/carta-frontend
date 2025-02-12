@@ -1,6 +1,6 @@
 import {CARTA} from "carta-protobuf";
 
-const ctypeSpatial = ["RA", "DEC", "GLON", "GLAT", "ELON", "ELAT", "OFFSET"];
+const ctypeSpatial = ["RA", "DEC", "GLON", "GLAT", "ELON", "ELAT", "OFFSET", "DISTANCE"];
 const ctypeSpectral = ["VRAD", "VOPT", "FREQ", "WAVE", "AWAV", "CHANNEL", "NATIVE", "ENER", "WAVN", "ZOPT", "VELO", "BETA"];
 const ctypeTime = ["TIME", "EPOCH"];
 const ctypeStokes = ["STOKES"];

@@ -211,9 +211,6 @@ export class StokesDialogComponent extends React.Component {
         await this.loadFile(stokeFiles)
             .then(() => {
                 activeFrame?.setStokesFiles(stokeFiles);
-                if (activeFrame?.dynamicLayout.layoutName) {
-                    layoutStore.applyLayout(activeFrame.dynamicLayout.layoutName);
-                }
             })
             .catch(() => {
                 activeFrame?.setStokesFiles([]);
