@@ -596,7 +596,6 @@ export class FileBrowserStore {
         const backendService = BackendService.Instance;
 
         const filesCtype: string[] = [];
-        let filesCtypeName: string[] = [];
         let filesCtypeRank: number[] = [];
 
         for (let i = 0; i < this.selectedFiles.length; i++) {
@@ -611,11 +610,10 @@ export class FileBrowserStore {
             const ctypeInfo = FileCtypeInfo(fileInfo.headerEntries);
 
             filesCtype.push(ctypeInfo.ctype);
-            filesCtypeName.push(ctypeInfo.name);
             filesCtypeRank.push(ctypeInfo.rank);
         }
 
-        return {ctype: filesCtype, name: filesCtypeName, rank: filesCtypeRank};
+        return {ctype: filesCtype, rank: filesCtypeRank};
     }
 
     @action showLoadingDialog = () => {

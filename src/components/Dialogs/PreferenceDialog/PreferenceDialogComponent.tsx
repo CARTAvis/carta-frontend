@@ -74,7 +74,7 @@ export class PreferenceDialogComponent extends React.Component {
     }
 
     private static readonly DefaultWidth = 800;
-    private static readonly DefaultHeight = 500;
+    private static readonly DefaultHeight = 525;
     private static readonly MinWidth = 650;
     private static readonly MinHeight = 300;
 

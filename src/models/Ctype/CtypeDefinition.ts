@@ -1,8 +1,8 @@
 import {CARTA} from "carta-protobuf";
 
-const ctypeSpatial = ["RA", "DEC", "GLON", "GLAT", "OFFSET"];
+const ctypeSpatial = ["RA", "DEC", "GLON", "GLAT", "ELON", "ELAT", "OFFSET"];
 const ctypeSpectral = ["VRAD", "VOPT", "FREQ", "WAVE", "AWAV", "CHANNEL", "NATIVE", "ENER", "WAVN", "ZOPT", "VELO", "BETA"];
-const ctypeTime = ["TIME"];
+const ctypeTime = ["TIME", "EPOCH"];
 const ctypeStokes = ["STOKES"];
 const ctypeRM = ["RM"]; // Rotation Measure
 
@@ -52,9 +52,9 @@ export function CtypeAbbrToName(ctypes: string): string {
     return ctypeName.join(", ");
 }
 
-export function FileCtypeInfo(headerEntries: CARTA.IFileInfoExtended | CARTA.IHeaderEntry[] | null): {ctype: string; name: string; rank: number} {
+export function FileCtypeInfo(headerEntries: CARTA.IFileInfoExtended | CARTA.IHeaderEntry[] | null): {ctype: string; rank: number} {
     if (headerEntries === null) {
-        return {ctype: "", name: "", rank: 0};
+        return {ctype: "", rank: 0};
     }
 
     let tempCtypes = {};
@@ -87,19 +87,25 @@ export function FileCtypeInfo(headerEntries: CARTA.IFileInfoExtended | CARTA.IHe
     if (ctypes.length === 0) {
         tempCtypes[`CTYPE${minLen}`].abbr = "SinglePixel" + tempCtypes[`CTYPE${minLen}`].abbr;
         ctypes.push(tempCtypes[`CTYPE${minLen}`]);
+
+        return {ctype: ctypes[0].abbr, rank: ctypes[0].rank};
     }
 
     // sort CTYPE
-    const first2D = ctypes.splice(0, 2);
-    first2D.sort((a, b) => a.rank - b.rank);
+    const stokesIndex = ctypes.findIndex(item => item.abbr === "P"); // extract STOCKS since we don't sort it
+    if (stokesIndex !== -1) {
+        ctypes.splice(stokesIndex, 1);
+    }
+    const showedXY = ctypes.splice(0, 2); // if showed XY is not first two dimensions, modify here
+    showedXY.sort((a, b) => a.rank - b.rank);
+    if (stokesIndex !== -1) {
+        ctypes = [...ctypes, {abbr: "P", rank: 2}]; // add STOKES back
+    }
     ctypes.sort((a, b) => a.rank - b.rank);
 
-    const sortedCtype = ctypes.length > 0 ? [first2D.map(item => item.abbr), ctypes.map(item => item.abbr)] : [first2D.map(item => item.abbr)];
-    const sortedCtypeName = ctypes.length > 0 ? [first2D.map(item => item.name), ctypes.map(item => item.name)] : [first2D.map(item => item.name)];
+    const sortedCtype = ctypes.length > 0 ? [showedXY.map(item => item.abbr), ctypes.map(item => item.abbr)] : [showedXY.map(item => item.abbr)];
+    const ctypeString = sortedCtype.join(",");
+    const ctypeRank = ctypes.length > 0 ? ctypes[ctypes.length - 1].rank : showedXY[showedXY.length - 1].rank;
 
-    const ctype = sortedCtype.join(",");
-    const ctypeName = sortedCtypeName.join(", ");
-    const ctypeRank = ctypes.length > 0 ? ctypes[ctypes.length - 1].rank : first2D[first2D.length - 1].rank;
-
-    return {ctype: ctype, name: ctypeName, rank: ctypeRank};
+    return {ctype: ctypeString, rank: ctypeRank};
 }

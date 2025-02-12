@@ -1186,14 +1186,14 @@ export class FrameStore {
         return cursorValue;
     }
 
-    @computed get dynamicLayout(): {ctype: string; ctypeName: string; layoutName: string} {
+    @computed get dynamicLayout(): {ctype: string; layoutName: string} {
         const dyLayoutStore = AppStore.Instance.dynamicLayoutStore;
         const preferenceStore = AppStore.Instance.preferenceStore;
 
         const info = FileCtypeInfo(this.frameInfo.fileInfoExtended.headerEntries);
         const layoutName = dyLayoutStore.isMappingExisted ? (preferenceStore.existLayoutMapping[info.ctype] ?? INITIAL_LAYOUT_ITEM) : INITIAL_LAYOUT_ITEM;
 
-        return {ctype: info.ctype, ctypeName: info.name, layoutName: layoutName};
+        return {ctype: info.ctype, layoutName: layoutName};
     }
 
     constructor(frameInfo: FrameInfo) {
