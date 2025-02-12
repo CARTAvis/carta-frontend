@@ -24,6 +24,6 @@ else
         singularity pull docker://emscripten/emsdk:4.0.3
     fi
     echo "Building WebAssembly libraries using singularity"
-    singularity exec emsdk-3.1.71.simg npm run build-libs
+    singularity exec emsdk-4.0.3.simg npm run build-libs
 fi
 
