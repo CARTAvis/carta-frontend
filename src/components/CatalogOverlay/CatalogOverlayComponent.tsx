@@ -579,6 +579,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (position) {
             this.isShowHeader = position === 100 ? false : true;
             this.prevPosition = position < 60 ? position : 60;
+            this.widgetStore.setTableSeparatorPosition(`${position}%`);
             PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION, `${position}%`);
         }
     };
