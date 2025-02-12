@@ -8,7 +8,7 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {POLARIZATION_LABELS} from "models";
+import {HyperCubeCtypeTransform, POLARIZATION_LABELS} from "models";
 import {AppStore, BrowserMode, DialogId, HelpType} from "stores";
 
 import "./StokesDialogComponent.scss";
@@ -201,13 +201,17 @@ export class StokesDialogComponent extends React.Component {
     }
 
     private loadSelectedFiles = async () => {
-        const appStore = AppStore.Instance;
-        const {activeFrame, layoutStore} = appStore;
+        const {activeFrame, dynamicLayoutStore, fileBrowserStore, layoutStore} = AppStore.Instance;
 
         let stokeFiles = [];
         this.stokes.forEach(file => {
             stokeFiles.push(file);
         });
+
+        const hyperCubeCtype = HyperCubeCtypeTransform(fileBrowserStore.selectedFilesCtypes);
+        dynamicLayoutStore.matchLayoutMapping(hyperCubeCtype);
+        layoutStore.applyLayout(dynamicLayoutStore.dynamicLayoutName);
+
         await this.loadFile(stokeFiles)
             .then(() => {
                 activeFrame?.setStokesFiles(stokeFiles);

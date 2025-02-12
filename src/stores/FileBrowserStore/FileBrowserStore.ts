@@ -71,6 +71,7 @@ export class FileBrowserStore {
     @observable exportCoordinateType: CARTA.CoordinateType;
     @observable exportFileType: RegionFileType;
     @observable exportRegionIndexes: number[] = [];
+    @observable selectedFilesCtypes: any | null;
 
     @observable catalogFileList: CARTA.ICatalogListResponse | null;
     @observable selectedCatalogFile: CARTA.ICatalogFileInfo;
@@ -585,9 +586,9 @@ export class FileBrowserStore {
 
         // for dynamic layout
         if (PreferenceStore.Instance.dynamicLayoutEnable) {
-            const selectedFilesCtypes = yield this.selectedFilesCtypeInfo();
+            this.selectedFilesCtypes = yield this.selectedFilesCtypeInfo();
             if (this.selectedFiles.length > 0) {
-                AppStore.Instance.dynamicLayoutStore.matchLayoutMapping(selectedFilesCtypes);
+                AppStore.Instance.dynamicLayoutStore.matchLayoutMapping(this.selectedFilesCtypes);
             }
         }
     }
