@@ -92,7 +92,7 @@ export function FileCtypeInfo(headerEntries: CARTA.IFileInfoExtended | CARTA.IHe
     }
 
     // sort CTYPE
-    const stokesIndex = ctypes.findIndex(item => item.abbr === "P"); // extract STOCKS since we don't sort it
+    const stokesIndex = ctypes.findIndex(item => item.abbr === "P"); // extract STOCKS since we don't use it in XY
     if (stokesIndex !== -1) {
         ctypes.splice(stokesIndex, 1);
     }

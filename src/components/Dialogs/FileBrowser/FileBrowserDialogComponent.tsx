@@ -88,13 +88,14 @@ export class FileBrowserDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const {fileBrowserStore, layoutStore, dynamicLayoutStore} = appStore;
 
+        if (PreferenceStore.Instance.dynamicLayoutEnable && dynamicLayoutStore.dynamicLayoutName && layoutStore.layoutExists(dynamicLayoutStore.dynamicLayoutName)) {
+            await layoutStore.applyLayout(dynamicLayoutStore.dynamicLayoutName);
+        }
+
         if (fileBrowserStore.selectedFiles.length > 1) {
             appStore.setLoadingMultipleFiles(true);
             for (let i = 0; i < fileBrowserStore.selectedFiles.length; i++) {
                 try {
-                    if (PreferenceStore.Instance.dynamicLayoutEnable && dynamicLayoutStore.dynamicLayoutName && layoutStore.layoutExists(dynamicLayoutStore.dynamicLayoutName)) {
-                        layoutStore.applyLayout(dynamicLayoutStore.dynamicLayoutName);
-                    }
                     await this.loadFile(fileBrowserStore.selectedFiles[i], i > 0);
                 } catch (err) {
                     console.log(err);
@@ -102,9 +103,6 @@ export class FileBrowserDialogComponent extends React.Component {
             }
             appStore.setLoadingMultipleFiles(false);
         } else {
-            if (PreferenceStore.Instance.dynamicLayoutEnable && dynamicLayoutStore.dynamicLayoutName && layoutStore.layoutExists(dynamicLayoutStore.dynamicLayoutName)) {
-                layoutStore.applyLayout(dynamicLayoutStore.dynamicLayoutName);
-            }
             await this.loadFile({fileInfo: fileBrowserStore.selectedFile, hdu: fileBrowserStore.selectedHDU});
         }
     };
