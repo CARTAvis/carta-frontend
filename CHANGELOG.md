@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Supported image coordinates for images with valid WCS headers ([#2366](https://github.com/CARTAvis/carta-frontend/issues/2366)).
 * Supported plotting with unit wavelength ^ 2 in z profile and Stokes analysis widgets ([#1685](https://github.com/CARTAvis/carta-frontend/issues/1685)).
 * Supported showing the coordinate system reference for RA and Dec labels in the image view panel.
+* Supported showing delta x and y in distance measurement ([#2165](https://github.com/CARTAvis/carta-frontend/issues/2165)).
 ### Fixed
 * Fixed ruler annotation matching bug ([#2242](https://github.com/CARTAvis/carta-frontend/issues/2242)).
 * Fixed compass and ruler annotations update bug in the spatially matched image when changing the coordinate ([#2270](https://github.com/CARTAvis/carta-frontend/issues/2270)).
