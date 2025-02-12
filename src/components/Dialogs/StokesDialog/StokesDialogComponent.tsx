@@ -201,16 +201,22 @@ export class StokesDialogComponent extends React.Component {
     }
 
     private loadSelectedFiles = async () => {
+        const appStore = AppStore.Instance;
+        const {activeFrame, layoutStore} = appStore;
+
         let stokeFiles = [];
         this.stokes.forEach(file => {
             stokeFiles.push(file);
         });
         await this.loadFile(stokeFiles)
             .then(() => {
-                AppStore.Instance.activeFrame?.setStokesFiles(stokeFiles);
+                activeFrame?.setStokesFiles(stokeFiles);
+                if (activeFrame?.dynamicLayout.layoutName) {
+                    layoutStore.applyLayout(activeFrame.dynamicLayout.layoutName);
+                }
             })
             .catch(() => {
-                AppStore.Instance.activeFrame?.setStokesFiles([]);
+                activeFrame?.setStokesFiles([]);
             });
     };
 
