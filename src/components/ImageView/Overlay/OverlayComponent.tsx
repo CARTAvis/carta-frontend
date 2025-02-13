@@ -119,10 +119,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     frameView.yMax / frame.aspectRatio,
                     (this.props.width ?? (frame.isPreview ? frame?.previewViewWidth : this.props.overlaySettings.viewWidth)) * appStore.pixelRatio,
                     (this.props.height ?? (frame.isPreview ? frame?.previewViewHeight : this.props.overlaySettings.viewHeight)) * appStore.pixelRatio,
-                    settings.padding.left * appStore.pixelRatio,
-                    settings.padding.right * appStore.pixelRatio,
-                    settings.padding.top * appStore.pixelRatio,
-                    settings.padding.bottom * appStore.pixelRatio,
+                    padding.left * appStore.pixelRatio,
+                    padding.right * appStore.pixelRatio,
+                    padding.top * appStore.pixelRatio,
+                    padding.bottom * appStore.pixelRatio,
                     settings.labels.raDecReference ? settings.global.explicitSystem : "",
                     styleString
                 );

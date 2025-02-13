@@ -425,12 +425,12 @@ export class FrameStore {
 
     @computed get renderWidth() {
         const overlayStore = AppStore.Instance.overlayStore;
-        return this.isPreview ? overlayStore.previewRenderWidth(this.previewViewWidth ?? PvPreviewComponent.WIDGET_CONFIG.defaultWidth) : overlayStore.renderWidth;
+        return this.isPreview ? overlayStore.previewRenderWidth(this.previewViewWidth || PvPreviewComponent.WIDGET_CONFIG.defaultWidth) : overlayStore.renderWidth;
     }
 
     @computed get renderHeight() {
         const overlayStore = AppStore.Instance.overlayStore;
-        return this.isPreview ? overlayStore.previewRenderHeight(this.previewViewHeight ?? PvPreviewComponent.WIDGET_CONFIG.defaultHeight) : overlayStore.renderHeight;
+        return this.isPreview ? overlayStore.previewRenderHeight(this.previewViewHeight || PvPreviewComponent.WIDGET_CONFIG.defaultHeight) : overlayStore.renderHeight;
     }
 
     @computed get isRenderable() {
@@ -3260,10 +3260,12 @@ export class FrameStore {
     }
 
     @action onResizePreviewWidget = (width: number, height: number) => {
+        if (width > 0 && height > 0) {
         this.previewViewWidth = width;
         this.previewViewHeight = height;
 
         this.fitZoom();
+        }
     };
 
     @action setFrameInfo = (frameInfo: FrameInfo) => {
