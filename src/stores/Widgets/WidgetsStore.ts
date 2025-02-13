@@ -983,7 +983,6 @@ export class WidgetsStore {
         const appStore = AppStore.Instance;
         const config = appStore.imageViewConfigStore;
         const nextPageButton = $(".lm_goldenlayout")?.find("li.lm-image-panel-next[style!='display:none;']");
-        const channelMapStore = AppStore.Instance.channelMapStore;
         if (nextPageButton) {
             nextPageButton.attr("style", config.currentImagePage < config.numImagePages - 1 ? "" : "cursor: not-allowed; opacity: 0.2");
             nextPageButton.attr("title", config.imagePanelMode === ImagePanelMode.None ? "next image" : "next page");
@@ -993,11 +992,6 @@ export class WidgetsStore {
         if (previousPageButton) {
             previousPageButton.attr("style", config.currentImagePage > 0 ? "" : "cursor: not-allowed; opacity: 0.2");
             previousPageButton.attr("title", config.imagePanelMode === ImagePanelMode.None ? "previous image" : "previous page");
-        }
-
-        const imagePanelButton = $(".lm_goldenlayout")?.find("li.lm-image-panel[style!='display:none;']");
-        if (imagePanelButton) {
-            imagePanelButton.attr("style", channelMapStore.channelMapEnabled ? "opacity: 0.2" : "");
         }
     };
 

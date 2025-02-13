@@ -124,6 +124,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                             height={imageRenderHeight}
                             docked={props.docked}
                             channel={channel}
+                            highlighted={channel === channelMapStore.masterFrame.requiredChannel}
                         />
                     )}
                     <RegionViewComponent
@@ -131,13 +132,12 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                         frame={frame}
                         width={imageRenderWidth}
                         height={imageRenderHeight}
-                        top={imageTop - (channel === channelMapStore.masterFrame.requiredChannel ? 1 : 0)}
-                        left={imageLeft - (channel === channelMapStore.masterFrame.requiredChannel ? 1 : 0)}
+                        top={imageTop}
+                        left={imageLeft}
                         onClickToCenter={cursorInfo => onClickToCenter(frame, cursorInfo)}
                         overlaySettings={overlayStore}
                         dragPanningEnabled={appStore.preferenceStore.dragPanning}
                         docked={props.docked}
-                        highlighted={channel === channelMapStore.masterFrame.requiredChannel}
                     />
                     {overlayType === "corner" && <BeamProfileOverlayComponent frame={frame} top={imageTop} left={imageLeft} docked={props.docked} padding={10} />}
                 </div>

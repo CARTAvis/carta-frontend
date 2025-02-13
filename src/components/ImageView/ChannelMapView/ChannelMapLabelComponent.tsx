@@ -15,6 +15,7 @@ export class ChannelMapLabelComponentProps {
     width: number;
     height: number;
     channel: number;
+    highlighted: boolean;
 }
 
 @observer
@@ -62,14 +63,15 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
                 style={{
                     color: getColorForTheme(this.props.overlaySettings.global.color),
                     position: "absolute",
-                    top: this.props.top || 0,
-                    left: this.props.left || 0,
-                    width: this.props.width,
-                    height: this.props.height,
+                    top: (this.props.top || 0) - 3,
+                    left: (this.props.left || 0) - 3,
+                    width: this.props.width + 6,
+                    height: this.props.height + 6,
                     zIndex: 2,
                     overflow: "hidden",
                     textOverflow: "ellipsis",
-                    paddingLeft: `${this.props.width * 0.02}px`
+                    paddingLeft: `${this.props.width * 0.02}px`,
+                    border: `${this.props.highlighted ? "3px solid red" : "none"}`
                 }}
                 id="channel-map-label-span"
             >
