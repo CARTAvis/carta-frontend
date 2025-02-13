@@ -71,7 +71,7 @@ export class FileBrowserStore {
     @observable exportCoordinateType: CARTA.CoordinateType;
     @observable exportFileType: RegionFileType;
     @observable exportRegionIndexes: number[] = [];
-    @observable selectedFilesCtypes: {ctype: string[]; rank: number[]} | null;
+    @observable selectedFilesCtypes: {ctype: string[]; rank: number[]};
 
     @observable catalogFileList: CARTA.ICatalogListResponse | null;
     @observable selectedCatalogFile: CARTA.ICatalogFileInfo;
