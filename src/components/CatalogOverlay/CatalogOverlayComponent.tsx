@@ -575,12 +575,13 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     };
 
     @action private handleSplitChange = (newSize: number) => {
-        let position = clamp(Math.floor((newSize / (this.height - 120)) * 100), CatalogWidgetStore.MinTableSeparatorPosition, CatalogWidgetStore.MaxTableSeparatorPosition);
+        // 130 is from 132, the height of widget excluding the header and table, subtracting 2 for the split bar width(?)
+        let position = clamp((newSize / (this.height - 130)) * 100, CatalogWidgetStore.MinTableSeparatorPosition, CatalogWidgetStore.MaxTableSeparatorPosition);
         if (position) {
             this.isShowHeader = position === 100 ? false : true;
             this.prevPosition = position < 60 ? position : 60;
-            this.widgetStore.setTableSeparatorPosition(`${position}%`);
-            PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION, `${position}%`);
+            this.widgetStore.setTableSeparatorPosition(`${position.toPrecision(4)}%`);
+            PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION, `${position.toPrecision(4)}%`);
         }
 
         const profileStore = this.profileStore;
