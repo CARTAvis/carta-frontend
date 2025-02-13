@@ -119,10 +119,11 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     frameView.yMax / frame.aspectRatio,
                     (this.props.width ?? (frame.isPreview ? frame?.previewViewWidth : this.props.overlaySettings.viewWidth)) * appStore.pixelRatio,
                     (this.props.height ?? (frame.isPreview ? frame?.previewViewHeight : this.props.overlaySettings.viewHeight)) * appStore.pixelRatio,
-                    padding.left * appStore.pixelRatio,
-                    padding.right * appStore.pixelRatio,
-                    padding.top * appStore.pixelRatio,
-                    padding.bottom * appStore.pixelRatio,
+                    settings.padding.left * appStore.pixelRatio,
+                    settings.padding.right * appStore.pixelRatio,
+                    settings.padding.top * appStore.pixelRatio,
+                    settings.padding.bottom * appStore.pixelRatio,
+                    settings.labels.raDecReference ? settings.global.explicitSystem : "",
                     styleString
                 );
             };
@@ -203,6 +204,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const darktheme = AppStore.Instance.darkTheme;
         const title = this.props.overlaySettings.title.customText ? this.props.image?.store?.titleCustomText : this.props.image?.store?.filename;
         const ratio = AppStore.Instance.imageRatio;
+        const raDecReference = this.props.overlaySettings.labels.raDecReference;
         const titleStyleString = this.props.overlaySettings.title.styleString;
         const gridStyleString = this.props.overlaySettings.grid.styleString;
         const borderStyleString = this.props.overlaySettings.border.styleString;

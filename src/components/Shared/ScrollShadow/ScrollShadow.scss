@@ -29,21 +29,17 @@
 }
 
 .scroll-shadow {
-    all: inherit;
     @include scroll-shadow-background(black);
 
     .scroll-shadow-cover {
-        all: inherit;
         @include scroll-shadow-cover-background($pt-app-background-color);
     }
 }
 
 .#{$ns}-dark .scroll-shadow {
-    all: inherit;
     @include scroll-shadow-background(white);
 
     .scroll-shadow-cover {
-        all: inherit;
         @include scroll-shadow-cover-background($pt-dark-app-background-color);
     }
 }

@@ -23,15 +23,20 @@
     .options-container {
         flex: 1 1 230px;
         min-width: 230px;
-        padding-right: 10px;
-        padding-top: 10px;
-        overflow-y: auto;
-        flex-wrap: nowrap;
-        display: flex;
-        flex-direction: column;
-        div {
-            margin-left: auto;
+
+        .options-form {
+            padding-right: 10px;
+            padding-top: 10px;
+            overflow-y: auto;
+            flex-wrap: nowrap;
+            display: flex;
+            flex-direction: column;
+
+            div {
+                margin-left: auto;
+            }
         }
+
         .percentile-select {
             margin-right: 0;
         }

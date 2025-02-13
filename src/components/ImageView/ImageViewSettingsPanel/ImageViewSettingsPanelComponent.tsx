@@ -503,13 +503,16 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         );
 
         const labelsPanel = (
-            <div className="panel-container">
+            <div className="panel-labels">
                 <FormGroup inline={true} label="Visible">
                     <Switch checked={labels.visible} onChange={ev => labels.setVisible(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} className="font-group" label="Font" disabled={!labels.visible}>
                     {this.fontSelect(labels.visible, labels.font, labels.setFont)}
                     <SafeNumericInput min={7} max={96} placeholder="Font size" value={labels.fontSize} disabled={!labels.visible} onValueChange={(value: number) => labels.setFontSize(value)} />
+                </FormGroup>
+                <FormGroup inline={true} label="Show RA/Dec reference" disabled={!labels.visible}>
+                    <Switch checked={labels.raDecReference} disabled={!labels.visible} onChange={ev => labels.setRaDecReference(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom text" disabled={!labels.visible}>
                     <Switch checked={labels.customText} disabled={!labels.visible} onChange={ev => labels.setCustomText(ev.currentTarget.checked)} />
