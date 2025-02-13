@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Supported plotting with unit wavelength ^ 2 in z profile and Stokes analysis widgets ([#1685](https://github.com/CARTAvis/carta-frontend/issues/1685)).
 * Supported showing the coordinate system reference for RA and Dec labels in the image view panel.
 * Supported showing delta x and y in distance measurement ([#2165](https://github.com/CARTAvis/carta-frontend/issues/2165)).
+* Supported plotting catalog sources on image pixel size and angular size ([#1956](https://github.com/CARTAvis/carta-frontend/issues/1956)).
 * Dynamic layout: automatically applying the layout which is associated with the data type ([#752](https://github.com/CARTAvis/carta-frontend/issues/752)).
 ### Fixed
 * Fixed ruler annotation matching bug ([#2242](https://github.com/CARTAvis/carta-frontend/issues/2242)).
