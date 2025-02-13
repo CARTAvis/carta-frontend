@@ -224,7 +224,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                 type={"channel-map-outer"}
                 width={
                     columnOfLastFrame < channelMapStore.numColumns - 1
-                        ? (channelMapViewHeight / channelMapStore.numColumns) * (columnOfLastFrame + 1) + overlayStore.paddingRight + overlayStore.paddingLeft
+                        ? (channelMapViewWidth / channelMapStore.numColumns) * (columnOfLastFrame + 1) + overlayStore.paddingRight + overlayStore.paddingLeft
                         : renderWidth - overlayStore.paddingRight
                 }
                 height={lastRow < channelMapStore.numRows - 1 ? (channelMapViewHeight / channelMapStore.numRows) * (lastRow + 1) + overlayStore.paddingBottom + overlayStore.paddingTop : renderHeight}
