@@ -35,9 +35,9 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
     @observable width: number;
     @observable height: number;
     @action onResize = (width: number, height: number) => {
-            this.width = width;
-            this.height = height;
-        };
+        this.width = width;
+        this.height = height;
+    };
 
     public render() {
         // const frame = WidgetsStore?.Instance.render3DWidgets?.get(this.props.id)?.render3DFrame;
@@ -54,11 +54,7 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
                         <directionalLight position={[0, 0, 5]} color="red" />
                     </Canvas>
                 </div>
-                {/* <div className="render-3d-viewer-widget">
-                    <ImagePanelComponent key={this.props.id} docked={false} image={{type: ImageType.PV_PREVIEW, store: frame}} row={0} column={0} />
-                </div> */}
             </ResizeDetector>
-            
         );
     }
 }
