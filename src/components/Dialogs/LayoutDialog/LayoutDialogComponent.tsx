@@ -223,7 +223,7 @@ export class LayoutDialogComponent extends React.Component {
                         <Tab id={LayoutDialogMode.Layout} title="Layout" panel={this.layoutComponent()} />
                         <Tab
                             id={LayoutDialogMode.DynamicLayout}
-                            title="Dynamic layout"
+                            title="Dynamic Layout"
                             panel={<LayoutMappingComponent orderedLayoutNames={layoutStore.orderedLayoutNames} existLayoutMapping={preferenceStore.existLayoutMapping} activeFrame={appStore.activeFrame} />}
                         />
                     </Tabs>

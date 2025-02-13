@@ -47,7 +47,7 @@ export const OnlineDataQueryDialogComponent = observer(() => {
             <div className={Classes.DIALOG_BODY}>
                 <Tabs id="onlineQueryDialogTabs">
                     <Tab id={OnlineDataQueryDialogTabs.Catalog} title="Catalog" panel={<CatalogQueryComponent />} />
-                    <Tab id={OnlineDataQueryDialogTabs.Hips} title="HiPS survey" panel={<HipsQueryComponent />} />
+                    <Tab id={OnlineDataQueryDialogTabs.Hips} title="HiPS Survey" panel={<HipsQueryComponent />} />
                 </Tabs>
             </div>
         </DraggableDialogComponent>
