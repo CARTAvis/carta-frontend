@@ -9,7 +9,6 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {HyperCubeCtypeTransform, POLARIZATION_LABELS} from "models";
-// import {POLARIZATION_LABELS} from "models";
 import {AppStore, BrowserMode, DialogId, HelpType, PreferenceStore} from "stores";
 
 import "./StokesDialogComponent.scss";
@@ -203,7 +202,6 @@ export class StokesDialogComponent extends React.Component {
 
     private loadSelectedFiles = async () => {
         const {activeFrame, dynamicLayoutStore, fileBrowserStore, layoutStore} = AppStore.Instance;
-        // const {activeFrame} = AppStore.Instance;
 
         let stokeFiles = [];
         this.stokes.forEach(file => {

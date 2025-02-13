@@ -30,7 +30,7 @@ export class DynamicLayoutStore {
         this.dynamicLayoutName = null;
     }
 
-    matchLayoutMapping(selectedFilesCtypes: any) {
+    matchLayoutMapping(selectedFilesCtypes: {ctype: string[]; rank: number[]}) {
         const appStore = AppStore.Instance;
         const preferenceStore = appStore.preferenceStore;
 

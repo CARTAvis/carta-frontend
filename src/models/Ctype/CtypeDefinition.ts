@@ -110,7 +110,7 @@ export function FileCtypeInfo(headerEntries: CARTA.IFileInfoExtended | CARTA.IHe
     return {ctype: ctypeString, rank: ctypeRank};
 }
 
-export function HyperCubeCtypeTransform(ctypes: any): {ctype: string; rank: number} {
+export function HyperCubeCtypeTransform(ctypes: {ctype: string[]; rank: number[]}): {ctype: string[]; rank: number[]} {
     const ctypeString = ctypes.ctype.map(ctype => {
         return ctype + ",P";
     });
