@@ -1353,7 +1353,7 @@ export class FrameStore {
                 const entries = this.frameInfo.fileInfoExtended.headerEntries;
                 const skySystem = entries.find(entry => entry.name.includes("RADESYS"))?.value;
                 if (Object.values(SystemType).includes(skySystem as SystemType)) {
-                    this.overlayStore.global.setDefaultSystem(skySystem as SystemType);
+                    AppStore.Instance.overlayStore.global.setDefaultSystem(skySystem as SystemType);
                 }
 
                 this.spectralFrame = AST.getSpectralFrame(astFrameSet);
