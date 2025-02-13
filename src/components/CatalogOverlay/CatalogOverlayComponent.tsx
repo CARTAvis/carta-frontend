@@ -589,7 +589,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
         if (profileStore && this.catalogTableRef) {
             this.updateTableSize(this.catalogTableRef, false);
-        }        
+        }
     };
 
     @action private handleHideHeader = () => {
