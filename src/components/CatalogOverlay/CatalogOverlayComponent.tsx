@@ -582,6 +582,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             this.widgetStore.setTableSeparatorPosition(`${position}%`);
             PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION, `${position}%`);
         }
+
+        const profileStore = this.profileStore;
+        if (profileStore && this.catalogHeaderTableRef) {
+            this.updateTableSize(this.catalogHeaderTableRef, false);
+        }
+        if (profileStore && this.catalogTableRef) {
+            this.updateTableSize(this.catalogTableRef, false);
+        }        
     };
 
     @action private handleHideHeader = () => {
