@@ -40,6 +40,8 @@ export class RegionStore {
     static readonly MAX_LINE_WIDTH = 10;
     static readonly MAX_DASH_LENGTH = 50;
     static readonly TARGET_VERTEX_COUNT = 200;
+    static readonly MIN_LABEL_OFFSET = -50;
+    static readonly MAX_LABEL_OFFSET = 50;
 
     private readonly backendService: BackendService;
     protected readonly regionApproximationMap: Map<AST.FrameSet, Point2D[]>;

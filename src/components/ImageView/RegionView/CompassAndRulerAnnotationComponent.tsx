@@ -276,6 +276,8 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     const shapeRef = React.useRef();
     const mousePoint = React.useRef({x: 0, y: 0});
     const distanceTextRef = React.useRef<Konva.Text>();
+    const xTextRef = React.useRef<Konva.Text>();
+    const yTextRef = React.useRef<Konva.Text>();
 
     const frame = props.frame;
     const region = props.region as RulerAnnotationStore;
@@ -362,18 +364,18 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
         let distString: string;
         if (unit.includes("degree") || unit.includes("hh:mm:s")) {
             if (distance < Math.PI / 180.0 / 60.0) {
-                distString = (((distance * 180.0) / Math.PI) * 3600.0).toFixed(6).toString();
+                distString = (((distance * 180.0) / Math.PI) * 3600.0).toFixed(region.decimals).toString();
                 distString += '"';
             } else if (distance < Math.PI / 180.0) {
-                distString = (((distance * 180.0) / Math.PI) * 60.0).toFixed(6).toString();
+                distString = (((distance * 180.0) / Math.PI) * 60.0).toFixed(region.decimals).toString();
                 distString += "'";
             } else {
-                distString = ((distance * 180.0) / Math.PI).toFixed(6).toString();
+                distString = ((distance * 180.0) / Math.PI).toFixed(region.decimals).toString();
                 distString += "\u00B0";
             }
         } else {
-            distString = distance.toString();
-            if (unit[0] === "\0") {
+            distString = distance.toFixed(region.decimals).toString();
+            if (unit[0] === "\0" || unit.trim() === "") {
                 distString += "pix";
             }
         }
@@ -387,12 +389,13 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     const canvasPosStart = transformedImageToCanvasPos(secondaryImagePointStart, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
     const canvasPosFinish = transformedImageToCanvasPos(secondaryImagePointFinish, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
 
-    const wcsInfo = frame?.validWcs ? frame.wcsInfoForTransformation : 0;
+    const wcsInfo = frame?.validWcs && AppStore.Instance.overlayStore.isWcsCoordinates ? frame.wcsInfoForTransformation : frame.wcsInfo; // calculate pixel distance for no valid WCS data images
     const approxPoints = region.getCurveApproximation(wcsInfo, frame.spatialTransformAST);
 
     const xApproxPoints = approxPoints.xApproximatePoints;
     const yApproxPoints = approxPoints.yApproximatePoints;
     const hypotenuseApproxPoints = approxPoints.hypotenuseApproximatePoints;
+    const cornerPoint = approxPoints.corner;
     const xPointArray = Array<number>(xApproxPoints.length);
     const yPointArray = Array<number>(yApproxPoints.length);
     const hypotenusePointArray = Array<number>(hypotenuseApproxPoints.length);
@@ -415,6 +418,17 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
         hypotenusePointArray[i + 1] = point.y - mousePoint.current.y;
     }
 
+    let xCenterPoints, xDistanceText, yCenterPoints, yDistanceText;
+    if (region.auxiliaryTextVisible) {
+        const xCenterPointIndex = Math.floor(xPointArray.length / 2) % 2 === 0 ? Math.floor(xPointArray.length / 2) : Math.floor(xPointArray.length / 2) + 1;
+        xCenterPoints = {x: xPointArray[xCenterPointIndex], y: xPointArray[xCenterPointIndex + 1]};
+        xDistanceText = getDistanceText(frame.wcsInfo, secondaryImagePointStart, cornerPoint);
+
+        const yCenterPointIndex = Math.floor(yPointArray.length / 2) % 2 === 0 ? Math.floor(yPointArray.length / 2) : Math.floor(yPointArray.length / 2) + 1;
+        yCenterPoints = {x: yPointArray[yCenterPointIndex], y: yPointArray[yCenterPointIndex + 1]};
+        yDistanceText = getDistanceText(frame.wcsInfo, cornerPoint, secondaryImagePointFinish);
+    }
+
     const centerPointIndex = Math.floor(hypotenusePointArray.length / 2) % 2 === 0 ? Math.floor(hypotenusePointArray.length / 2) : Math.floor(hypotenusePointArray.length / 2) + 1;
     const centerPoints = {x: hypotenusePointArray[centerPointIndex], y: hypotenusePointArray[centerPointIndex + 1]};
     const distanceText = getDistanceText(frame.wcsInfo, secondaryImagePointStart, secondaryImagePointFinish);
@@ -428,10 +442,16 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
     const [textOffsetX, setTextOffsetX] = React.useState(0);
+    const [xTextOffsetX, setXTextOffsetX] = React.useState(0);
+    const [yTextOffsetX, setYTextOffsetX] = React.useState(0);
 
     React.useEffect(() => {
         setTextOffsetX((region.textOffset.x * imageRatio * initialZoomLevel.current) / zoomLevel + distanceTextRef?.current?.textWidth / 2);
-    }, [imageRatio, zoomLevel, region.textOffset.x]);
+        if (region.auxiliaryTextVisible) {
+            setXTextOffsetX((region.xTextOffset.x * imageRatio * initialZoomLevel.current) / zoomLevel + xTextRef?.current?.textWidth / 2);
+            setYTextOffsetX((region.yTextOffset.x * imageRatio * initialZoomLevel.current) / zoomLevel + yTextRef?.current?.textWidth / 2);
+        }
+    }, [imageRatio, zoomLevel, region.textOffset.x, region.auxiliaryTextVisible, region.xTextOffset.x, region.yTextOffset.x]);
 
     return (
         <>
@@ -501,6 +521,42 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                     fontFamily={region.font}
                     fontStyle={region.fontStyle}
                 />
+                {region.auxiliaryTextVisible && (
+                    <>
+                        <Text
+                            ref={xTextRef}
+                            x={xCenterPoints.x}
+                            y={xCenterPoints.y}
+                            offsetX={xTextOffsetX}
+                            offsetY={(region.xTextOffset.y * imageRatio * initialZoomLevel.current) / zoomLevel}
+                            text={xDistanceText}
+                            stroke={region.color}
+                            fill={region.color}
+                            strokeWidth={(0.5 * imageRatio) / zoomLevel}
+                            strokeScaleEnabled={false}
+                            opacity={region.auxiliaryTextVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
+                            fontSize={(region.fontSize * imageRatio) / zoomLevel}
+                            fontFamily={region.font}
+                            fontStyle={region.fontStyle}
+                        />
+                        <Text
+                            ref={yTextRef}
+                            x={yCenterPoints.x}
+                            y={yCenterPoints.y}
+                            offsetX={yTextOffsetX}
+                            offsetY={(region.yTextOffset.y * imageRatio * initialZoomLevel.current) / zoomLevel}
+                            text={yDistanceText}
+                            stroke={region.color}
+                            fill={region.color}
+                            strokeWidth={(0.5 * imageRatio) / zoomLevel}
+                            strokeScaleEnabled={false}
+                            opacity={region.auxiliaryTextVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
+                            fontSize={(region.fontSize * imageRatio) / zoomLevel}
+                            fontFamily={region.font}
+                            fontStyle={region.fontStyle}
+                        />
+                    </>
+                )}
                 {/* This is an invisible shape in the empty area of the region to facilite clicking and dragging. */}
                 {region.auxiliaryLineVisible && <Line closed points={[xPointArray[0], xPointArray[1], hypotenusePointArray[0], hypotenusePointArray[1], yPointArray[0], yPointArray[1]]} opacity={0} />}
             </Group>

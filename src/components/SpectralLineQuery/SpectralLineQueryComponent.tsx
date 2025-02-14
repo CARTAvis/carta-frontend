@@ -119,14 +119,14 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         this.headerTableColumnWidths = vals;
     }
 
-    private renderDataColumn(columnName: string, coloumnData: any) {
+    private renderDataColumn(columnName: string, columnData: any) {
         return (
             <Column
                 key={columnName}
                 name={columnName}
                 cellRenderer={(rowIndex, columnIndex) => (
                     <Cell className="header-table-cell" key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>
-                        {coloumnData[rowIndex]}
+                        {columnData[rowIndex]}
                     </Cell>
                 )}
             />

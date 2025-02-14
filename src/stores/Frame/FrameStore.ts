@@ -9,6 +9,7 @@ import {
     COMPUTED_POLARIZATIONS,
     ControlMap,
     CursorInfo,
+    FileCtypeInfo,
     FrameView,
     FULL_POLARIZATIONS,
     GenCoordinateLabel,
@@ -35,7 +36,7 @@ import {
     ZoomPoint
 } from "models";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE, TileService} from "services";
-import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore, SystemType} from "stores";
+import {AnimatorStore, AppStore, ASTSettingsString, INITIAL_LAYOUT_ITEM, LogStore, OverlayStore, PreferenceStore, SystemType} from "stores";
 import {
     CENTER_POINT_INDEX,
     ColorbarStore,
@@ -1183,6 +1184,16 @@ export class FrameStore {
         const cursorPosImage = this.cursorInfo.posImageSpace;
         const cursorValue = {position: cursorPosImage, channel: 0, value: this.previewPVRasterData ? this.previewPVRasterData[Math.round(cursorPosImage.y) * this.frameInfo.fileInfoExtended.width + Math.round(cursorPosImage.x)] : NaN};
         return cursorValue;
+    }
+
+    @computed get dynamicLayout(): {ctype: string; layoutName: string} {
+        const dyLayoutStore = AppStore.Instance.dynamicLayoutStore;
+        const preferenceStore = AppStore.Instance.preferenceStore;
+
+        const info = FileCtypeInfo(this.frameInfo.fileInfoExtended.headerEntries);
+        const layoutName = dyLayoutStore.isMappingExisted ? (preferenceStore.existLayoutMapping[info.ctype] ?? INITIAL_LAYOUT_ITEM) : INITIAL_LAYOUT_ITEM;
+
+        return {ctype: info.ctype, layoutName: layoutName};
     }
 
     constructor(frameInfo: FrameInfo) {
