@@ -1,4 +1,4 @@
-import {computed, makeObservable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 
 import {OverlayStore} from "stores";
 import {FrameStore} from "stores/Frame";
@@ -8,16 +8,21 @@ export class ColorbarStore {
     static readonly PRECISION_MAX = 15;
     private readonly frame: FrameStore;
     private readonly overlayStore: OverlayStore;
+    @observable height: number;
     constructor(frame: FrameStore) {
         makeObservable(this);
         this.frame = frame;
         this.overlayStore = OverlayStore.Instance;
     }
 
+    @action setHeight = (height: number) => {
+        this.height = height;
+    };
+
     @computed get roundedNumbers(): {numbers: number[]; precision: number} {
         const scaleMinVal = this.frame?.renderConfig?.scaleMinVal;
         const scaleMaxVal = this.frame?.renderConfig?.scaleMaxVal;
-        const tickNum = this.overlayStore.colorbar.tickNum(this.frame);
+        const tickNum = this.overlayStore.colorbar.tickNum(this.frame, this.height);
         if (!isFinite(scaleMinVal) || !isFinite(scaleMaxVal) || scaleMinVal >= scaleMaxVal || !tickNum) {
             return null;
         } else {
@@ -55,18 +60,20 @@ export class ColorbarStore {
         }
     }
 
-    @computed get positions(): number[] {
-        const colorbar = this.overlayStore.colorbar;
-        if (!this.roundedNumbers || !this.frame || !isFinite(colorbar.yOffset)) {
-            return [];
-        }
-        const scaleMinVal = this.frame?.renderConfig?.scaleMinVal;
-        const scaleMaxVal = this.frame?.renderConfig?.scaleMaxVal;
-        if (colorbar.position === "right") {
-            return this.roundedNumbers.numbers.map(x => colorbar.yOffset + (colorbar.height(this.frame) * (scaleMaxVal - x)) / (scaleMaxVal - scaleMinVal));
-        } else {
-            return this.roundedNumbers.numbers.map(x => colorbar.yOffset + (colorbar.height(this.frame) * (x - scaleMinVal)) / (scaleMaxVal - scaleMinVal));
-        }
+    @computed get positions() {
+        return (yOffset: number): number[] => {
+            const colorbar = this.overlayStore.colorbar;
+            if (!this.roundedNumbers || !this.frame || !isFinite(yOffset)) {
+                return [];
+            }
+            const scaleMinVal = this.frame?.renderConfig?.scaleMinVal;
+            const scaleMaxVal = this.frame?.renderConfig?.scaleMaxVal;
+            if (colorbar.position === "right") {
+                return this.roundedNumbers.numbers.map(x => yOffset + (colorbar.height(this.frame, this.height) * (scaleMaxVal - x)) / (scaleMaxVal - scaleMinVal));
+            } else {
+                return this.roundedNumbers.numbers.map(x => yOffset + (colorbar.height(this.frame, this.height) * (x - scaleMinVal)) / (scaleMaxVal - scaleMinVal));
+            }
+        };
     }
 
     private static GetOrder = (x: number): number => {

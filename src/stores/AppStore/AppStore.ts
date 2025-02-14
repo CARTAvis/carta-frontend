@@ -42,6 +42,7 @@ import {
     CatalogProfileStore,
     CatalogStore,
     CatalogUpdateMode,
+    ChannelMapStore,
     DialogId,
     DialogStore,
     DynamicLayoutStore,
@@ -121,6 +122,7 @@ export class AppStore {
     readonly preferenceStore: PreferenceStore;
     readonly widgetsStore: WidgetsStore;
     readonly imageFittingStore: ImageFittingStore;
+    readonly channelMapStore: ChannelMapStore;
     /** Management of HiPS data queries. */
     readonly hipsQueryStore = HipsQueryStore.Instance;
     /** Configuration of the images in the image view widget. */
@@ -563,6 +565,9 @@ export class AppStore {
         this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfo.type, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes, generated);
 
         let newFrame = new FrameStore(frameInfo);
+        if (!newFrame.isPVImage && newFrame.frameInfo.fileInfoExtended.depth > 1) {
+            this.channelMapStore.setMasterFrame(newFrame);
+        }
 
         // Place frame in frame array (replace frame with the same ID if it exists)
         const existingFrameIndex = this.imageViewConfigStore.getImageListIndex(ImageType.FRAME, ack.fileId);
@@ -999,6 +1004,13 @@ export class AppStore {
                     } else {
                         this.clearSpectralReference();
                     }
+                }
+
+                // Clean up if frame is used in channel map
+                if (this.channelMapStore.masterFrame?.frameInfo.fileId === fileId) {
+                    const firstImage = this.imageViewConfigStore.imageNum ? this.imageViewConfigStore.getImage(0) : null;
+                    const firstFrame = (firstImage?.store as FrameStore)?.frameInfo.fileInfoExtended.depth > 1 ? (firstImage.store as FrameStore) : null;
+                    this.channelMapStore.setMasterFrame(firstFrame);
                 }
 
                 if (removedFrameIsRasterScalingReference) {
@@ -1721,30 +1733,14 @@ export class AppStore {
 
             frame.channel = update.channel;
             frame.stokes = update.stokes;
-            if (this.imageViewConfigStore.visibleFrames.includes(frame)) {
-                // Calculate new required frame view (cropped to file size)
-                const reqView = frame.requiredFrameView;
-
-                const croppedReq: FrameView = {
-                    xMin: Math.max(-0.5, reqView.xMin),
-                    xMax: Math.min(frame.frameInfo.fileInfoExtended.width - 0.5, reqView.xMax),
-                    yMin: Math.max(-0.5, reqView.yMin),
-                    yMax: Math.min(frame.frameInfo.fileInfoExtended.height - 0.5, reqView.yMax),
-                    mip: reqView.mip
-                };
-                const imageSize: Point2D = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
-                const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
-                const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
-                // TODO: dynamic tile size
-                const tileSizeFullRes = reqView.mip * 256;
-                const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
-
+            if (this.imageViewConfigStore.visibleFrames.includes(frame) && !this.channelMapStore.channelMapEnabled) {
+                const [tiles, midPointTileCoords] = frame.requiredTiles;
                 // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
                 const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
                 const compressionQuality = bunitVariant.includes(frame.headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
                 this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, compressionQuality, true);
             } else {
-                this.tileService.updateHiddenFileChannels(frame.frameInfo.fileId, frame.channel, frame.stokes);
+                this.tileService.updateHiddenFileChannels(frame.frameInfo.fileId, frame.channel, frame.stokes, this.channelMapStore.channelMapEnabled);
             }
         }
     };
@@ -1783,13 +1779,13 @@ export class AppStore {
 
     private updateView = (tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, headerUnit: string) => {
         const isAnimating = this.animatorStore.serverAnimationActive;
-        if (isAnimating) {
+        if (isAnimating && !this.channelMapStore.channelMapEnabled) {
             this.backendService.addRequiredTiles(
                 fileId,
                 tiles.map(t => t.encode()),
                 this.preferenceStore.animationCompressionQuality
             );
-        } else {
+        } else if (!this.channelMapStore.channelMapEnabled) {
             // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
             const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
             const compressionQuality = bunitVariant.includes(headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
@@ -1868,6 +1864,7 @@ export class AppStore {
         this.overlayStore = OverlayStore.Instance;
         this.widgetsStore = WidgetsStore.Instance;
         this.imageFittingStore = ImageFittingStore.Instance;
+        this.channelMapStore = ChannelMapStore.Instance;
 
         this.astReady = false;
         this.cartaComputeReady = false;
@@ -2065,6 +2062,7 @@ export class AppStore {
                         if (this.syncContourToFrame) {
                             this.contourDataSource = frame;
                         }
+                        this.channelMapStore.setMasterFrame(frame);
                     }
                 } else {
                     this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
@@ -2223,6 +2221,9 @@ export class AppStore {
         if (regionHistogramData.regionId === -1 && !regionHistogramData.config.fixedNumBins && !regionHistogramData.config.fixedBounds) {
             const key = `${regionHistogramData.fileId}_${regionHistogramData.stokes}_${regionHistogramData.channel}`;
             this.pendingChannelHistograms.set(key, regionHistogramData);
+            if (this.channelMapStore.channelMapEnabled && regionHistogramData.channel === 0) {
+                this.updateHistogram(regionHistogramData.fileId, regionHistogramData.stokes, regionHistogramData.channel, true);
+            }
         } else if (regionHistogramData.regionId === -2) {
             // Update cube histogram if it is still required
             const updatedFrame = this.getFrame(regionHistogramData.fileId);
@@ -2266,8 +2267,12 @@ export class AppStore {
             }
         }
 
+        this.updateHistogram(tileStreamDetails.fileId, tileStreamDetails.stokes, tileStreamDetails.channel);
+    };
+
+    updateHistogram = (fileId: number, stokes: number, channel: number, updateChannelMapHistogram?: boolean) => {
         // Apply pending channel histogram
-        const key = `${tileStreamDetails.fileId}_${tileStreamDetails.stokes}_${tileStreamDetails.channel}`;
+        const key = `${fileId}_${stokes}_${channel}`;
         const pendingHistogram = this.pendingChannelHistograms.get(key);
         if (pendingHistogram?.histograms) {
             const updatedFrame = this.getFrame(pendingHistogram.fileId);
@@ -2277,10 +2282,16 @@ export class AppStore {
                 updatedFrame.renderConfig.setStokesIndex(stokesIndex);
                 updatedFrame.renderConfig.setHistChannel(pendingHistogram.channel);
                 updatedFrame.renderConfig.updateChannelHistogram(channelHist);
-                updatedFrame.channel = tileStreamDetails.channel;
-                updatedFrame.stokes = tileStreamDetails.stokes;
+                updatedFrame.channel = channel;
+                updatedFrame.stokes = stokes;
+
+                if (updateChannelMapHistogram || !updatedFrame.renderConfig.channelMapHistogram) {
+                    updatedFrame.renderConfig.updateChannelMapHistogram(channelHist);
+                }
             }
-            this.pendingChannelHistograms.delete(key);
+            if (!updateChannelMapHistogram) {
+                this.pendingChannelHistograms.delete(key);
+            }
         }
     };
 

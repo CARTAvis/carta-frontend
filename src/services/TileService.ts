@@ -5,7 +5,7 @@ import {Subject} from "rxjs";
 
 import {Point2D, TileCoordinate} from "models";
 import {BackendService, TileWebGLService} from "services";
-import {AppStore, PREVIEW_PV_FILEID} from "stores";
+import {AppStore, FrameStore, PREVIEW_PV_FILEID} from "stores";
 import {clamp, copyToFP32Texture, createFP32Texture, GL2} from "utilities";
 
 import ZFPWorker from "!worker-loader!zfp_wrapper";
@@ -19,6 +19,7 @@ export interface RasterTile {
 
 export interface CompressedTile {
     tile: CARTA.ITileData;
+    channel: number | null | undefined;
     compressionQuality: number | null | undefined;
 }
 
@@ -33,6 +34,7 @@ export interface TileStreamDetails {
 export const TEXTURE_SIZE = 4096;
 export const TILE_SIZE = 256;
 export const MAX_TEXTURES = 8;
+const SINGLE_TILE_DECOMPRESION_SYNC_ID = -1;
 
 const MAX_TILE_WORKERS = 8;
 const MIN_TILE_WORKERS = 1;
@@ -64,13 +66,13 @@ export class TileService {
     }
 
     private readonly backendService: BackendService;
-    private readonly cacheMapCompressedTiles: Map<number, LRUCache<number, CompressedTile>>;
-    private readonly pendingRequests: Map<string, Map<number, boolean>>;
+    private readonly cacheMapCompressedTiles: Map<number, LRUCache<bigint | undefined, CompressedTile>>;
+    private readonly pendingRequests: Map<string | undefined, Map<number, boolean>>;
     private readonly pendingDecompressions: Map<string, Map<number, Map<number, boolean>>>;
     private readonly channelMap: Map<number, {channel: number | null | undefined; stokes: number | null | undefined}>;
     private readonly completedChannels: Map<string, boolean>;
     readonly tileStream: Subject<TileStreamDetails>;
-    private cachedTiles: LRUCache<number, RasterTile>;
+    private cachedTiles: LRUCache<bigint, RasterTile>;
     private lruCapacitySystem: number;
     private textureArray: Array<WebGLTexture | null>;
     private textureCoordinateQueue: Array<number | undefined>;
@@ -82,6 +84,8 @@ export class TileService {
     private readonly gl: WebGL2RenderingContext | null;
     private syncIdMap: Map<number, boolean>;
     private syncIdTileCountMap: Map<number, number>;
+    private currentlyStreamingChannelRange: {min: number; max: number};
+    private currentlyStreamingTileRange: number[];
 
     @observable remainingTiles: number;
     @observable workersReady: boolean[];
@@ -135,7 +139,7 @@ export class TileService {
         this.textureArray = new Array<WebGLTexture>(numTextures);
         this.initTextures();
         this.resetCoordinateQueue();
-        this.cachedTiles = new LRUCache<number, RasterTile>(Float64Array, ArrayBuffer, lruCapacityGPU);
+        this.cachedTiles = new LRUCache<bigint, RasterTile>(BigInt64Array, ArrayBuffer, lruCapacityGPU);
 
         // L2 cache: compressed tiles on system memory
         this.lruCapacitySystem = lruCapacitySystem;
@@ -148,7 +152,7 @@ export class TileService {
 
         this.channelMap = new Map<number, {channel: number; stokes: number}>();
         this.pendingRequests = new Map<string, Map<number, boolean>>();
-        this.cacheMapCompressedTiles = new Map<number, LRUCache<number, CompressedTile>>();
+        this.cacheMapCompressedTiles = new Map<number, LRUCache<bigint, CompressedTile>>();
         this.pendingDecompressions = new Map<string, Map<number, Map<number, boolean>>>();
         this.completedChannels = new Map<string, boolean>();
         this.receivedSynchronisedTiles = new Map<string, Map<number, Map<number, RasterTile>>>();
@@ -205,18 +209,62 @@ export class TileService {
         if (cache) {
             return cache;
         } else {
-            const newCache = new LRUCache<number, CompressedTile>(Float64Array, ArrayBuffer, this.lruCapacitySystem);
+            const newCache = new LRUCache<bigint, CompressedTile>(BigInt64Array, ArrayBuffer, this.lruCapacitySystem);
             this.cacheMapCompressedTiles.set(fileId, newCache);
             return newCache;
         }
     }
 
-    getTile(tileCoordinateEncoded: number, fileId: number, channel: number, stokes: number, peek: boolean = false) {
-        const gpuCacheCoordinate = TileCoordinate.AddFileId(tileCoordinateEncoded, fileId);
+    getTile(tileCoordinateEncoded: number, fileId: number, channel: number, peek: boolean = false) {
+        const gpuCacheCoordinate = TileCoordinate.AddFileIdAndChannel(tileCoordinateEncoded, fileId, channel);
         if (peek) {
             return this.cachedTiles.peek(gpuCacheCoordinate);
         }
         return this.cachedTiles.get(gpuCacheCoordinate);
+    }
+
+    private getRequiredRequestTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number) {
+        const newRequests = new Array<TileCoordinate>();
+        const key = `${fileId}_${stokes}_${channel}`;
+        for (const tile of tiles) {
+            if (tile.layer < 0) {
+                continue;
+            }
+            const encodedCoordinate = tile.encode();
+            const gpuCacheCoordinate = TileCoordinate.AddFileIdAndChannel(encodedCoordinate, fileId, channel);
+            const compressedTile = this.getCompressedCache(fileId).get(gpuCacheCoordinate);
+            const pendingCompressionMap = this.pendingDecompressions.get(key);
+            const tileIsQueuedForDecompression = pendingCompressionMap && Array.from(pendingCompressionMap.values()).some(map => map.has(encodedCoordinate));
+            const tileCached = this.cachedTiles?.has(gpuCacheCoordinate);
+            if (this.pendingRequests.has(key) && this.pendingRequests.get(key)?.has(encodedCoordinate)) {
+                continue;
+            }
+
+            if (!tileCached && compressedTile && !tileIsQueuedForDecompression) {
+                if (!pendingCompressionMap) {
+                    this.pendingDecompressions.set(key, new Map<number, Map<number, boolean>>().set(SINGLE_TILE_DECOMPRESION_SYNC_ID, new Map<number, boolean>()));
+                } else if (!pendingCompressionMap.has(SINGLE_TILE_DECOMPRESION_SYNC_ID)) {
+                    pendingCompressionMap.set(SINGLE_TILE_DECOMPRESION_SYNC_ID, new Map<number, boolean>());
+                }
+                // Load from L2 cache instead
+                this.asyncDecompressTile(fileId, channel, stokes, compressedTile.tile, compressedTile.compressionQuality, encodedCoordinate, SINGLE_TILE_DECOMPRESION_SYNC_ID);
+            } else if (!compressedTile) {
+                newRequests.push(tile);
+            }
+        }
+
+        const pendingRequestsMap = this.pendingRequests?.get(key);
+
+        if (!pendingRequestsMap) {
+            this.pendingRequests.set(key, new Map<number, boolean>());
+        }
+        for (const tile of newRequests) {
+            const encodedCoordinate = tile.encode();
+            this.pendingRequests.get(key)?.set(encodedCoordinate, true);
+        }
+        this.updateRemainingTileCount();
+
+        return newRequests;
     }
 
     requestTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, compressionQuality: number, channelsChanged: boolean = false) {
@@ -230,40 +278,7 @@ export class TileService {
             this.clearCompressedCache(fileId);
         }
 
-        const newRequests = new Array<TileCoordinate>();
-        for (const tile of tiles) {
-            if (tile.layer < 0) {
-                continue;
-            }
-            const encodedCoordinate = tile.encode();
-            const pendingRequestsMap = this.pendingRequests?.get(key);
-            if (!(pendingRequestsMap && pendingRequestsMap.has(encodedCoordinate))) {
-                const compressedTile = this.getCompressedCache(fileId).get(encodedCoordinate);
-                const pendingCompressionMap = this.pendingDecompressions.get(key);
-                const tileIsQueuedForDecompression = pendingCompressionMap && pendingCompressionMap.has(encodedCoordinate);
-
-                const gpuCacheCoordinate = TileCoordinate.AddFileId(encodedCoordinate, fileId);
-                const tileCached = !channelsChanged && this.cachedTiles?.has(gpuCacheCoordinate);
-
-                if (!tileCached && compressedTile && !tileIsQueuedForDecompression) {
-                    if (!pendingCompressionMap) {
-                        this.pendingDecompressions.set(key, new Map<number, Map<number, boolean>>().set(0, new Map<number, boolean>()));
-                    } else if (!pendingCompressionMap.has(0)) {
-                        pendingCompressionMap.set(0, new Map<number, boolean>());
-                    }
-                    // Load from L2 cache instead
-                    this.asyncDecompressTile(fileId, channel, stokes, compressedTile.tile, compressedTile.compressionQuality, encodedCoordinate);
-                } else if (!compressedTile) {
-                    // Request from backend
-                    if (!pendingRequestsMap) {
-                        this.pendingRequests.set(key, new Map<number, boolean>());
-                    }
-                    this.pendingRequests.get(key)?.set(encodedCoordinate, true);
-                    this.updateRemainingTileCount();
-                    newRequests.push(tile);
-                }
-            }
-        }
+        const newRequests = this.getRequiredRequestTiles(tiles, fileId, channel, stokes);
 
         if (newRequests.length) {
             // sort by distance to midpoint and encode
@@ -287,16 +302,87 @@ export class TileService {
         }
     }
 
-    updateHiddenFileChannels(fileId: number, channel: number, stokes: number) {
-        this.clearCompressedCache(fileId);
-        this.clearGPUCache(fileId);
+    groupChannels(channelToTilesArray: {channel: number; tiles: number[]}[]): {range: {min: number; max: number}; tiles: number[]}[] {
+        const result: {range: {min: number; max: number}; tiles: number[]}[] = [];
+        let previousTileString = "";
+        let currentRange: {min: number; max: number} | null = null;
+
+        for (const {channel, tiles} of channelToTilesArray) {
+            const tileString = JSON.stringify(tiles); // Convert TileCoordinate to a string
+
+            if (tileString === previousTileString && currentRange && channel === currentRange.max + 1) {
+                currentRange.max = channel;
+            } else {
+                currentRange = {min: channel, max: channel};
+                result.push({range: currentRange, tiles});
+            }
+
+            previousTileString = tileString;
+        }
+
+        return result;
+    }
+
+    requestChannelMapTiles(tiles: TileCoordinate[], frame: FrameStore, focusPoint: Point2D, compressionQuality: number, fullChannelRange: {min: number; max: number}) {
+        if (!frame) {
+            return;
+        }
+        const fileId = frame.frameInfo.fileId;
+        const stokes = frame.stokes;
+        const requiredChannel = frame.channel;
+        const currentTiles = tiles.map(tile => tile.encode());
+
+        if (this.currentlyStreamingChannelRange && this.currentlyStreamingTileRange) this.clearQueueForChannelMap(this.pendingRequests, fileId, fullChannelRange, currentTiles, this.currentlyStreamingTileRange);
+
+        const channelToTilesArray: {channel: number; tiles: TileCoordinate[]}[] = [];
+
+        if (fullChannelRange) {
+            // Loop through range of channel
+            for (let i = fullChannelRange.min; i <= fullChannelRange.max; i++) {
+                const newRequests = this.getRequiredRequestTiles(tiles, fileId, i, stokes);
+                channelToTilesArray.push({channel: i, tiles: newRequests});
+            }
+        }
+
+        const sortedChannelToTilesArray = channelToTilesArray.map(({channel, tiles}) => {
+            const sortedTiles = tiles
+                .sort((a, b) => {
+                    const aX = focusPoint.x - a.x;
+                    const aY = focusPoint.y - a.y;
+                    const bX = focusPoint.x - b.x;
+                    const bY = focusPoint.y - b.y;
+                    return aX * aX + aY * aY - (bX * bX + bY * bY);
+                })
+                .map(tile => tile.encode());
+            return {channel, tiles: sortedTiles};
+        });
+
+        // Groups channels that require the same tiles
+        const channelsToTilesArray = this.groupChannels(sortedChannelToTilesArray);
+
+        for (const {range, tiles} of channelsToTilesArray) {
+            if (tiles.length) {
+                const requestSentSuccessfully = this.backendService.setChannels(fileId, requiredChannel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles, currentTiles}, true, range, fullChannelRange);
+                if (requestSentSuccessfully) {
+                    this.currentlyStreamingChannelRange = fullChannelRange;
+                    this.currentlyStreamingTileRange = currentTiles;
+                }
+            }
+        }
+    }
+
+    updateHiddenFileChannels(fileId: number, channel: number, stokes: number, channelMapEnabled?: boolean) {
+        if (!channelMapEnabled) {
+            this.clearCompressedCache(fileId);
+            this.clearGPUCache(fileId);
+        }
         this.channelMap.set(fileId, {channel, stokes});
-        this.backendService.setChannels(fileId, channel, stokes, {});
+        this.backendService.setChannels(fileId, channel, stokes, {}, channelMapEnabled);
     }
 
     clearGPUCache(fileId: number | null | undefined) {
         const cacheCapacity = this.cachedTiles.capacity;
-        const keys: number[] = [];
+        const keys: bigint[] = [];
         const tiles: RasterTile[] = [];
 
         for (const [key, tile] of this.cachedTiles) {
@@ -310,7 +396,7 @@ export class TileService {
         }
 
         // populate new cache with old entries, from oldest to newest, in order to preserve LRU ordering
-        this.cachedTiles = new LRUCache<number, RasterTile>(Float64Array, ArrayBuffer, cacheCapacity);
+        this.cachedTiles = new LRUCache<bigint, RasterTile>(BigInt64Array, ArrayBuffer, cacheCapacity);
         for (let i = keys.length - 1; i >= 0; i--) {
             this.cachedTiles.set(keys[i], tiles[i]);
         }
@@ -329,7 +415,7 @@ export class TileService {
             // Clear all requests with the given file ID
             const fileKey = `${fileId}`;
             this.pendingRequests.forEach((value, key) => {
-                if (key.startsWith(fileKey)) {
+                if (key?.startsWith(fileKey)) {
                     value.clear();
                 }
             });
@@ -337,6 +423,33 @@ export class TileService {
             // Clear all requests
             this.pendingRequests.clear();
         }
+
+        this.updateRemainingTileCount();
+    }
+
+    clearQueueForChannelMap(pendingRequests: Map<string | undefined, Map<number, boolean>>, fileId: number, currentChannelRange: {min: number; max: number}, currentTileRange: number[], previousTileRange: number[]) {
+        pendingRequests.forEach((value, key) => {
+            if (!key) {
+                return;
+            }
+            for (const tile of currentTileRange) {
+                if (!previousTileRange.includes(tile)) {
+                    pendingRequests.delete(key);
+                    return;
+                }
+            }
+            const splitKey = key?.split("_");
+            if (splitKey.length <= 0) {
+                return;
+            }
+            const keyFileId = parseInt(splitKey[0]);
+            const channel = parseInt(splitKey[splitKey.length - 1]);
+            if (keyFileId === fileId && isFinite(channel) && channel >= 0) {
+                if (channel < currentChannelRange.min || channel > currentChannelRange.max) {
+                    pendingRequests.delete(key);
+                }
+            }
+        });
 
         this.updateRemainingTileCount();
     }
@@ -415,6 +528,7 @@ export class TileService {
 
         // At the start of the stream, create a new pending decompression map for the channel about to be streamed
         if (!syncMessage.endSync) {
+            // This endSync message might arrive later than the streamed tiles? Oh, but it's ok, it just means that backend has finished sending but we can still wait for more.
             this.completedChannels.delete(key);
             if (syncMessage.tileCount !== null && syncMessage.tileCount !== undefined) {
                 this.syncIdTileCountMap.set(syncMessage.syncId, syncMessage.tileCount);
@@ -429,6 +543,14 @@ export class TileService {
             // mark the channel as complete
             this.completedChannels.set(key, true);
             this.syncIdMap.set(syncMessage.syncId, true);
+
+            // Flow control
+            const flowControlMessage: CARTA.IChannelMapFlowControl = {
+                fileId: syncMessage.fileId,
+                receivedChannel: syncMessage.channel
+            };
+
+            this.backendService.sendChannelMapFlowControl(flowControlMessage);
         }
     };
 
@@ -439,10 +561,16 @@ export class TileService {
             console.error("Unsupported compression type");
         }
 
+        const appStore = AppStore.Instance;
         const currentChannels = this.channelMap.get(tileMessage.fileId ?? NaN);
         // Ignore stale tiles that don't match the currently required tiles. During animation, ignore changes to channel
-        if (!this.animationEnabled && (!currentChannels || currentChannels.channel !== tileMessage.channel || currentChannels.stokes !== tileMessage.stokes)) {
+        if (!appStore.channelMapStore.channelMapEnabled && !this.animationEnabled && (!currentChannels || currentChannels.channel !== tileMessage.channel || currentChannels.stokes !== tileMessage.stokes)) {
             console.log(`Ignoring stale tile for channel=${tileMessage.channel} (Current channel=${currentChannels ? currentChannels.channel : undefined})`);
+            return;
+        }
+
+        if (appStore.channelMapStore.channelMapEnabled && !appStore.channelMapStore.channelArray.includes(tileMessage?.channel ?? NaN)) {
+            console.log(`Skipping stale tile during channel map for key=${key}`);
             return;
         }
 
@@ -466,8 +594,10 @@ export class TileService {
 
         for (let tile of tileMessage.tiles ?? []) {
             const encodedCoordinate = TileCoordinate.Encode(tile.x ?? NaN, tile.y ?? NaN, tile.layer ?? NaN);
+            const gpuCacheCoordinate = TileCoordinate.AddFileIdAndChannel(encodedCoordinate, tileMessage?.fileId ?? NaN, tileMessage?.channel ?? NaN);
             // Remove from the requested tile map. If in animation mode, don't check if we're still requesting tiles
             const pendingRequestsMap = this.pendingRequests.get(key);
+
             if (pendingRequestsMap?.has(encodedCoordinate) || this.animationEnabled) {
                 if (pendingRequestsMap) {
                     pendingRequestsMap.delete(encodedCoordinate);
@@ -479,7 +609,7 @@ export class TileService {
                     this.updateStream(tileMessage.fileId, tileMessage.channel, tileMessage.stokes, decompressedData, tile.width, tile.height, tile.layer, encodedCoordinate, tileMessage.syncId);
                 } else {
                     if (tileMessage.fileId !== null && tileMessage.fileId !== undefined) {
-                        this.getCompressedCache(tileMessage.fileId).set(encodedCoordinate, {tile, compressionQuality: tileMessage.compressionQuality});
+                        this.getCompressedCache(tileMessage.fileId).set(gpuCacheCoordinate, {tile, channel: tileMessage.channel ?? NaN, compressionQuality: tileMessage.compressionQuality});
                         this.asyncDecompressTile(tileMessage.fileId, tileMessage.channel, tileMessage.stokes, tile, tileMessage.compressionQuality, encodedCoordinate, tileMessage.syncId);
                     }
                 }
@@ -510,7 +640,10 @@ export class TileService {
             console.warn("Problem decompressing tile!");
             return;
         }
-        pendingCompressionMap.get(syncId || 0)?.set(tileCoordinate, true);
+
+        if (syncId) {
+            pendingCompressionMap.get(syncId as number)?.set(tileCoordinate, true);
+        }
 
         const eventArgs: TileMessageArgs = {
             fileId,
@@ -543,7 +676,7 @@ export class TileService {
         syncId: number | null | undefined
     ) {
         const key = `${fileId}_${stokes}_${channel}`;
-        const pendingCompressionMap = this.pendingDecompressions.get(key)?.get(syncId || 0);
+        const pendingCompressionMap = this.pendingDecompressions.get(key)?.get(syncId || SINGLE_TILE_DECOMPRESION_SYNC_ID);
         if (!pendingCompressionMap) {
             console.warn(`Problem decompressing tile. Missing pending decompression map ${key}!`);
             return;
@@ -551,7 +684,7 @@ export class TileService {
 
         // If there are pending tiles to be synchronized, don't send tiles one-by-one
         const pendingTiles = this.pendingSynchronisedTiles.get(key);
-        if (syncId && (this.animationEnabled || pendingTiles?.size)) {
+        if (syncId && syncId > 0 && (this.animationEnabled || pendingTiles?.size)) {
             const nextTile: RasterTile = {
                 width,
                 height,
@@ -571,25 +704,24 @@ export class TileService {
                 receivedTiles = this.receivedSynchronisedTiles.get(key)?.get(syncId);
             }
             receivedTiles?.set(encodedCoordinate, nextTile);
-            // If all tiles are in place, add them to the LRU and fire the stream observable
-            if (this.syncIdMap.get(syncId) && this.syncIdTileCountMap.get(syncId) === receivedTiles?.size) {
+
+            if (this.syncIdMap.has(syncId) && this.syncIdTileCountMap.get(syncId) === receivedTiles?.size) {
                 this.completedChannels.delete(key);
                 this.pendingDecompressions.get(key)?.delete(syncId);
                 this.syncIdMap.delete(syncId);
                 this.syncIdTileCountMap.delete(syncId);
                 const tileCount = receivedTiles?.size;
-                this.clearGPUCache(fileId);
                 if (this.animationEnabled) {
                     this.clearCompressedCache(fileId ?? NaN);
                 }
-
                 receivedTiles?.forEach((tile, coordinate) => {
-                    tile.textureCoordinate = this.textureCoordinateQueue.pop();
-                    const gpuCacheCoordinate = TileCoordinate.AddFileId(coordinate, fileId ?? NaN);
+                    const gpuCacheCoordinate = TileCoordinate.AddFileIdAndChannel(coordinate, fileId ?? NaN, channel ?? NaN);
                     const oldValue = this.cachedTiles.setpop(gpuCacheCoordinate, tile);
                     if (oldValue) {
                         this.clearTile(oldValue.value, oldValue.key);
                     }
+                    // This needs to be after clearTile to avoid empty textureCoordinateQueue
+                    tile.textureCoordinate = this.textureCoordinateQueue.pop();
                 });
                 this.pendingSynchronisedTiles.delete(key);
                 this.receivedSynchronisedTiles.delete(key);
@@ -603,7 +735,7 @@ export class TileService {
                 textureCoordinate: 0,
                 data: decompressedData
             };
-            const gpuCacheCoordinate = TileCoordinate.AddFileId(encodedCoordinate, fileId ?? NaN);
+            const gpuCacheCoordinate = TileCoordinate.AddFileIdAndChannel(encodedCoordinate, fileId ?? NaN, channel ?? NaN);
             const oldValue = this.cachedTiles.setpop(gpuCacheCoordinate, rasterTile);
             if (oldValue) {
                 this.clearTile(oldValue.value, oldValue.key);
