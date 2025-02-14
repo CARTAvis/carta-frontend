@@ -1206,23 +1206,9 @@ export class OverlayStore {
         astString.add("DrawAxes", false);
         astString.add("NumLab", false);
         astString.add("LabelUp", 0);
-        astString.add(
-            "TitleGap",
-            this.titleGap /
-                Math.min(
-                    this.renderWidth * Math.min(frame.frameInfo.fileInfoExtended.depth, AppStore.Instance.channelMapStore.numColumns),
-                    this.renderHeight * Math.min(Math.ceil(frame.frameInfo.fileInfoExtended.depth / AppStore.Instance.channelMapStore.numRows), AppStore.Instance.channelMapStore.numRows)
-                )
-        );
+        astString.add("TitleGap", this.titleGap / Math.min(this.fullViewWidth - this.paddingLeft - this.paddingRight, this.fullViewHeight - this.paddingTop - this.paddingBottom));
         astString.add("NumLabGap", 0);
-        astString.add(
-            "TextLabGap",
-            this.cumulativeLabelGap /
-                Math.min(
-                    this.renderWidth * Math.min(frame.frameInfo.fileInfoExtended.depth, AppStore.Instance.channelMapStore.numColumns),
-                    this.renderHeight * Math.min(Math.ceil(frame.frameInfo.fileInfoExtended.depth / AppStore.Instance.channelMapStore.numRows), AppStore.Instance.channelMapStore.numRows)
-                )
-        );
+        astString.add("TextLabGap", this.cumulativeLabelGap / Math.min(this.fullViewWidth - this.paddingLeft - this.paddingRight, this.fullViewHeight - this.paddingTop - this.paddingBottom));
         astString.add("TextGapType", "plot");
         return astString.toString();
     }

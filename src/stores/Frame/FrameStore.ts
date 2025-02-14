@@ -3261,10 +3261,10 @@ export class FrameStore {
 
     @action onResizePreviewWidget = (width: number, height: number) => {
         if (width > 0 && height > 0) {
-        this.previewViewWidth = width;
-        this.previewViewHeight = height;
+            this.previewViewWidth = width;
+            this.previewViewHeight = height;
 
-        this.fitZoom();
+            this.fitZoom();
         }
     };
 

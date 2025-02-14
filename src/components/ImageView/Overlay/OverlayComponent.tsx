@@ -64,8 +64,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             ? {
                   xMin: padding.left * appStore.pixelRatio,
                   xMax: (this.props.width ?? this.props.overlaySettings.viewWidth) * appStore.pixelRatio - padding.right * appStore.pixelRatio,
-                  yMin: padding.bottom * appStore.pixelRatio,
-                  yMax: (this.props.height ?? this.props.overlaySettings.viewHeight) * appStore.pixelRatio - padding.top * appStore.pixelRatio,
+                  yMin: (frame.aspectRatio ?? 1) * padding.bottom * appStore.pixelRatio,
+                  yMax: (frame.aspectRatio ?? 1) * (this.props.height ?? this.props.overlaySettings.viewHeight) * appStore.pixelRatio - padding.top * appStore.pixelRatio,
                   mip: 1
               }
             : frame.spatialReference

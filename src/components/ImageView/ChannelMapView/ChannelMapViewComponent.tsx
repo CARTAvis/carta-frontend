@@ -218,16 +218,12 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     store: frame
                 }}
                 overlaySettings={overlayStore}
-                top={0}
+                top={overlayStore.base}
                 left={0}
                 docked={props.docked}
                 type={"channel-map-outer"}
-                width={
-                    columnOfLastFrame < channelMapStore.numColumns - 1
-                        ? (channelMapViewWidth / channelMapStore.numColumns) * (columnOfLastFrame + 1) + overlayStore.paddingRight + overlayStore.paddingLeft
-                        : renderWidth - overlayStore.paddingRight
-                }
-                height={lastRow < channelMapStore.numRows - 1 ? (channelMapViewHeight / channelMapStore.numRows) * (lastRow + 1) + overlayStore.paddingBottom + overlayStore.paddingTop : renderHeight}
+                width={renderWidth - overlayStore.base}
+                height={renderHeight - overlayStore.base}
                 unScaled={true}
             />
         </div>
