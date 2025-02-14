@@ -5,7 +5,10 @@
 
     .file-menu .#{$ns}-button {
         white-space: nowrap;
-        width: 100%;
+        width: 95%;
+        .#{$ns}-button-text {
+            min-width: 3.5em;
+        }
     }
     .#{$ns}-form-group {
         &:first-of-type {
@@ -14,15 +17,23 @@
     }
 
     .#{$ns}-form-group.#{$ns}-inline.file-menu .#{$ns}-label {
-        width: 3em;
-        min-width: 3em;
+        width: 4em;
+        min-width: 4em;
         text-align: right;
     }
 
-    .#{$ns}-form-group.#{$ns}-inline .#{$ns}-label {
-        width: 8em;
-        min-width: 8em;
-        text-align: right;
+    .#{$ns}-form-group.#{$ns}-inline {
+        .#{$ns}-label {
+            width: 8em;
+            min-width: 8em;
+            text-align: right;
+        }
+        .#{$ns}-form-content {
+            margin: 0 3px;
+        }
+        .#{$ns}-button-group {
+            width: 90%;
+        }
     }
 
     .#{$ns}-numeric-input {
@@ -72,5 +83,11 @@
         display: inline-flex;
         width: calc(100% - 3em); // because of the popover, the subtraction is required
         max-width: fit-content;
+    }
+
+    .panel-container {
+        .select-angular-unit {
+            height: 30px !important;
+        }
     }
 }

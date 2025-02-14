@@ -1,9 +1,16 @@
 export enum AngularSizeUnit {
-    MILLIARCSEC = "marcsec",
+    MILLIARCSEC = "milliarcsec",
     ARCSEC = "arcsec",
     ARCMIN = "arcmin",
     DEG = "deg"
 }
+
+export const FACTOR_TO_ARCSEC = new Map<AngularSizeUnit, number>([
+    [AngularSizeUnit.DEG, 3600.0],
+    [AngularSizeUnit.ARCMIN, 60.0],
+    [AngularSizeUnit.ARCSEC, 1.0],
+    [AngularSizeUnit.MILLIARCSEC, 0.001]
+]);
 
 export class AngularSize {
     value: number;
