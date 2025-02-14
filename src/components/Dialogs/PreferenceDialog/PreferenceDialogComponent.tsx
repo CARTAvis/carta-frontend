@@ -1,6 +1,6 @@
 import * as React from "react";
 import {ColorResult} from "react-color";
-import {AnchorButton, Button, Callout, Checkbox, Classes, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Callout, Checkbox, Classes, Collapse, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -9,7 +9,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
-import {DraggableDialogComponent} from "components/Dialogs";
+import {DraggableDialogComponent, LayoutMappingComponent} from "components/Dialogs";
 import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, ScrollShadow, SuccessToast} from "components/Shared";
 import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {TelemetryMode} from "services";
@@ -25,6 +25,7 @@ enum PreferenceDialogTabs {
     CONTOUR_CONFIG,
     VECTOR_OVERLAY_CONFIG,
     WCS_OVERLAY_CONFIG,
+    LAYOUT,
     REGION,
     ANNOTATION,
     PERFORMANCE,
@@ -73,7 +74,7 @@ export class PreferenceDialogComponent extends React.Component {
     }
 
     private static readonly DefaultWidth = 800;
-    private static readonly DefaultHeight = 500;
+    private static readonly DefaultHeight = 525;
     private static readonly MinWidth = 650;
     private static readonly MinHeight = 300;
 
@@ -115,6 +116,9 @@ export class PreferenceDialogComponent extends React.Component {
                 break;
             case PreferenceDialogTabs.WCS_OVERLAY_CONFIG:
                 preference.resetOverlayConfigSettings();
+                break;
+            case PreferenceDialogTabs.LAYOUT:
+                preference.resetLayoutSettings();
                 break;
             case PreferenceDialogTabs.REGION:
                 preference.resetRegionSettings();
@@ -179,15 +183,6 @@ export class PreferenceDialogComponent extends React.Component {
                         <option value={FileFilterMode.Content}>Filter by file content</option>
                         <option value={FileFilterMode.Extension}>Filter by extension</option>
                         <option value={FileFilterMode.All}>All files</option>
-                    </HTMLSelect>
-                </FormGroup>
-                <FormGroup inline={true} label="Initial layout">
-                    <HTMLSelect value={preference.layout} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_LAYOUT, ev.currentTarget.value)}>
-                        {layoutStore.orderedLayoutNames.map(layout => (
-                            <option key={layout} value={layout}>
-                                {layout}
-                            </option>
-                        ))}
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Initial cursor position">
@@ -542,6 +537,35 @@ export class PreferenceDialogComponent extends React.Component {
                 </option>
             );
         });
+
+        const layoutPanel = (
+            <React.Fragment>
+                <FormGroup inline={true} label="Initial layout">
+                    <HTMLSelect value={preference.layout} onChange={ev => preference.setPreference(PreferenceKeys.LAYOUT, ev.currentTarget.value)}>
+                        {layoutStore.orderedLayoutNames.map(layout => (
+                            <option key={layout} value={layout}>
+                                {layout}
+                            </option>
+                        ))}
+                    </HTMLSelect>
+                </FormGroup>
+                <FormGroup inline={true} label="Dynamic layout">
+                    <Tooltip content={"Apply a linked layout when loaded images based on data type"}>
+                        <Switch checked={preference.dynamicLayoutEnable} onChange={() => preference.setPreference(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT_ENABLE, !preference.dynamicLayoutEnable)} />
+                    </Tooltip>
+                </FormGroup>
+                <Collapse isOpen={preference.dynamicLayoutEnable}>
+                    <FormGroup inline={true} label="Higher dimension priority">
+                        <Tooltip content={"When disable, the dynamic layout will depend on the last selected file among multiple selected files."}>
+                            <Switch checked={preference.isHighDimPriority} onChange={() => preference.setPreference(PreferenceKeys.LAYOUT_IS_HIGH_DIM_PRIORITY, !preference.isHighDimPriority)} />
+                        </Tooltip>
+                    </FormGroup>
+                    <Collapse isOpen={appStore.dynamicLayoutStore.isMappingExisted || !!appStore.activeFrame}>
+                        <LayoutMappingComponent orderedLayoutNames={layoutStore.orderedLayoutNames} existLayoutMapping={preference.existLayoutMapping} activeFrame={appStore.activeFrame} />
+                    </Collapse>
+                </Collapse>
+            </React.Fragment>
+        );
 
         const regionSettingsPanel = (
             <React.Fragment>
@@ -915,6 +939,7 @@ export class PreferenceDialogComponent extends React.Component {
                         <Tab id={PreferenceDialogTabs.CONTOUR_CONFIG} title="Contour Configuration" panel={<ScrollShadow>{contourConfigPanel}</ScrollShadow>} />
                         <Tab id={PreferenceDialogTabs.VECTOR_OVERLAY_CONFIG} title="Vector Overlay Configuration" panel={<ScrollShadow>{vectorOverlayConfigPanel}</ScrollShadow>} />
                         <Tab id={PreferenceDialogTabs.WCS_OVERLAY_CONFIG} title="WCS and Image Overlay" panel={<ScrollShadow>{overlayConfigPanel}</ScrollShadow>} />
+                        <Tab id={PreferenceDialogTabs.LAYOUT} title="Layout" panel={<ScrollShadow>{layoutPanel}</ScrollShadow>} />
                         <Tab id={PreferenceDialogTabs.CATALOG} title="Catalog" panel={<ScrollShadow>{catalogPanel}</ScrollShadow>} />
                         <Tab id={PreferenceDialogTabs.REGION} title="Region" panel={<ScrollShadow>{regionSettingsPanel}</ScrollShadow>} />
                         <Tab id={PreferenceDialogTabs.ANNOTATION} title="Annotation" panel={<ScrollShadow>{annotationSettingsPanel}</ScrollShadow>} />

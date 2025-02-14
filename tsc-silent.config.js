@@ -17,7 +17,8 @@ const migratedFiles = [
     "stores/CatalogOnlineQuery",
     "stores/Catalog",
     "stores/AlertStore",
-    "stores/HipsQueryStore"
+    "stores/HipsQueryStore",
+    "stores/ChannelMapStore"
 ];
 
 module.exports = {

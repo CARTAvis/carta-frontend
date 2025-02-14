@@ -126,9 +126,10 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
 
     render() {
         const appStore = AppStore.Instance;
-        const overlayStore = appStore.overlayStore;
         const activeLayer = appStore.activeLayer;
 
+        const frame = this.frame;
+        const overlayStore = appStore.overlayStore;
         if (this.frame?.isRenderable && appStore.astReady) {
             const isActive = appStore.isActiveImage(this.props.image) && (appStore.imageViewConfigStore.imagesPerPage > 1 || appStore.previewFrames.size > 0);
             const isColorBlending = this.props.image?.type === ImageType.COLOR_BLENDING;
@@ -162,15 +163,15 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
             return (
                 <div id={`image-panel-${this.props.column}-${this.props.row}`} className={className} style={style} onWheel={this.onMouseWheel} onMouseDown={this.onMouseDown} onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
                     {showRaster && <RasterViewComponent image={this.props.image} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} row={this.props.row} column={this.props.column} />}
-                    {showContour && <ContourViewComponent frame={this.frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />}
-                    {showVector && <VectorOverlayViewComponent frame={this.frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />}
-                    {overlayStore?.visible && <OverlayComponent image={this.props.image} overlaySettings={overlayStore} docked={this.props.docked} />}
+                    {showContour && <ContourViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />}
+                    {showVector && <VectorOverlayViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />}
+                    {appStore.overlayStore?.visible && <OverlayComponent image={this.props.image} overlaySettings={overlayStore} docked={this.props.docked} />}
                     {this.cursorInfoRequired && this.frame.cursorInfo && !isColorBlending && (
                         <CursorOverlayComponent
-                            cursorInfo={this.frame.cursorInfo}
-                            cursorValue={this.frame.cursorInfo.isInsideImage ? (this.frame.isPreview ? this.frame.previewCursorValue.value : this.frame.cursorValue.value) : undefined}
-                            isValueCurrent={this.frame.isCursorValueCurrent}
-                            spectralInfo={this.frame.spectralInfo}
+                            cursorInfo={frame.cursorInfo}
+                            cursorValue={frame.cursorInfo.isInsideImage ? (frame.isPreview ? frame.previewCursorValue.value : frame.cursorValue.value) : undefined}
+                            isValueCurrent={frame.isCursorValueCurrent}
+                            spectralInfo={frame.spectralInfo}
                             width={this.frame.previewViewWidth || overlayStore.viewWidth}
                             left={overlayStore.padding.left}
                             right={overlayStore.padding.right}
@@ -182,9 +183,9 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                             isPreview={this.frame.isPreview}
                         />
                     )}
-                    {overlayStore.colorbar.visible && !isColorBlending && <ColorbarComponent frame={this.frame} onCursorHoverValueChanged={this.setPixelHighlightValue} />}
+                    {appStore.overlayStore.colorbar.visible && !isColorBlending && <ColorbarComponent frame={frame} onCursorHoverValueChanged={this.setPixelHighlightValue} />}
                     {!isColorBlending && <BeamProfileOverlayComponent frame={this.frame} top={overlayStore.padding.top} left={overlayStore.padding.left} docked={this.props.docked} padding={10} />}
-                    <CatalogViewGLComponent frame={this.frame} docked={this.props.docked} />
+                    <CatalogViewGLComponent frame={frame} docked={this.props.docked} />
                     <RegionViewComponent
                         ref={this.getRegionViewRef}
                         frame={this.frame}

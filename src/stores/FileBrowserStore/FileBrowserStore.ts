@@ -4,7 +4,7 @@ import {action, autorun, computed, flow, makeObservable, observable} from "mobx"
 
 import {FileInfoType} from "components";
 import {AppToaster, ErrorToast} from "components/Shared";
-import {Freq, FrequencyUnit, ImageType, LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
+import {FileCtypeInfo, Freq, FrequencyUnit, ImageType, LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
 import {BackendService} from "services";
 import {AppStore, DialogId, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
 import {RegionStore} from "stores/Frame";
@@ -71,6 +71,7 @@ export class FileBrowserStore {
     @observable exportCoordinateType: CARTA.CoordinateType;
     @observable exportFileType: RegionFileType;
     @observable exportRegionIndexes: number[] = [];
+    @observable selectedFilesCtypes: {ctype: string[]; rank: number[]};
 
     @observable catalogFileList: CARTA.ICatalogListResponse | null;
     @observable selectedCatalogFile: CARTA.ICatalogFileInfo;
@@ -580,9 +581,41 @@ export class FileBrowserStore {
         this.saveSpectralEnd = end;
     };
 
-    @action setSelectedFiles = (selection: ISelectedFile[]) => {
+    @flow.bound *setSelectedFiles(selection: ISelectedFile[]) {
         this.selectedFiles = selection;
-    };
+
+        // for dynamic layout
+        if (PreferenceStore.Instance.dynamicLayoutEnable) {
+            this.selectedFilesCtypes = yield this.selectedFilesCtypeInfo();
+            if (this.selectedFiles.length > 0) {
+                AppStore.Instance.dynamicLayoutStore.matchLayoutMapping(this.selectedFilesCtypes);
+            }
+        }
+    }
+
+    @flow.bound *selectedFilesCtypeInfo() {
+        const backendService = BackendService.Instance;
+
+        const filesCtype: string[] = [];
+        let filesCtypeRank: number[] = [];
+
+        for (let i = 0; i < this.selectedFiles.length; i++) {
+            const res = yield backendService.getFileInfo(this.fileList?.directory, this.selectedFiles[i].fileInfo?.name, this.selectedFiles[i].hdu);
+
+            if (!res.fileInfo || !res.fileInfoExtended) {
+                continue;
+            }
+
+            const HDUList = Object.keys(res.fileInfoExtended ?? {});
+            const fileInfo = HDUList?.length >= 1 ? res.fileInfoExtended[HDUList[0]] : res.fileInfoExtended;
+            const ctypeInfo = FileCtypeInfo(fileInfo.headerEntries);
+
+            filesCtype.push(ctypeInfo.ctype);
+            filesCtypeRank.push(ctypeInfo.rank);
+        }
+
+        return {ctype: filesCtype, rank: filesCtypeRank};
+    }
 
     @action showLoadingDialog = () => {
         this.isLoadingDialogOpen = true;

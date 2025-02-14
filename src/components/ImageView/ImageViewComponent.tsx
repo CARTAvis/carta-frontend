@@ -9,6 +9,7 @@ import {Point2D, Zoom} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, Padding, WidgetProps} from "stores";
 import {toFixed} from "utilities";
 
+import {ChannelMapViewComponent} from "./ChannelMapView/ChannelMapViewComponent";
 import {ImagePanelComponent} from "./ImagePanel/ImagePanelComponent";
 
 import "./ImageViewComponent.scss";
@@ -30,7 +31,7 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
     const ctx = imageViewCanvas.getContext("2d");
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, imageViewCanvas.width, imageViewCanvas.height);
-    config.visibleImages.forEach((frame, index) => {
+    config.visibleImages.forEach((image, index) => {
         const column = index % config.numImageColumns;
         const row = Math.floor(index / config.numImageColumns);
         const panelCanvas = getPanelCanvas(column, row, padding, colorbarPosition, backgroundColor);
@@ -183,12 +184,15 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         if (!visibleImages) {
             return [];
         }
-        return visibleImages.map((image, index) => {
-            const column = index % config.numImageColumns;
-            const row = Math.floor(index / config.numImageColumns);
 
-            return <ImagePanelComponent ref={this.collectImagePanelRef} key={`${image?.type}-${image?.store?.id}`} docked={this.props.docked} image={image} row={row} column={column} />;
-        });
+        return appStore.channelMapStore.channelMapEnabled
+            ? [<ChannelMapViewComponent docked={this.props.docked} />]
+            : visibleImages.map((image, index) => {
+                  const column = index % config.numImageColumns;
+                  const row = Math.floor(index / config.numImageColumns);
+
+                  return <ImagePanelComponent ref={this.collectImagePanelRef} key={`${image?.type}-${image?.store?.id}`} docked={this.props.docked} image={image} row={row} column={column} />;
+              });
     }
 
     render() {

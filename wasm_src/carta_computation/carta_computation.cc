@@ -266,8 +266,7 @@ float scaleValue(float x, int scaling, float alpha, float gamma) {
     }
 }
 
-void calculateCatalogMap(int mapType, float* data, size_t N, float dataMin, float dataMax, int clipMin, int clipMax, int scaling, float alpha, float gamma, int devicePixelRatio,
-                         bool invert) {
+void calculateCatalogMap(int mapType, float* data, size_t N, float dataMin, float dataMax, float clipMin, float clipMax, int scaling, float alpha, float gamma, float pixelSizeFactor, bool invert) {
     float columnMin = scaleValue(dataMin, scaling, alpha, gamma);
     float columnMax = scaleValue(dataMax, scaling, alpha, gamma);
     float range = columnMax - columnMin;
@@ -277,14 +276,14 @@ void calculateCatalogMap(int mapType, float* data, size_t N, float dataMin, floa
             for (size_t i = 0; i < N; i++) {
                 float v = clamp(data[i], dataMin, dataMax);
                 float value = scaleValue(v, scaling, alpha, gamma);
-                data[i] = ((value - columnMin) / range * (clipMax - clipMin) + clipMin) * devicePixelRatio;
+                data[i] = ((value - columnMin) / range * (clipMax - clipMin) + clipMin) * pixelSizeFactor;
             }
             break;
         case SIZE_AREA:
             for (size_t i = 0; i < N; i++) {
                 float v = clamp(data[i], dataMin, dataMax);
                 float value = scaleValue(v, scaling, alpha, gamma);
-                data[i] = (sqrt((value - columnMin) / range) * (clipMax - clipMin) + clipMin) * devicePixelRatio;
+                data[i] = (sqrt((value - columnMin) / range) * (clipMax - clipMin) + clipMin) * pixelSizeFactor;
             }
             break;
         case COLOR:
