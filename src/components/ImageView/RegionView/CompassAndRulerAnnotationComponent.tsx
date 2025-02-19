@@ -450,7 +450,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
             setXTextOffsetX((region.xTextOffset.x * imageRatio) / zoomLevel + xTextRef?.current?.textWidth / 2);
             setYTextOffsetX((region.yTextOffset.x * imageRatio) / zoomLevel + yTextRef?.current?.textWidth / 2);
         }
-    }, [imageRatio, zoomLevel, region.textOffset.x, region.auxiliaryTextVisible, region.xTextOffset.x, region.yTextOffset.x]);
+    }, [imageRatio, zoomLevel, region.fontSize, region.decimals, region.textOffset.x, region.auxiliaryTextVisible, region.xTextOffset.x, region.yTextOffset.x]);
 
     return (
         <>
