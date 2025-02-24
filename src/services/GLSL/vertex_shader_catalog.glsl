@@ -22,6 +22,7 @@ uniform bool uSizeMajorMapEnabled;
 uniform bool uAreaMode;
 uniform bool uShowSelectedSource;
 uniform bool uSizeMinorMapEnabled;
+uniform bool uIsImagePixelSize;
 uniform bool uAreaModeMinor;
 uniform bool uCmapEnabled;
 uniform bool uOmapEnabled;
@@ -69,6 +70,18 @@ float getSquareSideByArea(float area, float minorSize) {
     }
 }
 
+float tuneSize(float pointSize) {
+    if (uShapeType == BOX_FILLED || uShapeType == BOX_LINED || uShapeType == X_FILLED || uShapeType == X_LINED) {
+        return pointSize / COS_45;
+    } else if (uShapeType == TRIANGLE_FILLED_UP || uShapeType == TRIANGLE_LINED_UP || uShapeType == TRIANGLE_FILLED_DOWN || uShapeType == TRIANGLE_LINED_DOWN) {
+        return pointSize / SIN_60;
+    } else if (uShapeType == ELLIPSE_FILLED || uShapeType == ELLIPSE_LINED) {
+        return pointSize * 2.0;
+    } else {
+        return pointSize;
+    }
+}
+
 bool isNaN(float val) {
     return isnan(val) || isinf(val);
 }
@@ -90,6 +103,9 @@ void main() {
     v_minorSize = -1.0;
     v_selected = float(selectedSource.x);
     v_pointSize = uPointSize;
+    if (uIsImagePixelSize) {
+        v_pointSize = tuneSize(uPointSize) * uZoomLevel;
+    }    
     v_featherWidth = uFeatherWidth;
 
     if (uCmapEnabled) {
@@ -110,6 +126,10 @@ void main() {
     if (uSizeMajorMapEnabled) {
         vec4 sizeMajor = getValueByIndexFromTexture(uSizeTexture, dataPointIndex);
         float size = sizeMajor.x;
+        if (uIsImagePixelSize) {
+            size = tuneSize(size) * uZoomLevel;
+        } 
+
         if(!isNaN(size)) {
             v_pointSize = size;
         }
@@ -132,6 +152,10 @@ void main() {
     if (uSizeMinorMapEnabled) {
         vec4 sizeMinor = getValueByIndexFromTexture(uSizeMinorTexture, dataPointIndex);
         v_minorSize = sizeMinor.x;
+        if (uIsImagePixelSize) {
+            v_minorSize = tuneSize(v_minorSize) * uZoomLevel;
+        } 
+
         if (uAreaModeMinor) {
             v_minorSize = getSquareSideByArea(v_pointSize, v_minorSize);
         }
@@ -141,7 +165,11 @@ void main() {
     }
 
     if (uShapeType == ELLIPSE_LINED) {
-        v_featherWidth = v_pointSize / 50.0 * 15.0 + 0.7;
+        if (uIsImagePixelSize) {
+            v_featherWidth = v_pointSize;
+        } else {
+            v_featherWidth = v_pointSize / 50.0 * 15.0 + 0.7;
+        }
     }
 
     vec2 offset = getOffsetFromId(gl_VertexID);

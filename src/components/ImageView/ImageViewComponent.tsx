@@ -1,14 +1,15 @@
 import * as React from "react";
-import ReactResizeDetector from "react-resize-detector";
 import {NonIdealState, Spinner} from "@blueprintjs/core";
 import $ from "jquery";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
+import {ResizeDetector} from "components/Shared";
 import {Point2D, Zoom} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, Padding, WidgetProps} from "stores";
 import {toFixed} from "utilities";
 
+import {ChannelMapViewComponent} from "./ChannelMapView/ChannelMapViewComponent";
 import {ImagePanelComponent} from "./ImagePanel/ImagePanelComponent";
 
 import "./ImageViewComponent.scss";
@@ -30,7 +31,7 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
     const ctx = imageViewCanvas.getContext("2d");
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, imageViewCanvas.width, imageViewCanvas.height);
-    config.visibleImages.forEach((frame, index) => {
+    config.visibleImages.forEach((image, index) => {
         const column = index % config.numImageColumns;
         const row = Math.floor(index / config.numImageColumns);
         const panelCanvas = getPanelCanvas(column, row, padding, colorbarPosition, backgroundColor);
@@ -183,12 +184,15 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         if (!visibleImages) {
             return [];
         }
-        return visibleImages.map((image, index) => {
-            const column = index % config.numImageColumns;
-            const row = Math.floor(index / config.numImageColumns);
 
-            return <ImagePanelComponent ref={this.collectImagePanelRef} key={`${image?.type}-${image?.store?.id}`} docked={this.props.docked} image={image} row={row} column={column} />;
-        });
+        return appStore.channelMapStore.channelMapEnabled
+            ? [<ChannelMapViewComponent docked={this.props.docked} />]
+            : visibleImages.map((image, index) => {
+                  const column = index % config.numImageColumns;
+                  const row = Math.floor(index / config.numImageColumns);
+
+                  return <ImagePanelComponent ref={this.collectImagePanelRef} key={`${image?.type}-${image?.store?.id}`} docked={this.props.docked} image={image} row={row} column={column} />;
+              });
     }
 
     render() {
@@ -227,11 +231,11 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         }
 
         return (
-            <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
+            <ResizeDetector onResize={this.onResize} throttleTime={33}>
                 <div className="image-view-div" style={{gridTemplateColumns: `repeat(${config.numImageColumns}, auto)`, gridTemplateRows: `repeat(${config.numImageRows}, 1fr)`}} data-testid="viewer-div">
                     {divContents}
                 </div>
-            </ReactResizeDetector>
+            </ResizeDetector>
         );
     }
 }

@@ -1,5 +1,4 @@
 import * as React from "react";
-import ReactResizeDetector from "react-resize-detector";
 import SplitPane, {Pane} from "react-split-pane";
 import {AnchorButton, Button, ButtonGroup, Classes, FormGroup, Intent, MenuItem, NonIdealState, PopoverPosition, Switch, Tooltip} from "@blueprintjs/core";
 import {ItemPredicate, ItemRendererProps, Select} from "@blueprintjs/select";
@@ -11,12 +10,12 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
-import {ClearableNumericInputComponent, FilterableTableComponent, FilterableTableComponentProps} from "components/Shared";
+import {ClearableNumericInputComponent, FilterableTableComponent, FilterableTableComponentProps, ResizeDetector} from "components/Shared";
 import {AbstractCatalogProfileStore, CatalogOverlay, CatalogSystemType} from "models";
 import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, CatalogUpdateMode, DefaultWidgetConfig, HelpType, PreferenceKeys, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
 import {RegionMode} from "stores/Frame";
 import {CatalogPlotType, CatalogPlotWidgetStoreProps, CatalogSettingsTabs, CatalogWidgetStore} from "stores/Widgets";
-import {ProcessedColumnData, toFixed} from "utilities";
+import {clamp, ProcessedColumnData, toFixed} from "utilities";
 
 import "./CatalogOverlayComponent.scss";
 
@@ -30,9 +29,12 @@ enum HeaderTableColumnName {
 
 @observer
 export class CatalogOverlayComponent extends React.Component<WidgetProps> {
-    @observable catalogTableRef: Table2 = undefined;
-    @observable height: number;
-    @observable width: number;
+    @observable private catalogTableRef: Table2 = undefined;
+    @observable private height: number;
+    @observable private width: number;
+
+    @observable private isShowHeader: boolean = true;
+    private prevPosition: number = 60;
 
     private catalogHeaderTableRef: Table2 = undefined;
     private catalogFileNames: Map<number, string>;
@@ -185,6 +187,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const catalogWidgetStore = this.widgetStore;
         this.height = height;
         this.width = width;
+
         // fixed bug from blueprintjs, only display 4 rows. catalog name missing (in PR #1104) fixed after package update.
         if (profileStore && this.catalogHeaderTableRef) {
             this.updateTableSize(this.catalogHeaderTableRef, this.props.docked);
@@ -201,7 +204,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const viewportRect = ref.locator.getViewportRect();
         ref.updateViewportRect(viewportRect);
         // fixed bug for blueprint table, first column overlap with row index
-        // triger table update
+        // trigger table update
         if (docked) {
             ref.scrollToRegion(Regions.column(0));
         }
@@ -224,7 +227,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
-    private renderDataColumn(columnName: string, coloumnData: any) {
+    private renderDataColumn(columnName: string, columnData: any) {
         return (
             <Column
                 key={columnName}
@@ -232,7 +235,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 cellRenderer={(rowIndex, columnIndex) => (
                     <Cell className="header-table-cell" key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>
                         <>
-                            <div data-testid={"catalog-header-table-" + rowIndex + "-" + columnIndex}>{coloumnData[rowIndex]}</div>
+                            <div data-testid={"catalog-header-table-" + rowIndex + "-" + columnIndex}>{columnData[rowIndex]}</div>
                         </>
                     </Cell>
                 )}
@@ -571,13 +574,16 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return <MenuItem key={plotType} text={plotType} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
-    private onTableResize = (newSize: number) => {
-        // update table if resizing happend
-        const position = Math.floor((newSize / (this.height - 130)) * 100);
-        if (position <= CatalogWidgetStore.MaxTableSeparatorPosition && position >= CatalogWidgetStore.MinTableSeparatorPosition) {
-            this.widgetStore.setTableSeparatorPosition(`${position}%`);
-            PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION, `${position}%`);
+    @action private handleSplitChange = (newSize: number) => {
+        // 130 is from 132, the height of widget excluding the header and table, subtracting 2 for the split bar width(?)
+        let position = clamp((newSize / (this.height - 130)) * 100, CatalogWidgetStore.MinTableSeparatorPosition, CatalogWidgetStore.MaxTableSeparatorPosition);
+        if (position) {
+            this.isShowHeader = position === 100 ? false : true;
+            this.prevPosition = position < 60 ? position : 60;
+            this.widgetStore.setTableSeparatorPosition(`${position.toPrecision(4)}%`);
+            PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION, `${position.toPrecision(4)}%`);
         }
+
         const profileStore = this.profileStore;
         if (profileStore && this.catalogHeaderTableRef) {
             this.updateTableSize(this.catalogHeaderTableRef, false);
@@ -585,6 +591,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (profileStore && this.catalogTableRef) {
             this.updateTableSize(this.catalogTableRef, false);
         }
+    };
+
+    @action private handleHideHeader = () => {
+        const position = this.widgetStore.tableSeparatorPosition !== "100%" ? 100 : this.prevPosition;
+        this.isShowHeader = position === 100 ? false : true;
+        this.widgetStore.setTableSeparatorPosition(`${position}%`);
     };
 
     private renderSystemPopOver = (system: CatalogSystemType, itemProps: ItemRendererProps) => {
@@ -730,133 +742,144 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const noResults = <MenuItem disabled={true} text="No results" />;
 
         return (
-            <div className={"catalog-overlay"}>
-                <div className={"catalog-overlay-filter-settings"}>
-                    <FormGroup inline={true} label="File">
-                        <Select
-                            className={Classes.FILL}
-                            filterable={false}
-                            items={catalogFileItems}
-                            activeItem={this.catalogFileId}
-                            onItemSelect={this.handleCatalogFileChange}
-                            itemRenderer={this.renderFileIdPopOver}
-                            popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
-                        >
-                            <Button text={this.catalogFileId} rightIcon="double-caret-vertical" data-testid="catalog-file-dropdown" />
-                        </Select>
-                    </FormGroup>
-                    <FormGroup className="catalog-system" disabled={!isImageOverlay} inline={true} label="System">
-                        <Select
-                            filterable={false}
-                            items={systemOptions}
-                            activeItem={profileStore.catalogCoordinateSystem.system}
-                            onItemSelect={system => profileStore.setCatalogCoordinateSystem(system)}
-                            itemRenderer={this.renderSystemPopOver}
-                            disabled={!isImageOverlay}
-                            popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
-                        >
-                            <Button text={activeSystem} disabled={!isImageOverlay} rightIcon="double-caret-vertical" data-testid="catalog-system-dropdown" />
-                        </Select>
-                    </FormGroup>
-
-                    <ButtonGroup className="catalog-map-buttons">
-                        <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.SIZE)}>Size</AnchorButton>
-                        <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.COLOR)}>Color</AnchorButton>
-                        <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.ORIENTATION)}>Orientation</AnchorButton>
-                    </ButtonGroup>
-                </div>
-                <SplitPane
-                    className="catalog-table"
-                    split="horizontal"
-                    primary={"second"}
-                    minSize={`${CatalogWidgetStore.MinTableSeparatorPosition}%`}
-                    maxSize={`${CatalogWidgetStore.MaxTableSeparatorPosition}%`}
-                    size={catalogWidgetStore.tableSeparatorPosition}
-                    onChange={this.onTableResize}
-                >
-                    <Pane className={"catalog-overlay-column-header-container"}>{this.createHeaderTable()}</Pane>
-                    <Pane className={"catalog-overlay-data-container"}>
-                        <FilterableTableComponent {...dataTableProps} />
-                    </Pane>
-                </SplitPane>
-                <div className={Classes.DIALOG_FOOTER}>
-                    <div className={"table-info"}>
-                        <table className="info-display">
-                            <tbody data-testid="catalog-table-filtering-info">{tableInfo}</tbody>
-                        </table>
-                    </div>
-                    <div className="footer-action-container">
-                        <div className={footerDropdownClass}>
+            <ResizeDetector onResize={this.onResize} throttleTime={33}>
+                <div className={"catalog-overlay"}>
+                    <div className={"catalog-overlay-filter-settings"}>
+                        <FormGroup inline={true} label="File">
                             <Select
-                                className="catalog-type-button"
+                                className={Classes.FILL}
                                 filterable={false}
-                                items={Object.values(CatalogPlotType)}
-                                activeItem={catalogWidgetStore.catalogPlotType}
-                                onItemSelect={this.handlePlotTypeChange}
-                                itemRenderer={this.renderPlotTypePopOver}
+                                items={catalogFileItems}
+                                activeItem={this.catalogFileId}
+                                onItemSelect={this.handleCatalogFileChange}
+                                itemRenderer={this.renderFileIdPopOver}
                                 popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                             >
-                                <Button className="bp3" text={catalogWidgetStore.catalogPlotType} rightIcon="double-caret-vertical" data-testid="catalog-rendering-type-dropdown" />
+                                <Button text={this.catalogFileId} rightIcon="double-caret-vertical" data-testid="catalog-file-dropdown" />
                             </Select>
+                        </FormGroup>
+                        <FormGroup className="catalog-system" disabled={!isImageOverlay} inline={true} label="System">
+                            <Select
+                                filterable={false}
+                                items={systemOptions}
+                                activeItem={profileStore.catalogCoordinateSystem.system}
+                                onItemSelect={system => profileStore.setCatalogCoordinateSystem(system)}
+                                itemRenderer={this.renderSystemPopOver}
+                                disabled={!isImageOverlay}
+                                popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
+                            >
+                                <Button text={activeSystem} disabled={!isImageOverlay} rightIcon="double-caret-vertical" data-testid="catalog-system-dropdown" />
+                            </Select>
+                        </FormGroup>
+                        <FormGroup inline={true} label="Show header">
+                            <Switch checked={this.isShowHeader} onChange={this.handleHideHeader} />
+                        </FormGroup>
 
-                            <FormGroup className="catalog-axis" inline={true} label={this.xAxisLable} disabled={disable}>
-                                <Select
-                                    className="catalog-axis-select"
-                                    items={this.axisOption}
-                                    activeItem={null}
-                                    onItemSelect={columnName => catalogWidgetStore.setxAxis(columnName)}
-                                    itemRenderer={this.renderColumnNamePopOver}
-                                    disabled={disable}
-                                    popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
-                                    filterable={true}
-                                    noResults={noResults}
-                                    itemPredicate={this.filterColumn}
-                                    resetOnSelect={true}
-                                >
-                                    <Button className="catalog-axis-button" text={catalogWidgetStore.xAxis} disabled={disable} rightIcon="double-caret-vertical" data-testid="catalog-rendering-column-x-dropdown" />
-                                </Select>
-                            </FormGroup>
-
-                            <FormGroup className="catalog-axis" inline={true} label={this.yAxisLable} disabled={isHistogram || disable}>
-                                <Select
-                                    className="catalog-axis-select"
-                                    items={this.axisOption}
-                                    activeItem={null}
-                                    onItemSelect={columnName => catalogWidgetStore.setyAxis(columnName)}
-                                    itemRenderer={this.renderColumnNamePopOver}
-                                    disabled={isHistogram || disable}
-                                    popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
-                                    filterable={true}
-                                    noResults={noResults}
-                                    itemPredicate={this.filterColumn}
-                                    resetOnSelect={true}
-                                >
-                                    <Button className="catalog-axis-button" text={catalogWidgetStore.yAxis} disabled={isHistogram || disable} rightIcon="double-caret-vertical" data-testid="catalog-rendering-column-y-dropdown" />
-                                </Select>
-                            </FormGroup>
-
-                            <ClearableNumericInputComponent
-                                className={"catalog-max-rows"}
-                                label="Max rows"
-                                value={profileStore.maxRows}
-                                onValueChanged={val => profileStore.setMaxRows(val)}
-                                onValueCleared={() => profileStore.setMaxRows(profileStore.catalogInfo.dataSize)}
-                                displayExponential={false}
-                                disabled={disable || !profileStore.isFileBasedCatalog}
-                            />
-                        </div>
+                        <ButtonGroup className="catalog-map-buttons">
+                            <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.SIZE)}>Size</AnchorButton>
+                            <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.COLOR)}>Color</AnchorButton>
+                            <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.ORIENTATION)}>Orientation</AnchorButton>
+                        </ButtonGroup>
                     </div>
+                    <SplitPane
+                        className="catalog-table"
+                        split="horizontal"
+                        primary={"second"}
+                        minSize={`${CatalogWidgetStore.MinTableSeparatorPosition}%`}
+                        maxSize={`${CatalogWidgetStore.MaxTableSeparatorPosition}%`}
+                        size={catalogWidgetStore.tableSeparatorPosition}
+                        onDragFinished={this.handleSplitChange}
+                        onResizerDoubleClick={this.handleHideHeader}
+                    >
+                        <Pane className={"catalog-overlay-column-header-container"}>{this.createHeaderTable()}</Pane>
+                        <Pane className={"catalog-overlay-data-container"}>
+                            <FilterableTableComponent {...dataTableProps} />
+                        </Pane>
+                    </SplitPane>
                     <div className={Classes.DIALOG_FOOTER}>
-                        <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                            <AnchorButton intent={Intent.SUCCESS} text="Apply filter" onClick={this.handleFilterRequest} disabled={disable || !profileStore.updateTableView || !profileStore.hasFilter} data-testid="catalog-filter-button" />
-                            <AnchorButton intent={Intent.WARNING} text="Reset filter" onClick={this.handleResetClick} disabled={disable} data-testid="catalog-reset-button" />
-                            <AnchorButton text="Close catalog" onClick={this.handleFileCloseClick} disabled={disable} data-testid="catalog-close-button" />
-                            <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={!this.enablePlotButton} data-testid="catalog-plot-button" />
+                        <div className={"table-info"}>
+                            <table className="info-display">
+                                <tbody data-testid="catalog-table-filtering-info">{tableInfo}</tbody>
+                            </table>
+                        </div>
+                        <div className="footer-action-container">
+                            <div className={footerDropdownClass}>
+                                <Select
+                                    className="catalog-type-button"
+                                    filterable={false}
+                                    items={Object.values(CatalogPlotType)}
+                                    activeItem={catalogWidgetStore.catalogPlotType}
+                                    onItemSelect={this.handlePlotTypeChange}
+                                    itemRenderer={this.renderPlotTypePopOver}
+                                    popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
+                                >
+                                    <Button className="bp3" text={catalogWidgetStore.catalogPlotType} rightIcon="double-caret-vertical" data-testid="catalog-rendering-type-dropdown" />
+                                </Select>
+
+                                <FormGroup className="catalog-axis" inline={true} label={this.xAxisLable} disabled={disable}>
+                                    <Select
+                                        className="catalog-axis-select"
+                                        items={this.axisOption}
+                                        activeItem={null}
+                                        onItemSelect={columnName => catalogWidgetStore.setxAxis(columnName)}
+                                        itemRenderer={this.renderColumnNamePopOver}
+                                        disabled={disable}
+                                        popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
+                                        filterable={true}
+                                        noResults={noResults}
+                                        itemPredicate={this.filterColumn}
+                                        resetOnSelect={true}
+                                    >
+                                        <Button className="catalog-axis-button" text={catalogWidgetStore.xAxis} disabled={disable} rightIcon="double-caret-vertical" data-testid="catalog-rendering-column-x-dropdown" />
+                                    </Select>
+                                </FormGroup>
+
+                                <FormGroup className="catalog-axis" inline={true} label={this.yAxisLable} disabled={isHistogram || disable}>
+                                    <Select
+                                        className="catalog-axis-select"
+                                        items={this.axisOption}
+                                        activeItem={null}
+                                        onItemSelect={columnName => catalogWidgetStore.setyAxis(columnName)}
+                                        itemRenderer={this.renderColumnNamePopOver}
+                                        disabled={isHistogram || disable}
+                                        popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
+                                        filterable={true}
+                                        noResults={noResults}
+                                        itemPredicate={this.filterColumn}
+                                        resetOnSelect={true}
+                                    >
+                                        <Button className="catalog-axis-button" text={catalogWidgetStore.yAxis} disabled={isHistogram || disable} rightIcon="double-caret-vertical" data-testid="catalog-rendering-column-y-dropdown" />
+                                    </Select>
+                                </FormGroup>
+
+                                <ClearableNumericInputComponent
+                                    className={"catalog-max-rows"}
+                                    label="Max rows"
+                                    value={profileStore.maxRows}
+                                    onValueChanged={val => profileStore.setMaxRows(val)}
+                                    onValueCleared={() => profileStore.setMaxRows(profileStore.catalogInfo.dataSize)}
+                                    displayExponential={false}
+                                    disabled={disable || !profileStore.isFileBasedCatalog}
+                                />
+                            </div>
+                        </div>
+                        <div className={Classes.DIALOG_FOOTER}>
+                            <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                                <AnchorButton
+                                    intent={Intent.SUCCESS}
+                                    text="Apply filter"
+                                    onClick={this.handleFilterRequest}
+                                    disabled={disable || !profileStore.updateTableView || !profileStore.hasFilter}
+                                    data-testid="catalog-filter-button"
+                                />
+                                <AnchorButton intent={Intent.WARNING} text="Reset filter" onClick={this.handleResetClick} disabled={disable} data-testid="catalog-reset-button" />
+                                <AnchorButton text="Close catalog" onClick={this.handleFileCloseClick} disabled={disable} data-testid="catalog-close-button" />
+                                <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={!this.enablePlotButton} data-testid="catalog-plot-button" />
+                            </div>
                         </div>
                     </div>
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
-            </div>
+            </ResizeDetector>
         );
     }
 }

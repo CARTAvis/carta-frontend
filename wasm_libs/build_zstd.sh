@@ -27,9 +27,9 @@ echo "Compiling to LLVM bitcode"
 cd ../../
 mkdir -p build
 cd build
-emcc -O3 -g0 -s WASM=1 ../contrib/single_file_decoder/zstddeclib.c -c -o ./standalone_zstd.bc
+emcc -O3 -g0 -msimd128 ../contrib/single_file_decoder/zstddeclib.c -c -o ./standalone_zstd.a
 echo "Checking for Zstd bitcode..."
-if [[ $(find -L ./standalone_zstd.bc -type f -size +10000c 2>/dev/null) ]]; then
+if [[ $(find -L ./standalone_zstd.a -type f -size +10000c 2>/dev/null) ]]; then
     echo "Found"
 else
     echo "Not found!"

@@ -25,8 +25,6 @@ void astPutErr_(int status_value, const char* message)
 }
 
 #include <iostream>
-#include <string.h>
-#include <emscripten.h>
 
 using namespace std;
 
@@ -236,7 +234,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initDummyFrame()
 }
 
 EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double imageX2, double imageY1, double imageY2, double width, double height,
-                                        double paddingLeft, double paddingRight, double paddingTop, double paddingBottom, const char* args)
+                                        double paddingLeft, double paddingRight, double paddingTop, double paddingBottom, const char* system, const char* args)
 {
     if (!wcsinfo)
     {
@@ -261,6 +259,25 @@ EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double i
     float gbox[] = {(float)xleft, (float)ybottom, (float)xright, (float)ytop};
     double pbox[] = {imageX1, imageY1, imageX2, imageY2};
     plot = astPlot(wcsinfo, gbox, pbox, args);
+
+    // add RA/Dec reference
+    if (strlen(system) > 0)
+    {
+        const char* symbol1 = astGetC(plot, "Symbol(1)");
+        if (strcmp(symbol1, "RA") == 0 || strcmp(symbol1, "Dec") == 0)
+        {
+            const char* label1 = astGetC(plot, "Label(1)");
+            astSet(plot, "Label(1) = %s (%s)", label1, system);
+        }
+
+        const char* symbol2 = astGetC(plot, "Symbol(2)");
+        if (strcmp(symbol2, "RA") == 0 || strcmp(symbol2, "Dec") == 0)
+        {
+            const char* label2 = astGetC(plot, "Label(2)");
+            astSet(plot, "Label(2) = %s (%s)", label2, system);
+        }
+    }
+
     astBBuf(plot);
     astGrid(plot);
 

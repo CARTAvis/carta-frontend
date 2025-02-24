@@ -86,7 +86,12 @@ export class FileBrowserDialogComponent extends React.Component {
 
     private loadSelectedFiles = async () => {
         const appStore = AppStore.Instance;
-        const fileBrowserStore = appStore.fileBrowserStore;
+        const {fileBrowserStore, layoutStore, dynamicLayoutStore} = appStore;
+
+        if (PreferenceStore.Instance.dynamicLayoutEnable && dynamicLayoutStore.dynamicLayoutName && layoutStore.layoutExists(dynamicLayoutStore.dynamicLayoutName)) {
+            await layoutStore.applyLayout(dynamicLayoutStore.dynamicLayoutName);
+        }
+
         if (fileBrowserStore.selectedFiles.length > 1) {
             appStore.setLoadingMultipleFiles(true);
             for (let i = 0; i < fileBrowserStore.selectedFiles.length; i++) {
@@ -767,7 +772,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 onSortingChanged={fileBrowserStore.setSortingConfig}
                                 onFileClicked={this.handleFileClicked}
                                 onSelectionChanged={fileBrowserStore.setSelectedFiles}
-                                onFileDoubleClicked={this.loadFile}
+                                onFileDoubleClicked={this.loadSelectedFiles}
                                 onFolderClicked={this.handleFolderClicked}
                                 onListCancelled={this.handleFileListRequestCancelled}
                             />

@@ -5,6 +5,7 @@ export * from "./ChannelInfo/ChannelInfo";
 export * from "./CompressionQuality/CompressionQuality";
 export * from "./ControlMap/CatalogControlMap";
 export * from "./ControlMap/ControlMap";
+export * from "./Ctype/CtypeDefinition";
 export * from "./Cursor/CursorInfo";
 export * from "./Cursor/CursorPosition";
 export * from "./Event/Event";

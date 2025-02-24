@@ -14,16 +14,16 @@ if [ $VERSION == "3" ]; then
     if [ -d "./emscripten.simg" ]; then
         echo "Using existing singularity container"
     else
-        singularity build --sandbox emscripten.simg docker://emscripten/emsdk:2.0.14
+        singularity build --sandbox emscripten.simg docker://emscripten/emsdk:4.0.3
     fi
     singularity exec --writable emscripten.simg npm run build-wrappers
 else
-    if singularity check emsdk-2.0.14.simg ; then
+    if singularity check emsdk-4.0.3.simg ; then
         echo "Using existing singularity container"
     else
-        singularity pull docker://emscripten/emsdk:2.0.14
+        singularity pull docker://emscripten/emscripten/emsdk:4.0.3
     fi
     echo "Building WebAssembly wrappers using singularity"
-    singularity exec emsdk-2.0.14.simg npm run build-wrappers
+    singularity exec emsdk-4.0.3.simg npm run build-wrappers
 fi
 
