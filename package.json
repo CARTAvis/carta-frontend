@@ -9,6 +9,8 @@
         "@blueprintjs/icons": "^5.7.1",
         "@blueprintjs/select": "^5.2.2",
         "@blueprintjs/table": "^5.1.8",
+        "@rsbuild/core": "^1.2.11",
+        "@rsbuild/plugin-react": "^1.1.1",
         "@testing-library/jest-dom": "^6.4.8",
         "@testing-library/react": "^16.0.1",
         "@testing-library/user-event": "^14.5.2",
@@ -87,11 +89,12 @@
         "git-info": "./git-info.sh",
         "analyze": "source-map-explorer build/static/js/main.*",
         "postinstall": "patch-package",
-        "start": "npm run git-info; npm run strict-null-checks && react-scripts start",
+        "start": "npm run git-info; npm run strict-null-checks && rsbuild dev",
         "build": "npm run git-info; npm-run-all build-wrappers build-protobuf build-ts",
         "build-docker": "npm run git-info; npm-run-all build-wrappers-docker build-protobuf build-ts",
         "build-singularity": "npm run git-info; npm-run-all build-wrappers-singularity build-protobuf build-ts",
-        "build-ts": "npm run strict-null-checks && react-scripts --max_old_space_size=4096 build",
+        "build-ts": "npm run strict-null-checks && rsbuild --max_old_space_size=4096 build",
+        "preview": "rsbuild preview",
         "build-libs": "./wasm_libs/build_libs.sh",
         "build-libs-docker": "./build_wasm_libs_docker.sh",
         "build-libs-singularity": "./build_wasm_libs_singularity.sh",
@@ -198,7 +201,6 @@
     },
     "dependencies": {
         "patch-package": "^8.0.0",
-        "react-scripts": "^5.0.1",
         "usehooks-ts": "^3.1.0"
     },
     "overrides": {
