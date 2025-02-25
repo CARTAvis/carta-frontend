@@ -1,4 +1,4 @@
-import {RGBColor} from "react-color";
+import type {RGBColor} from "react-color";
 import {CARTA} from "carta-protobuf";
 
 import {ContourDashMode, FrameScaling, VectorOverlaySource} from "stores/Frame";

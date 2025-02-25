@@ -1,4 +1,4 @@
-import {RGBColor} from "react-color";
+import type {RGBColor} from "react-color";
 import {action, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 

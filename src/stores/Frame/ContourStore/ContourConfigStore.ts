@@ -1,4 +1,4 @@
-import {RGBColor} from "react-color";
+import type {RGBColor} from "react-color";
 import {CARTA} from "carta-protobuf";
 import {action, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
