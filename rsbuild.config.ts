@@ -6,4 +6,9 @@ import {pluginGlsl} from 'rsbuild-plugin-glsl';
 
 export default defineConfig({
     plugins: [pluginReact(), pluginSass(), pluginNodePolyfill(), pluginGlsl()],
+    source: {
+        decorators: {
+            version: 'legacy',
+        },
+    },
 });
