@@ -2,13 +2,12 @@ import {CARTA} from "carta-protobuf";
 import LRUCache from "mnemonist/lru-cache";
 import {action, computed, makeObservable, observable} from "mobx";
 import {Subject} from "rxjs";
+import ZFPWorker from "zfp_wrapper";
 
 import {Point2D, TileCoordinate} from "models";
 import {BackendService, TileWebGLService} from "services";
 import {AppStore, FrameStore, PREVIEW_PV_FILEID} from "stores";
 import {clamp, copyToFP32Texture, createFP32Texture, GL2} from "utilities";
-
-import ZFPWorker from "!worker-loader!zfp_wrapper";
 
 export interface RasterTile {
     data?: Float32Array;
