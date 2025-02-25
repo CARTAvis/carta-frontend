@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Button, ButtonGroup, Colors, FormGroup, HTMLSelect, NonIdealState, OptionProps} from "@blueprintjs/core";
+import {Button, ButtonGroup, Colors, FormGroup, HTMLSelect, NonIdealState, type OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {ImageType, Point2D} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, type DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore, RenderConfigStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
 import {clamp, getColorForTheme, scaleValue, toExponential, toFixed} from "utilities";

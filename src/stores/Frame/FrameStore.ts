@@ -1,4 +1,4 @@
-import {NumberRange} from "@blueprintjs/core";
+import type {NumberRange} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
@@ -6,16 +6,16 @@ import {action, autorun, computed, makeObservable, observable, reaction} from "m
 import {PvPreviewComponent} from "components";
 import {
     CatalogControlMap,
-    ChannelInfo,
+    type ChannelInfo,
     COMPUTED_POLARIZATIONS,
     ControlMap,
-    CursorInfo,
+    type CursorInfo,
     FileCtypeInfo,
-    FrameView,
+    type FrameView,
     FULL_POLARIZATIONS,
     GenCoordinateLabel,
     GetFreqInGHz,
-    IntensityConfig,
+    type IntensityConfig,
     IsSpectralSystemSupported,
     IsSpectralTypeSupported,
     IsSpectralUnitSupported,
@@ -25,10 +25,10 @@ import {
     SPECTRAL_COORDS_SUPPORTED,
     SPECTRAL_DEFAULT_UNIT,
     SPECTRAL_TYPE_STRING,
-    SpectralInfo,
+    type SpectralInfo,
     SpectralSystem,
     SpectralType,
-    SpectralTypeSet,
+    type SpectralTypeSet,
     SpectralUnit,
     STANDARD_POLARIZATIONS,
     STANDARD_SPECTRAL_TYPE_SETS,

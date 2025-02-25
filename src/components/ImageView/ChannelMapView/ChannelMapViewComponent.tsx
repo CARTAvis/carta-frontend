@@ -3,7 +3,7 @@ import {NonIdealState} from "@blueprintjs/core";
 import _ from "lodash";
 import {observer} from "mobx-react";
 
-import {CursorInfo, ImageType} from "models";
+import {type CursorInfo, ImageType} from "models";
 import {AppStore, FrameStore} from "stores";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";

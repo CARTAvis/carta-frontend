@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 
 import {SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
 import {CustomIcon} from "icons/CustomIcons";
-import {LineOption} from "models";
+import type {LineOption} from "models";
 import {AppStore} from "stores";
 import {MultiProfileCategory, SpectralProfileSelectionStore, SpectralProfileWidgetStore} from "stores/Widgets";
 

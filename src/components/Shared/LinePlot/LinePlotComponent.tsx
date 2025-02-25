@@ -1,7 +1,7 @@
 import * as React from "react";
 import {Arrow, Group, Layer, Line, Rect, Stage, Text} from "react-konva";
 import {Colors} from "@blueprintjs/core";
-import {Chart, ChartArea, Tick} from "chart.js";
+import {Chart, type ChartArea, type Tick} from "chart.js";
 import Konva from "konva";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";

@@ -1,6 +1,6 @@
 import * as React from "react";
 import SplitPane from "react-split-pane";
-import {AnchorButton, ButtonGroup, Classes, DialogProps, Divider, FormGroup, HTMLSelect, Intent, NonIdealState, Position, Pre, Slider, Switch, Tab, Tabs, Text, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Classes, type DialogProps, Divider, FormGroup, HTMLSelect, Intent, NonIdealState, Position, Pre, Slider, Switch, Tab, Tabs, Text, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";

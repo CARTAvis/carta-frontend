@@ -1,9 +1,9 @@
 import Ajv from "ajv";
-import axios, {AxiosInstance} from "axios";
+import axios, {type AxiosInstance} from "axios";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {AppToaster} from "components/Shared";
-import {LayoutConfig, Snippet, Workspace, WorkspaceListItem} from "models";
+import {LayoutConfig, Snippet, type Workspace, type WorkspaceListItem} from "models";
 
 const preferencesSchema = require("models/preferences_schema_2.json");
 const snippetSchema = require("models/snippet_schema_1.json");

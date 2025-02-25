@@ -4,8 +4,8 @@ import {autorun, computed} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScrollShadow} from "components/Shared";
-import {LineKey} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import type {LineKey} from "models";
+import {AppStore, type DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {HistogramWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 

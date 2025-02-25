@@ -1,13 +1,13 @@
 import * as React from "react";
-import {CSSProperties} from "react";
-import {AnchorButton, Button, ButtonGroup, Classes, Collapse, FormGroup, IconName, Menu, MenuDivider, MenuItem, Popover, PopoverInteractionKind, PopoverPosition, Position, Switch, Tooltip} from "@blueprintjs/core";
+import type {CSSProperties} from "react";
+import {AnchorButton, Button, ButtonGroup, Classes, Collapse, FormGroup, type IconName, Menu, MenuDivider, MenuItem, Popover, PopoverInteractionKind, PopoverPosition, Position, Switch, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {ImageViewComponent, ImageViewLayer} from "components";
 import {AnnotationMenuComponent, ExportImageMenuComponent} from "components/Shared";
-import {CustomIcon, CustomIconName} from "icons/CustomIcons";
+import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
 import {AppStore} from "stores";
 import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
 import {SystemType} from "stores/OverlayStore/OverlayStore";

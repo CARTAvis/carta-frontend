@@ -1,4 +1,4 @@
-import {OptionProps} from "@blueprintjs/core";
+import type {OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 

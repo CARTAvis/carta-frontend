@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Classes, DialogProps} from "@blueprintjs/core";
+import {Classes, type DialogProps} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 

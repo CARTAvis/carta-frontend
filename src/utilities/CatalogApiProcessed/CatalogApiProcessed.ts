@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 
 import {CatalogSystemType} from "models";
 import {AppStore, NumberFormatType, SystemType} from "stores";
-import {ProcessedColumnData} from "utilities";
+import type {ProcessedColumnData} from "utilities";
 
 enum DataType {
     CHAR = "CHAR",

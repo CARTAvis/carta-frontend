@@ -1,10 +1,10 @@
-import {Colors, IconName} from "@blueprintjs/core";
+import {Colors, type IconName} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {throttle} from "lodash";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
-import {CustomIconName} from "icons/CustomIcons";
+import type {CustomIconName} from "icons/CustomIcons";
 import {Point2D} from "models";
 import {BackendService} from "services";
 import {AppStore, PreferenceStore, WidgetsStore} from "stores";

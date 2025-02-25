@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 import {RegionSelectorComponent, ResizeDetector} from "components/Shared";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {FULL_POLARIZATIONS, POLARIZATIONS} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, type DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {StatsWidgetStore} from "stores/Widgets";
 import {exportTsvFile, toExponential} from "utilities";
 

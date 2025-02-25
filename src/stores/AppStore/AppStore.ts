@@ -1,4 +1,4 @@
-import {Classes, Colors, OptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
+import {Classes, Colors, type OptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import axios from "axios";
 import * as CARTACompute from "carta_computation";
@@ -13,27 +13,27 @@ import {getImageViewCanvas, ImageViewLayer, PvGeneratorComponent} from "componen
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import {
     CARTA_INFO,
-    CatalogInfo,
+    type CatalogInfo,
     CatalogType,
     COMPUTED_POLARIZATIONS,
-    FileId,
+    type FileId,
     FloatingObjzIndexManager,
-    FrameView,
-    ImageItem,
+    type FrameView,
+    type ImageItem,
     ImageType,
-    ImageViewItem,
+    type ImageViewItem,
     Point2D,
     PresetLayout,
-    RegionId,
+    type RegionId,
     SpectralType,
     Theme,
     TileCoordinate,
     ToFileListFilterMode,
     WCSMatchingType,
-    Workspace,
-    WorkspaceFile
+    type Workspace,
+    type WorkspaceFile
 } from "models";
-import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryAction, TelemetryService, TileService, TileStreamDetails} from "services";
+import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryAction, TelemetryService, TileService, type TileStreamDetails} from "services";
 import {
     AlertStore,
     AnimationMode,
@@ -57,14 +57,14 @@ import {
     OverlayStore,
     PreferenceKeys,
     PreferenceStore,
-    RegionFileType,
+    type RegionFileType,
     SnippetStore,
     SpatialProfileStore,
     SpectralProfileStore,
     SystemType,
     WidgetsStore
 } from "stores";
-import {CompassAnnotationStore, CURSOR_REGION_ID, FrameInfo, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
+import {CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
 import {distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
 

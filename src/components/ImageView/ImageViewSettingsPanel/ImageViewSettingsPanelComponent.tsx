@@ -1,6 +1,6 @@
 import * as React from "react";
-import {Button, Classes, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Position, Switch, Tab, TabId, Tabs, Tooltip} from "@blueprintjs/core";
-import {ItemRenderer, Select} from "@blueprintjs/select";
+import {Button, Classes, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Position, Switch, Tab, type TabId, Tabs, Tooltip} from "@blueprintjs/core";
+import {type ItemRenderer, Select} from "@blueprintjs/select";
 import * as AST from "ast_wrapper";
 import classNames from "classnames";
 import {action, autorun, makeObservable, observable} from "mobx";
@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 
 import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, InputType, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
 import {ImagePanelMode} from "models";
-import {AppStore, BeamType, DefaultWidgetConfig, HelpType, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
+import {AppStore, BeamType, type DefaultWidgetConfig, HelpType, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
 import {ColorbarStore, CoordinateMode} from "stores/Frame";
 import {SWATCH_COLORS, toFixed} from "utilities";
 

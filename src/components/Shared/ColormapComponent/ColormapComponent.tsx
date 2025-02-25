@@ -1,6 +1,6 @@
 import * as React from "react";
 import {SketchPicker} from "react-color";
-import {Button, Classes, MenuItem, Popover, PopoverPosition, PopoverProps} from "@blueprintjs/core";
+import {Button, Classes, MenuItem, Popover, PopoverPosition, type PopoverProps} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import classNames from "classnames";
 import * as _ from "lodash";

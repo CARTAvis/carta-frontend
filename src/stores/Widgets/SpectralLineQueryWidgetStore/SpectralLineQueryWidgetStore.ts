@@ -1,11 +1,11 @@
-import {NumberRange} from "@blueprintjs/core";
+import type {NumberRange} from "@blueprintjs/core";
 import {Table2} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, flow, makeObservable, observable} from "mobx";
 
 import {SplatalogueService} from "services";
-import {AppStore, ControlHeader} from "stores";
-import {booleanFiltering, getHasFilter, getInitIndexMap, getSortedIndexMap, numericFiltering, ProcessedColumnData, ProtobufProcessing, SPEED_OF_LIGHT, stringFiltering, wavelengthToFrequency} from "utilities";
+import {AppStore, type ControlHeader} from "stores";
+import {booleanFiltering, getHasFilter, getInitIndexMap, getSortedIndexMap, numericFiltering, type ProcessedColumnData, ProtobufProcessing, SPEED_OF_LIGHT, stringFiltering, wavelengthToFrequency} from "utilities";
 
 export enum SpectralLineQueryRangeType {
     Range = "Range",

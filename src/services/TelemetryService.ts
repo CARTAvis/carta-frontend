@@ -1,6 +1,6 @@
-import axios, {AxiosInstance} from "axios";
+import axios, {type AxiosInstance} from "axios";
 import {CARTA} from "carta-protobuf";
-import {DBSchema, IDBPDatabase, openDB} from "idb";
+import {type DBSchema, type IDBPDatabase, openDB} from "idb";
 import {jwtDecode} from "jwt-decode";
 import {computed, flow, makeObservable, observable} from "mobx";
 import {v1 as uuidv1} from "uuid";

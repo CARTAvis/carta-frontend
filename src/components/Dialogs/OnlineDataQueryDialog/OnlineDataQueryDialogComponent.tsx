@@ -1,4 +1,4 @@
-import {Classes, DialogProps, Tab, Tabs} from "@blueprintjs/core";
+import {Classes, type DialogProps, Tab, Tabs} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 

@@ -1,5 +1,5 @@
 import {CARTA} from "carta-protobuf";
-import {ChartArea} from "chart.js";
+import type {ChartArea} from "chart.js";
 import {action, computed, makeObservable, observable, override} from "mobx";
 import tinycolor from "tinycolor2";
 

@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Alert, AnchorButton, Button, Classes, Colors, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Tab, Tabs, TagInput, Tooltip} from "@blueprintjs/core";
+import {Alert, AnchorButton, Button, Classes, Colors, type DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Tab, Tabs, TagInput, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";

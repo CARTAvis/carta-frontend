@@ -12,8 +12,8 @@ import {
     SmoothingSettingsComponent,
     SpectralSettingsComponent
 } from "components/Shared";
-import {LineKey} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import type {LineKey} from "models";
+import {AppStore, type DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {StokesAnalysisWidgetStore} from "stores/Widgets";
 
 import "./StokesAnalysisSettingsPanelComponent.scss";

@@ -1,5 +1,5 @@
 import * as React from "react";
-import {FormGroup, HTMLSelect, OptionProps, Switch} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, type OptionProps, Switch} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
 import {AutoColorPickerComponent, LineSettings, PlotType, PlotTypeSelectorComponent, SafeNumericInput} from "components/Shared";

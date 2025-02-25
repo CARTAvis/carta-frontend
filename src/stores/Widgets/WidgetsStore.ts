@@ -40,7 +40,7 @@ import {
     ACTIVE_FILE_ID,
     CatalogPlotType,
     CatalogPlotWidgetStore,
-    CatalogPlotWidgetStoreProps,
+    type CatalogPlotWidgetStoreProps,
     CatalogWidgetStore,
     EmptyWidgetStore,
     HistogramWidgetStore,

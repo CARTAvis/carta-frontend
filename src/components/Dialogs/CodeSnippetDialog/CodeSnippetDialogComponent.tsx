@@ -1,6 +1,6 @@
 import * as React from "react";
 import Editor from "react-simple-code-editor";
-import {AnchorButton, Classes, DialogProps, Intent} from "@blueprintjs/core";
+import {AnchorButton, Classes, type DialogProps, Intent} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";

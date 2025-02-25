@@ -1,4 +1,4 @@
-import {FrameView, Point2D, Transform2D} from "models";
+import {type FrameView, Point2D, Transform2D} from "models";
 import {FrameStore} from "stores/Frame";
 import {rotate2D, scale2D} from "utilities";
 

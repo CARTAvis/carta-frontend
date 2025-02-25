@@ -1,7 +1,7 @@
 import * as React from "react";
 import SplitPane, {Pane} from "react-split-pane";
 import {AnchorButton, Button, ButtonGroup, Classes, FormGroup, Intent, MenuItem, NonIdealState, PopoverPosition, Switch, Tooltip} from "@blueprintjs/core";
-import {ItemPredicate, ItemRendererProps, Select} from "@blueprintjs/select";
+import {type ItemPredicate, type ItemRendererProps, Select} from "@blueprintjs/select";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
 import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
 import {CARTA} from "carta-protobuf";
@@ -12,10 +12,10 @@ import {observer} from "mobx-react";
 import {ImageViewLayer} from "components";
 import {ClearableNumericInputComponent, FilterableTableComponent, FilterableTableComponentProps, ResizeDetector} from "components/Shared";
 import {AbstractCatalogProfileStore, CatalogOverlay, CatalogSystemType} from "models";
-import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, CatalogUpdateMode, DefaultWidgetConfig, HelpType, PreferenceKeys, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, CatalogUpdateMode, type DefaultWidgetConfig, HelpType, PreferenceKeys, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
 import {RegionMode} from "stores/Frame";
-import {CatalogPlotType, CatalogPlotWidgetStoreProps, CatalogSettingsTabs, CatalogWidgetStore} from "stores/Widgets";
-import {clamp, ProcessedColumnData, toFixed} from "utilities";
+import {CatalogPlotType, type CatalogPlotWidgetStoreProps, CatalogSettingsTabs, CatalogWidgetStore} from "stores/Widgets";
+import {clamp, type ProcessedColumnData, toFixed} from "utilities";
 
 import "./CatalogOverlayComponent.scss";
 

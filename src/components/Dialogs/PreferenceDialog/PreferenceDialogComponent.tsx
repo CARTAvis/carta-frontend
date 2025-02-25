@@ -1,6 +1,6 @@
 import * as React from "react";
 import {ColorResult} from "react-color";
-import {AnchorButton, Button, Callout, Checkbox, Classes, Collapse, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Callout, Checkbox, Classes, Collapse, type DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";

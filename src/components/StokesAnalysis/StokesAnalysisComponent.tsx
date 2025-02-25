@@ -1,14 +1,14 @@
 import * as React from "react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {ChartArea} from "chart.js";
+import type {ChartArea} from "chart.js";
 import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, ResizeDetector, ScatterPlotComponent, ScatterPlotComponentProps, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {Point2D, SpectralColorMap, SpectralType} from "models";
-import {AnimatorStore, AppStore, DefaultWidgetConfig, HelpType, SpectralProfileStore, WidgetProps, WidgetsStore} from "stores";
+import {AnimatorStore, AppStore, type DefaultWidgetConfig, HelpType, SpectralProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/Widgets";
 import {binarySearchByX, clamp, closestPointIndexToCursor, formattedNotation, getColorForTheme, minMaxArray, minMaxPointArrayZ, normalising, polarizationAngle, polarizedIntensity, toExponential, toFixed} from "utilities";

@@ -4,7 +4,7 @@ import classNames from "classnames";
 import * as _ from "lodash";
 import {observer} from "mobx-react";
 
-import {CursorInfo, ImageItem, ImageType, SPECTRAL_TYPE_STRING} from "models";
+import {type CursorInfo, type ImageItem, ImageType, SPECTRAL_TYPE_STRING} from "models";
 import {AppStore, OverlayStore, PreferenceStore} from "stores";
 
 import "./OverlayComponent.scss";

@@ -5,7 +5,7 @@ import tinycolor from "tinycolor2";
 
 import {SpatialProfilerSettingsTabs} from "components";
 import {LineSettings, PlotType} from "components/Shared";
-import {LineOption, POLARIZATIONS, VALID_XY_COORDINATES} from "models";
+import {type LineOption, POLARIZATIONS, VALID_XY_COORDINATES} from "models";
 import {AppStore, ProfileSmoothingStore} from "stores";
 import {FrameStore, RegionStore} from "stores/Frame";
 import {clamp, isAutoColor} from "utilities";

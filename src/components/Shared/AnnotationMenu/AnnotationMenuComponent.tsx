@@ -1,8 +1,8 @@
 import * as React from "react";
-import {IconName, MenuItem} from "@blueprintjs/core";
+import {type IconName, MenuItem} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 
-import {CustomIcon, CustomIconName} from "icons/CustomIcons";
+import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
 import {RegionStore} from "stores/Frame";
 
 interface AnnotationMenuComponentProps {

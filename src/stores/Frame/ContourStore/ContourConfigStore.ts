@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {action, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
-import {WorkspaceContourConfig} from "models";
+import type {WorkspaceContourConfig} from "models";
 import {PreferenceStore} from "stores";
 
 export enum ContourGeneratorType {

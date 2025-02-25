@@ -1,5 +1,5 @@
 import * as React from "react";
-import {FormGroup, HTMLSelect, OptionProps} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, type OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 

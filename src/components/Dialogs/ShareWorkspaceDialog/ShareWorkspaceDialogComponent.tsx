@@ -1,5 +1,5 @@
-import {ReactNode, useEffect, useState} from "react";
-import {AnchorButton, Checkbox, Classes, Dialog, DialogProps, InputGroup, Intent, Tooltip} from "@blueprintjs/core";
+import {type ReactNode, useEffect, useState} from "react";
+import {AnchorButton, Checkbox, Classes, Dialog, type DialogProps, InputGroup, Intent, Tooltip} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
 import {AppStore, DialogId} from "stores";

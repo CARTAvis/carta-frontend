@@ -1,11 +1,11 @@
 import {useState} from "react";
 import {AnchorButton, Classes, FormGroup, HTMLSelect, InputGroup, Intent, MenuItem, Overlay2, Radio, RadioGroup, Spinner} from "@blueprintjs/core";
-import {ItemPredicate, ItemRenderer, Suggest} from "@blueprintjs/select";
+import {type ItemPredicate, type ItemRenderer, Suggest} from "@blueprintjs/select";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {SafeNumericInput, ScrollShadow} from "components/Shared";
-import {HipsCoord, HipsProjection, HipsQueryStore, HipsSurvey} from "stores";
+import {HipsCoord, HipsProjection, HipsQueryStore, type HipsSurvey} from "stores";
 
 import "./HipsQueryComponent.scss";
 

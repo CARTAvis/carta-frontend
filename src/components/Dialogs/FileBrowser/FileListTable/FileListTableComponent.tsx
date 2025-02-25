@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Button, Classes, Icon, Label, NonIdealState, Spinner} from "@blueprintjs/core";
-import {Cell, Column, ColumnHeaderCell, Region, Regions, RenderMode, SelectionModes, Table2, TableLoadingOption} from "@blueprintjs/table";
+import {Cell, Column, ColumnHeaderCell, type Region, Regions, RenderMode, SelectionModes, Table2, TableLoadingOption} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import FuzzySearch from "fuzzy-search";
@@ -9,7 +9,7 @@ import {action, autorun, computed, makeObservable, observable, runInAction} from
 import {observer} from "mobx-react";
 import moment from "moment";
 
-import {BrowserMode, FileFilteringType, ISelectedFile} from "stores";
+import {BrowserMode, FileFilteringType, type ISelectedFile} from "stores";
 import {toFixed} from "utilities";
 
 import "./FileListTableComponent.scss";

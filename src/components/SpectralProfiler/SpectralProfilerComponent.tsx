@@ -6,15 +6,15 @@ import * as _ from "lodash";
 import {autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
-import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, PlotType, SmoothingType} from "components/Shared";
+import {type LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, PlotType, SmoothingType} from "components/Shared";
 import {Point2D, SpectralType} from "models";
-import {AnimatorStore, AppStore, DefaultWidgetConfig, FittingContinuum, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {MultiPlotData, SpectralProfileWidgetStore} from "stores/Widgets";
+import {AnimatorStore, AppStore, type DefaultWidgetConfig, FittingContinuum, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {type MultiPlotData, SpectralProfileWidgetStore} from "stores/Widgets";
 import {binarySearchByX, clamp, formattedExponential, getColorForTheme, toExponential, toFixed, toFormattedNotationByDiff} from "utilities";
 
 import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
-import {ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfoComponent/SpectralProfilerInfoComponent";
+import {type ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfoComponent/SpectralProfilerInfoComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 
 import "./SpectralProfilerComponent.scss";

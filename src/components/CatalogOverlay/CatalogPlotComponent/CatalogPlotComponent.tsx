@@ -1,7 +1,7 @@
 import * as React from "react";
 import Plot from "react-plotly.js";
 import {AnchorButton, Button, Classes, Colors, FormGroup, Intent, MenuItem, NonIdealState, PopoverPosition, Switch, Tooltip} from "@blueprintjs/core";
-import {ItemPredicate, ItemRendererProps, Select} from "@blueprintjs/select";
+import {type ItemPredicate, type ItemRendererProps, Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
 import * as GSL from "gsl_wrapper";
@@ -11,9 +11,9 @@ import {observer} from "mobx-react";
 import * as Plotly from "plotly.js";
 
 import {ClearableNumericInputComponent, ProfilerInfoComponent, ResizeDetector} from "components/Shared";
-import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, CatalogUpdateMode, DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
-import {Border, CatalogPlotType, CatalogPlotWidgetStore, CatalogPlotWidgetStoreProps, CatalogWidgetStore, DragMode, XBorder} from "stores/Widgets";
-import {minMaxArray, toFixed, TypedArray} from "utilities";
+import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, CatalogUpdateMode, type DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
+import {type Border, CatalogPlotType, CatalogPlotWidgetStore, type CatalogPlotWidgetStoreProps, CatalogWidgetStore, type DragMode, type XBorder} from "stores/Widgets";
+import {minMaxArray, toFixed, type TypedArray} from "utilities";
 
 import "./CatalogPlotComponent.scss";
 

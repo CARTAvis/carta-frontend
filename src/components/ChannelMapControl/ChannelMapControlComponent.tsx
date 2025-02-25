@@ -4,7 +4,7 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
-import {AppStore, DefaultWidgetConfig, WidgetProps} from "stores";
+import {AppStore, type DefaultWidgetConfig, WidgetProps} from "stores";
 import {clamp} from "utilities";
 
 import "./ChannelMapControlComponent.scss";

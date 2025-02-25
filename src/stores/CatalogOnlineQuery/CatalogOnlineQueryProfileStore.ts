@@ -1,9 +1,9 @@
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {AbstractCatalogProfileStore, CatalogInfo, CatalogType} from "models";
-import {ControlHeader, PreferenceStore} from "stores";
-import {getInitIndexMap, getSortedIndexMap, ProcessedColumnData} from "utilities";
+import {AbstractCatalogProfileStore, type CatalogInfo, CatalogType} from "models";
+import {type ControlHeader, PreferenceStore} from "stores";
+import {getInitIndexMap, getSortedIndexMap, type ProcessedColumnData} from "utilities";
 
 export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore {
     private static readonly SimbadInitialedColumnsKeyWords = ["ra", "dec", "main_id", "coo_bibcode", "dist", "otype_txt"];

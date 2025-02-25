@@ -1,6 +1,6 @@
 import * as React from "react";
 import {AnchorButton, Button, Classes, Divider, FormGroup, HTMLSelect, MenuItem, Position, Switch, Tooltip} from "@blueprintjs/core";
-import {ItemPredicate, ItemRenderer, MultiSelect} from "@blueprintjs/select";
+import {type ItemPredicate, type ItemRenderer, MultiSelect} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";

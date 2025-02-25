@@ -1,7 +1,7 @@
 import * as GSL from "gsl_wrapper";
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {LinePlotInsideBoxMarker, LinePlotInsideTextMarker} from "components/Shared/LinePlot/LinePlotComponent";
+import type {LinePlotInsideBoxMarker, LinePlotInsideTextMarker} from "components/Shared/LinePlot/LinePlotComponent";
 import {Point2D} from "models";
 import {SpectralProfileWidgetStore} from "stores/Widgets";
 import {autoDetecting, gaussian, getColorForTheme, lorentzian, toFixed} from "utilities";

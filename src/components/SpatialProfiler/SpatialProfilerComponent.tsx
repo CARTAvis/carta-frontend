@@ -2,14 +2,14 @@ import * as React from "react";
 import {Colors, FormGroup, HTMLSelect, NonIdealState} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {Tick} from "chart.js";
+import type {Tick} from "chart.js";
 import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, ResizeDetector, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {Point2D, POLARIZATIONS} from "models";
-import {AppStore, ASTSettingsString, DefaultWidgetConfig, HelpType, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, ASTSettingsString, type DefaultWidgetConfig, HelpType, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {RegionId, SpatialProfileWidgetStore} from "stores/Widgets";
 import {binarySearchByX, clamp, formattedExponential, getColorForTheme, toFixed, transformPoint} from "utilities";

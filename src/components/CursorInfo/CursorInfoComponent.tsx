@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 
 import {ResizeDetector, SimpleTableComponent} from "components/Shared";
 import {ImageType} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
+import {AppStore, type DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
 import {FrameStore} from "stores/Frame";
 import {formattedExponential, toFixed} from "utilities";
 

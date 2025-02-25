@@ -4,8 +4,8 @@ import {observer} from "mobx-react";
 import {Subscription} from "rxjs";
 import tinycolor from "tinycolor2";
 
-import {FrameView, ImageItem, ImageType, Point2D, TileCoordinate} from "models";
-import {PreviewWebGLService, RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService, TileWebGLService} from "services";
+import {type FrameView, type ImageItem, ImageType, Point2D, TileCoordinate} from "models";
+import {PreviewWebGLService, type RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService, TileWebGLService} from "services";
 import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {add2D, copyToFP32Texture, createFP32Texture, getColorForTheme, GetRequiredTiles, GL2, LayerToMip, scale2D, smoothStep} from "utilities";

@@ -4,7 +4,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
-import {CursorInfo, CursorInfoVisibility, ImageItem, ImageType, Zoom} from "models";
+import {type CursorInfo, CursorInfoVisibility, type ImageItem, ImageType, Zoom} from "models";
 import {AnimationMode, AppStore, ColorBlendingStore, type FrameStore} from "stores";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";

@@ -1,4 +1,4 @@
-import {TabId} from "@blueprintjs/core";
+import type {TabId} from "@blueprintjs/core";
 import {action, makeObservable, observable} from "mobx";
 
 import {FileInfoType} from "components";

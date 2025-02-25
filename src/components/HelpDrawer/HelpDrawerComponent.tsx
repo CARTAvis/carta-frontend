@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Classes, Drawer, DrawerProps} from "@blueprintjs/core";
+import {Classes, Drawer, type DrawerProps} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 

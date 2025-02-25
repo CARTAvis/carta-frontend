@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 import {MemoryUnit, TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
 import {Point2D, SpectralSystem} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, type DefaultWidgetConfig, HelpType, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
 import {PVAxis, PvGeneratorWidgetStore, RegionId} from "stores/Widgets";
 import {toFixed} from "utilities";
 

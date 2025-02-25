@@ -1,6 +1,6 @@
 import * as React from "react";
 import Iframe from "react-iframe";
-import {Classes, DialogProps} from "@blueprintjs/core";
+import {Classes, type DialogProps} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 

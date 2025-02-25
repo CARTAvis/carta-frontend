@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Classes, DialogProps, Intent, NonIdealState, Tab, Tabs, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Classes, type DialogProps, Intent, NonIdealState, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";

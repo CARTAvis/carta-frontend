@@ -2,7 +2,7 @@ import {RGBColor} from "react-color";
 import {action, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
-import {WorkspaceVectorOverlayConfig} from "models";
+import type {WorkspaceVectorOverlayConfig} from "models";
 import {PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 

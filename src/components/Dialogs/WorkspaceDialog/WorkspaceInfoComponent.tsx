@@ -4,7 +4,7 @@ import {Callout, NonIdealState, Spinner} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {useMap} from "usehooks-ts";
 
-import {Workspace, WorkspaceFile, WorkspaceListItem} from "models";
+import type {Workspace, WorkspaceFile, WorkspaceListItem} from "models";
 import {AppStore} from "stores";
 
 import "./WorkspaceInfoComponent.scss";

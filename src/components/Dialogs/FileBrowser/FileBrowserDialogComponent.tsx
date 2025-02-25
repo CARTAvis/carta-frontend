@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Alert, AnchorButton, Breadcrumb, BreadcrumbProps, Breadcrumbs, Button, ButtonGroup, Classes, DialogProps, Icon, InputGroup, Intent, Menu, MenuItem, Popover, Position, TabId, Tooltip} from "@blueprintjs/core";
+import {Alert, AnchorButton, Breadcrumb, type BreadcrumbProps, Breadcrumbs, Button, ButtonGroup, Classes, type DialogProps, Icon, InputGroup, Intent, Menu, MenuItem, Popover, Position, type TabId, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import * as _ from "lodash";
@@ -10,7 +10,7 @@ import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {AppToaster, ErrorToast, SimpleTableComponentProps} from "components/Shared";
 import {ImageType} from "models";
-import {AppStore, BrowserMode, CatalogProfileStore, DialogId, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, BrowserMode, CatalogProfileStore, DialogId, FileBrowserStore, FileFilteringType, HelpType, type ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
 import {FileListTableComponent} from "./FileListTable/FileListTableComponent";

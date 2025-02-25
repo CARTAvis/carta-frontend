@@ -4,7 +4,7 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 import {CatalogSystemType, Point2D} from "models";
 import {CatalogDatabase} from "services";
 import {AppStore, ASTSettingsString, NumberFormatType, SystemType} from "stores";
-import {clamp, getPixelValueFromWCS, transformPoint, VizierResource} from "utilities";
+import {clamp, getPixelValueFromWCS, transformPoint, type VizierResource} from "utilities";
 
 export enum RadiusUnits {
     DEGREES = "deg",

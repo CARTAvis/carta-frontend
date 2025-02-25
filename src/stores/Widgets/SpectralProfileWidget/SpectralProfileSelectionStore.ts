@@ -1,11 +1,11 @@
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 
-import {GetIntensityOptions, IntensityConfig, LineKey, LineOption, POLARIZATION_LABELS, POLARIZATIONS, STATISTICS_TEXT, StatsTypeString, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES} from "models";
+import {GetIntensityOptions, type IntensityConfig, type LineKey, type LineOption, POLARIZATION_LABELS, POLARIZATIONS, STATISTICS_TEXT, StatsTypeString, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES} from "models";
 import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {ACTIVE_FILE_ID, RegionId, SpectralProfileWidgetStore} from "stores/Widgets";
-import {genColorFromIndex, ProcessedSpectralProfile} from "utilities";
+import {genColorFromIndex, type ProcessedSpectralProfile} from "utilities";
 
 export enum MultiProfileCategory {
     NONE = "None", // Single profile mode: allow only 1 profile displayed in widget

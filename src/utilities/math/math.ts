@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 
 import {FrameScaling} from "stores/Frame";
-import {TypedArray} from "utilities";
+import type {TypedArray} from "utilities";
 
 export function smoothStepOffset(val: number, edge0: number, edge1: number, level0: number, level1: number) {
     const stepVal = smoothStep(val, edge0, edge1);

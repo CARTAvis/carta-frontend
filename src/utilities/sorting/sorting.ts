@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 
-import {ControlHeader} from "stores";
-import {ProcessedColumnData} from "utilities";
+import type {ControlHeader} from "stores";
+import type {ProcessedColumnData} from "utilities";
 
 export function getSortedIndexMap(
     controlHeader: Map<string, ControlHeader>,

@@ -1,4 +1,4 @@
-import axios, {AxiosInstance} from "axios";
+import axios, {type AxiosInstance} from "axios";
 import {CARTA} from "carta-protobuf";
 
 import {SpectralLineHeaders} from "stores/Widgets";

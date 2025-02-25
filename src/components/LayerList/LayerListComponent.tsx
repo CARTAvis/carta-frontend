@@ -1,14 +1,14 @@
 import * as React from "react";
-import {CSSProperties} from "react";
+import type {CSSProperties} from "react";
 import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState, Tooltip} from "@blueprintjs/core";
-import {Cell, Column, ColumnHeaderCell, MenuContext, RowHeaderCell, SelectionModes, Table2} from "@blueprintjs/table";
+import {Cell, Column, ColumnHeaderCell, type MenuContext, RowHeaderCell, SelectionModes, Table2} from "@blueprintjs/table";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector} from "components/Shared";
-import {ImageItem, ImageType} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
+import {type ImageItem, ImageType} from "models";
+import {AppStore, type DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
 import {LayerListSettingsTabs} from "stores/Widgets";
 
 import "./LayerListComponent.scss";

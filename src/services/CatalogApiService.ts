@@ -1,11 +1,11 @@
-import axios, {AxiosInstance, AxiosResponse, CancelTokenSource} from "axios";
+import axios, {type AxiosInstance, type AxiosResponse, type CancelTokenSource} from "axios";
 import {CARTA} from "carta-protobuf";
 import {action} from "mobx";
 
 import {AppToaster, ErrorToast, WarningToast} from "components/Shared";
-import {CatalogInfo, CatalogType, WCSPoint2D} from "models";
+import {type CatalogInfo, CatalogType, WCSPoint2D} from "models";
 import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, DialogId, RadiusUnits, SystemType} from "stores";
-import {CatalogApiProcessing, ProcessedColumnData, VizierResource} from "utilities";
+import {CatalogApiProcessing, type ProcessedColumnData, type VizierResource} from "utilities";
 
 import {TelemetryAction, TelemetryService} from "./TelemetryService";
 

@@ -1,14 +1,14 @@
 import * as React from "react";
 import {Alert, AnchorButton, Button, Classes, Icon, Intent, Menu, MenuDivider, MenuItem, Popover, Position, Switch, Tooltip} from "@blueprintjs/core";
-import {IconName} from "@blueprintjs/icons";
+import type {IconName} from "@blueprintjs/icons";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {AppToaster, ExportImageMenuComponent, SuccessToast} from "components/Shared";
-import {CustomIcon, CustomIconName} from "icons/CustomIcons";
-import {CARTA_INFO, ImageType, ImageViewItem, Snippet} from "models";
+import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
+import {CARTA_INFO, ImageType, type ImageViewItem, Snippet} from "models";
 import {ApiService, ConnectionStatus} from "services";
 import {AppStore, BrowserMode, DialogId, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
 import {copyToClipboard, toFixed} from "utilities";

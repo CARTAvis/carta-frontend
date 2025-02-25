@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 
-import {ControlHeader} from "stores";
-import {ColumnArray, getComparisonOperatorAndValue, ProcessedColumnData} from "utilities";
+import type {ControlHeader} from "stores";
+import {type ColumnArray, getComparisonOperatorAndValue, type ProcessedColumnData} from "utilities";
 
 export function getDataTypeString(dataType: CARTA.ColumnType | null | undefined): string {
     switch (dataType) {

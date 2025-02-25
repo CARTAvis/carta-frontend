@@ -1,6 +1,6 @@
 import React from "react";
-import {MaybeElement} from "@blueprintjs/core";
-import {IconName} from "@blueprintjs/icons";
+import type {MaybeElement} from "@blueprintjs/core";
+import type {IconName} from "@blueprintjs/icons";
 import {action, makeObservable, observable} from "mobx";
 
 import {Deferred} from "services";

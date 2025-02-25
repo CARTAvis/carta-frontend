@@ -1,13 +1,13 @@
 import * as React from "react";
 import {useCallback, useEffect, useState} from "react";
-import {AnchorButton, Classes, DialogProps, InputGroup, Intent, NonIdealState, Spinner} from "@blueprintjs/core";
-import {Cell, Column, Region, RenderMode, SelectionModes, Table2, TableLoadingOption} from "@blueprintjs/table";
+import {AnchorButton, Classes, type DialogProps, InputGroup, Intent, NonIdealState, Spinner} from "@blueprintjs/core";
+import {Cell, Column, type Region, RenderMode, SelectionModes, Table2, TableLoadingOption} from "@blueprintjs/table";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 import moment from "moment/moment";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {WorkspaceListItem} from "models";
+import type {WorkspaceListItem} from "models";
 import {AlertStore, AppStore, DialogId, HelpType} from "stores";
 
 import {AppToaster, ErrorToast, SuccessToast} from "../../Shared";

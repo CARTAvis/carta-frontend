@@ -1,14 +1,14 @@
-import {NumberRange, OptionProps} from "@blueprintjs/core";
+import type {NumberRange, OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable, override, reaction} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {SpectralProfilerSettingsTabs} from "components";
 import {LineSettings, PlotType, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
-import {FindIntensityUnitType, GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, IntensityConfig, IntensityUnitType, IsIntensitySupported, LineKey, Point2D, POLARIZATIONS, SpectralSystem} from "models";
+import {FindIntensityUnitType, GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, type IntensityConfig, IntensityUnitType, IsIntensitySupported, type LineKey, Point2D, POLARIZATIONS, SpectralSystem} from "models";
 import {TelemetryAction, TelemetryService} from "services";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
-import {MultiProfileCategory, RegionId, RegionsType, RegionWidgetStore, SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
+import {MultiProfileCategory, RegionId, RegionsType, RegionWidgetStore, type SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
 import {clamp, getColorForTheme, isAutoColor} from "utilities";
 
 export enum MomentSelectingMode {

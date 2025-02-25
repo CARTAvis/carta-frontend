@@ -1,6 +1,6 @@
 import * as React from "react";
-import {CSSProperties} from "react";
-import {FixedSizeList, ListOnItemsRenderedProps} from "react-window";
+import type {CSSProperties} from "react";
+import {FixedSizeList, type ListOnItemsRenderedProps} from "react-window";
 import {AnchorButton, ButtonGroup, Classes, Icon, NonIdealState, Position, Spinner, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 
 import {ResizeDetector} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
-import {AppStore, BrowserMode, DefaultWidgetConfig, DialogId, DialogStore, FileBrowserStore, HelpType, WidgetProps} from "stores";
+import {AppStore, BrowserMode, type DefaultWidgetConfig, DialogId, DialogStore, FileBrowserStore, HelpType, WidgetProps} from "stores";
 import {FrameStore, RegionsOpacity, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {clamp, formattedArcsec, getFormattedWCSPoint, length2D, toFixed} from "utilities";
 

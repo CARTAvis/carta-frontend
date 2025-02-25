@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 
 import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
 import {Point2D, POLARIZATIONS} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, type DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {HistogramWidgetStore} from "stores/Widgets";
 import {binarySearchByX, clamp, closeTo, getColorForTheme, toExponential, toFixed} from "utilities";
