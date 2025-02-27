@@ -13,7 +13,7 @@ The configuration for the fitting is accessible via <ApiLink path="/.-stores/cla
 const file = await app.openFile("[filename]");
 
 // Display the fitting widget
-app.dialogStore.showFittingDialog();
+app.dialogStore.showDialog("fitting-dialog");
 
 // Clear previous inputs of initial values
 app.imageFittingStore.clearComponents();
