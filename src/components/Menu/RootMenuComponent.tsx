@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 
 import {AppToaster, ExportImageMenuComponent, SuccessToast} from "components/Shared";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
-import {CARTA_INFO, ImageType, ImageViewItem, PresetLayout, Snippet} from "models";
+import {CARTA_INFO, ImageType, ImageViewItem, Snippet} from "models";
 import {ApiService, ConnectionStatus} from "services";
 import {AppStore, BrowserMode, DialogId, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
 import {copyToClipboard, toFixed} from "utilities";
@@ -289,10 +289,6 @@ export class RootMenuComponent extends React.Component {
             return <MenuItem text={image.store.filename} active={appStore.activeImageIndex === index} key={index} onClick={() => this.handleImageSelect(image)} />;
         });
 
-        const presetLayouts: string[] = PresetLayout.PRESETS;
-        const layoutStore = appStore.layoutStore;
-        const userLayouts: string[] = layoutStore.userLayoutNames;
-
         const viewMenu = (
             <Menu>
                 <MenuItem text="Theme" icon={"media"}>
@@ -300,44 +296,7 @@ export class RootMenuComponent extends React.Component {
                     <MenuItem text="Light" icon={"flash"} onClick={appStore.setLightTheme} />
                     <MenuItem text="Dark" icon={"moon"} onClick={appStore.setDarkTheme} />
                 </MenuItem>
-                <MenuItem text="Layouts" icon={"page-layout"} disabled={layoutStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}>
-                    <MenuItem text="Existing Layouts" disabled={!presetLayouts && !userLayouts}>
-                        {presetLayouts &&
-                            presetLayouts.length > 0 &&
-                            presetLayouts.map(value => <MenuItem key={value} text={value} active={value === appStore.layoutStore.currentLayoutName} onClick={() => appStore.layoutStore.applyLayout(value)} />)}
-                        {userLayouts && userLayouts.length > 0 && (
-                            <React.Fragment>
-                                <MenuDivider />
-                                {userLayouts.map(value => (
-                                    <MenuItem key={value} text={value} active={value === appStore.layoutStore.currentLayoutName} onClick={() => appStore.layoutStore.applyLayout(value)} />
-                                ))}
-                            </React.Fragment>
-                        )}
-                    </MenuItem>
-                    <MenuItem text="Save Layout" onClick={() => appStore.dialogStore.showDialog(DialogId.Layout)} />
-                    <MenuItem text="Rename Layout" disabled={!userLayouts || userLayouts.length <= 0}>
-                        {userLayouts &&
-                            userLayouts.length > 0 &&
-                            userLayouts.map(value => <MenuItem key={value} text={value} active={value === appStore.layoutStore.currentLayoutName} onClick={() => appStore.dialogStore.showDialog(DialogId.Layout, {oldLayoutName: value})} />)}
-                    </MenuItem>
-                    <MenuItem text="Delete Layout" disabled={!userLayouts || userLayouts.length <= 0}>
-                        {userLayouts &&
-                            userLayouts.length > 0 &&
-                            userLayouts.map(value => (
-                                <MenuItem
-                                    key={value}
-                                    text={value}
-                                    active={value === appStore.layoutStore.currentLayoutName}
-                                    onClick={() => {
-                                        appStore.layoutStore.deleteLayout(value);
-                                        if (value === appStore.preferenceStore.layout) {
-                                            appStore.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
-                                        }
-                                    }}
-                                />
-                            ))}
-                    </MenuItem>
-                </MenuItem>
+                <MenuItem text="Layout" icon={"page-layout"} onClick={() => AppStore.Instance.dialogStore.showDialog(DialogId.Layout)} />
                 {imageItems.length > 0 && (
                     <MenuItem text="Images" icon={"multi-select"}>
                         {imageItems}

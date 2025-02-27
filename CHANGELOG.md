@@ -4,7 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [5.0.0-beta.1b]
+
+### Fixed
+* Fixed HiPS survey list requests.
+* Removed vulnerabilities.
 
 ## [5.0.0-beta.1]
 
@@ -22,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Supported image coordinates for images with valid WCS headers ([#2366](https://github.com/CARTAvis/carta-frontend/issues/2366)).
 * Supported plotting with unit wavelength ^ 2 in z profile and Stokes analysis widgets ([#1685](https://github.com/CARTAvis/carta-frontend/issues/1685)).
 * Supported showing the coordinate system reference for RA and Dec labels in the image view panel.
+* Supported showing delta x and y in distance measurement ([#2165](https://github.com/CARTAvis/carta-frontend/issues/2165)).
+* Supported plotting catalog sources on image pixel size and angular size ([#1956](https://github.com/CARTAvis/carta-frontend/issues/1956)).
+* Dynamic layout: automatically applying the layout which is associated with the data type ([#752](https://github.com/CARTAvis/carta-frontend/issues/752)).
+* Supported channel map mode: viewing multiple channels of an image cube in the image viewer ([#1203](https://github.com/CARTAvis/carta-frontend/issues/1203)).
 ### Fixed
 * Fixed ruler annotation matching bug ([#2242](https://github.com/CARTAvis/carta-frontend/issues/2242)).
 * Fixed compass and ruler annotations update bug in the spatially matched image when changing the coordinate ([#2270](https://github.com/CARTAvis/carta-frontend/issues/2270)).
@@ -46,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed the limitation of plotting up-to-10 profiles in the spectral profiler multi-profile mode to up-to-16 ([#2440](https://github.com/CARTAvis/carta-frontend/issues/2440)).
 * Changed in-app help context to the online readthedocs user manual ([#2241](https://github.com/CARTAvis/carta-frontend/issues/2241)).
 * Axes order of the PV diagram becomes a sticky parameter ([#2402](https://github.com/CARTAvis/carta-frontend/issues/2402)).
+* Redesign the layout dialog UI ([#773](https://github.com/CARTAvis/carta-frontend/issues/773)).
 
 ## [4.1.0]
 

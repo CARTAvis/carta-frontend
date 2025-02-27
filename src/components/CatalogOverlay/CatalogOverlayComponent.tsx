@@ -15,7 +15,7 @@ import {AbstractCatalogProfileStore, CatalogOverlay, CatalogSystemType} from "mo
 import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, CatalogUpdateMode, DefaultWidgetConfig, HelpType, PreferenceKeys, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
 import {RegionMode} from "stores/Frame";
 import {CatalogPlotType, CatalogPlotWidgetStoreProps, CatalogSettingsTabs, CatalogWidgetStore} from "stores/Widgets";
-import {ProcessedColumnData, toFixed} from "utilities";
+import {clamp, ProcessedColumnData, toFixed} from "utilities";
 
 import "./CatalogOverlayComponent.scss";
 
@@ -29,9 +29,12 @@ enum HeaderTableColumnName {
 
 @observer
 export class CatalogOverlayComponent extends React.Component<WidgetProps> {
-    @observable catalogTableRef: Table2 = undefined;
-    @observable height: number;
-    @observable width: number;
+    @observable private catalogTableRef: Table2 = undefined;
+    @observable private height: number;
+    @observable private width: number;
+
+    @observable private isShowHeader: boolean = true;
+    private prevPosition: number = 60;
 
     private catalogHeaderTableRef: Table2 = undefined;
     private catalogFileNames: Map<number, string>;
@@ -184,6 +187,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const catalogWidgetStore = this.widgetStore;
         this.height = height;
         this.width = width;
+
         // fixed bug from blueprintjs, only display 4 rows. catalog name missing (in PR #1104) fixed after package update.
         if (profileStore && this.catalogHeaderTableRef) {
             this.updateTableSize(this.catalogHeaderTableRef, this.props.docked);
@@ -200,7 +204,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const viewportRect = ref.locator.getViewportRect();
         ref.updateViewportRect(viewportRect);
         // fixed bug for blueprint table, first column overlap with row index
-        // triger table update
+        // trigger table update
         if (docked) {
             ref.scrollToRegion(Regions.column(0));
         }
@@ -223,7 +227,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
-    private renderDataColumn(columnName: string, coloumnData: any) {
+    private renderDataColumn(columnName: string, columnData: any) {
         return (
             <Column
                 key={columnName}
@@ -231,7 +235,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 cellRenderer={(rowIndex, columnIndex) => (
                     <Cell className="header-table-cell" key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>
                         <>
-                            <div data-testid={"catalog-header-table-" + rowIndex + "-" + columnIndex}>{coloumnData[rowIndex]}</div>
+                            <div data-testid={"catalog-header-table-" + rowIndex + "-" + columnIndex}>{columnData[rowIndex]}</div>
                         </>
                     </Cell>
                 )}
@@ -570,13 +574,16 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return <MenuItem key={plotType} text={plotType} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
-    private onTableResize = (newSize: number) => {
-        // update table if resizing happend
-        const position = Math.floor((newSize / (this.height - 130)) * 100);
-        if (position <= CatalogWidgetStore.MaxTableSeparatorPosition && position >= CatalogWidgetStore.MinTableSeparatorPosition) {
-            this.widgetStore.setTableSeparatorPosition(`${position}%`);
-            PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION, `${position}%`);
+    @action private handleSplitChange = (newSize: number) => {
+        // 130 is from 132, the height of widget excluding the header and table, subtracting 2 for the split bar width(?)
+        let position = clamp((newSize / (this.height - 130)) * 100, CatalogWidgetStore.MinTableSeparatorPosition, CatalogWidgetStore.MaxTableSeparatorPosition);
+        if (position) {
+            this.isShowHeader = position === 100 ? false : true;
+            this.prevPosition = position < 60 ? position : 60;
+            this.widgetStore.setTableSeparatorPosition(`${position.toPrecision(4)}%`);
+            PreferenceStore.Instance.setPreference(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION, `${position.toPrecision(4)}%`);
         }
+
         const profileStore = this.profileStore;
         if (profileStore && this.catalogHeaderTableRef) {
             this.updateTableSize(this.catalogHeaderTableRef, false);
@@ -584,6 +591,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (profileStore && this.catalogTableRef) {
             this.updateTableSize(this.catalogTableRef, false);
         }
+    };
+
+    @action private handleHideHeader = () => {
+        const position = this.widgetStore.tableSeparatorPosition !== "100%" ? 100 : this.prevPosition;
+        this.isShowHeader = position === 100 ? false : true;
+        this.widgetStore.setTableSeparatorPosition(`${position}%`);
     };
 
     private renderSystemPopOver = (system: CatalogSystemType, itemProps: ItemRendererProps) => {
@@ -758,6 +771,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 <Button text={activeSystem} disabled={!isImageOverlay} rightIcon="double-caret-vertical" data-testid="catalog-system-dropdown" />
                             </Select>
                         </FormGroup>
+                        <FormGroup inline={true} label="Show header">
+                            <Switch checked={this.isShowHeader} onChange={this.handleHideHeader} />
+                        </FormGroup>
 
                         <ButtonGroup className="catalog-map-buttons">
                             <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.SIZE)}>Size</AnchorButton>
@@ -772,7 +788,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                         minSize={`${CatalogWidgetStore.MinTableSeparatorPosition}%`}
                         maxSize={`${CatalogWidgetStore.MaxTableSeparatorPosition}%`}
                         size={catalogWidgetStore.tableSeparatorPosition}
-                        onChange={this.onTableResize}
+                        onDragFinished={this.handleSplitChange}
+                        onResizerDoubleClick={this.handleHideHeader}
                     >
                         <Pane className={"catalog-overlay-column-header-container"}>{this.createHeaderTable()}</Pane>
                         <Pane className={"catalog-overlay-data-container"}>

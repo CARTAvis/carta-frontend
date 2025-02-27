@@ -23,7 +23,7 @@ cd zfp
 mkdir -p build
 cd build
 echo "Building ZFP using Emscripten"
-emcmake cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-s WASM=1" -DZFP_WITH_OPENMP=OFF -DBUILD_UTILITIES=OFF -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=OFF -DZFP_ENABLE_PIC=OFF -DCMAKE_INSTALL_PREFIX=${PWD}/../../built ../
+emcmake cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-msimd128" -DZFP_WITH_OPENMP=OFF -DBUILD_UTILITIES=OFF -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=OFF -DZFP_ENABLE_PIC=OFF -DCMAKE_INSTALL_PREFIX=${PWD}/../../built ../
 emmake make -j4
 emmake make install
 echo "Checking for ZFP static lib..."

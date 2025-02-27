@@ -55,7 +55,7 @@ export class BackendService {
         return BackendService.staticInstance;
     }
 
-    private static readonly IcdVersion = 29;
+    private static readonly IcdVersion = 30;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     private static readonly MaxConnectionAttempts = 15;
     private static readonly ConnectionAttemptDelay = 1000;
@@ -496,9 +496,10 @@ export class BackendService {
     }
 
     @action("set channels")
-    setChannels(fileId: number, channel: number, stokes: number, requiredTiles: CARTA.IAddRequiredTiles): boolean {
+    setChannels(fileId: number, channel: number | undefined, stokes: number, requiredTiles: CARTA.IAddRequiredTiles, channelMapEnabled?: boolean, _channelRange?: CARTA.IIntBounds | undefined, currentRange?: CARTA.IIntBounds): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.SetImageChannels.create({fileId, channel, stokes, requiredTiles});
+            const channelRange: CARTA.IIntBounds | null = _channelRange || null;
+            const message = CARTA.SetImageChannels.create({fileId, channel, stokes, requiredTiles, channelMapEnabled, channelRange, currentRange});
             this.logEvent(CARTA.EventType.SET_IMAGE_CHANNELS, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.SET_IMAGE_CHANNELS, CARTA.SetImageChannels.encode(message).finish())) {
                 return true;
@@ -613,9 +614,9 @@ export class BackendService {
     }
 
     @action("add required tiles")
-    addRequiredTiles(fileId: number, tiles: Array<number>, quality: number): boolean {
+    addRequiredTiles(fileId: number, tiles: Array<number>, quality: number, currentTiles?: number[]): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.AddRequiredTiles.create({fileId, tiles, compressionQuality: quality, compressionType: CARTA.CompressionType.ZFP});
+            const message = CARTA.AddRequiredTiles.create({fileId, tiles, compressionQuality: quality, compressionType: CARTA.CompressionType.ZFP, currentTiles});
             this.logEvent(CARTA.EventType.ADD_REQUIRED_TILES, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.ADD_REQUIRED_TILES, CARTA.AddRequiredTiles.encode(message).finish())) {
                 return true;
@@ -669,6 +670,17 @@ export class BackendService {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
             this.logEvent(CARTA.EventType.ANIMATION_FLOW_CONTROL, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.ANIMATION_FLOW_CONTROL, CARTA.AnimationFlowControl.encode(message).finish())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @action("channel map flow control")
+    sendChannelMapFlowControl(message: CARTA.IChannelMapFlowControl) {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            this.logEvent(CARTA.EventType.CHANNEL_MAP_FLOW_CONTROL, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.CHANNEL_MAP_FLOW_CONTROL, CARTA.ChannelMapFlowControl.encode(message).finish())) {
                 return true;
             }
         }

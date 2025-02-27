@@ -1,4 +1,4 @@
-import {AngularSize, AngularSizeUnit} from "./AngularSize";
+import {AngularSize, AngularSizeUnit, FACTOR_TO_ARCSEC} from "./AngularSize";
 
 describe("AngularSize", () => {
     describe("convertValueFromArcsec", () => {
@@ -60,6 +60,15 @@ describe("AngularSize", () => {
             const size = AngularSize.convertFromArcsec(NaN);
             expect(size?.value).toBeNaN();
             expect(size?.unit).toEqual(AngularSizeUnit.ARCSEC);
+        });
+    });
+
+    describe("factor to arcsec", () => {
+        test("has correct factors", () => {
+            expect(FACTOR_TO_ARCSEC.get(AngularSizeUnit.DEG)).toEqual(3600);
+            expect(FACTOR_TO_ARCSEC.get(AngularSizeUnit.ARCMIN)).toEqual(60);
+            expect(FACTOR_TO_ARCSEC.get(AngularSizeUnit.ARCSEC)).toEqual(1);
+            expect(FACTOR_TO_ARCSEC.get(AngularSizeUnit.MILLIARCSEC)).toEqual(0.001);
         });
     });
 });

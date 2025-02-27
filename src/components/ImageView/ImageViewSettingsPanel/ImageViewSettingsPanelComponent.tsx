@@ -123,6 +123,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
 
     public render() {
         const appStore = AppStore.Instance;
+        const frame = appStore.channelMapStore.channelMapEnabled && appStore.channelMapStore.masterFrame ? appStore.channelMapStore.masterFrame : appStore.activeFrame;
         const overlayStore = appStore.overlayStore;
         const global = overlayStore.global;
         const title = overlayStore.title;
@@ -143,7 +144,6 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const disabledIfExterior = !interior && "Does not apply to exterior labelling.";
         const disabledIfNoWcs = !global.validWcs && "This image has no valid WCS data.";
 
-        const frame = appStore.activeFrame;
         const isPVImage = frame?.isPVImage;
 
         const getInfoString = (value: number, valueWcs: string) => {
@@ -774,7 +774,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <SafeNumericInput
                         placeholder="Position (X)"
                         min={0}
-                        max={overlayStore.renderWidth}
+                        max={AppStore.Instance.overlayStore.renderWidth}
                         value={beamSettings.shiftX}
                         stepSize={5}
                         minorStepSize={1}
@@ -786,7 +786,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <SafeNumericInput
                         placeholder="Position (Y)"
                         min={0}
-                        max={overlayStore.renderHeight}
+                        max={AppStore.Instance.overlayStore.renderHeight}
                         value={beamSettings.shiftY}
                         stepSize={5}
                         minorStepSize={1}

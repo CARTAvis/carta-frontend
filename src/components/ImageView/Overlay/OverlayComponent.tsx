@@ -13,8 +13,14 @@ export class OverlayComponentProps {
     overlaySettings: OverlayStore;
     image: ImageItem;
     docked: boolean;
+    top?: number;
+    left?: number;
     onClicked?: (cursorInfo: CursorInfo) => void;
     onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
+    width?: number;
+    height?: number;
+    type?: "channel-map-inner" | "channel-map-outer";
+    unScaled?: boolean;
 }
 
 @observer
@@ -22,16 +28,14 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     canvas: HTMLCanvasElement;
 
     componentDidMount() {
-        if (this.canvas) {
-            if (PreferenceStore.Instance.limitOverlayRedraw) {
-                this.throttledRenderCanvas();
-            } else {
-                requestAnimationFrame(this.renderCanvas);
-            }
-        }
+        this.updateImage();
     }
 
     componentDidUpdate() {
+        this.updateImage();
+    }
+
+    updateImage() {
         AppStore.Instance.resetImageRatio();
         if (PreferenceStore.Instance.limitOverlayRedraw) {
             this.throttledRenderCanvas();
@@ -43,8 +47,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     updateImageDimensions() {
         if (this.canvas) {
             const frame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image.store?.baseFrame : this.props.image?.store;
-            this.canvas.width = (frame?.isPreview ? frame?.previewViewWidth : this.props.overlaySettings.viewWidth) * AppStore.Instance.pixelRatio;
-            this.canvas.height = (frame?.isPreview ? frame?.previewViewHeight : this.props.overlaySettings.viewHeight) * AppStore.Instance.pixelRatio;
+            this.canvas.width = (this.props.width ?? (frame?.isPreview ? frame?.previewViewWidth : this.props.overlaySettings.viewWidth)) * devicePixelRatio * AppStore.Instance.imageRatio;
+            this.canvas.height = (this.props.height ?? (frame?.isPreview ? frame?.previewViewHeight : this.props.overlaySettings.viewHeight)) * devicePixelRatio * AppStore.Instance.imageRatio;
         }
     }
 
@@ -52,10 +56,21 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const settings = this.props.overlaySettings;
         const frame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image.store?.baseFrame : this.props.image?.store;
         const appStore = AppStore.Instance;
+        const padding = this.props.type === "channel-map-inner" ? settings.channelMapInnerPadding("corner") : settings.padding;
 
         const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoShifted : frame.wcsInfo;
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
-        const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+        const frameView = this.props.unScaled
+            ? {
+                  xMin: padding.left * appStore.pixelRatio,
+                  xMax: (this.props.width ?? this.props.overlaySettings.viewWidth) * appStore.pixelRatio - padding.right * appStore.pixelRatio,
+                  yMin: (frame.aspectRatio ?? 1) * padding.bottom * appStore.pixelRatio,
+                  yMax: (frame.aspectRatio ?? 1) * (this.props.height ?? this.props.overlaySettings.viewHeight) * appStore.pixelRatio - padding.top * appStore.pixelRatio,
+                  mip: 1
+              }
+            : frame.spatialReference
+              ? frame.spatialReference.requiredFrameView
+              : frame.requiredFrameView;
         if (wcsInfo && frameView && this.canvas) {
             // Take aspect ratio scaling into account
             const tempWcsInfo = AST.copy(wcsInfo);
@@ -102,18 +117,26 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     frameView.xMax,
                     frameView.yMin / frame.aspectRatio,
                     frameView.yMax / frame.aspectRatio,
-                    (frame.isPreview ? frame?.previewViewWidth : this.props.overlaySettings.viewWidth) * appStore.pixelRatio,
-                    (frame.isPreview ? frame?.previewViewHeight : this.props.overlaySettings.viewHeight) * appStore.pixelRatio,
-                    settings.padding.left * appStore.pixelRatio,
-                    settings.padding.right * appStore.pixelRatio,
-                    settings.padding.top * appStore.pixelRatio,
-                    settings.padding.bottom * appStore.pixelRatio,
+                    (this.props.width ?? (frame.isPreview ? frame?.previewViewWidth : this.props.overlaySettings.viewWidth)) * appStore.pixelRatio,
+                    (this.props.height ?? (frame.isPreview ? frame?.previewViewHeight : this.props.overlaySettings.viewHeight)) * appStore.pixelRatio,
+                    padding.left * appStore.pixelRatio,
+                    padding.right * appStore.pixelRatio,
+                    padding.top * appStore.pixelRatio,
+                    padding.bottom * appStore.pixelRatio,
                     settings.labels.raDecReference ? settings.global.explicitSystem : "",
                     styleString
                 );
             };
 
-            let currentStyleString = settings.styleString(frame);
+            let currentStyleString;
+
+            if (this.props.type === "channel-map-inner") {
+                currentStyleString = settings.channelMapInnerStyleString(frame);
+            } else if (this.props.type === "channel-map-outer") {
+                currentStyleString = settings.channelMapOuterStyleString(frame);
+            } else {
+                currentStyleString = settings.styleString(frame);
+            }
 
             // Override the AST tolerance during motion
             if (frame.moving) {
@@ -161,9 +184,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const refFrame = frame.spatialReference ?? frame;
         // changing the frame view, padding or width/height triggers a re-render
 
-        const w = frame?.isPreview ? frame?.previewViewWidth : this.props.overlaySettings.viewWidth;
-        const h = frame?.isPreview ? frame?.previewViewHeight : this.props.overlaySettings.viewHeight;
-
+        const w = this.props.width ?? (frame.isPreview ? frame?.previewViewWidth : this.props.overlaySettings.viewWidth);
+        const h = this.props.height ?? (frame.isPreview ? frame?.previewViewHeight : this.props.overlaySettings.viewHeight);
         // Dummy variables for triggering re-render
         /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
         const styleString = this.props.overlaySettings.styleString;
@@ -190,6 +212,11 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const axesStyleString = this.props.overlaySettings.axes.styleString;
         const numbersStyleString = this.props.overlaySettings.numbers.styleString;
         const labelsStyleString = this.props.overlaySettings.labels.styleString;
+        const channelMapStartChannel = AppStore.Instance.channelMapStore.startChannel;
+        const channelMapNumColumns = AppStore.Instance.channelMapStore.numColumns;
+        const channelMapNumRows = AppStore.Instance.channelMapStore.numRows;
+        const channelMapMasterFrame = AppStore.Instance.channelMapStore.masterFrame;
+        const channelMapChannelNum = AppStore.Instance.channelMapStore.numChannels;
         const offsetCoord = frame.isOffsetCoord;
         const offsetWcs = frame.wcsInfoShifted;
 
@@ -197,7 +224,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             const requiredChannel = frame.requiredChannel;
         }
         /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
-
         // Trigger switching AST overlay axis for PV image
         const spectralAxisSetting =
             `${frame.spectralType ? `System(${frame.spectral})=${frame.spectralType},` : ""}` +
@@ -205,9 +231,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             `${frame.spectralSystem ? `StdOfRest=${frame.spectralSystem},` : ""}` +
             `${frame.restFreqStore.restFreqInHz ? `RestFreq=${frame.restFreqStore.restFreqInHz} Hz,` : ""}` +
             `${frame.spectralType && frame.spectralSystem ? `Label(${frame.spectral})=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`;
-
         const dirAxesSetting = `${frame.dirX > 2 || frame.dirXLabel === "" ? "" : `Label(${frame.dirX})=${frame.dirXLabel},`} ${frame.dirY > 2 || frame.dirYLabel === "" ? "" : `Label(${frame.dirY})=${frame.dirYLabel},`}`;
-
         if (frame.isPVImage && frame.spectralAxis?.valid) {
             AST.set(frame.wcsInfo, spectralAxisSetting);
         } else if (frame.isSwappedZ && frame.spectralAxis?.valid) {
@@ -222,6 +246,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         }
 
         const className = classNames("overlay-canvas", {docked: this.props.docked});
-        return <canvas className={className} style={{width: w, height: h}} id="overlay-canvas" ref={this.getRef} />;
+
+        return <canvas className={className} style={{top: this.props.top || 0, left: this.props.left || 0, width: w, height: h}} id="overlay-canvas" ref={this.getRef} key={`overlay-canvas-${frame.frameInfo.fileId}`} />;
     }
 }

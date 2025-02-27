@@ -10,10 +10,10 @@ import {
     FileBrowserDialogComponent,
     FileInfoDialogComponent,
     FittingDialogComponent,
+    LayoutDialogComponent,
     OnlineDataQueryDialogComponent,
     PreferenceDialogComponent,
     RegionDialogComponent,
-    SaveLayoutDialogComponent,
     ShareWorkspaceDialogComponent,
     StokesDialogComponent,
     TelemetryDialogComponent,
@@ -34,7 +34,7 @@ export class UIControllerComponent extends React.Component {
                 <FileInfoDialogComponent />
                 <FileBrowserDialogComponent />
                 <PreferenceDialogComponent />
-                <SaveLayoutDialogComponent />
+                <LayoutDialogComponent />
                 <WorkspaceDialogComponent />
                 <ShareWorkspaceDialogComponent />
                 <CodeSnippetDialogComponent />
