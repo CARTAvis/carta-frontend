@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.0-beta.1c]
+
+### Fixed
+* Fixed failed to launch Carta with certain navigator.hardwareConcurrency ([#2478](https://github.com/CARTAvis/carta-frontend/pull/2478)).
+
 ## [5.0.0-beta.1b]
 
 ### Fixed
