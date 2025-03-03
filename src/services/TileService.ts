@@ -167,7 +167,7 @@ export class TileService {
         this.tileStream = new Subject<TileStreamDetails>();
         this.backendService.rasterTileStream.subscribe(this.handleStreamedTiles);
         this.backendService.rasterSyncStream.subscribe(this.handleStreamSync);
-        this.workers = new Array<Worker>(clamp((navigator.hardwareConcurrency || 6) * MAX_TILE_WORKERS_PER_CORE, MIN_TILE_WORKERS, MAX_TILE_WORKERS));
+        this.workers = new Array<Worker>(clamp(Math.ceil((navigator.hardwareConcurrency || 6) * MAX_TILE_WORKERS_PER_CORE), MIN_TILE_WORKERS, MAX_TILE_WORKERS));
         this.workersReady = new Array<boolean>(this.workers.length);
 
         for (let i = 0; i < this.workers.length; i++) {
