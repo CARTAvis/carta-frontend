@@ -718,6 +718,7 @@ export class WidgetsStore {
         layout.registerComponent("histogram", HistogramComponent);
         // add 3d render
         layout.registerComponent("render-3d", Render3DComponent);
+        layout.registerComponent("render-3d-viewer", Render3DViewerComponent);
         layout.registerComponent("render-config", RenderConfigComponent);
         layout.registerComponent("region-list", RegionListComponent);
         layout.registerComponent("layer-list", LayerListComponent);
@@ -902,6 +903,11 @@ export class WidgetsStore {
             widgetConfig.parentType = PvPreviewComponent.WIDGET_CONFIG.parentType;
         }
 
+        if (type === Render3DViewerComponent.WIDGET_CONFIG.type) {
+            widgetConfig.parentId = itemConfig.props.id;
+            widgetConfig.parentType = Render3DViewerComponent.WIDGET_CONFIG.parentType;
+        }
+
         const catalogPlotWidgetStore = this.catalogPlotWidgets.get(id);
         if (catalogPlotWidgetStore) {
             widgetConfig.helpType = catalogPlotWidgetStore.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT : HelpType.CATALOG_SCATTER_PLOT;
@@ -1036,7 +1042,7 @@ export class WidgetsStore {
             const isCatalogTable = config.component === CatalogOverlayComponent.WIDGET_CONFIG.type;
             const isCatalogPlot = config.component === CatalogPlotComponent.WIDGET_CONFIG.type;
             const isPvPreview = config.component === PvPreviewComponent.WIDGET_CONFIG.type;
-            const isRender3D = config.component === Render3DComponent.WIDGET_CONFIG.type;
+            const isRender3DViewer = config.component === Render3DViewerComponent.WIDGET_CONFIG.type;
             // Clean up removed widget's store (ignoring items that have been floated)
             const id = config.id as string;
             if (config.component !== "floated" && !isCatalogTable && !isCatalogPlot) {
@@ -1062,7 +1068,7 @@ export class WidgetsStore {
             }
 
             // remove render3d frane for current render3d widget
-            if (isRender3D) {
+            if (isRender3DViewer) {
                 const regexPattern = /render3d-viewer-(\d+)/;
                 const render3DId = id.match(regexPattern);
                 this.render3DWidgets.get(render3DId?.[0] ?? "")?.removeRender3DViewer(parseInt(id.split("-")[2]));

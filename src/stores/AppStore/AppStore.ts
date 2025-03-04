@@ -1089,9 +1089,6 @@ export class AppStore {
             this.widgetsStore.pvGeneratorWidgets.forEach((value, key) => {
                 this.widgetsStore.removeFloatingWidget(key);
             });
-            this.render3DFrames.forEach((render3DFrameStore, render3DFrameId) => {
-                this.removeRender3DViewer(render3DFrameId);
-            });
             this.widgetsStore.render3DWidgets.forEach((value, key) => {
                 this.widgetsStore.removeFloatingWidget(key);
             });
@@ -1123,7 +1120,7 @@ export class AppStore {
     };
 
     /**
-     * Closes a Render3D frame.
+     * Closes a Render3D viewer.
      * @param render3DId - The file id of the image cube from which the Render3D was created.
      */
     @action removeRender3DViewer = (render3DId: number) => {
@@ -1572,7 +1569,7 @@ export class AppStore {
             if (!ack.cancel && ack.success) {
                 const render3DWidgetStore = WidgetsStore.Instance.render3DWidgets.get(id);
 
-                // // see if the floating render3D widget is already created. change frame for render3DViewer
+                // see if the floating render3D widget is already created. change frame for render3DViewer
                 if (!render3DWidgetStore.render3DViewer) {
                     render3DWidgetStore.setRender3DViewer(id)
                     WidgetsStore.Instance.createFloatingSettingsWidget("3D Rendering Viewer", id, Render3DComponent.WIDGET_CONFIG.type);
@@ -1592,6 +1589,8 @@ export class AppStore {
         }
     }
 
+    // missing cancelRequestingRender3D
+
     @flow.bound *requestPreviewPV(message: CARTA.IPvRequest, frame: FrameStore, id: string) {
         if (!message || !frame) {
             return;
@@ -1601,7 +1600,6 @@ export class AppStore {
             const ack = yield this.backendService.requestPV(message);
             this.restartTaskProgress();
             if (!ack.cancel && ack.previewData) {
-                console.log("ID: ", id);
                 const pvGeneratorWidgetStore = WidgetsStore.Instance.pvGeneratorWidgets.get(id);
                 if (pvGeneratorWidgetStore.previewFrame) {
                     pvGeneratorWidgetStore.previewFrame.updatePreviewDataGenerator = pvGeneratorWidgetStore.previewFrame.updatePreviewData(ack.previewData);
@@ -2305,13 +2303,16 @@ export class AppStore {
         if (!Render3DData.width && !Render3DData.height && !Render3DData.depth && !Render3DData.imageData) {
             return;
         }
-        const previewFrame = this.widgetsStore.pvGeneratorWidgets.get(PvGeneratorComponent.WIDGET_CONFIG.id + "-" + Render3DData.viewerId)?.previewFrame;
+        
+        // store in the framestore under a seapate substore. reference to region etc.
 
-        if (previewFrame) {
-            // previewFrame.updatePreviewDataGenerator = previewFrame.updatePreviewData(Render3DData);
-            // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
-            previewFrame.updatePreviewDataGenerator.next();
-        }
+        // const previewFrame = this.widgetsStore.pvGeneratorWidgets.get(PvGeneratorComponent.WIDGET_CONFIG.id + "-" + Render3DData.viewerId)?.previewFrame;
+
+        // if (previewFrame) {
+        //     // previewFrame.updatePreviewDataGenerator = previewFrame.updatePreviewData(Render3DData);
+        //     // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
+        //     previewFrame.updatePreviewDataGenerator.next();
+        // }
     };
 
     handleRegionHistogramStream = (regionHistogramData: CARTA.RegionHistogramData) => {

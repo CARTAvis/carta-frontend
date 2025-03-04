@@ -129,6 +129,8 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 return <PvPreviewComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id} />;
             case Render3DComponent.WIDGET_CONFIG.type:
                 return <Render3DComponent id={widgetConfig.id} docked={false} />;
+            case Render3DViewerComponent.WIDGET_CONFIG.type:
+                return <Render3DViewerComponent id={widgetConfig.id} docked={false} />;
             default:
                 return <PlaceholderComponent id={widgetConfig.id} docked={false} label={widgetConfig.title} />;
         }

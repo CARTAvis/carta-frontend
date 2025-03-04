@@ -219,7 +219,10 @@ export class Render3DComponent extends React.Component<WidgetProps> {
         this.levels = levels.slice();
     };
 
-    private onVisualizeButtonClicked = () => {
+    private onVisualizeIsoSurfaceButtonClicked = () => {
+        this.widgetStore.requestRender3D(this.props.id);
+    };
+    private onVisualizeVolumeButtonClicked = () => {
         this.widgetStore.requestRender3D(this.props.id);
     };
 
@@ -435,11 +438,22 @@ export class Render3DComponent extends React.Component<WidgetProps> {
                     <Tab id={IsoSurfaceTabs.Configuration} title="Configuration" panel={isoSurfaceConfigurationPanel} panelClassName="isosurfaces-configuration-panel" data-testid="isosurfaces-configuration-tab-title" />
                     <Tab id={IsoSurfaceTabs.Styling} title="Styling" panel={isoSurfaceStylingPanel} panelClassName="isosurfaces-styling-panel" data-testid="isosurfaces-styling-tab-title" />
                 </Tabs>
+                <div className="generate-button">
+                    <Tooltip disabled={isAbleToVisualize} content={hint} position={Position.BOTTOM}>
+                        <AnchorButton intent="success" disabled={!isAbleToVisualize} text="Visualize" onClick={this.onVisualizeIsoSurfaceButtonClicked} />
+                    </Tooltip>
+                </div>
             </div>
         );
 
         const volumePanel = (
-            <div>volume</div>
+            <div>volume
+                <div className="generate-button">
+                    <Tooltip disabled={true} content={hint} position={Position.BOTTOM}>
+                        <AnchorButton intent="success" disabled={!true} text="Visualize" onClick={this.onVisualizeVolumeButtonClicked} />
+                    </Tooltip>
+                </div>
+            </div>
         );
 
         return (
@@ -469,7 +483,7 @@ export class Render3DComponent extends React.Component<WidgetProps> {
                                     stepSize={1}
                                     value={this.widgetStore.xyRebin}
                                     onValueChange={value => this.widgetStore.setXYRebin(value)}
-                                    data-testid="render3d-rebin-xy-input"
+                                    data-testid="render-3d-rebin-xy-input"
                                 />
                             </FormGroup>
                             <FormGroup inline={true} label={"Z"}>
@@ -479,21 +493,16 @@ export class Render3DComponent extends React.Component<WidgetProps> {
                                     stepSize={1}
                                     value={this.widgetStore.zRebin}
                                     onValueChange={value => this.widgetStore.setZRebin(value)}
-                                    data-testid="render3d-rebin-z-input"
+                                    data-testid="render-3d-rebin-z-input"
                                 />
                             </FormGroup>
                         </div>
                     </FormGroup>
                 <Divider />
-                <Tabs defaultSelectedTabId={Render3DTabs.IsoSurfaces} renderActiveTabPanelOnly={false}>
-                        <Tab id={Render3DTabs.IsoSurfaces} title="Iso-surfaces" panel={isoSurfacesPanel} panelClassName="render-3d-isosurfaces-panel" data-testid="render-3d-isosurfaces-tab-title" />
+                <Tabs defaultSelectedTabId={Render3DTabs.Volume} renderActiveTabPanelOnly={false}>
                         <Tab id={Render3DTabs.Volume} title="Volume rendering" panel={volumePanel} panelClassName="render-3d-volume-panel" data-testid="render-3d-volume-tab-title" />
+                        <Tab id={Render3DTabs.IsoSurfaces} title="Iso-surfaces" panel={isoSurfacesPanel} panelClassName="render-3d-isosurfaces-panel" data-testid="render-3d-isosurfaces-tab-title" />
                     </Tabs>
-                </div>
-                <div className="generate-button">
-                    <Tooltip disabled={isAbleToVisualize} content={hint} position={Position.BOTTOM}>
-                        <AnchorButton intent="success" disabled={!isAbleToVisualize} text="Visualize" onClick={this.onVisualizeButtonClicked} />
-                    </Tooltip>
                 </div>
             </div>
         );

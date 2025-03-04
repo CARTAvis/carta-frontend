@@ -5,7 +5,7 @@ import classNames from "classnames";
 import * as GoldenLayout from "golden-layout";
 import {observer} from "mobx-react";
 
-import {PlaceholderComponent, PvPreviewComponent} from "components";
+import {PlaceholderComponent, PvPreviewComponent, Render3DViewerComponent} from "components";
 import {AppStore, CatalogStore, HelpStore, LayoutStore, WidgetConfig} from "stores";
 
 import "./FloatingWidgetComponent.scss";
@@ -59,7 +59,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 title: this.props.widgetConfig.title,
                 id: this.props.widgetConfig.id,
                 isClosable: this.props.widgetConfig.isCloseable,
-                props: {id: this.props.widgetConfig.type === PvPreviewComponent.WIDGET_CONFIG.type ? this.props.widgetConfig.parentId : this.props.widgetConfig.id, docked: true}
+                props: {id: this.props.widgetConfig.type === PvPreviewComponent.WIDGET_CONFIG.type || this.props.widgetConfig.type === Render3DViewerComponent.WIDGET_CONFIG.type ? this.props.widgetConfig.parentId : this.props.widgetConfig.id, docked: true}
             };
 
             if (this.props.widgetConfig.type === PlaceholderComponent.WIDGET_CONFIG.type) {
