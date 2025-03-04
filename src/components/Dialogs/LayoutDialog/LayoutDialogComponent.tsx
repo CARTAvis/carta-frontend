@@ -1,5 +1,5 @@
-import * as React from "react";
 import type {CSSProperties} from "react";
+import * as React from "react";
 import {AnchorButton, ButtonGroup, Classes, Collapse, type DialogProps, FormGroup, HTMLSelect, HTMLTable, InputGroup, Intent, Position, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, computed, flow, makeObservable, observable} from "mobx";

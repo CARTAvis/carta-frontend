@@ -1,9 +1,9 @@
 import * as React from "react";
 import {computed} from "mobx";
 import {observer} from "mobx-react";
+import type {LineKey} from "models";
 
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScrollShadow} from "components/Shared";
-import type {LineKey} from "models";
 import {type DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {RenderConfigWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";

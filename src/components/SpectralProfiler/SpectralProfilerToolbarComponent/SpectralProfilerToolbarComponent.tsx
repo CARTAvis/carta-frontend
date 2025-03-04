@@ -3,10 +3,10 @@ import {AnchorButton, ButtonGroup, Checkbox, Classes, Intent, Menu, MenuItem, Po
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
+import type {LineOption} from "models";
 
 import {SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
 import {CustomIcon} from "icons/CustomIcons";
-import type {LineOption} from "models";
 import {AppStore} from "stores";
 import {MultiProfileCategory, SpectralProfileSelectionStore, SpectralProfileWidgetStore} from "stores/Widgets";
 

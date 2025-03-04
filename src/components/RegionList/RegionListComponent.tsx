@@ -1,5 +1,5 @@
-import * as React from "react";
 import type {CSSProperties} from "react";
+import * as React from "react";
 import {FixedSizeList, type ListOnItemsRenderedProps} from "react-window";
 import {AnchorButton, ButtonGroup, Classes, Icon, NonIdealState, Position, Spinner, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";

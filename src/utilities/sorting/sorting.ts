@@ -1,5 +1,4 @@
 import {CARTA} from "carta-protobuf";
-
 import type {ControlHeader} from "stores";
 import type {ProcessedColumnData} from "utilities";
 

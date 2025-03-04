@@ -1,9 +1,9 @@
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
+import type {ProcessedColumnData} from "utilities";
 
 import {CatalogSystemType} from "models";
 import {AppStore, NumberFormatType, SystemType} from "stores";
-import type {ProcessedColumnData} from "utilities";
 
 enum DataType {
     CHAR = "CHAR",

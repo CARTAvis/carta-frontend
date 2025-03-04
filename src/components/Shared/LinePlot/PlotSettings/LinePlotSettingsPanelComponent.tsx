@@ -1,9 +1,9 @@
 import * as React from "react";
 import {Button, FormGroup, HTMLSelect, Switch} from "@blueprintjs/core";
 import {observer} from "mobx-react";
+import type {LineKey, LineOption} from "models";
 
 import {AutoColorPickerComponent, PlotType, PlotTypeSelectorComponent, SafeNumericInput} from "components/Shared";
-import type {LineKey, LineOption} from "models";
 import {DEFAULT_COLOR, SWATCH_COLORS} from "utilities";
 
 import "./LinePlotSettingsPanelComponent.scss";

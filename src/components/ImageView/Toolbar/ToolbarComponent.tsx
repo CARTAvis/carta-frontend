@@ -1,5 +1,5 @@
-import * as React from "react";
 import type {CSSProperties} from "react";
+import * as React from "react";
 import {AnchorButton, Button, ButtonGroup, Classes, Collapse, FormGroup, type IconName, Menu, MenuDivider, MenuItem, Popover, PopoverInteractionKind, PopoverPosition, Position, Switch, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";

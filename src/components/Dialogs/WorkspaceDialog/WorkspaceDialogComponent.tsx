@@ -4,10 +4,10 @@ import {AnchorButton, Classes, type DialogProps, InputGroup, Intent, NonIdealSta
 import {Cell, Column, type Region, RenderMode, SelectionModes, Table2, TableLoadingOption} from "@blueprintjs/table";
 import classNames from "classnames";
 import {observer} from "mobx-react";
+import type {WorkspaceListItem} from "models";
 import moment from "moment/moment";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import type {WorkspaceListItem} from "models";
 import {AlertStore, AppStore, DialogId, HelpType} from "stores";
 
 import {AppToaster, ErrorToast, SuccessToast} from "../../Shared";

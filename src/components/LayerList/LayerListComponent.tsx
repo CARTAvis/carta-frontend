@@ -1,5 +1,5 @@
-import * as React from "react";
 import type {CSSProperties} from "react";
+import * as React from "react";
 import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, ColumnHeaderCell, type MenuContext, RowHeaderCell, SelectionModes, Table2} from "@blueprintjs/table";
 import classNames from "classnames";

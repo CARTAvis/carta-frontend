@@ -1,9 +1,9 @@
 import type {RGBColor} from "react-color";
 import {CARTA} from "carta-protobuf";
 import {action, makeObservable, observable} from "mobx";
+import type {WorkspaceContourConfig} from "models";
 import tinycolor from "tinycolor2";
 
-import type {WorkspaceContourConfig} from "models";
 import {PreferenceStore} from "stores";
 
 export enum ContourGeneratorType {

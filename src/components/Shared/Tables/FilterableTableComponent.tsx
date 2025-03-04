@@ -6,12 +6,12 @@ import type {RowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
+import type {ProcessedColumnData} from "utilities";
 
 import {CatalogType} from "models";
 import {CatalogApiService} from "services";
 import {AppStore, type ControlHeader} from "stores";
 import {SpectralLineHeaders} from "stores/Widgets";
-import type {ProcessedColumnData} from "utilities";
 
 import "./FilterableTableComponent.scss";
 

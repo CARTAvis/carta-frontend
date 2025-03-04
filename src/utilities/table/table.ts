@@ -1,6 +1,6 @@
 import {CARTA} from "carta-protobuf";
-
 import type {ControlHeader} from "stores";
+
 import {type ColumnArray, getComparisonOperatorAndValue, type ProcessedColumnData} from "utilities";
 
 export function getDataTypeString(dataType: CARTA.ColumnType | null | undefined): string {

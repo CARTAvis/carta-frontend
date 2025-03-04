@@ -2,6 +2,7 @@ import * as React from "react";
 import {Tab, Tabs} from "@blueprintjs/core";
 import {autorun, computed} from "mobx";
 import {observer} from "mobx-react";
+import type {LineKey} from "models";
 
 import {
     LinePlotSettingsPanelComponent,
@@ -12,7 +13,6 @@ import {
     SmoothingSettingsComponent,
     SpectralSettingsComponent
 } from "components/Shared";
-import type {LineKey} from "models";
 import {AppStore, type DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {StokesAnalysisWidgetStore} from "stores/Widgets";
 

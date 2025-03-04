@@ -1,8 +1,8 @@
 import * as React from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
-
 import type {ImageItem} from "models";
+
 import {AppStore, OverlayStore} from "stores";
 import {getColorForTheme} from "utilities";
 
