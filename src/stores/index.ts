@@ -19,6 +19,7 @@ export * from "./OverlayStore/OverlayStore";
 export * from "./PreferenceStore/PreferenceStore";
 export * from "./ProfileFittingStore/ProfileFittingStore";
 export * from "./ProfileSmoothingStore/ProfileSmoothingStore";
+export * from "./Render3DDataStore/Render3DDataStore";
 export * from "./Snippet/SnippetStore";
 export * from "./SpatialProfileStore/SpatialProfileStore";
 export * from "./SpectralProfileStore/SpectralProfileStore";

@@ -60,7 +60,7 @@ function Box(props: JSX.IntrinsicElements['mesh']) {
   )
 }
 
-export function App() {
+export function Volume() {
   return (
     <Canvas>
       <ambientLight intensity={0.5} />
@@ -104,14 +104,15 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
             it works
             <ResizeDetector onResize={this.onResize} throttleTime={33}>
                 <div className="render-3d-canvas">
-                    <Canvas style={{ width: "100%", height: "100%" }}>
+                  <Volume />
+                    {/* <Canvas style={{ width: "100%", height: "100%" }}>
                         <mesh>
                             <boxGeometry args={[2, 2, 2]} />
                             <meshPhongMaterial />
                         </mesh>
                         <ambientLight intensity={0.1} />
                         <directionalLight position={[0, 0, 5]} color="red" />
-                    </Canvas>
+                    </Canvas> */}
                 </div>
             </ResizeDetector>
           </div>
