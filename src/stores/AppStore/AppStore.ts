@@ -56,6 +56,7 @@ import {
     PreferenceKeys,
     PreferenceStore,
     RegionFileType,
+    Render3DDataStore,
     SnippetStore,
     SpatialProfileStore,
     SpectralProfileStore,
@@ -135,15 +136,17 @@ export class AppStore {
     @observable activeImage: ImageItem = null;
     @observable hoveredFrame: FrameStore = null;
     @observable contourDataSource: FrameStore = null;
-    // render3d
+    // // render3d
     @observable render3DDataSource: FrameStore = null;
+
     @observable syncContourToFrame = true;
     @observable syncFrameToContour = true;
     @observable activeWorkspace: Workspace;
 
-    // Profiles and region data
+    // Profiles, 3D rendering and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
     @observable spectralProfiles: Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>;
+    @observable render3D: Map<FileId, ObservableMap<RegionId, Render3DDataStore>>;
     @observable regionStats: Map<number, ObservableMap<number, ObservableMap<number, CARTA.RegionStatsData>>>;
     @observable regionHistograms: Map<number, ObservableMap<number, ObservableMap<number, CARTA.IRegionHistogramData>>>;
 
@@ -1973,6 +1976,7 @@ export class AppStore {
         this.cartaComputeReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>();
+        this.render3D = new Map<FileId, ObservableMap<RegionId, Render3DDataStore>>();
         this.regionStats = new Map<number, ObservableMap<number, ObservableMap<number, CARTA.RegionStatsData>>>();
         this.regionHistograms = new Map<number, ObservableMap<number, ObservableMap<number, CARTA.IRegionHistogramData>>>();
         this.pendingChannelHistograms = new Map<string, CARTA.IRegionHistogramData>();
@@ -2299,12 +2303,29 @@ export class AppStore {
         }
     };
 
-    handleRender3DStream = (Render3DData: CARTA.Render3DData) => {
-        if (!Render3DData.width && !Render3DData.height && !Render3DData.depth && !Render3DData.imageData) {
-            return;
+    handleRender3DStream = (render3DData: CARTA.Render3DData) => {
+        // combine SpectralProfileStream and PvPreviewStream
+
+        // update render3DDataStore with new slice
+
+        // check if render3dviewer with viewer_id is already created (and also teh render3DDataStore)
+        // if true, update the render3dviewer with the new data
+        // if false, create a new render3dviewer with the new data
+
+        const frame = this.frames.find(frame => frame.frameInfo.fileId === render3DData.fileId);
+        if (frame) {
+            let frameMap = this.render3D.get(render3DData.fileId);
+            if (!frameMap) {
+                frameMap = new ObservableMap<number, Render3DDataStore>();
+                this.render3D.set(render3DData.fileId, frameMap);
+            }
+            let render3DStore = frameMap.get(render3DData.regionId);
+            if (!render3DStore) {
+                render3DStore = new Render3DDataStore(render3DData.fileId, render3DData.regionId);
+                frameMap.set(render3DData.regionId, render3DStore);
+            }
+            render3DStore.updateRender3DData(render3DData);
         }
-        
-        // store in the framestore under a seapate substore. reference to region etc.
 
         // const previewFrame = this.widgetsStore.pvGeneratorWidgets.get(PvGeneratorComponent.WIDGET_CONFIG.id + "-" + Render3DData.viewerId)?.previewFrame;
 
