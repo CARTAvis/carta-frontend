@@ -159,7 +159,7 @@
                                     "^@?\\w"
                                 ],
                                 [
-                                    "^(components|icons|models|services|stores|utilities)(/.*|$)"
+                                    "^(components|enums|icons|models|services|stores|utilities)(/.*|$)"
                                 ],
                                 [
                                     "^\\u0000"

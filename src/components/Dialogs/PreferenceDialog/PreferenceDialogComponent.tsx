@@ -11,6 +11,7 @@ import tinycolor from "tinycolor2";
 
 import {DraggableDialogComponent, LayoutMappingComponent} from "components/Dialogs";
 import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, ScrollShadow, SuccessToast} from "components/Shared";
+import {MemoryUnit} from "enums";
 import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {TelemetryMode} from "services";
 import {AppStore, BeamType, DialogId, HelpType, PreferenceKeys, PreferenceStore} from "stores";
@@ -33,14 +34,6 @@ enum PreferenceDialogTabs {
     CATALOG,
     TELEMETRY,
     COMPATIBILITY
-}
-
-export enum MemoryUnit {
-    TB = "TB",
-    GB = "GB",
-    MB = "MB",
-    kB = "kB",
-    B = "B"
 }
 
 const PercentileSelect = Select<string>;
