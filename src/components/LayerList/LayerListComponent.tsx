@@ -7,7 +7,8 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector} from "components/Shared";
-import {type ImageItem, ImageType} from "models";
+import {ImageType} from "enums";
+import {type ImageItem} from "models";
 import {AppStore, type DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
 import {LayerListSettingsTabs} from "stores/Widgets";
 

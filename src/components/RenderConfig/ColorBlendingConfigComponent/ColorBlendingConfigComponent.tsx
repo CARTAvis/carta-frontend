@@ -4,7 +4,7 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {ColormapBlock, ColormapComponent, SafeNumericInput} from "components/Shared";
-import {ImageType} from "models";
+import {ImageType} from "enums";
 import {AppStore, ColorBlendingStore, type FrameStore} from "stores";
 
 import "./ColorBlendingConfigComponent.scss";

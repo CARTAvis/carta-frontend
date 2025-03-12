@@ -1,7 +1,7 @@
 import type {TabId} from "@blueprintjs/core";
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {ImageType} from "models";
+import {ImageType} from "enums";
 import {AppStore} from "stores";
 
 export enum LayerListSettingsTabs {

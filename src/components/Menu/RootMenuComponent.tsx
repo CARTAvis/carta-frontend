@@ -7,9 +7,9 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {AppToaster, ExportImageMenuComponent, SuccessToast} from "components/Shared";
-import {WorkspaceDialogMode} from "enums";
+import {ImageType, WorkspaceDialogMode} from "enums";
 import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
-import {CARTA_INFO, ImageType, type ImageViewItem, Snippet} from "models";
+import {CARTA_INFO, type ImageViewItem, Snippet} from "models";
 import {ApiService, ConnectionStatus} from "services";
 import {AppStore, BrowserMode, DialogId, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
 import {copyToClipboard, toFixed} from "utilities";

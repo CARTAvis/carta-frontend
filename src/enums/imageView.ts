@@ -9,3 +9,9 @@ export enum ImagePanelMode {
     Dynamic = "dynamic",
     Fixed = "fixed"
 }
+
+export enum ImageType {
+    FRAME,
+    COLOR_BLENDING,
+    PV_PREVIEW
+}

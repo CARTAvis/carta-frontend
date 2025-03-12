@@ -3,8 +3,8 @@ import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, ErrorToast} from "components/Shared";
-import {FileInfoType} from "enums";
-import {FileCtypeInfo, Freq, FrequencyUnit, ImageType, type LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
+import {FileInfoType, ImageType} from "enums";
+import {FileCtypeInfo, Freq, FrequencyUnit, type LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
 import {BackendService} from "services";
 import {AppStore, DialogId, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
 import {RegionStore} from "stores/Frame";

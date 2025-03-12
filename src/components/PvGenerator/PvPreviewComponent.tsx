@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 
 import {ImagePanelComponent} from "components/ImageView/ImagePanel/ImagePanelComponent";
 import {ResizeDetector} from "components/Shared";
-import {ImageType} from "models";
+import {ImageType} from "enums";
 import {type DefaultWidgetConfig, WidgetsStore} from "stores";
 
 import "./PvPreviewComponent.scss";

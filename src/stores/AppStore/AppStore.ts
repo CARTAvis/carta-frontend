@@ -11,7 +11,7 @@ import * as Semver from "semver";
 
 import {getImageViewCanvas, PvGeneratorComponent} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
-import {CatalogType, ImageViewLayer} from "enums";
+import {CatalogType, ImageType, ImageViewLayer} from "enums";
 import {
     CARTA_INFO,
     type CatalogInfo,
@@ -20,7 +20,6 @@ import {
     FloatingObjzIndexManager,
     type FrameView,
     type ImageItem,
-    ImageType,
     type ImageViewItem,
     Point2D,
     PresetLayout,

@@ -1,7 +1,8 @@
 import {throttle} from "lodash";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 
-import {type ImageItem, ImageType} from "models";
+import {ImageType} from "enums";
+import {type ImageItem} from "models";
 import {TileService} from "services";
 import {AppStore, FrameStore} from "stores";
 

@@ -4,7 +4,8 @@ import {observer} from "mobx-react";
 import {Subscription} from "rxjs";
 import tinycolor from "tinycolor2";
 
-import {type FrameView, type ImageItem, ImageType, Point2D, TileCoordinate} from "models";
+import {ImageType} from "enums";
+import {type FrameView, type ImageItem, Point2D, TileCoordinate} from "models";
 import {PreviewWebGLService, type RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService, TileWebGLService} from "services";
 import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";

@@ -1,4 +1,4 @@
-import {ImageType} from "models";
+import {ImageType} from "enums";
 import {FrameStore} from "stores";
 
 import {ImageViewConfigStore} from "./ImageViewConfigStore";

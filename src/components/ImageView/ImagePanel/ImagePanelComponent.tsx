@@ -3,8 +3,8 @@ import classNames from "classnames";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {CursorInfoVisibility, ImageViewLayer} from "enums";
-import {type CursorInfo, type ImageItem, ImageType, Zoom} from "models";
+import {CursorInfoVisibility, ImageType, ImageViewLayer} from "enums";
+import {type CursorInfo, type ImageItem, Zoom} from "models";
 import {AnimationMode, AppStore, ColorBlendingStore, type FrameStore} from "stores";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
