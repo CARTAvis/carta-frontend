@@ -4,8 +4,8 @@ import {action, autorun, computed, makeObservable, observable, override, reactio
 import tinycolor from "tinycolor2";
 
 import {SpectralProfilerSettingsTabs} from "components";
-import {PlotType, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
-import {LineSettings} from "enums";
+import {SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {LineSettings, PlotType} from "enums";
 import {FindIntensityUnitType, GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, type IntensityConfig, IntensityUnitType, IsIntensitySupported, type LineKey, Point2D, POLARIZATIONS, SpectralSystem} from "models";
 import {TelemetryAction, TelemetryService} from "services";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";

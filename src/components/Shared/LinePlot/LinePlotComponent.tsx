@@ -6,8 +6,8 @@ import Konva from "konva";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {PlotType, ResizeDetector} from "components/Shared";
-import {InteractionMode, LinePlotSelectingMode, TickType, ZoomMode} from "enums";
+import {ResizeDetector} from "components/Shared";
+import {InteractionMode, LinePlotSelectingMode, PlotType, TickType, ZoomMode} from "enums";
 import {Point2D} from "models";
 import {AppStore} from "stores";
 import {clamp, exportTsvFile, getTimestamp, toExponential} from "utilities";

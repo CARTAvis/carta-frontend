@@ -6,8 +6,8 @@ import * as _ from "lodash";
 import {autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
-import {type LineMarker, LinePlotComponent, LinePlotComponentProps, PlotType, SmoothingType} from "components/Shared";
-import {LinePlotSelectingMode, TickType} from "enums";
+import {type LineMarker, LinePlotComponent, LinePlotComponentProps, SmoothingType} from "components/Shared";
+import {LinePlotSelectingMode, PlotType, TickType} from "enums";
 import {Point2D, SpectralType} from "models";
 import {AnimatorStore, AppStore, type DefaultWidgetConfig, FittingContinuum, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {type MultiPlotData, SpectralProfileWidgetStore} from "stores/Widgets";

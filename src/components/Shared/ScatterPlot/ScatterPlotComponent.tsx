@@ -8,12 +8,10 @@ import {observer} from "mobx-react";
 import {ResizeDetector} from "components/Shared";
 import {MultiPlotProps, PlotContainerComponent} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
-import {InteractionMode, TickType, ZoomMode} from "enums";
+import {InteractionMode, PlotType, TickType, ZoomMode} from "enums";
 import {Point2D} from "models";
 import {AppStore} from "stores";
 import {clamp, exportTsvFile, getTimestamp, toExponential} from "utilities";
-
-import {PlotType} from "../PlotTypeSelector/PlotTypeSelectorComponent";
 
 import "./ScatterPlotComponent.scss";
 

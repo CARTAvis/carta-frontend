@@ -2,8 +2,7 @@ import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
-import {PlotType} from "components/Shared";
-import {HistogramSettingsTabs, LineSettings} from "enums";
+import {HistogramSettingsTabs, LineSettings, PlotType} from "enums";
 import {POLARIZATIONS, VALID_COORDINATES} from "models";
 import {closeTo, isAutoColor} from "utilities";
 

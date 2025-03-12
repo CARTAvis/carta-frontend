@@ -5,8 +5,7 @@ import {Chart, type ChartArea, type ChartDataset, type ChartOptions, Legend, Lin
 import * as _ from "lodash";
 import tinycolor from "tinycolor2";
 
-import {PlotType} from "components/Shared";
-import {TickType} from "enums";
+import {PlotType, TickType} from "enums";
 import {clamp, toExponential, toFixed} from "utilities";
 
 Chart.register(Legend, LinearScale, LineElement, LogarithmicScale, PointElement);

@@ -32,3 +32,9 @@ export enum LineSettings {
     POINT_SIZE_STEP_SIZE = 0.5,
     LINE_WIDTH_STEP_SIZE = 0.5
 }
+
+export enum PlotType {
+    STEPS = "Steps",
+    LINES = "Lines",
+    POINTS = "Points"
+}

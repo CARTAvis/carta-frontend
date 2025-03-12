@@ -6,8 +6,8 @@ import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, ResizeDetector, ScatterPlotComponent, ScatterPlotComponentProps, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
-import {TickType} from "enums";
+import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, ResizeDetector, ScatterPlotComponent, ScatterPlotComponentProps, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {PlotType, TickType} from "enums";
 import {Point2D, SpectralColorMap, SpectralType} from "models";
 import {AnimatorStore, AppStore, type DefaultWidgetConfig, HelpType, SpectralProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
