@@ -2,11 +2,10 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
-import {MemoryUnit} from "enums";
+import {CursorInfoVisibility, MemoryUnit} from "enums";
 import {
     CARTA_INFO,
     CompressionQuality,
-    CursorInfoVisibility,
     CursorPosition,
     Event,
     FileFilterMode,
