@@ -9,20 +9,11 @@ import {observer} from "mobx-react";
 
 import {ImageSaveComponent, RegionSelectComponent} from "components/Dialogs";
 import {SimpleTableComponent, SimpleTableComponentProps} from "components/Shared";
+import {FileInfoType} from "enums";
 import {AppStore} from "stores";
 import {exportTxtFile} from "utilities";
 
 import "./FileInfoComponent.scss";
-
-export enum FileInfoType {
-    IMAGE_FILE = "image-file",
-    IMAGE_HEADER = "image-header",
-    SAVE_IMAGE = "save-image",
-    REGION_FILE = "region-file",
-    SELECT_REGION = "select-region",
-    CATALOG_FILE = "catalog-file",
-    CATALOG_HEADER = "catalog-header"
-}
 
 @observer
 export class FileInfoComponent extends React.Component<{

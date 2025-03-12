@@ -7,8 +7,9 @@ import {action, computed, flow, makeObservable, observable, runInAction} from "m
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
-import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
+import {FileInfoComponent} from "components/FileInfo/FileInfoComponent";
 import {AppToaster, ErrorToast, SimpleTableComponentProps} from "components/Shared";
+import {FileInfoType} from "enums";
 import {ImageType} from "models";
 import {AppStore, BrowserMode, CatalogProfileStore, DialogId, FileBrowserStore, FileFilteringType, HelpType, type ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";

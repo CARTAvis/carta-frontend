@@ -4,7 +4,8 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
+import {FileInfoComponent} from "components/FileInfo/FileInfoComponent";
+import {FileInfoType} from "enums";
 import {AppStore, DialogId, HelpType} from "stores";
 
 import "./FileInfoDialogComponent.scss";
