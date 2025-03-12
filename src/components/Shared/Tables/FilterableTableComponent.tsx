@@ -8,7 +8,7 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 import type {ProcessedColumnData} from "utilities";
 
-import {CatalogType} from "models";
+import {CatalogType} from "enums";
 import {CatalogApiService} from "services";
 import {AppStore, type ControlHeader} from "stores";
 import {SpectralLineHeaders} from "stores/Widgets";

@@ -11,11 +11,10 @@ import * as Semver from "semver";
 
 import {getImageViewCanvas, PvGeneratorComponent} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
-import {ImageViewLayer} from "enums";
+import {CatalogType, ImageViewLayer} from "enums";
 import {
     CARTA_INFO,
     type CatalogInfo,
-    CatalogType,
     COMPUTED_POLARIZATIONS,
     type FileId,
     FloatingObjzIndexManager,

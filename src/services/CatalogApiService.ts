@@ -3,7 +3,8 @@ import {CARTA} from "carta-protobuf";
 import {action} from "mobx";
 
 import {AppToaster, ErrorToast, WarningToast} from "components/Shared";
-import {type CatalogInfo, CatalogType, WCSPoint2D} from "models";
+import {CatalogType} from "enums";
+import {type CatalogInfo, WCSPoint2D} from "models";
 import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, DialogId, RadiusUnits, SystemType} from "stores";
 import {CatalogApiProcessing, type ProcessedColumnData, type VizierResource} from "utilities";
 

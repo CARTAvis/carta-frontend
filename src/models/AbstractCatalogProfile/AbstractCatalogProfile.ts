@@ -2,6 +2,7 @@ import {type Region, Regions} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {action, computed, observable} from "mobx";
 
+import {CatalogOverlay, CatalogSystemType, CatalogType} from "enums";
 import {CatalogTextureType, CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, CatalogUpdateMode, type ControlHeader} from "stores";
 import {filterProcessedColumnData, getComparisonOperatorAndValue, getHasFilter, minMaxArray, type ProcessedColumnData, transformPoint, type TypedArray} from "utilities";
@@ -11,38 +12,6 @@ export interface CatalogInfo {
     fileInfo: CARTA.ICatalogFileInfo;
     dataSize: number;
     directory: string;
-}
-
-export enum CatalogType {
-    VIZIER,
-    SIMBAD,
-    FILE
-}
-
-export enum CatalogSystemType {
-    Ecliptic = "ECLIPTIC",
-    FK4 = "FK4",
-    FK5 = "FK5",
-    Galactic = "GALACTIC",
-    ICRS = "ICRS",
-    Pixel0 = "Pixel0",
-    Pixel1 = "Pixel1"
-}
-
-export enum CatalogOverlay {
-    X = "X",
-    Y = "Y",
-    NONE = "None",
-    RA = "RA",
-    DEC = "DEC",
-    GLAT = "GLAT",
-    GLON = "GLON",
-    ELON = "ELON",
-    ELAT = "ELAT",
-    X0 = "X0",
-    Y0 = "Y0",
-    X1 = "X1",
-    Y1 = "Y1"
 }
 
 export abstract class AbstractCatalogProfileStore {
