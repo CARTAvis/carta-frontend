@@ -47,3 +47,12 @@ export enum FrequencyUnit {
     KHZ = "kHz",
     HZ = "Hz"
 }
+
+export enum IntensityUnitType {
+    Kelvin,
+    JyBeam,
+    JySr,
+    JyArcsec2,
+    JyPixel,
+    Unsupported
+}

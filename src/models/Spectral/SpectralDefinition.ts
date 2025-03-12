@@ -1,4 +1,4 @@
-import {FrequencyUnit, SpectralSystem, SpectralType, SpectralUnit} from "enums";
+import {FrequencyUnit, IntensityUnitType, SpectralSystem, SpectralType, SpectralUnit} from "enums";
 
 export interface SpectralTypeSet {
     code: string;
@@ -108,15 +108,6 @@ export const SPECTRAL_COORDS_SUPPORTED = new Map<string, {type: SpectralType; un
     [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.ANGSTROM_SQUARE), {type: SpectralType.AWAV, unit: SpectralUnit.ANGSTROM_SQUARE}],
     ["Channel", {type: SpectralType.CHANNEL, unit: null}]
 ]);
-
-export enum IntensityUnitType {
-    Kelvin,
-    JyBeam,
-    JySr,
-    JyArcsec2,
-    JyPixel,
-    Unsupported
-}
 
 enum Jansky {
     MJy = "MJy",
