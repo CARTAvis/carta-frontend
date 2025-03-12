@@ -13,17 +13,11 @@ import {
     SmoothingSettingsComponent,
     SpectralSettingsComponent
 } from "components/Shared";
+import {StokesAnalysisSettingsTabs} from "enums";
 import {AppStore, type DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {StokesAnalysisWidgetStore} from "stores/Widgets";
 
 import "./StokesAnalysisSettingsPanelComponent.scss";
-
-export enum StokesAnalysisSettingsTabs {
-    CONVERSION,
-    LINE_PLOT_STYLING,
-    SCATTER_PLOT_STYLING,
-    SMOOTHING
-}
 
 @observer
 export class StokesAnalysisSettingsPanelComponent extends React.Component<WidgetProps> {

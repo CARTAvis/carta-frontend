@@ -3,8 +3,9 @@ import {AnchorButton, ButtonGroup, FormGroup, Switch, Tooltip} from "@blueprintj
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
-import {StokesAnalysisComponent, StokesAnalysisSettingsTabs} from "components";
+import {StokesAnalysisComponent} from "components";
 import {RegionSelectorComponent} from "components/Shared";
+import {StokesAnalysisSettingsTabs} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";

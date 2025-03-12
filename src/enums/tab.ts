@@ -16,3 +16,10 @@ export enum SpectralProfilerSettingsTabs {
     MOMENTS,
     FITTING
 }
+
+export enum StokesAnalysisSettingsTabs {
+    CONVERSION,
+    LINE_PLOT_STYLING,
+    SCATTER_PLOT_STYLING,
+    SMOOTHING
+}
