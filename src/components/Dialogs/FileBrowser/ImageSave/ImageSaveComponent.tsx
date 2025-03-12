@@ -5,8 +5,7 @@ import {action, autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
-import {ImageType} from "enums";
-import {FrequencyUnit, SpectralSystem} from "models";
+import {FrequencyUnit, ImageType, SpectralSystem} from "enums";
 import {AppStore, FileBrowserStore} from "stores";
 
 import "./ImageSaveComponent.scss";

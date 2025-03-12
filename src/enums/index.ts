@@ -5,6 +5,7 @@ export * from "./input";
 export * from "./plot";
 export * from "./polarization";
 export * from "./preference";
+export * from "./spectral";
 export * from "./tab";
 export * from "./unit";
 export * from "./workspace";

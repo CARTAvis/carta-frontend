@@ -3,8 +3,7 @@ import type {ChartArea} from "chart.js";
 import {action, computed, makeObservable, observable, override} from "mobx";
 import tinycolor from "tinycolor2";
 
-import {LineSettings, PlotType, ScatterSettings, StokesAnalysisSettingsTabs} from "enums";
-import {SpectralSystem} from "models";
+import {LineSettings, PlotType, ScatterSettings, SpectralSystem, StokesAnalysisSettingsTabs} from "enums";
 import {ProfileSmoothingStore} from "stores";
 import {getColorsForValues, isAutoColor} from "utilities";
 

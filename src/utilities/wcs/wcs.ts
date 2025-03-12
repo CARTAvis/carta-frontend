@@ -1,7 +1,8 @@
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 
-import {Point2D, SPECTRAL_DEFAULT_UNIT, SpectralType, WCSPoint2D} from "models";
+import {SpectralType} from "enums";
+import {Point2D, SPECTRAL_DEFAULT_UNIT, WCSPoint2D} from "models";
 import {NumberFormatType, OverlayStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {add2D, magDir2D, polygonPerimeter, rotate2D, scale2D, subtract2D, trimFitsComment} from "utilities";
