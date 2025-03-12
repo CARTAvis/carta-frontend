@@ -3,7 +3,7 @@ import {Classes, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {ImageViewLayer} from "components";
+import {ImageViewLayer} from "enums";
 import {AppStore, BrowserMode, DialogId} from "stores";
 import {RegionMode} from "stores/Frame";
 

@@ -9,8 +9,9 @@ import {action, autorun, computed, flow, makeObservable, observable, ObservableM
 import * as Path from "path-browserify";
 import * as Semver from "semver";
 
-import {getImageViewCanvas, ImageViewLayer, PvGeneratorComponent} from "components";
+import {getImageViewCanvas, PvGeneratorComponent} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
+import {ImageViewLayer} from "enums";
 import {
     CARTA_INFO,
     type CatalogInfo,

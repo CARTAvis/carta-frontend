@@ -9,8 +9,8 @@ import FuzzySearch from "fuzzy-search";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {ImageViewLayer} from "components";
 import {ClearableNumericInputComponent, FilterableTableComponent, FilterableTableComponentProps, ResizeDetector} from "components/Shared";
+import {ImageViewLayer} from "enums";
 import {AbstractCatalogProfileStore, CatalogOverlay, CatalogSystemType} from "models";
 import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, CatalogUpdateMode, type DefaultWidgetConfig, HelpType, PreferenceKeys, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
 import {RegionMode} from "stores/Frame";

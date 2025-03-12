@@ -14,12 +14,6 @@ import {ImagePanelComponent} from "./ImagePanel/ImagePanelComponent";
 
 import "./ImageViewComponent.scss";
 
-export enum ImageViewLayer {
-    RegionCreating = "regionCreating",
-    Catalog = "catalog",
-    RegionMoving = "regionMoving"
-}
-
 export function getImageViewCanvas(padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
     const appStore = AppStore.Instance;
     const config = appStore.imageViewConfigStore;

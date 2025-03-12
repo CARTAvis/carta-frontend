@@ -7,7 +7,7 @@ import * as _ from "lodash";
 import {action, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
-import {ImageViewLayer} from "components";
+import {ImageViewLayer} from "enums";
 import {type CursorInfo, Point2D, ZoomPoint} from "models";
 import {AppStore, DialogId, OverlayStore, PreferenceStore} from "stores";
 import {FrameStore, RegionMode, RegionStore} from "stores/Frame";

@@ -5,8 +5,8 @@ import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {ImageViewLayer} from "components";
 import {AnnotationMenuComponent} from "components/Shared";
+import {ImageViewLayer} from "enums";
 import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
 import {RegionCreationMode} from "models";
 import {AppStore, DialogId, WidgetsStore, WidgetType} from "stores";

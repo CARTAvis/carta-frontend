@@ -3,7 +3,7 @@ import classNames from "classnames";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {ImageViewLayer} from "components";
+import {ImageViewLayer} from "enums";
 import {type CursorInfo, CursorInfoVisibility, type ImageItem, ImageType, Zoom} from "models";
 import {AnimationMode, AppStore, ColorBlendingStore, type FrameStore} from "stores";
 

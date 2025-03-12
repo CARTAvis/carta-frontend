@@ -3,8 +3,8 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
-import {ImageViewLayer} from "components";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
+import {ImageViewLayer} from "enums";
 import {CatalogTextureType, CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, WidgetsStore} from "stores";
 import {FrameStore, RenderConfigStore} from "stores/Frame";
