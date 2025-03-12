@@ -5,6 +5,7 @@ import {observer} from "mobx-react";
 import type {LineKey} from "models";
 
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScrollShadow} from "components/Shared";
+import {HistogramSettingsTabs} from "enums";
 import {AppStore, type DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {HistogramWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
@@ -14,11 +15,6 @@ import {HistogramConfigPanelComponent} from "./HistogramConfigPanelComponent";
 import "./HistogramSettingsPanelComponent.scss";
 
 const KEYCODE_ENTER = 13;
-
-export enum HistogramSettingsTabs {
-    STYLING,
-    CONFIG
-}
 
 @observer
 export class HistogramSettingsPanelComponent extends React.Component<WidgetProps> {
