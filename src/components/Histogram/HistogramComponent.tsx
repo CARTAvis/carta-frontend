@@ -6,13 +6,12 @@ import {autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
+import {TickType} from "enums";
 import {Point2D, POLARIZATIONS} from "models";
 import {AppStore, type DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {HistogramWidgetStore} from "stores/Widgets";
 import {binarySearchByX, clamp, closeTo, getColorForTheme, toExponential, toFixed} from "utilities";
-
-import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
 import {HistogramToolbarComponent} from "./HistogramToolbarComponent/HistogramToolbarComponent";
 

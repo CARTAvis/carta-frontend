@@ -6,13 +6,14 @@ import * as _ from "lodash";
 import {autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
-import {type LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, PlotType, SmoothingType} from "components/Shared";
+import {type LineMarker, LinePlotComponent, LinePlotComponentProps, PlotType, SmoothingType} from "components/Shared";
+import {LinePlotSelectingMode, TickType} from "enums";
 import {Point2D, SpectralType} from "models";
 import {AnimatorStore, AppStore, type DefaultWidgetConfig, FittingContinuum, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {type MultiPlotData, SpectralProfileWidgetStore} from "stores/Widgets";
 import {binarySearchByX, clamp, formattedExponential, getColorForTheme, toExponential, toFixed, toFormattedNotationByDiff} from "utilities";
 
-import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
 import {type ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfoComponent/SpectralProfilerInfoComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";

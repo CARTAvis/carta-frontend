@@ -6,9 +6,9 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector} from "components/Shared";
-import {InteractionMode, ZoomMode} from "components/Shared/LinePlot/LinePlotComponent";
-import {MultiPlotProps, PlotContainerComponent, TickType} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {MultiPlotProps, PlotContainerComponent} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
+import {InteractionMode, TickType, ZoomMode} from "enums";
 import {Point2D} from "models";
 import {AppStore} from "stores";
 import {clamp, exportTsvFile, getTimestamp, toExponential} from "utilities";

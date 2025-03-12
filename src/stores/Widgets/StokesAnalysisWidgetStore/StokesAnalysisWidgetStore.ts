@@ -4,7 +4,8 @@ import {action, computed, makeObservable, observable, override} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {StokesAnalysisSettingsTabs} from "components";
-import {LineSettings, PlotType, ScatterSettings} from "components/Shared";
+import {PlotType, ScatterSettings} from "components/Shared";
+import {LineSettings} from "enums";
 import {SpectralSystem} from "models";
 import {ProfileSmoothingStore} from "stores";
 import {getColorsForValues, isAutoColor} from "utilities";

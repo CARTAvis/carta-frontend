@@ -2,7 +2,8 @@ import * as React from "react";
 import {FormGroup, HTMLSelect, type OptionProps, Switch} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
-import {AutoColorPickerComponent, LineSettings, PlotType, PlotTypeSelectorComponent, SafeNumericInput} from "components/Shared";
+import {AutoColorPickerComponent, PlotType, PlotTypeSelectorComponent, SafeNumericInput} from "components/Shared";
+import {LineSettings} from "enums";
 import {ProfileSmoothingStore} from "stores";
 import {SWATCH_COLORS} from "utilities";
 

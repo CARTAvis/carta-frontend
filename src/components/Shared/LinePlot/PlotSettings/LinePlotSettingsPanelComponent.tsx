@@ -4,6 +4,7 @@ import {observer} from "mobx-react";
 import type {LineKey, LineOption} from "models";
 
 import {AutoColorPickerComponent, PlotType, PlotTypeSelectorComponent, SafeNumericInput} from "components/Shared";
+import {LineSettings} from "enums";
 import {DEFAULT_COLOR, SWATCH_COLORS} from "utilities";
 
 import "./LinePlotSettingsPanelComponent.scss";
@@ -44,15 +45,6 @@ export class LinePlotSettingsPanelComponentProps {
     handleXMaxChange?: (ev: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>) => void;
     handleYMinChange?: (ev: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>) => void;
     handleYMaxChange?: (ev: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>) => void;
-}
-
-export enum LineSettings {
-    MIN_WIDTH = 0.5,
-    MAX_WIDTH = 10,
-    MIN_POINT_SIZE = 0.5,
-    MAX_POINT_SIZE = 10,
-    POINT_SIZE_STEP_SIZE = 0.5,
-    LINE_WIDTH_STEP_SIZE = 0.5
 }
 
 @observer

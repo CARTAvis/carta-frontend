@@ -4,7 +4,8 @@ import {action, autorun, computed, makeObservable, observable, override} from "m
 import tinycolor from "tinycolor2";
 
 import {SpatialProfilerSettingsTabs} from "components";
-import {LineSettings, PlotType} from "components/Shared";
+import {PlotType} from "components/Shared";
+import {LineSettings} from "enums";
 import {type LineOption, POLARIZATIONS, VALID_XY_COORDINATES} from "models";
 import {AppStore, ProfileSmoothingStore} from "stores";
 import {FrameStore, RegionStore} from "stores/Frame";

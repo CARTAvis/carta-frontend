@@ -7,34 +7,15 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {PlotType, ResizeDetector} from "components/Shared";
+import {InteractionMode, LinePlotSelectingMode, TickType, ZoomMode} from "enums";
 import {Point2D} from "models";
 import {AppStore} from "stores";
 import {clamp, exportTsvFile, getTimestamp, toExponential} from "utilities";
 
-import {MultiPlotProps, PlotContainerComponent, TickType} from "./PlotContainer/PlotContainerComponent";
+import {MultiPlotProps, PlotContainerComponent} from "./PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 
 import "./LinePlotComponent.scss";
-
-export enum ZoomMode {
-    NONE,
-    X,
-    Y,
-    XY
-}
-
-export enum InteractionMode {
-    NONE,
-    SELECTING,
-    PANNING
-}
-
-export enum LinePlotSelectingMode {
-    BOX,
-    HORIZONTAL,
-    VERTICAL,
-    LINE
-}
 
 export interface LineMarker {
     value: number;

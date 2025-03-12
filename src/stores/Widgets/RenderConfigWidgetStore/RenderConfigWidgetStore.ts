@@ -1,7 +1,8 @@
 import {action, computed, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
-import {LineSettings, PlotType} from "components/Shared";
+import {PlotType} from "components/Shared";
+import {LineSettings} from "enums";
 import {isAutoColor} from "utilities";
 
 export class RenderConfigWidgetStore {

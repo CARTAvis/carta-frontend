@@ -8,13 +8,14 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, ResizeDetector, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {TickType} from "enums";
 import {Point2D, POLARIZATIONS} from "models";
 import {AppStore, ASTSettingsString, type DefaultWidgetConfig, HelpType, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {RegionId, SpatialProfileWidgetStore} from "stores/Widgets";
 import {binarySearchByX, clamp, formattedExponential, getColorForTheme, toFixed, transformPoint} from "utilities";
 
-import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
 import "./SpatialProfilerComponent.scss";
 
