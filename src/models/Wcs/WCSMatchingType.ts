@@ -1,12 +1,4 @@
-/**
- * @privateRemarks the enum element should be a power of 2 value
- */
-export enum WCSMatchingType {
-    NONE = 0,
-    SPATIAL = 1,
-    SPECTRAL = 2,
-    RASTER = 4
-}
+import {WCSMatchingType} from "enums";
 
 export class WCSMatching {
     public static readonly MATCHING_TYPES = Object.values(WCSMatchingType).filter(v => !isNaN(Number(v)) && Number(v) !== WCSMatchingType.NONE) as WCSMatchingType[];
