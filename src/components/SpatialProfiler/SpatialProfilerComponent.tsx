@@ -7,8 +7,8 @@ import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, RegionSelectorComponent, ResizeDetector, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
-import {PlotType, TickType} from "enums";
+import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, RegionSelectorComponent, ResizeDetector, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {PlotType, SmoothingType, TickType} from "enums";
 import {Point2D, POLARIZATIONS} from "models";
 import {AppStore, ASTSettingsString, type DefaultWidgetConfig, HelpType, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";

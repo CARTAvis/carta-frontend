@@ -47,3 +47,13 @@ export enum PlotType {
     LINES = "Lines",
     POINTS = "Points"
 }
+
+export enum SmoothingType {
+    NONE = "None",
+    HANNING = "Hanning",
+    BOXCAR = "Boxcar",
+    GAUSSIAN = "Gaussian",
+    DECIMATION = "Decimation",
+    BINNING = "Binning",
+    SAVITZKY_GOLAY = "Savitzky-Golay"
+}
