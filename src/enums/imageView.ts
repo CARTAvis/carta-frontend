@@ -3,3 +3,9 @@ export enum ImageViewLayer {
     Catalog = "catalog",
     RegionMoving = "regionMoving"
 }
+
+export enum ImagePanelMode {
+    None = "none",
+    Dynamic = "dynamic",
+    Fixed = "fixed"
+}

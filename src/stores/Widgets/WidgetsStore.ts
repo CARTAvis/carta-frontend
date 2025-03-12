@@ -34,7 +34,8 @@ import {
     // setting Panel
     StokesAnalysisSettingsPanelComponent
 } from "components";
-import {ImagePanelMode, ImageType} from "models";
+import {ImagePanelMode} from "enums";
+import {ImageType} from "models";
 import {AppStore, CatalogStore, HelpStore, HelpType, LayoutStore, PreferenceKeys, PreferenceStore} from "stores";
 import {
     ACTIVE_FILE_ID,

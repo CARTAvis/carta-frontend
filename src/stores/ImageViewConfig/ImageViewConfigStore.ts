@@ -1,7 +1,8 @@
 import {Utils} from "@blueprintjs/table";
 import {action, computed, makeAutoObservable, observable} from "mobx";
 
-import {ImagePanelMode, ImageType, type ImageViewItem} from "models";
+import {ImagePanelMode} from "enums";
+import {ImageType, type ImageViewItem} from "models";
 import {AppStore, ColorBlendingStore, FrameStore, PreferenceStore} from "stores";
 import {clamp} from "utilities";
 

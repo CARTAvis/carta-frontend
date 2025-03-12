@@ -12,7 +12,6 @@ export * from "./Event/Event";
 export * from "./FileFilterMode/FileFilterMode";
 export * from "./FrameView/FrameView";
 export * from "./Freq/Freq";
-export * from "./ImagePanelMode/ImagePanelMode";
 export * from "./ImageType/ImageType";
 export * from "./Layout/LayoutConfig";
 export * from "./Layout/PresetLayout";
