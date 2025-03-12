@@ -33,6 +33,15 @@ export enum LineSettings {
     LINE_WIDTH_STEP_SIZE = 0.5
 }
 
+export enum ScatterSettings {
+    MIN_POINT_SIZE = 0.5,
+    MAX_POINT_SIZE = 10,
+    MIN_TRANSPARENCY = 0.1,
+    MAX_TRANSPARENCY = 1,
+    POINT_SIZE_STEP_SIZE = 0.5,
+    TRANSPARENCY_STEP_SIZE = 0.1
+}
+
 export enum PlotType {
     STEPS = "Steps",
     LINES = "Lines",

@@ -3,6 +3,7 @@ import {FormGroup, Switch} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
 import {ColormapComponent, SafeNumericInput} from "components/Shared";
+import {ScatterSettings} from "enums";
 
 import "./ScatterPlotSettingsPanelComponent.scss";
 
@@ -17,15 +18,6 @@ export class ScatterPlotSettingsPanelComponentProps {
     setColormap: (val: string) => void;
     handleEqualAxesValuesChanged: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
     handleInvertedColorMapChanged: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
-}
-
-export enum ScatterSettings {
-    MIN_POINT_SIZE = 0.5,
-    MAX_POINT_SIZE = 10,
-    MIN_TRANSPARENCY = 0.1,
-    MAX_TRANSPARENCY = 1,
-    POINT_SIZE_STEP_SIZE = 0.5,
-    TRANSPARENCY_STEP_SIZE = 0.1
 }
 
 @observer
