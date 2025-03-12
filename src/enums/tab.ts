@@ -8,3 +8,11 @@ export enum SpatialProfilerSettingsTabs {
     SMOOTHING,
     COMPUTATION
 }
+
+export enum SpectralProfilerSettingsTabs {
+    CONVERSION,
+    STYLING,
+    SMOOTHING,
+    MOMENTS,
+    FITTING
+}

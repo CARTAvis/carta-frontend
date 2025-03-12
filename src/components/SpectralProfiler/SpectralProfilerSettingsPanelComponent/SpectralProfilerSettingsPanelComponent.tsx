@@ -4,6 +4,7 @@ import {autorun, computed} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScrollShadow, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
+import {SpectralProfilerSettingsTabs} from "enums";
 import {AppStore, type DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {MultiProfileCategory, SpectralProfileWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
@@ -14,14 +15,6 @@ import {ProfileFittingComponent} from "../ProfileFittingComponent/ProfileFitting
 import "./SpectralProfilerSettingsPanelComponent.scss";
 
 const KEYCODE_ENTER = 13;
-
-export enum SpectralProfilerSettingsTabs {
-    CONVERSION,
-    STYLING,
-    SMOOTHING,
-    MOMENTS,
-    FITTING
-}
 
 @observer
 export class SpectralProfilerSettingsPanelComponent extends React.Component<WidgetProps> {

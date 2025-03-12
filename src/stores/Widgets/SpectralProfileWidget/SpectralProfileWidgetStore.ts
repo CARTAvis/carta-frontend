@@ -3,9 +3,8 @@ import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable, override, reaction} from "mobx";
 import tinycolor from "tinycolor2";
 
-import {SpectralProfilerSettingsTabs} from "components";
 import {VERTICAL_RANGE_PADDING} from "components/Shared";
-import {LineSettings, PlotType, SmoothingType} from "enums";
+import {LineSettings, PlotType, SmoothingType, SpectralProfilerSettingsTabs} from "enums";
 import {FindIntensityUnitType, GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, type IntensityConfig, IntensityUnitType, IsIntensitySupported, type LineKey, Point2D, POLARIZATIONS, SpectralSystem} from "models";
 import {TelemetryAction, TelemetryService} from "services";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
