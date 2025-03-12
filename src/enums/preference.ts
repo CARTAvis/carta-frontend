@@ -4,3 +4,9 @@ export enum CursorInfoVisibility {
     ActiveImage = "activeImage",
     HideTiled = "hideTiled"
 }
+
+export enum FileFilterMode {
+    Content = "content",
+    Extension = "extension",
+    All = "all"
+}
