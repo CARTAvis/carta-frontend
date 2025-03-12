@@ -1,4 +1,6 @@
-import {AngularSize, AngularSizeUnit, FACTOR_TO_ARCSEC} from "./AngularSize";
+import {AngularSizeUnit} from "enums";
+
+import {AngularSize, FACTOR_TO_ARCSEC} from "./AngularSize";
 
 describe("AngularSize", () => {
     describe("convertValueFromArcsec", () => {

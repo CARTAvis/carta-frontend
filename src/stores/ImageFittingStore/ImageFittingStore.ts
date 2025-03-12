@@ -2,7 +2,8 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
-import {AngularSize, AngularSizeUnit, Point2D, WCSPoint2D} from "models";
+import {AngularSizeUnit} from "enums";
+import {AngularSize, Point2D, WCSPoint2D} from "models";
 import {AppStore, NumberFormatType} from "stores";
 import {FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/Widgets";

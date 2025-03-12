@@ -5,3 +5,10 @@ export enum MemoryUnit {
     kB = "kB",
     B = "B"
 }
+
+export enum AngularSizeUnit {
+    MILLIARCSEC = "milliarcsec",
+    ARCSEC = "arcsec",
+    ARCMIN = "arcmin",
+    DEG = "deg"
+}
