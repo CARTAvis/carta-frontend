@@ -4,7 +4,8 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
-import {CoordinateComponent, CoordNumericInput, InputType} from "components/Shared";
+import {CoordinateComponent, CoordNumericInput} from "components/Shared";
+import {InputType} from "enums";
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
 import {CoordinateMode, RegionStore} from "stores/Frame";
