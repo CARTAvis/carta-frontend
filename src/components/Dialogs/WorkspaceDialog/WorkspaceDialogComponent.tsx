@@ -8,6 +8,7 @@ import type {WorkspaceListItem} from "models";
 import moment from "moment/moment";
 
 import {DraggableDialogComponent} from "components/Dialogs";
+import {WorkspaceDialogMode} from "enums";
 import {AlertStore, AppStore, DialogId, HelpType} from "stores";
 
 import {AppToaster, ErrorToast, SuccessToast} from "../../Shared";
@@ -15,12 +16,6 @@ import {AppToaster, ErrorToast, SuccessToast} from "../../Shared";
 import {WorkspaceInfoComponent} from "./WorkspaceInfoComponent";
 
 import "./WorkspaceDialogComponent.scss";
-
-export enum WorkspaceDialogMode {
-    Hidden,
-    Save,
-    Open
-}
 
 export const WorkspaceDialogComponent = observer(() => {
     const [workspaceList, setWorkspaceList] = useState<WorkspaceListItem[]>();
