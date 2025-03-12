@@ -1,7 +1,8 @@
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {POLARIZATIONS, VALID_COORDINATES} from "models";
+import {POLARIZATIONS} from "enums";
+import {VALID_COORDINATES} from "models";
 import {AppStore} from "stores";
 import {RegionsType, RegionWidgetStore} from "stores/Widgets";
 

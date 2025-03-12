@@ -4,6 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
 
 import {PvPreviewComponent} from "components";
+import {POLARIZATIONS} from "enums";
 import {
     CatalogControlMap,
     type ChannelInfo,
@@ -21,7 +22,6 @@ import {
     IsSpectralUnitSupported,
     Point2D,
     POLARIZATION_LABELS,
-    POLARIZATIONS,
     SPECTRAL_COORDS_SUPPORTED,
     SPECTRAL_DEFAULT_UNIT,
     SPECTRAL_TYPE_STRING,

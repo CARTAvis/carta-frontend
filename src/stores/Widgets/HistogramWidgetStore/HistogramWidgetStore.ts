@@ -2,8 +2,8 @@ import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
-import {HistogramSettingsTabs, LineSettings, PlotType} from "enums";
-import {POLARIZATIONS, VALID_COORDINATES} from "models";
+import {HistogramSettingsTabs, LineSettings, PlotType, POLARIZATIONS} from "enums";
+import {VALID_COORDINATES} from "models";
 import {closeTo, isAutoColor} from "utilities";
 
 import {RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
