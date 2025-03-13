@@ -4,6 +4,11 @@ export enum CatalogType {
     FILE
 }
 
+export enum CatalogDatabase {
+    SIMBAD = "SIMBAD",
+    VIZIER = "VizieR"
+}
+
 export enum CatalogSystemType {
     Ecliptic = "ECLIPTIC",
     FK4 = "FK4",
