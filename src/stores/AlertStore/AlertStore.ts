@@ -3,13 +3,8 @@ import type {MaybeElement} from "@blueprintjs/core";
 import type {IconName} from "@blueprintjs/icons";
 import {action, makeObservable, observable} from "mobx";
 
+import {AlertType} from "enums";
 import {Deferred} from "services";
-
-export enum AlertType {
-    Info,
-    Interactive,
-    Retry
-}
 
 export class AlertStore {
     private static staticInstance: AlertStore;
