@@ -92,11 +92,6 @@ export interface FrameInfo {
     preview?: boolean;
 }
 
-export enum CoordinateMode {
-    Image = "Image",
-    World = "World"
-}
-
 export const WCS_PRECISION = 10;
 
 export class FrameStore {

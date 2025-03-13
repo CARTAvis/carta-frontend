@@ -6,10 +6,10 @@ import {computed} from "mobx";
 import {observer} from "mobx-react";
 
 import {CoordinateComponent, CoordNumericInput} from "components/Shared";
-import {InputType} from "enums";
+import {CoordinateMode, InputType} from "enums";
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
-import {CoordinateMode, PointAnnotationStore, RegionStore} from "stores/Frame";
+import {PointAnnotationStore, RegionStore} from "stores/Frame";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
 @observer

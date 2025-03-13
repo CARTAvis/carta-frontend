@@ -36,3 +36,8 @@ export enum FrameScaling {
     EXP = 6,
     CUSTOM = 7
 }
+
+export enum CoordinateMode {
+    Image = "Image",
+    World = "World"
+}

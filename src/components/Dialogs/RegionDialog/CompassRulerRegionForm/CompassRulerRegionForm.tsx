@@ -5,10 +5,10 @@ import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
 import {CoordinateComponent, CoordNumericInput, SafeNumericInput} from "components/Shared";
-import {InputType} from "enums";
+import {CoordinateMode, InputType} from "enums";
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
-import {CompassAnnotationStore, CoordinateMode, RegionStore} from "stores/Frame";
+import {CompassAnnotationStore, RegionStore} from "stores/Frame";
 import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
 const KEYCODE_ENTER = 13;
