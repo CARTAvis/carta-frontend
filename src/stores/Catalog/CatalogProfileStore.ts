@@ -2,23 +2,9 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 import type {ProcessedColumnData} from "utilities";
 
-import {CatalogSystemType, CatalogType} from "enums";
+import {CatalogSystemType, CatalogType, CatalogUpdateMode} from "enums";
 import {AbstractCatalogProfileStore, type CatalogInfo} from "models";
 import {PreferenceStore} from "stores";
-
-export enum CatalogCoordinate {
-    X = "X",
-    Y = "Y",
-    PlotSize = "Size",
-    PlotShape = "Shape",
-    NONE = "None"
-}
-
-export enum CatalogUpdateMode {
-    TableUpdate = "TableUpdate",
-    ViewUpdate = "ViewUpdate",
-    PlotsUpdate = "PlotsUpdate"
-}
 
 export type ControlHeader = {columnIndex: number | undefined; dataIndex: number | undefined; display: boolean | undefined; filter: string; columnWidth: number | null | undefined};
 

@@ -11,7 +11,8 @@ import {observer} from "mobx-react";
 import * as Plotly from "plotly.js";
 
 import {ClearableNumericInputComponent, ProfilerInfoComponent, ResizeDetector} from "components/Shared";
-import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, CatalogUpdateMode, type DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
+import {CatalogUpdateMode} from "enums";
+import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
 import {type Border, CatalogPlotType, CatalogPlotWidgetStore, type CatalogPlotWidgetStoreProps, CatalogWidgetStore, type DragMode, type XBorder} from "stores/Widgets";
 import {minMaxArray, toFixed, type TypedArray} from "utilities";
 

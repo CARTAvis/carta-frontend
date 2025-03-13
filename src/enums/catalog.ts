@@ -43,3 +43,9 @@ export enum CatalogTextureType {
     SelectedSource,
     SizeMinor
 }
+
+export enum CatalogUpdateMode {
+    TableUpdate = "TableUpdate",
+    ViewUpdate = "ViewUpdate",
+    PlotsUpdate = "PlotsUpdate"
+}
