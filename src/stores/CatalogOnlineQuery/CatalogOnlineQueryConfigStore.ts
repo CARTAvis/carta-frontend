@@ -1,9 +1,9 @@
 import * as AST from "ast_wrapper";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
-import {CatalogDatabase, CatalogSystemType, RadiusUnits} from "enums";
+import {CatalogDatabase, CatalogSystemType, NumberFormatType, RadiusUnits, SystemType} from "enums";
 import {Point2D} from "models";
-import {AppStore, ASTSettingsString, NumberFormatType, SystemType} from "stores";
+import {AppStore, ASTSettingsString} from "stores";
 import {clamp, getPixelValueFromWCS, transformPoint, type VizierResource} from "utilities";
 
 export type VizierItem = {name: string | null; description: string | null};

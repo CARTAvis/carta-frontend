@@ -2,9 +2,9 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
-import {AngularSizeUnit} from "enums";
+import {AngularSizeUnit, NumberFormatType} from "enums";
 import {AngularSize, Point2D, WCSPoint2D} from "models";
-import {AppStore, NumberFormatType} from "stores";
+import {AppStore} from "stores";
 import {FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
 import {angle2D, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid, pointDistance, rotate2D, scale2D, subtract2D, toExponential} from "utilities";

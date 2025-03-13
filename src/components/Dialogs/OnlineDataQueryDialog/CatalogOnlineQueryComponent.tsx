@@ -6,9 +6,9 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, SafeNumericInput, ScrollShadow} from "components/Shared";
-import {CatalogDatabase, RadiusUnits} from "enums";
+import {CatalogDatabase, RadiusUnits, SystemType} from "enums";
 import {CatalogApiService} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, NUMBER_FORMAT_LABEL, SystemType, type VizierItem} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, NUMBER_FORMAT_LABEL, type VizierItem} from "stores";
 import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
 import "./CatalogOnlineQueryComponent.scss";

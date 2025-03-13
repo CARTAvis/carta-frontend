@@ -11,9 +11,9 @@ import tinycolor from "tinycolor2";
 
 import {DraggableDialogComponent, LayoutMappingComponent} from "components/Dialogs";
 import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, ScrollShadow, SuccessToast} from "components/Shared";
-import {ContourGeneratorType, CursorInfoVisibility, DialogId, FileFilterMode, FrameScaling, HelpType, MemoryUnit, TelemetryMode} from "enums";
+import {BeamType, ContourGeneratorType, CursorInfoVisibility, DialogId, FileFilterMode, FrameScaling, HelpType, MemoryUnit, TelemetryMode} from "enums";
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
-import {AppStore, BeamType, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, PreferenceKeys, PreferenceStore} from "stores";
 import {RegionStore, RenderConfigStore} from "stores/Frame";
 import {copyToClipboard, SWATCH_COLORS} from "utilities";
 

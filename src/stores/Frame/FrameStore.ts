@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
 
 import {PvPreviewComponent} from "components";
-import {POLARIZATIONS, SpectralSystem, SpectralType, SpectralUnit} from "enums";
+import {POLARIZATIONS, SpectralSystem, SpectralType, SpectralUnit, SystemType} from "enums";
 import {
     CatalogControlMap,
     type ChannelInfo,
@@ -35,7 +35,7 @@ import {
     ZoomPoint
 } from "models";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE, TileService} from "services";
-import {AnimatorStore, AppStore, ASTSettingsString, INITIAL_LAYOUT_ITEM, LogStore, PreferenceStore, SystemType} from "stores";
+import {AnimatorStore, AppStore, ASTSettingsString, INITIAL_LAYOUT_ITEM, LogStore, PreferenceStore} from "stores";
 import {
     CENTER_POINT_INDEX,
     ColorbarStore,

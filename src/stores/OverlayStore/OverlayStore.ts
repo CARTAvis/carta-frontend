@@ -1,6 +1,7 @@
 import * as AST from "ast_wrapper";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 
+import {LabelType, NumberFormatType, SystemType} from "enums";
 import {WCSType} from "models";
 import {AlertStore, AppStore, PreferenceStore} from "stores";
 import {FrameStore, OverlayBeamStore, WCS_PRECISION} from "stores/Frame";
@@ -9,7 +10,7 @@ import {clamp, getColorForTheme, toFixed} from "utilities";
 const AST_DEFAULT_COLOR = "auto-blue";
 const COLORBAR_TICK_NUM_MIN = 3;
 
-export enum AstColorsIndex {
+enum AstColorsIndex {
     GLOBAL = 0,
     TITLE = 1,
     GRID = 2,
@@ -21,37 +22,11 @@ export enum AstColorsIndex {
     DISTANCE_MEASURE = 8
 }
 
-export enum LabelType {
-    Interior = "Interior",
-    Exterior = "Exterior"
-}
-
-export enum SystemType {
-    Auto = "AUTO",
-    Ecliptic = "ECLIPTIC",
-    FK4 = "FK4",
-    FK5 = "FK5",
-    Galactic = "GALACTIC",
-    ICRS = "ICRS",
-    Image = "CARTESIAN"
-}
-
-export enum NumberFormatType {
-    HMS = "hms",
-    DMS = "dms",
-    Degrees = "d"
-}
-
 export const NUMBER_FORMAT_LABEL = new Map<NumberFormatType, string>([
     [NumberFormatType.HMS, "H:M:S"],
     [NumberFormatType.DMS, "D:M:S"],
     [NumberFormatType.Degrees, "Degrees"]
 ]);
-
-export enum BeamType {
-    Open = "open",
-    Solid = "solid"
-}
 
 export class Padding {
     left: number;
