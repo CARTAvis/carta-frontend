@@ -1,3 +1,23 @@
+export enum BrowserMode {
+    File,
+    SaveFile,
+    RegionImport,
+    RegionExport,
+    Catalog
+}
+
+export enum FileFilteringType {
+    Fuzzy = "fuzzy",
+    Unix = "unix",
+    Regex = "regex"
+}
+
+export enum SelectionMode {
+    All,
+    Annotation,
+    Region
+}
+
 export enum FileInfoType {
     IMAGE_FILE = "image-file",
     IMAGE_HEADER = "image-header",

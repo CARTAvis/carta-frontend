@@ -3,7 +3,7 @@ export * from "./animation";
 export * from "./catalog";
 export * from "./connection";
 export * from "./dialog";
-export * from "./fileInfo";
+export * from "./fileBrowser";
 export * from "./imageView";
 export * from "./input";
 export * from "./plot";

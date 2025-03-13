@@ -3,33 +3,13 @@ import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, ErrorToast} from "components/Shared";
-import {DialogId, FileInfoType, FrequencyUnit, ImageType} from "enums";
+import {BrowserMode, DialogId, FileInfoType, FrequencyUnit, ImageType, SelectionMode} from "enums";
 import {FileCtypeInfo, Freq, type LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
 import {BackendService} from "services";
 import {AppStore, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
 import {RegionStore} from "stores/Frame";
 import {RegionId} from "stores/Widgets";
 import {getDataTypeString, getHeaderNumericValue, type ProcessedColumnData} from "utilities";
-
-export enum BrowserMode {
-    File,
-    SaveFile,
-    RegionImport,
-    RegionExport,
-    Catalog
-}
-
-export enum FileFilteringType {
-    Fuzzy = "fuzzy",
-    Unix = "unix",
-    Regex = "regex"
-}
-
-export enum SelectionMode {
-    All,
-    Annotation,
-    Region
-}
 
 export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.DS9_REG;
 export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.FileType.HDF5 | CARTA.FileType.MIRIAD;

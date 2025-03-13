@@ -9,7 +9,8 @@ import {action, autorun, computed, makeObservable, observable, runInAction} from
 import {observer} from "mobx-react";
 import moment from "moment";
 
-import {BrowserMode, FileFilteringType, type ISelectedFile} from "stores";
+import {BrowserMode, FileFilteringType} from "enums";
+import {type ISelectedFile} from "stores";
 import {toFixed} from "utilities";
 
 import "./FileListTableComponent.scss";
