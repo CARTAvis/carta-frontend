@@ -5,7 +5,8 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {SafeNumericInput, ScrollShadow} from "components/Shared";
-import {HipsCoord, HipsProjection, HipsQueryStore, type HipsSurvey} from "stores";
+import {HipsCoord, HipsProjection} from "enums";
+import {HipsQueryStore, type HipsSurvey} from "stores";
 
 import "./HipsQueryComponent.scss";
 

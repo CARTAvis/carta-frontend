@@ -6,6 +6,7 @@ export * from "./contour";
 export * from "./dialog";
 export * from "./fileBrowser";
 export * from "./help";
+export * from "./hips";
 export * from "./imageView";
 export * from "./input";
 export * from "./plot";
