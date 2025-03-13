@@ -7,10 +7,10 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, CoordinateComponent, CoordNumericInput, ImageCoordNumericInput, SafeNumericInput, ScrollShadow} from "components/Shared";
-import {InputType} from "enums";
+import {DialogId, InputType} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {Point2D, WCSPoint2D} from "models";
-import {AppStore, DialogId, HelpType} from "stores";
+import {AppStore, HelpType} from "stores";
 import {CoordinateMode} from "stores/Frame";
 import {exportTxtFile, getTimestamp} from "utilities";
 

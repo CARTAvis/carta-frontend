@@ -3,7 +3,8 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore, DialogId, HelpType} from "stores";
+import {DialogId} from "enums";
+import {AppStore, HelpType} from "stores";
 
 import {CatalogQueryComponent} from "./CatalogOnlineQueryComponent";
 import {HipsQueryComponent} from "./HipsQueryComponent";

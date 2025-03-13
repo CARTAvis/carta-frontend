@@ -8,9 +8,10 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {LinePlotComponent, LinePlotComponentProps, SafeNumericInput, SCALING_POPOVER_PROPS, ScrollShadow} from "components/Shared";
+import {DialogId} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {Point2D} from "models";
-import {AppStore, DialogId, HelpType} from "stores";
+import {AppStore, HelpType} from "stores";
 import {FrameStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
 import {clamp, getColorForTheme, toExponential, toFixed} from "utilities";

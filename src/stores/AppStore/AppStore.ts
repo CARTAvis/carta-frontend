@@ -11,7 +11,7 @@ import * as Semver from "semver";
 
 import {getImageViewCanvas, PvGeneratorComponent} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
-import {AnimationMode, CatalogType, CatalogUpdateMode, ConnectionStatus, ImageType, ImageViewLayer, SpectralType, TelemetryAction, WCSMatchingType} from "enums";
+import {AnimationMode, CatalogType, CatalogUpdateMode, ConnectionStatus, DialogId, ImageType, ImageViewLayer, SpectralType, TelemetryAction, WCSMatchingType} from "enums";
 import {
     CARTA_INFO,
     type CatalogInfo,
@@ -38,7 +38,6 @@ import {
     CatalogProfileStore,
     CatalogStore,
     ChannelMapStore,
-    DialogId,
     DialogStore,
     DynamicLayoutStore,
     FileBrowserStore,

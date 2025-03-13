@@ -8,8 +8,9 @@ import * as prism from "prismjs";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppToaster, WarningToast} from "components/Shared";
+import {DialogId} from "enums";
 import {Snippet} from "models";
-import {AppStore, DialogId, SnippetStore} from "stores";
+import {AppStore, SnippetStore} from "stores";
 
 import {SaveSnippetDialogComponent} from "./SaveSnippetDialog/SaveSnippetDialogComponent";
 import {ThemeProvider} from "./ThemeProvider";

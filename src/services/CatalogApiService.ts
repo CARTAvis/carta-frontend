@@ -3,9 +3,9 @@ import {CARTA} from "carta-protobuf";
 import {action} from "mobx";
 
 import {AppToaster, ErrorToast, WarningToast} from "components/Shared";
-import {CatalogDatabase, CatalogType, RadiusUnits, TelemetryAction} from "enums";
+import {CatalogDatabase, CatalogType, DialogId, RadiusUnits, TelemetryAction} from "enums";
 import {type CatalogInfo, WCSPoint2D} from "models";
-import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, DialogId, SystemType} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, SystemType} from "stores";
 import {CatalogApiProcessing, type ProcessedColumnData, type VizierResource} from "utilities";
 
 import {TelemetryService} from "./TelemetryService";

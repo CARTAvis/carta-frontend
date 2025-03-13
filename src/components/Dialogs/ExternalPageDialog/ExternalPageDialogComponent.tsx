@@ -5,7 +5,8 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore, DialogId} from "stores";
+import {DialogId} from "enums";
+import {AppStore} from "stores";
 
 import "./ExternalPageDialogComponent.scss";
 

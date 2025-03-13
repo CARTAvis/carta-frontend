@@ -3,8 +3,9 @@ import {Classes, type DialogProps} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
+import {DialogId} from "enums";
 import {CARTA_INFO} from "models";
-import {DialogId, DialogStore} from "stores";
+import {DialogStore} from "stores";
 
 import "./AboutDialogComponent.scss";
 
