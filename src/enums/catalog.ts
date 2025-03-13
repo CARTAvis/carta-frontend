@@ -34,3 +34,12 @@ export enum CatalogOverlay {
     X1 = "X1",
     Y1 = "Y1"
 }
+
+export enum CatalogTextureType {
+    Position,
+    Size,
+    Color,
+    Orientation,
+    SelectedSource,
+    SizeMinor
+}

@@ -2,8 +2,8 @@ import {type Region, Regions} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {action, computed, observable} from "mobx";
 
-import {CatalogOverlay, CatalogSystemType, CatalogType} from "enums";
-import {CatalogTextureType, CatalogWebGLService} from "services";
+import {CatalogOverlay, CatalogSystemType, CatalogTextureType, CatalogType} from "enums";
+import {CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, CatalogUpdateMode, type ControlHeader} from "stores";
 import {filterProcessedColumnData, getComparisonOperatorAndValue, getHasFilter, minMaxArray, type ProcessedColumnData, transformPoint, type TypedArray} from "utilities";
 
