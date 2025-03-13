@@ -5,29 +5,10 @@ import {jwtDecode} from "jwt-decode";
 import {computed, flow, makeObservable, observable} from "mobx";
 import {v1 as uuidv1} from "uuid";
 
+import {TelemetryAction, TelemetryMode} from "enums";
 import {CARTA_INFO} from "models";
 import {PreferenceKeys, PreferenceStore} from "stores";
 import {getUnixTimestamp} from "utilities";
-
-export enum TelemetryMode {
-    None = "none",
-    Minimal = "minimal",
-    Usage = "usage"
-}
-
-export enum TelemetryAction {
-    Connection = "connection",
-    EndSession = "endSession",
-    RetryConnection = "retryConnection",
-    OptIn = "optIn",
-    OptOut = "optOut",
-    FileOpen = "fileOpen",
-    FileClose = "fileClose",
-    SpectralProfileGeneration = "spectralProfileGeneration",
-    PvGeneration = "pvGeneration",
-    MomentGeneration = "momentGeneration",
-    CatalogLoading = "catalogLoading"
-}
 
 export interface TelemetryMessage {
     timestamp: number;

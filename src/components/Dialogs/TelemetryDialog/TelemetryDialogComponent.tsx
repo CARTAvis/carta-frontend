@@ -4,7 +4,8 @@ import classNames from "classnames";
 import {makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {TelemetryMode, TelemetryService} from "services";
+import {TelemetryMode} from "enums";
+import {TelemetryService} from "services";
 import {AppStore} from "stores";
 
 import "./TelemetryDialogComponent.scss";
