@@ -1,4 +1,5 @@
 export * from "./catalog";
+export * from "./connection";
 export * from "./fileInfo";
 export * from "./imageView";
 export * from "./input";

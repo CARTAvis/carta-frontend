@@ -2,16 +2,11 @@ import {CARTA} from "carta-protobuf";
 import {action, makeObservable, observable, runInAction} from "mobx";
 import {Subject, throwError} from "rxjs";
 
+import {ConnectionStatus} from "enums";
 import {ApiService, TelemetryAction, TelemetryService} from "services";
 import {AppStore, PreferenceStore} from "stores";
 import {RegionStore} from "stores/Frame";
 import {mapToObject} from "utilities";
-
-export enum ConnectionStatus {
-    CLOSED = 0,
-    PENDING = 1,
-    ACTIVE = 2
-}
 
 export const INVALID_ANIMATION_ID = -1;
 
