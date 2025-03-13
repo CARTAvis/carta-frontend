@@ -1,8 +1,8 @@
 import type {RGBColor} from "react-color";
 import {CARTA} from "carta-protobuf";
 
-import {ContourDashMode} from "enums";
-import {FrameScaling, VectorOverlaySource} from "stores/Frame";
+import {ContourDashMode, FrameScaling} from "enums";
+import {VectorOverlaySource} from "stores/Frame";
 
 import {Point2D} from "./Point2D/Point2D";
 

@@ -1,21 +1,11 @@
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
+import {FrameScaling} from "enums";
 import {WorkspaceRenderConfig} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {clamp, getColorsForValues, getColorsFromHex, getPercentiles, scaleValueInverse} from "utilities";
-
-export enum FrameScaling {
-    LINEAR = 0,
-    LOG = 1,
-    SQRT = 2,
-    SQUARE = 3,
-    POWER = 4,
-    GAMMA = 5,
-    EXP = 6,
-    CUSTOM = 7
-}
 
 export class RenderConfigStore {
     static readonly SCALING_TYPES = new Map<FrameScaling, string>([

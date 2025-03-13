@@ -9,7 +9,8 @@ import powerPng from "static/equations/power.png";
 import sqrtPng from "static/equations/sqrt.png";
 import squaredPng from "static/equations/squared.png";
 
-import {FrameScaling, RenderConfigStore} from "stores/Frame";
+import {FrameScaling} from "enums";
+import {RenderConfigStore} from "stores/Frame";
 
 import "./ScalingSelectComponent.scss";
 

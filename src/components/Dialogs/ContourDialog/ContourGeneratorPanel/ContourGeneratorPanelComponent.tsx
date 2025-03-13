@@ -5,8 +5,8 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, SafeNumericInput, SCALING_POPOVER_PROPS, ScalingSelectComponent} from "components/Shared";
-import {ContourGeneratorType} from "enums";
-import {FrameScaling, FrameStore} from "stores/Frame";
+import {ContourGeneratorType, FrameScaling} from "enums";
+import {FrameStore} from "stores/Frame";
 import {getPercentiles, scaleValue} from "utilities";
 
 import "./ContourGeneratorPanelComponent.scss";
