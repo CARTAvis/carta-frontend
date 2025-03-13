@@ -5,8 +5,8 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector, SimpleTableComponent} from "components/Shared";
-import {ImageType} from "enums";
-import {AppStore, type DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
+import {HelpType, ImageType} from "enums";
+import {AppStore, type DefaultWidgetConfig, WidgetProps} from "stores";
 import {FrameStore} from "stores/Frame";
 import {formattedExponential, toFixed} from "utilities";
 

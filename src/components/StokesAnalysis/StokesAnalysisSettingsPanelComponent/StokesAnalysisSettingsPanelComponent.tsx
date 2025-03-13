@@ -13,8 +13,8 @@ import {
     SmoothingSettingsComponent,
     SpectralSettingsComponent
 } from "components/Shared";
-import {StokesAnalysisSettingsTabs} from "enums";
-import {AppStore, type DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {HelpType, StokesAnalysisSettingsTabs} from "enums";
+import {AppStore, type DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
 import {StokesAnalysisWidgetStore} from "stores/Widgets";
 
 import "./StokesAnalysisSettingsPanelComponent.scss";

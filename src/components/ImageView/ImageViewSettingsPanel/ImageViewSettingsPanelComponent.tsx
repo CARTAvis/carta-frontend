@@ -7,8 +7,8 @@ import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
-import {CoordinateMode, ImagePanelMode, InputType} from "enums";
-import {AppStore, BeamType, type DefaultWidgetConfig, HelpType, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
+import {CoordinateMode, HelpType, ImagePanelMode, InputType} from "enums";
+import {AppStore, BeamType, type DefaultWidgetConfig, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
 import {ColorbarStore} from "stores/Frame";
 import {SWATCH_COLORS, toFixed} from "utilities";
 

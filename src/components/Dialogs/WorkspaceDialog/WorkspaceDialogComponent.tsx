@@ -8,8 +8,8 @@ import type {WorkspaceListItem} from "models";
 import moment from "moment/moment";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {DialogId, WorkspaceDialogMode} from "enums";
-import {AlertStore, AppStore, HelpType} from "stores";
+import {DialogId, HelpType, WorkspaceDialogMode} from "enums";
+import {AlertStore, AppStore} from "stores";
 
 import {AppToaster, ErrorToast, SuccessToast} from "../../Shared";
 

@@ -5,8 +5,8 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
-import {AnimationMode, PlayMode} from "enums";
-import {AnimatorStore, AppStore, type DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
+import {AnimationMode, HelpType, PlayMode} from "enums";
+import {AnimatorStore, AppStore, type DefaultWidgetConfig, WidgetProps} from "stores";
 
 import "./AnimatorComponent.scss";
 

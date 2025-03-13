@@ -4,7 +4,8 @@ import {Button, Code, Colors, FormGroup, HTMLSelect, Intent, NonIdealState, Tag}
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
-import {type DefaultWidgetConfig, HelpType, LogStore, WidgetProps} from "stores";
+import {HelpType} from "enums";
+import {type DefaultWidgetConfig, LogStore, WidgetProps} from "stores";
 
 import "./LogComponent.scss";
 

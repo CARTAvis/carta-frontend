@@ -6,9 +6,9 @@ import {computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent} from "components/Shared";
-import {FrequencyUnit, SpectralType} from "enums";
+import {FrequencyUnit, HelpType, SpectralType} from "enums";
 import {SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING} from "models";
-import {AppStore, type DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, type DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
 import {LayerListSettingsTabs, LayerListWidgetStore} from "stores/Widgets";
 
 import "./LayerListSettingsPanelComponent.scss";

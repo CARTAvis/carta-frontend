@@ -3,8 +3,8 @@ import {Classes, Drawer, type DrawerProps} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
+import {HelpType} from "enums";
 import {AppStore, HelpStore} from "stores";
-import {HelpType} from "stores/HelpStore/HelpStore";
 
 import "./HelpDrawerComponent.scss";
 

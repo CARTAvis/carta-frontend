@@ -8,9 +8,9 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector} from "components/Shared";
-import {BrowserMode, DialogId, RegionsOpacity} from "enums";
+import {BrowserMode, DialogId, HelpType, RegionsOpacity} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
-import {AppStore, type DefaultWidgetConfig, DialogStore, FileBrowserStore, HelpType, WidgetProps} from "stores";
+import {AppStore, type DefaultWidgetConfig, DialogStore, FileBrowserStore, WidgetProps} from "stores";
 import {FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {clamp, formattedArcsec, getFormattedWCSPoint, length2D, toFixed} from "utilities";
 

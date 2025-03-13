@@ -7,9 +7,9 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput, ScrollShadow} from "components/Shared";
-import {DialogId, VectorOverlaySource} from "enums";
+import {DialogId, HelpType, VectorOverlaySource} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
-import {AppStore, HelpType} from "stores";
+import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 

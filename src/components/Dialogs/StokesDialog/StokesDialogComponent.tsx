@@ -8,9 +8,9 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {BrowserMode, DialogId} from "enums";
+import {BrowserMode, DialogId, HelpType} from "enums";
 import {HyperCubeCtypeTransform, POLARIZATION_LABELS} from "models";
-import {AppStore, HelpType, PreferenceStore} from "stores";
+import {AppStore, PreferenceStore} from "stores";
 
 import "./StokesDialogComponent.scss";
 
