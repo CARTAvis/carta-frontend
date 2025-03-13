@@ -2,11 +2,11 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
-import {CursorInfoVisibility, FileFilteringType, FileFilterMode, ImagePanelMode, MemoryUnit, SpectralType, TelemetryMode, WCSMatchingType} from "enums";
+import {ContourGeneratorType, CursorInfoVisibility, FileFilteringType, FileFilterMode, ImagePanelMode, MemoryUnit, SpectralType, TelemetryMode, WCSMatchingType} from "enums";
 import {CARTA_INFO, CompressionQuality, CursorPosition, Event, getEventList, PresetLayout, RegionCreationMode, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {ApiService} from "services";
 import {BeamType} from "stores";
-import {ContourGeneratorType, FrameScaling} from "stores/Frame";
+import {FrameScaling} from "stores/Frame";
 import {parseBoolean} from "utilities";
 
 export enum PreferenceKeys {

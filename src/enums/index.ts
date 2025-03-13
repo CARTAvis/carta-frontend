@@ -2,6 +2,7 @@ export * from "./alert";
 export * from "./animation";
 export * from "./catalog";
 export * from "./connection";
+export * from "./contour";
 export * from "./dialog";
 export * from "./fileBrowser";
 export * from "./imageView";

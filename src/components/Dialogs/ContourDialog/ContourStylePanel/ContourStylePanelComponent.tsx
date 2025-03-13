@@ -5,7 +5,8 @@ import {Select} from "@blueprintjs/select";
 import {observer} from "mobx-react";
 
 import {ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
-import {ContourDashMode, FrameStore} from "stores/Frame";
+import {ContourDashMode} from "enums";
+import {FrameStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 
 import "./ContourStylePanelComponent.scss";
