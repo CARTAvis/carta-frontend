@@ -11,7 +11,7 @@ import * as Semver from "semver";
 
 import {getImageViewCanvas, PvGeneratorComponent} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
-import {CatalogType, ConnectionStatus, ImageType, ImageViewLayer, SpectralType, TelemetryAction, WCSMatchingType} from "enums";
+import {AnimationMode, CatalogType, ConnectionStatus, ImageType, ImageViewLayer, SpectralType, TelemetryAction, WCSMatchingType} from "enums";
 import {
     CARTA_INFO,
     type CatalogInfo,
@@ -33,7 +33,6 @@ import {
 import {ApiService, BackendService, ScriptingService, TelemetryService, TileService, type TileStreamDetails} from "services";
 import {
     AlertStore,
-    AnimationMode,
     AnimatorStore,
     BrowserMode,
     CatalogProfileStore,

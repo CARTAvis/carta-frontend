@@ -1,23 +1,11 @@
 import {CARTA} from "carta-protobuf";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
+import {AnimationMode, PlayMode} from "enums";
 import {type FrameView, Point2D} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {clamp, GetRequiredTiles, getTransformedChannelList, mapToObject} from "utilities";
-
-export enum AnimationMode {
-    CHANNEL = 0,
-    STOKES = 1,
-    FRAME = 2
-}
-
-export enum PlayMode {
-    FORWARD = 0,
-    BACKWARD = 1,
-    BOUNCING = 2,
-    BLINK = 3
-}
 
 export class AnimatorStore {
     private static staticInstance: AnimatorStore;

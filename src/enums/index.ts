@@ -1,4 +1,5 @@
 export * from "./alert";
+export * from "./animation";
 export * from "./catalog";
 export * from "./connection";
 export * from "./fileInfo";

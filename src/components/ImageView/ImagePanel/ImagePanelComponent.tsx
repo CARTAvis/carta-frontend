@@ -3,9 +3,9 @@ import classNames from "classnames";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {CursorInfoVisibility, ImageType, ImageViewLayer} from "enums";
+import {AnimationMode, CursorInfoVisibility, ImageType, ImageViewLayer} from "enums";
 import {type CursorInfo, type ImageItem, Zoom} from "models";
-import {AnimationMode, AppStore, ColorBlendingStore, type FrameStore} from "stores";
+import {AppStore, ColorBlendingStore, type FrameStore} from "stores";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
 import {CatalogViewGLComponent} from "../CatalogView/CatalogViewGLComponent";
