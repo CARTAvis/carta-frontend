@@ -6,8 +6,9 @@ import * as _ from "lodash";
 import {observer} from "mobx-react";
 
 import {ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput} from "components/Shared";
+import {Font, FontStyle} from "enums";
 import {AppStore} from "stores";
-import {CompassAnnotationStore, Font, FontStyle, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore, VectorAnnotationStore} from "stores/Frame";
+import {CompassAnnotationStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore, VectorAnnotationStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 
 import "./AppearanceForm.scss";

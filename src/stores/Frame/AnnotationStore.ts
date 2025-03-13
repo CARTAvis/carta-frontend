@@ -3,25 +3,13 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {action, makeObservable, observable} from "mobx";
 
+import {Font, FontStyle} from "enums";
 import {Point2D} from "models";
 import {BackendService} from "services";
 import {FrameStore} from "stores/Frame";
 import {transformPoint} from "utilities";
 
 import {RegionStore} from "./Region/RegionStore";
-
-export enum FontStyle {
-    NORMAL = "Normal",
-    BOLD = "Bold",
-    ITALIC = "Italic",
-    BOLD_ITALIC = "Italic Bold"
-}
-
-export enum Font {
-    HELVETICA = "Helvetica",
-    TIMES = "Times",
-    COURIER = "Courier"
-}
 
 const NUMBER_OF_POINT_TRANSFORMED = 201;
 
