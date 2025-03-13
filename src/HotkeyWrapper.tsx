@@ -3,9 +3,8 @@ import {Classes, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {BrowserMode, DialogId, ImageViewLayer} from "enums";
+import {BrowserMode, DialogId, ImageViewLayer, RegionMode} from "enums";
 import {AppStore} from "stores";
-import {RegionMode} from "stores/Frame";
 
 // There are some issues with the Blueprint hotkey target decorator, so this rather hacky workaround is needed for now
 // Once the issues are fixed, the decorator can be used and the functions can be made non-static

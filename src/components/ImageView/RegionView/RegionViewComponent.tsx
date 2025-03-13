@@ -7,10 +7,10 @@ import * as _ from "lodash";
 import {action, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
-import {DialogId, ImageViewLayer} from "enums";
+import {DialogId, ImageViewLayer, RegionMode} from "enums";
 import {type CursorInfo, Point2D, ZoomPoint} from "models";
 import {AppStore, OverlayStore, PreferenceStore} from "stores";
-import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
+import {FrameStore, RegionStore} from "stores/Frame";
 import {add2D, average2D, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
 
 import {CompassAnnotation, RulerAnnotation} from "./CompassAndRulerAnnotationComponent";

@@ -6,11 +6,11 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {AnnotationMenuComponent} from "components/Shared";
-import {DialogId, ImageViewLayer} from "enums";
+import {DialogId, ImageViewLayer, RegionMode} from "enums";
 import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
 import {RegionCreationMode} from "models";
 import {AppStore, WidgetsStore, WidgetType} from "stores";
-import {RegionMode, RegionStore} from "stores/Frame";
+import {RegionStore} from "stores/Frame";
 
 import "./ToolbarMenuComponent.scss";
 

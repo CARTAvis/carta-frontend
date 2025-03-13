@@ -7,10 +7,10 @@ import {observer} from "mobx-react";
 
 import {ImageViewComponent} from "components";
 import {AnnotationMenuComponent, ExportImageMenuComponent} from "components/Shared";
-import {ImageViewLayer} from "enums";
+import {ImageViewLayer, RegionMode} from "enums";
 import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
 import {AppStore} from "stores";
-import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
+import {FrameStore, RegionStore} from "stores/Frame";
 import {SystemType} from "stores/OverlayStore/OverlayStore";
 import {toFixed} from "utilities";
 

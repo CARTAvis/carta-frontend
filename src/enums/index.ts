@@ -10,6 +10,7 @@ export * from "./input";
 export * from "./plot";
 export * from "./polarization";
 export * from "./preference";
+export * from "./region";
 export * from "./spectral";
 export * from "./tab";
 export * from "./telemetry";

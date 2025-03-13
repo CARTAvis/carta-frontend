@@ -2,22 +2,12 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
+import {RegionMode, RegionsOpacity} from "enums";
 import {Point2D, Transform2D} from "models";
 import {BackendService} from "services";
 import {FileBrowserStore, PreferenceStore} from "stores";
 import {CompassAnnotationStore, CURSOR_REGION_ID, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore, VectorAnnotationStore} from "stores/Frame";
 import {isAstBadPoint, scale2D, transformPoint} from "utilities";
-
-export enum RegionMode {
-    MOVING,
-    CREATING
-}
-
-export enum RegionsOpacity {
-    Visible = 1,
-    SemiTransparent = 0.5,
-    Invisible = 0
-}
 
 export class RegionSetStore {
     @observable regions: RegionStore[];
