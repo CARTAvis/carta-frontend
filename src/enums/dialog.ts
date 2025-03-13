@@ -16,3 +16,8 @@ export enum DialogId {
     ShareWorkspace = "share-work-dialog",
     Hotkey = "hotkey-dialog"
 }
+
+export enum LayoutDialogMode {
+    DynamicLayout,
+    Layout
+}

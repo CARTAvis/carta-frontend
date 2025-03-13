@@ -2,16 +2,12 @@ import * as GoldenLayout from "golden-layout";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
+import {LayoutDialogMode} from "enums";
 import {LayoutConfig, PresetLayout} from "models";
 import {ApiService} from "services";
 import {AlertStore, AppStore} from "stores";
 
 const MAX_LAYOUT = 10;
-
-export enum LayoutDialogMode {
-    DynamicLayout,
-    Layout
-}
 
 export class LayoutStore {
     private static staticInstance: LayoutStore;

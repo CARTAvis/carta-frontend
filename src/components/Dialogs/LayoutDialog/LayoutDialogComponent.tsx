@@ -7,9 +7,9 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScrollShadow} from "components/Shared";
-import {DialogId, HelpType} from "enums";
+import {DialogId, HelpType, LayoutDialogMode} from "enums";
 import {CtypeAbbrToName, PresetLayout} from "models";
-import {AppStore, FrameStore, INITIAL_LAYOUT_ITEM, LayoutDialogMode, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, FrameStore, INITIAL_LAYOUT_ITEM, PreferenceKeys, PreferenceStore} from "stores";
 
 import "./LayoutDialogComponent.scss";
 
