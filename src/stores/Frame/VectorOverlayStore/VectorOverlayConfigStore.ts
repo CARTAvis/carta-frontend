@@ -3,14 +3,9 @@ import {action, makeObservable, observable} from "mobx";
 import type {WorkspaceVectorOverlayConfig} from "models";
 import tinycolor from "tinycolor2";
 
+import {VectorOverlaySource} from "enums";
 import {PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
-
-export enum VectorOverlaySource {
-    None = -1,
-    Current = 0,
-    Computed = 1
-}
 
 export class VectorOverlayConfigStore {
     // Generator config

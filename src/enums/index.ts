@@ -15,4 +15,5 @@ export * from "./spectral";
 export * from "./tab";
 export * from "./telemetry";
 export * from "./unit";
+export * from "./vector";
 export * from "./workspace";
