@@ -1,16 +1,10 @@
 import * as AST from "ast_wrapper";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
-import {CatalogDatabase, CatalogSystemType} from "enums";
+import {CatalogDatabase, CatalogSystemType, RadiusUnits} from "enums";
 import {Point2D} from "models";
 import {AppStore, ASTSettingsString, NumberFormatType, SystemType} from "stores";
 import {clamp, getPixelValueFromWCS, transformPoint, type VizierResource} from "utilities";
-
-export enum RadiusUnits {
-    DEGREES = "deg",
-    ARCMINUTES = "arcmin",
-    ARCSECONDS = "arcsec"
-}
 
 export type VizierItem = {name: string | null; description: string | null};
 

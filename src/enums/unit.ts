@@ -12,3 +12,9 @@ export enum AngularSizeUnit {
     ARCMIN = "arcmin",
     DEG = "deg"
 }
+
+export enum RadiusUnits {
+    DEGREES = "deg",
+    ARCMINUTES = "arcmin",
+    ARCSECONDS = "arcsec"
+}
