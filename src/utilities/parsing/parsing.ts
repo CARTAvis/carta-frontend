@@ -1,8 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 
-// order matters, since ... and .. both having .. (same for < and <=, > and >=)
-export enum ComparisonOperator {
+enum ComparisonOperator {
     Equal = "==",
     NotEqual = "!=",
     LessorOrEqual = "<=",
