@@ -9,6 +9,7 @@ export * from "./help";
 export * from "./hips";
 export * from "./imageView";
 export * from "./input";
+export * from "./lineQuery";
 export * from "./overlay";
 export * from "./plot";
 export * from "./polarization";

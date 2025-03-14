@@ -1,7 +1,7 @@
 import axios, {type AxiosInstance} from "axios";
 import {CARTA} from "carta-protobuf";
 
-import {SpectralLineHeaders} from "stores/Widgets";
+import {SpectralLineHeaders} from "enums";
 
 export interface SpectralLineResponse {
     headers: CARTA.ICatalogHeader[];
