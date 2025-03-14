@@ -34,7 +34,7 @@ import {
     // setting Panel
     StokesAnalysisSettingsPanelComponent
 } from "components";
-import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, PreferenceKeys} from "enums";
+import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, PreferenceKeys, WidgetType} from "enums";
 import {AppStore, CatalogStore, HelpStore, LayoutStore, PreferenceStore} from "stores";
 import {
     ACTIVE_FILE_ID,
@@ -53,24 +53,6 @@ import {
     StatsWidgetStore,
     StokesAnalysisWidgetStore
 } from "stores/Widgets";
-
-export enum WidgetType {
-    Region = "Region List Widget",
-    Log = "Log Widget",
-    SpatialProfiler = "Spatial Profiler",
-    SpectralProfiler = "Spectral Profiler",
-    Statistics = "Statistics Widget",
-    Histogram = "Histogram Widget",
-    Animator = "Animator Widget",
-    RenderConfig = "Render Configuration Widget",
-    StokesAnalysis = "Stokes Analysis Widget",
-    ImageList = "Image List Widget",
-    Catalog = "Catalog Widget",
-    SpectralLineQuery = "Spectral Line Query Widget",
-    CursorInfo = "Cursor Info Widget",
-    PvGenerator = "PV Generator",
-    ChannelMapControl = "Channel Map Control"
-}
 
 export interface DefaultWidgetConfig {
     id: string;

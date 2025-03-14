@@ -20,4 +20,5 @@ export * from "./tab";
 export * from "./telemetry";
 export * from "./unit";
 export * from "./vector";
+export * from "./widget";
 export * from "./workspace";
