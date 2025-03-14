@@ -9,10 +9,15 @@ import {SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "compone
 import {HelpType, MemoryUnit, SpectralSystem} from "enums";
 import {Point2D} from "models";
 import {AppStore, type DefaultWidgetConfig, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
-import {PVAxis, PvGeneratorWidgetStore, RegionId} from "stores/Widgets";
+import {PvGeneratorWidgetStore, RegionId} from "stores/Widgets";
 import {toFixed} from "utilities";
 
 import "./PvGeneratorComponent.scss";
+
+enum PVAxis {
+    SPATIAL = "Spatial",
+    SPECTRAL = "Spectral"
+}
 
 @observer
 export class PvGeneratorComponent extends React.Component<WidgetProps> {

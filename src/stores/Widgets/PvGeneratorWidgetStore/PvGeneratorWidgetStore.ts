@@ -10,11 +10,6 @@ import {length2D} from "utilities";
 
 import {ACTIVE_FILE_ID, RegionId, RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
-export enum PVAxis {
-    SPATIAL = "Spatial",
-    SPECTRAL = "Spectral"
-}
-
 export class PvGeneratorWidgetStore extends RegionWidgetStore {
     @observable width: number;
     @observable reverse: boolean;
