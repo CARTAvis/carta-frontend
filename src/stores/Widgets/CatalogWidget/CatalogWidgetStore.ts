@@ -2,64 +2,13 @@ import {Colors} from "@blueprintjs/core";
 import * as CARTACompute from "carta_computation";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
-import {AngularSizeUnit, CatalogOverlay, CatalogTextureType, FrameScaling} from "enums";
+import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogSizeUnits, CatalogTextureType, FrameScaling} from "enums";
 import {FACTOR_TO_ARCSEC} from "models";
 import {CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, PreferenceStore} from "stores";
 import {clamp, minMaxArray} from "utilities";
 
-export enum CatalogPlotType {
-    ImageOverlay = "Image overlay",
-    Histogram = "Histogram",
-    D2Scatter = "2D scatter"
-}
-
-export enum CatalogOverlayShape {
-    BOX_LINED = 1,
-    CIRCLE_FILLED = 2,
-    CIRCLE_LINED = 3,
-    HEXAGON_LINED = 5,
-    RHOMB_LINED = 7,
-    TRIANGLE_LINED_UP = 9,
-    ELLIPSE_LINED = 11,
-    TRIANGLE_LINED_DOWN = 13,
-    HEXAGON_LINED_2 = 15,
-    CROSS_FILLED = 16,
-    CROSS_LINED = 17,
-    X_FILLED = 18,
-    X_LINED = 19,
-    LineSegment_FILLED = 20
-}
-
-export enum CatalogSettingsTabs {
-    GLOBAL,
-    STYLING,
-    COLOR,
-    SIZE,
-    ORIENTATION,
-    SIZE_MAJOR,
-    SIZE_MINOR,
-    ANGULAR_SIZE
-}
-
-/**
- * Display catalog sources with single or mapped sizes (Canvas) or their angular sizes (World)
- */
-export enum CatalogDisplayMode {
-    CANVAS = "Custom",
-    WORLD = "Angular size"
-}
-
 export type ValueClip = "size-min" | "size-max" | "angle-min" | "angle-max";
-
-export enum CatalogSizeUnits {
-    SCREENPIXEL = "screen px",
-    IMAGEPIXEL = "image px",
-    MILLIARCSEC = "milliarcsec",
-    ARCSEC = "arcsec",
-    ARCMIN = "arcmin",
-    DEG = "deg"
-}
 
 export class CatalogWidgetStore {
     public static readonly MinOverlaySize = 1;

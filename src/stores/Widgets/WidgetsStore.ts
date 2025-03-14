@@ -34,11 +34,10 @@ import {
     // setting Panel
     StokesAnalysisSettingsPanelComponent
 } from "components";
-import {HelpType, ImagePanelMode, ImageType, PreferenceKeys} from "enums";
+import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, PreferenceKeys} from "enums";
 import {AppStore, CatalogStore, HelpStore, LayoutStore, PreferenceStore} from "stores";
 import {
     ACTIVE_FILE_ID,
-    CatalogPlotType,
     CatalogPlotWidgetStore,
     type CatalogPlotWidgetStoreProps,
     CatalogWidgetStore,

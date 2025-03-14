@@ -23,3 +23,14 @@ export enum StokesAnalysisSettingsTabs {
     SCATTER_PLOT_STYLING,
     SMOOTHING
 }
+
+export enum CatalogSettingsTabs {
+    GLOBAL,
+    STYLING,
+    COLOR,
+    SIZE,
+    ORIENTATION,
+    SIZE_MAJOR,
+    SIZE_MINOR,
+    ANGULAR_SIZE
+}

@@ -1,8 +1,7 @@
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {CatalogOverlay} from "enums";
+import {CatalogOverlay, CatalogPlotType} from "enums";
 import {Point2D} from "models";
-import {CatalogPlotType} from "stores/Widgets";
 import {toExponential} from "utilities";
 
 export interface CatalogPlotWidgetStoreProps {

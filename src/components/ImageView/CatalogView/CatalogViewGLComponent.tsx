@@ -4,11 +4,10 @@ import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
-import {CatalogTextureType, ImageViewLayer} from "enums";
+import {CatalogOverlayShape, CatalogTextureType, ImageViewLayer} from "enums";
 import {CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, WidgetsStore} from "stores";
 import {FrameStore, RenderConfigStore} from "stores/Frame";
-import {CatalogOverlayShape} from "stores/Widgets";
 import {closestCatalogIndexToCursor, GL2, rotate2D, scale2D, subtract2D} from "utilities";
 
 import "./CatalogViewGLComponent.scss";
