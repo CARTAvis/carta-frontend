@@ -56,3 +56,11 @@ export enum IntensityUnitType {
     JyPixel,
     Unsupported
 }
+
+export enum MultiProfileCategory {
+    NONE = "None", // Single profile mode: allow only 1 profile displayed in widget
+    IMAGE = "Image",
+    REGION = "Region",
+    STATISTIC = "Statistic",
+    STOKES = "Polarization"
+}

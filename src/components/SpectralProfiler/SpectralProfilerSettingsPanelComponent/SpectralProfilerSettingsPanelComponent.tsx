@@ -4,9 +4,9 @@ import {autorun, computed} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScrollShadow, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
-import {HelpType, SpectralProfilerSettingsTabs} from "enums";
+import {HelpType, MultiProfileCategory, SpectralProfilerSettingsTabs} from "enums";
 import {AppStore, type DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
-import {MultiProfileCategory, SpectralProfileWidgetStore} from "stores/Widgets";
+import {SpectralProfileWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 
 import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGeneratorComponent";

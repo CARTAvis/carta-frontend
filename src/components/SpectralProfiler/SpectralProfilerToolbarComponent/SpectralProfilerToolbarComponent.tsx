@@ -6,10 +6,10 @@ import {observer} from "mobx-react";
 import type {LineOption} from "models";
 
 import {SpectralProfilerComponent} from "components";
-import {SpectralProfilerSettingsTabs} from "enums";
+import {MultiProfileCategory, SpectralProfilerSettingsTabs} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore} from "stores";
-import {MultiProfileCategory, SpectralProfileSelectionStore, SpectralProfileWidgetStore} from "stores/Widgets";
+import {SpectralProfileSelectionStore, SpectralProfileWidgetStore} from "stores/Widgets";
 
 import "./SpectralProfilerToolbarComponent.scss";
 
