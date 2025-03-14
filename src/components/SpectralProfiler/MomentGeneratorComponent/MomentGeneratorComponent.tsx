@@ -7,10 +7,10 @@ import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
-import {FrequencyUnit} from "enums";
+import {FrequencyUnit, MomentSelectingMode} from "enums";
 import {MOMENT_TEXT} from "models";
 import {AppStore, FrameStore} from "stores";
-import {MomentSelectingMode, SpectralProfileWidgetStore} from "stores/Widgets";
+import {SpectralProfileWidgetStore} from "stores/Widgets";
 
 import "./MomentGeneratorComponent.scss";
 

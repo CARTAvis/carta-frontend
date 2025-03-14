@@ -64,3 +64,9 @@ export enum MultiProfileCategory {
     STATISTIC = "Statistic",
     STOKES = "Polarization"
 }
+
+export enum MomentSelectingMode {
+    NONE = 1,
+    CHANNEL,
+    MASK
+}
