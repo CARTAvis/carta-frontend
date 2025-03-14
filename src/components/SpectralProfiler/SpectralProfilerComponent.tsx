@@ -7,9 +7,9 @@ import {autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {type LineMarker, LinePlotComponent, LinePlotComponentProps} from "components/Shared";
-import {HelpType, LinePlotSelectingMode, PlotType, SmoothingType, SpectralType, TickType} from "enums";
+import {FittingContinuum, HelpType, LinePlotSelectingMode, PlotType, SmoothingType, SpectralType, TickType} from "enums";
 import {Point2D} from "models";
-import {AnimatorStore, AppStore, type DefaultWidgetConfig, FittingContinuum, WidgetProps, WidgetsStore} from "stores";
+import {AnimatorStore, AppStore, type DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
 import {type MultiPlotData, SpectralProfileWidgetStore} from "stores/Widgets";
 import {binarySearchByX, clamp, formattedExponential, getColorForTheme, toExponential, toFixed, toFormattedNotationByDiff} from "utilities";
 

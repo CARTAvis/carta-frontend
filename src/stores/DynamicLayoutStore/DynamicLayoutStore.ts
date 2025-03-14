@@ -1,7 +1,8 @@
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, ErrorToast} from "components/Shared";
-import {AppStore, PreferenceKeys, PreferenceStore} from "stores";
+import {PreferenceKeys} from "enums";
+import {AppStore, PreferenceStore} from "stores";
 
 export const INITIAL_LAYOUT_ITEM = "Initial Layout";
 

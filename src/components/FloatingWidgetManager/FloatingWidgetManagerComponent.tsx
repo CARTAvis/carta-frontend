@@ -31,7 +31,7 @@ import {
     StokesAnalysisComponent,
     StokesAnalysisSettingsPanelComponent
 } from "components";
-import {ImageType} from "models";
+import {ImageType} from "enums";
 import {AppStore, CatalogStore, WidgetConfig, WidgetsStore} from "stores";
 
 @observer
