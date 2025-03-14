@@ -2,9 +2,9 @@ import type {OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
-import {SpectralSystem, TelemetryAction} from "enums";
+import {PreferenceKeys, SpectralSystem, TelemetryAction} from "enums";
 import {TelemetryService} from "services";
-import {AppStore, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {length2D} from "utilities";
 

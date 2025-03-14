@@ -6,8 +6,8 @@ import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
 import {BiasContrastSelectComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput, ScalingSelectComponent} from "components/Shared";
-import {FrameScaling} from "enums";
-import {AppStore, PreferenceKeys} from "stores";
+import {FrameScaling, PreferenceKeys} from "enums";
+import {AppStore} from "stores";
 import {RenderConfigStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 

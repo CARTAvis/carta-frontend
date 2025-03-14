@@ -10,9 +10,9 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, FilterableTableComponent, FilterableTableComponentProps, ResizeDetector} from "components/Shared";
-import {CatalogOverlay, CatalogSystemType, CatalogUpdateMode, HelpType, ImageViewLayer, RegionMode} from "enums";
+import {CatalogOverlay, CatalogSystemType, CatalogUpdateMode, HelpType, ImageViewLayer, PreferenceKeys, RegionMode} from "enums";
 import {AbstractCatalogProfileStore} from "models";
-import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, PreferenceKeys, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
 import {CatalogPlotType, type CatalogPlotWidgetStoreProps, CatalogSettingsTabs, CatalogWidgetStore} from "stores/Widgets";
 import {clamp, type ProcessedColumnData, toFixed} from "utilities";
 

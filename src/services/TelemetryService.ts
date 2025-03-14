@@ -5,9 +5,9 @@ import {jwtDecode} from "jwt-decode";
 import {computed, flow, makeObservable, observable} from "mobx";
 import {v1 as uuidv1} from "uuid";
 
-import {TelemetryAction, TelemetryMode} from "enums";
+import {PreferenceKeys, TelemetryAction, TelemetryMode} from "enums";
 import {CARTA_INFO} from "models";
-import {PreferenceKeys, PreferenceStore} from "stores";
+import {PreferenceStore} from "stores";
 import {getUnixTimestamp} from "utilities";
 
 export interface TelemetryMessage {
