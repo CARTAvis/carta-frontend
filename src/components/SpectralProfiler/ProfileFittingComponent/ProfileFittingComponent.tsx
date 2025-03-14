@@ -4,7 +4,8 @@ import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {SafeNumericInput} from "components/Shared";
-import {AppStore, FittingContinuum, FittingFunction, ProfileFittingStore} from "stores";
+import {FittingContinuum, FittingFunction} from "enums";
+import {AppStore, ProfileFittingStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/Widgets";
 import {exportTxtFile, getTimestamp} from "utilities";
 

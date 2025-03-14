@@ -57,3 +57,14 @@ export enum SmoothingType {
     BINNING = "Binning",
     SAVITZKY_GOLAY = "Savitzky-Golay"
 }
+
+export enum FittingFunction {
+    GAUSSIAN = 0,
+    LORENTZIAN = 1
+}
+
+export enum FittingContinuum {
+    NONE = -1,
+    ZEROTH_ORDER = 0,
+    FIRST_ORDER = 1
+}
