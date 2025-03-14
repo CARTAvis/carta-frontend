@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScrollShadow, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
 import {HelpType, MultiProfileCategory, SpectralProfilerSettingsTabs} from "enums";
-import {AppStore, type DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 

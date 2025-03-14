@@ -12,7 +12,7 @@ import {observer} from "mobx-react";
 import {ClearableNumericInputComponent, FilterableTableComponent, FilterableTableComponentProps, ResizeDetector} from "components/Shared";
 import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType, CatalogUpdateMode, HelpType, ImageViewLayer, PreferenceKeys, RegionMode} from "enums";
 import {AbstractCatalogProfileStore} from "models";
-import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps, WidgetsStore} from "stores";
 import {type CatalogPlotWidgetStoreProps, CatalogWidgetStore} from "stores/Widgets";
 import {clamp, type ProcessedColumnData, toFixed} from "utilities";
 

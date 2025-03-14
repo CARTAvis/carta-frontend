@@ -7,10 +7,12 @@ import {observer} from "mobx-react";
 
 import {CoordinateComponent, CoordNumericInput, ImageCoordNumericInput} from "components/Shared";
 import {CoordinateMode, InputType} from "enums";
-import {Point2D, WCSPoint2D} from "models";
+import {Point2D} from "models";
 import {AppStore} from "stores";
 import {FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
+
+import {WCSPoint2D} from "../../../../models/Point2D/Point2D";
 
 @observer
 export class EllipticalRegionForm extends React.Component<{region: RegionStore; frame: FrameStore; wcsInfo: AST.FrameSet}> {

@@ -8,9 +8,9 @@ import {action, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DialogId, ImageViewLayer, RegionMode} from "enums";
-import {type CursorInfo, Point2D, ZoomPoint} from "models";
+import {type CursorInfo, type Point2D, ZoomPoint} from "models";
 import {AppStore, OverlayStore, PreferenceStore} from "stores";
-import {FrameStore, RegionStore} from "stores/Frame";
+import {FrameStore, type RegionStore} from "stores/Frame";
 import {add2D, average2D, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
 
 import {CompassAnnotation, RulerAnnotation} from "./CompassAndRulerAnnotationComponent";

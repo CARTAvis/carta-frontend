@@ -6,7 +6,7 @@ import type {LineKey} from "models";
 
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScrollShadow} from "components/Shared";
 import {HelpType, HistogramSettingsTabs} from "enums";
-import {AppStore, type DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {HistogramWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 

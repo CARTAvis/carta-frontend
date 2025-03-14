@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 
 import {FilterableTableComponent, FilterableTableComponentProps, ResizeDetector, SafeNumericInput} from "components/Shared";
 import {HelpType, RedshiftType, SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "enums";
-import {AppStore, type DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {SpectralLineQueryWidgetStore} from "stores/Widgets";
 
 import "./SpectralLineQueryComponent.scss";

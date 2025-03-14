@@ -4,7 +4,7 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {ImageType} from "enums";
 import {type ImageItem} from "models";
 import {TileService} from "services";
-import {AppStore, FrameStore} from "stores";
+import {AppStore, type FrameStore} from "stores";
 
 export class ChannelMapStore {
     private static staticInstance: ChannelMapStore;

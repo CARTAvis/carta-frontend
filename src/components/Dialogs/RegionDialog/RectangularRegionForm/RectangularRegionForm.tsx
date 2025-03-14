@@ -7,10 +7,11 @@ import {observer} from "mobx-react";
 
 import {CoordinateComponent, CoordNumericInput, ImageCoordNumericInput} from "components/Shared";
 import {CoordinateMode, InputType} from "enums";
-import {Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
 import {FrameStore, RegionStore, TextAnnotationStore, WCS_PRECISION} from "stores/Frame";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid, scale2D} from "utilities";
+
+import {Point2D, WCSPoint2D} from "../../../../models/Point2D/Point2D";
 
 import "./RectangularRegionForm.scss";
 

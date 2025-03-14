@@ -8,7 +8,7 @@ import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
 import {HelpType, MemoryUnit, RegionId, SpectralSystem} from "enums";
 import {Point2D} from "models";
-import {AppStore, type DefaultWidgetConfig, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps, WidgetsStore} from "stores";
 import {PvGeneratorWidgetStore} from "stores/Widgets";
 import {toFixed} from "utilities";
 

@@ -9,7 +9,7 @@ import {TaskProgressDialogComponent} from "components/Dialogs";
 import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {HelpType, ImageType, PlotType} from "enums";
 import {Point2D} from "models";
-import {AppStore, type DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {FrameStore, RenderConfigStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
 import {clamp, getColorForTheme, scaleValue, toExponential, toFixed} from "utilities";

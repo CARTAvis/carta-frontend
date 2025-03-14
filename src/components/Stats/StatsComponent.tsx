@@ -9,7 +9,7 @@ import {RegionSelectorComponent, ResizeDetector} from "components/Shared";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {HelpType, POLARIZATIONS} from "enums";
 import {FULL_POLARIZATIONS} from "models";
-import {AppStore, type DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {StatsWidgetStore} from "stores/Widgets";
 import {exportTsvFile, toExponential} from "utilities";
 

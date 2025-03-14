@@ -6,8 +6,10 @@ import {RegionMode, RegionsOpacity} from "enums";
 import {Point2D, Transform2D} from "models";
 import {BackendService} from "services";
 import {FileBrowserStore, PreferenceStore} from "stores";
-import {CompassAnnotationStore, CURSOR_REGION_ID, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore, VectorAnnotationStore} from "stores/Frame";
+import {CompassAnnotationStore, CURSOR_REGION_ID, FrameStore, PointAnnotationStore, RulerAnnotationStore, TextAnnotationStore, VectorAnnotationStore} from "stores/Frame";
 import {isAstBadPoint, scale2D, transformPoint} from "utilities";
+
+import {RegionStore} from "./RegionStore";
 
 export class RegionSetStore {
     @observable regions: RegionStore[];

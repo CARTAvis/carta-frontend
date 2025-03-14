@@ -14,7 +14,7 @@ import {
     SpectralSettingsComponent
 } from "components/Shared";
 import {HelpType, StokesAnalysisSettingsTabs} from "enums";
-import {AppStore, type DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {StokesAnalysisWidgetStore} from "stores/Widgets";
 
 import "./StokesAnalysisSettingsPanelComponent.scss";

@@ -12,7 +12,7 @@ import * as Plotly from "plotly.js";
 
 import {ClearableNumericInputComponent, ProfilerInfoComponent, ResizeDetector} from "components/Shared";
 import {CatalogPlotType, CatalogUpdateMode} from "enums";
-import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {type Border, CatalogPlotWidgetStore, type CatalogPlotWidgetStoreProps, CatalogWidgetStore, type DragMode, type XBorder} from "stores/Widgets";
 import {minMaxArray, toFixed, type TypedArray} from "utilities";
 

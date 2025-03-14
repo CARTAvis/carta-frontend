@@ -36,20 +36,7 @@ import {
 } from "models";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE, TileService} from "services";
 import {AnimatorStore, AppStore, ASTSettingsString, INITIAL_LAYOUT_ITEM, LogStore, PreferenceStore} from "stores";
-import {
-    CENTER_POINT_INDEX,
-    ColorbarStore,
-    ContourConfigStore,
-    ContourStore,
-    OverlayBeamStore,
-    RegionSetStore,
-    RegionStore,
-    RenderConfigStore,
-    RestFreqStore,
-    SIZE_POINT_INDEX,
-    VectorOverlayConfigStore,
-    VectorOverlayStore
-} from "stores/Frame";
+import {CENTER_POINT_INDEX, ColorbarStore, ContourConfigStore, ContourStore, RegionStore, RenderConfigStore, RestFreqStore, SIZE_POINT_INDEX, VectorOverlayConfigStore, VectorOverlayStore} from "stores/Frame";
 import {
     clamp,
     formattedArcsec,
@@ -76,6 +63,9 @@ import {
     transformPoint,
     trimFitsComment
 } from "utilities";
+
+import {OverlayBeamStore} from "./OverlayBeamStore/OverlayBeamStore";
+import {RegionSetStore} from "./Region/RegionSetStore";
 
 export interface FrameInfo {
     fileId: number;

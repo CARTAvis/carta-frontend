@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, SafeNumericInput, ScrollShadow, SmoothingSettingsComponent} from "components/Shared";
 import {HelpType, RegionId, SpatialProfilerSettingsTabs} from "enums";
 import {LineKey} from "models";
-import {AppStore, DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {SpatialProfileWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 
