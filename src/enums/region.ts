@@ -9,6 +9,20 @@ export enum RegionsOpacity {
     Invisible = 0
 }
 
+export enum RegionId {
+    NONE = -4,
+    ACTIVE = -3,
+    IMAGE = -1,
+    CURSOR = 0
+}
+
+export enum RegionsType {
+    CLOSED,
+    CLOSED_AND_POINT,
+    POINT_AND_LINES,
+    LINE
+}
+
 export enum FontStyle {
     NORMAL = "Normal",
     BOLD = "Bold",

@@ -3,9 +3,10 @@ import {FormGroup, HTMLSelect, type OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
+import {RegionId, RegionsType} from "enums";
 import {AppStore} from "stores";
 import {FrameStore, RegionStore} from "stores/Frame";
-import {ACTIVE_FILE_ID, RegionId, RegionsType, RegionWidgetStore} from "stores/Widgets";
+import {ACTIVE_FILE_ID, RegionWidgetStore} from "stores/Widgets";
 
 import "./RegionSelectorComponent.scss";
 

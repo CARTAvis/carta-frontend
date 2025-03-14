@@ -4,11 +4,11 @@ import {action, autorun, computed, makeObservable, observable, override, reactio
 import tinycolor from "tinycolor2";
 
 import {VERTICAL_RANGE_PADDING} from "components/Shared";
-import {IntensityUnitType, LineSettings, PlotType, POLARIZATIONS, SmoothingType, SpectralProfilerSettingsTabs, SpectralSystem, TelemetryAction} from "enums";
+import {IntensityUnitType, LineSettings, PlotType, POLARIZATIONS, RegionId, RegionsType, SmoothingType, SpectralProfilerSettingsTabs, SpectralSystem, TelemetryAction} from "enums";
 import {FindIntensityUnitType, GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, type IntensityConfig, IsIntensitySupported, type LineKey, Point2D} from "models";
 import {TelemetryService} from "services";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
-import {MultiProfileCategory, RegionId, RegionsType, RegionWidgetStore, type SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
+import {MultiProfileCategory, RegionWidgetStore, type SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
 import {clamp, getColorForTheme, isAutoColor} from "utilities";
 
 export enum MomentSelectingMode {

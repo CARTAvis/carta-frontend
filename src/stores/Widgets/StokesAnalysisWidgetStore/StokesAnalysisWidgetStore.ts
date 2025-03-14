@@ -3,11 +3,11 @@ import type {ChartArea} from "chart.js";
 import {action, computed, makeObservable, observable, override} from "mobx";
 import tinycolor from "tinycolor2";
 
-import {LineSettings, PlotType, ScatterSettings, SpectralSystem, StokesAnalysisSettingsTabs} from "enums";
+import {LineSettings, PlotType, RegionsType, ScatterSettings, SpectralSystem, StokesAnalysisSettingsTabs} from "enums";
 import {ProfileSmoothingStore} from "stores";
 import {getColorsForValues, isAutoColor} from "utilities";
 
-import {RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
+import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
 export enum StokesCoordinate {
     CurrentZ = "z",

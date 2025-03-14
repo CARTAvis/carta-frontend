@@ -5,10 +5,10 @@ import {autorun, computed} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, SafeNumericInput, ScrollShadow, SmoothingSettingsComponent} from "components/Shared";
-import {HelpType, SpatialProfilerSettingsTabs} from "enums";
+import {HelpType, RegionId, SpatialProfilerSettingsTabs} from "enums";
 import {LineKey} from "models";
 import {AppStore, DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
-import {RegionId, SpatialProfileWidgetStore} from "stores/Widgets";
+import {SpatialProfileWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 
 import "./SpatialProfilerSettingsPanelComponent.scss";

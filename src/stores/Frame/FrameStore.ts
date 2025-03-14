@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
 
 import {PvPreviewComponent} from "components";
-import {POLARIZATIONS, SpectralSystem, SpectralType, SpectralUnit, SystemType} from "enums";
+import {POLARIZATIONS, RegionId, SpectralSystem, SpectralType, SpectralUnit, SystemType} from "enums";
 import {
     CatalogControlMap,
     type ChannelInfo,
@@ -50,7 +50,6 @@ import {
     VectorOverlayConfigStore,
     VectorOverlayStore
 } from "stores/Frame";
-import {RegionId} from "stores/Widgets";
 import {
     clamp,
     formattedArcsec,

@@ -3,13 +3,13 @@ import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable, override} from "mobx";
 import tinycolor from "tinycolor2";
 
-import {LineSettings, PlotType, POLARIZATIONS, SpatialProfilerSettingsTabs} from "enums";
+import {LineSettings, PlotType, POLARIZATIONS, RegionId, RegionsType, SpatialProfilerSettingsTabs} from "enums";
 import {type LineOption, VALID_XY_COORDINATES} from "models";
 import {AppStore, ProfileSmoothingStore} from "stores";
 import {FrameStore, RegionStore} from "stores/Frame";
 import {clamp, isAutoColor} from "utilities";
 
-import {RegionId, RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
+import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
 const DEFAULT_STOKES = "current";
 

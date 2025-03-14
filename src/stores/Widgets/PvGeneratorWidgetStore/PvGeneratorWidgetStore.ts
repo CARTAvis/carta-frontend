@@ -2,13 +2,13 @@ import type {OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
-import {PreferenceKeys, SpectralSystem, TelemetryAction} from "enums";
+import {PreferenceKeys, RegionId, RegionsType, SpectralSystem, TelemetryAction} from "enums";
 import {TelemetryService} from "services";
 import {AppStore, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {length2D} from "utilities";
 
-import {ACTIVE_FILE_ID, RegionId, RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
+import {ACTIVE_FILE_ID, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
 export class PvGeneratorWidgetStore extends RegionWidgetStore {
     @observable width: number;

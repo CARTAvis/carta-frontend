@@ -6,10 +6,10 @@ import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
-import {HelpType, MemoryUnit, SpectralSystem} from "enums";
+import {HelpType, MemoryUnit, RegionId, SpectralSystem} from "enums";
 import {Point2D} from "models";
 import {AppStore, type DefaultWidgetConfig, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
-import {PvGeneratorWidgetStore, RegionId} from "stores/Widgets";
+import {PvGeneratorWidgetStore} from "stores/Widgets";
 import {toFixed} from "utilities";
 
 import "./PvGeneratorComponent.scss";

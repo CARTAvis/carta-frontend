@@ -2,24 +2,11 @@ import type {OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
+import {RegionId, RegionsType} from "enums";
 import {AppStore} from "stores";
 import {FrameStore, RegionStore} from "stores/Frame";
 
 export const ACTIVE_FILE_ID = -1;
-
-export enum RegionId {
-    NONE = -4,
-    ACTIVE = -3,
-    IMAGE = -1,
-    CURSOR = 0
-}
-
-export enum RegionsType {
-    CLOSED,
-    CLOSED_AND_POINT,
-    POINT_AND_LINES,
-    LINE
-}
 
 export class RegionWidgetStore {
     protected readonly appStore: AppStore;

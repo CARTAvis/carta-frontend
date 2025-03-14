@@ -2,11 +2,11 @@ import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
-import {HistogramSettingsTabs, LineSettings, PlotType, POLARIZATIONS} from "enums";
+import {HistogramSettingsTabs, LineSettings, PlotType, POLARIZATIONS, RegionsType} from "enums";
 import {VALID_COORDINATES} from "models";
 import {closeTo, isAutoColor} from "utilities";
 
-import {RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
+import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
 export class HistogramWidgetStore extends RegionWidgetStore {
     @observable settingsTabId: HistogramSettingsTabs;
