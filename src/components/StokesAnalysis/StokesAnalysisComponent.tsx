@@ -7,11 +7,11 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, ResizeDetector, ScatterPlotComponent, ScatterPlotComponentProps, VERTICAL_RANGE_PADDING} from "components/Shared";
-import {HelpType, PlotType, SmoothingType, SpectralColorMap, SpectralType, TickType} from "enums";
+import {HelpType, PlotType, SmoothingType, SpectralColorMap, SpectralType, StokesCoordinate, TickType} from "enums";
 import {Point2D} from "models";
 import {AnimatorStore, AppStore, type DefaultWidgetConfig, SpectralProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
-import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/Widgets";
+import {StokesAnalysisWidgetStore} from "stores/Widgets";
 import {binarySearchByX, clamp, closestPointIndexToCursor, formattedNotation, getColorForTheme, minMaxArray, minMaxPointArrayZ, normalising, polarizationAngle, polarizedIntensity, toExponential, toFixed} from "utilities";
 
 import {MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";

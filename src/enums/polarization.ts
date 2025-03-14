@@ -17,3 +17,14 @@ export enum POLARIZATIONS {
     PFlinear = 16,
     Pangle = 17
 }
+
+export enum StokesCoordinate {
+    CurrentZ = "z",
+    TotalIntensity = "Iz",
+    LinearPolarizationQ = "Qz",
+    LinearPolarizationU = "Uz",
+    CircularPolarization = "Vz",
+    PolarizedIntensity = "PIz",
+    PolarizationAngle = "PAz",
+    PolarizationQU = "QvsU"
+}
