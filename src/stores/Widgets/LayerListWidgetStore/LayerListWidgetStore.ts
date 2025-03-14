@@ -1,13 +1,8 @@
 import type {TabId} from "@blueprintjs/core";
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {ImageType} from "enums";
+import {ImageType, LayerListSettingsTabs} from "enums";
 import {AppStore} from "stores";
-
-export enum LayerListSettingsTabs {
-    MATCHING,
-    REST_FREQ
-}
 
 export class LayerListWidgetStore {
     @observable settingsTabId: TabId = LayerListSettingsTabs.MATCHING;

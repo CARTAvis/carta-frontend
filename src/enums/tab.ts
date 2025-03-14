@@ -34,3 +34,8 @@ export enum CatalogSettingsTabs {
     SIZE_MINOR,
     ANGULAR_SIZE
 }
+
+export enum LayerListSettingsTabs {
+    MATCHING,
+    REST_FREQ
+}
