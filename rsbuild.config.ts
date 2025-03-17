@@ -11,4 +11,21 @@ export default defineConfig({
             version: 'legacy',
         },
     },
+    tools: {
+        rspack: {
+            resolveLoader: {
+                alias: {
+                    'worker-loader': require.resolve('worker-rspack-loader'),
+                },
+            },
+            module: {
+                rules: [
+                    {
+                        test: /\.worker\.js$/,
+                        loader: 'worker-rspack-loader',
+                    },
+                ],
+            },
+        },
+    },
 });
