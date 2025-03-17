@@ -5,8 +5,8 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {AppToaster} from "components/Shared";
 import {LayoutConfig, Snippet, Workspace, WorkspaceListItem} from "models";
 
-const preferencesSchema = require("models/preferences_schema_2.json");
-const snippetSchema = require("models/snippet_schema_1.json");
+const preferencesSchema = require("../schemas/preferences_schema_2.json");
+const snippetSchema = require("../schemas/snippet_schema_1.json");
 
 export interface RuntimeConfig {
     dashboardAddress?: string;
