@@ -61,6 +61,11 @@ const config = {
             /** @type {import('@docusaurus/preset-classic').Options} */
             ({
                 docs: {
+                    versions: {
+                        "5.0.0-beta.1c": {
+                            banner: "none",
+                        }
+                    },
                     sidebarPath: require.resolve("./sidebars.js")
                 },
                 theme: {
