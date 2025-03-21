@@ -1,5 +1,5 @@
 import {throttle} from "lodash";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
 
 import {TileService} from "services";
 import {AppStore, FrameStore} from "stores";
@@ -40,6 +40,25 @@ export class ChannelMapStore {
                 this.throttledRequestChannels(activeFrame);
             }
         });
+
+        reaction(
+            () => this.channelArray,
+            channelArray => {
+                const channel = AppStore.Instance.activeFrame?.channel;
+                if (Number.isFinite(channel) && !channelArray.includes(channel)) {
+                    AppStore.Instance.activeFrame.setChannel(channelArray[0]);
+                }
+            }
+        );
+
+        reaction(
+            () => AppStore.Instance.activeFrame?.channel,
+            channel => {
+                if (Number.isFinite(channel) && !this.channelArray.includes(channel)) {
+                    this.setStartChannel(channel);
+                }
+            }
+        );
     }
 
     @observable startChannel: number = 0;
