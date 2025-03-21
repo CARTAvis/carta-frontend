@@ -68,7 +68,7 @@ export class ChannelMapStore {
 
     @action setStartChannel(startChannel: number) {
         // Add checks for valid startChannel number for the masterFrame
-        if (startChannel < 0 || startChannel > AppStore.Instance.activeFrame.frameInfo.fileInfoExtended.depth - 1) {
+        if (startChannel < 0 || startChannel > this.totalChannelNum - 1) {
             return;
         }
         this.startChannel = startChannel;
@@ -140,18 +140,22 @@ export class ChannelMapStore {
         this.showVelocityStringLabel = show;
     };
 
+    @computed private get totalChannelNum(): number {
+        return AppStore.Instance.activeFrame?.frameInfo?.fileInfoExtended?.depth ?? 1;
+    }
+
     @computed get numChannels(): number {
         return this.numColumns * this.numRows;
     }
 
     @computed get endChannel(): number {
-        return Math.min(this.startChannel + this.numChannels - 1, AppStore.Instance.activeFrame?.frameInfo?.fileInfoExtended?.depth - 1);
+        return Math.min(this.startChannel + this.numChannels - 1, this.totalChannelNum - 1);
     }
 
     @computed get channelArray(): number[] {
         const channelArray: number[] = [];
         for (let i = this.startChannel; i < this.startChannel + this.numChannels; i += 1) {
-            if (i > AppStore.Instance.activeFrame?.frameInfo?.fileInfoExtended.depth - 1) {
+            if (i > this.totalChannelNum - 1) {
                 break;
             }
             channelArray.push(i);
