@@ -414,14 +414,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         let percentileButtonsDiv, percentileSelectDiv;
         if (displayRankButtons) {
             const percentileRankButtons = RenderConfigStore.PERCENTILE_RANKS.map(rank => (
-                <Button
-                    small={true}
-                    key={rank}
-                    onClick={() => this.handlePercentileRankClick(rank)}
-                    active={frame.renderConfig.selectedPercentileVal === rank}
-                    disabled={appStore.channelMapStore.channelMapEnabled}
-                    data-testid={"clip-button-" + rank}
-                >
+                <Button small={true} key={rank} onClick={() => this.handlePercentileRankClick(rank)} active={frame.renderConfig.selectedPercentileVal === rank} data-testid={"clip-button-" + rank}>
                     {`${rank}%`}
                 </Button>
             ));
