@@ -242,22 +242,12 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 <div className="animator-slider" data-testid="animator-slider">
                     <Radio
                         value={AnimationMode.CHANNEL}
-                        disabled={appStore.animatorStore.animationActive || appStore.channelMapStore.channelMapEnabled}
+                        disabled={appStore.animatorStore.animationActive}
                         checked={appStore.animatorStore.animationMode === AnimationMode.CHANNEL}
                         onChange={this.onAnimationModeChanged}
                         label={activeFrame.channelType}
                     />
-                    {hideSliders && (
-                        <SafeNumericInput
-                            value={activeFrame.requiredChannel}
-                            min={-1}
-                            max={numChannels}
-                            stepSize={1}
-                            onValueChange={this.onChannelChanged}
-                            fill={true}
-                            disabled={appStore.animatorStore.animationActive || appStore.channelMapStore.channelMapEnabled}
-                        />
-                    )}
+                    {hideSliders && <SafeNumericInput value={activeFrame.requiredChannel} min={-1} max={numChannels} stepSize={1} onValueChange={this.onChannelChanged} fill={true} disabled={appStore.animatorStore.animationActive} />}
                     {!hideSliders && (
                         <React.Fragment>
                             <Slider
@@ -269,7 +259,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                                 labelPrecision={0}
                                 showTrackFill={false}
                                 onChange={this.onChannelChanged}
-                                disabled={appStore.animatorStore.animationActive || appStore.channelMapStore.channelMapEnabled}
+                                disabled={appStore.animatorStore.animationActive}
                             />
                             <div className="slider-info" data-testid="animator-slider-info">
                                 <pre>{activeFrame.depthAxisInfo}</pre>
@@ -290,7 +280,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                                 labelStepSize={channelStep}
                                 labelPrecision={0}
                                 onChange={this.onRangeChanged}
-                                disabled={appStore.animatorStore.animationActive || appStore.channelMapStore.channelMapEnabled}
+                                disabled={appStore.animatorStore.animationActive}
                             />
                             <div className="slider-info" />
                         </React.Fragment>
