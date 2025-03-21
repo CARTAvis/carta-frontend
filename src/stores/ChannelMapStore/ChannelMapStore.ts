@@ -1,7 +1,6 @@
 import {throttle} from "lodash";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 
-import {ImageItem} from "models";
 import {TileService} from "services";
 import {AppStore, FrameStore} from "stores";
 
@@ -24,20 +23,21 @@ export class ChannelMapStore {
         this.numRows = 2;
 
         autorun(() => {
-            if (this.masterFrame && this.masterFrame?.requiredFrameView && this.channelMapEnabled) {
+            const activeFrame = AppStore.Instance.activeFrame;
+            if (activeFrame?.requiredFrameView && this.channelMapEnabled) {
                 /* eslint-disable @typescript-eslint/no-unused-vars */
                 const startChannel = this.startChannel;
                 const numColumns = this.numColumns;
                 const numRows = this.numRows;
                 const channelRange = this.endChannel;
-                const center = this.masterFrame.center;
-                const requiredFrameView = this.masterFrame.requiredFrameView;
-                const requiredTiles = this.masterFrame.requiredTiles;
-                const zoomLevel = this.masterFrame.zoomLevel;
-                const spatialReference = this.masterFrame.spatialReference;
-                const channel = this.masterFrame.channel;
+                const center = activeFrame.center;
+                const requiredFrameView = activeFrame.requiredFrameView;
+                const requiredTiles = activeFrame.requiredTiles;
+                const zoomLevel = activeFrame.zoomLevel;
+                const spatialReference = activeFrame.spatialReference;
+                const channel = activeFrame.channel;
                 /* eslint-disable @typescript-eslint/no-unused-vars */
-                this.throttledRequestChannels(this.masterFrame);
+                this.throttledRequestChannels(activeFrame);
             }
         });
     }
@@ -59,7 +59,7 @@ export class ChannelMapStore {
         const preferenceStore = AppStore.Instance.preferenceStore;
         const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
         const compressionQuality = frame.headerUnit && bunitVariant.includes(frame.headerUnit) ? Math.max(preferenceStore.imageCompressionQuality, 32) : preferenceStore.imageCompressionQuality;
-        TileService.Instance.requestChannelMapTiles(tiles, this.masterFrame, midPointTileCoords, compressionQuality, {min: this.startChannel, max: this.endChannel});
+        TileService.Instance.requestChannelMapTiles(tiles, frame, midPointTileCoords, compressionQuality, {min: this.startChannel, max: this.endChannel});
     }, 100);
 
     @action setChannelMapEnabled = (enabled: boolean) => {
@@ -68,7 +68,7 @@ export class ChannelMapStore {
 
     @action setStartChannel(startChannel: number) {
         // Add checks for valid startChannel number for the masterFrame
-        if (startChannel < 0 || startChannel > this.masterFrame.frameInfo.fileInfoExtended.depth - 1) {
+        if (startChannel < 0 || startChannel > AppStore.Instance.activeFrame.frameInfo.fileInfoExtended.depth - 1) {
             return;
         }
         this.startChannel = startChannel;
@@ -145,25 +145,17 @@ export class ChannelMapStore {
     }
 
     @computed get endChannel(): number {
-        return Math.min(this.startChannel + this.numChannels - 1, this.masterFrame?.frameInfo?.fileInfoExtended?.depth - 1);
+        return Math.min(this.startChannel + this.numChannels - 1, AppStore.Instance.activeFrame?.frameInfo?.fileInfoExtended?.depth - 1);
     }
 
     @computed get channelArray(): number[] {
         const channelArray: number[] = [];
         for (let i = this.startChannel; i < this.startChannel + this.numChannels; i += 1) {
-            if (i > this.masterFrame?.frameInfo?.fileInfoExtended.depth - 1) {
+            if (i > AppStore.Instance.activeFrame?.frameInfo?.fileInfoExtended.depth - 1) {
                 break;
             }
             channelArray.push(i);
         }
         return channelArray;
-    }
-
-    @computed get masterFrame(): FrameStore {
-        return AppStore.Instance.activeFrame;
-    }
-
-    @computed get masterImage(): ImageItem {
-        return AppStore.Instance.activeImage;
     }
 }
