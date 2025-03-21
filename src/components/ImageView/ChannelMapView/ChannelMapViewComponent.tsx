@@ -69,6 +69,10 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         frame?.setCenter(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y);
     };
 
+    if (image?.type === ImageType.COLOR_BLENDING) {
+        return <NonIdealState icon={"error"} title={"Not supported"} description={"Color blending images in channel map view is not supported"} />;
+    }
+
     const overlayComponents = channelMapStore.channelArray.map((channel, index) => {
         const appStore = AppStore.Instance;
         const overlayStore = appStore.overlayStore;
