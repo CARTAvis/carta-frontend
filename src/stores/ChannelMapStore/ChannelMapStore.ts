@@ -1,7 +1,7 @@
 import {throttle} from "lodash";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 
-import {ImageItem, ImageType} from "models";
+import {ImageItem} from "models";
 import {TileService} from "services";
 import {AppStore, FrameStore} from "stores";
 
@@ -42,7 +42,6 @@ export class ChannelMapStore {
         });
     }
 
-    @observable masterFrame: FrameStore;
     @observable startChannel: number = 0;
     @observable numColumns: number;
     @observable numRows: number;
@@ -62,10 +61,6 @@ export class ChannelMapStore {
         const compressionQuality = frame.headerUnit && bunitVariant.includes(frame.headerUnit) ? Math.max(preferenceStore.imageCompressionQuality, 32) : preferenceStore.imageCompressionQuality;
         TileService.Instance.requestChannelMapTiles(tiles, this.masterFrame, midPointTileCoords, compressionQuality, {min: this.startChannel, max: this.endChannel});
     }, 100);
-
-    @action setMasterFrame(masterFrame: FrameStore) {
-        this.masterFrame = masterFrame;
-    }
 
     @action setChannelMapEnabled = (enabled: boolean) => {
         this.channelMapEnabled = enabled;
@@ -164,10 +159,11 @@ export class ChannelMapStore {
         return channelArray;
     }
 
+    @computed get masterFrame(): FrameStore {
+        return AppStore.Instance.activeFrame;
+    }
+
     @computed get masterImage(): ImageItem {
-        return {
-            type: ImageType.FRAME,
-            store: this.masterFrame
-        };
+        return AppStore.Instance.activeImage;
     }
 }

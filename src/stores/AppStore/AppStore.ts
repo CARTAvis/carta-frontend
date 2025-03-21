@@ -565,9 +565,6 @@ export class AppStore {
         this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfo.type, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes, generated);
 
         let newFrame = new FrameStore(frameInfo);
-        if (!newFrame.isPVImage && newFrame.frameInfo.fileInfoExtended.depth > 1) {
-            this.channelMapStore.setMasterFrame(newFrame);
-        }
 
         // Place frame in frame array (replace frame with the same ID if it exists)
         const existingFrameIndex = this.imageViewConfigStore.getImageListIndex(ImageType.FRAME, ack.fileId);
@@ -1004,13 +1001,6 @@ export class AppStore {
                     } else {
                         this.clearSpectralReference();
                     }
-                }
-
-                // Clean up if frame is used in channel map
-                if (this.channelMapStore.masterFrame?.frameInfo.fileId === fileId) {
-                    const firstImage = this.imageViewConfigStore.imageNum ? this.imageViewConfigStore.getImage(0) : null;
-                    const firstFrame = (firstImage?.store as FrameStore)?.frameInfo.fileInfoExtended.depth > 1 ? (firstImage.store as FrameStore) : null;
-                    this.channelMapStore.setMasterFrame(firstFrame);
                 }
 
                 if (removedFrameIsRasterScalingReference) {
@@ -2062,7 +2052,6 @@ export class AppStore {
                         if (this.syncContourToFrame) {
                             this.contourDataSource = frame;
                         }
-                        this.channelMapStore.setMasterFrame(frame);
                     }
                 } else {
                     this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
