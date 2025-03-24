@@ -340,9 +340,10 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                     </Menu>
                 }
                 position={Position.TOP}
+                disabled={appStore.channelMapStore.channelMapEnabled}
             >
                 <Tooltip content="Playback mode" position={Position.TOP}>
-                    <AnchorButton icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.animationActive} data-testid="animator-playback-mode-button">
+                    <AnchorButton icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.animationActive || appStore.channelMapStore.channelMapEnabled} data-testid="animator-playback-mode-button">
                         {!iconOnly && "Mode"}
                     </AnchorButton>
                 </Tooltip>
@@ -358,12 +359,12 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                     {!iconOnly && "Prev"}
                 </Button>
                 {appStore.animatorStore.animationActive && (
-                    <Button icon={"stop"} onClick={appStore.animatorStore.stopAnimation} data-testid="animator-play-stop-button">
+                    <Button icon={"stop"} onClick={appStore.animatorStore.stopAnimation} disabled={appStore.channelMapStore.channelMapEnabled} data-testid="animator-play-stop-button">
                         {!iconOnly && "Stop"}
                     </Button>
                 )}
                 {!appStore.animatorStore.animationActive && (
-                    <Button icon={"play"} onClick={appStore.animatorStore.startAnimation} data-testid="animator-play-stop-button">
+                    <Button icon={"play"} onClick={appStore.animatorStore.startAnimation} disabled={appStore.channelMapStore.channelMapEnabled} data-testid="animator-play-stop-button">
                         {!iconOnly && "Play"}
                     </Button>
                 )}
@@ -378,7 +379,11 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
         const numericControl = (
             <ControlGroup className="playback-numeric-control">
-                <HTMLSelect options={[NumericInputType.FrameRate, NumericInputType.Step]} onChange={ev => this.onNumericInputTypeChange(ev.currentTarget.value as NumericInputType)} />
+                <HTMLSelect
+                    disabled={appStore.animatorStore.animationActive || appStore.channelMapStore.channelMapEnabled}
+                    options={[NumericInputType.FrameRate, NumericInputType.Step]}
+                    onChange={ev => this.onNumericInputTypeChange(ev.currentTarget.value as NumericInputType)}
+                />
                 {this.numericInputType === NumericInputType.FrameRate ? (
                     <SafeNumericInput
                         value={appStore.animatorStore.frameRate}
@@ -388,7 +393,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         minorStepSize={1}
                         majorStepSize={1}
                         onValueChange={appStore.animatorStore.setFrameRate}
-                        disabled={appStore.animatorStore.animationActive}
+                        disabled={appStore.animatorStore.animationActive || appStore.channelMapStore.channelMapEnabled}
                         data-testid="animator-control-input"
                     />
                 ) : (
@@ -400,7 +405,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         minorStepSize={1}
                         majorStepSize={1}
                         onValueChange={appStore.animatorStore.setStep}
-                        disabled={appStore.animatorStore.animationActive}
+                        disabled={appStore.animatorStore.animationActive || appStore.channelMapStore.channelMapEnabled}
                         data-testid="animator-control-input"
                     />
                 )}
