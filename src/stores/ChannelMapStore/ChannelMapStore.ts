@@ -41,14 +41,15 @@ export class ChannelMapStore {
             }
         });
 
-        autorun(() => {
-            const activeFrame = AppStore.Instance.activeFrame;
-            if (activeFrame?.requiredFrameView && this.channelMapEnabled) {
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const stokes = activeFrame.stokes;
-                this.requestChannels(activeFrame, true);
+        reaction(
+            () => AppStore.Instance.activeFrame?.stokes,
+            () => {
+                const activeFrame = AppStore.Instance.activeFrame;
+                if (activeFrame?.requiredFrameView && this.channelMapEnabled) {
+                    this.requestChannels(activeFrame, true);
+                }
             }
-        });
+        );
 
         reaction(
             () => this.channelArray,
