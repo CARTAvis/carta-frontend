@@ -54,7 +54,7 @@ export class ChannelMapStore {
             () => this.channelArray,
             channelArray => {
                 const channel = AppStore.Instance.activeFrame?.channel;
-                if (Number.isFinite(channel) && !channelArray.includes(channel)) {
+                if (this.channelMapEnabled && Number.isFinite(channel) && !channelArray.includes(channel)) {
                     AppStore.Instance.activeFrame.setChannel(channelArray[0]);
                 }
             }
@@ -183,13 +183,6 @@ export class ChannelMapStore {
     }
 
     @computed get channelArray(): number[] {
-        const channelArray: number[] = [];
-        for (let i = this.startChannel; i < this.startChannel + this.numChannels; i += 1) {
-            if (i > this.totalChannelNum - 1) {
-                break;
-            }
-            channelArray.push(i);
-        }
-        return channelArray;
+        return Array.from({length: this.endChannel - this.startChannel + 1}, (_, i) => this.startChannel + i);
     }
 }
