@@ -293,13 +293,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         if (numStokes > 1) {
             stokesSlider = (
                 <div className={classNames("animator-slider", "stokes-slider", {"tiled-label": this.width < 750})} data-testid="animator-polarization-slider">
-                    <Radio
-                        value={AnimationMode.STOKES}
-                        disabled={appStore.animatorStore.animationActive || appStore.channelMapStore.channelMapEnabled}
-                        checked={appStore.animatorStore.animationMode === AnimationMode.STOKES}
-                        onChange={this.onAnimationModeChanged}
-                        label="Polarization"
-                    />
+                    <Radio value={AnimationMode.STOKES} disabled={appStore.animatorStore.animationActive} checked={appStore.animatorStore.animationMode === AnimationMode.STOKES} onChange={this.onAnimationModeChanged} label="Polarization" />
                     {hideSliders && (
                         <SafeNumericInput
                             value={activeFrame.requiredStokes}
@@ -307,7 +301,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                             max={activeFrame.frameInfo.fileInfoExtended.stokes}
                             stepSize={1}
                             onValueChange={this.onStokesChanged}
-                            disabled={appStore.animatorStore.animationActive || appStore.channelMapStore.channelMapEnabled}
+                            disabled={appStore.animatorStore.animationActive}
                             fill={true}
                         />
                     )}
@@ -322,7 +316,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                                     return isFinite(val) && val >= 0 && val < activeFrame?.polarizationInfo?.length ? activeFrame.polarizationInfo[val] : `${val}`;
                                 }}
                                 onChange={this.onStokesChanged}
-                                disabled={appStore.animatorStore.animationActive || appStore.channelMapStore.channelMapEnabled}
+                                disabled={appStore.animatorStore.animationActive}
                             />
                             <div className="slider-info" />
                         </React.Fragment>

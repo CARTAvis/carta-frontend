@@ -29,7 +29,7 @@ export class ChannelMapStore {
                 const startChannel = this.startChannel;
                 const numColumns = this.numColumns;
                 const numRows = this.numRows;
-                const channelRange = this.endChannel;
+                const endChannel = this.endChannel;
                 const center = activeFrame.center;
                 const requiredFrameView = activeFrame.requiredFrameView;
                 const requiredTiles = activeFrame.requiredTiles;
@@ -38,6 +38,15 @@ export class ChannelMapStore {
                 const channel = activeFrame.channel;
                 /* eslint-disable @typescript-eslint/no-unused-vars */
                 this.throttledRequestChannels(activeFrame);
+            }
+        });
+
+        autorun(() => {
+            const activeFrame = AppStore.Instance.activeFrame;
+            if (activeFrame?.requiredFrameView && this.channelMapEnabled) {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const stokes = activeFrame.stokes;
+                this.requestChannels(activeFrame, true);
             }
         });
 
@@ -73,13 +82,15 @@ export class ChannelMapStore {
     @observable showSpectralStringLabel: boolean = false;
     @observable showVelocityStringLabel: boolean = false;
 
-    @action throttledRequestChannels = throttle((frame: FrameStore) => {
+    private throttledRequestChannels = throttle((frame: FrameStore) => this.requestChannels(frame), 100);
+
+    private requestChannels = (frame: FrameStore, polarizationChanged: boolean = false) => {
         const [tiles, midPointTileCoords] = frame.requiredTiles;
         const preferenceStore = AppStore.Instance.preferenceStore;
         const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
         const compressionQuality = frame.headerUnit && bunitVariant.includes(frame.headerUnit) ? Math.max(preferenceStore.imageCompressionQuality, 32) : preferenceStore.imageCompressionQuality;
-        TileService.Instance.requestChannelMapTiles(tiles, frame, midPointTileCoords, compressionQuality, {min: this.startChannel, max: this.endChannel});
-    }, 100);
+        TileService.Instance.requestChannelMapTiles(tiles, frame, midPointTileCoords, compressionQuality, {min: this.startChannel, max: this.endChannel}, polarizationChanged);
+    };
 
     @action setChannelMapEnabled = (enabled: boolean) => {
         this.channelMapEnabled = enabled;
