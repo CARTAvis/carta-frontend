@@ -18,9 +18,6 @@ export class ChannelMapStore {
     constructor() {
         makeObservable(this);
         ChannelMapStore.staticInstance = this;
-        this.startChannel = 0;
-        this.numColumns = 2;
-        this.numRows = 2;
 
         autorun(() => {
             const activeFrame = AppStore.Instance.activeFrame;
@@ -61,9 +58,13 @@ export class ChannelMapStore {
         );
     }
 
+    /** The first channel at the top-right corner. */
     @observable startChannel: number = 0;
-    @observable numColumns: number;
-    @observable numRows: number;
+    /** The number of columns in the image view. */
+    @observable numColumns: number = 2;
+    /** The number of rows in the image view. */
+    @observable numRows: number = 2;
+    /** Indicates whether the channel map mode is enabled. */
     @observable channelMapEnabled: boolean = false;
 
     @observable showChannelString: boolean = false;
@@ -74,6 +75,11 @@ export class ChannelMapStore {
     @observable showVelocityStringLabel: boolean = false;
 
     private throttledRequestChannels = throttle((frame: FrameStore) => this.requestChannels(frame), 100);
+
+    /**
+     * Clears the cache and requests new tiles when the polarization changes.
+     * @param frame - the frame to request tiles for.
+     */
     handlePolarizationChanged = (frame: FrameStore) => this.requestChannels(frame, true);
 
     private requestChannels = (frame: FrameStore, polarizationChanged: boolean = false) => {
@@ -84,10 +90,18 @@ export class ChannelMapStore {
         TileService.Instance.requestChannelMapTiles(tiles, frame, midPointTileCoords, compressionQuality, {min: this.startChannel, max: this.endChannel}, polarizationChanged);
     };
 
+    /**
+     * Enables or disables the channel map mode.
+     * @param enabled - Whether to enable the channel map mode.
+     */
     @action setChannelMapEnabled = (enabled: boolean) => {
         this.channelMapEnabled = enabled;
     };
 
+    /**
+     * Sets the first channel at the top-right corner. Skips when the channel is out of range.
+     * @param startChannel - The first channel at the top-right corner.
+     */
     @action setStartChannel(startChannel: number) {
         // Add checks for valid startChannel number for the masterFrame
         if (startChannel < 0 || startChannel > this.totalChannelNum - 1) {
@@ -96,36 +110,48 @@ export class ChannelMapStore {
         this.startChannel = startChannel;
     }
 
+    /** Sets the first channel at the top-right corner to the previous channel. */
     @action setPrevChannel() {
         this.setStartChannel(this.startChannel - 1);
     }
 
+    /** Sets the first channel at the top-right corner to the next channel. */
     @action setNextChannel() {
         this.setStartChannel(this.startChannel + 1);
     }
 
+    /** Moves to the previous page of channels. */
     @action setPrevPage() {
-        const newStart = this.startChannel - this.numColumns * this.numRows;
+        const newStart = this.startChannel - this.numChannels;
 
         if (newStart >= 0) {
             this.setStartChannel(newStart);
         }
     }
 
+    /** Moves to the next page of channels. */
     @action setNextPage() {
-        const newStart = this.startChannel + this.numColumns * this.numRows;
+        const newStart = this.startChannel + this.numChannels;
 
         if (newStart >= 0) {
             this.setStartChannel(newStart);
         }
     }
 
+    /**
+     * Sets the number of columns in the image vew.
+     * @param numColumns - The number of columns in the image view.
+     */
     @action setNumColumns(numColumns: number) {
         if (isFinite(numColumns) && numColumns > 0) {
             this.numColumns = numColumns;
         }
     }
 
+    /**
+     * Sets the number of rows in the image view.
+     * @param numRows - The number of rows in the image view.
+     */
     @action setNumRows(numRows: number) {
         if (isFinite(numRows) && numRows > 0) {
             this.numRows = numRows;
@@ -162,18 +188,22 @@ export class ChannelMapStore {
         this.showVelocityStringLabel = show;
     };
 
+    /** The number of channels of the active image. Returns 1 if the information is unavailable. */
     @computed private get totalChannelNum(): number {
         return AppStore.Instance.activeFrame?.frameInfo?.fileInfoExtended?.depth ?? 1;
     }
 
+    /** The number of panels in the image view. */
     @computed get numChannels(): number {
         return this.numColumns * this.numRows;
     }
 
+    /** The last channel in the image view. */
     @computed get endChannel(): number {
         return Math.min(this.startChannel + this.numChannels - 1, this.totalChannelNum - 1);
     }
 
+    /** The displayed channels in the image view. */
     @computed get channelArray(): number[] {
         return Array.from({length: this.endChannel - this.startChannel + 1}, (_, i) => this.startChannel + i);
     }
