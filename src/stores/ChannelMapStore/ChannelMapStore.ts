@@ -42,16 +42,6 @@ export class ChannelMapStore {
         });
 
         reaction(
-            () => AppStore.Instance.activeFrame?.stokes,
-            () => {
-                const activeFrame = AppStore.Instance.activeFrame;
-                if (activeFrame?.requiredFrameView && this.channelMapEnabled) {
-                    this.requestChannels(activeFrame, true);
-                }
-            }
-        );
-
-        reaction(
             () => this.channelArray,
             channelArray => {
                 const channel = AppStore.Instance.activeFrame?.channel;
@@ -84,6 +74,7 @@ export class ChannelMapStore {
     @observable showVelocityStringLabel: boolean = false;
 
     private throttledRequestChannels = throttle((frame: FrameStore) => this.requestChannels(frame), 100);
+    handlePolarizationChanged = (frame: FrameStore) => this.requestChannels(frame, true);
 
     private requestChannels = (frame: FrameStore, polarizationChanged: boolean = false) => {
         const [tiles, midPointTileCoords] = frame.requiredTiles;
