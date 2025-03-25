@@ -3254,41 +3254,5 @@ export class FrameStore {
     @action setFrameInfo = (frameInfo: FrameInfo) => {
         this.frameInfo = frameInfo;
     };
-
-    // The incoming data will be decompressed using zfp WebWorker instance, which runs in a different thread. WebWorker instance has an onmessage event listener function. Generator function is used here to wait for the decompression of rasterData to complete.
-    public *updateRender3DData(render3DData: CARTA.Render3DData) {
-        // Old values before updating to the new frameInfo
-        // const oldAspectRatio = this.aspectRatio;
-        // const oldHeight = this.frameInfo.fileInfoExtended.height;
-        // const oldWidth = this.frameInfo.fileInfoExtended.width;
-        // const oldDepth = this.frameInfo.fileInfoExtended.depth;
-
-        // Using the 'yield' keyword of generator functions to wait for decompressed raster data from other WebWorker thread.
-        // next() will be called in setPreviewPVRasterData, which will be called in the onmessage() function after receiving the decompressed data from other worker thread.u
-        yield TileService.Instance.decompressRender3DData(render3DData);
-
-        console.log(`Updating render3D data for frame ${this.frameInfo.fileId}`);
-
-        // const newFrameInfo = {...this.frameInfo};
-        // newFrameInfo.fileInfoExtended = new CARTA.FileInfoExtended(render3DData.imageInfo);
-        // this.setFrameInfo(newFrameInfo);
-
-        // Update wcsInfo
-        const astFrameSet = this.initPVFrame();
-        if (astFrameSet) {
-            this.spectralFrame = AST.getSpectralFrame(astFrameSet);
-            this.wcsInfo = AST.copy(astFrameSet);
-            AST.deleteObject(astFrameSet);
-        }
-
-        // Have a look at the code below
-
-        // const isHeightUpdated = oldHeight !== this.frameInfo.fileInfoExtended.height;
-        // const isWidthUpdated = oldWidth !== this.frameInfo.fileInfoExtended.width;
-        // const isDepthUpdated = oldDepth !== this.frameInfo.fileInfoExtended.depth;
-
-        // // Avoid image moving within the frame caused by changing image width or height as rasterData is updating
-        // this.setZoom((this.zoomLevel * oldHeight) / this.frameInfo.fileInfoExtended.height);
-        // this.setCenter(isWidthUpdated ? ((this.center.x + 0.5) * oldAspectRatio) / this.aspectRatio - 0.5 : this.center.x, isHeightUpdated ? ((this.center.y + 0.5) * this.aspectRatio) / oldAspectRatio - 0.5 : this.center.y, false);
-    }
+    
 }

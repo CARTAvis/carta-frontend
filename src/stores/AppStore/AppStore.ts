@@ -657,37 +657,6 @@ export class AppStore {
         return newFrame;
     };
 
-    // @action addRender3DFrame = (ack: any, directory: string, hdu: string) => {
-    //     if (!ack) {
-    //         return undefined;
-    //     }
-
-    //     const frameInfo: FrameInfo = {
-    //         fileId: RENDER3D_FILEID,
-    //         directory,
-    //         lelExpr: false,
-    //         hdu,
-    //         fileInfo: new CARTA.FileInfo(ack.imageInfo),
-    //         fileInfoExtended: new CARTA.FileInfoExtended(ack.imageInfo),
-    //         fileFeatureFlags: ack.fileFeatureFlags,
-    //         renderMode: CARTA.RenderMode.RASTER,
-    //         beamTable: ack.beamTable,
-    //         generated: true,
-    //     };
-
-    //     console.log("Adding render3D frame", frameInfo);
-    //     const newFrame = new FrameStore(frameInfo);
-
-    //     if (newFrame) {
-    //         this.render3DFrames.set(ack.render3DId, newFrame);
-    //         newFrame.updateRender3DDataGenerator = newFrame.updateRender3DData(ack);
-    //         // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
-    //         newFrame.updateRender3DDataGenerator.next();
-    //         this.updateActiveImageByFrame(newFrame);
-    //     }
-
-    //     return newFrame;
-    // };
 
     /**
      * Loads a file at the given path and adds it as a frame to the application.
@@ -2316,24 +2285,29 @@ export class AppStore {
         if (frame) {
             let frameMap = this.render3D.get(render3DData.fileId);
             if (!frameMap) {
+                console.log("one framemap")
                 frameMap = new ObservableMap<number, Render3DDataStore>();
                 this.render3D.set(render3DData.fileId, frameMap);
             }
             let render3DStore = frameMap.get(render3DData.regionId);
             if (!render3DStore) {
-                render3DStore = new Render3DDataStore(render3DData.fileId, render3DData.regionId);
+                console.log("one render3dstore")
+                render3DStore = new Render3DDataStore(render3DData.fileId, render3DData.regionId, render3DData.width, render3DData.height, render3DData.depth);
                 frameMap.set(render3DData.regionId, render3DStore);
             }
+
+            // const width = frame.frameInfo.fileInfoExtended.width;
+            // const height = frame.frameInfo.fileInfoExtended.height;
+            // const depth = frame.frameInfo.fileInfoExtended.depth;
+            // if (width !== render3DStore.width || height !== render3DStore.height || depth !== render3DStore.depth) {
+
+
             render3DStore.updateRender3DData(render3DData);
+            // frame.frameInfo.fileInfoExtended.width
+
+            // if size of the data changes, does the region_id change to? i think not.
+            // must check if the size is the same as the previous
         }
-
-        // const previewFrame = this.widgetsStore.pvGeneratorWidgets.get(PvGeneratorComponent.WIDGET_CONFIG.id + "-" + Render3DData.viewerId)?.previewFrame;
-
-        // if (previewFrame) {
-        //     // previewFrame.updatePreviewDataGenerator = previewFrame.updatePreviewData(Render3DData);
-        //     // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
-        //     previewFrame.updatePreviewDataGenerator.next();
-        // }
     };
 
     handleRegionHistogramStream = (regionHistogramData: CARTA.RegionHistogramData) => {

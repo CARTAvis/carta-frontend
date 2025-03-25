@@ -74,7 +74,7 @@ ctx.onmessage = (event => {
         }
         if (eventName === "setid") {
             Module.id = event.data[1];
-        } else if (eventName === "decompress" || eventName === "preview decompress") {
+        } else if (eventName.includes("decompress")) {
             const eventArgs = event.data[2];
             const compressedView = new Uint8Array(event.data[1], 0, eventArgs.subsetLength);
             if (Module.debugOutput) {

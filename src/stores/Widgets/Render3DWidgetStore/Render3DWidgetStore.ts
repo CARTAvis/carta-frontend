@@ -40,6 +40,9 @@ export class Render3DWidgetStore extends RegionWidgetStore {
     // render3d
     @observable render3DFrame: FrameStore | null;
     @observable render3DViewer: string | null;
+    // @observable render3DViewerFileId: number | null;
+    // @observable render3DViewerRegionId: number | null;
+
 
     @computed get regionOptions(): OptionProps[] {
         const appStore = AppStore.Instance;

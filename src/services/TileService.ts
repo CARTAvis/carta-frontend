@@ -5,7 +5,7 @@ import {Subject} from "rxjs";
 
 import {Point2D, TileCoordinate} from "models";
 import {BackendService, TileWebGLService} from "services";
-import {AppStore, PREVIEW_PV_FILEID, RENDER3D_FILEID} from "stores";
+import {AppStore, PREVIEW_PV_FILEID} from "stores";
 import {copyToFP32Texture, createFP32Texture, GL2} from "utilities";
 
 import ZFPWorker from "!worker-loader!zfp_wrapper";
@@ -116,32 +116,6 @@ export class TileService {
         this.workers[0].postMessage(["preview decompress", compressedView.buffer, eventArgs, previewData], [compressedView.buffer, nanEncodings32.buffer]);
     }
 
-    public decompressRender3DData(render3DData: CARTA.Render3DData) {
-        const compressedArray = render3DData.imageData;
-        const nanEncodings32 = new Int32Array(render3DData.nanEncodings.slice(0).buffer);
-        let compressedView = new Uint8Array(Math.max(compressedArray.byteLength, render3DData.width * render3DData.height * render3DData.depth * 4));
-        compressedView.set(compressedArray);
-
-        const eventArgs = {
-            fileId: RENDER3D_FILEID,
-            channel: 0,
-            stokes: 0,
-            width: render3DData.width,
-            depth: render3DData.depth,
-            subsetHeight: render3DData.height,
-            subsetLength: compressedArray.byteLength,
-            compression: render3DData.compressionQuality,
-            nanEncodings: nanEncodings32,
-            tileCoordinate: 0,
-            layer: 0,
-            requestId: 0,
-            viewerId: render3DData.viewerId
-        };
-
-        console.log("Decompressing render3D data");
-        this.workers[0].postMessage(["render3d decompress", compressedView.buffer, eventArgs, render3DData], [compressedView.buffer, nanEncodings32.buffer]);
-    }
-
     public setAnimationEnabled = (val: boolean) => {
         this.animationEnabled = val;
     };
@@ -205,6 +179,24 @@ export class TileService {
                     const length = eventArgs.width * eventArgs.subsetHeight;
                     const resultArray = new Float32Array(buffer, 0, length);
                     frame?.setPreviewPVRasterData(resultArray);
+                } else if (event.data[0] === "render3d decompress") {
+                    console.log("event data = ", event.data);
+                    const buffer = event.data[1];
+                    const eventArgs = event.data[2];
+                    const render3DData = event.data[3];
+                    const length = eventArgs.width * eventArgs.subsetHeight; // considering just one slice
+                    const resultArray = new Float32Array(buffer, 0, length);
+                    // console.log("tileservice array: ", resultArray);
+                    // console.log(AppStore.Instance.render3D);
+                    // console.log("file id: " + eventArgs.fileId);
+                    // console.log(AppStore.Instance.render3D.get(eventArgs.fileId));
+                    // console.log("region id: " + eventArgs.regionId);
+                    // console.log(AppStore.Instance.render3D.get(eventArgs.fileId)?.get(eventArgs.regionId));
+                    // console.log("slice: " + eventArgs.slice);
+
+                    // here I am using the render3DData object. Should I use eventArgs instead? it does not recognise regionID and slice
+                    AppStore.Instance.render3D.get(eventArgs.fileId)?.get(render3DData.regionId)?.setDecompressed3DData(resultArray, render3DData.slice);
+                    
                 }
             };
         }
@@ -452,6 +444,32 @@ export class TileService {
             this.syncIdMap.set(syncMessage.syncId, true);
         }
     };
+
+    public decompressRender3DData(render3DData: CARTA.Render3DData) {
+        const compressedArray = render3DData.imageData;
+        const nanEncodings32 = new Int32Array(render3DData.nanEncodings.slice(0).buffer);
+        let compressedView = new Uint8Array(Math.max(compressedArray.byteLength, render3DData.width * render3DData.height * 4));
+        compressedView.set(compressedArray);
+
+        console.log("fileID = ", render3DData.fileId);
+        console.log("regionID = ", render3DData.regionId);
+        console.log("slice = ", render3DData.slice);
+
+        const eventArgs = {
+            fileId: render3DData.fileId,
+            regionId: render3DData.regionId,
+            width: render3DData.width,
+            subsetHeight: render3DData.height,
+            subsetLength: compressedArray.byteLength,
+            compression: render3DData.compressionQuality,
+            nanEncodings: nanEncodings32,
+            slice: render3DData.slice,
+            viewerId: render3DData.viewerId
+        };
+
+        console.log("Decompressing render3D data");
+        this.workers[0].postMessage(["render3d decompress", compressedView.buffer, eventArgs, render3DData], [compressedView.buffer, nanEncodings32.buffer]);
+    }
 
     private handleStreamedTiles = (tileMessage: CARTA.IRasterTileData) => {
         const key = `${tileMessage.fileId}_${tileMessage.stokes}_${tileMessage.channel}`;
