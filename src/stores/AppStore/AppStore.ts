@@ -210,9 +210,9 @@ export class AppStore {
         // Remove query parameters and replace protocol
         let wsURL = window.location.href.replace(window.location.search, "").replace(/^http/, "ws");
         if (process.env.NODE_ENV === "development") {
-            wsURL = process.env.REACT_APP_DEFAULT_ADDRESS ? process.env.REACT_APP_DEFAULT_ADDRESS : wsURL;
+            wsURL = process.env.PUBLIC_REACT_APP_DEFAULT_ADDRESS ? process.env.PUBLIC_REACT_APP_DEFAULT_ADDRESS : wsURL;
         } else {
-            wsURL = process.env.REACT_APP_DEFAULT_ADDRESS_PROD ? process.env.REACT_APP_DEFAULT_ADDRESS_PROD : wsURL;
+            wsURL = process.env.PUBLIC_REACT_APP_DEFAULT_ADDRESS_PROD ? process.env.PUBLIC_REACT_APP_DEFAULT_ADDRESS_PROD : wsURL;
         }
 
         // Check for URL query parameters as a final override
