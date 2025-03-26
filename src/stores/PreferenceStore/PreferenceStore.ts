@@ -156,7 +156,7 @@ export class PreferenceStore {
         return PreferenceStore.staticInstance;
     }
 
-    @observable preferences: Map<PreferenceKeys, any>;
+    @observable preferences: Map<PreferenceKeys, any> = new Map<PreferenceKeys, any>();
 
     /**
      * Whether the preference data is initialized from the preference file or localStorage.
@@ -1031,6 +1031,5 @@ export class PreferenceStore {
 
     private constructor() {
         makeObservable(this);
-        this.preferences = new Map<PreferenceKeys, any>();
     }
 }

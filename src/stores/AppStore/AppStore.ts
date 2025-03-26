@@ -120,8 +120,8 @@ export class AppStore {
     readonly imageViewConfigStore = ImageViewConfigStore.Instance;
 
     // WebAssembly Module status
-    @observable astReady: boolean;
-    @observable cartaComputeReady: boolean;
+    @observable astReady: boolean = false;
+    @observable cartaComputeReady: boolean = false;
     // Frames
     @observable previewFrames = new ObservableMap<number, FrameStore>();
     /** The active image, which can be a loaded image, a color blended image, or a PV preivew. */
@@ -1857,8 +1857,6 @@ export class AppStore {
         this.imageFittingStore = ImageFittingStore.Instance;
         this.channelMapStore = ChannelMapStore.Instance;
 
-        this.astReady = false;
-        this.cartaComputeReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>();
         this.regionStats = new Map<number, ObservableMap<number, ObservableMap<number, CARTA.RegionStatsData>>>();
