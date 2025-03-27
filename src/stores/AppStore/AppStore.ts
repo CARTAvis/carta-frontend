@@ -2226,7 +2226,7 @@ export class AppStore {
         }
 
         // update the render config widget histogram for channel map view mode
-        if (this.channelMapStore.channelMapEnabled && regionHistogramData.regionId === RegionIdType.IMAGE) {
+        if (this.channelMapStore.channelMapEnabled && regionHistogramData.regionId === RegionIdType.IMAGE && regionHistogramData.stokes === this.activeFrame?.stokes) {
             this.updateHistogram(regionHistogramData.fileId, regionHistogramData.stokes, regionHistogramData.channel);
         }
     };
