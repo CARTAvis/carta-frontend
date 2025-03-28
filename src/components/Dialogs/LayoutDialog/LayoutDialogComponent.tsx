@@ -102,14 +102,14 @@ export class LayoutDialogComponent extends React.Component {
                 const confirmed = yield appStore.alertStore.showInteractiveAlert(`Are you sure to overwrite the existing layout ${this.layoutName}?`);
                 if (confirmed) {
                     yield appStore.layoutStore.saveLayout();
-                    if (this.saveDynamicLayoutEnable && appStore.activeFrame.dynamicLayout.ctype !== "") {
+                    if (this.saveDynamicLayoutEnable && appStore.activeFrame && appStore.activeFrame?.dynamicLayout.ctype !== "") {
                         yield dyLayoutStore.saveLayoutMapping(this.layoutName, appStore.activeFrame.dynamicLayout.ctype);
                     }
                 }
             }
         } else {
             yield appStore.layoutStore.saveLayout();
-            if (this.saveDynamicLayoutEnable && appStore.activeFrame.dynamicLayout.ctype !== "") {
+            if (this.saveDynamicLayoutEnable && appStore.activeFrame && appStore.activeFrame?.dynamicLayout.ctype !== "") {
                 yield dyLayoutStore.saveLayoutMapping(this.layoutName, appStore.activeFrame.dynamicLayout.ctype);
             }
         }
