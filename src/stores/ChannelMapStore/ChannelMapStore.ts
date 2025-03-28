@@ -1,4 +1,4 @@
-import {throttle} from "lodash";
+import {debounce, throttle} from "lodash";
 import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
 
 import {TileService} from "services";
@@ -43,7 +43,7 @@ export class ChannelMapStore {
             channelArray => {
                 const channel = AppStore.Instance.activeFrame?.channel;
                 if (this.channelMapEnabled && Number.isFinite(channel) && !channelArray.includes(channel)) {
-                    AppStore.Instance.activeFrame.setChannel(channelArray[0]);
+                    this.debouncedSetAciveChannel(channelArray[0]);
                 }
             }
         );
@@ -75,6 +75,7 @@ export class ChannelMapStore {
     @observable showVelocityStringLabel: boolean = false;
 
     private throttledRequestChannels = throttle((frame: FrameStore) => this.requestChannels(frame), 100);
+    private debouncedSetAciveChannel = debounce((channel: number) => AppStore.Instance.activeFrame?.setChannel(channel), 200);
 
     /**
      * Clears the cache and requests new tiles when the polarization changes.
