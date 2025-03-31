@@ -54,7 +54,7 @@ export function CtypeAbbrToName(ctypes: string): string {
 
 export function FileCtypeInfo(headerEntries: CARTA.IFileInfoExtended | CARTA.IHeaderEntry[] | null): {ctype: string; rank: number} {
     if (headerEntries === null) {
-        console.log("no header");
+        console.debug("no header");
         return {ctype: "", rank: 0};
     }
 
@@ -75,7 +75,7 @@ export function FileCtypeInfo(headerEntries: CARTA.IFileInfoExtended | CARTA.IHe
 
     // error handling for the files with minimal headers
     if (Object.keys(tempCtypes).length === 0 || Object.keys(tempNaxes).length === 0) {
-        console.log("no CTYPE or NAXIS keys in the header");
+        console.debug("no CTYPE or NAXIS keys in the header");
         return {ctype: "", rank: 0};
     }
 
