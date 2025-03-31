@@ -1096,12 +1096,7 @@ export class AppStore {
      * @param render3DId - The file id of the image cube from which the Render3D was created.
      */
     @action removeRender3DViewer = (render3DId: number) => {
-        console.log("(1) Removing Render3D frame", render3DId);
-        const iter = this.render3DFrames.keys();
-        console.log(iter.next().value);
-        while (iter.next().value) {
-            console.log(" has Render3D frame? ", iter.next().value);
-        }
+        console.log("Removing Render3D frame", render3DId);
         this.backendService.closeRender3D(render3DId);
         // if (this.render3DFrames.delete(render3DId)) {
         //     console.log("(2) Removing Render3D frame", render3DId);
@@ -1534,8 +1529,6 @@ export class AppStore {
             return;
         }
         try {
-            // this.startRender3DLoading(); // is it needed?
-            console.log("start_try")
             const ack = yield this.backendService.requestRender3D(message);
             this.restartTaskProgress();
             if (!ack.cancel && ack.success) {
@@ -2281,19 +2274,32 @@ export class AppStore {
         // if true, update the render3dviewer with the new data
         // if false, create a new render3dviewer with the new data
 
+        // MUST FIX TO UPDATE Rernder3DDataStore when it already exists.
+        // see if slice == depth. it means that it is the last iteration.
+        // update width and height and depth.
+
+        // check in carta the new fileID and regionID when creating the new visualisation
+
         const frame = this.frames.find(frame => frame.frameInfo.fileId === render3DData.fileId);
         if (frame) {
             let frameMap = this.render3D.get(render3DData.fileId);
             if (!frameMap) {
-                console.log("one framemap")
+                console.log("creating new frameMap");
                 frameMap = new ObservableMap<number, Render3DDataStore>();
                 this.render3D.set(render3DData.fileId, frameMap);
             }
             let render3DStore = frameMap.get(render3DData.regionId);
             if (!render3DStore) {
-                console.log("one render3dstore")
+                console.log("creating new render3DStore");
                 render3DStore = new Render3DDataStore(render3DData.fileId, render3DData.regionId, render3DData.width, render3DData.height, render3DData.depth);
                 frameMap.set(render3DData.regionId, render3DStore);
+            } else {
+                console.log("updating existing render3DStore");
+                if (render3DData.width === render3DStore.width && render3DData.height === render3DStore.height && render3DData.depth === render3DStore.depth) {
+                    //update existing
+                } else {
+                    // create new
+                }
             }
 
             // const width = frame.frameInfo.fileInfoExtended.width;

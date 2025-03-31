@@ -137,7 +137,6 @@ export class Render3DWidgetStore extends RegionWidgetStore {
             channelIndexMin = channelIndexMax - 1;
         }
         if (frame) {
-            console.log("Requesting Render3D with region ID: " + this.effectiveRegionId);
             const requestMessage: CARTA.IRender3DRequest = {
                 fileId: frame.frameInfo.fileId,
                 regionId: this.effectiveRegionId,
@@ -150,7 +149,6 @@ export class Render3DWidgetStore extends RegionWidgetStore {
                 keep: this.keep
             }
             if (render3DGeneratorId) {
-                console.log("Requesting Render3D with generator ID: " + render3DGeneratorId);
                 AppStore.Instance.requestRender3D(requestMessage, frame, this.keep,render3DGeneratorId);
             }
         }

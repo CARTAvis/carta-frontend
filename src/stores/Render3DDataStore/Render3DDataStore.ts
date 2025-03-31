@@ -25,18 +25,12 @@ export class Render3DDataStore {
 
     @action updateRender3DData = (render3DData: CARTA.Render3DData) => {
         if (render3DData.compressionType === CARTA.CompressionType.NONE) {
-            console.log("Render3D data is not compressed");
             const decompressedData = new Float32Array(render3DData.imageData.buffer.slice(render3DData.imageData.byteOffset, render3DData.imageData.byteOffset + render3DData.imageData.byteLength));
-            console.log('decompresseddata = ', decompressedData);
-            console.log("index = ", this.width * this.height * render3DData.slice);
             this.setDecompressed3DData(decompressedData, render3DData.slice);
 
         } else if (render3DData.compressionType === CARTA.CompressionType.ZFP) {
-            console.log("Render3D data is compressed with ZFP");
-            // the next function calls setDecompressed3DData which updates the datacube
             TileService.Instance.decompressRender3DData(render3DData);
         }
-        console.log("datastore array: ", this.datacube);
     }
 
     @action setDecompressed3DData = (decompressedData: Float32Array, slice: number) => {
