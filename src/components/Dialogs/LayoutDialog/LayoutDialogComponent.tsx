@@ -152,7 +152,7 @@ export class LayoutDialogComponent extends React.Component {
                         <Tooltip content="Layout name cannot be empty!" disabled={!this.isEmpty}>
                             <AnchorButton intent={Intent.PRIMARY} onClick={this.saveLayout} text={"Save"} disabled={this.isEmpty || !this.validName} />
                         </Tooltip>
-                        <Collapse isOpen={PreferenceStore.Instance.dynamicLayoutEnable}>
+                        <Collapse isOpen={PreferenceStore.Instance.dynamicLayoutEnable && !!activeFrame}>
                             <Tooltip content={`If on, apply layout when images with type (${activeFrame?.dynamicLayout.ctype.replace(",", ", ")}) are loaded`} disabled={!activeFrame}>
                                 <FormGroup inline={true} disabled={!activeFrame || this.isEmpty}>
                                     <Switch innerLabel="dynamic" checked={this.saveDynamicLayoutEnable} disabled={!activeFrame || this.isEmpty} onChange={() => this.toggleSaveDynamicLayoutEnable()} />
