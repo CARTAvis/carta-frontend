@@ -1014,9 +1014,13 @@ export class OverlayStore {
     /** Visibility of the overlay. */
     @observable visible: boolean = true;
 
-    // View size options
-    @observable fullViewWidth: number;
-    @observable fullViewHeight: number;
+    @computed private get fullViewWidth(): number {
+        return AppStore.Instance.fullViewWidth;
+    }
+
+    @computed private get fullViewHeight(): number {
+        return AppStore.Instance.fullViewHeight;
+    }
 
     // Individual settings
     @observable global: OverlayGlobalSettings;
@@ -1042,8 +1046,6 @@ export class OverlayStore {
         this.ticks = new OverlayTickSettings();
         this.colorbar = new OverlayColorbarSettings();
         this.beam = new OverlayBeamSettings();
-        this.fullViewWidth = 1;
-        this.fullViewHeight = 1;
 
         // if the system is manually selected, set new default formats & update active frame's wcs settings
         autorun(() => {
@@ -1081,11 +1083,6 @@ export class OverlayStore {
     @action setVisible(visible: boolean) {
         this.visible = visible;
     }
-
-    @action setViewDimension = (width: number, height: number) => {
-        this.fullViewWidth = width;
-        this.fullViewHeight = height;
-    };
 
     @action setFormatsFromSystem() {
         if (!this.global.validWcs) {
@@ -1382,8 +1379,8 @@ export class OverlayStore {
 }
 
 export class OverlayIndividualStore {
-    @observable fullViewWidth = 1;
-    @observable fullViewHeight = 1;
+    @observable fullViewWidth = AppStore.Instance.fullViewWidth;
+    @observable fullViewHeight = AppStore.Instance.fullViewHeight;
 
     @action setViewDimension = (width: number, height: number) => {
         this.fullViewWidth = width;

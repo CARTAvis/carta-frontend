@@ -188,8 +188,19 @@ export class AppStore {
     };
 
     // Image view
+    @observable fullViewWidth = 1;
+    @observable fullViewHeight = 1;
+
     @action setImageViewDimensions = (w: number, h: number) => {
-        this.overlayStore.setViewDimension(w, h);
+        this.fullViewWidth = w;
+        this.fullViewHeight = h;
+
+        this.frames.forEach(frame => {
+            if (frame && !frame.isPreview) {
+                frame.overlayIndividualStore.setViewDimension(w, h);
+                frame.channelMapInnerOverlayIndividualStore.setViewDimension(w, h);
+            }
+        });
     };
 
     // Auth

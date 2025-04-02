@@ -26,8 +26,8 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
     const overlay = appStore.overlayStore;
 
     const imageViewCanvas = document.createElement("canvas") as HTMLCanvasElement;
-    imageViewCanvas.width = overlay.fullViewWidth * appStore.pixelRatio;
-    imageViewCanvas.height = overlay.fullViewHeight * appStore.pixelRatio;
+    imageViewCanvas.width = appStore.fullViewWidth * appStore.pixelRatio;
+    imageViewCanvas.height = appStore.fullViewHeight * appStore.pixelRatio;
     const ctx = imageViewCanvas.getContext("2d");
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, imageViewCanvas.width, imageViewCanvas.height);
@@ -137,7 +137,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     onResize = (width: number, height: number) => {
         if (width > 0 && height > 0) {
             const appStore = AppStore.Instance;
-            const requiresAutoFit = appStore.preferenceStore.zoomMode === Zoom.FIT && appStore.overlayStore.fullViewWidth <= 1 && appStore.overlayStore.fullViewHeight <= 1;
+            const requiresAutoFit = appStore.preferenceStore.zoomMode === Zoom.FIT && appStore.fullViewWidth <= 1 && appStore.fullViewHeight <= 1;
             appStore.setImageViewDimensions(width, height);
             if (requiresAutoFit) {
                 this.imagePanelRefs?.forEach(imagePanelRef => imagePanelRef?.fitZoomFrameAndRegion());

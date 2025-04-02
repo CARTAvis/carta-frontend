@@ -33,8 +33,8 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     const [overlayComponentRef, setOverlayComponentRef] = React.useState<OverlayComponent>();
     const [imageToolbarVisible, setImageToolbarVisible] = React.useState(false);
 
-    const renderWidth = overlayStore.fullViewWidth;
-    const renderHeight = overlayStore.fullViewHeight;
+    const renderWidth = frame.overlayIndividualStore.fullViewWidth;
+    const renderHeight = frame.overlayIndividualStore.fullViewHeight;
 
     const channelMapViewWidth = renderWidth - overlayStore.paddingRight - overlayStore.paddingLeft;
     const channelMapViewHeight = renderHeight - overlayStore.paddingBottom - overlayStore.paddingTop;
