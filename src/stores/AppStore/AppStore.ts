@@ -2284,17 +2284,17 @@ export class AppStore {
         if (frame) {
             let frameMap = this.render3D.get(render3DData.fileId);
             if (!frameMap) {
-                console.log("creating new frameMap");
+                // console.log("creating new frameMap");
                 frameMap = new ObservableMap<number, Render3DDataStore>();
                 this.render3D.set(render3DData.fileId, frameMap);
             }
             let render3DStore = frameMap.get(render3DData.regionId);
             if (!render3DStore) {
-                console.log("creating new render3DStore");
+                // console.log("creating new render3DStore");
                 render3DStore = new Render3DDataStore(render3DData.fileId, render3DData.regionId, render3DData.width, render3DData.height, render3DData.depth);
                 frameMap.set(render3DData.regionId, render3DStore);
             } else {
-                console.log("updating existing render3DStore");
+                // console.log("updating existing render3DStore");
                 if (render3DData.width === render3DStore.width && render3DData.height === render3DStore.height && render3DData.depth === render3DStore.depth) {
                     //update existing
                 } else {

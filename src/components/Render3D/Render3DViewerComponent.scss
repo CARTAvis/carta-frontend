@@ -1,5 +1,13 @@
 .render-3d-viewer-widget {
     width: 100%;
     height: 100%;
+
+    .render-3d-canvas {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
 }
 

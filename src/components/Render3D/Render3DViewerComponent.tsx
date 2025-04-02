@@ -1,14 +1,12 @@
-import React, { useEffect, useRef } from "react";
-// import { shaderMaterial } from "@react-three/drei";
-import { Canvas, useThree } from "@react-three/fiber";
+import React, {useEffect, useRef, useState} from "react"; // , useState
+import { Canvas, extend, useFrame, useThree} from "@react-three/fiber";
 // import glsl from "babel-plugin-glsl/macro";
 import {action, autorun, observable} from "mobx";
 import {observer} from "mobx-react";
 import * as THREE from 'three';
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 import { ResizeDetector } from "components/Shared";
-// import {ImagePanelComponent} from "components/ImageView/ImagePanel/ImagePanelComponent";
-// import {ImageType} from "models";
 import {AppStore, DefaultWidgetConfig, WidgetsStore} from "stores"; // AppStore, , WidgetsStore 
 import { Render3DDataStore } from "stores/Render3DDataStore/Render3DDataStore";
 
@@ -18,21 +16,38 @@ interface Render3DViewerDialogProps {
     floatingSettingsId?: string;
 }
 
-/**
- * Main Scene
- */
-// const VolumeRenderingScene: React.FC = () => {
-//   return (
-//     <Canvas camera={{ position: [2, 2, 2] }}>
-//       <ambientLight intensity={0.5} />
-//       <pointLight position={[10, 10, 10]} />
-//       <VolumeRenderer />
-//     </Canvas>
-//   );
-// };
+// Extend Three.js with OrbitControls
+extend({ OrbitControls });
 
-// export default VolumeRenderingScene;
+// Custom component for controls
+const Controls = () => {
+    const { camera, gl } = useThree();
+    const controls = useRef<OrbitControls | null>(null);
 
+    useEffect(() => {
+        controls.current = new OrbitControls(camera, gl.domElement);
+        controls.current.enableDamping = true;
+        controls.current.dampingFactor = 0.1;
+        controls.current.rotateSpeed = 1;
+        controls.current.zoomSpeed = 1.2;
+
+        return () => controls.current?.dispose();
+    }, [camera, gl]);
+
+    useFrame(() => controls.current?.update());
+
+    return null; // This component does not render anything
+};
+
+function Torus(props) {
+    const hover = useState(false)[1];
+    return (
+      <mesh onPointerOver={(e) => hover(true)} onPointerOut={(e) => hover(false)} {...props}>
+        <torusGeometry args={[1, 0.25, 32, 100]} />
+        <meshStandardMaterial />
+      </mesh>
+    )
+  }
 
 @observer
 export class Render3DViewerComponent extends React.Component<Render3DViewerDialogProps> {
@@ -70,6 +85,23 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         this.panelHeight = height;
     };
 
+
+    // getMin and GetMax cause RangeError: too many function arguments
+    // because array is too big.
+    // @action getMin = () => {
+    //     if (this.render3DData) {
+    //         return Math.min(...this.render3DData.datacube);
+    //     }
+    //     return 0.0;
+    // }
+
+    // @action getMax = () => {
+    //     if (this.render3DData) {
+    //         return Math.max(...this.render3DData.datacube);
+    //     }
+    //     return 1.0;
+    // }
+
     constructor(props: Render3DViewerDialogProps) {
         super(props);
         this.widgetId = props.id.match(/render-3d-\d+/)[0];
@@ -86,38 +118,25 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
             console.log("render3d effectiveregion: ", AppStore.Instance.render3D.get(widgetStore.effectiveFrame.frameInfo.fileId));
     
             this.render3DData = AppStore?.Instance.render3D?.get(widgetStore?.effectiveFrame?.frameInfo.fileId)?.get(widgetStore.effectiveRegionId);
-    
-            console.log("renderdata: ", this.render3DData);
-        });
-    }
-    
-    /**
-     * Generates a 3D texture with random data (replace with actual astronomy data).
-     */
-    // generate3DTexture() {
-    //     const size = 50;
-    //     const data = new Float32Array(size * size * size);
-    //     for (let i = 0; i < data.length; i++) {
-    //     data[i] = Math.random();
-    //     }
-    
-    //     const texture = new THREE.Data3DTexture(data, size, size, size);
-    //     texture.format = THREE.RedFormat;
-    //     texture.type = THREE.FloatType;
-    //     texture.minFilter = THREE.LinearFilter;
-    //     texture.magFilter = THREE.LinearFilter;
-    //     texture.unpackAlignment = 1;
-    //     texture.needsUpdate = true;
-    
-    //     return texture;
-    // }
+            
+            if (this.render3DData) {
 
-    
+                console.log("renderdata: ", this.render3DData.datacube);
+
+            }
+            
+        });
+    }    
 
     @action generate3DTexture() {
         if (!this.render3DData) {
             return;
         }
+        
+        // for (let i = 0; i < this.render3DData.datacube.length; i++) {
+        //     this.render3DData.datacube[i] = (this.render3DData.datacube[i] - this.getMin()) / (this.getMax() - this.getMin());
+        // }
+
         const texture = new THREE.Data3DTexture(this.render3DData.datacube, this.render3DData.width, this.render3DData.height, this.render3DData.depth);
         texture.format = THREE.RedFormat;
         texture.type = THREE.FloatType;
@@ -128,110 +147,47 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         return texture;
     }
 
-    generateHalfTexture() {
+    @action generateRandomTexture() {
+
         const size = 50;
         const data = new Float32Array(size * size * size);
         for (let i = 0; i < data.length; i++) {
-            if (i < size * size * size / 2) {
-                data[i] = 1.0; // Set half of the data to 1.0
-            } else {
-                data[i] = 0.0; // Set the other half to 0.0
-            }
+            data[i] = Math.random();
         }
 
         const texture = new THREE.Data3DTexture(data, size, size, size);
         texture.format = THREE.RedFormat;
-        texture.type = THREE.HalfFloatType;
+        texture.type = THREE.FloatType;
         texture.minFilter = THREE.LinearFilter;
         texture.magFilter = THREE.LinearFilter;
         texture.unpackAlignment = 1;
         texture.needsUpdate = true;
-
         return texture;
     }
 
-    // VolumeShaderMaterial = new THREE.ShaderMaterial({
-    //     uniforms: {
-    //         uTexture: { value: this.generateHalfTexture() },
-    //     },
-    //     vertexShader: `
-    //         varying vec3 vUv;
-    //         void main() {
-    //         vUv = position * 0.5 + 0.5;  // Normalize from [-0.5,0.5] to [0,1]
-    //         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    //         }
-    //     `,
-    //     fragmentShader: `
-    //         precision highp sampler3D;
-    //         uniform sampler3D uTexture;
-    //         varying vec3 vUv;
-        
-    //         void main() {
-    //         float intensity = texture(uTexture, vUv).r;
-    //         gl_FragColor = vec4(vec3(intensity), intensity);
-    //         }
-    //     `,
-    //     transparent: true,
-    //     });
-
-    VolumeShaderMaterial = new THREE.ShaderMaterial({
+    @action VolumeShaderMaterial = new THREE.ShaderMaterial({
         uniforms: {
-            uTexture: { value: this.generate3DTexture() },
-            uCameraPosition: { value: new THREE.Vector3() },
-            uBoxMin: { value: new THREE.Vector3(-0.5, -0.5, -0.5) },
-            uBoxMax: { value: new THREE.Vector3(0.5, 0.5, 0.5) },
-            uSteps: { value: 128 },  // Number of raymarching steps
-            uStepSize: { value: 0.01 }  // Step size
+            uTexture: { value: this.generateRandomTexture() },
         },
         vertexShader: `
-            varying vec3 vRayDir;
+            varying vec3 vUv;
             void main() {
-                vRayDir = normalize(position - cameraPosition);
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            vUv = position * 0.5 + 0.5;  // Normalize from [-0.5,0.5] to [0,1]
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
             }
         `,
         fragmentShader: `
             precision highp sampler3D;
             uniform sampler3D uTexture;
-            uniform vec3 uCameraPosition;
-            uniform vec3 uBoxMin;
-            uniform vec3 uBoxMax;
-            uniform int uSteps;
-            uniform float uStepSize;
-            varying vec3 vRayDir;
-    
+            varying vec3 vUv;
+        
             void main() {
-                vec3 rayOrigin = uCameraPosition;
-                vec3 rayDirection = normalize(vRayDir);
-                vec4 accumulatedColor = vec4(0.0);
-                float t = 0.0;
-    
-                for (int i = 0; i < uSteps; i++) {
-                    vec3 samplePos = rayOrigin + rayDirection * t;
-                    vec3 uv = (samplePos - uBoxMin) / (uBoxMax - uBoxMin);
-    
-                    if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0 || uv.z < 0.0 || uv.z > 1.0) {
-                        break;
-                    }
-    
-                    float density = texture(uTexture, uv).r;
-                    vec4 colorSample = vec4(vec3(density), density);
-                    accumulatedColor.rgb += (1.0 - accumulatedColor.a) * colorSample.a * colorSample.rgb;
-                    accumulatedColor.a += (1.0 - accumulatedColor.a) * colorSample.a;
-    
-                    if (accumulatedColor.a >= 1.0) break;
-    
-                    t += uStepSize;
-                }
-    
-                gl_FragColor = accumulatedColor;
+            float intensity = texture(uTexture, vUv).r;
+            gl_FragColor = vec4(vec3(intensity), intensity);
             }
         `,
-        transparent: true
-    });
-
-    
-    // Volume Rendering Component
+        transparent: true,
+        });
      
     VolumeRenderer: React.FC = () => {
         const meshRef = useRef<THREE.Mesh>(null);
@@ -254,20 +210,15 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         return (
           <div className="render-3d-viewer-widget">
                 <ResizeDetector onResize={this.onResize} throttleTime={33}>
-                    <div className="render-3d-canvas">
+                    <div className="render-3d-canvas" >
                         <Canvas
                             // camera={{ position: [2, 2, 2] }}
-                            style={{ width: "100%", height: "100%" }}
-                        >
+                            style={{ width: "100%", height: "100%" }} >
+
                             <ambientLight />
-                            <mesh>
-                                <boxGeometry args={[1, 1, 1]} />
-                                <this.VolumeRenderer />
-                                {/* <VolumeMaterial
-                                    uTexture={this.generate3DTexture()}
-                                    uSize={new THREE.Vector3(this.width, this.height, this.depth)}
-                                /> */}
-                            </mesh>
+                            <Controls />
+                            <Torus />
+                            {/* <this.VolumeRenderer/> */}
                         </Canvas>
                     </div>
                 </ResizeDetector>
