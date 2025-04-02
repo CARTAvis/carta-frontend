@@ -3,7 +3,6 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
 
-import {PvPreviewComponent} from "components";
 import {
     CatalogControlMap,
     ChannelInfo,
@@ -211,8 +210,6 @@ export class FrameStore {
 
     @observable stokesFiles: CARTA.StokesFile[];
 
-    @observable previewViewWidth: number;
-    @observable previewViewHeight: number;
     @observable previewPVRasterData: Float32Array;
     @observable intensityUnit: string;
 
@@ -428,12 +425,12 @@ export class FrameStore {
 
     @computed get renderWidth() {
         const overlayStore = AppStore.Instance.overlayStore;
-        return this.isPreview ? overlayStore.previewRenderWidth(this.previewViewWidth || PvPreviewComponent.WIDGET_CONFIG.defaultWidth) : overlayStore.renderWidth;
+        return this.isPreview ? overlayStore.previewRenderWidth(this.overlayIndividualStore.fullViewWidth) : overlayStore.renderWidth;
     }
 
     @computed get renderHeight() {
         const overlayStore = AppStore.Instance.overlayStore;
-        return this.isPreview ? overlayStore.previewRenderHeight(this.previewViewHeight || PvPreviewComponent.WIDGET_CONFIG.defaultHeight) : overlayStore.renderHeight;
+        return this.isPreview ? overlayStore.previewRenderHeight(this.overlayIndividualStore.fullViewHeight) : overlayStore.renderHeight;
     }
 
     @computed get isRenderable() {
@@ -3276,9 +3273,7 @@ export class FrameStore {
 
     @action onResizePreviewWidget = (width: number, height: number) => {
         if (width > 0 && height > 0) {
-            this.previewViewWidth = width;
-            this.previewViewHeight = height;
-
+            this.overlayIndividualStore.setViewDimension(width, height);
             this.fitZoom();
         }
     };

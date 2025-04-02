@@ -1529,9 +1529,11 @@ export class AppStore {
                     // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
                     pvGeneratorWidgetStore.previewFrame.updatePreviewDataGenerator.next();
                 } else {
-                    pvGeneratorWidgetStore.setPreviewFrame(this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory, ""));
+                    const newFrame = this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory, "");
+                    pvGeneratorWidgetStore.setPreviewFrame(newFrame);
                     pvGeneratorWidgetStore.setPvCutRegionId(message.regionId);
                     WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WIDGET_CONFIG.type);
+                    newFrame.onResizePreviewWidget(PvGeneratorComponent.WIDGET_CONFIG.defaultWidth, PvGeneratorComponent.WIDGET_CONFIG.defaultHeight);
                 }
             } else {
                 AppToaster.show({icon: "warning-sign", message: "Load preview failed.", intent: "danger", timeout: 3000});

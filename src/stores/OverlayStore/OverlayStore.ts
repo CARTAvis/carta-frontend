@@ -1382,6 +1382,10 @@ export class OverlayIndividualStore {
     @observable fullViewWidth = AppStore.Instance.fullViewWidth;
     @observable fullViewHeight = AppStore.Instance.fullViewHeight;
 
+    constructor() {
+        makeObservable(this);
+    }
+
     @action setViewDimension = (width: number, height: number) => {
         this.fullViewWidth = width;
         this.fullViewHeight = height;

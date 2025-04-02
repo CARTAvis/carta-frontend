@@ -47,8 +47,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     updateImageDimensions() {
         if (this.canvas) {
             const frame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image.store?.baseFrame : this.props.image?.store;
-            this.canvas.width = (this.props.width ?? (frame?.isPreview ? frame?.previewViewWidth : this.props.overlaySettings.viewWidth)) * devicePixelRatio * AppStore.Instance.imageRatio;
-            this.canvas.height = (this.props.height ?? (frame?.isPreview ? frame?.previewViewHeight : this.props.overlaySettings.viewHeight)) * devicePixelRatio * AppStore.Instance.imageRatio;
+            this.canvas.width = (this.props.width ?? (frame?.isPreview ? frame?.overlayIndividualStore.fullViewWidth : this.props.overlaySettings.viewWidth)) * devicePixelRatio * AppStore.Instance.imageRatio;
+            this.canvas.height = (this.props.height ?? (frame?.isPreview ? frame?.overlayIndividualStore.fullViewHeight : this.props.overlaySettings.viewHeight)) * devicePixelRatio * AppStore.Instance.imageRatio;
         }
     }
 
@@ -117,8 +117,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     frameView.xMax,
                     frameView.yMin / frame.aspectRatio,
                     frameView.yMax / frame.aspectRatio,
-                    (this.props.width ?? (frame.isPreview ? frame?.previewViewWidth : this.props.overlaySettings.viewWidth)) * appStore.pixelRatio,
-                    (this.props.height ?? (frame.isPreview ? frame?.previewViewHeight : this.props.overlaySettings.viewHeight)) * appStore.pixelRatio,
+                    (this.props.width ?? (frame.isPreview ? frame?.overlayIndividualStore.fullViewWidth : this.props.overlaySettings.viewWidth)) * appStore.pixelRatio,
+                    (this.props.height ?? (frame.isPreview ? frame?.overlayIndividualStore.fullViewHeight : this.props.overlaySettings.viewHeight)) * appStore.pixelRatio,
                     padding.left * appStore.pixelRatio,
                     padding.right * appStore.pixelRatio,
                     padding.top * appStore.pixelRatio,
@@ -184,8 +184,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const refFrame = frame.spatialReference ?? frame;
         // changing the frame view, padding or width/height triggers a re-render
 
-        const w = this.props.width ?? (frame.isPreview ? frame?.previewViewWidth : this.props.overlaySettings.viewWidth);
-        const h = this.props.height ?? (frame.isPreview ? frame?.previewViewHeight : this.props.overlaySettings.viewHeight);
+        const w = this.props.width ?? (frame.isPreview ? frame?.overlayIndividualStore.fullViewWidth : this.props.overlaySettings.viewWidth);
+        const h = this.props.height ?? (frame.isPreview ? frame?.overlayIndividualStore.fullViewHeight : this.props.overlaySettings.viewHeight);
         // Dummy variables for triggering re-render
         /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
         const styleString = this.props.overlaySettings.styleString;
