@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from "react"; // , useState
+import React, {useEffect, useRef} from "react"; // , useState
 import { Canvas, extend, useFrame, useThree} from "@react-three/fiber";
 // import glsl from "babel-plugin-glsl/macro";
 import {action, autorun, observable} from "mobx";
@@ -39,15 +39,6 @@ const Controls = () => {
     return null; // This component does not render anything
 };
 
-function Torus(props) {
-    const hover = useState(false)[1];
-    return (
-      <mesh onPointerOver={(e) => hover(true)} onPointerOut={(e) => hover(false)} {...props}>
-        <torusGeometry args={[1, 0.25, 32, 100]} />
-        <meshStandardMaterial />
-      </mesh>
-    )
-  }
 
 @observer
 export class Render3DViewerComponent extends React.Component<Render3DViewerDialogProps> {
@@ -84,23 +75,6 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         this.panelWidth = width;
         this.panelHeight = height;
     };
-
-
-    // getMin and GetMax cause RangeError: too many function arguments
-    // because array is too big.
-    // @action getMin = () => {
-    //     if (this.render3DData) {
-    //         return Math.min(...this.render3DData.datacube);
-    //     }
-    //     return 0.0;
-    // }
-
-    // @action getMax = () => {
-    //     if (this.render3DData) {
-    //         return Math.max(...this.render3DData.datacube);
-    //     }
-    //     return 1.0;
-    // }
 
     constructor(props: Render3DViewerDialogProps) {
         super(props);
@@ -217,8 +191,7 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
 
                             <ambientLight />
                             <Controls />
-                            <Torus />
-                            {/* <this.VolumeRenderer/> */}
+                            <this.VolumeRenderer/>
                         </Canvas>
                     </div>
                 </ResizeDetector>
