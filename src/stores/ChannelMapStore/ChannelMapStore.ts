@@ -58,7 +58,7 @@ export class ChannelMapStore {
         );
     }
 
-    /** The first channel at the top-right corner. */
+    /** The first channel at the top-left corner. */
     @observable startChannel: number = 0;
     /** The number of columns in the image view. */
     @observable numColumns: number = 2;
@@ -100,8 +100,8 @@ export class ChannelMapStore {
     };
 
     /**
-     * Sets the first channel at the top-right corner. Skips when the channel is out of range.
-     * @param startChannel - The first channel at the top-right corner.
+     * Sets the first channel at the top-left corner. Skips when the channel is out of range.
+     * @param startChannel - The first channel at the top-left corner.
      */
     @action setStartChannel(startChannel: number) {
         // Add checks for valid startChannel number for the masterFrame
@@ -111,12 +111,12 @@ export class ChannelMapStore {
         this.startChannel = startChannel;
     }
 
-    /** Sets the first channel at the top-right corner to the previous channel. */
+    /** Sets the first channel at the top-left corner to the previous channel. */
     @action setPrevChannel() {
         this.setStartChannel(this.startChannel - 1);
     }
 
-    /** Sets the first channel at the top-right corner to the next channel. */
+    /** Sets the first channel at the top-left corner to the next channel. */
     @action setNextChannel() {
         this.setStartChannel(this.startChannel + 1);
     }
