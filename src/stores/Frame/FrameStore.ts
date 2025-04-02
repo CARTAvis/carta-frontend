@@ -38,7 +38,7 @@ import {
     ZoomPoint
 } from "models";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE, TileService} from "services";
-import {AnimatorStore, AppStore, ASTSettingsString, INITIAL_LAYOUT_ITEM, LogStore, PreferenceStore, SystemType} from "stores";
+import {AnimatorStore, AppStore, ASTSettingsString, INITIAL_LAYOUT_ITEM, LogStore, OverlayIndividualStore, PreferenceStore, SystemType} from "stores";
 import {
     CENTER_POINT_INDEX,
     ColorbarStore,
@@ -134,6 +134,8 @@ export class FrameStore {
     public readonly validWcs: boolean;
     public readonly defaultWcsSystem: SystemType;
     @observable public frameInfo: FrameInfo;
+    public readonly overlayIndividualStore: OverlayIndividualStore;
+    public readonly channelMapInnerOverlayIndividualStore: OverlayIndividualStore;
     public readonly colorbarStore: ColorbarStore;
 
     public spectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}>;
@@ -1261,6 +1263,8 @@ export class FrameStore {
         this.requiredStokes = 0;
         this.requiredChannel = 0;
         this.renderConfig = new RenderConfigStore(preferenceStore, this);
+        this.overlayIndividualStore = new OverlayIndividualStore();
+        this.channelMapInnerOverlayIndividualStore = new OverlayIndividualStore();
         this.colorbarStore = new ColorbarStore(this);
         this.contourConfig = new ContourConfigStore(preferenceStore);
         this.contourStores = new Map<number, ContourStore>();

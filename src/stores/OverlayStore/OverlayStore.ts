@@ -1380,3 +1380,13 @@ export class OverlayStore {
         return this.global.explicitSystem === SystemType.Image;
     }
 }
+
+export class OverlayIndividualStore {
+    @observable fullViewWidth = 1;
+    @observable fullViewHeight = 1;
+
+    @action setViewDimension = (width: number, height: number) => {
+        this.fullViewWidth = width;
+        this.fullViewHeight = height;
+    };
+}
