@@ -1,5 +1,6 @@
 import React, {useEffect, useRef} from "react"; // , useState
 import { Canvas, extend, useFrame, useThree} from "@react-three/fiber";
+import { max } from "lodash";
 // import glsl from "babel-plugin-glsl/macro";
 import {action, autorun, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -57,9 +58,10 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         };
     }
 
-    // @observable width: number;
-    // @observable height: number;
-    // @observable depth: number;
+    @observable width: number;
+    @observable height: number;
+    @observable depth: number;
+    // @observable index: number;
 
     // this.width = render3DData.width;
     // this.height = render3DData.height;
@@ -78,6 +80,7 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
 
     constructor(props: Render3DViewerDialogProps) {
         super(props);
+        // makeObservable(this); // makeObservable make RandomTexture not work
         this.widgetId = props.id.match(/render-3d-\d+/)[0];
 
         autorun(() => {
@@ -123,13 +126,17 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
 
     @action generateRandomTexture() {
 
-        const size = 50;
-        const data = new Float32Array(size * size * size);
+        this.width = 50;
+        this.height = 100;
+        this.depth = 50;
+
+        // const size = 50;
+        const data = new Float32Array(this.width * this.height * this.depth);
         for (let i = 0; i < data.length; i++) {
             data[i] = Math.random();
         }
 
-        const texture = new THREE.Data3DTexture(data, size, size, size);
+        const texture = new THREE.Data3DTexture(data, this.width, this.height, this.depth);
         texture.format = THREE.RedFormat;
         texture.type = THREE.FloatType;
         texture.minFilter = THREE.LinearFilter;
@@ -173,7 +180,9 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
     
         return (
         <mesh ref={meshRef} material={this.VolumeShaderMaterial}>
-            <boxGeometry args={[1, 1, 1]} />
+            <boxGeometry args={[this.width/max([this.width,max([this.height, this.depth])]),
+                                this.height/max([this.width,max([this.height, this.depth])]),
+                                this.depth/max([this.width,max([this.height, this.depth])])]} />
         </mesh>
         );
     };
