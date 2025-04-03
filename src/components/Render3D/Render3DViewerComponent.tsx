@@ -5,7 +5,7 @@ import { max } from "lodash";
 import {action, autorun, observable} from "mobx";
 import {observer} from "mobx-react";
 import * as THREE from 'three';
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { TrackballControls } from "three/examples/jsm/controls/TrackballControls";
 
 import { ResizeDetector } from "components/Shared";
 import {AppStore, DefaultWidgetConfig, WidgetsStore} from "stores"; // AppStore, , WidgetsStore 
@@ -18,15 +18,15 @@ interface Render3DViewerDialogProps {
 }
 
 // Extend Three.js with OrbitControls
-extend({ OrbitControls });
+extend({ TrackballControls });
 
 // Custom component for controls
 const Controls = () => {
     const { camera, gl } = useThree();
-    const controls = useRef<OrbitControls | null>(null);
+    const controls = useRef<TrackballControls | null>(null);
 
     useEffect(() => {
-        controls.current = new OrbitControls(camera, gl.domElement);
+        controls.current = new TrackballControls(camera, gl.domElement);
         controls.current.enableDamping = true;
         controls.current.dampingFactor = 0.1;
         controls.current.rotateSpeed = 1;
@@ -37,7 +37,7 @@ const Controls = () => {
 
     useFrame(() => controls.current?.update());
 
-    return null; // This component does not render anything
+    return null;
 };
 
 
@@ -107,48 +107,43 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
 
     @action generate3DTexture() {
         if (!this.render3DData) {
-            return;
+            console.log("use random texture")
+
+            this.width = 50;
+            this.height = 100;
+            this.depth = 50;
+
+            const data = new Float32Array(this.width * this.height * this.depth);
+            for (let i = 0; i < data.length; i++) {
+                data[i] = Math.random();
+            }
+
+            const texture = new THREE.Data3DTexture(data, this.width, this.height, this.depth);
+            texture.format = THREE.RedFormat;
+            texture.type = THREE.FloatType;
+            texture.minFilter = THREE.LinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            texture.unpackAlignment = 1;
+            texture.needsUpdate = true;
+            return texture;
+
+        } else {
+            console.log("use meetkat")
+
+            const texture = new THREE.Data3DTexture(this.render3DData.datacube, this.render3DData.width, this.render3DData.height, this.render3DData.depth);
+            texture.format = THREE.RedFormat;
+            texture.type = THREE.FloatType;
+            texture.minFilter = THREE.LinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            texture.unpackAlignment = 1;
+            texture.needsUpdate = true;
+            return texture;
         }
-        
-        // for (let i = 0; i < this.render3DData.datacube.length; i++) {
-        //     this.render3DData.datacube[i] = (this.render3DData.datacube[i] - this.getMin()) / (this.getMax() - this.getMin());
-        // }
-
-        const texture = new THREE.Data3DTexture(this.render3DData.datacube, this.render3DData.width, this.render3DData.height, this.render3DData.depth);
-        texture.format = THREE.RedFormat;
-        texture.type = THREE.FloatType;
-        texture.minFilter = THREE.LinearFilter;
-        texture.magFilter = THREE.LinearFilter;
-        texture.unpackAlignment = 1;
-        texture.needsUpdate = true;
-        return texture;
-    }
-
-    @action generateRandomTexture() {
-
-        this.width = 50;
-        this.height = 100;
-        this.depth = 50;
-
-        // const size = 50;
-        const data = new Float32Array(this.width * this.height * this.depth);
-        for (let i = 0; i < data.length; i++) {
-            data[i] = Math.random();
-        }
-
-        const texture = new THREE.Data3DTexture(data, this.width, this.height, this.depth);
-        texture.format = THREE.RedFormat;
-        texture.type = THREE.FloatType;
-        texture.minFilter = THREE.LinearFilter;
-        texture.magFilter = THREE.LinearFilter;
-        texture.unpackAlignment = 1;
-        texture.needsUpdate = true;
-        return texture;
     }
 
     @action VolumeShaderMaterial = new THREE.ShaderMaterial({
         uniforms: {
-            uTexture: { value: this.generateRandomTexture() },
+            uTexture: { value: this.generate3DTexture() },
         },
         vertexShader: `
             varying vec3 vUv;
