@@ -1,6 +1,5 @@
 import React, {useEffect, useRef} from "react"; // , useState
 import { Canvas, extend, useFrame, useThree} from "@react-three/fiber";
-import { max } from "lodash";
 // import glsl from "babel-plugin-glsl/macro";
 import {action, autorun, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -63,6 +62,8 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
     @observable depth: number;
     // @observable index: number;
 
+    @observable texture: THREE.Data3DTexture;
+
     // this.width = render3DData.width;
     // this.height = render3DData.height;
     // this.depth = render3DData.depth
@@ -77,6 +78,10 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         this.panelWidth = width;
         this.panelHeight = height;
     };
+
+    // @action getMax = () => {
+    //     return Math.max(...this.render3DData.datacube);
+    // };
 
     constructor(props: Render3DViewerDialogProps) {
         super(props);
@@ -96,91 +101,99 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
     
             this.render3DData = AppStore?.Instance.render3D?.get(widgetStore?.effectiveFrame?.frameInfo.fileId)?.get(widgetStore.effectiveRegionId);
             
-            if (this.render3DData) {
-
-                console.log("renderdata: ", this.render3DData.datacube);
-
-            }
-            
         });
-    }    
+    }
 
     @action generate3DTexture() {
         if (!this.render3DData) {
-            console.log("use random texture")
-
-            this.width = 50;
-            this.height = 100;
-            this.depth = 50;
-
-            const data = new Float32Array(this.width * this.height * this.depth);
-            for (let i = 0; i < data.length; i++) {
-                data[i] = Math.random();
-            }
-
-            const texture = new THREE.Data3DTexture(data, this.width, this.height, this.depth);
-            texture.format = THREE.RedFormat;
-            texture.type = THREE.FloatType;
-            texture.minFilter = THREE.LinearFilter;
-            texture.magFilter = THREE.LinearFilter;
-            texture.unpackAlignment = 1;
-            texture.needsUpdate = true;
-            return texture;
+    
+            this.width = 0;
+            this.height = 0;
+            this.depth = 0;
+    
+            this.texture = new THREE.Data3DTexture(new Float32Array(), 0, 0, 0);
 
         } else {
-            console.log("use meetkat")
 
-            const texture = new THREE.Data3DTexture(this.render3DData.datacube, this.render3DData.width, this.render3DData.height, this.render3DData.depth);
-            texture.format = THREE.RedFormat;
-            texture.type = THREE.FloatType;
-            texture.minFilter = THREE.LinearFilter;
-            texture.magFilter = THREE.LinearFilter;
-            texture.unpackAlignment = 1;
-            texture.needsUpdate = true;
-            return texture;
+            this.width = this.render3DData.width;
+            this.height = this.render3DData.height;
+            this.depth = this.render3DData.depth;
+
+            console.log("render3DData: ", this.render3DData);
+    
+            this.texture = new THREE.Data3DTexture(
+                this.render3DData.datacube,
+                this.render3DData.width,
+                this.render3DData.height,
+                this.render3DData.depth
+            );
         }
+    
+        this.texture.format = THREE.RedFormat;
+        this.texture.type = THREE.FloatType;
+        this.texture.minFilter = THREE.LinearFilter;
+        this.texture.magFilter = THREE.LinearFilter;
+        this.texture.unpackAlignment = 1;
+        this.texture.needsUpdate = true;
+
+        console.log("texture: ", this.texture);
     }
 
-    @action VolumeShaderMaterial = new THREE.ShaderMaterial({
-        uniforms: {
-            uTexture: { value: this.generate3DTexture() },
-        },
-        vertexShader: `
-            varying vec3 vUv;
-            void main() {
-            vUv = position * 0.5 + 0.5;  // Normalize from [-0.5,0.5] to [0,1]
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
-        `,
-        fragmentShader: `
-            precision highp sampler3D;
-            uniform sampler3D uTexture;
-            varying vec3 vUv;
-        
-            void main() {
-            float intensity = texture(uTexture, vUv).r;
-            gl_FragColor = vec4(vec3(intensity), intensity);
-            }
-        `,
-        transparent: true,
-        });
-     
-    VolumeRenderer: React.FC = () => {
+    VolumeRenderer: React.FC = observer(() => {
         const meshRef = useRef<THREE.Mesh>(null);
         const { gl } = useThree();
+        const [material, setMaterial] = React.useState<THREE.ShaderMaterial | null>(null);
     
         useEffect(() => {
-        gl.getContext().getExtension("OES_texture_float");
-        }, [gl]);
+            gl.getContext().getExtension("OES_texture_float");
     
-        return (
-        <mesh ref={meshRef} material={this.VolumeShaderMaterial}>
-            <boxGeometry args={[this.width/max([this.width,max([this.height, this.depth])]),
-                                this.height/max([this.width,max([this.height, this.depth])]),
-                                this.depth/max([this.width,max([this.height, this.depth])])]} />
-        </mesh>
-        );
-    };
+            // Generate the texture when render3DData changes
+            this.generate3DTexture();
+    
+            // Create or update the shader material
+            if (material) {
+                material.uniforms.uTexture.value = this.texture;
+                material.uniforms.uTexture.value.needsUpdate = true;
+            } else {
+                const newMaterial = new THREE.ShaderMaterial({
+                    uniforms: {
+                        uTexture: { value: this.texture },
+                    },
+                    vertexShader: /* glsl */`
+                        varying vec3 vUv;
+                        void main() {
+                            vUv = position * 0.5 + 0.5;  // Normalize from [-0.5,0.5] to [0,1]
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                        }
+                    `,
+                    fragmentShader: /* glsl */`
+                        precision highp sampler3D;
+                        uniform sampler3D uTexture;
+                        varying vec3 vUv;
+    
+                        void main() {
+                            float intensity = texture(uTexture, vUv).r;
+                            gl_FragColor = vec4(vec3(intensity), intensity);
+                        }
+                    `,
+                    transparent: true,
+                });
+                setMaterial(newMaterial);
+            }
+        }, [gl, this.render3DData]); // Runs when render3DData changes
+    
+        return material ? (
+            <mesh ref={meshRef} material={material}>
+                <boxGeometry
+                    args={[
+                        this.width / Math.max(this.width, Math.max(this.height, this.depth)),
+                        this.height / Math.max(this.width, Math.max(this.height, this.depth)),
+                        this.depth / Math.max(this.width, Math.max(this.height, this.depth)),
+                    ]}
+                />
+            </mesh>
+        ) : null;
+    });
 
     render() {
         // const frame = WidgetsStore?.Instance.render3DWidgets?.get(this.props.id)?.render3DFrame;
