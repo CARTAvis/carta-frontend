@@ -79,10 +79,6 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         this.panelHeight = height;
     };
 
-    // @action getMax = () => {
-    //     return Math.max(...this.render3DData.datacube);
-    // };
-
     constructor(props: Render3DViewerDialogProps) {
         super(props);
         // makeObservable(this); // makeObservable make RandomTexture not work
@@ -143,7 +139,14 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         const meshRef = useRef<THREE.Mesh>(null);
         const { gl } = useThree();
         const [material, setMaterial] = React.useState<THREE.ShaderMaterial | null>(null);
-    
+        const lastSlice = this.render3DData?.lastSlice;
+
+        const computedTexture = React.useMemo(() => {
+            console.log("lastSlice: ", lastSlice);
+            this.generate3DTexture();
+            return this.texture;
+        }, [lastSlice]);
+
         useEffect(() => {
             gl.getContext().getExtension("OES_texture_float");
     
@@ -180,7 +183,7 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
                 });
                 setMaterial(newMaterial);
             }
-        }, [gl, this.render3DData]); // Runs when render3DData changes
+        }, [gl, material, computedTexture]); // Runs when render3DData changes
     
         return material ? (
             <mesh ref={meshRef} material={material}>
