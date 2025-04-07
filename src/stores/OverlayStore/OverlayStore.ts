@@ -1424,3 +1424,31 @@ export class PvPreviewOverlayIndividualStore extends ImageViewOverlayIndividualS
         return this.fullViewHeight;
     }
 }
+
+/** The overlay configuration for the outer part of a single image in channel map mode in the image view widget. */
+export class ChannelMapOuterOverlayIndividualStore extends ImageViewOverlayIndividualStore {
+    /** The width of the overlay canvas. */
+    get viewWidth() {
+        return this.fullViewWidth;
+    }
+
+    /** The height of the overlay canvas. */
+    get viewHeight() {
+        return this.fullViewHeight;
+    }
+}
+
+/** The overlay configuration for each channel of a single image in channel map mode in the image view widget. */
+export class ChannelMapInnerOverlayIndividualStore extends ImageViewOverlayIndividualStore {
+    /** The width of the overlay canvas. */
+    get viewWidth() {
+        // ToDo: incorrectly set to fullViewWidth
+        return this.fullViewWidth;
+    }
+
+    /** The height of the overlay canvas. */
+    get viewHeight() {
+        // ToDo: incorrectly set to fullViewHeight
+        return this.fullViewHeight;
+    }
+}
