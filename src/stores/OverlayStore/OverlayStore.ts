@@ -1273,11 +1273,11 @@ export class OverlayStore {
         };
     }
 
-    @computed get viewWidth() {
+    @computed private get viewWidth() {
         return Math.floor(this.fullViewWidth / AppStore.Instance.imageViewConfigStore.numImageColumns);
     }
 
-    @computed get viewHeight() {
+    @computed private get viewHeight() {
         return Math.floor(this.fullViewHeight / AppStore.Instance.imageViewConfigStore.numImageRows);
     }
 
@@ -1378,16 +1378,49 @@ export class OverlayStore {
     }
 }
 
-export class OverlayIndividualStore {
+export type OverlayIndividualStore = ImageViewOverlayIndividualStore | PvPreviewOverlayIndividualStore;
+
+/** The overlay configuration for a single image in the image view widget. */
+export class ImageViewOverlayIndividualStore {
+    /** The width of the entire widget on which the overlay is displayed. */
     @observable fullViewWidth = AppStore.Instance.fullViewWidth;
+    /** The height of the entire widget on which the overlay is displayed. */
     @observable fullViewHeight = AppStore.Instance.fullViewHeight;
 
     constructor() {
         makeObservable(this);
     }
 
+    /**
+     * Update the size of the entire widget on which the overlay is displayed.
+     * @param width - The width of the widget.
+     * @param height - The height of the widget.
+     */
     @action setViewDimension = (width: number, height: number) => {
         this.fullViewWidth = width;
         this.fullViewHeight = height;
     };
+
+    /** The width of the overlay canvas. */
+    @computed get viewWidth() {
+        return Math.floor(this.fullViewWidth / AppStore.Instance.imageViewConfigStore.numImageColumns);
+    }
+
+    /** The height of the overlay canvas. */
+    @computed get viewHeight() {
+        return Math.floor(this.fullViewHeight / AppStore.Instance.imageViewConfigStore.numImageRows);
+    }
+}
+
+/** The overlay configuration for a PV preview widget. */
+export class PvPreviewOverlayIndividualStore extends ImageViewOverlayIndividualStore {
+    /** The width of the overlay canvas. */
+    get viewWidth() {
+        return this.fullViewWidth;
+    }
+
+    /** The height of the overlay canvas. */
+    get viewHeight() {
+        return this.fullViewHeight;
+    }
 }

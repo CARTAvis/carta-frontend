@@ -112,8 +112,8 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const overlayStore = appStore.overlayStore;
         const frame = this.props.frame;
         const colorbarSettings = appStore.overlayStore.colorbar;
-        const viewHeight = this.props.height || (frame.isPreview ? frame.overlayIndividualStore.fullViewHeight : overlayStore.viewHeight);
-        const viewWidth = this.props.width || (frame.isPreview ? frame.overlayIndividualStore.fullViewWidth : overlayStore.viewWidth);
+        const viewHeight = this.props.height || frame.overlayIndividualStore.viewHeight;
+        const viewWidth = this.props.width || frame.overlayIndividualStore.viewWidth;
         const colorbarSettingsHeight = this.props.length || colorbarSettings.height(frame, this.props.length);
         const yOffset = this.props.leftOffset ?? colorbarSettings.yOffset;
 

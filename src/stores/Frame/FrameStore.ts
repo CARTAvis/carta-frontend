@@ -37,7 +37,7 @@ import {
     ZoomPoint
 } from "models";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE, TileService} from "services";
-import {AnimatorStore, AppStore, ASTSettingsString, INITIAL_LAYOUT_ITEM, LogStore, OverlayIndividualStore, PreferenceStore, SystemType} from "stores";
+import {AnimatorStore, AppStore, ASTSettingsString, ImageViewOverlayIndividualStore, INITIAL_LAYOUT_ITEM, LogStore, OverlayIndividualStore, PreferenceStore, PvPreviewOverlayIndividualStore, SystemType} from "stores";
 import {
     CENTER_POINT_INDEX,
     ColorbarStore,
@@ -1260,8 +1260,8 @@ export class FrameStore {
         this.requiredStokes = 0;
         this.requiredChannel = 0;
         this.renderConfig = new RenderConfigStore(preferenceStore, this);
-        this.overlayIndividualStore = new OverlayIndividualStore();
-        this.channelMapInnerOverlayIndividualStore = new OverlayIndividualStore();
+        this.overlayIndividualStore = frameInfo.preview ? new PvPreviewOverlayIndividualStore() : new ImageViewOverlayIndividualStore();
+        this.channelMapInnerOverlayIndividualStore = new ImageViewOverlayIndividualStore();
         this.colorbarStore = new ColorbarStore(this);
         this.contourConfig = new ContourConfigStore(preferenceStore);
         this.contourStores = new Map<number, ContourStore>();

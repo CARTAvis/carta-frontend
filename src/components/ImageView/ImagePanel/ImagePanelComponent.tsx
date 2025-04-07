@@ -136,8 +136,8 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
             const className = classNames("image-panel-div", {active: isActive});
 
             let style: React.CSSProperties = {
-                width: this.frame.isPreview ? this.frame.overlayIndividualStore.fullViewWidth : overlayStore.viewWidth,
-                height: this.frame.isPreview ? this.frame.overlayIndividualStore.fullViewHeight : overlayStore.viewHeight
+                width: this.frame.overlayIndividualStore.viewWidth,
+                height: this.frame.overlayIndividualStore.viewHeight
             };
             if (isActive) {
                 // Disable border radius rounding in inner corners
@@ -175,7 +175,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                             cursorValue={frame.cursorInfo.isInsideImage ? (frame.isPreview ? frame.previewCursorValue.value : frame.cursorValue.value) : undefined}
                             isValueCurrent={frame.isCursorValueCurrent}
                             spectralInfo={frame.spectralInfo}
-                            width={this.frame.isPreview ? this.frame.overlayIndividualStore.fullViewWidth : overlayStore.viewWidth}
+                            width={this.frame.overlayIndividualStore.viewWidth}
                             left={overlayStore.padding.left}
                             right={overlayStore.padding.right}
                             docked={this.props.docked}

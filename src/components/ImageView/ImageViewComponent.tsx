@@ -5,7 +5,7 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector} from "components/Shared";
-import {Point2D, Zoom} from "models";
+import {ImageType, Point2D, Zoom} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, Padding, WidgetProps} from "stores";
 import {toFixed} from "utilities";
 
@@ -23,7 +23,6 @@ export enum ImageViewLayer {
 export function getImageViewCanvas(padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
     const appStore = AppStore.Instance;
     const config = appStore.imageViewConfigStore;
-    const overlay = appStore.overlayStore;
 
     const imageViewCanvas = document.createElement("canvas") as HTMLCanvasElement;
     imageViewCanvas.width = appStore.fullViewWidth * appStore.pixelRatio;
@@ -32,11 +31,12 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, imageViewCanvas.width, imageViewCanvas.height);
     config.visibleImages.forEach((image, index) => {
+        const frame = image?.type === ImageType.COLOR_BLENDING ? image.store?.baseFrame : image?.store;
         const column = index % config.numImageColumns;
         const row = Math.floor(index / config.numImageColumns);
         const panelCanvas = getPanelCanvas(column, row, padding, colorbarPosition, backgroundColor);
         if (panelCanvas) {
-            ctx.drawImage(panelCanvas, overlay.viewWidth * column * appStore.pixelRatio, overlay.viewHeight * row * appStore.pixelRatio);
+            ctx.drawImage(panelCanvas, frame.overlayIndividualStore.viewWidth * column * appStore.pixelRatio, frame.overlayIndividualStore.viewHeight * row * appStore.pixelRatio);
         }
     });
 
