@@ -198,6 +198,7 @@ export class AppStore {
         this.frames.forEach(frame => {
             if (frame && !frame.isPreview) {
                 frame.overlayIndividualStore.setViewDimension(w, h);
+                frame.channelMapOuterOverlayIndividualStore.setViewDimension(w, h);
                 frame.channelMapInnerOverlayIndividualStore.setViewDimension(w, h);
             }
         });

@@ -1429,26 +1429,30 @@ export class PvPreviewOverlayIndividualStore extends ImageViewOverlayIndividualS
 export class ChannelMapOuterOverlayIndividualStore extends ImageViewOverlayIndividualStore {
     /** The width of the overlay canvas. */
     get viewWidth() {
-        return this.fullViewWidth;
+        // ToDo: remove additional base padding
+        return this.fullViewWidth - OverlayStore.Instance.base;
     }
 
     /** The height of the overlay canvas. */
     get viewHeight() {
-        return this.fullViewHeight;
+        // ToDo: remove additional base padding
+        return this.fullViewHeight - OverlayStore.Instance.base;
     }
 }
 
-/** The overlay configuration for each channel of a single image in channel map mode in the image view widget. */
+/** The overlay configuration for the bottom-left channel of an image in channel map mode in the image view widget. */
 export class ChannelMapInnerOverlayIndividualStore extends ImageViewOverlayIndividualStore {
     /** The width of the overlay canvas. */
     get viewWidth() {
-        // ToDo: incorrectly set to fullViewWidth
-        return this.fullViewWidth;
+        const overlayStore = AppStore.Instance.overlayStore;
+        const channelMapStore = AppStore.Instance.channelMapStore;
+        return Math.ceil((this.fullViewWidth - overlayStore.paddingLeft - overlayStore.paddingRight) / channelMapStore.numColumns) + overlayStore.paddingLeft;
     }
 
     /** The height of the overlay canvas. */
     get viewHeight() {
-        // ToDo: incorrectly set to fullViewHeight
-        return this.fullViewHeight;
+        const overlayStore = AppStore.Instance.overlayStore;
+        const channelMapStore = AppStore.Instance.channelMapStore;
+        return Math.ceil((this.fullViewHeight - overlayStore.paddingBottom - overlayStore.paddingTop) / channelMapStore.numRows) + overlayStore.paddingBottom;
     }
 }
