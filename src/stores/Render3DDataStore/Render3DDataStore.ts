@@ -31,14 +31,14 @@ export class Render3DDataStore {
     @action updateRender3DData = (render3DData: CARTA.Render3DData) => {
         if (render3DData.compressionType === CARTA.CompressionType.NONE) {
             const decompressedData = new Float32Array(render3DData.imageData.buffer.slice(render3DData.imageData.byteOffset, render3DData.imageData.byteOffset + render3DData.imageData.byteLength));
-            this.setDecompressed3DData(decompressedData, render3DData.slice);
+            this.setDecompressed3DData(decompressedData);
 
         } else if (render3DData.compressionType === CARTA.CompressionType.ZFP) {
             TileService.Instance.decompressRender3DData(render3DData);
         }
     }
 
-    @action setDecompressed3DData = (decompressedData: Float32Array, slice: number) => {
+    @action setDecompressed3DData = (decompressedData: Float32Array) => {
         // console.log("datacube length: ", this.datacube.length);
         // console.log("decompressedData length: ", decompressedData.length);
         // console.log("decompressedData sum: ", decompressedData.length * this.depth);
@@ -46,7 +46,7 @@ export class Render3DDataStore {
         // console.log("width: ", this.width);
         // console.log("height: ", this.height);
         // console.log("depth: ", this.depth);
-        this.datacube.set(decompressedData, this.width * this.height * slice);
+        this.datacube.set(decompressedData, this.width * this.height * this.lastSlice);
         console.log("lastSlice: ", this.lastSlice);
         this.lastSlice += 1;
     }
