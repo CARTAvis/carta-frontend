@@ -5,12 +5,13 @@ import * as _ from "lodash";
 import {observer} from "mobx-react";
 
 import {CursorInfo, ImageItem, ImageType, SPECTRAL_TYPE_STRING} from "models";
-import {AppStore, OverlayStore, PreferenceStore} from "stores";
+import {AppStore, OverlayIndividualStore, OverlayStore, PreferenceStore} from "stores";
 
 import "./OverlayComponent.scss";
 
 export class OverlayComponentProps {
     overlaySettings: OverlayStore;
+    overlayIndividualStore: OverlayIndividualStore;
     image: ImageItem;
     docked: boolean;
     top?: number;

@@ -168,7 +168,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                     {showRaster && <RasterViewComponent image={this.props.image} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} row={this.props.row} column={this.props.column} />}
                     {showContour && <ContourViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />}
                     {showVector && <VectorOverlayViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />}
-                    {appStore.overlayStore?.visible && <OverlayComponent image={this.props.image} overlaySettings={overlayStore} docked={this.props.docked} />}
+                    {appStore.overlayStore?.visible && <OverlayComponent image={this.props.image} overlaySettings={overlayStore} overlayIndividualStore={frame.overlayIndividualStore} docked={this.props.docked} />}
                     {this.cursorInfoRequired && this.frame.cursorInfo && !isColorBlending && (
                         <CursorOverlayComponent
                             cursorInfo={frame.cursorInfo}

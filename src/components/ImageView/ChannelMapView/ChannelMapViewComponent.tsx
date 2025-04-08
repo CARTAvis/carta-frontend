@@ -218,6 +218,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     store: frame
                 }}
                 overlaySettings={overlayStore}
+                overlayIndividualStore={frame.channelMapOuterOverlayIndividualStore}
                 top={overlayStore.base}
                 left={0}
                 docked={props.docked}
@@ -285,6 +286,7 @@ const ChannelMapInnerOverlayComponent = observer(
                         store: frame
                     }}
                     overlaySettings={overlayStore}
+                    overlayIndividualStore={frame.channelMapInnerOverlayIndividualStore}
                     top={overlayComponentTop}
                     left={left}
                     docked={docked}
