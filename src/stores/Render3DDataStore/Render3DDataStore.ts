@@ -39,6 +39,13 @@ export class Render3DDataStore {
     }
 
     @action setDecompressed3DData = (decompressedData: Float32Array, slice: number) => {
+        // console.log("datacube length: ", this.datacube.length);
+        // console.log("decompressedData length: ", decompressedData.length);
+        // console.log("decompressedData sum: ", decompressedData.length * this.depth);
+        // console.log("slice: ", slice);
+        // console.log("width: ", this.width);
+        // console.log("height: ", this.height);
+        // console.log("depth: ", this.depth);
         this.datacube.set(decompressedData, this.width * this.height * slice);
         console.log("lastSlice: ", this.lastSlice);
         this.lastSlice += 1;
