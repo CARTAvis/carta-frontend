@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Enhanced support for modifying the render configuration and the active channel/polarization in channel map mode ([[#2492
 ](https://github.com/CARTAvis/carta-frontend/issues/2492)]).
+### Changed
+* When a PV preview is active, the image view shows the page with the source image instead of the first page.
 
 ## [5.0.0-beta.1c]
 
