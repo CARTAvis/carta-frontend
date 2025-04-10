@@ -75,7 +75,7 @@ export class ChannelMapStore {
     @observable showVelocityStringLabel: boolean = false;
 
     private throttledRequestChannels = throttle((frame: FrameStore) => this.requestChannels(frame), 100);
-    private debouncedSetAciveChannel = debounce((channel: number) => AppStore.Instance.activeFrame?.setChannel(channel), 200);
+    private debouncedSetAciveChannel = debounce((channel: number) => this.displayedFrame?.setChannel(channel), 200);
 
     /**
      * Clears the cache and requests new tiles when the polarization changes.
@@ -211,7 +211,7 @@ export class ChannelMapStore {
         return null;
     }
 
-    /** The number of channels of the active image. Returns 1 if the information is unavailable. */
+    /** The number of channels of the displayed image. Returns 1 if the information is unavailable. */
     @computed private get totalChannelNum(): number {
         return this.displayedFrame?.frameInfo?.fileInfoExtended?.depth ?? 1;
     }
