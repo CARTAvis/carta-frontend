@@ -438,13 +438,11 @@ export class FrameStore {
     }
 
     @computed get renderWidth() {
-        const overlayStore = AppStore.Instance.overlayStore;
-        return this.isPreview ? overlayStore.previewRenderWidth(this.overlayIndividualStore.fullViewWidth) : overlayStore.renderWidth;
+        return AppStore.Instance.channelMapStore.channelMapEnabled && !this.isPreview ? this.channelMapInnerOverlayIndividualStore.renderWidth : this.overlayIndividualStore.renderWidth;
     }
 
     @computed get renderHeight() {
-        const overlayStore = AppStore.Instance.overlayStore;
-        return this.isPreview ? overlayStore.previewRenderHeight(this.overlayIndividualStore.fullViewHeight) : overlayStore.renderHeight;
+        return AppStore.Instance.channelMapStore.channelMapEnabled && !this.isPreview ? this.channelMapInnerOverlayIndividualStore.renderHeight : this.overlayIndividualStore.renderHeight;
     }
 
     @computed get isRenderable() {

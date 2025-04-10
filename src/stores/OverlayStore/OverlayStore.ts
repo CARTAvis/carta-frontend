@@ -1281,6 +1281,7 @@ export class OverlayStore {
         return Math.floor(this.fullViewHeight / AppStore.Instance.imageViewConfigStore.numImageRows);
     }
 
+    // ToDo: remove and use overlay store per frame instead
     @computed get renderWidth() {
         let renderWidth;
         if (AppStore.Instance.channelMapStore.channelMapEnabled) {
@@ -1291,6 +1292,7 @@ export class OverlayStore {
         return renderWidth > 1 ? renderWidth : 1; // return value > 1 to prevent crashing
     }
 
+    // ToDo: remove and use overlay store per frame instead
     @computed get renderHeight() {
         let renderHeight;
         if (AppStore.Instance.channelMapStore.channelMapEnabled) {
@@ -1345,30 +1347,6 @@ export class OverlayStore {
         };
     }
 
-    @computed get previewRenderWidth() {
-        const paddingLeft = this.paddingLeft;
-        const paddingRight = this.paddingRight;
-        return (viewWidth: number) => {
-            if (!viewWidth) {
-                return undefined;
-            }
-            const renderWidth = viewWidth - paddingLeft - paddingRight;
-            return renderWidth > 1 ? renderWidth : 1; // return value > 1 to prevent crashing
-        };
-    }
-
-    @computed get previewRenderHeight() {
-        const paddingTop = this.paddingTop;
-        const paddingBottom = this.paddingBottom;
-        return (viewHeight: number) => {
-            if (!viewHeight) {
-                return undefined;
-            }
-            const renderHeight = viewHeight - paddingTop - paddingBottom;
-            return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
-        };
-    }
-
     @computed get isWcsCoordinates() {
         return this.global.explicitSystem !== SystemType.Image;
     }
@@ -1380,7 +1358,7 @@ export class OverlayStore {
 
 export type OverlayIndividualStore = ImageViewOverlayIndividualStore | PvPreviewOverlayIndividualStore;
 
-/** The overlay configuration for a single image in the image view widget. */
+/** The overlay configuration for a frame in the image view widget. */
 export class ImageViewOverlayIndividualStore {
     /** The width of the entire widget on which the overlay is displayed. */
     @observable fullViewWidth = AppStore.Instance.fullViewWidth;
@@ -1410,6 +1388,18 @@ export class ImageViewOverlayIndividualStore {
     @computed get viewHeight() {
         return Math.floor(this.fullViewHeight / AppStore.Instance.imageViewConfigStore.numImageRows);
     }
+
+    /** The width of the raster tile canvas (the area inside the border). */
+    @computed get renderWidth() {
+        // return value > 1 to prevent crashing
+        return Math.max(this.viewWidth - OverlayStore.Instance.paddingLeft - OverlayStore.Instance.paddingRight, 1);
+    }
+
+    /** The height of the raster tile canvas (the area inside the border). */
+    @computed get renderHeight() {
+        // return value > 1 to prevent crashing
+        return Math.max(this.viewHeight - OverlayStore.Instance.paddingTop - OverlayStore.Instance.paddingBottom, 1);
+    }
 }
 
 /** The overlay configuration for a PV preview widget. */
@@ -1425,7 +1415,7 @@ export class PvPreviewOverlayIndividualStore extends ImageViewOverlayIndividualS
     }
 }
 
-/** The overlay configuration for the outer part of a single image in channel map mode in the image view widget. */
+/** The overlay configuration for the outer part of a frame in channel map mode in the image view widget. */
 export class ChannelMapOuterOverlayIndividualStore extends ImageViewOverlayIndividualStore {
     /** The width of the overlay canvas. */
     get viewWidth() {
@@ -1440,7 +1430,7 @@ export class ChannelMapOuterOverlayIndividualStore extends ImageViewOverlayIndiv
     }
 }
 
-/** The overlay configuration for the bottom-left channel of an image in channel map mode in the image view widget. */
+/** The overlay configuration for the bottom-left channel of a frame in channel map mode in the image view widget. */
 export class ChannelMapInnerOverlayIndividualStore extends ImageViewOverlayIndividualStore {
     /** The width of the overlay canvas. */
     get viewWidth() {
@@ -1454,5 +1444,19 @@ export class ChannelMapInnerOverlayIndividualStore extends ImageViewOverlayIndiv
         const overlayStore = AppStore.Instance.overlayStore;
         const channelMapStore = AppStore.Instance.channelMapStore;
         return Math.ceil((this.fullViewHeight - overlayStore.paddingBottom - overlayStore.paddingTop) / channelMapStore.numRows) + overlayStore.paddingBottom;
+    }
+
+    /** The width of the raster tile canvas (the area inside the border). */
+    get renderWidth() {
+        const overlayStore = AppStore.Instance.overlayStore;
+        // return value > 1 to prevent crashing
+        return Math.max((this.fullViewWidth - overlayStore.paddingLeft - overlayStore.paddingRight) / AppStore.Instance.channelMapStore.numColumns - overlayStore.base, 1);
+    }
+
+    /** The height of the raster tile canvas (the area inside the border). */
+    get renderHeight() {
+        const overlayStore = AppStore.Instance.overlayStore;
+        // return value > 1 to prevent crashing
+        return Math.max((this.fullViewHeight - overlayStore.paddingTop - overlayStore.paddingBottom) / AppStore.Instance.channelMapStore.numRows - overlayStore.base, 1);
     }
 }
