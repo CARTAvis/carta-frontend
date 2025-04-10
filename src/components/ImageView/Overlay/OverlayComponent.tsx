@@ -150,7 +150,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             }
 
             if (!settings.title.customText) {
-                currentStyleString += `, Title=${this.props.image?.store?.filename}`;
+                currentStyleString += `, Title=${this.props.image?.store?.filename.replaceAll(",", "_")}`;
             } else if (this.props.image?.store?.titleCustomText?.length) {
                 currentStyleString += `, Title=${this.props.image?.store?.titleCustomText}`;
             } else {

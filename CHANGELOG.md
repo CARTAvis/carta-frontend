@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Fixed inconsistent label offsets of ruler annotations ([#2472](https://github.com/CARTAvis/carta-frontend/issues/2472)).
 * Fixed the misplaced spectral line labels in the PNG export with the Retina display ([[#2423](https://github.com/CARTAvis/carta-frontend/issues/2423)]).
+* Fixed no wcs grid if filename contains comma characters ([#2386](https://github.com/CARTAvis/carta-frontend/issues/2386)).
 ### Added
 * Enhanced support for modifying the render configuration and the active channel/polarization in channel map mode ([[#2492
 ](https://github.com/CARTAvis/carta-frontend/issues/2492)]).
