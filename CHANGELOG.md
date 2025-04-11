@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Fixed
 * Fixed inconsistent label offsets of ruler annotations ([#2472](https://github.com/CARTAvis/carta-frontend/issues/2472)).
+* Fixed no WCS overaly after opening a file with a non-standard header ([#2395](https://github.com/CARTAvis/carta-frontend/issues/2395)).
 
 ## [5.0.0-beta.1c]
 
