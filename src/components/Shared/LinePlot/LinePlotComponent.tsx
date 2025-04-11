@@ -1061,9 +1061,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 spectralLines.push({
                     color: marker?.color,
                     text: marker?.label,
-                    x: canvasX,
-                    yBottom: chartArea.bottom,
-                    yTop: chartArea.top
+                    x: canvasX * devicePixelRatio,
+                    yBottom: chartArea.bottom * devicePixelRatio,
+                    yTop: chartArea.top * devicePixelRatio
                 });
             }
         });
