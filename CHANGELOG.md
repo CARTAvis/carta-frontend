@@ -10,8 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed the misplaced spectral line labels in the PNG export with the Retina display ([#2423](https://github.com/CARTAvis/carta-frontend/issues/2423)).
 * Fixed no WCS overaly after opening a file with a non-standard header ([#2395](https://github.com/CARTAvis/carta-frontend/issues/2395)).
 ### Added
-* Enhanced support for modifying the render configuration and the active channel/polarization in channel map mode ([#2492
-](https://github.com/CARTAvis/carta-frontend/issues/2492)).
+* Enhanced support for modifying the render configuration and the active channel/polarization in channel map mode ([#2492](https://github.com/CARTAvis/carta-frontend/issues/2492)).
 
 ## [5.0.0-beta.1c]
 
