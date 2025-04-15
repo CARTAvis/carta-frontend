@@ -1524,7 +1524,7 @@ export class AppStore {
     }
 
     @flow.bound
-    *requestRender3D(message: CARTA.IRender3DRequest, frame: FrameStore, keepExisting: boolean, id: string) {
+    *requestRender3D(message: CARTA.IRender3DRequest, frame: FrameStore, id: string) {
         if (!message || !frame) {
             return;
         }
@@ -1536,7 +1536,7 @@ export class AppStore {
 
                 // see if the floating render3D widget is already created. change frame for render3DViewer
                 if (!render3DWidgetStore.render3DViewer) {
-                    render3DWidgetStore.setRender3DViewer(id)
+                    // render3DWidgetStore.setRender3DViewer(id) NOT NEEDED, remove dependent functions
                     WidgetsStore.Instance.createFloatingSettingsWidget("3D Rendering Viewer", id, Render3DComponent.WIDGET_CONFIG.type);
                 }
             } else {
@@ -2293,14 +2293,14 @@ export class AppStore {
                 // console.log("creating new render3DStore");
                 render3DStore = new Render3DDataStore(render3DData.fileId, render3DData.regionId, render3DData.width, render3DData.height, render3DData.depth);
                 frameMap.set(render3DData.regionId, render3DStore);
-            } else {
-                // console.log("updating existing render3DStore");
-                if (render3DData.width === render3DStore.width && render3DData.height === render3DStore.height && render3DData.depth === render3DStore.depth) {
-                    //update existing
-                } else {
-                    // create new
-                }
-            }
+            } // else {
+            //     // console.log("updating existing render3DStore");
+            //     if (render3DData.width === render3DStore.width && render3DData.height === render3DStore.height && render3DData.depth === render3DStore.depth) {
+            //         //update existing
+            //     } else {
+            //         // create new
+            //     }
+            // }
 
             // const width = frame.frameInfo.fileInfoExtended.width;
             // const height = frame.frameInfo.fileInfoExtended.height;

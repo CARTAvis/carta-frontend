@@ -139,7 +139,7 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         this.texture.unpackAlignment = 1;
         this.texture.needsUpdate = true;
 
-        console.log("texture: ", this.texture);
+        // console.log("texture: ", this.texture);
     }
 
     VolumeRenderer: React.FC = observer(() => {
@@ -186,16 +186,16 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
             if (material) {
                 material.uniforms.uTexture.value = this.texture;
                 material.uniforms.uTexture.value.needsUpdate = true;
-                material.uniforms.frame ++
+                material.uniforms.uFrame ++
             } else {
                 const newMaterial = new THREE.ShaderMaterial({
                     uniforms: {
                         uTexture: { value: this.texture },
-                        threshold: { value: 0.25 },
-                        range: { value: 0.1 },
-                        opacity: { value: 20.0 },
-                        steps: { value: 100 },
-                        frame: { value: 0 }
+                        // threshold: { value: 0.25 },
+                        // range: { value: 0.1 },
+                        uOpacity: { value: 20.0 },
+                        uSteps: { value: 100 },
+                        uFrame: { value: 0 }
                         // uColourMap: { value: colormap }
                     },
                     vertexShader: volumeShaders.vertexShader,

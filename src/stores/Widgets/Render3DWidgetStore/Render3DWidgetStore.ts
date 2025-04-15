@@ -40,6 +40,7 @@ export class Render3DWidgetStore extends RegionWidgetStore {
     // render3d
     @observable render3DFrame: FrameStore | null;
     @observable render3DViewer: string | null;
+    @observable render3DViewerId: number = 0;
     // @observable render3DViewerFileId: number | null;
     // @observable render3DViewerRegionId: number | null;
 
@@ -136,11 +137,14 @@ export class Render3DWidgetStore extends RegionWidgetStore {
             }
             channelIndexMin = channelIndexMax - 1;
         }
+
+        console.log("render3dgeneratorID: ", render3DGeneratorId);
+        console.log("viewerID: ", parseInt(render3DGeneratorId.split("-")[2]));
         if (frame) {
             const requestMessage: CARTA.IRender3DRequest = {
                 fileId: frame.frameInfo.fileId,
                 regionId: this.effectiveRegionId,
-                viewerId: parseInt(render3DGeneratorId.split("-")[2]),
+                viewerId: this.render3DViewerId,
                 spectralRange: isFinite(channelIndexMin) && isFinite(channelIndexMax) ? {min: channelIndexMin, max: channelIndexMax} : null,
                 rebinXy: this.xyRebin,
                 rebinZ: this.zRebin,
@@ -148,8 +152,9 @@ export class Render3DWidgetStore extends RegionWidgetStore {
                 compressionType: CARTA.CompressionType.ZFP,
                 keep: this.keep
             }
+            this.render3DViewerId ++;
             if (render3DGeneratorId) {
-                AppStore.Instance.requestRender3D(requestMessage, frame, this.keep,render3DGeneratorId);
+                AppStore.Instance.requestRender3D(requestMessage, frame, render3DGeneratorId);
             }
         }
     };
