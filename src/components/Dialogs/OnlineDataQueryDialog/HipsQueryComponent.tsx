@@ -1,5 +1,5 @@
 import {useState} from "react";
-import {AnchorButton, Classes, FormGroup, HTMLSelect, InputGroup, Intent, MenuItem, Overlay2, Radio, RadioGroup, Spinner} from "@blueprintjs/core";
+import {AnchorButton, Classes, FormGroup, HTMLSelect, InputGroup, Intent, MenuItem, Overlay2, Radio, RadioGroup, Spinner, Tooltip} from "@blueprintjs/core";
 import {ItemPredicate, ItemRenderer, Suggest} from "@blueprintjs/select";
 import classNames from "classnames";
 import {observer} from "mobx-react";
@@ -79,27 +79,60 @@ export const HipsQueryComponent = observer(() => {
                         </FormGroup>
                     )}
                     <FormGroup inline={true} label="Dimension" labelInfo="(px)" disabled={hipsQueryStore.isLoading}>
-                        <SafeNumericInput
-                            placeholder="Width"
-                            min={1}
-                            majorStepSize={100}
-                            stepSize={100}
-                            value={isNaN(hipsQueryStore.size.x) ? "" : hipsQueryStore.size.x}
-                            onValueChange={hipsQueryStore.setWidth}
-                            disabled={hipsQueryStore.isLoading}
-                        />
-                        <SafeNumericInput
-                            placeholder="Height"
-                            min={1}
-                            majorStepSize={100}
-                            stepSize={100}
-                            value={isNaN(hipsQueryStore.size.y) ? "" : hipsQueryStore.size.y}
-                            onValueChange={hipsQueryStore.setHeight}
-                            disabled={hipsQueryStore.isLoading}
-                        />
+                        <Tooltip
+                            position="auto-end"
+                            content={
+                                <small>
+                                    {">="} 5 pixels and (width x height) {"<="} 50 million pixels
+                                </small>
+                            }
+                        >
+                            <SafeNumericInput
+                                placeholder="Width"
+                                min={5}
+                                majorStepSize={100}
+                                stepSize={100}
+                                value={isNaN(hipsQueryStore.size.x) ? "" : hipsQueryStore.size.x}
+                                onValueChange={hipsQueryStore.setWidth}
+                                disabled={hipsQueryStore.isLoading}
+                            />
+                        </Tooltip>
+                        <Tooltip
+                            position="auto-end"
+                            content={
+                                <small>
+                                    {">="} 5 pixels and (width x height) {"<="} 50 million pixels
+                                </small>
+                            }
+                        >
+                            <SafeNumericInput
+                                placeholder="Height"
+                                min={5}
+                                majorStepSize={100}
+                                stepSize={100}
+                                value={isNaN(hipsQueryStore.size.y) ? "" : hipsQueryStore.size.y}
+                                onValueChange={hipsQueryStore.setHeight}
+                                disabled={hipsQueryStore.isLoading}
+                            />
+                        </Tooltip>
                     </FormGroup>
                     <FormGroup inline={true} label="Field of view" labelInfo="(deg)" disabled={hipsQueryStore.isLoading}>
-                        <SafeNumericInput buttonPosition="none" value={isNaN(hipsQueryStore.fov) ? "" : hipsQueryStore.fov} onValueChange={hipsQueryStore.setFov} disabled={hipsQueryStore.isLoading} />
+                        <Tooltip position="auto-end" content={<small>0 to 360 degree</small>}>
+                            <SafeNumericInput buttonPosition="none" value={isNaN(hipsQueryStore.fov) ? "" : hipsQueryStore.fov} onValueChange={hipsQueryStore.setFov} disabled={hipsQueryStore.isLoading} />
+                        </Tooltip>
+                    </FormGroup>
+                    <FormGroup className="pixel-size" inline={true} label="Pixel size" labelInfo="(deg)" disabled={hipsQueryStore.isLoading}>
+                        <Tooltip position="auto-end" content={<small>For estimating dimensions (Not neccesary field)</small>}>
+                            <SafeNumericInput buttonPosition="none" value={isNaN(hipsQueryStore.pixelSize) ? "" : hipsQueryStore.pixelSize} onValueChange={hipsQueryStore.setPixelSize} disabled={hipsQueryStore.isLoading} />
+                        </Tooltip>
+                        <Tooltip position="right" content={<small>Estimate pixel number (Require FOV)</small>}>
+                            <AnchorButton
+                                icon="locate"
+                                disabled={hipsQueryStore.isLoading || isNaN(hipsQueryStore.fov) || isNaN(hipsQueryStore.pixelSize)}
+                                onClick={() => hipsQueryStore.estimatePixelNumber()}
+                                data-testid="hips-query-estimate-pixels-button"
+                            />
+                        </Tooltip>
                     </FormGroup>
                     <FormGroup inline={true} label="Output system" disabled={hipsQueryStore.isLoading}>
                         <RadioGroup inline={true} onChange={ev => hipsQueryStore.setCoordsys(ev.currentTarget.value as HipsCoord)} selectedValue={hipsQueryStore.coordsys} disabled={hipsQueryStore.isLoading}>
@@ -116,7 +149,9 @@ export const HipsQueryComponent = observer(() => {
                         />
                     </FormGroup>
                     <FormGroup inline={true} label="Rotation angle" labelInfo="(deg)" disabled={hipsQueryStore.isLoading}>
-                        <SafeNumericInput buttonPosition="none" value={hipsQueryStore.rotationAngle} onValueChange={hipsQueryStore.setRotationAngle} disabled={hipsQueryStore.isLoading} />
+                        <Tooltip position="auto-end" content={<small>0 to 360 degree</small>}>
+                            <SafeNumericInput buttonPosition="none" value={hipsQueryStore.rotationAngle} onValueChange={hipsQueryStore.setRotationAngle} disabled={hipsQueryStore.isLoading} />
+                        </Tooltip>
                     </FormGroup>
                 </ScrollShadow>
             </div>

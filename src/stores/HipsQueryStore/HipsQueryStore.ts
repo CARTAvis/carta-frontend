@@ -75,6 +75,8 @@ export class HipsQueryStore {
     @observable rotationAngle = 0;
     /** Whether the query is in progress. */
     @observable isLoading = false;
+    /** To estimate pixel number */
+    @observable pixelSize = NaN;
 
     /** Whether the current state is valid for a HiPS data query. */
     @computed get isValid(): boolean {
@@ -175,10 +177,12 @@ export class HipsQueryStore {
 
     /**
      * Sets the field of view of the output image.
-     * @param fov - The field of view to set.
+     * @param fov - The field of view to set (degree).
      */
     @action setFov = (fov: number) => {
-        this.fov = fov;
+        if (fov >= 0 && fov <= 360) {
+            this.fov = fov;
+        }
     };
 
     /**
@@ -199,10 +203,35 @@ export class HipsQueryStore {
 
     /**
      * Sets the rotation angle of the output image.
-     * @param rotationAngle - The rotation angle to set.
+     * @param rotationAngle - The rotation angle to set (degree).
      */
     @action setRotationAngle = (rotationAngle: number) => {
-        this.rotationAngle = rotationAngle;
+        if (rotationAngle >= 0 && rotationAngle <= 360) {
+            this.rotationAngle = rotationAngle;
+        }
+    };
+
+    /**
+     * Sets the pixel angular size.
+     * @param pixelSize - The pixel angular size to set (degree).
+     */
+    @action setPixelSize = (pixelSize: number) => {
+        if (pixelSize >= 0 && pixelSize <= 10) {
+            this.pixelSize = pixelSize;
+        }
+    };
+
+    /**
+     * Estimates the pixel number based on the field of view and pixel size.
+     */
+    @action estimatePixelNumber = () => {
+        if (this.pixelSize > 0 && this.pixelSize <= 10) {
+            const pixelNumber = Math.ceil(this.fov / this.pixelSize);
+            if (pixelNumber >= 5 && pixelNumber ** 2 <= 50000000) {
+                this.size.x = pixelNumber;
+                this.size.y = pixelNumber;
+            }
+        }
     };
 
     /**

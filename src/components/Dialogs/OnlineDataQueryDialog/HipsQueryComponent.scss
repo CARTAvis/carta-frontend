@@ -31,6 +31,16 @@
                 max-width: 401px;
             }
         }
+
+        .#{$ns}-form-group.#{$ns}-inline.pixel-size {
+            .#{$ns}-form-content {
+                display: block;
+
+                .#{$ns}-popover-target {
+                    margin-right: 2px;
+                }
+            }
+        }
     }
 
     .query-footer {
