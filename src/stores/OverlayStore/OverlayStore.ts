@@ -1383,18 +1383,6 @@ export class PvPreviewOverlayIndividualStore extends ImageViewOverlayIndividualS
 
 /** The overlay configuration for the outer part of a frame in channel map mode in the image view widget. */
 export class ChannelMapOuterOverlayIndividualStore extends ImageViewOverlayIndividualStore {
-    /** The width of the overlay canvas. */
-    get viewWidth() {
-        // ToDo: remove additional base padding
-        return this.fullViewWidth - OverlayStore.Instance.base;
-    }
-
-    /** The height of the overlay canvas. */
-    get viewHeight() {
-        // ToDo: remove additional base padding
-        return this.fullViewHeight - OverlayStore.Instance.base;
-    }
-
     styleString(frame?: FrameStore) {
         const astString = this.defaultStyleString(frame);
         astString.add("Grid", false);

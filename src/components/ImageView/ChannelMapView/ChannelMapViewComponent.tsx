@@ -146,7 +146,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     });
 
     return frame ? (
-        <div id={`image-panel`} key={"channel-map"} onMouseOver={onMouseEnter} onMouseLeave={onMouseLeave}>
+        <div className="image-panel-div" key={"channel-map"} onMouseOver={onMouseEnter} onMouseLeave={onMouseLeave}>
             <div
                 style={{
                     width: renderWidth - overlayStore.paddingRight,
@@ -219,8 +219,6 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                 }}
                 overlaySettings={overlayStore}
                 overlayIndividualStore={frame.channelMapOuterOverlayIndividualStore}
-                top={overlayStore.base}
-                left={0}
                 docked={props.docked}
                 type={"channel-map-outer"}
                 unScaled={true}
