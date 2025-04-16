@@ -3,7 +3,7 @@ import {Button, Classes, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, M
 import {ItemRenderer, Select} from "@blueprintjs/select";
 import * as AST from "ast_wrapper";
 import classNames from "classnames";
-import {action, autorun, makeObservable, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, InputType, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
@@ -68,10 +68,12 @@ export const renderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, qu
     return <MenuItem active={modifiers.active} disabled={modifiers.disabled} key={font.id} onClick={handleClick} text={<span style={{fontFamily: font.family, fontWeight: font.weight, fontStyle: font.style}}>{font.name}</span>} />;
 };
 
+const KEYCODE_ENTER = 13;
 @observer
 export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps> {
     @observable selectedTab: TabId = ImageViewSettingsPanelTabs.PAN_AND_ZOOM;
     @observable panAndZoomCoord: CoordinateMode = CoordinateMode.World;
+    @observable private customTitle: string = "";
 
     @action private setSelectedTab = (tab: TabId) => {
         this.selectedTab = tab;
@@ -79,6 +81,20 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
 
     @action private setPanAndZoomCoord = (coord: CoordinateMode) => {
         this.panAndZoomCoord = coord;
+    };
+
+    @computed get validTitle(): boolean {
+        return this.customTitle === "" || this.customTitle.match(/^[^,]+$/)?.length > 0;
+    }
+
+    @action private handleInput = (ev: React.FormEvent<HTMLInputElement>) => {
+        this.customTitle = ev.currentTarget.value;
+    };
+
+    private handleKeyDown = ev => {
+        if (ev.keyCode === KEYCODE_ENTER && this.validTitle) {
+            AppStore.Instance.activeImage?.store?.setTitleCustomText(this.customTitle);
+        }
     };
 
     constructor(props: any) {
@@ -313,7 +329,9 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 </FormGroup>
                 <Collapse isOpen={title.customText}>
                     <FormGroup inline={true} label="Text" labelInfo="(Current image only)" disabled={!title.visible}>
-                        <InputGroup disabled={!title.visible} value={appStore.activeImage?.store?.titleCustomText} placeholder="Enter title text" onChange={ev => appStore.activeImage?.store?.setTitleCustomText(ev.currentTarget.value)} />
+                        <Tooltip isOpen={!this.validTitle} position={Position.BOTTOM_LEFT} content={"Title should not contain a comma (,)"}>
+                            <InputGroup disabled={!title.visible} value={this.customTitle} placeholder="Enter title text" onChange={this.handleInput} onKeyDown={this.handleKeyDown} />
+                        </Tooltip>
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Custom color" disabled={!title.visible}>
