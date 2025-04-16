@@ -369,7 +369,7 @@ const ChannelMapInnerOverlayComponent = observer(
             channelMapStore.masterFrame?.wcsInfoShifted,
             channelMapStore.masterFrame?.titleCustomText,
             channelMapStore.masterFrame?.filename,
-            overlayStore.styleString,
+            channelMapStore.masterFrame?.channelMapInnerOverlayIndividualStore.styleString,
             overlayStore.padding,
             channelMapStore.masterFrame?.moving,
             overlayStore.global.system,

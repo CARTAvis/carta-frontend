@@ -1151,65 +1151,6 @@ export class OverlayStore {
         return this.labels.hidden && this.numbers.hidden && this.title.hidden;
     }
 
-    public styleString(frame?: FrameStore) {
-        let astString = new ASTSettingsString();
-        astString.addSection(this.global.styleString(frame));
-        astString.addSection(this.title.styleString);
-        astString.addSection(this.grid.styleString);
-        astString.addSection(this.border.styleString);
-        astString.addSection(this.ticks.styleString);
-        astString.addSection(this.axes.styleString);
-        astString.addSection(this.numbers.styleString);
-        astString.addSection(this.labels.styleString);
-
-        astString.add("LabelUp", 0);
-        astString.add("TitleGap", this.titleGap / this.minSize(frame));
-        astString.add("NumLabGap", this.defaultGap / this.minSize(frame));
-        astString.add("TextLabGap", this.cumulativeLabelGap / this.minSize(frame));
-        astString.add("TextGapType", "plot");
-
-        return astString.toString();
-    }
-
-    public channelMapInnerStyleString(frame?: FrameStore) {
-        let astString = new ASTSettingsString();
-        astString.addSection(this.global.styleString(frame));
-        astString.addSection(this.grid.styleString);
-        astString.addSection(this.border.styleString);
-        astString.addSection(this.ticks.styleString);
-        astString.addSection(this.axes.styleString);
-        astString.addSection(this.numbers.styleString);
-        astString.add("DrawTitle", false);
-        astString.add("TextLab", false);
-        astString.add("LabelUp", 0);
-        astString.add("TitleGap", 0);
-        astString.add("NumLabGap", this.defaultGap / this.minSize(frame));
-        astString.add("TextLabGap", 0);
-        astString.add("TextGapType", "plot");
-        return astString.toString();
-    }
-
-    public channelMapOuterStyleString(frame?: FrameStore) {
-        let astString = new ASTSettingsString();
-        astString.addSection(this.global.styleString(frame));
-        astString.addSection(this.title.styleString);
-        astString.addSection(this.labels.styleString);
-        astString.add("Grid", false);
-        astString.add("Border", false);
-        astString.add("MajTickLen(1)", 0);
-        astString.add("MinTickLen(1)", 0);
-        astString.add("MajTickLen(2)", 0);
-        astString.add("MinTickLen(2)", 0);
-        astString.add("DrawAxes", false);
-        astString.add("NumLab", false);
-        astString.add("LabelUp", 0);
-        astString.add("TitleGap", this.titleGap / Math.min(this.fullViewWidth - this.paddingLeft - this.paddingRight, this.fullViewHeight - this.paddingTop - this.paddingBottom));
-        astString.add("NumLabGap", 0);
-        astString.add("TextLabGap", this.cumulativeLabelGap / Math.min(this.fullViewWidth - this.paddingLeft - this.paddingRight, this.fullViewHeight - this.paddingTop - this.paddingBottom));
-        astString.add("TextGapType", "plot");
-        return astString.toString();
-    }
-
     @action minSize(frame: FrameStore) {
         return Math.min(frame.renderWidth, frame.renderHeight);
     }
@@ -1400,6 +1341,26 @@ export class ImageViewOverlayIndividualStore {
         // return value > 1 to prevent crashing
         return Math.max(this.viewHeight - OverlayStore.Instance.paddingTop - OverlayStore.Instance.paddingBottom, 1);
     }
+
+    styleString(frame?: FrameStore) {
+        let astString = new ASTSettingsString();
+        astString.addSection(OverlayStore.Instance.global.styleString(frame));
+        astString.addSection(OverlayStore.Instance.title.styleString);
+        astString.addSection(OverlayStore.Instance.grid.styleString);
+        astString.addSection(OverlayStore.Instance.border.styleString);
+        astString.addSection(OverlayStore.Instance.ticks.styleString);
+        astString.addSection(OverlayStore.Instance.axes.styleString);
+        astString.addSection(OverlayStore.Instance.numbers.styleString);
+        astString.addSection(OverlayStore.Instance.labels.styleString);
+
+        astString.add("LabelUp", 0);
+        astString.add("TitleGap", OverlayStore.Instance.titleGap / OverlayStore.Instance.minSize(frame));
+        astString.add("NumLabGap", OverlayStore.Instance.defaultGap / OverlayStore.Instance.minSize(frame));
+        astString.add("TextLabGap", OverlayStore.Instance.cumulativeLabelGap / OverlayStore.Instance.minSize(frame));
+        astString.add("TextGapType", "plot");
+
+        return astString.toString();
+    }
 }
 
 /** The overlay configuration for a PV preview widget. */
@@ -1427,6 +1388,34 @@ export class ChannelMapOuterOverlayIndividualStore extends ImageViewOverlayIndiv
     get viewHeight() {
         // ToDo: remove additional base padding
         return this.fullViewHeight - OverlayStore.Instance.base;
+    }
+
+    styleString(frame?: FrameStore) {
+        let astString = new ASTSettingsString();
+        astString.addSection(OverlayStore.Instance.global.styleString(frame));
+        astString.addSection(OverlayStore.Instance.title.styleString);
+        astString.addSection(OverlayStore.Instance.labels.styleString);
+        astString.add("Grid", false);
+        astString.add("Border", false);
+        astString.add("MajTickLen(1)", 0);
+        astString.add("MinTickLen(1)", 0);
+        astString.add("MajTickLen(2)", 0);
+        astString.add("MinTickLen(2)", 0);
+        astString.add("DrawAxes", false);
+        astString.add("NumLab", false);
+        astString.add("LabelUp", 0);
+        astString.add(
+            "TitleGap",
+            OverlayStore.Instance.titleGap / Math.min(this.fullViewWidth - OverlayStore.Instance.paddingLeft - OverlayStore.Instance.paddingRight, this.fullViewHeight - OverlayStore.Instance.paddingTop - OverlayStore.Instance.paddingBottom)
+        );
+        astString.add("NumLabGap", 0);
+        astString.add(
+            "TextLabGap",
+            OverlayStore.Instance.cumulativeLabelGap /
+                Math.min(this.fullViewWidth - OverlayStore.Instance.paddingLeft - OverlayStore.Instance.paddingRight, this.fullViewHeight - OverlayStore.Instance.paddingTop - OverlayStore.Instance.paddingBottom)
+        );
+        astString.add("TextGapType", "plot");
+        return astString.toString();
     }
 }
 
@@ -1458,5 +1447,23 @@ export class ChannelMapInnerOverlayIndividualStore extends ImageViewOverlayIndiv
         const overlayStore = AppStore.Instance.overlayStore;
         // return value > 1 to prevent crashing
         return Math.max((this.fullViewHeight - overlayStore.paddingTop - overlayStore.paddingBottom) / AppStore.Instance.channelMapStore.numRows - overlayStore.base, 1);
+    }
+
+    styleString(frame?: FrameStore) {
+        let astString = new ASTSettingsString();
+        astString.addSection(OverlayStore.Instance.global.styleString(frame));
+        astString.addSection(OverlayStore.Instance.grid.styleString);
+        astString.addSection(OverlayStore.Instance.border.styleString);
+        astString.addSection(OverlayStore.Instance.ticks.styleString);
+        astString.addSection(OverlayStore.Instance.axes.styleString);
+        astString.addSection(OverlayStore.Instance.numbers.styleString);
+        astString.add("DrawTitle", false);
+        astString.add("TextLab", false);
+        astString.add("LabelUp", 0);
+        astString.add("TitleGap", 0);
+        astString.add("NumLabGap", OverlayStore.Instance.defaultGap / OverlayStore.Instance.minSize(frame));
+        astString.add("TextLabGap", 0);
+        astString.add("TextGapType", "plot");
+        return astString.toString();
     }
 }

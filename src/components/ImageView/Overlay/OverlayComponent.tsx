@@ -126,15 +126,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 );
             };
 
-            let currentStyleString;
-
-            if (this.props.type === "channel-map-inner") {
-                currentStyleString = settings.channelMapInnerStyleString(frame);
-            } else if (this.props.type === "channel-map-outer") {
-                currentStyleString = settings.channelMapOuterStyleString(frame);
-            } else {
-                currentStyleString = settings.styleString(frame);
-            }
+            let currentStyleString = this.props.overlayIndividualStore.styleString(frame);
 
             // Override the AST tolerance during motion
             if (frame.moving) {
@@ -186,7 +178,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const h = this.props.overlayIndividualStore.viewHeight;
         // Dummy variables for triggering re-render
         /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
-        const styleString = this.props.overlaySettings.styleString;
+        const styleString = this.props.overlayIndividualStore.styleString;
         const frameView = refFrame.requiredFrameView;
         const framePadding = this.props.overlaySettings.padding;
         const moving = frame.moving;
