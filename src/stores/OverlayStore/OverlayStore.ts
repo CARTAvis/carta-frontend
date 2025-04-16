@@ -1343,7 +1343,7 @@ export class ImageViewOverlayIndividualStore {
         return Math.min(this.renderWidth, this.renderHeight);
     }
 
-    styleString(frame?: FrameStore) {
+    defaultStyleString(frame?: FrameStore): ASTSettingsString {
         let astString = new ASTSettingsString();
         astString.addSection(OverlayStore.Instance.global.styleString(frame));
         astString.addSection(OverlayStore.Instance.title.styleString);
@@ -1360,7 +1360,11 @@ export class ImageViewOverlayIndividualStore {
         astString.add("TextLabGap", OverlayStore.Instance.cumulativeLabelGap / this.minSize);
         astString.add("TextGapType", "plot");
 
-        return astString.toString();
+        return astString;
+    }
+
+    styleString(frame?: FrameStore) {
+        return this.defaultStyleString(frame).toString();
     }
 }
 
@@ -1392,10 +1396,7 @@ export class ChannelMapOuterOverlayIndividualStore extends ImageViewOverlayIndiv
     }
 
     styleString(frame?: FrameStore) {
-        let astString = new ASTSettingsString();
-        astString.addSection(OverlayStore.Instance.global.styleString(frame));
-        astString.addSection(OverlayStore.Instance.title.styleString);
-        astString.addSection(OverlayStore.Instance.labels.styleString);
+        const astString = this.defaultStyleString(frame);
         astString.add("Grid", false);
         astString.add("Border", false);
         astString.add("MajTickLen(1)", 0);
@@ -1404,11 +1405,6 @@ export class ChannelMapOuterOverlayIndividualStore extends ImageViewOverlayIndiv
         astString.add("MinTickLen(2)", 0);
         astString.add("DrawAxes", false);
         astString.add("NumLab", false);
-        astString.add("LabelUp", 0);
-        astString.add("TitleGap", OverlayStore.Instance.titleGap / this.minSize);
-        astString.add("NumLabGap", 0);
-        astString.add("TextLabGap", OverlayStore.Instance.cumulativeLabelGap / this.minSize);
-        astString.add("TextGapType", "plot");
         return astString.toString();
     }
 }
@@ -1444,20 +1440,9 @@ export class ChannelMapInnerOverlayIndividualStore extends ImageViewOverlayIndiv
     }
 
     styleString(frame?: FrameStore) {
-        let astString = new ASTSettingsString();
-        astString.addSection(OverlayStore.Instance.global.styleString(frame));
-        astString.addSection(OverlayStore.Instance.grid.styleString);
-        astString.addSection(OverlayStore.Instance.border.styleString);
-        astString.addSection(OverlayStore.Instance.ticks.styleString);
-        astString.addSection(OverlayStore.Instance.axes.styleString);
-        astString.addSection(OverlayStore.Instance.numbers.styleString);
+        const astString = this.defaultStyleString(frame);
         astString.add("DrawTitle", false);
         astString.add("TextLab", false);
-        astString.add("LabelUp", 0);
-        astString.add("TitleGap", 0);
-        astString.add("NumLabGap", OverlayStore.Instance.defaultGap / this.minSize);
-        astString.add("TextLabGap", 0);
-        astString.add("TextGapType", "plot");
         return astString.toString();
     }
 }
