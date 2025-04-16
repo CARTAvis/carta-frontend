@@ -1151,10 +1151,6 @@ export class OverlayStore {
         return this.labels.hidden && this.numbers.hidden && this.title.hidden;
     }
 
-    @action minSize(frame: FrameStore) {
-        return Math.min(frame.renderWidth, frame.renderHeight);
-    }
-
     @computed get showNumbers() {
         return this.numbers.show && this.global.labelType === LabelType.Exterior;
     }
@@ -1342,6 +1338,11 @@ export class ImageViewOverlayIndividualStore {
         return Math.max(this.viewHeight - OverlayStore.Instance.paddingTop - OverlayStore.Instance.paddingBottom, 1);
     }
 
+    /** The minimum size between the raster tile canvas width and height (render width and height). */
+    @computed get minSize() {
+        return Math.min(this.renderWidth, this.renderHeight);
+    }
+
     styleString(frame?: FrameStore) {
         let astString = new ASTSettingsString();
         astString.addSection(OverlayStore.Instance.global.styleString(frame));
@@ -1354,9 +1355,9 @@ export class ImageViewOverlayIndividualStore {
         astString.addSection(OverlayStore.Instance.labels.styleString);
 
         astString.add("LabelUp", 0);
-        astString.add("TitleGap", OverlayStore.Instance.titleGap / OverlayStore.Instance.minSize(frame));
-        astString.add("NumLabGap", OverlayStore.Instance.defaultGap / OverlayStore.Instance.minSize(frame));
-        astString.add("TextLabGap", OverlayStore.Instance.cumulativeLabelGap / OverlayStore.Instance.minSize(frame));
+        astString.add("TitleGap", OverlayStore.Instance.titleGap / this.minSize);
+        astString.add("NumLabGap", OverlayStore.Instance.defaultGap / this.minSize);
+        astString.add("TextLabGap", OverlayStore.Instance.cumulativeLabelGap / this.minSize);
         astString.add("TextGapType", "plot");
 
         return astString.toString();
@@ -1404,16 +1405,9 @@ export class ChannelMapOuterOverlayIndividualStore extends ImageViewOverlayIndiv
         astString.add("DrawAxes", false);
         astString.add("NumLab", false);
         astString.add("LabelUp", 0);
-        astString.add(
-            "TitleGap",
-            OverlayStore.Instance.titleGap / Math.min(this.fullViewWidth - OverlayStore.Instance.paddingLeft - OverlayStore.Instance.paddingRight, this.fullViewHeight - OverlayStore.Instance.paddingTop - OverlayStore.Instance.paddingBottom)
-        );
+        astString.add("TitleGap", OverlayStore.Instance.titleGap / this.minSize);
         astString.add("NumLabGap", 0);
-        astString.add(
-            "TextLabGap",
-            OverlayStore.Instance.cumulativeLabelGap /
-                Math.min(this.fullViewWidth - OverlayStore.Instance.paddingLeft - OverlayStore.Instance.paddingRight, this.fullViewHeight - OverlayStore.Instance.paddingTop - OverlayStore.Instance.paddingBottom)
-        );
+        astString.add("TextLabGap", OverlayStore.Instance.cumulativeLabelGap / this.minSize);
         astString.add("TextGapType", "plot");
         return astString.toString();
     }
@@ -1461,7 +1455,7 @@ export class ChannelMapInnerOverlayIndividualStore extends ImageViewOverlayIndiv
         astString.add("TextLab", false);
         astString.add("LabelUp", 0);
         astString.add("TitleGap", 0);
-        astString.add("NumLabGap", OverlayStore.Instance.defaultGap / OverlayStore.Instance.minSize(frame));
+        astString.add("NumLabGap", OverlayStore.Instance.defaultGap / this.minSize);
         astString.add("TextLabGap", 0);
         astString.add("TextGapType", "plot");
         return astString.toString();
