@@ -1560,6 +1560,17 @@ export class FrameStore {
                 }
             }
         });
+
+        // Update the image view raster tiles in channel map mode
+        reaction(
+            () => this.stokes,
+            () => {
+                const channelMapStore = AppStore.Instance.channelMapStore;
+                if (this.requiredFrameView && channelMapStore.channelMapEnabled) {
+                    channelMapStore.handlePolarizationChanged(this);
+                }
+            }
+        );
     }
 
     updateWcsSystem = (formatStringX: string, formatStyingY: string, explicitSystem: SystemType) => {
