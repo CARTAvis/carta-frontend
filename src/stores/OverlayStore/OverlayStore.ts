@@ -101,15 +101,16 @@ export class OverlayGlobalSettings {
         astString.add("Color", AstColorsIndex.GLOBAL);
         astString.add("Tol", toFixed(this.tolerance / 100, 2), this.tolerance >= 0.001); // convert to fraction
 
-        const lableX = AST.getString(frame?.wcsInfo, "Label(1)");
-        const lableY = AST.getString(frame?.wcsInfo, "Label(2)");
-        astString.add("Label(1)", `"${lableX.replace(/%/g, "%%%%")} (${this.explicitSystem})"`, lableX !== undefined);
-        astString.add("Label(2)", `"${lableX.replace(/%/g, "%%%%")} (${this.explicitSystem})"`, lableY !== undefined);
-
         const isWcsFrameAndSystem = typeof this.explicitSystem !== "undefined" && this.explicitSystem !== SystemType.Image && frame.validWcs;
         if (isWcsFrameAndSystem) {
             astString.add("System", this.explicitSystem);
         }
+
+        const labelX = AST.getString(frame?.wcsInfo, "Label(1)");
+        const labelY = AST.getString(frame?.wcsInfo, "Label(2)");
+        const system = typeof this.explicitSystem !== "undefined" ? this.explicitSystem : "pixel";
+        astString.add("Label(1)", `"${labelX.replace(/%/g, "%%%%")} (${system})"`, labelX !== undefined);
+        astString.add("Label(2)", `"${labelX.replace(/%/g, "%%%%")} (${system})"`, labelY !== undefined);
 
         if ((frame?.isXY || frame?.isYX) && !frame?.isPVImage && isWcsFrameAndSystem) {
             if (this.system === SystemType.FK4) {
@@ -660,8 +661,10 @@ export class OverlayLabelSettings {
         astString.add("Font(TextLab)", this.font);
         astString.add("Size(TextLab)", this.fontSize * AppStore.Instance.imageRatio);
         astString.add("Color(TextLab)", AstColorsIndex.LABEL, this.customColor);
-        astString.add("Label(1)", `"${this.customLabelX.replace(/%/g, "%%%%")} (${OverlayStore.Instance.global.explicitSystem})"`, this.customText);
-        astString.add("Label(2)", `"${this.customLabelY.replace(/%/g, "%%%%")} (${OverlayStore.Instance.global.explicitSystem})"`, this.customText);
+
+        const system = typeof OverlayStore.Instance.global.explicitSystem !== "undefined" ? OverlayStore.Instance.global.explicitSystem : "pixel";
+        astString.add("Label(1)", `"${this.customLabelX.replace(/%/g, "%%%%")} (${system})"`, this.customText);
+        astString.add("Label(2)", `"${this.customLabelY.replace(/%/g, "%%%%")} (${system})"`, this.customText);
 
         return astString.toString();
     }
