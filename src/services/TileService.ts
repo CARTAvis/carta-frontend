@@ -190,12 +190,15 @@ export class TileService {
                     // console.log(AppStore.Instance.render3D);
                     // console.log("file id: " + eventArgs.fileId);
                     // console.log(AppStore.Instance.render3D.get(eventArgs.fileId));
-                    // console.log("region id: " + eventArgs.regionId);
-                    // console.log(AppStore.Instance.render3D.get(eventArgs.fileId)?.get(eventArgs.regionId));
-                    // console.log("slice: " + eventArgs.slice);
+                    // console.log("region id: " + render3DData.regionId);
+                    // console.log(AppStore.Instance.render3D.get(eventArgs.fileId)?.get(render3DData.regionId));
+                    // console.log("viewer id: " + eventArgs.previewId);
+                    // console.log(AppStore.Instance.render3D.get(eventArgs.fileId)?.get(render3DData.regionId)?.get(eventArgs.previewId));
+                    // console.log("slice: " + render3DData.slice);
 
                     // here I am using the render3DData object. Should I use eventArgs instead? it does not recognise regionID and slice
-                    AppStore.Instance.render3D.get(eventArgs.fileId)?.get(render3DData.regionId)?.get(render3DData.viewerId)?.setDecompressed3DData(resultArray);
+                    // previewId is viewerId
+                    AppStore.Instance.render3D.get(eventArgs.fileId)?.get(render3DData.regionId)?.get(eventArgs.previewId)?.setDecompressed3DData(resultArray);
                     
                 }
             };
@@ -453,6 +456,7 @@ export class TileService {
 
         console.log("fileID = ", render3DData.fileId);
         console.log("regionID = ", render3DData.regionId);
+        console.log("viewerID = ", render3DData.viewerId);
         console.log("slice = ", render3DData.slice);
 
         const eventArgs = {
@@ -463,7 +467,7 @@ export class TileService {
             subsetLength: compressedArray.byteLength,
             compression: render3DData.compressionQuality,
             nanEncodings: nanEncodings32,
-            viewerId: render3DData.viewerId
+            previewId: render3DData.viewerId,
         };
 
         console.log("Decompressing render3D data");
