@@ -854,6 +854,7 @@ export class BackendService {
     }
 
     closeRender3D(viewerId: number) {
+        console.log("closeRender3D backendservice", viewerId);
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {

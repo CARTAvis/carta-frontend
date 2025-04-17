@@ -91,7 +91,7 @@ interface ChannelUpdate {
 const IMPORT_REGION_BATCH_SIZE = 1000;
 const EXPORT_IMAGE_DELAY = 500;
 export const PREVIEW_PV_FILEID = -2;
-export const RENDER3D_FILEID = -2;
+// export const RENDER3D_FILEID = -2;
 
 export class AppStore {
     private static staticInstance: AppStore;
@@ -131,7 +131,7 @@ export class AppStore {
     @observable cartaComputeReady: boolean;
     // Frames
     @observable previewFrames = new ObservableMap<number, FrameStore>();
-    @observable render3DFrames = new ObservableMap<number, FrameStore>();
+    // @observable render3DFrames = new ObservableMap<number, FrameStore>();
     /** The active image, which can be a loaded image, a color blended image, or a PV preivew. */
     @observable activeImage: ImageItem = null;
     @observable hoveredFrame: FrameStore = null;
@@ -146,7 +146,7 @@ export class AppStore {
     // Profiles, 3D rendering and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
     @observable spectralProfiles: Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>;
-    @observable render3D: Map<FileId, ObservableMap<RegionId, Render3DDataStore>>;
+    @observable render3D: Map<FileId, Map<RegionId, ObservableMap<number,Render3DDataStore>>>;
     @observable regionStats: Map<number, ObservableMap<number, ObservableMap<number, CARTA.RegionStatsData>>>;
     @observable regionHistograms: Map<number, ObservableMap<number, ObservableMap<number, CARTA.IRegionHistogramData>>>;
 
@@ -1098,11 +1098,8 @@ export class AppStore {
     @action removeRender3DViewer = (render3DId: number) => {
         console.log("Removing Render3D frame", render3DId);
         this.backendService.closeRender3D(render3DId);
-        // if (this.render3DFrames.delete(render3DId)) {
-        //     console.log("(2) Removing Render3D frame", render3DId);
-        //     this.backendService.closeRender3D(render3DId);
-        //     this.setActiveImage(this.imageViewConfigStore.visibleImages[0]);
-        // }
+        // AppStore.Instance.render
+        // REMOVE Render3DDataStore when deleting a Render3D viewer
     };
 
     /**
@@ -1532,13 +1529,9 @@ export class AppStore {
             const ack = yield this.backendService.requestRender3D(message);
             this.restartTaskProgress();
             if (!ack.cancel && ack.success) {
-                const render3DWidgetStore = WidgetsStore.Instance.render3DWidgets.get(id);
-
-                // see if the floating render3D widget is already created. change frame for render3DViewer
-                if (!render3DWidgetStore.render3DViewer) {
-                    // render3DWidgetStore.setRender3DViewer(id) NOT NEEDED, remove dependent functions
-                    WidgetsStore.Instance.createFloatingSettingsWidget("3D Rendering Viewer", id, Render3DComponent.WIDGET_CONFIG.type);
-                }
+                // +"-viewer-"+message.viewerId
+                WidgetsStore.Instance.createFloatingSettingsWidget("3D Rendering Viewer", id+"-viewer-"+message.viewerId, Render3DComponent.WIDGET_CONFIG.type);
+                
             } else {
                 AppToaster.show({icon: "warning-sign", message: "Load 3D renderig failed.", intent: "danger", timeout: 3000});
             }
@@ -1938,7 +1931,7 @@ export class AppStore {
         this.cartaComputeReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>();
-        this.render3D = new Map<FileId, ObservableMap<RegionId, Render3DDataStore>>();
+        this.render3D = new Map<FileId, Map<RegionId, ObservableMap<number, Render3DDataStore>>>();
         this.regionStats = new Map<number, ObservableMap<number, ObservableMap<number, CARTA.RegionStatsData>>>();
         this.regionHistograms = new Map<number, ObservableMap<number, ObservableMap<number, CARTA.IRegionHistogramData>>>();
         this.pendingChannelHistograms = new Map<string, CARTA.IRegionHistogramData>();
@@ -2282,31 +2275,21 @@ export class AppStore {
 
         const frame = this.frames.find(frame => frame.frameInfo.fileId === render3DData.fileId);
         if (frame) {
-            let frameMap = this.render3D.get(render3DData.fileId);
-            if (!frameMap) {
-                // console.log("creating new frameMap");
-                frameMap = new ObservableMap<number, Render3DDataStore>();
-                this.render3D.set(render3DData.fileId, frameMap);
+            let fileMap = this.render3D.get(render3DData.fileId);
+            if (!fileMap) {
+                fileMap = new Map<number, ObservableMap<number, Render3DDataStore>>();
+                this.render3D.set(render3DData.fileId, fileMap);
             }
-            let render3DStore = frameMap.get(render3DData.regionId);
+            let regionMap = fileMap.get(render3DData.regionId);
+            if (!regionMap) {
+                regionMap = new ObservableMap<number, Render3DDataStore>();
+                fileMap.set(render3DData.regionId, regionMap);
+            }
+            let render3DStore = regionMap.get(render3DData.viewerId);
             if (!render3DStore) {
-                // console.log("creating new render3DStore");
-                render3DStore = new Render3DDataStore(render3DData.fileId, render3DData.regionId, render3DData.width, render3DData.height, render3DData.depth);
-                frameMap.set(render3DData.regionId, render3DStore);
-            } // else {
-            //     // console.log("updating existing render3DStore");
-            //     if (render3DData.width === render3DStore.width && render3DData.height === render3DStore.height && render3DData.depth === render3DStore.depth) {
-            //         //update existing
-            //     } else {
-            //         // create new
-            //     }
-            // }
-
-            // const width = frame.frameInfo.fileInfoExtended.width;
-            // const height = frame.frameInfo.fileInfoExtended.height;
-            // const depth = frame.frameInfo.fileInfoExtended.depth;
-            // if (width !== render3DStore.width || height !== render3DStore.height || depth !== render3DStore.depth) {
-
+                render3DStore = new Render3DDataStore(render3DData.fileId, render3DData.regionId, render3DData.viewerId, render3DData.width, render3DData.height, render3DData.depth);
+                regionMap.set(render3DData.viewerId, render3DStore);
+            } 
 
             render3DStore.updateRender3DData(render3DData);
             // frame.frameInfo.fileInfoExtended.width

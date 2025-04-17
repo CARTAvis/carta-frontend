@@ -8,16 +8,18 @@ import { TileService } from "services";
 export class Render3DDataStore {
     readonly fileId: number;
     readonly regionId: number;
+    readonly viewerId: number;
     readonly width: number;
     readonly height: number;
     readonly depth: number;
     readonly datacube: Float32Array; // keep as readonly, the observable is lastslice. update lastslice when updating array. in component observe lastslice in usememo
     @observable lastSlice: number; // last slice updated, use to check if the data is updated
 
-    constructor(fileId: number = 0, regionId: number = 0, width: number = 0, height:number = 0, depth: number = 0) {
+    constructor(fileId: number = 0, regionId: number = 0, viewerId: number, width: number = 0, height:number = 0, depth: number = 0) {
         makeObservable(this);
         this.fileId = fileId;
         this.regionId = regionId;
+        this.viewerId = viewerId;
         this.width = width;
         this.height = height;
         this.depth = depth;

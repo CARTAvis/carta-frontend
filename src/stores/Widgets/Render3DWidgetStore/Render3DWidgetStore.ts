@@ -39,11 +39,8 @@ export class Render3DWidgetStore extends RegionWidgetStore {
 
     // render3d
     @observable render3DFrame: FrameStore | null;
-    @observable render3DViewer: string | null;
-    @observable render3DViewerId: number = 0;
-    // @observable render3DViewerFileId: number | null;
-    // @observable render3DViewerRegionId: number | null;
-
+    // @observable render3DViewer: string | null;
+    @observable render3DViewerId: number = -1;
 
     @computed get regionOptions(): OptionProps[] {
         const appStore = AppStore.Instance;
@@ -138,9 +135,8 @@ export class Render3DWidgetStore extends RegionWidgetStore {
             channelIndexMin = channelIndexMax - 1;
         }
 
-        console.log("render3dgeneratorID: ", render3DGeneratorId);
-        console.log("viewerID: ", parseInt(render3DGeneratorId.split("-")[2]));
         if (frame) {
+            this.render3DViewerId ++;
             const requestMessage: CARTA.IRender3DRequest = {
                 fileId: frame.frameInfo.fileId,
                 regionId: this.effectiveRegionId,
@@ -152,7 +148,6 @@ export class Render3DWidgetStore extends RegionWidgetStore {
                 compressionType: CARTA.CompressionType.ZFP,
                 keep: this.keep
             }
-            this.render3DViewerId ++;
             if (render3DGeneratorId) {
                 AppStore.Instance.requestRender3D(requestMessage, frame, render3DGeneratorId);
             }
@@ -222,13 +217,13 @@ export class Render3DWidgetStore extends RegionWidgetStore {
         this.linePlotInitXYBoundaries = {minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal};
     }
 
-    @action setRender3DViewer = (id: string) => {
-        this.render3DViewer = id;
-    }
+    // @action setRender3DViewer = (id: string) => {
+    //     this.render3DViewer = id;
+    // }
 
     @action removeRender3DViewer = (id: number) => {
         AppStore.Instance.removeRender3DViewer(id);
-        this.render3DViewer = null;
+        // this.render3DViewer = null;
     }
 
     public toConfig = () => {

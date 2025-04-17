@@ -92,13 +92,14 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
             const widgetStore = WidgetsStore?.Instance.render3DWidgets?.get(widgetId);
             // console.log("regionid: ", widgetStore.effectiveRegionId);
             // console.log("frameid: ", widgetStore.effectiveFrame.frameInfo.fileId);
+            // console.log("viewerid: ", widgetStore.render3DViewerId);
             // console.log("render3d: ", AppStore?.Instance.render3D);
             // console.log("render3D keys:", Array.from(AppStore?.Instance.render3D?.keys() || []));
             // console.log("render3D.get(0):", AppStore?.Instance.render3D?.get(0));
-    
             // console.log("render3d effectiveregion: ", AppStore.Instance.render3D.get(widgetStore.effectiveFrame.frameInfo.fileId));
-    
-            this.render3DData = AppStore?.Instance.render3D?.get(widgetStore?.effectiveFrame?.frameInfo.fileId)?.get(widgetStore.effectiveRegionId);
+            // console.log("render3d viewerid: ", AppStore.Instance.render3D.get(widgetStore.effectiveFrame.frameInfo.fileId)?.get(widgetStore.render3DViewerId));
+
+            this.render3DData = AppStore?.Instance.render3D?.get(widgetStore?.effectiveFrame?.frameInfo.fileId)?.get(widgetStore.effectiveRegionId)?.get(widgetStore.render3DViewerId);
 
             // console.log("width: ", this.render3DData?.width);
             // console.log("height: ", this.render3DData?.height);
@@ -115,6 +116,8 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
             this.depth = 0;
     
             this.texture = new THREE.Data3DTexture(new Float32Array(), 0, 0, 0);
+
+            console.log("No render3DData available");
 
         } else {
 

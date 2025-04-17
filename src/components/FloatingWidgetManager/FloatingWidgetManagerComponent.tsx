@@ -74,8 +74,12 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 widgetsStore.removeFloatingWidget(widget.id);
                 break;
             case Render3DViewerComponent.WIDGET_CONFIG.type:
-                console.log("Removing Render3DViewer with ID: " + widget.id);
-                console.log("Current Render3DWidgets: ", widgetsStore.render3DWidgets);
+                // console.log("widget: ", widget);
+                // console.log("Removing Render3DViewer with ID: " + widget.id);
+                // console.log("Current Render3DWidgets: ", widgetsStore.render3DWidgets);
+                // console.log("Current Render3DViewer: ", widgetsStore.render3DWidgets.get(widget.parentId));
+                // console.log("parentId: ", widget.parentId);
+                // console.log("viewerId: ", parseInt(widget.id.split("-")[2]));
                 widgetsStore.render3DWidgets.get(widget.parentId)?.removeRender3DViewer(parseInt(widget.id.split("-")[2]));
                 widgetsStore.removeFloatingWidget(widget.id);
                 break;

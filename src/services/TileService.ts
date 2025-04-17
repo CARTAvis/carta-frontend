@@ -195,7 +195,7 @@ export class TileService {
                     // console.log("slice: " + eventArgs.slice);
 
                     // here I am using the render3DData object. Should I use eventArgs instead? it does not recognise regionID and slice
-                    AppStore.Instance.render3D.get(eventArgs.fileId)?.get(render3DData.regionId)?.setDecompressed3DData(resultArray);
+                    AppStore.Instance.render3D.get(eventArgs.fileId)?.get(render3DData.regionId)?.get(render3DData.viewerId)?.setDecompressed3DData(resultArray);
                     
                 }
             };
