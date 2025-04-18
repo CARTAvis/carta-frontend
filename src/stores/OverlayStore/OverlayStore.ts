@@ -107,9 +107,12 @@ export class OverlayGlobalSettings {
         }
 
         if (!AppStore.Instance?.overlayStore?.labels?.customText) {
+            const symbol1 = AST.getString(frame?.wcsInfo, "Symbol(1)");
             const labelX = AST.getString(frame?.wcsInfo, "Label(1)");
             const labelY = AST.getString(frame?.wcsInfo, "Label(2)");
-            const systemName = typeof this.explicitSystem === "undefined" || this.explicitSystem === SystemType.Image ? "pixel" : this.explicitSystem;
+
+            const isSysPixel = typeof this.explicitSystem === "undefined" || this.explicitSystem === SystemType.Image || !(symbol1 === "RA" || symbol1 === "Dec");
+            const systemName = isSysPixel ? "pixel" : this.explicitSystem;
             astString.add("Label(1)", `"${labelX.replace(/%/g, "%%%%")} (${systemName})"`, labelX !== undefined);
             astString.add("Label(2)", `"${labelY.replace(/%/g, "%%%%")} (${systemName})"`, labelY !== undefined);
         }
@@ -659,13 +662,17 @@ export class OverlayLabelSettings {
     @computed get styleString() {
         let astString = new ASTSettingsString();
 
+        const appStore = AppStore.Instance;
+
         astString.add("TextLab", this.show);
         astString.add("Font(TextLab)", this.font);
-        astString.add("Size(TextLab)", this.fontSize * AppStore.Instance.imageRatio);
+        astString.add("Size(TextLab)", this.fontSize * appStore.imageRatio);
         astString.add("Color(TextLab)", AstColorsIndex.LABEL, this.customColor);
 
-        const explicitSystem = AppStore.Instance.overlayStore.global.explicitSystem;
-        const systemName = typeof explicitSystem === "undefined" || explicitSystem === SystemType.Image ? "pixel" : explicitSystem;
+        const symbol1 = AST.getString(appStore.activeFrame?.wcsInfo, "Symbol(1)");
+        const explicitSystem = appStore.overlayStore.global.explicitSystem;
+        const isSysPixel = typeof explicitSystem === "undefined" || explicitSystem === SystemType.Image || !(symbol1 === "RA" || symbol1 === "Dec");
+        const systemName = isSysPixel ? "pixel" : explicitSystem;
         astString.add("Label(1)", `"${this.customLabelX.replace(/%/g, "%%%%")} (${systemName})"`, this.customText);
         astString.add("Label(2)", `"${this.customLabelY.replace(/%/g, "%%%%")} (${systemName})"`, this.customText);
 
