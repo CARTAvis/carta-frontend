@@ -111,10 +111,10 @@ export class OverlayGlobalSettings {
             const labelX = AST.getString(frame?.wcsInfo, "Label(1)");
             const labelY = AST.getString(frame?.wcsInfo, "Label(2)");
 
-            const isSysPixel = typeof this.explicitSystem === "undefined" || this.explicitSystem === SystemType.Image || !(symbol1 === "RA" || symbol1 === "Dec");
-            const systemName = isSysPixel ? "pixel" : this.explicitSystem;
-            astString.add("Label(1)", `"${labelX.replace(/%/g, "%%%%")} (${systemName})"`, labelX !== undefined);
-            astString.add("Label(2)", `"${labelY.replace(/%/g, "%%%%")} (${systemName})"`, labelY !== undefined);
+            const isSysPixel = typeof this.explicitSystem === "undefined" || this.explicitSystem === SystemType.Image;
+            const systemName = ((symbol1 === "RA" || symbol1 === "Dec") && AppStore.Instance?.overlayStore?.labels?.raDecReference) || isSysPixel ? (isSysPixel ? ` (pixel)` : ` (${this.explicitSystem})`) : ""; // a space between ` and ( is eccential
+            astString.add("Label(1)", `"${labelX.replace(/%/g, "%%%%")}${systemName}"`, labelX !== undefined);
+            astString.add("Label(2)", `"${labelY.replace(/%/g, "%%%%")}${systemName}"`, labelY !== undefined);
         }
 
         if ((frame?.isXY || frame?.isYX) && !frame?.isPVImage && isWcsFrameAndSystem) {
@@ -671,10 +671,9 @@ export class OverlayLabelSettings {
 
         const symbol1 = AST.getString(appStore.activeFrame?.wcsInfo, "Symbol(1)");
         const explicitSystem = appStore.overlayStore.global.explicitSystem;
-        const isSysPixel = typeof explicitSystem === "undefined" || explicitSystem === SystemType.Image || !(symbol1 === "RA" || symbol1 === "Dec");
-        const systemName = isSysPixel ? "pixel" : explicitSystem;
-        astString.add("Label(1)", `"${this.customLabelX.replace(/%/g, "%%%%")} (${systemName})"`, this.customText);
-        astString.add("Label(2)", `"${this.customLabelY.replace(/%/g, "%%%%")} (${systemName})"`, this.customText);
+        const systemName = (symbol1 === "RA" || symbol1 === "Dec") && this.raDecReference ? ` (${explicitSystem})` : ""; // a space between ` and ( is eccential
+        astString.add("Label(1)", `"${this.customLabelX.replace(/%/g, "%%%%")}${systemName}"`, this.customText);
+        astString.add("Label(2)", `"${this.customLabelY.replace(/%/g, "%%%%")}${systemName}"`, this.customText);
 
         return astString.toString();
     }

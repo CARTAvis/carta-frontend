@@ -123,7 +123,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     padding.right * appStore.pixelRatio,
                     padding.top * appStore.pixelRatio,
                     padding.bottom * appStore.pixelRatio,
-                    settings.labels.raDecReference ? settings.global.explicitSystem : "",
                     styleString
                 );
             };
