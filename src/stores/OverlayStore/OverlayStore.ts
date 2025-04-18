@@ -109,9 +109,9 @@ export class OverlayGlobalSettings {
         if (!AppStore.Instance?.overlayStore?.labels?.customText) {
             const labelX = AST.getString(frame?.wcsInfo, "Label(1)");
             const labelY = AST.getString(frame?.wcsInfo, "Label(2)");
-            const system = typeof this.explicitSystem === "undefined" || this.explicitSystem === SystemType.Image ? "pixel" : this.explicitSystem;
-            astString.add("Label(1)", `"${labelX.replace(/%/g, "%%%%")} (${system})"`, labelX !== undefined);
-            astString.add("Label(2)", `"${labelY.replace(/%/g, "%%%%")} (${system})"`, labelY !== undefined);
+            const systemName = typeof this.explicitSystem === "undefined" || this.explicitSystem === SystemType.Image ? "pixel" : this.explicitSystem;
+            astString.add("Label(1)", `"${labelX.replace(/%/g, "%%%%")} (${systemName})"`, labelX !== undefined);
+            astString.add("Label(2)", `"${labelY.replace(/%/g, "%%%%")} (${systemName})"`, labelY !== undefined);
         }
 
         if ((frame?.isXY || frame?.isYX) && !frame?.isPVImage && isWcsFrameAndSystem) {
@@ -665,9 +665,9 @@ export class OverlayLabelSettings {
         astString.add("Color(TextLab)", AstColorsIndex.LABEL, this.customColor);
 
         const explicitSystem = AppStore.Instance.overlayStore.global.explicitSystem;
-        const system = typeof explicitSystem === "undefined" || explicitSystem === SystemType.Image ? "pixel" : explicitSystem;
-        astString.add("Label(1)", `"${this.customLabelX.replace(/%/g, "%%%%")} (${system})"`, this.customText);
-        astString.add("Label(2)", `"${this.customLabelY.replace(/%/g, "%%%%")} (${system})"`, this.customText);
+        const systemName = typeof explicitSystem === "undefined" || explicitSystem === SystemType.Image ? "pixel" : explicitSystem;
+        astString.add("Label(1)", `"${this.customLabelX.replace(/%/g, "%%%%")} (${systemName})"`, this.customText);
+        astString.add("Label(2)", `"${this.customLabelY.replace(/%/g, "%%%%")} (${systemName})"`, this.customText);
 
         return astString.toString();
     }
