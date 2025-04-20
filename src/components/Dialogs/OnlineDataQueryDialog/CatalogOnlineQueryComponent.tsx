@@ -78,8 +78,8 @@ export class CatalogQueryComponent extends React.Component {
         }
 
         const frame = appStore.activeFrame.spatialReference ?? appStore.activeFrame;
-        const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
-        const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
+        const formatX = appStore.overlayStore.numbers.formatTypeX;
+        const formatY = appStore.overlayStore.numbers.formatTypeY;
         const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
         const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
         const isVizier = configStore.catalogDB === CatalogDatabase.VIZIER;

@@ -6,6 +6,7 @@ import {
     CatalogOverlayComponent,
     CatalogOverlayPlotSettingsPanelComponent,
     CatalogPlotComponent,
+    ChannelMapControlComponent,
     CursorInfoComponent,
     FloatingWidgetComponent,
     HistogramComponent,
@@ -107,6 +108,8 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 return <RenderConfigComponent id={widgetConfig.id} docked={false} />;
             case AnimatorComponent.WIDGET_CONFIG.type:
                 return <AnimatorComponent id={widgetConfig.id} docked={false} />;
+            case ChannelMapControlComponent.WIDGET_CONFIG.type:
+                return <ChannelMapControlComponent id={widgetConfig.id} docked={false} />;
             case SpatialProfilerComponent.WIDGET_CONFIG.type:
                 return <SpatialProfilerComponent id={widgetConfig.id} docked={false} />;
             case SpectralProfilerComponent.WIDGET_CONFIG.type:

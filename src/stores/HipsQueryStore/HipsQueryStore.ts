@@ -280,20 +280,20 @@ export class HipsQueryStore {
     private fetchSurveyList = async () => {
         try {
             const skyMaps = await axios.get(
-                "http://alasky.cds.unistra.fr/MocServer/query?expr=(hips_frame%3Dequatorial%2Cgalactic%2Cecliptic+||+hips_frame%3D!*)+%26%26+dataproduct_type!%3Dcatalog%2Ccube+%26%26+hips_service_url%3D*+%26%26+hips_tile_format=*fits*&get=id&fmt=json"
+                "https://alasky.cds.unistra.fr/MocServer/query?expr=(hips_frame%3Dequatorial%2Cgalactic%2Cecliptic+||+hips_frame%3D!*)+%26%26+dataproduct_type!%3Dcatalog%2Ccube+%26%26+hips_service_url%3D*+%26%26+hips_tile_format=*fits*&get=id&fmt=json"
             );
             if (skyMaps?.data) {
                 this.surveyList = skyMaps?.data.map(x => ({name: x, type: "Sky map"}));
             }
 
             const planetMaps = await axios.get(
-                "http://alasky.cds.unistra.fr/MocServer/query?expr=hips_frame!%3Dequatorial%2Cgalactic%2Cecliptic+%26%26+hips_frame%3D*+%26%26+dataproduct_type!%3Dcatalog%2Ccube+%26%26+hips_service_url%3D*+%26%26+hips_tile_format=*fits*&get=id&fmt=json"
+                "https://alasky.cds.unistra.fr/MocServer/query?expr=hips_frame!%3Dequatorial%2Cgalactic%2Cecliptic+%26%26+hips_frame%3D*+%26%26+dataproduct_type!%3Dcatalog%2Ccube+%26%26+hips_service_url%3D*+%26%26+hips_tile_format=*fits*&get=id&fmt=json"
             );
             if (planetMaps?.data) {
                 planetMaps.data.forEach(x => this.surveyList.push({name: x, type: "Planet map"}));
             }
 
-            const cubes = await axios.get("http://alasky.cds.unistra.fr/MocServer/query?hips_service_url=*&dataproduct_type=cube&hips_tile_format=*fits*&get=id&fmt=json");
+            const cubes = await axios.get("https://alasky.cds.unistra.fr/MocServer/query?hips_service_url=*&dataproduct_type=cube&hips_tile_format=*fits*&get=id&fmt=json");
             if (cubes?.data) {
                 cubes.data.forEach(x => this.surveyList.push({name: x, type: "Cube"}));
             }

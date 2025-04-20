@@ -3,6 +3,7 @@ export * from "./App/UIControllerComponent";
 export * from "./CatalogOverlay/CatalogOverlayComponent";
 export * from "./CatalogOverlay/CatalogOverlayPlotSettingsPanelComponent/CatalogOverlayPlotSettingsPanelComponent";
 export * from "./CatalogOverlay/CatalogPlotComponent/CatalogPlotComponent";
+export * from "./ChannelMapControl/ChannelMapControlComponent";
 export * from "./CursorInfo/CursorInfoComponent";
 export * from "./FileInfo/FileInfoComponent";
 export * from "./FloatingWidget/FloatingWidgetComponent";

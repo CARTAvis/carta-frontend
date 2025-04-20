@@ -456,6 +456,7 @@ export class RenderConfigStore {
     @action setCustomScale = (minVal: number, maxVal: number) => {
         this.scaleMin[this.stokesIndex] = minVal;
         this.scaleMax[this.stokesIndex] = maxVal;
+
         this.selectedPercentile[this.stokesIndex] = -1;
         this.updateSiblings();
     };

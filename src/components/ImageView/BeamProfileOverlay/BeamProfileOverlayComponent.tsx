@@ -125,7 +125,7 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         }
 
         const contourBeams = [];
-        contourFrames.forEach(contourFrame => {
+        contourFrames?.forEach(contourFrame => {
             const plotProps = this.getPlotProps(contourFrame, baseBeamPlotProps ? baseBeamPlotProps.position : null);
             contourBeams.push(this.plotBeam(plotProps));
         });

@@ -46,6 +46,9 @@
     .#{$ns}-dialog-footer {
         margin-top: 0;
         margin-right: 20px;
+        .footer-sub {
+            display: flex;
+        }
     }
 }
 
