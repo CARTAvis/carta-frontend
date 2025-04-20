@@ -33,7 +33,7 @@ mkdir -p gsl; tar -xf gsl-2.6.tar.gz --directory ./gsl --strip-components=1
 
 cd gsl
 echo "Building GSL using Emscripten"
-CFLAGS="-g0 -O3 -s WASM=1" emconfigure ./configure --enable-shared=no --prefix=${PWD}/../built
+CFLAGS="-msimd128 -g0 -O3" emconfigure ./configure --enable-shared=no --prefix=${PWD}/../built
 
 emmake make -j4
 emmake make install

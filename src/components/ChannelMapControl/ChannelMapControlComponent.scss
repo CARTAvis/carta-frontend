@@ -1,0 +1,60 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+.channel-map-control-containers {
+    margin: 20px;
+    display: flex;
+    flex-direction: column;
+    user-select: none;
+
+    .channel-map-channel-control {
+        &-buttons {
+            .#{$ns}-button {
+                .#{$ns}-icon {
+                    position: relative;
+                    left: 3px;
+                }
+            }
+        }
+    }
+
+    .channel-map-control-container {
+        flex: auto;
+        padding: 5px 5px 1px;
+        margin: 0;
+        text-align: right;
+        overflow: visible;
+
+        .#{$ns}-slider {
+            width: 100%;
+            min-width: 80px;
+            margin-left: 8px;
+            margin-top: 8px;
+            text-align: left;
+        }
+
+        .channel-map-control-label {
+            width: 90%;
+
+            .#{$ns}-label {
+                min-width: 13em;
+                width: 13em;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .#{$ns}-html-select select {
+                min-width: 97px;
+            }
+
+            .#{$ns}-form-content {
+                width: 100%;
+                text-align: left;
+
+                .#{$ns}-input-group {
+                    width: 65px;
+                }
+            }
+        }
+    }
+}

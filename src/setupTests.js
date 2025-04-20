@@ -18,15 +18,15 @@ Object.defineProperty(window, "matchMedia", {
     })
 });
 
-jest.mock("ast_wrapper", () => {
-    return {
-        fonts: [],
-        onReady: new Promise(() => {}),
-        emptyFitsChan: () => {},
-        getFrameFromFitsChan: () => {},
-        initDummyFrame: () => {},
-        putFits: () => {},
-        setColor: () => {},
-        geodesicDistance: () => {}
-    };
-});
+jest.mock("ast_wrapper", () => ({
+    fonts: [],
+    onReady: new Promise(() => {}),
+    emptyFitsChan: () => {},
+    getFrameFromFitsChan: () => {},
+    initDummyFrame: () => {},
+    putFits: () => {},
+    setColor: () => {},
+    geodesicDistance: () => {}
+}));
+jest.mock("carta_computation", () => ({onReady: new Promise(() => {})}));
+jest.mock("gsl_wrapper", () => ({}));

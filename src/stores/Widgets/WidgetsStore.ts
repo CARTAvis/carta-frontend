@@ -9,6 +9,7 @@ import {
     CatalogOverlayComponent,
     CatalogOverlayPlotSettingsPanelComponent,
     CatalogPlotComponent,
+    ChannelMapControlComponent,
     CursorInfoComponent,
     HistogramComponent,
     HistogramSettingsPanelComponent,
@@ -73,7 +74,8 @@ export enum WidgetType {
     Catalog = "Catalog Widget",
     SpectralLineQuery = "Spectral Line Query Widget",
     CursorInfo = "Cursor Info Widget",
-    PvGenerator = "PV Generator"
+    PvGenerator = "PV Generator",
+    ChannelMapControl = "Channel Map Control"
 }
 
 export interface DefaultWidgetConfig {
@@ -167,6 +169,7 @@ export class WidgetsStore {
     @observable logWidgets: Map<string, EmptyWidgetStore>;
     @observable regionListWidgets: Map<string, EmptyWidgetStore>;
     @observable animatorWidgets: Map<string, EmptyWidgetStore>;
+    @observable channelMapControlWidgets: Map<string, EmptyWidgetStore>;
     // add render 3d
     @observable render3DWidgets: Map<string, Render3DWidgetStore>;
     @observable stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore>;
@@ -246,6 +249,15 @@ export class WidgetsStore {
                 widgetConfig: Render3DComponent.WIDGET_CONFIG
             }
         ],	
+        [
+            WidgetType.ChannelMapControl,
+            {
+                isCustomIcon: false,
+                icon: "heat-grid",
+                onClick: () => WidgetsStore.Instance.createFloatingChannelMapControlWidget(),
+                widgetConfig: ChannelMapControlComponent.WIDGET_CONFIG
+            }
+        ],
         [
             WidgetType.RenderConfig,
             {
@@ -379,6 +391,7 @@ export class WidgetsStore {
         this.animatorWidgets = new Map<string, EmptyWidgetStore>();
         // add render 3d
         this.render3DWidgets = new Map<string, Render3DWidgetStore>();
+        this.channelMapControlWidgets = new Map<string, EmptyWidgetStore>();
         this.layerListWidgets = new Map<string, LayerListWidgetStore>();
         this.logWidgets = new Map<string, EmptyWidgetStore>();
         this.regionListWidgets = new Map<string, EmptyWidgetStore>();
@@ -399,6 +412,7 @@ export class WidgetsStore {
             [AnimatorComponent.WIDGET_CONFIG.type, this.animatorWidgets],
             // add render 3d
             [Render3DComponent.WIDGET_CONFIG.type, this.render3DWidgets],
+            [ChannelMapControlComponent.WIDGET_CONFIG.type, this.channelMapControlWidgets],
             [LayerListComponent.WIDGET_CONFIG.type, this.layerListWidgets],
             [LogComponent.WIDGET_CONFIG.type, this.logWidgets],
             [RegionListComponent.WIDGET_CONFIG.type, this.regionListWidgets],
@@ -429,6 +443,8 @@ export class WidgetsStore {
             // add render 3d
             case Render3DComponent.WIDGET_CONFIG.type:
                 return Render3DComponent.WIDGET_CONFIG;
+            case ChannelMapControlComponent.WIDGET_CONFIG.type:
+                return ChannelMapControlComponent.WIDGET_CONFIG;
             case SpatialProfilerComponent.WIDGET_CONFIG.type:
                 return SpatialProfilerComponent.WIDGET_CONFIG;
             case SpectralProfilerComponent.WIDGET_CONFIG.type:
@@ -589,6 +605,9 @@ export class WidgetsStore {
             case AnimatorComponent.WIDGET_CONFIG.type:
                 itemId = this.addAnimatorWidget();
                 break;
+            case ChannelMapControlComponent.WIDGET_CONFIG.type:
+                itemId = this.addAnimatorWidget();
+                break;
             // add render 3d
             case Render3DComponent.WIDGET_CONFIG.type:
                 itemId = this.addRender3DWidget();
@@ -723,6 +742,7 @@ export class WidgetsStore {
         layout.registerComponent("pv-preview", PvPreviewComponent);
         layout.registerComponent("log", LogComponent);
         layout.registerComponent("animator", AnimatorComponent);
+        layout.registerComponent("channel-map-control", ChannelMapControlComponent);
         layout.registerComponent("stokes", StokesAnalysisComponent);
         layout.registerComponent("catalog-overlay", CatalogOverlayComponent);
         layout.registerComponent("catalog-plot", CatalogPlotComponent);
@@ -741,9 +761,10 @@ export class WidgetsStore {
             const cogPinedButton = this.getControlButton("lm_settings", "settings", "cog").on("click", ev => WidgetsStore.Instance.onCogPinedClick(stack.getActiveContentItem()));
             const nextPageButton = this.getControlButton("lm-image-panel-next", "next image", "step-forward").on("click", this.onNextPageClick);
             const imagePanelButton = this.getControlButton("lm-image-panel", "switch to multi-panel", "square").on("click", this.onImagePanelButtonClick);
+            const channelMapButton = this.getControlButton("lm-channel-map-panel", "enable/disable channel map", "heat-grid").on("click", this.onChannelMapButtonClick);
             this.updateImagePanelButton();
             const previousPageButton = this.getControlButton("lm-image-panel-previous", "previous image", "step-backward").on("click", this.onPreviousPageClick);
-            stack.header.controlsContainer.prepend([previousPageButton, imagePanelButton, nextPageButton, cogPinedButton, helpButton, unpinButton]);
+            stack.header.controlsContainer.prepend([channelMapButton, previousPageButton, imagePanelButton, nextPageButton, cogPinedButton, helpButton, unpinButton]);
 
             stack.on("activeContentItemChanged", (contentItem: any) => {
                 if (stack && stack.config && stack.header.controlsContainer && stack.config.content.length) {
@@ -763,7 +784,7 @@ export class WidgetsStore {
 
                     // show/hide image panel buttons
                     $(stackHeaderControlButtons)
-                        ?.find("li.lm-image-panel-next, li.lm-image-panel, li.lm-image-panel-previous")
+                        ?.find("li.lm-image-panel-next, li.lm-image-panel, li.lm-image-panel-previous, li.lm-channel-map-panel")
                         ?.attr("style", component === "image-view" ? "" : "display:none;");
 
                     // disable unpin button when active tab is image-view
@@ -808,7 +829,8 @@ export class WidgetsStore {
             return null;
         }
 
-        let widgetStore: RenderConfigWidgetStore | Render3DWidgetStore | SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore | CatalogWidgetStore | null | undefined = null;
+        // render3d: Render3DWidgetStore
+        let widgetStore: RenderConfigWidgetStore | SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore | CatalogWidgetStore | null | undefined = null;
         switch (widgetType) {
             case RenderConfigComponent.WIDGET_CONFIG.type:
                 widgetStore = this.renderConfigWidgets.get(widgetID);
@@ -823,9 +845,9 @@ export class WidgetsStore {
                 widgetStore = this.histogramWidgets.get(widgetID);
                 break;
             // add render 3d
-            case Render3DComponent.WIDGET_CONFIG.type:
-                widgetStore = this.render3DWidgets.get(widgetID);
-                break;
+            // case Render3DComponent.WIDGET_CONFIG.type:
+            //     widgetStore = this.render3DWidgets.get(widgetID);
+            //     break;
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 widgetStore = this.stokesAnalysisWidgets.get(widgetID);
                 break;
@@ -943,11 +965,22 @@ export class WidgetsStore {
     };
 
     onImagePanelButtonClick = () => {
-        this.setImageMultiPanelEnabled(!PreferenceStore.Instance.imageMultiPanelEnabled);
+        const channelMapStore = AppStore.Instance.channelMapStore;
+        if (channelMapStore.channelMapEnabled) {
+            channelMapStore.setChannelMapEnabled(false);
+        } else {
+            this.setImageMultiPanelEnabled(!PreferenceStore.Instance.imageMultiPanelEnabled);
+        }
+    };
+
+    onChannelMapButtonClick = () => {
+        const channelMapStore = AppStore.Instance.channelMapStore;
+        channelMapStore.setChannelMapEnabled(!channelMapStore.channelMapEnabled);
     };
 
     setImageMultiPanelEnabled = (multiPanelEnabled: boolean) => {
-        PreferenceStore.Instance.setPreference(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED, multiPanelEnabled);
+        const preferenceStore = PreferenceStore.Instance;
+        preferenceStore.setPreference(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED, multiPanelEnabled);
         this.updateImagePanelButton();
     };
 
@@ -1497,6 +1530,24 @@ export class WidgetsStore {
 
         if (id) {
             this.animatorWidgets.set(id, new EmptyWidgetStore());
+        }
+        return id;
+    }
+
+    createFloatingChannelMapControlWidget = () => {
+        const id = this.addChannelMapControlWidget();
+        if (id !== null) {
+            this.addFloatingWidget(new WidgetConfig(id, ChannelMapControlComponent.WIDGET_CONFIG));
+        }
+    };
+
+    @action addChannelMapControlWidget(id: string | null = null) {
+        if (!id) {
+            id = this.getNextId(ChannelMapControlComponent.WIDGET_CONFIG.type);
+        }
+
+        if (id) {
+            this.channelMapControlWidgets.set(id, new EmptyWidgetStore());
         }
         return id;
     }

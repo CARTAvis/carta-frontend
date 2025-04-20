@@ -1,5 +1,6 @@
 export class TileCoordinate {
-    private static readonly FileIdOffset = 2 ** 32;
+    private static readonly FileIdOffset = BigInt(2 ** 32);
+    private static readonly ChannelOffset = BigInt(2 ** 48);
 
     layer: number;
     x: number;
@@ -22,12 +23,12 @@ export class TileCoordinate {
         return TileCoordinate.Encode(coordinate.x, coordinate.y, coordinate.layer);
     }
 
-    public static AddFileId(encodedCoordinate: number, fileId: number) {
-        return encodedCoordinate + fileId * TileCoordinate.FileIdOffset;
+    public static AddFileIdAndChannel(encodedCoordinate: number, fileId: number, channel: number): bigint {
+        return BigInt(BigInt(encodedCoordinate) + BigInt(fileId) * TileCoordinate.FileIdOffset + BigInt(channel) * TileCoordinate.ChannelOffset);
     }
 
-    public static RemoveFileId(encodedCoordinate: number) {
-        return encodedCoordinate % TileCoordinate.FileIdOffset;
+    public static RemoveFileIdAndChannel(encodedCoordinateWithFileIdAndChannel: bigint): number {
+        return Number((BigInt(encodedCoordinateWithFileIdAndChannel) % TileCoordinate.FileIdOffset) % TileCoordinate.ChannelOffset);
     }
 
     // Encoding a tile combines x, y and layer coordinates into a single number. This makes it more efficient
@@ -58,7 +59,11 @@ export class TileCoordinate {
         return (encodedCoordinate >> 24) & 127;
     }
 
-    public static GetFileId(encodedCoordinate: number): number {
-        return Math.floor(encodedCoordinate / TileCoordinate.FileIdOffset);
+    public static GetFileId(encodedCoordinateWithFileIdAndChannel: bigint): number {
+        return Number((encodedCoordinateWithFileIdAndChannel >> BigInt(32)) & BigInt("0xFFFF"));
+    }
+
+    public static GetChannel(encodedCoordinateWithFileIdAndChannel: bigint): number {
+        return Math.floor(Number(encodedCoordinateWithFileIdAndChannel / TileCoordinate.ChannelOffset));
     }
 }
