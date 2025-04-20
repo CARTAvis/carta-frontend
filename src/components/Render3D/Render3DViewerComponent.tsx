@@ -1,15 +1,17 @@
 import React, {useEffect, useRef} from "react"; // , useState
 import { Canvas, extend, useFrame, useThree} from "@react-three/fiber";
-// import glsl from "babel-plugin-glsl/macro";
-import {action, autorun, observable} from "mobx";
+import {action, autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import * as THREE from 'three';
 import { TrackballControls } from "three/examples/jsm/controls/TrackballControls";
+import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 
-// import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { ResizeDetector } from "components/Shared";
+// import {VolumeWebGLService} from "services";
 import {AppStore, DefaultWidgetConfig, WidgetsStore} from "stores"; // AppStore, , WidgetsStore 
+import { FrameStore, } from "stores/Frame";
 import { Render3DDataStore } from "stores/Render3DDataStore/Render3DDataStore";
+import {getPercentiles} from "utilities";
 
 import {volumeShaders} from "../../services/GLSL";
 
@@ -60,12 +62,15 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         };
     }
 
+    // private readonly gl: WebGL2RenderingContext | null;
+
     @observable width: number;
     @observable height: number;
     @observable depth: number;
-    // @observable index: number;
 
     @observable texture: THREE.Data3DTexture;
+    @observable minVal: number;
+    @observable maxVal: number;
 
     // this.width = render3DData.width;
     // this.height = render3DData.height;
@@ -77,19 +82,40 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
     @observable panelWidth: number;
     @observable panelHeight: number;
 
+    @observable frame: FrameStore;
+
     @action onResize = (width: number, height: number) => {
         this.panelWidth = width;
         this.panelHeight = height;
     };
 
+    @computed get minValue() {
+        if (this.minVal === undefined && this.frame && this.frame.renderConfig.isoSurfaceHistogram) {
+            return getPercentiles(this.frame.renderConfig.isoSurfaceHistogram, [0.1])[0];
+        } else {
+            return this.minVal;
+        }
+    }
+
+    @computed get maxValue() {
+        if (this.maxVal === undefined && this.frame && this.frame.renderConfig.isoSurfaceHistogram) {
+            return getPercentiles(this.frame.renderConfig.isoSurfaceHistogram, [99.9])[0];
+        } else {
+            return this.maxVal;
+        }
+    }
+
     constructor(props: Render3DViewerDialogProps) {
         super(props);
         // makeObservable(this); // makeObservable make RandomTexture not work
-        this.widgetId = props.id.match(/render-3d-\d+/)[0];
-
+        this.widgetId = props.id.match(/render-3d-\d+/)[0];  
+        // this.gl = VolumeWebGLService.Instance.gl;
+        
         autorun(() => {
             const widgetId = this.props.id.match(/render-3d-\d+/)[0];
             const widgetStore = WidgetsStore?.Instance.render3DWidgets?.get(widgetId);
+            this.frame = widgetStore?.effectiveFrame;
+            // console.log("frame: ", this.frame.renderConfig);
             // console.log("regionid: ", widgetStore.effectiveRegionId);
             // console.log("frameid: ", widgetStore.effectiveFrame.frameInfo.fileId);
             // console.log("viewerid: ", widgetStore.render3DViewerId);
@@ -157,43 +183,53 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
             return this.texture;
         }, [lastSlice]);
 
-        // const parameters = {
-        //     threshold: 0.25,
-        //     opacity: 20.0,
-        //     range: 0.1,
-        //     steps: 100
-        // };
+        const parameters = {
+            minThreshold: 0,
+            maxThreshold: 1,
+            opacity: 20.0,
+            range: 0.1,
+            steps: 100,
+        };
 
-        // function update() {
+        function update() {
 
-        //     material.uniforms.threshold.value = parameters.threshold;
-        //     material.uniforms.opacity.value = parameters.opacity;
-        //     material.uniforms.range.value = parameters.range;
-        //     material.uniforms.steps.value = parameters.steps;
+            // material.uniforms.threshold.value = parameters.threshold;
+            material.uniforms.uOpacity.value = parameters.opacity;
+            // material.uniforms.range.value = parameters.range;
+            material.uniforms.uSteps.value = parameters.steps;
+            material.uniforms.uMinVal.value = parameters.minThreshold;
+            material.uniforms.uMaxVal.value = parameters.maxThreshold;
 
-        // }
+        }
 
-        // const gui = new GUI();
+        const gui = new GUI();
         // gui.add( parameters, 'threshold', 0, 1, 0.01 ).onChange( update );
-        // gui.add( parameters, 'opacity', 0, 50, 0.01 ).onChange( update );
+        gui.add( parameters, 'opacity', 0, 100.0, 0.01 ).onChange( update );
         // gui.add( parameters, 'range', 0, 1, 0.01 ).onChange( update );
-        // gui.add( parameters, 'steps', 0, 200, 1 ).onChange( update );
+        gui.add( parameters, 'steps', 0, 200, 1 ).onChange( update );
+        gui.add( parameters, 'minThreshold', this.minVal, this.maxVal).onChange( update );
+        gui.add( parameters, 'maxThreshold', this.minVal, this.maxVal).onChange( update );
 
         useEffect(() => {
             gl.getContext().getExtension("OES_texture_float");
     
             // Generate the texture when render3DData changes
             this.generate3DTexture();
+            console.log("minMAX values: ", this.minValue, this.maxValue)
     
             // Create or update the shader material
             if (material) {
-                material.uniforms.uTexture.value = this.texture;
-                material.uniforms.uTexture.value.needsUpdate = true;
+                material.uniforms.uDataTexture.value = this.texture;
+                material.uniforms.uDataTexture.value.needsUpdate = true;
                 material.uniforms.uFrame ++
             } else {
                 const newMaterial = new THREE.ShaderMaterial({
                     uniforms: {
-                        uTexture: { value: this.texture },
+                        uDataTexture: { value: this.texture },
+                        uMinVal: {value: this.minValue},
+                        uMaxVal: {value: this.maxValue},
+                        uMinThreshold: {value: this.minValue},
+                        uMaxThreshold: {value: this.maxValue},
                         // threshold: { value: 0.25 },
                         // range: { value: 0.1 },
                         uOpacity: { value: 20.0 },

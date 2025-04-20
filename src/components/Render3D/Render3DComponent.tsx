@@ -73,7 +73,7 @@ export class Render3DComponent extends React.Component<WidgetProps> {
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
-        this.showCubeHistogramAlert = false;
+        this.showCubeHistogramAlert = true;
 
         autorun(() => {
             const appStore = AppStore.Instance;

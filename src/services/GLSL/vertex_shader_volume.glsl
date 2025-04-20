@@ -1,7 +1,7 @@
 
 // adapted from https://github.com/mrdoob/three.js/blob/master/examples/webgl_texture3d_partialupdate.html
 
-// in vec3 position;
+// in vec3 position; // this is needed when using VolumeWebGLService
 
 // uniform mat4 modelMatrix;
 // uniform mat4 modelViewMatrix;

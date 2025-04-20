@@ -180,7 +180,7 @@ export class TileService {
                     const resultArray = new Float32Array(buffer, 0, length);
                     frame?.setPreviewPVRasterData(resultArray);
                 } else if (event.data[0] === "render3d decompress") {
-                    console.log("event data = ", event.data);
+                    // console.log("event data = ", event.data);
                     const buffer = event.data[1];
                     const eventArgs = event.data[2];
                     const render3DData = event.data[3];
@@ -454,10 +454,10 @@ export class TileService {
         let compressedView = new Uint8Array(Math.max(compressedArray.byteLength, render3DData.width * render3DData.height * 4));
         compressedView.set(compressedArray);
 
-        console.log("fileID = ", render3DData.fileId);
-        console.log("regionID = ", render3DData.regionId);
-        console.log("viewerID = ", render3DData.viewerId);
-        console.log("slice = ", render3DData.slice);
+        // console.log("fileID = ", render3DData.fileId);
+        // console.log("regionID = ", render3DData.regionId);
+        // console.log("viewerID = ", render3DData.viewerId);
+        // console.log("slice = ", render3DData.slice);
 
         const eventArgs = {
             fileId: render3DData.fileId,
