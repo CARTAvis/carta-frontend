@@ -51,6 +51,16 @@ export enum HipsProjection {
     XPH = "XPH"
 }
 
+export enum HipsConstraint {
+    MinWidth = 5,
+    MinHeight = 5,
+    MaxDems = 5e7,
+    MinFov = 0,
+    MaxFov = 360,
+    MinRotAngle = 0,
+    MaxRotAngle = 360
+}
+
 /** Management of HiPS data queries. */
 export class HipsQueryStore {
     private static staticInstance: HipsQueryStore;
@@ -75,12 +85,27 @@ export class HipsQueryStore {
     @observable rotationAngle = 0;
     /** Whether the query is in progress. */
     @observable isLoading = false;
-    /** To estimate pixel number */
-    @observable pixelSize = NaN;
 
     /** Whether the current state is valid for a HiPS data query. */
     @computed get isValid(): boolean {
-        return this.hipsSurvey.length > 0 && this.size.x > 0 && this.size.y > 0 && (this.object.length > 0 || (isFinite(this.center.x) && isFinite(this.center.y))) && this.fov > 0 && isFinite(this.rotationAngle) && !this.isLoading;
+        return this.hipsSurvey.length > 0 && this.isDemValid && (this.object.length > 0 || (isFinite(this.center.x) && isFinite(this.center.y))) && this.isFovValid && this.isRotAngleValid && !this.isLoading;
+    }
+
+    @computed get isDemValid(): boolean {
+        return this.size.x >= HipsConstraint.MinWidth && this.size.y >= HipsConstraint.MinHeight && this.size.x * this.size.y <= HipsConstraint.MaxDems;
+    }
+
+    @computed get isFovValid(): boolean {
+        return this.fov > HipsConstraint.MinFov && this.fov <= HipsConstraint.MaxFov;
+    }
+
+    @computed get isRotAngleValid(): boolean {
+        return this.rotationAngle >= HipsConstraint.MinRotAngle && this.rotationAngle <= HipsConstraint.MaxRotAngle;
+    }
+
+    @computed get pixelSize(): number {
+        const selectedSide = isNaN(this.size.x) || isNaN(this.size.y) ? (isNaN(this.size.x) ? this.size.y : this.size.x) : Math.max(this.size.x, this.size.y);
+        return this.fov / selectedSide;
     }
 
     /** HiPS projection types and their descriptions. */
@@ -180,9 +205,7 @@ export class HipsQueryStore {
      * @param fov - The field of view to set (degree).
      */
     @action setFov = (fov: number) => {
-        if (fov >= 0 && fov <= 360) {
-            this.fov = fov;
-        }
+        this.fov = fov;
     };
 
     /**
@@ -206,32 +229,7 @@ export class HipsQueryStore {
      * @param rotationAngle - The rotation angle to set (degree).
      */
     @action setRotationAngle = (rotationAngle: number) => {
-        if (rotationAngle >= 0 && rotationAngle <= 360) {
-            this.rotationAngle = rotationAngle;
-        }
-    };
-
-    /**
-     * Sets the pixel angular size.
-     * @param pixelSize - The pixel angular size to set (degree).
-     */
-    @action setPixelSize = (pixelSize: number) => {
-        if (pixelSize >= 0 && pixelSize <= 10) {
-            this.pixelSize = pixelSize;
-        }
-    };
-
-    /**
-     * Estimates the pixel number based on the field of view and pixel size.
-     */
-    @action estimatePixelNumber = () => {
-        if (this.pixelSize > 0 && this.pixelSize <= 10) {
-            const pixelNumber = Math.ceil(this.fov / this.pixelSize);
-            if (pixelNumber >= 5 && pixelNumber ** 2 <= 50000000) {
-                this.size.x = pixelNumber;
-                this.size.y = pixelNumber;
-            }
-        }
+        this.rotationAngle = rotationAngle;
     };
 
     /**
