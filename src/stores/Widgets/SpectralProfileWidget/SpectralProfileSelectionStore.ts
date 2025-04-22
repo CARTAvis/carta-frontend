@@ -1,5 +1,5 @@
 import {CARTA} from "carta-protobuf";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
 
 import {GetIntensityOptions, IntensityConfig, LineKey, LineOption, POLARIZATION_LABELS, POLARIZATIONS, STATISTICS_TEXT, StatsTypeString, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES} from "models";
 import {AppStore} from "stores";
@@ -689,18 +689,60 @@ export class SpectralProfileSelectionStore {
         });
 
         // When in Multi profile mode of Image and there are matched files(may change dynamically), assign them colors
-        autorun(() => {
-            const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
-            if (matchedFileIds?.length > 1 && this.activeProfileCategory === MultiProfileCategory.IMAGE && this.selectedFrameFileId !== undefined) {
-                if (matchedFileIds.includes(this.selectedFrameFileId)) {
-                    matchedFileIds.forEach((fileId, index) => {
+        // autorun(() => {
+        //     const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
+        //     if (matchedFileIds?.length > 1 && this.activeProfileCategory === MultiProfileCategory.IMAGE && this.selectedFrameFileId !== undefined) {
+        //         if (matchedFileIds.includes(this.selectedFrameFileId)) {
+        //             const widgetStore = this.widgetStore;
+        //             widgetStore.clearProfileColors();
+        //             matchedFileIds.forEach((fileId, index) => {
+        //                 // index + 1 to avoid choosing blue(conflict with native primary color(auto-blue))
+        //                 // const color = fileId === this.selectedFrameFileId ? widgetStore.primaryLineColor : genColorFromIndex(index + 1);
+        //                 const color = genColorFromIndex(index);
+        //                 widgetStore.setProfileColor(fileId, color);
+        //             });
+        //         }
+        //     }
+        // });
+
+
+        reaction(
+            () => {
+                const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
+                const activeProfileCategory = this.activeProfileCategory;
+                return {matchedFileIds, activeProfileCategory};
+            }, 
+            () => {
+                const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
+                // When in Multi profile mode of Image and there are matched files(may change dynamically), assign them colors
+                if (matchedFileIds?.length > 1 && this.activeProfileCategory === MultiProfileCategory.IMAGE && this.selectedFrameFileId !== undefined) {
+                    if (matchedFileIds.includes(this.selectedFrameFileId)) {
                         const widgetStore = this.widgetStore;
-                        // index + 1 to avoid choosing blue(conflict with native primary color(auto-blue))
-                        const color = fileId === this.selectedFrameFileId ? widgetStore.primaryLineColor : genColorFromIndex(index + 1);
-                        widgetStore.setProfileColor(fileId, color);
-                    });
-                }
-            }
+                        const profileColors = [];
+                        
+                        matchedFileIds.forEach(fileId => {
+                            const profileColor = widgetStore.getProfileColor(fileId);
+                            
+                            if (!profileColor || profileColor === "auto-blue") {
+
+                                let color: string;
+                                for (let i = 0; i < profileColors.length + 1; i++) {
+                                    color = genColorFromIndex(i);
+                                    if (!profileColors.includes(color)) {
+                                        break;
+                                    }
+                                }
+
+                                widgetStore.setProfileColor(fileId, color);
+                                profileColors.push(color);
+
+                            } else {
+                                profileColors.push(profileColor);
+                            }
+                        });
+                    }
+                }    
+
         });
     }
 }
