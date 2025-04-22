@@ -22,10 +22,6 @@
         flex: 3 3 auto;
         min-width: 0;
 
-        .profile-toolbar {
-            height: 42px;
-        }
-
         .body-split-pane {
             height: calc(100% - 42px) !important;
             position: inherit !important;
