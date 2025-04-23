@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Enhanced support for modifying the render configuration and the active channel/polarization in channel map mode ([[#2492
 ](https://github.com/CARTAvis/carta-frontend/issues/2492)]).
+### Changed
+* The dropdown options in the z profile widget becomes scrollable with small widget width ([#1600](https://github.com/CARTAvis/carta-frontend/issues/1600)).
 
 ## [5.0.0-beta.1c]
 
