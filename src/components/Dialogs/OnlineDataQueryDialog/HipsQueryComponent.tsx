@@ -5,6 +5,7 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {SafeNumericInput, ScrollShadow} from "components/Shared";
+import {AngularSize, AngularSizeUnit} from "models";
 import {HipsConstraint, HipsCoord, HipsProjection, HipsQueryStore, HipsSurvey} from "stores";
 
 import "./HipsQueryComponent.scss";
@@ -29,7 +30,15 @@ const renderSurveyOption: ItemRenderer<HipsSurvey> = (survey, {handleClick, hand
 
 const renderPixelSize = () => {
     const hipsQueryStore = HipsQueryStore.Instance;
-    return <span className="info-pixel-size">Pixel size: ~ {hipsQueryStore.pixelSize.toExponential(2)} deg</span>;
+    const pixelSize = AngularSize.convertFromArcsec(hipsQueryStore.pixelSize * 3600, true);
+    if (pixelSize.unit === AngularSizeUnit.MILLIARCSEC && pixelSize.value < 0.001) {
+        return <span className="info-pixel-size">Pixel size: &lt; 0.001 {pixelSize.unit}</span>;
+    }
+    return (
+        <span className="info-pixel-size">
+            Pixel size: ~ {pixelSize.value.toFixed(3)} {pixelSize.unit}
+        </span>
+    );
 };
 
 export const HipsQueryComponent = observer(() => {

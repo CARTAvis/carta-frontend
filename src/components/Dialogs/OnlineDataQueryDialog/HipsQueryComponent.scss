@@ -1,6 +1,7 @@
 @import "~@blueprintjs/core/lib/scss/variables.scss";
 
 .hips-query-panel {
+    user-select: none;
     display: flex;
     flex-direction: column;
     height: 100%;
