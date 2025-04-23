@@ -705,28 +705,26 @@ export class SpectralProfileSelectionStore {
         //     }
         // });
 
-
         reaction(
             () => {
                 const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
                 const activeProfileCategory = this.activeProfileCategory;
                 return {matchedFileIds, activeProfileCategory};
-            }, 
+            },
             () => {
                 const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
                 // When in Multi profile mode of Image and there are matched files(may change dynamically), assign them colors
                 if (matchedFileIds?.length > 1 && this.activeProfileCategory === MultiProfileCategory.IMAGE && this.selectedFrameFileId !== undefined) {
                     if (matchedFileIds.includes(this.selectedFrameFileId)) {
                         const widgetStore = this.widgetStore;
-                        const profileColors = [];
-                        
+                        const profileColors: string[] = [];
+
                         matchedFileIds.forEach(fileId => {
                             const profileColor = widgetStore.getProfileColor(fileId);
-                            
-                            if (!profileColor || profileColor === "auto-blue") {
 
-                                let color: string;
-                                for (let i = 0; i < profileColors.length + 1; i++) {
+                            if (!profileColor || profileColor === "auto-blue") {
+                                let color: string = genColorFromIndex(0);
+                                for (let i = 1; i < profileColors.length + 1; i++) {
                                     color = genColorFromIndex(i);
                                     if (!profileColors.includes(color)) {
                                         break;
@@ -735,14 +733,13 @@ export class SpectralProfileSelectionStore {
 
                                 widgetStore.setProfileColor(fileId, color);
                                 profileColors.push(color);
-
                             } else {
                                 profileColors.push(profileColor);
                             }
                         });
                     }
-                }    
-
-        });
+                }
+            }
+        );
     }
 }
