@@ -20,6 +20,7 @@ export class OverlayComponentProps {
     onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
     type?: "channel-map-inner" | "channel-map-outer";
     unScaled?: boolean;
+    channelMapDrawFunction?: (canvas: HTMLCanvasElement) => void;
 }
 
 @observer
@@ -54,7 +55,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const settings = this.props.overlaySettings;
         const frame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image.store?.baseFrame : this.props.image?.store;
         const appStore = AppStore.Instance;
-        const padding = this.props.type === "channel-map-inner" ? settings.channelMapInnerPadding("corner") : settings.padding;
+        const padding = this.props.overlayIndividualStore.padding;
 
         const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoShifted : frame.wcsInfo;
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
@@ -160,6 +161,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
             AST.deleteObject(tempWcsInfo);
             AST.clearLastErrorMessage();
+
+            if (this.props.channelMapDrawFunction) {
+                this.props.channelMapDrawFunction(this.canvas);
+            }
         }
     };
 

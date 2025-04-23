@@ -147,8 +147,8 @@ export class FrameStore {
     public readonly defaultWcsSystem: SystemType;
     @observable public frameInfo: FrameInfo;
     public readonly overlayIndividualStore: OverlayIndividualStore;
-    public readonly channelMapOuterOverlayIndividualStore: OverlayIndividualStore;
-    public readonly channelMapInnerOverlayIndividualStore: OverlayIndividualStore;
+    public readonly channelMapOuterOverlayIndividualStore: ChannelMapOuterOverlayIndividualStore;
+    public readonly channelMapInnerOverlayIndividualStore: ChannelMapInnerOverlayIndividualStore;
     public readonly colorbarStore: ColorbarStore;
 
     public spectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}>;
