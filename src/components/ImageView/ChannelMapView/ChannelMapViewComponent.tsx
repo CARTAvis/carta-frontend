@@ -39,6 +39,8 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     const channelMapViewHeight = renderHeight - overlayStore.paddingBottom - overlayStore.paddingTop;
 
     const outerPadding = frame.channelMapOuterOverlayIndividualStore.padding;
+    const outerViewWidth = frame.channelMapOuterOverlayIndividualStore.viewWidth;
+    const outerViewHeight = frame.channelMapOuterOverlayIndividualStore.viewHeight;
     const innerRenderWidth = frame.channelMapInnerOverlayIndividualStore.renderWidth;
     const innerRenderHeight = frame.channelMapInnerOverlayIndividualStore.renderHeight;
     const gapX = frame.channelMapInnerOverlayIndividualStore.gapX;
@@ -122,8 +124,8 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
             className="image-panel-div"
             key={"channel-map"}
             style={{
-                width: frame.channelMapOuterOverlayIndividualStore.viewWidth,
-                height: frame.channelMapOuterOverlayIndividualStore.viewHeight
+                width: outerViewWidth,
+                height: outerViewHeight
             }}
             onMouseOver={onMouseEnter}
             onMouseLeave={onMouseLeave}
@@ -147,16 +149,12 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                 cursorValue={frame.cursorInfo.isInsideImage ? frame.cursorValue.value : undefined}
                 isValueCurrent={frame.isCursorValueCurrent}
                 spectralInfo={frame.spectralInfo}
-                width={
-                    channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth < channelMapStore.numColumns
-                        ? channelMapStore.masterFrame.renderWidth + overlayStore.paddingLeft + overlayStore.paddingRight
-                        : renderWidth - overlayStore.base
-                }
-                left={overlayStore.paddingLeft}
-                right={overlayStore.paddingRight}
+                width={outerViewWidth}
+                left={outerPadding.left}
+                right={outerPadding.right}
                 docked={props.docked}
                 unit={frame.requiredUnit}
-                top={overlayStore.paddingTop + overlayStore.base}
+                top={outerPadding.top}
                 currentStokes={AppStore.Instance.activeFrame?.requiredPolarizationInfo}
                 cursorValueToPercentage={frame.requiredUnit === "%"}
                 isPreview={frame.isPreview}
@@ -170,8 +168,6 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                 onActiveLayerChange={AppStore.Instance.updateActiveLayer}
                 onRegionViewZoom={zoom => onRegionViewZoom(frame, zoom)}
                 onZoomToFit={() => fitZoomFrameAndRegion(frame)}
-                bottom={0}
-                right={0}
             />
             {overlayStore.colorbar.visible && (
                 <ColorbarComponent
