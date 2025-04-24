@@ -689,41 +689,29 @@ export class SpectralProfileSelectionStore {
         });
 
         // When in Multi profile mode of Image and there are matched files(may change dynamically), assign them colors
-        // autorun(() => {
-        //     const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
-        //     if (matchedFileIds?.length > 1 && this.activeProfileCategory === MultiProfileCategory.IMAGE && this.selectedFrameFileId !== undefined) {
-        //         if (matchedFileIds.includes(this.selectedFrameFileId)) {
-        //             const widgetStore = this.widgetStore;
-        //             widgetStore.clearProfileColors();
-        //             matchedFileIds.forEach((fileId, index) => {
-        //                 // index + 1 to avoid choosing blue(conflict with native primary color(auto-blue))
-        //                 // const color = fileId === this.selectedFrameFileId ? widgetStore.primaryLineColor : genColorFromIndex(index + 1);
-        //                 const color = genColorFromIndex(index);
-        //                 widgetStore.setProfileColor(fileId, color);
-        //             });
-        //         }
-        //     }
-        // });
-
         reaction(
             () => {
+                // when matchedFileIds and activeProfileCategory changes, give colors to profiles
                 const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
                 const activeProfileCategory = this.activeProfileCategory;
                 return {matchedFileIds, activeProfileCategory};
             },
             () => {
                 const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
-                // When in Multi profile mode of Image and there are matched files(may change dynamically), assign them colors
                 if (matchedFileIds?.length > 1 && this.activeProfileCategory === MultiProfileCategory.IMAGE && this.selectedFrameFileId !== undefined) {
                     if (matchedFileIds.includes(this.selectedFrameFileId)) {
                         const widgetStore = this.widgetStore;
-                        const profileColors: string[] = [];
+                        const profileColors: string[] = []; // to record existing profile colors
 
                         matchedFileIds.forEach(fileId => {
                             const profileColor = widgetStore.getProfileColor(fileId);
 
+                            // "auto-blue" is the default color name for the first image,
+                            // it will be replaced by the Hex code (same color) using genColorFromIndex(0)
                             if (!profileColor || profileColor === "auto-blue") {
                                 let color: string = genColorFromIndex(0);
+
+                                // find color that is not used by other profiles
                                 for (let i = 1; i < profileColors.length + 1; i++) {
                                     color = genColorFromIndex(i);
                                     if (!profileColors.includes(color)) {
