@@ -711,7 +711,7 @@ export class OverlayColorbarSettings {
     @observable interactive: boolean;
     @observable width: number;
     @observable offset: number;
-    @observable position: string;
+    @observable position: "right" | "top" | "bottom";
     @observable customColor: boolean;
     @observable color: string;
     @observable borderVisible: boolean;
@@ -796,7 +796,7 @@ export class OverlayColorbarSettings {
         this.offset = offset;
     };
 
-    @action setPosition = (position: string) => {
+    @action setPosition = (position: "right" | "top" | "bottom") => {
         this.position = position;
     };
 
@@ -918,19 +918,15 @@ export class OverlayColorbarSettings {
     }
 
     @computed get height() {
-        return (frame?: FrameStore, length?: number) => {
-            if (length) {
-                return length;
-            }
-            const overlayStore = AppStore.Instance.overlayStore;
-            return this.position === "right" ? frame?.renderHeight || overlayStore?.renderHeight : frame?.renderWidth || overlayStore?.renderWidth;
+        return (frame: FrameStore) => {
+            return this.position === "right" ? frame.overlayIndividualStore.renderHeight : frame.overlayIndividualStore.renderWidth;
         };
     }
 
     @computed get tickNum() {
-        return (frame?: FrameStore, length?: number) => {
-            const tickNum = Math.round((this.height(frame, length) / 100.0) * this.tickDensity);
-            return this.height(frame, length) && tickNum > COLORBAR_TICK_NUM_MIN ? tickNum : COLORBAR_TICK_NUM_MIN;
+        return (frame?: FrameStore) => {
+            const tickNum = Math.round((this.height(frame) / 100.0) * this.tickDensity);
+            return this.height(frame) && tickNum > COLORBAR_TICK_NUM_MIN ? tickNum : COLORBAR_TICK_NUM_MIN;
         };
     }
 

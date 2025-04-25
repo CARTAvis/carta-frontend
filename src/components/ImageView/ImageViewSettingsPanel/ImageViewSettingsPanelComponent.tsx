@@ -545,7 +545,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Switch disabled={!colorbar.visible} checked={colorbar.interactive} onChange={ev => colorbar.setInteractive(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Position" disabled={!colorbar.visible}>
-                    <HTMLSelect value={colorbar.position} disabled={!colorbar.visible} onChange={ev => colorbar.setPosition(ev.currentTarget.value)}>
+                    <HTMLSelect value={colorbar.position} disabled={!colorbar.visible} onChange={ev => colorbar.setPosition(ev.currentTarget.value as "right" | "top" | "bottom")}>
                         <option value={"right"}>Right</option>
                         <option value={"top"}>Top</option>
                         <option value={"bottom"}>Bottom</option>

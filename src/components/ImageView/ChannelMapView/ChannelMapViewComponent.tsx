@@ -27,8 +27,6 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     const frame = channelMapStore.masterFrame;
     const image = channelMapStore.masterImage;
     const overlayStore = appStore.overlayStore;
-    const colorBarSetting = overlayStore.colorbar;
-    const colorbarOffset = overlayStore.colorbar.visible ? colorBarSetting.stageWidth + overlayStore?.colorbarHoverInfoHeight : 0;
 
     const [imageToolbarVisible, setImageToolbarVisible] = React.useState(false);
 
@@ -169,18 +167,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                 onRegionViewZoom={zoom => onRegionViewZoom(frame, zoom)}
                 onZoomToFit={() => fitZoomFrameAndRegion(frame)}
             />
-            {overlayStore.colorbar.visible && (
-                <ColorbarComponent
-                    frame={frame}
-                    onCursorHoverValueChanged={channelMapStore.setPixelHighlightValue}
-                    width={renderWidth}
-                    height={renderHeight}
-                    leftOffset={overlayStore.colorbar.position === "right" ? overlayStore.paddingTop * 2 : overlayStore.paddingLeft}
-                    left={overlayStore.colorbar.position === "right" ? renderWidth - overlayStore.paddingRight : 0}
-                    top={overlayStore.colorbar.position === "bottom" ? renderHeight - colorbarOffset : overlayStore.colorbar.position === "right" ? 0 : overlayStore.paddingTop - colorbarOffset}
-                    length={overlayStore.colorbar.position === "right" ? channelMapViewHeight - overlayStore.paddingTop : channelMapViewWidth}
-                />
-            )}
+            {overlayStore.colorbar.visible && <ColorbarComponent frame={frame} onCursorHoverValueChanged={channelMapStore.setPixelHighlightValue} />}
             <OverlayComponent
                 key={`overlay-view-component-outer`}
                 image={{
