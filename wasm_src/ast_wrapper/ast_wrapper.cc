@@ -47,6 +47,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* getFrameFromFitsChan(AstFitsChan* fitschan, bo
     if (!frameSet || !astIsAFrameSet(frameSet))
     {
         cout << "Creating frame set failed." << endl;
+        astClearStatus;
         return nullptr;
     }
 
