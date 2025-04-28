@@ -30,15 +30,12 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
 
     const [imageToolbarVisible, setImageToolbarVisible] = React.useState(false);
 
-    const renderWidth = frame.overlayIndividualStore.fullViewWidth;
-    const renderHeight = frame.overlayIndividualStore.fullViewHeight;
-
-    const channelMapViewWidth = renderWidth - overlayStore.paddingRight - overlayStore.paddingLeft;
-    const channelMapViewHeight = renderHeight - overlayStore.paddingBottom - overlayStore.paddingTop;
-
     const outerPadding = frame.channelMapOuterOverlayIndividualStore.padding;
     const outerViewWidth = frame.channelMapOuterOverlayIndividualStore.viewWidth;
     const outerViewHeight = frame.channelMapOuterOverlayIndividualStore.viewHeight;
+    const outerRenderWidth = frame.channelMapOuterOverlayIndividualStore.renderWidth;
+    const outerRenderHeight = frame.channelMapOuterOverlayIndividualStore.renderHeight;
+
     const innerRenderWidth = frame.channelMapInnerOverlayIndividualStore.renderWidth;
     const innerRenderHeight = frame.channelMapInnerOverlayIndividualStore.renderHeight;
     const gapX = frame.channelMapInnerOverlayIndividualStore.gapX;
@@ -135,11 +132,10 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                 image={image}
                 docked={props.docked}
                 pixelHighlightValue={channelMapStore.pixelHighlightValue}
-                renderWidth={channelMapViewWidth}
-                renderHeight={channelMapViewHeight}
                 row={0}
                 column={0}
-                leftPadding={overlayStore.paddingLeft}
+                renderWidth={outerRenderWidth}
+                renderHeight={outerRenderHeight}
                 channel={channelMapStore.channelArray}
             />
             <CursorOverlayComponent

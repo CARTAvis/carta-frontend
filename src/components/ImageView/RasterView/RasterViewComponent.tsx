@@ -16,11 +16,10 @@ export class RasterViewComponentProps {
     docked: boolean;
     image: ImageItem;
     pixelHighlightValue: number;
-    renderWidth?: number;
-    renderHeight?: number;
-    leftPadding?: number;
     row: number;
     column: number;
+    renderWidth?: number;
+    renderHeight?: number;
     channel?: number[];
 }
 
@@ -67,17 +66,21 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             return;
         }
 
+        const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
+        const innerRenderWidth = frame.channelMapInnerOverlayIndividualStore.renderWidth;
+        const innerRenderHeight = frame.channelMapInnerOverlayIndividualStore.renderHeight;
+        const gapX = frame.channelMapInnerOverlayIndividualStore.gapX;
+        const gapY = frame.channelMapInnerOverlayIndividualStore.gapY;
+
         channels.forEach((channel, index) => {
             const appStore = AppStore.Instance;
             const channelMapStore = appStore.channelMapStore;
             const column = index % channelMapStore.numColumns;
             const row = Math.floor(index / channelMapStore.numColumns);
 
-            let width = w / channelMapStore.numColumns;
-            let height = h / channelMapStore.numRows;
+            const xOffset = Math.round((innerRenderWidth + gapX) * column * pixelRatio);
+            const yOffset = Math.round((innerRenderHeight + gapY) * row * pixelRatio); //this.props.renderHeight - innerRenderHeight * (row + 1) - gapY * row
 
-            let xOffset = Math.ceil(column * width);
-            let yOffset = Math.ceil(this.gl.canvas.height - height * (row + 1));
             this.renderCanvas(frame, xOffset, yOffset, Math.floor(frame.renderWidth), Math.floor(frame.renderHeight), channel);
         });
     };
@@ -488,7 +491,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     ref={this.getRef}
                     style={{
                         top: padding.top,
-                        left: this.props.leftPadding ?? padding.left,
+                        left: padding.left,
                         width: baseFrame?.isRenderable ? this.props.renderWidth || baseFrame.renderWidth || 1 : 1,
                         height: baseFrame?.isRenderable ? this.props.renderHeight || baseFrame.renderHeight || 1 : 1
                     }}
