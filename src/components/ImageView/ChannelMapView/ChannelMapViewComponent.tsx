@@ -105,7 +105,14 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
 
         return (
             channel < frame?.frameInfo.fileInfoExtended.depth && (
-                <div key={index} onClick={() => frame.setChannel(channel)} style={{top: overlayComponentTop}}>
+                <div
+                    key={index}
+                    onClick={() => {
+                        frame.setChannel(channel);
+                        appStore.setActiveImage(image);
+                    }}
+                    style={{top: overlayComponentTop}}
+                >
                     <ChannelMapInnerOverlayComponent
                         index={index}
                         frame={frame}
