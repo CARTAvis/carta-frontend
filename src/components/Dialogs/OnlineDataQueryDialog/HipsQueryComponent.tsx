@@ -32,13 +32,9 @@ const renderPixelSize = () => {
     const hipsQueryStore = HipsQueryStore.Instance;
     const pixelSize = AngularSize.convertFromArcsec(hipsQueryStore.pixelSize * 3600, true);
     if (pixelSize.unit === AngularSizeUnit.MILLIARCSEC && pixelSize.value < 0.001) {
-        return <span className="info-string">Pixel size: &lt; 0.001 {pixelSize.unit}</span>;
+        return <FormGroup className="info-string" inline={true} label={`Pixel size: < 0.001 ${pixelSize.unit}`} disabled={hipsQueryStore.isLoading} />;
     }
-    return (
-        <span className="info-string">
-            Pixel size: ~ {pixelSize.value.toFixed(3)} {pixelSize.unit}
-        </span>
-    );
+    return <FormGroup className="info-string" inline={true} label={`Pixel size: ~ ${pixelSize.value.toFixed(3)} ${pixelSize.unit}`} disabled={hipsQueryStore.isLoading} />;
 };
 
 export const HipsQueryComponent = observer(() => {
