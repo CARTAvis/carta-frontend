@@ -191,6 +191,8 @@ const ChannelMapInnerOverlayComponent = observer(({frame, docked}: {frame: Frame
 
     const outerPadding = frame.channelMapOuterOverlayIndividualStore.padding;
     const innerPadding = frame.channelMapInnerOverlayIndividualStore.padding;
+    const innerViewWidth = frame.channelMapInnerOverlayIndividualStore.viewWidth;
+    const innerViewHeight = frame.channelMapInnerOverlayIndividualStore.viewHeight;
     const innerRenderWidth = frame.channelMapInnerOverlayIndividualStore.renderWidth;
     const innerRenderHeight = frame.channelMapInnerOverlayIndividualStore.renderHeight;
     const gapX = frame.channelMapInnerOverlayIndividualStore.gapX;
@@ -212,9 +214,11 @@ const ChannelMapInnerOverlayComponent = observer(({frame, docked}: {frame: Frame
         const sourceWidth = sourceCanvas.width;
         const sourceHeight = sourceCanvas.height;
         const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
-        // when the padding is x.5, slice the area of x instead of x.5 when redrawing
-        const innerPaddingLeft = Math.floor(innerPadding.left * pixelRatio);
-        const innerPaddingBottom = Math.floor(innerPadding.bottom * pixelRatio);
+        // when border > 1, include the area of the border
+        const extraBorderWidth = overlayStore.border.width - 1;
+        // when the padding is x.5, exclude a smaller area (x instead of x.5) when redrawing
+        const innerPaddingLeft = Math.floor(innerPadding.left * pixelRatio - extraBorderWidth);
+        const innerPaddingBottom = Math.floor(innerPadding.bottom * pixelRatio - extraBorderWidth);
 
         channelMapStore.channelArray.forEach((channel, index) => {
             const canvasRefObject = getCanvasRefMap().get(index);
@@ -285,7 +289,7 @@ const ChannelMapInnerOverlayComponent = observer(({frame, docked}: {frame: Frame
                                 map.delete(index);
                             }
                         }}
-                        style={{left, top, width: frame.channelMapInnerOverlayIndividualStore.viewWidth, height: frame.channelMapInnerOverlayIndividualStore.viewHeight}}
+                        style={{left, top, width: innerViewWidth, height: innerViewHeight}}
                     />
                 ) : null;
             })}
