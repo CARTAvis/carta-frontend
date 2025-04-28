@@ -55,7 +55,7 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
         const velocityText = channelMapStore.showVelocityString ? `${velocityLabel}${velocityValue}` : "";
 
         const className = classNames("channel-map-label-span", {docked: this.props.docked});
-        const borderWidth = 1;
+        const hightlightBorderWidth = 2;
 
         return (
             <span
@@ -64,15 +64,15 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
                 style={{
                     color: getColorForTheme(this.props.overlaySettings.global.color),
                     position: "absolute",
-                    top: (this.props.top || 0) - 1 - borderWidth,
-                    left: (this.props.left || 0) - borderWidth,
-                    width: this.props.width + 1 + borderWidth * 2,
-                    height: this.props.height + 1 + borderWidth * 2,
+                    top: (this.props.top || 0) - 1 - hightlightBorderWidth,
+                    left: (this.props.left || 0) - hightlightBorderWidth,
+                    width: this.props.width + 1 + hightlightBorderWidth * 2,
+                    height: this.props.height + 1 + hightlightBorderWidth * 2,
                     zIndex: 2,
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     paddingLeft: `${this.props.width * 0.02}px`,
-                    border: `${this.props.highlighted ? borderWidth + "px solid red" : "none"}`
+                    border: `${this.props.highlighted ? hightlightBorderWidth + "px solid red" : "none"}`
                 }}
                 id="channel-map-label-span"
             >
