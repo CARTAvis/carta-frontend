@@ -107,14 +107,16 @@ export class OverlayGlobalSettings {
         }
 
         if (!AppStore.Instance?.overlayStore?.labels?.customText) {
-            const symbol1 = AST.getString(frame?.wcsInfo, "Symbol(1)");
+            const symbolX = AST.getString(frame?.wcsInfo, "Symbol(1)");
+            const symbolY = AST.getString(frame?.wcsInfo, "Symbol(2)");
             const labelX = AST.getString(frame?.wcsInfo, "Label(1)");
             const labelY = AST.getString(frame?.wcsInfo, "Label(2)");
 
             const isSysPixel = typeof this.explicitSystem === "undefined" || this.explicitSystem === SystemType.Image;
-            const systemName = ((symbol1 === "RA" || symbol1 === "Dec") && AppStore.Instance?.overlayStore?.labels?.raDecReference) || isSysPixel ? (isSysPixel ? ` (pixel)` : ` (${this.explicitSystem})`) : ""; // a space between ` and ( is eccential
-            astString.add("Label(1)", `"${labelX.replace(/%/g, "%%%%")}${systemName}"`, labelX !== undefined);
-            astString.add("Label(2)", `"${labelY.replace(/%/g, "%%%%")}${systemName}"`, labelY !== undefined);
+            const systemNameX = ((symbolX === "RA" || symbolX === "Dec") && AppStore.Instance?.overlayStore?.labels?.raDecReference) || isSysPixel ? (isSysPixel ? ` (pixel)` : ` (${this.explicitSystem})`) : ""; // a space between ` and ( is eccential
+            const systemNameY = ((symbolY === "RA" || symbolY === "Dec") && AppStore.Instance?.overlayStore?.labels?.raDecReference) || isSysPixel ? (isSysPixel ? ` (pixel)` : ` (${this.explicitSystem})`) : ""; // a space between ` and ( is eccential
+            astString.add("Label(1)", `"${labelX.replace(/%/g, "%%%%").replace(/"/g, "'")}${systemNameX}"`, labelX !== undefined);
+            astString.add("Label(2)", `"${labelY.replace(/%/g, "%%%%").replace(/"/g, "'")}${systemNameY}"`, labelY !== undefined);
         }
 
         if ((frame?.isXY || frame?.isYX) && !frame?.isPVImage && isWcsFrameAndSystem) {
@@ -669,11 +671,13 @@ export class OverlayLabelSettings {
         astString.add("Size(TextLab)", this.fontSize * appStore.imageRatio);
         astString.add("Color(TextLab)", AstColorsIndex.LABEL, this.customColor);
 
-        const symbol1 = AST.getString(appStore.activeFrame?.wcsInfo, "Symbol(1)");
+        const symbolX = AST.getString(appStore.activeFrame?.wcsInfo, "Symbol(1)");
+        const symbolY = AST.getString(appStore.activeFrame?.wcsInfo, "Symbol(2)");
         const explicitSystem = appStore.overlayStore.global.explicitSystem;
-        const systemName = (symbol1 === "RA" || symbol1 === "Dec") && this.raDecReference ? ` (${explicitSystem})` : ""; // a space between ` and ( is eccential
-        astString.add("Label(1)", `"${this.customLabelX.replace(/%/g, "%%%%")}${systemName}"`, this.customText);
-        astString.add("Label(2)", `"${this.customLabelY.replace(/%/g, "%%%%")}${systemName}"`, this.customText);
+        const systemNameX = (symbolX === "RA" || symbolX === "Dec") && this.raDecReference ? ` (${explicitSystem})` : ""; // a space between ` and ( is eccential
+        const systemNameY = (symbolY === "RA" || symbolY === "Dec") && this.raDecReference ? ` (${explicitSystem})` : ""; // a space between ` and ( is eccential
+        astString.add("Label(1)", `"${this.customLabelX.replace(/%/g, "%%%%").replace(/"/g, "'")}${systemNameX}"`, this.customText);
+        astString.add("Label(2)", `"${this.customLabelY.replace(/%/g, "%%%%").replace(/"/g, "'")}${systemNameY}"`, this.customText);
 
         return astString.toString();
     }
