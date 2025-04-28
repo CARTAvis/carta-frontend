@@ -51,15 +51,14 @@ export enum HipsProjection {
     XPH = "XPH"
 }
 
-export enum HipsConstraint {
-    MinWidth = 5,
-    MinHeight = 5,
-    MaxDems = 5e7,
-    MinFov = 0,
-    MaxFov = 360,
-    MinRotAngle = 0,
-    MaxRotAngle = 360
-}
+export const HIPSCONSTRAINT = new Map<string, number>([
+    ["MinDems", 5],
+    ["MaxDems", 5e7],
+    ["MinFov", 0],
+    ["MaxFov", 360],
+    ["MinRotAngle", 0],
+    ["MaxRotAngle", 360]
+]);
 
 /** Management of HiPS data queries. */
 export class HipsQueryStore {
@@ -88,19 +87,19 @@ export class HipsQueryStore {
 
     /** Whether the current state is valid for a HiPS data query. */
     @computed get isValid(): boolean {
-        return this.hipsSurvey.length > 0 && this.isDemValid && (this.object.length > 0 || (isFinite(this.center.x) && isFinite(this.center.y))) && this.isFovValid && this.isRotAngleValid && !this.isLoading;
+        return this.hipsSurvey.length > 0 && this.isDimensionValid && (this.object.length > 0 || (isFinite(this.center.x) && isFinite(this.center.y))) && this.isFovValid && this.isRotAngleValid && !this.isLoading;
     }
 
-    @computed get isDemValid(): boolean {
-        return this.size.x >= HipsConstraint.MinWidth && this.size.y >= HipsConstraint.MinHeight && this.size.x * this.size.y <= HipsConstraint.MaxDems;
+    @computed get isDimensionValid(): boolean {
+        return this.size.x >= HIPSCONSTRAINT.get("MinDems") && this.size.y >= HIPSCONSTRAINT.get("MinDems") && this.size.x * this.size.y <= HIPSCONSTRAINT.get("MaxDems");
     }
 
     @computed get isFovValid(): boolean {
-        return this.fov > HipsConstraint.MinFov && this.fov <= HipsConstraint.MaxFov;
+        return this.fov > HIPSCONSTRAINT.get("MinFov") && this.fov <= HIPSCONSTRAINT.get("MaxFov");
     }
 
     @computed get isRotAngleValid(): boolean {
-        return this.rotationAngle >= HipsConstraint.MinRotAngle && this.rotationAngle <= HipsConstraint.MaxRotAngle;
+        return this.rotationAngle >= HIPSCONSTRAINT.get("MinRotAngle") && this.rotationAngle <= HIPSCONSTRAINT.get("MaxRotAngle");
     }
 
     @computed get pixelSize(): number {

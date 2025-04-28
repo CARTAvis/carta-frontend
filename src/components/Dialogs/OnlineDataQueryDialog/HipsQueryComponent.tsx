@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 
 import {SafeNumericInput, ScrollShadow} from "components/Shared";
 import {AngularSize, AngularSizeUnit} from "models";
-import {HipsConstraint, HipsCoord, HipsProjection, HipsQueryStore, HipsSurvey} from "stores";
+import {HIPSCONSTRAINT, HipsCoord, HipsProjection, HipsQueryStore, HipsSurvey} from "stores";
 
 import "./HipsQueryComponent.scss";
 
@@ -32,10 +32,10 @@ const renderPixelSize = () => {
     const hipsQueryStore = HipsQueryStore.Instance;
     const pixelSize = AngularSize.convertFromArcsec(hipsQueryStore.pixelSize * 3600, true);
     if (pixelSize.unit === AngularSizeUnit.MILLIARCSEC && pixelSize.value < 0.001) {
-        return <span className="info-pixel-size">Pixel size: &lt; 0.001 {pixelSize.unit}</span>;
+        return <span className="info-string">Pixel size: &lt; 0.001 {pixelSize.unit}</span>;
     }
     return (
-        <span className="info-pixel-size">
+        <span className="info-string">
             Pixel size: ~ {pixelSize.value.toFixed(3)} {pixelSize.unit}
         </span>
     );
@@ -103,14 +103,14 @@ export const HipsQueryComponent = observer(() => {
                         >
                             <SafeNumericInput
                                 placeholder="Width"
-                                min={HipsConstraint.MinWidth}
+                                min={0}
                                 majorStepSize={100}
                                 stepSize={100}
                                 value={isNaN(hipsQueryStore.size.x) ? "" : hipsQueryStore.size.x}
                                 onValueChange={hipsQueryStore.setWidth}
                                 disabled={hipsQueryStore.isLoading}
                                 intent={
-                                    (hipsQueryStore.size.x >= HipsConstraint.MinWidth && hipsQueryStore.size.x * hipsQueryStore.size.y <= HipsConstraint.MaxDems) || isNaN(hipsQueryStore.size.x) || isNaN(hipsQueryStore.size.y)
+                                    (hipsQueryStore.size.x >= HIPSCONSTRAINT.get("MinDems") && (hipsQueryStore.size.x * hipsQueryStore.size.y <= HIPSCONSTRAINT.get("MaxDems") || isNaN(hipsQueryStore.size.y))) || isNaN(hipsQueryStore.size.x)
                                         ? "none"
                                         : "danger"
                                 }
@@ -126,14 +126,14 @@ export const HipsQueryComponent = observer(() => {
                         >
                             <SafeNumericInput
                                 placeholder="Height"
-                                min={HipsConstraint.MinHeight}
+                                min={0}
                                 majorStepSize={100}
                                 stepSize={100}
                                 value={isNaN(hipsQueryStore.size.y) ? "" : hipsQueryStore.size.y}
                                 onValueChange={hipsQueryStore.setHeight}
                                 disabled={hipsQueryStore.isLoading}
                                 intent={
-                                    (hipsQueryStore.size.y >= HipsConstraint.MinHeight && hipsQueryStore.size.x * hipsQueryStore.size.y <= HipsConstraint.MaxDems) || isNaN(hipsQueryStore.size.x) || isNaN(hipsQueryStore.size.y)
+                                    (hipsQueryStore.size.y >= HIPSCONSTRAINT.get("MinDems") && (hipsQueryStore.size.x * hipsQueryStore.size.y <= HIPSCONSTRAINT.get("MaxDems") || isNaN(hipsQueryStore.size.x))) || isNaN(hipsQueryStore.size.y)
                                         ? "none"
                                         : "danger"
                                 }
