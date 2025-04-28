@@ -115,8 +115,8 @@ export class OverlayGlobalSettings {
             const isSysPixel = typeof this.explicitSystem === "undefined" || this.explicitSystem === SystemType.Image;
             const systemNameX = ((symbolX === "RA" || symbolX === "Dec") && AppStore.Instance?.overlayStore?.labels?.raDecReference) || isSysPixel ? (isSysPixel ? ` (pixel)` : ` (${this.explicitSystem})`) : ""; // a space between ` and ( is eccential
             const systemNameY = ((symbolY === "RA" || symbolY === "Dec") && AppStore.Instance?.overlayStore?.labels?.raDecReference) || isSysPixel ? (isSysPixel ? ` (pixel)` : ` (${this.explicitSystem})`) : ""; // a space between ` and ( is eccential
-            astString.add("Label(1)", `"${labelX.replace(/%/g, "%%%%").replace(/"/g, "'")}${systemNameX}"`, labelX !== undefined);
-            astString.add("Label(2)", `"${labelY.replace(/%/g, "%%%%").replace(/"/g, "'")}${systemNameY}"`, labelY !== undefined);
+            astString.add("Label(1)", `"${labelX.replace(/%/g, "%%%%").replace(/"/g, "”")}${systemNameX}"`, labelX !== undefined);
+            astString.add("Label(2)", `"${labelY.replace(/%/g, "%%%%").replace(/"/g, "”")}${systemNameY}"`, labelY !== undefined);
         }
 
         if ((frame?.isXY || frame?.isYX) && !frame?.isPVImage && isWcsFrameAndSystem) {
@@ -676,8 +676,8 @@ export class OverlayLabelSettings {
         const explicitSystem = appStore.overlayStore.global.explicitSystem;
         const systemNameX = (symbolX === "RA" || symbolX === "Dec") && this.raDecReference ? ` (${explicitSystem})` : ""; // a space between ` and ( is eccential
         const systemNameY = (symbolY === "RA" || symbolY === "Dec") && this.raDecReference ? ` (${explicitSystem})` : ""; // a space between ` and ( is eccential
-        astString.add("Label(1)", `"${this.customLabelX.replace(/%/g, "%%%%").replace(/"/g, "'")}${systemNameX}"`, this.customText);
-        astString.add("Label(2)", `"${this.customLabelY.replace(/%/g, "%%%%").replace(/"/g, "'")}${systemNameY}"`, this.customText);
+        astString.add("Label(1)", `"${this.customLabelX.replace(/%/g, "%%%%").replace(/"/g, "”")}${systemNameX}"`, this.customText);
+        astString.add("Label(2)", `"${this.customLabelY.replace(/%/g, "%%%%").replace(/"/g, "”")}${systemNameY}"`, this.customText);
 
         return astString.toString();
     }
