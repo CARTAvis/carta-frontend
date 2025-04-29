@@ -671,13 +671,8 @@ export class OverlayLabelSettings {
         astString.add("Size(TextLab)", this.fontSize * appStore.imageRatio);
         astString.add("Color(TextLab)", AstColorsIndex.LABEL, this.customColor);
 
-        const symbolX = AST.getString(appStore.activeFrame?.wcsInfo, "Symbol(1)");
-        const symbolY = AST.getString(appStore.activeFrame?.wcsInfo, "Symbol(2)");
-        const explicitSystem = appStore.overlayStore.global.explicitSystem;
-        const systemNameX = (symbolX === "RA" || symbolX === "Dec") && this.raDecReference ? ` (${explicitSystem})` : ""; // a space between ` and ( is eccential
-        const systemNameY = (symbolY === "RA" || symbolY === "Dec") && this.raDecReference ? ` (${explicitSystem})` : ""; // a space between ` and ( is eccential
-        astString.add("Label(1)", `"${this.customLabelX.replace(/%/g, "%%%%").replace(/"/g, "”")}${systemNameX}"`, this.customText);
-        astString.add("Label(2)", `"${this.customLabelY.replace(/%/g, "%%%%").replace(/"/g, "”")}${systemNameY}"`, this.customText);
+        astString.add("Label(1)", `"${this.customLabelX.replace(/%/g, "%%%%").replace(/"/g, "”")}"`, this.customText);
+        astString.add("Label(2)", `"${this.customLabelY.replace(/%/g, "%%%%").replace(/"/g, "”")}"`, this.customText);
 
         return astString.toString();
     }

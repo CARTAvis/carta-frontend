@@ -107,7 +107,12 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     format = "d.*";
                 }
 
-                AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)=${unit}, Unit(2)=${unit}`);
+                // disable unit labels when custom labels on
+                if (OverlayStore.Instance.labels.customText) {
+                    AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)="", Unit(2)=""`);
+                } else {
+                    AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)=${unit}, Unit(2)=${unit}`);
+                }
             }
 
             const plot = (styleString: string) => {
