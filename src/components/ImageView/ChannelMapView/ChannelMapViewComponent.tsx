@@ -173,8 +173,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                 overlaySettings={overlayStore}
                 overlayIndividualStore={frame.channelMapOuterOverlayIndividualStore}
                 docked={props.docked}
-                type={"channel-map-outer"}
-                unScaled={true}
+                unscaled={true}
             />
         </div>
     ) : (
@@ -302,7 +301,6 @@ const ChannelMapInnerOverlayComponent = observer(({frame, docked}: {frame: Frame
                 overlayIndividualStore={frame.channelMapInnerOverlayIndividualStore}
                 top={outerPadding.top + (innerRenderHeight + gapY) * lastRow - innerPadding.top}
                 docked={docked}
-                type={"channel-map-inner"}
                 channelMapDrawFunction={draw}
             />
         </>

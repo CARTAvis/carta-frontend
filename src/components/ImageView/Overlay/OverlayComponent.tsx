@@ -4,7 +4,7 @@ import classNames from "classnames";
 import * as _ from "lodash";
 import {observer} from "mobx-react";
 
-import {CursorInfo, ImageItem, ImageType, SPECTRAL_TYPE_STRING} from "models";
+import {ImageItem, ImageType, SPECTRAL_TYPE_STRING} from "models";
 import {AppStore, OverlayIndividualStore, OverlayStore, PreferenceStore} from "stores";
 
 import "./OverlayComponent.scss";
@@ -16,10 +16,7 @@ export class OverlayComponentProps {
     docked: boolean;
     top?: number;
     left?: number;
-    onClicked?: (cursorInfo: CursorInfo) => void;
-    onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
-    type?: "channel-map-inner" | "channel-map-outer";
-    unScaled?: boolean;
+    unscaled?: boolean;
     channelMapDrawFunction?: (canvas: HTMLCanvasElement) => void;
 }
 
@@ -59,7 +56,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoShifted : frame.wcsInfo;
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
-        const frameView = this.props.unScaled
+        const frameView = this.props.unscaled
             ? {
                   xMin: padding.left * appStore.pixelRatio,
                   xMax: this.props.overlayIndividualStore.viewWidth * appStore.pixelRatio - padding.right * appStore.pixelRatio,
