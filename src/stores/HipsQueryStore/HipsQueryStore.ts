@@ -51,15 +51,6 @@ export enum HipsProjection {
     XPH = "XPH"
 }
 
-export const HIPSCONSTRAINT = new Map<string, number>([
-    ["MinDems", 5],
-    ["MaxDems", 5e7],
-    ["MinFov", 0],
-    ["MaxFov", 360],
-    ["MinRotAngle", 0],
-    ["MaxRotAngle", 360]
-]);
-
 /** Management of HiPS data queries. */
 export class HipsQueryStore {
     private static staticInstance: HipsQueryStore;
@@ -91,15 +82,15 @@ export class HipsQueryStore {
     }
 
     @computed get isDimensionValid(): boolean {
-        return this.size.x >= HIPSCONSTRAINT.get("MinDems") && this.size.y >= HIPSCONSTRAINT.get("MinDems") && this.size.x * this.size.y <= HIPSCONSTRAINT.get("MaxDems");
+        return this.size.x >= this.HipsConstraint.MinDems && this.size.y >= this.HipsConstraint.MinDems && this.size.x * this.size.y <= this.HipsConstraint.MaxDems;
     }
 
     @computed get isFovValid(): boolean {
-        return this.fov > HIPSCONSTRAINT.get("MinFov") && this.fov <= HIPSCONSTRAINT.get("MaxFov");
+        return this.fov > this.HipsConstraint.MinFov && this.fov <= this.HipsConstraint.MaxFov;
     }
 
     @computed get isRotAngleValid(): boolean {
-        return this.rotationAngle >= HIPSCONSTRAINT.get("MinRotAngle") && this.rotationAngle <= HIPSCONSTRAINT.get("MaxRotAngle");
+        return this.rotationAngle >= this.HipsConstraint.MinRotAngle && this.rotationAngle <= this.HipsConstraint.MaxRotAngle;
     }
 
     @computed get pixelSize(): number {
@@ -138,6 +129,15 @@ export class HipsQueryStore {
         [HipsProjection.HPX, "HEALPix"],
         [HipsProjection.XPH, "HEALPix polar, aka “butterfly”"]
     ]);
+
+    readonly HipsConstraint = {
+        MinDems: 5,
+        MaxDems: 5e7,
+        MinFov: 0,
+        MaxFov: 360,
+        MinRotAngle: 0,
+        MaxRotAngle: 360
+    };
 
     static get Instance() {
         if (!HipsQueryStore.staticInstance) {

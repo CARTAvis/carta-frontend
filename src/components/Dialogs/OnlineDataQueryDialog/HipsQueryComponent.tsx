@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 
 import {SafeNumericInput, ScrollShadow} from "components/Shared";
 import {AngularSize, AngularSizeUnit} from "models";
-import {HIPSCONSTRAINT, HipsCoord, HipsProjection, HipsQueryStore, HipsSurvey} from "stores";
+import {HipsCoord, HipsProjection, HipsQueryStore, HipsSurvey} from "stores";
 
 import "./HipsQueryComponent.scss";
 
@@ -106,7 +106,8 @@ export const HipsQueryComponent = observer(() => {
                                 onValueChange={hipsQueryStore.setWidth}
                                 disabled={hipsQueryStore.isLoading}
                                 intent={
-                                    (hipsQueryStore.size.x >= HIPSCONSTRAINT.get("MinDems") && (hipsQueryStore.size.x * hipsQueryStore.size.y <= HIPSCONSTRAINT.get("MaxDems") || isNaN(hipsQueryStore.size.y))) || isNaN(hipsQueryStore.size.x)
+                                    (hipsQueryStore.size.x >= hipsQueryStore.HipsConstraint.MinDems && (hipsQueryStore.size.x * hipsQueryStore.size.y <= hipsQueryStore.HipsConstraint.MaxDems || isNaN(hipsQueryStore.size.y))) ||
+                                    isNaN(hipsQueryStore.size.x)
                                         ? "none"
                                         : "danger"
                                 }
@@ -129,7 +130,8 @@ export const HipsQueryComponent = observer(() => {
                                 onValueChange={hipsQueryStore.setHeight}
                                 disabled={hipsQueryStore.isLoading}
                                 intent={
-                                    (hipsQueryStore.size.y >= HIPSCONSTRAINT.get("MinDems") && (hipsQueryStore.size.x * hipsQueryStore.size.y <= HIPSCONSTRAINT.get("MaxDems") || isNaN(hipsQueryStore.size.x))) || isNaN(hipsQueryStore.size.y)
+                                    (hipsQueryStore.size.y >= hipsQueryStore.HipsConstraint.MinDems && (hipsQueryStore.size.x * hipsQueryStore.size.y <= hipsQueryStore.HipsConstraint.MaxDems || isNaN(hipsQueryStore.size.x))) ||
+                                    isNaN(hipsQueryStore.size.y)
                                         ? "none"
                                         : "danger"
                                 }
