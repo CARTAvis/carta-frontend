@@ -82,7 +82,7 @@ export class HipsQueryStore {
     }
 
     @computed get isDimensionValid(): boolean {
-        return this.size.x >= this.HipsConstraint.MinDems && this.size.y >= this.HipsConstraint.MinDems && this.size.x * this.size.y <= this.HipsConstraint.MaxDems;
+        return this.size.x >= this.HipsConstraint.MinDemension && this.size.y >= this.HipsConstraint.MinDemension && this.size.x * this.size.y <= this.HipsConstraint.MaxDemension;
     }
 
     @computed get isFovValid(): boolean {
@@ -131,8 +131,8 @@ export class HipsQueryStore {
     ]);
 
     readonly HipsConstraint = {
-        MinDems: 5,
-        MaxDems: 5e7,
+        MinDemension: 5,
+        MaxDemension: 5e7,
         MinFov: 0,
         MaxFov: 360,
         MinRotAngle: 0,
