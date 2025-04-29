@@ -79,7 +79,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             const row = Math.floor(index / channelMapStore.numColumns);
 
             const xOffset = Math.round((innerRenderWidth + gapX) * column * pixelRatio);
-            const yOffset = Math.round((innerRenderHeight + gapY) * row * pixelRatio); //this.props.renderHeight - innerRenderHeight * (row + 1) - gapY * row
+            const yOffset = Math.round(this.gl.canvas.height - ((innerRenderHeight + gapY) * (row + 1) - gapY) * pixelRatio);
 
             this.renderCanvas(frame, xOffset, yOffset, Math.floor(frame.renderWidth), Math.floor(frame.renderHeight), channel);
         });
