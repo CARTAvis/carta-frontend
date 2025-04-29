@@ -149,9 +149,9 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             }
 
             if (!settings.title.customText) {
-                currentStyleString += `, Title="${this.props.image?.store?.filename.replace(/%/g, "%%%%")}"`;
+                currentStyleString += `, Title="${this.props.image?.store?.filename.replace(/%/g, "%%%%").replace(/"/g, "”")}"`;
             } else if (this.props.image?.store?.titleCustomText?.length) {
-                currentStyleString += `, Title="${this.props.image?.store?.titleCustomText.replace(/%/g, "%%%%")}"`;
+                currentStyleString += `, Title="${this.props.image?.store?.titleCustomText.replace(/%/g, "%%%%").replace(/"/g, "”")}"`;
             } else {
                 currentStyleString += `, Title=${""}`;
             }
