@@ -991,14 +991,6 @@ export class OverlayStore {
     /** Visibility of the overlay. */
     @observable visible: boolean = true;
 
-    @computed private get fullViewWidth(): number {
-        return AppStore.Instance.fullViewWidth;
-    }
-
-    @computed private get fullViewHeight(): number {
-        return AppStore.Instance.fullViewHeight;
-    }
-
     // Individual settings
     @observable global: OverlayGlobalSettings;
     @observable title: OverlayTitleSettings;
@@ -1010,6 +1002,9 @@ export class OverlayStore {
     @observable ticks: OverlayTickSettings;
     @observable colorbar: OverlayColorbarSettings;
     @observable beam: OverlayBeamSettings;
+
+    private base = 5;
+    defaultGap = 5;
 
     private constructor() {
         makeObservable(this);
@@ -1130,14 +1125,6 @@ export class OverlayStore {
 
     @computed get showNumbers() {
         return this.numbers.show && this.global.labelType === LabelType.Exterior;
-    }
-
-    @computed get base() {
-        return 5;
-    }
-
-    @computed get defaultGap() {
-        return 5;
     }
 
     @computed get titleGap() {
