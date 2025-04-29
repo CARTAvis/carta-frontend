@@ -41,14 +41,14 @@ import {
     AnimatorStore,
     AppStore,
     ASTSettingsString,
-    ChannelMapInnerOverlayIndividualStore,
-    ChannelMapOuterOverlayIndividualStore,
-    ImageViewOverlayIndividualStore,
+    ChannelMapInnerOverlayStore,
+    ChannelMapOuterOverlayStore,
+    ImageViewOverlayStore,
     INITIAL_LAYOUT_ITEM,
     LogStore,
-    OverlayIndividualStore,
+    OverlayStore,
     PreferenceStore,
-    PvPreviewOverlayIndividualStore,
+    PvPreviewOverlayStore,
     SystemType
 } from "stores";
 import {
@@ -146,9 +146,9 @@ export class FrameStore {
     public readonly validWcs: boolean;
     public readonly defaultWcsSystem: SystemType;
     @observable public frameInfo: FrameInfo;
-    public readonly overlayIndividualStore: OverlayIndividualStore;
-    public readonly channelMapOuterOverlayIndividualStore: ChannelMapOuterOverlayIndividualStore;
-    public readonly channelMapInnerOverlayIndividualStore: ChannelMapInnerOverlayIndividualStore;
+    public readonly overlayStore: OverlayStore;
+    public readonly channelMapOuterOverlayStore: ChannelMapOuterOverlayStore;
+    public readonly channelMapInnerOverlayStore: ChannelMapInnerOverlayStore;
     public readonly colorbarStore: ColorbarStore;
 
     public spectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}>;
@@ -438,11 +438,11 @@ export class FrameStore {
     }
 
     @computed get renderWidth() {
-        return AppStore.Instance.channelMapStore.channelMapEnabled && !this.isPreview ? this.channelMapInnerOverlayIndividualStore.renderWidth : this.overlayIndividualStore.renderWidth;
+        return AppStore.Instance.channelMapStore.channelMapEnabled && !this.isPreview ? this.channelMapInnerOverlayStore.renderWidth : this.overlayStore.renderWidth;
     }
 
     @computed get renderHeight() {
-        return AppStore.Instance.channelMapStore.channelMapEnabled && !this.isPreview ? this.channelMapInnerOverlayIndividualStore.renderHeight : this.overlayIndividualStore.renderHeight;
+        return AppStore.Instance.channelMapStore.channelMapEnabled && !this.isPreview ? this.channelMapInnerOverlayStore.renderHeight : this.overlayStore.renderHeight;
     }
 
     @computed get isRenderable() {
@@ -1272,9 +1272,9 @@ export class FrameStore {
         this.requiredStokes = 0;
         this.requiredChannel = 0;
         this.renderConfig = new RenderConfigStore(preferenceStore, this);
-        this.overlayIndividualStore = frameInfo.preview ? new PvPreviewOverlayIndividualStore(pvGeneratorWidget) : new ImageViewOverlayIndividualStore();
-        this.channelMapOuterOverlayIndividualStore = new ChannelMapOuterOverlayIndividualStore();
-        this.channelMapInnerOverlayIndividualStore = new ChannelMapInnerOverlayIndividualStore();
+        this.overlayStore = frameInfo.preview ? new PvPreviewOverlayStore(pvGeneratorWidget) : new ImageViewOverlayStore();
+        this.channelMapOuterOverlayStore = new ChannelMapOuterOverlayStore();
+        this.channelMapInnerOverlayStore = new ChannelMapInnerOverlayStore();
         this.colorbarStore = new ColorbarStore(this);
         this.contourConfig = new ContourConfigStore(preferenceStore);
         this.contourStores = new Map<number, ContourStore>();

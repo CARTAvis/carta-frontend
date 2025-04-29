@@ -106,8 +106,8 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const overlaySettings = appStore.overlaySettings;
         const frame = this.props.frame;
         const colorbarSettings = appStore.overlaySettings.colorbar;
-        const viewHeight = frame.overlayIndividualStore.viewHeight;
-        const viewWidth = frame.overlayIndividualStore.viewWidth;
+        const viewHeight = frame.overlayStore.viewHeight;
+        const viewWidth = frame.overlayStore.viewWidth;
         const colorbarSettingsHeight = frame.colorbarStore.height;
         const yOffset = frame.colorbarStore.yOffset;
 
@@ -139,12 +139,12 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
         // adjust stage position
         if (colorbarSettings.position === "right") {
-            stageLeft = frame.overlayIndividualStore.padding.left + frame.overlayIndividualStore.renderWidth;
+            stageLeft = frame.overlayStore.padding.left + frame.overlayStore.renderWidth;
             stageTop = 0;
         } else if (colorbarSettings.position === "bottom") {
             stageTop = viewHeight - overlaySettings.colorbarHoverInfoHeight - colorbarSettings.stageWidth;
         } else if (colorbarSettings.position === "top" && overlaySettings.title.show) {
-            stageTop = frame.overlayIndividualStore.padding.top - colorbarSettings.stageWidth;
+            stageTop = frame.overlayStore.padding.top - colorbarSettings.stageWidth;
         }
 
         // rotate to horizontal by swapping

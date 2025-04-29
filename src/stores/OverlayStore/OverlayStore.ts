@@ -1178,10 +1178,10 @@ export class OverlaySettings {
     }
 }
 
-export type OverlayIndividualStore = ImageViewOverlayIndividualStore | PvPreviewOverlayIndividualStore;
+export type OverlayStore = ImageViewOverlayStore | PvPreviewOverlayStore;
 
 /** The overlay configuration for a frame in the image view widget. */
-export class ImageViewOverlayIndividualStore {
+export class ImageViewOverlayStore {
     constructor() {
         makeObservable(this);
     }
@@ -1259,7 +1259,7 @@ export class ImageViewOverlayIndividualStore {
 }
 
 /** The overlay configuration for a PV preview widget. */
-export class PvPreviewOverlayIndividualStore extends ImageViewOverlayIndividualStore {
+export class PvPreviewOverlayStore extends ImageViewOverlayStore {
     private readonly previewWidgetStore: PvGeneratorWidgetStore | null = null;
 
     constructor(previewWidgetStore: PvGeneratorWidgetStore) {
@@ -1289,7 +1289,7 @@ export class PvPreviewOverlayIndividualStore extends ImageViewOverlayIndividualS
 }
 
 /** The overlay configuration for the outer part of a frame in channel map mode in the image view widget. */
-export class ChannelMapOuterOverlayIndividualStore extends ImageViewOverlayIndividualStore {
+export class ChannelMapOuterOverlayStore extends ImageViewOverlayStore {
     styleString(frame?: FrameStore) {
         const astString = this.defaultStyleString(frame);
         astString.add("Grid", false);
@@ -1305,7 +1305,7 @@ export class ChannelMapOuterOverlayIndividualStore extends ImageViewOverlayIndiv
 }
 
 /** The overlay configuration for the bottom-left channel of a frame in channel map mode in the image view widget. */
-export class ChannelMapInnerOverlayIndividualStore extends ImageViewOverlayIndividualStore {
+export class ChannelMapInnerOverlayStore extends ImageViewOverlayStore {
     /** Maximum allowed gap between the overlay canvas in pixels. Cannot be set to a negative value. */
     @observable private maxGap = 5;
 

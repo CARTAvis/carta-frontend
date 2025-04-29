@@ -5,13 +5,13 @@ import * as _ from "lodash";
 import {observer} from "mobx-react";
 
 import {ImageItem, ImageType, SPECTRAL_TYPE_STRING} from "models";
-import {AppStore, OverlayIndividualStore, OverlaySettings, PreferenceStore} from "stores";
+import {AppStore, OverlaySettings, OverlayStore, PreferenceStore} from "stores";
 
 import "./OverlayComponent.scss";
 
 export class OverlayComponentProps {
     overlaySettings: OverlaySettings;
-    overlayIndividualStore: OverlayIndividualStore;
+    overlayStore: OverlayStore;
     image: ImageItem;
     docked: boolean;
     top?: number;
@@ -43,8 +43,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     updateImageDimensions() {
         if (this.canvas) {
-            this.canvas.width = this.props.overlayIndividualStore.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
-            this.canvas.height = this.props.overlayIndividualStore.viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
+            this.canvas.width = this.props.overlayStore.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
+            this.canvas.height = this.props.overlayStore.viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
         }
     }
 
@@ -52,16 +52,16 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const settings = this.props.overlaySettings;
         const frame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image.store?.baseFrame : this.props.image?.store;
         const appStore = AppStore.Instance;
-        const padding = this.props.overlayIndividualStore.padding;
+        const padding = this.props.overlayStore.padding;
 
         const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoShifted : frame.wcsInfo;
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
         const frameView = this.props.unscaled
             ? {
                   xMin: padding.left * appStore.pixelRatio,
-                  xMax: this.props.overlayIndividualStore.viewWidth * appStore.pixelRatio - padding.right * appStore.pixelRatio,
+                  xMax: this.props.overlayStore.viewWidth * appStore.pixelRatio - padding.right * appStore.pixelRatio,
                   yMin: (frame.aspectRatio ?? 1) * padding.bottom * appStore.pixelRatio,
-                  yMax: (frame.aspectRatio ?? 1) * this.props.overlayIndividualStore.viewHeight * appStore.pixelRatio - padding.top * appStore.pixelRatio,
+                  yMax: (frame.aspectRatio ?? 1) * this.props.overlayStore.viewHeight * appStore.pixelRatio - padding.top * appStore.pixelRatio,
                   mip: 1
               }
             : frame.spatialReference
@@ -113,8 +113,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     frameView.xMax,
                     frameView.yMin / frame.aspectRatio,
                     frameView.yMax / frame.aspectRatio,
-                    this.props.overlayIndividualStore.viewWidth * appStore.pixelRatio,
-                    this.props.overlayIndividualStore.viewHeight * appStore.pixelRatio,
+                    this.props.overlayStore.viewWidth * appStore.pixelRatio,
+                    this.props.overlayStore.viewHeight * appStore.pixelRatio,
                     padding.left * appStore.pixelRatio,
                     padding.right * appStore.pixelRatio,
                     padding.top * appStore.pixelRatio,
@@ -124,7 +124,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 );
             };
 
-            let currentStyleString = this.props.overlayIndividualStore.styleString(frame);
+            let currentStyleString = this.props.overlayStore.styleString(frame);
 
             // Override the AST tolerance during motion
             if (frame.moving) {
@@ -176,13 +176,13 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const refFrame = frame.spatialReference ?? frame;
         // changing the frame view, padding or width/height triggers a re-render
 
-        const w = this.props.overlayIndividualStore.viewWidth;
-        const h = this.props.overlayIndividualStore.viewHeight;
+        const w = this.props.overlayStore.viewWidth;
+        const h = this.props.overlayStore.viewHeight;
         // Dummy variables for triggering re-render
         /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
-        const styleString = this.props.overlayIndividualStore.styleString;
+        const styleString = this.props.overlayStore.styleString;
         const frameView = refFrame.requiredFrameView;
-        const framePadding = this.props.overlayIndividualStore.padding;
+        const framePadding = this.props.overlayStore.padding;
         const moving = frame.moving;
         const system = this.props.overlaySettings.global.system;
         const globalColor = this.props.overlaySettings.global.color;

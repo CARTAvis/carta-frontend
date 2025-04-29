@@ -18,11 +18,11 @@ export class ColorbarStore {
     }
 
     @computed get yOffset(): number {
-        return this.overlaySettings.colorbar.position === "right" ? this.frame.overlayIndividualStore.padding.top : this.frame.overlayIndividualStore.padding.left;
+        return this.overlaySettings.colorbar.position === "right" ? this.frame.overlayStore.padding.top : this.frame.overlayStore.padding.left;
     }
 
     @computed get height() {
-        return this.overlaySettings.colorbar.position === "right" ? this.frame.overlayIndividualStore.renderHeight : this.frame.overlayIndividualStore.renderWidth;
+        return this.overlaySettings.colorbar.position === "right" ? this.frame.overlayStore.renderHeight : this.frame.overlayStore.renderWidth;
     }
 
     @computed get tickNum() {

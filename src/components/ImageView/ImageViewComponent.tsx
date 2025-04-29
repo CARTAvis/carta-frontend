@@ -36,7 +36,7 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
         const row = Math.floor(index / config.numImageColumns);
         const panelCanvas = getPanelCanvas(column, row, padding, colorbarPosition, backgroundColor);
         if (panelCanvas) {
-            ctx.drawImage(panelCanvas, frame.overlayIndividualStore.viewWidth * column * appStore.pixelRatio, frame.overlayIndividualStore.viewHeight * row * appStore.pixelRatio);
+            ctx.drawImage(panelCanvas, frame.overlayStore.viewWidth * column * appStore.pixelRatio, frame.overlayStore.viewHeight * row * appStore.pixelRatio);
         }
     });
 
@@ -167,7 +167,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                 return;
             }
 
-            const imageSize = {x: firstFrame.overlayIndividualStore.renderWidth, y: firstFrame.overlayIndividualStore.renderHeight};
+            const imageSize = {x: firstFrame.overlayStore.renderWidth, y: firstFrame.overlayStore.renderHeight};
             const imageGridSize = {x: appStore.imageViewConfigStore.numImageColumns, y: appStore.imageViewConfigStore.numImageRows};
             // Compare to cached image size to prevent duplicate events when changing frames
             const imageSizeChanged = !this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y;
@@ -216,7 +216,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             divContents = <NonIdealState icon={<Spinner className="astLoadingSpinner" />} title={"Loading AST Library"} />;
         } else {
             const firstFrame = appStore.imageViewConfigStore.visibleFrames?.[0];
-            const effectiveImageSize = {x: Math.floor(firstFrame?.overlayIndividualStore?.renderWidth), y: Math.floor(firstFrame?.overlayIndividualStore?.renderHeight)};
+            const effectiveImageSize = {x: Math.floor(firstFrame?.overlayStore?.renderWidth), y: Math.floor(firstFrame?.overlayStore?.renderHeight)};
             const ratio = effectiveImageSize.x / effectiveImageSize.y;
             const gridSize = {x: config.numImageColumns, y: config.numImageRows};
 

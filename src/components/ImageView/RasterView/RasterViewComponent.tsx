@@ -67,10 +67,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
 
         const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
-        const innerRenderWidth = frame.channelMapInnerOverlayIndividualStore.renderWidth;
-        const innerRenderHeight = frame.channelMapInnerOverlayIndividualStore.renderHeight;
-        const gapX = frame.channelMapInnerOverlayIndividualStore.gapX;
-        const gapY = frame.channelMapInnerOverlayIndividualStore.gapY;
+        const innerRenderWidth = frame.channelMapInnerOverlayStore.renderWidth;
+        const innerRenderHeight = frame.channelMapInnerOverlayStore.renderHeight;
+        const gapX = frame.channelMapInnerOverlayStore.gapX;
+        const gapY = frame.channelMapInnerOverlayStore.gapY;
 
         channels.forEach((channel, index) => {
             const appStore = AppStore.Instance;
@@ -480,7 +480,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
-        const padding = baseFrame.overlayIndividualStore.padding;
+        const padding = baseFrame.overlayStore.padding;
         const className = classNames(`raster-div`, {docked: this.props.docked});
 
         return (

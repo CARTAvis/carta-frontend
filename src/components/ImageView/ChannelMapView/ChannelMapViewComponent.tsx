@@ -30,16 +30,16 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
 
     const [imageToolbarVisible, setImageToolbarVisible] = React.useState(false);
 
-    const outerPadding = frame.channelMapOuterOverlayIndividualStore.padding;
-    const outerViewWidth = frame.channelMapOuterOverlayIndividualStore.viewWidth;
-    const outerViewHeight = frame.channelMapOuterOverlayIndividualStore.viewHeight;
-    const outerRenderWidth = frame.channelMapOuterOverlayIndividualStore.renderWidth;
-    const outerRenderHeight = frame.channelMapOuterOverlayIndividualStore.renderHeight;
+    const outerPadding = frame.channelMapOuterOverlayStore.padding;
+    const outerViewWidth = frame.channelMapOuterOverlayStore.viewWidth;
+    const outerViewHeight = frame.channelMapOuterOverlayStore.viewHeight;
+    const outerRenderWidth = frame.channelMapOuterOverlayStore.renderWidth;
+    const outerRenderHeight = frame.channelMapOuterOverlayStore.renderHeight;
 
-    const innerRenderWidth = frame.channelMapInnerOverlayIndividualStore.renderWidth;
-    const innerRenderHeight = frame.channelMapInnerOverlayIndividualStore.renderHeight;
-    const gapX = frame.channelMapInnerOverlayIndividualStore.gapX;
-    const gapY = frame.channelMapInnerOverlayIndividualStore.gapY;
+    const innerRenderWidth = frame.channelMapInnerOverlayStore.renderWidth;
+    const innerRenderHeight = frame.channelMapInnerOverlayStore.renderHeight;
+    const gapX = frame.channelMapInnerOverlayStore.gapX;
+    const gapY = frame.channelMapInnerOverlayStore.gapY;
 
     const lastRow = Math.floor((channelMapStore.channelArray.length - 1) / channelMapStore.numColumns);
 
@@ -170,7 +170,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     store: frame
                 }}
                 overlaySettings={overlaySettings}
-                overlayIndividualStore={frame.channelMapOuterOverlayIndividualStore}
+                overlayStore={frame.channelMapOuterOverlayStore}
                 docked={props.docked}
                 unscaled={true}
             />
@@ -187,14 +187,14 @@ const ChannelMapInnerOverlayComponent = observer(({frame, docked}: {frame: Frame
     const lastRow = Math.floor((channelMapStore.channelArray.length - 1) / channelMapStore.numColumns);
     const columnOfLastFrame = channelMapStore.channelArray.length - lastRow * channelMapStore.numColumns - 1;
 
-    const outerPadding = frame.channelMapOuterOverlayIndividualStore.padding;
-    const innerPadding = frame.channelMapInnerOverlayIndividualStore.padding;
-    const innerViewWidth = frame.channelMapInnerOverlayIndividualStore.viewWidth;
-    const innerViewHeight = frame.channelMapInnerOverlayIndividualStore.viewHeight;
-    const innerRenderWidth = frame.channelMapInnerOverlayIndividualStore.renderWidth;
-    const innerRenderHeight = frame.channelMapInnerOverlayIndividualStore.renderHeight;
-    const gapX = frame.channelMapInnerOverlayIndividualStore.gapX;
-    const gapY = frame.channelMapInnerOverlayIndividualStore.gapY;
+    const outerPadding = frame.channelMapOuterOverlayStore.padding;
+    const innerPadding = frame.channelMapInnerOverlayStore.padding;
+    const innerViewWidth = frame.channelMapInnerOverlayStore.viewWidth;
+    const innerViewHeight = frame.channelMapInnerOverlayStore.viewHeight;
+    const innerRenderWidth = frame.channelMapInnerOverlayStore.renderWidth;
+    const innerRenderHeight = frame.channelMapInnerOverlayStore.renderHeight;
+    const gapX = frame.channelMapInnerOverlayStore.gapX;
+    const gapY = frame.channelMapInnerOverlayStore.gapY;
 
     const canvasRef = React.useRef(null);
     const getCanvasRefMap = (): Map<number, {overlayType: "left" | "bottom" | "inner"; node: HTMLCanvasElement}> => {
@@ -297,7 +297,7 @@ const ChannelMapInnerOverlayComponent = observer(({frame, docked}: {frame: Frame
                     store: frame
                 }}
                 overlaySettings={overlaySettings}
-                overlayIndividualStore={frame.channelMapInnerOverlayIndividualStore}
+                overlayStore={frame.channelMapInnerOverlayStore}
                 top={outerPadding.top + (innerRenderHeight + gapY) * lastRow - innerPadding.top}
                 docked={docked}
                 channelMapDrawFunction={draw}
