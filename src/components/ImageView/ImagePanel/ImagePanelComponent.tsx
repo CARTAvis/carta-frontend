@@ -197,7 +197,6 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                         top={frame.overlayIndividualStore.padding.top}
                         left={frame.overlayIndividualStore.padding.left}
                         onClickToCenter={this.onClickToCenter}
-                        overlaySettings={overlayStore}
                         dragPanningEnabled={appStore.preferenceStore.dragPanning}
                         docked={this.props.docked && activeLayer !== ImageViewLayer.Catalog}
                     />

@@ -104,7 +104,6 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                         top={top}
                         left={left}
                         onClickToCenter={cursorInfo => onClickToCenter(frame, cursorInfo)}
-                        overlaySettings={overlayStore}
                         dragPanningEnabled={appStore.preferenceStore.dragPanning}
                         docked={props.docked}
                     />

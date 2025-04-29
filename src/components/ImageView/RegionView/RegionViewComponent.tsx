@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
 import {CursorInfo, Point2D, ZoomPoint} from "models";
-import {AppStore, DialogId, OverlayStore, PreferenceStore} from "stores";
+import {AppStore, DialogId, PreferenceStore} from "stores";
 import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
 import {add2D, average2D, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
 
@@ -24,7 +24,6 @@ import "./RegionViewComponent.scss";
 
 export interface RegionViewComponentProps {
     frame: FrameStore;
-    overlaySettings: OverlayStore;
     dragPanningEnabled: boolean;
     docked: boolean;
     width: number;
