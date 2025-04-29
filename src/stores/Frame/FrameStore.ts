@@ -65,7 +65,7 @@ import {
     VectorOverlayConfigStore,
     VectorOverlayStore
 } from "stores/Frame";
-import {RegionId} from "stores/Widgets";
+import {PvGeneratorWidgetStore, RegionId} from "stores/Widgets";
 import {
     clamp,
     formattedArcsec,
@@ -1244,7 +1244,7 @@ export class FrameStore {
         return {ctype: info.ctype, layoutName: layoutName};
     }
 
-    constructor(frameInfo: FrameInfo) {
+    constructor(frameInfo: FrameInfo, pvGeneratorWidget?: PvGeneratorWidgetStore) {
         makeObservable(this);
         this.logStore = LogStore.Instance;
         this.backendService = BackendService.Instance;
@@ -1272,7 +1272,7 @@ export class FrameStore {
         this.requiredStokes = 0;
         this.requiredChannel = 0;
         this.renderConfig = new RenderConfigStore(preferenceStore, this);
-        this.overlayIndividualStore = frameInfo.preview ? new PvPreviewOverlayIndividualStore() : new ImageViewOverlayIndividualStore();
+        this.overlayIndividualStore = frameInfo.preview ? new PvPreviewOverlayIndividualStore(pvGeneratorWidget) : new ImageViewOverlayIndividualStore();
         this.channelMapOuterOverlayIndividualStore = new ChannelMapOuterOverlayIndividualStore();
         this.channelMapInnerOverlayIndividualStore = new ChannelMapInnerOverlayIndividualStore();
         this.colorbarStore = new ColorbarStore(this);
@@ -3283,12 +3283,6 @@ export class FrameStore {
         this.setZoom((this.zoomLevel * oldHeight) / this.frameInfo.fileInfoExtended.height);
         this.setCenter(isWidthUpdated ? ((this.center.x + 0.5) * oldAspectRatio) / this.aspectRatio - 0.5 : this.center.x, isHeightUpdated ? ((this.center.y + 0.5) * this.aspectRatio) / oldAspectRatio - 0.5 : this.center.y, false);
     }
-
-    @action onResizePreviewWidget = (width: number, height: number) => {
-        if (width > 0 && height > 0) {
-            this.overlayIndividualStore.setViewDimension(width, height);
-        }
-    };
 
     @action setFrameInfo = (frameInfo: FrameInfo) => {
         this.frameInfo = frameInfo;

@@ -2,7 +2,7 @@ import * as AST from "ast_wrapper";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 
 import {WCSType} from "models";
-import {AlertStore, AppStore, PreferenceStore} from "stores";
+import {AlertStore, AppStore, PreferenceStore, PvGeneratorWidgetStore} from "stores";
 import {FrameStore, OverlayBeamStore, WCS_PRECISION} from "stores/Frame";
 import {clamp, getColorForTheme, toFixed} from "utilities";
 
@@ -1182,24 +1182,19 @@ export type OverlayIndividualStore = ImageViewOverlayIndividualStore | PvPreview
 
 /** The overlay configuration for a frame in the image view widget. */
 export class ImageViewOverlayIndividualStore {
-    /** The width of the entire widget on which the overlay is displayed. */
-    @observable fullViewWidth = AppStore.Instance.fullViewWidth;
-    /** The height of the entire widget on which the overlay is displayed. */
-    @observable fullViewHeight = AppStore.Instance.fullViewHeight;
-
     constructor() {
         makeObservable(this);
     }
 
-    /**
-     * Update the size of the entire widget on which the overlay is displayed.
-     * @param width - The width of the widget.
-     * @param height - The height of the widget.
-     */
-    @action setViewDimension = (width: number, height: number) => {
-        this.fullViewWidth = width;
-        this.fullViewHeight = height;
-    };
+    /** The width of the entire widget on which the overlay is displayed. */
+    @computed get fullViewWidth() {
+        return AppStore.Instance.fullViewWidth;
+    }
+
+    /** The height of the entire widget on which the overlay is displayed. */
+    @computed get fullViewHeight() {
+        return AppStore.Instance.fullViewHeight;
+    }
 
     /** The width of the overlay canvas. */
     @computed get viewWidth() {
@@ -1265,6 +1260,23 @@ export class ImageViewOverlayIndividualStore {
 
 /** The overlay configuration for a PV preview widget. */
 export class PvPreviewOverlayIndividualStore extends ImageViewOverlayIndividualStore {
+    private readonly previewWidgetStore: PvGeneratorWidgetStore | null = null;
+
+    constructor(previewWidgetStore: PvGeneratorWidgetStore) {
+        super();
+        this.previewWidgetStore = previewWidgetStore;
+    }
+
+    /** The width of the entire widget on which the overlay is displayed. */
+    get fullViewWidth() {
+        return this.previewWidgetStore?.previewFullViewWidth;
+    }
+
+    /** The height of the entire widget on which the overlay is displayed. */
+    get fullViewHeight() {
+        return this.previewWidgetStore?.previewFullViewHeight;
+    }
+
     /** The width of the overlay canvas. */
     get viewWidth() {
         return this.fullViewWidth;

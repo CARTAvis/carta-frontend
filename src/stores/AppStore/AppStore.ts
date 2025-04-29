@@ -65,7 +65,7 @@ import {
     WidgetsStore
 } from "stores";
 import {CompassAnnotationStore, CURSOR_REGION_ID, FrameInfo, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
-import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
+import {HistogramWidgetStore, PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
 import {distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
 
 import GitCommit from "../../static/gitInfo";
@@ -194,14 +194,6 @@ export class AppStore {
     @action setImageViewDimensions = (w: number, h: number) => {
         this.fullViewWidth = w;
         this.fullViewHeight = h;
-
-        this.frames.forEach(frame => {
-            if (frame && !frame.isPreview) {
-                frame.overlayIndividualStore.setViewDimension(w, h);
-                frame.channelMapOuterOverlayIndividualStore.setViewDimension(w, h);
-                frame.channelMapInnerOverlayIndividualStore.setViewDimension(w, h);
-            }
-        });
     };
 
     // Auth
@@ -636,7 +628,7 @@ export class AppStore {
         return true;
     };
 
-    @action addPreviewFrame = (ack: any, directory: string, hdu: string) => {
+    @action addPreviewFrame = (ack: any, directory: string, hdu: string, pvGeneratorWidgetStore: PvGeneratorWidgetStore) => {
         if (!ack) {
             return undefined;
         }
@@ -655,7 +647,7 @@ export class AppStore {
             preview: true
         };
 
-        const newFrame = new FrameStore(frameInfo);
+        const newFrame = new FrameStore(frameInfo, pvGeneratorWidgetStore);
 
         if (newFrame) {
             this.previewFrames.set(ack.previewId, newFrame);
@@ -1530,11 +1522,10 @@ export class AppStore {
                     // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
                     pvGeneratorWidgetStore.previewFrame.updatePreviewDataGenerator.next();
                 } else {
-                    const newFrame = this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory, "");
+                    const newFrame = this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory, "", pvGeneratorWidgetStore);
                     pvGeneratorWidgetStore.setPreviewFrame(newFrame);
                     pvGeneratorWidgetStore.setPvCutRegionId(message.regionId);
                     WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WIDGET_CONFIG.type);
-                    newFrame.onResizePreviewWidget(PvGeneratorComponent.WIDGET_CONFIG.defaultWidth, PvGeneratorComponent.WIDGET_CONFIG.defaultHeight);
                     pvGeneratorWidgetStore.onResizePreviewWidget(PvGeneratorComponent.WIDGET_CONFIG.defaultWidth, PvGeneratorComponent.WIDGET_CONFIG.defaultHeight);
                 }
             } else {
