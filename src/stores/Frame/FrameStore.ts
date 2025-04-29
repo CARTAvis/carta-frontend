@@ -3287,7 +3287,6 @@ export class FrameStore {
     @action onResizePreviewWidget = (width: number, height: number) => {
         if (width > 0 && height > 0) {
             this.overlayIndividualStore.setViewDimension(width, height);
-            this.fitZoom();
         }
     };
 
