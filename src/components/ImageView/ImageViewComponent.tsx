@@ -157,7 +157,17 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         const appStore = AppStore.Instance;
 
         autorun(() => {
-            const imageSize = {x: appStore.overlayStore.renderWidth, y: appStore.overlayStore.renderHeight};
+            const visibleFrames = appStore.imageViewConfigStore.visibleFrames;
+            if (!visibleFrames.length) {
+                return;
+            }
+
+            const firstFrame = visibleFrames[0];
+            if (!firstFrame) {
+                return;
+            }
+
+            const imageSize = {x: firstFrame.overlayIndividualStore.renderWidth, y: firstFrame.overlayIndividualStore.renderHeight};
             const imageGridSize = {x: appStore.imageViewConfigStore.numImageColumns, y: appStore.imageViewConfigStore.numImageRows};
             // Compare to cached image size to prevent duplicate events when changing frames
             const imageSizeChanged = !this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y;
@@ -205,7 +215,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         } else if (!appStore.astReady) {
             divContents = <NonIdealState icon={<Spinner className="astLoadingSpinner" />} title={"Loading AST Library"} />;
         } else {
-            const effectiveImageSize = {x: Math.floor(appStore.overlayStore.renderWidth), y: Math.floor(appStore.overlayStore.renderHeight)};
+            const firstFrame = appStore.imageViewConfigStore.visibleFrames?.[0];
+            const effectiveImageSize = {x: Math.floor(firstFrame?.overlayIndividualStore?.renderWidth), y: Math.floor(firstFrame?.overlayIndividualStore?.renderHeight)};
             const ratio = effectiveImageSize.x / effectiveImageSize.y;
             const gridSize = {x: config.numImageColumns, y: config.numImageRows};
 

@@ -1182,36 +1182,6 @@ export class OverlayStore {
         return this.base + this.numberWidth + this.labelWidth + (this.colorbar.visible && this.colorbar.position === "bottom" ? this.colorbar.totalWidth : 0) + this.colorbarHoverInfoHeight;
     }
 
-    @computed private get viewWidth() {
-        return Math.floor(this.fullViewWidth / AppStore.Instance.imageViewConfigStore.numImageColumns);
-    }
-
-    @computed private get viewHeight() {
-        return Math.floor(this.fullViewHeight / AppStore.Instance.imageViewConfigStore.numImageRows);
-    }
-
-    // ToDo: remove and use overlay store per frame instead
-    @computed get renderWidth() {
-        let renderWidth;
-        if (AppStore.Instance.channelMapStore.channelMapEnabled) {
-            renderWidth = (this.fullViewWidth - this.paddingLeft - this.paddingRight) / AppStore.Instance.channelMapStore.numColumns - this.base;
-        } else {
-            renderWidth = this.viewWidth - this.paddingLeft - this.paddingRight;
-        }
-        return renderWidth > 1 ? renderWidth : 1; // return value > 1 to prevent crashing
-    }
-
-    // ToDo: remove and use overlay store per frame instead
-    @computed get renderHeight() {
-        let renderHeight;
-        if (AppStore.Instance.channelMapStore.channelMapEnabled) {
-            renderHeight = (this.fullViewHeight - this.paddingTop - this.paddingBottom) / AppStore.Instance.channelMapStore.numRows - this.base;
-        } else {
-            renderHeight = this.viewHeight - this.paddingTop - this.paddingBottom;
-        }
-        return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
-    }
-
     @computed get isWcsCoordinates() {
         return this.global.explicitSystem !== SystemType.Image;
     }
