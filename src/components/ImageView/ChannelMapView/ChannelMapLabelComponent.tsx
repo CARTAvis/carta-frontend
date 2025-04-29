@@ -3,11 +3,11 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {ImageItem} from "models";
-import {AppStore, OverlayStore} from "stores";
+import {AppStore, OverlaySettings} from "stores";
 import {getColorForTheme} from "utilities";
 
 export class ChannelMapLabelComponentProps {
-    overlaySettings: OverlayStore;
+    overlaySettings: OverlaySettings;
     image: ImageItem;
     docked: boolean;
     top: number;

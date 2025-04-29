@@ -978,14 +978,14 @@ export class OverlayBeamSettings {
     };
 }
 
-export class OverlayStore {
-    private static staticInstance: OverlayStore;
+export class OverlaySettings {
+    private static staticInstance: OverlaySettings;
 
     static get Instance() {
-        if (!OverlayStore.staticInstance) {
-            OverlayStore.staticInstance = new OverlayStore();
+        if (!OverlaySettings.staticInstance) {
+            OverlaySettings.staticInstance = new OverlaySettings();
         }
-        return OverlayStore.staticInstance;
+        return OverlaySettings.staticInstance;
     }
 
     /** Visibility of the overlay. */
@@ -1209,13 +1209,13 @@ export class ImageViewOverlayIndividualStore {
     /** The width of the raster tile canvas (the area inside the border). */
     @computed get renderWidth() {
         // return value > 1 to prevent crashing
-        return Math.max(this.viewWidth - OverlayStore.Instance.paddingLeft - OverlayStore.Instance.paddingRight, 1);
+        return Math.max(this.viewWidth - OverlaySettings.Instance.paddingLeft - OverlaySettings.Instance.paddingRight, 1);
     }
 
     /** The height of the raster tile canvas (the area inside the border). */
     @computed get renderHeight() {
         // return value > 1 to prevent crashing
-        return Math.max(this.viewHeight - OverlayStore.Instance.paddingTop - OverlayStore.Instance.paddingBottom, 1);
+        return Math.max(this.viewHeight - OverlaySettings.Instance.paddingTop - OverlaySettings.Instance.paddingBottom, 1);
     }
 
     /** The minimum size between the raster tile canvas width and height (render width and height). */
@@ -1226,28 +1226,28 @@ export class ImageViewOverlayIndividualStore {
     /** The space between the edges of the overlay canvas and the raster tile canvas (the area outside the border). */
     @computed get padding(): Padding {
         return {
-            left: OverlayStore.Instance.paddingLeft,
-            right: OverlayStore.Instance.paddingRight,
-            top: OverlayStore.Instance.paddingTop,
-            bottom: OverlayStore.Instance.paddingBottom
+            left: OverlaySettings.Instance.paddingLeft,
+            right: OverlaySettings.Instance.paddingRight,
+            top: OverlaySettings.Instance.paddingTop,
+            bottom: OverlaySettings.Instance.paddingBottom
         };
     }
 
     defaultStyleString(frame?: FrameStore): ASTSettingsString {
         let astString = new ASTSettingsString();
-        astString.addSection(OverlayStore.Instance.global.styleString(frame));
-        astString.addSection(OverlayStore.Instance.title.styleString);
-        astString.addSection(OverlayStore.Instance.grid.styleString);
-        astString.addSection(OverlayStore.Instance.border.styleString);
-        astString.addSection(OverlayStore.Instance.ticks.styleString);
-        astString.addSection(OverlayStore.Instance.axes.styleString);
-        astString.addSection(OverlayStore.Instance.numbers.styleString);
-        astString.addSection(OverlayStore.Instance.labels.styleString);
+        astString.addSection(OverlaySettings.Instance.global.styleString(frame));
+        astString.addSection(OverlaySettings.Instance.title.styleString);
+        astString.addSection(OverlaySettings.Instance.grid.styleString);
+        astString.addSection(OverlaySettings.Instance.border.styleString);
+        astString.addSection(OverlaySettings.Instance.ticks.styleString);
+        astString.addSection(OverlaySettings.Instance.axes.styleString);
+        astString.addSection(OverlaySettings.Instance.numbers.styleString);
+        astString.addSection(OverlaySettings.Instance.labels.styleString);
 
         astString.add("LabelUp", 0);
-        astString.add("TitleGap", OverlayStore.Instance.titleGap / this.minSize);
-        astString.add("NumLabGap", OverlayStore.Instance.defaultGap / this.minSize);
-        astString.add("TextLabGap", OverlayStore.Instance.cumulativeLabelGap / this.minSize);
+        astString.add("TitleGap", OverlaySettings.Instance.titleGap / this.minSize);
+        astString.add("NumLabGap", OverlaySettings.Instance.defaultGap / this.minSize);
+        astString.add("TextLabGap", OverlaySettings.Instance.cumulativeLabelGap / this.minSize);
         astString.add("TextGapType", "plot");
 
         return astString;
@@ -1334,8 +1334,8 @@ export class ChannelMapInnerOverlayIndividualStore extends ImageViewOverlayIndiv
 
     /** The width of the raster tile canvas (the area inside the border). */
     get renderWidth() {
-        const overlayStore = AppStore.Instance.overlayStore;
-        const outerRenderWidth = this.fullViewWidth - overlayStore.paddingLeft - overlayStore.paddingRight;
+        const overlaySettings = AppStore.Instance.overlaySettings;
+        const outerRenderWidth = this.fullViewWidth - overlaySettings.paddingLeft - overlaySettings.paddingRight;
         const numColumns = AppStore.Instance.channelMapStore.numColumns;
         const renderWidth = Math.ceil((outerRenderWidth - this.maxGap * (numColumns - 1)) / numColumns);
         return Math.max(renderWidth, 1); // return value > 1 to prevent crashing
@@ -1343,8 +1343,8 @@ export class ChannelMapInnerOverlayIndividualStore extends ImageViewOverlayIndiv
 
     /** The height of the raster tile canvas (the area inside the border). */
     get renderHeight() {
-        const overlayStore = AppStore.Instance.overlayStore;
-        const outerRenderHeight = this.fullViewHeight - overlayStore.paddingTop - overlayStore.paddingBottom;
+        const overlaySettings = AppStore.Instance.overlaySettings;
+        const outerRenderHeight = this.fullViewHeight - overlaySettings.paddingTop - overlaySettings.paddingBottom;
         const numRows = AppStore.Instance.channelMapStore.numRows;
         const renderHeight = Math.ceil((outerRenderHeight - this.maxGap * (numRows - 1)) / numRows);
         return Math.max(renderHeight, 1); // return value > 1 to prevent crashing
@@ -1353,26 +1353,26 @@ export class ChannelMapInnerOverlayIndividualStore extends ImageViewOverlayIndiv
     /** The space between the edges of the overlay canvas and the raster tile canvas (the area outside the border). */
     get padding(): Padding {
         return {
-            left: OverlayStore.Instance.paddingLeft,
+            left: OverlaySettings.Instance.paddingLeft,
             right: this.maxGap,
             top: this.maxGap,
-            bottom: OverlayStore.Instance.paddingBottom
+            bottom: OverlaySettings.Instance.paddingBottom
         };
     }
 
     /** The horizontal gap between columns. Returns 0 if there's only one column. */
     @computed get gapX() {
-        const overlayStore = AppStore.Instance.overlayStore;
+        const overlaySettings = AppStore.Instance.overlaySettings;
         const channelMapStore = AppStore.Instance.channelMapStore;
-        const outerRenderWidth = this.fullViewWidth - overlayStore.paddingLeft - overlayStore.paddingRight;
+        const outerRenderWidth = this.fullViewWidth - overlaySettings.paddingLeft - overlaySettings.paddingRight;
         return channelMapStore.numColumns > 1 ? (outerRenderWidth - this.renderWidth * channelMapStore.numColumns) / (channelMapStore.numColumns - 1) : 0;
     }
 
     /** The vertical gap between rows. Returns 0 if there's only one row. */
     @computed get gapY() {
-        const overlayStore = AppStore.Instance.overlayStore;
+        const overlaySettings = AppStore.Instance.overlaySettings;
         const channelMapStore = AppStore.Instance.channelMapStore;
-        const outerRenderHeight = this.fullViewHeight - overlayStore.paddingTop - overlayStore.paddingBottom;
+        const outerRenderHeight = this.fullViewHeight - overlaySettings.paddingTop - overlaySettings.paddingBottom;
         return channelMapStore.numRows > 1 ? (outerRenderHeight - this.renderHeight * channelMapStore.numRows) / (channelMapStore.numRows - 1) : 0;
     }
 

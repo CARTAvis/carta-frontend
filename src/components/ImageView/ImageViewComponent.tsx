@@ -82,7 +82,7 @@ export function getPanelCanvas(column: number, row: number, padding: Padding, co
                 break;
             case "bottom":
                 xPos = 0;
-                yPos = overlayCanvas.height - colorbarCanvas.height - AppStore.Instance.overlayStore.colorbarHoverInfoHeight * appStore.pixelRatio;
+                yPos = overlayCanvas.height - colorbarCanvas.height - AppStore.Instance.overlaySettings.colorbarHoverInfoHeight * appStore.pixelRatio;
                 break;
             case "right":
             default:

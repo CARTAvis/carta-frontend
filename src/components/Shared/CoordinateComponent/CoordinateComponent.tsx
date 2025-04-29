@@ -24,8 +24,8 @@ export class CoordinateComponent extends React.Component<ICoordinateComponentPro
                 </RadioGroup>
                 <HTMLSelect
                     options={Object.keys(SystemType).map(key => ({label: key, value: SystemType[key]}))}
-                    value={AppStore.Instance.overlayStore.global.system}
-                    onChange={ev => AppStore.Instance.overlayStore.global.setSystem(ev.currentTarget.value as SystemType)}
+                    value={AppStore.Instance.overlaySettings.global.system}
+                    onChange={ev => AppStore.Instance.overlaySettings.global.setSystem(ev.currentTarget.value as SystemType)}
                 />
             </div>
         );

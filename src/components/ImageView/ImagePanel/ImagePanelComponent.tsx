@@ -129,7 +129,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         const activeLayer = appStore.activeLayer;
 
         const frame = this.frame;
-        const overlayStore = appStore.overlayStore;
+        const overlaySettings = appStore.overlaySettings;
         if (this.frame?.isRenderable && appStore.astReady) {
             const isActive = appStore.isActiveImage(this.props.image) && (appStore.imageViewConfigStore.imagesPerPage > 1 || appStore.previewFrames.size > 0);
             const isColorBlending = this.props.image?.type === ImageType.COLOR_BLENDING;
@@ -168,7 +168,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                     {showRaster && <RasterViewComponent image={this.props.image} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} row={this.props.row} column={this.props.column} />}
                     {showContour && <ContourViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />}
                     {showVector && <VectorOverlayViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />}
-                    {appStore.overlayStore?.visible && <OverlayComponent image={this.props.image} overlaySettings={overlayStore} overlayIndividualStore={frame.overlayIndividualStore} docked={this.props.docked} />}
+                    {appStore.overlaySettings?.visible && <OverlayComponent image={this.props.image} overlaySettings={overlaySettings} overlayIndividualStore={frame.overlayIndividualStore} docked={this.props.docked} />}
                     {this.cursorInfoRequired && this.frame.cursorInfo && !isColorBlending && (
                         <CursorOverlayComponent
                             cursorInfo={frame.cursorInfo}
@@ -186,7 +186,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                             isPreview={this.frame.isPreview}
                         />
                     )}
-                    {appStore.overlayStore.colorbar.visible && !isColorBlending && <ColorbarComponent frame={frame} onCursorHoverValueChanged={this.setPixelHighlightValue} />}
+                    {appStore.overlaySettings.colorbar.visible && !isColorBlending && <ColorbarComponent frame={frame} onCursorHoverValueChanged={this.setPixelHighlightValue} />}
                     {!isColorBlending && <BeamProfileOverlayComponent frame={this.frame} top={frame.overlayIndividualStore.padding.top} left={frame.overlayIndividualStore.padding.left} docked={this.props.docked} padding={10} />}
                     <CatalogViewGLComponent frame={frame} docked={this.props.docked} />
                     <RegionViewComponent

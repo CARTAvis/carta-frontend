@@ -5,12 +5,12 @@ import * as _ from "lodash";
 import {observer} from "mobx-react";
 
 import {ImageItem, ImageType, SPECTRAL_TYPE_STRING} from "models";
-import {AppStore, OverlayIndividualStore, OverlayStore, PreferenceStore} from "stores";
+import {AppStore, OverlayIndividualStore, OverlaySettings, PreferenceStore} from "stores";
 
 import "./OverlayComponent.scss";
 
 export class OverlayComponentProps {
-    overlaySettings: OverlayStore;
+    overlaySettings: OverlaySettings;
     overlayIndividualStore: OverlayIndividualStore;
     image: ImageItem;
     docked: boolean;
@@ -82,10 +82,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 const newFrame = AST.frame(2, "Domain=PIXEL");
                 AST.addFrame(tempWcsInfo, 1, scaleMapping, newFrame);
                 AST.setI(tempWcsInfo, "Base", frame.isOffsetCoord ? 4 : 3);
-                AST.setI(tempWcsInfo, "Current", frame.isOffsetCoord && OverlayStore.Instance.isImgCoordinates ? 3 : 2);
+                AST.setI(tempWcsInfo, "Current", frame.isOffsetCoord && OverlaySettings.Instance.isImgCoordinates ? 3 : 2);
             }
 
-            if (frame.isOffsetCoord && OverlayStore.Instance.isWcsCoordinates) {
+            if (frame.isOffsetCoord && OverlaySettings.Instance.isWcsCoordinates) {
                 const fovSizeInArcsec = frame.getWcsSizeInArcsec(frame.fovSize);
                 const viewSize = fovSizeInArcsec.x > fovSizeInArcsec.y ? fovSizeInArcsec.y : fovSizeInArcsec.x;
                 const factor = 2; // jump factor
@@ -232,7 +232,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             const formatStringX = this.props.overlaySettings.numbers.formatStringX;
             const formatStyingY = this.props.overlaySettings.numbers.formatStringY;
             const explicitSystem = this.props.overlaySettings.global.explicitSystem;
-            if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined && OverlayStore.Instance.isWcsCoordinates && frame.validWcs) {
+            if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined && OverlaySettings.Instance.isWcsCoordinates && frame.validWcs) {
                 AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY}, System=${explicitSystem},` + dirAxesSetting);
             }
         }

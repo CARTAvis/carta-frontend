@@ -1,6 +1,6 @@
 import {computed, makeObservable} from "mobx";
 
-import {OverlayStore} from "stores";
+import {OverlaySettings} from "stores";
 import {FrameStore} from "stores/Frame";
 import {clamp} from "utilities";
 
@@ -9,24 +9,24 @@ const COLORBAR_TICK_NUM_MIN = 3;
 export class ColorbarStore {
     static readonly PRECISION_MAX = 15;
     private readonly frame: FrameStore;
-    private readonly overlayStore: OverlayStore;
+    private readonly overlaySettings: OverlaySettings;
 
     constructor(frame: FrameStore) {
         makeObservable(this);
         this.frame = frame;
-        this.overlayStore = OverlayStore.Instance;
+        this.overlaySettings = OverlaySettings.Instance;
     }
 
     @computed get yOffset(): number {
-        return this.overlayStore.colorbar.position === "right" ? this.frame.overlayIndividualStore.padding.top : this.frame.overlayIndividualStore.padding.left;
+        return this.overlaySettings.colorbar.position === "right" ? this.frame.overlayIndividualStore.padding.top : this.frame.overlayIndividualStore.padding.left;
     }
 
     @computed get height() {
-        return this.overlayStore.colorbar.position === "right" ? this.frame.overlayIndividualStore.renderHeight : this.frame.overlayIndividualStore.renderWidth;
+        return this.overlaySettings.colorbar.position === "right" ? this.frame.overlayIndividualStore.renderHeight : this.frame.overlayIndividualStore.renderWidth;
     }
 
     @computed get tickNum() {
-        const tickNum = Math.round((this.height / 100.0) * this.overlayStore.colorbar.tickDensity);
+        const tickNum = Math.round((this.height / 100.0) * this.overlaySettings.colorbar.tickDensity);
         return this.height && tickNum > COLORBAR_TICK_NUM_MIN ? tickNum : COLORBAR_TICK_NUM_MIN;
     }
 
@@ -61,7 +61,7 @@ export class ColorbarStore {
         const orders = this.roundedNumbers.numbers.map(x => ColorbarStore.GetOrder(x));
         const maxOrder = Math.max(...orders);
         const minOrder = Math.min(...orders);
-        const colorbar = this.overlayStore.colorbar;
+        const colorbar = this.overlaySettings.colorbar;
         const precision = colorbar.numberCustomPrecision ? colorbar.numberPrecision : this.roundedNumbers.precision;
         if (maxOrder > 5.0 || minOrder < -5.0) {
             return this.roundedNumbers.numbers.map(x => x.toExponential(clamp(colorbar.numberCustomPrecision ? precision : x === 0 ? 0 : precision + ColorbarStore.GetPrecision(x), 0, ColorbarStore.PRECISION_MAX)));
@@ -71,7 +71,7 @@ export class ColorbarStore {
     }
 
     @computed get positions(): number[] {
-        const colorbar = this.overlayStore.colorbar;
+        const colorbar = this.overlaySettings.colorbar;
         if (!this.roundedNumbers || !this.frame || !isFinite(this.yOffset)) {
             return [];
         }

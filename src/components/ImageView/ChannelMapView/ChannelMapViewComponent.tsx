@@ -26,7 +26,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     const channelMapStore = appStore.channelMapStore;
     const frame = channelMapStore.masterFrame;
     const image = channelMapStore.masterImage;
-    const overlayStore = appStore.overlayStore;
+    const overlaySettings = appStore.overlaySettings;
 
     const [imageToolbarVisible, setImageToolbarVisible] = React.useState(false);
 
@@ -86,7 +86,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                                 type: ImageType.FRAME,
                                 store: frame
                             }}
-                            overlaySettings={overlayStore}
+                            overlaySettings={overlaySettings}
                             top={top}
                             left={left}
                             width={innerRenderWidth}
@@ -162,14 +162,14 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                 onRegionViewZoom={zoom => onRegionViewZoom(frame, zoom)}
                 onZoomToFit={() => fitZoomFrameAndRegion(frame)}
             />
-            {overlayStore.colorbar.visible && <ColorbarComponent frame={frame} onCursorHoverValueChanged={channelMapStore.setPixelHighlightValue} />}
+            {overlaySettings.colorbar.visible && <ColorbarComponent frame={frame} onCursorHoverValueChanged={channelMapStore.setPixelHighlightValue} />}
             <OverlayComponent
                 key={`overlay-view-component-outer`}
                 image={{
                     type: ImageType.FRAME,
                     store: frame
                 }}
-                overlaySettings={overlayStore}
+                overlaySettings={overlaySettings}
                 overlayIndividualStore={frame.channelMapOuterOverlayIndividualStore}
                 docked={props.docked}
                 unscaled={true}
@@ -182,7 +182,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
 
 const ChannelMapInnerOverlayComponent = observer(({frame, docked}: {frame: FrameStore; docked: boolean}) => {
     const appStore = AppStore.Instance;
-    const overlayStore = appStore.overlayStore;
+    const overlaySettings = appStore.overlaySettings;
     const channelMapStore = appStore.channelMapStore;
     const lastRow = Math.floor((channelMapStore.channelArray.length - 1) / channelMapStore.numColumns);
     const columnOfLastFrame = channelMapStore.channelArray.length - lastRow * channelMapStore.numColumns - 1;
@@ -213,7 +213,7 @@ const ChannelMapInnerOverlayComponent = observer(({frame, docked}: {frame: Frame
         const sourceHeight = sourceCanvas.height;
         const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
         // when border > 1, include the area of the border
-        const extraBorderWidth = overlayStore.border.width - 1;
+        const extraBorderWidth = overlaySettings.border.width - 1;
         // when the padding is x.5, exclude a smaller area (x instead of x.5) when redrawing
         const innerPaddingLeft = Math.floor(innerPadding.left * pixelRatio - extraBorderWidth);
         const innerPaddingBottom = Math.floor(innerPadding.bottom * pixelRatio - extraBorderWidth);
@@ -296,7 +296,7 @@ const ChannelMapInnerOverlayComponent = observer(({frame, docked}: {frame: Frame
                     type: ImageType.FRAME,
                     store: frame
                 }}
-                overlaySettings={overlayStore}
+                overlaySettings={overlaySettings}
                 overlayIndividualStore={frame.channelMapInnerOverlayIndividualStore}
                 top={outerPadding.top + (innerRenderHeight + gapY) * lastRow - innerPadding.top}
                 docked={docked}

@@ -151,7 +151,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
 
     // Dummy variables for triggering re-render
     /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
-    const system = AppStore.Instance.overlayStore.global.explicitSystem;
+    const system = AppStore.Instance.overlaySettings.global.explicitSystem;
     const darktheme = AppStore.Instance.darkTheme;
     const title = frame.titleCustomText;
     const pixelRatio = AppStore.Instance.pixelRatio;
@@ -388,7 +388,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     const canvasPosStart = transformedImageToCanvasPos(secondaryImagePointStart, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
     const canvasPosFinish = transformedImageToCanvasPos(secondaryImagePointFinish, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
 
-    const wcsInfo = frame?.validWcs && AppStore.Instance.overlayStore.isWcsCoordinates ? frame.wcsInfoForTransformation : frame.wcsInfo; // calculate pixel distance for no valid WCS data images
+    const wcsInfo = frame?.validWcs && AppStore.Instance.overlaySettings.isWcsCoordinates ? frame.wcsInfoForTransformation : frame.wcsInfo; // calculate pixel distance for no valid WCS data images
     const approxPoints = region.getCurveApproximation(wcsInfo, frame.spatialTransformAST);
 
     const xApproxPoints = approxPoints.xApproximatePoints;
@@ -434,7 +434,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
 
     // Dummy variables for triggering re-render
     /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
-    const system = AppStore.Instance.overlayStore.global.explicitSystem;
+    const system = AppStore.Instance.overlaySettings.global.explicitSystem;
     const darktheme = AppStore.Instance.darkTheme;
     const title = frame.titleCustomText;
     const pixelRatio = AppStore.Instance.pixelRatio;

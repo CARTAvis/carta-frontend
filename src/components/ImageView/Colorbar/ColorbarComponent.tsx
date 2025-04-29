@@ -71,7 +71,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const appStore = AppStore.Instance;
         const frame = this.props.frame;
         const renderConfig = frame?.renderConfig;
-        const colorbarSettings = appStore.overlayStore?.colorbar;
+        const colorbarSettings = appStore.overlaySettings?.colorbar;
         const yOffset = frame.colorbarStore.yOffset;
         const height = frame.colorbarStore.height;
         if (!renderConfig || !colorbarSettings) {
@@ -103,9 +103,9 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
     render() {
         const appStore = AppStore.Instance;
-        const overlayStore = appStore.overlayStore;
+        const overlaySettings = appStore.overlaySettings;
         const frame = this.props.frame;
-        const colorbarSettings = appStore.overlayStore.colorbar;
+        const colorbarSettings = appStore.overlaySettings.colorbar;
         const viewHeight = frame.overlayIndividualStore.viewHeight;
         const viewWidth = frame.overlayIndividualStore.viewWidth;
         const colorbarSettingsHeight = frame.colorbarStore.height;
@@ -114,7 +114,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         appStore.updateLayerPixelRatio(this.layerRef);
 
         let getColor = (customColor: boolean, color: string): string => {
-            return customColor ? getColorForTheme(color) : colorbarSettings.customColor ? getColorForTheme(colorbarSettings.color) : getColorForTheme(appStore.overlayStore.global.color);
+            return customColor ? getColorForTheme(color) : colorbarSettings.customColor ? getColorForTheme(colorbarSettings.color) : getColorForTheme(appStore.overlaySettings.global.color);
         };
 
         // to avoid blurry border when width <= 1px, add 0.5 px offset to the colorbar if necessary
@@ -142,8 +142,8 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
             stageLeft = frame.overlayIndividualStore.padding.left + frame.overlayIndividualStore.renderWidth;
             stageTop = 0;
         } else if (colorbarSettings.position === "bottom") {
-            stageTop = viewHeight - overlayStore.colorbarHoverInfoHeight - colorbarSettings.stageWidth;
-        } else if (colorbarSettings.position === "top" && overlayStore.title.show) {
+            stageTop = viewHeight - overlaySettings.colorbarHoverInfoHeight - colorbarSettings.stageWidth;
+        } else if (colorbarSettings.position === "top" && overlaySettings.title.show) {
             stageTop = frame.overlayIndividualStore.padding.top - colorbarSettings.stageWidth;
         }
 
@@ -277,7 +277,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
         const hoverBar =
             colorbarSettings.interactive && this.isHovering ? (
-                <Line points={hoverBarPosition} stroke={colorbarSettings.customColor ? getColorForTheme(colorbarSettings.color) : getColorForTheme(appStore.overlayStore.global.color)} strokeWidth={1 / devicePixelRatio} />
+                <Line points={hoverBarPosition} stroke={colorbarSettings.customColor ? getColorForTheme(colorbarSettings.color) : getColorForTheme(appStore.overlaySettings.global.color)} strokeWidth={1 / devicePixelRatio} />
             ) : null;
 
         const hoverInfo =
