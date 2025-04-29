@@ -4,6 +4,8 @@ import {OverlayStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {clamp} from "utilities";
 
+const COLORBAR_TICK_NUM_MIN = 3;
+
 export class ColorbarStore {
     static readonly PRECISION_MAX = 15;
     private readonly frame: FrameStore;
@@ -15,14 +17,26 @@ export class ColorbarStore {
         this.overlayStore = OverlayStore.Instance;
     }
 
+    @computed get yOffset(): number {
+        return this.overlayStore.colorbar.position === "right" ? this.frame.overlayIndividualStore.padding.top : this.frame.overlayIndividualStore.padding.left;
+    }
+
+    @computed get height() {
+        return this.overlayStore.colorbar.position === "right" ? this.frame.overlayIndividualStore.renderHeight : this.frame.overlayIndividualStore.renderWidth;
+    }
+
+    @computed get tickNum() {
+        const tickNum = Math.round((this.height / 100.0) * this.overlayStore.colorbar.tickDensity);
+        return this.height && tickNum > COLORBAR_TICK_NUM_MIN ? tickNum : COLORBAR_TICK_NUM_MIN;
+    }
+
     @computed get roundedNumbers(): {numbers: number[]; precision: number} {
         const scaleMinVal = this.frame?.renderConfig?.scaleMinVal;
         const scaleMaxVal = this.frame?.renderConfig?.scaleMaxVal;
-        const tickNum = this.overlayStore.colorbar.tickNum(this.frame);
-        if (!isFinite(scaleMinVal) || !isFinite(scaleMaxVal) || scaleMinVal >= scaleMaxVal || !tickNum) {
+        if (!isFinite(scaleMinVal) || !isFinite(scaleMaxVal) || scaleMinVal >= scaleMaxVal || !this.tickNum) {
             return null;
         } else {
-            let dy = (scaleMaxVal - scaleMinVal) / tickNum; // estimate the step
+            let dy = (scaleMaxVal - scaleMinVal) / this.tickNum; // estimate the step
             let precision = -ColorbarStore.GetPrecision(dy); // estimate precision
             let roundBase = Math.pow(10, precision);
             dy = Math.round(dy * roundBase) / roundBase; // the exact step
@@ -58,15 +72,15 @@ export class ColorbarStore {
 
     @computed get positions(): number[] {
         const colorbar = this.overlayStore.colorbar;
-        if (!this.roundedNumbers || !this.frame || !isFinite(colorbar.yOffset)) {
+        if (!this.roundedNumbers || !this.frame || !isFinite(this.yOffset)) {
             return [];
         }
         const scaleMinVal = this.frame?.renderConfig?.scaleMinVal;
         const scaleMaxVal = this.frame?.renderConfig?.scaleMaxVal;
         if (colorbar.position === "right") {
-            return this.roundedNumbers.numbers.map(x => colorbar.yOffset + (colorbar.height(this.frame) * (scaleMaxVal - x)) / (scaleMaxVal - scaleMinVal));
+            return this.roundedNumbers.numbers.map(x => this.yOffset + (this.height * (scaleMaxVal - x)) / (scaleMaxVal - scaleMinVal));
         } else {
-            return this.roundedNumbers.numbers.map(x => colorbar.yOffset + (colorbar.height(this.frame) * (x - scaleMinVal)) / (scaleMaxVal - scaleMinVal));
+            return this.roundedNumbers.numbers.map(x => this.yOffset + (this.height * (x - scaleMinVal)) / (scaleMaxVal - scaleMinVal));
         }
     }
 

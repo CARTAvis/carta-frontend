@@ -7,7 +7,6 @@ import {FrameStore, OverlayBeamStore, WCS_PRECISION} from "stores/Frame";
 import {clamp, getColorForTheme, toFixed} from "utilities";
 
 const AST_DEFAULT_COLOR = "auto-blue";
-const COLORBAR_TICK_NUM_MIN = 3;
 
 export enum AstColorsIndex {
     GLOBAL = 0,
@@ -911,24 +910,6 @@ export class OverlayColorbarSettings {
     @action setGradientVisible = (visible: boolean) => {
         this.gradientVisible = visible;
     };
-
-    @computed get yOffset(): number {
-        const overlayStore = AppStore.Instance?.overlayStore;
-        return this.position === "right" ? overlayStore.paddingTop : overlayStore.paddingLeft;
-    }
-
-    @computed get height() {
-        return (frame: FrameStore) => {
-            return this.position === "right" ? frame.overlayIndividualStore.renderHeight : frame.overlayIndividualStore.renderWidth;
-        };
-    }
-
-    @computed get tickNum() {
-        return (frame?: FrameStore) => {
-            const tickNum = Math.round((this.height(frame) / 100.0) * this.tickDensity);
-            return this.height(frame) && tickNum > COLORBAR_TICK_NUM_MIN ? tickNum : COLORBAR_TICK_NUM_MIN;
-        };
-    }
 
     @computed get rightBorderPos(): number {
         return this.position === "top" ? this.stageWidth - this.offset - this.width : this.offset + this.width;

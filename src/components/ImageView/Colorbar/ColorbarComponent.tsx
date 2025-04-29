@@ -72,7 +72,8 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const frame = this.props.frame;
         const renderConfig = frame?.renderConfig;
         const colorbarSettings = appStore.overlayStore?.colorbar;
-        const yOffset = colorbarSettings.yOffset;
+        const yOffset = frame.colorbarStore.yOffset;
+        const height = frame.colorbarStore.height;
         if (!renderConfig || !colorbarSettings) {
             return;
         }
@@ -81,12 +82,12 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         let point = colorbarSettings.position === "right" ? stage.getPointerPosition().y : stage.getPointerPosition().x;
         let scaledPos = point - yOffset;
         if (colorbarSettings.position === "right") {
-            scaledPos = colorbarSettings.height(this.props.frame) - scaledPos;
+            scaledPos = height - scaledPos;
         }
-        scaledPos /= colorbarSettings.height(this.props.frame);
+        scaledPos /= height;
         scaledPos = clamp(scaledPos, 0.0, 1.0);
         // Recalculate clamped point position
-        point = clamp(point, yOffset, yOffset + colorbarSettings.height(this.props.frame));
+        point = clamp(point, yOffset, yOffset + height);
         // Lock to mid-pixel for sharp lines
         point = Math.floor(point) + 0.5;
 
@@ -107,8 +108,8 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const colorbarSettings = appStore.overlayStore.colorbar;
         const viewHeight = frame.overlayIndividualStore.viewHeight;
         const viewWidth = frame.overlayIndividualStore.viewWidth;
-        const colorbarSettingsHeight = colorbarSettings.height(frame);
-        const yOffset = colorbarSettings.yOffset;
+        const colorbarSettingsHeight = frame.colorbarStore.height;
+        const yOffset = frame.colorbarStore.yOffset;
 
         appStore.updateLayerPixelRatio(this.layerRef);
 
