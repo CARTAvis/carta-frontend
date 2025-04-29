@@ -176,26 +176,26 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                             isValueCurrent={frame.isCursorValueCurrent}
                             spectralInfo={frame.spectralInfo}
                             width={this.frame.overlayIndividualStore.viewWidth}
-                            left={overlayStore.padding.left}
-                            right={overlayStore.padding.right}
+                            left={frame.overlayIndividualStore.padding.left}
+                            right={frame.overlayIndividualStore.padding.right}
                             docked={this.props.docked}
                             unit={this.frame.requiredUnit}
-                            top={overlayStore.padding.top}
+                            top={frame.overlayIndividualStore.padding.top}
                             currentStokes={appStore.activeFrame.requiredPolarizationInfo}
                             cursorValueToPercentage={this.frame.requiredUnit === "%"}
                             isPreview={this.frame.isPreview}
                         />
                     )}
                     {appStore.overlayStore.colorbar.visible && !isColorBlending && <ColorbarComponent frame={frame} onCursorHoverValueChanged={this.setPixelHighlightValue} />}
-                    {!isColorBlending && <BeamProfileOverlayComponent frame={this.frame} top={overlayStore.padding.top} left={overlayStore.padding.left} docked={this.props.docked} padding={10} />}
+                    {!isColorBlending && <BeamProfileOverlayComponent frame={this.frame} top={frame.overlayIndividualStore.padding.top} left={frame.overlayIndividualStore.padding.left} docked={this.props.docked} padding={10} />}
                     <CatalogViewGLComponent frame={frame} docked={this.props.docked} />
                     <RegionViewComponent
                         ref={this.getRegionViewRef}
                         frame={this.frame}
                         width={this.frame.renderWidth}
                         height={this.frame.renderHeight}
-                        top={overlayStore.padding.top}
-                        left={overlayStore.padding.left}
+                        top={frame.overlayIndividualStore.padding.top}
+                        left={frame.overlayIndividualStore.padding.left}
                         onClickToCenter={this.onClickToCenter}
                         overlaySettings={overlayStore}
                         dragPanningEnabled={appStore.preferenceStore.dragPanning}

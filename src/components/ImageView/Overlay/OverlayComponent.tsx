@@ -182,7 +182,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
         const styleString = this.props.overlayIndividualStore.styleString;
         const frameView = refFrame.requiredFrameView;
-        const framePadding = this.props.overlaySettings.padding;
+        const framePadding = this.props.overlayIndividualStore.padding;
         const moving = frame.moving;
         const system = this.props.overlaySettings.global.system;
         const globalColor = this.props.overlaySettings.global.color;

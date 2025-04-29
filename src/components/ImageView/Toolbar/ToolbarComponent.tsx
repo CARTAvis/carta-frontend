@@ -120,9 +120,9 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const grid = overlay.grid;
 
         const styleProps: CSSProperties = {
-            bottom: overlay.padding.bottom,
-            right: overlay.padding.right,
-            left: overlay.padding.left,
+            bottom: frame.overlayIndividualStore.padding.bottom,
+            right: frame.overlayIndividualStore.padding.right,
+            left: frame.overlayIndividualStore.padding.left,
             opacity: this.props.visible ? 1 : 0,
             backgroundColor: "transparent"
         };

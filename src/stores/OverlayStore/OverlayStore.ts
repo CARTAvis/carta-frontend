@@ -913,8 +913,8 @@ export class OverlayColorbarSettings {
     };
 
     @computed get yOffset(): number {
-        const padding = AppStore.Instance?.overlayStore?.padding;
-        return this.position === "right" ? padding?.top : padding?.left;
+        const overlayStore = AppStore.Instance?.overlayStore;
+        return this.position === "right" ? overlayStore.paddingTop : overlayStore.paddingLeft;
     }
 
     @computed get height() {
@@ -1181,29 +1181,24 @@ export class OverlayStore {
         return !this.colorbar.visible || (this.colorbar.visible && this.colorbar.position !== "bottom" && this.labels.show) || (this.colorbar.visible && this.colorbar.position === "bottom" && this.colorbar.labelVisible) ? 0 : 10;
     }
 
+    /** The usual left padding in single/multi-panel mode. */
     @computed get paddingLeft(): number {
         return this.base + this.numberWidth + this.labelWidth;
     }
 
+    /** The usual right padding in single/multi-panel mode. */
     @computed get paddingRight(): number {
         return this.base + (this.colorbar.visible && this.colorbar.position === "right" ? this.colorbar.totalWidth : 0);
     }
 
+    /** The usual top padding in single/multi-panel mode. */
     @computed get paddingTop(): number {
         return this.base + (this.title.show ? this.titleGap + this.title.fontSize : this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0);
     }
 
+    /** The usual bottom padding in single/multi-panel mode. */
     @computed get paddingBottom(): number {
         return this.base + this.numberWidth + this.labelWidth + (this.colorbar.visible && this.colorbar.position === "bottom" ? this.colorbar.totalWidth : 0) + this.colorbarHoverInfoHeight;
-    }
-
-    @computed get padding(): Padding {
-        return {
-            left: this.paddingLeft,
-            right: this.paddingRight,
-            top: this.paddingTop,
-            bottom: this.paddingBottom
-        };
     }
 
     @computed private get viewWidth() {
@@ -1234,50 +1229,6 @@ export class OverlayStore {
             renderHeight = this.viewHeight - this.paddingTop - this.paddingBottom;
         }
         return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
-    }
-
-    @computed get channelMapInnerPadding(): (type: "left" | "bottom" | "corner" | "inner") => Padding {
-        const paddingLeft = this.paddingLeft;
-        const paddingBottom = this.paddingBottom;
-        return (type: "left" | "bottom" | "corner" | "inner") => {
-            switch (type) {
-                case "left":
-                    return {
-                        left: paddingLeft,
-                        right: this.base,
-                        top: this.base,
-                        bottom: this.base
-                    };
-                case "bottom":
-                    return {
-                        left: this.base,
-                        right: this.base,
-                        top: this.base,
-                        bottom: paddingBottom
-                    };
-                case "corner":
-                    return {
-                        left: paddingLeft,
-                        right: this.base,
-                        top: this.base,
-                        bottom: paddingBottom
-                    };
-                case "inner":
-                    return {
-                        left: this.base,
-                        right: this.base,
-                        top: this.base,
-                        bottom: this.base
-                    };
-                default:
-                    return {
-                        left: paddingLeft,
-                        right: this.base,
-                        top: this.base,
-                        bottom: paddingBottom
-                    };
-            }
-        };
     }
 
     @computed get isWcsCoordinates() {

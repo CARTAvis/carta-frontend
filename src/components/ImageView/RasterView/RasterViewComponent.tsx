@@ -480,7 +480,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
-        const padding = appStore.overlayStore.padding;
+        const padding = baseFrame.overlayIndividualStore.padding;
         const className = classNames(`raster-div`, {docked: this.props.docked});
 
         return (

@@ -138,12 +138,12 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
         // adjust stage position
         if (colorbarSettings.position === "right") {
-            stageLeft = overlayStore.padding.left + frame.overlayIndividualStore.renderWidth;
+            stageLeft = frame.overlayIndividualStore.padding.left + frame.overlayIndividualStore.renderWidth;
             stageTop = 0;
         } else if (colorbarSettings.position === "bottom") {
             stageTop = viewHeight - overlayStore.colorbarHoverInfoHeight - colorbarSettings.stageWidth;
         } else if (colorbarSettings.position === "top" && overlayStore.title.show) {
-            stageTop = overlayStore.padding.top - colorbarSettings.stageWidth;
+            stageTop = frame.overlayIndividualStore.padding.top - colorbarSettings.stageWidth;
         }
 
         // rotate to horizontal by swapping
