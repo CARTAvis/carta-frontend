@@ -106,7 +106,7 @@ export const HipsQueryComponent = observer(() => {
                                 onValueChange={hipsQueryStore.setWidth}
                                 disabled={hipsQueryStore.isLoading}
                                 intent={
-                                    (hipsQueryStore.size.x >= hipsQueryStore.HipsConstraint.MinDemension && (hipsQueryStore.size.x * hipsQueryStore.size.y <= hipsQueryStore.HipsConstraint.MaxDemension || isNaN(hipsQueryStore.size.y))) ||
+                                    (hipsQueryStore.size.x >= hipsQueryStore.HipsConstraint.MinDimension && (hipsQueryStore.size.x * hipsQueryStore.size.y <= hipsQueryStore.HipsConstraint.MaxDimension || isNaN(hipsQueryStore.size.y))) ||
                                     isNaN(hipsQueryStore.size.x)
                                         ? "none"
                                         : "danger"
@@ -130,7 +130,7 @@ export const HipsQueryComponent = observer(() => {
                                 onValueChange={hipsQueryStore.setHeight}
                                 disabled={hipsQueryStore.isLoading}
                                 intent={
-                                    (hipsQueryStore.size.y >= hipsQueryStore.HipsConstraint.MinDemension && (hipsQueryStore.size.x * hipsQueryStore.size.y <= hipsQueryStore.HipsConstraint.MaxDemension || isNaN(hipsQueryStore.size.x))) ||
+                                    (hipsQueryStore.size.y >= hipsQueryStore.HipsConstraint.MinDimension && (hipsQueryStore.size.x * hipsQueryStore.size.y <= hipsQueryStore.HipsConstraint.MaxDimension || isNaN(hipsQueryStore.size.x))) ||
                                     isNaN(hipsQueryStore.size.y)
                                         ? "none"
                                         : "danger"
