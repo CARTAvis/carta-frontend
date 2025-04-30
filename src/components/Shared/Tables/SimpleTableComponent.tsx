@@ -69,7 +69,7 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
                 numRows={table.numVisibleRows}
                 renderMode={RenderMode.NONE}
                 enableRowReordering={false}
-                selectionModes={SelectionModes.NONE}
+                selectionModes={SelectionModes.COLUMNS_AND_CELLS}
                 enableGhostCells={this.props.enableGhostCells ?? true}
                 defaultRowHeight={this.props.defaultRowHeight}
                 rowHeaderCellRenderer={this.renderRowHeaderCell}
