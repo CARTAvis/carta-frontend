@@ -100,9 +100,23 @@ export class OverlayGlobalSettings {
         astString.add("Labelling", this.labelType);
         astString.add("Color", AstColorsIndex.GLOBAL);
         astString.add("Tol", toFixed(this.tolerance / 100, 2), this.tolerance >= 0.001); // convert to fraction
+
         const isWcsFrameAndSystem = typeof this.explicitSystem !== "undefined" && this.explicitSystem !== SystemType.Image && frame.validWcs;
         if (isWcsFrameAndSystem) {
             astString.add("System", this.explicitSystem);
+        }
+
+        if (!AppStore.Instance?.overlayStore?.labels?.customText) {
+            const symbolX = AST.getString(frame?.wcsInfo, "Symbol(1)");
+            const symbolY = AST.getString(frame?.wcsInfo, "Symbol(2)");
+            const labelX = AST.getString(frame?.wcsInfo, "Label(1)");
+            const labelY = AST.getString(frame?.wcsInfo, "Label(2)");
+
+            const isSysPixel = typeof this.explicitSystem === "undefined" || this.explicitSystem === SystemType.Image;
+            const systemNameX = ((symbolX === "RA" || symbolX === "Dec") && AppStore.Instance?.overlayStore?.labels?.raDecReference) || isSysPixel ? (isSysPixel ? ` (pixel)` : ` (${this.explicitSystem})`) : ""; // a space between ` and ( is eccential
+            const systemNameY = ((symbolY === "RA" || symbolY === "Dec") && AppStore.Instance?.overlayStore?.labels?.raDecReference) || isSysPixel ? (isSysPixel ? ` (pixel)` : ` (${this.explicitSystem})`) : ""; // a space between ` and ( is eccential
+            astString.add("Label(1)", `"${labelX.replace(/%/g, "%%%%").replace(/"/g, "”")}${systemNameX}"`, labelX !== undefined);
+            astString.add("Label(2)", `"${labelY.replace(/%/g, "%%%%").replace(/"/g, "”")}${systemNameY}"`, labelY !== undefined);
         }
 
         if ((frame?.isXY || frame?.isYX) && !frame?.isPVImage && isWcsFrameAndSystem) {
@@ -650,12 +664,15 @@ export class OverlayLabelSettings {
     @computed get styleString() {
         let astString = new ASTSettingsString();
 
+        const appStore = AppStore.Instance;
+
         astString.add("TextLab", this.show);
         astString.add("Font(TextLab)", this.font);
-        astString.add("Size(TextLab)", this.fontSize * AppStore.Instance.imageRatio);
+        astString.add("Size(TextLab)", this.fontSize * appStore.imageRatio);
         astString.add("Color(TextLab)", AstColorsIndex.LABEL, this.customColor);
-        astString.add("Label(1)", this.customLabelX, this.customText);
-        astString.add("Label(2)", this.customLabelY, this.customText);
+
+        astString.add("Label(1)", `"${this.customLabelX.replace(/%/g, "%%%%").replace(/"/g, "”")}"`, this.customText);
+        astString.add("Label(2)", `"${this.customLabelY.replace(/%/g, "%%%%").replace(/"/g, "”")}"`, this.customText);
 
         return astString.toString();
     }
