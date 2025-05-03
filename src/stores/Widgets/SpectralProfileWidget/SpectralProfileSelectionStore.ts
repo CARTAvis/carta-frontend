@@ -545,7 +545,7 @@ export class SpectralProfileSelectionStore {
         const profileColor = widgetStore.getProfileColor(selectedId);
 
         if (!profileColor) {
-            let color: string;
+            let color: string = genColorFromIndex(0);
 
             // find color that is not used by other profiles
             for (let i = 0; i < profileColors.length + 1; i++) {
