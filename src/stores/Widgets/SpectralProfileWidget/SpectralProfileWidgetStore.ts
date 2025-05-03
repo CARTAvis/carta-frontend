@@ -375,7 +375,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.meanRmsVisible = false;
         this.secondaryAxisCursorInfoVisible = false;
         this.markerTextVisible = false;
-        // this.primaryLineColor = "auto-blue";
         this.primaryLineColor = genColorFromIndex(0); // default auto-blue color in Hex code
         this.lineColorMap = new Map<LineKey, string>([[SpectralProfileWidgetStore.PRIMARY_LINE_KEY, this.primaryLineColor]]);
         this.linePlotPointSize = 1.5;
