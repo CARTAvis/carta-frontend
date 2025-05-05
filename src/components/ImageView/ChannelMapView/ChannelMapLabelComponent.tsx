@@ -72,7 +72,7 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     paddingLeft: `${this.props.width * 0.02}px`,
-                    border: `${this.props.highlighted ? hightlightBorderWidth + "px solid red" : "none"}`
+                    border: `${hightlightBorderWidth}px solid ${this.props.highlighted ? "red" : "transparent"}`
                 }}
                 id="channel-map-label-span"
             >
