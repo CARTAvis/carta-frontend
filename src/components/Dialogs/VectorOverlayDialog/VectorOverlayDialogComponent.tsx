@@ -8,6 +8,7 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
+import {POLARIZATIONS} from "models"; // Ensure this is the correct path to where POLARIZATIONS is defined
 import {AppStore, DialogId, HelpType} from "stores";
 import {FrameStore, VectorOverlaySource} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
@@ -34,6 +35,7 @@ export class VectorOverlayDialogComponent extends React.Component {
     @observable debiasing: boolean;
     @observable qError: number;
     @observable uError: number;
+    @observable thresholdOption: number;
 
     private static readonly DefaultWidth = 500;
     private static readonly DefaultHeight = 720;
@@ -69,6 +71,7 @@ export class VectorOverlayDialogComponent extends React.Component {
             this.threshold = config.threshold;
             this.thresholdEnabled = config.thresholdEnabled;
             this.debiasing = config.debiasing;
+            this.thresholdOption = config.thresholdOption;
         } else {
             this.angularSource = VectorOverlaySource.Current;
             this.intensitySource = VectorOverlaySource.Current;
@@ -78,6 +81,7 @@ export class VectorOverlayDialogComponent extends React.Component {
             this.thresholdEnabled = false;
             this.threshold = 0;
             this.debiasing = false;
+            this.thresholdOption = POLARIZATIONS.Plinear;
         }
     };
 
@@ -126,7 +130,8 @@ export class VectorOverlayDialogComponent extends React.Component {
                 this.threshold,
                 this.debiasing,
                 this.qError,
-                this.uError
+                this.uError,
+                this.thresholdOption
             );
             dataSource.applyVectorOverlay();
         }
@@ -174,6 +179,10 @@ export class VectorOverlayDialogComponent extends React.Component {
 
     @action private handleDebiasingChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
         this.debiasing = ev.currentTarget.checked;
+    };
+
+    @action private handleThresholdOptionChanged = (ev: React.ChangeEvent<HTMLSelectElement>) => {
+        this.thresholdOption = parseInt(ev.currentTarget.value);
     };
 
     private renderIntensityParameters() {
@@ -275,6 +284,8 @@ export class VectorOverlayDialogComponent extends React.Component {
         const intensityOnly = dataSource.vectorOverlayConfig.angularSource === VectorOverlaySource.None;
         const angleOnly = dataSource.vectorOverlayConfig.intensitySource === VectorOverlaySource.None;
 
+        const thresholdOptionDisabled = dataSource.polarizations.includes(POLARIZATIONS.Plinear) && !dataSource.polarizations.includes(POLARIZATIONS.I);
+
         const configPanel = (
             <div className="vector-overlay-config-panel">
                 <FormGroup inline={true} label="Angular source">
@@ -323,6 +334,12 @@ export class VectorOverlayDialogComponent extends React.Component {
                 </FormGroup>
                 <FormGroup inline={true} label="Threshold enabled">
                     <Switch checked={this.thresholdEnabled} onChange={this.handleThresholdEnabledChanged} data-testid="vector-field-threshold-toggle" />
+                    {dataSource.hasLinearStokes && this.thresholdEnabled && (
+                        <HTMLSelect value={this.thresholdOption} onChange={ev => this.handleThresholdOptionChanged(ev)} data-testid="vector-field-threshold-option-dropdown" disabled={thresholdOptionDisabled}>
+                            <option value={POLARIZATIONS.Plinear}>Plinear</option>
+                            <option value={POLARIZATIONS.I}>Stokes I</option>
+                        </HTMLSelect>
+                    )}
                 </FormGroup>
                 <FormGroup disabled={!this.thresholdEnabled} inline={true} label="Threshold" labelInfo={dataSource.headerUnit ? `(${dataSource.headerUnit})` : ""}>
                     <SafeNumericInput disabled={!this.thresholdEnabled} placeholder="Threshold" buttonPosition="none" value={this.threshold} onValueChange={this.handleThresholdChanged} data-testid="vector-field-threshold-input" />

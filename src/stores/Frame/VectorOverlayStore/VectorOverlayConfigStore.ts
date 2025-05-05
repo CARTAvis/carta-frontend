@@ -2,7 +2,7 @@ import {RGBColor} from "react-color";
 import {action, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
-import {WorkspaceVectorOverlayConfig} from "models";
+import {POLARIZATIONS, WorkspaceVectorOverlayConfig} from "models";
 import {PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
@@ -25,6 +25,7 @@ export class VectorOverlayConfigStore {
     @observable debiasing: boolean;
     @observable qError: number;
     @observable uError: number;
+    @observable thresholdOption: number;
 
     // Appearance
     @observable visible: boolean;
@@ -56,6 +57,7 @@ export class VectorOverlayConfigStore {
         this.threshold = 0;
         this.thresholdEnabled = false;
         this.debiasing = false;
+        this.thresholdOption = POLARIZATIONS.Plinear;
 
         this.color = tinycolor(this.preferenceStore.vectorOverlayColor).toRgb();
         this.colormapEnabled = this.preferenceStore.vectorOverlayColormapEnabled;
@@ -79,6 +81,10 @@ export class VectorOverlayConfigStore {
         this.thresholdEnabled = val;
     }
 
+    @action setThresholdOption(val: number) {
+        this.thresholdOption = val;
+    }
+
     @action setVectorOverlayConfiguration = (
         angularSource: VectorOverlaySource,
         intensitySource: VectorOverlaySource,
@@ -89,7 +95,8 @@ export class VectorOverlayConfigStore {
         threshold: number,
         debiasing: boolean,
         qError: number,
-        uError: number
+        uError: number,
+        thresholdOption: number
     ) => {
         this.angularSource = angularSource;
         this.intensitySource = intensitySource;
@@ -101,6 +108,7 @@ export class VectorOverlayConfigStore {
         this.debiasing = debiasing;
         this.qError = qError;
         this.uError = uError;
+        this.thresholdOption = thresholdOption;
     };
 
     // Styling
@@ -164,6 +172,7 @@ export class VectorOverlayConfigStore {
         this.debiasing = config.debiasing;
         this.qError = config.qError;
         this.uError = config.uError;
+        this.thresholdOption = config.thresholdOption;
 
         this.visible = config.visible;
         this.thickness = config.thickness;

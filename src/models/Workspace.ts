@@ -48,6 +48,7 @@ export interface WorkspaceVectorOverlayConfig {
     debiasing: boolean;
     qError: number;
     uError: number;
+    thresholdOption: number;
 
     visible: boolean;
     thickness: number;
