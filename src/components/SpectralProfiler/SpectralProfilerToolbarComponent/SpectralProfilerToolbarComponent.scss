@@ -1,7 +1,7 @@
 @import "~@blueprintjs/core/lib/scss/variables.scss";
 
 .spectral-profiler-toolbar {
-    overflow: hidden;
+    overflow-x: auto;
     display: flex;
     user-select: none;
 
@@ -15,7 +15,7 @@
         .category-set {
             display: flex;
             align-items: center;
-            margin-right: 15px;
+            margin-right: 12px;
 
             .category-checkbox {
                 margin: 0 5px 0 0;

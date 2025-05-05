@@ -107,7 +107,12 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     format = "d.*";
                 }
 
-                AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)=${unit}, Unit(2)=${unit}`);
+                // disable unit labels when custom labels on
+                if (OverlayStore.Instance.labels.customText) {
+                    AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)="", Unit(2)=""`);
+                } else {
+                    AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)=${unit}, Unit(2)=${unit}`);
+                }
             }
 
             const plot = (styleString: string) => {
@@ -123,7 +128,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     padding.right * appStore.pixelRatio,
                     padding.top * appStore.pixelRatio,
                     padding.bottom * appStore.pixelRatio,
-                    settings.labels.raDecReference ? settings.global.explicitSystem : "",
                     styleString
                 );
             };
@@ -150,9 +154,9 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             }
 
             if (!settings.title.customText) {
-                currentStyleString += `, Title=${this.props.image?.store?.filename}`;
+                currentStyleString += `, Title="${this.props.image?.store?.filename.replace(/%/g, "%%%%").replace(/"/g, "”")}"`;
             } else if (this.props.image?.store?.titleCustomText?.length) {
-                currentStyleString += `, Title=${this.props.image?.store?.titleCustomText}`;
+                currentStyleString += `, Title="${this.props.image?.store?.titleCustomText.replace(/%/g, "%%%%").replace(/"/g, "”")}"`;
             } else {
                 currentStyleString += `, Title=${""}`;
             }

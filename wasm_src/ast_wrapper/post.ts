@@ -36,8 +36,8 @@ Module.fonts = [
     "bold {size} times",
     "bold italic {size} times",
     "{size} arial",
-    "bold {size} arial",
     "italic {size} arial",
+    "bold {size} arial",
     "bold italic {size} arial",
     "{size} palatino",
     "italic {size} palatino",
@@ -95,7 +95,7 @@ Module.setCanvas = function (canvas) {
     Module.gridContext.font = Module.font;
 };
 
-Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string", "string"]);
+Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"]);
 Module.emptyFitsChan = Module.cwrap("emptyFitsChan", "number");
 Module.putFits = Module.cwrap("putFits", null, ["number", "string"]);
 Module.getFrameFromFitsChan = Module.cwrap("getFrameFromFitsChan", "number", ["number", "number"]);
