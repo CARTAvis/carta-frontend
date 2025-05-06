@@ -11,12 +11,18 @@ precision highp sampler3D;
 varying vec3 vOrigin; // in
 varying vec3 vDirection; // in
 
+// varying float tNear;
+// varying float tFar;
+
 // out vec4 color;
 
 // uniform vec3 base;
 uniform sampler3D uDataTexture;
 
-// uniform float uThreshold;
+uniform float uMinThreshold;
+uniform float uMaxThreshold;
+uniform float uMinValue;
+uniform float uMaxValue;
 // uniform float uRange;
 uniform float uOpacity;
 uniform float uSteps;
@@ -60,6 +66,9 @@ vec2 hitBox( vec3 origin, vec3 direction ) {
     float t0 = max( min_value.x, max( min_value.y, min_value.z ) );
     float t1 = min( max_value.x, min( max_value.y, max_value.z ) );
 
+    // tNear = t0;
+    // tFar = t1;
+
     return vec2( t0, t1 );
 }
 
@@ -93,7 +102,8 @@ void main(){
     vec4 color = vec4(white, 0.0);
 
     // float accumulator = 0.0;
-    float max_value = 0.0;
+    float rayVal = 0.0;
+    float cumulativeLength = 0.0;
 
     // vec4 ac = vec4( base, 0.0 );
 
@@ -101,7 +111,19 @@ void main(){
 
     // ray march through the volume
     for(float i = bounds.x; i < bounds.y; i += delta) {
-        float rawVal = samplePoint( point + 0.5 );
+        float stepVal = samplePoint( point + 0.5 );
+
+        // make it like iDaVIE:
+        // if (!isNaN(stepVal)) {
+        //     rayVal += stepVal * delta;
+        //     cumulativeLength += delta;
+
+        //     point += rayDir * delta;
+        // }
+
+        // rayVal /= cumulativeLength;
+
+        // -------------------------------------
 
         // if ( d < -3.402823466e38 ) {
         //     d = uMinValue;
@@ -110,12 +132,13 @@ void main(){
 
         // get also the minimum value.
 
-        // max_value is not used
-        if( rawVal > max_value ) max_value = rawVal;
+        if( stepVal > rayVal ) rayVal = stepVal;
 
         // accumulator += d;
-        rawVal *= uOpacity;
-        color.a += ( 1.0 - color.a ) * rawVal;
+        stepVal *= uOpacity;
+        color.a += ( 1.0 - color.a ) * stepVal;
+
+        // color.a += ( stepVal - uMinVal ) / range;
 
         // stop ray if it has accumulated enough opacity
         if( color.a >= 0.95 ) break;
@@ -124,11 +147,17 @@ void main(){
         point += rayDir * delta;
     }
 
-    float x = clamp((max_value - uMinVal) / range, 0.0, 1.0);
+    
+    float x = clamp(rayVal, uMinThreshold, uMaxThreshold);
+    x = (rayVal - uMinVal) / range;
 
+    // for colormap
     float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
-    vec2 cmapCoords = vec2(x, cmapYVal);
-    // color.rgb = texture(uCmapTexture, cmapCoords).rgb;
+
+    // float x = (rayVal - uMinThreshold) / (uMaxThreshold - uMinThreshold);
+
+    color.rgb = texture(uCmapTexture, vec2(x, cmapYVal)).rgb; // use .rgb for michaela's method
+    // color.a = uOpacity;
 
     gl_FragColor = color;
 

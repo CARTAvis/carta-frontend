@@ -2,6 +2,7 @@ import React, {useEffect, useRef} from "react"; // , useState
 import { Canvas, extend, useFrame, useThree} from "@react-three/fiber";
 import {action, autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
+import allMaps from "static/allmaps.png";
 import * as THREE from 'three';
 import { TrackballControls } from "three/examples/jsm/controls/TrackballControls";
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
@@ -69,8 +70,11 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
     @observable depth: number;
 
     @observable texture: THREE.Data3DTexture;
+    @observable cmapTexture: THREE.DataTexture;
+    @observable cmapIndex: number;
     @observable minVal: number;
     @observable maxVal: number;
+    @observable zscale: number = 1;
 
     // this.width = render3DData.width;
     // this.height = render3DData.height;
@@ -105,11 +109,18 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         }
     }
 
+    @computed get range() {
+        return this.maxValue - this.minValue;
+    }
+
     constructor(props: Render3DViewerDialogProps) {
         super(props);
         // makeObservable(this); // makeObservable make RandomTexture not work
         this.widgetId = props.id.match(/render-3d-\d+/)[0];  
         // this.gl = VolumeWebGLService.Instance.gl;
+        this.cmapTexture = new THREE.TextureLoader().load( allMaps );
+        this.cmapIndex = 8;
+        console.log("cmaptexture: ", this.cmapTexture);
         
         autorun(() => {
             const widgetId = this.props.id.match(/render-3d-\d+/)[0];
@@ -184,9 +195,9 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         }, [lastSlice]);
 
         const parameters = {
-            minThreshold: 0,
-            maxThreshold: 1,
-            opacity: 20.0,
+            minThreshold: this.minValue,
+            maxThreshold: this.maxValue,
+            opacity: 0.5,
             range: 0.1,
             steps: 100,
         };
@@ -197,8 +208,8 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
             material.uniforms.uOpacity.value = parameters.opacity;
             // material.uniforms.range.value = parameters.range;
             material.uniforms.uSteps.value = parameters.steps;
-            material.uniforms.uMinVal.value = parameters.minThreshold;
-            material.uniforms.uMaxVal.value = parameters.maxThreshold;
+            material.uniforms.uMinThreshold.value = parameters.minThreshold;
+            material.uniforms.uMaxThreshold.value = parameters.maxThreshold;
 
         }
 
@@ -207,8 +218,8 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         gui.add( parameters, 'opacity', 0, 100.0, 0.01 ).onChange( update );
         // gui.add( parameters, 'range', 0, 1, 0.01 ).onChange( update );
         gui.add( parameters, 'steps', 0, 200, 1 ).onChange( update );
-        gui.add( parameters, 'minThreshold', this.minVal, this.maxVal).onChange( update );
-        gui.add( parameters, 'maxThreshold', this.minVal, this.maxVal).onChange( update );
+        gui.add( parameters, 'minThreshold', this.minVal, this.maxVal, 0.00001).onChange( update );
+        gui.add( parameters, 'maxThreshold', this.minVal, this.maxVal, 0.00001).onChange( update );
 
         useEffect(() => {
             gl.getContext().getExtension("OES_texture_float");
@@ -223,6 +234,7 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
                 material.uniforms.uDataTexture.value.needsUpdate = true;
                 material.uniforms.uFrame ++
             } else {
+                // check how to load 2d image from threejs.
                 const newMaterial = new THREE.ShaderMaterial({
                     uniforms: {
                         uDataTexture: { value: this.texture },
@@ -232,10 +244,12 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
                         uMaxThreshold: {value: this.maxValue},
                         // threshold: { value: 0.25 },
                         // range: { value: 0.1 },
-                        uOpacity: { value: 20.0 },
+                        uOpacity: { value: 0.5 },
                         uSteps: { value: 100 },
-                        uFrame: { value: 0 }
-                        // uColourMap: { value: colormap }
+                        // uFrame: { value: 0 },
+                        uCmapTexture: { value: this.cmapTexture },
+                        uCmapIndex: { value: this.cmapIndex },
+                        uNumCmaps: { value: 79 }, // 79 cmaps?
                     },
                     vertexShader: volumeShaders.vertexShader,
                     fragmentShader: volumeShaders.fragmentShader,
@@ -248,7 +262,7 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         return material ? (
             <mesh ref={meshRef} material={material}>
                 <boxGeometry
-                    args={[ 1,1,1
+                    args={[ 1,1,this.zscale
                         // this.width / Math.max(this.width, Math.max(this.height, this.depth)),
                         // this.height / Math.max(this.width, Math.max(this.height, this.depth)),
                         // this.depth / Math.max(this.width, Math.max(this.height, this.depth)),
