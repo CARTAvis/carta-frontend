@@ -24,7 +24,6 @@ export function plot(
     paddingRight: number,
     paddingTop: number,
     paddingBottom: number,
-    system: string,
     options: string
 );
 export function emptyFitsChan(): FitsChan;

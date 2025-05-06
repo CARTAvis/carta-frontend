@@ -92,4 +92,8 @@
     }
 
     user-select: none !important;
+
+    .#{$ns}-html-table {
+        width: 90%;
+    }
 }

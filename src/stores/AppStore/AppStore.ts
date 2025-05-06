@@ -42,8 +42,10 @@ import {
     CatalogProfileStore,
     CatalogStore,
     CatalogUpdateMode,
+    ChannelMapStore,
     DialogId,
     DialogStore,
+    DynamicLayoutStore,
     FileBrowserStore,
     HelpStore,
     HipsQueryStore,
@@ -63,7 +65,7 @@ import {
     WidgetsStore
 } from "stores";
 import {CompassAnnotationStore, CURSOR_REGION_ID, FrameInfo, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
-import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
+import {HistogramWidgetStore, RegionId as RegionIdType, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
 import {distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
 
 import GitCommit from "../../static/gitInfo";
@@ -113,12 +115,14 @@ export class AppStore {
     readonly fileBrowserStore: FileBrowserStore;
     readonly helpStore: HelpStore;
     readonly layoutStore: LayoutStore;
+    readonly dynamicLayoutStore: DynamicLayoutStore;
     readonly snippetStore: SnippetStore;
     readonly logStore: LogStore;
     readonly overlayStore: OverlayStore;
     readonly preferenceStore: PreferenceStore;
     readonly widgetsStore: WidgetsStore;
     readonly imageFittingStore: ImageFittingStore;
+    readonly channelMapStore: ChannelMapStore;
     /** Management of HiPS data queries. */
     readonly hipsQueryStore = HipsQueryStore.Instance;
     /** Configuration of the images in the image view widget. */
@@ -1719,24 +1723,11 @@ export class AppStore {
 
             frame.channel = update.channel;
             frame.stokes = update.stokes;
-            if (this.imageViewConfigStore.visibleFrames.includes(frame)) {
-                // Calculate new required frame view (cropped to file size)
-                const reqView = frame.requiredFrameView;
 
-                const croppedReq: FrameView = {
-                    xMin: Math.max(-0.5, reqView.xMin),
-                    xMax: Math.min(frame.frameInfo.fileInfoExtended.width - 0.5, reqView.xMax),
-                    yMin: Math.max(-0.5, reqView.yMin),
-                    yMax: Math.min(frame.frameInfo.fileInfoExtended.height - 0.5, reqView.yMax),
-                    mip: reqView.mip
-                };
-                const imageSize: Point2D = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
-                const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
-                const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
-                // TODO: dynamic tile size
-                const tileSizeFullRes = reqView.mip * 256;
-                const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
-
+            if (this.channelMapStore.channelMapEnabled) {
+                this.tileService.updateChannelMapActiveChannel(frame.frameInfo.fileId, frame.channel, frame.stokes);
+            } else if (this.imageViewConfigStore.visibleFrames.includes(frame)) {
+                const [tiles, midPointTileCoords] = frame.requiredTiles;
                 // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
                 const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
                 const compressionQuality = bunitVariant.includes(frame.headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
@@ -1781,13 +1772,13 @@ export class AppStore {
 
     private updateView = (tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, headerUnit: string) => {
         const isAnimating = this.animatorStore.serverAnimationActive;
-        if (isAnimating) {
+        if (isAnimating && !this.channelMapStore.channelMapEnabled) {
             this.backendService.addRequiredTiles(
                 fileId,
                 tiles.map(t => t.encode()),
                 this.preferenceStore.animationCompressionQuality
             );
-        } else {
+        } else if (!this.channelMapStore.channelMapEnabled) {
             // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
             const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
             const compressionQuality = bunitVariant.includes(headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
@@ -1809,7 +1800,7 @@ export class AppStore {
                 if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
                     AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
                     this.layoutStore.applyLayout(PresetLayout.DEFAULT);
-                    this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
+                    this.preferenceStore.setPreference(PreferenceKeys.LAYOUT, PresetLayout.DEFAULT);
                 }
                 await this.loadDefaultFiles();
                 this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
@@ -1859,12 +1850,14 @@ export class AppStore {
         this.fileBrowserStore = FileBrowserStore.Instance;
         this.helpStore = HelpStore.Instance;
         this.layoutStore = LayoutStore.Instance;
+        this.dynamicLayoutStore = DynamicLayoutStore.Instance;
         this.snippetStore = SnippetStore.Instance;
         this.logStore = LogStore.Instance;
         this.preferenceStore = PreferenceStore.Instance;
         this.overlayStore = OverlayStore.Instance;
         this.widgetsStore = WidgetsStore.Instance;
         this.imageFittingStore = ImageFittingStore.Instance;
+        this.channelMapStore = ChannelMapStore.Instance;
 
         this.astReady = false;
         this.cartaComputeReady = false;
@@ -2217,7 +2210,7 @@ export class AppStore {
         // TODO: update histograms directly if the image is not active!
 
         // Add histogram to pending histogram list
-        if (regionHistogramData.regionId === -1 && !regionHistogramData.config.fixedNumBins && !regionHistogramData.config.fixedBounds) {
+        if (regionHistogramData.regionId === RegionIdType.IMAGE && !regionHistogramData.config.fixedNumBins && !regionHistogramData.config.fixedBounds) {
             const key = `${regionHistogramData.fileId}_${regionHistogramData.stokes}_${regionHistogramData.channel}`;
             this.pendingChannelHistograms.set(key, regionHistogramData);
         } else if (regionHistogramData.regionId === -2) {
@@ -2230,6 +2223,11 @@ export class AppStore {
                     this.updateTaskProgress(regionHistogramData.progress);
                 }
             }
+        }
+
+        // update the render config widget histogram for channel map view mode
+        if (this.channelMapStore.channelMapEnabled && regionHistogramData.regionId === RegionIdType.IMAGE && regionHistogramData.stokes === this.activeFrame?.stokes) {
+            this.updateHistogram(regionHistogramData.fileId, regionHistogramData.stokes, regionHistogramData.channel);
         }
     };
 
@@ -2263,8 +2261,12 @@ export class AppStore {
             }
         }
 
+        this.updateHistogram(tileStreamDetails.fileId, tileStreamDetails.stokes, tileStreamDetails.channel);
+    };
+
+    updateHistogram = (fileId: number, stokes: number, channel: number) => {
         // Apply pending channel histogram
-        const key = `${tileStreamDetails.fileId}_${tileStreamDetails.stokes}_${tileStreamDetails.channel}`;
+        const key = `${fileId}_${stokes}_${channel}`;
         const pendingHistogram = this.pendingChannelHistograms.get(key);
         if (pendingHistogram?.histograms) {
             const updatedFrame = this.getFrame(pendingHistogram.fileId);
@@ -2274,9 +2276,10 @@ export class AppStore {
                 updatedFrame.renderConfig.setStokesIndex(stokesIndex);
                 updatedFrame.renderConfig.setHistChannel(pendingHistogram.channel);
                 updatedFrame.renderConfig.updateChannelHistogram(channelHist);
-                updatedFrame.channel = tileStreamDetails.channel;
-                updatedFrame.stokes = tileStreamDetails.stokes;
+                updatedFrame.channel = channel;
+                updatedFrame.stokes = stokes;
             }
+
             this.pendingChannelHistograms.delete(key);
         }
     };

@@ -13,6 +13,7 @@ uniform float uLineThickness;
 uniform int uShapeType;
 uniform vec3 uSelectedSourceColor;
 uniform bool uOmapEnabled;
+uniform float uRotationAngle;
 
 in vec2 v_pointCoord;
 in vec3 v_colour;
@@ -410,8 +411,9 @@ void main() {
     float outline = 0.0;
     float alpha2 = 0.0;
     // orientation
+    posPixelSpace *= rotateMat(degrees(uRotationAngle)); // correct frame rotation
     if(uOmapEnabled){
-        posPixelSpace*= rotateMat(v_orientation);
+        posPixelSpace *= rotateMat(v_orientation);
     }
 
     // highlight selected source

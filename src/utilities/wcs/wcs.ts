@@ -6,7 +6,7 @@ import {NumberFormatType, OverlayStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {add2D, magDir2D, polygonPerimeter, rotate2D, scale2D, subtract2D, trimFitsComment} from "utilities";
 
-export function isWCSStringFormatValid(wcsString: string, format: NumberFormatType): boolean {
+export function isWCSStringFormatValid(wcsString: string, format: NumberFormatType | undefined): boolean {
     if (!wcsString || !format) {
         return false;
     }

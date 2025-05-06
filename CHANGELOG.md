@@ -5,6 +5,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+* Fixed inconsistent label offsets of ruler annotations ([#2472](https://github.com/CARTAvis/carta-frontend/issues/2472)).
+* Fixed the misplaced spectral line labels in the PNG export with the Retina display ([#2423](https://github.com/CARTAvis/carta-frontend/issues/2423)).
+* Fixed incorrect initial position of the first loaded image ([#2486](https://github.com/CARTAvis/carta-frontend/issues/2486)).
+* Fixed the crash when loading fits files without CTYPE keywords in their header ([#2481](https://github.com/CARTAvis/carta-frontend/issues/2481)).
+* Fixed no WCS overaly after opening a file with a non-standard header ([#2395](https://github.com/CARTAvis/carta-frontend/issues/2395)).
+* Fixed no wcs grid if filename contains comma characters ([#2386](https://github.com/CARTAvis/carta-frontend/issues/2386)).
+### Added
+* Enhanced support for modifying the render configuration and the active channel/polarization in channel map mode ([#2492](https://github.com/CARTAvis/carta-frontend/issues/2492)).
+### Changed
+* The dropdown options in the z profile widget becomes scrollable with small widget width ([#1600](https://github.com/CARTAvis/carta-frontend/issues/1600)).
+
+## [5.0.0-beta.1c]
+
+### Fixed
+* Fixed failed to launch Carta with certain navigator.hardwareConcurrency ([#2478](https://github.com/CARTAvis/carta-frontend/pull/2478)).
+
+## [5.0.0-beta.1b]
+
+### Fixed
+* Fixed HiPS survey list requests.
+* Removed vulnerabilities.
+
+## [5.0.0-beta.1]
 
 ### Added
 * Added support for changing the depth order of floating widget and dialog on select ([#2307](https://github.com/CARTAvis/carta-frontend/pull/2307)).
@@ -20,6 +44,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Supported image coordinates for images with valid WCS headers ([#2366](https://github.com/CARTAvis/carta-frontend/issues/2366)).
 * Supported plotting with unit wavelength ^ 2 in z profile and Stokes analysis widgets ([#1685](https://github.com/CARTAvis/carta-frontend/issues/1685)).
 * Supported showing the coordinate system reference for RA and Dec labels in the image view panel.
+* Supported showing delta x and y in distance measurement ([#2165](https://github.com/CARTAvis/carta-frontend/issues/2165)).
+* Supported plotting catalog sources on image pixel size and angular size ([#1956](https://github.com/CARTAvis/carta-frontend/issues/1956)).
+* Dynamic layout: automatically applying the layout which is associated with the data type ([#752](https://github.com/CARTAvis/carta-frontend/issues/752)).
+* Supported channel map mode: viewing multiple channels of an image cube in the image viewer ([#1203](https://github.com/CARTAvis/carta-frontend/issues/1203)).
 ### Fixed
 * Fixed ruler annotation matching bug ([#2242](https://github.com/CARTAvis/carta-frontend/issues/2242)).
 * Fixed compass and ruler annotations update bug in the spatially matched image when changing the coordinate ([#2270](https://github.com/CARTAvis/carta-frontend/issues/2270)).
@@ -35,14 +63,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed the catalog load button status after double clicking catalog files ([#2378](https://github.com/CARTAvis/carta-frontend/issues/2378)).
 * Synchronized the value format in the pan and zoom tab in the image view settings widget ([#2235](https://github.com/CARTAvis/carta-frontend/issues/2235)).
 * Fixed save image/export regions bug which could cause directory overwrite or deletion ([#1377](https://github.com/CARTAvis/carta-backend/issues/1377)).
-* Fixed incorrect rendering of image view when moving the window to monitors with different screen resolution ([#2285](https://github.com/CARTAvis/carta-frontend/issues/2285)).
+* Fixed incorrect rendering of image view when moving the window to monitors with different screen resolution ([[#2285](https://github.com/CARTAvis/carta-frontend/issues/2285)]).
 * Fixed the sudden jump of dragged-out marks ([#152](https://github.com/CARTAvis/carta-frontend/issues/152)).
 * Fixed missing raster images when panning images to the top edge and right edge ([#948](https://github.com/CARTAvis/carta-frontend/issues/948)).
 * Fixed incorrect image viewer title after changing a layout ([#2379](https://github.com/CARTAvis/carta-frontend/issues/2379)).
+* Fixed the unit label of the y axis for flux density in the spectral profiles ([#2355](https://github.com/CARTAvis/carta-frontend/issues/2355)).
 ### Changed
 * Changed the limitation of plotting up-to-10 profiles in the spectral profiler multi-profile mode to up-to-16 ([#2440](https://github.com/CARTAvis/carta-frontend/issues/2440)).
-* Fixed the unit label of the y axis for flux density in the spectral profiles ([#2355](https://github.com/CARTAvis/carta-frontend/issues/2355)).
+* Changed in-app help context to the online readthedocs user manual ([#2241](https://github.com/CARTAvis/carta-frontend/issues/2241)).
 * Axes order of the PV diagram becomes a sticky parameter ([#2402](https://github.com/CARTAvis/carta-frontend/issues/2402)).
+* Redesign the layout dialog UI ([#773](https://github.com/CARTAvis/carta-frontend/issues/773)).
 
 ## [4.1.0]
 

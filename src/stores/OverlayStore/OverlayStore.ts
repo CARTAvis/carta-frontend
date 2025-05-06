@@ -100,9 +100,23 @@ export class OverlayGlobalSettings {
         astString.add("Labelling", this.labelType);
         astString.add("Color", AstColorsIndex.GLOBAL);
         astString.add("Tol", toFixed(this.tolerance / 100, 2), this.tolerance >= 0.001); // convert to fraction
+
         const isWcsFrameAndSystem = typeof this.explicitSystem !== "undefined" && this.explicitSystem !== SystemType.Image && frame.validWcs;
         if (isWcsFrameAndSystem) {
             astString.add("System", this.explicitSystem);
+        }
+
+        if (!AppStore.Instance?.overlayStore?.labels?.customText) {
+            const symbolX = AST.getString(frame?.wcsInfo, "Symbol(1)");
+            const symbolY = AST.getString(frame?.wcsInfo, "Symbol(2)");
+            const labelX = AST.getString(frame?.wcsInfo, "Label(1)");
+            const labelY = AST.getString(frame?.wcsInfo, "Label(2)");
+
+            const isSysPixel = typeof this.explicitSystem === "undefined" || this.explicitSystem === SystemType.Image;
+            const systemNameX = ((symbolX === "RA" || symbolX === "Dec") && AppStore.Instance?.overlayStore?.labels?.raDecReference) || isSysPixel ? (isSysPixel ? ` (pixel)` : ` (${this.explicitSystem})`) : ""; // a space between ` and ( is eccential
+            const systemNameY = ((symbolY === "RA" || symbolY === "Dec") && AppStore.Instance?.overlayStore?.labels?.raDecReference) || isSysPixel ? (isSysPixel ? ` (pixel)` : ` (${this.explicitSystem})`) : ""; // a space between ` and ( is eccential
+            astString.add("Label(1)", `"${labelX.replace(/%/g, "%%%%").replace(/"/g, "”")}${systemNameX}"`, labelX !== undefined);
+            astString.add("Label(2)", `"${labelY.replace(/%/g, "%%%%").replace(/"/g, "”")}${systemNameY}"`, labelY !== undefined);
         }
 
         if ((frame?.isXY || frame?.isYX) && !frame?.isPVImage && isWcsFrameAndSystem) {
@@ -339,6 +353,7 @@ export class OverlayBorderSettings {
 }
 
 export class OverlayTickSettings {
+    @observable visible: boolean;
     @observable drawAll: boolean;
     @observable densityX: number;
     @observable densityY: number;
@@ -363,6 +378,7 @@ export class OverlayTickSettings {
 
     constructor() {
         makeObservable(this);
+        this.visible = true;
         this.drawAll = true;
         this.customDensity = false;
         this.densityX = 4;
@@ -372,6 +388,10 @@ export class OverlayTickSettings {
         this.width = 1;
         this.length = 1; // percentage
         this.majorLength = 2; // percentage
+    }
+
+    @action setVisible(visible: boolean) {
+        this.visible = visible;
     }
 
     @action setDrawAll(drawAll: boolean = true) {
@@ -644,12 +664,15 @@ export class OverlayLabelSettings {
     @computed get styleString() {
         let astString = new ASTSettingsString();
 
+        const appStore = AppStore.Instance;
+
         astString.add("TextLab", this.show);
         astString.add("Font(TextLab)", this.font);
-        astString.add("Size(TextLab)", this.fontSize * AppStore.Instance.imageRatio);
+        astString.add("Size(TextLab)", this.fontSize * appStore.imageRatio);
         astString.add("Color(TextLab)", AstColorsIndex.LABEL, this.customColor);
-        astString.add("Label(1)", this.customLabelX, this.customText);
-        astString.add("Label(2)", this.customLabelY, this.customText);
+
+        astString.add("Label(1)", `"${this.customLabelX.replace(/%/g, "%%%%").replace(/"/g, "”")}"`, this.customText);
+        astString.add("Label(2)", `"${this.customLabelY.replace(/%/g, "%%%%").replace(/"/g, "”")}"`, this.customText);
 
         return astString.toString();
     }
@@ -912,16 +935,19 @@ export class OverlayColorbarSettings {
     }
 
     @computed get height() {
-        const overlayStore = AppStore.Instance?.overlayStore;
-        return (frame?: FrameStore) => {
+        return (frame?: FrameStore, length?: number) => {
+            if (length) {
+                return length;
+            }
+            const overlayStore = AppStore.Instance.overlayStore;
             return this.position === "right" ? frame?.renderHeight || overlayStore?.renderHeight : frame?.renderWidth || overlayStore?.renderWidth;
         };
     }
 
     @computed get tickNum() {
-        return (frame?: FrameStore) => {
-            const tickNum = Math.round((this.height(frame) / 100.0) * this.tickDensity);
-            return this.height && tickNum > COLORBAR_TICK_NUM_MIN ? tickNum : COLORBAR_TICK_NUM_MIN;
+        return (frame?: FrameStore, length?: number) => {
+            const tickNum = Math.round((this.height(frame, length) / 100.0) * this.tickDensity);
+            return this.height(frame, length) && tickNum > COLORBAR_TICK_NUM_MIN ? tickNum : COLORBAR_TICK_NUM_MIN;
         };
     }
 
@@ -1038,6 +1064,8 @@ export class OverlayStore {
 
         // if the system is manually selected, set new default formats & update active frame's wcs settings
         autorun(() => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const _ = this.global.system;
             this.setFormatsFromSystem();
             AppStore.Instance.frames.forEach(frame => {
                 if (frame?.validWcs && frame?.wcsInfoForTransformation && this.global.explicitSystem && this.global.explicitSystem !== SystemType.Image) {
@@ -1163,12 +1191,55 @@ export class OverlayStore {
         return astString.toString();
     }
 
-    @action minSize(frame?: FrameStore) {
-        return Math.min(frame.renderWidth || this.renderWidth, frame.renderHeight || this.renderHeight);
+    public channelMapInnerStyleString(frame?: FrameStore) {
+        let astString = new ASTSettingsString();
+        astString.addSection(this.global.styleString(frame));
+        astString.addSection(this.grid.styleString);
+        astString.addSection(this.border.styleString);
+        astString.addSection(this.ticks.styleString);
+        astString.addSection(this.axes.styleString);
+        astString.addSection(this.numbers.styleString);
+        astString.add("DrawTitle", false);
+        astString.add("TextLab", false);
+        astString.add("LabelUp", 0);
+        astString.add("TitleGap", 0);
+        astString.add("NumLabGap", this.defaultGap / this.minSize(frame));
+        astString.add("TextLabGap", 0);
+        astString.add("TextGapType", "plot");
+        return astString.toString();
+    }
+
+    public channelMapOuterStyleString(frame?: FrameStore) {
+        let astString = new ASTSettingsString();
+        astString.addSection(this.global.styleString(frame));
+        astString.addSection(this.title.styleString);
+        astString.addSection(this.labels.styleString);
+        astString.add("Grid", false);
+        astString.add("Border", false);
+        astString.add("MajTickLen(1)", 0);
+        astString.add("MinTickLen(1)", 0);
+        astString.add("MajTickLen(2)", 0);
+        astString.add("MinTickLen(2)", 0);
+        astString.add("DrawAxes", false);
+        astString.add("NumLab", false);
+        astString.add("LabelUp", 0);
+        astString.add("TitleGap", this.titleGap / Math.min(this.fullViewWidth - this.paddingLeft - this.paddingRight, this.fullViewHeight - this.paddingTop - this.paddingBottom));
+        astString.add("NumLabGap", 0);
+        astString.add("TextLabGap", this.cumulativeLabelGap / Math.min(this.fullViewWidth - this.paddingLeft - this.paddingRight, this.fullViewHeight - this.paddingTop - this.paddingBottom));
+        astString.add("TextGapType", "plot");
+        return astString.toString();
+    }
+
+    @action minSize(frame: FrameStore) {
+        return Math.min(frame.renderWidth, frame.renderHeight);
     }
 
     @computed get showNumbers() {
         return this.numbers.show && this.global.labelType === LabelType.Exterior;
+    }
+
+    @computed get base() {
+        return 5;
     }
 
     @computed get defaultGap() {
@@ -1183,10 +1254,6 @@ export class OverlayStore {
         const numGap = this.showNumbers ? this.defaultGap : 0;
         const numHeight = this.showNumbers ? this.numbers.fontSize : 0;
         return numGap + numHeight + this.defaultGap;
-    }
-
-    @computed get base() {
-        return 5;
     }
 
     @computed get numberWidth(): number {
@@ -1235,31 +1302,89 @@ export class OverlayStore {
     }
 
     @computed get renderWidth() {
-        const renderWidth = this.viewWidth - this.paddingLeft - this.paddingRight;
+        let renderWidth;
+        if (AppStore.Instance.channelMapStore.channelMapEnabled) {
+            renderWidth = (this.fullViewWidth - this.paddingLeft - this.paddingRight) / AppStore.Instance.channelMapStore.numColumns - this.base;
+        } else {
+            renderWidth = this.viewWidth - this.paddingLeft - this.paddingRight;
+        }
         return renderWidth > 1 ? renderWidth : 1; // return value > 1 to prevent crashing
     }
 
     @computed get renderHeight() {
-        const renderHeight = this.viewHeight - this.paddingTop - this.paddingBottom;
+        let renderHeight;
+        if (AppStore.Instance.channelMapStore.channelMapEnabled) {
+            renderHeight = (this.fullViewHeight - this.paddingTop - this.paddingBottom) / AppStore.Instance.channelMapStore.numRows - this.base;
+        } else {
+            renderHeight = this.viewHeight - this.paddingTop - this.paddingBottom;
+        }
         return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
     }
 
+    @computed get channelMapInnerPadding(): (type: "left" | "bottom" | "corner" | "inner") => Padding {
+        const paddingLeft = this.paddingLeft;
+        const paddingBottom = this.paddingBottom;
+        return (type: "left" | "bottom" | "corner" | "inner") => {
+            switch (type) {
+                case "left":
+                    return {
+                        left: paddingLeft,
+                        right: this.base,
+                        top: this.base,
+                        bottom: this.base
+                    };
+                case "bottom":
+                    return {
+                        left: this.base,
+                        right: this.base,
+                        top: this.base,
+                        bottom: paddingBottom
+                    };
+                case "corner":
+                    return {
+                        left: paddingLeft,
+                        right: this.base,
+                        top: this.base,
+                        bottom: paddingBottom
+                    };
+                case "inner":
+                    return {
+                        left: this.base,
+                        right: this.base,
+                        top: this.base,
+                        bottom: this.base
+                    };
+                default:
+                    return {
+                        left: paddingLeft,
+                        right: this.base,
+                        top: this.base,
+                        bottom: paddingBottom
+                    };
+            }
+        };
+    }
+
     @computed get previewRenderWidth() {
+        const paddingLeft = this.paddingLeft;
+        const paddingRight = this.paddingRight;
         return (viewWidth: number) => {
             if (!viewWidth) {
                 return undefined;
             }
-            const renderWidth = viewWidth - this.paddingLeft - this.paddingRight;
+            const renderWidth = viewWidth - paddingLeft - paddingRight;
             return renderWidth > 1 ? renderWidth : 1; // return value > 1 to prevent crashing
         };
     }
 
     @computed get previewRenderHeight() {
+        const paddingTop = this.paddingTop;
+        const paddingBottom = this.paddingBottom;
         return (viewHeight: number) => {
             if (!viewHeight) {
                 return undefined;
             }
-            const renderHeight = viewHeight - this.paddingTop - this.paddingBottom;
+            const renderHeight = viewHeight - paddingTop - paddingBottom;
             return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
         };
     }

@@ -78,7 +78,24 @@ export class HipsQueryStore {
 
     /** Whether the current state is valid for a HiPS data query. */
     @computed get isValid(): boolean {
-        return this.hipsSurvey.length > 0 && this.size.x > 0 && this.size.y > 0 && (this.object.length > 0 || (isFinite(this.center.x) && isFinite(this.center.y))) && this.fov > 0 && isFinite(this.rotationAngle) && !this.isLoading;
+        return this.hipsSurvey.length > 0 && this.isDimensionValid && (this.object.length > 0 || (isFinite(this.center.x) && isFinite(this.center.y))) && this.isFovValid && this.isRotAngleValid && !this.isLoading;
+    }
+
+    @computed get isDimensionValid(): boolean {
+        return this.size.x >= this.HipsConstraint.MinDimension && this.size.y >= this.HipsConstraint.MinDimension && this.size.x * this.size.y <= this.HipsConstraint.MaxDimension;
+    }
+
+    @computed get isFovValid(): boolean {
+        return this.fov > this.HipsConstraint.MinFov && this.fov <= this.HipsConstraint.MaxFov;
+    }
+
+    @computed get isRotAngleValid(): boolean {
+        return this.rotationAngle >= this.HipsConstraint.MinRotAngle && this.rotationAngle <= this.HipsConstraint.MaxRotAngle;
+    }
+
+    @computed get pixelSize(): number {
+        const selectedSide = isNaN(this.size.x) || isNaN(this.size.y) ? (isNaN(this.size.x) ? this.size.y : this.size.x) : Math.max(this.size.x, this.size.y);
+        return this.fov / selectedSide;
     }
 
     /** HiPS projection types and their descriptions. */
@@ -112,6 +129,15 @@ export class HipsQueryStore {
         [HipsProjection.HPX, "HEALPix"],
         [HipsProjection.XPH, "HEALPix polar, aka “butterfly”"]
     ]);
+
+    readonly HipsConstraint = {
+        MinDimension: 5,
+        MaxDimension: 5e7,
+        MinFov: 0,
+        MaxFov: 360,
+        MinRotAngle: 0,
+        MaxRotAngle: 360
+    };
 
     static get Instance() {
         if (!HipsQueryStore.staticInstance) {
@@ -175,7 +201,7 @@ export class HipsQueryStore {
 
     /**
      * Sets the field of view of the output image.
-     * @param fov - The field of view to set.
+     * @param fov - The field of view to set (degree).
      */
     @action setFov = (fov: number) => {
         this.fov = fov;
@@ -199,7 +225,7 @@ export class HipsQueryStore {
 
     /**
      * Sets the rotation angle of the output image.
-     * @param rotationAngle - The rotation angle to set.
+     * @param rotationAngle - The rotation angle to set (degree).
      */
     @action setRotationAngle = (rotationAngle: number) => {
         this.rotationAngle = rotationAngle;
@@ -280,20 +306,20 @@ export class HipsQueryStore {
     private fetchSurveyList = async () => {
         try {
             const skyMaps = await axios.get(
-                "http://alasky.cds.unistra.fr/MocServer/query?expr=(hips_frame%3Dequatorial%2Cgalactic%2Cecliptic+||+hips_frame%3D!*)+%26%26+dataproduct_type!%3Dcatalog%2Ccube+%26%26+hips_service_url%3D*+%26%26+hips_tile_format=*fits*&get=id&fmt=json"
+                "https://alasky.cds.unistra.fr/MocServer/query?expr=(hips_frame%3Dequatorial%2Cgalactic%2Cecliptic+||+hips_frame%3D!*)+%26%26+dataproduct_type!%3Dcatalog%2Ccube+%26%26+hips_service_url%3D*+%26%26+hips_tile_format=*fits*&get=id&fmt=json"
             );
             if (skyMaps?.data) {
                 this.surveyList = skyMaps?.data.map(x => ({name: x, type: "Sky map"}));
             }
 
             const planetMaps = await axios.get(
-                "http://alasky.cds.unistra.fr/MocServer/query?expr=hips_frame!%3Dequatorial%2Cgalactic%2Cecliptic+%26%26+hips_frame%3D*+%26%26+dataproduct_type!%3Dcatalog%2Ccube+%26%26+hips_service_url%3D*+%26%26+hips_tile_format=*fits*&get=id&fmt=json"
+                "https://alasky.cds.unistra.fr/MocServer/query?expr=hips_frame!%3Dequatorial%2Cgalactic%2Cecliptic+%26%26+hips_frame%3D*+%26%26+dataproduct_type!%3Dcatalog%2Ccube+%26%26+hips_service_url%3D*+%26%26+hips_tile_format=*fits*&get=id&fmt=json"
             );
             if (planetMaps?.data) {
                 planetMaps.data.forEach(x => this.surveyList.push({name: x, type: "Planet map"}));
             }
 
-            const cubes = await axios.get("http://alasky.cds.unistra.fr/MocServer/query?hips_service_url=*&dataproduct_type=cube&hips_tile_format=*fits*&get=id&fmt=json");
+            const cubes = await axios.get("https://alasky.cds.unistra.fr/MocServer/query?hips_service_url=*&dataproduct_type=cube&hips_tile_format=*fits*&get=id&fmt=json");
             if (cubes?.data) {
                 cubes.data.forEach(x => this.surveyList.push({name: x, type: "Cube"}));
             }

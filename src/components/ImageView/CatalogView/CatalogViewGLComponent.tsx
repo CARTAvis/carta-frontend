@@ -62,6 +62,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const pointSize = catalogWidgetStore.catalogSize;
             const shape = catalogWidgetStore.catalogShape;
             const thickness = catalogWidgetStore.thickness;
+            const displayMode = catalogWidgetStore.catalogDisplayMode;
             // size
             const sizeMapColumn = catalogWidgetStore.sizeMapColumn;
             const sizeMaxArea = catalogWidgetStore.sizeMax.area;
@@ -72,6 +73,10 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const sizeColumnMinClipd = catalogWidgetStore.sizeColumnMin.clipd;
             const sizeArea = catalogWidgetStore.sizeArea;
             const sizeScalingType = catalogWidgetStore.sizeScalingType;
+            const isImagePixelSize = catalogWidgetStore.isImagePixelSize;
+            const isAngularSize = catalogWidgetStore.isAngularSize;
+            const canvassizeUnit = catalogWidgetStore.canvasSizeUnit;
+            const worldSizeUnit = catalogWidgetStore.worldSizeUnit;
             // size minor
             const sizeMinorMapColumn = catalogWidgetStore.sizeMinorMapColumn;
             const sizeMinorColumnMaxClipd = catalogWidgetStore.sizeMinorColumnMax.clipd;
@@ -179,7 +184,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 const lineThickness = catalogWidgetStore.thickness * shape.thicknessBase * AppStore.Instance.pixelRatio;
                 let color = tinycolor(catalogWidgetStore.catalogColor).toRgb();
                 let selectedSourceColor = tinycolor(catalogWidgetStore.highlightColor).toRgb();
-                let pointSize = catalogWidgetStore.catalogSize + shape.diameterBase;
+                let pointSize = catalogWidgetStore.isImagePixelSize ? catalogWidgetStore.catalogSize : catalogWidgetStore.catalogSize + shape.diameterBase;
                 this.gl.uniform1f(shaderUniforms.LineThickness, lineThickness);
                 this.gl.uniform1i(shaderUniforms.ShowSelectedSource, catalogWidgetStore.showSelectedData ? 1.0 : 0.0);
                 // frameView
@@ -228,6 +233,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 this.gl.uniform1i(shaderUniforms.SizeMajorMapEnabled, 0);
                 this.gl.uniform1i(shaderUniforms.AreaMode, catalogWidgetStore.sizeArea ? 1 : 0);
                 const sizeTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Size);
+                this.gl.uniform1i(shaderUniforms.IsImagePixelSize, catalogWidgetStore.isImagePixelSize ? 1 : 0);
                 if (!catalogWidgetStore.disableSizeMap && sizeTexture) {
                     this.gl.uniform1i(shaderUniforms.SizeMajorMapEnabled, 1);
                     this.gl.activeTexture(GL2.TEXTURE3);
@@ -309,8 +315,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     this.gl.uniform3f(shaderUniforms.PointColor, color.r / 255.0, color.g / 255.0, color.b / 255.0);
                     this.gl.uniform3f(shaderUniforms.SelectedSourceColor, selectedSourceColor.r / 255.0, selectedSourceColor.g / 255.0, selectedSourceColor.b / 255.0);
                     this.gl.uniform1i(shaderUniforms.ShapeType, catalogWidgetStore.catalogShape);
-                    this.gl.uniform1f(shaderUniforms.PointSize, pointSize * AppStore.Instance.pixelRatio);
-
+                    this.gl.uniform1f(shaderUniforms.PointSize, catalogWidgetStore.isImagePixelSize ? pointSize : pointSize * AppStore.Instance.pixelRatio);
                     this.gl.drawArrays(GL2.TRIANGLES, 0, count * 6);
                     this.gl.finish();
                 }
