@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
 ### Fixed
 * Fixed inconsistent label offsets of ruler annotations ([#2472](https://github.com/CARTAvis/carta-frontend/issues/2472)).
 * Fixed the misplaced spectral line labels in the PNG export with the Retina display ([#2423](https://github.com/CARTAvis/carta-frontend/issues/2423)).
@@ -14,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed no wcs grid if filename contains comma characters ([#2386](https://github.com/CARTAvis/carta-frontend/issues/2386)).
 ### Added
 * Enhanced support for modifying the render configuration and the active channel/polarization in channel map mode ([#2492](https://github.com/CARTAvis/carta-frontend/issues/2492)).
+* Supported flux density calculations with various pixel units in the statistics widget ([#2521](https://github.com/CARTAvis/carta-frontend/issues/2521)).
 ### Changed
 * The dropdown options in the z profile widget becomes scrollable with small widget width ([#1600](https://github.com/CARTAvis/carta-frontend/issues/1600)).
 
