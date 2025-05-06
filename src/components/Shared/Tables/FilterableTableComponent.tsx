@@ -367,7 +367,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 columnWidths={table.columnWidths}
                 onCompleteRender={table.onCompleteRender}
                 cellRendererDependencies={[tableCheckData]} // trigger re-render on line selection change
-                getCellClipboardData={(rowIndex, columnIndex) => copyToClipboard(tableData.get(table.columnHeaders[columnIndex].columnIndex)?.data[rowIndex] as string)}
+                getCellClipboardData={window.isSecureContext ? undefined : (rowIndex, columnIndex) => copyToClipboard(tableData.get(table.columnHeaders[columnIndex].columnIndex)?.data[rowIndex] as string)}
             >
                 {tableColumns}
             </Table2>

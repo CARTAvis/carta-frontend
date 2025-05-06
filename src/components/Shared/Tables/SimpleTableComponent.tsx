@@ -66,7 +66,6 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
                         .join(", ")
                 );
             } else if (typeof cellData === "string") {
-                console.log("cellData", typeof cellData);
                 copyToClipboard(cellData);
             }
         }
@@ -98,7 +97,7 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
                 columnWidths={this.props.columnWidths}
                 onColumnWidthChanged={this.props.onColumnWidthChanged}
                 cellRendererDependencies={this.props.cellRendererDependencies}
-                getCellClipboardData={(rowIndex, columnIndex) => this.copyCellToClipboard(rowIndex, columnIndex)}
+                getCellClipboardData={window.isSecureContext ? undefined : (rowIndex, columnIndex) => this.copyCellToClipboard(rowIndex, columnIndex)}
             >
                 {tableColumns}
             </Table2>
