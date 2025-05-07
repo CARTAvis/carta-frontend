@@ -583,9 +583,11 @@ export class SpectralProfileSelectionStore {
         const widgetStore = this.widgetStore;
         const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
 
-        if (!matchedFileIds?.includes(fileId) || !matchedFileIds?.includes(this.selectedFrameFileId)) {
+        if (this.selectedFrameFileId !== undefined && (!matchedFileIds?.includes(fileId) || !matchedFileIds?.includes(this.selectedFrameFileId))) {
             this.selectedFileIds = [fileId];
             widgetStore.setFileId(fileId);
+            widgetStore.clearProfileColors();
+            this.assignColor(fileId);
             return;
         }
 
@@ -749,10 +751,14 @@ export class SpectralProfileSelectionStore {
                 return matchedFileIds;
             },
             matchedFileIds => {
-                if (!matchedFileIds.includes(this.selectedFrameFileId)) {
+                if (this.selectedFrameFileId !== undefined && !matchedFileIds.includes(this.selectedFrameFileId)) {
                     this.selectedFileIds = [this.selectedFrameFileId];
                 } else {
-                    this.selectedFileIds = this.selectedFileIds?.filter(fileId => matchedFileIds.includes(fileId));
+                    this.selectedFileIds.forEach(fileId => {
+                        if (!matchedFileIds.includes(fileId)) {
+                            this.removeSelectedFileMultiMode(fileId);
+                        }
+                    });
                 }
             }
         );
