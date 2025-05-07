@@ -1,5 +1,5 @@
 import {CARTA} from "carta-protobuf";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
 
 import {GetIntensityOptions, IntensityConfig, LineKey, LineOption, POLARIZATION_LABELS, POLARIZATIONS, STATISTICS_TEXT, StatsTypeString, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES} from "models";
 import {AppStore} from "stores";
@@ -583,7 +583,7 @@ export class SpectralProfileSelectionStore {
         const widgetStore = this.widgetStore;
         const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
 
-        if (!matchedFileIds?.includes(fileId)) {
+        if (!matchedFileIds?.includes(fileId) || !matchedFileIds?.includes(this.selectedFrameFileId)) {
             this.selectedFileIds = [fileId];
             widgetStore.setFileId(fileId);
             return;
@@ -594,9 +594,8 @@ export class SpectralProfileSelectionStore {
             this.removeSelectedFileMultiMode(fileId);
         } else if (!this.selectedFileIds?.includes(fileId) && this.selectedFileIds?.length < MAXIMUM_PROFILES) {
             // add selection
-            this.selectedFileIds = [...this.selectedFileIds, fileId].sort((a, b) => {
-                return a - b;
-            });
+            this.selectedFileIds = [...this.selectedFileIds, fileId];
+            widgetStore.setFileId(fileId);
             this.assignColor(fileId);
         }
     };
@@ -743,5 +742,19 @@ export class SpectralProfileSelectionStore {
                 this.selectFrame(ACTIVE_FILE_ID);
             }
         });
+
+        reaction(
+            () => {
+                const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
+                return matchedFileIds;
+            },
+            matchedFileIds => {
+                if (!matchedFileIds.includes(this.selectedFrameFileId)) {
+                    this.selectedFileIds = [this.selectedFrameFileId];
+                } else {
+                    this.selectedFileIds = this.selectedFileIds?.filter(fileId => matchedFileIds.includes(fileId));
+                }
+            }
+        );
     }
 }
