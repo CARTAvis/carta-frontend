@@ -119,6 +119,8 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         this.widgetId = props.id.match(/render-3d-\d+/)[0];  
         // this.gl = VolumeWebGLService.Instance.gl;
         this.cmapTexture = new THREE.TextureLoader().load( allMaps );
+        this.cmapTexture.magFilter = THREE.NearestFilter;
+        this.cmapTexture.minFilter = THREE.NearestFilter;
         this.cmapIndex = 8;
         console.log("cmaptexture: ", this.cmapTexture);
         
@@ -197,7 +199,6 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         const parameters = {
             minThreshold: this.minValue,
             maxThreshold: this.maxValue,
-            opacity: 0.5,
             range: 0.1,
             steps: 100,
         };
@@ -205,21 +206,21 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         function update() {
 
             // material.uniforms.threshold.value = parameters.threshold;
-            material.uniforms.uOpacity.value = parameters.opacity;
             // material.uniforms.range.value = parameters.range;
             material.uniforms.uSteps.value = parameters.steps;
             material.uniforms.uMinThreshold.value = parameters.minThreshold;
             material.uniforms.uMaxThreshold.value = parameters.maxThreshold;
+            console.log("minThreshold: ", parameters.minThreshold);
+            console.log("maxThreshold: ", parameters.maxThreshold);
 
         }
 
         const gui = new GUI();
         // gui.add( parameters, 'threshold', 0, 1, 0.01 ).onChange( update );
-        gui.add( parameters, 'opacity', 0, 100.0, 0.01 ).onChange( update );
         // gui.add( parameters, 'range', 0, 1, 0.01 ).onChange( update );
         gui.add( parameters, 'steps', 0, 200, 1 ).onChange( update );
-        gui.add( parameters, 'minThreshold', this.minVal, this.maxVal, 0.00001).onChange( update );
-        gui.add( parameters, 'maxThreshold', this.minVal, this.maxVal, 0.00001).onChange( update );
+        gui.add( parameters, 'minThreshold', this.minVal, this.maxVal).onChange( update );
+        gui.add( parameters, 'maxThreshold', this.minVal, this.maxVal).onChange( update );
 
         useEffect(() => {
             gl.getContext().getExtension("OES_texture_float");

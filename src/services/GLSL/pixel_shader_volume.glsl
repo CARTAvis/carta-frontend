@@ -98,14 +98,7 @@ void main(){
     float randNum = randomFloat( seed ) * 2.0 - 1.0;
     point += rayDir * randNum * ( 1.0 / size );
 
-    vec3 white = vec3(1.0, 1.0, 1.0);
-    vec4 color = vec4(white, 0.0);
-
-    // float accumulator = 0.0;
-    float rayVal = 0.0;
-    float cumulativeLength = 0.0;
-
-    // vec4 ac = vec4( base, 0.0 );
+    float rayVal = -3.402823466;
 
     float range = uMaxVal - uMinVal;
 
@@ -113,51 +106,24 @@ void main(){
     for(float i = bounds.x; i < bounds.y; i += delta) {
         float stepVal = samplePoint( point + 0.5 );
 
-        // make it like iDaVIE:
-        // if (!isNaN(stepVal)) {
-        //     rayVal += stepVal * delta;
-        //     cumulativeLength += delta;
+        if ( !isNaN( stepVal ) ) {
+            if( stepVal > rayVal ) rayVal = stepVal;
+        }
 
-        //     point += rayDir * delta;
-        // }
-
-        // rayVal /= cumulativeLength;
-
-        // -------------------------------------
-
-        // if ( d < -3.402823466e38 ) {
-        //     d = uMinValue;
-        // }
-        // give it a nan color but make it transparent.
-
-        // get also the minimum value.
-
-        if( stepVal > rayVal ) rayVal = stepVal;
-
-        // accumulator += d;
-        stepVal *= uOpacity;
-        color.a += ( 1.0 - color.a ) * stepVal;
-
-        // color.a += ( stepVal - uMinVal ) / range;
-
-        // stop ray if it has accumulated enough opacity
-        if( color.a >= 0.95 ) break;
-
-        // move point on step in direction of the ray
         point += rayDir * delta;
     }
 
+    // float x = (rayVal - uMinVal) / range;
+
+    // x = clamp(rayVal, (uMinThreshold - uMinVal) / range, ( uMaxThreshold - uMinVal) / range);
     
-    float x = clamp(rayVal, uMinThreshold, uMaxThreshold);
-    x = (rayVal - uMinVal) / range;
+    float x = (rayVal - uMinThreshold) / (uMaxThreshold - uMinThreshold);
 
     // for colormap
     float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
 
-    // float x = (rayVal - uMinThreshold) / (uMaxThreshold - uMinThreshold);
-
-    color.rgb = texture(uCmapTexture, vec2(x, cmapYVal)).rgb; // use .rgb for michaela's method
-    // color.a = uOpacity;
+    vec4 color = texture(uCmapTexture, vec2(x, cmapYVal)); // use .rgb for michaela's method
+    color.a = x;
 
     gl_FragColor = color;
 
