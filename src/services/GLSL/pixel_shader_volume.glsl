@@ -14,15 +14,12 @@ varying vec3 vDirection; // in
 // varying float tNear;
 // varying float tFar;
 
-// out vec4 color;
-
-// uniform vec3 base;
 uniform sampler3D uDataTexture;
 
 uniform float uMinThreshold;
 uniform float uMaxThreshold;
-uniform float uMinValue;
-uniform float uMaxValue;
+// uniform float uMinValue;
+// uniform float uMaxValue;
 // uniform float uRange;
 uniform float uOpacity;
 uniform float uSteps;
@@ -36,8 +33,8 @@ uniform sampler2D uCmapTexture;
 uniform int uNumCmaps;
 uniform int uCmapIndex;
 
-uniform float uMinVal;
-uniform float uMaxVal;
+// uniform float uMinVal;
+// uniform float uMaxVal;
 
 bool isNaN(float val) {
     return val <= -FLT_MAX;
@@ -102,9 +99,7 @@ void main(){
     float randNum = randomFloat( seed ) * 2.0 - 1.0;
     point += rayDir * randNum * ( 1.0 / size );
 
-    float rayVal = -3.402823466;
-
-    float range = uMaxVal - uMinVal;
+    float rayVal = -3.402823466e+38;
 
     // ray march through the volume
     for(float i = bounds.x; i < bounds.y; i += delta) {
@@ -117,17 +112,13 @@ void main(){
         point += rayDir * delta;
     }
 
-    // float x = (rayVal - uMinVal) / range;
+    if (isNaN(rayVal)) {
+        discard;
+    }
 
-    // x = clamp(rayVal, (uMinThreshold - uMinVal) / range, ( uMaxThreshold - uMinVal) / range);
-    
     float x = (rayVal - uMinThreshold) / (uMaxThreshold - uMinThreshold);
 
     x = clamp(x, 0.0, 1.0);
-
-    // uScaleType = 1;
-    float uAlpha = 1000.0;
-    float uGamma = 1.0;
 
     if (uScaleType == SQUARE) {
         x = x * x;
