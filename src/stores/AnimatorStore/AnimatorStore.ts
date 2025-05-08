@@ -204,6 +204,7 @@ export class AnimatorStore {
         return this.animationActive && this.animationMode !== AnimationMode.FRAME;
     }
 
+    /** Whether the animation feature should be disabled. It is disabled when no image is loaded or only one animation step is available, e.g., animating channels of a 2D image. */
     @computed get startAnimationDisabled() {
         const frame = AppStore.Instance.activeFrame;
         if (!frame) {

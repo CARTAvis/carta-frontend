@@ -1071,6 +1071,7 @@ export class WidgetsStore {
 
     // endregion
 
+    /** The title of the image view widget, which is the file name of the active image. If the active image is a PV preview, the title is the file name of the first image on the page. */
     @computed get imageViewWidgetTitle() {
         const activeImage = AppStore.Instance.activeImage;
         const visibleImages = AppStore.Instance.imageViewConfigStore.visibleImages;
@@ -1085,6 +1086,7 @@ export class WidgetsStore {
         return newTitle;
     }
 
+    /** Updates the title of the image view widget using {@link imageViewWidgetTitle}. */
     @action updateImageWidgetTitle() {
         const layout = LayoutStore.Instance.dockedLayout;
         const newTitle = this.imageViewWidgetTitle;
