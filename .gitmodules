@@ -3,4 +3,4 @@
 	url = https://github.com/CARTAvis/carta-protobuf.git
 [submodule "schemas"]
 	path = schemas
-	url = git@github.com:CARTAvis/schemas.git
+	url = https://github.com/CARTAvis/schemas.git
