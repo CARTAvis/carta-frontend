@@ -1,6 +1,6 @@
 // adapted from https://github.com/mrdoob/three.js/blob/master/examples/webgl_texture3d_partialupdate.html
 
-#define FLT_MAX 3.402823466e+38
+// #define FLT_MAX 3.402823466e+38
 
 precision highp float;
 precision highp sampler3D;
@@ -27,6 +27,9 @@ uniform float uMaxValue;
 uniform float uOpacity;
 uniform float uSteps;
 uniform float uFrame; // it is used for the random seed
+uniform int uScaleType;
+uniform float uGamma;
+uniform float uAlpha;
 
 uniform sampler2D uCmapTexture;
 uniform int uNumCmaps;
@@ -119,11 +122,33 @@ void main(){
     
     float x = (rayVal - uMinThreshold) / (uMaxThreshold - uMinThreshold);
 
-    // for colormap
-    float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
+    x = clamp(x, 0.0, 1.0);
+
+    // uScaleType = 1;
+    float uAlpha = 1000.0;
+    float uGamma = 1.0;
+
+    if (uScaleType == SQUARE) {
+        x = x * x;
+    }
+    else if (uScaleType == SQRT) {
+        x = sqrt(x);
+    }
+    else if (uScaleType == LOG) {
+        x = log(uAlpha * x + 1.0) / log(uAlpha + 1.0);
+    }
+    else if (uScaleType == POWER) {
+        x = (pow(uAlpha, x) - 1.0) / (uAlpha - 1.0);
+    }
+    else if (uScaleType == GAMMA) {
+        x = pow(x, uGamma);
+    }
+
+    // for colormap. Without the 1.0 - the order of the colormaps is reversed
+    float cmapYVal = 1.0 - (float(uCmapIndex) + 0.5) / float(uNumCmaps);
 
     vec4 color = texture(uCmapTexture, vec2(x, cmapYVal)); // use .rgb for michaela's method
-    color.a = x;
+    color.a = x - 0.05;
 
     gl_FragColor = color;
 

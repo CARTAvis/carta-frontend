@@ -74,7 +74,7 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
     @observable cmapIndex: number;
     @observable minVal: number;
     @observable maxVal: number;
-    @observable zscale: number = 1;
+    // @observable zScale: number;
 
     // this.width = render3DData.width;
     // this.height = render3DData.height;
@@ -93,9 +93,10 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         this.panelHeight = height;
     };
 
+    // these are not the absolute min and max values, but the percentiles of the histogram
     @computed get minValue() {
         if (this.minVal === undefined && this.frame && this.frame.renderConfig.isoSurfaceHistogram) {
-            return getPercentiles(this.frame.renderConfig.isoSurfaceHistogram, [0.1])[0];
+            return getPercentiles(this.frame.renderConfig.isoSurfaceHistogram, [0.0005])[0];
         } else {
             return this.minVal;
         }
@@ -103,7 +104,7 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
 
     @computed get maxValue() {
         if (this.maxVal === undefined && this.frame && this.frame.renderConfig.isoSurfaceHistogram) {
-            return getPercentiles(this.frame.renderConfig.isoSurfaceHistogram, [99.9])[0];
+            return getPercentiles(this.frame.renderConfig.isoSurfaceHistogram, [99.9995])[0];
         } else {
             return this.maxVal;
         }
@@ -121,8 +122,8 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         this.cmapTexture = new THREE.TextureLoader().load( allMaps );
         this.cmapTexture.magFilter = THREE.NearestFilter;
         this.cmapTexture.minFilter = THREE.NearestFilter;
-        this.cmapIndex = 8;
         console.log("cmaptexture: ", this.cmapTexture);
+        // this.zScale = 1;
         
         autorun(() => {
             const widgetId = this.props.id.match(/render-3d-\d+/)[0];
@@ -201,26 +202,36 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
             maxThreshold: this.maxValue,
             range: 0.1,
             steps: 100,
+            colorMap: 0,
+            scaleType: 0,
+            // zScale: 1,
         };
+
+        const cmaps = {'accent': 0, 'afmhot': 1, 'autumn': 2, 'binary': 3, 'Blues': 4, 'bone': 5, 'BrBG': 6, 'brg': 7, 'BuGn': 8, 'BuPu': 9, 'bwr': 10, 'CMRmap': 11, 'cool': 12, 'coolwarm': 13, 'copper': 14, 'cubehelix': 15, 'dark2': 16, 'flag': 17, 'gist_earth': 18, 'gist_gray': 19, 'gist_heat': 20, 'gist_ncar': 21, 'gist_rainbow': 22, 'gist_stern': 23, 'gist_yarg': 24, 'GnBu': 25, 'gnuplot': 26, 'gnuplot2': 27, 'gray': 28, 'greens': 29, 'greys': 30, 'hot': 31, 'hsv': 32, 'inferno': 33, 'jet': 34, 'magma': 35, 'nipy_spectral': 36, 'ocean': 37, 'oranges': 38, 'OrRd': 39, 'paired': 40, 'pastel1': 41, 'pastel2': 42, 'pink': 43, 'PiYG': 44, 'plasma': 45, 'PRGn': 46, 'prism': 47, 'PuBu': 48, 'PuBuGn': 49, 'PuOr': 50, 'PuRd': 51, 'purples': 52, 'rainbow': 53, 'RdBu': 54, 'RdGy': 55, 'RdPu': 56, 'RdYlBu': 57, 'RdYlGn': 58, 'reds': 59, 'seismic': 60, 'set1': 61, 'set2': 62, 'set3': 63, 'spectral': 64, 'spring': 65, 'summer': 66, 'tab10': 67, 'tab20': 68, 'tab20b': 69, 'tab20c': 70, 'terrain': 71, 'viridis': 72, 'winter': 73, 'Wistia': 74, 'YlGn': 75, 'YlGnBu': 76, 'YlOrBr': 77, 'YlOrRd': 78};
+
+        const scaleType = {'Linear': 0, 'Log': 1, 'Sqrt': 2, 'Square': 3, 'Power': 4, 'Gamma': 5};
 
         function update() {
 
             // material.uniforms.threshold.value = parameters.threshold;
             // material.uniforms.range.value = parameters.range;
-            material.uniforms.uSteps.value = parameters.steps;
+            // material.uniforms.uSteps.value = parameters.steps;
             material.uniforms.uMinThreshold.value = parameters.minThreshold;
             material.uniforms.uMaxThreshold.value = parameters.maxThreshold;
-            console.log("minThreshold: ", parameters.minThreshold);
-            console.log("maxThreshold: ", parameters.maxThreshold);
+            material.uniforms.uCmapIndex.value = parameters.colorMap;
+            material.uniforms.uScaleType.value = parameters.scaleType;
 
         }
 
         const gui = new GUI();
         // gui.add( parameters, 'threshold', 0, 1, 0.01 ).onChange( update );
         // gui.add( parameters, 'range', 0, 1, 0.01 ).onChange( update );
-        gui.add( parameters, 'steps', 0, 200, 1 ).onChange( update );
+        // gui.add( parameters, 'steps', 0, 200, 1 ).onChange( update );
         gui.add( parameters, 'minThreshold', this.minVal, this.maxVal).onChange( update );
         gui.add( parameters, 'maxThreshold', this.minVal, this.maxVal).onChange( update );
+        gui.add( parameters, 'colorMap', cmaps).onChange( update );
+        gui.add( parameters, 'scaleType', scaleType).onChange( update );
+        // gui.add( parameters, 'zScale', 0, 10).onChange( update );
 
         useEffect(() => {
             gl.getContext().getExtension("OES_texture_float");
@@ -249,8 +260,9 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
                         uSteps: { value: 100 },
                         // uFrame: { value: 0 },
                         uCmapTexture: { value: this.cmapTexture },
-                        uCmapIndex: { value: this.cmapIndex },
+                        uCmapIndex: { value: 0 },
                         uNumCmaps: { value: 79 }, // 79 cmaps?
+                        uScaleType: { value: 0 },
                     },
                     vertexShader: volumeShaders.vertexShader,
                     fragmentShader: volumeShaders.fragmentShader,
@@ -263,7 +275,7 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         return material ? (
             <mesh ref={meshRef} material={material}>
                 <boxGeometry
-                    args={[ 1,1,this.zscale
+                    args={[ 1,1,1
                         // this.width / Math.max(this.width, Math.max(this.height, this.depth)),
                         // this.height / Math.max(this.width, Math.max(this.height, this.depth)),
                         // this.depth / Math.max(this.width, Math.max(this.height, this.depth)),
