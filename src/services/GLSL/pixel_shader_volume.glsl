@@ -30,6 +30,7 @@ uniform float uFrame; // it is used for the random seed
 uniform int uScaleType;
 uniform float uGamma;
 uniform float uAlpha;
+uniform int uInverted;
 
 uniform sampler2D uCmapTexture;
 uniform int uNumCmaps;
@@ -144,11 +145,17 @@ void main(){
         x = pow(x, uGamma);
     }
 
+    // set opacity before inverting color. 
+    vec4 color = vec4(0.0, 0.0, 0.0, x - 0.05);
+
+    if (uInverted > 0) {
+        x = 1.0 - x;
+    }
+
     // for colormap. Without the 1.0 - the order of the colormaps is reversed
     float cmapYVal = 1.0 - (float(uCmapIndex) + 0.5) / float(uNumCmaps);
 
-    vec4 color = texture(uCmapTexture, vec2(x, cmapYVal)); // use .rgb for michaela's method
-    color.a = x - 0.05;
+    color.rgb = texture(uCmapTexture, vec2(x, cmapYVal)).rgb;
 
     gl_FragColor = color;
 

@@ -205,6 +205,7 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
             colorMap: 0,
             scaleType: 0,
             // zScale: 1,
+            inverted: false,
         };
 
         const cmaps = {'accent': 0, 'afmhot': 1, 'autumn': 2, 'binary': 3, 'Blues': 4, 'bone': 5, 'BrBG': 6, 'brg': 7, 'BuGn': 8, 'BuPu': 9, 'bwr': 10, 'CMRmap': 11, 'cool': 12, 'coolwarm': 13, 'copper': 14, 'cubehelix': 15, 'dark2': 16, 'flag': 17, 'gist_earth': 18, 'gist_gray': 19, 'gist_heat': 20, 'gist_ncar': 21, 'gist_rainbow': 22, 'gist_stern': 23, 'gist_yarg': 24, 'GnBu': 25, 'gnuplot': 26, 'gnuplot2': 27, 'gray': 28, 'greens': 29, 'greys': 30, 'hot': 31, 'hsv': 32, 'inferno': 33, 'jet': 34, 'magma': 35, 'nipy_spectral': 36, 'ocean': 37, 'oranges': 38, 'OrRd': 39, 'paired': 40, 'pastel1': 41, 'pastel2': 42, 'pink': 43, 'PiYG': 44, 'plasma': 45, 'PRGn': 46, 'prism': 47, 'PuBu': 48, 'PuBuGn': 49, 'PuOr': 50, 'PuRd': 51, 'purples': 52, 'rainbow': 53, 'RdBu': 54, 'RdGy': 55, 'RdPu': 56, 'RdYlBu': 57, 'RdYlGn': 58, 'reds': 59, 'seismic': 60, 'set1': 61, 'set2': 62, 'set3': 63, 'spectral': 64, 'spring': 65, 'summer': 66, 'tab10': 67, 'tab20': 68, 'tab20b': 69, 'tab20c': 70, 'terrain': 71, 'viridis': 72, 'winter': 73, 'Wistia': 74, 'YlGn': 75, 'YlGnBu': 76, 'YlOrBr': 77, 'YlOrRd': 78};
@@ -220,7 +221,7 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
             material.uniforms.uMaxThreshold.value = parameters.maxThreshold;
             material.uniforms.uCmapIndex.value = parameters.colorMap;
             material.uniforms.uScaleType.value = parameters.scaleType;
-
+            material.uniforms.uInverted.value = parameters.inverted ? 1 : 0;
         }
 
         const gui = new GUI();
@@ -232,6 +233,7 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         gui.add( parameters, 'colorMap', cmaps).onChange( update );
         gui.add( parameters, 'scaleType', scaleType).onChange( update );
         // gui.add( parameters, 'zScale', 0, 10).onChange( update );
+        gui.add( parameters, 'inverted').onChange( update );
 
         useEffect(() => {
             gl.getContext().getExtension("OES_texture_float");
@@ -263,6 +265,7 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
                         uCmapIndex: { value: 0 },
                         uNumCmaps: { value: 79 }, // 79 cmaps?
                         uScaleType: { value: 0 },
+                        uInverted: { value: 0 },
                     },
                     vertexShader: volumeShaders.vertexShader,
                     fragmentShader: volumeShaders.fragmentShader,
