@@ -4,8 +4,6 @@ import {Cell, Column, RenderMode, RowHeaderCell, SelectionModes, Table2} from "@
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
-import {copyToClipboard} from "utilities";
-
 export class SimpleTableComponentProps {
     dataset: Map<number, any>;
     columnHeaders: Array<CARTA.CatalogHeader>;
@@ -53,24 +51,6 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
         );
     };
 
-    private copyCellToClipboard = (rowIndex: number, columnIndex: number) => {
-        const columnData = this.props.dataset.get(columnIndex)?.data;
-        const cellData = rowIndex < columnData?.length ? columnData[rowIndex] : undefined;
-        if (cellData) {
-            if (typeof cellData === "object") {
-                copyToClipboard(
-                    Object.values(cellData.props.children)
-                        .filter((value: any) => {
-                            return typeof value === "string";
-                        })
-                        .join(", ")
-                );
-            } else if (typeof cellData === "string") {
-                copyToClipboard(cellData);
-            }
-        }
-    };
-
     render() {
         const table = this.props;
         const tableColumns = [];
@@ -89,7 +69,7 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
                 numRows={table.numVisibleRows}
                 renderMode={RenderMode.NONE}
                 enableRowReordering={false}
-                selectionModes={SelectionModes.COLUMNS_AND_CELLS}
+                selectionModes={SelectionModes.NONE}
                 enableGhostCells={this.props.enableGhostCells ?? true}
                 defaultRowHeight={this.props.defaultRowHeight}
                 rowHeaderCellRenderer={this.renderRowHeaderCell}
@@ -97,7 +77,7 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
                 columnWidths={this.props.columnWidths}
                 onColumnWidthChanged={this.props.onColumnWidthChanged}
                 cellRendererDependencies={this.props.cellRendererDependencies}
-                getCellClipboardData={window.isSecureContext ? undefined : (rowIndex, columnIndex) => this.copyCellToClipboard(rowIndex, columnIndex)}
+                getCellClipboardData={null}
             >
                 {tableColumns}
             </Table2>

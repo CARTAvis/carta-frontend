@@ -11,7 +11,7 @@ import {CatalogType} from "models";
 import {CatalogApiService} from "services";
 import {AppStore, ControlHeader} from "stores";
 import {SpectralLineHeaders} from "stores/Widgets";
-import {copyToClipboard, ProcessedColumnData} from "utilities";
+import {ProcessedColumnData} from "utilities";
 
 import "./FilterableTableComponent.scss";
 
@@ -367,7 +367,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 columnWidths={table.columnWidths}
                 onCompleteRender={table.onCompleteRender}
                 cellRendererDependencies={[tableCheckData]} // trigger re-render on line selection change
-                getCellClipboardData={window.isSecureContext ? undefined : (rowIndex, columnIndex) => copyToClipboard(tableData.get(table.columnHeaders[columnIndex].columnIndex)?.data[rowIndex] as string)}
+                getCellClipboardData={null}
             >
                 {tableColumns}
             </Table2>
