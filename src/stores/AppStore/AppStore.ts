@@ -2045,20 +2045,12 @@ export class AppStore {
             () => this.activeImage,
             image => {
                 this.widgetsStore.updateRenderConfigSettingsVisibility();
-                if (image) {
-                    if (image.type !== ImageType.PV_PREVIEW) {
-                        this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
+                if (image && image.type === ImageType.FRAME) {
+                    const frame = image.store;
+                    this.catalogStore.resetActiveCatalogFile(frame?.id);
+                    if (this.syncContourToFrame) {
+                        this.contourDataSource = frame;
                     }
-
-                    if (image.type === ImageType.FRAME) {
-                        const frame = image.store;
-                        this.catalogStore.resetActiveCatalogFile(frame?.id);
-                        if (this.syncContourToFrame) {
-                            this.contourDataSource = frame;
-                        }
-                    }
-                } else {
-                    this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
                 }
             }
         );
