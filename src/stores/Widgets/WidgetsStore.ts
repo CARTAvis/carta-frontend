@@ -1103,7 +1103,6 @@ export class WidgetsStore {
 
             // remove render3d frane for current render3d widget
             if (isRender3DViewer) {
-                // console.log("remove in widgetstore id: ", id)
                 const regexPattern = /render3d-viewer-(\d+)/;
                 // console.log("regexPattern: ", regexPattern)
                 const render3DId = id.match(regexPattern);
@@ -1726,6 +1725,15 @@ export class WidgetsStore {
             }
 
             this.removeWidget(id, widget.type);
+
+            if (widget.type === Render3DViewerComponent.WIDGET_CONFIG.type) {
+                const regexPattern = /render-3d-viewer-(\d+)/;
+                const render3DId = id.match(regexPattern);
+                if (render3DId && render3DId[1]) {
+                    const viewerId = parseInt(render3DId[1]);
+                    AppStore.Instance.render3D.delete(viewerId);
+                }
+            }
         }
     };
     // endregion

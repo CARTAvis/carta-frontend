@@ -150,7 +150,7 @@ export class AppStore {
     // Profiles, 3D rendering and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
     @observable spectralProfiles: Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>;
-    @observable render3D: Map<FileId, Map<RegionId, ObservableMap<number,Render3DDataStore>>>;
+    @observable render3D: ObservableMap<number,Render3DDataStore>; // number is viewerId
     @observable regionStats: Map<number, ObservableMap<number, ObservableMap<number, CARTA.RegionStatsData>>>;
     @observable regionHistograms: Map<number, ObservableMap<number, ObservableMap<number, CARTA.IRegionHistogramData>>>;
 
@@ -1924,7 +1924,7 @@ export class AppStore {
         this.cartaComputeReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>();
-        this.render3D = new Map<FileId, Map<RegionId, ObservableMap<number, Render3DDataStore>>>();
+        this.render3D = new ObservableMap<number, Render3DDataStore>();
         this.regionStats = new Map<number, ObservableMap<number, ObservableMap<number, CARTA.RegionStatsData>>>();
         this.regionHistograms = new Map<number, ObservableMap<number, ObservableMap<number, CARTA.IRegionHistogramData>>>();
         this.pendingChannelHistograms = new Map<string, CARTA.IRegionHistogramData>();
@@ -2268,20 +2268,20 @@ export class AppStore {
 
         const frame = this.frames.find(frame => frame.frameInfo.fileId === render3DData.fileId);
         if (frame) {
-            let fileMap = this.render3D.get(render3DData.fileId);
-            if (!fileMap) {
-                fileMap = new Map<number, ObservableMap<number, Render3DDataStore>>();
-                this.render3D.set(render3DData.fileId, fileMap);
-            }
-            let regionMap = fileMap.get(render3DData.regionId);
-            if (!regionMap) {
-                regionMap = new ObservableMap<number, Render3DDataStore>();
-                fileMap.set(render3DData.regionId, regionMap);
-            }
-            let render3DStore = regionMap.get(render3DData.viewerId);
+            let render3DStore = this.render3D.get(render3DData.viewerId);
+            // if (!fileMap) {
+            //     fileMap = new Map<number, ObservableMap<number, Render3DDataStore>>();
+            //     this.render3D.set(render3DData.fileId, fileMap);
+            // }
+            // let regionMap = fileMap.get(render3DData.regionId);
+            // if (!regionMap) {
+            //     regionMap = new ObservableMap<number, Render3DDataStore>();
+            //     fileMap.set(render3DData.regionId, regionMap);
+            // }
+            // let render3DStore = regionMap.get(render3DData.viewerId);
             if (!render3DStore) {
                 render3DStore = new Render3DDataStore(render3DData.fileId, render3DData.regionId, render3DData.viewerId, render3DData.width, render3DData.height, render3DData.depth);
-                regionMap.set(render3DData.viewerId, render3DStore);
+                this.render3D.set(render3DData.viewerId, render3DStore);
             } 
 
             render3DStore.updateRender3DData(render3DData);

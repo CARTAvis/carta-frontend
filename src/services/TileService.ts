@@ -192,7 +192,7 @@ export class TileService {
                     // console.log("event data = ", event.data);
                     const buffer = event.data[1];
                     const eventArgs = event.data[2];
-                    const render3DData = event.data[3];
+                    // const render3DData = event.data[3];
                     const length = eventArgs.width * eventArgs.subsetHeight; // considering just one slice
                     const resultArray = new Float32Array(buffer, 0, length);
                     // console.log("tileservice array: ", resultArray);
@@ -202,12 +202,12 @@ export class TileService {
                     // console.log("region id: " + render3DData.regionId);
                     // console.log(AppStore.Instance.render3D.get(eventArgs.fileId)?.get(render3DData.regionId));
                     // console.log("viewer id: " + eventArgs.previewId);
-                    // console.log(AppStore.Instance.render3D.get(eventArgs.fileId)?.get(render3DData.regionId)?.get(eventArgs.previewId));
+                    // console.log(AppStore.Instance.render3D.get(eventArgs.previewId));
                     // console.log("slice: " + render3DData.slice);
 
                     // here I am using the render3DData object. Should I use eventArgs instead? it does not recognise regionID and slice
                     // previewId is viewerId
-                    AppStore.Instance.render3D.get(eventArgs.fileId)?.get(render3DData.regionId)?.get(eventArgs.previewId)?.setDecompressed3DData(resultArray);
+                    AppStore.Instance.render3D?.get(eventArgs.previewId)?.setDecompressed3DData(resultArray);
                     
                 }
             };
@@ -613,7 +613,7 @@ export class TileService {
             previewId: render3DData.viewerId,
         };
 
-        console.log("Decompressing render3D data");
+        // console.log("Decompressing render3D data");
         this.workers[0].postMessage(["render3d decompress", compressedView.buffer, eventArgs, render3DData], [compressedView.buffer, nanEncodings32.buffer]);
     }
 

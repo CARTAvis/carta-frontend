@@ -135,7 +135,9 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
             // console.log("render3d effectiveregion: ", AppStore.Instance.render3D.get(widgetStore.effectiveFrame.frameInfo.fileId));
             // console.log("render3d viewerid: ", AppStore.Instance.render3D.get(widgetStore.effectiveFrame.frameInfo.fileId)?.get(widgetStore.render3DViewerId));
 
-            this.render3DData = AppStore?.Instance.render3D?.get(widgetStore?.effectiveFrame?.frameInfo.fileId)?.get(widgetStore.effectiveRegionId)?.get(widgetStore.render3DViewerId);
+            // this.render3DData = AppStore?.Instance.render3D?.get(widgetStore?.effectiveFrame?.frameInfo.fileId)?.get(widgetStore.effectiveRegionId)?.get(widgetStore.render3DViewerId);
+
+            this.render3DData = AppStore?.Instance.render3D?.get(widgetStore.render3DViewerId);
 
             // console.log("width: ", this.render3DData?.width);
             // console.log("height: ", this.render3DData?.height);
@@ -188,7 +190,13 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         const lastSlice = this.render3DData?.lastSlice;
 
         const computedTexture = React.useMemo(() => {
-            console.log("lastSlice: ", lastSlice);
+            if (this.render3DData) {
+                if (lastSlice === this.render3DData.depth - 1) {
+                    console.log("Full texture loaded");
+                } else if (lastSlice%20 === 0) {
+                    console.log("Loading texture");
+                }
+            }
             this.generate3DTexture();
             return this.texture;
         }, [lastSlice]);
@@ -243,7 +251,7 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
     
             // Generate the texture when render3DData changes
             this.generate3DTexture();
-            console.log("minMAX values: ", this.minValue, this.maxValue)
+            // console.log("minMAX values: ", this.minValue, this.maxValue)
     
             // Create or update the shader material
             if (material) {

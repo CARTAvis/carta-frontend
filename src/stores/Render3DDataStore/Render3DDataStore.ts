@@ -49,7 +49,7 @@ export class Render3DDataStore {
         // console.log("height: ", this.height);
         // console.log("depth: ", this.depth);
         this.datacube.set(decompressedData, this.width * this.height * this.lastSlice);
-        console.log("lastSlice: ", this.lastSlice);
+        // console.log("lastSlice: ", this.lastSlice);
         this.lastSlice += 1;
     }
     
