@@ -9,7 +9,8 @@ import {action, autorun, computed, makeObservable, observable, runInAction} from
 import {observer} from "mobx-react";
 import moment from "moment";
 
-import {BrowserMode, FileFilteringType, ISelectedFile} from "stores";
+import {FileFilterMode} from "models";
+import {AppStore, BrowserMode, FileBrowserStore, FileFilteringType, ISelectedFile} from "stores";
 import {toFixed} from "utilities";
 
 import "./FileListTableComponent.scss";
@@ -93,6 +94,12 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     }
 
     @computed get tableEntries(): FileEntry[] {
+        // recalculate when receiving new file info of a file in all file mode
+        if (AppStore.Instance.preferenceStore.fileFilterMode === FileFilterMode.All) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const fileInfoResp = FileBrowserStore.Instance.fileInfoResp;
+        }
+
         const fileResponse = this.props.listResponse;
         if (!fileResponse) {
             return [];
@@ -489,7 +496,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 enableRowHeader={false}
                 numRows={this.tableEntries.length}
                 loadingOptions={this.props.loading ? [TableLoadingOption.CELLS] : []}
-                cellRendererDependencies={[this.props.sortingString, this.props.filterString]} // trigger re-render on sorting change
+                cellRendererDependencies={[this.tableEntries, this.props.sortingString, this.props.filterString]} // trigger re-render on sorting change
             >
                 <Column name="Filename" columnHeaderCellRenderer={() => this.renderColumnHeader("Filename")} cellRenderer={this.renderFilenames} />
                 <Column name="Type" columnHeaderCellRenderer={() => this.renderColumnHeader("Type")} cellRenderer={this.renderTypes} />

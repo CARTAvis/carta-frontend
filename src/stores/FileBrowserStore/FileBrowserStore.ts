@@ -4,7 +4,7 @@ import {action, autorun, computed, flow, makeObservable, observable} from "mobx"
 
 import {FileInfoType} from "components";
 import {AppToaster, ErrorToast} from "components/Shared";
-import {FileCtypeInfo, Freq, FrequencyUnit, ImageType, LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
+import {FileCtypeInfo, FileFilterMode, Freq, FrequencyUnit, ImageType, LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
 import {BackendService} from "services";
 import {AppStore, DialogId, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
 import {RegionStore} from "stores/Frame";
@@ -241,6 +241,7 @@ export class FileBrowserStore {
                 if (HDUList?.length >= 1) {
                     this.selectedHDU = HDUList[0];
                 }
+                this.updateFileInfoInFileList(res.fileInfo);
                 this.loadingInfo = false;
             }
             this.fileInfoResp = true;
@@ -264,6 +265,7 @@ export class FileBrowserStore {
         try {
             const res = yield backendService.getRegionFileInfo(directory, file);
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
+                this.updateFileInfoInFileList(res.fileInfo);
                 this.loadingInfo = false;
                 this.regionFileInfo = res.contents;
             }
@@ -288,6 +290,7 @@ export class FileBrowserStore {
         try {
             const res = yield backendService.getCatalogFileInfo(directory, filename);
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
+                this.updateFileInfoInFileList(res.fileInfo);
                 this.loadingInfo = false;
                 this.catalogFileInfo = res.fileInfo;
                 this.catalogHeaders = res.headers.sort((a, b) => {
@@ -303,6 +306,21 @@ export class FileBrowserStore {
             this.loadingInfo = false;
         }
     }
+
+    /** In all files mode, updates the file info in the file list if the file type is unknown. */
+    private updateFileInfoInFileList = (fileInfo: CARTA.IFileInfo) => {
+        if (AppStore.Instance.preferenceStore.fileFilterMode === FileFilterMode.All) {
+            const fileListFiles = this.getfileListByMode?.files;
+
+            if (fileListFiles) {
+                const index = fileListFiles.findIndex(item => item.name === fileInfo.name);
+
+                if (index !== -1 && fileListFiles[index].type === CARTA.FileType.UNKNOWN) {
+                    fileListFiles[index] = fileInfo;
+                }
+            }
+        }
+    };
 
     /// Update the spectral range for save image file
     @action initialSaveSpectralRange = () => {
