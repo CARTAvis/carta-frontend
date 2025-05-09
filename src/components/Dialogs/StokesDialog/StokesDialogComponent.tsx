@@ -181,6 +181,7 @@ export class StokesDialogComponent extends React.Component {
                         columnWidths={[440, 120]}
                         enableRowResizing={false}
                         cellRendererDependencies={[rerenderCheck]}
+                        getCellClipboardData={null}
                     >
                         {[fileName, stokesDropDown]}
                     </Table2>
