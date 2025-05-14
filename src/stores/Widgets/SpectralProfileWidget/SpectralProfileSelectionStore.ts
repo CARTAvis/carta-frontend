@@ -334,7 +334,7 @@ export class SpectralProfileSelectionStore {
                     return {
                         value: r.regionId,
                         label: r.nameString,
-                        active: this.widgetStore.isEffectiveFrameEqualToActiveFrame && r.regionId === activeRegionId
+                        active: r.regionId === activeRegionId
                     };
                 })
             );
