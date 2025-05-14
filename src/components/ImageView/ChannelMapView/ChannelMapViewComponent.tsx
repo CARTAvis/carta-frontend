@@ -24,8 +24,8 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     const regionViewRef = React.useRef<RegionViewComponent>();
     const appStore = AppStore.Instance;
     const channelMapStore = appStore.channelMapStore;
-    const frame = channelMapStore.masterFrame;
-    const image = channelMapStore.masterImage;
+    const frame = appStore.activeFrame;
+    const image = appStore.activeImage;
     const overlayStore = appStore.overlayStore;
     const colorBarSetting = overlayStore.colorbar;
     const colorbarOffset = overlayStore.colorbar.visible ? colorBarSetting.stageWidth + overlayStore?.colorbarHoverInfoHeight : 0;
@@ -69,6 +69,10 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         frame?.setCenter(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y);
     };
 
+    if (image?.type === ImageType.COLOR_BLENDING) {
+        return <NonIdealState icon={"error"} title={"Not supported"} description={"Color blending images in channel map view is not supported"} />;
+    }
+
     const overlayComponents = channelMapStore.channelArray.map((channel, index) => {
         const appStore = AppStore.Instance;
         const overlayStore = appStore.overlayStore;
@@ -100,8 +104,8 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         const imageRenderHeight = frame?.renderHeight;
 
         return (
-            channel < channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth && (
-                <div key={index} onClick={() => channelMapStore.masterFrame.setChannel(channel)} style={{top: overlayComponentTop}}>
+            channel < frame?.frameInfo.fileInfoExtended.depth && (
+                <div key={index} onClick={() => frame.setChannel(channel)} style={{top: overlayComponentTop}}>
                     <ChannelMapInnerOverlayComponent
                         index={index}
                         frame={frame}
@@ -111,7 +115,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                         overlayComponentRef={overlayComponentRef}
                         setOverlayComponentRef={setOverlayComponentRef}
                     />
-                    {channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth > 1 && (
+                    {frame?.frameInfo.fileInfoExtended.depth > 1 && (
                         <ChannelMapLabelComponent
                             image={{
                                 type: ImageType.FRAME,
@@ -124,7 +128,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                             height={imageRenderHeight}
                             docked={props.docked}
                             channel={channel}
-                            highlighted={channel === channelMapStore.masterFrame.requiredChannel}
+                            highlighted={channel === frame.requiredChannel}
                         />
                     )}
                     <RegionViewComponent
@@ -172,11 +176,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     cursorValue={frame.cursorInfo.isInsideImage ? frame.cursorValue.value : undefined}
                     isValueCurrent={frame.isCursorValueCurrent}
                     spectralInfo={frame.spectralInfo}
-                    width={
-                        channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth < channelMapStore.numColumns
-                            ? channelMapStore.masterFrame.renderWidth + overlayStore.paddingLeft + overlayStore.paddingRight
-                            : renderWidth - overlayStore.base
-                    }
+                    width={frame?.frameInfo.fileInfoExtended.depth < channelMapStore.numColumns ? frame.renderWidth + overlayStore.paddingLeft + overlayStore.paddingRight : renderWidth - overlayStore.base}
                     left={overlayStore.paddingLeft}
                     right={overlayStore.paddingRight}
                     docked={props.docked}
@@ -354,26 +354,26 @@ const ChannelMapInnerOverlayComponent = observer(
             height,
             channelMapStore.startChannel,
             channelMapStore.endChannel,
-            channelMapStore.masterFrame,
+            frame,
             channelMapStore.numColumns,
             channelMapStore.numRows,
-            channelMapStore.masterFrame?.center,
-            channelMapStore.masterFrame?.requiredFrameView,
-            channelMapStore.masterFrame?.requiredFrameView.xMin,
-            channelMapStore.masterFrame?.requiredFrameView.xMax,
-            channelMapStore.masterFrame?.requiredFrameView.yMin,
-            channelMapStore.masterFrame?.requiredFrameView.yMax,
-            channelMapStore.masterFrame?.zooming,
-            channelMapStore.masterFrame?.zoomLevel,
-            channelMapStore.masterFrame?.spatialReference,
-            channelMapStore.masterFrame?.channel,
-            channelMapStore.masterFrame?.isOffsetCoord,
-            channelMapStore.masterFrame?.wcsInfoShifted,
-            channelMapStore.masterFrame?.titleCustomText,
-            channelMapStore.masterFrame?.filename,
+            frame?.center,
+            frame?.requiredFrameView,
+            frame?.requiredFrameView.xMin,
+            frame?.requiredFrameView.xMax,
+            frame?.requiredFrameView.yMin,
+            frame?.requiredFrameView.yMax,
+            frame?.zooming,
+            frame?.zoomLevel,
+            frame?.spatialReference,
+            frame?.channel,
+            frame?.isOffsetCoord,
+            frame?.wcsInfoShifted,
+            frame?.titleCustomText,
+            frame?.filename,
             overlayStore.styleString,
             overlayStore.padding,
-            channelMapStore.masterFrame?.moving,
+            frame?.moving,
             overlayStore.global.system,
             overlayStore.global.color,
             overlayStore.title.color,

@@ -102,14 +102,14 @@ export class LayoutDialogComponent extends React.Component {
                 const confirmed = yield appStore.alertStore.showInteractiveAlert(`Are you sure to overwrite the existing layout ${this.layoutName}?`);
                 if (confirmed) {
                     yield appStore.layoutStore.saveLayout();
-                    if (this.saveDynamicLayoutEnable) {
+                    if (this.saveDynamicLayoutEnable && appStore.activeFrame && appStore.activeFrame?.dynamicLayout.ctype !== "") {
                         yield dyLayoutStore.saveLayoutMapping(this.layoutName, appStore.activeFrame.dynamicLayout.ctype);
                     }
                 }
             }
         } else {
             yield appStore.layoutStore.saveLayout();
-            if (this.saveDynamicLayoutEnable) {
+            if (this.saveDynamicLayoutEnable && appStore.activeFrame && appStore.activeFrame?.dynamicLayout.ctype !== "") {
                 yield dyLayoutStore.saveLayoutMapping(this.layoutName, appStore.activeFrame.dynamicLayout.ctype);
             }
         }
@@ -152,10 +152,15 @@ export class LayoutDialogComponent extends React.Component {
                         <Tooltip content="Layout name cannot be empty!" disabled={!this.isEmpty}>
                             <AnchorButton intent={Intent.PRIMARY} onClick={this.saveLayout} text={"Save"} disabled={this.isEmpty || !this.validName} />
                         </Tooltip>
-                        <Collapse isOpen={PreferenceStore.Instance.dynamicLayoutEnable}>
-                            <Tooltip content={`If on, apply layout when images with type (${activeFrame?.dynamicLayout.ctype.replace(",", ", ")}) are loaded`} disabled={!activeFrame}>
+                        <Collapse isOpen={PreferenceStore.Instance.dynamicLayoutEnable && !!activeFrame && activeFrame?.dynamicLayout.ctype !== ""}>
+                            <Tooltip content={`If on, apply layout when images with type (${activeFrame?.dynamicLayout.ctype.replace(",", ", ")}) are loaded`} disabled={!activeFrame || activeFrame?.dynamicLayout.ctype === ""}>
                                 <FormGroup inline={true} disabled={!activeFrame || this.isEmpty}>
-                                    <Switch innerLabel="dynamic" checked={this.saveDynamicLayoutEnable} disabled={!activeFrame || this.isEmpty} onChange={() => this.toggleSaveDynamicLayoutEnable()} />
+                                    <Switch
+                                        innerLabel="dynamic"
+                                        checked={this.saveDynamicLayoutEnable}
+                                        disabled={!activeFrame || this.isEmpty || activeFrame?.dynamicLayout.ctype === ""}
+                                        onChange={() => this.toggleSaveDynamicLayoutEnable()}
+                                    />
                                 </FormGroup>
                             </Tooltip>
                         </Collapse>
@@ -216,7 +221,7 @@ export class LayoutDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const {preferenceStore, layoutStore} = appStore;
 
-        if (preferenceStore.dynamicLayoutEnable && (appStore.activeFrame || appStore.dynamicLayoutStore.isMappingExisted)) {
+        if (preferenceStore.dynamicLayoutEnable && ((appStore.activeFrame && appStore.activeFrame.dynamicLayout.ctype !== "") || appStore.dynamicLayoutStore.isMappingExisted)) {
             return (
                 <ScrollShadow>
                     <Tabs>
@@ -343,8 +348,9 @@ export const LayoutMappingComponent = React.memo((props: LayoutMappingComponentP
         const ctypes = Object.keys(props.existLayoutMapping).reverse();
         const layoutNames = ctypes.map(ctype => props.existLayoutMapping[ctype]);
 
-        ctypeList = props.activeFrame ? (ctypes.includes(props.activeFrame.dynamicLayout.ctype) ? ctypes : [props.activeFrame.dynamicLayout.ctype, ...ctypes]) : ctypes;
-        layoutNameList = props.activeFrame ? (ctypes.includes(props.activeFrame.dynamicLayout.ctype) ? layoutNames : [props.activeFrame.dynamicLayout.layoutName, ...layoutNames]) : layoutNames;
+        ctypeList = props.activeFrame && props.activeFrame.dynamicLayout.ctype !== "" ? (ctypes.includes(props.activeFrame.dynamicLayout.ctype) ? ctypes : [props.activeFrame.dynamicLayout.ctype, ...ctypes]) : ctypes;
+        layoutNameList =
+            props.activeFrame && props.activeFrame.dynamicLayout.ctype !== "" ? (ctypes.includes(props.activeFrame.dynamicLayout.ctype) ? layoutNames : [props.activeFrame.dynamicLayout.layoutName, ...layoutNames]) : layoutNames;
     }
 
     const LayoutMappingRows = () => {

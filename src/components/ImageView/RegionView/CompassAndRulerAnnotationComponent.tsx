@@ -281,7 +281,6 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
 
     const frame = props.frame;
     const region = props.region as RulerAnnotationStore;
-    const initialZoomLevel = React.useRef(frame.spatialReference?.zoomLevel || frame.zoomLevel);
 
     const handleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
         props.onSelect(region);
@@ -446,12 +445,12 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     const [yTextOffsetX, setYTextOffsetX] = React.useState(0);
 
     React.useEffect(() => {
-        setTextOffsetX((region.textOffset.x * imageRatio * initialZoomLevel.current) / zoomLevel + distanceTextRef?.current?.textWidth / 2);
+        setTextOffsetX((region.textOffset.x * imageRatio) / zoomLevel + distanceTextRef?.current?.textWidth / 2);
         if (region.auxiliaryTextVisible) {
-            setXTextOffsetX((region.xTextOffset.x * imageRatio * initialZoomLevel.current) / zoomLevel + xTextRef?.current?.textWidth / 2);
-            setYTextOffsetX((region.yTextOffset.x * imageRatio * initialZoomLevel.current) / zoomLevel + yTextRef?.current?.textWidth / 2);
+            setXTextOffsetX((region.xTextOffset.x * imageRatio) / zoomLevel + xTextRef?.current?.textWidth / 2);
+            setYTextOffsetX((region.yTextOffset.x * imageRatio) / zoomLevel + yTextRef?.current?.textWidth / 2);
         }
-    }, [imageRatio, zoomLevel, region.textOffset.x, region.auxiliaryTextVisible, region.xTextOffset.x, region.yTextOffset.x]);
+    }, [imageRatio, zoomLevel, region.fontSize, region.decimals, region.textOffset.x, region.auxiliaryTextVisible, region.xTextOffset.x, region.yTextOffset.x]);
 
     return (
         <>
@@ -510,7 +509,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                     x={centerPoints.x}
                     y={centerPoints.y}
                     offsetX={textOffsetX}
-                    offsetY={(region.textOffset.y * imageRatio * initialZoomLevel.current) / zoomLevel}
+                    offsetY={(region.textOffset.y * imageRatio) / zoomLevel}
                     text={distanceText}
                     stroke={region.color}
                     fill={region.color}
@@ -528,7 +527,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                             x={xCenterPoints.x}
                             y={xCenterPoints.y}
                             offsetX={xTextOffsetX}
-                            offsetY={(region.xTextOffset.y * imageRatio * initialZoomLevel.current) / zoomLevel}
+                            offsetY={(region.xTextOffset.y * imageRatio) / zoomLevel}
                             text={xDistanceText}
                             stroke={region.color}
                             fill={region.color}
@@ -544,7 +543,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                             x={yCenterPoints.x}
                             y={yCenterPoints.y}
                             offsetX={yTextOffsetX}
-                            offsetY={(region.yTextOffset.y * imageRatio * initialZoomLevel.current) / zoomLevel}
+                            offsetY={(region.yTextOffset.y * imageRatio) / zoomLevel}
                             text={yDistanceText}
                             stroke={region.color}
                             fill={region.color}
