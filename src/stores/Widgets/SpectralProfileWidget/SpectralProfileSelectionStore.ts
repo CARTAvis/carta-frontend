@@ -596,7 +596,9 @@ export class SpectralProfileSelectionStore {
             this.removeSelectedFileMultiMode(fileId);
         } else if (!this.selectedFileIds?.includes(fileId) && this.selectedFileIds?.length < MAXIMUM_PROFILES) {
             // add selection
-            this.selectedFileIds = [...this.selectedFileIds, fileId];
+            this.selectedFileIds = [...this.selectedFileIds, fileId].sort((a, b) => {
+                return a - b;
+            });
             widgetStore.setFileId(fileId);
             this.assignColor(fileId);
         }
@@ -740,9 +742,7 @@ export class SpectralProfileSelectionStore {
 
         // Selecting active frame in the single frame mode
         autorun(() => {
-            if (this.activeProfileCategory !== MultiProfileCategory.IMAGE) {
-                this.selectFrame(ACTIVE_FILE_ID);
-            }
+            this.activeProfileCategory === MultiProfileCategory.IMAGE ? this.selectFrame(AppStore.Instance.activeFrameFileId) : this.selectFrame(ACTIVE_FILE_ID);
         });
 
         reaction(
