@@ -832,7 +832,7 @@ export class PreferenceDialogComponent extends React.Component {
                     <Checkbox label="Select all" checked={preference.isSelectingAllLogEvents} indeterminate={preference.isSelectingIndeterminateLogEvents} onChange={() => preference.selectAllLogEvents()} />
                 </FormGroup>
                 <FormGroup inline={false} className="log-event-list">
-                    {Event.EVENT_TYPES.map(eventType => (
+                    {Event.EVENT_TYPES.sort((a, b) => Event.getNameFromType(a).localeCompare(Event.getNameFromType(b))).map(eventType => (
                         <Checkbox
                             className="log-event-checkbox"
                             key={eventType}
