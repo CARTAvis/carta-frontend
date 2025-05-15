@@ -100,8 +100,7 @@ export class SpectralProfileSelectionStore {
                 const region = this.widgetStore.effectiveRegion;
                 const statsType = region?.isClosedRegion ? this.selectedStatsTypes[0] : CARTA.StatsType.Sum;
                 const selectedCoordinate = this.selectedCoordinates[0];
-                const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
-                if (this.activeProfileCategory === MultiProfileCategory.IMAGE && this.selectedFrameFileId !== undefined && matchedFileIds?.includes(this.selectedFrameFileId)) {
+                if (this.activeProfileCategory === MultiProfileCategory.IMAGE && this.selectedFrameFileId !== undefined) {
                     const appStore = AppStore.Instance;
 
                     this.selectedFileIds?.forEach(fileId => {
@@ -599,7 +598,6 @@ export class SpectralProfileSelectionStore {
             this.selectedFileIds = [...this.selectedFileIds, fileId].sort((a, b) => {
                 return a - b;
             });
-            widgetStore.setFileId(fileId);
             this.assignColor(fileId);
         }
     };
@@ -742,7 +740,9 @@ export class SpectralProfileSelectionStore {
 
         // Selecting active frame in the single frame mode
         autorun(() => {
-            this.activeProfileCategory === MultiProfileCategory.IMAGE ? this.selectFrame(AppStore.Instance.activeFrameFileId) : this.selectFrame(ACTIVE_FILE_ID);
+            if (this.activeProfileCategory !== MultiProfileCategory.IMAGE) {
+                this.selectFrame(ACTIVE_FILE_ID);
+            }
         });
 
         reaction(
@@ -751,14 +751,20 @@ export class SpectralProfileSelectionStore {
                 return matchedFileIds;
             },
             matchedFileIds => {
-                if (this.selectedFrameFileId !== undefined && !matchedFileIds.includes(this.selectedFrameFileId)) {
-                    this.selectedFileIds = [this.selectedFrameFileId];
-                } else {
-                    this.selectedFileIds.forEach(fileId => {
-                        if (!matchedFileIds.includes(fileId)) {
-                            this.removeSelectedFileMultiMode(fileId);
-                        }
-                    });
+                if (this.activeProfileCategory === MultiProfileCategory.IMAGE) {
+                    // remove the profile if it is unmatched
+                    if (this.selectedFileIds.length > 0) {
+                        this.selectedFileIds.forEach(fileId => {
+                            if (!matchedFileIds?.includes(fileId)) {
+                                this.removeSelectedFileMultiMode(fileId);
+                            }
+                        });
+                    }
+
+                    // if no selected frame under the multi-frame mode, add the selected frame
+                    if (this.selectedFileIds.length === 0) {
+                        this.selectedFileIds = [this.selectedFrameFileId];
+                    }
                 }
             }
         );
