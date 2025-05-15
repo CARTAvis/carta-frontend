@@ -6,6 +6,7 @@ describe("pixelToFluxDensityUnit", () => {
     it("removes specific substrings from the pixel unit string", () => {
         expect(pixelToFluxDensityUnit("Jy/beam")).toBe("Jy");
         expect(pixelToFluxDensityUnit("Jy/arcsec^2")).toBe("Jy");
+        expect(pixelToFluxDensityUnit("Jy/arcsec2")).toBe("Jy");
         expect(pixelToFluxDensityUnit("MJy/sr")).toBe("MJy");
         expect(pixelToFluxDensityUnit("Jy/pixel")).toBe("Jy");
     });

@@ -176,5 +176,5 @@ export function pixelToFluxDensityUnit(pixelUnit: string): string {
     if (pixelUnit === "K") {
         return "Jy";
     }
-    return pixelUnit.replace(/\/arcsec\^2|\/beam|\/sr|\/pixel/i, "");
+    return pixelUnit.replace(/\/beam|\/arcsec\^2|\/arcsec2|\/sr|\/pixel/i, "");
 }
