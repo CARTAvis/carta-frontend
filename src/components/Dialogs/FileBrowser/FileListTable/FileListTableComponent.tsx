@@ -490,6 +490,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 numRows={this.tableEntries.length}
                 loadingOptions={this.props.loading ? [TableLoadingOption.CELLS] : []}
                 cellRendererDependencies={[this.props.sortingString, this.props.filterString]} // trigger re-render on sorting change
+                getCellClipboardData={null}
             >
                 <Column name="Filename" columnHeaderCellRenderer={() => this.renderColumnHeader("Filename")} cellRenderer={this.renderFilenames} />
                 <Column name="Type" columnHeaderCellRenderer={() => this.renderColumnHeader("Type")} cellRenderer={this.renderTypes} />
