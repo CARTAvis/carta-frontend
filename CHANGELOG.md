@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed incorrect status in the animator widget and incorrect title in the image view widget when PV previews are active ([#2523](https://github.com/CARTAvis/carta-frontend/issues/2523), [#2524](https://github.com/CARTAvis/carta-frontend/issues/2524)).
 ### Added
 * Enhanced support for modifying the render configuration and the active channel/polarization in channel map mode ([#2492](https://github.com/CARTAvis/carta-frontend/issues/2492)).
+* Enable the copy function in the cursor info widget ([#2468](https://github.com/CARTAvis/carta-frontend/issues/2468)).
 ### Changed
 * The dropdown options in the z profile widget becomes scrollable with small widget width ([#1600](https://github.com/CARTAvis/carta-frontend/issues/1600)).
 * When a PV preview is active, the image view shows the page with the source image instead of the first page.
