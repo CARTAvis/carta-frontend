@@ -1087,7 +1087,7 @@ export class WidgetsStore {
     }
 
     /** Updates the title of the image view widget using {@link imageViewWidgetTitle}. */
-    @action updateImageWidgetTitle() {
+    @action updateImageWidgetTitle = () => {
         const layout = LayoutStore.Instance.dockedLayout;
         const newTitle = this.imageViewWidgetTitle;
 
@@ -1106,7 +1106,7 @@ export class WidgetsStore {
         if (imageViewWidget && imageViewWidget.title !== newTitle) {
             this.setWidgetTitle(imageViewWidget.id, newTitle);
         }
-    }
+    };
 
     @action setWidgetTitle(id: string, title: string) {
         const layoutStore = LayoutStore.Instance;
