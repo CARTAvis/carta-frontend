@@ -762,7 +762,7 @@ export class SpectralProfileSelectionStore {
                     }
 
                     // if no selected frame under the multi-frame mode, add the selected frame
-                    if (this.selectedFileIds.length === 0) {
+                    if (this.selectedFileIds.length === 0 && this.selectedFrameFileId !== undefined) {
                         this.selectedFileIds = [this.selectedFrameFileId];
                     }
                 }
