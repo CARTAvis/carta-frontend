@@ -35,6 +35,13 @@ export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.DS9_REG;
 export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.FileType.HDF5 | CARTA.FileType.MIRIAD;
 export type CatalogFileType = CARTA.CatalogFileType.VOTable | CARTA.CatalogFileType.FITSTable;
 
+export interface BrowserFileList {
+    directory: string | null | undefined;
+    parent: string | null | undefined;
+    files: CARTA.IFileInfo[] | CARTA.ICatalogFileInfo[] | null | undefined;
+    subdirectories: CARTA.IDirectoryInfo[] | null | undefined;
+}
+
 export interface ISelectedFile {
     fileInfo?: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
     hdu?: string;
@@ -54,7 +61,7 @@ export class FileBrowserStore {
 
     @observable browserMode: BrowserMode = BrowserMode.File;
     @observable appendingFrame = false;
-    @observable fileList: CARTA.IFileListResponse | null;
+    @observable fileList: BrowserFileList | null;
     @observable selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo | null | undefined;
     @observable selectedHDU: string | null;
     @observable HDUfileInfoExtended: {[k: string]: CARTA.IFileInfoExtended} | null;
@@ -73,7 +80,7 @@ export class FileBrowserStore {
     @observable exportRegionIndexes: number[] = [];
     @observable selectedFilesCtypes: {ctype: string[]; rank: number[]};
 
-    @observable catalogFileList: CARTA.ICatalogListResponse | null;
+    @observable catalogFileList: BrowserFileList | null;
     @observable selectedCatalogFile: CARTA.ICatalogFileInfo;
     @observable catalogFileInfo: CARTA.ICatalogFileInfo | null;
     @observable catalogHeaders: Array<CARTA.ICatalogHeader>;
@@ -164,12 +171,12 @@ export class FileBrowserStore {
         DialogStore.Instance.hideDialog(DialogId.FileBrowser);
     };
 
-    @action setFileList = (list: CARTA.IFileListResponse) => {
-        this.fileList = list;
+    @action setFileList = (fileListResponse: CARTA.IFileListResponse) => {
+        this.fileList = {directory: fileListResponse.directory, parent: fileListResponse.parent, files: fileListResponse.files, subdirectories: fileListResponse.subdirectories};
     };
 
-    @action setCatalogFileList = (list: CARTA.ICatalogListResponse) => {
-        this.catalogFileList = list;
+    @action setCatalogFileList = (fileListResponse: CARTA.ICatalogListResponse) => {
+        this.catalogFileList = {directory: fileListResponse.directory, parent: fileListResponse.parent, files: fileListResponse.files, subdirectories: fileListResponse.subdirectories};
     };
 
     private setExtendedDelayTimer() {
@@ -752,7 +759,7 @@ export class FileBrowserStore {
         return headers;
     }
 
-    @computed get getfileListByMode(): CARTA.IFileListResponse | CARTA.ICatalogListResponse | null {
+    @computed get getfileListByMode(): BrowserFileList | null {
         switch (this.browserMode) {
             case BrowserMode.Catalog:
                 return this.catalogFileList;

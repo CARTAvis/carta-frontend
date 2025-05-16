@@ -10,7 +10,7 @@ import {observer} from "mobx-react";
 import moment from "moment";
 
 import {FileFilterMode} from "models";
-import {AppStore, BrowserMode, FileBrowserStore, FileFilteringType, ISelectedFile} from "stores";
+import {AppStore, BrowserFileList, BrowserMode, FileBrowserStore, FileFilteringType, ISelectedFile} from "stores";
 import {toFixed} from "utilities";
 
 import "./FileListTableComponent.scss";
@@ -30,7 +30,7 @@ export interface FileListTableComponentProps {
     loading?: boolean;
     extendedLoading?: boolean;
     fileProgress?: {total: number; checked: number};
-    listResponse: CARTA.IFileListResponse | CARTA.ICatalogListResponse;
+    fileList: BrowserFileList | null;
     selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
     selectedHDU: string;
     filterType: FileFilteringType;
@@ -54,7 +54,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     private tableRef: Table2;
     private cachedFilterString: string;
     private cachedSortingString: string;
-    private cachedFileResponse: CARTA.IFileListResponse | CARTA.ICatalogListResponse;
+    private cachedFileList: BrowserFileList;
     private rowPivotIndex: number = -1;
 
     private static readonly FileTypeMap = new Map<CARTA.FileType, {type: string; description: string}>([
@@ -100,15 +100,15 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             const fileInfoResp = FileBrowserStore.Instance.fileInfoResp;
         }
 
-        const fileResponse = this.props.listResponse;
-        if (!fileResponse) {
+        const fileList = this.props.fileList;
+        if (!fileList) {
             return [];
         }
 
         const fileBrowserMode = this.props.fileBrowserMode;
 
-        let filteredSubdirectories = fileResponse?.subdirectories?.slice();
-        let filteredFiles = fileResponse?.files?.slice();
+        let filteredSubdirectories = fileList?.subdirectories?.slice();
+        let filteredFiles = fileList?.files?.slice();
 
         const filterString = this.props.filterString;
         const filterType = this.props.filterType;
@@ -246,14 +246,14 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
         // Automatically scroll to the top of the table when a new file response is received, or when filtering/sorting changes
         autorun(() => {
-            const fileResponse = this.props.listResponse;
+            const fileList = this.props.fileList;
             const sortingString = this.props.sortingString;
             const filterString = this.props.filterString;
 
-            if (fileResponse !== this.cachedFileResponse || sortingString !== this.cachedSortingString || filterString !== this.cachedFilterString) {
+            if (fileList !== this.cachedFileList || sortingString !== this.cachedSortingString || filterString !== this.cachedFilterString) {
                 this.cachedSortingString = sortingString;
                 this.cachedFilterString = filterString;
-                this.cachedFileResponse = fileResponse;
+                this.cachedFileList = fileList;
                 runInAction(() => (this.selectedRegions = []));
                 this.rowPivotIndex = -1;
                 this.props.onSelectionChanged([]);
@@ -442,7 +442,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     };
 
     render() {
-        const fileResponse = this.props.listResponse;
+        const fileList = this.props.fileList;
 
         const classes = ["browser-table"];
         if (this.props.darkTheme) {
@@ -450,7 +450,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         }
 
         const entryCount = this.tableEntries.length;
-        const unfilteredEntryCount = (fileResponse?.files?.length || 0) + (fileResponse?.subdirectories?.length || 0);
+        const unfilteredEntryCount = (fileList?.files?.length || 0) + (fileList?.subdirectories?.length || 0);
 
         let nonIdealState: React.ReactNode;
 

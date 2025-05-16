@@ -762,7 +762,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 loading={fileBrowserStore.loadingList}
                                 extendedLoading={fileBrowserStore.extendedLoading}
                                 fileProgress={fileProgress}
-                                listResponse={fileBrowserStore.getfileListByMode}
+                                fileList={fileBrowserStore.getfileListByMode}
                                 fileBrowserMode={fileBrowserStore.browserMode}
                                 selectedFile={fileBrowserStore.selectedFile}
                                 selectedHDU={fileBrowserStore.selectedHDU}
