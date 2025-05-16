@@ -256,10 +256,11 @@ export class FileBrowserStore {
                     const directoryInfo = fileListDirectories[index];
                     directoryInfo.type = fileInfo.type;
                     directoryInfo.size = fileInfo.size;
+                    directoryInfo.HDUList = fileInfo.HDUList;
                 }
             }
 
-            console.error("ToDo: update selected file info", fileInfo);
+            this.selectFile({fileInfo: fileInfo, hdu: fileInfo.HDUList?.[0]});
         }
     };
 

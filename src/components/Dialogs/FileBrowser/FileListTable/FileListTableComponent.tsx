@@ -165,7 +165,8 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                         typeInfo: FileListTableComponent.GetFileTypeDisplay(directory.type),
                         size: directory.size as number,
                         date: directory.date as number,
-                        isDirectory: true
+                        isDirectory: true,
+                        fileInfo: {name: directory.name, type: directory.type, size: directory.size, HDUList: directory.HDUList, date: directory.date}
                     });
                 } else {
                     entries.push({
@@ -273,22 +274,6 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             }
         });
     }
-
-    @action selectEntry = (entry: FileEntry, index) => {
-        if (entry) {
-            if (entry.isDirectory) {
-                this.props.onFolderClicked(entry.filename);
-                this.selectedRegions = undefined;
-                this.rowPivotIndex = -1;
-                this.props.onSelectionChanged([]);
-            } else {
-                this.props.onFileClicked(entry);
-                this.selectedRegions = [Regions.row(index)];
-                this.rowPivotIndex = index;
-                this.props.onSelectionChanged(this.selectedFiles);
-            }
-        }
-    };
 
     @action handleColumnWidthChanged = (index: number, size: number) => {
         if (index >= 0 && index < this.columnWidths.length) {
@@ -407,7 +392,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     };
 
     private handleEntryDoubleClicked = (entry: FileEntry) => {
-        if (entry?.isDirectory) {
+        if (entry?.isDirectory && !entry.size) {
             return;
         }
         this.props.onFileDoubleClicked(entry);
@@ -415,39 +400,36 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
     @action private handleEntryClicked = (event: React.MouseEvent, entry: FileEntry, index: number) => {
         if (entry) {
-            if (entry.isDirectory) {
-                this.props.onFolderClicked(entry.filename);
-                this.selectedRegions = [];
-                this.rowPivotIndex = -1;
-            } else {
-                const isCtrlPressed = event.ctrlKey || event.metaKey;
-                if (isCtrlPressed && this.selectedRegions.length) {
-                    const currentRow = Regions.row(index);
-                    const rowIndex = Regions.findMatchingRegion(this.selectedRegions, currentRow);
-                    if (rowIndex === -1) {
-                        this.selectedRegions.push(currentRow);
-                        // Generate new array in order to trigger re-render
-                        this.selectedRegions = this.selectedRegions.slice();
-                    } else {
-                        this.selectedRegions = this.selectedRegions.filter(r => r !== this.selectedRegions[rowIndex]);
-                        // Prevent deselection of all files
-                        if (!this.selectedRegions.length) {
-                            this.selectedRegions = [Regions.row(index)];
-                        }
-                    }
-                } else if (event.shiftKey && this.selectedRegions.length) {
-                    const range = Regions.row(this.rowPivotIndex, index);
-                    this.selectedRegions = [];
-                    for (let i = range.rows[0]; i <= range.rows[1]; i++) {
-                        this.selectedRegions.push(Regions.row(i));
-                    }
+            const isCtrlPressed = event.ctrlKey || event.metaKey;
+            if (isCtrlPressed && this.selectedRegions.length) {
+                const currentRow = Regions.row(index);
+                const rowIndex = Regions.findMatchingRegion(this.selectedRegions, currentRow);
+                if (rowIndex === -1) {
+                    this.selectedRegions.push(currentRow);
+                    // Generate new array in order to trigger re-render
+                    this.selectedRegions = this.selectedRegions.slice();
                 } else {
-                    this.selectedRegions = [Regions.row(index)];
-                    this.rowPivotIndex = index;
+                    this.selectedRegions = this.selectedRegions.filter(r => r !== this.selectedRegions[rowIndex]);
+                    // Prevent deselection of all files
+                    if (!this.selectedRegions.length) {
+                        this.selectedRegions = [Regions.row(index)];
+                    }
                 }
-                if (this.selectedRegions?.length === 1) {
-                    this.props.onFileClicked(this.tableEntries[this.selectedRegions[0].rows[0]]);
+            } else if (event.shiftKey && this.selectedRegions.length) {
+                const range = Regions.row(this.rowPivotIndex, index);
+                this.selectedRegions = [];
+                for (let i = range.rows[0]; i <= range.rows[1]; i++) {
+                    this.selectedRegions.push(Regions.row(i));
                 }
+            } else {
+                this.selectedRegions = [Regions.row(index)];
+                this.rowPivotIndex = index;
+            }
+
+            if (entry.isDirectory && !entry.size) {
+                this.props.onFolderClicked(entry.filename);
+            } else if (this.selectedRegions?.length === 1) {
+                this.props.onFileClicked(this.tableEntries[this.selectedRegions[0].rows[0]]);
             }
         }
         this.props.onSelectionChanged(this.selectedFiles);
