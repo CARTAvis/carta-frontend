@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed no WCS overaly after opening a file with a non-standard header ([#2395](https://github.com/CARTAvis/carta-frontend/issues/2395)).
 * Fixed no wcs grid if filename contains comma characters ([#2386](https://github.com/CARTAvis/carta-frontend/issues/2386)).
 * Fixed incorrect status in the animator widget and incorrect title in the image view widget when PV previews are active ([#2523](https://github.com/CARTAvis/carta-frontend/issues/2523), [#2524](https://github.com/CARTAvis/carta-frontend/issues/2524)).
+* Fixed jumpy non-square images after widget resizing ([#2467](https://github.com/CARTAvis/carta-frontend/issues/2467)).
 ### Added
 * Enhanced support for modifying the render configuration and the active channel/polarization in channel map mode ([#2492](https://github.com/CARTAvis/carta-frontend/issues/2492)).
 * Enable the copy function in the cursor info widget ([#2468](https://github.com/CARTAvis/carta-frontend/issues/2468)).
