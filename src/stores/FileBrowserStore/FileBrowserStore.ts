@@ -35,11 +35,13 @@ export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.DS9_REG;
 export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.FileType.HDF5 | CARTA.FileType.MIRIAD;
 export type CatalogFileType = CARTA.CatalogFileType.VOTable | CARTA.CatalogFileType.FITSTable;
 
+type DirectoryInfo = CARTA.IFileInfo & Omit<CARTA.IDirectoryInfo, keyof CARTA.IFileInfo>;
+
 export interface BrowserFileList {
     directory: string | null | undefined;
     parent: string | null | undefined;
     files: CARTA.IFileInfo[] | CARTA.ICatalogFileInfo[] | null | undefined;
-    subdirectories: CARTA.IDirectoryInfo[] | null | undefined;
+    subdirectories: DirectoryInfo[] | null | undefined;
 }
 
 export interface ISelectedFile {
