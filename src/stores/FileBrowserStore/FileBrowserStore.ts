@@ -218,13 +218,28 @@ export class FileBrowserStore {
         try {
             if (this.browserMode === BrowserMode.File || this.browserMode === BrowserMode.SaveFile) {
                 const list = yield appStore.backendService.getFileList(directory, filterMode);
-                this.setFileList(list);
+
+                if (directory && list.directory.replace(/^\/+/, "") !== directory.replace(/^\/+/, "")) {
+                    console.error("ToDo: got single file info instead of file list", list.directory, directory);
+                } else {
+                    this.setFileList(list);
+                }
             } else if (this.browserMode === BrowserMode.Catalog) {
                 const list = yield appStore.backendService.getCatalogList(directory, filterMode);
-                this.setCatalogFileList(list);
+
+                if (directory && list.directory.replace(/^\/+/, "") !== directory.replace(/^\/+/, "")) {
+                    console.error("ToDo: got single file info instead of file list", list.directory, directory);
+                } else {
+                    this.setCatalogFileList(list);
+                }
             } else {
                 const list = yield appStore.backendService.getRegionList(directory, filterMode);
-                this.setFileList(list);
+
+                if (directory && list.directory.replace(/^\/+/, "") !== directory.replace(/^\/+/, "")) {
+                    console.error("ToDo: got single file info instead of file list", list.directory, directory);
+                } else {
+                    this.setFileList(list);
+                }
             }
         } catch (err) {
             console.log(err);
