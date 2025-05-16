@@ -219,24 +219,19 @@ export class FileBrowserStore {
             if (this.browserMode === BrowserMode.File || this.browserMode === BrowserMode.SaveFile) {
                 const list = yield appStore.backendService.getFileList(directory, filterMode);
 
-                if (directory && list.directory.replace(/^\/+/, "") !== directory.replace(/^\/+/, "")) {
-                    console.error("ToDo: got single file info instead of file list", list.directory, directory);
+                if (directory && list?.directory.replace(/^\/+/, "") !== directory.replace(/^\/+/, "")) {
+                    this.updateFolderInfoInFileList(list.files?.[0]);
                 } else {
                     this.setFileList(list);
                 }
             } else if (this.browserMode === BrowserMode.Catalog) {
                 const list = yield appStore.backendService.getCatalogList(directory, filterMode);
-
-                if (directory && list.directory.replace(/^\/+/, "") !== directory.replace(/^\/+/, "")) {
-                    console.error("ToDo: got single file info instead of file list", list.directory, directory);
-                } else {
-                    this.setCatalogFileList(list);
-                }
+                this.setCatalogFileList(list);
             } else {
                 const list = yield appStore.backendService.getRegionList(directory, filterMode);
 
-                if (directory && list.directory.replace(/^\/+/, "") !== directory.replace(/^\/+/, "")) {
-                    console.error("ToDo: got single file info instead of file list", list.directory, directory);
+                if (directory && list?.directory.replace(/^\/+/, "") !== directory.replace(/^\/+/, "")) {
+                    this.updateFolderInfoInFileList(list.files?.[0]);
                 } else {
                     this.setFileList(list);
                 }
@@ -248,6 +243,25 @@ export class FileBrowserStore {
         this.loadingList = false;
         this.resetLoadingStates();
     }
+
+    /** In all files mode, updates the folder info in the file list with file info and updates the selected file info. */
+    private updateFolderInfoInFileList = (fileInfo: CARTA.IFileInfo) => {
+        if (AppStore.Instance.preferenceStore.fileFilterMode === FileFilterMode.All) {
+            const fileListDirectories = this.getfileListByMode?.subdirectories;
+
+            if (fileListDirectories) {
+                const index = fileListDirectories.findIndex(item => item.name === fileInfo.name);
+
+                if (index !== -1) {
+                    const directoryInfo = fileListDirectories[index];
+                    directoryInfo.type = fileInfo.type;
+                    directoryInfo.size = fileInfo.size;
+                }
+            }
+
+            console.error("ToDo: update selected file info", fileInfo);
+        }
+    };
 
     @flow.bound
     *getFileInfo(directory: string | null | undefined, file: string | null | undefined, hdu: string | undefined) {

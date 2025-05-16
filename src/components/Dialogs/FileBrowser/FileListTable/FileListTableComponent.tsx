@@ -19,6 +19,7 @@ interface FileEntry extends ISelectedFile {
     filename: string;
     typeInfo?: {type: string; description: string};
     isDirectory?: boolean;
+    itemCount?: number;
     size?: number;
     date?: number;
     fileInfo?: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
@@ -158,12 +159,22 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             }
 
             for (const directory of filteredSubdirectories) {
-                entries.push({
-                    filename: directory.name,
-                    size: directory.itemCount > 0 ? directory.itemCount : undefined,
-                    date: directory.date as number,
-                    isDirectory: true
-                });
+                if (AppStore.Instance.preferenceStore.fileFilterMode === FileFilterMode.All && directory.size && directory.type in CARTA.FileType) {
+                    entries.push({
+                        filename: directory.name,
+                        typeInfo: FileListTableComponent.GetFileTypeDisplay(directory.type),
+                        size: directory.size as number,
+                        date: directory.date as number,
+                        isDirectory: true
+                    });
+                } else {
+                    entries.push({
+                        filename: directory.name,
+                        itemCount: directory.itemCount > 0 ? directory.itemCount : undefined,
+                        date: directory.date as number,
+                        isDirectory: true
+                    });
+                }
             }
         }
 
@@ -352,13 +363,14 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         if (!entry) {
             return <Cell loading={true} />;
         }
-        const sizeInBytes = entry?.size;
+
+        const showSize = !entry.isDirectory || (entry.isDirectory && entry.size);
         return (
             <Cell>
                 <React.Fragment>
                     <div onClick={event => this.handleEntryClicked(event, entry, rowIndex)} onDoubleClick={() => this.handleEntryDoubleClicked(entry)}>
-                        {isFinite(sizeInBytes) && !entry.isDirectory && FileListTableComponent.GetFileSizeDisplay(sizeInBytes)}
-                        {isFinite(sizeInBytes) && entry.isDirectory && `${sizeInBytes} items`}
+                        {showSize && isFinite(entry.size) && FileListTableComponent.GetFileSizeDisplay(entry.size)}
+                        {!showSize && isFinite(entry.itemCount) && `${entry.itemCount} items`}
                     </div>
                 </React.Fragment>
             </Cell>
