@@ -19,6 +19,7 @@ interface FileEntry extends ISelectedFile {
     filename: string;
     typeInfo?: {type: string; description: string};
     isDirectory?: boolean;
+    isFile?: boolean;
     itemCount?: number;
     size?: number;
     date?: number;
@@ -166,6 +167,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                         size: directory.size as number,
                         date: directory.date as number,
                         isDirectory: true,
+                        isFile: true,
                         fileInfo: {name: directory.name, type: directory.type, size: directory.size, HDUList: directory.HDUList, date: directory.date}
                     });
                 } else {
@@ -205,7 +207,8 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                         typeInfo: FileListTableComponent.GeCatalogFileTypeDisplay(file.type),
                         size: file.fileSize as number,
                         date: file.date as number,
-                        fileInfo: file
+                        fileInfo: file,
+                        isFile: true
                     });
                 }
             } else if (fileBrowserMode === BrowserMode.File) {
@@ -218,7 +221,8 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                             size: file.size as number,
                             date: file.date as number,
                             fileInfo: file,
-                            hdu
+                            hdu,
+                            isFile: true
                         });
                     }
                 }
@@ -229,7 +233,8 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                         typeInfo: FileListTableComponent.GetFileTypeDisplay(file.type),
                         size: file.size as number,
                         date: file.date as number,
-                        fileInfo: file
+                        fileInfo: file,
+                        isFile: true
                     });
                 }
             }
@@ -350,13 +355,12 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             return <Cell loading={true} />;
         }
 
-        const showSize = !entry.isDirectory || (entry.isDirectory && entry.size);
         return (
             <Cell>
                 <React.Fragment>
                     <div onClick={event => this.handleEntryClicked(event, entry, rowIndex)} onDoubleClick={() => this.handleEntryDoubleClicked(entry)}>
-                        {showSize && isFinite(entry.size) && FileListTableComponent.GetFileSizeDisplay(entry.size)}
-                        {!showSize && isFinite(entry.itemCount) && `${entry.itemCount} items`}
+                        {entry.isFile && isFinite(entry.size) && FileListTableComponent.GetFileSizeDisplay(entry.size)}
+                        {!entry.isFile && isFinite(entry.itemCount) && `${entry.itemCount} items`}
                     </div>
                 </React.Fragment>
             </Cell>
@@ -393,7 +397,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
     };
 
     private handleEntryDoubleClicked = (entry: FileEntry) => {
-        if (entry?.isDirectory && !entry.size) {
+        if (!entry.isFile) {
             return;
         }
         this.props.onFileDoubleClicked(entry);
@@ -427,7 +431,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 this.rowPivotIndex = index;
             }
 
-            if (entry.isDirectory && !entry.size) {
+            if (!entry.isFile) {
                 this.props.onFolderClicked(entry.filename);
             } else if (this.selectedRegions?.length === 1) {
                 this.props.onFileClicked(this.tableEntries[this.selectedRegions[0].rows[0]]);
