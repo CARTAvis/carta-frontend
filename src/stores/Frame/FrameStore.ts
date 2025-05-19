@@ -93,6 +93,7 @@ export interface FrameInfo {
     beamTable: CARTA.IBeam[];
     generated: boolean;
     preview?: boolean;
+    previewSourceFileId?: number;
 }
 
 export enum CoordinateMode {

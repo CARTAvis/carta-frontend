@@ -3,10 +3,8 @@ import {ChannelMapStore} from "./ChannelMapStore";
 jest.mock("stores", () => ({
     AppStore: {
         Instance: {
-            activeFrame: {
-                frameInfo: {
-                    fileInfoExtended: {depth: 12}
-                }
+            imageViewConfigStore: {
+                visibleImages: [{type: 0, store: {frameInfo: {fileInfoExtended: {depth: 12}}}}]
             }
         }
     }
