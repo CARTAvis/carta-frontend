@@ -173,7 +173,8 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                         filename: directory.name,
                         itemCount: directory.itemCount > 0 ? directory.itemCount : undefined,
                         date: directory.date as number,
-                        isDirectory: true
+                        isDirectory: true,
+                        fileInfo: {name: directory.name}
                     });
                 }
             }
