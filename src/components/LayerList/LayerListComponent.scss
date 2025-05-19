@@ -14,6 +14,10 @@
         font-size: 12px;
     }
 
+    .#{$ns}-table-cell {
+        user-select: text;
+    }
+
     .#{$ns}-button {
         font-size: 11px;
 
