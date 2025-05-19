@@ -47,6 +47,7 @@ export interface BrowserFileList {
 export interface ISelectedFile {
     fileInfo?: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
     hdu?: string;
+    isFile?: boolean;
 }
 
 export class FileBrowserStore {
@@ -264,6 +265,7 @@ export class FileBrowserStore {
             const selectedFileIndex = this.selectedFiles.findIndex(item => item.fileInfo?.name === fileInfo.name);
             if (selectedFileIndex !== -1) {
                 this.selectedFiles[selectedFileIndex].fileInfo = fileInfo;
+                this.selectedFiles[selectedFileIndex].isFile = true;
             }
         }
     };
