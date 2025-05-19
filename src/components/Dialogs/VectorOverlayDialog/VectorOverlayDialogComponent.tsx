@@ -284,7 +284,7 @@ export class VectorOverlayDialogComponent extends React.Component {
         const intensityOnly = dataSource.vectorOverlayConfig.angularSource === VectorOverlaySource.None;
         const angleOnly = dataSource.vectorOverlayConfig.intensitySource === VectorOverlaySource.None;
 
-        const thresholdOptionDisabled = dataSource.polarizations.includes(POLARIZATIONS.Plinear) && !dataSource.polarizations.includes(POLARIZATIONS.Ptotal) && !dataSource.polarizations.includes(POLARIZATIONS.I);
+        const thresholdOptionDisabled = !dataSource.polarizations.includes(POLARIZATIONS.Plinear || POLARIZATIONS.PFlinear) || !dataSource.polarizations.includes(POLARIZATIONS.I);
 
         const configPanel = (
             <div className="vector-overlay-config-panel">
@@ -334,9 +334,9 @@ export class VectorOverlayDialogComponent extends React.Component {
                 </FormGroup>
                 <FormGroup inline={true} label="Threshold enabled">
                     <Switch checked={this.thresholdEnabled} onChange={this.handleThresholdEnabledChanged} data-testid="vector-field-threshold-toggle" />
-                    {dataSource.hasLinearStokes && this.thresholdEnabled && (
+                    {this.thresholdEnabled && (
                         <HTMLSelect value={this.thresholdOption} onChange={ev => this.handleThresholdOptionChanged(ev)} data-testid="vector-field-threshold-option-dropdown" disabled={thresholdOptionDisabled}>
-                            <option value={POLARIZATIONS.Plinear}>Computed PI</option>
+                            {dataSource.hasLinearStokes && <option value={POLARIZATIONS.Plinear}>Computed PI</option>}
                             {dataSource.polarizations.includes(POLARIZATIONS.I) && <option value={POLARIZATIONS.I}>Stokes I</option>}
                         </HTMLSelect>
                     )}

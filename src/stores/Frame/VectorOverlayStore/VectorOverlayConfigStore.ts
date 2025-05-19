@@ -57,7 +57,7 @@ export class VectorOverlayConfigStore {
         this.threshold = 0;
         this.thresholdEnabled = false;
         this.debiasing = false;
-        this.thresholdOption = POLARIZATIONS.Plinear;
+        this.thresholdOption = frame.hasLinearStokes ? POLARIZATIONS.Plinear : POLARIZATIONS.I;
 
         this.color = tinycolor(this.preferenceStore.vectorOverlayColor).toRgb();
         this.colormapEnabled = this.preferenceStore.vectorOverlayColormapEnabled;
