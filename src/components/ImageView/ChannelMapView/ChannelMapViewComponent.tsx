@@ -24,8 +24,8 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     const regionViewRef = React.useRef<RegionViewComponent>();
     const appStore = AppStore.Instance;
     const channelMapStore = appStore.channelMapStore;
-    const frame = channelMapStore.masterFrame;
-    const image = channelMapStore.masterImage;
+    const frame = channelMapStore.displayedFrame;
+    const image = channelMapStore.displayedImage;
     const overlaySettings = appStore.overlaySettings;
 
     const [imageToolbarVisible, setImageToolbarVisible] = React.useState(false);
@@ -70,6 +70,10 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         frame?.setCenter(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y);
     };
 
+    if (image?.type === ImageType.COLOR_BLENDING) {
+        return <NonIdealState icon={"error"} title={"Not supported"} description={"Color blending images in channel map view is not supported"} />;
+    }
+
     const overlayComponents = channelMapStore.channelArray.map((channel, index) => {
         const column = index % channelMapStore.numColumns;
         const row = Math.floor(index / channelMapStore.numColumns);
@@ -78,9 +82,16 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         const isCornerOverlay = column === 0 && (row === channelMapStore.numRows - 1 || row === lastRow);
 
         return (
-            channel < channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth && (
-                <div key={index} onClick={() => channelMapStore.masterFrame.setChannel(channel)} style={{top}}>
-                    {channelMapStore.masterFrame?.frameInfo.fileInfoExtended.depth > 1 && (
+            channel < frame?.frameInfo.fileInfoExtended.depth && (
+                <div
+                    key={index}
+                    onClick={() => {
+                        frame.setChannel(channel);
+                        appStore.setActiveImage(image);
+                    }}
+                    style={{top}}
+                >
+                    {frame?.frameInfo.fileInfoExtended.depth > 1 && (
                         <ChannelMapLabelComponent
                             image={{
                                 type: ImageType.FRAME,
@@ -93,7 +104,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                             height={innerRenderHeight}
                             docked={props.docked}
                             channel={channel}
-                            highlighted={channel === channelMapStore.masterFrame.requiredChannel}
+                            highlighted={channel === frame.requiredChannel}
                         />
                     )}
                     <RegionViewComponent

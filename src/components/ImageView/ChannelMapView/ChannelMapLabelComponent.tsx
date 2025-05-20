@@ -39,7 +39,7 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
     }
 
     render() {
-        const frame = AppStore.Instance.channelMapStore.masterFrame;
+        const frame = AppStore.Instance.activeFrame;
         const channelMapStore = AppStore.Instance.channelMapStore;
         const {spectralString, velocityString} = frame.getFreqWithChannel(this.props.channel);
 

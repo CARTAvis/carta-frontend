@@ -21,15 +21,13 @@
     .profile-container {
         flex: 3 3 auto;
         min-width: 0;
-
-        .profile-toolbar {
-            height: 42px;
-        }
+        display: flex;
+        flex-direction: column;
 
         .body-split-pane {
-            height: calc(100% - 42px) !important;
+            height: auto !important;
             position: inherit !important;
-            min-height: calc(100% - 42px) !important;
+            min-height: auto !important;
 
             .Resizer {
                 background: rgba(0, 0, 0, 0);

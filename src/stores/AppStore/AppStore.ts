@@ -65,7 +65,7 @@ import {
     WidgetsStore
 } from "stores";
 import {CompassAnnotationStore, CURSOR_REGION_ID, FrameInfo, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
-import {HistogramWidgetStore, PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
+import {HistogramWidgetStore, PvGeneratorWidgetStore, RegionId as RegionIdType, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
 import {distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
 
 import GitCommit from "../../static/gitInfo";
@@ -569,9 +569,6 @@ export class AppStore {
         this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfo.type, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes, generated);
 
         let newFrame = new FrameStore(frameInfo);
-        if (!newFrame.isPVImage && newFrame.frameInfo.fileInfoExtended.depth > 1) {
-            this.channelMapStore.setMasterFrame(newFrame);
-        }
 
         // Place frame in frame array (replace frame with the same ID if it exists)
         const existingFrameIndex = this.imageViewConfigStore.getImageListIndex(ImageType.FRAME, ack.fileId);
@@ -628,7 +625,7 @@ export class AppStore {
         return true;
     };
 
-    @action addPreviewFrame = (ack: any, directory: string, hdu: string, pvGeneratorWidgetStore: PvGeneratorWidgetStore) => {
+    @action addPreviewFrame = (ack: any, directory: string, hdu: string, sourceFileId: number, pvGeneratorWidgetStore: PvGeneratorWidgetStore) => {
         if (!ack) {
             return undefined;
         }
@@ -644,7 +641,8 @@ export class AppStore {
             renderMode: CARTA.RenderMode.RASTER,
             beamTable: ack.beamTable,
             generated: true,
-            preview: true
+            preview: true,
+            previewSourceFileId: sourceFileId
         };
 
         const newFrame = new FrameStore(frameInfo, pvGeneratorWidgetStore);
@@ -1008,13 +1006,6 @@ export class AppStore {
                     } else {
                         this.clearSpectralReference();
                     }
-                }
-
-                // Clean up if frame is used in channel map
-                if (this.channelMapStore.masterFrame?.frameInfo.fileId === fileId) {
-                    const firstImage = this.imageViewConfigStore.imageNum ? this.imageViewConfigStore.getImage(0) : null;
-                    const firstFrame = (firstImage?.store as FrameStore)?.frameInfo.fileInfoExtended.depth > 1 ? (firstImage.store as FrameStore) : null;
-                    this.channelMapStore.setMasterFrame(firstFrame);
                 }
 
                 if (removedFrameIsRasterScalingReference) {
@@ -1522,7 +1513,7 @@ export class AppStore {
                     // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
                     pvGeneratorWidgetStore.previewFrame.updatePreviewDataGenerator.next();
                 } else {
-                    const newFrame = this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory, "", pvGeneratorWidgetStore);
+                    const newFrame = this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory, "", message.fileId, pvGeneratorWidgetStore);
                     pvGeneratorWidgetStore.setPreviewFrame(newFrame);
                     pvGeneratorWidgetStore.setPvCutRegionId(message.regionId);
                     WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WIDGET_CONFIG.type);
@@ -1739,14 +1730,17 @@ export class AppStore {
 
             frame.channel = update.channel;
             frame.stokes = update.stokes;
-            if (this.imageViewConfigStore.visibleFrames.includes(frame) && !this.channelMapStore.channelMapEnabled) {
+
+            if (this.channelMapStore.channelMapEnabled) {
+                this.tileService.updateChannelMapActiveChannel(frame.frameInfo.fileId, frame.channel, frame.stokes);
+            } else if (this.imageViewConfigStore.visibleFrames.includes(frame)) {
                 const [tiles, midPointTileCoords] = frame.requiredTiles;
                 // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
                 const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
                 const compressionQuality = bunitVariant.includes(frame.headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
                 this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, compressionQuality, true);
             } else {
-                this.tileService.updateHiddenFileChannels(frame.frameInfo.fileId, frame.channel, frame.stokes, this.channelMapStore.channelMapEnabled);
+                this.tileService.updateHiddenFileChannels(frame.frameInfo.fileId, frame.channel, frame.stokes);
             }
         }
     };
@@ -2057,21 +2051,12 @@ export class AppStore {
             () => this.activeImage,
             image => {
                 this.widgetsStore.updateRenderConfigSettingsVisibility();
-                if (image) {
-                    if (image.type !== ImageType.PV_PREVIEW) {
-                        this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
+                if (image && image.type === ImageType.FRAME) {
+                    const frame = image.store;
+                    this.catalogStore.resetActiveCatalogFile(frame?.id);
+                    if (this.syncContourToFrame) {
+                        this.contourDataSource = frame;
                     }
-
-                    if (image.type === ImageType.FRAME) {
-                        const frame = image.store;
-                        this.catalogStore.resetActiveCatalogFile(frame?.id);
-                        if (this.syncContourToFrame) {
-                            this.contourDataSource = frame;
-                        }
-                        this.channelMapStore.setMasterFrame(frame);
-                    }
-                } else {
-                    this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
                 }
             }
         );
@@ -2224,12 +2209,9 @@ export class AppStore {
         // TODO: update histograms directly if the image is not active!
 
         // Add histogram to pending histogram list
-        if (regionHistogramData.regionId === -1 && !regionHistogramData.config.fixedNumBins && !regionHistogramData.config.fixedBounds) {
+        if (regionHistogramData.regionId === RegionIdType.IMAGE && !regionHistogramData.config.fixedNumBins && !regionHistogramData.config.fixedBounds) {
             const key = `${regionHistogramData.fileId}_${regionHistogramData.stokes}_${regionHistogramData.channel}`;
             this.pendingChannelHistograms.set(key, regionHistogramData);
-            if (this.channelMapStore.channelMapEnabled && regionHistogramData.channel === 0) {
-                this.updateHistogram(regionHistogramData.fileId, regionHistogramData.stokes, regionHistogramData.channel, true);
-            }
         } else if (regionHistogramData.regionId === -2) {
             // Update cube histogram if it is still required
             const updatedFrame = this.getFrame(regionHistogramData.fileId);
@@ -2240,6 +2222,11 @@ export class AppStore {
                     this.updateTaskProgress(regionHistogramData.progress);
                 }
             }
+        }
+
+        // update the render config widget histogram for channel map view mode
+        if (this.channelMapStore.channelMapEnabled && regionHistogramData.regionId === RegionIdType.IMAGE && regionHistogramData.stokes === this.activeFrame?.stokes) {
+            this.updateHistogram(regionHistogramData.fileId, regionHistogramData.stokes, regionHistogramData.channel);
         }
     };
 
@@ -2276,7 +2263,7 @@ export class AppStore {
         this.updateHistogram(tileStreamDetails.fileId, tileStreamDetails.stokes, tileStreamDetails.channel);
     };
 
-    updateHistogram = (fileId: number, stokes: number, channel: number, updateChannelMapHistogram?: boolean) => {
+    updateHistogram = (fileId: number, stokes: number, channel: number) => {
         // Apply pending channel histogram
         const key = `${fileId}_${stokes}_${channel}`;
         const pendingHistogram = this.pendingChannelHistograms.get(key);
@@ -2290,14 +2277,9 @@ export class AppStore {
                 updatedFrame.renderConfig.updateChannelHistogram(channelHist);
                 updatedFrame.channel = channel;
                 updatedFrame.stokes = stokes;
+            }
 
-                if (updateChannelMapHistogram || !updatedFrame.renderConfig.channelMapHistogram) {
-                    updatedFrame.renderConfig.updateChannelMapHistogram(channelHist);
-                }
-            }
-            if (!updateChannelMapHistogram) {
-                this.pendingChannelHistograms.delete(key);
-            }
+            this.pendingChannelHistograms.delete(key);
         }
     };
 

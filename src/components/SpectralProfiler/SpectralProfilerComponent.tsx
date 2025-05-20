@@ -27,7 +27,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return {
             id: "spectral-profiler",
             type: "spectral-profiler",
-            minWidth: 880,
+            minWidth: 300,
             minHeight: 300,
             defaultWidth: 870,
             defaultHeight: 300,

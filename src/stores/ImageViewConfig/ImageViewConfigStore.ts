@@ -152,7 +152,16 @@ export class ImageViewConfigStore {
     /** The index of the current page in the image view widget. */
     @computed get currentImagePage() {
         const activeImage = AppStore.Instance.activeImage;
-        if (!this.imageNum || !activeImage || activeImage.type === ImageType.PV_PREVIEW) {
+        if (!this.imageNum || !activeImage) {
+            return 0;
+        }
+
+        if (activeImage.type === ImageType.PV_PREVIEW) {
+            const sourceFileId = activeImage.store.frameInfo.previewSourceFileId;
+            if (sourceFileId !== undefined) {
+                const index = this.getImageListIndex(ImageType.FRAME, sourceFileId);
+                return Math.floor(index / this.imagesPerPage);
+            }
             return 0;
         }
 

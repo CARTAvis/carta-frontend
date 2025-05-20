@@ -91,13 +91,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const image = this.props.image;
         const baseFrame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image?.store?.baseFrame : this.props.image?.store;
         const tileRenderService = baseFrame.isPreview ? PreviewWebGLService.Instance : TileWebGLService.Instance;
-        const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
         const renderWidth = this.props.renderWidth || baseFrame.renderWidth;
         const renderHeight = this.props.renderHeight || baseFrame.renderHeight;
-        const column = this.props.column;
-        const row = this.props.row;
-        const xOffset = column * renderWidth * pixelRatio;
-        const yOffset = this.gl.canvas.height - renderHeight * (row + 1) * pixelRatio;
         const canvas = this.canvas;
         const numImageColumns = AppStore.Instance.imageViewConfigStore.numImageColumns;
         const numImageRows = AppStore.Instance.imageViewConfigStore.numImageRows;
@@ -115,6 +110,12 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.updateCanvasSize(baseFrame, renderWidth, renderHeight, numImageColumns, numImageRows);
         }
 
+        const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
+        const column = this.props.column;
+        const row = this.props.row;
+        const xOffset = column * renderWidth * pixelRatio;
+        const yOffset = this.gl.canvas.height - renderHeight * (row + 1) * pixelRatio;
+
         const ctx = canvas.getContext("2d");
         const w = canvas.width;
         const h = canvas.height;
@@ -130,7 +131,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 const histStokesIndex = frame.renderConfig.stokesIndex;
                 const histChannel = frame.renderConfig.histChannel;
                 if (
-                    (frame.renderConfig.useCubeHistogram || frame.channel === histChannel || frame.isPreview || (AppStore.Instance.channelMapStore.channelMapEnabled && frame.renderConfig.channelMapHistogram)) &&
+                    (frame.renderConfig.useCubeHistogram || frame.channel === histChannel || frame.isPreview || AppStore.Instance.channelMapStore.channelMapEnabled) &&
                     (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)
                 ) {
                     this.updateUniforms(frame, Math.floor(frame.renderWidth), Math.floor(frame.renderHeight), this.props.pixelHighlightValue);

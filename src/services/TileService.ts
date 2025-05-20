@@ -323,7 +323,7 @@ export class TileService {
         return result;
     }
 
-    requestChannelMapTiles(tiles: TileCoordinate[], frame: FrameStore, focusPoint: Point2D, compressionQuality: number, fullChannelRange: {min: number; max: number}) {
+    requestChannelMapTiles(tiles: TileCoordinate[], frame: FrameStore, focusPoint: Point2D, compressionQuality: number, fullChannelRange: {min: number; max: number}, polarizationChanged: boolean = false) {
         if (!frame) {
             return;
         }
@@ -332,7 +332,19 @@ export class TileService {
         const requiredChannel = frame.channel;
         const currentTiles = tiles.map(tile => tile.encode());
 
-        if (this.currentlyStreamingChannelRange && this.currentlyStreamingTileRange) this.clearQueueForChannelMap(this.pendingRequests, fileId, fullChannelRange, currentTiles, this.currentlyStreamingTileRange);
+        if (polarizationChanged) {
+            for (let i = fullChannelRange.min; i <= fullChannelRange.max; i++) {
+                const key = `${fileId}_${stokes}_${i}`;
+                this.pendingSynchronisedTiles.set(key, new Set(tiles.map(tile => tile.encode())));
+                this.receivedSynchronisedTiles.delete(key);
+            }
+            this.clearRequestQueue(fileId);
+            this.clearCompressedCache(fileId);
+        }
+
+        if (this.currentlyStreamingChannelRange && this.currentlyStreamingTileRange) {
+            this.clearQueueForChannelMap(this.pendingRequests, fileId, fullChannelRange, currentTiles, this.currentlyStreamingTileRange);
+        }
 
         const channelToTilesArray: {channel: number; tiles: TileCoordinate[]}[] = [];
 
@@ -371,13 +383,17 @@ export class TileService {
         }
     }
 
-    updateHiddenFileChannels(fileId: number, channel: number, stokes: number, channelMapEnabled?: boolean) {
-        if (!channelMapEnabled) {
-            this.clearCompressedCache(fileId);
-            this.clearGPUCache(fileId);
-        }
+    updateChannelMapActiveChannel(fileId: number, channel: number, stokes: number) {
         this.channelMap.set(fileId, {channel, stokes});
-        this.backendService.setChannels(fileId, channel, stokes, {}, channelMapEnabled);
+        this.backendService.setChannels(fileId, channel, stokes, {}, true);
+    }
+
+    updateHiddenFileChannels(fileId: number, channel: number, stokes: number) {
+        this.clearCompressedCache(fileId);
+        this.clearGPUCache(fileId);
+
+        this.channelMap.set(fileId, {channel, stokes});
+        this.backendService.setChannels(fileId, channel, stokes, {});
     }
 
     clearGPUCache(fileId: number | null | undefined) {
