@@ -753,13 +753,11 @@ export class SpectralProfileSelectionStore {
             matchedFileIds => {
                 if (this.activeProfileCategory === MultiProfileCategory.IMAGE) {
                     // remove the profile if it is unmatched
-                    if (this.selectedFileIds.length > 0) {
-                        this.selectedFileIds.forEach(fileId => {
-                            if (!matchedFileIds?.includes(fileId)) {
-                                this.removeSelectedFileMultiMode(fileId);
-                            }
-                        });
-                    }
+                    this.selectedFileIds.forEach(fileId => {
+                        if (!matchedFileIds?.includes(fileId)) {
+                            this.removeSelectedFileMultiMode(fileId);
+                        }
+                    });
 
                     // if no selected frame under the multi-frame mode, add the selected frame
                     if (this.selectedFileIds.length === 0 && this.selectedFrameFileId !== undefined) {
