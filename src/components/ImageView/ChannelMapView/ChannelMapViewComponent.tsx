@@ -24,8 +24,8 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     const regionViewRef = React.useRef<RegionViewComponent>();
     const appStore = AppStore.Instance;
     const channelMapStore = appStore.channelMapStore;
-    const frame = appStore.activeFrame;
-    const image = appStore.activeImage;
+    const frame = channelMapStore.displayedFrame;
+    const image = channelMapStore.displayedImage;
     const overlayStore = appStore.overlayStore;
     const colorBarSetting = overlayStore.colorbar;
     const colorbarOffset = overlayStore.colorbar.visible ? colorBarSetting.stageWidth + overlayStore?.colorbarHoverInfoHeight : 0;
@@ -105,7 +105,14 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
 
         return (
             channel < frame?.frameInfo.fileInfoExtended.depth && (
-                <div key={index} onClick={() => frame.setChannel(channel)} style={{top: overlayComponentTop}}>
+                <div
+                    key={index}
+                    onClick={() => {
+                        frame.setChannel(channel);
+                        appStore.setActiveImage(image);
+                    }}
+                    style={{top: overlayComponentTop}}
+                >
                     <ChannelMapInnerOverlayComponent
                         index={index}
                         frame={frame}

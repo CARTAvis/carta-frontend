@@ -2,7 +2,7 @@ import {Classes} from "@blueprintjs/core";
 import classNames from "classnames";
 import * as GoldenLayout from "golden-layout";
 import $ from "jquery";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {
     AnimatorComponent,
@@ -405,6 +405,8 @@ export class WidgetsStore {
 
         this.floatingWidgets = [];
         this.defaultFloatingWidgetOffset = 100;
+
+        reaction(() => this.imageViewWidgetTitle, this.updateImageWidgetTitle);
     }
 
     private static GetDefaultWidgetConfig(type: string): DefaultWidgetConfig {
@@ -1069,14 +1071,25 @@ export class WidgetsStore {
 
     // endregion
 
-    @action updateImageWidgetTitle(layout: GoldenLayout) {
+    /** The title of the image view widget, which is the file name of the active image. If the active image is a PV preview, the title is the file name of the first image on the page. */
+    @computed get imageViewWidgetTitle() {
         const activeImage = AppStore.Instance.activeImage;
+        const visibleImages = AppStore.Instance.imageViewConfigStore.visibleImages;
+        const titleImage = activeImage?.type !== ImageType.PV_PREVIEW && visibleImages.includes(activeImage) ? activeImage : visibleImages[0];
+
         let newTitle;
-        if (activeImage && activeImage.type !== ImageType.PV_PREVIEW) {
-            newTitle = activeImage?.store?.filename ?? "";
+        if (titleImage) {
+            newTitle = titleImage?.store?.filename ?? "";
         } else {
             newTitle = "No image loaded";
         }
+        return newTitle;
+    }
+
+    /** Updates the title of the image view widget using {@link imageViewWidgetTitle}. */
+    @action updateImageWidgetTitle = () => {
+        const layout = LayoutStore.Instance.dockedLayout;
+        const newTitle = this.imageViewWidgetTitle;
 
         // Update GL title by searching for image-view components
         if (layout?.root) {
@@ -1093,7 +1106,7 @@ export class WidgetsStore {
         if (imageViewWidget && imageViewWidget.title !== newTitle) {
             this.setWidgetTitle(imageViewWidget.id, newTitle);
         }
-    }
+    };
 
     @action setWidgetTitle(id: string, title: string) {
         const layoutStore = LayoutStore.Instance;
