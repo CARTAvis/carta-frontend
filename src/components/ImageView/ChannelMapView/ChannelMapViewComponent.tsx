@@ -30,6 +30,10 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
 
     const [imageToolbarVisible, setImageToolbarVisible] = React.useState(false);
 
+    if (!frame) {
+        return <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;
+    }
+
     const outerPadding = frame.channelMapOuterOverlayStore.padding;
     const outerViewWidth = frame.channelMapOuterOverlayStore.viewWidth;
     const outerViewHeight = frame.channelMapOuterOverlayStore.viewHeight;
@@ -124,7 +128,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         );
     });
 
-    return frame ? (
+    return (
         <div
             className="image-panel-div"
             key={"channel-map"}
@@ -186,8 +190,6 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                 unscaled={true}
             />
         </div>
-    ) : (
-        <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
     );
 });
 

@@ -104,7 +104,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 }
 
                 // disable unit labels when custom labels on
-                if (OverlayStore.Instance.labels.customText) {
+                if (settings.labels.customText) {
                     AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)="", Unit(2)=""`);
                 } else {
                     AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)=${unit}, Unit(2)=${unit}`);
