@@ -51,7 +51,9 @@ export class ChannelMapStore {
         reaction(
             () => this.displayedFrame?.channel,
             channel => {
-                if (channel !== undefined && !this.channelArray.includes(channel)) {
+                if (channel === undefined) {
+                    this.setStartChannel(0);
+                } else if (!this.channelArray.includes(channel)) {
                     this.setStartChannel(channel);
                 }
             }
