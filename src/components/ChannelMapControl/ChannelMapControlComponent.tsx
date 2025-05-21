@@ -98,7 +98,7 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                 </FormGroup>
                 <FormGroup className="channel-map-control-label" inline={true} label="Image" disabled={!channelMapSettings.channelMapEnabled}>
                     <HTMLSelect
-                        value={appStore.imageViewConfigStore.getImageListIndex(channelMapSettings.displayedImage.type, channelMapSettings.displayedImage.store.id)}
+                        value={appStore.imageViewConfigStore.getImageListIndex(channelMapSettings.displayedImage?.type, channelMapSettings.displayedImage?.store.id)}
                         options={AppStore.Instance.imageViewConfigStore.imageNames.map((name, index) => ({value: index, label: `${index}: ${name}`}))}
                         onChange={ev => appStore.setActiveImageByIndex(parseInt(ev.currentTarget.value))}
                         disabled={!channelMapSettings.channelMapEnabled}
