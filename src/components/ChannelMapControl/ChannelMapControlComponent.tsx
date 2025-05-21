@@ -84,14 +84,19 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
             </div>
         );
 
+        const numLabels = 5;
+        const channelStep = numChannels > 10 ? Math.floor((numChannels - 1) / (numLabels - 1)) : 1;
+        const channelTickPre = numChannels - 1 - 4 * channelStep < channelStep / 2 ? [0, channelStep, 2 * channelStep, 3 * channelStep, numChannels - 1] : [0, channelStep, 2 * channelStep, 3 * channelStep, 4 * channelStep, numChannels - 1];
+        const channelTick = numChannels > 10 ? channelTickPre : Array.from(Array(numChannels).keys());
+
         const channelMapPanel = (
             <div className="channel-map-control-container">
                 <FormGroup className="channel-map-control-label" inline={true} label="Start channel" disabled={!channelMapSettings.channelMapEnabled}>
                     <Slider
                         min={0}
                         max={channelMapSettings.totalChannelNum - 1}
+                        labelValues={channelTick}
                         stepSize={1}
-                        labelStepSize={Math.max(channelMapSettings.totalChannelNum / appStore.channelMapStore.numChannels, Math.ceil(channelMapSettings.totalChannelNum / 5))}
                         value={appStore.channelMapStore.startChannel}
                         onChange={channel => appStore.channelMapStore.setStartChannel(channel)}
                         disabled={!channelMapSettings.channelMapEnabled || channelMapSettings.totalChannelNum <= 1}
