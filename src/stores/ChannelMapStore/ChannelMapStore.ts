@@ -212,7 +212,7 @@ export class ChannelMapStore {
     }
 
     /** The number of channels of the displayed image. Returns 1 if the information is unavailable. */
-    @computed private get totalChannelNum(): number {
+    @computed get totalChannelNum(): number {
         return this.displayedFrame?.frameInfo?.fileInfoExtended?.depth ?? 1;
     }
 

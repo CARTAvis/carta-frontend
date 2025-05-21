@@ -38,9 +38,10 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
     };
 
     @action onChannelChanged = (val: number) => {
-        const frame = AppStore.Instance.channelMapStore.displayedFrame;
+        const channelMapStore = AppStore.Instance.channelMapStore;
+        const frame = channelMapStore.displayedFrame;
         if (frame) {
-            AppStore.Instance.channelMapStore.setStartChannel(clamp(val, 0, frame.frameInfo.fileInfoExtended.depth - 1));
+            channelMapStore.setStartChannel(clamp(val, 0, channelMapStore.totalChannelNum - 1));
         }
     };
 
@@ -48,7 +49,7 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
         const appStore = AppStore.Instance;
         const channelMapSettings = appStore.channelMapStore;
         const displayedFrame = channelMapSettings.displayedFrame;
-        const numChannels = displayedFrame ? displayedFrame.frameInfo.fileInfoExtended.depth : 10;
+        const numChannels = displayedFrame ? channelMapSettings.totalChannelNum : 10;
         const iconOnly = this.width < 300;
 
         const channelMapControl = (
@@ -88,12 +89,12 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                 <FormGroup className="channel-map-control-label" inline={true} label="Start channel" disabled={!channelMapSettings.channelMapEnabled}>
                     <Slider
                         min={0}
-                        max={displayedFrame?.frameInfo.fileInfoExtended.depth}
+                        max={channelMapSettings.totalChannelNum - 1}
                         stepSize={1}
-                        labelStepSize={Math.max(displayedFrame?.frameInfo.fileInfoExtended.depth / appStore.channelMapStore.numChannels, Math.ceil(displayedFrame?.frameInfo.fileInfoExtended.depth / 5))}
+                        labelStepSize={Math.max(channelMapSettings.totalChannelNum / appStore.channelMapStore.numChannels, Math.ceil(channelMapSettings.totalChannelNum / 5))}
                         value={appStore.channelMapStore.startChannel}
                         onChange={channel => appStore.channelMapStore.setStartChannel(channel)}
-                        disabled={!channelMapSettings.channelMapEnabled || displayedFrame?.frameInfo.fileInfoExtended.depth <= 1}
+                        disabled={!channelMapSettings.channelMapEnabled || channelMapSettings.totalChannelNum <= 1}
                     />
                 </FormGroup>
                 <FormGroup className="channel-map-control-label" inline={true} label="Image" disabled={!channelMapSettings.channelMapEnabled}>
