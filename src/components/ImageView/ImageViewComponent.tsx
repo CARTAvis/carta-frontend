@@ -186,7 +186,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         }
 
         return appStore.channelMapStore.channelMapEnabled
-            ? [<ChannelMapViewComponent docked={this.props.docked} />]
+            ? [<ChannelMapViewComponent docked={this.props.docked} key="channel-map-panel" />]
             : visibleImages.map((image, index) => {
                   const column = index % config.numImageColumns;
                   const row = Math.floor(index / config.numImageColumns);
