@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Button, ButtonGroup, Checkbox, FormGroup, HTMLSelect, Position, Slider, Switch, Tooltip} from "@blueprintjs/core";
+import {Button, ButtonGroup, Checkbox, FormGroup, HTMLSelect, NonIdealState, Position, Slider, Switch, Tooltip} from "@blueprintjs/core";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
@@ -178,16 +178,18 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
 
         return (
             <ResizeDetector onResize={this.onResize} throttleTime={33}>
-                <ScrollShadow>
-                    <div className="channel-map-control-containers">
-                        {displayedFrame && (
-                            <div className="channel-map-sliders">
+                <div className="channel-map-control-containers">
+                    {displayedFrame ? (
+                        <ScrollShadow>
+                            <div className="channel-map-control-panel">
                                 {channelMapControl}
                                 {channelMapPanel}
                             </div>
-                        )}
-                    </div>
-                </ScrollShadow>
+                        </ScrollShadow>
+                    ) : (
+                        <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
+                    )}
+                </div>
             </ResizeDetector>
         );
     }
