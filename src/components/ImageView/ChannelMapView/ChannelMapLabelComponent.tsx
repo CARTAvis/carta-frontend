@@ -23,13 +23,21 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
     render() {
         const channelMapStore = AppStore.Instance.channelMapStore;
         const frame = channelMapStore.displayedFrame;
-        const {spectralString, velocityString} = frame.getFreqWithChannel(this.props.channel);
 
         const channelText = channelMapStore.showChannelString ? this.props.channel : "";
-        const spectralLabelMatch = spectralString.match(/^[^:]+:\s*/);
-        const spectralLabel = channelMapStore.showSpectralStringLabel && spectralLabelMatch ? spectralLabelMatch[0] : "";
-        const spectralValue = spectralString.replace(/^[^:]+:\s*/, "");
-        const spectralText = channelMapStore.showSpectralString ? `${spectralLabel}${spectralValue}` : "";
+
+        let spectralString = "";
+        let velocityString = "";
+        if (channelMapStore.showSpectralString || channelMapStore.showVelocityString) {
+            ({spectralString, velocityString} = frame.getFreqWithChannel(this.props.channel));
+        }
+
+        if (channelMapStore.showSpectralString) {
+            spectralString = spectralString.replace(/^[^:]+:\s*/, "");
+            if (!channelMapStore.showSpectralStringUnit) {
+                spectralString = spectralString.replace(/\s+[^ ]*$/, "");
+            }
+        }
 
         const velocityLabelMatch = velocityString.match(/^[^:]+:\s*/);
         const velocityLabel = channelMapStore.showVelocityStringLabel && velocityLabelMatch ? velocityLabelMatch[0] : "";
@@ -57,7 +65,7 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
                 id="channel-map-label-span"
             >
                 <div>{channelText}</div>
-                <div>{spectralText}</div>
+                <div>{spectralString}</div>
                 <div>{velocityText}</div>
             </span>
         );

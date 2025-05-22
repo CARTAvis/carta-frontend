@@ -72,7 +72,7 @@ export class ChannelMapStore {
     @observable showChannelString: boolean = false;
     @observable showSpectralString: boolean = false;
     @observable showVelocityString: boolean = false;
-    @observable showSpectralStringLabel: boolean = false;
+    @observable showSpectralStringUnit: boolean = true;
     @observable showVelocityStringLabel: boolean = false;
 
     private throttledRequestChannels = throttle((frame: FrameStore) => this.requestChannels(frame), 100);
@@ -178,8 +178,8 @@ export class ChannelMapStore {
         this.showVelocityString = show;
     };
 
-    @action setShowSpectralStringLabel = (show: boolean) => {
-        this.showSpectralStringLabel = show;
+    @action setShowSpectralStringUnit = (show: boolean) => {
+        this.showSpectralStringUnit = show;
     };
 
     @action setShowVelocityStringLabel = (show: boolean) => {
