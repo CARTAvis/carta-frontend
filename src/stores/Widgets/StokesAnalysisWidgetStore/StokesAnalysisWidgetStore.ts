@@ -1,3 +1,4 @@
+import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {ChartArea} from "chart.js";
 import {action, computed, makeObservable, observable, override} from "mobx";
@@ -6,7 +7,7 @@ import tinycolor from "tinycolor2";
 import {StokesAnalysisSettingsTabs} from "components";
 import {LineSettings, PlotType, ScatterSettings} from "components/Shared";
 import {SpectralSystem} from "models";
-import {ProfileSmoothingStore} from "stores";
+import {AppStore, ProfileSmoothingStore} from "stores";
 import {getColorsForValues, isAutoColor} from "utilities";
 
 import {RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
@@ -72,6 +73,9 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable colorPixel: {color: Uint8ClampedArray; size: number};
     @observable pointTransparency: number;
     @observable invertedColorMap: boolean;
+    @observable showReferenceAxes: boolean;
+    @observable referenceAxesThickness: number;
+    @observable referenceAxesColor: string;
     readonly smoothingStore: ProfileSmoothingStore;
     @observable settingsTabId: StokesAnalysisSettingsTabs;
 
@@ -234,6 +238,9 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.smoothingStore = new ProfileSmoothingStore();
         this.settingsTabId = StokesAnalysisSettingsTabs.CONVERSION;
         this.invertedColorMap = DEFAULTS.invertedColorMap;
+        this.showReferenceAxes = false;
+        this.referenceAxesThickness = 2;
+        this.referenceAxesColor = AppStore.Instance.darkTheme ? Colors.LIGHT_GRAY3 : Colors.GRAY3;
     }
 
     @action setQUScatterPlotXBounds = (minVal: number, maxVal: number) => {
@@ -360,6 +367,10 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
 
     @action setSettingsTabId = (tabId: StokesAnalysisSettingsTabs) => {
         this.settingsTabId = tabId;
+    };
+
+    @action setShowReferenceAxes = (val: boolean) => {
+        this.showReferenceAxes = val;
     };
 
     @computed get isLinePlotsAutoScaledX() {
