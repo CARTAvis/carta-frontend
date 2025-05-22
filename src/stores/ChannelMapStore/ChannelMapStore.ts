@@ -72,7 +72,6 @@ export class ChannelMapStore {
     @observable showChannelString: boolean = false;
     @observable showSpectralString: boolean = false;
     @observable showVelocityString: boolean = false;
-    @observable showChannelStringLabel: boolean = false;
     @observable showSpectralStringLabel: boolean = false;
     @observable showVelocityStringLabel: boolean = false;
 
@@ -177,10 +176,6 @@ export class ChannelMapStore {
 
     @action setShowVelocityString = (show: boolean) => {
         this.showVelocityString = show;
-    };
-
-    @action setShowChannelStringLabel = (show: boolean) => {
-        this.showChannelStringLabel = show;
     };
 
     @action setShowSpectralStringLabel = (show: boolean) => {

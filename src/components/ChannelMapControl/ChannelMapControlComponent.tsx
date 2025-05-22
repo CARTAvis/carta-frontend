@@ -140,15 +140,6 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                 <FormGroup className="channel-map-control-label" inline={true} label="Show channel string" disabled={!channelMapSettings.channelMapEnabled}>
                     <div style={{display: "flex", alignItems: "center"}}>
                         <Switch checked={channelMapSettings.showChannelString} onChange={ev => channelMapSettings.setShowChannelString(ev.currentTarget.checked)} disabled={!channelMapSettings.channelMapEnabled} />
-                        {channelMapSettings.showChannelString && (
-                            <Checkbox
-                                checked={channelMapSettings.showChannelStringLabel}
-                                onChange={(ev: React.ChangeEvent<HTMLInputElement>) => channelMapSettings.setShowChannelStringLabel(ev.currentTarget.checked)}
-                                label="Show label"
-                                style={{marginLeft: "10px"}}
-                                disabled={!channelMapSettings.channelMapEnabled}
-                            />
-                        )}
                     </div>
                 </FormGroup>
                 <FormGroup className="channel-map-control-label" inline={true} label="Show spectral string" disabled={!channelMapSettings.channelMapEnabled}>
