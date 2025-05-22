@@ -20,24 +20,6 @@ export class ChannelMapLabelComponentProps {
 
 @observer
 export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelComponentProps> {
-    private spanRef = React.createRef<HTMLSpanElement>();
-
-    componentDidMount() {
-        this.updateFontSize();
-    }
-
-    componentDidUpdate() {
-        this.updateFontSize();
-    }
-
-    updateFontSize() {
-        if (this.spanRef.current) {
-            const spanWidth = this.spanRef.current.offsetWidth;
-            const fontSize = spanWidth * 0.1;
-            this.spanRef.current.style.fontSize = `${fontSize}px`;
-        }
-    }
-
     render() {
         const frame = AppStore.Instance.activeFrame;
         const channelMapStore = AppStore.Instance.channelMapStore;
@@ -58,7 +40,6 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
 
         return (
             <span
-                ref={this.spanRef}
                 className={className}
                 style={{
                     color: getColorForTheme(this.props.overlaySettings.global.color),
@@ -70,7 +51,7 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
                     zIndex: 2,
                     overflow: "hidden",
                     textOverflow: "ellipsis",
-                    paddingLeft: `${this.props.width * 0.02}px`,
+                    padding: "5px",
                     border: `${this.props.highlighted ? "3px solid red" : "none"}`
                 }}
                 id="channel-map-label-span"
