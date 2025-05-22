@@ -74,7 +74,8 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
                     border: `${this.props.highlighted ? "3px solid red" : "none"}`,
                     fontFamily: font.family,
                     fontWeight: font.weight,
-                    fontStyle: font.style
+                    fontStyle: font.style,
+                    fontSize: channelMapStore.fontSize
                 }}
                 id="channel-map-label-span"
             >

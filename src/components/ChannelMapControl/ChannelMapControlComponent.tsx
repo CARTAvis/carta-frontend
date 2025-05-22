@@ -1,5 +1,6 @@
 import * as React from "react";
 import {Button, ButtonGroup, Checkbox, FormGroup, HTMLSelect, NonIdealState, Position, Slider, Switch, Tooltip} from "@blueprintjs/core";
+import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
@@ -89,6 +90,8 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
         const channelTickPre = numChannels - 1 - 4 * channelStep < channelStep / 2 ? [0, channelStep, 2 * channelStep, 3 * channelStep, numChannels - 1] : [0, channelStep, 2 * channelStep, 3 * channelStep, 4 * channelStep, numChannels - 1];
         const channelTick = numChannels > 10 ? channelTickPre : Array.from(Array(numChannels).keys());
 
+        const channelMapLabelVisible = channelMapSettings.showChannelString || channelMapSettings.showSpectralString || channelMapSettings.showVelocityString;
+
         const channelMapPanel = (
             <div className="channel-map-control-container">
                 <FormGroup className="channel-map-control-label" inline={true} label="Start channel" disabled={!channelMapSettings.channelMapEnabled}>
@@ -170,18 +173,12 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                         )}
                     </div>
                 </FormGroup>
-                <FormGroup
-                    className="channel-map-control-label"
-                    inline={true}
-                    label="Font"
-                    disabled={!channelMapSettings.channelMapEnabled || !(channelMapSettings.showChannelString || channelMapSettings.showSpectralString || channelMapSettings.showVelocityString)}
-                >
-                    {fontSelect(
-                        channelMapSettings.channelMapEnabled && (channelMapSettings.showChannelString || channelMapSettings.showSpectralString || channelMapSettings.showVelocityString),
-                        channelMapSettings.font,
-                        channelMapSettings.setFont
-                    )}
-                </FormGroup>
+                {channelMapLabelVisible && (
+                    <FormGroup className={classNames("channel-map-control-label", "font-group")} inline={true} label="Font">
+                        {fontSelect(channelMapLabelVisible, channelMapSettings.font, channelMapSettings.setFont)}
+                        <SafeNumericInput min={7} max={96} placeholder="Font size" value={channelMapSettings.fontSize} onValueChange={(value: number) => channelMapSettings.setFontSize(value)} />
+                    </FormGroup>
+                )}
             </div>
         );
 

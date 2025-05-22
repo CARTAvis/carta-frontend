@@ -65,5 +65,32 @@
                 margin-bottom: 0;
             }
         }
+
+        .font-group {
+            .#{$ns}-form-content {
+                display: flex;
+            }
+
+            .#{$ns}-input-group {
+                width: 40px !important;
+            }
+
+            input {
+                width: 40px !important;
+            }
+
+            button > span > span {
+                width: 130px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                display: inline-block;
+                white-space: nowrap;
+            }
+
+            button {
+                width: 170px;
+                margin-right: 5px;
+            }
+        }
     }
 }
