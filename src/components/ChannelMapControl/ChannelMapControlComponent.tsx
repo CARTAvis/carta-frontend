@@ -3,7 +3,7 @@ import {Button, ButtonGroup, Checkbox, FormGroup, HTMLSelect, NonIdealState, Pos
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
+import {fontSelect, ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {AppStore, DefaultWidgetConfig, WidgetProps} from "stores";
 import {clamp} from "utilities";
 
@@ -169,6 +169,18 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                             />
                         )}
                     </div>
+                </FormGroup>
+                <FormGroup
+                    className="channel-map-control-label"
+                    inline={true}
+                    label="Font"
+                    disabled={!channelMapSettings.channelMapEnabled || !(channelMapSettings.showChannelString || channelMapSettings.showSpectralString || channelMapSettings.showVelocityString)}
+                >
+                    {fontSelect(
+                        channelMapSettings.channelMapEnabled && (channelMapSettings.showChannelString || channelMapSettings.showSpectralString || channelMapSettings.showVelocityString),
+                        channelMapSettings.font,
+                        channelMapSettings.setFont
+                    )}
                 </FormGroup>
             </div>
         );

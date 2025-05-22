@@ -74,6 +74,7 @@ export class ChannelMapStore {
     @observable showVelocityString: boolean = false;
     @observable showSpectralStringUnit: boolean = true;
     @observable showVelocityStringUnit: boolean = true;
+    @observable font: number = 0;
 
     private throttledRequestChannels = throttle((frame: FrameStore) => this.requestChannels(frame), 100);
     private debouncedSetAciveChannel = debounce((channel: number) => this.displayedFrame?.setChannel(channel), 200);
@@ -184,6 +185,10 @@ export class ChannelMapStore {
 
     @action setShowVelocityStringUnit = (show: boolean) => {
         this.showVelocityStringUnit = show;
+    };
+
+    @action setFont = (font: number) => {
+        this.font = font;
     };
 
     /** The displayed image in the image view. */

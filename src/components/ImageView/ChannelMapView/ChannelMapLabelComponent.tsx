@@ -1,7 +1,9 @@
 import * as React from "react";
+import {fonts} from "ast_wrapper";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
+import {Font} from "components/Shared";
 import {ImageItem} from "models";
 import {AppStore, OverlayStore} from "stores";
 import {getColorForTheme} from "utilities";
@@ -20,6 +22,8 @@ export class ChannelMapLabelComponentProps {
 
 @observer
 export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelComponentProps> {
+    private readonly fonts: Font[] = fonts.map((x, i) => new Font(x, i));
+
     render() {
         const channelMapStore = AppStore.Instance.channelMapStore;
         const frame = channelMapStore.displayedFrame;
@@ -51,6 +55,7 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
         }
 
         const className = classNames("channel-map-label-span", {docked: this.props.docked});
+        const font = this.fonts[channelMapStore.font];
 
         return (
             <span
@@ -66,7 +71,10 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     padding: "5px",
-                    border: `${this.props.highlighted ? "3px solid red" : "none"}`
+                    border: `${this.props.highlighted ? "3px solid red" : "none"}`,
+                    fontFamily: font.family,
+                    fontWeight: font.weight,
+                    fontStyle: font.style
                 }}
                 id="channel-map-label-span"
             >
