@@ -21,8 +21,8 @@ export class ChannelMapLabelComponentProps {
 @observer
 export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelComponentProps> {
     render() {
-        const frame = AppStore.Instance.activeFrame;
         const channelMapStore = AppStore.Instance.channelMapStore;
+        const frame = channelMapStore.displayedFrame;
         const {spectralString, velocityString} = frame.getFreqWithChannel(this.props.channel);
 
         const channelText = channelMapStore.showChannelString ? `${channelMapStore.showChannelStringLabel ? "Channel: " : ""}${this.props.channel}` : "";
