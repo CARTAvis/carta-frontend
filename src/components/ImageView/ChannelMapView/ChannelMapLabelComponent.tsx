@@ -37,12 +37,18 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
             if (!channelMapStore.showSpectralStringUnit) {
                 spectralString = spectralString.replace(/\s+[^ ]*$/, "");
             }
+        } else {
+            spectralString = "";
         }
 
-        const velocityLabelMatch = velocityString.match(/^[^:]+:\s*/);
-        const velocityLabel = channelMapStore.showVelocityStringLabel && velocityLabelMatch ? velocityLabelMatch[0] : "";
-        const velocityValue = velocityString.replace(/^[^:]+:\s*/, "");
-        const velocityText = channelMapStore.showVelocityString ? `${velocityLabel}${velocityValue}` : "";
+        if (channelMapStore.showVelocityString) {
+            velocityString = velocityString.replace(/^[^:]+:\s*/, "");
+            if (!channelMapStore.showVelocityStringUnit) {
+                velocityString = velocityString.replace(/\s+[^ ]*$/, "");
+            }
+        } else {
+            velocityString = "";
+        }
 
         const className = classNames("channel-map-label-span", {docked: this.props.docked});
 
@@ -66,7 +72,7 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
             >
                 <div>{channelText}</div>
                 <div>{spectralString}</div>
-                <div>{velocityText}</div>
+                <div>{velocityString}</div>
             </span>
         );
     }
