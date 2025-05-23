@@ -11,8 +11,8 @@ describe("pixelToFluxDensityUnit", () => {
         expect(pixelToFluxDensityUnit("Jy/pixel")).toBe("Jy");
     });
 
-    it("converts pixel unit K to Jy", () => {
-        expect(pixelToFluxDensityUnit("K")).toBe("Jy");
+    it("converts pixel unit K to K*arcsec^2", () => {
+        expect(pixelToFluxDensityUnit("K")).toBe("K*arcsec^2");
     });
 
     it("returns the original unit string for other units", () => {
