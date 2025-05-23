@@ -220,7 +220,13 @@ export class FileBrowserStore {
             if (this.browserMode === BrowserMode.File || this.browserMode === BrowserMode.SaveFile) {
                 const list = yield appStore.backendService.getFileList(directory, filterMode);
 
-                if (directory && list?.directory.replace(/^\/+/, "") !== directory.replace(/^\/+/, "")) {
+                if (
+                    AppStore.Instance.preferenceStore.fileFilterMode === FileFilterMode.All &&
+                    directory &&
+                    directory !== this.startingDirectory &&
+                    directory !== "$BASE" &&
+                    list?.directory.replace(/^\/+/, "") !== directory.replace(/^\/+/, "")
+                ) {
                     this.updateFolderInfoInFileList(list.files?.[0]);
                 } else {
                     this.setFileList(list);
@@ -231,7 +237,13 @@ export class FileBrowserStore {
             } else {
                 const list = yield appStore.backendService.getRegionList(directory, filterMode);
 
-                if (directory && list?.directory.replace(/^\/+/, "") !== directory.replace(/^\/+/, "")) {
+                if (
+                    AppStore.Instance.preferenceStore.fileFilterMode === FileFilterMode.All &&
+                    directory &&
+                    directory !== this.startingDirectory &&
+                    directory !== "$BASE" &&
+                    list?.directory.replace(/^\/+/, "") !== directory.replace(/^\/+/, "")
+                ) {
                     this.updateFolderInfoInFileList(list.files?.[0]);
                 } else {
                     this.setFileList(list);
