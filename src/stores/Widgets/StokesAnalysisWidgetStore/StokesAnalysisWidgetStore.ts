@@ -78,8 +78,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable pointTransparency: number;
     @observable invertedColorMap: boolean;
     @observable showReferenceAxes: boolean;
-    @observable referenceAxesThickness: number;
-    @observable referenceAxesColor: string;
+    referenceAxesThickness: number;
     readonly smoothingStore: ProfileSmoothingStore;
     @observable settingsTabId: StokesAnalysisSettingsTabs;
 
@@ -244,7 +243,6 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.invertedColorMap = DEFAULTS.invertedColorMap;
         this.showReferenceAxes = false;
         this.referenceAxesThickness = 2;
-        this.referenceAxesColor = AppStore.Instance.darkTheme ? Colors.LIGHT_GRAY3 : Colors.GRAY3;
     }
 
     @action setQUScatterPlotXBounds = (minVal: number, maxVal: number) => {
@@ -402,6 +400,10 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
 
     @computed get isPolAngleAutoScaledY() {
         return this.polAngleMinY === undefined || this.polAngleMaxY === undefined;
+    }
+
+    @computed get referenceAxesColor() {
+        return AppStore.Instance.darkTheme ? Colors.LIGHT_GRAY3 : Colors.GRAY3;
     }
 
     public init = (widgetSettings): void => {
