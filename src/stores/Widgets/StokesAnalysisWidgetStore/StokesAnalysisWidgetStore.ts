@@ -50,6 +50,10 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable quScatterMaxX: number | undefined;
     @observable quScatterMinY: number | undefined;
     @observable quScatterMaxY: number | undefined;
+    @observable quScatterEqualXmin: number | undefined;
+    @observable quScatterEqualXmax: number | undefined;
+    @observable quScatterEqualYmin: number | undefined;
+    @observable quScatterEqualYmax: number | undefined;
     @observable linePlotcursorX: number;
     @observable channel: number;
     @observable scatterPlotCursorX: number;
@@ -279,6 +283,10 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.quScatterMaxX = undefined;
         this.quScatterMinY = undefined;
         this.quScatterMaxY = undefined;
+        this.quScatterEqualXmin = undefined;
+        this.quScatterEqualXmax = undefined;
+        this.quScatterEqualYmin = undefined;
+        this.quScatterEqualYmax = undefined;
         this.scatterOutRangePointsZIndex = [];
     };
 
@@ -313,6 +321,13 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.quScatterMaxX = maxX;
         this.quScatterMinY = minY;
         this.quScatterMaxY = maxY;
+    };
+
+    @action setQUScatterPlotEqualXYBounds = (xMin: number, xMax: number, yMin: number, yMax: number) => {
+        this.quScatterEqualXmin = xMin;
+        this.quScatterEqualXmax = xMax;
+        this.quScatterEqualYmin = yMin;
+        this.quScatterEqualYmax = yMax;
     };
 
     // settings
@@ -375,14 +390,6 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
 
     @computed get isLinePlotsAutoScaledX() {
         return this.sharedMinX === undefined || this.sharedMaxX === undefined;
-    }
-
-    @computed get isQUScatterPlotAutoScaledX() {
-        return this.quScatterMinX === undefined || this.quScatterMaxX === undefined;
-    }
-
-    @computed get isQUScatterPlotAutoScaledY() {
-        return this.quScatterMinY === undefined || this.quScatterMaxY === undefined;
     }
 
     @computed get isQULinePlotAutoScaledY() {
