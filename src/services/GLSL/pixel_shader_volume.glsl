@@ -67,9 +67,6 @@ vec2 hitBox( vec3 origin, vec3 direction ) {
     float t0 = max( min_value.x, max( min_value.y, min_value.z ) );
     float t1 = min( max_value.x, min( max_value.y, max_value.z ) );
 
-    // tNear = t0;
-    // tFar = t1;
-
     return vec2( t0, t1 );
 }
 
@@ -77,14 +74,15 @@ float samplePoint(vec3 point) {
     return texture(uDataTexture, point).r;
 }
 
-
 void main(){
     vec3 rayDir = normalize( vDirection );
     vec2 bounds = hitBox( vOrigin, rayDir );
 
-    if ( bounds.x > bounds.y ) discard;
+    // if ( bounds.x > bounds.y ) discard;
 
-    bounds.x = max( bounds.x, 0.0 );
+    // if ( bounds.y < 0.0 ) discard;
+
+    // bounds.x = max( bounds.x, 0.0 );
 
     vec3 point = vOrigin + bounds.x * rayDir;
     vec3 inc = 1.0 / abs( rayDir );
@@ -101,9 +99,20 @@ void main(){
 
     float rayVal = -3.402823466e+38;
 
+    bool isInsideVolume = bounds.x <= 0.0;
+
+        if (isInsideVolume) {
+            // Debug color for rays that start inside the volume
+            gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0); // Bright magenta
+            return;
+        }
+
     // ray march through the volume
     for(float i = bounds.x; i < bounds.y; i += delta) {
-        float stepVal = samplePoint( point + 0.5 );
+
+        // clamp point to always be inside the volume (0,1)
+        vec3 texCoord = clamp( point + 0.5, 0.0, 1.0 );
+        float stepVal = samplePoint( texCoord );
 
         if ( !isNaN( stepVal ) ) {
             if( stepVal > rayVal ) rayVal = stepVal;

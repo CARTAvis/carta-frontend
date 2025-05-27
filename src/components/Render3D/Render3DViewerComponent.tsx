@@ -310,7 +310,7 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
                 <ResizeDetector onResize={this.onResize} throttleTime={33}>
                     {/* <div className="render-3d-canvas" > */}
                         <Canvas
-                            // camera={{ position: [2, 2, 2] }}
+                            camera={{ near: 0.00001, far: 100000}} // position: [2, 2, 2]
                             style={{ width: "100%", height: "100%" }} >
                             
                             <ambientLight />
