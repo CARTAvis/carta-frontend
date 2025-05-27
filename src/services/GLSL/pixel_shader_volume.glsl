@@ -78,11 +78,11 @@ void main(){
     vec3 rayDir = normalize( vDirection );
     vec2 bounds = hitBox( vOrigin, rayDir );
 
-    // if ( bounds.x > bounds.y ) discard;
+    if ( bounds.x > bounds.y ) discard;
 
     // if ( bounds.y < 0.0 ) discard;
 
-    // bounds.x = max( bounds.x, 0.0 );
+    bounds.x = max( bounds.x, 0.0 );
 
     vec3 point = vOrigin + bounds.x * rayDir;
     vec3 inc = 1.0 / abs( rayDir );
@@ -99,13 +99,13 @@ void main(){
 
     float rayVal = -3.402823466e+38;
 
-    bool isInsideVolume = bounds.x <= 0.0;
+    // bool isInsideVolume = bounds.x <= 0.0;
 
-        if (isInsideVolume) {
-            // Debug color for rays that start inside the volume
-            gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0); // Bright magenta
-            return;
-        }
+    //     if (isInsideVolume) {
+    //         // Debug color for rays that start inside the volume
+    //         gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0); // Bright magenta
+    //         return;
+    //     }
 
     // ray march through the volume
     for(float i = bounds.x; i < bounds.y; i += delta) {

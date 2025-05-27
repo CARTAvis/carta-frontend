@@ -261,6 +261,8 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
             } else {
                 // check how to load 2d image from threejs.
                 const newMaterial = new THREE.ShaderMaterial({
+                    side: THREE.BackSide,
+                    blending: THREE.NormalBlending,
                     uniforms: {
                         uDataTexture: { value: this.texture },
                         uMinVal: {value: this.minValue},
