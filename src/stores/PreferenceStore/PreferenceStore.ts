@@ -1114,20 +1114,22 @@ export class PreferenceStore {
 
             for (const key of stringKeys) {
                 const entry = localStorage.getItem(key);
-                if (entry) {
+                if (entry !== null) {
                     preferenceObject[key] = entry;
                 }
             }
 
             for (const key of intKeys) {
-                const entry = parseInt(localStorage.getItem(key));
+                const entryRaw = localStorage.getItem(key);
+                const entry = entryRaw !== null ? parseInt(entryRaw) : NaN;
                 if (isFinite(entry)) {
                     preferenceObject[key] = entry;
                 }
             }
 
             for (const key of numberKeys) {
-                const entry = parseFloat(localStorage.getItem(key));
+                const entryRaw = localStorage.getItem(key);
+                const entry = entryRaw !== null ? parseFloat(entryRaw) : NaN;
                 if (isFinite(entry)) {
                     preferenceObject[key] = entry;
                 }
@@ -1135,13 +1137,13 @@ export class PreferenceStore {
 
             for (const key of booleanKeys) {
                 const entryString = localStorage.getItem(key);
-                if (entryString) {
-                    preferenceObject[key] = parseBoolean(localStorage.getItem(key), false);
+                if (entryString !== null) {
+                    preferenceObject[key] = parseBoolean(entryString, false);
                 }
             }
 
             const logEntryString = localStorage.getItem(PreferenceKeys.LOG_EVENT);
-            if (logEntryString) {
+            if (logEntryString !== null) {
                 try {
                     const logEntries = JSON.parse(logEntryString);
                     if (logEntries && Array.isArray(logEntries)) {
