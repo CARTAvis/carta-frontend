@@ -3,6 +3,7 @@ const migratedFiles = [
     "models",
     "services",
     "stores/AlertStore",
+    "stores/AnimatorStore",
     "stores/Catalog",
     "stores/CatalogOnlineQuery",
     "stores/ChannelMapStore",
