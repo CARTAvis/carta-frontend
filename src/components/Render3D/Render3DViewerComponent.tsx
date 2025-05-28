@@ -137,7 +137,7 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
 
             // this.render3DData = AppStore?.Instance.render3D?.get(widgetStore?.effectiveFrame?.frameInfo.fileId)?.get(widgetStore.effectiveRegionId)?.get(widgetStore.render3DViewerId);
 
-            this.render3DData = AppStore?.Instance.render3D?.get(widgetStore.render3DViewerId);
+            this.render3DData = AppStore?.Instance.render3D?.get(widgetStore?.render3DViewerId);
 
             // console.log("width: ", this.render3DData?.width);
             // console.log("height: ", this.render3DData?.height);

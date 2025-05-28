@@ -1534,11 +1534,21 @@ export class AppStore {
             this.restartTaskProgress();
             if (!ack.cancel && ack.success) {
                 // +"-viewer-"+message.viewerId
-                WidgetsStore.Instance.createFloatingSettingsWidget("3D Rendering Viewer", id+"-viewer-"+message.viewerId, Render3DComponent.WIDGET_CONFIG.type);
+                WidgetsStore.Instance.createFloatingSettingsWidget("3D Rendering Viewer "+message.viewerId, id+"-viewer-"+message.viewerId, Render3DComponent.WIDGET_CONFIG.type);
+
+                let render3DStore = this.render3D.get(message.viewerId);
+                if (!render3DStore) {
+                    // initialize render3DStore without dimensions. otherwise does not load the 3D viewer
+                    render3DStore = new Render3DDataStore(message.fileId, message.regionId, message.viewerId);
+                    this.render3D.set(message.viewerId, render3DStore);
+                }
                 
             } else {
                 AppToaster.show({icon: "warning-sign", message: "Load 3D renderig failed.", intent: "danger", timeout: 3000});
             }
+            // if (ack.cancel || !ack.success) {
+            //     AppToaster.show({icon: "warning-sign", message: "Load 3D renderig failed.", intent: "danger", timeout: 3000});
+            // }
             frame.resetRender3DRequestState();
             // frame.setIsRequestPVCancelling(false);
             // this.endRender3DLoading();
@@ -2252,19 +2262,7 @@ export class AppStore {
     };
 
     handleRender3DStream = (render3DData: CARTA.Render3DData) => {
-        // combine SpectralProfileStream and PvPreviewStream
-
-        // update render3DDataStore with new slice
-
-        // check if render3dviewer with viewer_id is already created (and also teh render3DDataStore)
-        // if true, update the render3dviewer with the new data
-        // if false, create a new render3dviewer with the new data
-
-        // MUST FIX TO UPDATE Rernder3DDataStore when it already exists.
-        // see if slice == depth. it means that it is the last iteration.
-        // update width and height and depth.
-
-        // check in carta the new fileID and regionID when creating the new visualisation
+        // requestrender3d
 
         const frame = this.frames.find(frame => frame.frameInfo.fileId === render3DData.fileId);
         if (frame) {
@@ -2279,10 +2277,19 @@ export class AppStore {
             //     fileMap.set(render3DData.regionId, regionMap);
             // }
             // let render3DStore = regionMap.get(render3DData.viewerId);
-            if (!render3DStore) {
-                render3DStore = new Render3DDataStore(render3DData.fileId, render3DData.regionId, render3DData.viewerId, render3DData.width, render3DData.height, render3DData.depth);
-                this.render3D.set(render3DData.viewerId, render3DStore);
-            } 
+
+            // making new render3DStore probably not be needed
+            // if (!render3DStore) {
+            //     console.debug("Creating new handlerender3dstream");
+            //     render3DStore = new Render3DDataStore(render3DData.fileId, render3DData.regionId, render3DData.viewerId, render3DData.width, render3DData.height, render3DData.depth, render3DData.slice);
+            //     this.render3D.set(render3DData.viewerId, render3DStore);
+            // }
+
+            // render3DStore has been initialized when requesting render3D, but without dimensions
+            if (render3DStore.lastSlice === 0) {
+                render3DStore.setDimensions(render3DData.width, render3DData.height, render3DData.depth);
+                render3DStore.setNumSlices(render3DData.slice);
+            }
 
             render3DStore.updateRender3DData(render3DData);
             // frame.frameInfo.fileInfoExtended.width

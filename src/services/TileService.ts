@@ -192,8 +192,8 @@ export class TileService {
                     // console.log("event data = ", event.data);
                     const buffer = event.data[1];
                     const eventArgs = event.data[2];
-                    // const render3DData = event.data[3];
-                    const length = eventArgs.width * eventArgs.subsetHeight; // considering just one slice
+                    const render3DData = event.data[3];
+                    const length = eventArgs.width * eventArgs.subsetHeight * render3DData.slice; // considering just one slice
                     const resultArray = new Float32Array(buffer, 0, length);
                     // console.log("tileservice array: ", resultArray);
                     // console.log(AppStore.Instance.render3D);
@@ -594,7 +594,7 @@ export class TileService {
     public decompressRender3DData(render3DData: CARTA.Render3DData) {
         const compressedArray = render3DData.imageData;
         const nanEncodings32 = new Int32Array(render3DData.nanEncodings.slice(0).buffer);
-        let compressedView = new Uint8Array(Math.max(compressedArray.byteLength, render3DData.width * render3DData.height * 4));
+        let compressedView = new Uint8Array(Math.max(compressedArray.byteLength, render3DData.width * render3DData.height * render3DData.slice * 4));
         compressedView.set(compressedArray);
 
         // console.log("fileID = ", render3DData.fileId);

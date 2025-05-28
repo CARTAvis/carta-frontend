@@ -9,13 +9,14 @@ export class Render3DDataStore {
     readonly fileId: number;
     readonly regionId: number;
     readonly viewerId: number;
-    readonly width: number;
-    readonly height: number;
-    readonly depth: number;
-    readonly datacube: Float32Array; // keep as readonly, the observable is lastslice. update lastslice when updating array. in component observe lastslice in usememo
+    @observable width: number;
+    @observable height: number;
+    @observable depth: number;
+    @observable numSlices: number; 
+    @observable datacube: Float32Array; // keep as readonly, the observable is lastslice. update lastslice when updating array. in component observe lastslice in usememo
     @observable lastSlice: number; // last slice updated, use to check if the data is updated
 
-    constructor(fileId: number = 0, regionId: number = 0, viewerId: number, width: number = 0, height:number = 0, depth: number = 0) {
+    constructor(fileId: number = 0, regionId: number = 0, viewerId: number, width: number = 0, height:number = 0, depth: number = 0, numSlices: number = 1) {
         makeObservable(this);
         this.fileId = fileId;
         this.regionId = regionId;
@@ -23,6 +24,7 @@ export class Render3DDataStore {
         this.width = width;
         this.height = height;
         this.depth = depth;
+        this.numSlices = numSlices;
         this.datacube = new Float32Array(height * width * depth);
         this.lastSlice = 0; // last slice updated, use to check if the data is updated
         
@@ -48,9 +50,21 @@ export class Render3DDataStore {
         // console.log("width: ", this.width);
         // console.log("height: ", this.height);
         // console.log("depth: ", this.depth);
-        this.datacube.set(decompressedData, this.width * this.height * this.lastSlice);
+        this.datacube.set(decompressedData, this.width * this.height * this.lastSlice * this.numSlices);
         // console.log("lastSlice: ", this.lastSlice);
         this.lastSlice += 1;
     }
+
+    @action setDimensions = (width: number, height: number, depth: number) => {
+        this.width = width;
+        this.height = height;
+        this.depth = depth;
+        this.datacube = new Float32Array(width * height * depth);
+    }
+
+    @action setNumSlices = (numSlices: number) => {
+        this.numSlices = numSlices;
+    }
+        
     
 }
