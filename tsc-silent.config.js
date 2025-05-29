@@ -14,6 +14,7 @@ const migratedFiles = [
     "stores/HelpStore",
     "stores/HipsQueryStore",
     "stores/ImageFittingStore",
+    "stores/ImageViewConfigStore",
     "stores/LayoutStore",
     "stores/LogStore",
     "stores/PreferenceStore",
