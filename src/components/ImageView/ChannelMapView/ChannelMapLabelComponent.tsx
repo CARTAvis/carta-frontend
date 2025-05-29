@@ -61,7 +61,7 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
             <span
                 className={className}
                 style={{
-                    color: getColorForTheme(this.props.overlaySettings.global.color),
+                    color: channelMapStore.customColor ? getColorForTheme(channelMapStore.color) : getColorForTheme(this.props.overlaySettings.global.color),
                     position: "absolute",
                     top: (this.props.top || 0) - 3,
                     left: (this.props.left || 0) - 3,

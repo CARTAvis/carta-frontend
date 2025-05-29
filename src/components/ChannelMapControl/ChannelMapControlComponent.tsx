@@ -1,12 +1,12 @@
 import * as React from "react";
-import {Button, ButtonGroup, Checkbox, FormGroup, HTMLSelect, NonIdealState, Position, Slider, Switch, Tooltip} from "@blueprintjs/core";
+import {Button, ButtonGroup, Checkbox, Classes, Collapse, FormGroup, HTMLSelect, NonIdealState, Position, Slider, Switch, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {fontSelect, ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
+import {AutoColorPickerComponent, fontSelect, ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {AppStore, DefaultWidgetConfig, WidgetProps} from "stores";
-import {clamp} from "utilities";
+import {clamp, SWATCH_COLORS} from "utilities";
 
 import "./ChannelMapControlComponent.scss";
 
@@ -173,18 +173,33 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                         )}
                     </div>
                 </FormGroup>
-                {channelMapLabelVisible && (
-                    <FormGroup className={classNames("channel-map-control-label", "font-group")} inline={true} label="Font">
-                        {fontSelect(channelMapLabelVisible, channelMapSettings.font, channelMapSettings.setFont)}
-                        <SafeNumericInput min={7} max={96} placeholder="Font size" value={channelMapSettings.fontSize} onValueChange={(value: number) => channelMapSettings.setFontSize(value)} />
+                <Collapse isOpen={channelMapLabelVisible}>
+                    <FormGroup className={classNames("channel-map-control-label", "font-group")} inline={true} label="Font" disabled={!channelMapSettings.channelMapEnabled}>
+                        {fontSelect(channelMapSettings.channelMapEnabled, channelMapSettings.font, channelMapSettings.setFont)}
+                        <SafeNumericInput
+                            min={7}
+                            max={96}
+                            placeholder="Font size"
+                            value={channelMapSettings.fontSize}
+                            onValueChange={(value: number) => channelMapSettings.setFontSize(value)}
+                            disabled={!channelMapSettings.channelMapEnabled}
+                        />
                     </FormGroup>
-                )}
+                    <FormGroup className="channel-map-control-label" inline={true} label="Custom color" disabled={!channelMapSettings.channelMapEnabled}>
+                        <Switch checked={channelMapSettings.customColor} onChange={ev => channelMapSettings.setCustomColor(ev.currentTarget.checked)} disabled={!channelMapSettings.channelMapEnabled} />
+                    </FormGroup>
+                    <Collapse isOpen={channelMapSettings.customColor}>
+                        <FormGroup className="channel-map-control-label" inline={true} label="Color" disabled={!channelMapSettings.channelMapEnabled}>
+                            <AutoColorPickerComponent color={channelMapSettings.color} presetColors={SWATCH_COLORS} setColor={channelMapSettings.setColor} disableAlpha={true} disabled={!channelMapSettings.channelMapEnabled} />
+                        </FormGroup>
+                    </Collapse>
+                </Collapse>
             </div>
         );
 
         return (
             <ResizeDetector onResize={this.onResize} throttleTime={33}>
-                <div className="channel-map-control-containers">
+                <div className={classNames("channel-map-control-containers", {[Classes.DARK]: appStore.darkTheme})}>
                     {displayedFrame ? (
                         <ScrollShadow>
                             <div className="channel-map-control-panel">

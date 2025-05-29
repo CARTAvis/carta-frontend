@@ -76,6 +76,8 @@ export class ChannelMapStore {
     @observable showVelocityStringUnit: boolean = true;
     @observable font: number = 0;
     @observable fontSize: number = 12;
+    @observable customColor: boolean = false;
+    @observable color: string = "auto-blue";
 
     private throttledRequestChannels = throttle((frame: FrameStore) => this.requestChannels(frame), 100);
     private debouncedSetAciveChannel = debounce((channel: number) => this.displayedFrame?.setChannel(channel), 200);
@@ -194,6 +196,14 @@ export class ChannelMapStore {
 
     @action setFontSize = (fontSize: number) => {
         this.fontSize = fontSize;
+    };
+
+    @action setCustomColor = (customColor: boolean) => {
+        this.customColor = customColor;
+    };
+
+    @action setColor = (color: string) => {
+        this.color = color;
     };
 
     /** The displayed image in the image view. */
