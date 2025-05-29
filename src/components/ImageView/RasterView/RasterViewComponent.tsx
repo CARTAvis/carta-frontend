@@ -66,7 +66,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             return;
         }
 
-        const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
+        const pixelRatio = AppStore.Instance.pixelRatio;
         const innerRenderWidth = frame.channelMapInnerOverlayStore.renderWidth;
         const innerRenderHeight = frame.channelMapInnerOverlayStore.renderHeight;
         const gapX = frame.channelMapInnerOverlayStore.gapX;
@@ -110,7 +110,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.updateCanvasSize(baseFrame, renderWidth, renderHeight, numImageColumns, numImageRows);
         }
 
-        const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
+        const pixelRatio = AppStore.Instance.pixelRatio;
         const column = this.props.column;
         const row = this.props.row;
         const xOffset = column * renderWidth * pixelRatio;

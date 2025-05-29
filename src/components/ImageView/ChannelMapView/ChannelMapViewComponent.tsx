@@ -224,7 +224,7 @@ const ChannelMapInnerOverlayComponent = observer(({frame, docked}: {frame: Frame
 
         const sourceWidth = sourceCanvas.width;
         const sourceHeight = sourceCanvas.height;
-        const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
+        const pixelRatio = AppStore.Instance.pixelRatio;
         // when border > 1, include the area of the border
         const extraBorderWidth = overlaySettings.border.width - 1;
         // when the padding is x.5, exclude a smaller area (x instead of x.5) when redrawing
