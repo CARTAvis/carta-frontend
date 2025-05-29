@@ -65,7 +65,9 @@ export class AnimatorStore {
         const frame = appStore.activeFrame;
 
         if (this.animationMode === AnimationMode.FRAME) {
-            if (this.animateHandle !== undefined) clearInterval(this.animateHandle);
+            if (this.animateHandle !== undefined) {
+                clearInterval(this.animateHandle);
+            }
             this.animationActive = true;
             this.animate();
             this.animateHandle = setInterval(this.animate, this.frameInterval);
@@ -130,7 +132,9 @@ export class AnimatorStore {
             console.log(err);
             appStore.tileService.setAnimationEnabled(false);
         }
-        if (this.stopHandle !== undefined) clearTimeout(this.stopHandle);
+        if (this.stopHandle !== undefined) {
+            clearTimeout(this.stopHandle);
+        }
         this.stopHandle = setTimeout(this.stopAnimation, 1000 * 60 * preferenceStore.stopAnimationPlaybackMinutes);
     }
 
@@ -149,7 +153,9 @@ export class AnimatorStore {
         this.animationActive = false;
         appStore.tileService.setAnimationEnabled(false);
         if (this.animationMode === AnimationMode.FRAME) {
-            if (this.animateHandle !== undefined) clearInterval(this.animateHandle);
+            if (this.animateHandle !== undefined) {
+                clearInterval(this.animateHandle);
+            }
         } else {
             const endFrame: CARTA.IAnimationFrame = {
                 channel: frame.channel,
