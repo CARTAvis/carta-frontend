@@ -38,19 +38,26 @@ export class Render3DDataStore {
             this.setDecompressed3DData(decompressedData);
 
         } else if (render3DData.compressionType === CARTA.CompressionType.ZFP) {
-            TileService.Instance.decompressRender3DData(render3DData);
+            // console.log("decompressedData ", render3DData.slice);
+            TileService.Instance.decompress3DRender3DData(render3DData);
         }
     }
 
     @action setDecompressed3DData = (decompressedData: Float32Array) => {
         // console.log("datacube length: ", this.datacube.length);
         // console.log("decompressedData length: ", decompressedData.length);
-        // console.log("decompressedData sum: ", decompressedData.length * this.depth);
-        // console.log("slice: ", slice);
+        // console.log("decompressedData sum: ", decompressedData.length * this.lastSlice);
+        // console.log("slice: ", this.numSlices);
         // console.log("width: ", this.width);
         // console.log("height: ", this.height);
         // console.log("depth: ", this.depth);
-        this.datacube.set(decompressedData, this.width * this.height * this.lastSlice * this.numSlices);
+        // console.log("diff: ", (this.lastSlice + 1) * this.numSlices);
+        let diff = (this.lastSlice + 1) * this.numSlices;
+        if (diff > this.depth) {
+            this.datacube.set(decompressedData.slice(0, (diff - this.depth) * this.width * this.height), this.width * this.height * this.lastSlice * this.numSlices);
+        } else {
+            this.datacube.set(decompressedData, this.width * this.height * this.lastSlice * this.numSlices);
+        }
         // console.log("lastSlice: ", this.lastSlice);
         this.lastSlice += 1;
     }

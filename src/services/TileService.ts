@@ -188,8 +188,8 @@ export class TileService {
                     const length = eventArgs.width * eventArgs.subsetHeight;
                     const resultArray = new Float32Array(buffer, 0, length);
                     frame?.setPreviewPVRasterData(resultArray);
-                } else if (event.data[0] === "render3d decompress") {
-                    // console.log("event data = ", event.data);
+                } else if (event.data[0] === "render3d decompress3D") {
+                    console.log("event data = ", event.data);
                     const buffer = event.data[1];
                     const eventArgs = event.data[2];
                     const render3DData = event.data[3];
@@ -615,6 +615,33 @@ export class TileService {
 
         // console.log("Decompressing render3D data");
         this.workers[0].postMessage(["render3d decompress", compressedView.buffer, eventArgs, render3DData], [compressedView.buffer, nanEncodings32.buffer]);
+    }
+
+    public decompress3DRender3DData(render3DData: CARTA.Render3DData) {
+        const compressedArray = render3DData.imageData;
+        const nanEncodings32 = new Int32Array(render3DData.nanEncodings.slice(0).buffer);
+        let compressedView = new Uint8Array(Math.max(compressedArray.byteLength, render3DData.width * render3DData.height * render3DData.slice * 4));
+        compressedView.set(compressedArray);
+
+        // console.log("fileID = ", render3DData.fileId);
+        // console.log("regionID = ", render3DData.regionId);
+        // console.log("viewerID = ", render3DData.viewerId);
+        // console.log("slice = ", render3DData.slice);
+
+        const eventArgs = {
+            fileId: render3DData.fileId,
+            regionId: render3DData.regionId,
+            width: render3DData.width,
+            subsetHeight: render3DData.height,
+            depth: render3DData.slice,
+            subsetLength: compressedArray.byteLength,
+            compression: render3DData.compressionQuality,
+            nanEncodings: nanEncodings32,
+            previewId: render3DData.viewerId,
+        };
+
+        // console.log("Decompressing render3D data");
+        this.workers[0].postMessage(["render3d decompress3D", compressedView.buffer, eventArgs, render3DData], [compressedView.buffer, nanEncodings32.buffer]);
     }
 
     private handleStreamedTiles = (tileMessage: CARTA.IRasterTileData) => {
