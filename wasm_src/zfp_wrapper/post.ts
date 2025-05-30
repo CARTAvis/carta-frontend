@@ -95,13 +95,9 @@ Module.zfpDecompress3DUint8WASM = function (u8: Uint8Array, compressedSize: numb
         }
     }
 
-    console.log("Module after if 2");
-
     Module.dataHeapUint.set(new Uint8Array(u8.buffer, u8.byteOffset, compressedSize));
-    console.log("Module after set");
     // Call function and get result
     zfpDecompress3D(Math.floor(precision), Module.dataHeap.byteOffset, nx, ny, nz, Module.dataHeapUint.byteOffset, compressedSize);
-    console.log("Module after decompress");
 
     // Free memory
     return new Float32Array(Module.resultFloat.buffer, Module.resultFloat.byteOffset, nx * ny * nz);
@@ -124,16 +120,12 @@ ctx.onmessage = (event => {
             if (Module.debugOutput) {
                 performance.mark("decompressStart");
             }
-            console.log("quepasaque");
             let imageData = Module.zfpDecompress3DUint8WASM(compressedView, eventArgs.subsetLength, eventArgs.width, eventArgs.subsetHeight, eventArgs.depth, eventArgs.compression);
-            console.log("above erwree");
             if (Module.debugOutput) {   
                 performance.mark("decompressEnd");
             }
             let outputView = new Float32Array(event.data[1], 0, eventArgs.width * eventArgs.subsetHeight * eventArgs.depth);
             outputView.set(imageData);
-
-            console.log("above1");
 
             // put NaNs back into data
             let decodedIndex = 0;
@@ -147,7 +139,6 @@ ctx.onmessage = (event => {
                 fillVal = !fillVal;
                 decodedIndex += L;
             }
-            console.log("above2");
 
             ctx.postMessage([eventName, event.data[1], {
                 width: eventArgs.width,
@@ -166,7 +157,6 @@ ctx.onmessage = (event => {
                 oldWidth: eventArgs.oldWidth,
                 syncId: eventArgs.syncId
             }, event.data[3]], [event.data[1]]);
-            console.log("whatt");
 
             if (Module.debugOutput) {
                 performance.measure("dtDecompress", "decompressStart", "decompressEnd");
@@ -178,7 +168,6 @@ ctx.onmessage = (event => {
                     console.log(`ZFP Worker ${Module.id} decompressed ${eventSize.toFixed(2)} MB in ${dt.toFixed(2)} ms at ${(1e3 * eventSize / dt).toFixed(2)} MB/s (${(1e3 * eventSize / dt / 4).toFixed(2)} Mpix/s)`);
                 }, 100);
             }
-            console.log("above")
         } else if (eventName.includes("decompress")) {
             const eventArgs = event.data[2];
             const compressedView = new Uint8Array(event.data[1], 0, eventArgs.subsetLength);

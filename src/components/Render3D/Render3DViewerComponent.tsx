@@ -191,7 +191,8 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
 
         const computedTexture = React.useMemo(() => {
             if (this.render3DData) {
-                if (lastSlice === this.render3DData.depth - 1) {
+                
+                if (lastSlice !== 0 && lastSlice * 4 >= this.render3DData.depth - 1) {
                     console.log("Full texture loaded");
                 } else if (lastSlice%20 === 0) {
                     console.log("Loading texture");

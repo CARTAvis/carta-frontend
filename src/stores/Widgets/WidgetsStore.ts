@@ -1103,7 +1103,7 @@ export class WidgetsStore {
 
             // remove render3d frane for current render3d widget
             if (isRender3DViewer) {
-                const regexPattern = /render3d-viewer-(\d+)/;
+                const regexPattern = /render-3d-viewer-(\d+)/;
                 // console.log("regexPattern: ", regexPattern)
                 const render3DId = id.match(regexPattern);
                 // console.log("render3DId: ", render3DId)

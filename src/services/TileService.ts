@@ -189,7 +189,6 @@ export class TileService {
                     const resultArray = new Float32Array(buffer, 0, length);
                     frame?.setPreviewPVRasterData(resultArray);
                 } else if (event.data[0] === "render3d decompress3D") {
-                    console.log("event data = ", event.data);
                     const buffer = event.data[1];
                     const eventArgs = event.data[2];
                     const render3DData = event.data[3];

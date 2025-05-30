@@ -1100,10 +1100,9 @@ export class AppStore {
      * @param render3DId - The file id of the image cube from which the Render3D was created.
      */
     @action removeRender3DViewer = (render3DId: number) => {
-        console.log("Removing Render3D frame", render3DId);
+        console.log("3D Rendering Viewer ", render3DId);
         this.backendService.closeRender3D(render3DId);
-        // AppStore.Instance.render
-        // REMOVE Render3DDataStore when deleting a Render3D viewer
+        this.render3D.delete(render3DId);
     };
 
     /**
