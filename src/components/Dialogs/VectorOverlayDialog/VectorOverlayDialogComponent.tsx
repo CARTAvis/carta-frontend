@@ -103,7 +103,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                 return true;
             }
 
-            if (config.thresholdEnabled && (config.threshold !== this.threshold || config.thresholdOption !== this.thresholdOption) ) {
+            if (config.thresholdEnabled && (config.threshold !== this.threshold || config.thresholdOption !== this.thresholdOption)) {
                 return true;
             }
         }

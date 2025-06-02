@@ -96,7 +96,7 @@ export class VectorOverlayConfigStore {
         debiasing: boolean,
         qError: number,
         uError: number,
-        thresholdOption: number
+        thresholdOption: POLARIZATIONS
     ) => {
         this.angularSource = angularSource;
         this.intensitySource = intensitySource;
