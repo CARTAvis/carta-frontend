@@ -621,7 +621,7 @@ export class AppStore {
         return true;
     };
 
-    @action addPreviewFrame = (ack: any, directory: string, hdu: string) => {
+    @action addPreviewFrame = (ack: any, directory: string, hdu: string, sourceFileId: number) => {
         if (!ack) {
             return undefined;
         }
@@ -637,7 +637,8 @@ export class AppStore {
             renderMode: CARTA.RenderMode.RASTER,
             beamTable: ack.beamTable,
             generated: true,
-            preview: true
+            preview: true,
+            previewSourceFileId: sourceFileId
         };
 
         const newFrame = new FrameStore(frameInfo);
@@ -1508,7 +1509,7 @@ export class AppStore {
                     // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
                     pvGeneratorWidgetStore.previewFrame.updatePreviewDataGenerator.next();
                 } else {
-                    pvGeneratorWidgetStore.setPreviewFrame(this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory, ""));
+                    pvGeneratorWidgetStore.setPreviewFrame(this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory, "", message.fileId));
                     pvGeneratorWidgetStore.setPvCutRegionId(message.regionId);
                     WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WIDGET_CONFIG.type);
                 }
@@ -2044,20 +2045,12 @@ export class AppStore {
             () => this.activeImage,
             image => {
                 this.widgetsStore.updateRenderConfigSettingsVisibility();
-                if (image) {
-                    if (image.type !== ImageType.PV_PREVIEW) {
-                        this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
+                if (image && image.type === ImageType.FRAME) {
+                    const frame = image.store;
+                    this.catalogStore.resetActiveCatalogFile(frame?.id);
+                    if (this.syncContourToFrame) {
+                        this.contourDataSource = frame;
                     }
-
-                    if (image.type === ImageType.FRAME) {
-                        const frame = image.store;
-                        this.catalogStore.resetActiveCatalogFile(frame?.id);
-                        if (this.syncContourToFrame) {
-                            this.contourDataSource = frame;
-                        }
-                    }
-                } else {
-                    this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
                 }
             }
         );

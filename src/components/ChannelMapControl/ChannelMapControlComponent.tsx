@@ -38,7 +38,7 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
     };
 
     @action onChannelChanged = (val: number) => {
-        const frame = AppStore.Instance.activeFrame;
+        const frame = AppStore.Instance.channelMapStore.displayedFrame;
         if (frame) {
             AppStore.Instance.channelMapStore.setStartChannel(clamp(val, 0, frame.frameInfo.fileInfoExtended.depth - 1));
         }
@@ -46,9 +46,9 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
 
     public render() {
         const appStore = AppStore.Instance;
-        const activeFrame = appStore.activeFrame;
         const channelMapSettings = appStore.channelMapStore;
-        const numChannels = activeFrame ? activeFrame.frameInfo.fileInfoExtended.depth : 10;
+        const displayedFrame = channelMapSettings.displayedFrame;
+        const numChannels = displayedFrame ? displayedFrame.frameInfo.fileInfoExtended.depth : 10;
         const iconOnly = this.width < 300;
 
         const channelMapControl = (
@@ -88,17 +88,17 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                 <FormGroup className="channel-map-control-label" inline={true} label="Start channel" disabled={!channelMapSettings.channelMapEnabled}>
                     <Slider
                         min={0}
-                        max={activeFrame?.frameInfo.fileInfoExtended.depth}
+                        max={displayedFrame?.frameInfo.fileInfoExtended.depth}
                         stepSize={1}
-                        labelStepSize={Math.max(activeFrame?.frameInfo.fileInfoExtended.depth / appStore.channelMapStore.numChannels, Math.ceil(activeFrame?.frameInfo.fileInfoExtended.depth / 5))}
+                        labelStepSize={Math.max(displayedFrame?.frameInfo.fileInfoExtended.depth / appStore.channelMapStore.numChannels, Math.ceil(displayedFrame?.frameInfo.fileInfoExtended.depth / 5))}
                         value={appStore.channelMapStore.startChannel}
                         onChange={channel => appStore.channelMapStore.setStartChannel(channel)}
-                        disabled={!channelMapSettings.channelMapEnabled || activeFrame?.frameInfo.fileInfoExtended.depth <= 1}
+                        disabled={!channelMapSettings.channelMapEnabled || displayedFrame?.frameInfo.fileInfoExtended.depth <= 1}
                     />
                 </FormGroup>
                 <FormGroup className="channel-map-control-label" inline={true} label="Image" disabled={!channelMapSettings.channelMapEnabled}>
                     <HTMLSelect
-                        value={appStore.activeImageIndex}
+                        value={appStore.imageViewConfigStore.getImageListIndex(channelMapSettings.displayedImage.type, channelMapSettings.displayedImage.store.id)}
                         options={AppStore.Instance.imageViewConfigStore.imageNames.map((name, index) => ({value: index, label: `${index}: ${name}`}))}
                         onChange={ev => appStore.setActiveImageByIndex(parseInt(ev.currentTarget.value))}
                         disabled={!channelMapSettings.channelMapEnabled}
@@ -180,7 +180,7 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
             <ResizeDetector onResize={this.onResize} throttleTime={33}>
                 <ScrollShadow>
                     <div className="channel-map-control-containers">
-                        {activeFrame && (
+                        {displayedFrame && (
                             <div className="channel-map-sliders">
                                 {channelMapControl}
                                 {channelMapPanel}
