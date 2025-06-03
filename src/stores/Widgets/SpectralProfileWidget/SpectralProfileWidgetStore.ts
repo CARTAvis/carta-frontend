@@ -9,7 +9,7 @@ import {FindIntensityUnitType, GetCommonIntensityOptions, GetIntensityConversion
 import {TelemetryAction, TelemetryService} from "services";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
 import {MultiProfileCategory, RegionId, RegionsType, RegionWidgetStore, SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
-import {clamp, getColorForTheme, isAutoColor} from "utilities";
+import {clamp, genColorFromIndex, getColorForTheme, isAutoColor} from "utilities";
 
 export enum MomentSelectingMode {
     NONE = 1,
@@ -375,7 +375,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.meanRmsVisible = false;
         this.secondaryAxisCursorInfoVisible = false;
         this.markerTextVisible = false;
-        this.primaryLineColor = "auto-blue";
+        this.primaryLineColor = genColorFromIndex(0); // default auto-blue color in Hex code
         this.lineColorMap = new Map<LineKey, string>([[SpectralProfileWidgetStore.PRIMARY_LINE_KEY, this.primaryLineColor]]);
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
