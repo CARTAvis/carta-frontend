@@ -249,8 +249,13 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         if (!frame || !frame.renderConfig) {
             return;
         }
+
+        const filename = frame.frameInfo.fileInfo.name;
+        const channel = frame.channel;
         const renderConfig = frame.renderConfig;
         const params: string[] = [];
+        params.push(`File: ${filename}`);
+        params.push(`Channel: ${channel}`);
         params.push(`Scaling: ${RenderConfigStore.SCALING_TYPES.get(renderConfig.scaling)}`);
         params.push(`Gamma: ${renderConfig.gamma}`);
         params.push(`Alpha: ${renderConfig.alpha}`);
@@ -259,8 +264,6 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         params.push(`Bias: ${renderConfig.bias}`);
         params.push(`Contrast: ${renderConfig.contrast}`);
 
-        const filename = frame.frameInfo.fileInfo.name;
-        const channel = frame.channel;
         exportTxtFile(`render_config_file_${filename}_channel_${channel}`, params.join("\n"));
     };
 
