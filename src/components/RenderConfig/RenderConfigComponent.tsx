@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Button, ButtonGroup, Colors, FormGroup, HTMLSelect, NonIdealState, OptionProps} from "@blueprintjs/core";
+import {AnchorButton, Button, ButtonGroup, Colors, FormGroup, HTMLSelect, NonIdealState, OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
@@ -11,7 +11,7 @@ import {ImageType, Point2D} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore, RenderConfigStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
-import {clamp, getColorForTheme, scaleValue, toExponential, toFixed} from "utilities";
+import {clamp, exportTxtFile, getColorForTheme, scaleValue, toExponential, toFixed} from "utilities";
 
 import {MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
@@ -242,6 +242,26 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             profilerInfo.push(`Cursor: ${numberString}`);
         }
         return profilerInfo;
+    };
+
+    private exportParameters = (): void => {
+        const frame = AppStore.Instance.activeFrame;
+        if (!frame || !frame.renderConfig) {
+            return;
+        }
+        const renderConfig = frame.renderConfig;
+        const params: string[] = [];
+        params.push(`Scaling: ${RenderConfigStore.SCALING_TYPES.get(renderConfig.scaling)}`);
+        params.push(`Gamma: ${renderConfig.gamma}`);
+        params.push(`Alpha: ${renderConfig.alpha}`);
+        params.push(`clipMin: ${renderConfig.scaleMinVal}`);
+        params.push(`clipMax: ${renderConfig.scaleMaxVal}`);
+        params.push(`Bias: ${renderConfig.bias}`);
+        params.push(`Contrast: ${renderConfig.contrast}`);
+
+        const filename = frame.frameInfo.fileInfo.name;
+        const channel = frame.channel;
+        exportTxtFile(`render_config_file_${filename}_channel_${channel}`, params.join("\n"));
     };
 
     render() {
@@ -485,6 +505,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                                 </FormGroup>
                                 <ColormapConfigComponent renderConfig={frame.renderConfig} />
                                 {this.width < histogramCutoff && percentileSelectDiv}
+                                <AnchorButton onClick={this.exportParameters}>Export Parameters</AnchorButton>
                             </div>
                         </ScrollShadow>
                     </div>
