@@ -187,12 +187,12 @@ export class ImageFittingStore {
         const fixedParams: boolean[] = [];
         for (const c of this.components) {
             initialValues.push({
-                center: c.center,
-                amp: c.amplitude,
-                fwhm: c.fwhm,
-                pa: c.pa
+                center: this.isAutoInitVal ? {x: NaN, y: NaN} : c.center,
+                amp: this.isAutoInitVal ? NaN : c.amplitude,
+                fwhm: this.isAutoInitVal ? {x: NaN, y: NaN} : c.fwhm,
+                pa: this.isAutoInitVal ? NaN : c.pa
             });
-            fixedParams.push(...c.fixedParams);
+            fixedParams.push(...(this.isAutoInitVal ? [false, false, false, false, false, false] : c.fixedParams));
         }
         fixedParams.push(this.backgroundOffsetFixed);
 

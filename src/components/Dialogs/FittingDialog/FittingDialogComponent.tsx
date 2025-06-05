@@ -278,7 +278,7 @@ export class FittingDialogComponent extends React.Component {
                                     content={
                                         <span>
                                             Fit the current channel of the image
-                                            {!fittingStore.validParams && (
+                                            {fittingStore.isAutoInitVal && (
                                                 <span>
                                                     <br />
                                                     <i>
