@@ -1,6 +1,6 @@
 import * as React from "react";
 import SplitPane from "react-split-pane";
-import {AnchorButton, ButtonGroup, Classes, DialogProps, Divider, FormGroup, HTMLSelect, Intent, NonIdealState, Position, Pre, Slider, Switch, Tab, Tabs, Text, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Classes, Collapse, DialogProps, Divider, FormGroup, HTMLSelect, Intent, NonIdealState, Position, Pre, Slider, Switch, Tab, Tabs, Text, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -200,8 +200,10 @@ export class FittingDialogComponent extends React.Component {
                                         onValueChange={val => setTimeout(() => fittingStore.setComponents(Math.round(val)), 0)}
                                         data-testid="image-fitting-component-input"
                                     />
-                                    <Switch className="auto-switch" checked={fittingStore.isAutoInitVal} onChange={ev => fittingStore.setIsAutoInitVal(ev.currentTarget.checked)} innerLabel="Auto" />
-                                    {fittingStore.components.length > 1 && (
+                                    <Tooltip content={`${fittingStore.isAutoInitVal ? "Disable" : "Enable"} initial value auto generation`} position={Position.RIGHT}>
+                                        <Switch className="auto-switch" checked={fittingStore.isAutoInitVal} onChange={ev => fittingStore.setIsAutoInitVal(ev.currentTarget.checked)} innerLabel="Auto" />
+                                    </Tooltip>
+                                    {!fittingStore.isAutoInitVal && fittingStore.components.length > 1 && (
                                         <>
                                             <Slider
                                                 value={fittingStore.selectedComponentIndex + 1}
@@ -220,32 +222,35 @@ export class FittingDialogComponent extends React.Component {
                                         </>
                                     )}
                                 </FormGroup>
-                                <FormGroup label="Coordinate" inline={true}>
-                                    <CoordinateComponent selectedValue={this.coord} onChange={this.setCoord} disableCoordinate={!fittingStore.effectiveFrame.hasSquarePixels} />
-                                </FormGroup>
-                                <FormGroup label="Center" inline={true} labelInfo={pixUnitString}>
-                                    {this.renderParamCoordInput(InputType.XCoord, component?.center?.x, "Center X", component?.setCenterX, component?.centerWcs?.x, component?.setCenterXWcs)}
-                                    {this.renderLockButton(component?.centerFixed?.x, component?.toggleCenterXFixed, "center-x")}
-                                    {this.renderParamCoordInput(InputType.YCoord, component?.center?.y, "Center Y", component?.setCenterY, component?.centerWcs?.y, component?.setCenterYWcs)}
-                                    {this.renderLockButton(component?.centerFixed?.y, component?.toggleCenterYFixed, "center-y")}
-                                    {this.renderInfoString(component?.center, component?.centerWcs)}
-                                </FormGroup>
-                                <FormGroup label="Amplitude" inline={true} labelInfo={<span title={imageUnitString}>{imageUnitString}</span>}>
-                                    {this.renderParamInput(component?.amplitude, "Amplitude", component?.setAmplitude)}
-                                    {this.renderLockButton(component?.amplitudeFixed, component?.toggleAmplitudeFixed, "amplitude")}
-                                </FormGroup>
-                                <FormGroup label="FWHM" inline={true} labelInfo={pixUnitString}>
-                                    {this.renderParamCoordInput(InputType.Size, component?.fwhm?.x, "Major axis", component?.setFwhmX, component?.fwhmWcs?.x, component?.setFwhmXWcs)}
-                                    {this.renderLockButton(component?.fwhmFixed?.x, component?.toggleFwhmXFixed, "fwhm-x")}
-                                    {this.renderParamCoordInput(InputType.Size, component?.fwhm?.y, "Minor axis", component?.setFwhmY, component?.fwhmWcs?.y, component?.setFwhmYWcs)}
-                                    {this.renderLockButton(component?.fwhmFixed?.y, component?.toggleFwhmYFixed, "fwhm-y")}
-                                    {this.renderInfoString(component?.fwhm, component?.fwhmWcs)}
-                                </FormGroup>
-                                <FormGroup label="P.A." inline={true} labelInfo="(deg)">
-                                    {this.renderParamInput(component?.pa, "Position angle", component?.setPa)}
-                                    {this.renderLockButton(component?.paFixed, component?.togglePaFixed, "pa")}
-                                </FormGroup>
-                                <Divider />
+                                <Collapse isOpen={!fittingStore.isAutoInitVal}>
+                                    <FormGroup label="Coordinate" inline={true}>
+                                        <CoordinateComponent selectedValue={this.coord} onChange={this.setCoord} disableCoordinate={!fittingStore.effectiveFrame.hasSquarePixels} />
+                                    </FormGroup>
+                                    <Divider />
+                                    <FormGroup label="Center" inline={true} labelInfo={pixUnitString}>
+                                        {this.renderParamCoordInput(InputType.XCoord, component?.center?.x, "Center X", component?.setCenterX, component?.centerWcs?.x, component?.setCenterXWcs)}
+                                        {this.renderLockButton(component?.centerFixed?.x, component?.toggleCenterXFixed, "center-x")}
+                                        {this.renderParamCoordInput(InputType.YCoord, component?.center?.y, "Center Y", component?.setCenterY, component?.centerWcs?.y, component?.setCenterYWcs)}
+                                        {this.renderLockButton(component?.centerFixed?.y, component?.toggleCenterYFixed, "center-y")}
+                                        {this.renderInfoString(component?.center, component?.centerWcs)}
+                                    </FormGroup>
+                                    <FormGroup label="Amplitude" inline={true} labelInfo={<span title={imageUnitString}>{imageUnitString}</span>}>
+                                        {this.renderParamInput(component?.amplitude, "Amplitude", component?.setAmplitude)}
+                                        {this.renderLockButton(component?.amplitudeFixed, component?.toggleAmplitudeFixed, "amplitude")}
+                                    </FormGroup>
+                                    <FormGroup label="FWHM" inline={true} labelInfo={pixUnitString}>
+                                        {this.renderParamCoordInput(InputType.Size, component?.fwhm?.x, "Major axis", component?.setFwhmX, component?.fwhmWcs?.x, component?.setFwhmXWcs)}
+                                        {this.renderLockButton(component?.fwhmFixed?.x, component?.toggleFwhmXFixed, "fwhm-x")}
+                                        {this.renderParamCoordInput(InputType.Size, component?.fwhm?.y, "Minor axis", component?.setFwhmY, component?.fwhmWcs?.y, component?.setFwhmYWcs)}
+                                        {this.renderLockButton(component?.fwhmFixed?.y, component?.toggleFwhmYFixed, "fwhm-y")}
+                                        {this.renderInfoString(component?.fwhm, component?.fwhmWcs)}
+                                    </FormGroup>
+                                    <FormGroup label="P.A." inline={true} labelInfo="(deg)">
+                                        {this.renderParamInput(component?.pa, "Position angle", component?.setPa)}
+                                        {this.renderLockButton(component?.paFixed, component?.togglePaFixed, "pa")}
+                                    </FormGroup>
+                                    <Divider />
+                                </Collapse>
                                 <ClearableNumericInputComponent
                                     label="Background"
                                     inline={true}
