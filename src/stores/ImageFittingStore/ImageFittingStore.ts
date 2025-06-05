@@ -24,6 +24,7 @@ export class ImageFittingStore {
     @observable selectedFileId: number = ACTIVE_FILE_ID;
     @observable selectedRegionId: number = FOV_REGION_ID;
     @observable components: ImageFittingIndividualStore[];
+    @observable isAutoInitVal: boolean = true;
     @observable selectedComponentIndex: number;
     @observable backgroundOffset: number = 0;
     @observable backgroundOffsetFixed: boolean = true;
@@ -68,6 +69,10 @@ export class ImageFittingStore {
             this.components.splice(this.selectedComponentIndex, 1);
             this.selectedComponentIndex = this.selectedComponentIndex === 0 ? 0 : this.selectedComponentIndex - 1;
         }
+    };
+
+    @action setIsAutoInitVal = (isAuto: boolean) => {
+        this.isAutoInitVal = isAuto;
     };
 
     @action setSelectedComponentIndex = (index: number) => {

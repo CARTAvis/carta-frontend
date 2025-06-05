@@ -200,6 +200,7 @@ export class FittingDialogComponent extends React.Component {
                                         onValueChange={val => setTimeout(() => fittingStore.setComponents(Math.round(val)), 0)}
                                         data-testid="image-fitting-component-input"
                                     />
+                                    <Switch className="auto-switch" checked={fittingStore.isAutoInitVal} onChange={ev => fittingStore.setIsAutoInitVal(ev.currentTarget.checked)} innerLabel="Auto" />
                                     {fittingStore.components.length > 1 && (
                                         <>
                                             <Slider
