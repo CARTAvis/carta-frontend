@@ -42,10 +42,10 @@ export class FittingDialogComponent extends React.Component {
         this.isMouseEntered = false;
     };
 
-    private static readonly DefaultWidth = 600;
-    private static readonly DefaultHeight = 660;
-    private static readonly MinWidth = 575;
-    private static readonly MinHeight = 500;
+    private static readonly DefaultWidth = 525;
+    private static readonly DefaultHeight = 600;
+    private static readonly MinWidth = 375;
+    private static readonly MinHeight = 250;
 
     constructor(props: any) {
         super(props);
@@ -180,7 +180,7 @@ export class FittingDialogComponent extends React.Component {
                         <HTMLSelect value={fittingStore.selectedFileId} options={fittingStore.frameOptions} onChange={ev => fittingStore.setSelectedFileId(parseInt(ev.target.value))} />
                     </FormGroup>
                 </div>
-                <SplitPane split="horizontal" defaultSize="50%">
+                <SplitPane split="horizontal" defaultSize="45%">
                     <div className="upper-pane">
                         <div className={classNames(Classes.DIALOG_BODY, "unpinned-input-panel")}>
                             <ScrollShadow>
