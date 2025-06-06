@@ -245,6 +245,8 @@ export class ImageFittingStore {
             return;
         }
 
+        this.setGeneratedInitVal(fittingLog);
+
         let results = "";
         let log = "";
 
@@ -492,6 +494,33 @@ export class ImageFittingStore {
                 return {points: [center, size], rotation: value?.pa};
             })
             .filter((params): params is {points: Point2D[]; rotation: number} => params !== null);
+    };
+
+    private setGeneratedInitVal = (log: string) => {
+        const initValString = log.match(/Generated initial values([\s\S]*?)Gaussian fitting with/)?.[1];
+        if (!initValString) {
+            return;
+        }
+
+        const initVal = Array.from(initValString.matchAll(/=\s*([-\d.]+)\s*\(/g), match => Number(match[1]));
+        if (initVal.length === 0 || initVal.length % 6 !== 0) {
+            console.warn("Invalid initial values format in fitting log.");
+            return;
+        }
+
+        const initVal2D = Array.from({length: Math.ceil(initVal.length / 6)}, (_, i) => initVal.slice(i * 6, i * 6 + 6));
+        this.setComponents(initVal2D.length);
+        for (let i = 0; i < initVal2D.length; i++) {
+            const [centerX, centerY, amplitude, fwhmX, fwhmY, pa] = initVal2D[i];
+            const component = this.components[i];
+            component.setCenterX(centerX);
+            component.setCenterY(centerY);
+            component.setAmplitude(amplitude);
+            component.setFwhmX(fwhmX);
+            component.setFwhmY(fwhmY);
+            component.setPa(pa);
+        }
+        this.setSelectedComponentIndex(0);
     };
 }
 
