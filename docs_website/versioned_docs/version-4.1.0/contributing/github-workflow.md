@@ -117,7 +117,7 @@ If the pull request requires changes in the carta-protobuf submodule and is read
 2. Check out the frontend branch:
 
     ```
-    git checkout "[the frontend branch]"
+    git checkout [the frontend branch]
     ```
 
 3. Check out the dev branch of the protobuf submodule and pull the latest version:
@@ -132,7 +132,7 @@ If the pull request requires changes in the carta-protobuf submodule and is read
 4. Commit and push the changes:
 
     ```
-    git merge -a -m "update protobuf"
+    git commit -a -m "update protobuf"
     git push
     ```
 
