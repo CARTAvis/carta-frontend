@@ -156,6 +156,10 @@ export class ImageFittingStore {
         return this.isAutoInitVal ? true : this.components.every(c => c.validParams === true);
     }
 
+    @computed get fixedParamsNum(): number {
+        return this.isAutoInitVal ? 0 : this.components.reduce((sum, c) => sum + c.fixedParamNum, 0);
+    }
+
     @computed get fitDisabled() {
         const fileId = this.effectiveFrame?.frameInfo?.fileId;
         const validFileId = fileId !== undefined && isFinite(fileId) && fileId >= 0;
@@ -624,6 +628,10 @@ export class ImageFittingIndividualStore {
 
     @computed get fixedParams(): boolean[] {
         return [this.centerFixed.x, this.centerFixed.y, this.amplitudeFixed, this.fwhmFixed.x, this.fwhmFixed.y, this.paFixed];
+    }
+
+    @computed get fixedParamNum(): number {
+        return this.fixedParams.filter(p => p === true).length;
     }
 
     @computed get allFixed(): boolean {

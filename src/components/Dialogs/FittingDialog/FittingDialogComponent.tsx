@@ -286,6 +286,14 @@ export class FittingDialogComponent extends React.Component {
                                                     </i>
                                                 </span>
                                             )}
+                                            {fittingStore.fixedParamsNum > 0 && (
+                                                <span>
+                                                    <br />
+                                                    <i>
+                                                        <small>{fittingStore.fixedParamsNum} Gaussian parameter(s) are fixed.</small>
+                                                    </i>
+                                                </span>
+                                            )}
                                             {fittingStore.effectiveFrame?.fittingResult !== "" && (
                                                 <span>
                                                     <br />
@@ -297,7 +305,6 @@ export class FittingDialogComponent extends React.Component {
                                         </span>
                                     }
                                     position={Position.BOTTOM}
-                                    disabled={fittingStore.fitDisabled}
                                 >
                                     <AnchorButton intent={Intent.PRIMARY} onClick={fittingStore.fitImage} text="Fit" disabled={fittingStore.fitDisabled} data-testid="image-fitting-fit-button" />
                                 </Tooltip>
