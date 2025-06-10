@@ -511,7 +511,7 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_INTERACTIVE) ?? DEFAULTS.WCS_OVERLAY.colorbarInteractive;
     }
 
-    @computed get colorbarPosition(): string {
+    @computed get colorbarPosition(): "right" | "top" | "bottom" {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_POSITION) ?? DEFAULTS.WCS_OVERLAY.colorbarPosition;
     }
 

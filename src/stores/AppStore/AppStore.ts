@@ -54,7 +54,7 @@ import {
     LayoutStore,
     LogEntry,
     LogStore,
-    OverlayStore,
+    OverlaySettings,
     PreferenceKeys,
     PreferenceStore,
     RegionFileType,
@@ -65,7 +65,7 @@ import {
     WidgetsStore
 } from "stores";
 import {CompassAnnotationStore, CURSOR_REGION_ID, FrameInfo, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
-import {HistogramWidgetStore, RegionId as RegionIdType, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
+import {HistogramWidgetStore, PvGeneratorWidgetStore, RegionId as RegionIdType, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
 import {distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
 
 import GitCommit from "../../static/gitInfo";
@@ -118,7 +118,7 @@ export class AppStore {
     readonly dynamicLayoutStore: DynamicLayoutStore;
     readonly snippetStore: SnippetStore;
     readonly logStore: LogStore;
-    readonly overlayStore: OverlayStore;
+    readonly overlaySettings: OverlaySettings;
     readonly preferenceStore: PreferenceStore;
     readonly widgetsStore: WidgetsStore;
     readonly imageFittingStore: ImageFittingStore;
@@ -188,8 +188,12 @@ export class AppStore {
     };
 
     // Image view
+    @observable fullViewWidth = 1;
+    @observable fullViewHeight = 1;
+
     @action setImageViewDimensions = (w: number, h: number) => {
-        this.overlayStore.setViewDimension(w, h);
+        this.fullViewWidth = w;
+        this.fullViewHeight = h;
     };
 
     // Auth
@@ -621,7 +625,7 @@ export class AppStore {
         return true;
     };
 
-    @action addPreviewFrame = (ack: any, directory: string, hdu: string, sourceFileId: number) => {
+    @action addPreviewFrame = (ack: any, directory: string, hdu: string, sourceFileId: number, pvGeneratorWidgetStore: PvGeneratorWidgetStore) => {
         if (!ack) {
             return undefined;
         }
@@ -641,7 +645,7 @@ export class AppStore {
             previewSourceFileId: sourceFileId
         };
 
-        const newFrame = new FrameStore(frameInfo);
+        const newFrame = new FrameStore(frameInfo, pvGeneratorWidgetStore);
 
         if (newFrame) {
             this.previewFrames.set(ack.previewId, newFrame);
@@ -814,7 +818,7 @@ export class AppStore {
     @flow.bound
     *openFile(path: string, filename?: string, hdu?: string, imageArithmetic?: boolean, updateStartingDirectory: boolean = true) {
         this.removeAllFrames();
-        this.overlayStore.global.setSystem(SystemType.Auto);
+        this.overlaySettings.global.setSystem(SystemType.Auto);
         return yield this.loadFile(path, filename, hdu, imageArithmetic, true, updateStartingDirectory);
     }
 
@@ -1023,7 +1027,7 @@ export class AppStore {
                 } else {
                     // update overlay defaults from the last frame
                     if (removedFrameIsLastFrame) {
-                        this.overlayStore.setDefaultsFromFrame(this.frames[this.frames.length - 1]);
+                        this.overlaySettings.setDefaultsFromFrame(this.frames[this.frames.length - 1]);
                     }
                 }
 
@@ -1509,9 +1513,11 @@ export class AppStore {
                     // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
                     pvGeneratorWidgetStore.previewFrame.updatePreviewDataGenerator.next();
                 } else {
-                    pvGeneratorWidgetStore.setPreviewFrame(this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory, "", message.fileId));
+                    const newFrame = this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory, "", message.fileId, pvGeneratorWidgetStore);
+                    pvGeneratorWidgetStore.setPreviewFrame(newFrame);
                     pvGeneratorWidgetStore.setPvCutRegionId(message.regionId);
                     WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WIDGET_CONFIG.type);
+                    pvGeneratorWidgetStore.onResizePreviewWidget(PvGeneratorComponent.WIDGET_CONFIG.defaultWidth, PvGeneratorComponent.WIDGET_CONFIG.defaultHeight);
                 }
             } else {
                 AppToaster.show({icon: "warning-sign", message: "Load preview failed.", intent: "danger", timeout: 3000});
@@ -1629,14 +1635,14 @@ export class AppStore {
     private updateASTColors() {
         if (this.astReady) {
             const astColors = [
-                getColorForTheme(this.overlayStore.global.color),
-                getColorForTheme(this.overlayStore.title.color),
-                getColorForTheme(this.overlayStore.grid.color),
-                getColorForTheme(this.overlayStore.border.color),
-                getColorForTheme(this.overlayStore.ticks.color),
-                getColorForTheme(this.overlayStore.axes.color),
-                getColorForTheme(this.overlayStore.numbers.color),
-                getColorForTheme(this.overlayStore.labels.color)
+                getColorForTheme(this.overlaySettings.global.color),
+                getColorForTheme(this.overlaySettings.title.color),
+                getColorForTheme(this.overlaySettings.grid.color),
+                getColorForTheme(this.overlaySettings.border.color),
+                getColorForTheme(this.overlaySettings.ticks.color),
+                getColorForTheme(this.overlaySettings.axes.color),
+                getColorForTheme(this.overlaySettings.numbers.color),
+                getColorForTheme(this.overlaySettings.labels.color)
             ];
             AST.setColors(astColors);
         }
@@ -1855,7 +1861,7 @@ export class AppStore {
         this.snippetStore = SnippetStore.Instance;
         this.logStore = LogStore.Instance;
         this.preferenceStore = PreferenceStore.Instance;
-        this.overlayStore = OverlayStore.Instance;
+        this.overlaySettings = OverlaySettings.Instance;
         this.widgetsStore = WidgetsStore.Instance;
         this.imageFittingStore = ImageFittingStore.Instance;
         this.channelMapStore = ChannelMapStore.Instance;
@@ -3248,7 +3254,7 @@ export class AppStore {
             this.setImageRatio(imageRatio);
             this.waitForImageData().then(() => {
                 const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : this.darkTheme ? "rgba(0, 0, 0, 1)" : Colors.WHITE;
-                const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
+                const composedCanvas = getImageViewCanvas(this.activeFrame.overlayStore.padding, this.overlaySettings.colorbar.position, backgroundColor);
                 if (composedCanvas) {
                     composedCanvas.toBlob(blob => {
                         const link = document.createElement("a") as HTMLAnchorElement;
@@ -3286,7 +3292,7 @@ export class AppStore {
 
     getImageDataUrl = (backgroundColor: string) => {
         if (this.activeFrame) {
-            const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
+            const composedCanvas = getImageViewCanvas(this.activeFrame.overlayStore.padding, this.overlaySettings.colorbar.position, backgroundColor);
             if (composedCanvas) {
                 return composedCanvas.toDataURL();
             }
