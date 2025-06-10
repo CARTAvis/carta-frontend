@@ -1589,6 +1589,9 @@ export class AppStore {
                     }
                 }
             }
+            if (ack.resultValues?.length < message.initialValues?.length) {
+                AppToaster.show(WarningToast(`Image fitting: generated initial values of ${ack.resultValues.length} component(s) instead of ${message.initialValues.length}.`));
+            }
             if (ack.message) {
                 AppToaster.show(WarningToast(`Image fitting: ${ack.message}.`));
             }
