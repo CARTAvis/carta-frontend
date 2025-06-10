@@ -36,8 +36,8 @@ export class VectorOverlayConfigStore {
     @observable colormapBias: number;
     @observable lengthMin: number;
     @observable lengthMax: number;
-    @observable intensityMin: number;
-    @observable intensityMax: number;
+    @observable intensityMin: number | undefined;
+    @observable intensityMax: number | undefined;
     @observable rotationOffset: number;
 
     private readonly preferenceStore: PreferenceStore;
@@ -136,7 +136,7 @@ export class VectorOverlayConfigStore {
         this.lengthMax = max;
     };
 
-    @action setIntensityRange = (min: number, max: number) => {
+    @action setIntensityRange = (min: number | undefined, max: number | undefined) => {
         this.intensityMin = min;
         this.intensityMax = max;
     };
