@@ -63,6 +63,7 @@ const CATALOG_SETTINGS_ORIENTATION_HELP_CONTENT_URL = `${url_prefix}/catalog_wid
 const SPECTRAL_LINE_QUERY_HELP_CONTENT_URL = `${url_prefix}/spectral_line_query.html`;
 const PV_GENERATOR_HELP_CONTENT_URL = `${url_prefix}/pv_generator.html`;
 const CURSOR_INFO_HELP_CONTENT_URL = `${url_prefix}/cursor_info.html`;
+const CHANNEL_MAP_CONTROL_HELP_CONTENT_URL = `${url_prefix}/channel_map_control.html`;
 
 const HELP_CONTENT_MAP = new Map<HelpType, string>([
     // Dialog
@@ -117,7 +118,8 @@ const HELP_CONTENT_MAP = new Map<HelpType, string>([
     [HelpType.CATALOG_SETTINGS_ORIENTATION, CATALOG_SETTINGS_ORIENTATION_HELP_CONTENT_URL],
     [HelpType.SPECTRAL_LINE_QUERY, SPECTRAL_LINE_QUERY_HELP_CONTENT_URL],
     [HelpType.PV_GENERATOR, PV_GENERATOR_HELP_CONTENT_URL],
-    [HelpType.CURSOR_INFO, CURSOR_INFO_HELP_CONTENT_URL]
+    [HelpType.CURSOR_INFO, CURSOR_INFO_HELP_CONTENT_URL],
+    [HelpType.CHANNEL_MAP_CONTROL, CHANNEL_MAP_CONTROL_HELP_CONTENT_URL]
 ]);
 
 @observer

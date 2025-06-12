@@ -54,7 +54,8 @@ export enum HelpType {
     CATALOG_SETTINGS_ORIENTATION = "Catalog Orientation Settings",
     SPECTRAL_LINE_QUERY = "Spectral Line Query",
     PV_GENERATOR = "PV Generator",
-    CURSOR_INFO = "Cursor Information"
+    CURSOR_INFO = "Cursor Information",
+    CHANNEL_MAP_CONTROL = "Channel Map Control"
 }
 
 export class HelpStore {

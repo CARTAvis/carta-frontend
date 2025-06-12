@@ -4,7 +4,7 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
-import {AppStore, DefaultWidgetConfig, WidgetProps} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
 import {clamp} from "utilities";
 
 import "./ChannelMapControlComponent.scss";
@@ -20,7 +20,8 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
             defaultWidth: 480,
             defaultHeight: 600,
             title: "Channel Map Control",
-            isCloseable: true
+            isCloseable: true,
+            helpType: HelpType.CHANNEL_MAP_CONTROL
         };
     }
 
