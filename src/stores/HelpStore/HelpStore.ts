@@ -27,6 +27,7 @@ export enum HelpType {
     PLACEHOLDER = "Placeholder",
     REGION_LIST = "Region List",
     RENDER_CONFIG = "Render Configuration",
+    RENDER_CONFIG_COLOR_BLENDING = "Color Blending Render Configuration",
     RENDER_CONFIG_SETTINGS = "Render Configuration Settings",
     SPATIAL_PROFILER = "Spatial Profiler",
     SPATIAL_PROFILER_SETTINGS_STYLING = "Spatial Profiler Style Settings",

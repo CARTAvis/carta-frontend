@@ -923,6 +923,11 @@ export class WidgetsStore {
             if (catalogPlotWidgetStore) {
                 HelpStore.Instance.showHelpDrawer(catalogPlotWidgetStore.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT : HelpType.CATALOG_SCATTER_PLOT, centerX);
             }
+
+            const renderConfigWidgetStore = this.renderConfigWidgets.get(id);
+            if (renderConfigWidgetStore) {
+                HelpStore.Instance.showHelpDrawer(AppStore.Instance.activeImage?.type === ImageType.COLOR_BLENDING ? HelpType.RENDER_CONFIG_COLOR_BLENDING : HelpType.RENDER_CONFIG, centerX);
+            }
         }
     };
 

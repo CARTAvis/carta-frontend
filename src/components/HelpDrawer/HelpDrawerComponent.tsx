@@ -37,6 +37,7 @@ const LOG_HELP_CONTENT_URL = `${url_prefix}/log_widget.html`;
 const PLACE_HOLDER_HELP_CONTENT_URL = `${url_prefix}/`;
 const REGION_LIST_HELP_CONTENT_URL = `${url_prefix}/region_list_widget.html`;
 const RENDER_CONFIG_HELP_CONTENT_URL = `${url_prefix}/raster_rendering.html`;
+const RENDER_CONFIG_COLOR_BLENDING_HELP_CONTENT_URL = `${url_prefix}/multicolor_blending.html`;
 const RENDER_CONFIG_SETTINGS_HELP_CONTENT_URL = `${url_prefix}/raster_rendering.html#settings`;
 const SPATIAL_PROFILER_HELP_CONTENT_URL = `${url_prefix}/spatial_profiler.html`;
 const SPATIAL_PROFILER_SETTINGS_STYLING_HELP_CONTENT_URL = `${url_prefix}/spatial_profiler.html#settings`;
@@ -91,6 +92,7 @@ const HELP_CONTENT_MAP = new Map<HelpType, string>([
     [HelpType.PLACEHOLDER, PLACE_HOLDER_HELP_CONTENT_URL],
     [HelpType.REGION_LIST, REGION_LIST_HELP_CONTENT_URL],
     [HelpType.RENDER_CONFIG, RENDER_CONFIG_HELP_CONTENT_URL],
+    [HelpType.RENDER_CONFIG_COLOR_BLENDING, RENDER_CONFIG_COLOR_BLENDING_HELP_CONTENT_URL],
     [HelpType.RENDER_CONFIG_SETTINGS, RENDER_CONFIG_SETTINGS_HELP_CONTENT_URL],
     [HelpType.SPATIAL_PROFILER, SPATIAL_PROFILER_HELP_CONTENT_URL],
     [HelpType.SPATIAL_PROFILER_SETTINGS_STYLING, SPATIAL_PROFILER_SETTINGS_STYLING_HELP_CONTENT_URL],
