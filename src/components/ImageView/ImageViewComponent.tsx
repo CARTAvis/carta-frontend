@@ -5,7 +5,7 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector} from "components/Shared";
-import {Point2D, Zoom} from "models";
+import {ImageType, Point2D, Zoom} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, Padding, WidgetProps} from "stores";
 import {toFixed} from "utilities";
 
@@ -23,20 +23,20 @@ export enum ImageViewLayer {
 export function getImageViewCanvas(padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
     const appStore = AppStore.Instance;
     const config = appStore.imageViewConfigStore;
-    const overlay = appStore.overlayStore;
 
     const imageViewCanvas = document.createElement("canvas") as HTMLCanvasElement;
-    imageViewCanvas.width = overlay.fullViewWidth * appStore.pixelRatio;
-    imageViewCanvas.height = overlay.fullViewHeight * appStore.pixelRatio;
+    imageViewCanvas.width = appStore.fullViewWidth * appStore.pixelRatio;
+    imageViewCanvas.height = appStore.fullViewHeight * appStore.pixelRatio;
     const ctx = imageViewCanvas.getContext("2d");
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, imageViewCanvas.width, imageViewCanvas.height);
     config.visibleImages.forEach((image, index) => {
+        const frame = image?.type === ImageType.COLOR_BLENDING ? image.store?.baseFrame : image?.store;
         const column = index % config.numImageColumns;
         const row = Math.floor(index / config.numImageColumns);
         const panelCanvas = getPanelCanvas(column, row, padding, colorbarPosition, backgroundColor);
         if (panelCanvas) {
-            ctx.drawImage(panelCanvas, overlay.viewWidth * column * appStore.pixelRatio, overlay.viewHeight * row * appStore.pixelRatio);
+            ctx.drawImage(panelCanvas, frame.overlayStore.viewWidth * column * appStore.pixelRatio, frame.overlayStore.viewHeight * row * appStore.pixelRatio);
         }
     });
 
@@ -82,7 +82,7 @@ export function getPanelCanvas(column: number, row: number, padding: Padding, co
                 break;
             case "bottom":
                 xPos = 0;
-                yPos = overlayCanvas.height - colorbarCanvas.height - AppStore.Instance.overlayStore.colorbarHoverInfoHeight * appStore.pixelRatio;
+                yPos = overlayCanvas.height - colorbarCanvas.height - AppStore.Instance.overlaySettings.colorbarHoverInfoHeight * appStore.pixelRatio;
                 break;
             case "right":
             default:
@@ -137,7 +137,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     onResize = (width: number, height: number) => {
         if (width > 0 && height > 0) {
             const appStore = AppStore.Instance;
-            const requiresAutoFit = appStore.preferenceStore.zoomMode === Zoom.FIT && appStore.overlayStore.fullViewWidth <= 1 && appStore.overlayStore.fullViewHeight <= 1;
+            const requiresAutoFit = appStore.preferenceStore.zoomMode === Zoom.FIT && appStore.fullViewWidth <= 1 && appStore.fullViewHeight <= 1;
             appStore.setImageViewDimensions(width, height);
             if (requiresAutoFit) {
                 this.imagePanelRefs?.forEach(imagePanelRef => imagePanelRef?.fitZoomFrameAndRegion());
@@ -157,7 +157,17 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         const appStore = AppStore.Instance;
 
         autorun(() => {
-            const imageSize = {x: appStore.overlayStore.renderWidth, y: appStore.overlayStore.renderHeight};
+            const visibleFrames = appStore.imageViewConfigStore.visibleFrames;
+            if (!visibleFrames.length) {
+                return;
+            }
+
+            const firstFrame = visibleFrames[0];
+            if (!firstFrame) {
+                return;
+            }
+
+            const imageSize = {x: firstFrame.overlayStore.renderWidth, y: firstFrame.overlayStore.renderHeight};
             const imageGridSize = {x: appStore.imageViewConfigStore.numImageColumns, y: appStore.imageViewConfigStore.numImageRows};
             // Compare to cached image size to prevent duplicate events when changing frames
             const imageSizeChanged = !this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y;
@@ -205,7 +215,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         } else if (!appStore.astReady) {
             divContents = <NonIdealState icon={<Spinner className="astLoadingSpinner" />} title={"Loading AST Library"} />;
         } else {
-            const effectiveImageSize = {x: Math.floor(appStore.overlayStore.renderWidth), y: Math.floor(appStore.overlayStore.renderHeight)};
+            const firstFrame = appStore.imageViewConfigStore.visibleFrames?.[0];
+            const effectiveImageSize = {x: Math.floor(firstFrame?.overlayStore?.renderWidth), y: Math.floor(firstFrame?.overlayStore?.renderHeight)};
             const ratio = effectiveImageSize.x / effectiveImageSize.y;
             const gridSize = {x: config.numImageColumns, y: config.numImageRows};
 

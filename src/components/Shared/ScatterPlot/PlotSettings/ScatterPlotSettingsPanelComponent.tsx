@@ -17,6 +17,10 @@ export class ScatterPlotSettingsPanelComponentProps {
     setColormap: (val: string) => void;
     handleEqualAxesValuesChanged: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
     handleInvertedColorMapChanged: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
+    showReferenceAxes: boolean;
+    referenceAxesThickness: number;
+    referenceAxesColor: string;
+    setShowReferenceAxes: (val: boolean) => void;
 }
 
 export enum ScatterSettings {
@@ -71,6 +75,9 @@ export class ScatterPlotSettingsPanelComponent extends React.Component<ScatterPl
                         <Switch checked={props.equalAxes} onChange={props.handleEqualAxesValuesChanged} />
                     </FormGroup>
                 </React.Fragment>
+                <FormGroup inline={true} label="Reference axes">
+                    <Switch checked={props.showReferenceAxes} onChange={e => props.setShowReferenceAxes((e.target as HTMLInputElement).checked)} />
+                </FormGroup>
             </div>
         );
     }
