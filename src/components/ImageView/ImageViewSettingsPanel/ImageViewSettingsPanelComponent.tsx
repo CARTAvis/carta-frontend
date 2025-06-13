@@ -124,17 +124,17 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
     public render() {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
-        const overlayStore = appStore.overlayStore;
-        const global = overlayStore.global;
-        const title = overlayStore.title;
-        const grid = overlayStore.grid;
-        const border = overlayStore.border;
-        const ticks = overlayStore.ticks;
-        const axes = overlayStore.axes;
-        const numbers = overlayStore.numbers;
-        const labels = overlayStore.labels;
-        const colorbar = overlayStore.colorbar;
-        const beam = overlayStore.beam;
+        const overlaySettings = appStore.overlaySettings;
+        const global = overlaySettings.global;
+        const title = overlaySettings.title;
+        const grid = overlaySettings.grid;
+        const border = overlaySettings.border;
+        const ticks = overlaySettings.ticks;
+        const axes = overlaySettings.axes;
+        const numbers = overlaySettings.numbers;
+        const labels = overlaySettings.labels;
+        const colorbar = overlaySettings.colorbar;
+        const beam = overlaySettings.beam;
         const beamSettings = beam.settingsForDisplay;
         const preferences = appStore.preferenceStore;
 
@@ -545,7 +545,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Switch disabled={!colorbar.visible} checked={colorbar.interactive} onChange={ev => colorbar.setInteractive(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Position" disabled={!colorbar.visible}>
-                    <HTMLSelect value={colorbar.position} disabled={!colorbar.visible} onChange={ev => colorbar.setPosition(ev.currentTarget.value)}>
+                    <HTMLSelect value={colorbar.position} disabled={!colorbar.visible} onChange={ev => colorbar.setPosition(ev.currentTarget.value as "right" | "top" | "bottom")}>
                         <option value={"right"}>Right</option>
                         <option value={"top"}>Top</option>
                         <option value={"bottom"}>Bottom</option>
@@ -774,7 +774,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <SafeNumericInput
                         placeholder="Position (X)"
                         min={0}
-                        max={AppStore.Instance.overlayStore.renderWidth}
+                        max={AppStore.Instance.activeFrame.renderWidth}
                         value={beamSettings.shiftX}
                         stepSize={5}
                         minorStepSize={1}
@@ -786,7 +786,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <SafeNumericInput
                         placeholder="Position (Y)"
                         min={0}
-                        max={AppStore.Instance.overlayStore.renderHeight}
+                        max={AppStore.Instance.activeFrame.renderHeight}
                         value={beamSettings.shiftY}
                         stepSize={5}
                         minorStepSize={1}

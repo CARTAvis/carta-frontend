@@ -250,8 +250,8 @@ export class ImageFittingStore {
             const errorString = fixed ? "" : " \u00b1 " + toExponential(error ?? NaN, 12);
             return `${param} = ${valueString}${errorString}${unit ? ` (${unit})` : ""}${fixed ? " (fixed)" : ""}\n`;
         };
-        const formatTypeX = AppStore.Instance.overlayStore.numbers?.formatTypeX;
-        const formatTypeY = AppStore.Instance.overlayStore.numbers?.formatTypeY;
+        const formatTypeX = AppStore.Instance.overlaySettings.numbers?.formatTypeX;
+        const formatTypeY = AppStore.Instance.overlaySettings.numbers?.formatTypeY;
         const showIntegratedFlux = integratedFluxValues.length === values.length && integratedFluxErrors.length === values.length && (frame.requiredUnit === "Jy/pixel" || frame.requiredUnit === "Jy/beam");
 
         for (let i = 0; i < values.length; i++) {
@@ -588,7 +588,7 @@ export class ImageFittingIndividualStore {
     @computed get centerWcs(): WCSPoint2D | null {
         // re-calculate with different wcs system
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const system = AppStore.Instance.overlayStore.global.explicitSystem;
+        const system = AppStore.Instance.overlaySettings.global.explicitSystem;
         const wcsInfo = AppStore.Instance.imageFittingStore?.effectiveFrame?.wcsInfoForTransformation;
         if (!wcsInfo || !isFinite(this.center.x) || !isFinite(this.center.y)) {
             return null;
@@ -623,7 +623,7 @@ export class ImageFittingIndividualStore {
     }
 
     setCenterXWcs = (val: string): boolean => {
-        if (!isWCSStringFormatValid(val, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
+        if (!isWCSStringFormatValid(val, AppStore.Instance.overlaySettings.numbers.formatTypeX)) {
             return false;
         }
         const wcsInfo = AppStore.Instance.imageFittingStore?.effectiveFrame?.wcsInfoForTransformation;
@@ -644,7 +644,7 @@ export class ImageFittingIndividualStore {
     };
 
     setCenterYWcs = (val: string): boolean => {
-        if (!isWCSStringFormatValid(val, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
+        if (!isWCSStringFormatValid(val, AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
             return false;
         }
         const wcsInfo = AppStore.Instance.imageFittingStore?.effectiveFrame?.wcsInfoForTransformation;

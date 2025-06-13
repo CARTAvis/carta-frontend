@@ -78,8 +78,8 @@ export class CatalogQueryComponent extends React.Component {
         }
 
         const frame = appStore.activeFrame.spatialReference ?? appStore.activeFrame;
-        const formatX = appStore.overlayStore.numbers.formatTypeX;
-        const formatY = appStore.overlayStore.numbers.formatTypeY;
+        const formatX = appStore.overlaySettings.numbers.formatTypeX;
+        const formatY = appStore.overlaySettings.numbers.formatTypeY;
         const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
         const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
         const isVizier = configStore.catalogDB === CatalogDatabase.VIZIER;
@@ -146,14 +146,14 @@ export class CatalogQueryComponent extends React.Component {
                     <Select
                         items={Object.values(SystemType).filter(sys => sys !== SystemType.Image)}
                         activeItem={null}
-                        onItemSelect={type => appStore.overlayStore.global.setSystem(type)}
+                        onItemSelect={type => appStore.overlaySettings.global.setSystem(type)}
                         itemRenderer={this.renderSysTypePopOver}
                         disabled={disable}
                         popoverProps={{minimal: true}}
                         filterable={false}
                         resetOnSelect={true}
                     >
-                        <Button text={appStore.overlayStore.global.system} disabled={disable} rightIcon="double-caret-vertical" />
+                        <Button text={appStore.overlaySettings.global.system} disabled={disable} rightIcon="double-caret-vertical" />
                     </Select>
                     <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <SafeNumericInput
@@ -236,8 +236,8 @@ export class CatalogQueryComponent extends React.Component {
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => CatalogApiService.Instance.cancelQuery(configStore.catalogDB)} text={"Cancel"} />
                         {configStore.enableLoadVizier ? <AnchorButton intent={Intent.PRIMARY} disabled={disable} onClick={() => this.loadVizierCatalogs()} text={"Load selected"} /> : null}
-                        <Tooltip content={"Please select WCS coordinates"} disabled={appStore.overlayStore.isWcsCoordinates} position={Position.BOTTOM} hoverOpenDelay={300}>
-                            <AnchorButton intent={Intent.SUCCESS} disabled={disable || appStore.overlayStore.isImgCoordinates} onClick={() => this.query()} text={"Query"} />
+                        <Tooltip content={"Please select WCS coordinates"} disabled={appStore.overlaySettings.isWcsCoordinates} position={Position.BOTTOM} hoverOpenDelay={300}>
+                            <AnchorButton intent={Intent.SUCCESS} disabled={disable || appStore.overlaySettings.isImgCoordinates} onClick={() => this.query()} text={"Query"} />
                         </Tooltip>
                     </div>
                 </div>
@@ -385,7 +385,7 @@ export class CatalogQueryComponent extends React.Component {
         if (wcsString === centerWcsPoint.x) {
             return;
         }
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX)) {
             const newPoint = getPixelValueFromWCS(wcsInfo, {x: wcsString, y: centerWcsPoint.y});
             if (newPoint && isFinite(newPoint.x)) {
                 configStore.updateCenterPixelCoord(newPoint);
@@ -411,7 +411,7 @@ export class CatalogQueryComponent extends React.Component {
         if (wcsString === centerWcsPoint.y) {
             return;
         }
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
             const newPoint = getPixelValueFromWCS(wcsInfo, {x: centerWcsPoint.x, y: wcsString});
             if (newPoint && isFinite(newPoint.y)) {
                 configStore.updateCenterPixelCoord(newPoint);

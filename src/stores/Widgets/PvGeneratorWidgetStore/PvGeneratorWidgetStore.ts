@@ -25,6 +25,8 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     @observable previewRegionId: number;
     @observable previewFrame: FrameStore | null;
     @observable pvCutRegionId: number | null;
+    @observable previewFullViewWidth: number = 1;
+    @observable previewFullViewHeight: number = 1;
 
     @computed get regionOptions(): OptionProps[] {
         const appStore = AppStore.Instance;
@@ -190,6 +192,14 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         this.pvCutRegionId = null;
     };
 
+    @action onResizePreviewWidget = (width: number, height: number) => {
+        if (width > 0 && height > 0) {
+            this.previewFullViewWidth = width;
+            this.previewFullViewHeight = height;
+            this.previewFrame?.fitZoom();
+        }
+    };
+
     constructor() {
         super(RegionsType.LINE);
         makeObservable(this);
@@ -197,6 +207,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         this.reverse = PreferenceStore.Instance.isPVAxesOrderReverse;
         this.keep = false;
         this.regionIdMap.set(ACTIVE_FILE_ID, RegionId.NONE);
+
         reaction(
             () => this.effectiveFrame?.channelValueBounds,
             channelValueBounds => {
