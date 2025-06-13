@@ -3,7 +3,6 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
 
-import {PvPreviewComponent} from "components";
 import {
     CatalogControlMap,
     ChannelInfo,
@@ -38,7 +37,20 @@ import {
     ZoomPoint
 } from "models";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE, TileService} from "services";
-import {AnimatorStore, AppStore, ASTSettingsString, INITIAL_LAYOUT_ITEM, LogStore, PreferenceStore, SystemType} from "stores";
+import {
+    AnimatorStore,
+    AppStore,
+    ASTSettingsString,
+    ChannelMapInnerOverlayStore,
+    ChannelMapOuterOverlayStore,
+    ImageViewOverlayStore,
+    INITIAL_LAYOUT_ITEM,
+    LogStore,
+    OverlayStore,
+    PreferenceStore,
+    PvPreviewOverlayStore,
+    SystemType
+} from "stores";
 import {
     CENTER_POINT_INDEX,
     ColorbarStore,
@@ -53,7 +65,7 @@ import {
     VectorOverlayConfigStore,
     VectorOverlayStore
 } from "stores/Frame";
-import {RegionId} from "stores/Widgets";
+import {PvGeneratorWidgetStore, RegionId} from "stores/Widgets";
 import {
     clamp,
     formattedArcsec,
@@ -135,6 +147,9 @@ export class FrameStore {
     public readonly validWcs: boolean;
     public readonly defaultWcsSystem: SystemType;
     @observable public frameInfo: FrameInfo;
+    public readonly overlayStore: OverlayStore;
+    public readonly channelMapOuterOverlayStore: ChannelMapOuterOverlayStore;
+    public readonly channelMapInnerOverlayStore: ChannelMapInnerOverlayStore;
     public readonly colorbarStore: ColorbarStore;
 
     public spectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}>;
@@ -210,8 +225,6 @@ export class FrameStore {
 
     @observable stokesFiles: CARTA.StokesFile[];
 
-    @observable previewViewWidth: number;
-    @observable previewViewHeight: number;
     @observable previewPVRasterData: Float32Array;
     @observable intensityUnit: string;
 
@@ -426,13 +439,11 @@ export class FrameStore {
     }
 
     @computed get renderWidth() {
-        const overlayStore = AppStore.Instance.overlayStore;
-        return this.isPreview ? overlayStore.previewRenderWidth(this.previewViewWidth || PvPreviewComponent.WIDGET_CONFIG.defaultWidth) : overlayStore.renderWidth;
+        return AppStore.Instance.channelMapStore.channelMapEnabled && !this.isPreview ? this.channelMapInnerOverlayStore.renderWidth : this.overlayStore.renderWidth;
     }
 
     @computed get renderHeight() {
-        const overlayStore = AppStore.Instance.overlayStore;
-        return this.isPreview ? overlayStore.previewRenderHeight(this.previewViewHeight || PvPreviewComponent.WIDGET_CONFIG.defaultHeight) : overlayStore.renderHeight;
+        return AppStore.Instance.channelMapStore.channelMapEnabled && !this.isPreview ? this.channelMapInnerOverlayStore.renderHeight : this.overlayStore.renderHeight;
     }
 
     @computed get isRenderable() {
@@ -1200,9 +1211,9 @@ export class FrameStore {
     @computed get centerWCS(): WCSPoint2D {
         // re-calculate with different wcs system and format
         /* eslint-disable @typescript-eslint/no-unused-vars */
-        const system = AppStore.Instance.overlayStore.global.explicitSystem;
-        const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
-        const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
+        const system = AppStore.Instance.overlaySettings.global.explicitSystem;
+        const formatX = AppStore.Instance.overlaySettings.numbers.formatTypeX;
+        const formatY = AppStore.Instance.overlaySettings.numbers.formatTypeY;
         /* eslint-enable @typescript-eslint/no-unused-vars */
         if (!this.wcsInfoForTransformation) {
             return null;
@@ -1234,7 +1245,7 @@ export class FrameStore {
         return {ctype: info.ctype, layoutName: layoutName};
     }
 
-    constructor(frameInfo: FrameInfo) {
+    constructor(frameInfo: FrameInfo, pvGeneratorWidget?: PvGeneratorWidgetStore) {
         makeObservable(this);
         this.logStore = LogStore.Instance;
         this.backendService = BackendService.Instance;
@@ -1262,6 +1273,9 @@ export class FrameStore {
         this.requiredStokes = 0;
         this.requiredChannel = 0;
         this.renderConfig = new RenderConfigStore(preferenceStore, this);
+        this.overlayStore = frameInfo.preview ? new PvPreviewOverlayStore(pvGeneratorWidget) : new ImageViewOverlayStore();
+        this.channelMapOuterOverlayStore = new ChannelMapOuterOverlayStore();
+        this.channelMapInnerOverlayStore = new ChannelMapInnerOverlayStore();
         this.colorbarStore = new ColorbarStore(this);
         this.contourConfig = new ContourConfigStore(preferenceStore);
         this.contourStores = new Map<number, ContourStore>();
@@ -1304,41 +1318,41 @@ export class FrameStore {
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preferenceStore.astColor;
-        const overlayStore = AppStore.Instance.overlayStore;
-        if (astColor !== overlayStore.global.color) {
-            overlayStore.global.setColor(astColor);
+        const overlaySettings = AppStore.Instance.overlaySettings;
+        if (astColor !== overlaySettings.global.color) {
+            overlaySettings.global.setColor(astColor);
         }
         const astGridVisible = preferenceStore.astGridVisible;
-        if (astGridVisible !== overlayStore.grid.visible) {
-            overlayStore.grid.setVisible(astGridVisible);
+        if (astGridVisible !== overlaySettings.grid.visible) {
+            overlaySettings.grid.setVisible(astGridVisible);
         }
         const astLabelsVisible = preferenceStore.astLabelsVisible;
-        if (astLabelsVisible !== overlayStore.labels.visible) {
-            overlayStore.labels.setVisible(astLabelsVisible);
+        if (astLabelsVisible !== overlaySettings.labels.visible) {
+            overlaySettings.labels.setVisible(astLabelsVisible);
         }
         const colorbarVisible = preferenceStore.colorbarVisible;
-        if (colorbarVisible !== overlayStore.colorbar.visible) {
-            overlayStore.colorbar.setVisible(colorbarVisible);
+        if (colorbarVisible !== overlaySettings.colorbar.visible) {
+            overlaySettings.colorbar.setVisible(colorbarVisible);
         }
         const colorbarInteractive = preferenceStore.colorbarInteractive;
-        if (colorbarInteractive !== overlayStore.colorbar.interactive) {
-            overlayStore.colorbar.setInteractive(colorbarInteractive);
+        if (colorbarInteractive !== overlaySettings.colorbar.interactive) {
+            overlaySettings.colorbar.setInteractive(colorbarInteractive);
         }
         const colorbarPosition = preferenceStore.colorbarPosition;
-        if (colorbarPosition !== overlayStore.colorbar.position) {
-            overlayStore.colorbar.setPosition(colorbarPosition);
+        if (colorbarPosition !== overlaySettings.colorbar.position) {
+            overlaySettings.colorbar.setPosition(colorbarPosition);
         }
         const colorbarWidth = preferenceStore.colorbarWidth;
-        if (colorbarWidth !== overlayStore.colorbar.width) {
-            overlayStore.colorbar.setWidth(colorbarWidth);
+        if (colorbarWidth !== overlaySettings.colorbar.width) {
+            overlaySettings.colorbar.setWidth(colorbarWidth);
         }
         const colorbarTicksDensity = preferenceStore.colorbarTicksDensity;
-        if (colorbarTicksDensity !== overlayStore.colorbar.tickDensity) {
-            overlayStore.colorbar.setTickDensity(colorbarTicksDensity);
+        if (colorbarTicksDensity !== overlaySettings.colorbar.tickDensity) {
+            overlaySettings.colorbar.setTickDensity(colorbarTicksDensity);
         }
         const colorbarLabelVisible = preferenceStore.colorbarLabelVisible;
-        if (colorbarLabelVisible !== overlayStore.colorbar.labelVisible) {
-            overlayStore.colorbar.setLabelVisible(colorbarLabelVisible);
+        if (colorbarLabelVisible !== overlaySettings.colorbar.labelVisible) {
+            overlaySettings.colorbar.setLabelVisible(colorbarLabelVisible);
         }
 
         this.frameRegionSet = new RegionSetStore(this, PreferenceStore.Instance, BackendService.Instance);
@@ -1365,7 +1379,7 @@ export class FrameStore {
                 const entries = this.frameInfo.fileInfoExtended.headerEntries;
                 const skySystem = entries.find(entry => entry.name.includes("RADESYS"))?.value;
                 if (Object.values(SystemType).includes(skySystem as SystemType)) {
-                    AppStore.Instance.overlayStore.global.setDefaultSystem(skySystem as SystemType);
+                    AppStore.Instance.overlaySettings.global.setDefaultSystem(skySystem as SystemType);
                 }
 
                 this.spectralFrame = AST.getSpectralFrame(astFrameSet);
@@ -1413,16 +1427,16 @@ export class FrameStore {
                 if (this.wcsInfo) {
                     // init 2D(Sky) wcs copy for the precision of region coordinate transformation
                     this.wcsInfoForTransformation = AST.copy(this.wcsInfo);
-                    AST.set(this.wcsInfoForTransformation, `Format(${this.dirX})=${overlayStore.numbers.formatTypeX}.${WCS_PRECISION}`);
-                    AST.set(this.wcsInfoForTransformation, `Format(${this.dirY})=${overlayStore.numbers.formatTypeY}.${WCS_PRECISION}`);
+                    AST.set(this.wcsInfoForTransformation, `Format(${this.dirX})=${overlaySettings.numbers.formatTypeX}.${WCS_PRECISION}`);
+                    AST.set(this.wcsInfoForTransformation, `Format(${this.dirY})=${overlaySettings.numbers.formatTypeY}.${WCS_PRECISION}`);
                     this.validWcs = true;
                     this.defaultWcsSystem = AST.getString(this.wcsInfo, "System") as SystemType;
-                    overlayStore.setDefaultsFromFrame(this);
+                    overlaySettings.setDefaultsFromFrame(this);
                 }
             }
         }
 
-        this.updateWcsSystem(overlayStore.numbers.formatStringX, overlayStore.numbers.formatStringY, overlayStore.global.explicitSystem); // for image coordinates selected
+        this.updateWcsSystem(overlaySettings.numbers.formatStringX, overlaySettings.numbers.formatStringY, overlaySettings.global.explicitSystem); // for image coordinates selected
 
         if (!this.wcsInfo) {
             this.logStore.addWarning(`Problem processing headers in file ${this.filename} for AST`, ["ast"]);
@@ -1504,10 +1518,10 @@ export class FrameStore {
         );
 
         autorun(() => {
-            const overlayStore = AppStore.Instance.overlayStore;
-            const formatStringX = overlayStore?.numbers?.formatStringX;
-            const formatStyingY = overlayStore?.numbers?.formatStringY;
-            const explicitSystem = overlayStore?.global?.explicitSystem;
+            const overlaySettings = AppStore.Instance.overlaySettings;
+            const formatStringX = overlaySettings?.numbers?.formatStringX;
+            const formatStyingY = overlaySettings?.numbers?.formatStringY;
+            const explicitSystem = overlaySettings?.global?.explicitSystem;
             this.updateWcsSystem(formatStringX, formatStyingY, explicitSystem);
         });
 
@@ -2002,7 +2016,7 @@ export class FrameStore {
         let cursorPosWCS, cursorPosFormatted;
         let precisionX = 0;
         let precisionY = 0;
-        if (((this.validWcs || this.isYX) && AppStore.Instance.overlayStore.isWcsCoordinates) || this.isPVImage || this.isUVImage || this.isSwappedZ) {
+        if (((this.validWcs || this.isYX) && AppStore.Instance.overlaySettings.isWcsCoordinates) || this.isPVImage || this.isUVImage || this.isSwappedZ) {
             // We need to compare X and Y coordinates in both directions
             // to avoid a confusing drop in precision at rounding threshold
             const offsetBlock = [
@@ -2020,10 +2034,10 @@ export class FrameStore {
 
             while (precisionX < FrameStore.CursorInfoMaxPrecision && precisionY < FrameStore.CursorInfoMaxPrecision) {
                 let astString = new ASTSettingsString();
-                const overlayStore = AppStore.Instance.overlayStore;
-                astString.add(`Format(${this.dirX})`, this.isPVImage || this.isUVImage || this.isSwappedZ ? undefined : overlayStore.numbers.cursorFormatStringX(precisionX));
-                astString.add(`Format(${this.dirY})`, this.isPVImage || this.isUVImage || this.isSwappedZ ? undefined : overlayStore.numbers.cursorFormatStringY(precisionY));
-                astString.add("System", this.isPVImage || this.isUVImage || this.isSwappedZ ? "cartesian" : overlayStore.global.explicitSystem);
+                const overlaySettings = AppStore.Instance.overlaySettings;
+                astString.add(`Format(${this.dirX})`, this.isPVImage || this.isUVImage || this.isSwappedZ ? undefined : overlaySettings.numbers.cursorFormatStringX(precisionX));
+                astString.add(`Format(${this.dirY})`, this.isPVImage || this.isUVImage || this.isSwappedZ ? undefined : overlaySettings.numbers.cursorFormatStringY(precisionY));
+                astString.add("System", this.isPVImage || this.isUVImage || this.isSwappedZ ? "cartesian" : overlaySettings.global.explicitSystem);
 
                 let formattedNeighbourhood = normalizedNeighbourhood.map(pos => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString(), true));
                 let [p, n1, n2] = formattedNeighbourhood;
@@ -2178,7 +2192,7 @@ export class FrameStore {
 
     public genRegionWcsProperties = (regionType: CARTA.RegionType, controlPoints: Point2D[], rotation: number, regionId: number = -1): string => {
         const centerPoint = controlPoints[CENTER_POINT_INDEX];
-        if (!this.validWcs || !isFinite(centerPoint.x) || !isFinite(centerPoint.y) || AppStore.Instance.overlayStore.isImgCoordinates) {
+        if (!this.validWcs || !isFinite(centerPoint.x) || !isFinite(centerPoint.y) || AppStore.Instance.overlaySettings.isImgCoordinates) {
             return "Invalid";
         }
 
@@ -2188,7 +2202,7 @@ export class FrameStore {
         }
 
         const center = regionId === RegionId.CURSOR ? `${this.cursorInfo?.infoWCS?.x}, ${this.cursorInfo?.infoWCS?.y}` : `${wcsCenter.x}, ${wcsCenter.y}`;
-        const systemType = AppStore.Instance.overlayStore.global.explicitSystem;
+        const systemType = AppStore.Instance.overlaySettings.global.explicitSystem;
 
         switch (regionType) {
             case CARTA.RegionType.POINT:
@@ -2295,7 +2309,7 @@ export class FrameStore {
     @computed get offsetCenterWCS(): WCSPoint2D {
         // re-calculate with different wcs system
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const system = AppStore.Instance.overlayStore.global.explicitSystem;
+        const system = AppStore.Instance.overlaySettings.global.explicitSystem;
         if (!this.wcsInfoShifted) {
             return null;
         }
@@ -2342,7 +2356,7 @@ export class FrameStore {
      * @returns - false
      */
     @action setOffsetCenterWcs = (wcsX: string, wcsY: string): boolean => {
-        if (!isWCSStringFormatValid(wcsX, AppStore.Instance.overlayStore.numbers.formatTypeX) || !isWCSStringFormatValid(wcsY, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
+        if (!isWCSStringFormatValid(wcsX, AppStore.Instance.overlaySettings.numbers.formatTypeX) || !isWCSStringFormatValid(wcsY, AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
             return false;
         }
         const center = getPixelValueFromWCS(this.wcsInfoForTransformation, {x: wcsX, y: wcsY});
@@ -2699,7 +2713,7 @@ export class FrameStore {
      * @returns - false
      */
     @action setCenterWcs = (wcsX: string, wcsY: string): boolean => {
-        if (!isWCSStringFormatValid(wcsX, AppStore.Instance.overlayStore.numbers.formatTypeX) || !isWCSStringFormatValid(wcsY, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
+        if (!isWCSStringFormatValid(wcsX, AppStore.Instance.overlaySettings.numbers.formatTypeX) || !isWCSStringFormatValid(wcsY, AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
             return false;
         }
         const center = getPixelValueFromWCS(this.wcsInfoForTransformation, {x: wcsX, y: wcsY});
@@ -3281,15 +3295,6 @@ export class FrameStore {
         this.setZoom((this.zoomLevel * oldHeight) / this.frameInfo.fileInfoExtended.height);
         this.setCenter(isWidthUpdated ? ((this.center.x + 0.5) * oldAspectRatio) / this.aspectRatio - 0.5 : this.center.x, isHeightUpdated ? ((this.center.y + 0.5) * this.aspectRatio) / oldAspectRatio - 0.5 : this.center.y, false);
     }
-
-    @action onResizePreviewWidget = (width: number, height: number) => {
-        if (width > 0 && height > 0) {
-            this.previewViewWidth = width;
-            this.previewViewHeight = height;
-
-            this.fitZoom();
-        }
-    };
 
     @action setFrameInfo = (frameInfo: FrameInfo) => {
         this.frameInfo = frameInfo;
