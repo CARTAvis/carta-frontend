@@ -89,7 +89,7 @@ export class AboutDialogComponent extends React.Component {
                         </li>
                     </ul>
                     <Button minimal={true} icon="link" rightIcon={this.extendUsefulLinks ? "double-chevron-up" : "double-chevron-down"} alignText={"right"} small={true} onClick={this.toggleExtendUsefulLinks}>
-                        <h4 style={{margin: "7px 0"}}>Useful links</h4>
+                        <h4 className="extend-button-title">Useful links</h4>
                     </Button>
                     <Collapse isOpen={this.extendUsefulLinks}>
                         <ul>
@@ -125,10 +125,10 @@ export class AboutDialogComponent extends React.Component {
                         </ul>
                     </Collapse>
                     <Button minimal={true} icon="database" rightIcon={this.extendExternalServices ? "double-chevron-up" : "double-chevron-down"} alignText={"right"} small={true} onClick={this.toggleExtendExternalServices}>
-                        <h4 style={{margin: "7px 0"}}>External services</h4>
+                        <h4 className="extend-button-title">External services</h4>
                     </Button>
                     <Collapse isOpen={this.extendExternalServices}>
-                        <p style={{margin: "14px 7px"}}>This software has made use of:</p>
+                        <p className="external-services-content">This software has made use of:</p>
                         <ul>
                             <li>
                                 The SIMBAD database, operated at CDS, Strasbourg, France (
