@@ -128,16 +128,17 @@ export class AboutDialogComponent extends React.Component {
                         <h4 style={{margin: "7px 0"}}>External services</h4>
                     </Button>
                     <Collapse isOpen={this.extendExternalServices}>
+                        <p style={{margin: "14px 7px"}}>This software has made use of:</p>
                         <ul>
                             <li>
-                                This software has made use of the SIMBAD database, operated at CDS, Strasbourg, France (
+                                The SIMBAD database, operated at CDS, Strasbourg, France (
                                 <a href="https://ui.adsabs.harvard.edu/abs/2000A%26AS..143....9W" rel="noopener noreferrer" target="_blank">
                                     2000,A&AS,143,9
                                 </a>
-                                , "The SIMBAD astronomical database", Wenger et al.).
+                                , "The SIMBAD astronomical database", Wenger et al.)
                             </li>
                             <li>
-                                This software has made use of the VizieR catalogue access tool, CDS, Strasbourg Astronomical Observatory, France (DOI :{" "}
+                                The VizieR catalogue access tool, operated at CDS, Strasbourg Astronomical Observatory, France (DOI :{" "}
                                 <a href="https://www.doi.org/https://www.doi.org/" rel="noopener noreferrer" target="_blank">
                                     10.26093/cds/vizier
                                 </a>
@@ -148,22 +149,21 @@ export class AboutDialogComponent extends React.Component {
                                 , "The VizieR database of astronomical catalogues.", Ochsenbein et al.)
                             </li>
                             <li>
-                                This software has made use of{" "}
                                 <a href="https://alasky.cds.unistra.fr/hips-image-services/hips2fits" rel="noopener noreferrer" target="_blank">
                                     hips2fits
-                                </a>{" "}
-                                a service provided by CDS.
+                                </a>
+                                , a service provided by CDS
                             </li>
                             <li>
-                                This software has made use of{" "}
+                                {" "}
                                 <a href="https://splatalogue.online/" rel="noopener noreferrer" target="_blank">
                                     Splatalogue
-                                </a>{" "}
-                                a service provided by NRAO. See the{" "}
+                                </a>
+                                , a service provided by NRAO. See the{" "}
                                 <a href="https://splatalogue.online//#/faq" rel="noopener noreferrer" target="_blank">
                                     FAQ page
                                 </a>{" "}
-                                for the full set of catalog collection.
+                                for the full set of catalog collection
                             </li>
                         </ul>
                     </Collapse>
