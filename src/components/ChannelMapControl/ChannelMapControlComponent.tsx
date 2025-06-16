@@ -16,9 +16,9 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
         return {
             id: "channel-map-control",
             type: "channel-map-control",
-            minWidth: 450,
+            minWidth: 300,
             minHeight: 200,
-            defaultWidth: 480,
+            defaultWidth: 490,
             defaultHeight: 600,
             title: "Channel Map Control",
             isCloseable: true
