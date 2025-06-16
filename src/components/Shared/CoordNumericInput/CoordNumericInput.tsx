@@ -40,11 +40,11 @@ const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled = fals
     let tooltipContent = "";
     switch (inputType) {
         case InputType.XCoord:
-            const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
+            const formatX = AppStore.Instance.overlaySettings.numbers.formatTypeX;
             tooltipContent = `Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`;
             break;
         case InputType.YCoord:
-            const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
+            const formatY = AppStore.Instance.overlaySettings.numbers.formatTypeY;
             tooltipContent = `Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`;
             break;
         case InputType.Size:
@@ -131,6 +131,6 @@ export const CoordNumericInput = ({coord, inputType, value, onChange, valueWcs, 
     if (coord === CoordinateMode.Image) {
         return <ImageCoordNumericInput inputType={inputType} value={value} onChange={onChange} disabled={disabled} customPlaceholder={customPlaceholder} />;
     } else {
-        return <WcsCoordNumericInput inputType={inputType} valueWcs={valueWcs} onChangeWcs={onChangeWcs} disabled={disabled || wcsDisabled || AppStore.Instance.overlayStore.isImgCoordinates} customPlaceholder={customPlaceholder} />;
+        return <WcsCoordNumericInput inputType={inputType} valueWcs={valueWcs} onChangeWcs={onChangeWcs} disabled={disabled || wcsDisabled || AppStore.Instance.overlaySettings.isImgCoordinates} customPlaceholder={customPlaceholder} />;
     }
 };

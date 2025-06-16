@@ -119,7 +119,11 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             setColormap: widgetStore.setColormap,
             handleEqualAxesValuesChanged: this.handleEqualAxesValuesChanged,
             invertedColorMap: widgetStore.invertedColorMap,
-            handleInvertedColorMapChanged: this.handleInvertedColorMapChanged
+            handleInvertedColorMapChanged: this.handleInvertedColorMapChanged,
+            showReferenceAxes: widgetStore.showReferenceAxes,
+            referenceAxesThickness: widgetStore.referenceAxesThickness,
+            referenceAxesColor: widgetStore.referenceAxesColor,
+            setShowReferenceAxes: widgetStore.setShowReferenceAxes
         };
 
         const hasStokes = widgetStore.effectiveFrame && widgetStore.effectiveFrame.hasStokes;

@@ -4,23 +4,20 @@ import classNames from "classnames";
 import * as _ from "lodash";
 import {observer} from "mobx-react";
 
-import {CursorInfo, ImageItem, ImageType, SPECTRAL_TYPE_STRING} from "models";
-import {AppStore, OverlayStore, PreferenceStore} from "stores";
+import {ImageItem, ImageType, SPECTRAL_TYPE_STRING} from "models";
+import {AppStore, OverlaySettings, OverlayStore, PreferenceStore} from "stores";
 
 import "./OverlayComponent.scss";
 
 export class OverlayComponentProps {
-    overlaySettings: OverlayStore;
+    overlaySettings: OverlaySettings;
+    overlayStore: OverlayStore;
     image: ImageItem;
     docked: boolean;
     top?: number;
     left?: number;
-    onClicked?: (cursorInfo: CursorInfo) => void;
-    onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
-    width?: number;
-    height?: number;
-    type?: "channel-map-inner" | "channel-map-outer";
-    unScaled?: boolean;
+    unscaled?: boolean;
+    channelMapDrawFunction?: (canvas: HTMLCanvasElement) => void;
 }
 
 @observer
@@ -46,9 +43,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     updateImageDimensions() {
         if (this.canvas) {
-            const frame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image.store?.baseFrame : this.props.image?.store;
-            this.canvas.width = (this.props.width ?? (frame?.isPreview ? frame?.previewViewWidth : this.props.overlaySettings.viewWidth)) * devicePixelRatio * AppStore.Instance.imageRatio;
-            this.canvas.height = (this.props.height ?? (frame?.isPreview ? frame?.previewViewHeight : this.props.overlaySettings.viewHeight)) * devicePixelRatio * AppStore.Instance.imageRatio;
+            this.canvas.width = this.props.overlayStore.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
+            this.canvas.height = this.props.overlayStore.viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
         }
     }
 
@@ -56,16 +52,16 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const settings = this.props.overlaySettings;
         const frame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image.store?.baseFrame : this.props.image?.store;
         const appStore = AppStore.Instance;
-        const padding = this.props.type === "channel-map-inner" ? settings.channelMapInnerPadding("corner") : settings.padding;
+        const padding = this.props.overlayStore.padding;
 
         const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoShifted : frame.wcsInfo;
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
-        const frameView = this.props.unScaled
+        const frameView = this.props.unscaled
             ? {
                   xMin: padding.left * appStore.pixelRatio,
-                  xMax: (this.props.width ?? this.props.overlaySettings.viewWidth) * appStore.pixelRatio - padding.right * appStore.pixelRatio,
+                  xMax: this.props.overlayStore.viewWidth * appStore.pixelRatio - padding.right * appStore.pixelRatio,
                   yMin: (frame.aspectRatio ?? 1) * padding.bottom * appStore.pixelRatio,
-                  yMax: (frame.aspectRatio ?? 1) * (this.props.height ?? this.props.overlaySettings.viewHeight) * appStore.pixelRatio - padding.top * appStore.pixelRatio,
+                  yMax: (frame.aspectRatio ?? 1) * this.props.overlayStore.viewHeight * appStore.pixelRatio - padding.top * appStore.pixelRatio,
                   mip: 1
               }
             : frame.spatialReference
@@ -86,10 +82,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 const newFrame = AST.frame(2, "Domain=PIXEL");
                 AST.addFrame(tempWcsInfo, 1, scaleMapping, newFrame);
                 AST.setI(tempWcsInfo, "Base", frame.isOffsetCoord ? 4 : 3);
-                AST.setI(tempWcsInfo, "Current", frame.isOffsetCoord && OverlayStore.Instance.isImgCoordinates ? 3 : 2);
+                AST.setI(tempWcsInfo, "Current", frame.isOffsetCoord && OverlaySettings.Instance.isImgCoordinates ? 3 : 2);
             }
 
-            if (frame.isOffsetCoord && OverlayStore.Instance.isWcsCoordinates) {
+            if (frame.isOffsetCoord && OverlaySettings.Instance.isWcsCoordinates) {
                 const fovSizeInArcsec = frame.getWcsSizeInArcsec(frame.fovSize);
                 const viewSize = fovSizeInArcsec.x > fovSizeInArcsec.y ? fovSizeInArcsec.y : fovSizeInArcsec.x;
                 const factor = 2; // jump factor
@@ -108,7 +104,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 }
 
                 // disable unit labels when custom labels on
-                if (OverlayStore.Instance.labels.customText) {
+                if (settings.labels.customText) {
                     AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)="", Unit(2)=""`);
                 } else {
                     AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)=${unit}, Unit(2)=${unit}`);
@@ -122,8 +118,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     frameView.xMax,
                     frameView.yMin / frame.aspectRatio,
                     frameView.yMax / frame.aspectRatio,
-                    (this.props.width ?? (frame.isPreview ? frame?.previewViewWidth : this.props.overlaySettings.viewWidth)) * appStore.pixelRatio,
-                    (this.props.height ?? (frame.isPreview ? frame?.previewViewHeight : this.props.overlaySettings.viewHeight)) * appStore.pixelRatio,
+                    this.props.overlayStore.viewWidth * appStore.pixelRatio,
+                    this.props.overlayStore.viewHeight * appStore.pixelRatio,
                     padding.left * appStore.pixelRatio,
                     padding.right * appStore.pixelRatio,
                     padding.top * appStore.pixelRatio,
@@ -132,15 +128,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 );
             };
 
-            let currentStyleString;
-
-            if (this.props.type === "channel-map-inner") {
-                currentStyleString = settings.channelMapInnerStyleString(frame);
-            } else if (this.props.type === "channel-map-outer") {
-                currentStyleString = settings.channelMapOuterStyleString(frame);
-            } else {
-                currentStyleString = settings.styleString(frame);
-            }
+            let currentStyleString = this.props.overlayStore.styleString(frame);
 
             // Override the AST tolerance during motion
             if (frame.moving) {
@@ -174,6 +162,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
             AST.deleteObject(tempWcsInfo);
             AST.clearLastErrorMessage();
+
+            if (this.props.channelMapDrawFunction) {
+                this.props.channelMapDrawFunction(this.canvas);
+            }
         }
     };
 
@@ -188,13 +180,13 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const refFrame = frame.spatialReference ?? frame;
         // changing the frame view, padding or width/height triggers a re-render
 
-        const w = this.props.width ?? (frame.isPreview ? frame?.previewViewWidth : this.props.overlaySettings.viewWidth);
-        const h = this.props.height ?? (frame.isPreview ? frame?.previewViewHeight : this.props.overlaySettings.viewHeight);
+        const w = this.props.overlayStore.viewWidth;
+        const h = this.props.overlayStore.viewHeight;
         // Dummy variables for triggering re-render
         /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
-        const styleString = this.props.overlaySettings.styleString;
+        const styleString = this.props.overlayStore.styleString;
         const frameView = refFrame.requiredFrameView;
-        const framePadding = this.props.overlaySettings.padding;
+        const framePadding = this.props.overlayStore.padding;
         const moving = frame.moving;
         const system = this.props.overlaySettings.global.system;
         const globalColor = this.props.overlaySettings.global.color;
@@ -243,7 +235,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             const formatStringX = this.props.overlaySettings.numbers.formatStringX;
             const formatStyingY = this.props.overlaySettings.numbers.formatStringY;
             const explicitSystem = this.props.overlaySettings.global.explicitSystem;
-            if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined && OverlayStore.Instance.isWcsCoordinates && frame.validWcs) {
+            if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined && OverlaySettings.Instance.isWcsCoordinates && frame.validWcs) {
                 AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY}, System=${explicitSystem},` + dirAxesSetting);
             }
         }

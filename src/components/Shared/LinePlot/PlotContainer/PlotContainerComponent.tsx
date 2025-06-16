@@ -49,6 +49,7 @@ export class PlotContainerProps {
     isGroupSubPlot?: boolean;
     pointRadius?: number;
     zeroLineWidth?: number;
+    showZeroLine?: boolean;
     multiColorSingleLineColors?: Array<string>;
     multiColorMultiLinesColors?: Map<string, Array<string>>;
     borderWidth?: number;
@@ -391,8 +392,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         callback: PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeX)
                     },
                     grid: {
-                        color: grid => (grid.index === 0 && this.props.xZeroLineColor ? this.props.xZeroLineColor : gridColor),
-                        lineWidth: grid => (grid.index === 0 && this.props.zeroLineWidth ? this.props.zeroLineWidth : 1),
+                        color: grid => (grid.tick.value === 0 && this.props.showZeroLine ? this.props.xZeroLineColor : gridColor),
+                        lineWidth: grid => (grid.tick.value === 0 && this.props.showZeroLine ? this.props.zeroLineWidth : 1),
                         tickLength: this.props.xTickMarkLength === 0 ? this.props.xTickMarkLength : 10
                     },
                     border: {
@@ -429,8 +430,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         callback: PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeY)
                     },
                     grid: {
-                        color: grid => (grid.index === 0 && this.props.xZeroLineColor ? this.props.xZeroLineColor : gridColor),
-                        lineWidth: grid => (grid.index === 0 && this.props.zeroLineWidth ? this.props.zeroLineWidth : 1)
+                        color: grid => (grid.tick.value === 0 && this.props.showZeroLine ? this.props.xZeroLineColor : gridColor),
+                        lineWidth: grid => (grid.tick.value === 0 && this.props.showZeroLine ? this.props.zeroLineWidth : 1)
                     },
                     border: {
                         display: false

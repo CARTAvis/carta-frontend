@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
 import {CursorInfo, Point2D, ZoomPoint} from "models";
-import {AppStore, DialogId, OverlayStore, PreferenceStore} from "stores";
+import {AppStore, DialogId, PreferenceStore} from "stores";
 import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
 import {add2D, average2D, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
 
@@ -24,7 +24,6 @@ import "./RegionViewComponent.scss";
 
 export interface RegionViewComponentProps {
     frame: FrameStore;
-    overlaySettings: OverlayStore;
     dragPanningEnabled: boolean;
     docked: boolean;
     width: number;
@@ -109,10 +108,15 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         if (prevProps.width !== this.props.width || prevProps.height !== this.props.height) {
             const stage = this.stageRef.current;
             if (stage) {
-                const offset = {x: (this.props.width - prevProps.width) / 2, y: (this.props.height - prevProps.height) / 2};
+                const offset = {x: ((this.props.width - prevProps.width) / 2) * this.props.frame.aspectRatio, y: (this.props.height - prevProps.height) / 2};
                 const zoom = stage.scaleX();
                 const mutatedOffset = scale2D(offset, (1 - zoom) / zoom);
                 this.stageResizeOffset = add2D(this.stageResizeOffset, mutatedOffset);
+
+                const frame = this.props.frame?.spatialReference ?? this.props.frame;
+                if (frame) {
+                    this.syncStage(frame.centerMovement, frame.zoomLevel);
+                }
             }
         }
     }
