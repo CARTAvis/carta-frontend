@@ -16,11 +16,10 @@ export class RasterViewComponentProps {
     docked: boolean;
     image: ImageItem;
     pixelHighlightValue: number;
-    renderWidth?: number;
-    renderHeight?: number;
-    leftPadding?: number;
     row: number;
     column: number;
+    renderWidth?: number;
+    renderHeight?: number;
     channel?: number[];
 }
 
@@ -67,17 +66,21 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             return;
         }
 
+        const pixelRatio = AppStore.Instance.pixelRatio;
+        const innerRenderWidth = frame.channelMapInnerOverlayStore.renderWidth;
+        const innerRenderHeight = frame.channelMapInnerOverlayStore.renderHeight;
+        const gapX = frame.channelMapInnerOverlayStore.gapX;
+        const gapY = frame.channelMapInnerOverlayStore.gapY;
+
         channels.forEach((channel, index) => {
             const appStore = AppStore.Instance;
             const channelMapStore = appStore.channelMapStore;
             const column = index % channelMapStore.numColumns;
             const row = Math.floor(index / channelMapStore.numColumns);
 
-            let width = w / channelMapStore.numColumns;
-            let height = h / channelMapStore.numRows;
+            const xOffset = Math.round((innerRenderWidth + gapX) * column * pixelRatio);
+            const yOffset = Math.round(this.gl.canvas.height - ((innerRenderHeight + gapY) * (row + 1) - gapY) * pixelRatio);
 
-            let xOffset = Math.ceil(column * width);
-            let yOffset = Math.ceil(this.gl.canvas.height - height * (row + 1));
             this.renderCanvas(frame, xOffset, yOffset, Math.floor(frame.renderWidth), Math.floor(frame.renderHeight), channel);
         });
     };
@@ -107,7 +110,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.updateCanvasSize(baseFrame, renderWidth, renderHeight, numImageColumns, numImageRows);
         }
 
-        const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
+        const pixelRatio = AppStore.Instance.pixelRatio;
         const column = this.props.column;
         const row = this.props.row;
         const xOffset = column * renderWidth * pixelRatio;
@@ -478,7 +481,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
-        const padding = appStore.overlayStore.padding;
+        const padding = baseFrame.overlayStore.padding;
         const className = classNames(`raster-div`, {docked: this.props.docked});
 
         return (
@@ -489,7 +492,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     ref={this.getRef}
                     style={{
                         top: padding.top,
-                        left: this.props.leftPadding ?? padding.left,
+                        left: padding.left,
                         width: baseFrame?.isRenderable ? this.props.renderWidth || baseFrame.renderWidth || 1 : 1,
                         height: baseFrame?.isRenderable ? this.props.renderHeight || baseFrame.renderHeight || 1 : 1
                     }}

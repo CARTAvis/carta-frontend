@@ -3,11 +3,11 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {ImageItem} from "models";
-import {AppStore, OverlayStore} from "stores";
+import {AppStore, OverlaySettings} from "stores";
 import {getColorForTheme} from "utilities";
 
 export class ChannelMapLabelComponentProps {
-    overlaySettings: OverlayStore;
+    overlaySettings: OverlaySettings;
     image: ImageItem;
     docked: boolean;
     top: number;
@@ -55,6 +55,7 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
         const velocityText = channelMapStore.showVelocityString ? `${velocityLabel}${velocityValue}` : "";
 
         const className = classNames("channel-map-label-span", {docked: this.props.docked});
+        const hightlightBorderWidth = 2;
 
         return (
             <span
@@ -63,15 +64,15 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
                 style={{
                     color: getColorForTheme(this.props.overlaySettings.global.color),
                     position: "absolute",
-                    top: (this.props.top || 0) - 3,
-                    left: (this.props.left || 0) - 3,
-                    width: this.props.width + 6,
-                    height: this.props.height + 6,
+                    top: (this.props.top || 0) - 0.5 - hightlightBorderWidth,
+                    left: (this.props.left || 0) + 0.5 - hightlightBorderWidth,
+                    width: this.props.width + hightlightBorderWidth * 2,
+                    height: this.props.height + hightlightBorderWidth * 2,
                     zIndex: 2,
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     paddingLeft: `${this.props.width * 0.02}px`,
-                    border: `${this.props.highlighted ? "3px solid red" : "none"}`
+                    border: `${hightlightBorderWidth}px solid ${this.props.highlighted ? "red" : "transparent"}`
                 }}
                 id="channel-map-label-span"
             >

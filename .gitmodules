@@ -1,3 +1,6 @@
 [submodule "protobuf"]
 	path = protobuf
 	url = https://github.com/CARTAvis/carta-protobuf.git
+[submodule "schemas"]
+	path = schemas
+	url = https://github.com/CARTAvis/schemas.git
