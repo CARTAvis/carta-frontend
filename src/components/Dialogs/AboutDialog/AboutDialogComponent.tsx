@@ -11,9 +11,9 @@ import "./AboutDialogComponent.scss";
 
 @observer
 export class AboutDialogComponent extends React.Component {
-    private static readonly DefaultWidth = 500;
+    private static readonly DefaultWidth = 525;
     private static readonly DefaultHeight = 615;
-    private static readonly MinWidth = 500;
+    private static readonly MinWidth = 525;
     private static readonly MinHeight = 615;
 
     @observable extendUsefulLinks: boolean = false;
