@@ -1,6 +1,6 @@
 import * as React from "react";
 import {NonIdealState} from "@blueprintjs/core";
-import _ from "lodash";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {CursorInfo, ImageType} from "models";
@@ -24,23 +24,28 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     const regionViewRef = React.useRef<RegionViewComponent>();
     const appStore = AppStore.Instance;
     const channelMapStore = appStore.channelMapStore;
-    const frame = appStore.activeFrame;
-    const image = appStore.activeImage;
-    const overlayStore = appStore.overlayStore;
-    const colorBarSetting = overlayStore.colorbar;
-    const colorbarOffset = overlayStore.colorbar.visible ? colorBarSetting.stageWidth + overlayStore?.colorbarHoverInfoHeight : 0;
+    const frame = channelMapStore.displayedFrame;
+    const image = channelMapStore.displayedImage;
+    const overlaySettings = appStore.overlaySettings;
 
-    const [overlayComponentRef, setOverlayComponentRef] = React.useState<OverlayComponent>();
     const [imageToolbarVisible, setImageToolbarVisible] = React.useState(false);
 
-    const renderWidth = overlayStore.fullViewWidth;
-    const renderHeight = overlayStore.fullViewHeight;
+    if (!frame) {
+        return <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;
+    }
 
-    const channelMapViewWidth = renderWidth - overlayStore.paddingRight - overlayStore.paddingLeft;
-    const channelMapViewHeight = renderHeight - overlayStore.paddingBottom - overlayStore.paddingTop;
+    const outerPadding = frame.channelMapOuterOverlayStore.padding;
+    const outerViewWidth = frame.channelMapOuterOverlayStore.viewWidth;
+    const outerViewHeight = frame.channelMapOuterOverlayStore.viewHeight;
+    const outerRenderWidth = frame.channelMapOuterOverlayStore.renderWidth;
+    const outerRenderHeight = frame.channelMapOuterOverlayStore.renderHeight;
+
+    const innerRenderWidth = frame.channelMapInnerOverlayStore.renderWidth;
+    const innerRenderHeight = frame.channelMapInnerOverlayStore.renderHeight;
+    const gapX = frame.channelMapInnerOverlayStore.gapX;
+    const gapY = frame.channelMapInnerOverlayStore.gapY;
 
     const lastRow = Math.floor((channelMapStore.channelArray.length - 1) / channelMapStore.numColumns);
-    const columnOfLastFrame = channelMapStore.channelArray.length - lastRow * channelMapStore.numColumns - 1;
 
     const onMouseEnter = () => {
         setImageToolbarVisible(true);
@@ -74,58 +79,33 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     }
 
     const overlayComponents = channelMapStore.channelArray.map((channel, index) => {
-        const appStore = AppStore.Instance;
-        const overlayStore = appStore.overlayStore;
         const column = index % channelMapStore.numColumns;
         const row = Math.floor(index / channelMapStore.numColumns);
-
-        let imageViewWidth = channelMapViewWidth / channelMapStore.numColumns;
-        let imageViewHeight = channelMapViewHeight / channelMapStore.numRows;
-
-        let overlayComponentTop = imageViewHeight * row + overlayStore.paddingTop;
-        let overlayComponentLeft = imageViewWidth * column + overlayStore.paddingLeft;
-
-        let overlayType: "corner" | "left" | "bottom" | "inner";
-
-        if (column === 0 && (row === channelMapStore.numRows - 1 || row === lastRow)) {
-            overlayType = "corner";
-        } else if (column === 0) {
-            overlayType = "left";
-        } else if (row === channelMapStore.numRows - 1 || row === lastRow || (row === lastRow - 1 && column > columnOfLastFrame)) {
-            overlayType = "bottom";
-        } else {
-            overlayType = "inner";
-        }
-
-        let imageTop = overlayComponentTop + overlayStore.channelMapInnerPadding(overlayType).top;
-        let imageLeft = overlayComponentLeft;
-
-        const imageRenderWidth = frame?.renderWidth;
-        const imageRenderHeight = frame?.renderHeight;
+        const left = outerPadding.left + (innerRenderWidth + gapX) * column;
+        const top = outerPadding.top + (innerRenderHeight + gapY) * row;
+        const isCornerOverlay = column === 0 && (row === channelMapStore.numRows - 1 || row === lastRow);
 
         return (
             channel < frame?.frameInfo.fileInfoExtended.depth && (
-                <div key={index} onClick={() => frame.setChannel(channel)} style={{top: overlayComponentTop}}>
-                    <ChannelMapInnerOverlayComponent
-                        index={index}
-                        frame={frame}
-                        renderWidth={renderWidth}
-                        renderHeight={renderHeight}
-                        docked={props.docked}
-                        overlayComponentRef={overlayComponentRef}
-                        setOverlayComponentRef={setOverlayComponentRef}
-                    />
+                <div
+                    key={index}
+                    onClick={() => {
+                        frame.setChannel(channel);
+                        appStore.setActiveImage(image);
+                    }}
+                    style={{top}}
+                >
                     {frame?.frameInfo.fileInfoExtended.depth > 1 && (
                         <ChannelMapLabelComponent
                             image={{
                                 type: ImageType.FRAME,
                                 store: frame
                             }}
-                            overlaySettings={overlayStore}
-                            top={imageTop}
-                            left={imageLeft}
-                            width={imageRenderWidth}
-                            height={imageRenderHeight}
+                            overlaySettings={overlaySettings}
+                            top={top}
+                            left={left}
+                            width={innerRenderWidth}
+                            height={innerRenderHeight}
                             docked={props.docked}
                             channel={channel}
                             highlighted={channel === frame.requiredChannel}
@@ -134,272 +114,207 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                     <RegionViewComponent
                         key={`region-view-component-${index}`}
                         frame={frame}
-                        width={imageRenderWidth}
-                        height={imageRenderHeight}
-                        top={imageTop}
-                        left={imageLeft}
+                        width={innerRenderWidth}
+                        height={innerRenderHeight}
+                        top={top}
+                        left={left}
                         onClickToCenter={cursorInfo => onClickToCenter(frame, cursorInfo)}
-                        overlaySettings={overlayStore}
                         dragPanningEnabled={appStore.preferenceStore.dragPanning}
                         docked={props.docked}
                     />
-                    {overlayType === "corner" && <BeamProfileOverlayComponent frame={frame} top={imageTop} left={imageLeft} docked={props.docked} padding={10} />}
+                    {isCornerOverlay && <BeamProfileOverlayComponent frame={frame} top={top} left={left} docked={props.docked} padding={10} />}
                 </div>
             )
         );
     });
 
-    return frame ? (
-        <div id={`image-panel`} key={"channel-map"} onMouseOver={onMouseEnter} onMouseLeave={onMouseLeave}>
-            <div
-                style={{
-                    width: renderWidth - overlayStore.paddingRight,
-                    height: renderHeight - overlayStore.paddingBottom,
-                    position: "absolute"
-                }}
-            >
-                {overlayComponents}
-                <RasterViewComponent
-                    key={"raster-view-component-channel-map"}
-                    image={image}
-                    docked={props.docked}
-                    pixelHighlightValue={channelMapStore.pixelHighlightValue}
-                    renderWidth={channelMapViewWidth}
-                    renderHeight={channelMapViewHeight}
-                    row={0}
-                    column={0}
-                    leftPadding={overlayStore.paddingLeft}
-                    channel={channelMapStore.channelArray}
-                />
-                <CursorOverlayComponent
-                    cursorInfo={frame.cursorInfo}
-                    cursorValue={frame.cursorInfo.isInsideImage ? frame.cursorValue.value : undefined}
-                    isValueCurrent={frame.isCursorValueCurrent}
-                    spectralInfo={frame.spectralInfo}
-                    width={frame?.frameInfo.fileInfoExtended.depth < channelMapStore.numColumns ? frame.renderWidth + overlayStore.paddingLeft + overlayStore.paddingRight : renderWidth - overlayStore.base}
-                    left={overlayStore.paddingLeft}
-                    right={overlayStore.paddingRight}
-                    docked={props.docked}
-                    unit={frame.requiredUnit}
-                    top={overlayStore.paddingTop + overlayStore.base}
-                    currentStokes={AppStore.Instance.activeFrame?.requiredPolarizationInfo}
-                    cursorValueToPercentage={frame.requiredUnit === "%"}
-                    isPreview={frame.isPreview}
-                    visible={imageToolbarVisible}
-                />
-                <ToolbarComponent
-                    docked={props.docked}
-                    visible={imageToolbarVisible}
-                    frame={frame}
-                    activeLayer={AppStore.Instance.activeLayer}
-                    onActiveLayerChange={AppStore.Instance.updateActiveLayer}
-                    onRegionViewZoom={zoom => onRegionViewZoom(frame, zoom)}
-                    onZoomToFit={() => fitZoomFrameAndRegion(frame)}
-                    bottom={0}
-                    right={0}
-                />
-            </div>
-            {overlayStore.colorbar.visible && (
-                <ColorbarComponent
-                    frame={frame}
-                    onCursorHoverValueChanged={channelMapStore.setPixelHighlightValue}
-                    width={renderWidth}
-                    height={renderHeight}
-                    leftOffset={overlayStore.colorbar.position === "right" ? overlayStore.paddingTop * 2 : overlayStore.paddingLeft}
-                    left={overlayStore.colorbar.position === "right" ? renderWidth - overlayStore.paddingRight : 0}
-                    top={overlayStore.colorbar.position === "bottom" ? renderHeight - colorbarOffset : overlayStore.colorbar.position === "right" ? 0 : overlayStore.paddingTop - colorbarOffset}
-                    length={overlayStore.colorbar.position === "right" ? channelMapViewHeight - overlayStore.paddingTop : channelMapViewWidth}
-                />
-            )}
+    return (
+        <div
+            className="image-panel-div"
+            key={"channel-map"}
+            style={{
+                width: outerViewWidth,
+                height: outerViewHeight
+            }}
+            onMouseOver={onMouseEnter}
+            onMouseLeave={onMouseLeave}
+        >
+            <ChannelMapInnerOverlayComponent frame={frame} docked={props.docked} />
+            {overlayComponents}
+            <RasterViewComponent
+                key={"raster-view-component-channel-map"}
+                image={image}
+                docked={props.docked}
+                pixelHighlightValue={channelMapStore.pixelHighlightValue}
+                row={0}
+                column={0}
+                renderWidth={outerRenderWidth}
+                renderHeight={outerRenderHeight}
+                channel={channelMapStore.channelArray}
+            />
+            <CursorOverlayComponent
+                cursorInfo={frame.cursorInfo}
+                cursorValue={frame.cursorInfo.isInsideImage ? frame.cursorValue.value : undefined}
+                isValueCurrent={frame.isCursorValueCurrent}
+                spectralInfo={frame.spectralInfo}
+                width={outerViewWidth}
+                left={outerPadding.left}
+                right={outerPadding.right}
+                docked={props.docked}
+                unit={frame.requiredUnit}
+                top={outerPadding.top}
+                currentStokes={AppStore.Instance.activeFrame?.requiredPolarizationInfo}
+                cursorValueToPercentage={frame.requiredUnit === "%"}
+                isPreview={frame.isPreview}
+                visible={imageToolbarVisible}
+            />
+            <ToolbarComponent
+                docked={props.docked}
+                visible={imageToolbarVisible}
+                frame={frame}
+                activeLayer={AppStore.Instance.activeLayer}
+                onActiveLayerChange={AppStore.Instance.updateActiveLayer}
+                onRegionViewZoom={zoom => onRegionViewZoom(frame, zoom)}
+                onZoomToFit={() => fitZoomFrameAndRegion(frame)}
+            />
+            {overlaySettings.colorbar.visible && <ColorbarComponent frame={frame} onCursorHoverValueChanged={channelMapStore.setPixelHighlightValue} />}
             <OverlayComponent
                 key={`overlay-view-component-outer`}
                 image={{
                     type: ImageType.FRAME,
                     store: frame
                 }}
-                overlaySettings={overlayStore}
-                top={overlayStore.base}
-                left={0}
+                overlaySettings={overlaySettings}
+                overlayStore={frame.channelMapOuterOverlayStore}
                 docked={props.docked}
-                type={"channel-map-outer"}
-                width={renderWidth - overlayStore.base}
-                height={renderHeight - overlayStore.base}
-                unScaled={true}
+                unscaled={true}
             />
         </div>
-    ) : (
-        <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
     );
 });
 
-const ChannelMapInnerOverlayComponent = observer(
-    ({
-        index,
-        frame,
-        renderWidth,
-        renderHeight,
-        overlayComponentRef,
-        setOverlayComponentRef,
-        docked
-    }: {
-        index: number;
-        frame: FrameStore;
-        renderWidth: number;
-        renderHeight: number;
-        overlayComponentRef: OverlayComponent | undefined;
-        setOverlayComponentRef: (ref: OverlayComponent | undefined) => void;
-        docked: boolean;
-    }) => {
-        const appStore = AppStore.Instance;
-        const overlayStore = appStore.overlayStore;
-        const channelMapStore = appStore.channelMapStore;
-        const column = index % channelMapStore.numColumns;
-        const row = Math.floor(index / channelMapStore.numColumns);
-        const lastRow = Math.floor((channelMapStore.channelArray.length - 1) / channelMapStore.numColumns);
-        const columnOfLastFrame = channelMapStore.channelArray.length - lastRow * channelMapStore.numColumns - 1;
+const ChannelMapInnerOverlayComponent = observer(({frame, docked}: {frame: FrameStore; docked: boolean}) => {
+    const appStore = AppStore.Instance;
+    const overlaySettings = appStore.overlaySettings;
+    const channelMapStore = appStore.channelMapStore;
+    const lastRow = Math.floor((channelMapStore.channelArray.length - 1) / channelMapStore.numColumns);
+    const columnOfLastFrame = channelMapStore.channelArray.length - lastRow * channelMapStore.numColumns - 1;
 
-        const channelMapViewWidth = renderWidth - overlayStore.paddingLeft - overlayStore.paddingRight;
-        const channelMapViewHeight = renderHeight - overlayStore.paddingBottom - overlayStore.paddingTop;
-        const imageRenderWidth = channelMapViewWidth / channelMapStore.numColumns;
-        const imageRenderHeight = channelMapViewHeight / channelMapStore.numRows;
-        let overlayComponentTop = imageRenderHeight * row + overlayStore.paddingTop;
-        let overlayComponentLeft = imageRenderWidth * column + overlayStore.paddingLeft;
-        let overlayType: "corner" | "left" | "bottom" | "inner";
+    const outerPadding = frame.channelMapOuterOverlayStore.padding;
+    const innerPadding = frame.channelMapInnerOverlayStore.padding;
+    const innerViewWidth = frame.channelMapInnerOverlayStore.viewWidth;
+    const innerViewHeight = frame.channelMapInnerOverlayStore.viewHeight;
+    const innerRenderWidth = frame.channelMapInnerOverlayStore.renderWidth;
+    const innerRenderHeight = frame.channelMapInnerOverlayStore.renderHeight;
+    const gapX = frame.channelMapInnerOverlayStore.gapX;
+    const gapY = frame.channelMapInnerOverlayStore.gapY;
 
-        const canvasRef = React.useRef<HTMLCanvasElement>(null);
-
-        const getCornerOverlay = () => {
-            const left = overlayComponentLeft;
-
-            return (
-                <OverlayComponent
-                    key={`overlay-view-component`}
-                    ref={ref => {
-                        setOverlayComponentRef(ref);
-                        if (ref?.canvas) {
-                            ref.canvas.id = `${column}_${row}`;
-                        }
-                    }}
-                    image={{
-                        type: ImageType.FRAME,
-                        store: frame
-                    }}
-                    overlaySettings={overlayStore}
-                    top={overlayComponentTop}
-                    left={left}
-                    docked={docked}
-                    width={Math.ceil(imageRenderWidth) + overlayStore.paddingLeft}
-                    height={Math.ceil(imageRenderHeight) + overlayStore.paddingBottom}
-                    type={"channel-map-inner"}
-                />
-            );
-        };
-        let width = channelMapViewWidth / channelMapStore.numColumns;
-        let height = channelMapViewHeight / channelMapStore.numRows;
-
-        if (column === 0) {
-            overlayType = "left";
-            width += overlayStore.paddingLeft;
-            overlayComponentLeft -= overlayStore.paddingLeft;
-        } else if (row === channelMapStore.numRows - 1 || row === lastRow || (row === lastRow - 1 && column > columnOfLastFrame)) {
-            overlayType = "bottom";
-            height += overlayStore.paddingBottom;
-        } else {
-            overlayType = "inner";
+    const canvasRef = React.useRef(null);
+    const getCanvasRefMap = (): Map<number, {overlayType: "left" | "bottom" | "inner"; node: HTMLCanvasElement}> => {
+        if (!canvasRef.current) {
+            canvasRef.current = new Map();
         }
-        const getRef = (ref: HTMLCanvasElement) => {
-            if (ref) {
-                ref.id = `${column}_${row}`;
-                canvasRef.current = ref;
-            }
-        };
+        return canvasRef.current;
+    };
 
-        const draw = () => {
-            const canvas = canvasRef.current;
-            if (canvas && overlayComponentRef?.canvas) {
-                const ctx = canvas.getContext("2d");
-                if (ctx) {
-                    requestAnimationFrame(() => {
-                        const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
-                        canvas.width = width * pixelRatio;
-                        canvas.height = height * pixelRatio;
-                        const destCanvas = canvas.getContext("2d", {willReadFrequently: true});
-                        const w = overlayComponentRef.canvas.width;
-                        const h = overlayComponentRef.canvas.height;
-                        const destWidth = canvas.width;
-                        const destHeight = canvas.height;
-                        const cornerPaddingLeft = overlayStore.paddingLeft * pixelRatio;
-                        const cornerPaddingBottom = overlayStore.paddingBottom * pixelRatio;
-                        destCanvas.clearRect(0, 0, canvas.width, canvas.height);
-                        if (overlayType === "left") {
-                            destCanvas.drawImage(overlayComponentRef.canvas, 0, 0, w, h - cornerPaddingBottom, 0, 0, destWidth, destHeight);
-                        } else if (overlayType === "bottom") {
-                            destCanvas.drawImage(overlayComponentRef.canvas, cornerPaddingLeft, 0, w - cornerPaddingLeft, h, 0, 0, destWidth, destHeight);
-                        } else if (overlayType === "inner") {
-                            destCanvas.drawImage(overlayComponentRef.canvas, cornerPaddingLeft, 0, w - cornerPaddingLeft, h - cornerPaddingBottom, 0, 0, destWidth, destHeight);
-                        }
-                    });
+    const draw = sourceCanvas => {
+        if (!sourceCanvas) {
+            return;
+        }
+
+        const sourceWidth = sourceCanvas.width;
+        const sourceHeight = sourceCanvas.height;
+        const pixelRatio = AppStore.Instance.pixelRatio;
+        // when border > 1, include the area of the border
+        const extraBorderWidth = overlaySettings.border.width - 1;
+        // when the padding is x.5, exclude a smaller area (x instead of x.5) when redrawing
+        const innerPaddingLeft = Math.floor(innerPadding.left * pixelRatio - extraBorderWidth);
+        const innerPaddingBottom = Math.floor(innerPadding.bottom * pixelRatio - extraBorderWidth);
+
+        channelMapStore.channelArray.forEach((channel, index) => {
+            const canvasRefObject = getCanvasRefMap().get(index);
+            if (!canvasRefObject) {
+                return;
+            }
+
+            const {overlayType, node: destCanvas} = canvasRefObject;
+            const ctx = destCanvas?.getContext("2d");
+            if (!ctx) {
+                return;
+            }
+
+            destCanvas.width = sourceWidth;
+            destCanvas.height = sourceHeight;
+            ctx.clearRect(0, 0, destCanvas.width, destCanvas.height);
+            ctx.imageSmoothingEnabled = false;
+
+            let x = 0,
+                y = 0,
+                w = sourceWidth,
+                h = sourceHeight;
+            if (overlayType === "left") {
+                h -= innerPaddingBottom;
+            } else if (overlayType === "bottom") {
+                x += innerPaddingLeft;
+                w -= innerPaddingLeft;
+            } else if (overlayType === "inner") {
+                x += innerPaddingLeft;
+                w -= innerPaddingLeft;
+                h -= innerPaddingBottom;
+            }
+            ctx.drawImage(sourceCanvas, x, y, w, h, x, y, w, h);
+        });
+    };
+
+    const className = classNames("overlay-canvas", {docked: docked});
+
+    return (
+        <>
+            {channelMapStore.channelArray.map((channel, index) => {
+                const column = index % channelMapStore.numColumns;
+                const row = Math.floor(index / channelMapStore.numColumns);
+
+                let overlayType: "corner" | "left" | "bottom" | "inner";
+                if (column === 0 && (row === channelMapStore.numRows - 1 || row === lastRow)) {
+                    overlayType = "corner";
+                } else if (column === 0) {
+                    overlayType = "left";
+                } else if (row === channelMapStore.numRows - 1 || row === lastRow || (row === lastRow - 1 && column > columnOfLastFrame)) {
+                    overlayType = "bottom";
+                } else {
+                    overlayType = "inner";
                 }
-            }
-        };
 
-        const throttledDraw = _.throttle(draw, 50);
+                const left = outerPadding.left + (innerRenderWidth + gapX) * column - innerPadding.left;
+                const top = outerPadding.top + (innerRenderHeight + gapY) * row - innerPadding.top;
 
-        React.useEffect(() => {
-            throttledDraw();
-        }, [
-            throttledDraw,
-            overlayComponentRef,
-            width,
-            height,
-            channelMapStore.startChannel,
-            channelMapStore.endChannel,
-            frame,
-            channelMapStore.numColumns,
-            channelMapStore.numRows,
-            frame?.center,
-            frame?.requiredFrameView,
-            frame?.requiredFrameView.xMin,
-            frame?.requiredFrameView.xMax,
-            frame?.requiredFrameView.yMin,
-            frame?.requiredFrameView.yMax,
-            frame?.zooming,
-            frame?.zoomLevel,
-            frame?.spatialReference,
-            frame?.channel,
-            frame?.isOffsetCoord,
-            frame?.wcsInfoShifted,
-            frame?.titleCustomText,
-            frame?.filename,
-            overlayStore.styleString,
-            overlayStore.padding,
-            frame?.moving,
-            overlayStore.global.system,
-            overlayStore.global.color,
-            overlayStore.title.color,
-            overlayStore.grid.color,
-            overlayStore.border.color,
-            overlayStore.ticks.color,
-            overlayStore.axes.color,
-            overlayStore.numbers.color,
-            overlayStore.labels.color,
-            overlayStore.title.styleString,
-            overlayStore.grid.styleString,
-            overlayStore.border.styleString,
-            overlayStore.ticks.styleString,
-            overlayStore.axes.styleString,
-            overlayStore.numbers.styleString,
-            overlayStore.labels.styleString
-        ]);
-
-        return (
-            <>
-                {column === 0 && (row === channelMapStore.numRows - 1 || row === lastRow) ? (
-                    getCornerOverlay()
-                ) : (
-                    <canvas key={`overlay-view-component-${index}`} id={`${column}_${row}`} style={{position: "absolute", top: overlayComponentTop, left: overlayComponentLeft, width: width, height: height, zIndex: 2}} ref={getRef} />
-                )}
-            </>
-        );
-    }
-);
+                return overlayType !== "corner" ? (
+                    <canvas
+                        className={className}
+                        key={index}
+                        ref={node => {
+                            const map = getCanvasRefMap();
+                            if (node) {
+                                map.set(index, {overlayType, node});
+                            } else {
+                                map.delete(index);
+                            }
+                        }}
+                        style={{left, top, width: innerViewWidth, height: innerViewHeight}}
+                    />
+                ) : null;
+            })}
+            <OverlayComponent
+                image={{
+                    type: ImageType.FRAME,
+                    store: frame
+                }}
+                overlaySettings={overlaySettings}
+                overlayStore={frame.channelMapInnerOverlayStore}
+                top={outerPadding.top + (innerRenderHeight + gapY) * lastRow - innerPadding.top}
+                docked={docked}
+                channelMapDrawFunction={draw}
+            />
+        </>
+    );
+});

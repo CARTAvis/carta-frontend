@@ -51,7 +51,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                 if (!wcsInfo) {
                     return false;
                 }
-                if (isX && isWCSStringFormatValid(value, appStore.overlayStore.numbers.formatTypeX)) {
+                if (isX && isWCSStringFormatValid(value, appStore.overlaySettings.numbers.formatTypeX)) {
                     if (finish) {
                         const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, x: value});
                         region?.setControlPoint(1, finishPixelFromWCS);
@@ -60,7 +60,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                         region?.setControlPoint(0, startPixelFromWCS);
                     }
                     return true;
-                } else if (!isX && isWCSStringFormatValid(value, appStore.overlayStore.numbers.formatTypeY)) {
+                } else if (!isX && isWCSStringFormatValid(value, appStore.overlaySettings.numbers.formatTypeY)) {
                     if (finish) {
                         const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, y: value});
                         region?.setControlPoint(1, finishPixelFromWCS);
@@ -105,9 +105,9 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
         // dummy variables related to wcs to trigger re-render
         /* eslint-disable @typescript-eslint/no-unused-vars */
         const appStore = AppStore.Instance;
-        const system = appStore.overlayStore.global.explicitSystem;
-        const formatX = appStore.overlayStore.numbers.formatTypeX;
-        const formatY = appStore.overlayStore.numbers.formatTypeY;
+        const system = appStore.overlaySettings.global.explicitSystem;
+        const formatX = appStore.overlaySettings.numbers.formatTypeX;
+        const formatY = appStore.overlaySettings.numbers.formatTypeY;
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
         const region = this.props.region;

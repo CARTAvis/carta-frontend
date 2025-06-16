@@ -449,20 +449,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             xMax = localXMax;
         }
 
-        if (!this.widgetStore.isQUScatterPlotAutoScaledX && !isLinePlots && type === StokesCoordinate.PolarizationQU) {
-            const localXMin = clamp(this.widgetStore.quScatterMinX, xMin, xMax);
-            const localXMax = clamp(this.widgetStore.quScatterMaxX, xMin, xMax);
-            xMin = localXMin;
-            xMax = localXMax;
-        }
-
-        if (!this.widgetStore.isQUScatterPlotAutoScaledY && !isLinePlots && type === StokesCoordinate.PolarizationQU) {
-            const localYMin = clamp(this.widgetStore.quScatterMinY, yMin, yMax);
-            const localYMax = clamp(this.widgetStore.quScatterMaxY, yMin, yMax);
-            yMin = localYMin;
-            yMax = localYMax;
-        }
-
         if (yMin === Number.MAX_VALUE) {
             yMin = undefined;
             yMax = undefined;
@@ -945,7 +931,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             showXAxisTicks: true,
             showXAxisLabel: true,
             plotType: PlotType.POINTS,
-            zeroLineWidth: 2,
+            zeroLineWidth: this.widgetStore.referenceAxesThickness,
+            xZeroLineColor: this.widgetStore.referenceAxesColor,
+            showZeroLine: this.widgetStore.showReferenceAxes,
             isGroupSubPlot: true,
             colorRangeEnd: 240,
             zIndex: true,
@@ -954,7 +942,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             graphZoomReset: this.widgetStore.clearScatterPlotXYBounds,
             mouseEntered: this.widgetStore.setMouseMoveIntoScatterPlots,
             scrollZoom: true,
-            graphZoomedXY: this.widgetStore.setQUScatterPlotXYBounds,
+            graphZoomedXY: this.widgetStore.equalAxes ? this.widgetStore.setQUScatterPlotEqualXYBounds : this.widgetStore.setQUScatterPlotXYBounds,
             updateChartArea: this.widgetStore.setScatterChartAres,
             // settings
             pointRadius: this.widgetStore.scatterPlotPointSize
@@ -1129,20 +1117,18 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     }
                 }
 
-                if (this.widgetStore.isQUScatterPlotAutoScaledX) {
-                    quScatterPlotProps.xMin = quBorder.xMin;
-                    quScatterPlotProps.xMax = quBorder.xMax;
+                if (this.widgetStore.equalAxes) {
+                    quScatterPlotProps.xMin = this.widgetStore.quScatterEqualXmin !== undefined ? this.widgetStore.quScatterEqualXmin : quBorder.xMin;
+                    quScatterPlotProps.xMax = this.widgetStore.quScatterEqualXmax !== undefined ? this.widgetStore.quScatterEqualXmax : quBorder.xMax;
+                    quScatterPlotProps.yMin = this.widgetStore.quScatterEqualYmin !== undefined ? this.widgetStore.quScatterEqualYmin : quBorder.yMin;
+                    quScatterPlotProps.yMax = this.widgetStore.quScatterEqualYmax !== undefined ? this.widgetStore.quScatterEqualYmax : quBorder.yMax;
                 } else {
-                    quScatterPlotProps.xMin = this.widgetStore.quScatterMinX;
-                    quScatterPlotProps.xMax = this.widgetStore.quScatterMaxX;
+                    quScatterPlotProps.xMin = this.widgetStore.quScatterMinX !== undefined ? this.widgetStore.quScatterMinX : quBorder.xMin;
+                    quScatterPlotProps.xMax = this.widgetStore.quScatterMaxX !== undefined ? this.widgetStore.quScatterMaxX : quBorder.xMax;
+                    quScatterPlotProps.yMin = this.widgetStore.quScatterMinY !== undefined ? this.widgetStore.quScatterMinY : quBorder.yMin;
+                    quScatterPlotProps.yMax = this.widgetStore.quScatterMaxY !== undefined ? this.widgetStore.quScatterMaxY : quBorder.yMax;
                 }
-                if (this.widgetStore.isQUScatterPlotAutoScaledY) {
-                    quScatterPlotProps.yMin = quBorder.yMin;
-                    quScatterPlotProps.yMax = quBorder.yMax;
-                } else {
-                    quScatterPlotProps.yMin = this.widgetStore.quScatterMinY;
-                    quScatterPlotProps.yMax = this.widgetStore.quScatterMaxY;
-                }
+
                 let scatterCursorInfor = {
                     profiler: {x: this.widgetStore.scatterPlotCursorX, y: this.widgetStore.scatterPlotCursorY},
                     image: this.matchXYindex(cursorX.image, quScatterPlotProps.data),

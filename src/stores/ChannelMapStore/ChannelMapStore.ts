@@ -1,6 +1,7 @@
 import {debounce, throttle} from "lodash";
 import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
 
+import {ImageType, ImageViewItem} from "models";
 import {TileService} from "services";
 import {AppStore, FrameStore} from "stores";
 
@@ -20,38 +21,37 @@ export class ChannelMapStore {
         ChannelMapStore.staticInstance = this;
 
         autorun(() => {
-            const activeFrame = AppStore.Instance.activeFrame;
-            if (activeFrame?.requiredFrameView && this.channelMapEnabled) {
+            if (this.displayedFrame?.requiredFrameView && this.channelMapEnabled) {
                 /* eslint-disable @typescript-eslint/no-unused-vars */
                 const startChannel = this.startChannel;
                 const numColumns = this.numColumns;
                 const numRows = this.numRows;
                 const endChannel = this.endChannel;
-                const center = activeFrame.center;
-                const requiredFrameView = activeFrame.requiredFrameView;
-                const requiredTiles = activeFrame.requiredTiles;
-                const zoomLevel = activeFrame.zoomLevel;
-                const spatialReference = activeFrame.spatialReference;
-                const channel = activeFrame.channel;
+                const center = this.displayedFrame.center;
+                const requiredFrameView = this.displayedFrame.requiredFrameView;
+                const requiredTiles = this.displayedFrame.requiredTiles;
+                const zoomLevel = this.displayedFrame.zoomLevel;
+                const spatialReference = this.displayedFrame.spatialReference;
+                const channel = this.displayedFrame.channel;
                 /* eslint-disable @typescript-eslint/no-unused-vars */
-                this.throttledRequestChannels(activeFrame);
+                this.throttledRequestChannels(this.displayedFrame);
             }
         });
 
         reaction(
             () => this.channelArray,
             channelArray => {
-                const channel = AppStore.Instance.activeFrame?.channel;
-                if (this.channelMapEnabled && Number.isFinite(channel) && !channelArray.includes(channel)) {
+                const channel = this.displayedFrame?.channel;
+                if (this.channelMapEnabled && channel !== undefined && !channelArray.includes(channel)) {
                     this.debouncedSetAciveChannel(channelArray[0]);
                 }
             }
         );
 
         reaction(
-            () => AppStore.Instance.activeFrame?.channel,
+            () => this.displayedFrame?.channel,
             channel => {
-                if (Number.isFinite(channel) && !this.channelArray.includes(channel)) {
+                if (channel !== undefined && !this.channelArray.includes(channel)) {
                     this.setStartChannel(channel);
                 }
             }
@@ -75,7 +75,7 @@ export class ChannelMapStore {
     @observable showVelocityStringLabel: boolean = false;
 
     private throttledRequestChannels = throttle((frame: FrameStore) => this.requestChannels(frame), 100);
-    private debouncedSetAciveChannel = debounce((channel: number) => AppStore.Instance.activeFrame?.setChannel(channel), 200);
+    private debouncedSetAciveChannel = debounce((channel: number) => this.displayedFrame?.setChannel(channel), 200);
 
     /**
      * Clears the cache and requests new tiles when the polarization changes.
@@ -189,9 +189,31 @@ export class ChannelMapStore {
         this.showVelocityStringLabel = show;
     };
 
-    /** The number of channels of the active image. Returns 1 if the information is unavailable. */
+    /** The displayed image in the image view. */
+    @computed get displayedImage(): ImageViewItem | null {
+        const visibleImages = AppStore.Instance.imageViewConfigStore.visibleImages;
+        return visibleImages.length > 0 ? visibleImages[0] : null;
+    }
+
+    /** The frame of the displayed image in the image view. */
+    @computed get displayedFrame(): FrameStore | null {
+        if (!this.displayedImage) {
+            return null;
+        }
+
+        const type = this.displayedImage.type;
+        if (type === ImageType.FRAME) {
+            return this.displayedImage.store;
+        } else if (type === ImageType.COLOR_BLENDING) {
+            return this.displayedImage.store.baseFrame;
+        }
+
+        return null;
+    }
+
+    /** The number of channels of the displayed image. Returns 1 if the information is unavailable. */
     @computed private get totalChannelNum(): number {
-        return AppStore.Instance.activeFrame?.frameInfo?.fileInfoExtended?.depth ?? 1;
+        return this.displayedFrame?.frameInfo?.fileInfoExtended?.depth ?? 1;
     }
 
     /** The number of panels in the image view. */
