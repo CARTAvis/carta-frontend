@@ -12,6 +12,11 @@ export default defineConfig({
         },
         preEntry: "./src/setupGoldenLayout.ts"
     },
+    output: {
+        distPath: {
+            root: "build"
+        }
+    },
     tools: {
         rspack: {
             resolveLoader: {
