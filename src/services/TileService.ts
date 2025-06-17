@@ -87,15 +87,15 @@ export class TileService {
     private currentlyStreamingChannelRange: {min: number; max: number};
     private currentlyStreamingTileRange: number[];
 
-    @observable remainingTiles: number;
-    @observable workersReady: boolean[];
+    @observable remainingTiles: number = 0;
+    @observable workersReady: boolean[] | undefined = undefined;
 
     @computed get zfpReady() {
         return this.workersReady && this.workersReady.every(v => v);
     }
 
     @action setWorkerReady(index: number) {
-        if (index >= 0 && index < this.workersReady.length) {
+        if (this.workersReady && index >= 0 && index < this.workersReady.length) {
             this.workersReady[index] = true;
             this.workers[index].postMessage(["setid", index]);
         }
@@ -161,7 +161,6 @@ export class TileService {
         this.syncIdTileCountMap = new Map<number, number>();
 
         this.compressionRequestCounter = 0;
-        this.remainingTiles = 0;
         this.animationEnabled = false;
 
         this.tileStream = new Subject<TileStreamDetails>();

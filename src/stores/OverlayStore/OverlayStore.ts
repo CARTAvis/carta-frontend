@@ -990,8 +990,8 @@ export class OverlayStore {
     @observable visible: boolean = true;
 
     // View size options
-    @observable fullViewWidth: number;
-    @observable fullViewHeight: number;
+    @observable fullViewWidth: number = 1;
+    @observable fullViewHeight: number = 1;
 
     // Individual settings
     @observable global: OverlayGlobalSettings;
@@ -1017,8 +1017,6 @@ export class OverlayStore {
         this.ticks = new OverlayTickSettings();
         this.colorbar = new OverlayColorbarSettings();
         this.beam = new OverlayBeamSettings();
-        this.fullViewWidth = 1;
-        this.fullViewHeight = 1;
 
         // if the system is manually selected, set new default formats & update active frame's wcs settings
         autorun(() => {

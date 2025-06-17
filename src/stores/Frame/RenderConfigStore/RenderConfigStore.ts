@@ -169,25 +169,25 @@ export class RenderConfigStore {
 
     @observable scaling: FrameScaling;
     @observable colorMapIndex: number;
-    @observable bias: number;
-    @observable contrast: number;
+    @observable bias: number = 0;
+    @observable contrast: number = 1;
     @observable gamma: number;
     @observable alpha: number;
-    @observable inverted: boolean;
-    @observable channelHistogram: CARTA.IHistogram;
-    @observable channelMapHistogram: CARTA.IHistogram;
-    @observable cubeHistogram: CARTA.IHistogram;
-    @observable useCubeHistogram: boolean;
-    @observable useCubeHistogramContours: boolean;
-    @observable cubeHistogramProgress: number;
+    @observable inverted: boolean = false;
+    @observable channelHistogram: CARTA.IHistogram | undefined = undefined;
+    @observable channelMapHistogram: CARTA.IHistogram | undefined = undefined;
+    @observable cubeHistogram: CARTA.IHistogram | undefined = undefined;
+    @observable useCubeHistogram: boolean = false;
+    @observable useCubeHistogramContours: boolean = false;
+    @observable cubeHistogramProgress: number = 0;
     @observable selectedPercentile: number[];
     @observable histChannel: number;
-    @observable stokesIndex: number;
-    @observable scaleMin: number[];
-    @observable scaleMax: number[];
+    @observable stokesIndex: number = 0;
+    @observable scaleMin: number[] | undefined = undefined;
+    @observable scaleMax: number[] | undefined = undefined;
     @observable channelMapScaleMin: number;
     @observable channelMapScaleMax: number;
-    @observable visible: boolean;
+    @observable visible: boolean = true;
     @observable previewHistogramMax: number;
     @observable previewHistogramMin: number;
     @observable customColormapHexEnd: string;
@@ -199,25 +199,19 @@ export class RenderConfigStore {
         readonly preference: PreferenceStore,
         frame: FrameStore
     ) {
-        makeObservable(this);
         this.frame = frame;
         const stokesLength = this.frame.polarizations.length !== 0 ? this.frame.polarizations.length : 1;
         const percentile = preference.percentile;
         this.selectedPercentile = new Array<number>(stokesLength).fill(percentile);
-        this.bias = 0;
-        this.contrast = 1;
         this.alpha = preference.scalingAlpha;
         this.gamma = preference.scalingGamma;
         this.scaling = preference.scaling;
-        this.inverted = false;
-        this.cubeHistogramProgress = 0;
         this.setColorMap(preference.colormap);
-        this.stokesIndex = 0;
         this.scaleMin = new Array<number>(stokesLength).fill(0);
         this.scaleMax = new Array<number>(stokesLength).fill(1);
-        this.visible = true;
         this.customColormapHexEnd = preference.colormapHex;
         this.customColormapHexStart = preference.colormapHexStart;
+        makeObservable(this);
     }
 
     public static IsScalingValid(scaling: FrameScaling): boolean {

@@ -55,7 +55,7 @@ export class BackendService {
     private static readonly MaxConnectionAttempts = 15;
     private static readonly ConnectionAttemptDelay = 1000;
 
-    @observable connectionStatus: ConnectionStatus;
+    @observable connectionStatus: ConnectionStatus = ConnectionStatus.CLOSED;
     readonly loggingEnabled: boolean;
     @observable connectionDropped: boolean;
     @observable endToEndPing: number;
@@ -98,7 +98,6 @@ export class BackendService {
         this.sessionId = 0;
         this.endToEndPing = NaN;
         this.animationId = INVALID_ANIMATION_ID;
-        this.connectionStatus = ConnectionStatus.CLOSED;
         this.rasterTileStream = new Subject<CARTA.RasterTileData>();
         this.rasterSyncStream = new Subject<CARTA.RasterTileSync>();
         this.histogramStream = new Subject<CARTA.RegionHistogramData>();

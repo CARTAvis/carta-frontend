@@ -33,7 +33,7 @@ export class FileBrowserStore {
 
     @observable browserMode: BrowserMode = BrowserMode.File;
     @observable appendingFrame = false;
-    @observable fileList: CARTA.IFileListResponse | null;
+    @observable fileList: CARTA.IFileListResponse | null = null;
     @observable selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo | null | undefined;
     @observable selectedHDU: string | null;
     @observable HDUfileInfoExtended: {[k: string]: CARTA.IFileInfoExtended} | null;
