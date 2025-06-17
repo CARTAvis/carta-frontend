@@ -10,6 +10,7 @@ export default defineConfig({
         decorators: {
             version: 'legacy',
         },
+        preEntry: "./src/setupGoldenLayout.ts"
     },
     tools: {
         rspack: {
