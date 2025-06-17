@@ -1,14 +1,14 @@
-import {defineConfig} from '@rsbuild/core';
-import {pluginReact} from '@rsbuild/plugin-react';
-import {pluginSass} from '@rsbuild/plugin-sass';
+import {defineConfig} from "@rsbuild/core";
+import {pluginReact} from "@rsbuild/plugin-react";
+import {pluginSass} from "@rsbuild/plugin-sass";
 import {pluginNodePolyfill} from "@rsbuild/plugin-node-polyfill";
-import {pluginGlsl} from 'rsbuild-plugin-glsl';
+import {pluginGlsl} from "rsbuild-plugin-glsl";
 
 export default defineConfig({
     plugins: [pluginReact(), pluginSass(), pluginNodePolyfill(), pluginGlsl()],
     source: {
         decorators: {
-            version: 'legacy',
+            version: "legacy",
         },
         preEntry: "./src/setupGoldenLayout.ts"
     },
@@ -17,18 +17,22 @@ export default defineConfig({
             root: "build"
         }
     },
+    html: {
+        favicon: "./public/carta_icon_128px.png",
+        title: "CARTA"
+    },
     tools: {
         rspack: {
             resolveLoader: {
                 alias: {
-                    'worker-loader': require.resolve('worker-rspack-loader'),
+                    "worker-loader": require.resolve("worker-rspack-loader"),
                 },
             },
             module: {
                 rules: [
                     {
                         test: /\.worker\.js$/,
-                        loader: 'worker-rspack-loader',
+                        loader: "worker-rspack-loader",
                     },
                 ],
             },
