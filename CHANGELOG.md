@@ -16,7 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed incorrect status in the animator widget and incorrect title in the image view widget when PV previews are active ([#2523](https://github.com/CARTAvis/carta-frontend/issues/2523), [#2524](https://github.com/CARTAvis/carta-frontend/issues/2524)).
 * Fixed jumpy non-square images after widget resizing ([#2467](https://github.com/CARTAvis/carta-frontend/issues/2467)).
 * Colors of multi-spectral profiles do not vary with the image selection ([[#2236](https://github.com/CARTAvis/carta-frontend/issues/2236)]).
-* Fix reference axes in the scatter plot of Stokes analysis ([#2531](https://github.com/CARTAvis/carta-frontend/issues/2531) and [#2532](https://github.com/CARTAvis/carta-frontend/issues/2532)).
+* Fixed reference axes in the scatter plot of Stokes analysis ([#2531](https://github.com/CARTAvis/carta-frontend/issues/2531) and [#2532](https://github.com/CARTAvis/carta-frontend/issues/2532)).
+* Fixed slow response to file list by sending basic info only ([#1435](https://github.com/CARTAvis/carta-backend/issues/1435)).
 ### Added
 * Enhanced support for modifying the render configuration and the active channel/polarization in channel map mode ([#2492](https://github.com/CARTAvis/carta-frontend/issues/2492)).
 * Enable the copy function in the cursor info widget ([#2468](https://github.com/CARTAvis/carta-frontend/issues/2468)).
