@@ -204,7 +204,7 @@ export class FittingDialogComponent extends React.Component {
                                         <Switch className="auto-switch" checked={fittingStore.isAutoInitVal} onChange={ev => fittingStore.setIsAutoInitVal(ev.currentTarget.checked)} innerLabel="Auto" />
                                     </Tooltip>
                                     {!fittingStore.isAutoInitVal && fittingStore.components.length > 1 && (
-                                        <>
+                                        <div className="components-slider">
                                             <Slider
                                                 value={fittingStore.selectedComponentIndex + 1}
                                                 min={1}
@@ -219,7 +219,7 @@ export class FittingDialogComponent extends React.Component {
                                             <Tooltip content="Delete current component">
                                                 <AnchorButton icon={"trash"} onClick={fittingStore.deleteSelectedComponent} />
                                             </Tooltip>
-                                        </>
+                                        </div>
                                     )}
                                 </FormGroup>
                                 <Collapse isOpen={!fittingStore.isAutoInitVal}>

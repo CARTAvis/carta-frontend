@@ -116,9 +116,14 @@
         }
     }
 
+    .components-slider {
+        flex: 1 1 auto;
+        display: flex;
+    }
+
     .#{$ns}-slider {
-        width: 35%;
-        min-width: 130px;
+        width: 50%;
+        min-width: 110px;
         height: 30px;
         margin-right: 20px;
 
