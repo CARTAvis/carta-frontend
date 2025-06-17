@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 
 import {Font} from "components/Shared";
 import {ImageItem} from "models";
-import {AppStore, OverlaySettings} from "stores";
+import {AppStore, ChannelMapStore, OverlaySettings} from "stores";
 import {getColorForTheme} from "utilities";
 
 export class ChannelMapLabelComponentProps {
@@ -62,7 +62,7 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
             <span
                 className={className}
                 style={{
-                    color: channelMapStore.customColor ? getColorForTheme(channelMapStore.color) : getColorForTheme(this.props.overlaySettings.global.color),
+                    color: channelMapStore.customColor ? getColorForTheme(channelMapStore.color) : getColorForTheme(ChannelMapStore.DefaultLabelColor),
                     position: "absolute",
                     top: (this.props.top || 0) - 0.5 - hightlightBorderWidth,
                     left: (this.props.left || 0) + 0.5 - hightlightBorderWidth,
