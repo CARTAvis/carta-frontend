@@ -15,12 +15,6 @@ import "./ColorbarComponent.scss";
 export interface ColorbarComponentProps {
     onCursorHoverValueChanged: (number) => void;
     frame: FrameStore;
-    width?: number;
-    height?: number;
-    top?: number;
-    left?: number;
-    leftOffset?: number;
-    length?: number;
 }
 
 @observer
@@ -71,15 +65,15 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
     componentDidUpdate() {
         AppStore.Instance.resetImageRatio();
-        this.props.frame.colorbarStore.setHeight(this.props.length ?? AppStore.Instance.overlayStore?.colorbar.height(this.props.frame, this.props.length));
     }
 
     private handleMouseMove = event => {
         const appStore = AppStore.Instance;
         const frame = this.props.frame;
         const renderConfig = frame?.renderConfig;
-        const colorbarSettings = appStore.overlayStore?.colorbar;
-        const yOffset = this.props.leftOffset ?? colorbarSettings.yOffset;
+        const colorbarSettings = appStore.overlaySettings?.colorbar;
+        const yOffset = frame.colorbarStore.yOffset;
+        const height = frame.colorbarStore.height;
         if (!renderConfig || !colorbarSettings) {
             return;
         }
@@ -88,12 +82,12 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         let point = colorbarSettings.position === "right" ? stage.getPointerPosition().y : stage.getPointerPosition().x;
         let scaledPos = point - yOffset;
         if (colorbarSettings.position === "right") {
-            scaledPos = colorbarSettings.height(this.props.frame, this.props.length) - scaledPos;
+            scaledPos = height - scaledPos;
         }
-        scaledPos /= colorbarSettings.height(this.props.frame, this.props.length);
+        scaledPos /= height;
         scaledPos = clamp(scaledPos, 0.0, 1.0);
         // Recalculate clamped point position
-        point = clamp(point, yOffset, yOffset + colorbarSettings.height(this.props.frame, this.props.length));
+        point = clamp(point, yOffset, yOffset + height);
         // Lock to mid-pixel for sharp lines
         point = Math.floor(point) + 0.5;
 
@@ -109,18 +103,18 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
     render() {
         const appStore = AppStore.Instance;
-        const overlayStore = appStore.overlayStore;
+        const overlaySettings = appStore.overlaySettings;
         const frame = this.props.frame;
-        const colorbarSettings = appStore.overlayStore.colorbar;
-        const viewHeight = this.props.height || (frame.isPreview ? frame.previewViewHeight : overlayStore.viewHeight);
-        const viewWidth = this.props.width || (frame.isPreview ? frame.previewViewWidth : overlayStore.viewWidth);
-        const colorbarSettingsHeight = this.props.length || colorbarSettings.height(frame, this.props.length);
-        const yOffset = this.props.leftOffset ?? colorbarSettings.yOffset;
+        const colorbarSettings = appStore.overlaySettings.colorbar;
+        const viewHeight = frame.overlayStore.viewHeight;
+        const viewWidth = frame.overlayStore.viewWidth;
+        const colorbarSettingsHeight = frame.colorbarStore.height;
+        const yOffset = frame.colorbarStore.yOffset;
 
         appStore.updateLayerPixelRatio(this.layerRef);
 
         let getColor = (customColor: boolean, color: string): string => {
-            return customColor ? getColorForTheme(color) : colorbarSettings.customColor ? getColorForTheme(colorbarSettings.color) : getColorForTheme(appStore.overlayStore.global.color);
+            return customColor ? getColorForTheme(color) : colorbarSettings.customColor ? getColorForTheme(colorbarSettings.color) : getColorForTheme(appStore.overlaySettings.global.color);
         };
 
         // to avoid blurry border when width <= 1px, add 0.5 px offset to the colorbar if necessary
@@ -145,14 +139,12 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
         // adjust stage position
         if (colorbarSettings.position === "right") {
-            stageLeft = this.props.left ?? overlayStore.padding.left + frame.renderWidth;
-            stageTop = this.props.top || 0;
+            stageLeft = frame.overlayStore.padding.left + frame.overlayStore.renderWidth;
+            stageTop = 0;
         } else if (colorbarSettings.position === "bottom") {
-            stageTop = this.props.top || viewHeight - overlayStore.colorbarHoverInfoHeight - colorbarSettings.stageWidth;
-        } else if (colorbarSettings.position === "top" && overlayStore.title.show && !this.props.top) {
-            stageTop = overlayStore.padding.top - colorbarSettings.stageWidth;
-        } else if (colorbarSettings.position === "top" && this.props.top) {
-            stageTop = this.props.top;
+            stageTop = viewHeight - overlaySettings.colorbarHoverInfoHeight - colorbarSettings.stageWidth;
+        } else if (colorbarSettings.position === "top" && overlaySettings.title.show) {
+            stageTop = frame.overlayStore.padding.top - colorbarSettings.stageWidth;
         }
 
         // rotate to horizontal by swapping
@@ -192,7 +184,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         let numbers = [];
         if (colorbarSettings.tickVisible || colorbarSettings.numberVisible) {
             const texts = frame.colorbarStore.texts;
-            const positions = frame.colorbarStore.positions(yOffset);
+            const positions = frame.colorbarStore.positions;
 
             for (let i = 0; i < positions.length; i++) {
                 if (colorbarSettings.tickVisible) {
@@ -285,7 +277,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
         const hoverBar =
             colorbarSettings.interactive && this.isHovering ? (
-                <Line points={hoverBarPosition} stroke={colorbarSettings.customColor ? getColorForTheme(colorbarSettings.color) : getColorForTheme(appStore.overlayStore.global.color)} strokeWidth={1 / devicePixelRatio} />
+                <Line points={hoverBarPosition} stroke={colorbarSettings.customColor ? getColorForTheme(colorbarSettings.color) : getColorForTheme(appStore.overlaySettings.global.color)} strokeWidth={1 / devicePixelRatio} />
             ) : null;
 
         const hoverInfo =

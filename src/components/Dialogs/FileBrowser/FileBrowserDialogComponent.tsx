@@ -230,7 +230,7 @@ export class FileBrowserDialogComponent extends React.Component {
     };
 
     private exportRegion = async (directory: string, filename: string, overwrite: boolean = false) => {
-        if (!filename || !directory) {
+        if (!filename) {
             return;
         }
 

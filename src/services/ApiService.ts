@@ -5,8 +5,9 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {AppToaster} from "components/Shared";
 import {LayoutConfig, Snippet, Workspace, WorkspaceListItem} from "models";
 
-const preferencesSchema = require("models/preferences_schema_2.json");
-const snippetSchema = require("models/snippet_schema_1.json");
+const preferencesSchema = require("carta-schemas/preferences_schema_2.json");
+const snippetSchema = require("carta-schemas/snippet_schema_1.json");
+// const workspaceSchema = require("carta-schemas/workspace_schema_1.json");
 
 export interface RuntimeConfig {
     dashboardAddress?: string;
