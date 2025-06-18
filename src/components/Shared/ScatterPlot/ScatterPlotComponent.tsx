@@ -54,6 +54,7 @@ export class ScatterPlotComponentProps {
     showXAxisLabel?: boolean;
     xZeroLineColor?: string;
     yZeroLineColor?: string;
+    showZeroLine?: boolean;
     showLegend?: boolean;
     xTickMarkLength?: number;
     plotType?: PlotType;

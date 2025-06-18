@@ -23,8 +23,6 @@ export class ToolbarComponentProps {
     onActiveLayerChange: (layer: ImageViewLayer) => void;
     onRegionViewZoom: (zoom: number) => void;
     onZoomToFit: () => void;
-    bottom?: number;
-    right?: number;
 }
 
 @observer
@@ -74,7 +72,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     };
 
     handleCoordinateSystemClicked = (coordinateSystem: SystemType) => {
-        AppStore.Instance.overlayStore.global.setSystem(coordinateSystem);
+        AppStore.Instance.overlaySettings.global.setSystem(coordinateSystem);
         this.props.frame.updateOffsetCenter();
     };
 
@@ -117,14 +115,14 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     render() {
         const appStore = AppStore.Instance;
-        const overlay = AppStore.Instance.overlayStore;
+        const overlay = AppStore.Instance.overlaySettings;
         const frame = this.props.frame;
         const grid = overlay.grid;
 
         const styleProps: CSSProperties = {
-            bottom: this.props.bottom ?? overlay.padding.bottom,
-            right: this.props.right ?? overlay.padding.right,
-            left: overlay.padding.left,
+            bottom: frame.overlayStore.padding.bottom,
+            right: frame.overlayStore.padding.right,
+            left: frame.overlayStore.padding.left,
             opacity: this.props.visible ? 1 : 0,
             backgroundColor: "transparent"
         };

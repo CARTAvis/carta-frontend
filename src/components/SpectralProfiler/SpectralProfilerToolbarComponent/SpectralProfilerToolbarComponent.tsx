@@ -106,7 +106,12 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
 class ProfileSelectionComponent extends React.Component<{profileSelectionStore: SpectralProfileSelectionStore}> {
     // Frame selection does not allow multiple selection
     private onFrameItemClick = (selectedFrame: number, itemIndex: number) => {
-        this.props.profileSelectionStore.selectFrame(selectedFrame);
+        const profileSelectionStore = this.props.profileSelectionStore;
+        if (profileSelectionStore.activeProfileCategory !== MultiProfileCategory.IMAGE) {
+            profileSelectionStore.selectFrame(selectedFrame);
+        } else {
+            profileSelectionStore.selectFrameMultiMode(selectedFrame);
+        }
     };
 
     private onRegionItemClick = (selectedRegion: number, itemIndex: number) => {
@@ -114,7 +119,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
         if (profileSelectionStore.activeProfileCategory !== MultiProfileCategory.REGION) {
             profileSelectionStore.selectRegionSingleMode(selectedRegion);
         } else {
-            profileSelectionStore.selectRegionMultiMode(selectedRegion, itemIndex + 1);
+            profileSelectionStore.selectRegionMultiMode(selectedRegion);
         }
     };
 
@@ -123,7 +128,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
         if (profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STATISTIC) {
             profileSelectionStore.selectStatSingleMode(selectedStatsType);
         } else {
-            profileSelectionStore.selectStatMultiMode(selectedStatsType, itemIndex + 1);
+            profileSelectionStore.selectStatMultiMode(selectedStatsType);
         }
     };
 
@@ -132,7 +137,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
         if (profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STOKES) {
             profileSelectionStore.selectCoordinateSingleMode(selectedStokes);
         } else {
-            profileSelectionStore.selectCoordinateMultiMode(selectedStokes, itemIndex + 1);
+            profileSelectionStore.selectCoordinateMultiMode(selectedStokes);
         }
     };
 
@@ -147,7 +152,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     categoryName={MultiProfileCategory.IMAGE}
                     isActiveCategory={profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE}
                     itemOptions={profileSelectionStore.frameOptions}
-                    itemSelected={[profileSelectionStore.selectedFrameWidgetFileId]}
+                    itemSelected={profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE ? profileSelectionStore.selectedFileIds : [profileSelectionStore.selectedFrameWidgetFileId]}
                     disabled={!frame}
                     isSelectingSpecificItem={profileSelectionStore.isSelectingActiveFrame}
                     onCategorySelect={() => {

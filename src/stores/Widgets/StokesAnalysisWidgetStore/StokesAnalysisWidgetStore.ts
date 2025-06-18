@@ -1,10 +1,11 @@
+import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import type {ChartArea} from "chart.js";
 import {action, computed, makeObservable, observable, override} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {LineSettings, PlotType, RegionsType, ScatterSettings, SpectralSystem, StokesAnalysisSettingsTabs, StokesCoordinate} from "enums";
-import {ProfileSmoothingStore} from "stores";
+import {AppStore, ProfileSmoothingStore} from "stores";
 import {getColorsForValues, isAutoColor} from "utilities";
 
 import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
@@ -36,6 +37,10 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable quScatterMaxX: number | undefined;
     @observable quScatterMinY: number | undefined;
     @observable quScatterMaxY: number | undefined;
+    @observable quScatterEqualXmin: number | undefined;
+    @observable quScatterEqualXmax: number | undefined;
+    @observable quScatterEqualYmin: number | undefined;
+    @observable quScatterEqualYmax: number | undefined;
     @observable linePlotcursorX: number;
     @observable channel: number;
     @observable scatterPlotCursorX: number;
@@ -59,6 +64,8 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable colorPixel: {color: Uint8ClampedArray; size: number};
     @observable pointTransparency: number;
     @observable invertedColorMap: boolean;
+    @observable showReferenceAxes: boolean;
+    referenceAxesThickness: number;
     readonly smoothingStore: ProfileSmoothingStore;
     @observable settingsTabId: StokesAnalysisSettingsTabs;
 
@@ -221,6 +228,8 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.smoothingStore = new ProfileSmoothingStore();
         this.settingsTabId = StokesAnalysisSettingsTabs.CONVERSION;
         this.invertedColorMap = DEFAULTS.invertedColorMap;
+        this.showReferenceAxes = true;
+        this.referenceAxesThickness = 2;
     }
 
     @action setQUScatterPlotXBounds = (minVal: number, maxVal: number) => {
@@ -259,6 +268,10 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.quScatterMaxX = undefined;
         this.quScatterMinY = undefined;
         this.quScatterMaxY = undefined;
+        this.quScatterEqualXmin = undefined;
+        this.quScatterEqualXmax = undefined;
+        this.quScatterEqualYmin = undefined;
+        this.quScatterEqualYmax = undefined;
         this.scatterOutRangePointsZIndex = [];
     };
 
@@ -293,6 +306,13 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.quScatterMaxX = maxX;
         this.quScatterMinY = minY;
         this.quScatterMaxY = maxY;
+    };
+
+    @action setQUScatterPlotEqualXYBounds = (xMin: number, xMax: number, yMin: number, yMax: number) => {
+        this.quScatterEqualXmin = xMin;
+        this.quScatterEqualXmax = xMax;
+        this.quScatterEqualYmin = yMin;
+        this.quScatterEqualYmax = yMax;
     };
 
     // settings
@@ -349,16 +369,12 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.settingsTabId = tabId;
     };
 
+    @action setShowReferenceAxes = (val: boolean) => {
+        this.showReferenceAxes = val;
+    };
+
     @computed get isLinePlotsAutoScaledX() {
         return this.sharedMinX === undefined || this.sharedMaxX === undefined;
-    }
-
-    @computed get isQUScatterPlotAutoScaledX() {
-        return this.quScatterMinX === undefined || this.quScatterMaxX === undefined;
-    }
-
-    @computed get isQUScatterPlotAutoScaledY() {
-        return this.quScatterMinY === undefined || this.quScatterMaxY === undefined;
     }
 
     @computed get isQULinePlotAutoScaledY() {
@@ -371,6 +387,10 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
 
     @computed get isPolAngleAutoScaledY() {
         return this.polAngleMinY === undefined || this.polAngleMaxY === undefined;
+    }
+
+    @computed get referenceAxesColor() {
+        return AppStore.Instance.darkTheme ? Colors.GRAY2 : Colors.GRAY3;
     }
 
     public init = (widgetSettings): void => {

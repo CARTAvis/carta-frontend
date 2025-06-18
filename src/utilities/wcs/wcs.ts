@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 
 import {NumberFormatType, SpectralType} from "enums";
 import {Point2D, SPECTRAL_DEFAULT_UNIT, WCSPoint2D} from "models";
-import {OverlayStore} from "stores";
+import {OverlaySettings} from "stores";
 import {FrameStore} from "stores/Frame";
 import {add2D, magDir2D, polygonPerimeter, rotate2D, scale2D, subtract2D, trimFitsComment} from "utilities";
 
@@ -78,7 +78,7 @@ export function getFormattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: Po
 
 export function getUnformattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: Point2D) {
     if (astTransform) {
-        if (OverlayStore.Instance.isImgCoordinates) {
+        if (OverlaySettings.Instance.isImgCoordinates) {
             // need second frame(WCS frame) in the frame to get WCS point
             AST.setI(astTransform, "Current", 2);
         }
@@ -88,7 +88,7 @@ export function getUnformattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: 
         const pointWCS = transformPoint(astTransform, pixelCoords);
         const normVals = AST.normalizeCoordinates(astTransform, pointWCS.x, pointWCS.y);
 
-        if (OverlayStore.Instance.isImgCoordinates) {
+        if (OverlaySettings.Instance.isImgCoordinates) {
             AST.setI(astTransform, "Current", 1);
         }
 

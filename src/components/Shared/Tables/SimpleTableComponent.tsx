@@ -77,6 +77,7 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
                 columnWidths={this.props.columnWidths}
                 onColumnWidthChanged={this.props.onColumnWidthChanged}
                 cellRendererDependencies={this.props.cellRendererDependencies}
+                getCellClipboardData={null}
             >
                 {tableColumns}
             </Table2>

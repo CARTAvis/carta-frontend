@@ -175,7 +175,6 @@ export class RenderConfigStore {
     @observable alpha: number;
     @observable inverted: boolean = false;
     @observable channelHistogram: CARTA.IHistogram | undefined = undefined;
-    @observable channelMapHistogram: CARTA.IHistogram | undefined = undefined;
     @observable cubeHistogram: CARTA.IHistogram | undefined = undefined;
     @observable useCubeHistogram: boolean = false;
     @observable useCubeHistogramContours: boolean = false;
@@ -311,19 +310,11 @@ export class RenderConfigStore {
     }
 
     @computed get scaleMinVal() {
-        return AppStore.Instance.channelMapStore.channelMapEnabled && !AppStore.Instance.activeFrame?.isPreview
-            ? this.channelMapScaleMin
-            : this.previewHistogramMin
-              ? Math.max(this.previewHistogramMin, this.scaleMin[this.stokesIndex])
-              : this.scaleMin[this.stokesIndex];
+        return this.previewHistogramMin ? Math.max(this.previewHistogramMin, this.scaleMin[this.stokesIndex]) : this.scaleMin[this.stokesIndex];
     }
 
     @computed get scaleMaxVal() {
-        return AppStore.Instance.channelMapStore.channelMapEnabled && !AppStore.Instance.activeFrame?.isPreview
-            ? this.channelMapScaleMax
-            : this.previewHistogramMax
-              ? Math.min(this.previewHistogramMax, this.scaleMax[this.stokesIndex])
-              : this.scaleMax[this.stokesIndex];
+        return this.previewHistogramMax ? Math.min(this.previewHistogramMax, this.scaleMax[this.stokesIndex]) : this.scaleMax[this.stokesIndex];
     }
 
     @computed get selectedPercentileVal() {
@@ -424,16 +415,6 @@ export class RenderConfigStore {
         }
     };
 
-    @action updateChannelMapHistogram = (histogram: CARTA.IHistogram) => {
-        this.channelMapHistogram = histogram;
-
-        // Need change to 1 standard deviation.
-        if (this.selectedPercentile[this.stokesIndex] > 0 && !this.useCubeHistogram) {
-            this.channelMapScaleMin = -histogram.stdDev;
-            this.channelMapScaleMax = histogram.stdDev * 10;
-        }
-    };
-
     @action updateCubeHistogram = (histogram: CARTA.IHistogram, progress: number) => {
         this.cubeHistogram = histogram;
         this.cubeHistogramProgress = progress;
@@ -449,13 +430,9 @@ export class RenderConfigStore {
      * @param maxVal - The maximum scaling value.
      */
     @action setCustomScale = (minVal: number, maxVal: number) => {
-        if (AppStore.Instance.channelMapStore.channelMapEnabled) {
-            this.channelMapScaleMin = minVal;
-            this.channelMapScaleMax = maxVal;
-        } else {
-            this.scaleMin[this.stokesIndex] = minVal;
-            this.scaleMax[this.stokesIndex] = maxVal;
-        }
+        this.scaleMin[this.stokesIndex] = minVal;
+        this.scaleMax[this.stokesIndex] = maxVal;
+
         this.selectedPercentile[this.stokesIndex] = -1;
         this.updateSiblings();
     };

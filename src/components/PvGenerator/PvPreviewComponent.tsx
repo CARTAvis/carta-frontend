@@ -35,7 +35,7 @@ export class PvPreviewComponent extends React.Component<PVPreviewDialogProps> {
         const frame = WidgetsStore?.Instance.pvGeneratorWidgets?.get(this.props.id)?.previewFrame;
 
         return (
-            <ResizeDetector onResize={frame.onResizePreviewWidget} throttleTime={33}>
+            <ResizeDetector onResize={WidgetsStore?.Instance.pvGeneratorWidgets?.get(this.props.id)?.onResizePreviewWidget} throttleTime={33}>
                 <div className="pv-preview-widget">
                     <ImagePanelComponent key={this.props.id} docked={false} image={{type: ImageType.PV_PREVIEW, store: frame}} row={0} column={0} />
                 </div>

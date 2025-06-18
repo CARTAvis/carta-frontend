@@ -155,7 +155,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
 
             if (showFileIds.includes(frame.frameInfo.fileId)) {
                 values[index] = this.genValueContent(frame);
-                systems[index] = appStore.overlayStore.global.explicitSystem ?? "-";
+                systems[index] = appStore.overlaySettings.global.explicitSystem ?? "-";
                 worldCoords[index] = this.genWorldCoordContent(frame);
                 imageCoords[index] = this.genImageCoordContent(frame);
             }

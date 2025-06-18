@@ -63,7 +63,7 @@ export const WorkspaceDialogComponent = observer(() => {
             }
 
             // TODO: to be removed after storing SystemType in workspace
-            if (appStore.overlayStore.isImgCoordinates && appStore.frames.map(frame => frame.spatialReference !== null).includes(true)) {
+            if (appStore.overlaySettings.isImgCoordinates && appStore.frames.map(frame => frame.spatialReference !== null).includes(true)) {
                 AlertStore.Instance.showAlert("Saving workspace failed: not supporting spatial matching in image cooordinates.");
                 return;
             }
@@ -249,6 +249,7 @@ export const WorkspaceDialogComponent = observer(() => {
                 enableRowHeader={false}
                 numRows={workspaceList?.length}
                 loadingOptions={isFetching ? [TableLoadingOption.CELLS] : []}
+                getCellClipboardData={null}
             >
                 <Column name="Name" cellRenderer={renderFilenames} />
                 <Column name="Last modified" cellRenderer={renderDates} />
