@@ -138,11 +138,7 @@ export class AboutDialogComponent extends React.Component {
                                 , "The SIMBAD astronomical database", Wenger et al.)
                             </li>
                             <li>
-                                The VizieR catalogue access tool, operated at CDS, Strasbourg Astronomical Observatory, France (DOI :{" "}
-                                <a href="https://www.doi.org/https://www.doi.org/" rel="noopener noreferrer" target="_blank">
-                                    10.26093/cds/vizier
-                                </a>
-                                ;{" "}
+                                The VizieR catalogue access tool, operated at CDS, Strasbourg Astronomical Observatory, France (
                                 <a href="https://ui.adsabs.harvard.edu/abs/2000A%26AS..143...23O%2F" rel="noopener noreferrer" target="_blank">
                                     2000, A&AS, 143, 23
                                 </a>
