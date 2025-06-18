@@ -1408,6 +1408,7 @@ export class FrameStore {
         } else {
             // init WCS
             const astFrameSet = this.initFrame();
+            overlaySettings.global.setValidWcs(false); // initialize validWcs to false
             if (astFrameSet) {
                 this.spectralFrame = AST.getSpectralFrame(astFrameSet);
                 if (frameInfo.fileInfoExtended.depth > 1) {
