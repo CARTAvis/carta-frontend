@@ -802,13 +802,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 <p>For spatial-spectral image</p>
                 <Divider />
                 <p>Spectral axis</p>
-                <SpectralSettingsComponent
-                    frame={appStore.activeFrame}
-                    onSpectralCoordinateChange={frame.setSpectralCoordinate}
-                    onSpectralSystemChange={frame.setSpectralSystem}
-                    disable={!isPVImage || !appStore.activeFrame?.isSpectralChannel}
-                    disableChannelOption={true}
-                />
+                <SpectralSettingsComponent frame={appStore.activeFrame} onSpectralCoordinateChange={frame.setSpectralCoordinate} onSpectralSystemChange={frame.setSpectralSystem} disable={!isPVImage} disableChannelOption={true} />
             </div>
         ) : null;
 
