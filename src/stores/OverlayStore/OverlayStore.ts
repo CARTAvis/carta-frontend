@@ -113,10 +113,10 @@ export class OverlayGlobalSettings {
 
             const isSysPixel = typeof this.explicitSystem === "undefined" || this.explicitSystem === SystemType.Image;
             const getSystemName = (symbolXY: string, isSysPixel: boolean, isPVImage: boolean, explicitSystem: SystemType) => {
-                return ((symbolXY === "RA" || symbolXY === "Dec") && AppStore.Instance.overlaySettings.labels?.raDecReference) || isSysPixel ? (isSysPixel && !isPVImage ? ` (pixel)` : ` (${explicitSystem})`) : ""; // a space between ` and ( is essential
+                return ((symbolXY === "RA" || symbolXY === "Dec") && AppStore.Instance.overlaySettings.labels?.raDecReference) || (isSysPixel && !isPVImage) ? (isSysPixel ? ` (pixel)` : ` (${explicitSystem})`) : ""; // a space between ` and ( is essential
             };
-            const systemNameX = getSystemName(symbolX, isSysPixel, frame?.isPVImage, this.explicitSystem);
-            const systemNameY = getSystemName(symbolY, isSysPixel, frame?.isPVImage, this.explicitSystem);
+            const systemNameX = getSystemName(symbolX, isSysPixel, frame?.isPVImage, this?.explicitSystem);
+            const systemNameY = getSystemName(symbolY, isSysPixel, frame?.isPVImage, this?.explicitSystem);
             astString.add("Label(1)", `"${labelX.replace(/%/g, "%%%%").replace(/"/g, "”")}${systemNameX}"`, labelX !== undefined);
             astString.add("Label(2)", `"${labelY.replace(/%/g, "%%%%").replace(/"/g, "”")}${systemNameY}"`, labelY !== undefined);
         }
