@@ -110,13 +110,21 @@ export class OverlayGlobalSettings {
             const symbolY = AST.getString(frame?.wcsInfo, "Symbol(2)");
             const labelX = AST.getString(frame?.wcsInfo, "Label(1)");
             const labelY = AST.getString(frame?.wcsInfo, "Label(2)");
+            const haveUnitX = AST.getString(frame?.wcsInfo, "Unit(1)") !== "";
+            const haveUnitY = AST.getString(frame?.wcsInfo, "Unit(2)") !== "";
 
-            const isSysPixel = typeof this.explicitSystem === "undefined" || this.explicitSystem === SystemType.Image;
-            const getSystemName = (symbolXY: string, isSysPixel: boolean, isPVImage: boolean, explicitSystem: SystemType) => {
-                return ((symbolXY === "RA" || symbolXY === "Dec") && AppStore.Instance.overlaySettings.labels?.raDecReference) || (isSysPixel && !isPVImage) ? (isSysPixel ? ` (pixel)` : ` (${explicitSystem})`) : ""; // a space between ` and ( is essential
+            const isSysPixel = (this.explicitSystem === undefined && !(frame?.isPVImage || frame?.isSwappedZ)) || this.explicitSystem === SystemType.Image;
+            const getSystemName = (symbolXY: string, isSysPixel: boolean, haveUnit: boolean, explicitSystem: SystemType) => {
+                if (isSysPixel) {
+                    return haveUnit ? "" : " (pixel)";
+                } else if ((symbolXY === "RA" || symbolXY === "Dec") && AppStore.Instance.overlaySettings.labels?.raDecReference) {
+                    return ` (${explicitSystem})`;
+                } else {
+                    return "";
+                }
             };
-            const systemNameX = getSystemName(symbolX, isSysPixel, frame?.isPVImage, this?.explicitSystem);
-            const systemNameY = getSystemName(symbolY, isSysPixel, frame?.isPVImage, this?.explicitSystem);
+            const systemNameX = getSystemName(symbolX, isSysPixel, haveUnitX, this?.explicitSystem);
+            const systemNameY = getSystemName(symbolY, isSysPixel, haveUnitY, this?.explicitSystem);
             astString.add("Label(1)", `"${labelX.replace(/%/g, "%%%%").replace(/"/g, "”")}${systemNameX}"`, labelX !== undefined);
             astString.add("Label(2)", `"${labelY.replace(/%/g, "%%%%").replace(/"/g, "”")}${systemNameY}"`, labelY !== undefined);
         }
