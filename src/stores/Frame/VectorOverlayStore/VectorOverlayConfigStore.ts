@@ -1,8 +1,9 @@
 import {RGBColor} from "react-color";
+import {CARTA} from "carta-protobuf";
 import {action, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
-import {POLARIZATIONS, WorkspaceVectorOverlayConfig} from "models";
+import {WorkspaceVectorOverlayConfig} from "models";
 import {PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
@@ -25,7 +26,7 @@ export class VectorOverlayConfigStore {
     @observable debiasing: boolean;
     @observable qError: number;
     @observable uError: number;
-    @observable thresholdOption: number;
+    @observable thresholdOption: CARTA.PolarizationType.I | CARTA.PolarizationType.Plinear;
 
     // Appearance
     @observable visible: boolean;
@@ -57,7 +58,7 @@ export class VectorOverlayConfigStore {
         this.threshold = 0;
         this.thresholdEnabled = false;
         this.debiasing = false;
-        this.thresholdOption = frame.hasLinearStokes ? POLARIZATIONS.Plinear : POLARIZATIONS.I;
+        this.thresholdOption = frame.hasLinearStokes ? CARTA.PolarizationType.Plinear : CARTA.PolarizationType.I;
 
         this.color = tinycolor(this.preferenceStore.vectorOverlayColor).toRgb();
         this.colormapEnabled = this.preferenceStore.vectorOverlayColormapEnabled;
@@ -81,7 +82,7 @@ export class VectorOverlayConfigStore {
         this.thresholdEnabled = val;
     }
 
-    @action setThresholdOption(val: number) {
+    @action setThresholdOption(val: CARTA.PolarizationType.I | CARTA.PolarizationType.Plinear) {
         this.thresholdOption = val;
     }
 
@@ -96,7 +97,7 @@ export class VectorOverlayConfigStore {
         debiasing: boolean,
         qError: number,
         uError: number,
-        thresholdOption: POLARIZATIONS
+        thresholdOption: CARTA.PolarizationType.I | CARTA.PolarizationType.Plinear
     ) => {
         this.angularSource = angularSource;
         this.intensitySource = intensitySource;
