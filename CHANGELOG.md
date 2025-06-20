@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Enhanced support for modifying the render configuration and the active channel/polarization in channel map mode ([#2492](https://github.com/CARTAvis/carta-frontend/issues/2492)).
 * Enable the copy function in the cursor info widget ([#2468](https://github.com/CARTAvis/carta-frontend/issues/2468)).
+* Supported flux density calculations with various pixel units in the statistics widget ([#2521](https://github.com/CARTAvis/carta-frontend/issues/2521)).
 ### Changed
 * The dropdown options in the z profile widget becomes scrollable with small widget width ([#1600](https://github.com/CARTAvis/carta-frontend/issues/1600)).
 * When a PV preview is active, the image view shows the page with the source image instead of the first page.
