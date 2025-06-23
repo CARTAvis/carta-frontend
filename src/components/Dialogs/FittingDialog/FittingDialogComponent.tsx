@@ -206,7 +206,7 @@ export class FittingDialogComponent extends React.Component {
                                             checked={fittingStore.isAutoInitVal}
                                             onChange={ev => fittingStore.setIsAutoInitVal(ev.currentTarget.checked)}
                                             innerLabel="Auto"
-                                            test-id="image-fitting-auto-initial-value-toggle"
+                                            data-testid="image-fitting-auto-initial-value-toggle"
                                         />
                                     </Tooltip>
                                     {!fittingStore.isAutoInitVal && fittingStore.components.length > 1 && (
