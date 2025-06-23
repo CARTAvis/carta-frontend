@@ -201,7 +201,13 @@ export class FittingDialogComponent extends React.Component {
                                         data-testid="image-fitting-component-input"
                                     />
                                     <Tooltip content={`${fittingStore.isAutoInitVal ? "Disable" : "Enable"} initial value auto generation`} position={Position.RIGHT}>
-                                        <Switch className="auto-switch" checked={fittingStore.isAutoInitVal} onChange={ev => fittingStore.setIsAutoInitVal(ev.currentTarget.checked)} innerLabel="Auto" />
+                                        <Switch
+                                            className="auto-switch"
+                                            checked={fittingStore.isAutoInitVal}
+                                            onChange={ev => fittingStore.setIsAutoInitVal(ev.currentTarget.checked)}
+                                            innerLabel="Auto"
+                                            test-id="image-fitting-auto-initial-value-toggle"
+                                        />
                                     </Tooltip>
                                     {!fittingStore.isAutoInitVal && fittingStore.components.length > 1 && (
                                         <div className="components-slider">
