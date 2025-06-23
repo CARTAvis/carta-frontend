@@ -340,8 +340,8 @@ export class VectorOverlayDialogComponent extends React.Component {
                     <Switch checked={this.thresholdEnabled} onChange={this.handleThresholdEnabledChanged} data-testid="vector-field-threshold-toggle" />
                     {this.thresholdEnabled && numberOfAvailableOptions > 0 && (
                         <HTMLSelect value={this.thresholdOption} onChange={ev => this.handleThresholdOptionChanged(ev)} data-testid="vector-field-threshold-option-dropdown" disabled={thresholdOptionDisabled}>
-                            {computedPIOptionAvailable && <option value={POLARIZATIONS.Plinear}>Computed PI</option>}
-                            {stokesIOptionAvailable && <option value={POLARIZATIONS.I}>Stokes I</option>}
+                            {computedPIOptionAvailable && <option value={CARTA.PolarizationType.Plinear}>Computed PI</option>}
+                            {stokesIOptionAvailable && <option value={CARTA.PolarizationType.I}>Stokes I</option>}
                         </HTMLSelect>
                     )}
                 </FormGroup>
