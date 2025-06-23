@@ -135,7 +135,14 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
                         <Tab
                             id={StokesAnalysisSettingsTabs.CONVERSION}
                             title="Conversion"
-                            panel={<SpectralSettingsComponent frame={widgetStore.effectiveFrame} onSpectralCoordinateChange={widgetStore.setSpectralCoordinate} onSpectralSystemChange={widgetStore.setSpectralSystem} disable={!hasStokes} />}
+                            panel={
+                                <SpectralSettingsComponent
+                                    frame={widgetStore.effectiveFrame}
+                                    onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
+                                    onSpectralSystemChange={widgetStore.setSpectralSystem}
+                                    disable={!hasStokes || !widgetStore.effectiveFrame?.isSpectralChannel}
+                                />
+                            }
                         />
                         <Tab id={StokesAnalysisSettingsTabs.LINE_PLOT_STYLING} title="Line Plot Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps} />} />
                         <Tab id={StokesAnalysisSettingsTabs.SCATTER_PLOT_STYLING} title="Scatter Plot Styling" panel={<ScatterPlotSettingsPanelComponent {...scatterSettingsProps} />} />
