@@ -14,7 +14,7 @@ const file = await app.openFile("my_image.fits");
 
 ## Creating regions
 
-Regions on a specific image is accessible via <ApiLink path="/.-stores/class/RegionSetStore">`RegionSetStore`</ApiLink> under each image. Each region is represented by a <ApiLink path="/.-stores/class/RegionStore">`RegionStore`</ApiLink> object.
+Regions on a specific image are accessible via <ApiLink path="/.-stores/class/RegionSetStore">`RegionSetStore`</ApiLink> under each image. Each region is represented by a <ApiLink path="/.-stores/class/RegionStore">`RegionStore`</ApiLink> object.
 
 ```javascript
 console.log(file.regionSet.regions); // View all regions

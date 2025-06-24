@@ -11,6 +11,7 @@ import {angle2D, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, ge
 const FOV_REGION_ID = 0;
 const IMAGE_REGION_ID = -1;
 
+/** Manages the state and logic for multiple Gaussian image fitting. */
 export class ImageFittingStore {
     private static staticInstance: ImageFittingStore;
 
@@ -21,27 +22,53 @@ export class ImageFittingStore {
         return ImageFittingStore.staticInstance;
     }
 
+    /** ID of the file currently selected for fitting. */
     @observable selectedFileId: number = ACTIVE_FILE_ID;
+    /** ID of the region currently selected for fitting. Set to 0 for the current field of view, or -1 for the full image. */
     @observable selectedRegionId: number = FOV_REGION_ID;
+    /** Stores the initial values and fixed flags for each Gaussian component. */
     @observable components: ImageFittingIndividualStore[];
+    /** Indicates whether to auto‑generate initial values when requesting for fitting. */
+    @observable isAutoInitVal: boolean = true;
+    /** Index of the component currently selected in the UI. */
     @observable selectedComponentIndex: number;
+    /** Constant background offset. */
     @observable backgroundOffset: number = 0;
+    /** Indicates whether to fix the background offset when fitting. */
     @observable backgroundOffsetFixed: boolean = true;
+    /** Solver used for fitting. */
     @observable solverType: CARTA.FittingSolverType = CARTA.FittingSolverType.Cholesky;
+    /** Indicates whether to generate a model image when requesting for fitting. */
     @observable createModelImage: boolean = true;
+    /** Indicates whether to generate a residual image when requesting for fitting. */
     @observable createResidualImage: boolean = true;
+    /** Whether a fitting request is currently being processed. */
     @observable isFitting: boolean = false;
+    /** Progress of the current fitting request, from 0 to 1 (multiply by 100 for %). */
     @observable progress: number = 0;
+    /** Whether cancel is in progress. */
     @observable isCancelling: boolean = false;
 
+    /**
+     *  Sets the ID of the file currently selected for fitting.
+     * @param id - The file ID.
+     */
     @action setSelectedFileId = (id: number) => {
         this.selectedFileId = id;
     };
 
+    /**
+     * Sets the ID of the region currently selected for fitting.
+     * @param id - The region ID (0 = current FOV, -1 = full image, positive number = specific region).
+     */
     @action setSelectedRegionId = (id: number) => {
         this.selectedRegionId = id;
     };
 
+    /**
+     * Sets the number of components used for fitting.
+     * @param num - The number of components.
+     */
     @action setComponents = (num: number) => {
         if (num > this.components.length) {
             for (let i = this.components.length; i < num; i++) {
@@ -56,6 +83,7 @@ export class ImageFittingStore {
         }
     };
 
+    /** Resets settings to defaults. */
     @action clearComponents = () => {
         this.components = [new ImageFittingIndividualStore()];
         this.selectedComponentIndex = 0;
@@ -63,6 +91,7 @@ export class ImageFittingStore {
         this.solverType = CARTA.FittingSolverType.Cholesky;
     };
 
+    /** Removes the currently selected component (if more than one remains). */
     @action deleteSelectedComponent = () => {
         if (this.components.length > 1) {
             this.components.splice(this.selectedComponentIndex, 1);
@@ -70,58 +99,97 @@ export class ImageFittingStore {
         }
     };
 
+    /**
+     * Enables or disables automatic initial‑value generation.
+     * @param isAuto - True to enable, false to disable.
+     */
+    @action setIsAutoInitVal = (isAuto: boolean) => {
+        this.isAutoInitVal = isAuto;
+    };
+
+    /**
+     * Sets the index of the component currently selected in the UI.
+     * @param index - The selected component index.
+     */
     @action setSelectedComponentIndex = (index: number) => {
         this.selectedComponentIndex = index;
     };
 
+    /**
+     * Sets the constant background offset.
+     * @param offset - Offset value (ignored if not finite).
+     */
     @action setBackgroundOffset = (offset: number) => {
         if (isFinite(offset)) {
             this.backgroundOffset = offset;
         }
     };
 
+    /** Resets the background offset to 0. */
     @action resetBackgroundOffset = () => {
         this.backgroundOffset = 0;
     };
 
+    /** Toggles whether the background offset is fixed during fitting. */
     @action toggleBackgroundOffsetFixed = () => {
         this.backgroundOffsetFixed = !this.backgroundOffsetFixed;
     };
 
+    /**
+     * Sets the solver used for fitting.
+     * @param type - A value from `CARTA.FittingSolverType`.
+     */
     @action setSolverType = (type: CARTA.FittingSolverType) => {
         this.solverType = type;
     };
 
+    /** Toggles whether to generate a model image when requesting for fitting.  */
     @action toggleCreateModelImage = () => {
         this.createModelImage = !this.createModelImage;
     };
 
+    /** Toggles whether to generate a residual image when requesting for fitting. */
     @action toggleCreateResidualImage = () => {
         this.createResidualImage = !this.createResidualImage;
     };
 
+    /**
+     * Updates whether a fitting request is currently being processed.
+     * @param isFitting - True when fitting is in progress.
+     */
     @action setIsFitting = (isFitting: boolean) => {
         this.isFitting = isFitting;
     };
 
+    /**
+     * Sets the progress of the current fitting request.
+     * @param progress - Progress from 0 to 1 (multiply by 100 for %).
+     */
     @action setProgress = (progress: number) => {
         this.progress = progress;
     };
 
+    /**
+     * Updates whether cancel is in progress.
+     * @param isCancelling - True if cancellation has been requested.
+     */
     @action setIsCancelling = (isCancelling: boolean) => {
         this.isCancelling = isCancelling;
     };
 
+    /** Resets the fitting states and progress. */
     @action resetFittingState = () => {
         this.isFitting = false;
         this.progress = 0;
         this.isCancelling = false;
     };
 
+    /** The available file frame options for selection, including the active file. */
     @computed get frameOptions() {
         return [{value: ACTIVE_FILE_ID, label: "Active"}, ...(AppStore.Instance.frameNames ?? [])];
     }
 
+    /** The available region options including the field of view, entire image, and all closed, non-temporary regions. */
     @computed get regionOptions() {
         const closedRegions = this.effectiveFrame?.regionSet?.regions.filter(r => !r.isTemporary && r.isClosedRegion);
         const options = closedRegions?.map(r => {
@@ -130,7 +198,7 @@ export class ImageFittingStore {
         return [{value: FOV_REGION_ID, label: "Field of view"}, {value: IMAGE_REGION_ID, label: "Image"}, ...(options ?? [])];
     }
 
-    // Mcholesky is not supported because it's not available in all gsl versions
+    /** Available fitting solver options shown in the UI. MCholesky is excluded because it is not supported in all GSL versions. */
     get solverOptions() {
         return [
             {value: CARTA.FittingSolverType.Qr, label: "QR"},
@@ -139,6 +207,7 @@ export class ImageFittingStore {
         ];
     }
 
+    /** The frame used for fitting. */
     @computed get effectiveFrame(): FrameStore | null {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame && appStore.frames?.length > 0) {
@@ -147,12 +216,22 @@ export class ImageFittingStore {
         return null;
     }
 
+    /** Whether all input initial values are valid. Returns true if automatic initial-value generation is enabled. */
+    @computed get validParams() {
+        return this.isAutoInitVal ? true : this.components.every(c => c.validParams === true);
+    }
+
+    /** The total number of fixed parameters across all Gaussian parameters. Returns 0 if automatic initial-value generation is enabled. */
+    @computed get fixedParamsNum(): number {
+        return this.isAutoInitVal ? 0 : this.components.reduce((sum, c) => sum + c.fixedParamNum, 0);
+    }
+
+    /** Whether fitting is disabled due to an invalid file ID, all parameters being fixed, invalid initial values, or fitting in progress. */
     @computed get fitDisabled() {
         const fileId = this.effectiveFrame?.frameInfo?.fileId;
         const validFileId = fileId !== undefined && isFinite(fileId) && fileId >= 0;
         const allFixed = this.components.every(c => c.allFixed === true);
-        const validParams = this.components.every(c => c.validParams === true);
-        return !validFileId || allFixed || !validParams || this.isFitting;
+        return !validFileId || allFixed || !this.validParams || this.isFitting;
     }
 
     constructor() {
@@ -169,6 +248,11 @@ export class ImageFittingStore {
         );
     }
 
+    /**
+     * Sends a fitting request using the current fitting settings.
+     * If automatic initial-value generation is enabled, `NaN` values and `false` flags are used instead of {@link components}.
+     * Skips the request if fitting is currently disabled.
+     */
     fitImage = () => {
         if (this.fitDisabled) {
             return;
@@ -179,12 +263,12 @@ export class ImageFittingStore {
         const fixedParams: boolean[] = [];
         for (const c of this.components) {
             initialValues.push({
-                center: c.center,
-                amp: c.amplitude,
-                fwhm: c.fwhm,
-                pa: c.pa
+                center: this.isAutoInitVal ? {x: NaN, y: NaN} : c.center,
+                amp: this.isAutoInitVal ? NaN : c.amplitude,
+                fwhm: this.isAutoInitVal ? {x: NaN, y: NaN} : c.fwhm,
+                pa: this.isAutoInitVal ? NaN : c.pa
             });
-            fixedParams.push(...c.fixedParams);
+            fixedParams.push(...(this.isAutoInitVal ? [false, false, false, false, false, false] : c.fixedParams));
         }
         fixedParams.push(this.backgroundOffsetFixed);
 
@@ -209,6 +293,7 @@ export class ImageFittingStore {
         AppStore.Instance.requestFitting(message);
     };
 
+    /** Cancels a fitting request if the progress is incomplete and updates the cancelling status. */
     cancelFitting = () => {
         this.setIsCancelling(true);
         if (this.progress < 1.0 && this.isFitting && this.effectiveFrame) {
@@ -216,6 +301,19 @@ export class ImageFittingStore {
         }
     };
 
+    /**
+     * Processes the fitting results and stores the formatted result string and log messages.
+     * @param regionId - The region ID used for fitting.
+     * @param fovInfo - Field of view parameters when fitting was performed on the current FOV.
+     * @param fixedParams - Fixed flags for each fitting parameters.
+     * @param values - Values for each Gaussian component.
+     * @param errors - Fitting errors for each Gaussian component.
+     * @param offsetValue - The background offset.
+     * @param offsetError - Fitting error of the background offset.
+     * @param integratedFluxValues - Integrated flux values for each Gaussian component.
+     * @param integratedFluxErrors - Errors of the integrated flux values.
+     * @param fittingLog - The log message.
+     */
     setResultString = (
         regionId: number,
         fovInfo: CARTA.IRegionInfo,
@@ -232,6 +330,8 @@ export class ImageFittingStore {
         if (!frame || !values || !errors) {
             return;
         }
+
+        this.setGeneratedInitVal(fittingLog);
 
         let results = "";
         let log = "";
@@ -352,6 +452,7 @@ export class ImageFittingStore {
         frame.setFittingResultRegionParams(this.getRegionParams(values));
     };
 
+    /** Creates ellipse regions on the selected image based on the fitting results. */
     createRegions = async () => {
         const frame = this.effectiveFrame;
         const params = frame?.fittingResultRegionParams;
@@ -481,9 +582,36 @@ export class ImageFittingStore {
             })
             .filter((params): params is {points: Point2D[]; rotation: number} => params !== null);
     };
+
+    private setGeneratedInitVal = (log: string) => {
+        const initValString = log.match(/Generated initial values([\s\S]*?)Gaussian fitting with/)?.[1];
+        if (!initValString) {
+            return;
+        }
+
+        const initVal = Array.from(initValString.matchAll(/=\s*([-\d.]+)\s*\(/g), match => Number(match[1]));
+        if (initVal.length === 0 || initVal.length % 6 !== 0) {
+            console.warn("Invalid initial values format in fitting log.");
+            return;
+        }
+
+        const initVal2D = Array.from({length: Math.ceil(initVal.length / 6)}, (_, i) => initVal.slice(i * 6, i * 6 + 6));
+        this.setComponents(initVal2D.length);
+        for (let i = 0; i < initVal2D.length; i++) {
+            const [centerX, centerY, amplitude, fwhmX, fwhmY, pa] = initVal2D[i];
+            const component = this.components[i];
+            component.setCenterX(centerX);
+            component.setCenterY(centerY);
+            component.setAmplitude(amplitude);
+            component.setFwhmX(fwhmX);
+            component.setFwhmY(fwhmY);
+            component.setPa(pa);
+        }
+        this.setSelectedComponentIndex(0);
+    };
 }
 
-export class ImageFittingIndividualStore {
+class ImageFittingIndividualStore {
     @observable center: Point2D;
     @observable amplitude: number;
     @observable fwhm: Point2D;
@@ -616,6 +744,10 @@ export class ImageFittingIndividualStore {
 
     @computed get fixedParams(): boolean[] {
         return [this.centerFixed.x, this.centerFixed.y, this.amplitudeFixed, this.fwhmFixed.x, this.fwhmFixed.y, this.paFixed];
+    }
+
+    @computed get fixedParamNum(): number {
+        return this.fixedParams.filter(p => p === true).length;
     }
 
     @computed get allFixed(): boolean {

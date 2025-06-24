@@ -130,6 +130,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
 
     return (
         <div
+            id="image-panel-0-0"
             className="image-panel-div"
             key={"channel-map"}
             style={{

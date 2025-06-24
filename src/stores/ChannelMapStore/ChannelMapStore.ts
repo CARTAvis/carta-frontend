@@ -7,7 +7,6 @@ import {AppStore, FrameStore} from "stores";
 
 export class ChannelMapStore {
     private static staticInstance: ChannelMapStore;
-    @observable pixelHighlightValue: number = NaN;
 
     static get Instance() {
         if (!ChannelMapStore.staticInstance) {
@@ -15,6 +14,9 @@ export class ChannelMapStore {
         }
         return ChannelMapStore.staticInstance;
     }
+
+    /** The default color used for rendering the channel map label. */
+    static readonly DefaultLabelColor = "auto-light_gray";
 
     constructor() {
         makeObservable(this);
@@ -43,7 +45,7 @@ export class ChannelMapStore {
             channelArray => {
                 const channel = this.displayedFrame?.channel;
                 if (this.channelMapEnabled && channel !== undefined && !channelArray.includes(channel)) {
-                    this.debouncedSetAciveChannel(channelArray[0]);
+                    this.debouncedSetActiveChannel(channelArray[0]);
                 }
             }
         );
@@ -51,13 +53,17 @@ export class ChannelMapStore {
         reaction(
             () => this.displayedFrame?.channel,
             channel => {
-                if (channel !== undefined && !this.channelArray.includes(channel)) {
+                if (channel === undefined) {
+                    this.setStartChannel(0);
+                } else if (!this.channelArray.includes(channel)) {
                     this.setStartChannel(channel);
                 }
             }
         );
     }
 
+    /** The threshold value below which pixels are displayed in grayscale. */
+    @observable pixelHighlightValue: number = NaN;
     /** The first channel at the top-left corner. */
     @observable startChannel: number = 0;
     /** The number of columns in the image view. */
@@ -66,16 +72,27 @@ export class ChannelMapStore {
     @observable numRows: number = 2;
     /** Indicates whether the channel map mode is enabled. */
     @observable channelMapEnabled: boolean = false;
-
+    /** Indicates whether to show the channel string. */
     @observable showChannelString: boolean = false;
+    /** Indicates whether to show the spectral string. */
     @observable showSpectralString: boolean = false;
+    /** Indicates whether to show the velocity string. */
     @observable showVelocityString: boolean = false;
-    @observable showChannelStringLabel: boolean = false;
-    @observable showSpectralStringLabel: boolean = false;
-    @observable showVelocityStringLabel: boolean = false;
+    /** Indicates whether to show the unit of the spectral string. */
+    @observable showSpectralStringUnit: boolean = true;
+    /** Indicates whether to show the unit of the velocity string. */
+    @observable showVelocityStringUnit: boolean = true;
+    /** Font index used for rendering the channel map label. */
+    @observable font: number = 0;
+    /** Font size in pixels used for rendering the channel map label. */
+    @observable fontSize: number = 12;
+    /** Indicates whether to use a custom color for rendering the channel map label. */
+    @observable customColor: boolean = false;
+    /** The custom color used for rendering the channel map label. */
+    @observable color: string = ChannelMapStore.DefaultLabelColor;
 
     private throttledRequestChannels = throttle((frame: FrameStore) => this.requestChannels(frame), 100);
-    private debouncedSetAciveChannel = debounce((channel: number) => this.displayedFrame?.setChannel(channel), 200);
+    private debouncedSetActiveChannel = debounce((channel: number) => this.displayedFrame?.setChannel(channel), 200);
 
     /**
      * Clears the cache and requests new tiles when the polarization changes.
@@ -140,7 +157,7 @@ export class ChannelMapStore {
     }
 
     /**
-     * Sets the number of columns in the image vew.
+     * Sets the number of columns in the image view.
      * @param numColumns - The number of columns in the image view.
      */
     @action setNumColumns(numColumns: number) {
@@ -159,34 +176,86 @@ export class ChannelMapStore {
         }
     }
 
+    /**
+     * Sets the threshold value below which pixels are displayed in grayscale.
+     * @param val - Threshold value.
+     */
     @action setPixelHighlightValue = (val: number) => {
         if (!AppStore.Instance.isExportingImage) {
             this.pixelHighlightValue = val;
         }
     };
 
+    /**
+     * Show or hide the channel string.
+     * @param show - True to show, false to hide.
+     */
     @action setShowChannelString = (show: boolean) => {
         this.showChannelString = show;
     };
 
+    /**
+     * Show or hide the spectral string.
+     * @param show - True to show, false to hide.
+     */
     @action setShowSpectralString = (show: boolean) => {
         this.showSpectralString = show;
     };
 
+    /**
+     * Show or hide the velocity string.
+     * @param show - True to show, false to hide.
+     */
     @action setShowVelocityString = (show: boolean) => {
         this.showVelocityString = show;
     };
 
-    @action setShowChannelStringLabel = (show: boolean) => {
-        this.showChannelStringLabel = show;
+    /**
+     * Show or hide the unit of the spectral string.
+     * @param show - True to show, false to hide.
+     */
+    @action setShowSpectralStringUnit = (show: boolean) => {
+        this.showSpectralStringUnit = show;
     };
 
-    @action setShowSpectralStringLabel = (show: boolean) => {
-        this.showSpectralStringLabel = show;
+    /**
+     * Show or hide the unit of the velocity string.
+     * @param show - True to show, false to hide.
+     */
+    @action setShowVelocityStringUnit = (show: boolean) => {
+        this.showVelocityStringUnit = show;
     };
 
-    @action setShowVelocityStringLabel = (show: boolean) => {
-        this.showVelocityStringLabel = show;
+    /**
+     * Sets the font index used for rendering the channel map label.
+     * @param font - Font index.
+     */
+    @action setFont = (font: number) => {
+        this.font = font;
+    };
+
+    /**
+     * Sets the font size in pixels used for rendering the channel map label.
+     * @param fontSize - Font size in pixels.
+     */
+    @action setFontSize = (fontSize: number) => {
+        this.fontSize = fontSize;
+    };
+
+    /**
+     * Sets whether to use a custom color for rendering the channel map label.
+     * @param customColor - True to use a custom color, false to use the default color.
+     */
+    @action setCustomColor = (customColor: boolean) => {
+        this.customColor = customColor;
+    };
+
+    /**
+     * Sets the color used for rendering the channel map label.
+     * @param color - The custom color.
+     */
+    @action setColor = (color: string) => {
+        this.color = color;
     };
 
     /** The displayed image in the image view. */
@@ -212,7 +281,7 @@ export class ChannelMapStore {
     }
 
     /** The number of channels of the displayed image. Returns 1 if the information is unavailable. */
-    @computed private get totalChannelNum(): number {
+    @computed get totalChannelNum(): number {
         return this.displayedFrame?.frameInfo?.fileInfoExtended?.depth ?? 1;
     }
 

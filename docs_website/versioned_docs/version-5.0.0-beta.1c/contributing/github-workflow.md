@@ -10,7 +10,7 @@ The workflow for contributing to the codebase.
 
 When creating new issues, please refer to [this page](https://github.com/CARTAvis/carta-frontend/labels) for the available labels that can be added.
 
-If the issue is related to bug fixing, please use the [bug report template](https://github.com/CARTAvis/carta-frontend/blob/dev/.github/ISSUE_TEMPLATE/bug_report.md). Please make sure to fill in the template with all the necessary information, including the description, reproduction steps, and platform information. Providing reproduction steps is particularly helpful for resloving issues. Additionally, including testing images can be helpful for reproducing the issue.
+If the issue is related to bug fixing, please use the [bug report template](https://github.com/CARTAvis/carta-frontend/blob/dev/.github/ISSUE_TEMPLATE/bug_report.md). Please make sure to fill in the template with all the necessary information, including the description, reproduction steps, and platform information. Providing reproduction steps is particularly helpful for resolving issues. Additionally, including testing images can be helpful for reproducing the issue.
 
 ## Contributing to the codebase
 
@@ -53,7 +53,7 @@ git push
 
 #### Pull request template
 
-When making a pull request from you branch, please use the [pull request template](https://github.com/CARTAvis/carta-frontend/blob/dev/.github/pull_request_template.md).
+When making a pull request from your branch, please use the [pull request template](https://github.com/CARTAvis/carta-frontend/blob/dev/.github/pull_request_template.md).
 
 In the description section, please provide details about your changes, including linked issues and companion pull requests (if there are), what is implemented or fixed, and how to test it.
 
@@ -117,7 +117,7 @@ If the pull request requires changes in the carta-protobuf submodule and is read
 2. Check out the frontend branch:
 
     ```
-    git checkout "[the frontend branch]"
+    git checkout [the frontend branch]
     ```
 
 3. Check out the dev branch of the protobuf submodule and pull the latest version:
@@ -132,7 +132,7 @@ If the pull request requires changes in the carta-protobuf submodule and is read
 4. Commit and push the changes:
 
     ```
-    git merge -a -m "update protobuf"
+    git commit -a -m "update protobuf"
     git push
     ```
 

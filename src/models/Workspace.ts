@@ -48,6 +48,7 @@ export interface WorkspaceVectorOverlayConfig {
     debiasing: boolean;
     qError: number;
     uError: number;
+    thresholdOption: CARTA.PolarizationType.I | CARTA.PolarizationType.Plinear;
 
     visible: boolean;
     thickness: number;
