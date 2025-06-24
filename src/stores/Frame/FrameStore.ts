@@ -2889,6 +2889,7 @@ export class FrameStore {
             smoothingFactor: config.pixelAveragingEnabled ? config.pixelAveraging : 1,
             fractional: config.fractionalIntensity,
             threshold: config.thresholdEnabled ? config.threshold : NaN,
+            thresholdOption: config.thresholdEnabled ? config.thresholdOption : NaN,
             debiasing: config.debiasing,
             qError: config.qError,
             uError: config.uError,
