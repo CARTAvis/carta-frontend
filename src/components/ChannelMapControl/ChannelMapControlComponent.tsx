@@ -3,9 +3,11 @@ import {Button, ButtonGroup, Checkbox, Classes, Collapse, FormGroup, HTMLSelect,
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
+
 import {AutoColorPickerComponent, fontSelect, ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
 import {clamp, SWATCH_COLORS} from "utilities";
+
 import "./ChannelMapControlComponent.scss";
 
 @observer
