@@ -192,7 +192,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                         onSpectralCoordinateChangeSecondary={widgetStore.setSpectralCoordinateSecondary}
                                         onSpectralSystemChange={widgetStore.setSpectralSystem}
                                         secondaryAxisCursorInfoVisible={widgetStore.secondaryAxisCursorInfoVisible}
-                                        disable={widgetStore.effectiveFrame?.isPVImage}
+                                        disable={widgetStore.effectiveFrame?.isPVImage || !widgetStore.effectiveFrame?.isSpectralChannel}
                                     />
                                     <FormGroup label={"Intensity unit"} inline={true}>
                                         <HTMLSelect
