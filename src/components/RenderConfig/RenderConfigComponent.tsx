@@ -36,7 +36,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             defaultHeight: 225,
             title: "Render Configuration",
             isCloseable: true,
-            helpType: HelpType.RENDER_CONFIG
+            helpType: [HelpType.RENDER_CONFIG, HelpType.RENDER_CONFIG_COLOR_BLENDING]
         };
     }
 
@@ -61,7 +61,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} {
         const frame = AppStore.Instance.activeFrame;
         if (frame && frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
-            const histogram = AppStore.Instance.channelMapStore.channelMapEnabled && !frame.isPreview ? frame.renderConfig.channelMapHistogram : frame.renderConfig.histogram;
+            const histogram = frame.renderConfig.histogram;
             let minIndex = 0;
             let maxIndex = histogram.bins.length - 1;
 
@@ -414,14 +414,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         let percentileButtonsDiv, percentileSelectDiv;
         if (displayRankButtons) {
             const percentileRankButtons = RenderConfigStore.PERCENTILE_RANKS.map(rank => (
-                <Button
-                    small={true}
-                    key={rank}
-                    onClick={() => this.handlePercentileRankClick(rank)}
-                    active={frame.renderConfig.selectedPercentileVal === rank}
-                    disabled={appStore.channelMapStore.channelMapEnabled}
-                    data-testid={"clip-button-" + rank}
-                >
+                <Button small={true} key={rank} onClick={() => this.handlePercentileRankClick(rank)} active={frame.renderConfig.selectedPercentileVal === rank} data-testid={"clip-button-" + rank}>
                     {`${rank}%`}
                 </Button>
             ));

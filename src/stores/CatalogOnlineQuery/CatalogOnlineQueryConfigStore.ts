@@ -260,7 +260,7 @@ export class CatalogOnlineQueryConfigStore {
 
     @computed get searchRadiusInDegree(): number {
         const activeFrame = this.activeFrame;
-        if (activeFrame?.validWcs && AppStore.Instance.overlayStore.isWcsCoordinates) {
+        if (activeFrame?.validWcs && AppStore.Instance.overlaySettings.isWcsCoordinates) {
             const requiredFrameView = activeFrame.requiredFrameView;
             const diagonal1 = this.calculateDistanceFromPixelCoord({x: requiredFrameView.xMax, y: requiredFrameView.yMax}, {x: requiredFrameView.xMin, y: requiredFrameView.yMin}, true);
             const diagonal2 = this.calculateDistanceFromPixelCoord({x: requiredFrameView.xMin, y: requiredFrameView.yMax}, {x: requiredFrameView.xMax, y: requiredFrameView.yMin}, true);
@@ -312,7 +312,7 @@ export class CatalogOnlineQueryConfigStore {
 
     convertToDeg(pixelCoords: Point2D, system?: SystemType): {x: string | undefined; y: string | undefined} {
         const frame = this.activeFrame;
-        const overlay = AppStore.Instance.overlayStore;
+        const overlay = AppStore.Instance.overlaySettings;
         let p: {x: string | undefined; y: string | undefined} = {x: undefined, y: undefined};
         if (frame && overlay) {
             const precision = overlay.numbers.customPrecision ? overlay.numbers.precision : "*";
@@ -335,7 +335,7 @@ export class CatalogOnlineQueryConfigStore {
 
     convertToPixel(coords: Point2D): {x: number | undefined; y: number | undefined} | null {
         const frame = this.activeFrame;
-        const overlay = AppStore.Instance.overlayStore;
+        const overlay = AppStore.Instance.overlaySettings;
         let p: {x: number | undefined; y: number | undefined} | null = {x: undefined, y: undefined};
         if (frame && overlay) {
             const precision = overlay.numbers.customPrecision ? overlay.numbers.precision : "*";

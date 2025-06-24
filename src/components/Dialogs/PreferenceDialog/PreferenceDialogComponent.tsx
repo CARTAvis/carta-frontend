@@ -560,7 +560,7 @@ export class PreferenceDialogComponent extends React.Component {
                             <Switch checked={preference.isHighDimPriority} onChange={() => preference.setPreference(PreferenceKeys.LAYOUT_IS_HIGH_DIM_PRIORITY, !preference.isHighDimPriority)} />
                         </Tooltip>
                     </FormGroup>
-                    <Collapse isOpen={appStore.dynamicLayoutStore.isMappingExisted || !!appStore.activeFrame}>
+                    <Collapse isOpen={appStore.dynamicLayoutStore.isMappingExisted || (appStore.activeFrame && appStore.activeFrame.dynamicLayout.ctype !== "")}>
                         <LayoutMappingComponent orderedLayoutNames={layoutStore.orderedLayoutNames} existLayoutMapping={preference.existLayoutMapping} activeFrame={appStore.activeFrame} />
                     </Collapse>
                 </Collapse>
@@ -832,7 +832,7 @@ export class PreferenceDialogComponent extends React.Component {
                     <Checkbox label="Select all" checked={preference.isSelectingAllLogEvents} indeterminate={preference.isSelectingIndeterminateLogEvents} onChange={() => preference.selectAllLogEvents()} />
                 </FormGroup>
                 <FormGroup inline={false} className="log-event-list">
-                    {Event.EVENT_TYPES.map(eventType => (
+                    {Event.EVENT_TYPES.sort((a, b) => Event.getNameFromType(a).localeCompare(Event.getNameFromType(b))).map(eventType => (
                         <Checkbox
                             className="log-event-checkbox"
                             key={eventType}

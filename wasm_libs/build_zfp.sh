@@ -1,15 +1,20 @@
 #!/usr/bin/env bash
 command -v emcc >/dev/null 2>&1 || { echo "Script requires emcc but it's not installed or in PATH.Aborting." >&2; exit 1; }
 cd "${0%/*}"
-if ! [[ $(find zfp-0.5.5.tar.gz -type f 2>/dev/null && md5sum -c zfp.md5 &>/dev/null) ]]; then
-    echo "Fetching ZFP 0.5.5"
+
+zfp_version="1.0.1"
+zfp_tar="zfp-${zfp_version}.tar.gz"
+zfp_url="https://github.com/LLNL/zfp/releases/download/${zfp_version}/${zfp_tar}"
+
+if ! [[ $(find "${zfp_tar}" -type f 2>/dev/null && md5sum -c zfp.md5 &>/dev/null) ]]; then
+    echo "Fetching ZFP ${zfp_version}."
     retry_count=0
     max_retries=2
     while (( retry_count < max_retries )); do
-        wget https://github.com/LLNL/zfp/releases/download/0.5.5/zfp-0.5.5.tar.gz && break
+        wget "${zfp_url}" && break
         ((retry_count++))
         if (( retry_count == max_retries )); then
-            echo "Failed to fetch ZFP 0.5.5."
+            echo "Failed to fetch ZFP ${zfp_version}."
             exit 1
         fi
         echo "Download failed. Trying again."
@@ -17,7 +22,7 @@ if ! [[ $(find zfp-0.5.5.tar.gz -type f 2>/dev/null && md5sum -c zfp.md5 &>/dev/
     done
 fi
 
-mkdir -p zfp; tar -xf zfp-0.5.5.tar.gz --directory ./zfp --strip-components=1
+mkdir -p zfp; tar -xf "${zfp_tar}" --directory ./zfp --strip-components=1
 
 cd zfp
 mkdir -p build

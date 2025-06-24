@@ -347,7 +347,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                         this.setisValidSpectralRange(true);
                         this.widgetStore.setSpectralSystem(sys as SpectralSystem);
                     }}
-                    disable={frame?.isPVImage}
+                    disable={frame?.isPVImage || !frame?.isSpectralChannel}
                 />
                 {frame && frame.numChannels > 1 && (
                     <FormGroup label="Range" inline={true} labelInfo={`(${frame.spectralUnit})`}>

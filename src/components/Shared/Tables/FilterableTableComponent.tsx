@@ -367,6 +367,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 columnWidths={table.columnWidths}
                 onCompleteRender={table.onCompleteRender}
                 cellRendererDependencies={[tableCheckData]} // trigger re-render on line selection change
+                getCellClipboardData={null}
             >
                 {tableColumns}
             </Table2>

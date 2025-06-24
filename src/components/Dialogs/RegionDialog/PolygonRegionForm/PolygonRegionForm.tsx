@@ -38,7 +38,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
         return (wcsString: string): boolean => {
             const region = this.props.region;
             const pointWCS = getFormattedWCSPoint(this.props.wcsInfo, region.controlPoints[index]);
-            if (isWCSStringFormatValid(wcsString, isXCoordinate ? AppStore.Instance.overlayStore.numbers.formatTypeX : AppStore.Instance.overlayStore.numbers.formatTypeY)) {
+            if (isWCSStringFormatValid(wcsString, isXCoordinate ? AppStore.Instance.overlaySettings.numbers.formatTypeX : AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
                 const newPoint = getPixelValueFromWCS(this.props.wcsInfo, isXCoordinate ? {x: wcsString, y: pointWCS.y} : {x: pointWCS.x, y: wcsString});
                 if (!newPoint) {
                     return false;
@@ -58,9 +58,9 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
     public render() {
         // dummy variables related to wcs to trigger re-render
         /* eslint-disable @typescript-eslint/no-unused-vars */
-        const system = AppStore.Instance.overlayStore.global.explicitSystem;
-        const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
-        const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
+        const system = AppStore.Instance.overlaySettings.global.explicitSystem;
+        const formatX = AppStore.Instance.overlaySettings.numbers.formatTypeX;
+        const formatY = AppStore.Instance.overlaySettings.numbers.formatTypeY;
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
         const region = this.props.region;

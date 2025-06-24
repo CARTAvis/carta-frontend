@@ -5,7 +5,7 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector} from "components/Shared";
-import {Point2D, Zoom} from "models";
+import {ImageType, Point2D, Zoom} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, Padding, WidgetProps} from "stores";
 import {toFixed} from "utilities";
 
@@ -23,56 +23,66 @@ export enum ImageViewLayer {
 export function getImageViewCanvas(padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
     const appStore = AppStore.Instance;
     const config = appStore.imageViewConfigStore;
-    const overlay = appStore.overlayStore;
 
     const imageViewCanvas = document.createElement("canvas") as HTMLCanvasElement;
-    imageViewCanvas.width = overlay.fullViewWidth * appStore.pixelRatio;
-    imageViewCanvas.height = overlay.fullViewHeight * appStore.pixelRatio;
+    imageViewCanvas.width = appStore.fullViewWidth * appStore.pixelRatio;
+    imageViewCanvas.height = appStore.fullViewHeight * appStore.pixelRatio;
     const ctx = imageViewCanvas.getContext("2d");
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, imageViewCanvas.width, imageViewCanvas.height);
     config.visibleImages.forEach((image, index) => {
+        const frame = image?.type === ImageType.COLOR_BLENDING ? image.store?.baseFrame : image?.store;
         const column = index % config.numImageColumns;
         const row = Math.floor(index / config.numImageColumns);
-        const panelCanvas = getPanelCanvas(column, row, padding, colorbarPosition, backgroundColor);
+        const viewWidth = (appStore.channelMapStore.channelMapEnabled ? frame.channelMapOuterOverlayStore.viewWidth : frame.overlayStore.viewWidth) * appStore.pixelRatio;
+        const viewHeight = (appStore.channelMapStore.channelMapEnabled ? frame.channelMapOuterOverlayStore.viewHeight : frame.overlayStore.viewHeight) * appStore.pixelRatio;
+        const panelCanvas = getPanelCanvas(column, row, viewWidth, viewHeight, padding, colorbarPosition, backgroundColor);
         if (panelCanvas) {
-            ctx.drawImage(panelCanvas, overlay.viewWidth * column * appStore.pixelRatio, overlay.viewHeight * row * appStore.pixelRatio);
+            ctx.drawImage(panelCanvas, frame.overlayStore.viewWidth * column * appStore.pixelRatio, frame.overlayStore.viewHeight * row * appStore.pixelRatio);
         }
     });
 
     return imageViewCanvas;
 }
 
-export function getPanelCanvas(column: number, row: number, padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
+export function getPanelCanvas(column: number, row: number, viewWidth: number, viewHeight: number, padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
     const panelElement = $(`#image-panel-${column}-${row}`)?.first();
     if (!panelElement?.length) {
         return null;
     }
     const rasterCanvas = panelElement.find(".raster-canvas")?.[0] as HTMLCanvasElement;
     const contourCanvas = panelElement.find(".contour-canvas")?.[0] as HTMLCanvasElement;
-    const overlayCanvas = panelElement.find(".overlay-canvas")?.[0] as HTMLCanvasElement;
+    const overlayCanvasArray = panelElement.find(".overlay-canvas") as JQuery<HTMLCanvasElement>;
     const catalogCanvas = panelElement.find(".catalog-canvas")?.[0] as HTMLCanvasElement;
     const vectorOverlayCanvas = panelElement.find(".vector-overlay-canvas")?.[0] as HTMLCanvasElement;
 
-    if (!rasterCanvas || !contourCanvas || !overlayCanvas || !vectorOverlayCanvas) {
+    if (!rasterCanvas || !overlayCanvasArray?.length) {
         return null;
     }
 
     const colorbarCanvas = panelElement.find(".colorbar-stage")?.children()?.children("canvas")?.[0] as HTMLCanvasElement;
     const beamProfileCanvas = panelElement.find(".beam-profile-stage")?.children()?.children("canvas")?.[0] as HTMLCanvasElement;
-    const regionCanvas = panelElement.find(".region-stage")?.children()?.children("canvas")?.[0] as HTMLCanvasElement;
+    const regionDivArray = panelElement.find(".region-stage") as JQuery<HTMLDivElement>;
+    const channelMapLabelArray = panelElement.find(".channel-map-label-span") as JQuery<HTMLSpanElement>;
 
     const appStore = AppStore.Instance;
     const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
-    composedCanvas.width = overlayCanvas.width;
-    composedCanvas.height = overlayCanvas.height;
+    composedCanvas.width = viewWidth;
+    composedCanvas.height = viewHeight;
 
     const ctx = composedCanvas.getContext("2d");
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
     ctx.drawImage(rasterCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
-    ctx.drawImage(contourCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
-    ctx.drawImage(vectorOverlayCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
+
+    if (contourCanvas) {
+        ctx.drawImage(contourCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
+    }
+
+    if (vectorOverlayCanvas) {
+        ctx.drawImage(vectorOverlayCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
+    }
+
     if (colorbarCanvas) {
         let xPos, yPos;
         switch (colorbarPosition) {
@@ -82,7 +92,7 @@ export function getPanelCanvas(column: number, row: number, padding: Padding, co
                 break;
             case "bottom":
                 xPos = 0;
-                yPos = overlayCanvas.height - colorbarCanvas.height - AppStore.Instance.overlayStore.colorbarHoverInfoHeight * appStore.pixelRatio;
+                yPos = viewHeight - colorbarCanvas.height - AppStore.Instance.overlaySettings.colorbarHoverInfoHeight * appStore.pixelRatio;
                 break;
             case "right":
             default:
@@ -94,18 +104,55 @@ export function getPanelCanvas(column: number, row: number, padding: Padding, co
     }
 
     if (beamProfileCanvas) {
-        ctx.drawImage(beamProfileCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
+        const beamProfileDiv = panelElement.find(".beam-profile-stage")?.[0] as HTMLDivElement;
+        const offsetLeft = beamProfileDiv?.offsetLeft * appStore.pixelRatio || 0;
+        const offsetTop = beamProfileDiv?.offsetTop * appStore.pixelRatio || 0;
+        ctx.drawImage(beamProfileCanvas, offsetLeft, offsetTop);
     }
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.drawImage(overlayCanvas, 0, 0);
+    for (const overlayCanvas of overlayCanvasArray) {
+        ctx.drawImage(overlayCanvas, overlayCanvas.offsetLeft * appStore.pixelRatio, overlayCanvas.offsetTop * appStore.pixelRatio);
+    }
 
     if (catalogCanvas) {
         ctx.drawImage(catalogCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
     }
 
-    if (regionCanvas) {
-        ctx.drawImage(regionCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
+    if (channelMapLabelArray?.length) {
+        for (const channelMapLabel of channelMapLabelArray) {
+            const style = getComputedStyle(channelMapLabel);
+            const offsetLeft = (channelMapLabel.offsetLeft + parseFloat(style.paddingLeft)) * appStore.pixelRatio;
+            const offsetTop = (channelMapLabel.offsetTop + parseFloat(style.paddingTop)) * appStore.pixelRatio;
+
+            const fontSize = parseFloat(style.fontSize);
+            const scaledFontSize = fontSize * appStore.pixelRatio;
+            const fontStyle = style.fontStyle;
+            const fontVariant = style.fontVariant;
+            const fontWeight = style.fontWeight;
+            const fontFamily = style.fontFamily;
+            ctx.font = `${fontStyle} ${fontVariant} ${fontWeight} ${scaledFontSize}px ${fontFamily}`;
+
+            ctx.fillStyle = style.color;
+            ctx.textBaseline = "bottom";
+
+            const divElementArray = channelMapLabel.querySelectorAll("div");
+            let line = 1;
+            const lineHeight = parseFloat(style.lineHeight) * appStore.pixelRatio;
+            for (const divElement of divElementArray) {
+                if (divElement.textContent) {
+                    ctx.fillText(divElement.textContent, offsetLeft, offsetTop + lineHeight * line);
+                    line++;
+                }
+            }
+        }
+    }
+
+    if (regionDivArray?.length) {
+        for (const regionDiv of regionDivArray) {
+            const regionCanvas = regionDiv?.children[0]?.querySelector("canvas");
+            ctx.drawImage(regionCanvas, regionDiv.offsetLeft * appStore.pixelRatio, regionDiv.offsetTop * appStore.pixelRatio);
+        }
     }
 
     return composedCanvas;
@@ -137,7 +184,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     onResize = (width: number, height: number) => {
         if (width > 0 && height > 0) {
             const appStore = AppStore.Instance;
-            const requiresAutoFit = appStore.preferenceStore.zoomMode === Zoom.FIT && appStore.overlayStore.fullViewWidth <= 1 && appStore.overlayStore.fullViewHeight <= 1;
+            const requiresAutoFit = appStore.preferenceStore.zoomMode === Zoom.FIT && appStore.fullViewWidth <= 1 && appStore.fullViewHeight <= 1;
             appStore.setImageViewDimensions(width, height);
             if (requiresAutoFit) {
                 this.imagePanelRefs?.forEach(imagePanelRef => imagePanelRef?.fitZoomFrameAndRegion());
@@ -157,7 +204,17 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         const appStore = AppStore.Instance;
 
         autorun(() => {
-            const imageSize = {x: appStore.overlayStore.renderWidth, y: appStore.overlayStore.renderHeight};
+            const visibleFrames = appStore.imageViewConfigStore.visibleFrames;
+            if (!visibleFrames.length) {
+                return;
+            }
+
+            const firstFrame = visibleFrames[0];
+            if (!firstFrame) {
+                return;
+            }
+
+            const imageSize = {x: firstFrame.overlayStore.renderWidth, y: firstFrame.overlayStore.renderHeight};
             const imageGridSize = {x: appStore.imageViewConfigStore.numImageColumns, y: appStore.imageViewConfigStore.numImageRows};
             // Compare to cached image size to prevent duplicate events when changing frames
             const imageSizeChanged = !this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y;
@@ -186,7 +243,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         }
 
         return appStore.channelMapStore.channelMapEnabled
-            ? [<ChannelMapViewComponent docked={this.props.docked} />]
+            ? [<ChannelMapViewComponent docked={this.props.docked} key="channel-map-panel" />]
             : visibleImages.map((image, index) => {
                   const column = index % config.numImageColumns;
                   const row = Math.floor(index / config.numImageColumns);
@@ -205,7 +262,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         } else if (!appStore.astReady) {
             divContents = <NonIdealState icon={<Spinner className="astLoadingSpinner" />} title={"Loading AST Library"} />;
         } else {
-            const effectiveImageSize = {x: Math.floor(appStore.overlayStore.renderWidth), y: Math.floor(appStore.overlayStore.renderHeight)};
+            const firstFrame = appStore.imageViewConfigStore.visibleFrames?.[0];
+            const effectiveImageSize = {x: Math.floor(firstFrame?.overlayStore?.renderWidth), y: Math.floor(firstFrame?.overlayStore?.renderHeight)};
             const ratio = effectiveImageSize.x / effectiveImageSize.y;
             const gridSize = {x: config.numImageColumns, y: config.numImageRows};
 

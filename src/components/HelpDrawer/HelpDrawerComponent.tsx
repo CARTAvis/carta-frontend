@@ -19,7 +19,7 @@ const FILE_INFO_HELP_CONTENT_URL = `${url_prefix}/file_info.html`;
 const IMAGE_FITTING_HELP_CONTENT_URL = `${url_prefix}/image_fitting.html`;
 const PREFERENCES_HELP_CONTENT_URL = `${url_prefix}/preferences.html`;
 const REGION_DIALOG_HELP_CONTENT_URL = `${url_prefix}/region_configuration.html`;
-const SAVE_LAYOUT_HELP_CONTENT_URL = `${url_prefix}/about_gui.html#configuring-the-layout`;
+const SAVE_LAYOUT_HELP_CONTENT_URL = `${url_prefix}/layout.html`;
 const STOKES_HYPERCUBE_DIALOG_HELP_CONTENT_URL = `${url_prefix}/file_browser.html#stokes-hypercube`;
 const VECTOR_OVERLAY_HELP_CONTENT_URL = `${url_prefix}/vector_field_rendering.html`;
 const ONLINE_CATALOG_QUERY_HELP_CONTENT_URL = `${url_prefix}/online_data_query.html`;
@@ -28,41 +28,43 @@ const WORKSPACE_HELP_CONTENT_URL = `${url_prefix}/workspace.html`;
 // widgets URLs
 const ANIMATOR_HELP_CONTENT_URL = `${url_prefix}/animator.html`;
 const HISTOGRAM_HELP_CONTENT_URL = `${url_prefix}/histogram_widget.html`;
-const HISTOGRAM_SETTINGS_HELP_CONTENT_URL = `${url_prefix}/histogram_widget.html`;
+const HISTOGRAM_SETTINGS_HELP_CONTENT_URL = `${url_prefix}/histogram_widget.html#settings`;
 const IMAGE_VIEW_HELP_CONTENT_URL = `${url_prefix}/image_viewer.html`;
 const IMAGE_VIEW_SETTINGS_HELP_CONTENT_URL = `${url_prefix}/image_viewer.html`;
 const LAYER_LIST_HELP_CONTENT_URL = `${url_prefix}/image_list_widget.html`;
-const LAYER_LIST_SETTINGS_HELP_CONTENT_URL = `${url_prefix}/image_list_widget.html`;
+const LAYER_LIST_SETTINGS_HELP_CONTENT_URL = `${url_prefix}/image_list_widget.html#settings`;
 const LOG_HELP_CONTENT_URL = `${url_prefix}/log_widget.html`;
 const PLACE_HOLDER_HELP_CONTENT_URL = `${url_prefix}/`;
 const REGION_LIST_HELP_CONTENT_URL = `${url_prefix}/region_list_widget.html`;
 const RENDER_CONFIG_HELP_CONTENT_URL = `${url_prefix}/raster_rendering.html`;
-const RENDER_CONFIG_SETTINGS_HELP_CONTENT_URL = `${url_prefix}/raster_rendering.html`;
+const RENDER_CONFIG_COLOR_BLENDING_HELP_CONTENT_URL = `${url_prefix}/multicolor_blending.html`;
+const RENDER_CONFIG_SETTINGS_HELP_CONTENT_URL = `${url_prefix}/raster_rendering.html#settings`;
 const SPATIAL_PROFILER_HELP_CONTENT_URL = `${url_prefix}/spatial_profiler.html`;
-const SPATIAL_PROFILER_SETTINGS_STYLING_HELP_CONTENT_URL = `${url_prefix}/spatial_profiler.html`;
+const SPATIAL_PROFILER_SETTINGS_STYLING_HELP_CONTENT_URL = `${url_prefix}/spatial_profiler.html#settings`;
 const SPATIAL_PROFILER_SETTINGS_SMOOTHING_HELP_CONTENT_URL = `${url_prefix}/profile_smoothing.html`;
 const SPATIAL_PROFILER_SETTINGS_COMPUTATION_HELP_CONTENT_URL = `${url_prefix}/spatial_profiler.html`;
 const SPECTRAL_PROFILER_HELP_CONTENT_URL = `${url_prefix}/spectral_profiler.html`;
-const SPECTRAL_PROFILER_SETTINGS_CONVERSION_HELP_CONTENT_URL = `${url_prefix}/spectral_profiler.html`;
-const SPECTRAL_PROFILER_SETTINGS_STYLING_HELP_CONTENT_URL = `${url_prefix}/spectral_profiler.html`;
+const SPECTRAL_PROFILER_SETTINGS_CONVERSION_HELP_CONTENT_URL = `${url_prefix}/spectral_profiler.html#settings`;
+const SPECTRAL_PROFILER_SETTINGS_STYLING_HELP_CONTENT_URL = `${url_prefix}/spectral_profiler.html#settings`;
 const SPECTRAL_PROFILER_SETTINGS_SMOOTHING_HELP_CONTENT_URL = `${url_prefix}/profile_smoothing.html`;
 const SPECTRAL_PROFILER_SETTINGS_MOMENTS_HELP_CONTENT_URL = `${url_prefix}/moment_generator.html`;
 const SPECTRAL_PROFILER_SETTINGS_FITTING_HELP_CONTENT_URL = `${url_prefix}/profile_fitting.html`;
 const STATS_HELP_CONTENT_URL = `${url_prefix}/statistics_widget.html`;
 const STOKES_ANALYSIS_HELP_CONTENT_URL = `${url_prefix}/stokes_analysis_widget.html`;
-const STOKES_ANALYSIS_SETTINGS_CONVERSION_HELP_CONTENT_URL = `${url_prefix}/stokes_analysis_widget.html`;
-const STOKES_ANALYSIS_SETTINGS_LINE_PLOT_STYLING_HELP_CONTENT_URL = `${url_prefix}/stokes_analysis_widget.html`;
-const STOKES_ANALYSIS_SETTINGS_SCATTER_PLOT_STYLING_HELP_CONTENT_URL = `${url_prefix}/stokes_analysis_widget.html`;
+const STOKES_ANALYSIS_SETTINGS_CONVERSION_HELP_CONTENT_URL = `${url_prefix}/stokes_analysis_widget.html#settings`;
+const STOKES_ANALYSIS_SETTINGS_LINE_PLOT_STYLING_HELP_CONTENT_URL = `${url_prefix}/stokes_analysis_widget.html#settings`;
+const STOKES_ANALYSIS_SETTINGS_SCATTER_PLOT_STYLING_HELP_CONTENT_URL = `${url_prefix}/stokes_analysis_widget.html#settings`;
 const STOKES_ANALYSIS_SETTINGS_SMOOTHING_HELP_CONTENT_URL = `${url_prefix}/profile_smoothing.html`;
 const CATALOG_OVERLAY_HELP_CONTENT_URL = `${url_prefix}/catalog_widget.html`;
-const CATALOG_HISTOGRAM_PLOT_HELP_CONTENT_URL = `${url_prefix}/catalog_widget.html`;
-const CATALOG_SCATTER_PLOT_HELP_CONTENT_URL = `${url_prefix}/catalog_widget.html`;
-const CATALOG_SETTINGS_COLOR_HELP_CONTENT_URL = `${url_prefix}/catalog_widget.html`;
-const CATALOG_SETTINGS_SIZE_HELP_CONTENT_URL = `${url_prefix}/catalog_widget.html`;
-const CATALOG_SETTINGS_ORIENTATION_HELP_CONTENT_URL = `${url_prefix}/catalog_widget.html`;
+const CATALOG_HISTOGRAM_PLOT_HELP_CONTENT_URL = `${url_prefix}/catalog_widget.html#catalog-histogram-plot`;
+const CATALOG_SCATTER_PLOT_HELP_CONTENT_URL = `${url_prefix}/catalog_widget.html#catalog-2d-scatter-plot`;
+const CATALOG_SETTINGS_COLOR_HELP_CONTENT_URL = `${url_prefix}/catalog_widget.html#catalog-image-overlay-and-settings`;
+const CATALOG_SETTINGS_SIZE_HELP_CONTENT_URL = `${url_prefix}/catalog_widget.html#catalog-image-overlay-and-settings`;
+const CATALOG_SETTINGS_ORIENTATION_HELP_CONTENT_URL = `${url_prefix}/catalog_widget.html#catalog-image-overlay-and-settings`;
 const SPECTRAL_LINE_QUERY_HELP_CONTENT_URL = `${url_prefix}/spectral_line_query.html`;
 const PV_GENERATOR_HELP_CONTENT_URL = `${url_prefix}/pv_generator.html`;
 const CURSOR_INFO_HELP_CONTENT_URL = `${url_prefix}/cursor_info.html`;
+const CHANNEL_MAP_CONTROL_HELP_CONTENT_URL = `${url_prefix}/channel_map_control.html`;
 
 const HELP_CONTENT_MAP = new Map<HelpType, string>([
     // Dialog
@@ -90,6 +92,7 @@ const HELP_CONTENT_MAP = new Map<HelpType, string>([
     [HelpType.PLACEHOLDER, PLACE_HOLDER_HELP_CONTENT_URL],
     [HelpType.REGION_LIST, REGION_LIST_HELP_CONTENT_URL],
     [HelpType.RENDER_CONFIG, RENDER_CONFIG_HELP_CONTENT_URL],
+    [HelpType.RENDER_CONFIG_COLOR_BLENDING, RENDER_CONFIG_COLOR_BLENDING_HELP_CONTENT_URL],
     [HelpType.RENDER_CONFIG_SETTINGS, RENDER_CONFIG_SETTINGS_HELP_CONTENT_URL],
     [HelpType.SPATIAL_PROFILER, SPATIAL_PROFILER_HELP_CONTENT_URL],
     [HelpType.SPATIAL_PROFILER_SETTINGS_STYLING, SPATIAL_PROFILER_SETTINGS_STYLING_HELP_CONTENT_URL],
@@ -117,7 +120,8 @@ const HELP_CONTENT_MAP = new Map<HelpType, string>([
     [HelpType.CATALOG_SETTINGS_ORIENTATION, CATALOG_SETTINGS_ORIENTATION_HELP_CONTENT_URL],
     [HelpType.SPECTRAL_LINE_QUERY, SPECTRAL_LINE_QUERY_HELP_CONTENT_URL],
     [HelpType.PV_GENERATOR, PV_GENERATOR_HELP_CONTENT_URL],
-    [HelpType.CURSOR_INFO, CURSOR_INFO_HELP_CONTENT_URL]
+    [HelpType.CURSOR_INFO, CURSOR_INFO_HELP_CONTENT_URL],
+    [HelpType.CHANNEL_MAP_CONTROL, CHANNEL_MAP_CONTROL_HELP_CONTENT_URL]
 ]);
 
 @observer
