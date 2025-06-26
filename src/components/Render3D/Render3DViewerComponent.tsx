@@ -188,11 +188,12 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         const { gl } = useThree();
         const [material, setMaterial] = React.useState<THREE.ShaderMaterial | null>(null);
         const lastSlice = this.render3DData?.lastSlice;
+        // const maxDimension = Math.max(this.render3DData.width,this.render3DData.height, this.render3DData.depth);
 
         const computedTexture = React.useMemo(() => {
             if (this.render3DData) {
                 
-                if (lastSlice !== 0 && lastSlice * 4 >= this.render3DData.depth - 1) {
+                if (lastSlice !== 0 && lastSlice >= this.render3DData.depth - 1) {
                     console.log("Full texture loaded");
                 } else if (lastSlice%20 === 0) {
                     console.log("Loading texture");
@@ -206,7 +207,7 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
             minThreshold: this.minValue,
             maxThreshold: this.maxValue,
             // range: 0.1,
-            // steps: 100,
+            steps: 500,
             colorMap: 0,
             scaleType: 0,
             // zScale: 1,
@@ -224,7 +225,7 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
 
             // material.uniforms.threshold.value = parameters.threshold;
             // material.uniforms.range.value = parameters.range;
-            // material.uniforms.uSteps.value = parameters.steps;
+            material.uniforms.uSteps.value = parameters.steps;
             material.uniforms.uMinThreshold.value = parameters.minThreshold;
             material.uniforms.uMaxThreshold.value = parameters.maxThreshold;
             material.uniforms.uCmapIndex.value = parameters.colorMap;
@@ -237,7 +238,7 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         const gui = new GUI();
         // gui.add( parameters, 'threshold', 0, 1, 0.01 ).onChange( update );
         // gui.add( parameters, 'range', 0, 1, 0.01 ).onChange( update );
-        // gui.add( parameters, 'steps', 0, 200, 1 ).onChange( update );
+        gui.add( parameters, 'steps', 0, 1000, 1 ).onChange( update );
         gui.add( parameters, 'minThreshold', this.minValue, this.maxValue).onChange( update );
         gui.add( parameters, 'maxThreshold', this.minValue, this.maxValue).onChange( update );
         gui.add( parameters, 'colorMap', cmaps).onChange( update );
@@ -273,7 +274,7 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
                         // threshold: { value: 0.25 },
                         // range: { value: 0.1 },
                         uOpacity: { value: 0.5 },
-                        uSteps: { value: 100 },
+                        uSteps: { value: 500 },
                         // uFrame: { value: 0 },
                         uCmapTexture: { value: this.cmapTexture },
                         uCmapIndex: { value: 0 },

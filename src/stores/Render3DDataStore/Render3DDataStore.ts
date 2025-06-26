@@ -26,6 +26,7 @@ export class Render3DDataStore {
         this.depth = depth;
         this.numSlices = numSlices;
         this.datacube = new Float32Array(height * width * depth);
+        // this.datacube.fill(-3.402823466e+38); // does not work, when opening it is still seen green
         this.lastSlice = 0; // last slice updated, use to check if the data is updated
         
         // new variable last updated timestamp and usememo to check if timestamp changes
@@ -38,8 +39,11 @@ export class Render3DDataStore {
             this.setDecompressed3DData(decompressedData);
 
         } else if (render3DData.compressionType === CARTA.CompressionType.ZFP) {
-            // console.log("decompressedData ", render3DData.slice);
-            TileService.Instance.decompress3DRender3DData(render3DData);
+            if (render3DData.slice > 1) {
+                TileService.Instance.decompress3DRender3DData(render3DData);
+            } else {
+                TileService.Instance.decompressRender3DData(render3DData);
+            }
         }
     }
 

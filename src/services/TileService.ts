@@ -192,7 +192,7 @@ export class TileService {
                     const buffer = event.data[1];
                     const eventArgs = event.data[2];
                     const render3DData = event.data[3];
-                    const length = eventArgs.width * eventArgs.subsetHeight * render3DData.slice; // considering just one slice
+                    const length = eventArgs.width * eventArgs.subsetHeight * render3DData.slice;
                     const resultArray = new Float32Array(buffer, 0, length);
                     // console.log("tileservice array: ", resultArray);
                     // console.log(AppStore.Instance.render3D);
@@ -207,8 +207,26 @@ export class TileService {
                     // here I am using the render3DData object. Should I use eventArgs instead? it does not recognise regionID and slice
                     // previewId is viewerId
                     AppStore.Instance.render3D?.get(eventArgs.previewId)?.setDecompressed3DData(resultArray);
-                    
-                }
+                } else if (event.data[0] === "render3d decompress") {
+                    const buffer = event.data[1];
+                    const eventArgs = event.data[2];
+                    // const render3DData = event.data[3];
+                    const length = eventArgs.width * eventArgs.subsetHeight;
+                    const resultArray = new Float32Array(buffer, 0, length);
+                    // console.log("tileservice array: ", resultArray);
+                    // console.log(AppStore.Instance.render3D);
+                    // console.log("file id: " + eventArgs.fileId);
+                    // console.log(AppStore.Instance.render3D.get(eventArgs.fileId));
+                    // console.log("region id: " + render3DData.regionId);
+                    // console.log(AppStore.Instance.render3D.get(eventArgs.fileId)?.get(render3DData.regionId));
+                    // console.log("viewer id: " + eventArgs.previewId);
+                    // console.log(AppStore.Instance.render3D.get(eventArgs.previewId));
+                    // console.log("slice: " + render3DData.slice);
+
+                    // here I am using the render3DData object. Should I use eventArgs instead? it does not recognise regionID and slice
+                    // previewId is viewerId
+                    AppStore.Instance.render3D?.get(eventArgs.previewId)?.setDecompressed3DData(resultArray);
+                } 
             };
         }
     }
@@ -593,7 +611,7 @@ export class TileService {
     public decompressRender3DData(render3DData: CARTA.Render3DData) {
         const compressedArray = render3DData.imageData;
         const nanEncodings32 = new Int32Array(render3DData.nanEncodings.slice(0).buffer);
-        let compressedView = new Uint8Array(Math.max(compressedArray.byteLength, render3DData.width * render3DData.height * render3DData.slice * 4));
+        let compressedView = new Uint8Array(Math.max(compressedArray.byteLength, render3DData.width * render3DData.height * 4));
         compressedView.set(compressedArray);
 
         // console.log("fileID = ", render3DData.fileId);
