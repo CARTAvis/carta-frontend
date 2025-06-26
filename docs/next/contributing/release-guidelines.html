@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.0.1">
 <title data-rh="true">Release guidelines | CARTA Frontend Documentation</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://cartavis.org/carta-frontend/docs/next/contributing/release-guidelines"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Release guidelines | CARTA Frontend Documentation"><meta data-rh="true" name="description" content="In this document, 123 is a placeholder for the current release number, and 124 for the following release number."><meta data-rh="true" property="og:description" content="In this document, 123 is a placeholder for the current release number, and 124 for the following release number."><link data-rh="true" rel="icon" href="/carta-frontend/img/carta_icon_128px.png"><link data-rh="true" rel="canonical" href="https://cartavis.org/carta-frontend/docs/next/contributing/release-guidelines"><link data-rh="true" rel="alternate" href="https://cartavis.org/carta-frontend/docs/next/contributing/release-guidelines" hreflang="en"><link data-rh="true" rel="alternate" href="https://cartavis.org/carta-frontend/docs/next/contributing/release-guidelines" hreflang="x-default"><link rel="stylesheet" href="/carta-frontend/assets/css/styles.d25ca6d8.css">
-<script src="/carta-frontend/assets/js/runtime~main.fa296838.js" defer="defer"></script>
-<script src="/carta-frontend/assets/js/main.a8d6287e.js" defer="defer"></script>
+<script src="/carta-frontend/assets/js/runtime~main.6cde4b3e.js" defer="defer"></script>
+<script src="/carta-frontend/assets/js/main.87d21db8.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
 <script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return localStorage.getItem("theme")}catch(t){}}();t(null!==e?e:"light")}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/carta-frontend/"><div class="navbar__logo"><img src="/carta-frontend/img/carta_icon_128px.png" alt="CARTA Logo" class="themedComponent_mlkZ themedComponent--light_NVdE"><img src="/carta-frontend/img/carta_icon_128px.png" alt="CARTA Logo" class="themedComponent_mlkZ themedComponent--dark_xIcU"></div><b class="navbar__title text--truncate">CARTA Frontend Documentation</b></a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/carta-frontend/docs/next">Docs</a><div class="navbar__item navbar__link">
@@ -15,28 +15,28 @@
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="beta-releases">Beta releases<a href="#beta-releases" class="hash-link" aria-label="Direct link to Beta releases" title="Direct link to Beta releases">​</a></h2>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="beta-release">Beta release<a href="#beta-release" class="hash-link" aria-label="Direct link to Beta release" title="Direct link to Beta release">​</a></h3>
 <ol>
-<li><code>dev</code> branch: update <code>CHANGELOG.md</code>. Change the <code>Unreleased</code> heading to <code>123.0.0-beta.1</code>.</li>
+<li><code>dev</code> branch: update <code>CHANGELOG.md</code>. Change the <code>Unreleased</code> heading to <code>123.0.0-beta.0</code>.</li>
 <li><code>dev</code> branch: update the user manual URL if necessary.</li>
 <li>Create a <code>release/123.0</code> branch using the <code>dev</code> branch.</li>
-<li><code>release/123.0</code> branch: update the <code>package.json</code> version string to <code>123.0.0-beta.1</code>. Run <code>npm install</code> to update <code>package-lock.json</code>.</li>
-<li>Create a <code>v123.0.0-beta.1</code> tag using the release branch.</li>
+<li><code>release/123.0</code> branch: update the <code>package.json</code> version string to <code>123.0.0-beta.0</code>. Run <code>npm install</code> to update <code>package-lock.json</code>.</li>
+<li>Create a <code>v123.0.0-beta.0</code> tag using the release branch.</li>
 <li>Test the release branch. Make any required fixes in the <code>dev</code> branch, and merge them into the release branch. Ideally, bump the version and create a new tag every time changes are merged. If you don&#x27;t want to bump the version, remember to destroy and recreate the latest tag.</li>
 <li>Create packages from the release branch.</li>
 </ol>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="after-beta-release">After beta release<a href="#after-beta-release" class="hash-link" aria-label="Direct link to After beta release" title="Direct link to After beta release">​</a></h3>
 <ol>
 <li><code>dev</code> branch: update <code>CHANGELOG.md</code>. Create a new <code>Unreleased</code> section.</li>
-<li><code>dev</code> branch: update the documentation website (<a href="/carta-frontend/docs/next/contributing/documentation-guidelines#Versioning">guidelines</a>). Create a new version <code>123.0.0-beta.1</code>.</li>
+<li><code>dev</code> branch: update the documentation website (<a href="/carta-frontend/docs/next/contributing/documentation-guidelines#Versioning">guidelines</a>). Create a new version <code>123.0.0-beta.0</code>.</li>
 </ol>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="additional-beta-release">Additional beta release<a href="#additional-beta-release" class="hash-link" aria-label="Direct link to Additional beta release" title="Direct link to Additional beta release">​</a></h3>
 <p>This process should be followed if changes have to be made after the beta packages have already been published (or even provided to a limited number of users). If there are significant changes in <code>dev</code> that should <em>not</em> be included in the beta release, follow the point release procedure instead (but adjust the version strings as required).</p>
 <ol>
 <li>Make the required fixes in <code>dev</code>.</li>
-<li><code>dev</code> branch: update <code>CHANGELOG.md</code>. Change the <code>Unreleased</code> heading to <code>123.0.0-beta.2</code>.</li>
+<li><code>dev</code> branch: update <code>CHANGELOG.md</code>. Change the <code>Unreleased</code> heading to <code>123.0.0-beta.1</code>.</li>
 <li><code>dev</code> branch: update the user manual URL if necessary.</li>
 <li>Merge the <code>dev</code> branch into the <code>release/123.0</code> branch.</li>
-<li><code>release/123.0</code> branch: update the <code>package.json</code> version string to <code>123.0.0-beta.2</code>. Run <code>npm install</code> to update <code>package-lock.json</code>.</li>
-<li>Create a <code>v123.0.0-beta.2</code> tag using the release branch.</li>
+<li><code>release/123.0</code> branch: update the <code>package.json</code> version string to <code>123.0.0-beta.1</code>. Run <code>npm install</code> to update <code>package-lock.json</code>.</li>
+<li>Create a <code>v123.0.0-beta.1</code> tag using the release branch.</li>
 <li>Test the release branch. Make any required fixes in the <code>dev</code> branch, and merge them into the release branch. Ideally, bump the version and create a new tag every time changes are merged. If you don&#x27;t want to bump the version, remember to destroy and recreate the latest tag.</li>
 <li>Create packages from the release branch.</li>
 </ol>
@@ -46,8 +46,8 @@
 <li><code>dev</code> branch: update <code>CHANGELOG.md</code>. Change the <code>Unreleased</code> heading to <code>123.0.0</code>.</li>
 <li><code>dev</code> branch: update the user manual URL if necessary.</li>
 <li>Merge the <code>dev</code> branch into the <code>release/123.0</code> branch.</li>
-<li><code>release/123.0</code> branch: update the <code>package.json</code> version string to <code>123.0.0-rc.1</code>. Run <code>npm install</code> to update <code>package-lock.json</code>.</li>
-<li>Create a <code>v123.0.0-rc.1</code> tag using the release branch.</li>
+<li><code>release/123.0</code> branch: update the <code>package.json</code> version string to <code>123.0.0-rc.0</code>. Run <code>npm install</code> to update <code>package-lock.json</code>.</li>
+<li>Create a <code>v123.0.0-rc.0</code> tag using the release branch.</li>
 <li>Test the release branch. Make any required fixes in the <code>dev</code> branch, and merge them into the release branch. Ideally, bump the version and create a new tag every time changes are merged. If you don&#x27;t want to bump the version, remember to destroy and recreate the latest tag.</li>
 <li><code>release/123.0</code> branch: update the <code>package.json</code> version string to <code>123.0.0</code>. Run <code>npm install</code> to update <code>package-lock.json</code>.</li>
 <li>Create a <code>v123.0.0</code> tag using the release branch.</li>
