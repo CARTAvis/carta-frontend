@@ -660,12 +660,9 @@ export class FileBrowserStore {
         this.selectedFiles = selection;
 
         // for dynamic layout
-        const isFile = selection[0]?.isFile; // prevent first selection is a directory
-        if (PreferenceStore.Instance.dynamicLayoutEnable && isFile) {
+        if (PreferenceStore.Instance.dynamicLayoutEnable && selection.length > 0 && selection.every(item => item.isFile)) {
             this.selectedFilesCtypes = yield this.selectedFilesCtypeInfo();
-            if (this.selectedFiles.length > 0) {
-                AppStore.Instance.dynamicLayoutStore.matchLayoutMapping(this.selectedFilesCtypes);
-            }
+            AppStore.Instance.dynamicLayoutStore.matchLayoutMapping(this.selectedFilesCtypes);
         }
     }
 
