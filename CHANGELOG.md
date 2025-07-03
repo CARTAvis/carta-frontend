@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [5.0.1]
 
 ### Fixed
-* Prevented the dynamic layout to request the file information for a folder ([#2557](https://github.com/CARTAvis/carta-frontend/issues/2557)).
+* Fixed an issue where the dynamic layout incorrectly requested file information for folders ([#2557](https://github.com/CARTAvis/carta-frontend/issues/2557)).
 
 ## [5.0.0]
 
