@@ -190,7 +190,7 @@ const file = await app.openFile("my_image.fits");
 
 // # Creating regions
 
-// Regions on a specific image is accessible via "RegionSetStore" under each image.
+// Regions on a specific image are accessible via "RegionSetStore" under each image.
 // Each region is represented by a "RegionStore" object.
 console.log(file.regionSet.regions); // View all regions
 console.log(file.regionSet.selectedRegion); // View the selected region

@@ -34,7 +34,9 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
         const frame = image?.type === ImageType.COLOR_BLENDING ? image.store?.baseFrame : image?.store;
         const column = index % config.numImageColumns;
         const row = Math.floor(index / config.numImageColumns);
-        const panelCanvas = getPanelCanvas(column, row, padding, colorbarPosition, backgroundColor);
+        const viewWidth = (appStore.channelMapStore.channelMapEnabled ? frame.channelMapOuterOverlayStore.viewWidth : frame.overlayStore.viewWidth) * appStore.pixelRatio;
+        const viewHeight = (appStore.channelMapStore.channelMapEnabled ? frame.channelMapOuterOverlayStore.viewHeight : frame.overlayStore.viewHeight) * appStore.pixelRatio;
+        const panelCanvas = getPanelCanvas(column, row, viewWidth, viewHeight, padding, colorbarPosition, backgroundColor);
         if (panelCanvas) {
             ctx.drawImage(panelCanvas, frame.overlayStore.viewWidth * column * appStore.pixelRatio, frame.overlayStore.viewHeight * row * appStore.pixelRatio);
         }
@@ -43,36 +45,44 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
     return imageViewCanvas;
 }
 
-export function getPanelCanvas(column: number, row: number, padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
+export function getPanelCanvas(column: number, row: number, viewWidth: number, viewHeight: number, padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
     const panelElement = $(`#image-panel-${column}-${row}`)?.first();
     if (!panelElement?.length) {
         return null;
     }
     const rasterCanvas = panelElement.find(".raster-canvas")?.[0] as HTMLCanvasElement;
     const contourCanvas = panelElement.find(".contour-canvas")?.[0] as HTMLCanvasElement;
-    const overlayCanvas = panelElement.find(".overlay-canvas")?.[0] as HTMLCanvasElement;
+    const overlayCanvasArray = panelElement.find(".overlay-canvas") as JQuery<HTMLCanvasElement>;
     const catalogCanvas = panelElement.find(".catalog-canvas")?.[0] as HTMLCanvasElement;
     const vectorOverlayCanvas = panelElement.find(".vector-overlay-canvas")?.[0] as HTMLCanvasElement;
 
-    if (!rasterCanvas || !contourCanvas || !overlayCanvas || !vectorOverlayCanvas) {
+    if (!rasterCanvas || !overlayCanvasArray?.length) {
         return null;
     }
 
     const colorbarCanvas = panelElement.find(".colorbar-stage")?.children()?.children("canvas")?.[0] as HTMLCanvasElement;
     const beamProfileCanvas = panelElement.find(".beam-profile-stage")?.children()?.children("canvas")?.[0] as HTMLCanvasElement;
-    const regionCanvas = panelElement.find(".region-stage")?.children()?.children("canvas")?.[0] as HTMLCanvasElement;
+    const regionDivArray = panelElement.find(".region-stage") as JQuery<HTMLDivElement>;
+    const channelMapLabelArray = panelElement.find(".channel-map-label-span") as JQuery<HTMLSpanElement>;
 
     const appStore = AppStore.Instance;
     const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
-    composedCanvas.width = overlayCanvas.width;
-    composedCanvas.height = overlayCanvas.height;
+    composedCanvas.width = viewWidth;
+    composedCanvas.height = viewHeight;
 
     const ctx = composedCanvas.getContext("2d");
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
     ctx.drawImage(rasterCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
-    ctx.drawImage(contourCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
-    ctx.drawImage(vectorOverlayCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
+
+    if (contourCanvas) {
+        ctx.drawImage(contourCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
+    }
+
+    if (vectorOverlayCanvas) {
+        ctx.drawImage(vectorOverlayCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
+    }
+
     if (colorbarCanvas) {
         let xPos, yPos;
         switch (colorbarPosition) {
@@ -82,7 +92,7 @@ export function getPanelCanvas(column: number, row: number, padding: Padding, co
                 break;
             case "bottom":
                 xPos = 0;
-                yPos = overlayCanvas.height - colorbarCanvas.height - AppStore.Instance.overlaySettings.colorbarHoverInfoHeight * appStore.pixelRatio;
+                yPos = viewHeight - colorbarCanvas.height - AppStore.Instance.overlaySettings.colorbarHoverInfoHeight * appStore.pixelRatio;
                 break;
             case "right":
             default:
@@ -94,18 +104,55 @@ export function getPanelCanvas(column: number, row: number, padding: Padding, co
     }
 
     if (beamProfileCanvas) {
-        ctx.drawImage(beamProfileCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
+        const beamProfileDiv = panelElement.find(".beam-profile-stage")?.[0] as HTMLDivElement;
+        const offsetLeft = beamProfileDiv?.offsetLeft * appStore.pixelRatio || 0;
+        const offsetTop = beamProfileDiv?.offsetTop * appStore.pixelRatio || 0;
+        ctx.drawImage(beamProfileCanvas, offsetLeft, offsetTop);
     }
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.drawImage(overlayCanvas, 0, 0);
+    for (const overlayCanvas of overlayCanvasArray) {
+        ctx.drawImage(overlayCanvas, overlayCanvas.offsetLeft * appStore.pixelRatio, overlayCanvas.offsetTop * appStore.pixelRatio);
+    }
 
     if (catalogCanvas) {
         ctx.drawImage(catalogCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
     }
 
-    if (regionCanvas) {
-        ctx.drawImage(regionCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
+    if (channelMapLabelArray?.length) {
+        for (const channelMapLabel of channelMapLabelArray) {
+            const style = getComputedStyle(channelMapLabel);
+            const offsetLeft = (channelMapLabel.offsetLeft + parseFloat(style.paddingLeft)) * appStore.pixelRatio;
+            const offsetTop = (channelMapLabel.offsetTop + parseFloat(style.paddingTop)) * appStore.pixelRatio;
+
+            const fontSize = parseFloat(style.fontSize);
+            const scaledFontSize = fontSize * appStore.pixelRatio;
+            const fontStyle = style.fontStyle;
+            const fontVariant = style.fontVariant;
+            const fontWeight = style.fontWeight;
+            const fontFamily = style.fontFamily;
+            ctx.font = `${fontStyle} ${fontVariant} ${fontWeight} ${scaledFontSize}px ${fontFamily}`;
+
+            ctx.fillStyle = style.color;
+            ctx.textBaseline = "bottom";
+
+            const divElementArray = channelMapLabel.querySelectorAll("div");
+            let line = 1;
+            const lineHeight = parseFloat(style.lineHeight) * appStore.pixelRatio;
+            for (const divElement of divElementArray) {
+                if (divElement.textContent) {
+                    ctx.fillText(divElement.textContent, offsetLeft, offsetTop + lineHeight * line);
+                    line++;
+                }
+            }
+        }
+    }
+
+    if (regionDivArray?.length) {
+        for (const regionDiv of regionDivArray) {
+            const regionCanvas = regionDiv?.children[0]?.querySelector("canvas");
+            ctx.drawImage(regionCanvas, regionDiv.offsetLeft * appStore.pixelRatio, regionDiv.offsetTop * appStore.pixelRatio);
+        }
     }
 
     return composedCanvas;
@@ -196,7 +243,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         }
 
         return appStore.channelMapStore.channelMapEnabled
-            ? [<ChannelMapViewComponent docked={this.props.docked} />]
+            ? [<ChannelMapViewComponent docked={this.props.docked} key="channel-map-panel" />]
             : visibleImages.map((image, index) => {
                   const column = index % config.numImageColumns;
                   const row = Math.floor(index / config.numImageColumns);

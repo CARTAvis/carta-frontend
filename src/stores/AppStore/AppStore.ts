@@ -1581,7 +1581,11 @@ export class AppStore {
                 if (ack.modelImage) {
                     if (this.addFrame(CARTA.OpenFileAck.create(ack.modelImage), this.fileBrowserStore.startingDirectory, false, "", true)) {
                         this.fileCounter++;
-                        frame?.addFittingModelImage(this.getFrame(ack.modelImage.fileId));
+                        const newModelFrame = this.getFrame(ack.modelImage.fileId);
+                        frame?.addFittingModelImage(newModelFrame);
+                        if (newModelFrame && frame === this.spatialReference) {
+                            newModelFrame.setSpatialReference(this.spatialReference);
+                        }
                     } else {
                         AppToaster.show({icon: "warning-sign", message: "Load model image failed.", intent: "danger", timeout: 3000});
                     }
@@ -1589,11 +1593,18 @@ export class AppStore {
                 if (ack.residualImage) {
                     if (this.addFrame(CARTA.OpenFileAck.create(ack.residualImage), this.fileBrowserStore.startingDirectory, false, "", true)) {
                         this.fileCounter++;
-                        frame?.addFittingResidualImage(this.getFrame(ack.residualImage.fileId));
+                        const newResidualFrame = this.getFrame(ack.residualImage.fileId);
+                        frame?.addFittingResidualImage(newResidualFrame);
+                        if (newResidualFrame && frame === this.spatialReference) {
+                            newResidualFrame.setSpatialReference(this.spatialReference);
+                        }
                     } else {
                         AppToaster.show({icon: "warning-sign", message: "Load residual image failed.", intent: "danger", timeout: 3000});
                     }
                 }
+            }
+            if (ack.resultValues?.length < message.initialValues?.length) {
+                AppToaster.show(WarningToast(`Image fitting: generated initial values of ${ack.resultValues.length} component(s) instead of ${message.initialValues.length}.`));
             }
             if (ack.message) {
                 AppToaster.show(WarningToast(`Image fitting: ${ack.message}.`));

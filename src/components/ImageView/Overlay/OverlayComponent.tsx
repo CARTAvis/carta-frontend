@@ -111,6 +111,11 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 }
             }
 
+            if (settings.labels.customText) {
+                // Disable the PV image labels when custom labels are set
+                AST.set(tempWcsInfo, `Unit(1)="", Unit(2)=""`);
+            }
+
             const plot = (styleString: string) => {
                 AST.plot(
                     tempWcsInfo,

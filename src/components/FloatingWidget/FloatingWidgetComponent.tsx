@@ -5,8 +5,9 @@ import classNames from "classnames";
 import * as GoldenLayout from "golden-layout";
 import {observer} from "mobx-react";
 
-import {PlaceholderComponent, PvPreviewComponent} from "components";
-import {AppStore, CatalogStore, HelpStore, LayoutStore, WidgetConfig} from "stores";
+import {PlaceholderComponent, PvPreviewComponent, RenderConfigComponent} from "components";
+import {ImageType} from "models";
+import {AppStore, CatalogStore, HelpStore, HelpType, LayoutStore, WidgetConfig} from "stores";
 
 import "./FloatingWidgetComponent.scss";
 
@@ -74,6 +75,12 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
 
     private onClickHelpButton = () => {
         const centerX = (this.rnd.draggable.state as any).x + this.rnd.resizable.size.width * 0.5;
+
+        if (this.props.widgetConfig.type === RenderConfigComponent.WIDGET_CONFIG.type) {
+            HelpStore.Instance.showHelpDrawer(AppStore.Instance.activeImage?.type === ImageType.COLOR_BLENDING ? HelpType.RENDER_CONFIG_COLOR_BLENDING : HelpType.RENDER_CONFIG, centerX);
+            return;
+        }
+
         if (Array.isArray(this.props.widgetConfig.helpType)) {
             const widgetsStore = AppStore.Instance.widgetsStore;
             const widgetParentType = this.props.widgetConfig.parentType;

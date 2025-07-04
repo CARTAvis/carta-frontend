@@ -1,12 +1,10 @@
 import * as React from "react";
-import {Button, Classes, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Position, Switch, Tab, TabId, Tabs, Tooltip} from "@blueprintjs/core";
-import {ItemRenderer, Select} from "@blueprintjs/select";
-import * as AST from "ast_wrapper";
+import {Button, Classes, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, Position, Switch, Tab, TabId, Tabs, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, InputType, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
+import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, fontSelect, InputType, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
 import {ImagePanelMode} from "models";
 import {AppStore, BeamType, DefaultWidgetConfig, HelpType, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
 import {ColorbarStore, CoordinateMode} from "stores/Frame";
@@ -28,45 +26,6 @@ enum ImageViewSettingsPanelTabs {
     COLORBAR = "Colorbar",
     CONVERSION = "Conversion"
 }
-
-// Font selector
-export class Font {
-    name: string;
-    id: number;
-    style: string;
-    weight: number;
-    family: string;
-
-    constructor(name: string, id: number) {
-        this.name = name.replace("{size} ", "");
-        this.id = id;
-
-        let family = this.name;
-
-        if (family.indexOf("bold") === 0) {
-            family = family.replace("bold ", "");
-            this.weight = 700;
-        } else {
-            this.weight = 400;
-        }
-
-        if (family.indexOf("italic") === 0) {
-            family = family.replace("italic ", "");
-            this.style = "italic";
-        } else {
-            this.style = "";
-        }
-
-        this.family = family;
-    }
-}
-
-const astFonts: Font[] = AST.fonts.map((x, i) => new Font(x, i));
-const FontSelect = Select<Font>;
-
-export const renderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, query}) => {
-    return <MenuItem active={modifiers.active} disabled={modifiers.disabled} key={font.id} onClick={handleClick} text={<span style={{fontFamily: font.family, fontWeight: font.weight, fontStyle: font.style}}>{font.name}</span>} />;
-};
 
 @observer
 export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps> {
@@ -90,19 +49,6 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 this.selectedTab = ImageViewSettingsPanelTabs.GLOBAL;
             }
         });
-    }
-
-    private fontSelect(visible: boolean, currentFontId: number, fontSetter: Function) {
-        let currentFont: Font = astFonts[currentFontId];
-        if (typeof currentFont === "undefined") {
-            currentFont = astFonts[0];
-        }
-
-        return (
-            <FontSelect activeItem={currentFont} itemRenderer={renderFont} items={astFonts} disabled={!visible} filterable={false} popoverProps={{minimal: true, popoverClassName: "fontselect"}} onItemSelect={font => fontSetter(font.id)}>
-                <Button text={<span style={{fontFamily: currentFont.family, fontWeight: currentFont.weight, fontStyle: currentFont.style}}>{currentFont.name}</span>} disabled={!visible} rightIcon="double-caret-vertical" />
-            </FontSelect>
-        );
     }
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
@@ -305,7 +251,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Switch checked={title.visible} onChange={ev => title.setVisible(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} className="font-group" label="Font" disabled={!title.visible}>
-                    {this.fontSelect(title.visible, title.font, title.setFont)}
+                    {fontSelect(title.visible, title.font, title.setFont)}
                     <SafeNumericInput min={7} max={96} placeholder="Font size" value={title.fontSize} disabled={!title.visible} onValueChange={(value: number) => title.setFontSize(value)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom text" disabled={!title.visible}>
@@ -453,7 +399,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Switch checked={numbers.visible} onChange={ev => numbers.setVisible(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} className="font-group" label="Font" disabled={!numbers.visible}>
-                    {this.fontSelect(numbers.visible, numbers.font, numbers.setFont)}
+                    {fontSelect(numbers.visible, numbers.font, numbers.setFont)}
                     <SafeNumericInput min={7} max={96} placeholder="Font size" value={numbers.fontSize} disabled={!numbers.visible} onValueChange={(value: number) => numbers.setFontSize(value)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom color" disabled={!numbers.visible}>
@@ -508,7 +454,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Switch checked={labels.visible} onChange={ev => labels.setVisible(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} className="font-group" label="Font" disabled={!labels.visible}>
-                    {this.fontSelect(labels.visible, labels.font, labels.setFont)}
+                    {fontSelect(labels.visible, labels.font, labels.setFont)}
                     <SafeNumericInput min={7} max={96} placeholder="Font size" value={labels.fontSize} disabled={!labels.visible} onValueChange={(value: number) => labels.setFontSize(value)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Show RA/Dec reference" disabled={!labels.visible}>
@@ -620,7 +566,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} className="font-group" label="Label font" disabled={!colorbar.visible || !colorbar.labelVisible}>
-                    {this.fontSelect(colorbar.visible && colorbar.labelVisible, colorbar.labelFont, colorbar.setLabelFont)}
+                    {fontSelect(colorbar.visible && colorbar.labelVisible, colorbar.labelFont, colorbar.setLabelFont)}
                     <SafeNumericInput min={7} max={96} value={colorbar.labelFontSize} disabled={!colorbar.visible || !colorbar.labelVisible} onValueChange={(value: number) => colorbar.setLabelFontSize(value)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Label custom text" disabled={!colorbar.visible || !colorbar.labelVisible}>
@@ -656,7 +602,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} className="font-group" label="Numbers font" disabled={!colorbar.visible || !colorbar.numberVisible}>
-                    {this.fontSelect(colorbar.visible && colorbar.numberVisible, colorbar.numberFont, colorbar.setNumberFont)}
+                    {fontSelect(colorbar.visible && colorbar.numberVisible, colorbar.numberFont, colorbar.setNumberFont)}
                     <SafeNumericInput min={7} max={96} value={colorbar.numberFontSize} disabled={!colorbar.visible || !colorbar.numberVisible} onValueChange={(value: number) => colorbar.setNumberFontSize(value)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Numbers custom precision" disabled={!colorbar.visible || !colorbar.numberVisible}>
@@ -774,7 +720,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <SafeNumericInput
                         placeholder="Position (X)"
                         min={0}
-                        max={AppStore.Instance.activeFrame.renderWidth}
+                        max={AppStore.Instance.activeFrame?.renderWidth}
                         value={beamSettings.shiftX}
                         stepSize={5}
                         minorStepSize={1}
@@ -786,7 +732,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <SafeNumericInput
                         placeholder="Position (Y)"
                         min={0}
-                        max={AppStore.Instance.activeFrame.renderHeight}
+                        max={AppStore.Instance.activeFrame?.renderHeight}
                         value={beamSettings.shiftY}
                         stepSize={5}
                         minorStepSize={1}

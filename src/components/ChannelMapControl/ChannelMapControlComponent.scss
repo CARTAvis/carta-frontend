@@ -1,10 +1,15 @@
 @import "~@blueprintjs/core/lib/scss/variables.scss";
 
 .channel-map-control-containers {
-    margin: 20px;
-    display: flex;
-    flex-direction: column;
-    user-select: none;
+    width: 100%;
+    height: 100%;
+
+    .channel-map-control-panel {
+        margin: 20px;
+        display: flex;
+        flex-direction: column;
+        user-select: none;
+    }
 
     .channel-map-channel-control {
         &-buttons {
@@ -54,6 +59,37 @@
                 .#{$ns}-input-group {
                     width: 65px;
                 }
+            }
+
+            &:last-child {
+                margin-bottom: 0;
+            }
+        }
+
+        .font-group {
+            .#{$ns}-form-content {
+                display: flex;
+            }
+
+            .#{$ns}-input-group {
+                width: 40px !important;
+            }
+
+            input {
+                width: 40px !important;
+            }
+
+            button > span > span {
+                width: 130px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                display: inline-block;
+                white-space: nowrap;
+            }
+
+            button {
+                width: 170px;
+                margin-right: 5px;
             }
         }
     }
