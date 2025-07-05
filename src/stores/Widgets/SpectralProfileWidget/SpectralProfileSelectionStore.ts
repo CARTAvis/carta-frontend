@@ -42,7 +42,7 @@ type Profile = {
     };
     comments: string[];
     intensityConfig: IntensityConfig;
-    intensityUnit: string;
+    intensityUnit: string | undefined;
 };
 
 export class SpectralProfileSelectionStore {

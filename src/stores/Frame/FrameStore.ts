@@ -120,7 +120,7 @@ export class FrameStore {
     private static readonly ZoomInertiaDuration = 250;
     private static readonly CursorMovementDuration = 250;
 
-    private spectralFrame: AST.SpecFrame;
+    private spectralFrame: AST.SpecFrame | null = null;
     private readonly controlMaps: Map<FrameStore, ControlMap>;
     private readonly catalogControlMaps: Map<FrameStore, CatalogControlMap>;
     private readonly framePixelRatio: number;
@@ -152,10 +152,10 @@ export class FrameStore {
     public readonly channelMapInnerOverlayStore: ChannelMapInnerOverlayStore;
     public readonly colorbarStore: ColorbarStore;
 
-    public spectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}>;
-    public spectralSystemsSupported: Array<SpectralSystem>;
-    public spatialTransformAST: AST.Mapping;
-    private cursorMovementHandle: NodeJS.Timeout;
+    public spectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}> | null = null;
+    public spectralSystemsSupported: Array<SpectralSystem> | null = null;
+    public spatialTransformAST: AST.Mapping | null = null;
+    private cursorMovementHandle: NodeJS.Timeout | null = null;
 
     public restFreqStore: RestFreqStore;
 
@@ -169,13 +169,13 @@ export class FrameStore {
     // Region set for the current frame. Accessed via regionSet, to take into account region sharing
     @observable private readonly frameRegionSet: RegionSetStore;
 
-    @observable spectralType: SpectralType;
-    @observable spectralUnit: SpectralUnit;
-    @observable spectralTypeSecondary: SpectralType;
-    @observable spectralUnitSecondary: SpectralUnit;
-    @observable spectralSystem: SpectralSystem;
-    @observable channelValues: Array<number>;
-    @observable channelSecondaryValues: Array<number>;
+    @observable spectralType: SpectralType | null = null;
+    @observable spectralUnit: SpectralUnit | null = null;
+    @observable spectralTypeSecondary: SpectralType | null = null;
+    @observable spectralUnitSecondary: SpectralUnit | null = null;
+    @observable spectralSystem: SpectralSystem | null = null;
+    @observable channelValues: Array<number> = [];
+    @observable channelSecondaryValues: Array<number> = [];
     /**
      * View center in pixel coordinates
      */
@@ -183,7 +183,7 @@ export class FrameStore {
     /**
      * View center for the relative coordinate in pixel coordinates
      */
-    @observable offsetCenter: Point2D;
+    @observable offsetCenter: Point2D | null = null;
     @observable cursorInfo: CursorInfo;
     @observable cursorValue: {position: Point2D; channel: number; value: number};
     @observable cursorMoving: boolean;
@@ -202,7 +202,7 @@ export class FrameStore {
     @observable colorbarLabelCustomText: string;
     @observable titleCustomText: string;
     @observable overlayBeamSettings: OverlayBeamStore;
-    @observable spatialReference: FrameStore;
+    @observable spatialReference: FrameStore | null = null;
     @observable spectralReference: FrameStore;
     @observable rasterScalingReference: FrameStore;
     @observable secondarySpatialImages: FrameStore[];
@@ -226,7 +226,7 @@ export class FrameStore {
     @observable stokesFiles: CARTA.StokesFile[];
 
     @observable previewPVRasterData: Float32Array;
-    @observable intensityUnit: string;
+    @observable intensityUnit: string | undefined;
 
     @observable isOffsetCoord: boolean;
 
@@ -1251,19 +1251,19 @@ export class FrameStore {
         this.backendService = BackendService.Instance;
         const preferenceStore = PreferenceStore.Instance;
 
-        this.spectralFrame = null;
-        this.spectralType = null;
-        this.spectralUnit = null;
-        this.spectralTypeSecondary = null;
-        this.spectralUnitSecondary = null;
-        this.channelSecondaryValues = null;
-        this.spectralSystem = null;
-        this.channelValues = null;
-        this.spectralCoordsSupported = null;
-        this.spectralSystemsSupported = null;
-        this.wcsInfo = null;
-        this.wcsInfoForTransformation = null;
-        this.wcsInfo3D = null;
+        // this.spectralFrame = null;
+        // this.spectralType = null;
+        // this.spectralUnit = null;
+        // this.spectralTypeSecondary = null;
+        // this.spectralUnitSecondary = null;
+        // this.channelSecondaryValues = null;
+        // this.spectralSystem = null;
+        // this.channelValues = null;
+        // this.spectralCoordsSupported = null;
+        // this.spectralSystemsSupported = null;
+        // this.wcsInfo = null;
+        // this.wcsInfoForTransformation = null;
+        // this.wcsInfo3D = null;
         this.validWcs = false;
         this.frameInfo = frameInfo;
         this.initialCenter = {x: (this.frameInfo.fileInfoExtended.width - 1) / 2.0, y: (this.frameInfo.fileInfoExtended.height - 1) / 2.0};
@@ -1286,8 +1286,8 @@ export class FrameStore {
         this.colorbarLabelCustomText = this.requiredUnit === undefined || !this.requiredUnit.length ? "arbitrary units" : this.requiredUnit;
         this.titleCustomText = frameInfo?.fileInfo?.name;
         this.overlayBeamSettings = new OverlayBeamStore();
-        this.spatialReference = null;
-        this.spatialTransformAST = null;
+        // this.spatialReference = null;
+        // this.spatialTransformAST = null;
         this.catalogControlMaps = new Map<FrameStore, CatalogControlMap>();
         this.controlMaps = new Map<FrameStore, ControlMap>();
         this.secondarySpatialImages = [];
@@ -1303,7 +1303,7 @@ export class FrameStore {
         this.requestingMomentsProgress = 0;
         this.isRequestingPV = false;
         this.requestingPVProgress = 0;
-        this.cursorMovementHandle = null;
+        // this.cursorMovementHandle = null;
 
         this.stokesFiles = [];
 
@@ -1314,7 +1314,7 @@ export class FrameStore {
         this.intensityUnit = this.headerUnit;
 
         this.isOffsetCoord = false;
-        this.offsetCenter = null;
+        // this.offsetCenter = null;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preferenceStore.astColor;

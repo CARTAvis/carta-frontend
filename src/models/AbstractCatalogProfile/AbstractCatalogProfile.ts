@@ -410,7 +410,7 @@ export abstract class AbstractCatalogProfileStore {
                     appStore.activeFrame.setZoom(zoomLevel);
                 }
 
-                if (frame?.spatialReference && frame !== appStore.activeFrame) {
+                if (frame?.spatialReference && frame !== appStore.activeFrame && frame.spatialTransformAST) {
                     positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
                 }
 
