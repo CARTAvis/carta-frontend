@@ -304,7 +304,7 @@ export class FrameStore {
 
     @computed get requiredFrameView(): FrameView {
         // use spatial reference frame to calculate frame view, if it exists
-        if (this.spatialReference) {
+        if (this.spatialReference && this.spatialTransform) {
             // Required view of reference frame
             const refView = this.spatialReference.requiredFrameView;
             // Get the position of the ref frame's view in the secondary frame's pixel space
@@ -1018,7 +1018,7 @@ export class FrameStore {
 
     @computed get spectralSiblings(): FrameStore[] {
         if (this.spectralReference) {
-            let siblings = [];
+            let siblings: FrameStore[] = [];
             siblings.push(this.spectralReference);
             siblings.push(...this.spectralReference.secondarySpectralImages.slice().filter(f => f !== this));
             return siblings;
@@ -1029,7 +1029,7 @@ export class FrameStore {
 
     @computed get spatialSiblings(): FrameStore[] {
         if (this.spatialReference) {
-            let siblings = [];
+            let siblings: FrameStore[] = [];
             siblings.push(this.spatialReference);
             siblings.push(...this.spatialReference.secondarySpatialImages.slice().filter(f => f !== this));
             return siblings;
@@ -1040,7 +1040,7 @@ export class FrameStore {
 
     @computed get renderConfigSiblings(): FrameStore[] {
         if (this.rasterScalingReference) {
-            let siblings = [];
+            let siblings: FrameStore[] = [];
             siblings.push(this.rasterScalingReference);
             siblings.push(...this.rasterScalingReference.secondaryRasterScalingImages.slice().filter(f => f !== this));
             return siblings;
@@ -1104,7 +1104,7 @@ export class FrameStore {
     }
 
     @computed get stokesOptions(): {value: number; label: string}[] {
-        let stokesOptions = [];
+        let stokesOptions: {value: number; label: string}[] = [];
         if (this.frameInfo && this.frameInfo.fileInfoExtended && this.frameInfo.fileInfoExtended.headerEntries) {
             const ctype = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.value?.toUpperCase() === "STOKES");
             if (ctype && ctype.name?.indexOf("CTYPE") !== -1) {
@@ -1122,7 +1122,7 @@ export class FrameStore {
                 for (let i = 0; i < parseInt(naxisHeader.value ?? ""); i++) {
                     const stokesVal = getHeaderNumericValue(crvalHeader) + (i + 1 - getHeaderNumericValue(crpixHeader)) * getHeaderNumericValue(cdeltHeader);
                     if (STANDARD_POLARIZATIONS.has(stokesVal)) {
-                        stokesOptions.push({value: stokesVal, label: POLARIZATION_LABELS.get(STANDARD_POLARIZATIONS.get(stokesVal))});
+                        stokesOptions.push({value: stokesVal, label: POLARIZATION_LABELS.get(STANDARD_POLARIZATIONS.get(stokesVal) ?? "") ?? ""});
                     }
                 }
             }
@@ -1172,19 +1172,19 @@ export class FrameStore {
 
     @computed get polarizationInfo(): string[] {
         return this.polarizations?.map(polarization => {
-            return POLARIZATION_LABELS.get(FULL_POLARIZATIONS.get(polarization));
+            return POLARIZATION_LABELS.get(FULL_POLARIZATIONS.get(polarization) ?? "") ?? "";
         });
     }
 
     @computed get coordinateOptions(): {value: string; label: string}[] {
         return this.polarizations?.map(polarization => {
-            return {value: FULL_POLARIZATIONS.get(polarization), label: POLARIZATION_LABELS.get(FULL_POLARIZATIONS.get(polarization))};
+            return {value: FULL_POLARIZATIONS.get(polarization) ?? "", label: POLARIZATION_LABELS.get(FULL_POLARIZATIONS.get(polarization) ?? "") ?? ""};
         });
     }
 
     @computed get coordinateOptionsZ(): {value: string; label: string}[] {
         return this.polarizations?.map(polarization => {
-            return {value: FULL_POLARIZATIONS.get(polarization) + "z", label: POLARIZATION_LABELS.get(FULL_POLARIZATIONS.get(polarization))};
+            return {value: FULL_POLARIZATIONS.get(polarization) + "z", label: POLARIZATION_LABELS.get(FULL_POLARIZATIONS.get(polarization) ?? "") ?? ""};
         });
     }
 
@@ -2287,7 +2287,7 @@ export class FrameStore {
                     this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, centerInRad.x, centerInRad.y, this.offsetCenter.x, this.offsetCenter.y);
                     for (const frame of this.secondarySpatialImages) {
                         const frameCenterInRad = getUnformattedWCSPoint(frame.wcsInfo, frame.offsetCenter);
-                        if (frame.isOffsetCoord && frameCenterInRad) {
+                        if (frame.isOffsetCoord && frameCenterInRad && frame.spatialTransform) {
                             frame.wcsInfoShifted = AST.createShiftmapFrameset(
                                 frame.wcsInfo,
                                 frameCenterInRad.x,
@@ -2331,7 +2331,7 @@ export class FrameStore {
             return false;
         }
 
-        if (this.spatialReference) {
+        if (this.spatialReference && this.spatialTransform) {
             let centerPointRefImage = {x, y};
             if (enableSpatialTransform) {
                 centerPointRefImage = this.spatialTransform.transformCoordinate({x, y}, true);
@@ -2340,8 +2340,10 @@ export class FrameStore {
         } else {
             this.offsetCenter = {x, y};
             for (const frame of this.secondarySpatialImages) {
-                const centerPointSecondaryImage = frame.spatialTransform.transformCoordinate(this.offsetCenter, false);
-                frame.offsetCenter = centerPointSecondaryImage;
+                if (frame.spatialTransform) {
+                    const centerPointSecondaryImage = frame.spatialTransform.transformCoordinate(this.offsetCenter, false);
+                    frame.offsetCenter = centerPointSecondaryImage;
+                }
             }
         }
 
@@ -2643,7 +2645,7 @@ export class FrameStore {
     };
 
     @action setZoom = (zoom: number, absolute: boolean = false) => {
-        if (this.spatialReference) {
+        if (this.spatialReference && this.spatialTransform) {
             // Adjust zoom by scaling factor if zoom level is not absolute
             const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale;
             this.spatialReference.setZoom(adjustedZoom);
@@ -2691,7 +2693,7 @@ export class FrameStore {
             return false;
         }
 
-        if (this.spatialReference) {
+        if (this.spatialReference && this.spatialTransform) {
             let centerPointRefImage = {x, y};
             if (enableSpatialTransform) {
                 centerPointRefImage = this.spatialTransform.transformCoordinate({x, y}, true);
@@ -2700,8 +2702,10 @@ export class FrameStore {
         } else {
             this.center = {x, y};
             for (const frame of this.secondarySpatialImages) {
-                const centerPointSecondaryImage = frame.spatialTransform.transformCoordinate(this.center, false);
-                frame.center = centerPointSecondaryImage;
+                if (frame.spatialTransform) {
+                    const centerPointSecondaryImage = frame.spatialTransform.transformCoordinate(this.center, false);
+                    frame.center = centerPointSecondaryImage;
+                }
             }
         }
         return true;
@@ -2769,7 +2773,7 @@ export class FrameStore {
 
     // Sets a new zoom level and pans to keep the given point fixed
     @action zoomToPoint = (x: number, y: number, zoom: number, absolute: boolean = false) => {
-        if (this.spatialReference) {
+        if (this.spatialReference && this.spatialTransform) {
             // Adjust zoom by scaling factor if zoom level is not absolute
             const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale;
             const pointRefImage = transformPoint(this.spatialTransformAST, {x, y}, true);
@@ -2783,7 +2787,7 @@ export class FrameStore {
     };
 
     @action fitZoom = (): number => {
-        if (this.spatialReference) {
+        if (this.spatialReference && this.spatialTransform) {
             // Calculate midpoint of image
             this.initCenter();
             const imageCenterReferenceSpace = transformPoint(this.spatialTransformAST, this.center, true);
@@ -2807,8 +2811,10 @@ export class FrameStore {
             this.zoomLevel = this.zoomLevelForFit;
             this.initCenter();
             for (const frame of this.secondarySpatialImages) {
-                const centerPointSecondaryImage = frame.spatialTransform.transformCoordinate(this.center, false);
-                frame.center = centerPointSecondaryImage;
+                if (frame.spatialTransform) {
+                    const centerPointSecondaryImage = frame.spatialTransform.transformCoordinate(this.center, false);
+                    frame.center = centerPointSecondaryImage;
+                }
             }
             return this.zoomLevel;
         }
@@ -3000,7 +3006,7 @@ export class FrameStore {
 
     @action clearSpatialReference = () => {
         // Adjust center and zoom based on existing spatial reference
-        if (this.spatialReference) {
+        if (this.spatialReference && this.spatialTransform) {
             this.frameRegionSet.migrateRegionsFromExistingSet(this.spatialReference.frameRegionSet, this.spatialTransformAST);
             this.center = this.spatialTransform.transformCoordinate(this.spatialReference.center, false);
             this.zoomLevel = this.spatialReference.zoomLevel;
