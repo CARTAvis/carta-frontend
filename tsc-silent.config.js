@@ -24,6 +24,7 @@ const migratedFiles = [
     "stores/SpatialProfileStore",
     "stores/SpectralProfileStore",
     "stores/Widgets",
+    "stores/Frame/AnnotationStore",
     "stores/Frame/ColorbarStore",
     "stores/Frame/ContourStore",
     "stores/Frame/OverlayStore",

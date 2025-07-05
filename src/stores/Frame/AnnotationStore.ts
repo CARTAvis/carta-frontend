@@ -335,11 +335,11 @@ export class CompassAnnotationStore extends RegionStore {
     };
 
     public getCompassApproximation(wcsInfo: AST.FrameSet, spatiallyMatched?: boolean, spatialTransform?: AST.Mapping): {northApproximatePoints: number[]; eastApproximatePoints: number[]} {
-        const originPoint = spatiallyMatched ? transformPoint(spatialTransform, this.controlPoints[0], false) : this.controlPoints[0];
+        const originPoint = spatiallyMatched && spatialTransform ? transformPoint(spatialTransform, this.controlPoints[0], false) : this.controlPoints[0];
         const transformed = AST.transformPoint(wcsInfo, originPoint.x, originPoint.y);
 
-        const delta1 = this.activeFrame.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.includes("CDELT1"));
-        const delta2 = this.activeFrame.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.includes("CDELT2"));
+        const delta1 = this.activeFrame.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.includes("CDELT1"));
+        const delta2 = this.activeFrame.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.includes("CDELT2"));
         const frameView = this.activeFrame.requiredFrameViewForRegionRender;
         const top = frameView.yMax;
         const bottom = frameView.yMin;
@@ -347,11 +347,11 @@ export class CompassAnnotationStore extends RegionStore {
         const right = frameView.xMax;
         const width = right - left;
         const height = top - bottom;
-        const angularWidth = delta1 ? Math.abs((delta1?.numericValue * Math.PI * width) / 180) : 6.18;
-        const angularHeight = delta2 ? Math.abs((delta2?.numericValue * Math.PI * height) / 180) : 6.18;
+        const angularWidth = delta1 && delta1.numericValue ? Math.abs((delta1.numericValue * Math.PI * width) / 180) : 6.18;
+        const angularHeight = delta2 && delta2.numericValue ? Math.abs((delta2.numericValue * Math.PI * height) / 180) : 6.18;
 
-        const northApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, 2, transformed.x, transformed.y, delta1 ? angularWidth : 6.18);
-        const eastApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, 1, transformed.x, transformed.y, delta2 ? angularHeight : 6.18);
+        const northApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, 2, transformed.x, transformed.y, delta1 && delta1.numericValue ? angularWidth : 6.18);
+        const eastApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, 1, transformed.x, transformed.y, delta2 && delta2.numericValue ? angularHeight : 6.18);
 
         return {northApproximatePoints, eastApproximatePoints};
     }
