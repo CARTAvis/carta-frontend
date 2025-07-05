@@ -478,8 +478,8 @@ export class FrameStore {
     }
 
     @computed get beamProperties(): {x: number; y: number; majorAxis: number; minorAxis: number; angle: number; overlayBeamSettings: OverlayBeamStore} {
-        const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CUNIT${this.renderedAxesNumbers[0]}`) !== -1);
-        const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CDELT${this.renderedAxesNumbers[0]}`) !== -1);
+        const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.indexOf(`CUNIT${this.renderedAxesNumbers[0]}`) !== -1);
+        const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.indexOf(`CDELT${this.renderedAxesNumbers[0]}`) !== -1);
 
         if (!this.isSwappedZ && deltaHeader) {
             const unit = unitHeader?.value.trim() || "deg";
@@ -627,8 +627,8 @@ export class FrameStore {
     @computed get isPVImage(): boolean {
         if (this.frameInfo?.fileInfoExtended?.headerEntries) {
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
-            const axis1 = entries.find(entry => entry.name.includes(`CTYPE${this.renderedAxesNumbers[0]}`));
-            const axis2 = entries.find(entry => entry.name.includes(`CTYPE${this.renderedAxesNumbers[1]}`));
+            const axis1 = entries.find(entry => entry.name?.includes(`CTYPE${this.renderedAxesNumbers[0]}`));
+            const axis2 = entries.find(entry => entry.name?.includes(`CTYPE${this.renderedAxesNumbers[1]}`));
             const axis1SpectralAxis2Spatial = axis1?.value?.match(/offset|position|offset position|distance/i) && axis2?.value?.match(/freq/i);
             const axis1SpatialAxis2Spectral = axis2?.value?.match(/offset|position|offset position|distance/i) && axis1?.value?.match(/freq/i);
             return !!(axis1SpatialAxis2Spectral || axis1SpectralAxis2Spatial);
@@ -775,7 +775,7 @@ export class FrameStore {
     get channelType(): string {
         if (this.isSwappedZ) {
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
-            const depthAxis = entries.find(entry => entry.name.includes(`CTYPE${this.depthNumber}`));
+            const depthAxis = entries.find(entry => entry.name?.includes(`CTYPE${this.depthNumber}`));
             let dirName = depthAxis?.value ?? "Unknown";
 
             if (dirName.match(/^RA/)) {
@@ -872,8 +872,8 @@ export class FrameStore {
     @computed get uvAxis(): number {
         if (this.frameInfo?.fileInfoExtended?.headerEntries) {
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
-            const axis1 = entries.find(entry => entry.name.includes(`CTYPE${this.renderedAxesNumbers[0]}`));
-            const axis2 = entries.find(entry => entry.name.includes(`CTYPE${this.renderedAxesNumbers[1]}`));
+            const axis1 = entries.find(entry => entry.name?.includes(`CTYPE${this.renderedAxesNumbers[0]}`));
+            const axis2 = entries.find(entry => entry.name?.includes(`CTYPE${this.renderedAxesNumbers[1]}`));
             if (axis1?.value?.match(/uu/i)) {
                 return 1;
             } else if (axis2?.value?.match(/uu/i)) {
@@ -889,12 +889,12 @@ export class FrameStore {
 
             // Fill up spectral dimension & type/unit/system
             if (this.spectralNumber > 0) {
-                const spectralHeader = entries.find(entry => entry.name.includes(`CTYPE${this.spectralNumber}`));
+                const spectralHeader = entries.find(entry => entry.name?.includes(`CTYPE${this.spectralNumber}`));
                 const spectralValue = spectralHeader?.value.trim().toUpperCase();
                 const spectralType = STANDARD_SPECTRAL_TYPE_SETS.find(type => spectralValue === type.code);
-                const valueHeader = entries.find(entry => entry.name.includes(`CRVAL${this.spectralNumber}`));
-                const unitHeader = entries.find(entry => entry.name.includes(`CUNIT${this.spectralNumber}`));
-                const specSysHeader = entries.find(entry => entry.name.includes("SPECSYS"));
+                const valueHeader = entries.find(entry => entry.name?.includes(`CRVAL${this.spectralNumber}`));
+                const unitHeader = entries.find(entry => entry.name?.includes(`CUNIT${this.spectralNumber}`));
+                const specSysHeader = entries.find(entry => entry.name?.includes("SPECSYS"));
                 const specsys = specSysHeader?.value ? trimFitsComment(specSysHeader.value)?.toUpperCase() : undefined;
                 if (spectralType) {
                     return {
@@ -1106,20 +1106,20 @@ export class FrameStore {
     @computed get stokesOptions(): {value: number; label: string}[] {
         let stokesOptions = [];
         if (this.frameInfo && this.frameInfo.fileInfoExtended && this.frameInfo.fileInfoExtended.headerEntries) {
-            const ctype = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.value.toUpperCase() === "STOKES");
-            if (ctype && ctype.name.indexOf("CTYPE") !== -1) {
-                const index = ctype.name.substring(5);
-                const naxisHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`NAXIS${index}`) !== -1);
-                const crpixHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRPIX${index}`) !== -1);
-                const crvalHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRVAL${index}`) !== -1);
-                const cdeltHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CDELT${index}`) !== -1);
+            const ctype = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.value?.toUpperCase() === "STOKES");
+            if (ctype && ctype.name?.indexOf("CTYPE") !== -1) {
+                const index = ctype.name?.substring(5);
+                const naxisHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.indexOf(`NAXIS${index}`) !== -1);
+                const crpixHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.indexOf(`CRPIX${index}`) !== -1);
+                const crvalHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.indexOf(`CRVAL${index}`) !== -1);
+                const cdeltHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.indexOf(`CDELT${index}`) !== -1);
 
                 // Skip if any headers are missing
                 if (!naxisHeader || !crpixHeader || !crvalHeader || !cdeltHeader) {
                     return [];
                 }
 
-                for (let i = 0; i < parseInt(naxisHeader.value); i++) {
+                for (let i = 0; i < parseInt(naxisHeader.value ?? ""); i++) {
                     const stokesVal = getHeaderNumericValue(crvalHeader) + (i + 1 - getHeaderNumericValue(crpixHeader)) * getHeaderNumericValue(cdeltHeader);
                     if (STANDARD_POLARIZATIONS.has(stokesVal)) {
                         stokesOptions.push({value: stokesVal, label: POLARIZATION_LABELS.get(STANDARD_POLARIZATIONS.get(stokesVal))});
@@ -1377,7 +1377,7 @@ export class FrameStore {
             if (astFrameSet) {
                 // update default system from the header
                 const entries = this.frameInfo.fileInfoExtended.headerEntries;
-                const skySystem = entries.find(entry => entry.name.includes("RADESYS"))?.value;
+                const skySystem = entries.find(entry => entry.name?.includes("RADESYS"))?.value;
                 if (Object.values(SystemType).includes(skySystem as SystemType)) {
                     AppStore.Instance.overlaySettings.global.setDefaultSystem(skySystem as SystemType);
                     overlaySettings.global.setValidWcs(true);
@@ -1615,8 +1615,8 @@ export class FrameStore {
     // This function shifts the pixel axis by 1, so that it starts at 0, rather than 1
     // For entries that are not related to the reference pixel location, the current value is returned
     private static ShiftASTCoords = (entry: CARTA.IHeaderEntry, currentValue: string) => {
-        if (entry.name.match(/CRPIX\d+/)) {
-            const numericValue = parseFloat(entry.value);
+        if (entry.name?.match(/CRPIX\d+/)) {
+            const numericValue = parseFloat(entry.value ?? "");
             if (isFinite(numericValue)) {
                 return (numericValue - 1).toString();
             }
@@ -1626,7 +1626,7 @@ export class FrameStore {
 
     private getDirAxisLabel = (axisNumber: number) => {
         const entries = this.frameInfo.fileInfoExtended.headerEntries;
-        const dirXAxis = entries.find(entry => entry.name.includes(`CTYPE${axisNumber}`));
+        const dirXAxis = entries.find(entry => entry.name?.includes(`CTYPE${axisNumber}`));
         let name = dirXAxis?.value ?? "";
         if (name.match(/^RA/) && this.isSwappedZ) {
             name = "Right ascension"; // Customize the axis label
@@ -1663,8 +1663,8 @@ export class FrameStore {
     };
 
     private getSpatialRefPix = (): Point2D => {
-        const refXPixHeader = this.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name.indexOf(`CRPIX${this.dirX}`) !== -1);
-        const refYPixHeader = this.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name.indexOf(`CRPIX${this.dirY}`) !== -1);
+        const refXPixHeader = this.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name?.indexOf(`CRPIX${this.dirX}`) !== -1);
+        const refYPixHeader = this.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name?.indexOf(`CRPIX${this.dirY}`) !== -1);
 
         if (refXPixHeader && refYPixHeader) {
             // Shift pixel coordinates by -1 to start at zero instead of 1
@@ -1717,20 +1717,20 @@ export class FrameStore {
         const fitsChan = AST.emptyFitsChan();
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
             let name = entry.name;
-            if (name.match(regOtherAxes) || name.match(regStokesNumber) || name === "HISTORY") {
+            if (name?.match(regOtherAxes) || name?.match(regStokesNumber) || name === "HISTORY") {
                 continue;
             }
 
-            if (name.match(regSpectralNumber) && this.spectralNumber !== this.spectral) {
-                name = entry.name.replace(`${this.spectralNumber}`, `${this.spectral}`);
-            } else if (name.match(regDirXNumber) && this.dirXNumber !== this.dirX) {
-                name = entry.name.replace(`${this.dirXNumber}`, `${this.dirX}`);
-            } else if (name.match(regDirYNumber) && this.dirYNumber !== this.dirY) {
-                name = entry.name.replace(`${this.dirYNumber}`, `${this.dirY}`);
+            if (name?.match(regSpectralNumber) && this.spectralNumber !== this.spectral) {
+                name = entry.name?.replace(`${this.spectralNumber}`, `${this.spectral}`);
+            } else if (name?.match(regDirXNumber) && this.dirXNumber !== this.dirX) {
+                name = entry.name?.replace(`${this.dirXNumber}`, `${this.dirX}`);
+            } else if (name?.match(regDirYNumber) && this.dirYNumber !== this.dirY) {
+                name = entry.name?.replace(`${this.dirYNumber}`, `${this.dirY}`);
             }
 
             let value = trimFitsComment(entry.value);
-            if (entry.name.toUpperCase() === "NAXIS" || entry.name.toUpperCase() === "WCSAXES") {
+            if (entry.name?.toUpperCase() === "NAXIS" || entry.name?.toUpperCase() === "WCSAXES") {
                 value = "2";
             }
             if (entry.entryType === CARTA.EntryType.STRING) {
@@ -1739,7 +1739,7 @@ export class FrameStore {
                 value = FrameStore.ShiftASTCoords(entry, value);
             }
 
-            while (name.length < 8) {
+            while (name && name.length < 8) {
                 name += " ";
             }
 
@@ -1766,19 +1766,19 @@ export class FrameStore {
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
             let name = entry.name;
 
-            if (name.match(regOtherAxes) || name.match(regStokesNumber) || name.match(regSpectralNumber) || name === "HISTORY") {
+            if (name?.match(regOtherAxes) || name?.match(regStokesNumber) || name?.match(regSpectralNumber) || name === "HISTORY") {
                 continue;
             }
 
             // Remove the stokes axis (if any), and reset axis numbers for x or y
-            if (name.match(regDirXNumber) && this.dirXNumber !== this.dirX) {
-                name = entry.name.replace(`${this.dirXNumber}`, `${this.dirX}`);
-            } else if (name.match(regDirYNumber) && this.dirYNumber !== this.dirY) {
-                name = entry.name.replace(`${this.dirYNumber}`, `${this.dirY}`);
+            if (name?.match(regDirXNumber) && this.dirXNumber !== this.dirX) {
+                name = entry.name?.replace(`${this.dirXNumber}`, `${this.dirX}`);
+            } else if (name?.match(regDirYNumber) && this.dirYNumber !== this.dirY) {
+                name = entry.name?.replace(`${this.dirYNumber}`, `${this.dirY}`);
             }
 
             let value = trimFitsComment(entry.value);
-            if (entry.name.toUpperCase() === "NAXIS" || entry.name.toUpperCase() === "WCSAXES") {
+            if (entry.name?.toUpperCase() === "NAXIS" || entry.name?.toUpperCase() === "WCSAXES") {
                 value = "2";
             }
             if (entry.entryType === CARTA.EntryType.STRING) {
@@ -1787,7 +1787,7 @@ export class FrameStore {
                 value = FrameStore.ShiftASTCoords(entry, value);
             }
 
-            while (name.length < 8) {
+            while (name && name.length < 8) {
                 name += " ";
             }
 
@@ -1815,26 +1815,26 @@ export class FrameStore {
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
             let name = entry.name;
 
-            if (name.match(regOtherAxes) || name.match(regStokesNumber) || name === "HISTORY") {
+            if (name?.match(regOtherAxes) || name?.match(regStokesNumber) || name === "HISTORY") {
                 continue;
             }
 
             // Remove the stokes axis (if any), and reset axis numbers for x, y, or spectral
-            if (name.match(regDirXNumber) && this.dirXNumber !== this.dirX) {
-                name = entry.name.replace(`${this.dirXNumber}`, `${this.dirX}`);
-            } else if (name.match(regDirYNumber) && this.dirYNumber !== this.dirY) {
-                name = entry.name.replace(`${this.dirYNumber}`, `${this.dirY}`);
-            } else if (name.match(regSpectralNumber) && this.spectralNumber !== this.spectral) {
-                name = entry.name.replace(`${this.spectralNumber}`, `${this.spectral}`);
+            if (name?.match(regDirXNumber) && this.dirXNumber !== this.dirX) {
+                name = entry.name?.replace(`${this.dirXNumber}`, `${this.dirX}`);
+            } else if (name?.match(regDirYNumber) && this.dirYNumber !== this.dirY) {
+                name = entry.name?.replace(`${this.dirYNumber}`, `${this.dirY}`);
+            } else if (name?.match(regSpectralNumber) && this.spectralNumber !== this.spectral) {
+                name = entry.name?.replace(`${this.spectralNumber}`, `${this.spectral}`);
             }
 
             // Skip empty header entries
-            if (!entry.value.length) {
+            if (!entry.value?.length) {
                 continue;
             }
 
             let value = trimFitsComment(entry.value);
-            if (entry.name.toUpperCase() === "NAXIS" || entry.name.toUpperCase() === "WCSAXES") {
+            if (entry.name?.toUpperCase() === "NAXIS" || entry.name?.toUpperCase() === "WCSAXES") {
                 value = this.dimension;
             }
             if (entry.entryType === CARTA.EntryType.STRING) {
@@ -1843,7 +1843,7 @@ export class FrameStore {
                 value = FrameStore.ShiftASTCoords(entry, value);
             }
 
-            while (name.length < 8) {
+            while (name && name.length < 8) {
                 name += " ";
             }
 
@@ -1864,25 +1864,25 @@ export class FrameStore {
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
             let name = entry.name;
 
-            if (name.match(regOtherAxes) || name.match(regStokesNumber) || name === "HISTORY") {
+            if (name?.match(regOtherAxes) || name?.match(regStokesNumber) || name === "HISTORY") {
                 continue;
             }
 
             // Remove the stokes axis (if any), and reset axis numbers for x, y, and spectral.
-            if (name.match(regDirXNumber) && this.dirXNumber !== this.dirX) {
-                name = entry.name.replace(`${this.dirXNumber}`, `${this.dirX}`);
-            } else if (name.match(regDirYNumber) && this.dirYNumber !== this.dirY) {
-                name = entry.name.replace(`${this.dirYNumber}`, `${this.dirY}`);
-            } else if (name.match(regSpectralNumber) && this.spectralNumber !== this.spectral) {
-                name = entry.name.replace(`${this.spectralNumber}`, `${this.spectral}`);
+            if (name?.match(regDirXNumber) && this.dirXNumber !== this.dirX) {
+                name = entry.name?.replace(`${this.dirXNumber}`, `${this.dirX}`);
+            } else if (name?.match(regDirYNumber) && this.dirYNumber !== this.dirY) {
+                name = entry.name?.replace(`${this.dirYNumber}`, `${this.dirY}`);
+            } else if (name?.match(regSpectralNumber) && this.spectralNumber !== this.spectral) {
+                name = entry.name?.replace(`${this.spectralNumber}`, `${this.spectral}`);
             }
 
-            if (!entry.value.length) {
+            if (!entry.value?.length) {
                 continue;
             }
 
             let value = trimFitsComment(entry.value);
-            if (name.toUpperCase() === "NAXIS" || name.toUpperCase() === "WCSAXES") {
+            if (name?.toUpperCase() === "NAXIS" || name?.toUpperCase() === "WCSAXES") {
                 value = "3";
             }
 
@@ -1892,7 +1892,7 @@ export class FrameStore {
                 value = FrameStore.ShiftASTCoords(entry, value);
             }
 
-            while (name.length < 8) {
+            while (name && name.length < 8) {
                 name += " ";
             }
 
@@ -1916,7 +1916,7 @@ export class FrameStore {
 
         // Get rendered and hidden direction axes formats
         const entries = this.frameInfo.fileInfoExtended.headerEntries;
-        const axisName = entries.find(entry => entry.name.includes(`CTYPE${this.dirAxis}`));
+        const axisName = entries.find(entry => entry.name?.includes(`CTYPE${this.dirAxis}`));
         let axisValue = axisName?.value ?? "Unknown";
         if (axisValue.match(/^GLON/) || axisValue.match(/^GLAT/)) {
             this.dirAxisFormat = "d.*";
@@ -1951,8 +1951,8 @@ export class FrameStore {
         if (this.isPVImage || this.isUVImage || this.isSwappedZ) {
             return null;
         }
-        const crpix1 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRPIX${this.renderedAxesNumbers[0]}`) !== -1);
-        const crpix2 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRPIX${this.renderedAxesNumbers[1]}`) !== -1);
+        const crpix1 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.indexOf(`CRPIX${this.renderedAxesNumbers[0]}`) !== -1);
+        const crpix2 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.indexOf(`CRPIX${this.renderedAxesNumbers[1]}`) !== -1);
         if (crpix1 && crpix2) {
             const crpix1Val = getHeaderNumericValue(crpix1);
             const crpix2Val = getHeaderNumericValue(crpix2);
@@ -2417,10 +2417,10 @@ export class FrameStore {
         // generate spectral system options
         const spectralSystem = this.spectralAxis.specsys;
         if (IsSpectralSystemSupported(spectralSystem)) {
-            const dateObsHeader = entries.find(entry => entry.name.indexOf("DATE-OBS") !== -1);
-            const obsgeoxHeader = entries.find(entry => entry.name.indexOf("OBSGEO-X") !== -1);
-            const obsgeoyHeader = entries.find(entry => entry.name.indexOf("OBSGEO-Y") !== -1);
-            const obsgeozHeader = entries.find(entry => entry.name.indexOf("OBSGEO-Z") !== -1);
+            const dateObsHeader = entries.find(entry => entry.name?.indexOf("DATE-OBS") !== -1);
+            const obsgeoxHeader = entries.find(entry => entry.name?.indexOf("OBSGEO-X") !== -1);
+            const obsgeoyHeader = entries.find(entry => entry.name?.indexOf("OBSGEO-Y") !== -1);
+            const obsgeozHeader = entries.find(entry => entry.name?.indexOf("OBSGEO-Z") !== -1);
             if (spectralSystem === SpectralSystem.LSRK || spectralSystem === SpectralSystem.LSRD) {
                 // LSRK, LSRD
                 if (dateObsHeader && obsgeoxHeader && obsgeoyHeader && obsgeozHeader) {
