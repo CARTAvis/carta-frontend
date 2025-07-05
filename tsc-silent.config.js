@@ -29,8 +29,9 @@ const migratedFiles = [
     "stores/Frame/ContourStore",
     "stores/Frame/OverlayStore",
     "stores/Frame/Region/RegionSetStore",
-    "stores/Frame/RenderStore",
+    "stores/Frame/RenderConfigStore",
     "stores/Frame/RestFreqStore",
+    "stores/Frame/VectorOverlayStore",
 ];
 
 module.exports = {
