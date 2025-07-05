@@ -28,7 +28,7 @@ const migratedFiles = [
     "stores/Frame/ColorbarStore",
     "stores/Frame/ContourStore",
     "stores/Frame/OverlayStore",
-    "stores/Frame/Region/RegionSetStore",
+    "stores/Frame/Region",
     "stores/Frame/RenderConfigStore",
     "stores/Frame/RestFreqStore",
     "stores/Frame/VectorOverlayStore",

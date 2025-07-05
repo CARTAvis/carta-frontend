@@ -225,14 +225,14 @@ export class RegionStore {
                 const size = subtract2D(this.controlPoints[0], this.controlPoints[1]);
                 return {x: Math.abs(size.x), y: Math.abs(size.y)};
             default:
-                return {x: undefined, y: undefined};
+                return {x: 0, y: 0};
         }
     }
 
     @computed get wcsSize(): Point2D {
         const frame = this.activeFrame;
         if (!this.size || !frame?.validWcs) {
-            return {x: undefined, y: undefined};
+            return {x: 0, y: 0};
         }
         return frame.getWcsSizeInArcsec(this.size);
     }
