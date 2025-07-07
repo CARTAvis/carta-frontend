@@ -129,7 +129,7 @@ export class FrameStore {
     private readonly initialCenter: Point2D;
     public readonly pixelUnitSizeArcsec: Point2D;
 
-    private spectralTransformAST: AST.FrameSet;
+    private spectralTransformAST: AST.FrameSet | null = null;
     private cachedTransformedWcsInfo: AST.FrameSet = -1;
     private zoomTimeoutHandler;
 
@@ -203,8 +203,8 @@ export class FrameStore {
     @observable titleCustomText: string;
     @observable overlayBeamSettings: OverlayBeamStore;
     @observable spatialReference: FrameStore | null = null;
-    @observable spectralReference: FrameStore;
-    @observable rasterScalingReference: FrameStore;
+    @observable spectralReference: FrameStore | null = null;
+    @observable rasterScalingReference: FrameStore | null = null;
     @observable secondarySpatialImages: FrameStore[];
     @observable secondarySpectralImages: FrameStore[];
     @observable secondaryRasterScalingImages: FrameStore[];
@@ -214,8 +214,8 @@ export class FrameStore {
     @observable fittingResult: string;
     @observable fittingResultRegionParams: {points: Point2D[]; rotation: number}[];
     @observable fittingLog: string;
-    @observable fittingModelImage: FrameStore;
-    @observable fittingResidualImage: FrameStore;
+    @observable fittingModelImage: FrameStore | null = null;
+    @observable fittingResidualImage: FrameStore | null = null;
 
     @observable isRequestingMoments: boolean;
     @observable requestingMomentsProgress: number;
@@ -408,7 +408,7 @@ export class FrameStore {
     }
 
     @computed get transformedWcsInfo() {
-        if (this.spatialTransform) {
+        if (this.spatialReference && this.spatialTransform) {
             let adjTranslation: Point2D = {
                 x: -this.spatialTransform.translation.x / this.spatialTransform.scale,
                 y: -this.spatialTransform.translation.y / this.spatialTransform.scale
@@ -2730,11 +2730,14 @@ export class FrameStore {
     };
 
     @action setCursorPosition = (posImageSpace: Point2D) => {
-        if (this.spatialReference) {
+        if (this.spatialReference && this.spatialTransformAST) {
             this.spatialReference.setCursorPosition(transformPoint(this.spatialTransformAST, posImageSpace, true));
         } else {
             this.cursorInfo = this.getCursorInfo(posImageSpace);
             for (const frame of this.secondarySpatialImages) {
+                if (!frame.spatialTransform || !frame.spatialTransformAST) {
+                    continue;
+                }
                 const posSecondaryImage = transformPoint(frame.spatialTransformAST, posImageSpace, false);
                 frame.cursorInfo = frame.getCursorInfo(posSecondaryImage);
             }
@@ -2754,7 +2757,7 @@ export class FrameStore {
 
     @action updateCursorRegion = (pos: Point2D) => {
         const isHoverImage = pos.x + 0.5 >= 0 && pos.x + 0.5 <= this.frameInfo.fileInfoExtended.width && pos.y + 0.5 >= 0 && pos.y + 0.5 <= this.frameInfo.fileInfoExtended.height;
-        if (this.spatialReference) {
+        if (this.spatialReference && this.spatialTransformAST) {
             const pointRefImage = transformPoint(this.spatialTransformAST, pos, true);
             this.spatialReference.updateCursorRegion(pointRefImage);
         } else if (isHoverImage) {
@@ -2762,6 +2765,9 @@ export class FrameStore {
         }
 
         for (const frame of this.secondarySpatialImages) {
+            if (!frame.spatialTransform || !frame.spatialTransformAST) {
+                continue;
+            }
             const pointSecondaryImage = transformPoint(frame.spatialTransformAST, pos, false);
             const isHoverSecondaryImage =
                 pointSecondaryImage.x + 0.5 >= 0 && pointSecondaryImage.x + 0.5 <= frame.frameInfo.fileInfoExtended.width && pointSecondaryImage.y + 0.5 >= 0 && pointSecondaryImage.y + 0.5 <= frame.frameInfo.fileInfoExtended.height;
@@ -2773,7 +2779,7 @@ export class FrameStore {
 
     // Sets a new zoom level and pans to keep the given point fixed
     @action zoomToPoint = (x: number, y: number, zoom: number, absolute: boolean = false) => {
-        if (this.spatialReference && this.spatialTransform) {
+        if (this.spatialReference && this.spatialTransform && this.spatialTransformAST) {
             // Adjust zoom by scaling factor if zoom level is not absolute
             const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale;
             const pointRefImage = transformPoint(this.spatialTransformAST, {x, y}, true);
@@ -2787,7 +2793,7 @@ export class FrameStore {
     };
 
     @action fitZoom = (): number => {
-        if (this.spatialReference && this.spatialTransform) {
+        if (this.spatialReference && this.spatialTransform && this.spatialTransformAST) {
             // Calculate midpoint of image
             this.initCenter();
             const imageCenterReferenceSpace = transformPoint(this.spatialTransformAST, this.center, true);
@@ -3006,7 +3012,7 @@ export class FrameStore {
 
     @action clearSpatialReference = () => {
         // Adjust center and zoom based on existing spatial reference
-        if (this.spatialReference && this.spatialTransform) {
+        if (this.spatialReference && this.spatialTransform && this.spatialTransformAST) {
             this.frameRegionSet.migrateRegionsFromExistingSet(this.spatialReference.frameRegionSet, this.spatialTransformAST);
             this.center = this.spatialTransform.transformCoordinate(this.spatialReference.center, false);
             this.zoomLevel = this.spatialReference.zoomLevel;
@@ -3281,13 +3287,17 @@ export class FrameStore {
             this.renderConfig.setPreviewHistogramMin(null);
             this.renderConfig.updateChannelHistogram(previewData.histogram);
         } else {
-            this.renderConfig.setPreviewHistogramMax(previewData.histogramBounds?.max);
-            this.renderConfig.setPreviewHistogramMin(previewData.histogramBounds?.min);
+            if (previewData.histogramBounds?.max && previewData.histogramBounds?.min) {
+                this.renderConfig.setPreviewHistogramMax(previewData.histogramBounds.max);
+                this.renderConfig.setPreviewHistogramMin(previewData.histogramBounds.min);
+            }
         }
 
         const newFrameInfo = {...this.frameInfo};
-        newFrameInfo.fileInfoExtended = new CARTA.FileInfoExtended(previewData.imageInfo);
-        this.setFrameInfo(newFrameInfo);
+        if (previewData.imageInfo) {
+            newFrameInfo.fileInfoExtended = new CARTA.FileInfoExtended(previewData.imageInfo);
+            this.setFrameInfo(newFrameInfo);
+        }
 
         // Update wcsInfo
         const astFrameSet = this.initPVFrame();

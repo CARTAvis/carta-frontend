@@ -195,8 +195,8 @@ export class RenderConfigStore {
     @observable scaleMin: number[];
     @observable scaleMax: number[];
     @observable visible: boolean;
-    @observable previewHistogramMax: number;
-    @observable previewHistogramMin: number;
+    @observable previewHistogramMax: number | null = null;
+    @observable previewHistogramMin: number | null = null;
     @observable customColormapHexEnd: string;
     @observable customColormapHexStart: string;
 
@@ -596,7 +596,7 @@ export class RenderConfigStore {
      *
      * @param histogramMax - The upper cut of the histogram.
      */
-    @action setPreviewHistogramMax = (histogramMax: number) => {
+    @action setPreviewHistogramMax = (histogramMax: number | null) => {
         this.previewHistogramMax = histogramMax;
     };
 
@@ -605,7 +605,7 @@ export class RenderConfigStore {
      *
      * @param histogramMin - The lower cut of the histogram.
      */
-    @action setPreviewHistogramMin = (histogramMin: number) => {
+    @action setPreviewHistogramMin = (histogramMin: number | null) => {
         this.previewHistogramMin = histogramMin;
     };
 
