@@ -451,11 +451,11 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="WCS format">
-                    <HTMLSelect
-                        options={[WCSType.AUTOMATIC, WCSType.DEGREES, WCSType.SEXAGESIMAL]}
-                        value={preference.wcsType}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_WCS_TYPE, event.currentTarget.value)}
-                    />
+                    <HTMLSelect value={preference.wcsType} onChange={(event: React.FormEvent<HTMLSelectElement>) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_WCS_TYPE, event.currentTarget.value)}>
+                        <option value={WCSType.AUTOMATIC}>Automatic</option>
+                        <option value={WCSType.DEGREES}>Degrees</option>
+                        <option value={WCSType.SEXAGESIMAL}>Sexagesimal</option>
+                    </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Colorbar visible">
                     <Switch checked={preference.colorbarVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_VISIBLE, ev.currentTarget.checked)} />
