@@ -15,7 +15,7 @@ export enum InputType {
 
 type WcsCoordNumericInputProps = {
     inputType: InputType;
-    valueWcs: string;
+    valueWcs: string | null;
     onChangeWcs: (val: string) => boolean; // return success or not for resetting displayed value
     disabled?: boolean;
     customPlaceholder?: string;
@@ -120,7 +120,7 @@ interface CoordNumericInputProps {
     inputType: InputType;
     value: number;
     onChange: (val: number) => boolean;
-    valueWcs: string;
+    valueWcs: string | null;
     onChangeWcs: (val: string) => boolean;
     disabled?: boolean;
     wcsDisabled?: boolean;

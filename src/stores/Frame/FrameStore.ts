@@ -183,7 +183,7 @@ export class FrameStore {
     /**
      * View center for the relative coordinate in pixel coordinates
      */
-    @observable offsetCenter: Point2D | null = null;
+    @observable offsetCenter: Point2D;
     @observable cursorInfo: CursorInfo;
     @observable cursorValue: {position: Point2D; channel: number; value: number};
     @observable cursorMoving: boolean;
@@ -1208,7 +1208,7 @@ export class FrameStore {
         return this.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === "RESTFRQ")?.numericValue;
     }
 
-    @computed get centerWCS(): WCSPoint2D {
+    @computed get centerWCS(): WCSPoint2D | null {
         // re-calculate with different wcs system and format
         /* eslint-disable @typescript-eslint/no-unused-vars */
         const system = AppStore.Instance.overlaySettings.global.explicitSystem;
@@ -2308,7 +2308,7 @@ export class FrameStore {
         }
     };
 
-    @computed get offsetCenterWCS(): WCSPoint2D {
+    @computed get offsetCenterWCS(): WCSPoint2D | null {
         // re-calculate with different wcs system
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const system = AppStore.Instance.overlaySettings.global.explicitSystem;
@@ -2359,13 +2359,15 @@ export class FrameStore {
      * @param wcsY - y-axis value in the WCS coordinates.
      * @returns - false
      */
-    @action setOffsetCenterWcs = (wcsX: string, wcsY: string): boolean => {
+    @action setOffsetCenterWcs = (wcsX: string | null, wcsY: string | null): boolean => {
         if (!isWCSStringFormatValid(wcsX, AppStore.Instance.overlaySettings.numbers.formatTypeX) || !isWCSStringFormatValid(wcsY, AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
             return false;
         }
-        const center = getPixelValueFromWCS(this.wcsInfoForTransformation, {x: wcsX, y: wcsY});
-        if (isFinite(center?.x) && isFinite(center?.y)) {
-            return this.setOffsetCenter(center.x, center.y);
+        if (wcsX && wcsY) {
+            const center = getPixelValueFromWCS(this.wcsInfoForTransformation, {x: wcsX, y: wcsY});
+            if (center && isFinite(center.x) && isFinite(center.y)) {
+                return this.setOffsetCenter(center.x, center.y);
+            }
         }
         return false;
     };
@@ -2718,13 +2720,15 @@ export class FrameStore {
      * @param wcsY - y-axis value in the WCS coordinate
      * @returns - false
      */
-    @action setCenterWcs = (wcsX: string, wcsY: string): boolean => {
+    @action setCenterWcs = (wcsX: string | null, wcsY: string | null): boolean => {
         if (!isWCSStringFormatValid(wcsX, AppStore.Instance.overlaySettings.numbers.formatTypeX) || !isWCSStringFormatValid(wcsY, AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
             return false;
         }
-        const center = getPixelValueFromWCS(this.wcsInfoForTransformation, {x: wcsX, y: wcsY});
-        if (isFinite(center?.x) && isFinite(center?.y)) {
-            return this.setCenter(center.x, center.y);
+        if (wcsX && wcsY) {
+            const center = getPixelValueFromWCS(this.wcsInfoForTransformation, {x: wcsX, y: wcsY});
+            if (center && isFinite(center.x) && isFinite(center.y)) {
+                return this.setCenter(center.x, center.y);
+            }
         }
         return false;
     };
@@ -2954,7 +2958,7 @@ export class FrameStore {
         this.isOffsetCoord = frame.isOffsetCoord;
 
         // initialize wcsInfoShifted if it is not existed
-        if (this.isOffsetCoord && !this.wcsInfoShifted) {
+        if (this.isOffsetCoord && !this.wcsInfoShifted && this.offsetCenter) {
             const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.center);
             if (centerInRad) {
                 this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, centerInRad.x, centerInRad.y, this.offsetCenter.x, this.offsetCenter.y);
