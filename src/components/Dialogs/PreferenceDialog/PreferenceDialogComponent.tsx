@@ -265,7 +265,13 @@ export class PreferenceDialogComponent extends React.Component {
                 </FormGroup>
                 {(preference.scaling === FrameScaling.LOG || preference.scaling === FrameScaling.POWER) && (
                     <FormGroup label={"Alpha"} inline={true}>
-                        <SafeNumericInput buttonPosition={"none"} value={preference.scalingAlpha} onValueChange={value => preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA, value)} />
+                        <SafeNumericInput
+                            min={RenderConfigStore.ALPHA_MIN}
+                            max={RenderConfigStore.ALPHA_MAX}
+                            buttonPosition={"none"}
+                            value={preference.scalingAlpha}
+                            onValueChange={value => preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA, value)}
+                        />
                     </FormGroup>
                 )}
                 {preference.scaling === FrameScaling.GAMMA && (
