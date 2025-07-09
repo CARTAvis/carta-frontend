@@ -4,6 +4,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 
 import {AppToaster} from "components/Shared";
 import {LayoutConfig, Snippet, Workspace, WorkspaceListItem} from "models";
+import {PreferenceKeys} from "stores";
 import {AST_COLORS} from "utilities";
 
 const preferencesSchema = require("carta-schemas/preferences_schema_2.json");
@@ -191,6 +192,7 @@ export class ApiService {
                         console.log(`Removing invalid preference ${error.instancePath}`);
                         // Trim the leading "." from the path
                         delete preferences[error.instancePath.substring(1)];
+                        this.clearPreferences([error.instancePath.substring(1)]);
                     }
                 }
             }
@@ -200,15 +202,26 @@ export class ApiService {
 
     private upgradePreferences = (preferences: any) => {
         // Upgrade to V2 if required
-        if (preferences?.version && preferences.version === 1) {
-            if (preferences.astColor || preferences.astColor === 0) {
-                // Convert preferences.astColor from a number in version 1 to a string in version 2
-                // default to "auto-blue" if the value is not in the AST_COLORS map
-                const astColorArray = Array.from(AST_COLORS.keys());
-                preferences.astColor = astColorArray.includes(preferences.astColor) ? AST_COLORS.get(preferences.astColor) : "auto-blue";
+        if (preferences["version"] && preferences["version"] === 1) {
+            // Convert preferences[PreferenceKeys.WCS_OVERLAY_AST_COLOR] from a number in version 1 to a string in version 2
+            // default to "auto-blue" if the value is not in the AST_COLORS map
+            const astColorKey = PreferenceKeys.WCS_OVERLAY_AST_COLOR;
+            if (preferences[astColorKey] || preferences[astColorKey] === 0) {
+                const astColorArrays = Array.from(AST_COLORS.keys());
+                preferences[astColorKey] = astColorArrays.includes(preferences[astColorKey]) ? AST_COLORS.get(preferences[astColorKey]) : "auto-blue";
             }
-            preferences.version = 2;
+            preferences["version"] = 2;
             this.setPreferences(preferences);
+        }
+
+        // Upgrade to schema version 2
+        const schemaVersionRegex = /schema_(\d+)\.json/;
+        const schemaKey = "$schema";
+        if (preferences[schemaKey] && preferences[schemaKey].match(schemaVersionRegex)[1] === "1") {
+            if (preferences[PreferenceKeys.WCS_OVERLAY_WCS_TYPE]) {
+                preferences[PreferenceKeys.WCS_OVERLAY_WCS_TYPE] = preferences[PreferenceKeys.WCS_OVERLAY_WCS_TYPE].toLowerCase();
+                this.setPreferences(preferences);
+            }
         }
     };
 
@@ -223,6 +236,7 @@ export class ApiService {
             try {
                 const url = `${ApiService.RuntimeConfig.apiAddress}/database/preferences`;
                 const response = await this.axiosInstance.put(url, preferences);
+                console.log("qq2");
                 return response?.data?.success;
             } catch (err) {
                 console.log(err);
