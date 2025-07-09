@@ -5,7 +5,6 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {AppToaster} from "components/Shared";
 import {LayoutConfig, Snippet, Workspace, WorkspaceListItem} from "models";
 import {AppStore, PreferenceKeys} from "stores";
-import {Pre} from "@blueprintjs/core";
 
 const preferencesSchema = require("carta-schemas/preferences_schema_2.json");
 const snippetSchema = require("carta-schemas/snippet_schema_1.json");
@@ -192,10 +191,11 @@ export class ApiService {
                     if (error.instancePath) {
                         console.log(`Removing invalid preference ${error.instancePath}`);
                         // Trim the leading "." from the path
-                        delete preferences[error.instancePath.substring(1)];
-
-                        this.clearPreferences([error.instancePath.substring(1)]);
-                        deletedKeys.push(error.instancePath.substring(1));
+                        const errorKey = error.instancePath.substring(1);
+                        // Remove the invalid preference from the preferences object
+                        delete preferences[errorKey];
+                        this.clearPreferences([errorKey]);
+                        deletedKeys.push(errorKey);
                     }
                 }
 
@@ -230,20 +230,14 @@ export class ApiService {
             preferences[astColorKey] = `auto-${color}`;
             this.setPreference(astColorKey, preferences[astColorKey]);
 
-            // preferences["version"] = 2;
+            preferences["version"] = 2;
             this.setPreference("version", 2);
         }
 
-        // Upgrade to schema version 2
+        // Fix the inconsistent `wcsType` value between schema v1 and v2
         let key = PreferenceKeys.WCS_OVERLAY_WCS_TYPE;
-        if (preferences[key]) {
+        if (/[A-Z]/.test(preferences[key])) {
             preferences[key] = preferences[key].toLowerCase();
-            this.setPreference(key, preferences[key]);
-        }
-
-        key = PreferenceKeys.IMAGE_PANEL_MODE;
-        if (preferences[key] === "static") {
-            preferences[key] = "fixed";
             this.setPreference(key, preferences[key]);
         }
     };
