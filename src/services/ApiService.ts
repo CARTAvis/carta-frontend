@@ -234,7 +234,7 @@ export class ApiService {
             this.setPreference("version", 2);
         }
 
-        // Fix the inconsistent `wcsType` value between schema v1 and v2
+        // Normalize case of wcsType value, which may have been saved incorrectly in existing preferences
         let key = PreferenceKeys.WCS_OVERLAY_WCS_TYPE;
         if (/[A-Z]/.test(preferences[key])) {
             preferences[key] = preferences[key].toLowerCase();
