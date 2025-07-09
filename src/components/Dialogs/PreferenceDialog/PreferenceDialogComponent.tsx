@@ -610,7 +610,14 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Region size" labelInfo="(px)">
-                    <SafeNumericInput placeholder="Region size" min={1} value={preference.regionSize} stepSize={1} onValueChange={(value: number) => preference.setPreference(PreferenceKeys.REGION_SIZE, Math.max(1, value))} />
+                    <SafeNumericInput
+                        placeholder="Region size"
+                        min={10}
+                        max={100}
+                        value={preference.regionSize}
+                        stepSize={1}
+                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.REGION_SIZE, Math.max(10, Math.min(100, value)))}
+                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Creation mode">
                     <RadioGroup selectedValue={preference.regionCreationMode} onChange={ev => preference.setPreference(PreferenceKeys.REGION_CREATION_MODE, ev.currentTarget.value)}>
@@ -668,9 +675,10 @@ export class PreferenceDialogComponent extends React.Component {
                     <SafeNumericInput
                         placeholder="Point size"
                         min={1}
+                        max={100}
                         value={preference.pointAnnotationWidth}
                         stepSize={1}
-                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.POINT_ANNOTATION_WIDTH, Math.max(1, value))}
+                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.POINT_ANNOTATION_WIDTH, Math.max(1, Math.min(100, value)))}
                     />
                 </FormGroup>
             </React.Fragment>
