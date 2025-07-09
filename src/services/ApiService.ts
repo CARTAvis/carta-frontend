@@ -4,8 +4,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 
 import {AppToaster} from "components/Shared";
 import {LayoutConfig, Snippet, Workspace, WorkspaceListItem} from "models";
-import {PreferenceKeys} from "stores";
-import {AST_COLORS} from "utilities";
+import {AppStore, PreferenceKeys} from "stores";
 
 const preferencesSchema = require("carta-schemas/preferences_schema_2.json");
 const snippetSchema = require("carta-schemas/snippet_schema_1.json");
@@ -46,8 +45,8 @@ export class ApiService {
         }
     }
 
-    private static PreferenceValidator = new Ajv({strictTypes: false}).compile(preferencesSchema);
-    private static SnippetValidator = new Ajv({strictTypes: false}).compile(snippetSchema);
+    private static PreferenceValidator = new Ajv({strictTypes: false, allErrors: true}).compile(preferencesSchema);
+    private static SnippetValidator = new Ajv({strictTypes: false, allErrors: true}).compile(snippetSchema);
 
     @observable private _accessToken: string | undefined;
     private _tokenLifetime: number;
@@ -186,14 +185,23 @@ export class ApiService {
         if (preferences) {
             this.upgradePreferences(preferences);
             const valid = ApiService.PreferenceValidator(preferences);
+            let deletedKeys: string[] = [];
             if (!valid) {
                 for (const error of ApiService.PreferenceValidator.errors ?? []) {
                     if (error.instancePath) {
                         console.log(`Removing invalid preference ${error.instancePath}`);
                         // Trim the leading "." from the path
                         delete preferences[error.instancePath.substring(1)];
+
                         this.clearPreferences([error.instancePath.substring(1)]);
+                        deletedKeys.push(error.instancePath.substring(1));
                     }
+                }
+
+                if (deletedKeys.length > 0) {
+                    // Show an alert to the user about the deleted preferences
+                    const appStore = AppStore.Instance;
+                    appStore.alertStore.showAlert(`Deleted invalid preferences: ${deletedKeys.join(", ")}`);
                 }
             }
         }
@@ -202,13 +210,13 @@ export class ApiService {
 
     private upgradePreferences = (preferences: any) => {
         // Upgrade to V2 if required
-        if (preferences["version"] && preferences["version"] === 1) {
+        if (preferences["version"] === 1) {
             // Convert preferences[PreferenceKeys.WCS_OVERLAY_AST_COLOR] from a number in version 1 to a string in version 2
             // default to "auto-blue" if the value is not in the AST_COLORS map
+            const astColors = ["auto-black", "auto-white", "auto-red", "auto-forest", "auto-blue", "auto-turquoise", "auto-violet", "auto-gold", "auto-gray"];
             const astColorKey = PreferenceKeys.WCS_OVERLAY_AST_COLOR;
-            if (preferences[astColorKey] || preferences[astColorKey] === 0) {
-                const astColorArrays = Array.from(AST_COLORS.keys());
-                preferences[astColorKey] = astColorArrays.includes(preferences[astColorKey]) ? AST_COLORS.get(preferences[astColorKey]) : "auto-blue";
+            if (astColorKey in preferences || preferences[astColorKey] === 0) {
+                preferences[astColorKey] = astColors.includes(preferences[astColorKey]) ? astColors[preferences[astColorKey]] : "auto-blue";
             }
             preferences["version"] = 2;
             this.setPreferences(preferences);

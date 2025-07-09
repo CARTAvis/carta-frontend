@@ -29,19 +29,6 @@ export const SWATCH_COLORS = [
 ];
 export const DEFAULT_COLOR = SWATCH_COLORS[0];
 
-// Colors for AST image overlay
-export const AST_COLORS = new Map<number, string>([
-    [0, "auto-black"],
-    [1, "auto-white"],
-    [2, "auto-red"],
-    [3, "auto-forest"],
-    [4, "auto-blue"],
-    [5, "auto-turquoise"],
-    [6, "auto-violet"],
-    [7, "auto-gold"],
-    [8, "auto-gray"]
-]);
-
 const SELECTABLE_COLORS = ["blue", "orange", "green", "red", "violet", "sepia", "indigo", "gray", "lime", "turquoise", "forest", "gold", "cerulean", "rose", "vermilion", "light_gray", "dark_gray"];
 export const AUTO_COLOR_OPTIONS = SELECTABLE_COLORS.map(color => {
     return `auto-${color}`;
