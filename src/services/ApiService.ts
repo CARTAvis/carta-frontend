@@ -223,16 +223,10 @@ export class ApiService {
         }
 
         // Upgrade to schema version 2
-        const schemaVersionRegex = /schema_(\d+)\.json/;
-        const schemaKey = "$schema";
-        if (preferences[schemaKey]) {
-            const matchResult = preferences[schemaKey].match(schemaVersionRegex);
-            if (matchResult && matchResult[1] === "1") {
-                if (preferences[PreferenceKeys.WCS_OVERLAY_WCS_TYPE]) {
-                    preferences[PreferenceKeys.WCS_OVERLAY_WCS_TYPE] = preferences[PreferenceKeys.WCS_OVERLAY_WCS_TYPE].toLowerCase();
-                    this.setPreferences(preferences);
-                }
-            }
+        const key = PreferenceKeys.WCS_OVERLAY_WCS_TYPE;
+        if (/[A-Z]/.test(preferences[key])) {
+            preferences[key] = preferences[key].toLowerCase();
+            this.setPreference(key, preferences[key]);
         }
     };
 
