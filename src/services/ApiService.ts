@@ -5,6 +5,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {AppToaster} from "components/Shared";
 import {LayoutConfig, Snippet, Workspace, WorkspaceListItem} from "models";
 import {AppStore, PreferenceKeys} from "stores";
+import {Pre} from "@blueprintjs/core";
 
 const preferencesSchema = require("carta-schemas/preferences_schema_2.json");
 const snippetSchema = require("carta-schemas/snippet_schema_1.json");
@@ -213,19 +214,36 @@ export class ApiService {
         if (preferences["version"] === 1) {
             // Convert preferences[PreferenceKeys.WCS_OVERLAY_AST_COLOR] from a number in version 1 to a string in version 2
             // default to "auto-blue" if the value is not in the AST_COLORS map
-            const astColors = ["auto-black", "auto-white", "auto-red", "auto-forest", "auto-blue", "auto-turquoise", "auto-violet", "auto-gold", "auto-gray"];
-            const astColorKey = PreferenceKeys.WCS_OVERLAY_AST_COLOR;
-            if (astColorKey in preferences || preferences[astColorKey] === 0) {
-                preferences[astColorKey] = astColors.includes(preferences[astColorKey]) ? astColors[preferences[astColorKey]] : "auto-blue";
+            enum ASTColors {
+                black,
+                white,
+                red,
+                forest,
+                blue,
+                turquoise,
+                violet,
+                gold,
+                gray
             }
-            preferences["version"] = 2;
-            this.setPreferences(preferences);
+            const astColorKey = PreferenceKeys.WCS_OVERLAY_AST_COLOR;
+            const color = preferences[astColorKey] in ASTColors ? ASTColors[preferences[astColorKey]] : "blue";
+            preferences[astColorKey] = `auto-${color}`;
+            this.setPreference(astColorKey, preferences[astColorKey]);
+
+            // preferences["version"] = 2;
+            this.setPreference("version", 2);
         }
 
         // Upgrade to schema version 2
-        const key = PreferenceKeys.WCS_OVERLAY_WCS_TYPE;
-        if (/[A-Z]/.test(preferences[key])) {
+        let key = PreferenceKeys.WCS_OVERLAY_WCS_TYPE;
+        if (preferences[key]) {
             preferences[key] = preferences[key].toLowerCase();
+            this.setPreference(key, preferences[key]);
+        }
+
+        key = PreferenceKeys.IMAGE_PANEL_MODE;
+        if (preferences[key] === "static") {
+            preferences[key] = "fixed";
             this.setPreference(key, preferences[key]);
         }
     };
