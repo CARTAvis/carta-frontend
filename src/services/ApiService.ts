@@ -4,10 +4,10 @@ import {action, computed, makeObservable, observable} from "mobx";
 
 import {AppToaster} from "components/Shared";
 import {LayoutConfig, Snippet, Workspace, WorkspaceListItem} from "models";
+import {AST_COLORS} from "utilities";
 
 const preferencesSchema = require("carta-schemas/preferences_schema_2.json");
 const snippetSchema = require("carta-schemas/snippet_schema_1.json");
-// const workspaceSchema = require("carta-schemas/workspace_schema_1.json");
 
 export interface RuntimeConfig {
     dashboardAddress?: string;
@@ -202,38 +202,10 @@ export class ApiService {
         // Upgrade to V2 if required
         if (preferences?.version && preferences.version === 1) {
             if (preferences.astColor || preferences.astColor === 0) {
-                switch (preferences.astColor) {
-                    case 0:
-                        preferences.astColor = "auto-black";
-                        break;
-                    case 1:
-                        preferences.astColor = "auto-white";
-                        break;
-                    case 2:
-                        preferences.astColor = "auto-red";
-                        break;
-                    case 3:
-                        preferences.astColor = "auto-forest";
-                        break;
-                    case 4:
-                        preferences.astColor = "auto-blue";
-                        break;
-                    case 5:
-                        preferences.astColor = "auto-turquoise";
-                        break;
-                    case 6:
-                        preferences.astColor = "auto-violet";
-                        break;
-                    case 7:
-                        preferences.astColor = "auto-gold";
-                        break;
-                    case 8:
-                        preferences.astColor = "auto-gray";
-                        break;
-                    default:
-                        preferences.astColor = "auto-blue";
-                        break;
-                }
+                // Convert preferences.astColor from a number in version 1 to a string in version 2
+                // default to "auto-blue" if the value is not in the AST_COLORS map
+                const astColorArray = Array.from(AST_COLORS.keys());
+                preferences.astColor = astColorArray.includes(preferences.astColor) ? AST_COLORS.get(preferences.astColor) : "auto-blue";
             }
             preferences.version = 2;
             this.setPreferences(preferences);
