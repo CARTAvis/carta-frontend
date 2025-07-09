@@ -217,10 +217,13 @@ export class ApiService {
         // Upgrade to schema version 2
         const schemaVersionRegex = /schema_(\d+)\.json/;
         const schemaKey = "$schema";
-        if (preferences[schemaKey] && preferences[schemaKey].match(schemaVersionRegex)[1] === "1") {
-            if (preferences[PreferenceKeys.WCS_OVERLAY_WCS_TYPE]) {
-                preferences[PreferenceKeys.WCS_OVERLAY_WCS_TYPE] = preferences[PreferenceKeys.WCS_OVERLAY_WCS_TYPE].toLowerCase();
-                this.setPreferences(preferences);
+        if (preferences[schemaKey]) {
+            const matchResult = preferences[schemaKey].match(schemaVersionRegex);
+            if (matchResult && matchResult[1] === "1") {
+                if (preferences[PreferenceKeys.WCS_OVERLAY_WCS_TYPE]) {
+                    preferences[PreferenceKeys.WCS_OVERLAY_WCS_TYPE] = preferences[PreferenceKeys.WCS_OVERLAY_WCS_TYPE].toLowerCase();
+                    this.setPreferences(preferences);
+                }
             }
         }
     };
@@ -236,7 +239,6 @@ export class ApiService {
             try {
                 const url = `${ApiService.RuntimeConfig.apiAddress}/database/preferences`;
                 const response = await this.axiosInstance.put(url, preferences);
-                console.log("qq2");
                 return response?.data?.success;
             } catch (err) {
                 console.log(err);
