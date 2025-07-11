@@ -74,11 +74,11 @@ export class ChannelMapStore {
     @observable channelMapEnabled: boolean = false;
     /** Indicates whether to show the channel string. */
     @observable showChannelString: boolean = false;
-    /** Indicates whether to show the spectral string. */
+    /** Indicates whether to show the frequency string. */
     @observable showFrequencyString: boolean = false;
     /** Indicates whether to show the velocity string. */
     @observable showVelocityString: boolean = false;
-    /** Indicates whether to show the unit of the spectral string. */
+    /** Indicates whether to show the unit of the frequency string. */
     @observable showFrequencyStringUnit: boolean = true;
     /** Indicates whether to show the unit of the velocity string. */
     @observable showVelocityStringUnit: boolean = true;
@@ -195,7 +195,7 @@ export class ChannelMapStore {
     };
 
     /**
-     * Show or hide the spectral string.
+     * Show or hide the frequency string.
      * @param show - True to show, false to hide.
      */
     @action setShowFrequencyString = (show: boolean) => {
@@ -211,7 +211,7 @@ export class ChannelMapStore {
     };
 
     /**
-     * Show or hide the unit of the spectral string.
+     * Show or hide the unit of the frequency string.
      * @param show - True to show, false to hide.
      */
     @action setShowFrequencyStringUnit = (show: boolean) => {
