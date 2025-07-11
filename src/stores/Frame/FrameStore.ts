@@ -481,17 +481,17 @@ export class FrameStore {
         return undefined;
     }
 
-    @computed get beamProperties(): {x: number; y: number; majorAxis: number; minorAxis: number; angle: number; overlayBeamSettings: OverlayBeamStore} {
+    @computed get beamProperties(): {x: number; y: number; majorAxis: number; minorAxis: number; angle: number; overlayBeamSettings: OverlayBeamStore} | null {
         const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.indexOf(`CUNIT${this.renderedAxesNumbers[0]}`) !== -1);
         const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.indexOf(`CDELT${this.renderedAxesNumbers[0]}`) !== -1);
 
         if (!this.isSwappedZ && deltaHeader) {
-            const unit = unitHeader?.value.trim() || "deg";
+            const unit = unitHeader?.value?.trim() || "deg";
             const delta = getHeaderNumericValue(deltaHeader);
             if (isFinite(delta) && (unit === "deg" || unit === "rad")) {
                 if (this.frameInfo.beamTable && this.frameInfo.beamTable.length > 0) {
                     const beam = this.getBeam(this.requiredChannel, this.requiredStokes);
-                    if (beam && isFinite(beam.majorAxis) && beam.majorAxis > 0 && isFinite(beam.minorAxis) && beam.minorAxis > 0 && isFinite(beam.pa)) {
+                    if (beam && beam.majorAxis && isFinite(beam.majorAxis) && beam.majorAxis > 0 && beam.minorAxis && isFinite(beam.minorAxis) && beam.minorAxis > 0 && beam.pa && isFinite(beam.pa)) {
                         return {
                             x: beam.majorAxis / (unit === "deg" ? 3600 : (180 * 3600) / Math.PI) / Math.abs(delta),
                             y: beam.minorAxis / (unit === "deg" ? 3600 : (180 * 3600) / Math.PI) / Math.abs(delta),
@@ -517,8 +517,8 @@ export class FrameStore {
         return beams;
     }
 
-    private getBeam = (channel: number, stokes: number): CARTA.IBeam => {
-        let beam: CARTA.IBeam;
+    private getBeam = (channel: number, stokes: number): CARTA.IBeam | undefined => {
+        let beam: CARTA.IBeam | undefined;
         if (this.frameInfo.beamTable.length === 1 && this.frameInfo.beamTable[0].channel === -1 && this.frameInfo.beamTable[0].stokes === -1) {
             beam = this.frameInfo.beamTable[0];
         } else {
@@ -534,7 +534,7 @@ export class FrameStore {
     };
 
     @computed get hasVisibleBeam(): boolean {
-        return this.beamProperties?.overlayBeamSettings?.visible;
+        return this.beamProperties ? this.beamProperties.overlayBeamSettings.visible : false;
     }
 
     @computed get channelInfo(): ChannelInfo {
@@ -2652,7 +2652,12 @@ export class FrameStore {
     };
 
     @action zoomToSizeXWcs = (wcsX: string): boolean => {
-        return this.zoomToSizeX(this.getImageXValueFromArcsec(getValueFromArcsecString(wcsX)));
+        const arcsecValue = getValueFromArcsecString(wcsX);
+        if (arcsecValue === null) {
+            return false;
+        }
+        const value = this.getImageXValueFromArcsec(arcsecValue);
+        return value !== null ? this.zoomToSizeX(value) : false;
     };
 
     @action zoomToSizeY = (y: number): boolean => {
@@ -2664,7 +2669,12 @@ export class FrameStore {
     };
 
     @action zoomToSizeYWcs = (wcsY: string): boolean => {
-        return this.zoomToSizeY(this.getImageYValueFromArcsec(getValueFromArcsecString(wcsY)));
+        const arcsecValue = getValueFromArcsecString(wcsY);
+        if (arcsecValue === null) {
+            return false;
+        }
+        const value = this.getImageYValueFromArcsec(arcsecValue);
+        return value !== null ? this.zoomToSizeY(value) : false;
     };
 
     /**
@@ -3030,7 +3040,7 @@ export class FrameStore {
         const gl2 = CatalogWebGLService.Instance.gl;
         if (gl2) {
             this.catalogControlMaps.forEach(controlMap => {
-                if (controlMap.hasTextureForContext(gl)) {
+                if (gl && controlMap.hasTextureForContext(gl)) {
                     const texture = controlMap.getTextureX(gl2);
                     gl2.deleteTexture(texture);
                 }
