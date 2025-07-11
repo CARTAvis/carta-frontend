@@ -121,7 +121,7 @@ export const SPECTRAL_DEFAULT_UNIT = new Map<SpectralType, SpectralUnit>([
     [SpectralType.AWAV, SpectralUnit.MM]
 ]);
 
-export const GenCoordinateLabel = (type: SpectralType, unit: SpectralUnit): string => {
+export const GenCoordinateLabel = (type: SpectralType | null, unit: SpectralUnit | null): string => {
     return `${type ? SPECTRAL_TYPE_STRING.get(type) : ""}${unit ? " (" + unit + ")" : ""}`;
 };
 

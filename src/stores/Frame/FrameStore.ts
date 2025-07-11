@@ -152,7 +152,7 @@ export class FrameStore {
     public readonly channelMapInnerOverlayStore: ChannelMapInnerOverlayStore;
     public readonly colorbarStore: ColorbarStore;
 
-    public spectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}> | null = null;
+    public spectralCoordsSupported: Map<string | undefined, {type: SpectralType | null; unit: SpectralUnit | null}> | null = null;
     public spectralSystemsSupported: Array<SpectralSystem> | null = null;
     public spatialTransformAST: AST.Mapping | null = null;
     private cursorMovementHandle: NodeJS.Timeout | null = null;
@@ -1000,7 +1000,8 @@ export class FrameStore {
         if (this.spectralAxis && !this.spectralType && !this.spectralUnit) {
             return this.spectralAxis.type.unit;
         }
-        return this.isCoordChannel ? SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL) : (this.spectralUnit as string);
+        const spectralTypeString = SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL);
+        return this.isCoordChannel && spectralTypeString ? spectralTypeString : (this.spectralUnit as string);
     }
 
     @computed get hasStokes(): boolean {
@@ -1484,8 +1485,8 @@ export class FrameStore {
                 this.spectralType = this.spectralAxis.type.code as SpectralType;
                 this.spectralTypeSecondary = this.spectralAxis.type.code as SpectralType;
             }
-            this.spectralUnit = SPECTRAL_DEFAULT_UNIT.get(this.spectralType);
-            this.spectralUnitSecondary = SPECTRAL_DEFAULT_UNIT.get(this.spectralType);
+            this.spectralUnit = SPECTRAL_DEFAULT_UNIT.get(this.spectralType) ?? null;
+            this.spectralUnitSecondary = SPECTRAL_DEFAULT_UNIT.get(this.spectralType) ?? null;
         }
         if (this.isSpectralSystemConvertible) {
             this.spectralSystem = this.spectralAxis.specsys as SpectralSystem;
@@ -2359,7 +2360,7 @@ export class FrameStore {
     @action private initSupportedSpectralConversion = () => {
         if (this.channelInfo && this.spectralAxis && !this.spectralAxis.valid) {
             this.setChannelValues(this.channelInfo.values);
-            this.spectralCoordsSupported = new Map<string, {type: SpectralType; unit: SpectralUnit}>([
+            this.spectralCoordsSupported = new Map<string | undefined, {type: SpectralType | null; unit: SpectralUnit | null}>([
                 [this.nativeSpectralCoordinate, {type: null, unit: null}],
                 [SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]
             ]);
@@ -2383,20 +2384,20 @@ export class FrameStore {
                 Array.from(SPECTRAL_COORDS_SUPPORTED.keys()).forEach((key: string) => {
                     const value = SPECTRAL_COORDS_SUPPORTED.get(key);
                     const isVolecity = spectralType === SpectralType.VRAD || spectralType === SpectralType.VOPT;
-                    const isValueVolecity = value.type === SpectralType.VRAD || value.type === SpectralType.VOPT;
+                    const isValueVolecity = value?.type === SpectralType.VRAD || value?.type === SpectralType.VOPT;
                     if (isVolecity && isValueVolecity) {
                         // VRAD, VOPT
-                        this.spectralCoordsSupported.set(key, value);
+                        this.spectralCoordsSupported?.set(key, value);
                     }
-                    if (!isVolecity && !isValueVolecity) {
+                    if (value && !isVolecity && !isValueVolecity) {
                         // FREQ, WAVE, AWAV
-                        this.spectralCoordsSupported.set(key, value);
+                        this.spectralCoordsSupported?.set(key, value);
                     }
                 });
                 this.spectralCoordsSupported.set(SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null});
             }
         } else {
-            this.spectralCoordsSupported = new Map<string, {type: SpectralType; unit: SpectralUnit}>([
+            this.spectralCoordsSupported = new Map<string | undefined, {type: SpectralType | null; unit: SpectralUnit | null}>([
                 [SPECTRAL_TYPE_STRING.get(SpectralType.NATIVE), {type: null, unit: null}],
                 [SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]
             ]);
@@ -2446,38 +2447,38 @@ export class FrameStore {
     };
 
     @action setSpectralCoordinateToRadioVelocity = () => {
-        const coordStr = GenCoordinateLabel(SpectralType.VRAD, SPECTRAL_DEFAULT_UNIT.get(SpectralType.VRAD));
+        const coordStr = GenCoordinateLabel(SpectralType.VRAD, SPECTRAL_DEFAULT_UNIT.get(SpectralType.VRAD) ?? null);
         if (this.spectralCoordsSupported?.has(coordStr)) {
             this.setSpectralCoordinate(coordStr);
         }
     };
 
     @action setSpectralCoordinate = (coordStr: string, alignSpectralSiblings: boolean = true): boolean => {
-        if (this.spectralCoordsSupported?.has(coordStr)) {
-            const coord: {type: SpectralType; unit: SpectralUnit} = this.spectralCoordsSupported.get(coordStr);
-            this.spectralType = coord.type;
-            this.spectralUnit = coord.unit;
-
-            if (alignSpectralSiblings) {
-                (!this.spectralReference ? this.secondarySpectralImages : this.spectralSiblings)?.forEach(spectrallyMatchedFrame => spectrallyMatchedFrame.setSpectralCoordinate(coordStr, false));
-            }
-            return true;
+        const coord = this.spectralCoordsSupported?.get(coordStr);
+        if (!coord) {
+            return false;
         }
-        return false;
+
+        this.spectralType = coord.type;
+        this.spectralUnit = coord.unit;
+        if (alignSpectralSiblings) {
+            (!this.spectralReference ? this.secondarySpectralImages : this.spectralSiblings)?.forEach(spectrallyMatchedFrame => spectrallyMatchedFrame.setSpectralCoordinate(coordStr, false));
+        }
+        return true;
     };
 
     @action setSpectralCoordinateSecondary = (coordStr: string, alignSpectralSiblings: boolean = true): boolean => {
-        if (this.spectralCoordsSupported?.has(coordStr)) {
-            const coord: {type: SpectralType; unit: SpectralUnit} = this.spectralCoordsSupported.get(coordStr);
-            this.spectralTypeSecondary = coord.type;
-            this.spectralUnitSecondary = coord.unit;
-
-            if (alignSpectralSiblings) {
-                (!this.spectralReference ? this.secondarySpectralImages : this.spectralSiblings)?.forEach(spectrallyMatchedFrame => spectrallyMatchedFrame.setSpectralCoordinateSecondary(coordStr, false));
-            }
-            return true;
+        const coord = this.spectralCoordsSupported?.get(coordStr);
+        if (!coord) {
+            return false;
         }
-        return false;
+
+        this.spectralTypeSecondary = coord.type;
+        this.spectralUnitSecondary = coord.unit;
+        if (alignSpectralSiblings) {
+            (!this.spectralReference ? this.secondarySpectralImages : this.spectralSiblings)?.forEach(spectrallyMatchedFrame => spectrallyMatchedFrame.setSpectralCoordinateSecondary(coordStr, false));
+        }
+        return true;
     };
 
     @action setSpectralSystem = (spectralSystem: SpectralSystem, alignSpectralSiblings: boolean = true): boolean => {
