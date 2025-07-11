@@ -32,13 +32,13 @@ export class ChannelMapLabelComponent extends React.Component<ChannelMapLabelCom
 
         let spectralString = "";
         let velocityString = "";
-        if (channelMapStore.showSpectralString || channelMapStore.showVelocityString) {
+        if (channelMapStore.showFrequencyString || channelMapStore.showVelocityString) {
             ({spectralString, velocityString} = frame.getFreqWithChannel(this.props.channel));
         }
 
-        if (channelMapStore.showSpectralString) {
+        if (channelMapStore.showFrequencyString) {
             spectralString = spectralString.replace(/^[^:]+:\s*/, "");
-            if (!channelMapStore.showSpectralStringUnit) {
+            if (!channelMapStore.showFrequencyStringUnit) {
                 spectralString = spectralString.replace(/\s+[^ ]*$/, "");
             }
         } else {
