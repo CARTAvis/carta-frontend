@@ -629,11 +629,11 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES) ?? DEFAULTS.PERFORMANCE.stopAnimationPlaybackMinutes;
     }
 
-    @computed get pvPreivewCubeSizeLimit(): number {
+    @computed get pvPreviewCubeSizeLimit(): number {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT) ?? DEFAULTS.PERFORMANCE.pvPreviewCubeSizeLimit;
     }
 
-    @computed get pvPreivewCubeSizeLimitUnit(): string {
+    @computed get pvPreviewCubeSizeLimitUnit(): string {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT) ?? DEFAULTS.PERFORMANCE.pvPreviewCubeSizeLimitUnit;
     }
 
