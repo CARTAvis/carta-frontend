@@ -703,7 +703,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (frame && !disablePlot) {
             this.spectralLinesMHz?.forEach(spectralLine => {
                 const transformedValue = frame.convertFreqMHzToSettingWCS(spectralLine?.value);
-                if (isFinite(transformedValue)) {
+                if (transformedValue && isFinite(transformedValue)) {
                     transformedSpectralLines.push({species: spectralLine?.species, value: transformedValue, qn: spectralLine?.qn});
                 }
             });

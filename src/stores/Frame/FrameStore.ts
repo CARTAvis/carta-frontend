@@ -662,7 +662,7 @@ export class FrameStore {
     getFreqWithChannel(channel: number) {
         const result: {spectralString: string; velocityString: string; freqString: string} = {spectralString: "", velocityString: "", freqString: ""};
         const spectralType = this.spectralAxis?.type;
-        if (!spectralType || !this.channelInfo) {
+        if (!spectralType || !this.channelInfo || !this.spectralSystem) {
             return {spectralString: "", velocityString: "", freqString: ""};
         }
         result.spectralString = `${spectralType.name} (${this.spectralAxis?.specsys ?? ""}): ${toFixed(this.channelInfo.values[channel], 4)} ${spectralType.unit ?? ""}`;
@@ -675,7 +675,7 @@ export class FrameStore {
                     result.spectralString = `Frequency (${this.spectralSystem}): ${formattedFrequency(freqGHz)}`;
                 }
             }
-            // convert frequency to volecity
+            // convert frequency to velocity
             const velocityVal = this.astSpectralTransform(SpectralType.VRAD, SpectralUnit.KMS, this.spectralSystem, freqVal);
             if (isFinite(velocityVal)) {
                 result.velocityString = `Velocity: ${toFixed(velocityVal, 4)} km/s`;
@@ -983,8 +983,8 @@ export class FrameStore {
         return !this.spectralTypeSecondary && !this.spectralUnitSecondary ? this.nativeSpectralCoordinate : GenCoordinateLabel(this.spectralTypeSecondary, this.spectralUnitSecondary);
     }
 
-    @computed get spectralLabel(): string {
-        let label = undefined;
+    @computed get spectralLabel(): string | undefined {
+        let label: string | undefined = undefined;
         if (this.spectralAxis) {
             const spectralSystem = this.isSpectralSystemConvertible ? this.spectralSystem : this.spectralAxis.specsys;
             label = `${spectralSystem ? `[${spectralSystem}] ` : ""}${this.spectralCoordinate ?? ""}`;
@@ -1676,9 +1676,9 @@ export class FrameStore {
         }
     };
 
-    private convertSpectral = (values: Array<number>): Array<number> => {
+    private convertSpectral = (values: Array<number>): Array<number> | null => {
         const N = values?.length;
-        if (!N || !this.spectralFrame) {
+        if (!N || !this.spectralFrame || !this.spectralType || !this.spectralUnit || !this.spectralSystem) {
             return null;
         }
 
@@ -1686,9 +1686,9 @@ export class FrameStore {
         return Array.from(convertedArray);
     };
 
-    private convertSpectralSecondary = (values: Array<number>): Array<number> => {
+    private convertSpectralSecondary = (values: Array<number>): Array<number> | null => {
         const N = values?.length;
-        if (!N || !this.spectralFrame) {
+        if (!N || !this.spectralFrame || !this.spectralTypeSecondary || !this.spectralUnitSecondary || !this.spectralSystem) {
             return null;
         }
 
@@ -1969,15 +1969,15 @@ export class FrameStore {
         return this.regionSet?.regions?.find(r => r.regionId === regionId);
     };
 
-    public convertToNativeWCS = (value: number): number => {
-        if (!this.spectralFrame || !isFinite(value)) {
+    public convertToNativeWCS = (value: number): number | undefined => {
+        if (!this.spectralFrame || !isFinite(value) || !this.spectralType || !this.spectralUnit || !this.spectralSystem) {
             return undefined;
         }
         return AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, value, false);
     };
 
-    public convertFreqMHzToSettingWCS = (value: number): number => {
-        if (!this.spectralFrame || !isFinite(value)) {
+    public convertFreqMHzToSettingWCS = (value: number): number | undefined => {
+        if (!this.spectralFrame || !isFinite(value) || !this.spectralType || !this.spectralUnit || !this.spectralSystem) {
             return undefined;
         }
 
@@ -2146,7 +2146,7 @@ export class FrameStore {
             } else {
                 if ((this.spectralAxis && !this.spectralAxis.valid) || this.isSpectralPropsEqual) {
                     return this.channelInfo.getChannelIndexWCS(x);
-                } else {
+                } else if (this.spectralFrame && this.spectralType && this.spectralUnit && this.spectralSystem) {
                     // invert x in selected widget wcs to frame's default wcs
                     const tx = AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, x, false);
                     return this.channelInfo.getChannelIndexWCS(tx);
