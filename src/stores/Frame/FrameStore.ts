@@ -385,10 +385,14 @@ export class FrameStore {
         return {x: this.requiredFrameView?.xMax - this.requiredFrameView?.xMin, y: this.requiredFrameView?.yMax - this.requiredFrameView?.yMin};
     }
 
-    @computed get fovSizeWCS(): WCSPoint2D {
+    @computed get fovSizeWCS(): WCSPoint2D | null {
         const wcsSize = this.getWcsSizeInArcsec(this.fovSize);
         if (wcsSize) {
-            return {x: formattedArcsec(wcsSize.x, WCS_PRECISION), y: formattedArcsec(wcsSize.y, WCS_PRECISION)};
+            const formatX = formattedArcsec(wcsSize.x, WCS_PRECISION);
+            const formatY = formattedArcsec(wcsSize.y, WCS_PRECISION);
+            if (formatX && formatY) {
+                return {x: formatX, y: formatY};
+            }
         }
         return null;
     }
@@ -2114,28 +2118,28 @@ export class FrameStore {
         this.catalogControlMaps.delete(frame);
     }
 
-    public getWcsSizeInArcsec(size: Point2D): Point2D {
+    public getWcsSizeInArcsec(size: Point2D): Point2D | null {
         if (size && this.pixelUnitSizeArcsec) {
             return multiply2D(size, this.pixelUnitSizeArcsec);
         }
         return null;
     }
 
-    public getImageXValueFromArcsec(arcsecValue: number): number {
+    public getImageXValueFromArcsec(arcsecValue: number): number | null {
         if (isFinite(arcsecValue) && isFinite(this.pixelUnitSizeArcsec?.x)) {
             return arcsecValue / this.pixelUnitSizeArcsec.x;
         }
         return null;
     }
 
-    public getImageYValueFromArcsec(arcsecValue: number): number {
+    public getImageYValueFromArcsec(arcsecValue: number): number | null {
         if (isFinite(arcsecValue) && isFinite(this.pixelUnitSizeArcsec?.y)) {
             return arcsecValue / this.pixelUnitSizeArcsec.y;
         }
         return null;
     }
 
-    public findChannelIndexByValue = (x: number | null | undefined): number => {
+    public findChannelIndexByValue = (x: number | null | undefined): number | undefined => {
         if (x === null || x === undefined || !isFinite(x)) {
             return undefined;
         }

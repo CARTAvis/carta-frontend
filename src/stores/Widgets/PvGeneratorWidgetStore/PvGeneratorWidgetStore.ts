@@ -85,6 +85,10 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         let channelIndexMin = frame.findChannelIndexByValue(this.range.min);
         let channelIndexMax = frame.findChannelIndexByValue(this.range.max);
 
+        if (channelIndexMin === undefined || channelIndexMax === undefined) {
+            return;
+        }
+
         if (channelIndexMin > channelIndexMax) {
             const holder = channelIndexMax;
             channelIndexMax = channelIndexMin;

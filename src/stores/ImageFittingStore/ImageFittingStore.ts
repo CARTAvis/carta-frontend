@@ -391,7 +391,7 @@ export class ImageFittingStore {
                 if (formatTypeY === NumberFormatType.Degrees && centerValueWCS) {
                     centerValueWCS.y += " (deg)";
                 }
-                const centerErrorWCS = frame.getWcsSizeInArcsec(error.center as Point2D);
+                const centerErrorWCS = frame.getWcsSizeInArcsec(error.center as Point2D) ?? {x: NaN, y: NaN};
                 if (formatTypeX === NumberFormatType.HMS) {
                     centerErrorWCS.x /= 15; // convert from arcsec to sec
                 }
@@ -800,7 +800,10 @@ class ImageFittingIndividualStore {
         const frame = AppStore.Instance.imageFittingStore?.effectiveFrame;
         const sizeInArcsec = getValueFromArcsecString(val);
         if (val && frame && sizeInArcsec !== null) {
-            return this.setFwhmX(frame.getImageXValueFromArcsec(sizeInArcsec));
+            const imageValue = frame.getImageXValueFromArcsec(sizeInArcsec);
+            if (imageValue !== null) {
+                return this.setFwhmX(imageValue);
+            }
         }
         return false;
     };
@@ -809,7 +812,10 @@ class ImageFittingIndividualStore {
         const frame = AppStore.Instance.imageFittingStore?.effectiveFrame;
         const sizeInArcsec = getValueFromArcsecString(val);
         if (val && frame && sizeInArcsec !== null) {
-            return this.setFwhmY(frame.getImageYValueFromArcsec(sizeInArcsec));
+            const imageValue = frame.getImageYValueFromArcsec(sizeInArcsec);
+            if (imageValue !== null) {
+                return this.setFwhmY(imageValue);
+            }
         }
         return false;
     };
