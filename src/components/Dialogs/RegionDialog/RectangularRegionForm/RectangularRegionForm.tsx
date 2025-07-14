@@ -45,7 +45,8 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         }
         const size = region.regionType === CARTA.RegionType.ANNTEXT ? scale2D(region.size, AppStore.Instance.imageRatio / this.props.frame.zoomLevel) : region.size;
         const wcsSize = this.props.frame.getWcsSizeInArcsec(size);
-        if (wcsSize) {
+        const isValidWcsSize = wcsSize && !isNaN(wcsSize.x) && !isNaN(wcsSize.y) && isFinite(wcsSize.x) && isFinite(wcsSize.y);
+        if (isValidWcsSize) {
             return {x: formattedArcsec(wcsSize.x, WCS_PRECISION), y: formattedArcsec(wcsSize.y, WCS_PRECISION)};
         }
         return null;

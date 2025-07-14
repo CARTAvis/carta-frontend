@@ -185,7 +185,7 @@ export class RenderConfigStore {
     @observable alpha: number;
     @observable inverted: boolean;
     @observable channelHistogram: CARTA.IHistogram;
-    @observable cubeHistogram: CARTA.IHistogram;
+    @observable cubeHistogram: CARTA.IHistogram | null;
     @observable useCubeHistogram: boolean;
     @observable useCubeHistogramContours: boolean;
     @observable cubeHistogramProgress: number;
@@ -439,7 +439,7 @@ export class RenderConfigStore {
         }
     };
 
-    @action updateCubeHistogram = (histogram: CARTA.IHistogram, progress: number) => {
+    @action updateCubeHistogram = (histogram: CARTA.IHistogram | null, progress: number) => {
         this.cubeHistogram = histogram;
         this.cubeHistogramProgress = progress;
         if (this.selectedPercentile[this.stokesIndex] > 0 && this.useCubeHistogram) {

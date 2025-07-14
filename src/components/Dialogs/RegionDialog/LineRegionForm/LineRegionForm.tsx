@@ -41,7 +41,8 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         }
         const size = this.props.region.size;
         const wcsSize = this.props.frame.getWcsSizeInArcsec(size);
-        if (wcsSize) {
+        const isValidWcsSize = wcsSize && !isNaN(wcsSize.x) && !isNaN(wcsSize.y) && isFinite(wcsSize.x) && isFinite(wcsSize.y);
+        if (isValidWcsSize) {
             return formattedArcsec(length2D(wcsSize), WCS_PRECISION);
         }
         return null;

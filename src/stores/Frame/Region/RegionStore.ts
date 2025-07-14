@@ -235,7 +235,8 @@ export class RegionStore {
             return {x: 0, y: 0};
         }
         const wcsSize = frame.getWcsSizeInArcsec(this.size);
-        return wcsSize ? wcsSize : {x: 0, y: 0};
+        const isValidWcsSize = !isNaN(wcsSize.x) && !isNaN(wcsSize.y) && isFinite(wcsSize.x) && isFinite(wcsSize.y);
+        return isValidWcsSize ? wcsSize : {x: 0, y: 0};
     }
 
     @computed get boundingBox(): Point2D {

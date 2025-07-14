@@ -155,7 +155,7 @@ export class FrameStore {
     public spectralCoordsSupported: Map<string | undefined, {type: SpectralType | null; unit: SpectralUnit | null}> | null = null;
     public spectralSystemsSupported: Array<SpectralSystem> | null = null;
     public spatialTransformAST: AST.Mapping | null = null;
-    private cursorMovementHandle: NodeJS.Timeout | null = null;
+    private cursorMovementHandle: NodeJS.Timeout | undefined = undefined;
 
     public restFreqStore: RestFreqStore;
 
@@ -385,16 +385,16 @@ export class FrameStore {
         return {x: this.requiredFrameView?.xMax - this.requiredFrameView?.xMin, y: this.requiredFrameView?.yMax - this.requiredFrameView?.yMin};
     }
 
-    @computed get fovSizeWCS(): WCSPoint2D | null {
+    @computed get fovSizeWCS(): WCSPoint2D {
         const wcsSize = this.getWcsSizeInArcsec(this.fovSize);
-        if (wcsSize) {
+        if (!isNaN(wcsSize.x) && !isNaN(wcsSize.y) && isFinite(wcsSize.x) && isFinite(wcsSize.y)) {
             const formatX = formattedArcsec(wcsSize.x, WCS_PRECISION);
             const formatY = formattedArcsec(wcsSize.y, WCS_PRECISION);
             if (formatX && formatY) {
                 return {x: formatX, y: formatY};
             }
         }
-        return null;
+        return {x: "NaN", y: "NaN"};
     }
 
     @computed get spatialTransform() {
@@ -514,7 +514,7 @@ export class FrameStore {
         }
 
         const beams = this.channelInfo.indexes.map(channelIndex => this.getBeam(channelIndex, this.requiredStokes));
-        return beams;
+        return beams.filter(beam => beam !== undefined);
     }
 
     private getBeam = (channel: number, stokes: number): CARTA.IBeam | undefined => {
@@ -643,11 +643,11 @@ export class FrameStore {
     }
 
     @computed get intensityConfig(): IntensityConfig {
-        let config: IntensityConfig = {nativeIntensityUnit: this.headerUnit};
+        let config: IntensityConfig = {nativeIntensityUnit: this.headerUnit ?? ""};
         const beams = this.beamAllChannels;
         if (beams?.length) {
-            config["bmaj"] = beams.map(b => b?.majorAxis);
-            config["bmin"] = beams.map(b => b?.minorAxis);
+            config["bmaj"] = beams.map(b => b.majorAxis ?? 0);
+            config["bmin"] = beams.map(b => b.minorAxis ?? 0);
             if (this.spectralAxis?.type?.code === "FREQ") {
                 config["freqGHz"] = this.channelInfo?.values.map(x => GetFreqInGHz(this.spectralAxis.type.unit, x));
             } else if (this.spectralAxis?.type?.code === "VRAD") {
@@ -2121,25 +2121,25 @@ export class FrameStore {
         this.catalogControlMaps.delete(frame);
     }
 
-    public getWcsSizeInArcsec(size: Point2D): Point2D | null {
+    public getWcsSizeInArcsec(size: Point2D): Point2D {
         if (size && this.pixelUnitSizeArcsec) {
             return multiply2D(size, this.pixelUnitSizeArcsec);
         }
-        return null;
+        return {x: NaN, y: NaN};
     }
 
-    public getImageXValueFromArcsec(arcsecValue: number): number | null {
+    public getImageXValueFromArcsec(arcsecValue: number): number {
         if (isFinite(arcsecValue) && isFinite(this.pixelUnitSizeArcsec?.x)) {
             return arcsecValue / this.pixelUnitSizeArcsec.x;
         }
-        return null;
+        return NaN;
     }
 
-    public getImageYValueFromArcsec(arcsecValue: number): number | null {
+    public getImageYValueFromArcsec(arcsecValue: number): number {
         if (isFinite(arcsecValue) && isFinite(this.pixelUnitSizeArcsec?.y)) {
             return arcsecValue / this.pixelUnitSizeArcsec.y;
         }
-        return null;
+        return NaN;
     }
 
     public findChannelIndexByValue = (x: number | null | undefined): number | undefined => {
@@ -2197,8 +2197,8 @@ export class FrameStore {
             case CARTA.RegionType.POINT:
                 return `Point (wcs:${systemType}) [${center}]`;
             case CARTA.RegionType.LINE:
-                const wcsStartPoint = getFormattedWCSPoint(this.wcsInfoForTransformation, controlPoints[0]);
-                const wcsEndPoint = getFormattedWCSPoint(this.wcsInfoForTransformation, controlPoints[1]);
+                const wcsStartPoint = getFormattedWCSPoint(this.wcsInfoForTransformation, controlPoints[0]) ?? {x: "Invalid", y: "Invalid"};
+                const wcsEndPoint = getFormattedWCSPoint(this.wcsInfoForTransformation, controlPoints[1]) ?? {x: "Invalid", y: "Invalid"};
                 return `Line (wcs:${systemType}) [[${wcsStartPoint.x}, ${wcsStartPoint.y}], [${wcsEndPoint.x}, ${wcsEndPoint.y}]]`;
             case CARTA.RegionType.RECTANGLE:
                 const recSizePoint = controlPoints[SIZE_POINT_INDEX];
@@ -2295,12 +2295,12 @@ export class FrameStore {
         }
     };
 
-    @computed get offsetCenterWCS(): WCSPoint2D | null {
+    @computed get offsetCenterWCS(): WCSPoint2D {
         // re-calculate with different wcs system
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const system = AppStore.Instance.overlaySettings.global.explicitSystem;
         if (!this.wcsInfoShifted) {
-            return null;
+            return {x: "NaN", y: "NaN"};
         }
         return getFormattedWCSPoint(this.wcsInfoForTransformation, this.offsetCenter);
     }
@@ -2531,9 +2531,9 @@ export class FrameStore {
     }
 
     @action updateFromVectorOverlayData(vectorOverlayData: CARTA.IVectorOverlayTileData) {
-        if (!this.vectorOverlayStore.isComplete && vectorOverlayData.progress > 0) {
+        if (!this.vectorOverlayStore.isComplete && vectorOverlayData.progress && vectorOverlayData.progress > 0 && vectorOverlayData.intensityTiles && vectorOverlayData.angleTiles) {
             this.vectorOverlayStore.addData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
-        } else {
+        } else if (vectorOverlayData.progress && vectorOverlayData.intensityTiles && vectorOverlayData.angleTiles) {
             this.vectorOverlayStore.setData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
         }
     }
@@ -2661,7 +2661,7 @@ export class FrameStore {
             return false;
         }
         const value = this.getImageXValueFromArcsec(arcsecValue);
-        return value !== null ? this.zoomToSizeX(value) : false;
+        return !isNaN(value) && isFinite(value) ? this.zoomToSizeX(value) : false;
     };
 
     @action zoomToSizeY = (y: number): boolean => {
@@ -2678,7 +2678,7 @@ export class FrameStore {
             return false;
         }
         const value = this.getImageYValueFromArcsec(arcsecValue);
-        return value !== null ? this.zoomToSizeY(value) : false;
+        return !isNaN(value) && isFinite(value) ? this.zoomToSizeY(value) : false;
     };
 
     /**

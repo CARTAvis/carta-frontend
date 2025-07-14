@@ -403,8 +403,10 @@ export class ImageFittingStore {
 
                 let fwhmValueWCS = frame.getWcsSizeInArcsec(value.fwhm as Point2D);
                 let fwhmErrorWCS = frame.getWcsSizeInArcsec(error.fwhm as Point2D);
+                const isValidFwhmValueWCS = !isNaN(fwhmValueWCS.x) && !isNaN(fwhmValueWCS.y) && isFinite(fwhmValueWCS.x) && isFinite(fwhmValueWCS.y);
+                const isValidFwhmErrorWCS = !isNaN(fwhmErrorWCS.x) && !isNaN(fwhmErrorWCS.y) && isFinite(fwhmErrorWCS.x) && isFinite(fwhmErrorWCS.y);
                 let fwhmUnit = AngularSizeUnit.ARCSEC;
-                if (fwhmValueWCS && fwhmErrorWCS) {
+                if (isValidFwhmValueWCS && isValidFwhmErrorWCS) {
                     if (Math.abs(fwhmValueWCS.x) < Math.abs(fwhmValueWCS.y)) {
                         ({value: fwhmValueWCS.x, unit: fwhmUnit} = AngularSize.convertFromArcsec(fwhmValueWCS.x, true));
                         fwhmValueWCS.y = AngularSize.convertValueFromArcsec(fwhmValueWCS.y, fwhmUnit);
@@ -727,7 +729,8 @@ class ImageFittingIndividualStore {
     @computed get fwhmWcs(): WCSPoint2D | null {
         const frame = AppStore.Instance.imageFittingStore?.effectiveFrame;
         const wcsSize = frame?.getWcsSizeInArcsec(this.fwhm);
-        if (!wcsSize) {
+        const isValidWcsSize = wcsSize && !isNaN(wcsSize.x) && !isNaN(wcsSize.y) && isFinite(wcsSize.x) && isFinite(wcsSize.y);
+        if (!isValidWcsSize) {
             return null;
         }
         const x = formattedArcsec(wcsSize.x, WCS_PRECISION);
@@ -801,7 +804,7 @@ class ImageFittingIndividualStore {
         const sizeInArcsec = getValueFromArcsecString(val);
         if (val && frame && sizeInArcsec !== null) {
             const imageValue = frame.getImageXValueFromArcsec(sizeInArcsec);
-            if (imageValue !== null) {
+            if (!isNaN(imageValue) && isFinite(imageValue)) {
                 return this.setFwhmX(imageValue);
             }
         }
