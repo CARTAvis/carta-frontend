@@ -127,7 +127,7 @@ export class FrameStore {
     private readonly backendService: BackendService;
     private readonly logStore: LogStore;
     private readonly initialCenter: Point2D;
-    public readonly pixelUnitSizeArcsec: Point2D;
+    public readonly pixelUnitSizeArcsec: Point2D | null;
 
     private spectralTransformAST: AST.FrameSet | null = null;
     private cachedTransformedWcsInfo: AST.FrameSet = -1;
@@ -658,7 +658,7 @@ export class FrameStore {
             }
         }
 
-        if (isFinite(this.pixelUnitSizeArcsec?.x) && isFinite(this.pixelUnitSizeArcsec?.y)) {
+        if (this.pixelUnitSizeArcsec && isFinite(this.pixelUnitSizeArcsec.x) && isFinite(this.pixelUnitSizeArcsec.y)) {
             config["cdelta1"] = getAngleInRad(this.pixelUnitSizeArcsec.x);
             config["cdelta2"] = getAngleInRad(this.pixelUnitSizeArcsec.y);
         }
@@ -677,13 +677,13 @@ export class FrameStore {
             // convert frequency value to unit in GHz
             if (this.isSpectralCoordinateConvertible && this.spectralAxis?.type.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.FREQ)) {
                 const freqGHz = this.astSpectralTransform(SpectralType.FREQ, SpectralUnit.GHZ, this.spectralSystem, freqVal);
-                if (isFinite(freqGHz)) {
+                if (freqGHz && isFinite(freqGHz)) {
                     result.spectralString = `Frequency (${this.spectralSystem}): ${formattedFrequency(freqGHz)}`;
                 }
             }
             // convert frequency to velocity
             const velocityVal = this.astSpectralTransform(SpectralType.VRAD, SpectralUnit.KMS, this.spectralSystem, freqVal);
-            if (isFinite(velocityVal)) {
+            if (velocityVal && isFinite(velocityVal)) {
                 result.velocityString = `Velocity: ${toFixed(velocityVal, 4)} km/s`;
             }
         } else if (spectralType.code === "VRAD") {
@@ -691,13 +691,13 @@ export class FrameStore {
             // convert velocity value to unit in km/s
             if (this.isSpectralCoordinateConvertible && this.spectralAxis?.type.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.VRAD)) {
                 const velocityKMS = this.astSpectralTransform(SpectralType.VRAD, SpectralUnit.KMS, this.spectralSystem, velocityVal);
-                if (isFinite(velocityKMS)) {
+                if (velocityKMS && isFinite(velocityKMS)) {
                     result.spectralString = `Velocity (${this.spectralSystem}): ${toFixed(velocityKMS, 4)} km/s`;
                 }
             }
             // convert velocity to frequency
             const freqGHz = this.astSpectralTransform(SpectralType.FREQ, SpectralUnit.GHZ, this.spectralSystem, velocityVal);
-            if (isFinite(freqGHz)) {
+            if (freqGHz && isFinite(freqGHz)) {
                 result.freqString = `Frequency: ${formattedFrequency(freqGHz)}`;
             }
         }
@@ -743,8 +743,8 @@ export class FrameStore {
         if (axes.length > 1) {
             return [axes[0], axes[1]];
         }
-        console.log(`Undefined rendered axes!`);
-        return [undefined, undefined];
+        console.log(`Undefined rendered axes! Using default axes [1, 2]`);
+        return [1, 2];
     }
 
     // X direction axis number in the AST frame set
@@ -977,16 +977,16 @@ export class FrameStore {
         return this.spectralType === SpectralType.VRAD || this.spectralType === SpectralType.VOPT;
     }
 
-    @computed get nativeSpectralCoordinate(): string {
+    @computed get nativeSpectralCoordinate(): string | undefined {
         return this.spectralAxis ? `${this.spectralAxis.type.name}${this.spectralAxis.type.unit ? ` (${this.spectralAxis.type.unit})` : ""}` : undefined;
     }
 
     @computed get spectralCoordinate(): string {
-        return !this.spectralType && !this.spectralUnit ? this.nativeSpectralCoordinate : GenCoordinateLabel(this.spectralType, this.spectralUnit);
+        return !this.spectralType && !this.spectralUnit && this.nativeSpectralCoordinate ? this.nativeSpectralCoordinate : GenCoordinateLabel(this.spectralType, this.spectralUnit);
     }
 
     @computed get spectralCoordinateSecondary(): string {
-        return !this.spectralTypeSecondary && !this.spectralUnitSecondary ? this.nativeSpectralCoordinate : GenCoordinateLabel(this.spectralTypeSecondary, this.spectralUnitSecondary);
+        return !this.spectralTypeSecondary && !this.spectralUnitSecondary && this.nativeSpectralCoordinate ? this.nativeSpectralCoordinate : GenCoordinateLabel(this.spectralTypeSecondary, this.spectralUnitSecondary);
     }
 
     @computed get spectralLabel(): string | undefined {
@@ -1062,7 +1062,7 @@ export class FrameStore {
         }
 
         const roundedPosInfo = round2D(this.cursorInfo.posImageSpace);
-        const roundedPosValue = round2D(this.isPreview ? this.previewCursorValue.position : this.cursorValue.position);
+        const roundedPosValue = round2D(this.isPreview && this.previewCursorValue ? this.previewCursorValue?.position : this.cursorValue.position);
         return this.cursorValue.channel === this.channel && roundedPosInfo.x === roundedPosValue.x && roundedPosInfo.y === roundedPosValue.y;
     }
 
@@ -1212,7 +1212,7 @@ export class FrameStore {
     }
 
     get headerRestFreq(): number {
-        return this.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === "RESTFRQ")?.numericValue;
+        return this.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === "RESTFRQ")?.numericValue ?? NaN;
     }
 
     @computed get centerWCS(): WCSPoint2D | null {
@@ -1229,7 +1229,7 @@ export class FrameStore {
     }
 
     @computed get isPreview(): boolean {
-        return this.frameInfo.preview;
+        return this.frameInfo.preview ?? false;
     }
 
     @computed get previewCursorValue(): {position: Point2D; channel: number; value: number} | null {
@@ -1502,7 +1502,7 @@ export class FrameStore {
         reaction(
             () => this.restFreqStore.restFreqInHz,
             restFreq => {
-                if (this.restFreqStore.inValidInput || !isFinite(restFreq)) {
+                if (this.restFreqStore.inValidInput || !restFreq || !isFinite(restFreq)) {
                     return;
                 }
 
@@ -1597,7 +1597,7 @@ export class FrameStore {
         );
     }
 
-    updateWcsSystem = (formatStringX: string, formatStyingY: string, explicitSystem: SystemType) => {
+    updateWcsSystem = (formatStringX: string | undefined, formatStyingY: string | undefined, explicitSystem: SystemType | undefined) => {
         if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined) {
             if (!(this.isPVImage && this.spectralAxis?.valid) && !(this.isSwappedZ && this.spectralAxis?.valid) && this.validWcs && this.wcsInfo) {
                 if (explicitSystem === SystemType.Image) {
@@ -1703,14 +1703,14 @@ export class FrameStore {
         return Array.from(convertedArray);
     };
 
-    private astSpectralTransform = (type: SpectralType, unit: SpectralUnit, system: SpectralSystem, value: number): number => {
+    private astSpectralTransform = (type: SpectralType, unit: SpectralUnit, system: SpectralSystem, value: number): number | undefined => {
         if (!this.spectralFrame || !isFinite(value)) {
             return undefined;
         }
         return AST.transformSpectralPoint(this.spectralFrame, type, unit, system, value);
     };
 
-    private initPVFrame = (): AST.FrameSet => {
+    private initPVFrame = (): AST.FrameSet | undefined => {
         if (!this.isPVImage) {
             return undefined;
         }
@@ -1972,7 +1972,7 @@ export class FrameStore {
         return null;
     };
 
-    public getRegion = (regionId: number): RegionStore => {
+    public getRegion = (regionId: number): RegionStore | undefined => {
         return this.regionSet?.regions?.find(r => r.regionId === regionId);
     };
 
@@ -1998,7 +1998,7 @@ export class FrameStore {
         }
 
         const settingWCSValue = this.astSpectralTransform(this.spectralType, this.spectralUnit, this.spectralSystem, nativeWCSValue);
-        return isFinite(settingWCSValue) ? settingWCSValue : undefined;
+        return settingWCSValue && isFinite(settingWCSValue) ? settingWCSValue : undefined;
     };
 
     public getCursorInfo(cursorPosImageSpace: Point2D) {
@@ -2129,14 +2129,14 @@ export class FrameStore {
     }
 
     public getImageXValueFromArcsec(arcsecValue: number): number {
-        if (isFinite(arcsecValue) && isFinite(this.pixelUnitSizeArcsec?.x)) {
+        if (isFinite(arcsecValue) && this.pixelUnitSizeArcsec && isFinite(this.pixelUnitSizeArcsec.x)) {
             return arcsecValue / this.pixelUnitSizeArcsec.x;
         }
         return NaN;
     }
 
     public getImageYValueFromArcsec(arcsecValue: number): number {
-        if (isFinite(arcsecValue) && isFinite(this.pixelUnitSizeArcsec?.y)) {
+        if (isFinite(arcsecValue) && this.pixelUnitSizeArcsec && isFinite(this.pixelUnitSizeArcsec.y)) {
             return arcsecValue / this.pixelUnitSizeArcsec.y;
         }
         return NaN;
@@ -2164,7 +2164,7 @@ export class FrameStore {
     };
 
     public getRegionProperties(regionId: number): string[] {
-        let propertyString = [];
+        let propertyString: string[] = [];
         const region = this.getRegion(regionId);
         if (region) {
             propertyString.push(region.regionProperties);
@@ -2302,7 +2302,7 @@ export class FrameStore {
         if (!this.wcsInfoShifted) {
             return {x: "NaN", y: "NaN"};
         }
-        return getFormattedWCSPoint(this.wcsInfoForTransformation, this.offsetCenter);
+        return getFormattedWCSPoint(this.wcsInfoForTransformation, this.offsetCenter) ?? {x: "NaN", y: "NaN"};
     }
 
     /**
