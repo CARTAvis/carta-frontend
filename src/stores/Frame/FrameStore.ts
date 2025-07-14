@@ -537,7 +537,7 @@ export class FrameStore {
         return this.beamProperties ? this.beamProperties.overlayBeamSettings.visible : false;
     }
 
-    @computed get channelInfo(): ChannelInfo {
+    @computed get channelInfo(): ChannelInfo | undefined {
         if (!this.frameInfo || !this.frameInfo.fileInfoExtended || this.frameInfo.fileInfoExtended.depth <= 1 || !this.frameInfo.fileInfoExtended.headerEntries) {
             return undefined;
         }
@@ -546,7 +546,7 @@ export class FrameStore {
 
         const getChannelIndexSimple = (value: number): number => {
             if (!value && value !== 0) {
-                return null;
+                return 0;
             }
 
             if (value < 0) {
@@ -570,7 +570,7 @@ export class FrameStore {
                     values,
                     getChannelIndexWCS: (value: number): number => {
                         if (!isFinite(value)) {
-                            return null;
+                            return 0;
                         }
 
                         const index = this.getSpectralIndexFromNativeWcs(value);
@@ -596,7 +596,9 @@ export class FrameStore {
             fromWCS: false,
             indexes,
             values,
-            getChannelIndexWCS: null,
+            getChannelIndexWCS: () => {
+                return 0;
+            },
             getChannelIndexSimple: getChannelIndexSimple
         };
     }
@@ -1681,20 +1683,20 @@ export class FrameStore {
         }
     };
 
-    private convertSpectral = (values: Array<number>): Array<number> | null => {
+    private convertSpectral = (values: Array<number>): Array<number> => {
         const N = values?.length;
         if (!N || !this.spectralFrame || !this.spectralType || !this.spectralUnit || !this.spectralSystem) {
-            return null;
+            return [];
         }
 
         const convertedArray = AST.transformSpectralPointArray(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, values);
         return Array.from(convertedArray);
     };
 
-    private convertSpectralSecondary = (values: Array<number>): Array<number> | null => {
+    private convertSpectralSecondary = (values: Array<number>): Array<number> => {
         const N = values?.length;
         if (!N || !this.spectralFrame || !this.spectralTypeSecondary || !this.spectralUnitSecondary || !this.spectralSystem) {
-            return null;
+            return [];
         }
 
         const convertedArray = AST.transformSpectralPointArray(this.spectralFrame, this.spectralTypeSecondary, this.spectralUnitSecondary, this.spectralSystem, values);
@@ -2495,26 +2497,28 @@ export class FrameStore {
 
     @action updateFromContourData(contourImageData: CARTA.ContourImageData) {
         const processedData = ProtobufProcessing.ProcessContourData(contourImageData);
-        this.stokes = processedData.stokes;
-        this.channel = processedData.channel;
+        this.stokes = processedData.stokes ?? 0;
+        this.channel = processedData.channel ?? 0;
 
         const animatorStore = AnimatorStore.Instance;
         if (animatorStore.serverAnimationActive) {
-            this.requiredChannel = processedData.channel;
-            this.requiredStokes = processedData.stokes;
+            this.requiredChannel = processedData.channel ?? 0;
+            this.requiredStokes = processedData.stokes ?? 0;
         }
 
-        for (const contourSet of processedData.contourSets) {
-            let contourStore = this.contourStores.get(contourSet.level);
-            if (!contourStore) {
-                contourStore = new ContourStore();
-                this.contourStores.set(contourSet.level, contourStore);
-            }
+        for (const contourSet of processedData.contourSets ?? []) {
+            if (contourSet.level) {
+                let contourStore = this.contourStores.get(contourSet.level);
+                if (!contourStore) {
+                    contourStore = new ContourStore();
+                    this.contourStores.set(contourSet.level, contourStore);
+                }
 
-            if (!contourStore.isComplete && processedData.progress > 0) {
-                contourStore.addContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
-            } else {
-                contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
+                if (!contourStore.isComplete && processedData.progress && processedData.progress > 0 && contourSet.coordinates) {
+                    contourStore.addContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
+                } else if (processedData.progress && contourSet.coordinates) {
+                    contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
+                }
             }
         }
 
