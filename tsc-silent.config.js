@@ -24,14 +24,7 @@ const migratedFiles = [
     "stores/SpatialProfileStore",
     "stores/SpectralProfileStore",
     "stores/Widgets",
-    "stores/Frame/AnnotationStore",
-    "stores/Frame/ColorbarStore",
-    "stores/Frame/ContourStore",
-    "stores/Frame/OverlayStore",
-    "stores/Frame/Region",
-    "stores/Frame/RenderConfigStore",
-    "stores/Frame/RestFreqStore",
-    "stores/Frame/VectorOverlayStore",
+    "stores/Frame"
 ];
 
 module.exports = {

@@ -382,7 +382,7 @@ export class FileBrowserStore {
     /// Update the spectral range for save image file
     @action initialSaveSpectralRange = () => {
         const activeFrame = AppStore.Instance.activeFrame;
-        if (activeFrame && activeFrame.numChannels > 1 && activeFrame.isSpectralChannel) {
+        if (activeFrame && activeFrame.numChannels > 1 && activeFrame.isSpectralChannel && activeFrame.channelValueBounds) {
             this.setSaveSpectralStart(Math.min(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min));
             this.setSaveSpectralEnd(Math.max(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min));
         }

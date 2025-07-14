@@ -88,7 +88,7 @@ export const IsSpectralSystemSupported = (systemStr: string): boolean => {
     return Object.values(SpectralSystem).includes(normalizedStr as SpectralSystem);
 };
 
-export const GetFreqInGHz = (unit: string, value: number): number => {
+export const GetFreqInGHz = (unit: string | undefined, value: number): number => {
     if (unit && Object.values(FrequencyUnit).includes(unit as FrequencyUnit) && isFinite(value)) {
         if (unit === FrequencyUnit.GHZ) {
             return value;
