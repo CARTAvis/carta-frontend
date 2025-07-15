@@ -63,7 +63,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                 </Tooltip>
                 <Popover
                     content={
-                        <Menu>
+                        <Menu className="spectral-profiler-dropdown">
                             {this.props.itemOptions?.map((item, index) => (
                                 <MenuItem
                                     key={item.value}
