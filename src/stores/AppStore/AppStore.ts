@@ -134,9 +134,9 @@ export class AppStore {
     // Frames
     @observable previewFrames = new ObservableMap<number, FrameStore>();
     /** The active image, which can be a loaded image, a color blended image, or a PV preivew. */
-    @observable activeImage: ImageItem = null;
-    @observable hoveredFrame: FrameStore = null;
-    @observable contourDataSource: FrameStore = null;
+    @observable activeImage: ImageItem | null = null;
+    @observable hoveredFrame: FrameStore | null = null;
+    @observable contourDataSource: FrameStore | null = null;
     @observable syncContourToFrame = true;
     @observable syncFrameToContour = true;
     @observable activeWorkspace: Workspace;
@@ -2123,7 +2123,7 @@ export class AppStore {
         });
 
         // listen devicePixelRatio
-        let remove = null;
+        let remove: (() => void) | null = null;
         const updatePixelRatio = () => {
             if (remove != null) {
                 remove();
