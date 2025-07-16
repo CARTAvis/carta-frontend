@@ -201,8 +201,7 @@ export class ApiService {
 
                 if (deletedKeys.length > 0) {
                     // Show an alert to the user about the deleted preferences
-                    const appStore = AppStore.Instance;
-                    appStore.alertStore.showAlert(`Deleted invalid preferences: ${deletedKeys.join(", ")}`);
+                    AppStore.Instance.alertStore.showAlert(`Deleted invalid preferences: ${deletedKeys.join(", ")}`);
                 }
             }
         }
@@ -235,7 +234,7 @@ export class ApiService {
         }
 
         // Normalize case of wcsType value, which may have been saved incorrectly in existing preferences
-        let key = PreferenceKeys.WCS_OVERLAY_WCS_TYPE;
+        const key = PreferenceKeys.WCS_OVERLAY_WCS_TYPE;
         if (/[A-Z]/.test(preferences[key])) {
             preferences[key] = preferences[key].toLowerCase();
             this.setPreference(key, preferences[key]);
