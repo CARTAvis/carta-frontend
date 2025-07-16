@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
-import {AngularSize, AngularSizeUnit, Point2D, WCSPoint2D} from "models";
+import {AngularSize, AngularSizeUnit, isValidWcsPoint, Point2D, WCSPoint2D} from "models";
 import {AppStore, NumberFormatType} from "stores";
 import {FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
@@ -729,8 +729,7 @@ class ImageFittingIndividualStore {
     @computed get fwhmWcs(): WCSPoint2D | null {
         const frame = AppStore.Instance.imageFittingStore?.effectiveFrame;
         const wcsSize = frame?.getWcsSizeInArcsec(this.fwhm);
-        const isValidWcsSize = wcsSize && !isNaN(wcsSize.x) && !isNaN(wcsSize.y) && isFinite(wcsSize.x) && isFinite(wcsSize.y);
-        if (!isValidWcsSize) {
+        if (!isValidWcsPoint(wcsSize)) {
             return null;
         }
         const x = formattedArcsec(wcsSize.x, WCS_PRECISION);

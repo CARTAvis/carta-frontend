@@ -34,13 +34,6 @@ export class ContourStore {
     constructor() {
         makeObservable(this);
         this.gl = ContourWebGLService.Instance.gl;
-        this.progress = 0;
-        this.numGeneratedVertices = [];
-        this.vertexCount = 0;
-        this.chunkCount = 0;
-        this.indexOffsets = [];
-        this.vertexData = [];
-        this.vertexBuffers = [];
     }
 
     @action setContourData = (indexOffsets: Int32Array, vertexData: Float32Array, progress: number) => {

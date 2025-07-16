@@ -121,9 +121,9 @@ export class FrameStore {
     private static readonly CursorMovementDuration = 250;
 
     private spectralFrame: AST.SpecFrame | null = null;
-    private readonly controlMaps: Map<FrameStore, ControlMap>;
-    private readonly catalogControlMaps: Map<FrameStore, CatalogControlMap>;
-    private readonly framePixelRatio: number;
+    private readonly controlMaps: Map<FrameStore, ControlMap> = new Map<FrameStore, ControlMap>();
+    private readonly catalogControlMaps: Map<FrameStore, CatalogControlMap> = new Map<FrameStore, CatalogControlMap>();
+    private readonly framePixelRatio: number = 1.0;
     private readonly backendService: BackendService;
     private readonly logStore: LogStore;
     private readonly initialCenter: Point2D;
@@ -133,10 +133,10 @@ export class FrameStore {
     private cachedTransformedWcsInfo: AST.FrameSet = -1;
     private zoomTimeoutHandler;
 
-    private dirAxis: number;
-    private dirAxisSize: number;
-    private dirAxisFormat: string;
-    private depthAxisFormat: string;
+    private dirAxis: number = -1;
+    private dirAxisSize: number = -1;
+    private dirAxisFormat: string = "";
+    private depthAxisFormat: string = "";
 
     public requiredFrameViewForRegionRender: FrameView;
 
@@ -144,7 +144,7 @@ export class FrameStore {
     public readonly wcsInfoForTransformation: AST.FrameSet;
     @observable public wcsInfoShifted: AST.FrameSet;
     public readonly wcsInfo3D: AST.FrameSet;
-    public readonly validWcs: boolean;
+    public readonly validWcs: boolean = false;
     public readonly defaultWcsSystem: SystemType;
     @observable public frameInfo: FrameInfo;
     public readonly overlayStore: OverlayStore;
@@ -179,56 +179,56 @@ export class FrameStore {
     /**
      * View center in pixel coordinates
      */
-    @observable center: Point2D;
+    @observable center: Point2D = {x: 0, y: 0};
     /**
      * View center for the relative coordinate in pixel coordinates
      */
     @observable offsetCenter: Point2D;
     @observable cursorInfo: CursorInfo;
     @observable cursorValue: {position: Point2D; channel: number; value: number};
-    @observable cursorMoving: boolean;
-    @observable zoomLevel: number;
-    @observable stokes: number;
-    @observable channel: number;
-    @observable requiredStokes: number;
-    @observable requiredChannel: number;
+    @observable cursorMoving: boolean = false;
+    @observable zoomLevel: number = 1;
+    @observable stokes: number = 0;
+    @observable channel: number = 0;
+    @observable requiredStokes: number = 0;
+    @observable requiredChannel: number = 0;
     @observable animationChannelRange: NumberRange;
-    @observable currentFrameView: FrameView;
-    @observable currentCompressionQuality: number;
-    @observable contourStores: Map<number, ContourStore>;
-    @observable moving: boolean;
-    @observable zooming: boolean;
+    @observable currentFrameView: FrameView | null = null;
+    @observable currentCompressionQuality: number = 100;
+    @observable contourStores: Map<number, ContourStore> = new Map();
+    @observable moving: boolean = false;
+    @observable zooming: boolean = false;
 
     @observable colorbarLabelCustomText: string;
     @observable titleCustomText: string;
-    @observable overlayBeamSettings: OverlayBeamStore;
+    @observable overlayBeamSettings: OverlayBeamStore = new OverlayBeamStore();
     @observable spatialReference: FrameStore | null = null;
     @observable spectralReference: FrameStore | null = null;
     @observable rasterScalingReference: FrameStore | null = null;
-    @observable secondarySpatialImages: FrameStore[];
-    @observable secondarySpectralImages: FrameStore[];
-    @observable secondaryRasterScalingImages: FrameStore[];
-    @observable momentImages: FrameStore[];
-    @observable pvImages: FrameStore[];
-    @observable generatedPVRegionId: number;
-    @observable fittingResult: string;
-    @observable fittingResultRegionParams: {points: Point2D[]; rotation: number}[];
-    @observable fittingLog: string;
+    @observable secondarySpatialImages: FrameStore[] = [];
+    @observable secondarySpectralImages: FrameStore[] = [];
+    @observable secondaryRasterScalingImages: FrameStore[] = [];
+    @observable momentImages: FrameStore[] = [];
+    @observable pvImages: FrameStore[] = [];
+    @observable generatedPVRegionId: number = 0;
+    @observable fittingResult: string = "";
+    @observable fittingResultRegionParams: {points: Point2D[]; rotation: number}[] = [];
+    @observable fittingLog: string = "";
     @observable fittingModelImage: FrameStore | null = null;
     @observable fittingResidualImage: FrameStore | null = null;
 
-    @observable isRequestingMoments: boolean;
-    @observable requestingMomentsProgress: number;
-    @observable isRequestingPV: boolean;
-    @observable requestingPVProgress: number;
-    @observable isRequestPVCancelling: boolean;
+    @observable isRequestingMoments: boolean = false;
+    @observable requestingMomentsProgress: number = 0;
+    @observable isRequestingPV: boolean = false;
+    @observable requestingPVProgress: number = 0;
+    @observable isRequestPVCancelling: boolean = false;
 
-    @observable stokesFiles: CARTA.StokesFile[];
+    @observable stokesFiles: CARTA.StokesFile[] = [];
 
-    @observable previewPVRasterData: Float32Array;
-    @observable intensityUnit: string | undefined;
+    @observable previewPVRasterData: Float32Array = new Float32Array();
+    @observable intensityUnit: string | undefined = undefined;
 
-    @observable isOffsetCoord: boolean;
+    @observable isOffsetCoord: boolean = false;
 
     @computed get filename(): string {
         // hdu extension name is in field 3 of fileInfoExtended computed entries
@@ -1258,27 +1258,8 @@ export class FrameStore {
         this.backendService = BackendService.Instance;
         const preferenceStore = PreferenceStore.Instance;
 
-        // this.spectralFrame = null;
-        // this.spectralType = null;
-        // this.spectralUnit = null;
-        // this.spectralTypeSecondary = null;
-        // this.spectralUnitSecondary = null;
-        // this.channelSecondaryValues = null;
-        // this.spectralSystem = null;
-        // this.channelValues = null;
-        // this.spectralCoordsSupported = null;
-        // this.spectralSystemsSupported = null;
-        // this.wcsInfo = null;
-        // this.wcsInfoForTransformation = null;
-        // this.wcsInfo3D = null;
-        this.validWcs = false;
         this.frameInfo = frameInfo;
         this.initialCenter = {x: (this.frameInfo.fileInfoExtended.width - 1) / 2.0, y: (this.frameInfo.fileInfoExtended.height - 1) / 2.0};
-        this.center = {x: 0, y: 0};
-        this.stokes = 0;
-        this.channel = 0;
-        this.requiredStokes = 0;
-        this.requiredChannel = 0;
         this.renderConfig = new RenderConfigStore(preferenceStore, this);
         this.overlayStore = frameInfo.preview && pvGeneratorWidget ? new PvPreviewOverlayStore(pvGeneratorWidget) : new ImageViewOverlayStore();
         this.channelMapOuterOverlayStore = new ChannelMapOuterOverlayStore();
@@ -1288,40 +1269,9 @@ export class FrameStore {
         this.contourStores = new Map<number, ContourStore>();
         this.vectorOverlayConfig = new VectorOverlayConfigStore(preferenceStore, this);
         this.vectorOverlayStore = new VectorOverlayStore(this);
-        this.moving = false;
-        this.zooming = false;
         this.colorbarLabelCustomText = this.requiredUnit === undefined || !this.requiredUnit.length ? "arbitrary units" : this.requiredUnit;
         this.titleCustomText = frameInfo?.fileInfo?.name;
-        this.overlayBeamSettings = new OverlayBeamStore();
-        // this.spatialReference = null;
-        // this.spatialTransformAST = null;
-        this.catalogControlMaps = new Map<FrameStore, CatalogControlMap>();
-        this.controlMaps = new Map<FrameStore, ControlMap>();
-        this.secondarySpatialImages = [];
-        this.secondarySpectralImages = [];
-        this.secondaryRasterScalingImages = [];
-        this.momentImages = [];
-        this.pvImages = [];
-        this.fittingResult = "";
-        this.fittingResultRegionParams = [];
-        this.fittingLog = "";
-
-        this.isRequestingMoments = false;
-        this.requestingMomentsProgress = 0;
-        this.isRequestingPV = false;
-        this.requestingPVProgress = 0;
-        // this.cursorMovementHandle = null;
-
-        this.stokesFiles = [];
-
-        this.dirAxis = -1;
-        this.dirAxisSize = -1;
-        this.dirAxisFormat = "";
-        this.depthAxisFormat = "";
         this.intensityUnit = this.headerUnit;
-
-        this.isOffsetCoord = false;
-        // this.offsetCenter = null;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preferenceStore.astColor;

@@ -5,7 +5,7 @@ import {throttle} from "lodash";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {CustomIconName} from "icons/CustomIcons";
-import {Point2D} from "models";
+import {isValidWcsPoint, Point2D} from "models";
 import {BackendService} from "services";
 import {AppStore, PreferenceStore, WidgetsStore} from "stores";
 import {CoordinateMode, FrameStore} from "stores/Frame";
@@ -235,8 +235,7 @@ export class RegionStore {
             return {x: 0, y: 0};
         }
         const wcsSize = frame.getWcsSizeInArcsec(this.size);
-        const isValidWcsSize = !isNaN(wcsSize.x) && !isNaN(wcsSize.y) && isFinite(wcsSize.x) && isFinite(wcsSize.y);
-        return isValidWcsSize ? wcsSize : {x: 0, y: 0};
+        return isValidWcsPoint(wcsSize) ? wcsSize : {x: 0, y: 0};
     }
 
     @computed get boundingBox(): Point2D {
