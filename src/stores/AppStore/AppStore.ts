@@ -148,9 +148,9 @@ export class AppStore {
     @observable regionHistograms: Map<number, ObservableMap<number, ObservableMap<number, CARTA.IRegionHistogramData>>>;
 
     // Reference images
-    @observable spatialReference: FrameStore;
-    @observable spectralReference: FrameStore;
-    @observable rasterScalingReference: FrameStore;
+    @observable spatialReference: FrameStore | null;
+    @observable spectralReference: FrameStore | null;
+    @observable rasterScalingReference: FrameStore | null;
 
     // ImageViewer
     @observable activeLayer = ImageViewLayer.RegionMoving;
@@ -463,7 +463,7 @@ export class AppStore {
             return [];
         }
 
-        const baseGroupFrames = [];
+        const baseGroupFrames: FrameStore[] = [];
         for (const frame of this.frames) {
             const groupMember =
                 frame === baseFrame || // Frame is the base
@@ -480,18 +480,22 @@ export class AppStore {
     }
 
     @computed get spatialAndSpectalMatchedFileIds(): number[] {
-        let matchedIds = [];
+        let matchedIds: number[] = [];
         const spatialReferenceId = this.spatialReference?.frameInfo?.fileId;
         const spectralReferenceId = this.spectralReference?.frameInfo?.fileId;
 
         const spatialMatchedFileIds = this.spatialReference?.spatialSiblings?.map(matchedFrame => {
             return matchedFrame.frameInfo.fileId;
         });
-        spatialMatchedFileIds?.unshift(spatialReferenceId);
+        if (spatialMatchedFileIds && spatialReferenceId !== undefined) {
+            spatialMatchedFileIds.unshift(spatialReferenceId);
+        }
         const spectralMatchedFileIds = this.spectralReference?.spectralSiblings?.map(matchedFrame => {
             return matchedFrame.frameInfo.fileId;
         });
-        spectralMatchedFileIds?.unshift(spectralReferenceId);
+        if (spectralMatchedFileIds && spectralReferenceId !== undefined) {
+            spectralMatchedFileIds.unshift(spectralReferenceId);
+        }
 
         spatialMatchedFileIds?.forEach(spatialMatchedFileId => {
             if (spectralMatchedFileIds?.includes(spatialMatchedFileId)) {
@@ -2123,7 +2127,7 @@ export class AppStore {
         });
 
         // listen devicePixelRatio
-        let remove: (() => void) | null = null;
+        let remove = null;
         const updatePixelRatio = () => {
             if (remove != null) {
                 remove();
@@ -3044,7 +3048,7 @@ export class AppStore {
     @flow.bound *setSpatialReference(frame: FrameStore, showColorBlendingAlert = true) {
         const oldRef = this.spatialReference;
 
-        if (showColorBlendingAlert) {
+        if (showColorBlendingAlert && oldRef) {
             const confirmed = yield this.confirmColorBlendingRemoval(oldRef);
             if (!confirmed) {
                 return;
@@ -3092,7 +3096,7 @@ export class AppStore {
             return;
         }
 
-        if (val) {
+        if (val && this.spatialReference) {
             if (!frame.setSpatialReference(this.spatialReference)) {
                 AppToaster.show(WarningToast(`Could not enable spatial matching of ${frame.filename} to reference image ${this.spatialReference.filename}. No valid transform was found.`));
             }
@@ -3169,7 +3173,7 @@ export class AppStore {
             return;
         }
 
-        if (val) {
+        if (val && this.spectralReference) {
             if (!frame.setSpectralReference(this.spectralReference)) {
                 AppToaster.show(WarningToast(`Could not enable spectral matching (velocity system) of ${frame.filename} to reference image ${this.spectralReference.filename}. No valid transform was found`));
             }
@@ -3230,7 +3234,7 @@ export class AppStore {
             return;
         }
 
-        if (val) {
+        if (val && this.rasterScalingReference) {
             frame.setRasterScalingReference(this.rasterScalingReference);
         } else {
             frame.clearRasterScalingReference();
