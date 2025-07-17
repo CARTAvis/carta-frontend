@@ -838,7 +838,7 @@ export class PreferenceDialogComponent extends React.Component {
                             min={1e-12}
                             max={this.pvPreviewCubeSizeMaxValue}
                             value={this.showedPvPreviewCubeSizeLimit}
-                            majorStepSize={2}
+                            majorStepSize={this.showedPvPreviewCubeSizeLimitUnit === MemoryUnit.GB ? 2 : 2000}
                             stepSize={this.showedPvPreviewCubeSizeLimitUnit === MemoryUnit.GB ? 0.1 : 100}
                             onValueChange={value => this.handlePvPreviewCubeSizeChange(value, this.showedPvPreviewCubeSizeLimitUnit)}
                         />
