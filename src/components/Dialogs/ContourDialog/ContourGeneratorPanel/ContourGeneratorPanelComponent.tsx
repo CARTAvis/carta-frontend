@@ -5,7 +5,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, SafeNumericInput, SCALING_POPOVER_PROPS, ScalingSelectComponent} from "components/Shared";
-import {ContourGeneratorType, FrameScaling, FrameStore} from "stores/Frame";
+import {ContourGeneratorType, FrameScaling, FrameStore, PreferenceStore} from "stores";
 import {getPercentiles, scaleValue} from "utilities";
 
 import "./ContourGeneratorPanelComponent.scss";
@@ -20,7 +20,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
 }> {
     @observable generator: ContourGeneratorType = this.props.generatorType ? this.props.generatorType : ContourGeneratorType.StartStepMultiplier;
 
-    @observable numLevels: number = 5;
+    @observable numLevels: number = PreferenceStore.Instance.contourNumLevels;
 
     // region min-max-scaling
     @observable enteredMinValue: number | undefined;
