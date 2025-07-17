@@ -45,7 +45,7 @@ export enum MemoryUnit {
 
 const PercentileSelect = Select<string>;
 
-const PV_PREVIEW_CUBE_SIZE_LIMIT = 1000000000; //need to be removed and replaced by backend limit
+const PV_PREVIEW_CUBE_SIZE_LIMIT = 2000000000; //need to be removed and replaced by backend limit
 
 @observer
 export class PreferenceDialogComponent extends React.Component {
@@ -55,17 +55,22 @@ export class PreferenceDialogComponent extends React.Component {
     };
 
     @computed get pvPreviewCubeSizeMaxValue(): number {
-        if (PreferenceStore.Instance.pvPreviewCubeSizeLimitUnit === MemoryUnit.TB) {
+        if (this.showedPvPreviewCubeSizeLimitUnit === MemoryUnit.TB) {
             return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e12;
-        } else if (PreferenceStore.Instance.pvPreviewCubeSizeLimitUnit === MemoryUnit.GB) {
+        } else if (this.showedPvPreviewCubeSizeLimitUnit === MemoryUnit.GB) {
             return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e9;
-        } else if (PreferenceStore.Instance.pvPreviewCubeSizeLimitUnit === MemoryUnit.MB) {
+        } else if (this.showedPvPreviewCubeSizeLimitUnit === MemoryUnit.MB) {
             return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e6;
-        } else if (PreferenceStore.Instance.pvPreviewCubeSizeLimitUnit === MemoryUnit.kB) {
+        } else if (this.showedPvPreviewCubeSizeLimitUnit === MemoryUnit.kB) {
             return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e3;
         } else {
             return PV_PREVIEW_CUBE_SIZE_LIMIT;
         }
+    }
+
+    @computed get showedPvPreviewCubeSizeLimit(): number {
+        const preference = PreferenceStore.Instance;
+        return this.showedPvPreviewCubeSizeLimitUnit === MemoryUnit.GB ? preference.pvPreviewCubeSizeLimit : preference.pvPreviewCubeSizeLimit * 1000;
     }
 
     constructor(props: any) {
@@ -99,8 +104,18 @@ export class PreferenceDialogComponent extends React.Component {
     }, 100);
 
     @action private handlePvPreviewCubeSizeUnitChange = _.throttle(unit => {
-        PreferenceStore.Instance.setPreference(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT, unit);
+        this.showedPvPreviewCubeSizeLimitUnit = unit;
+        // always store value in GB
+        PreferenceStore.Instance.setPreference(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT, MemoryUnit.GB);
     }, 100);
+
+    @action private handlePvPreviewCubeSizeChange = _.throttle((size, unit) => {
+        const storedSize = unit === MemoryUnit.GB ? size : size / 1000; // Convert to GB if necessary
+        PreferenceStore.Instance.setPreference(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT, storedSize);
+    }, 100);
+
+    // variable for showing preview cube size unit in the dialog
+    @observable private showedPvPreviewCubeSizeLimitUnit = PreferenceStore.Instance.pvPreviewCubeSizeLimitUnit;
 
     private reset = () => {
         const preference = PreferenceStore.Instance;
@@ -822,12 +837,12 @@ export class PreferenceDialogComponent extends React.Component {
                             placeholder="PV preview cube size limit"
                             min={1e-12}
                             max={this.pvPreviewCubeSizeMaxValue}
-                            value={preference.pvPreviewCubeSizeLimit}
-                            majorStepSize={1}
-                            stepSize={preference.pvPreviewCubeSizeLimitUnit === MemoryUnit.GB ? 0.1 : 100}
-                            onValueChange={value => preference.setPreference(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT, value)}
+                            value={this.showedPvPreviewCubeSizeLimit}
+                            majorStepSize={2}
+                            stepSize={this.showedPvPreviewCubeSizeLimitUnit === MemoryUnit.GB ? 0.1 : 100}
+                            onValueChange={value => this.handlePvPreviewCubeSizeChange(value, this.showedPvPreviewCubeSizeLimitUnit)}
                         />
-                        <HTMLSelect value={preference.pvPreviewCubeSizeLimitUnit} onChange={ev => this.handlePvPreviewCubeSizeUnitChange(ev.target.value)}>
+                        <HTMLSelect value={this.showedPvPreviewCubeSizeLimitUnit} onChange={ev => this.handlePvPreviewCubeSizeUnitChange(ev.target.value)}>
                             <option key={0} value={"MB"}>
                                 MB
                             </option>

@@ -239,6 +239,17 @@ export class ApiService {
             preferences[key] = preferences[key].toLowerCase();
             this.setPreference(key, preferences[key]);
         }
+
+        // This is to ensure consistency in the unit used for the preview cube size limit
+        const cubeSizeUnitKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT;
+        const cubeSizeKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT;
+        if (preferences[cubeSizeUnitKey] === "MB") {
+            // Convert MB to GB for consistency
+            preferences[cubeSizeUnitKey] = "GB";
+            preferences[cubeSizeKey] = preferences[cubeSizeKey] / 1000;
+            this.setPreference(cubeSizeUnitKey, preferences[cubeSizeUnitKey]);
+            this.setPreference(cubeSizeKey, preferences[cubeSizeKey]);
+        }
     };
 
     public setPreference = async (key: string, value: any) => {
