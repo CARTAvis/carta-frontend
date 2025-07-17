@@ -43,9 +43,17 @@ export enum MemoryUnit {
     B = "B"
 }
 
+export enum ConvertToGB {
+    TB = 1e3,
+    GB = 1,
+    MB = 1e-3,
+    kB = 1e-6,
+    B = 1e-9
+}
+
 const PercentileSelect = Select<string>;
 
-const PV_PREVIEW_CUBE_SIZE_LIMIT = 2000000000; //need to be removed and replaced by backend limit
+const PV_PREVIEW_CUBE_SIZE_LIMIT = 2; //in unit of GB
 
 @observer
 export class PreferenceDialogComponent extends React.Component {
@@ -55,22 +63,16 @@ export class PreferenceDialogComponent extends React.Component {
     };
 
     @computed get pvPreviewCubeSizeMaxValue(): number {
-        if (this.showedPvPreviewCubeSizeLimitUnit === MemoryUnit.TB) {
-            return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e12;
-        } else if (this.showedPvPreviewCubeSizeLimitUnit === MemoryUnit.GB) {
-            return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e9;
-        } else if (this.showedPvPreviewCubeSizeLimitUnit === MemoryUnit.MB) {
-            return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e6;
-        } else if (this.showedPvPreviewCubeSizeLimitUnit === MemoryUnit.kB) {
-            return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e3;
-        } else {
-            return PV_PREVIEW_CUBE_SIZE_LIMIT;
-        }
+        return this.pvPreviewCubeSizeLimitUnit === MemoryUnit.GB ? PV_PREVIEW_CUBE_SIZE_LIMIT : PV_PREVIEW_CUBE_SIZE_LIMIT / ConvertToGB.MB;
+    }
+
+    @computed get pvPreviewCubeSizeMinValue(): number {
+        return this.pvPreviewCubeSizeLimitUnit === MemoryUnit.GB ? 0.1 : 128;
     }
 
     @computed get showedPvPreviewCubeSizeLimit(): number {
         const preference = PreferenceStore.Instance;
-        return this.showedPvPreviewCubeSizeLimitUnit === MemoryUnit.GB ? preference.pvPreviewCubeSizeLimit : preference.pvPreviewCubeSizeLimit * 1000;
+        return this.pvPreviewCubeSizeLimitUnit === MemoryUnit.GB ? preference.pvPreviewCubeSizeLimit : preference.pvPreviewCubeSizeLimit / ConvertToGB.MB;
     }
 
     constructor(props: any) {
@@ -104,18 +106,16 @@ export class PreferenceDialogComponent extends React.Component {
     }, 100);
 
     @action private handlePvPreviewCubeSizeUnitChange = _.throttle(unit => {
-        this.showedPvPreviewCubeSizeLimitUnit = unit;
-        // always store value in GB
-        PreferenceStore.Instance.setPreference(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT, MemoryUnit.GB);
+        this.pvPreviewCubeSizeLimitUnit = unit;
     }, 100);
 
     @action private handlePvPreviewCubeSizeChange = _.throttle((size, unit) => {
-        const storedSize = unit === MemoryUnit.GB ? size : size / 1000; // Convert to GB if necessary
+        const storedSize = unit === MemoryUnit.GB ? size : size * ConvertToGB.MB; // Convert to GB if necessary
         PreferenceStore.Instance.setPreference(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT, storedSize);
     }, 100);
 
     // variable for showing preview cube size unit in the dialog
-    @observable private showedPvPreviewCubeSizeLimitUnit = PreferenceStore.Instance.pvPreviewCubeSizeLimitUnit;
+    @observable private pvPreviewCubeSizeLimitUnit = PreferenceStore.Instance.pvPreviewCubeSizeLimitUnit;
 
     private reset = () => {
         const preference = PreferenceStore.Instance;
@@ -835,18 +835,18 @@ export class PreferenceDialogComponent extends React.Component {
                     <div className="pv-preview-cube-size-limit">
                         <SafeNumericInput
                             placeholder="PV preview cube size limit"
-                            min={1e-12}
+                            min={this.pvPreviewCubeSizeMinValue}
                             max={this.pvPreviewCubeSizeMaxValue}
                             value={this.showedPvPreviewCubeSizeLimit}
-                            majorStepSize={this.showedPvPreviewCubeSizeLimitUnit === MemoryUnit.GB ? 2 : 2000}
-                            stepSize={this.showedPvPreviewCubeSizeLimitUnit === MemoryUnit.GB ? 0.1 : 100}
-                            onValueChange={value => this.handlePvPreviewCubeSizeChange(value, this.showedPvPreviewCubeSizeLimitUnit)}
+                            majorStepSize={this.pvPreviewCubeSizeLimitUnit === MemoryUnit.GB ? 2 : 2048}
+                            stepSize={this.pvPreviewCubeSizeLimitUnit === MemoryUnit.GB ? 0.1 : 128}
+                            onValueChange={value => this.handlePvPreviewCubeSizeChange(value, this.pvPreviewCubeSizeLimitUnit)}
                         />
-                        <HTMLSelect value={this.showedPvPreviewCubeSizeLimitUnit} onChange={ev => this.handlePvPreviewCubeSizeUnitChange(ev.target.value)}>
-                            <option key={0} value={"MB"}>
+                        <HTMLSelect value={this.pvPreviewCubeSizeLimitUnit} onChange={ev => this.handlePvPreviewCubeSizeUnitChange(ev.target.value)}>
+                            <option key={0} value={MemoryUnit.MB}>
                                 MB
                             </option>
-                            <option key={1} value={"GB"}>
+                            <option key={1} value={MemoryUnit.GB}>
                                 GB
                             </option>
                         </HTMLSelect>

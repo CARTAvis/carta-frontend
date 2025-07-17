@@ -245,10 +245,9 @@ export class ApiService {
         const cubeSizeKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT;
         if (preferences[cubeSizeUnitKey] === "MB") {
             // Convert MB to GB for consistency
-            preferences[cubeSizeUnitKey] = "GB";
             preferences[cubeSizeKey] = preferences[cubeSizeKey] / 1000;
-            this.setPreference(cubeSizeUnitKey, preferences[cubeSizeUnitKey]);
             this.setPreference(cubeSizeKey, preferences[cubeSizeKey]);
+            this.clearPreferences([cubeSizeUnitKey]); // Remove the deprecated unit key from preferences.json
         }
     };
 

@@ -51,20 +51,6 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         return {value, unit, bitValue: bitValue};
     };
 
-    public static getBitValueFromFormatted = (value: number, unit: string): number => {
-        let bitValue = value;
-        if (unit === MemoryUnit.TB) {
-            bitValue = value * 1e12;
-        } else if (unit === MemoryUnit.GB) {
-            bitValue = value * 1e9;
-        } else if (unit === MemoryUnit.MB) {
-            bitValue = value * 1e6;
-        } else if (unit === MemoryUnit.kB) {
-            bitValue = value * 1e3;
-        }
-        return bitValue;
-    };
-
     @computed get widgetStore(): PvGeneratorWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.pvGeneratorWidgets) {
@@ -157,7 +143,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     }
 
     @computed get isCubeSizeBelowLimit(): boolean {
-        return this.estimatedCubeSize?.bitValue <= PvGeneratorComponent.getBitValueFromFormatted(PreferenceStore.Instance.pvPreviewCubeSizeLimit, PreferenceStore.Instance.pvPreviewCubeSizeLimitUnit);
+        return this.estimatedCubeSize?.bitValue <= PreferenceStore.Instance.pvPreviewCubeSizeLimit * 1e9; // Convert GB to bits
     }
 
     constructor(props: WidgetProps) {
