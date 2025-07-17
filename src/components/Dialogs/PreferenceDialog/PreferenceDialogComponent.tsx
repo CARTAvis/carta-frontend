@@ -824,7 +824,7 @@ export class PreferenceDialogComponent extends React.Component {
                             max={this.pvPreviewCubeSizeMaxValue}
                             value={preference.pvPreviewCubeSizeLimit}
                             majorStepSize={1}
-                            stepSize={1}
+                            stepSize={preference.pvPreviewCubeSizeLimitUnit === MemoryUnit.GB ? 0.1 : 100}
                             onValueChange={value => preference.setPreference(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT, value)}
                         />
                         <HTMLSelect value={preference.pvPreviewCubeSizeLimitUnit} onChange={ev => this.handlePvPreviewCubeSizeUnitChange(ev.target.value)}>
