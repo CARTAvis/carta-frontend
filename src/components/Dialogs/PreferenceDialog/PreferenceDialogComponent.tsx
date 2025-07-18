@@ -35,14 +35,6 @@ enum PreferenceDialogTabs {
     COMPATIBILITY
 }
 
-export enum MemoryUnit {
-    TB = "TB",
-    GB = "GB",
-    MB = "MB",
-    kB = "kB",
-    B = "B"
-}
-
 export enum ConvertToGB {
     TB = 1e3,
     GB = 1,
@@ -63,16 +55,15 @@ export class PreferenceDialogComponent extends React.Component {
     };
 
     @computed get pvPreviewCubeSizeMaxValue(): number {
-        return this.pvPreviewCubeSizeLimitUnit === MemoryUnit.GB ? PV_PREVIEW_CUBE_SIZE_LIMIT : PV_PREVIEW_CUBE_SIZE_LIMIT / ConvertToGB.MB;
+        return PV_PREVIEW_CUBE_SIZE_LIMIT / ConvertToGB[this.pvPreviewCubeSizeLimitUnit];
     }
 
     @computed get pvPreviewCubeSizeMinValue(): number {
-        return this.pvPreviewCubeSizeLimitUnit === MemoryUnit.GB ? 0.1 : 128;
+        return 0.1 / ConvertToGB[this.pvPreviewCubeSizeLimitUnit];
     }
 
     @computed get showedPvPreviewCubeSizeLimit(): number {
-        const preference = PreferenceStore.Instance;
-        return this.pvPreviewCubeSizeLimitUnit === MemoryUnit.GB ? preference.pvPreviewCubeSizeLimit : preference.pvPreviewCubeSizeLimit / ConvertToGB.MB;
+        return PreferenceStore.Instance.pvPreviewCubeSizeLimit / ConvertToGB[this.pvPreviewCubeSizeLimitUnit];
     }
 
     constructor(props: any) {
@@ -110,12 +101,12 @@ export class PreferenceDialogComponent extends React.Component {
     }, 100);
 
     @action private handlePvPreviewCubeSizeChange = _.throttle((size, unit) => {
-        const storedSize = unit === MemoryUnit.GB ? size : size * ConvertToGB.MB; // Convert to GB if necessary
+        const storedSize = size * ConvertToGB[this.pvPreviewCubeSizeLimitUnit]; // Convert to GB if necessary
         PreferenceStore.Instance.setPreference(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT, storedSize);
     }, 100);
 
     // variable for showing preview cube size unit in the dialog
-    @observable private pvPreviewCubeSizeLimitUnit = PreferenceStore.Instance.pvPreviewCubeSizeLimitUnit;
+    @observable private pvPreviewCubeSizeLimitUnit = "GB";
 
     private reset = () => {
         const preference = PreferenceStore.Instance;
@@ -838,15 +829,15 @@ export class PreferenceDialogComponent extends React.Component {
                             min={this.pvPreviewCubeSizeMinValue}
                             max={this.pvPreviewCubeSizeMaxValue}
                             value={this.showedPvPreviewCubeSizeLimit}
-                            majorStepSize={this.pvPreviewCubeSizeLimitUnit === MemoryUnit.GB ? 2 : 2048}
-                            stepSize={this.pvPreviewCubeSizeLimitUnit === MemoryUnit.GB ? 0.1 : 128}
+                            majorStepSize={0.5 / ConvertToGB[this.pvPreviewCubeSizeLimitUnit]}
+                            stepSize={0.1 / ConvertToGB[this.pvPreviewCubeSizeLimitUnit]}
                             onValueChange={value => this.handlePvPreviewCubeSizeChange(value, this.pvPreviewCubeSizeLimitUnit)}
                         />
                         <HTMLSelect value={this.pvPreviewCubeSizeLimitUnit} onChange={ev => this.handlePvPreviewCubeSizeUnitChange(ev.target.value)}>
-                            <option key={0} value={MemoryUnit.MB}>
+                            <option key={0} value={"MB"}>
                                 MB
                             </option>
-                            <option key={1} value={MemoryUnit.GB}>
+                            <option key={1} value={"GB"}>
                                 GB
                             </option>
                         </HTMLSelect>

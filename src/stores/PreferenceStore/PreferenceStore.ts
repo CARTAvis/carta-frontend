@@ -2,7 +2,6 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
-import {MemoryUnit} from "components/Dialogs";
 import {
     CARTA_INFO,
     CompressionQuality,
@@ -262,8 +261,7 @@ const DEFAULTS = {
         lowBandwidthMode: false,
         stopAnimationPlaybackMinutes: 5,
         limitOverlayRedraw: true,
-        pvPreviewCubeSizeLimit: 1,
-        pvPreviewCubeSizeLimitUnit: MemoryUnit.GB
+        pvPreviewCubeSizeLimit: 1
     },
     LOG_EVENT: {
         eventLoggingEnabled: []
@@ -631,10 +629,6 @@ export class PreferenceStore {
 
     @computed get pvPreviewCubeSizeLimit(): number {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT) ?? DEFAULTS.PERFORMANCE.pvPreviewCubeSizeLimit;
-    }
-
-    @computed get pvPreviewCubeSizeLimitUnit(): string {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT) ?? DEFAULTS.PERFORMANCE.pvPreviewCubeSizeLimitUnit;
     }
 
     @computed get isPVAxesOrderReverse(): boolean {

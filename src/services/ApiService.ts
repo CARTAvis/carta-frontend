@@ -2,6 +2,7 @@ import Ajv from "ajv";
 import axios, {AxiosInstance} from "axios";
 import {action, computed, makeObservable, observable} from "mobx";
 
+// import {ConvertToGB} from "components/Dialogs";
 import {AppToaster} from "components/Shared";
 import {LayoutConfig, Snippet, Workspace, WorkspaceListItem} from "models";
 import {AppStore, PreferenceKeys} from "stores";
@@ -214,18 +215,18 @@ export class ApiService {
             // Convert preferences[PreferenceKeys.WCS_OVERLAY_AST_COLOR] from a number in version 1 to a string in version 2
             // default to "auto-blue" if the value is not in the AST_COLORS map
             enum ASTColors {
-                black,
-                white,
-                red,
-                forest,
-                blue,
-                turquoise,
-                violet,
-                gold,
-                gray
+                black = 0,
+                white = 1,
+                red = 2,
+                forest = 3,
+                blue = 4,
+                turquoise = 5,
+                violet = 6,
+                gold = 7,
+                gray = 8
             }
             const astColorKey = PreferenceKeys.WCS_OVERLAY_AST_COLOR;
-            const color = preferences[astColorKey] in ASTColors ? ASTColors[preferences[astColorKey]] : "blue";
+            const color = typeof preferences[astColorKey] === "number" ? (ASTColors[preferences[astColorKey]] ?? "blue") : "blue";
             preferences[astColorKey] = `auto-${color}`;
             this.setPreference(astColorKey, preferences[astColorKey]);
 
@@ -243,12 +244,25 @@ export class ApiService {
         // This is to ensure consistency in the unit used for the preview cube size limit
         const cubeSizeUnitKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT;
         const cubeSizeKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT;
-        if (preferences[cubeSizeUnitKey] === "MB") {
-            // Convert MB to GB for consistency
-            preferences[cubeSizeKey] = preferences[cubeSizeKey] / 1000;
-            this.setPreference(cubeSizeKey, preferences[cubeSizeKey]);
-            this.clearPreferences([cubeSizeUnitKey]); // Remove the deprecated unit key from preferences.json
+
+        // const memoryUnits = ["TB", "GB", "MB", "kB", "B"];
+        enum ConvertToGB {
+            TB = 1e3,
+            GB = 1,
+            MB = 1e-3,
+            kB = 1e-6,
+            B = 1e-9
         }
+        if (ConvertToGB[preferences[cubeSizeUnitKey]] && typeof preferences[cubeSizeKey] === "number") {
+            let gbSize = preferences[cubeSizeKey] * ConvertToGB[preferences[cubeSizeUnitKey] as string];
+            if (gbSize !== preferences[cubeSizeKey]) {
+                preferences[cubeSizeKey] = gbSize;
+                this.setPreference(cubeSizeKey, preferences[cubeSizeKey]);
+            }
+        }
+
+        delete preferences[cubeSizeUnitKey];
+        this.clearPreferences([cubeSizeUnitKey]);
     };
 
     public setPreference = async (key: string, value: any) => {
