@@ -2,7 +2,6 @@ import Ajv from "ajv";
 import axios, {AxiosInstance} from "axios";
 import {action, computed, makeObservable, observable} from "mobx";
 
-// import {ConvertToGB} from "components/Dialogs";
 import {AppToaster} from "components/Shared";
 import {LayoutConfig, Snippet, Workspace, WorkspaceListItem} from "models";
 import {AppStore, PreferenceKeys} from "stores";
@@ -245,7 +244,6 @@ export class ApiService {
         const cubeSizeUnitKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT;
         const cubeSizeKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT;
 
-        // const memoryUnits = ["TB", "GB", "MB", "kB", "B"];
         enum ConvertToGB {
             TB = 1e3,
             GB = 1,
