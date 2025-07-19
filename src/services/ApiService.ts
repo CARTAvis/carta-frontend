@@ -176,7 +176,7 @@ export class ApiService {
                 }
             } catch (err) {
                 console.log(err);
-                AppStore.Instance.alertStore.showAlert(`Failed to load preferences: preferences.json might contain malformed values and are reset to defaults. Please check the backup file preferences.json.bak.`);
+                AppStore.Instance.alertStore.showAlert(`Failed to load preferences: preferences.json might be malformed and reset to default. Please check the backup file preferences.json.bak.`);
                 return undefined;
             }
         } else {
