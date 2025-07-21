@@ -203,7 +203,7 @@ export class ApiService {
 
                 if (deletedKeys.length > 0) {
                     // Show an alert to the user about the deleted preferences
-                    AppStore.Instance.alertStore.showAlert(`Deleted invalid preferences: ${deletedKeys.join(", ")}`);
+                    AppStore.Instance.alertStore.showAlert(`Invalid preferences reset to defaults: ${deletedKeys.join(", ")}`);
                 }
             }
         }
@@ -254,11 +254,11 @@ export class ApiService {
                 this.setPreference(cubeSizeKey, preferences[cubeSizeKey]);
             }
         } else if (cubeSizeUnitKey in preferences) {
-            delete preferences[cubeSizeUnitKey];
-            this.clearPreferences([cubeSizeUnitKey]);
             // set an invalid value to cubeSizeKey to be removed by the validator
             preferences[cubeSizeKey] = -1;
         }
+        delete preferences[cubeSizeUnitKey];
+        this.clearPreferences([cubeSizeUnitKey]);
     };
 
     public setPreference = async (key: string, value: any) => {
