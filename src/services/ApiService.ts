@@ -3,7 +3,7 @@ import axios, {AxiosInstance} from "axios";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {AppToaster} from "components/Shared";
-import {LayoutConfig, Snippet, Workspace, WorkspaceListItem} from "models";
+import {ConvertToGB, LayoutConfig, Snippet, Workspace, WorkspaceListItem} from "models";
 import {AppStore, PreferenceKeys} from "stores";
 
 const preferencesSchema = require("carta-schemas/preferences_schema_2.json");
@@ -185,6 +185,7 @@ export class ApiService {
 
         if (preferences) {
             this.upgradePreferences(preferences);
+            console.log(preferences);
             const valid = ApiService.PreferenceValidator(preferences);
             let deletedKeys: string[] = [];
             if (!valid) {
@@ -245,23 +246,19 @@ export class ApiService {
         const cubeSizeUnitKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT;
         const cubeSizeKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT;
 
-        enum ConvertToGB {
-            TB = 1e3,
-            GB = 1,
-            MB = 1e-3,
-            kB = 1e-6,
-            B = 1e-9
-        }
-        if (ConvertToGB[preferences[cubeSizeUnitKey]] && typeof preferences[cubeSizeKey] === "number") {
-            let gbSize = preferences[cubeSizeKey] * ConvertToGB[preferences[cubeSizeUnitKey] as string];
+        const conversionFactor = ConvertToGB[preferences[cubeSizeUnitKey]];
+        if (typeof conversionFactor === "number") {
+            let gbSize = preferences[cubeSizeKey] * conversionFactor;
             if (gbSize !== preferences[cubeSizeKey]) {
                 preferences[cubeSizeKey] = gbSize;
                 this.setPreference(cubeSizeKey, preferences[cubeSizeKey]);
             }
+        } else if (cubeSizeUnitKey in preferences) {
+            delete preferences[cubeSizeUnitKey];
+            this.clearPreferences([cubeSizeUnitKey]);
+            // set an invalid value to cubeSizeKey to be removed by the validator
+            preferences[cubeSizeKey] = -1;
         }
-
-        delete preferences[cubeSizeUnitKey];
-        this.clearPreferences([cubeSizeUnitKey]);
     };
 
     public setPreference = async (key: string, value: any) => {
