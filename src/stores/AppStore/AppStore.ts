@@ -2670,16 +2670,16 @@ export class AppStore {
 
                 for (const {imageListIndex, selectedFrameId, alpha} of workspace.colorBlendingImages) {
                     const colorBlending = this.imageViewConfigStore.createColorBlending();
-                    while (colorBlending.selectedFrames.length) {
+                    while (colorBlending?.selectedFrames.length) {
                         colorBlending.deleteSelectedFrame(0);
                     }
-                    colorBlending.setAlpha(0, alpha[0]);
+                    colorBlending?.setAlpha(0, alpha[0]);
 
                     for (let i = 0; i < selectedFrameId.length; i++) {
                         const frame = this.frameMap.get(frameIdMap.get(selectedFrameId[i]));
                         if (frame) {
-                            colorBlending.addSelectedFrame(frame);
-                            colorBlending.setAlpha(colorBlending.selectedFrames.length, alpha[i + 1]);
+                            colorBlending?.addSelectedFrame(frame);
+                            colorBlending?.setAlpha(colorBlending.selectedFrames.length, alpha[i + 1]);
                         }
                     }
 
