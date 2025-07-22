@@ -62,7 +62,7 @@ export class AnimatorStore {
 
         const appStore = AppStore.Instance;
         const preferenceStore = PreferenceStore.Instance;
-        const frame = appStore.activeFrame;
+        const activeFrame = appStore.activeFrame;
 
         if (this.animationMode === AnimationMode.FRAME) {
             if (this.animateHandle !== undefined) {
@@ -74,24 +74,29 @@ export class AnimatorStore {
             return;
         }
 
-        const animationFrames = this.genAnimationFrames(frame);
+        if (!activeFrame) {
+            console.warn("No active frame to start animation.");
+            return;
+        }
+
+        const animationFrames = this.genAnimationFrames(activeFrame);
         if (!animationFrames) {
             return;
         }
         // Calculate new required frame view (cropped to file size)
-        const reqView = frame.requiredFrameView;
+        const reqView = activeFrame.requiredFrameView;
 
         const croppedReq: FrameView = {
             xMin: Math.max(-0.5, reqView.xMin),
-            xMax: Math.min(frame.frameInfo.fileInfoExtended.width - 0.5, reqView.xMax),
+            xMax: Math.min(activeFrame.frameInfo.fileInfoExtended.width - 0.5, reqView.xMax),
             yMin: Math.max(-0.5, reqView.yMin),
-            yMax: Math.min(frame.frameInfo.fileInfoExtended.height - 0.5, reqView.yMax),
+            yMax: Math.min(activeFrame.frameInfo.fileInfoExtended.height - 0.5, reqView.yMax),
             mip: reqView.mip
         };
-        const imageSize: Point2D = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
+        const imageSize: Point2D = {x: activeFrame.frameInfo.fileInfoExtended.width, y: activeFrame.frameInfo.fileInfoExtended.height};
         const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256}).map(tile => tile.encode());
         const requiredTiles: CARTA.IAddRequiredTiles = {
-            fileId: frame.frameInfo.fileId,
+            fileId: activeFrame.frameInfo.fileId,
             tiles: tiles,
             compressionType: CARTA.CompressionType.ZFP,
             compressionQuality: preferenceStore.animationCompressionQuality
@@ -99,15 +104,15 @@ export class AnimatorStore {
 
         // Calculate matched frames for the animation range
         const matchedFrames = new Map<number, CARTA.IMatchedFrameList>();
-        for (const sibling of frame.spectralSiblings) {
+        for (const sibling of activeFrame.spectralSiblings) {
             const firstChannel = animationFrames.firstFrame.channel ?? 0;
             const lastChannel = animationFrames.lastFrame.channel ?? 0;
-            const frameNumbers = getTransformedChannelList(frame.wcsInfo3D, sibling.wcsInfo3D, appStore.spectralMatchingType, firstChannel, lastChannel);
+            const frameNumbers = getTransformedChannelList(activeFrame.wcsInfo3D, sibling.wcsInfo3D, appStore.spectralMatchingType, firstChannel, lastChannel);
             matchedFrames.set(sibling.frameInfo.fileId, {frameNumbers});
         }
 
         const animationMessage: CARTA.IStartAnimation = {
-            fileId: frame.frameInfo.fileId,
+            fileId: activeFrame.frameInfo.fileId,
             startFrame: animationFrames.startFrame,
             firstFrame: animationFrames.firstFrame,
             lastFrame: animationFrames.lastFrame,
@@ -117,8 +122,8 @@ export class AnimatorStore {
             reverse: this.playMode === PlayMode.BOUNCING,
             frameRate: this.frameRate,
             matchedFrames: mapToObject(matchedFrames),
-            stokesIndices: frame.polarizations.map((polarization, i) => {
-                return i < frame.frameInfo.fileInfoExtended.stokes && i >= 0 ? i : polarization;
+            stokesIndices: activeFrame.polarizations.map((polarization, i) => {
+                return i < activeFrame.frameInfo.fileInfoExtended.stokes && i >= 0 ? i : polarization;
             })
         };
 

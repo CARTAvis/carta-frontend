@@ -2942,7 +2942,7 @@ export class AppStore {
 
     /** The active frame. If the active image is a loaded image or a PV preview, returns the corresponding frame.
      * If the active image is a color blended image, returns the base frame. */
-    @computed get activeFrame(): FrameStore {
+    @computed get activeFrame(): FrameStore | null {
         if (this.activeImage) {
             const type = this.activeImage.type;
 
