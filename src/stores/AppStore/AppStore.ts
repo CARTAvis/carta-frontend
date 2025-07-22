@@ -893,7 +893,7 @@ export class AppStore {
      * @param confirmClose - Flag indicating whether to display a confirmation dialog before closing.
      */
     @action closeCurrentFile = (confirmClose: boolean = false) => {
-        if (!this.appendFileDisabled && this.activeImage?.type !== ImageType.PV_PREVIEW) {
+        if (this.activeImage && !this.appendFileDisabled && this.activeImage?.type !== ImageType.PV_PREVIEW) {
             this.closeImage(this.activeImage, confirmClose);
         }
     };
@@ -2928,7 +2928,7 @@ export class AppStore {
      * Sets the active image.
      * @param activeImage - The image to set as the active image.
      */
-    @action setActiveImage = (activeImage: ImageItem) => {
+    @action setActiveImage = (activeImage: ImageItem | null) => {
         this.activeImage = activeImage;
     };
 
@@ -2943,12 +2943,14 @@ export class AppStore {
     /** The active frame. If the active image is a loaded image or a PV preview, returns the corresponding frame.
      * If the active image is a color blended image, returns the base frame. */
     @computed get activeFrame(): FrameStore {
-        const type = this.activeImage?.type;
+        if (this.activeImage) {
+            const type = this.activeImage.type;
 
-        if (type === ImageType.FRAME || type === ImageType.PV_PREVIEW) {
-            return this.activeImage.store;
-        } else if (type === ImageType.COLOR_BLENDING) {
-            return this.activeImage.store.baseFrame;
+            if (type === ImageType.FRAME || type === ImageType.PV_PREVIEW) {
+                return this.activeImage.store;
+            } else if (type === ImageType.COLOR_BLENDING) {
+                return this.activeImage.store.baseFrame;
+            }
         }
 
         return null;
