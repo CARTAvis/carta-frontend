@@ -2127,7 +2127,7 @@ export class AppStore {
         });
 
         // listen devicePixelRatio
-        let remove = null;
+        let remove: (() => void) | null = null;
         const updatePixelRatio = () => {
             if (remove != null) {
                 remove();
