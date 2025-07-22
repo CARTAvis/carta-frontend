@@ -91,7 +91,7 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
         const channelTickPre = numChannels - 1 - 4 * channelStep < channelStep / 2 ? [0, channelStep, 2 * channelStep, 3 * channelStep, numChannels - 1] : [0, channelStep, 2 * channelStep, 3 * channelStep, 4 * channelStep, numChannels - 1];
         const channelTick = numChannels > 10 ? channelTickPre : Array.from(Array(numChannels).keys());
 
-        const channelMapLabelVisible = channelMapSettings.showChannelString || channelMapSettings.showSpectralString || channelMapSettings.showVelocityString;
+        const channelMapLabelVisible = channelMapSettings.showChannelString || channelMapSettings.showFrequencyString || channelMapSettings.showVelocityString;
 
         const channelMapPanel = (
             <div className="channel-map-control-container">
@@ -146,13 +146,13 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
                         <Switch checked={channelMapSettings.showChannelString} onChange={ev => channelMapSettings.setShowChannelString(ev.currentTarget.checked)} disabled={!channelMapSettings.channelMapEnabled} />
                     </div>
                 </FormGroup>
-                <FormGroup className="channel-map-control-label" inline={true} label="Show spectral string" disabled={!channelMapSettings.channelMapEnabled}>
+                <FormGroup className="channel-map-control-label" inline={true} label="Show frequency string" disabled={!channelMapSettings.channelMapEnabled}>
                     <div style={{display: "flex", alignItems: "center"}}>
-                        <Switch checked={channelMapSettings.showSpectralString} onChange={ev => channelMapSettings.setShowSpectralString(ev.currentTarget.checked)} disabled={!channelMapSettings.channelMapEnabled} />
-                        {channelMapSettings.showSpectralString && (
+                        <Switch checked={channelMapSettings.showFrequencyString} onChange={ev => channelMapSettings.setShowFrequencyString(ev.currentTarget.checked)} disabled={!channelMapSettings.channelMapEnabled} />
+                        {channelMapSettings.showFrequencyString && (
                             <Checkbox
-                                checked={channelMapSettings.showSpectralStringUnit}
-                                onChange={(ev: React.ChangeEvent<HTMLInputElement>) => channelMapSettings.setShowSpectralStringUnit(ev.currentTarget.checked)}
+                                checked={channelMapSettings.showFrequencyStringUnit}
+                                onChange={(ev: React.ChangeEvent<HTMLInputElement>) => channelMapSettings.setShowFrequencyStringUnit(ev.currentTarget.checked)}
                                 label="Show unit"
                                 style={{marginLeft: "10px"}}
                                 disabled={!channelMapSettings.channelMapEnabled}
