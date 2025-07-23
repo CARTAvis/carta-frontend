@@ -399,7 +399,7 @@ export class AppStore {
         if (!this.activeFrame) {
             return -1;
         }
-        return this.frames.findIndex(frame => frame.frameInfo.fileId === this.activeFrame.frameInfo.fileId);
+        return this.frames.findIndex(frame => frame.frameInfo.fileId === this.activeFrame?.frameInfo.fileId);
     }
 
     @computed get frameNum(): number {
@@ -982,7 +982,7 @@ export class AppStore {
                 const firstFrame = this.frames.length ? this.frames[0] : null;
 
                 // Clean up if frame is active
-                if (this.activeFrame.frameInfo.fileId === fileId) {
+                if (this.activeFrame?.frameInfo.fileId === fileId) {
                     const firstImage = this.imageViewConfigStore.imageNum ? this.imageViewConfigStore.getImage(0) : null;
                     this.setActiveImage(firstImage);
                 }
@@ -1366,7 +1366,7 @@ export class AppStore {
      * Deletes all regions including annotations.
      */
     @action deleteAllRegions = () => {
-        this.activeFrame.regionSet.regionMap.forEach(x => {
+        this.activeFrame?.regionSet.regionMap.forEach(x => {
             if (x.regionId !== CURSOR_REGION_ID) {
                 this.deleteRegion(x);
             }
@@ -1378,7 +1378,7 @@ export class AppStore {
      * Deletes all annotations.
      */
     @action deleteAllAnnotations = () => {
-        this.activeFrame.regionSet.regionMap.forEach(x => {
+        this.activeFrame?.regionSet.regionMap.forEach(x => {
             if (x.regionId !== CURSOR_REGION_ID && x.isAnnotation) {
                 this.deleteRegion(x);
             }
@@ -1389,7 +1389,7 @@ export class AppStore {
      * Deletes all regular regions.
      */
     @action deleteAllRegularRegions = () => {
-        this.activeFrame.regionSet.regionMap.forEach(x => {
+        this.activeFrame?.regionSet.regionMap.forEach(x => {
             if (x.regionId !== CURSOR_REGION_ID && !x.isAnnotation) {
                 this.deleteRegion(x);
             }
@@ -3252,8 +3252,10 @@ export class AppStore {
     };
 
     @action setMatchingEnabled = (spatial: boolean, spectral: boolean) => {
-        this.setSpatialMatchingEnabled(this.activeFrame, spatial);
-        this.setSpectralMatchingEnabled(this.activeFrame, spectral);
+        if (this.activeFrame) {
+            this.setSpatialMatchingEnabled(this.activeFrame, spatial);
+            this.setSpectralMatchingEnabled(this.activeFrame, spectral);
+        }
     };
 
     @action toggleMomentToMatch = () => {
@@ -3271,16 +3273,18 @@ export class AppStore {
             this.setImageRatio(imageRatio);
             this.waitForImageData().then(() => {
                 const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : this.darkTheme ? "rgba(0, 0, 0, 1)" : Colors.WHITE;
-                const composedCanvas = getImageViewCanvas(this.activeFrame.overlayStore.padding, this.overlaySettings.colorbar.position, backgroundColor);
-                if (composedCanvas) {
-                    composedCanvas.toBlob(blob => {
-                        const link = document.createElement("a") as HTMLAnchorElement;
-                        const joinedNames = this.imageViewConfigStore.visibleFrames.map(f => f.filename).join("-");
-                        // Trim filename before timestamp to 200 characters to prevent browser errors
-                        link.download = `${joinedNames}-image`.substring(0, 200) + `-${getTimestamp()}.png`;
-                        link.href = URL.createObjectURL(blob);
-                        link.dispatchEvent(new MouseEvent("click"));
-                    }, "image/png");
+                if (this.activeFrame) {
+                    const composedCanvas = getImageViewCanvas(this.activeFrame.overlayStore.padding, this.overlaySettings.colorbar.position, backgroundColor);
+                    if (composedCanvas) {
+                        composedCanvas.toBlob(blob => {
+                            const link = document.createElement("a") as HTMLAnchorElement;
+                            const joinedNames = this.imageViewConfigStore.visibleFrames.map(f => f.filename).join("-");
+                            // Trim filename before timestamp to 200 characters to prevent browser errors
+                            link.download = `${joinedNames}-image`.substring(0, 200) + `-${getTimestamp()}.png`;
+                            link.href = URL.createObjectURL(blob);
+                            link.dispatchEvent(new MouseEvent("click"));
+                        }, "image/png");
+                    }
                 }
                 this.setIsExportingImage(false);
             });

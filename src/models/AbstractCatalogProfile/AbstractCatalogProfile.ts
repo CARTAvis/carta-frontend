@@ -400,14 +400,14 @@ export abstract class AbstractCatalogProfileStore {
                 const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(this.catalogFileId));
                 const activeFrame = appStore.activeFrame;
                 const selectedDataLength = selectedX.length;
-                let positionImageSpace = { x: selectedX[0], y: selectedY[0] };
+                let positionImageSpace = {x: selectedX[0], y: selectedY[0]};
                 if (activeFrame) {
                     if (selectedDataLength > 1) {
                         const minMaxX = minMaxArray(selectedX);
                         const minMaxY = minMaxArray(selectedY);
                         const width = minMaxX.maxVal - minMaxX.minVal;
                         const height = minMaxY.maxVal - minMaxY.minVal;
-                        positionImageSpace = { x: width / 2 + minMaxX.minVal, y: height / 2 + minMaxY.minVal };
+                        positionImageSpace = {x: width / 2 + minMaxX.minVal, y: height / 2 + minMaxY.minVal};
                         const zoomLevel = Math.min(activeFrame.renderWidth / width, activeFrame.renderHeight / height);
                         activeFrame.setZoom(zoomLevel);
                     }
