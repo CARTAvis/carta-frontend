@@ -2051,7 +2051,7 @@ export class AppStore {
         // Update cursor profiles
         autorun(() => {
             const pos = this.hoveredFrame?.cursorInfo?.posImageSpace;
-            if (pos) {
+            if (this.hoveredFrame && pos) {
                 if (this.preferenceStore.lowBandwidthMode) {
                     throttledSetCursorLowBandwidth(this.hoveredFrame.frameInfo.fileId, pos);
                 } else if (this.hoveredFrame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.ROTATED_DATASET) {
