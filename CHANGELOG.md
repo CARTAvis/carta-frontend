@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [5.0.3]
 
 ### Fixed
-* Fixed flux density unit display in spectral profile for images with brightness temperature (K) units ([#2572](https://github.com/CARTAvis/carta-frontend/issues/2572)).
+* Fixed flux density unit display in spectral profile for images with brightness temperature (K) ([#2572](https://github.com/CARTAvis/carta-frontend/issues/2572)).
 
 ## [5.0.2]
 
