@@ -182,11 +182,11 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         this.previewRegionId = regionId;
     };
 
-    @action setPreviewFrame = (frame: FrameStore) => {
+    @action setPreviewFrame = (frame: FrameStore | null) => {
         this.previewFrame = frame;
     };
 
-    @action setPvCutRegionId = (regionId: number) => {
+    @action setPvCutRegionId = (regionId: number | null) => {
         this.pvCutRegionId = regionId;
     };
 

@@ -629,7 +629,7 @@ export class AppStore {
         return true;
     };
 
-    @action addPreviewFrame = (ack: any, directory: string, hdu: string, sourceFileId: number, pvGeneratorWidgetStore: PvGeneratorWidgetStore) => {
+    @action addPreviewFrame = (ack: any, directory: string, hdu: string, sourceFileId: number | undefined, pvGeneratorWidgetStore: PvGeneratorWidgetStore) => {
         if (!ack) {
             return undefined;
         }
@@ -1511,17 +1511,19 @@ export class AppStore {
             this.restartTaskProgress();
             if (!ack.cancel && ack.previewData) {
                 const pvGeneratorWidgetStore = WidgetsStore.Instance.pvGeneratorWidgets.get(id);
-                if (pvGeneratorWidgetStore.previewFrame) {
-                    pvGeneratorWidgetStore.previewFrame.updatePreviewDataGenerator = pvGeneratorWidgetStore.previewFrame.updatePreviewData(ack.previewData);
-                    pvGeneratorWidgetStore.setPvCutRegionId(message.regionId);
-                    // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
-                    pvGeneratorWidgetStore.previewFrame.updatePreviewDataGenerator.next();
-                } else {
-                    const newFrame = this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory, "", message.fileId, pvGeneratorWidgetStore);
-                    pvGeneratorWidgetStore.setPreviewFrame(newFrame);
-                    pvGeneratorWidgetStore.setPvCutRegionId(message.regionId);
-                    WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WIDGET_CONFIG.type);
-                    pvGeneratorWidgetStore.onResizePreviewWidget(PvGeneratorComponent.WIDGET_CONFIG.defaultWidth, PvGeneratorComponent.WIDGET_CONFIG.defaultHeight);
+                if (pvGeneratorWidgetStore) {
+                    if (pvGeneratorWidgetStore.previewFrame) {
+                        pvGeneratorWidgetStore.previewFrame.updatePreviewDataGenerator = pvGeneratorWidgetStore.previewFrame.updatePreviewData(ack.previewData);
+                        pvGeneratorWidgetStore.setPvCutRegionId(message.regionId ?? null);
+                        // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
+                        pvGeneratorWidgetStore.previewFrame.updatePreviewDataGenerator.next();
+                    } else {
+                        const newFrame = this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory ?? "$BASE", "", message.fileId ?? undefined, pvGeneratorWidgetStore);
+                        pvGeneratorWidgetStore.setPreviewFrame(newFrame ?? null);
+                        pvGeneratorWidgetStore.setPvCutRegionId(message.regionId ?? null);
+                        WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WIDGET_CONFIG.type);
+                        pvGeneratorWidgetStore.onResizePreviewWidget(PvGeneratorComponent.WIDGET_CONFIG.defaultWidth, PvGeneratorComponent.WIDGET_CONFIG.defaultHeight);
+                    }
                 }
             } else {
                 AppToaster.show({icon: "warning-sign", message: "Load preview failed.", intent: "danger", timeout: 3000});
