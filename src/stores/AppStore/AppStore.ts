@@ -2573,7 +2573,7 @@ export class AppStore {
 
             if (workspace.files) {
                 for (const fileInfo of workspace.files) {
-                    const frame: FrameStore = yield this.appendFile(fileInfo.directory, fileInfo.filename, fileInfo.hdu, false, false);
+                    const frame: FrameStore = yield this.appendFile(fileInfo.directory ?? "", fileInfo.filename ?? "", fileInfo.hdu, false, false);
                     if (frame) {
                         frameIdMap.set(fileInfo.id, frame.frameInfo.fileId);
 
@@ -2598,7 +2598,11 @@ export class AppStore {
                         continue;
                     }
 
-                    const frame = this.frameMap.get(frameIdMap.get(fileInfo.id));
+                    const frameId = frameIdMap.get(fileInfo.id);
+                    if (frameId === undefined) {
+                        continue;
+                    }
+                    const frame = this.frameMap.get(frameId);
                     if (!frame) {
                         continue;
                     }
@@ -2642,16 +2646,17 @@ export class AppStore {
 
                     // Apply regions if spatial matching isn't enabled
                     if (!frame.spatialReference && fileInfo.regionsSet?.regions) {
+                        const preferenceStore = AppStore.Instance.preferenceStore;
                         for (const regionInfo of fileInfo.regionsSet.regions) {
                             const region = frame.regionSet.addExistingRegion(
                                 regionInfo.points,
                                 regionInfo.rotation,
                                 regionInfo.type,
                                 regionInfo.id,
-                                regionInfo.name,
-                                regionInfo.color,
-                                regionInfo.lineWidth,
-                                regionInfo.dashes,
+                                regionInfo.name ?? "",
+                                regionInfo.color ?? preferenceStore.regionColor,
+                                regionInfo.lineWidth ?? preferenceStore.regionLineWidth,
+                                regionInfo.dashes ?? [preferenceStore.regionDashLength],
                                 false,
                                 regionInfo.annotationStyles
                             );
@@ -2678,7 +2683,11 @@ export class AppStore {
                     colorBlending?.setAlpha(0, alpha[0]);
 
                     for (let i = 0; i < selectedFrameId.length; i++) {
-                        const frame = this.frameMap.get(frameIdMap.get(selectedFrameId[i]));
+                        const frameId = frameIdMap.get(selectedFrameId[i]);
+                        if (frameId === undefined) {
+                            continue;
+                        }
+                        const frame = this.frameMap.get(frameId);
                         if (frame) {
                             colorBlending?.addSelectedFrame(frame);
                             colorBlending?.setAlpha(colorBlending.selectedFrames.length, alpha[i + 1]);
@@ -3012,7 +3021,7 @@ export class AppStore {
         return this.frames?.findIndex(frame => frame?.frameInfo.fileId === fileId);
     }
 
-    @computed get selectedRegion(): RegionStore | null{
+    @computed get selectedRegion(): RegionStore | null {
         if (this.activeFrame && this.activeFrame.regionSet && this.activeFrame.regionSet.selectedRegion && this.activeFrame.regionSet.selectedRegion.regionId !== 0) {
             return this.activeFrame.regionSet.selectedRegion;
         }
