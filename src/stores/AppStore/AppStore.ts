@@ -2431,7 +2431,7 @@ export class AppStore {
                 level: errorData.severity,
                 message: errorData.message,
                 tags: errorData.tags.concat(["server-sent"]),
-                title: null
+                title: ""
             };
             this.logStore.addLog(logEntry);
         }
@@ -2711,11 +2711,11 @@ export class AppStore {
             workspaceVersion: 0,
             frontendVersion: CARTA_INFO.version,
             description: "Workspace exported from CARTA",
-            files: [],
-            colorBlendingImages: [],
-            references: {},
             date: Date.now() / 1000
         };
+        workspace.files = [];
+        workspace.colorBlendingImages = [];
+        workspace.references = {};
 
         const thumbnail = yield exportScreenshot();
         if (thumbnail) {
@@ -2744,16 +2744,17 @@ export class AppStore {
                 id: frame.frameInfo.fileId,
                 directory: frame.frameInfo.directory,
                 filename: frame.filename,
-                hdu: frame.frameInfo.hdu,
-                references: {}
+                hdu: frame.frameInfo.hdu
             };
+            workspaceFile.references = {};
+
             if (frame.spatialReference) {
                 workspaceFile.references.spatial = frame.spatialReference.frameInfo.fileId;
             } else if (frame.regionSet?.regions.length) {
                 workspaceFile.regionsSet = {
-                    regions: [],
                     selectedRegion: frame.regionSet.selectedRegion?.regionId
                 };
+                workspaceFile.regionsSet.regions = [];
                 for (const region of frame.regionSet.regions) {
                     // Skip cursor region
                     if (region.regionId === 0) {
@@ -3011,7 +3012,7 @@ export class AppStore {
         return this.frames?.findIndex(frame => frame?.frameInfo.fileId === fileId);
     }
 
-    @computed get selectedRegion(): RegionStore {
+    @computed get selectedRegion(): RegionStore | null{
         if (this.activeFrame && this.activeFrame.regionSet && this.activeFrame.regionSet.selectedRegion && this.activeFrame.regionSet.selectedRegion.regionId !== 0) {
             return this.activeFrame.regionSet.selectedRegion;
         }
