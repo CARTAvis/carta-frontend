@@ -260,30 +260,33 @@ export class AppStore {
 
         // Load workspace first if it exists
         if (hasWorkspaceParam) {
-            try {
-                yield this.loadWorkspace(workspaceKeyParam ?? workspaceNameParam, !!workspaceKeyParam);
-            } catch (err) {
-                console.error(err);
+            const workspaceName = workspaceKeyParam ?? workspaceNameParam;
+            if (workspaceName) {
+                try {
+                    yield this.loadWorkspace(workspaceName, !!workspaceKeyParam);
+                } catch (err) {
+                    console.error(err);
+                }
             }
         }
 
-        let fileList: string[];
+        let fileList: string[] = [];
         if (url.searchParams.has("files")) {
-            let filesString = url.searchParams.get("files");
+            let filesString = url.searchParams.get("files") ?? "";
             // Strip the padding [] if it exists
             if (filesString.startsWith("[") && filesString.endsWith("]")) {
                 filesString = filesString.slice(1, -1);
             }
             fileList = filesString.split(",")?.map(file => file.trim());
         } else if (url.searchParams.has("file")) {
-            fileList = [url.searchParams.get("file")];
+            fileList = [url.searchParams.get("file") ?? ""];
         }
 
         try {
             if (fileList?.length) {
                 this.setLoadingMultipleFiles(true);
                 for (const file of fileList) {
-                    yield this.loadFile(folderSearchParam, file, "", false);
+                    yield this.loadFile(folderSearchParam ?? "", file, "", false);
                 }
                 this.setLoadingMultipleFiles(false);
             } else if (this.preferenceStore.autoLaunch && !hasWorkspaceParam) {
@@ -2485,7 +2488,7 @@ export class AppStore {
                 }
             }
 
-            let contourSettings: CARTA.ISetContourParameters;
+            let contourSettings: CARTA.ISetContourParameters = {};
             if (frame.contourConfig.enabled) {
                 contourSettings = {
                     fileId: frame.frameInfo.fileId,
