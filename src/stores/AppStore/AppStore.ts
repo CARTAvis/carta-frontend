@@ -1437,9 +1437,12 @@ export class AppStore {
             const ack = yield this.backendService.requestMoment(message);
             if (!ack.cancel && ack.openFileAcks) {
                 for (const openFileAck of ack.openFileAcks) {
-                    if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), this.fileBrowserStore.startingDirectory, false, "", true)) {
+                    if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), this.fileBrowserStore.startingDirectory ?? "", false, "", true)) {
                         this.fileCounter++;
                         const newMomentImage = this.frames.find(f => f.frameInfo.fileId === openFileAck.fileId);
+                        if (!newMomentImage) {
+                            continue;
+                        }
                         frame.addMomentImage(newMomentImage);
                         if (frame === this.spatialReference && this.momentToMatch) {
                             newMomentImage.setSpatialReference(this.spatialReference);
@@ -1485,9 +1488,12 @@ export class AppStore {
         try {
             const ack = yield this.backendService.requestPV(message);
             if (!ack.cancel && ack.openFileAck) {
-                if (this.addFrame(CARTA.OpenFileAck.create(ack.openFileAck), this.fileBrowserStore.startingDirectory, false, "", true)) {
+                if (this.addFrame(CARTA.OpenFileAck.create(ack.openFileAck), this.fileBrowserStore.startingDirectory ?? "", false, "", true)) {
                     this.fileCounter++;
-                    frame.addPvImage(this.frames.find(f => f.frameInfo.fileId === ack.openFileAck.fileId));
+                    const newPVImage = this.frames.find(f => f.frameInfo.fileId === ack.openFileAck.fileId);
+                    if (newPVImage) {
+                        frame.addPvImage(newPVImage);
+                    }
                 } else {
                     AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
                 }
@@ -1547,7 +1553,7 @@ export class AppStore {
         const frame = this.getFrame(fileId);
         if (frame && frame.requestingPVProgress < 1.0) {
             this.backendService.cancelRequestingPV(fileId);
-            if (this.backendService.stopPvPreview(previewId)) {
+            if (previewId && this.backendService.stopPvPreview(previewId)) {
                 frame.resetPvRequestState();
             }
         }
@@ -1757,7 +1763,7 @@ export class AppStore {
                 const [tiles, midPointTileCoords] = frame.requiredTiles;
                 // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
                 const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
-                const compressionQuality = bunitVariant.includes(frame.headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
+                const compressionQuality = frame.headerUnit && bunitVariant.includes(frame.headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
                 this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, compressionQuality, true);
             } else {
                 this.tileService.updateHiddenFileChannels(frame.frameInfo.fileId, frame.channel, frame.stokes);
