@@ -323,7 +323,7 @@ export class AppStore {
         this.taskCurrentTime = performance.now();
     };
 
-    @computed get estimatedTaskRemainingTime(): number {
+    @computed get estimatedTaskRemainingTime(): number | undefined {
         if (this.taskProgress <= 0 || this.taskProgress >= 1) {
             return undefined;
         }
@@ -394,7 +394,7 @@ export class AppStore {
     }
 
     // Frame actions
-    @computed get activeFrameFileId(): number {
+    @computed get activeFrameFileId(): number | undefined {
         return this.activeFrame?.frameInfo.fileId;
     }
 
