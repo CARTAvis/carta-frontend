@@ -744,7 +744,7 @@ export class AppStore {
             if (!ack.success || !ack.openFileAck) {
                 AppToaster.show({icon: "warning-sign", message: `HiPS data query failed: ${ack.message}`, intent: "danger", timeout: 3000});
             }
-            if (!this.addFrame(ack.openFileAck, "", false, "", true, true, false)) {
+            if (ack.openFileAck && !this.addFrame(ack.openFileAck, "", false, "", true, true, false)) {
                 AppToaster.show({icon: "warning-sign", message: "HiPS data query failed: Load file failed.", intent: "danger", timeout: 3000});
             }
             this.dialogStore.hideDialog(DialogId.OnlineDataQuery);
@@ -753,7 +753,7 @@ export class AppStore {
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
             // Ensure loading finishes before next file is added
             yield this.delay(10);
-            return this.getFrame(ack.openFileAck.fileId);
+            return ack.openFileAck?.fileId && this.getFrame(ack.openFileAck.fileId);
         } catch (err) {
             this.alertStore.showAlert(`HiPS data query failed: ${err}`);
             throw err;
@@ -765,7 +765,7 @@ export class AppStore {
         try {
             const ack = await this.backendService.loadStokeFiles(stokesFiles, this.fileCounter, CARTA.RenderMode.RASTER);
             this.fileCounter++;
-            if (!this.addFrame(ack.openFileAck, directory, false, hdu)) {
+            if (ack.openFileAck && !this.addFrame(ack.openFileAck, directory, false, hdu)) {
                 AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
             }
             this.endFileLoading();
@@ -774,7 +774,7 @@ export class AppStore {
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
-            return ack.openFileAck.fileId;
+            return ack.openFileAck?.fileId;
         } catch (err) {
             console.log(err);
             this.alertStore.showAlert(`Error loading files: ${err}`);
