@@ -1568,7 +1568,7 @@ export class AppStore {
         if (message.createModelImage || message.createResidualImage) {
             this.startFileLoading();
         }
-        const frame = this.getFrame(message.fileId);
+        const frame = this.getFrame(message.fileId ?? 0);
         if (frame?.fittingModelImage) {
             this.closeFile(frame.fittingModelImage);
         }
@@ -1582,9 +1582,9 @@ export class AppStore {
             const ack = yield this.backendService.requestFitting(message);
             if (ack.success) {
                 this.imageFittingStore.setResultString(
-                    message.regionId,
-                    message.fovInfo,
-                    message.fixedParams,
+                    message.regionId ?? 0,
+                    message.fovInfo ?? {},
+                    message.fixedParams ?? [],
                     ack.resultValues,
                     ack.resultErrors,
                     ack.offsetValue,
@@ -1594,31 +1594,35 @@ export class AppStore {
                     ack.log
                 );
                 if (ack.modelImage) {
-                    if (this.addFrame(CARTA.OpenFileAck.create(ack.modelImage), this.fileBrowserStore.startingDirectory, false, "", true)) {
+                    if (this.addFrame(CARTA.OpenFileAck.create(ack.modelImage), this.fileBrowserStore.startingDirectory ?? "", false, "", true)) {
                         this.fileCounter++;
                         const newModelFrame = this.getFrame(ack.modelImage.fileId);
-                        frame?.addFittingModelImage(newModelFrame);
-                        if (newModelFrame && frame === this.spatialReference) {
-                            newModelFrame.setSpatialReference(this.spatialReference);
+                        if (newModelFrame) {
+                            frame?.addFittingModelImage(newModelFrame);
+                            if (this.spatialReference && frame === this.spatialReference) {
+                                newModelFrame.setSpatialReference(this.spatialReference);
+                            }
                         }
                     } else {
                         AppToaster.show({icon: "warning-sign", message: "Load model image failed.", intent: "danger", timeout: 3000});
                     }
                 }
                 if (ack.residualImage) {
-                    if (this.addFrame(CARTA.OpenFileAck.create(ack.residualImage), this.fileBrowserStore.startingDirectory, false, "", true)) {
+                    if (this.addFrame(CARTA.OpenFileAck.create(ack.residualImage), this.fileBrowserStore.startingDirectory ?? "", false, "", true)) {
                         this.fileCounter++;
                         const newResidualFrame = this.getFrame(ack.residualImage.fileId);
-                        frame?.addFittingResidualImage(newResidualFrame);
-                        if (newResidualFrame && frame === this.spatialReference) {
-                            newResidualFrame.setSpatialReference(this.spatialReference);
+                        if (newResidualFrame) {
+                            frame?.addFittingResidualImage(newResidualFrame);
+                            if (this.spatialReference && frame === this.spatialReference) {
+                                newResidualFrame.setSpatialReference(this.spatialReference);
+                            }
                         }
                     } else {
                         AppToaster.show({icon: "warning-sign", message: "Load residual image failed.", intent: "danger", timeout: 3000});
                     }
                 }
             }
-            if (ack.resultValues?.length < message.initialValues?.length) {
+            if (message.initialValues?.length && ack.resultValues?.length < message.initialValues.length) {
                 AppToaster.show(WarningToast(`Image fitting: generated initial values of ${ack.resultValues.length} component(s) instead of ${message.initialValues.length}.`));
             }
             if (ack.message) {
@@ -1628,7 +1632,7 @@ export class AppStore {
             AppToaster.show(ErrorToast(`Image fitting failed: ${err}.`));
         }
 
-        this.setActiveImageByFileId(message.fileId);
+        this.setActiveImageByFileId(message.fileId ?? 0);
         if (message.createModelImage || message.createResidualImage) {
             this.endFileLoading();
         }
