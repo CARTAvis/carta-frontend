@@ -553,32 +553,40 @@ export class AppStore {
             return false;
         }
 
-        let dimensionsString = `${ack.fileInfoExtended.width}\u00D7${ack.fileInfoExtended.height}`;
-        if (ack.fileInfoExtended.dimensions > 2) {
-            dimensionsString += `\u00D7${ack.fileInfoExtended.depth}`;
+        let dimensionsString = `${ack.fileInfoExtended?.width}\u00D7${ack.fileInfoExtended?.height}`;
+        if (ack.fileInfoExtended?.dimensions && ack.fileInfoExtended?.dimensions > 2) {
+            dimensionsString += `\u00D7${ack.fileInfoExtended?.depth}`;
             if (ack.fileInfoExtended.dimensions > 3) {
-                dimensionsString += ` (${ack.fileInfoExtended.stokes} Stokes cubes)`;
+                dimensionsString += ` (${ack.fileInfoExtended?.stokes} Stokes cubes)`;
             }
         }
-        this.logStore.addInfo(`Loaded file ${ack.fileInfo.name} with dimensions ${dimensionsString}`, ["file"]);
+        this.logStore.addInfo(`Loaded file ${ack.fileInfo?.name} with dimensions ${dimensionsString}`, ["file"]);
         const frameInfo: FrameInfo = {
-            fileId: ack.fileId,
+            fileId: ack.fileId ?? 0,
             directory,
             lelExpr,
             hdu,
-            fileInfo: new CARTA.FileInfo(ack.fileInfo),
-            fileInfoExtended: new CARTA.FileInfoExtended(ack.fileInfoExtended),
-            fileFeatureFlags: ack.fileFeatureFlags,
+            fileInfo: new CARTA.FileInfo(ack.fileInfo ?? {}),
+            fileInfoExtended: new CARTA.FileInfoExtended(ack.fileInfoExtended ?? {}),
+            fileFeatureFlags: ack.fileFeatureFlags ?? 0,
             renderMode: CARTA.RenderMode.RASTER,
-            beamTable: ack.beamTable,
+            beamTable: ack.beamTable ?? [],
             generated
         };
-        this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfo.type, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes, generated);
+        this.telemetryService.addFileOpenEntry(
+            ack.fileId ?? 0,
+            ack.fileInfo?.type ?? CARTA.FileType.UNKNOWN,
+            ack.fileInfoExtended?.width ?? 0,
+            ack.fileInfoExtended?.height ?? 0,
+            ack.fileInfoExtended?.depth ?? 0,
+            ack.fileInfoExtended?.stokes ?? 0,
+            generated
+        );
 
         let newFrame = new FrameStore(frameInfo);
 
         // Place frame in frame array (replace frame with the same ID if it exists)
-        const existingFrameIndex = this.imageViewConfigStore.getImageListIndex(ImageType.FRAME, ack.fileId);
+        const existingFrameIndex = this.imageViewConfigStore.getImageListIndex(ImageType.FRAME, ack.fileId ?? 0);
         if (existingFrameIndex !== -1) {
             this.imageViewConfigStore.replaceFrame(existingFrameIndex, newFrame);
         } else {
