@@ -1023,7 +1023,7 @@ export class PreferenceStore {
         }
         this.preferenceReady = true;
     }
-    
+
     private constructor() {
         makeObservable(this);
         this.preferences = new Map<PreferenceKeys, any>();
