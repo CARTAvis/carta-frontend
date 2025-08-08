@@ -2270,13 +2270,13 @@ export class AppStore {
 
     @action handleTileStream = (tileStreamDetails: TileStreamDetails) => {
         if (this.animatorStore.serverAnimationActive && tileStreamDetails?.fileId === this.activeFrameFileId) {
-            const frame = this.getFrame(tileStreamDetails.fileId);
+            const frame = this.getFrame(tileStreamDetails.fileId ?? -1);
 
             // Get stokes from the backend tile stream message
-            const stokes = tileStreamDetails.stokes;
+            const stokes = tileStreamDetails.stokes ?? 0;
 
             // Set stokes index in the animation flow control message
-            const stokesIndex = COMPUTED_POLARIZATIONS.has(stokes) ? frame.polarizations.indexOf(stokes) : stokes;
+            const stokesIndex = COMPUTED_POLARIZATIONS.has(stokes) ? frame?.polarizations.indexOf(stokes) : stokes;
 
             // Flow control
             const flowControlMessage: CARTA.IAnimationFlowControl = {
@@ -2292,13 +2292,15 @@ export class AppStore {
             this.backendService.sendAnimationFlowControl(flowControlMessage);
 
             if (frame) {
-                frame.setChannels(tileStreamDetails.channel, tileStreamDetails.stokes, false);
-                frame.channel = tileStreamDetails.channel;
-                frame.stokes = tileStreamDetails.stokes;
+                const tileStreamChannel = tileStreamDetails.channel ?? 0;
+                const tileStreamStokes = tileStreamDetails.stokes ?? 0;
+                frame.setChannels(tileStreamChannel, tileStreamStokes, false);
+                frame.channel = tileStreamChannel;
+                frame.stokes = tileStreamStokes;
             }
         }
 
-        this.updateHistogram(tileStreamDetails.fileId, tileStreamDetails.stokes, tileStreamDetails.channel);
+        this.updateHistogram(tileStreamDetails.fileId ?? -1, tileStreamDetails.stokes ?? 0, tileStreamDetails.channel ?? 0);
     };
 
     updateHistogram = (fileId: number, stokes: number, channel: number) => {
@@ -2306,12 +2308,13 @@ export class AppStore {
         const key = `${fileId}_${stokes}_${channel}`;
         const pendingHistogram = this.pendingChannelHistograms.get(key);
         if (pendingHistogram?.histograms) {
-            const updatedFrame = this.getFrame(pendingHistogram.fileId);
+            const updatedFrame = this.getFrame(pendingHistogram.fileId ?? -1);
             const channelHist = pendingHistogram.histograms;
             if (updatedFrame && channelHist) {
-                const stokesIndex = COMPUTED_POLARIZATIONS.has(pendingHistogram.stokes) && updatedFrame.polarizations.includes(pendingHistogram.stokes) ? updatedFrame.polarizations.indexOf(pendingHistogram.stokes) : pendingHistogram.stokes;
+                const pendingHistogramStokes = pendingHistogram.stokes ?? 0;
+                const stokesIndex = COMPUTED_POLARIZATIONS.has(pendingHistogramStokes) && updatedFrame.polarizations.includes(pendingHistogramStokes) ? updatedFrame.polarizations.indexOf(pendingHistogramStokes) : pendingHistogramStokes;
                 updatedFrame.renderConfig.setStokesIndex(stokesIndex);
-                updatedFrame.renderConfig.setHistChannel(pendingHistogram.channel);
+                updatedFrame.renderConfig.setHistChannel(pendingHistogram.channel ?? 0);
                 updatedFrame.renderConfig.updateChannelHistogram(channelHist);
                 updatedFrame.channel = channel;
                 updatedFrame.stokes = stokes;
