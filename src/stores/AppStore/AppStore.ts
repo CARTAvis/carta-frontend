@@ -2188,14 +2188,14 @@ export class AppStore {
             const key = `${spatialProfileData.fileId}-${spatialProfileData.regionId}`;
             let profileStore = this.spatialProfiles.get(key);
             if (!profileStore) {
-                profileStore = new SpatialProfileStore(spatialProfileData.fileId, spatialProfileData.regionId);
+                profileStore = new SpatialProfileStore(spatialProfileData.fileId ?? -1, spatialProfileData.regionId ?? -1);
                 this.spatialProfiles.set(key, profileStore);
             }
             profileStore.updateFromStream(spatialProfileData);
 
             // Update cursor value from profile if it is the cursor data
             if (spatialProfileData.regionId === 0) {
-                this.getFrame(spatialProfileData.fileId).setCursorValue({x: spatialProfileData.x, y: spatialProfileData.y}, spatialProfileData.channel, spatialProfileData.value);
+                this.getFrame(spatialProfileData.fileId ?? -1)?.setCursorValue({x: spatialProfileData.x ?? 0, y: spatialProfileData.y ?? 0}, spatialProfileData.channel ?? 0, spatialProfileData.value ?? 0);
             }
         }
     };
@@ -2247,7 +2247,7 @@ export class AppStore {
         // TODO: update histograms directly if the image is not active!
 
         // Add histogram to pending histogram list
-        if (regionHistogramData.regionId === RegionIdType.IMAGE && !regionHistogramData.config.fixedNumBins && !regionHistogramData.config.fixedBounds) {
+        if (regionHistogramData.regionId === RegionIdType.IMAGE && !regionHistogramData.config?.fixedNumBins && !regionHistogramData.config?.fixedBounds) {
             const key = `${regionHistogramData.fileId}_${regionHistogramData.stokes}_${regionHistogramData.channel}`;
             this.pendingChannelHistograms.set(key, regionHistogramData);
         } else if (regionHistogramData.regionId === -2) {
