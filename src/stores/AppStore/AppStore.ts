@@ -2216,7 +2216,9 @@ export class AppStore {
 
             if (spectralProfileData.progress >= 1 && spectralProfileData.regionId !== CURSOR_REGION_ID && !this.animatorStore.animationActive) {
                 const region = frame.getRegion(spectralProfileData.regionId);
-                TelemetryService.Instance.addSpectralProfileEntry(spectralProfileData.profiles.length, region.regionType, region.regionId, region.size.x, region.size.y, frame.frameInfo.fileInfoExtended.depth);
+                if (region) {
+                    TelemetryService.Instance.addSpectralProfileEntry(spectralProfileData.profiles.length, region.regionType, region.regionId, region.size.x, region.size.y, frame.frameInfo.fileInfoExtended.depth);
+                }
             }
 
             for (let profile of spectralProfileData.profiles) {
