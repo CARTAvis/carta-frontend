@@ -11,7 +11,7 @@ import tinycolor from "tinycolor2";
 
 import {DraggableDialogComponent, LayoutMappingComponent} from "components/Dialogs";
 import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, ScrollShadow, SuccessToast} from "components/Shared";
-import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
+import {CompressionQuality, ConvertToGB, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {TelemetryMode} from "services";
 import {AppStore, BeamType, DialogId, HelpType, PreferenceKeys, PreferenceStore} from "stores";
 import {ContourGeneratorType, FrameScaling, RegionStore, RenderConfigStore} from "stores/Frame";
@@ -35,17 +35,9 @@ enum PreferenceDialogTabs {
     COMPATIBILITY
 }
 
-export enum MemoryUnit {
-    TB = "TB",
-    GB = "GB",
-    MB = "MB",
-    kB = "kB",
-    B = "B"
-}
-
 const PercentileSelect = Select<string>;
 
-const PV_PREVIEW_CUBE_SIZE_LIMIT = 1000000000; //need to be removed and replaced by backend limit
+const PV_PREVIEW_CUBE_SIZE_LIMIT = 2; //in unit of GB
 
 @observer
 export class PreferenceDialogComponent extends React.Component {
@@ -55,17 +47,15 @@ export class PreferenceDialogComponent extends React.Component {
     };
 
     @computed get pvPreviewCubeSizeMaxValue(): number {
-        if (PreferenceStore.Instance.pvPreivewCubeSizeLimitUnit === MemoryUnit.TB) {
-            return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e12;
-        } else if (PreferenceStore.Instance.pvPreivewCubeSizeLimitUnit === MemoryUnit.GB) {
-            return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e9;
-        } else if (PreferenceStore.Instance.pvPreivewCubeSizeLimitUnit === MemoryUnit.MB) {
-            return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e6;
-        } else if (PreferenceStore.Instance.pvPreivewCubeSizeLimitUnit === MemoryUnit.kB) {
-            return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e3;
-        } else {
-            return PV_PREVIEW_CUBE_SIZE_LIMIT;
-        }
+        return PV_PREVIEW_CUBE_SIZE_LIMIT / ConvertToGB[this.pvPreviewCubeSizeLimitUnit];
+    }
+
+    @computed get pvPreviewCubeSizeMinValue(): number {
+        return 0.1 / ConvertToGB[this.pvPreviewCubeSizeLimitUnit];
+    }
+
+    @computed get showedPvPreviewCubeSizeLimit(): number {
+        return PreferenceStore.Instance.pvPreviewCubeSizeLimit / ConvertToGB[this.pvPreviewCubeSizeLimitUnit];
     }
 
     constructor(props: any) {
@@ -99,8 +89,16 @@ export class PreferenceDialogComponent extends React.Component {
     }, 100);
 
     @action private handlePvPreviewCubeSizeUnitChange = _.throttle(unit => {
-        PreferenceStore.Instance.setPreference(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT, unit);
+        this.pvPreviewCubeSizeLimitUnit = unit;
     }, 100);
+
+    @action private handlePvPreviewCubeSizeChange = _.throttle((size, unit) => {
+        const storedSize = size * ConvertToGB[this.pvPreviewCubeSizeLimitUnit]; // Convert to GB if necessary
+        PreferenceStore.Instance.setPreference(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT, storedSize);
+    }, 100);
+
+    // variable for showing preview cube size unit in the dialog
+    @observable private pvPreviewCubeSizeLimitUnit = "GB";
 
     private reset = () => {
         const preference = PreferenceStore.Instance;
@@ -265,7 +263,13 @@ export class PreferenceDialogComponent extends React.Component {
                 </FormGroup>
                 {(preference.scaling === FrameScaling.LOG || preference.scaling === FrameScaling.POWER) && (
                     <FormGroup label={"Alpha"} inline={true}>
-                        <SafeNumericInput buttonPosition={"none"} value={preference.scalingAlpha} onValueChange={value => preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA, value)} />
+                        <SafeNumericInput
+                            min={RenderConfigStore.ALPHA_MIN}
+                            max={RenderConfigStore.ALPHA_MAX}
+                            buttonPosition={"none"}
+                            value={preference.scalingAlpha}
+                            onValueChange={value => preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA, value)}
+                        />
                     </FormGroup>
                 )}
                 {preference.scaling === FrameScaling.GAMMA && (
@@ -451,11 +455,11 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="WCS format">
-                    <HTMLSelect
-                        options={[WCSType.AUTOMATIC, WCSType.DEGREES, WCSType.SEXAGESIMAL]}
-                        value={preference.wcsType}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_WCS_TYPE, event.currentTarget.value)}
-                    />
+                    <HTMLSelect value={preference.wcsType} onChange={(event: React.FormEvent<HTMLSelectElement>) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_WCS_TYPE, event.currentTarget.value)}>
+                        <option value={WCSType.AUTOMATIC}>Automatic</option>
+                        <option value={WCSType.DEGREES}>Degrees</option>
+                        <option value={WCSType.SEXAGESIMAL}>Sexagesimal</option>
+                    </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Colorbar visible">
                     <Switch checked={preference.colorbarVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_VISIBLE, ev.currentTarget.checked)} />
@@ -604,7 +608,14 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Region size" labelInfo="(px)">
-                    <SafeNumericInput placeholder="Region size" min={1} value={preference.regionSize} stepSize={1} onValueChange={(value: number) => preference.setPreference(PreferenceKeys.REGION_SIZE, Math.max(1, value))} />
+                    <SafeNumericInput
+                        placeholder="Region size"
+                        min={10}
+                        max={100}
+                        value={preference.regionSize}
+                        stepSize={1}
+                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.REGION_SIZE, Math.max(10, Math.min(100, value)))}
+                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Creation mode">
                     <RadioGroup selectedValue={preference.regionCreationMode} onChange={ev => preference.setPreference(PreferenceKeys.REGION_CREATION_MODE, ev.currentTarget.value)}>
@@ -662,9 +673,10 @@ export class PreferenceDialogComponent extends React.Component {
                     <SafeNumericInput
                         placeholder="Point size"
                         min={1}
+                        max={100}
                         value={preference.pointAnnotationWidth}
                         stepSize={1}
-                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.POINT_ANNOTATION_WIDTH, Math.max(1, value))}
+                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.POINT_ANNOTATION_WIDTH, Math.max(1, Math.min(100, value)))}
                     />
                 </FormGroup>
             </React.Fragment>
@@ -806,14 +818,14 @@ export class PreferenceDialogComponent extends React.Component {
                     <div className="pv-preview-cube-size-limit">
                         <SafeNumericInput
                             placeholder="PV preview cube size limit"
-                            min={1e-12}
+                            min={this.pvPreviewCubeSizeMinValue}
                             max={this.pvPreviewCubeSizeMaxValue}
-                            value={preference.pvPreivewCubeSizeLimit}
-                            majorStepSize={1}
-                            stepSize={1}
-                            onValueChange={value => preference.setPreference(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT, value)}
+                            value={this.showedPvPreviewCubeSizeLimit}
+                            majorStepSize={0.5 / ConvertToGB[this.pvPreviewCubeSizeLimitUnit]}
+                            stepSize={0.1 / ConvertToGB[this.pvPreviewCubeSizeLimitUnit]}
+                            onValueChange={value => this.handlePvPreviewCubeSizeChange(value, this.pvPreviewCubeSizeLimitUnit)}
                         />
-                        <HTMLSelect value={preference.pvPreivewCubeSizeLimitUnit} onChange={ev => this.handlePvPreviewCubeSizeUnitChange(ev.target.value)}>
+                        <HTMLSelect value={this.pvPreviewCubeSizeLimitUnit} onChange={ev => this.handlePvPreviewCubeSizeUnitChange(ev.target.value)}>
                             <option key={0} value={"MB"}>
                                 MB
                             </option>

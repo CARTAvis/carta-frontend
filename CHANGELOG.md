@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [5.0.3]
+
+### Fixed
+* Fixed flux density unit display in spectral profile for images with brightness temperature (K) ([#2572](https://github.com/CARTAvis/carta-frontend/issues/2572)).
+
+## [5.0.2]
+
+### Fixed
+* Fixed invalid values in preferences.json cause all preferences to be reset ([#2561](https://github.com/CARTAvis/carta-frontend/issues/2561)).
+### Added
+* Added support for scrolling in the spectral profile dropdown menus ([#2566](https://github.com/CARTAvis/carta-frontend/issues/2566)).
+
 ## [5.0.1]
 
 ### Fixed
