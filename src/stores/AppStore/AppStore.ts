@@ -562,7 +562,7 @@ export class AppStore {
         }
         this.logStore.addInfo(`Loaded file ${ack.fileInfo?.name} with dimensions ${dimensionsString}`, ["file"]);
         const frameInfo: FrameInfo = {
-            fileId: ack.fileId ?? 0,
+            fileId: ack.fileId ?? -1,
             directory,
             lelExpr,
             hdu,
@@ -574,7 +574,7 @@ export class AppStore {
             generated
         };
         this.telemetryService.addFileOpenEntry(
-            ack.fileId ?? 0,
+            ack.fileId ?? -1,
             ack.fileInfo?.type ?? CARTA.FileType.UNKNOWN,
             ack.fileInfoExtended?.width ?? 0,
             ack.fileInfoExtended?.height ?? 0,
@@ -1576,7 +1576,7 @@ export class AppStore {
         if (message.createModelImage || message.createResidualImage) {
             this.startFileLoading();
         }
-        const frame = this.getFrame(message.fileId ?? 0);
+        const frame = this.getFrame(message.fileId ?? -1);
         if (frame?.fittingModelImage) {
             this.closeFile(frame.fittingModelImage);
         }
@@ -1640,7 +1640,7 @@ export class AppStore {
             AppToaster.show(ErrorToast(`Image fitting failed: ${err}.`));
         }
 
-        this.setActiveImageByFileId(message.fileId ?? 0);
+        this.setActiveImageByFileId(message.fileId ?? -1);
         if (message.createModelImage || message.createResidualImage) {
             this.endFileLoading();
         }
@@ -2363,25 +2363,27 @@ export class AppStore {
                 catalogProfileStore.setUpdatingDataStream(false);
             }
 
-            if (catalogProfileStore.updateMode === CatalogUpdateMode.ViewUpdate) {
+            if (catalogProfileStore.updateMode === CatalogUpdateMode.ViewUpdate && catalogWidgetStoreId) {
                 const catalogWidgetStore = this.widgetsStore.catalogWidgets.get(catalogWidgetStoreId);
-                const xColumn = catalogWidgetStore.xAxis;
-                const yColumn = catalogWidgetStore.yAxis;
+                const xColumn = catalogWidgetStore?.xAxis;
+                const yColumn = catalogWidgetStore?.yAxis;
                 const frame = this.getFrame(this.catalogStore.getFrameIdByCatalogId(catalogFileId));
                 if (xColumn && yColumn && frame) {
                     const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogData);
                     const wcs = frame.validWcs ? frame.wcsInfo : 0;
-                    this.catalogStore.convertToImageCoordinate(
-                        catalogFileId,
-                        coords.wcsX,
-                        coords.wcsY,
-                        wcs,
-                        coords.xHeaderInfo.units,
-                        coords.yHeaderInfo.units,
-                        catalogProfileStore.catalogCoordinateSystem.system,
-                        catalogFilter.subsetEndIndex,
-                        catalogFilter.subsetDataSize
-                    );
+                    if (coords.wcsX && coords.wcsY && coords.xHeaderInfo.units && coords.yHeaderInfo.units) {
+                        this.catalogStore.convertToImageCoordinate(
+                            catalogFileId,
+                            coords.wcsX,
+                            coords.wcsY,
+                            wcs,
+                            coords.xHeaderInfo.units,
+                            coords.yHeaderInfo.units,
+                            catalogProfileStore.catalogCoordinateSystem.system,
+                            catalogFilter.subsetEndIndex,
+                            catalogFilter.subsetDataSize
+                        );
+                    }
                 }
             }
         }
@@ -2440,7 +2442,7 @@ export class AppStore {
     };
 
     handleVectorTileStream = (vectorTileData: CARTA.IVectorOverlayTileData) => {
-        const updatedFrame = this.getFrame(vectorTileData.fileId);
+        const updatedFrame = this.getFrame(vectorTileData.fileId ?? -1);
         if (updatedFrame) {
             updatedFrame.updateFromVectorOverlayData(vectorTileData);
         }
@@ -3310,12 +3312,14 @@ export class AppStore {
                     const composedCanvas = getImageViewCanvas(this.activeFrame.overlayStore.padding, this.overlaySettings.colorbar.position, backgroundColor);
                     if (composedCanvas) {
                         composedCanvas.toBlob(blob => {
-                            const link = document.createElement("a") as HTMLAnchorElement;
-                            const joinedNames = this.imageViewConfigStore.visibleFrames.map(f => f.filename).join("-");
-                            // Trim filename before timestamp to 200 characters to prevent browser errors
-                            link.download = `${joinedNames}-image`.substring(0, 200) + `-${getTimestamp()}.png`;
-                            link.href = URL.createObjectURL(blob);
-                            link.dispatchEvent(new MouseEvent("click"));
+                            if (blob) {
+                                const link = document.createElement("a") as HTMLAnchorElement;
+                                const joinedNames = this.imageViewConfigStore.visibleFrames.map(f => f.filename).join("-");
+                                // Trim filename before timestamp to 200 characters to prevent browser errors
+                                link.download = `${joinedNames}-image`.substring(0, 200) + `-${getTimestamp()}.png`;
+                                link.href = URL.createObjectURL(blob);
+                                link.dispatchEvent(new MouseEvent("click"));
+                            }
                         }, "image/png");
                     }
                 }
