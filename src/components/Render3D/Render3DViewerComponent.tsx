@@ -214,6 +214,7 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
             inverted: false,
             alpha: 1000.0,
             gamma: 1.0,
+            scaleZ: 1,
 
         };
 
@@ -222,6 +223,10 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         const scaleType = {'Linear': 0, 'Log': 1, 'Sqrt': 2, 'Square': 3, 'Power': 4, 'Gamma': 5};
 
         function update() {
+
+            if (meshRef.current) {
+                meshRef.current.scale.z = parameters.scaleZ;
+            }
 
             // material.uniforms.threshold.value = parameters.threshold;
             // material.uniforms.range.value = parameters.range;
@@ -233,6 +238,7 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
             material.uniforms.uInverted.value = parameters.inverted ? 1 : 0;
             material.uniforms.uAlpha.value = parameters.alpha;
             material.uniforms.uGamma.value = parameters.gamma;
+            
         }
 
         const gui = new GUI();
@@ -247,6 +253,15 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         gui.add( parameters, 'inverted').onChange( update );
         gui.add( parameters, 'alpha').onChange( update );
         gui.add( parameters, 'gamma', 0.1, 2.0).onChange( update );
+        gui.add(parameters, 'scaleZ', 0.1, 10.0).onChange(update);
+
+        // render3d animation
+        useFrame(() => {
+            if (meshRef.current) {
+                meshRef.current.rotation.y += 0.01;
+                meshRef.current.rotation.x += 0.005;
+            }
+        });
 
         useEffect(() => {
             gl.getContext().getExtension("OES_texture_float");
