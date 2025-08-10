@@ -139,7 +139,7 @@ export class AppStore {
     @observable contourDataSource: FrameStore | null = null;
     @observable syncContourToFrame = true;
     @observable syncFrameToContour = true;
-    @observable activeWorkspace: Workspace;
+    @observable activeWorkspace: Workspace | undefined = undefined;
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
@@ -999,7 +999,7 @@ export class AppStore {
                 }
 
                 // Clean up if frame is contour data source
-                if (this.contourDataSource.frameInfo.fileId === fileId) {
+                if (this.contourDataSource?.frameInfo.fileId === fileId) {
                     this.contourDataSource = firstFrame;
                 }
                 // Clean up if frame is currently spatial reference
@@ -1174,7 +1174,7 @@ export class AppStore {
     @action updateCatalogProfile = (fileId: number, frame: FrameStore): string => {
         let catalogWidgetId;
         // update image associated catalog file
-        let associatedCatalogFiles = [];
+        let associatedCatalogFiles: number[] = [];
         const catalogStore = CatalogStore.Instance;
         const catalogComponentSize = catalogStore.catalogProfiles.size;
         let currentAssociatedCatalogFile = catalogStore.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
@@ -1187,7 +1187,9 @@ export class AppStore {
             });
         }
         associatedCatalogFiles.push(fileId);
-        catalogStore.updateImageAssociatedCatalogId(AppStore.Instance.activeFrame.frameInfo.fileId, associatedCatalogFiles);
+        if (AppStore.Instance.activeFrame) {
+            catalogStore.updateImageAssociatedCatalogId(AppStore.Instance.activeFrame.frameInfo.fileId, associatedCatalogFiles);
+        }
 
         if (catalogComponentSize === 0) {
             const catalog = this.widgetsStore.createFloatingCatalogWidget(fileId);
@@ -1255,7 +1257,7 @@ export class AppStore {
             return;
         }
 
-        let frame: FrameStore;
+        let frame: FrameStore | undefined = undefined;
         if (targetFrame) {
             frame = targetFrame.spatialReference ?? targetFrame;
         } else if (this.activeFrame) {
@@ -1270,7 +1272,7 @@ export class AppStore {
         try {
             const ack = yield this.backendService.importRegion(directory, file, type, frame.frameInfo.fileId);
             if (frame && ack.success && ack.regions) {
-                const regions = Object.entries(ack.regions);
+                const regions = Object.entries(ack.regions) as [string, CARTA.IRegionInfo][];
                 const regionStyleMap = new Map<string, CARTA.IRegionStyle>(Object.entries(ack.regionStyles));
                 let startIndex = 0;
                 while (startIndex < regions.length) {
