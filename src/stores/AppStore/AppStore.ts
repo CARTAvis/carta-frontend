@@ -813,7 +813,7 @@ export class AppStore {
     *appendFile(path: string, filename?: string, hdu?: string, imageArithmetic: boolean = false, setAsActive: boolean = true, updateStartingDirectory: boolean = true) {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
-        return yield this.loadFile(path, filename, hdu, imageArithmetic, setAsActive, updateStartingDirectory);
+        return yield this.loadFile(path, filename ?? "", hdu ?? "", imageArithmetic, setAsActive, updateStartingDirectory);
     }
 
     /**
@@ -834,7 +834,7 @@ export class AppStore {
     *openFile(path: string, filename?: string, hdu?: string, imageArithmetic?: boolean, updateStartingDirectory: boolean = true) {
         this.removeAllFrames();
         this.overlaySettings.global.setSystem(SystemType.Auto);
-        return yield this.loadFile(path, filename, hdu, imageArithmetic, true, updateStartingDirectory);
+        return yield this.loadFile(path, filename ?? "", hdu ?? "", imageArithmetic ?? false, true, updateStartingDirectory);
     }
 
     @flow.bound
