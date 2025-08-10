@@ -1303,13 +1303,13 @@ export class AppStore {
             const styleInfo = regionStyleMap.get(regionIdString);
             frame.regionSet.addExistingRegion(
                 regionInfo.controlPoints as Point2D[],
-                regionInfo.rotation,
-                regionInfo.regionType,
+                regionInfo.rotation ?? 0,
+                regionInfo.regionType ?? CARTA.RegionType.RECTANGLE,
                 parseInt(regionIdString),
-                styleInfo?.name,
-                styleInfo?.color,
-                styleInfo?.lineWidth,
-                styleInfo?.dashList,
+                styleInfo?.name ?? "",
+                styleInfo?.color ?? "",
+                styleInfo?.lineWidth ?? 1,
+                styleInfo?.dashList ?? [],
                 true,
                 styleInfo?.annotationStyle
             );
@@ -2026,7 +2026,7 @@ export class AppStore {
                     const tileSizeFullRes = reqView.mip * 256;
                     const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
                     if (tiles.length) {
-                        viewUpdates.push({tiles, fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: midPointTileCoords, headerUnit: frame.headerUnit});
+                        viewUpdates.push({tiles, fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: midPointTileCoords, headerUnit: frame.headerUnit ?? ""});
                     }
                 }
 
@@ -2034,7 +2034,7 @@ export class AppStore {
                 if (this.animatorStore?.serverAnimationActive) {
                     for (const frame of this.activeFrame.spectralSiblings) {
                         if (!this.imageViewConfigStore.visibleFrames.includes(frame)) {
-                            viewUpdates.push({tiles: [], fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: null, headerUnit: frame.headerUnit});
+                            viewUpdates.push({tiles: [], fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: {x: 0, y: 0}, headerUnit: frame.headerUnit ?? ""});
                         }
                     }
                 }
@@ -2136,7 +2136,7 @@ export class AppStore {
         }
 
         autorun(() => {
-            this.initCarta(this.astReady, this.tileService?.zfpReady, this.cartaComputeReady, this.apiService?.authenticated);
+            this.initCarta(this.astReady, this.tileService?.zfpReady, this.cartaComputeReady, !!this.apiService?.authenticated);
         });
 
         autorun(() => {
