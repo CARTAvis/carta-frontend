@@ -10,7 +10,8 @@ const migratedFiles = [
     "components/ChannelMapControl",
     "components/CursorInfo",
     "components/Dialogs/AboutDialog",
-    "components/Dialogs/CodeSnippetDialog"
+    "components/Dialogs/CodeSnippetDialog",
+    "components/Dialogs/ContourGeneratorPanel"
 ];
 
 module.exports = {
