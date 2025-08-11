@@ -8,7 +8,9 @@ const migratedFiles = [
     "components/App",
     "components/CatalogOverlay",
     "components/ChannelMapControl",
-    "components/CursorInfo"
+    "components/CursorInfo",
+    "components/Dialogs/AboutDialog",
+    "components/Dialogs/CodeSnippetDialog"
 ];
 
 module.exports = {
