@@ -11,7 +11,7 @@ const migratedFiles = [
     "components/CursorInfo",
     "components/Dialogs/AboutDialog",
     "components/Dialogs/CodeSnippetDialog",
-    "components/Dialogs/ContourGeneratorPanel"
+    "components/Dialogs/ContourDialog"
 ];
 
 module.exports = {
