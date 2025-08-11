@@ -4,7 +4,9 @@ const migratedFiles = [
     "services",
     "stores",
     "App.tsx",
-    "components/Animator"
+    "components/Animator",
+    "components/App",
+    "components/CatalogOverlay"
 ];
 
 module.exports = {
