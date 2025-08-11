@@ -6,7 +6,8 @@ const migratedFiles = [
     "App.tsx",
     "components/Animator",
     "components/App",
-    "components/CatalogOverlay"
+    "components/CatalogOverlay",
+    "components/ChannelMapControl"
 ];
 
 module.exports = {
