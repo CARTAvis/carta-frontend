@@ -7,7 +7,8 @@ const migratedFiles = [
     "components/Animator",
     "components/App",
     "components/CatalogOverlay",
-    "components/ChannelMapControl"
+    "components/ChannelMapControl",
+    "components/CursorInfo"
 ];
 
 module.exports = {
