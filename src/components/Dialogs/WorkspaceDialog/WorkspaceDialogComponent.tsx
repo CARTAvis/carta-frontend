@@ -131,7 +131,7 @@ export const WorkspaceDialogComponent = observer(() => {
     };
 
     const handleOpenClicked = () => {
-        if (!workspaceName || !workspaceList.find(item => item.name === workspaceName)) {
+        if (!workspaceName || !workspaceList?.find(item => item.name === workspaceName)) {
             return;
         }
         openWorkspace(workspaceName);
@@ -204,7 +204,7 @@ export const WorkspaceDialogComponent = observer(() => {
             }
 
             const unixDate = entry.date;
-            let dateString: string;
+            let dateString: string = "";
             if (unixDate > 0) {
                 const t = moment.unix(unixDate);
                 const isToday = moment(0, "HH").diff(t) <= 0;
@@ -229,7 +229,7 @@ export const WorkspaceDialogComponent = observer(() => {
     );
 
     const selectedItemIndex = workspaceList?.findIndex(item => item.name === workspaceName);
-    const selectedRegions: Region[] = selectedItemIndex >= 0 ? [{rows: [selectedItemIndex, selectedItemIndex]}] : [];
+    const selectedRegions: Region[] = selectedItemIndex !== undefined && selectedItemIndex >= 0 ? [{rows: [selectedItemIndex, selectedItemIndex]}] : [];
 
     let tableContent: React.ReactNode;
     if (isFetching) {
@@ -254,7 +254,7 @@ export const WorkspaceDialogComponent = observer(() => {
                 enableRowHeader={false}
                 numRows={workspaceList?.length}
                 loadingOptions={isFetching ? [TableLoadingOption.CELLS] : []}
-                getCellClipboardData={null}
+                getCellClipboardData={undefined}
             >
                 <Column name="Name" cellRenderer={renderFilenames} />
                 <Column name="Last modified" cellRenderer={renderDates} />
