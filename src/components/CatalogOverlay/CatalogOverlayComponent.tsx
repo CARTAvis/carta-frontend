@@ -518,7 +518,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private updateSortRequest = (columnName: string, sortingType: CARTA.SortingType, columnIndex: number) => {
+    private updateSortRequest = (columnName: string, sortingType: CARTA.SortingType | null, columnIndex: number) => {
         const profileStore = this.profileStore;
         const catalogFileId = this.catalogFileId;
         const appStore = AppStore.Instance;
@@ -815,7 +815,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             updateSortRequest: this.updateSortRequest,
             sortingInfo: {
                 columnName: profileStore.sortingInfo.columnName ?? "",
-                sortingType: profileStore.sortingInfo.sortingType ?? CARTA.SortingType.Ascending
+                sortingType: profileStore.sortingInfo.sortingType
             },
             disableSort: profileStore.loadOntoImage,
             tableHeaders: profileStore.catalogHeader,

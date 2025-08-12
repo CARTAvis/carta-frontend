@@ -11,7 +11,11 @@ const migratedFiles = [
     "components/CursorInfo",
     "components/Dialogs/AboutDialog",
     "components/Dialogs/CodeSnippetDialog",
-    "components/Dialogs/ContourDialog"
+    "components/Dialogs/ContourDialog",
+    "components/Shared/AnnotationMenuComponent",
+    "components/Shared/AutoColorComponent",
+    "components/Shared/Tables",
+    "components/SpectralLineQuery"
 ];
 
 module.exports = {
