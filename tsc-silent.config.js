@@ -19,6 +19,7 @@ const migratedFiles = [
     "components/Shared/CoordNumericInputComponent",
     "components/Shared/PlotContainerComponent",
     "components/Shared/LinePlotSettingPanelComponent",
+    "components/Shared/LinePlotComponent",
     "components/Shared/Tables",
     "components/SpectralLineQuery"
 ];
