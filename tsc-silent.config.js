@@ -12,6 +12,9 @@ const migratedFiles = [
     "components/Dialogs/AboutDialog",
     "components/Dialogs/CodeSnippetDialog",
     "components/Dialogs/ContourDialog",
+    "components/Dialogs/DraggableDialog",
+    "components/Dialogs/ExternalPageDialog",
+    "components/Dialogs/FileBrowser",
     "components/Shared",
     "components/SpectralLineQuery"
 ];
