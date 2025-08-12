@@ -34,7 +34,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
     }
 
     // size determined by reference frame
-    @computed get lengthWCS(): string {
+    @computed get lengthWCS(): string | null {
         const region = this.props.region;
         if (!region || region.controlPoints.length !== 2 || !region.size || !this.props.frame) {
             return null;
@@ -47,7 +47,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         return null;
     }
 
-    @computed get centerWCS(): WCSPoint2D {
+    @computed get centerWCS(): WCSPoint2D | null {
         const region = this.props.region;
         if (!region || !this.props.wcsInfo) {
             return null;
@@ -55,7 +55,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         return getFormattedWCSPoint(this.props.wcsInfo, region.center);
     }
 
-    @computed get startWCS(): WCSPoint2D {
+    @computed get startWCS(): WCSPoint2D | null {
         const region = this.props.region;
         if (!region || !this.props.wcsInfo) {
             return null;
@@ -63,7 +63,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         return getFormattedWCSPoint(this.props.wcsInfo, this.startPoint);
     }
 
-    @computed get endWCS(): WCSPoint2D {
+    @computed get endWCS(): WCSPoint2D | null {
         const region = this.props.region;
         if (!region || !this.props.wcsInfo) {
             return null;
@@ -97,11 +97,14 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
 
     private handleCenterWCSXChange = (wcsString: string): boolean => {
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX)) {
-            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.centerWCS.y});
-            const existingValue = this.props.region.center.x;
-            if (isFinite(newPoint?.x) && !closeTo(newPoint.x, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
-                this.props.region.setCenter(newPoint);
-                return true;
+            const centerWCS = this.centerWCS;
+            if (centerWCS) {
+                const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: centerWCS.y});
+                const existingValue = this.props.region.center.x;
+                if (newPoint && isFinite(newPoint.x) && !closeTo(newPoint.x, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
+                    this.props.region.setCenter(newPoint);
+                    return true;
+                }
             }
         }
         return false;
@@ -109,11 +112,14 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
 
     private handleCenterWCSYChange = (wcsString: string): boolean => {
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
-            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.centerWCS.x, y: wcsString});
-            const existingValue = this.props.region.center.y;
-            if (isFinite(newPoint?.y) && !closeTo(newPoint.y, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
-                this.props.region.setCenter(newPoint);
-                return true;
+            const centerWCS = this.centerWCS;
+            if (centerWCS) {
+                const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: centerWCS.x, y: wcsString});
+                const existingValue = this.props.region.center.y;
+                if (newPoint && isFinite(newPoint.y) && !closeTo(newPoint.y, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
+                    this.props.region.setCenter(newPoint);
+                    return true;
+                }
             }
         }
         return false;
@@ -135,15 +141,18 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
 
     private handleLengthWCSChange = (wcsString: string): boolean => {
         const existingValue = length2D(this.props.region.size);
-        const value = (existingValue * getValueFromArcsecString(wcsString)) / length2D(this.props.frame.getWcsSizeInArcsec(this.props.region.size));
-        if (isFinite(value) && value > 0 && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
-            const region = this.props.region;
-            const rotation = (region.rotation * Math.PI) / 180.0;
-            // the rotation angle is defined to be 0 at North (mostly in +y axis) and increases counter-clockwisely. This is
-            // different from the usual definition in math where 0 degree is in the +x axis. The extra 90-degree offset swaps
-            // cos and sin with a proper +/-1 constant applied.
-            region.setSize({x: value * Math.sin(rotation), y: -1 * value * Math.cos(rotation)});
-            return true;
+        const arcsecValue = getValueFromArcsecString(wcsString);
+        if (arcsecValue !== null) {
+            const value = (existingValue * arcsecValue) / length2D(this.props.frame.getWcsSizeInArcsec(this.props.region.size));
+            if (isFinite(value) && value > 0 && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
+                const region = this.props.region;
+                const rotation = (region.rotation * Math.PI) / 180.0;
+                // the rotation angle is defined to be 0 at North (mostly in +y axis) and increases counter-clockwisely. This is
+                // different from the usual definition in math where 0 degree is in the +x axis. The extra 90-degree offset swaps
+                // cos and sin with a proper +/-1 constant applied.
+                region.setSize({x: value * Math.sin(rotation), y: -1 * value * Math.cos(rotation)});
+                return true;
+            }
         }
         return false;
     };
@@ -167,10 +176,15 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
 
     private handleStartXWCSChange = (wcsString: string): boolean => {
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX)) {
-            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.startWCS.y});
-            const value = newPoint.x;
-            const existingValue = this.startPoint.x;
-            return this.handleStartXValueChange(value, existingValue);
+            const startWCS = this.startWCS;
+            if (startWCS) {
+                const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: startWCS.y});
+                if (newPoint) {
+                    const value = newPoint.x;
+                    const existingValue = this.startPoint.x;
+                    return this.handleStartXValueChange(value, existingValue);
+                }
+            }
         }
         return false;
     };
@@ -194,10 +208,15 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
 
     private handleStartYWCSChange = (wcsString: string): boolean => {
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
-            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.startWCS.x, y: wcsString});
-            const value = newPoint.y;
-            const existingValue = this.startPoint.y;
-            return this.handleStartYValueChange(value, existingValue);
+            const startWCS = this.startWCS;
+            if (startWCS) {
+                const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: startWCS.x, y: wcsString});
+                if (newPoint) {
+                    const value = newPoint.y;
+                    const existingValue = this.startPoint.y;
+                    return this.handleStartYValueChange(value, existingValue);
+                }
+            }
         }
         return false;
     };
@@ -221,10 +240,15 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
 
     private handleEndXWCSChange = (wcsString: string): boolean => {
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX)) {
-            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.endWCS.y});
-            const value = newPoint.x;
-            const existingValue = this.endPoint.x;
-            return this.handleEndXValueChange(value, existingValue);
+            const endWCS = this.endWCS;
+            if (endWCS) {
+                const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: endWCS.y});
+                if (newPoint) {
+                    const value = newPoint.x;
+                    const existingValue = this.endPoint.x;
+                    return this.handleEndXValueChange(value, existingValue);
+                }
+            }
         }
         return false;
     };
@@ -248,10 +272,15 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
 
     private handleEndYWCSChange = (wcsString: string): boolean => {
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
-            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.endWCS.x, y: wcsString});
-            const value = newPoint.y;
-            const existingValue = this.endPoint.y;
-            return this.handleEndYValueChange(value, existingValue);
+            const endWCS = this.endWCS;
+            if (endWCS) {
+                const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: endWCS.x, y: wcsString});
+                if (newPoint) {
+                    const value = newPoint.y;
+                    const existingValue = this.endPoint.y;
+                    return this.handleEndYValueChange(value, existingValue);
+                }
+            }
         }
         return false;
     };
@@ -288,7 +317,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 inputType={InputType.XCoord}
                 value={startPoint?.x}
                 onChange={this.handleStartXChange}
-                valueWcs={startWCSPoint?.x}
+                valueWcs={startWCSPoint?.x || null}
                 onChangeWcs={this.handleStartXWCSChange}
                 wcsDisabled={!this.props.wcsInfo || !startWCSPoint}
             />
@@ -299,12 +328,12 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 inputType={InputType.YCoord}
                 value={startPoint?.y}
                 onChange={this.handleStartYChange}
-                valueWcs={startWCSPoint?.y}
+                valueWcs={startWCSPoint?.y || null}
                 onChangeWcs={this.handleStartYWCSChange}
                 wcsDisabled={!this.props.wcsInfo || !startWCSPoint}
             />
         );
-        const startInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${WCSPoint2D.ToString(startWCSPoint)}` : `Image: ${Point2D.ToString(this.startPoint, "px", 3)}`;
+        const startInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${startWCSPoint ? WCSPoint2D.ToString(startWCSPoint) : ""}` : `Image: ${Point2D.ToString(this.startPoint, "px", 3)}`;
 
         // end
         const endPoint = this.endPoint;
@@ -315,7 +344,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 inputType={InputType.XCoord}
                 value={endPoint?.x}
                 onChange={this.handleEndXChange}
-                valueWcs={endWCSPoint?.x}
+                valueWcs={endWCSPoint?.x || null}
                 onChangeWcs={this.handleEndXWCSChange}
                 wcsDisabled={!this.props.wcsInfo || !endWCSPoint}
             />
@@ -326,12 +355,12 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 inputType={InputType.YCoord}
                 value={endPoint?.y}
                 onChange={this.handleEndYChange}
-                valueWcs={endWCSPoint?.y}
+                valueWcs={endWCSPoint?.y || null}
                 onChangeWcs={this.handleEndYWCSChange}
                 wcsDisabled={!this.props.wcsInfo || !endWCSPoint}
             />
         );
-        const endInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${WCSPoint2D.ToString(endWCSPoint)}` : `Image: ${Point2D.ToString(this.endPoint, "px", 3)}`;
+        const endInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${endWCSPoint ? WCSPoint2D.ToString(endWCSPoint) : ""}` : `Image: ${Point2D.ToString(this.endPoint, "px", 3)}`;
 
         // center
         const centerPoint = region.center;
@@ -342,7 +371,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 inputType={InputType.XCoord}
                 value={centerPoint?.x}
                 onChange={this.handleCenterXChange}
-                valueWcs={centerWCSPoint?.x}
+                valueWcs={centerWCSPoint?.x || null}
                 onChangeWcs={this.handleCenterWCSXChange}
                 wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
             />
@@ -353,12 +382,12 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 inputType={InputType.YCoord}
                 value={centerPoint?.y}
                 onChange={this.handleCenterYChange}
-                valueWcs={centerWCSPoint?.y}
+                valueWcs={centerWCSPoint?.y || null}
                 onChangeWcs={this.handleCenterWCSYChange}
                 wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
             />
         );
-        const centerInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
+        const centerInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${centerWCSPoint ? WCSPoint2D.ToString(centerWCSPoint) : ""}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
 
         // length
 
