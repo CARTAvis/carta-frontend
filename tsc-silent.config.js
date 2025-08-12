@@ -15,6 +15,9 @@ const migratedFiles = [
     "components/Dialogs/DraggableDialog",
     "components/Dialogs/ExternalPageDialog",
     "components/Dialogs/FileBrowser",
+    "components/Dialogs/FileInfoDialog",
+    "components/Dialogs/FittingDialog",
+    "components/Dialogs/LayoutDialog",
     "components/Shared",
     "components/SpectralLineQuery"
 ];

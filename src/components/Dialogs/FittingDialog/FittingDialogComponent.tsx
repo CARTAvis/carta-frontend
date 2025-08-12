@@ -75,7 +75,7 @@ export class FittingDialogComponent extends React.Component {
         return <AnchorButton className="lock-button" onClick={toggleFixed} icon={fixed ? "lock" : "unlock"} data-testid={"image-fitting-" + testid + "-lock-button"} />;
     };
 
-    private renderInfoString = (point: Point2D, pointWcs: WCSPoint2D) => {
+    private renderInfoString = (point: Point2D, pointWcs: WCSPoint2D | null) => {
         return (
             <span className="info-string">
                 {this.coord === CoordinateMode.Image ? `WCS: ${pointWcs?.x || pointWcs?.y ? WCSPoint2D.ToString(pointWcs) : "-"}` : `Image: ${isFinite(point?.x) || isFinite(point?.y) ? Point2D.ToString(point, "px", 3) : "-"}`}
@@ -85,14 +85,18 @@ export class FittingDialogComponent extends React.Component {
 
     private exportResult = () => {
         const content = AppStore.Instance.imageFittingStore.effectiveFrame?.fittingResult;
-        const fileName = `${AppStore.Instance.imageFittingStore.effectiveFrame?.filename}-${getTimestamp()}-2D_Fitting_Result`;
-        exportTxtFile(fileName, content);
+        if (content) {
+            const fileName = `${AppStore.Instance.imageFittingStore.effectiveFrame?.filename}-${getTimestamp()}-2D_Fitting_Result`;
+            exportTxtFile(fileName, content);
+        }
     };
 
     private exportFullLog = () => {
         const content = AppStore.Instance.imageFittingStore.effectiveFrame?.fittingLog;
-        const fileName = `${AppStore.Instance.imageFittingStore.effectiveFrame?.filename}-${getTimestamp()}-2D_Fitting_Full_Log`;
-        exportTxtFile(fileName, content);
+        if (content) {
+            const fileName = `${AppStore.Instance.imageFittingStore.effectiveFrame?.filename}-${getTimestamp()}-2D_Fitting_Full_Log`;
+            exportTxtFile(fileName, content);
+        }
     };
 
     render() {
@@ -106,7 +110,7 @@ export class FittingDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Fitting),
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Fitting) || false,
             title: "Image Fitting"
         };
 
@@ -234,9 +238,9 @@ export class FittingDialogComponent extends React.Component {
                                     </FormGroup>
                                     <Divider />
                                     <FormGroup label="Center" inline={true} labelInfo={pixUnitString}>
-                                        {this.renderParamCoordInput(InputType.XCoord, component?.center?.x, "Center X", component?.setCenterX, component?.centerWcs?.x, component?.setCenterXWcs)}
+                                        {this.renderParamCoordInput(InputType.XCoord, component?.center?.x, "Center X", component?.setCenterX, component?.centerWcs?.x || "", component?.setCenterXWcs)}
                                         {this.renderLockButton(component?.centerFixed?.x, component?.toggleCenterXFixed, "center-x")}
-                                        {this.renderParamCoordInput(InputType.YCoord, component?.center?.y, "Center Y", component?.setCenterY, component?.centerWcs?.y, component?.setCenterYWcs)}
+                                        {this.renderParamCoordInput(InputType.YCoord, component?.center?.y, "Center Y", component?.setCenterY, component?.centerWcs?.y || "", component?.setCenterYWcs)}
                                         {this.renderLockButton(component?.centerFixed?.y, component?.toggleCenterYFixed, "center-y")}
                                         {this.renderInfoString(component?.center, component?.centerWcs)}
                                     </FormGroup>
@@ -245,9 +249,9 @@ export class FittingDialogComponent extends React.Component {
                                         {this.renderLockButton(component?.amplitudeFixed, component?.toggleAmplitudeFixed, "amplitude")}
                                     </FormGroup>
                                     <FormGroup label="FWHM" inline={true} labelInfo={pixUnitString}>
-                                        {this.renderParamCoordInput(InputType.Size, component?.fwhm?.x, "Major axis", component?.setFwhmX, component?.fwhmWcs?.x, component?.setFwhmXWcs)}
+                                        {this.renderParamCoordInput(InputType.Size, component?.fwhm?.x, "Major axis", component?.setFwhmX, component?.fwhmWcs?.x || "", component?.setFwhmXWcs)}
                                         {this.renderLockButton(component?.fwhmFixed?.x, component?.toggleFwhmXFixed, "fwhm-x")}
-                                        {this.renderParamCoordInput(InputType.Size, component?.fwhm?.y, "Minor axis", component?.setFwhmY, component?.fwhmWcs?.y, component?.setFwhmYWcs)}
+                                        {this.renderParamCoordInput(InputType.Size, component?.fwhm?.y, "Minor axis", component?.setFwhmY, component?.fwhmWcs?.y || "", component?.setFwhmYWcs)}
                                         {this.renderLockButton(component?.fwhmFixed?.y, component?.toggleFwhmYFixed, "fwhm-y")}
                                         {this.renderInfoString(component?.fwhm, component?.fwhmWcs)}
                                     </FormGroup>
@@ -327,7 +331,7 @@ export class FittingDialogComponent extends React.Component {
                 <TaskProgressDialogComponent
                     isOpen={fittingStore.isFitting}
                     progress={fittingStore?.progress ?? 0}
-                    timeRemaining={appStore.estimatedTaskRemainingTime}
+                    timeRemaining={appStore.estimatedTaskRemainingTime || 0}
                     cancellable={true}
                     onCancel={fittingStore.cancelFitting}
                     text={"Image fitting processing"}
