@@ -12,15 +12,7 @@ const migratedFiles = [
     "components/Dialogs/AboutDialog",
     "components/Dialogs/CodeSnippetDialog",
     "components/Dialogs/ContourDialog",
-    "components/Shared/AnnotationMenuComponent",
-    "components/Shared/AutoColorComponent",
-    "components/Shared/BiasContrastSelectComponent",
-    "components/Shared/ColorMapComponent",
-    "components/Shared/CoordNumericInputComponent",
-    "components/Shared/PlotContainerComponent",
-    "components/Shared/LinePlotSettingPanelComponent",
-    "components/Shared/LinePlotComponent",
-    "components/Shared/Tables",
+    "components/Shared",
     "components/SpectralLineQuery"
 ];
 

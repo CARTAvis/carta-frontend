@@ -67,7 +67,11 @@ export class SmoothingSettingsComponent extends React.Component<{
                             <FormGroup inline={true} label="Color">
                                 {smoothingStore.colorMap.size > 0 && <HTMLSelect value={smoothingStore.selectedLine} options={colorKeys} onChange={this.handleSelectedLineChanged} />}
                                 <AutoColorPickerComponent
-                                    color={smoothingStore.selectedLine && smoothingStore.colorMap.get(smoothingStore.selectedLine) ? smoothingStore.colorMap.get(smoothingStore.selectedLine) : smoothingStore.lineColor}
+                                    color={
+                                        smoothingStore.selectedLine && smoothingStore.colorMap.get(smoothingStore.selectedLine)
+                                            ? (smoothingStore.colorMap.get(smoothingStore.selectedLine) ?? smoothingStore.lineColor)
+                                            : smoothingStore.lineColor
+                                    }
                                     presetColors={SWATCH_COLORS}
                                     setColor={(color: string) => {
                                         if (smoothingStore.selectedLine && smoothingStore.colorMap.get(smoothingStore.selectedLine)) {
