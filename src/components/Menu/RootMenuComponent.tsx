@@ -61,17 +61,20 @@ export class RootMenuComponent extends React.Component {
         return (
             <Menu className="widgets-menu">
                 <MenuItem text="Info Panels" icon={"panel-stats"}>
-                    <MenuItem text={WidgetType.Region} icon={<CustomIcon icon={regionListConfig.icon as CustomIconName} />} onClick={regionListConfig.onClick} />
-                    <MenuItem text={WidgetType.ImageList} icon={imageListConfig.icon as IconName} onClick={imageListConfig.onClick} />
-                    <MenuItem text={WidgetType.CursorInfo} icon={<CustomIcon icon={cursorInfoConfig.icon as CustomIconName} />} onClick={cursorInfoConfig.onClick} />
-                    <MenuItem text={WidgetType.Log} icon={logConfig.icon as IconName} onClick={logConfig.onClick} />
+                    {regionListConfig && <MenuItem text={WidgetType.Region} icon={<CustomIcon icon={regionListConfig.icon as CustomIconName} />} onClick={regionListConfig.onClick} />}
+                    {imageListConfig && <MenuItem text={WidgetType.ImageList} icon={imageListConfig.icon as IconName} onClick={imageListConfig.onClick} />}
+                    {cursorInfoConfig && <MenuItem text={WidgetType.CursorInfo} icon={<CustomIcon icon={cursorInfoConfig.icon as CustomIconName} />} onClick={cursorInfoConfig.onClick} />}
+                    {logConfig && <MenuItem text={WidgetType.Log} icon={logConfig.icon as IconName} onClick={logConfig.onClick} />}
                 </MenuItem>
                 <MenuItem text="Profiles" icon={"pulse"}>
-                    <MenuItem text={WidgetType.SpatialProfiler} icon={<CustomIcon icon={spatialProfilerConfig.icon as CustomIconName} />} onClick={spatialProfilerConfig.onClick} />
-                    <MenuItem text={WidgetType.SpectralProfiler} icon={<CustomIcon icon={spectralProfilerConfig.icon as CustomIconName} />} onClick={spectralProfilerConfig.onClick} />
+                    {spatialProfilerConfig && <MenuItem text={WidgetType.SpatialProfiler} icon={<CustomIcon icon={spatialProfilerConfig.icon as CustomIconName} />} onClick={spatialProfilerConfig.onClick} />}
+                    {spectralProfilerConfig && <MenuItem text={WidgetType.SpectralProfiler} icon={<CustomIcon icon={spectralProfilerConfig.icon as CustomIconName} />} onClick={spectralProfilerConfig.onClick} />}
                 </MenuItem>
                 {restWidgets.map(widgetType => {
                     const widgetConfig = cartaWidgets.get(widgetType);
+                    if (!widgetConfig) {
+                        return null;
+                    }
                     const trimmedStr = widgetType.replace(/\s+/g, "");
                     return (
                         <MenuItem key={`${trimmedStr}Menu`} text={widgetType} icon={widgetConfig.isCustomIcon ? <CustomIcon icon={widgetConfig.icon as CustomIconName} /> : (widgetConfig.icon as IconName)} onClick={widgetConfig.onClick} />
@@ -82,7 +85,7 @@ export class RootMenuComponent extends React.Component {
     };
 
     private recurseSnippetMap(snippetMap: Map<string, any>): React.ReactNode[] {
-        let nodes = [];
+        const nodes: React.ReactNode[] = [];
         for (const [name, node] of snippetMap) {
             // Create menu and recurse
             if (node instanceof Map) {
@@ -98,7 +101,7 @@ export class RootMenuComponent extends React.Component {
         // Sort nodes as follows:
         // - Folders first (sorted alphabetically)
         // - Items sorted alphabetically
-        return nodes.sort((a, b) => {
+        return nodes.sort((a: any, b: any) => {
             const lengthA = a.props?.children?.length ?? 0;
             const lengthB = b.props?.children?.length ?? 0;
             if ((lengthA > 0 && lengthB > 0) || lengthA === lengthB) {
@@ -206,9 +209,13 @@ export class RootMenuComponent extends React.Component {
                         if (url.protocol.startsWith("file")) {
                             const socketUrl = url.searchParams.get("socketUrl");
                             const token = url.searchParams.get("token");
-                            const httpUrl = socketUrl.replace("ws", "http");
-                            const finalUrl = `${httpUrl}?token=${token}`;
-                            await copyToClipboard(finalUrl);
+                            if (socketUrl) {
+                                const httpUrl = socketUrl.replace("ws", "http");
+                                const finalUrl = `${httpUrl}?token=${token}`;
+                                await copyToClipboard(finalUrl);
+                            } else {
+                                await copyToClipboard(document.URL);
+                            }
                         } else {
                             await copyToClipboard(document.URL);
                         }
@@ -368,8 +375,9 @@ export class RootMenuComponent extends React.Component {
         }
 
         const tilesLoading = appStore.tileService.remainingTiles > 0;
-        const contoursLoading = appStore.activeFrame?.contourProgress >= 0 && appStore.activeFrame.contourProgress < 1;
-        const vectorOverlayLoading = appStore.activeFrame?.vectorOverlayStore.progress >= 0 && appStore.activeFrame.vectorOverlayStore.progress < 1;
+        const contoursLoading = appStore.activeFrame && typeof appStore.activeFrame.contourProgress === "number" && appStore.activeFrame.contourProgress >= 0 && appStore.activeFrame.contourProgress < 1;
+        const vectorOverlayLoading =
+            appStore.activeFrame && typeof appStore.activeFrame.vectorOverlayStore?.progress === "number" && appStore.activeFrame.vectorOverlayStore.progress >= 0 && appStore.activeFrame.vectorOverlayStore.progress < 1;
         let loadingTooltipFragment;
         let loadingIndicatorClass = "contour-loading-icon";
         let showLoadingIndicator = false;
@@ -380,12 +388,12 @@ export class RootMenuComponent extends React.Component {
                 tilesTooltipContent = <span>Streaming image tiles. {appStore.tileService.remainingTiles} remaining</span>;
             }
             let contourTooltipContent;
-            if (contoursLoading) {
+            if (contoursLoading && appStore.activeFrame) {
                 contourTooltipContent = <span>Streaming contours. {toFixed(100 * appStore.activeFrame.contourProgress, 1)}% complete</span>;
             }
 
             let vectorOverlayTooltipContent;
-            if (vectorOverlayLoading) {
+            if (vectorOverlayLoading && appStore.activeFrame) {
                 vectorOverlayTooltipContent = <span>Streaming vector overlay. {toFixed(100 * appStore.activeFrame.vectorOverlayStore.progress, 1)}% complete</span>;
             }
 
@@ -455,7 +463,7 @@ export class RootMenuComponent extends React.Component {
                         <MenuItem text="Widgets" />
                     </Menu>
                 </Popover>
-                {appStore.preferenceStore.codeSnippetsEnabled && (
+                {appStore.preferenceStore.codeSnippetsEnabled && this.snippetsMenu && (
                     <Popover autoFocus={false} minimal={true} content={this.snippetsMenu} position={Position.BOTTOM_LEFT}>
                         <Menu className="root-menu-entry">
                             <MenuItem text="Snippets" />

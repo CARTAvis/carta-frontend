@@ -32,7 +32,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
         };
     }
 
-    @computed get widgetStore(): LayerListWidgetStore {
+    @computed get widgetStore(): LayerListWidgetStore | null {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.layerListWidgets) {
             const widgetStore = widgetsStore.layerListWidgets.get(this.props.id);
@@ -50,6 +50,9 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
     }
 
     private renderFrameOptions = (val: number, itemProps: ItemRendererProps) => {
+        if (!this.widgetStore) {
+            return null;
+        }
         const option = this.widgetStore.restFreqFrameOptions.find(option => option.frameIndex === val);
         return <MenuItem key={option?.frameIndex} text={option?.label} disabled={option?.disable} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
@@ -66,7 +69,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                     selectAllOnFocus={true}
                     onValueChanged={val => {
                         restFreqStore.setCustomVal(val);
-                        if (AppStore.Instance.frameNum <= 10) {
+                        if (AppStore.Instance.frameNum <= 10 && this.widgetStore) {
                             this.widgetStore.resetSelectedFrameIndex();
                         }
                     }}
@@ -74,7 +77,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                     resetDisabled={restFreqStore.resetDisable}
                     tooltipContent={restFreqStore.defaultInfo}
                     tooltipPlacement={"bottom"}
-                    focused={frameOption.frameIndex === this.widgetStore.selectedFrameIndex}
+                    focused={frameOption.frameIndex === this.widgetStore?.selectedFrameIndex}
                 />
                 <HTMLSelect disabled={frameOption.disable} options={Object.values(FrequencyUnit)} value={restFreqStore.customRestFreq.unit} onChange={ev => restFreqStore.setCustomUnit(ev.currentTarget.value as FrequencyUnit)} />
             </div>
@@ -83,6 +86,10 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
 
     render() {
         const appStore = AppStore.Instance;
+
+        if (!this.widgetStore) {
+            return null;
+        }
 
         const matchingPanel = (
             <div className="panel-container">
@@ -100,7 +107,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
 
         const selectedFrameIndex = this.widgetStore.selectedFrameIndex;
         const frameOptions = this.widgetStore.restFreqFrameOptions;
-        let restFreqPanel = null;
+        let restFreqPanel: JSX.Element | null = null;
         if (appStore.frameNum > 10) {
             const fileText = frameOptions.find(option => option.frameIndex === selectedFrameIndex)?.label;
             const inputFrame = frameOptions.find(option => option.frameIndex === (selectedFrameIndex === -1 ? appStore.activeFrameIndex : selectedFrameIndex));
