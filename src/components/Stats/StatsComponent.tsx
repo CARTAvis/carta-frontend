@@ -46,7 +46,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         return new StatsWidgetStore();
     }
 
-    @computed get statsData(): CARTA.RegionStatsData {
+    @computed get statsData(): CARTA.RegionStatsData | null {
         const appStore = AppStore.Instance;
         if (this.widgetStore.effectiveFrame) {
             let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
@@ -57,13 +57,16 @@ export class StatsComponent extends React.Component<WidgetProps> {
             if (!frameMap) {
                 return null;
             }
+            if (regionId === null) {
+                return null;
+            }
             const regionMap = frameMap.get(regionId);
             if (!regionMap) {
                 return null;
             }
             const stokesIndex = this.widgetStore.effectiveFrame.polarizationInfo.findIndex(polarization => polarization.replace("Stokes ", "") === coordinate.slice(0, coordinate.length - 1));
             const stokes = stokesIndex >= this.widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes ? this.widgetStore.effectiveFrame.polarizations[stokesIndex] : stokesIndex;
-            return regionMap.get(stokes === -1 ? this.widgetStore.effectiveFrame.requiredStokes : stokes);
+            return regionMap.get(stokes === -1 ? this.widgetStore.effectiveFrame.requiredStokes : stokes) || null;
         }
         return null;
     }
@@ -104,7 +107,9 @@ export class StatsComponent extends React.Component<WidgetProps> {
         if (!props.docked && props.id === StatsComponent.WIDGET_CONFIG.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addStatsWidget();
-            appStore.widgetsStore.changeWidgetId(props.id, id);
+            if (id) {
+                appStore.widgetsStore.changeWidgetId(props.id, id);
+            }
         } else {
             if (!appStore.widgetsStore.statsWidgets.has(this.props.id)) {
                 console.log(`can't find store for widget with id=${this.props.id}`);
@@ -161,9 +166,10 @@ export class StatsComponent extends React.Component<WidgetProps> {
             const frame = this.widgetStore.effectiveFrame;
             if (frame && frame.headerUnit) {
                 let unit: string;
-                if ([POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(this.widgetStore.effectivePolarization)) {
+                const effectivePolarization = this.widgetStore.effectivePolarization;
+                if (effectivePolarization && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(effectivePolarization)) {
                     unit = "%";
-                } else if (this.widgetStore.effectivePolarization === POLARIZATIONS.Pangle) {
+                } else if (effectivePolarization === POLARIZATIONS.Pangle) {
                     unit = "degree";
                 } else {
                     unit = frame.headerUnit;
@@ -181,8 +187,10 @@ export class StatsComponent extends React.Component<WidgetProps> {
             }
 
             const value = this.statsData.statistics[index].value;
-            numString = toExponential(value, 12);
-            unitString = isFinite(value) ? unitString : "";
+            if (value !== null && value !== undefined) {
+                numString = toExponential(value, 12);
+                unitString = isFinite(value) ? unitString : "";
+            }
         }
 
         return {num: numString, unit: unitString};
@@ -197,7 +205,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
             let regionInfo = "";
             const regionId = this.widgetStore.effectiveRegionId;
-            if (regionId !== -1) {
+            if (regionId !== -1 && regionId !== null) {
                 const regionProperties = frame.getRegionProperties(regionId);
                 regionProperties?.forEach(regionProperty => (regionInfo += `# ${regionProperty}\n`));
             } else {
@@ -211,11 +219,13 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
             let rows = "";
             StatsComponent.STATS_NAME_MAP.forEach((name, type) => {
-                const index = this.statsData.statistics?.findIndex(s => s.statsType === type);
-                if (index >= 0 && index < this.statsData.statistics?.length) {
-                    const value = this.getTableValue(index, type);
-                    value.unit = value.unit === "" ? "N/A" : value.unit;
-                    rows += `${name.padEnd(12)}\t${value.num}\t${value.unit}\n`;
+                if (this.statsData?.statistics) {
+                    const index = this.statsData.statistics.findIndex(s => s.statsType === type);
+                    if (index >= 0 && index < this.statsData.statistics.length) {
+                        const value = this.getTableValue(index, type);
+                        value.unit = value.unit === "" ? "N/A" : value.unit;
+                        rows += `${name.padEnd(12)}\t${value.num}\t${value.unit}\n`;
+                    }
                 }
             });
 
@@ -242,24 +252,26 @@ export class StatsComponent extends React.Component<WidgetProps> {
         }
 
         let formContent;
-        let exportDataComponent = null;
+        let exportDataComponent: JSX.Element | null = null;
         if (this.statsData) {
             // stretch value column to cover width
             const valueWidth = Math.max(0, this.width - StatsComponent.NAME_COLUMN_WIDTH);
 
-            let rows = [];
+            let rows: JSX.Element[] = [];
             StatsComponent.STATS_NAME_MAP.forEach((name, type) => {
-                const index = this.statsData.statistics?.findIndex(s => s.statsType === type);
-                if (index >= 0 && index < this.statsData.statistics.length) {
-                    const value = this.getTableValue(index, type);
-                    rows.push(
-                        <tr key={type}>
-                            <td style={{width: StatsComponent.NAME_COLUMN_WIDTH}}>{name}</td>
-                            <td style={{width: valueWidth}}>
-                                {value.num} {value.unit}
-                            </td>
-                        </tr>
-                    );
+                if (this.statsData?.statistics) {
+                    const index = this.statsData.statistics.findIndex(s => s.statsType === type);
+                    if (index >= 0 && index < this.statsData.statistics.length) {
+                        const value = this.getTableValue(index, type);
+                        rows.push(
+                            <tr key={type}>
+                                <td style={{width: StatsComponent.NAME_COLUMN_WIDTH}}>{name}</td>
+                                <td style={{width: valueWidth}}>
+                                    {value.num} {value.unit}
+                                </td>
+                            </tr>
+                        );
+                    }
                 }
             });
 
