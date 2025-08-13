@@ -61,6 +61,9 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
 
     private filterMoment: ItemPredicate<CARTA.Moment> = (query, moment, index, exactMatch) => {
         const momentContent = MOMENT_TEXT.get(moment);
+        if (!momentContent) {
+            return false;
+        }
         const normalizedMoment = momentContent.tag.toLowerCase();
         const normalizedQuery = query.toLowerCase();
 
@@ -78,7 +81,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
 
     private renderMomentSelectItem: ItemRenderer<CARTA.Moment> = (moment: CARTA.Moment, {modifiers, handleClick}) => {
         const momentContent = MOMENT_TEXT.get(moment);
-        return momentContent ? <MenuItem text={`${momentContent.tag}: ${momentContent.text}`} onClick={handleClick} key={moment} icon={this.props.widgetStore.isMomentSelected(moment) ? "tick" : "blank"} /> : undefined;
+        return momentContent ? <MenuItem text={`${momentContent.tag}: ${momentContent.text}`} onClick={handleClick} key={moment} icon={this.props.widgetStore.isMomentSelected(moment) ? "tick" : "blank"} /> : null;
     };
 
     private renderRestFreqInput = (frame: FrameStore) => {
@@ -177,7 +180,9 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
 
         const spectralPanel = (
             <React.Fragment>
-                <SpectralSettingsComponent frame={frame} onSpectralCoordinateChange={widgetStore.setSpectralCoordinate} onSpectralSystemChange={widgetStore.setSpectralSystem} disable={frame?.isPVImage || !frame?.isSpectralChannel} />
+                {frame && (
+                    <SpectralSettingsComponent frame={frame} onSpectralCoordinateChange={widgetStore.setSpectralCoordinate} onSpectralSystemChange={widgetStore.setSpectralSystem} disable={frame?.isPVImage || !frame?.isSpectralChannel} />
+                )}
                 {frame && frame.numChannels > 1 && (
                     <FormGroup label="Range" inline={true} labelInfo={frame?.spectralUnit ? `(${frame.spectralUnit})` : ""}>
                         <div className="range-select">
@@ -195,7 +200,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                         </div>
                     </FormGroup>
                 )}
-                <React.Fragment>{this.renderRestFreqInput(frame)}</React.Fragment>
+                {frame && <React.Fragment>{this.renderRestFreqInput(frame)}</React.Fragment>}
             </React.Fragment>
         );
 
@@ -283,7 +288,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     {frame === appStore.spatialReference && <Switch label={"Auto spatial matching"} checked={appStore.momentToMatch} onChange={appStore.toggleMomentToMatch} />}
                 </FormGroup>
                 <div className="moment-generate">
-                    <Tooltip disabled={isAbleToGenerate} content={msg} position={Position.BOTTOM}>
+                    <Tooltip disabled={!!isAbleToGenerate} content={msg} position={Position.BOTTOM}>
                         <AnchorButton intent="success" onClick={this.handleRequestMoment} disabled={!isAbleToGenerate} data-testid="moment-generator-generate-button">
                             Generate
                         </AnchorButton>
@@ -304,9 +309,9 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     {momentsPanel}
                 </div>
                 <TaskProgressDialogComponent
-                    isOpen={frame && frame.isRequestingMoments && frame.requestingMomentsProgress < 1}
-                    progress={frame ? frame.requestingMomentsProgress : 0}
-                    timeRemaining={appStore.estimatedTaskRemainingTime}
+                    isOpen={!!(frame && frame.isRequestingMoments && frame.requestingMomentsProgress < 1)}
+                    progress={frame?.requestingMomentsProgress ?? 0}
+                    timeRemaining={appStore.estimatedTaskRemainingTime ?? 0}
                     cancellable={true}
                     onCancel={this.handleRequestingMomentCancelled}
                     text={"Generating moments"}

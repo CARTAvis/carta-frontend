@@ -24,8 +24,9 @@ const migratedFiles = [
     "components/RegionList",
     "components/RegionConfig",
     "components/Shared",
-    "components/SpectralProfile",
-    "components/SpectralLineQuery"
+    "components/SpatialProfile",
+    "components/SpectralLineQuery",
+    "components/SpectralProfile"
 ];
 
 module.exports = {
