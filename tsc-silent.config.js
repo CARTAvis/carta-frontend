@@ -13,6 +13,8 @@ const migratedFiles = [
     "components/FileInfo",
     "components/FloatingWidget",
     "components/FloatingWidgetManager",
+    "components/HelpDrawer",
+    "components/Histogram",
     "components/Shared",
     "components/SpectralLineQuery"
 ];
