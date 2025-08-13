@@ -15,6 +15,7 @@ const migratedFiles = [
     "components/FloatingWidgetManager",
     "components/HelpDrawer",
     "components/Histogram",
+    "components/ImageView",
     "components/Shared",
     "components/SpectralLineQuery"
 ];
