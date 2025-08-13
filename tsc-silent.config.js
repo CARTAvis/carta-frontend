@@ -16,6 +16,13 @@ const migratedFiles = [
     "components/HelpDrawer",
     "components/Histogram",
     "components/ImageView",
+    "components/LayerList",
+    "components/Log",
+    "components/Menu",
+    "components/Placeholder",
+    "components/PvGenerator",
+    "components/RegionList",
+    "components/RegionConfig",
     "components/Shared",
     "components/SpectralLineQuery"
 ];
