@@ -195,7 +195,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const canEnableSpatialMatching = appStore.spatialReference !== frame;
         const canEnableSpectralMatching = appStore.spectralReference && appStore.spectralReference !== frame && frame.frameInfo.fileInfoExtended.depth > 1;
         const wcsButtonSuperscript = (spatialMatchingEnabled ? "x" : "") + (spectralMatchingEnabled ? "z" : "");
-        const wcsButtonTooltipEntries = [];
+        const wcsButtonTooltipEntries: string[] = [];
         if (spectralMatchingEnabled) {
             wcsButtonTooltipEntries.push(`Spectral (${appStore.spectralMatchingType})`);
         }
@@ -238,8 +238,11 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         const handleDistanceMeasuringClicked = () => {
             this.handleActiveLayerClicked(ImageViewLayer.RegionCreating);
-            appStore.activeFrame.regionSet.setNewRegionType(CARTA.RegionType.ANNRULER);
-            appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
+            const activeFrame = appStore.activeFrame;
+            if (activeFrame) {
+                activeFrame.regionSet.setNewRegionType(CARTA.RegionType.ANNRULER);
+                activeFrame.regionSet.setMode(RegionMode.CREATING);
+            }
         };
 
         return (
@@ -284,8 +287,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                                 <span>
                                                     Create{" "}
                                                     {frame.regionSet.isNewRegionAnnotation
-                                                        ? `${RegionStore.AVAILABLE_ANNOTATION_TYPES.get(frame.regionSet.newRegionType).toLowerCase()} annotation`
-                                                        : `${RegionStore.AVAILABLE_REGION_TYPES.get(frame.regionSet.newRegionType).toLowerCase()} region`}
+                                                        ? `${RegionStore.AVAILABLE_ANNOTATION_TYPES.get(frame.regionSet.newRegionType)?.toLowerCase() ?? "unknown"} annotation`
+                                                        : `${RegionStore.AVAILABLE_REGION_TYPES.get(frame.regionSet.newRegionType)?.toLowerCase() ?? "unknown"} region`}
                                                     <br />
                                                     <i>
                                                         <small>Click to select region or annotation type</small>
@@ -295,7 +298,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                         >
                                             <AnchorButton
                                                 icon={frame.regionSet.isNewRegionAnnotation ? "annotation" : regionIcon}
-                                                active={appStore.activeLayer === ImageViewLayer.RegionCreating || appStore.activeFrame.regionSet.mode === RegionMode.CREATING}
+                                                active={appStore.activeLayer === ImageViewLayer.RegionCreating || appStore.activeFrame?.regionSet.mode === RegionMode.CREATING}
                                                 onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)}
                                             />
                                         </Tooltip>
@@ -308,8 +311,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                             <span>
                                                 Create{" "}
                                                 {frame.regionSet.isNewRegionAnnotation
-                                                    ? `${RegionStore.AVAILABLE_ANNOTATION_TYPES.get(frame.regionSet.newRegionType).toLowerCase()} annotation`
-                                                    : `${RegionStore.AVAILABLE_REGION_TYPES.get(frame.regionSet.newRegionType).toLowerCase()} region`}
+                                                    ? `${RegionStore.AVAILABLE_ANNOTATION_TYPES.get(frame.regionSet.newRegionType)?.toLowerCase() ?? "unknown"} annotation`
+                                                    : `${RegionStore.AVAILABLE_REGION_TYPES.get(frame.regionSet.newRegionType)?.toLowerCase() ?? "unknown"} region`}
                                                 <br />
                                                 <i>
                                                     <small>

@@ -28,10 +28,16 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
     imageViewCanvas.width = appStore.fullViewWidth * appStore.pixelRatio;
     imageViewCanvas.height = appStore.fullViewHeight * appStore.pixelRatio;
     const ctx = imageViewCanvas.getContext("2d");
+    if (!ctx) {
+        return imageViewCanvas;
+    }
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, imageViewCanvas.width, imageViewCanvas.height);
     config.visibleImages.forEach((image, index) => {
         const frame = image?.type === ImageType.COLOR_BLENDING ? image.store?.baseFrame : image?.store;
+        if (!frame) {
+            return;
+        }
         const column = index % config.numImageColumns;
         const row = Math.floor(index / config.numImageColumns);
         const viewWidth = (appStore.channelMapStore.channelMapEnabled ? frame.channelMapOuterOverlayStore.viewWidth : frame.overlayStore.viewWidth) * appStore.pixelRatio;
@@ -71,6 +77,9 @@ export function getPanelCanvas(column: number, row: number, viewWidth: number, v
     composedCanvas.height = viewHeight;
 
     const ctx = composedCanvas.getContext("2d");
+    if (!ctx) {
+        return null;
+    }
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
     ctx.drawImage(rasterCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
@@ -151,7 +160,9 @@ export function getPanelCanvas(column: number, row: number, viewWidth: number, v
     if (regionDivArray?.length) {
         for (const regionDiv of regionDivArray) {
             const regionCanvas = regionDiv?.children[0]?.querySelector("canvas");
-            ctx.drawImage(regionCanvas, regionDiv.offsetLeft * appStore.pixelRatio, regionDiv.offsetTop * appStore.pixelRatio);
+            if (regionCanvas) {
+                ctx.drawImage(regionCanvas, regionDiv.offsetLeft * appStore.pixelRatio, regionDiv.offsetTop * appStore.pixelRatio);
+            }
         }
     }
 

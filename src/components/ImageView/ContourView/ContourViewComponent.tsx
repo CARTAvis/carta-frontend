@@ -24,7 +24,12 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
     componentDidMount() {
         this.contourWebGLService = ContourWebGLService.Instance;
-        this.gl = this.contourWebGLService.gl;
+        const gl = this.contourWebGLService.gl;
+        if (!gl) {
+            console.error("Failed to get WebGL2 context");
+            return;
+        }
+        this.gl = gl;
         const contourStream = AppStore.Instance.backendService.contourStream;
         this.triggerUpdate();
         if (this.canvas) {
@@ -100,10 +105,12 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             }
             // draw in 2d canvas
             const ctx = this.canvas.getContext("2d");
-            const w = this.canvas.width;
-            const h = this.canvas.height;
-            ctx.clearRect(0, 0, w, h);
-            ctx.drawImage(this.gl.canvas, this.props.column * w, this.props.row * h, w, h, 0, 0, w, h);
+            if (ctx) {
+                const w = this.canvas.width;
+                const h = this.canvas.height;
+                ctx.clearRect(0, 0, w, h);
+                ctx.drawImage(this.gl.canvas, this.props.column * w, this.props.row * h, w, h, 0, 0, w, h);
+            }
         }
     };
 
@@ -119,6 +126,10 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
                 y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin)
             };
+
+            if (!baseFrame.spatialTransform) {
+                return;
+            }
 
             // Instead of rotating and scaling about an origin on the GPU (float32), we take this out of the shader, and perform beforehand (float64, and consistent)
             const originAdjustedOffset = subtract2D(baseFrame.spatialTransform.origin, scale2D(rotate2D(baseFrame.spatialTransform.origin, baseFrame.spatialTransform.rotation), baseFrame.spatialTransform.scale));
@@ -184,7 +195,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         }
 
         if (frame.contourStores) {
-            const levels = [];
+            const levels: number[] = [];
             frame.contourStores.forEach((v, level) => levels.push(level));
             const minVal = Math.min(...levels);
             const maxVal = Math.max(...levels);
