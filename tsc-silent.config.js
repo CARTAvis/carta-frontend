@@ -24,6 +24,7 @@ const migratedFiles = [
     "components/RegionList",
     "components/RegionConfig",
     "components/Shared",
+    "components/SpectralProfile",
     "components/SpectralLineQuery"
 ];
 
