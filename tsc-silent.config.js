@@ -10,6 +10,9 @@ const migratedFiles = [
     "components/ChannelMapControl",
     "components/CursorInfo",
     "components/Dialogs",
+    "components/FileInfo",
+    "components/FloatingWidget",
+    "components/FloatingWidgetManager",
     "components/Shared",
     "components/SpectralLineQuery"
 ];

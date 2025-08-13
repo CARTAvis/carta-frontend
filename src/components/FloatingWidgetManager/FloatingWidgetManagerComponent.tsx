@@ -50,19 +50,27 @@ export class FloatingWidgetManagerComponent extends React.Component {
         switch (widget.type) {
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
                 // remove widget component only
-                widgetsStore.removeFloatingWidgetComponent(widget.componentId);
-                CatalogStore.Instance.catalogProfiles.delete(widget.componentId);
+                if (widget.componentId) {
+                    widgetsStore.removeFloatingWidgetComponent(widget.componentId);
+                    CatalogStore.Instance.catalogProfiles.delete(widget.componentId);
+                }
                 break;
             case CatalogPlotComponent.WIDGET_CONFIG.type:
-                widgetsStore.removeFloatingWidgetComponent(widget.componentId);
-                CatalogStore.Instance.clearCatalogPlotsByComponentId(widget.componentId);
+                if (widget.componentId) {
+                    widgetsStore.removeFloatingWidgetComponent(widget.componentId);
+                    CatalogStore.Instance.clearCatalogPlotsByComponentId(widget.componentId);
+                }
                 break;
             case LayerListSettingsPanelComponent.WIDGET_CONFIG.type:
-                widgetsStore.layerListWidgets.get(widget.parentId)?.resetSelectedFrameIndex();
+                if (widget.parentId) {
+                    widgetsStore.layerListWidgets.get(widget.parentId)?.resetSelectedFrameIndex();
+                }
                 widgetsStore.removeFloatingWidget(widget.id);
                 break;
             case PvPreviewComponent.WIDGET_CONFIG.type:
-                widgetsStore.pvGeneratorWidgets.get(widget.parentId)?.removePreviewFrame(parseInt(widget.parentId.split("-")[2]));
+                if (widget.parentId) {
+                    widgetsStore.pvGeneratorWidgets.get(widget.parentId)?.removePreviewFrame(parseInt(widget.parentId.split("-")[2]));
+                }
                 widgetsStore.removeFloatingWidget(widget.id);
                 break;
             case PvGeneratorComponent.WIDGET_CONFIG.type:
@@ -106,15 +114,15 @@ export class FloatingWidgetManagerComponent extends React.Component {
             case CursorInfoComponent.WIDGET_CONFIG.type:
                 return <CursorInfoComponent id={widgetConfig.id} docked={false} />;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
-                return <CatalogOverlayComponent id={widgetConfig.componentId} docked={false} />;
+                return <CatalogOverlayComponent id={widgetConfig.componentId ?? ""} docked={false} />;
             case CatalogPlotComponent.WIDGET_CONFIG.type:
                 return <CatalogPlotComponent id={widgetConfig.id} docked={false} />;
             case PvGeneratorComponent.WIDGET_CONFIG.type:
                 return <PvGeneratorComponent id={widgetConfig.id} docked={false} />;
             case PvPreviewComponent.WIDGET_CONFIG.type:
-                return <PvPreviewComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id} />;
+                return <PvPreviewComponent id={widgetConfig.parentId ?? ""} docked={false} floatingSettingsId={widgetConfig.id} />;
             default:
-                return <PlaceholderComponent id={widgetConfig.id} docked={false} label={widgetConfig.title} />;
+                return <PlaceholderComponent id={widgetConfig.id} docked={false} label={widgetConfig.title ?? ""} />;
         }
     }
 
