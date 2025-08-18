@@ -35,6 +35,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     @observable private isShowHeader: boolean = true;
     private prevPosition: number = 60;
+    // Track catalogs for which axes auto-selection has been attempted (per catalog)
+    private autoSelectAttemptedCatalogIds: Set<number> = new Set();
 
     private catalogHeaderTableRef: Table2 = undefined;
     private catalogFileNames: Map<number, string>;
@@ -86,9 +88,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @action handleFileCloseClick = () => {
         const appStore = AppStore.Instance;
         const catalogWidgetStore = this.widgetStore;
-        const widgetId = CatalogStore.Instance.catalogWidgets.get(this.catalogFileId);
-        appStore.removeCatalog(this.catalogFileId, widgetId, this.props.id);
+        const currentId = this.catalogFileId as number;
+        const widgetId = CatalogStore.Instance.catalogWidgets.get(currentId);
+        appStore.removeCatalog(currentId, widgetId, this.props.id);
         catalogWidgetStore?.resetMaps();
+        // remove auto-select attempt record for this catalog id when it is closed
+        if (currentId) {
+            this.autoSelectAttemptedCatalogIds.delete(currentId);
+        }
     };
 
     // overwrite scrollToRegion to avoid crush when viewportRect is undefined (unpin action with goldenLayout)
@@ -171,6 +178,58 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             } else {
                 WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog`);
             }
+        });
+
+        // Auto-select RA/DEC columns by prefix when axes are None (attempt at most once per catalog)
+        autorun(() => {
+            const profileStore = this.profileStore;
+            const catalogWidgetStore = this.widgetStore;
+            const currentId = this.catalogFileId as number;
+            if (!profileStore || !catalogWidgetStore || !currentId) return;
+
+            // If already attempted for this catalog, do nothing
+            if (this.autoSelectAttemptedCatalogIds.has(currentId)) return;
+
+            // Only auto-select for ImageOverlay; otherwise mark as attempted and exit
+            if (catalogWidgetStore.catalogPlotType !== CatalogPlotType.ImageOverlay) {
+                this.autoSelectAttemptedCatalogIds.add(currentId);
+                return;
+            }
+
+            // Helper: first displayed numeric column matching regex
+            const findColumnBy = (regex: RegExp): string | undefined => {
+                let found: string | undefined;
+                profileStore.catalogControlHeader.forEach((header, name) => {
+                    if (found) return;
+                    const dataType = profileStore.catalogHeader[header.dataIndex]?.dataType;
+                    const isNumeric = CatalogOverlayComponent.axisDataType.includes(dataType);
+                    if (header.display && isNumeric && regex.test(name)) {
+                        found = name;
+                    }
+                });
+                return found;
+            };
+
+            const xLabel = this.xAxisLable;
+            const yLabel = this.yAxisLable;
+            const trySetAxis = (axisLabel: string, expectedLabel: string, currentAxis: string, patterns: RegExp[], setter: (name: string) => void) => {
+                if (axisLabel !== expectedLabel || currentAxis !== CatalogOverlay.NONE) return;
+                for (const pattern of patterns) {
+                    const col = findColumnBy(pattern);
+                    if (col) {
+                        setter(col);
+                        break;
+                    }
+                }
+            };
+
+            // RA aliases: ra, ra_deg, ra_*, r.a., right ascension, alpha, raj...
+            // DEC aliases: dec, dec_deg, dec_*, decl, declination, delta, dej...
+            trySetAxis(xLabel, CatalogOverlay.RA, catalogWidgetStore.xAxis, [/^ra_?deg/i, /^ra_/i, /^ra\b/i, /^r\.?a\.?/i, /^right[ _-]?asc/i, /^alpha/i, /^raj/i], name => catalogWidgetStore.setxAxis(name));
+            trySetAxis(yLabel, CatalogOverlay.DEC, catalogWidgetStore.yAxis, [/^dec_?deg/i, /^dec_/i, /^dec\b/i, /^decl/i, /^declin/i, /^delta/i, /^dej/i], name => catalogWidgetStore.setyAxis(name));
+
+            // Mark as attempted regardless of success to avoid future auto-selection for this catalog
+            this.autoSelectAttemptedCatalogIds.add(currentId);
         });
     }
 

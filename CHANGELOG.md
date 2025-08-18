@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+* Added support for auto-selecting RA/DEC columns by common prefixes when loading a catalog overlay. ([#2578](https://github.com/CARTAvis/carta-frontend/issues/2578))
+
 ## [5.0.3]
 
 ### Fixed
