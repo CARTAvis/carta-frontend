@@ -88,12 +88,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @action handleFileCloseClick = () => {
         const appStore = AppStore.Instance;
         const catalogWidgetStore = this.widgetStore;
-        const currentId = this.catalogFileId as number;
+        const currentId = this.catalogFileId;
         const widgetId = CatalogStore.Instance.catalogWidgets.get(currentId);
         appStore.removeCatalog(currentId, widgetId, this.props.id);
         catalogWidgetStore?.resetMaps();
         // remove auto-select attempt record for this catalog id when it is closed
-        if (currentId) {
+        if (currentId !== undefined) {
             this.autoSelectAttemptedCatalogIds.delete(currentId);
         }
     };
@@ -184,8 +184,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         autorun(() => {
             const profileStore = this.profileStore;
             const catalogWidgetStore = this.widgetStore;
-            const currentId = this.catalogFileId as number;
-            if (!profileStore || !catalogWidgetStore || !currentId) return;
+            const currentId = this.catalogFileId;
+            if (!profileStore || !catalogWidgetStore || currentId === undefined) return;
 
             // If already attempted for this catalog, do nothing
             if (this.autoSelectAttemptedCatalogIds.has(currentId)) return;
@@ -198,16 +198,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
             // Helper: first displayed numeric column matching regex
             const findColumnBy = (regex: RegExp): string | undefined => {
-                let found: string | undefined;
-                profileStore.catalogControlHeader.forEach((header, name) => {
-                    if (found) return;
+                for (const [name, header] of profileStore.catalogControlHeader) {
                     const dataType = profileStore.catalogHeader[header.dataIndex]?.dataType;
                     const isNumeric = CatalogOverlayComponent.axisDataType.includes(dataType);
                     if (header.display && isNumeric && regex.test(name)) {
-                        found = name;
+                        return name;
                     }
-                });
-                return found;
+                }
+                return undefined;
             };
 
             const xLabel = this.xAxisLable;
