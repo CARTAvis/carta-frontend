@@ -27,7 +27,7 @@ FocusStyleManager.onlyShowFocusOnTabs();
 // GoldenLayout requires these in the global namespace
 window["React"] = React; // tslint:disable-line
 // Ensure any roots created by GoldenLayout are wrapped with providers
-window["createRoot"] = ((origCreateRoot => {
+window["createRoot"] = (origCreateRoot => {
     return (container: Element | DocumentFragment) => {
         const root = origCreateRoot(container);
         const origRender = root.render.bind(root);
@@ -39,7 +39,7 @@ window["createRoot"] = ((origCreateRoot => {
             );
         return root;
     };
-})(createRoot as any)) as any; // tslint:disable-line
+})(createRoot as any) as any; // tslint:disable-line
 
 async function fetchConfig() {
     const baseUrl = window.location.href.replace(window.location.search, "").replace("index.html", "");

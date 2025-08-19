@@ -148,8 +148,8 @@ export class HotkeyContainer extends React.Component {
 
         if (includeHidden) {
             animatorHotkeys.push(
-               <Hotkey key={6} group={animatorGroupTitle} global={true} combo={`${modString}‘`} label="" onKeyDown={appStore.nextImage} />,
-               <Hotkey key={7} group={animatorGroupTitle} global={true} combo={`${modString}“`} label="" onKeyDown={appStore.prevImage} />
+                <Hotkey key={6} group={animatorGroupTitle} global={true} combo={`${modString}‘`} label="" onKeyDown={appStore.nextImage} />,
+                <Hotkey key={7} group={animatorGroupTitle} global={true} combo={`${modString}“`} label="" onKeyDown={appStore.prevImage} />
             );
         }
 
