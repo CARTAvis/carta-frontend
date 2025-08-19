@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+* Disable text selection in file list cells ([#2574](https://github.com/CARTAvis/carta-frontend/issues/2574)).
+
 ## [5.0.3]
 
 ### Fixed
