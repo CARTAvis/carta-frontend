@@ -25,7 +25,7 @@ export class HotkeyContainer extends React.Component {
                 canOutsideClickClose={true}
                 onClose={() => appStore.dialogStore.hideDialog(DialogId.Hotkey)}
             >
-                <div className={Classes.DIALOG_BODY}>{HotkeyContainer.RenderHotkeys()}</div>
+                <div className={Classes.DIALOG_BODY}>{HotkeyContainer.RenderHotkeys(false)}</div>
             </Dialog>
         );
     }
@@ -108,7 +108,7 @@ export class HotkeyContainer extends React.Component {
         }
     };
 
-    static RenderHotkeys() {
+    static RenderHotkeys(includeHidden: boolean = true) {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
 
@@ -145,6 +145,13 @@ export class HotkeyContainer extends React.Component {
             <Hotkey key={4} group={animatorGroupTitle} global={true} combo={`${modString}shift + up`} label="Next Stokes cube" onKeyDown={HotkeyContainer.NextStokes} />,
             <Hotkey key={5} group={animatorGroupTitle} global={true} combo={`${modString}shift + down`} label="Previous Stokes cube" onKeyDown={HotkeyContainer.PrevStokes} />
         ];
+
+        if (includeHidden) {
+            animatorHotkeys.push(
+               <Hotkey key={6} group={animatorGroupTitle} global={true} combo={`${modString}‘`} label="" onKeyDown={appStore.nextImage} />,
+               <Hotkey key={7} group={animatorGroupTitle} global={true} combo={`${modString}“`} label="" onKeyDown={appStore.prevImage} />
+            );
+        }
 
         const fileHotkeys = [
             <Hotkey key={0} group={fileGroupTitle} global={true} combo={`${modString}O`} label="Open image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File)} />,
