@@ -146,10 +146,12 @@ export class HotkeyContainer extends React.Component {
             <Hotkey key={5} group={animatorGroupTitle} global={true} combo={`${modString}shift + down`} label="Previous Stokes cube" onKeyDown={HotkeyContainer.PrevStokes} />
         ];
 
+        // The two hotkeys are for macOS to support option + ] and option + [ to navigate between images
+        // and are not visible in the hotkey dialog
         if (includeHidden) {
             animatorHotkeys.push(
-                <Hotkey key={6} group={animatorGroupTitle} global={true} combo={`${modString}‘`} label="" onKeyDown={appStore.nextImage} />,
-                <Hotkey key={7} group={animatorGroupTitle} global={true} combo={`${modString}“`} label="" onKeyDown={appStore.prevImage} />
+                <Hotkey key={6} group={animatorGroupTitle} global={true} combo={`${modString}‘`} label="Next image" onKeyDown={appStore.nextImage} />,
+                <Hotkey key={7} group={animatorGroupTitle} global={true} combo={`${modString}“`} label="Previous image" onKeyDown={appStore.prevImage} />
             );
         }
 
