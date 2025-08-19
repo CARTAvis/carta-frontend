@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-* Fixed hotkeys for next/prev images and "useHotkeys() was used outside of a <HotkeysProvider> context" problem ([#2575](https://github.com/CARTAvis/carta-frontend/issues/2575)).
+* Fixed hotkeys for next/prev images and "useHotkeys() was used outside of a `<HotkeysProvider>` context" problem ([#2575](https://github.com/CARTAvis/carta-frontend/issues/2575)).
 
 ## [5.0.3]
 
