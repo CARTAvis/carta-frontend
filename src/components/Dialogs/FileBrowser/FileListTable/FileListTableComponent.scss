@@ -67,7 +67,8 @@
             inset -1px 0 0 rgba($black, 0.05) !important;
         line-height: 22px;
         height: 22px;
-        user-select: text;
+        user-select: none;
+        -webkit-user-select: none;
 
         &.folder-cell {
             cursor: pointer !important;
