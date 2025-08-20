@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+* Fixed VizieR database URL ([#2480](https://github.com/CARTAvis/carta-frontend/issues/2480)).
+
 ## [5.0.3]
 
 ### Fixed
