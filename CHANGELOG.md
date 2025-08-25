@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+* Disable text selection in file browser ([#2574](https://github.com/CARTAvis/carta-frontend/issues/2574)).
 * Fixed VizieR database query ([#2480](https://github.com/CARTAvis/carta-frontend/issues/2480)).
 
 ## [5.0.3]
