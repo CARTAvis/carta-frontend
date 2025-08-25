@@ -39,7 +39,7 @@ window["createRoot"] = (origCreateRoot => {
             );
         return root;
     };
-})(createRoot as any) as any; // tslint:disable-line
+})(createRoot);
 
 async function fetchConfig() {
     const baseUrl = window.location.href.replace(window.location.search, "").replace("index.html", "");
