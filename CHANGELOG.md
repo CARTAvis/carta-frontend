@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Disable text selection in file browser ([#2574](https://github.com/CARTAvis/carta-frontend/issues/2574)).
 * Fixed VizieR database query ([#2480](https://github.com/CARTAvis/carta-frontend/issues/2480)).
+* Fixed issue where the PV generator widget and progress bar were removed after clicking the generate button when a PV image already exists ([#2576](https://github.com/CARTAvis/carta-frontend/issues/2576)).
 
 ## [5.0.3]
 
