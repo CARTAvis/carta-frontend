@@ -1,6 +1,6 @@
 import * as React from "react";
 import {createRoot} from "react-dom/client";
-import {FocusStyleManager, HotkeysProvider, OverlaysProvider} from "@blueprintjs/core";
+import {FocusStyleManager, OverlaysProvider} from "@blueprintjs/core";
 import axios from "axios";
 
 import {ApiService} from "services";
@@ -27,19 +27,7 @@ FocusStyleManager.onlyShowFocusOnTabs();
 // GoldenLayout requires these in the global namespace
 window["React"] = React; // tslint:disable-line
 // Ensure any roots created by GoldenLayout are wrapped with providers
-window["createRoot"] = (origCreateRoot => {
-    return (container: Element | DocumentFragment) => {
-        const root = origCreateRoot(container);
-        const origRender = root.render.bind(root);
-        root.render = (el: React.ReactNode) =>
-            origRender(
-                <HotkeysProvider>
-                    <OverlaysProvider>{el}</OverlaysProvider>
-                </HotkeysProvider>
-            );
-        return root;
-    };
-})(createRoot);
+window["createRoot"] = createRoot; // tslint:disable-line
 
 async function fetchConfig() {
     const baseUrl = window.location.href.replace(window.location.search, "").replace("index.html", "");
@@ -55,11 +43,9 @@ async function fetchConfig() {
     const container = document.getElementById("root") as HTMLElement;
     const root = createRoot(container);
     root.render(
-        <HotkeysProvider>
-            <OverlaysProvider>
-                <App />
-            </OverlaysProvider>
-        </HotkeysProvider>
+        <OverlaysProvider>
+            <App />
+        </OverlaysProvider>
     );
 }
 
