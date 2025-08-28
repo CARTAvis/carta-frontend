@@ -147,7 +147,7 @@ export class HotkeyContainer extends React.Component {
         ];
 
         // The two hotkeys are for macOS to support option + ] and option + [ to navigate between images
-        // and are not visible in the hotkey dialog
+        // They should only be registered when includeHidden is true to avoid showing in the help dialog
         if (includeHidden) {
             animatorHotkeys.push(
                 <Hotkey key={6} group={animatorGroupTitle} global={true} combo={`${modString}‘`} label="Next image" onKeyDown={appStore.nextImage} />,
@@ -184,5 +184,5 @@ export class HotkeyContainer extends React.Component {
 
 function HotkeyWrapper() {} // tslint:disable-line
 HotkeyWrapper.prototype = Object.create(HotkeyContainer.prototype);
-HotkeyWrapper.prototype.renderHotkeys = HotkeyContainer.RenderHotkeys;
+HotkeyWrapper.prototype.renderHotkeys = () => HotkeyContainer.RenderHotkeys(false);
 export const HotkeyTargetContainer = HotkeysTarget(HotkeyWrapper as any);
