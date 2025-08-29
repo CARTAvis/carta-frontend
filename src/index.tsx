@@ -1,6 +1,6 @@
 import * as React from "react";
 import {createRoot} from "react-dom/client";
-import {FocusStyleManager, OverlaysProvider} from "@blueprintjs/core";
+import {FocusStyleManager, HotkeysProvider, OverlaysProvider} from "@blueprintjs/core";
 import axios from "axios";
 
 import {ApiService} from "services";
@@ -43,9 +43,11 @@ async function fetchConfig() {
     const container = document.getElementById("root") as HTMLElement;
     const root = createRoot(container);
     root.render(
-        <OverlaysProvider>
-            <App />
-        </OverlaysProvider>
+        <HotkeysProvider>
+            <OverlaysProvider>
+                <App />
+            </OverlaysProvider>
+        </HotkeysProvider>
     );
 }
 
