@@ -562,7 +562,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         }
     };
 
-    @computed get zoomMode(): ZoomMode {
+    get zoomMode(): ZoomMode {
         const absDelta = {x: Math.abs(this.selectionBoxEnd.x - this.selectionBoxStart.x), y: Math.abs(this.selectionBoxEnd.y - this.selectionBoxStart.y)};
         if (absDelta.x > XY_ZOOM_THRESHOLD && absDelta.y > XY_ZOOM_THRESHOLD && this.props.graphZoomedXY) {
             return ZoomMode.XY;

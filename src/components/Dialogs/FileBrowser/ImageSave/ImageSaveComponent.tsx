@@ -1,7 +1,7 @@
 import * as React from "react";
 import {FormGroup, HTMLSelect, Intent, Label, NonIdealState, OptionProps, Switch, Text} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {action, autorun, computed, makeObservable} from "mobx";
+import {action, autorun, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
@@ -27,16 +27,12 @@ export class ImageSaveComponent extends React.Component {
         });
     }
 
-    @computed get validSaveSpectralRangeStart() {
-        const fileBrowser = FileBrowserStore.Instance;
-        const min = AppStore.Instance.activeFrame?.channelValueBounds?.min;
-        return min != null && min <= fileBrowser.saveSpectralStart && fileBrowser.saveSpectralStart <= fileBrowser.saveSpectralEnd;
+    get validSaveSpectralRangeStart() {
+        return AppStore.Instance.activeFrame?.frameInfo.fileInfoExtended.stokes === 1;
     }
 
-    @computed get validSaveSpectralRangeEnd() {
-        const fileBrowser = FileBrowserStore.Instance;
-        const max = AppStore.Instance.activeFrame?.channelValueBounds?.max;
-        return max != null && fileBrowser.saveSpectralStart <= fileBrowser.saveSpectralEnd && fileBrowser.saveSpectralEnd <= max;
+    get validSaveSpectralRangeEnd() {
+        return AppStore.Instance.activeFrame?.frameInfo.fileInfoExtended.stokes === 1;
     }
 
     private onChangeShouldDropDegenerateAxes = () => {
@@ -75,7 +71,7 @@ export class ImageSaveComponent extends React.Component {
     }
 
     /// Generate options for stokes via string
-    @computed get stokesOptions(): OptionProps[] {
+    get stokesOptions(): OptionProps[] {
         const stokesInfo = AppStore.Instance.activeFrame?.stokesInfo;
 
         if (stokesInfo) {

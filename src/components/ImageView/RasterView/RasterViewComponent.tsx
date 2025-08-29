@@ -43,8 +43,13 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             }
         }
 
+        // Capture props values to avoid accessing them in reactive context
+        const channels = this.props.channel;
+        const image = this.props.image;
+        const imageStore = image?.store as FrameStore;
+
         this.sub = TileService.Instance.tileStream.subscribe(tileMessage => {
-            if ((!isFinite(this.props.channel?.length ?? NaN) && (!AppStore.Instance.channelMapStore.channelMapEnabled || (this.props.image.store as FrameStore).isPreview)) || this.props.channel?.includes(tileMessage.channel ?? 0)) {
+            if ((!isFinite(channels?.length ?? NaN) && (!AppStore.Instance.channelMapStore.channelMapEnabled || imageStore?.isPreview)) || channels?.includes(tileMessage.channel ?? 0)) {
                 requestAnimationFrame(() => this.updateCanvas());
             }
         });

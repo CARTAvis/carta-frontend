@@ -3,7 +3,7 @@ import {Colors, NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {ChartArea} from "chart.js";
 import * as _ from "lodash";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, ResizeDetector, ScatterPlotComponent, ScatterPlotComponentProps, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
@@ -24,6 +24,7 @@ type Point3D = {x: number; y: number; z?: number};
 
 @observer
 export class StokesAnalysisComponent extends React.Component<WidgetProps> {
+    private widgetId: string;
     private pointDefaultColor = Colors.GRAY2;
     private opacityOutRange = 0.1;
     private channelBorder: {xMin: number; xMax: number};
@@ -52,10 +53,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     @observable width: number;
     @observable height: number;
 
-    @computed get widgetStore(): StokesAnalysisWidgetStore {
+    get widgetStore(): StokesAnalysisWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.stokesAnalysisWidgets) {
-            const widgetStore = widgetsStore.stokesAnalysisWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.stokesAnalysisWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -64,7 +65,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return new StokesAnalysisWidgetStore();
     }
 
-    @computed get profileStore(): SpectralProfileStore | null {
+    get profileStore(): SpectralProfileStore | null {
         const appStore = AppStore.Instance;
         if (this.widgetStore.effectiveFrame) {
             let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
@@ -77,7 +78,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    @computed get exportHeaders(): string[] {
+    get exportHeaders(): string[] {
         let headerString: string[] = [];
         const regionId = this.widgetStore.effectiveRegionId;
         if (regionId !== null) {
@@ -87,7 +88,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return headerString;
     }
 
-    @computed get exportQUScatterHeaders(): string[] {
+    get exportQUScatterHeaders(): string[] {
         return this.widgetStore.smoothingStore.type === SmoothingType.NONE ? this.exportHeaders : this.exportHeaders.concat(this.widgetStore.smoothingStore.comments);
     }
 
@@ -95,16 +96,18 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         super(props);
         makeObservable(this);
 
+        this.widgetId = props.id;
         const appStore = AppStore.Instance;
         if (!props.docked && props.id === StokesAnalysisComponent.WIDGET_CONFIG.type) {
             const id = appStore.widgetsStore.addStokesWidget();
             if (id) {
                 appStore.widgetsStore.changeWidgetId(props.id, id);
+                this.widgetId = id;
             }
         } else {
-            if (!appStore.widgetsStore.stokesAnalysisWidgets.has(this.props.id)) {
-                console.log(`can't find store for widget with id=${this.props.id}`);
-                appStore.widgetsStore.stokesAnalysisWidgets.set(this.props.id, new StokesAnalysisWidgetStore());
+            if (!appStore.widgetsStore.stokesAnalysisWidgets.has(this.widgetId)) {
+                console.log(`can't find store for widget with id=${this.widgetId}`);
+                appStore.widgetsStore.stokesAnalysisWidgets.set(this.widgetId, new StokesAnalysisWidgetStore());
             }
         }
 
@@ -124,10 +127,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                    appStore.widgetsStore.setWidgetTitle(this.props.id, `Stokes Analysis : ${regionString} ${selectedString} ${progressString}`);
+                    appStore.widgetsStore.setWidgetTitle(this.widgetId, `Stokes Analysis : ${regionString} ${selectedString} ${progressString}`);
                 }
             } else {
-                appStore.widgetsStore.setWidgetTitle(this.props.id, `Stokes Analysis: Cursor`);
+                appStore.widgetsStore.setWidgetTitle(this.widgetId, `Stokes Analysis: Cursor`);
             }
         });
     }
@@ -156,7 +159,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         }
     }
 
-    @computed get currentChannelValue(): number | null {
+    get currentChannelValue(): number | null {
         const frame = this.widgetStore.effectiveFrame;
         if (!frame || !frame.channelValues) {
             return null;
@@ -168,7 +171,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return frame.isCoordChannel ? channel : frame.channelValues[channel];
     }
 
-    @computed get requiredChannelValue(): number | null {
+    get requiredChannelValue(): number | null {
         const frame = this.widgetStore.effectiveFrame;
         if (!frame || !frame.channelValues) {
             return null;
@@ -671,7 +674,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return indicator;
     }
 
-    @computed get plotData(): {
+    get plotData(): {
         qValues: {dataset: Array<Point2D>; border: Border};
         uValues: {dataset: Array<Point2D>; border: Border};
         piValues: {dataset: Array<Point2D>; border: Border};
@@ -1294,7 +1297,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 <div className={"stokes-widget"}>
                     <div className={className}>
                         <div className="profile-plot-toolbar">
-                            <StokesAnalysisToolbarComponent widgetStore={this.widgetStore} id={this.props.id} />
+                            <StokesAnalysisToolbarComponent widgetStore={this.widgetStore} id={this.widgetId} />
                         </div>
                         <div className="profile-plot-qup">
                             <div className="profile-plot-qu">

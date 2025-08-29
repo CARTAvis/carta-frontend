@@ -2,7 +2,7 @@ import * as React from "react";
 import {FormGroup, HTMLSelect, HTMLTable, NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {RegionSelectorComponent, ResizeDetector} from "components/Shared";
@@ -16,6 +16,8 @@ import "./StatsComponent.scss";
 
 @observer
 export class StatsComponent extends React.Component<WidgetProps> {
+    private widgetId: string;
+
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "stats",
@@ -34,10 +36,10 @@ export class StatsComponent extends React.Component<WidgetProps> {
     @observable height: number = 0;
     @observable isMouseEntered = false;
 
-    @computed get widgetStore(): StatsWidgetStore {
+    get widgetStore(): StatsWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.statsWidgets) {
-            const widgetStore = widgetsStore.statsWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.statsWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -46,7 +48,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         return new StatsWidgetStore();
     }
 
-    @computed get statsData(): CARTA.RegionStatsData | null {
+    get statsData(): CARTA.RegionStatsData | null {
         const appStore = AppStore.Instance;
         if (this.widgetStore.effectiveFrame) {
             let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
@@ -102,6 +104,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         super(props);
         makeObservable(this);
 
+        this.widgetId = props.id;
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === StatsComponent.WIDGET_CONFIG.type) {
@@ -109,11 +112,12 @@ export class StatsComponent extends React.Component<WidgetProps> {
             const id = appStore.widgetsStore.addStatsWidget();
             if (id) {
                 appStore.widgetsStore.changeWidgetId(props.id, id);
+                this.widgetId = id;
             }
         } else {
-            if (!appStore.widgetsStore.statsWidgets.has(this.props.id)) {
-                console.log(`can't find store for widget with id=${this.props.id}`);
-                appStore.widgetsStore.statsWidgets.set(this.props.id, new StatsWidgetStore());
+            if (!appStore.widgetsStore.statsWidgets.has(this.widgetId)) {
+                console.log(`can't find store for widget with id=${this.widgetId}`);
+                appStore.widgetsStore.statsWidgets.set(this.widgetId, new StatsWidgetStore());
             }
         }
         // Update widget title when region or coordinate changes
@@ -131,9 +135,9 @@ export class StatsComponent extends React.Component<WidgetProps> {
                         regionString = region.nameString;
                     }
                 }
-                appStore.widgetsStore.setWidgetTitle(this.props.id, `Statistics: ${regionString} ${selectedString}`);
+                appStore.widgetsStore.setWidgetTitle(this.widgetId, `Statistics: ${regionString} ${selectedString}`);
             } else {
-                appStore.widgetsStore.setWidgetTitle(this.props.id, `Statistics`);
+                appStore.widgetsStore.setWidgetTitle(this.widgetId, `Statistics`);
             }
         });
 

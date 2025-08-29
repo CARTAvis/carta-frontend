@@ -6,7 +6,7 @@ import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@bluepr
 import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
 import {CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
@@ -35,6 +35,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     @observable private isShowHeader: boolean = true;
     private prevPosition: number = 60;
+    private widgetId: string;
 
     private catalogHeaderTableRef: Table2 | undefined = undefined;
     private catalogFileNames: Map<number, string>;
@@ -66,11 +67,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         };
     }
 
-    @computed get catalogFileId() {
-        return CatalogStore.Instance.catalogProfiles?.get(this.props.id);
+    get catalogFileId() {
+        return CatalogStore.Instance.catalogProfiles?.get(this.widgetId);
     }
 
-    @computed get widgetStore(): CatalogWidgetStore | undefined {
+    get widgetStore(): CatalogWidgetStore | undefined {
         const catalogFileId = this.catalogFileId;
         if (!catalogFileId) {
             return undefined;
@@ -82,7 +83,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return WidgetsStore.Instance.catalogWidgets.get(widgetStoreId);
     }
 
-    @computed get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined {
+    get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined {
         const catalogFileId = this.catalogFileId;
         if (!catalogFileId) {
             return undefined;
@@ -91,7 +92,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
-        CatalogStore.Instance.catalogProfiles.set(this.props.id, fileId);
+        CatalogStore.Instance.catalogProfiles.set(this.widgetId, fileId);
     };
 
     @action handleFileCloseClick = () => {
@@ -105,7 +106,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (!widgetId) {
             return;
         }
-        appStore.removeCatalog(catalogFileId, widgetId, this.props.id);
+        appStore.removeCatalog(catalogFileId, widgetId, this.widgetId);
         catalogWidgetStore?.resetMaps();
     };
 
@@ -129,7 +130,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     };
 
-    @computed get catalogDataInfo(): {dataset: Map<number, ProcessedColumnData> | undefined; numVisibleRows: number} {
+    get catalogDataInfo(): {dataset: Map<number, ProcessedColumnData> | undefined; numVisibleRows: number} {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
         let dataset: Map<number, ProcessedColumnData> | undefined;
@@ -147,7 +148,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return {dataset, numVisibleRows};
     }
 
-    @computed get enablePlotButton(): boolean {
+    get enablePlotButton(): boolean {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
         if (!profileStore || !catalogWidgetStore) {
@@ -164,9 +165,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
+        this.widgetId = props.id;
 
-        if (!CatalogStore.Instance.catalogProfiles.has(this.props.id)) {
-            CatalogStore.Instance.catalogProfiles.set(this.props.id, 1);
+        if (!CatalogStore.Instance.catalogProfiles.has(this.widgetId)) {
+            CatalogStore.Instance.catalogProfiles.set(this.widgetId, 1);
         }
         this.catalogFileNames = new Map<number, string>();
 
@@ -185,12 +187,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 }
 
                 if (frame && catalogFileIds?.length) {
-                    WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog : ${fileName} ${progressString}`);
+                    WidgetsStore.Instance.setWidgetComponentTitle(this.widgetId, `Catalog : ${fileName} ${progressString}`);
                 } else {
-                    WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog`);
+                    WidgetsStore.Instance.setWidgetComponentTitle(this.widgetId, `Catalog`);
                 }
             } else {
-                WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog`);
+                WidgetsStore.Instance.setWidgetComponentTitle(this.widgetId, `Catalog`);
             }
         });
     }
@@ -291,7 +293,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         );
     }
 
-    @computed get axisOption(): string[] {
+    get axisOption(): string[] {
         const profileStore = this.profileStore;
         if (!profileStore) {
             return [CatalogOverlay.NONE];
@@ -318,7 +320,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return fileSearcher.search(query).length > 0;
     };
 
-    @computed get xAxisLable(): string {
+    get xAxisLable(): string {
         const catalogWidgetStore = this.widgetStore;
         if (!catalogWidgetStore) {
             return CatalogOverlay.X;
@@ -333,7 +335,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
-    @computed get yAxisLable(): string {
+    get yAxisLable(): string {
         const catalogWidgetStore = this.widgetStore;
         if (!catalogWidgetStore) {
             return CatalogOverlay.Y;
@@ -751,7 +753,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             return;
         }
         widgetStore.setSettingsTabId(type);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WIDGET_CONFIG.title ?? "", this.props.id, CatalogOverlayComponent.WIDGET_CONFIG.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WIDGET_CONFIG.title ?? "", this.widgetId, CatalogOverlayComponent.WIDGET_CONFIG.type);
     };
 
     private onCompleteRender = () => {

@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Tab, Tabs} from "@blueprintjs/core";
-import {autorun, computed} from "mobx";
+import {autorun} from "mobx";
 import {observer} from "mobx-react";
 
 import {
@@ -43,7 +43,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
         };
     }
 
-    @computed get widgetStore(): StokesAnalysisWidgetStore | null {
+    get widgetStore(): StokesAnalysisWidgetStore | null {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.stokesAnalysisWidgets) {
             const widgetStore = widgetsStore.stokesAnalysisWidgets.get(this.props.id);

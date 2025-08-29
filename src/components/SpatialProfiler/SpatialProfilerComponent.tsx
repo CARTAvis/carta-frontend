@@ -4,7 +4,7 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {Tick} from "chart.js";
 import * as _ from "lodash";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, ResizeDetector, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
@@ -38,6 +38,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     }
 
     private cachedFormattedCoordinates: string[];
+    private widgetId: string;
 
     @observable width: number;
     @observable height: number;
@@ -46,10 +47,10 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     @observable autoScaleHorizontalMin: number;
     @observable autoScaleHorizontalMax: number;
 
-    @computed get widgetStore(): SpatialProfileWidgetStore {
+    get widgetStore(): SpatialProfileWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.spatialProfileWidgets) {
-            const widgetStore = widgetsStore.spatialProfileWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.spatialProfileWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -58,7 +59,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return new SpatialProfileWidgetStore();
     }
 
-    @computed get profileStore(): SpatialProfileStore | undefined {
+    get profileStore(): SpatialProfileStore | undefined {
         const widgetStore = this.widgetStore;
         if (widgetStore.effectiveFrame) {
             const profileKey = `${widgetStore.effectiveFrame.frameInfo.fileId}-${widgetStore.effectiveRegionId}`;
@@ -67,7 +68,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return undefined;
     }
 
-    @computed get frame(): FrameStore | undefined {
+    get frame(): FrameStore | undefined {
         if (this.widgetStore) {
             return AppStore.Instance.getFrame(this.widgetStore.fileId) || undefined;
         } else {
@@ -75,7 +76,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
     }
 
-    @computed get plotData(): {
+    get plotData(): {
         values: Array<Point2D>;
         fullResolutionValues: Array<Point2D>;
         smoothingValues: Array<Point2D>;
@@ -277,7 +278,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
     }
 
-    @computed get exportHeader(): string[] {
+    get exportHeader(): string[] {
         const headerString: string[] = [];
         if (this.widgetStore.effectiveRegion && this.widgetStore.effectiveFrame && this.widgetStore.effectiveRegionId !== null) {
             headerString.push(...this.widgetStore.effectiveFrame.getRegionProperties(this.widgetStore.effectiveRegionId));
@@ -286,7 +287,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     }
 
     // displaying offset/distance in the x axis for line and polyline regions
-    @computed get lineAxis(): {label: string; min: number; max: number; unit: string} | null {
+    get lineAxis(): {label: string; min: number; max: number; unit: string} | null {
         const coordinateData = this.profileStore?.getProfile(this.widgetStore.fullCoordinate);
         if (coordinateData?.lineAxis && this.widgetStore.isLineOrPolyline) {
             const lineAxis = coordinateData.lineAxis;
@@ -297,14 +298,14 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    @computed get nearestCursorPoint(): Point2D | null {
+    get nearestCursorPoint(): Point2D | null {
         if (this.widgetStore.isMouseMoveIntoLinePlots && this.plotData) {
             return binarySearchByX(this.plotData.values, this.widgetStore.cursorX)?.point ?? null;
         }
         return null;
     }
 
-    @computed get pointInfo(): {
+    get pointInfo(): {
         posImageSpace: Point2D;
         posWCS: any;
         infoWCS: any;
@@ -329,6 +330,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         super(props);
         makeObservable(this);
 
+        this.widgetId = props.id;
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === SpatialProfilerComponent.WIDGET_CONFIG.type) {
@@ -336,11 +338,12 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             const id = appStore.widgetsStore.addSpatialProfileWidget();
             if (id) {
                 appStore.widgetsStore.changeWidgetId(props.id, id);
+                this.widgetId = id;
             }
         } else {
-            if (!appStore.widgetsStore.spatialProfileWidgets.has(this.props.id)) {
-                console.log(`can't find store for widget with id=${this.props.id}`);
-                appStore.widgetsStore.spatialProfileWidgets.set(this.props.id, new SpatialProfileWidgetStore());
+            if (!appStore.widgetsStore.spatialProfileWidgets.has(this.widgetId)) {
+                console.log(`can't find store for widget with id=${this.widgetId}`);
+                appStore.widgetsStore.spatialProfileWidgets.set(this.widgetId, new SpatialProfileWidgetStore());
             }
         }
         // Update widget title when region or coordinate changes
@@ -351,13 +354,13 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 if (appStore && coordinate) {
                     const coordinateString = this.widgetStore.isLineOrPolyline ? "" : coordinate.toUpperCase();
                     const regionString = this.widgetStore.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
-                    appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString} Profile: ${regionString}`);
+                    appStore.widgetsStore.setWidgetTitle(this.widgetId, `${coordinateString} Profile: ${regionString}`);
                 }
                 if (currentData) {
                     this.widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
                 }
             } else {
-                appStore.widgetsStore.setWidgetTitle(this.props.id, `X Profile: Cursor`);
+                appStore.widgetsStore.setWidgetTitle(this.widgetId, `X Profile: Cursor`);
             }
         });
 

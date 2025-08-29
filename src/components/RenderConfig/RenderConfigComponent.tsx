@@ -2,7 +2,7 @@ import * as React from "react";
 import {Button, ButtonGroup, Colors, FormGroup, HTMLSelect, NonIdealState, OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";
@@ -42,14 +42,15 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
     private cachedFrame: FrameStore;
     private cachedHistogram: CARTA.IHistogram;
+    private widgetId: string;
 
     @observable width: number;
     @observable height: number;
 
-    @computed get widgetStore(): RenderConfigWidgetStore {
+    get widgetStore(): RenderConfigWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.renderConfigWidgets) {
-            const widgetStore = widgetsStore.renderConfigWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.renderConfigWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -58,7 +59,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         return new RenderConfigWidgetStore();
     }
 
-    @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} | null {
+    get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} | null {
         const frame = AppStore.Instance.activeFrame;
         if (frame?.renderConfig?.histogram?.bins?.length && frame.renderConfig.histogram.firstBinCenter != null && frame.renderConfig.histogram.binWidth != null) {
             const histogram = frame.renderConfig.histogram;
@@ -102,6 +103,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         super(props);
         makeObservable(this);
 
+        this.widgetId = props.id;
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === RenderConfigComponent.WIDGET_CONFIG.type) {
@@ -109,11 +111,12 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             const id = appStore.widgetsStore.addRenderConfigWidget();
             if (id) {
                 appStore.widgetsStore.changeWidgetId(props.id, id);
+                this.widgetId = id;
             }
         } else {
-            if (!appStore.widgetsStore.renderConfigWidgets.has(this.props.id)) {
-                console.log(`can't find store for widget with id=${this.props.id}`);
-                appStore.widgetsStore.renderConfigWidgets.set(this.props.id, new RenderConfigWidgetStore());
+            if (!appStore.widgetsStore.renderConfigWidgets.has(this.widgetId)) {
+                console.log(`can't find store for widget with id=${this.widgetId}`);
+                appStore.widgetsStore.renderConfigWidgets.set(this.widgetId, new RenderConfigWidgetStore());
             }
         }
 

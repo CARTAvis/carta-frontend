@@ -2,7 +2,7 @@ import * as React from "react";
 import {AnchorButton, Button, ButtonGroup, Classes, Collapse, Colors, FormGroup, Icon, MenuItem, PopoverPosition, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {ItemPredicate, ItemRendererProps, Select} from "@blueprintjs/select";
 import FuzzySearch from "fuzzy-search";
-import {action, autorun, computed, makeObservable} from "mobx";
+import {action, autorun, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {CatalogOverlayComponent} from "components";
@@ -39,6 +39,8 @@ const KEYCODE_ENTER = 13;
 @observer
 export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<WidgetProps> {
     private catalogFileNames: Map<number, string>;
+    private widgetId: string;
+    private floatingSettingsId: string | undefined;
     private catalogOverlayShape: Array<CatalogOverlayShape> = [
         CatalogOverlayShape.BOX_LINED,
         CatalogOverlayShape.CIRCLE_FILLED,
@@ -70,7 +72,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         };
     }
 
-    @computed get widgetStore(): CatalogWidgetStore | undefined {
+    get widgetStore(): CatalogWidgetStore | undefined {
         const catalogStore = CatalogStore.Instance;
         const catalogFileId = this.catalogFileId;
         if (catalogFileId === undefined) {
@@ -83,11 +85,11 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         return WidgetsStore.Instance.catalogWidgets.get(catalogWidgetStoreId);
     }
 
-    @computed get catalogFileId() {
-        return CatalogStore.Instance.catalogProfiles?.get(this.props.id);
+    get catalogFileId() {
+        return CatalogStore.Instance.catalogProfiles?.get(this.widgetId);
     }
 
-    @computed get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined {
+    get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined {
         const catalogFileId = this.catalogFileId;
         if (catalogFileId === undefined) {
             return undefined;
@@ -95,7 +97,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         return CatalogStore.Instance.catalogProfileStores.get(catalogFileId);
     }
 
-    @computed get axisOption() {
+    get axisOption() {
         const profileStore = this.profileStore;
         let axisOptions: string[] = [];
         axisOptions.push(CatalogOverlay.NONE);
@@ -113,6 +115,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
+        this.widgetId = props.id;
+        this.floatingSettingsId = props.floatingSettingsId;
 
         const appStore = AppStore.Instance;
         this.catalogFileNames = new Map<number, string>();
@@ -128,12 +132,12 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
                 if (activeFiles?.includes(catalogFileId)) {
                     const fileName = catalogStore.getCatalogFileNames([catalogFileId]).get(catalogFileId);
-                    if (fileName && this.props.floatingSettingsId) {
-                        appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Catalog Settings: ${fileName}`);
+                    if (fileName && this.floatingSettingsId) {
+                        appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Catalog Settings: ${fileName}`);
                     }
                 } else {
-                    if (this.props.floatingSettingsId) {
-                        appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Catalog Settings`);
+                    if (this.floatingSettingsId) {
+                        appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Catalog Settings`);
                     }
                 }
             }
@@ -141,7 +145,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
-        CatalogStore.Instance.catalogProfiles?.set(this.props.id, fileId);
+        CatalogStore.Instance.catalogProfiles?.set(this.widgetId, fileId);
     };
 
     public render() {

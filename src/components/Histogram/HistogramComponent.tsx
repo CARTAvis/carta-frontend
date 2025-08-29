@@ -2,7 +2,7 @@ import * as React from "react";
 import {NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
-import {autorun, computed, makeObservable} from "mobx";
+import {autorun, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
@@ -20,6 +20,8 @@ import "./HistogramComponent.scss";
 
 @observer
 export class HistogramComponent extends React.Component<WidgetProps> {
+    private widgetId: string;
+
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "histogram",
@@ -37,10 +39,10 @@ export class HistogramComponent extends React.Component<WidgetProps> {
     private cachedFrame: FrameStore | null = null;
     private currentLinePlotProps: LinePlotComponentProps;
 
-    @computed get widgetStore(): HistogramWidgetStore {
+    get widgetStore(): HistogramWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.histogramWidgets) {
-            const widgetStore = widgetsStore.histogramWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.histogramWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -49,7 +51,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         return new HistogramWidgetStore();
     }
 
-    @computed get isTargetData(): boolean {
+    get isTargetData(): boolean {
         const regionHistogramData = this.getRegionHistogramData();
         if (!regionHistogramData || !regionHistogramData.config) {
             return false;
@@ -68,12 +70,12 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         );
     }
 
-    @computed get histogramData(): CARTA.IHistogram | null {
+    get histogramData(): CARTA.IHistogram | null {
         const regionHistogramData = this.getRegionHistogramData();
         return regionHistogramData?.histograms ?? null;
     }
 
-    @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} | null {
+    get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} | null {
         const histogram = this.histogramData;
         if (histogram && histogram.bins && histogram.firstBinCenter !== null && histogram.firstBinCenter !== undefined && histogram.binWidth !== null && histogram.binWidth !== undefined) {
             let minIndex = 0;
@@ -121,7 +123,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    @computed get exportHeaders(): string[] {
+    get exportHeaders(): string[] {
         let headerString: string[] = [];
 
         // region info
@@ -141,6 +143,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         super(props);
         makeObservable(this);
 
+        this.widgetId = props.id ?? "";
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === HistogramComponent.WIDGET_CONFIG.type) {
@@ -148,9 +151,10 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             const id = appStore.widgetsStore.addHistogramWidget();
             if (id) {
                 appStore.widgetsStore.changeWidgetId(props.id as string, id);
+                this.widgetId = id;
             }
         } else {
-            const widgetId = props.id ?? "";
+            const widgetId = this.widgetId;
             if (widgetId && !appStore.widgetsStore.histogramWidgets.has(widgetId)) {
                 console.log(`can't find store for widget with id=${widgetId}`);
                 appStore.widgetsStore.histogramWidgets.set(widgetId, new HistogramWidgetStore());
@@ -171,12 +175,12 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                     }
                 }
                 const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                const widgetId = this.props.id ?? "";
+                const widgetId = this.widgetId;
                 if (widgetId) {
                     appStore.widgetsStore.setWidgetTitle(widgetId, `Histogram: ${regionString} ${selectedString}`);
                 }
             } else {
-                const widgetId = this.props.id ?? "";
+                const widgetId = this.widgetId;
                 if (widgetId) {
                     appStore.widgetsStore.setWidgetTitle(widgetId, `Histogram`);
                 }

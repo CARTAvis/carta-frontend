@@ -3,7 +3,7 @@ import SplitPane, {Pane} from "react-split-pane";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import classNames from "classnames";
 import * as _ from "lodash";
-import {autorun, computed, makeObservable} from "mobx";
+import {autorun, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, PlotType, SmoothingType} from "components/Shared";
@@ -23,6 +23,8 @@ const INFO_HEIGHT_MIN = 28;
 const INFO_HEIGHT_MAX = 100;
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
+    private widgetId: string;
+
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "spectral-profiler",
@@ -37,10 +39,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         };
     }
 
-    @computed get widgetStore(): SpectralProfileWidgetStore {
+    get widgetStore(): SpectralProfileWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.spectralProfileWidgets) {
-            const widgetStore = widgetsStore.spectralProfileWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.spectralProfileWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -49,11 +51,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return new SpectralProfileWidgetStore();
     }
 
-    @computed get plotData(): MultiPlotData | null {
+    get plotData(): MultiPlotData | null {
         return this.widgetStore.plotData;
     }
 
-    @computed get isMeanRmsVisible(): boolean {
+    get isMeanRmsVisible(): boolean {
         // Show Mean/RMS when only 1 profile
         return this.widgetStore.meanRmsVisible && this.plotData?.numProfiles === 1;
     }
@@ -62,6 +64,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         super(props);
         makeObservable(this);
 
+        this.widgetId = props.id;
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === SpectralProfilerComponent.WIDGET_CONFIG.type) {
@@ -69,11 +72,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             const id = appStore.widgetsStore.addSpectralProfileWidget();
             if (id) {
                 appStore.widgetsStore.changeWidgetId(props.id, id);
+                this.widgetId = id;
             }
         } else {
-            if (!appStore.widgetsStore.spectralProfileWidgets.has(this.props.id)) {
-                console.log(`can't find store for widget with id=${this.props.id}`);
-                appStore.widgetsStore.addSpectralProfileWidget(this.props.id);
+            if (!appStore.widgetsStore.spectralProfileWidgets.has(this.widgetId)) {
+                console.log(`can't find store for widget with id=${this.widgetId}`);
+                appStore.widgetsStore.addSpectralProfileWidget(this.widgetId);
             }
         }
 
@@ -90,7 +94,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     this.widgetStore.updateStreamingDataStatus(false);
                 }
             }
-            appStore.widgetsStore.setWidgetTitle(this.props.id, title);
+            appStore.widgetsStore.setWidgetTitle(this.widgetId, title);
         });
     }
 
@@ -112,7 +116,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
     };
 
-    @computed get currentChannelValue(): number | null {
+    get currentChannelValue(): number | null {
         const frame = this.widgetStore.effectiveFrame;
         if (!frame || !frame.channelValues) {
             return null;
@@ -124,7 +128,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return frame.isCoordChannel ? channel : frame.channelValues[channel];
     }
 
-    @computed get requiredChannelValue(): number | null {
+    get requiredChannelValue(): number | null {
         const frame = this.widgetStore.effectiveFrame;
         if (!frame || !frame.channelValues) {
             return null;
@@ -136,7 +140,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return frame.isCoordChannel ? channel : frame.channelValues[channel];
     }
 
-    @computed get linePlotSelectingMode(): LinePlotSelectingMode {
+    get linePlotSelectingMode(): LinePlotSelectingMode {
         if (this.widgetStore.isSelectingMomentChannelRange) {
             return LinePlotSelectingMode.HORIZONTAL;
         } else if (this.widgetStore.isSelectingMomentMaskRange) {
@@ -576,7 +580,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             <div className={className}>
                 <div className="profile-container">
                     <div className="profile-toolbar">
-                        <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} id={this.props.id} />
+                        <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} id={this.widgetId} />
                     </div>
                     <SplitPane
                         className="body-split-pane"

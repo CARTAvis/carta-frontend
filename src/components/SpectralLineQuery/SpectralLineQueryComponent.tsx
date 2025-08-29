@@ -3,7 +3,7 @@ import SplitPane, {Pane} from "react-split-pane";
 import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay2, Popover, Position, Spinner, Switch, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {FilterableTableComponent, FilterableTableComponentProps, ResizeDetector, SafeNumericInput} from "components/Shared";
@@ -53,7 +53,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         this.headerTableColumnWidths = [150, 70, 300];
     }
 
-    @computed get widgetStore(): SpectralLineQueryWidgetStore {
+    get widgetStore(): SpectralLineQueryWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.spectralLineQueryWidgets) {
             const widgetStore = widgetsStore.spectralLineQueryWidgets.get(this.props.id);

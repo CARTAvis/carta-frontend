@@ -1,5 +1,4 @@
 import * as React from "react";
-import {computed} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScrollShadow} from "components/Shared";
@@ -30,7 +29,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
         };
     }
 
-    @computed get widgetStore(): RenderConfigWidgetStore {
+    get widgetStore(): RenderConfigWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.renderConfigWidgets) {
             const widgetStore = widgetsStore.renderConfigWidgets.get(this.props.id);

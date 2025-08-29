@@ -1,6 +1,6 @@
 import * as React from "react";
 import classNames from "classnames";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
@@ -40,7 +40,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         }
     };
 
-    @computed get frame(): FrameStore | null {
+    get frame(): FrameStore | null {
         return this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image.store?.baseFrame : this.props.image?.store;
     }
 
@@ -110,7 +110,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         }
     };
 
-    @computed get cursorInfoRequired() {
+    get cursorInfoRequired() {
         const appStore = AppStore.Instance;
         switch (appStore.preferenceStore.cursorInfoVisible) {
             case CursorInfoVisibility.Always:

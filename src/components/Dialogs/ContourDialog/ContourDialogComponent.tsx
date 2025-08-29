@@ -3,7 +3,8 @@ import {Alert, AnchorButton, Button, Classes, Colors, DialogProps, FormGroup, HT
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
-import {action, autorun, computed, makeObservable, observable, runInAction} from "mobx";
+import * as _ from "lodash";
+import {action, autorun, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
@@ -95,28 +96,55 @@ export class ContourDialogComponent extends React.Component {
         }
     }
 
-    @computed get contourConfigChanged(): boolean {
+    get currentContourConfig() {
         const dataSource = AppStore.Instance.contourDataSource;
-        if (dataSource) {
-            const numContourLevels = this.levels.length;
-            if (dataSource.contourConfig.smoothingMode !== this.smoothingMode) {
-                return true;
-            } else if (dataSource.contourConfig.smoothingFactor !== this.smoothingFactor) {
-                return true;
-            } else if (dataSource.contourConfig.levels.length !== numContourLevels) {
-                return true;
-            }
-
-            for (let i = 0; i < numContourLevels; i++) {
-                if (dataSource.contourConfig.levels[i] !== this.levels[i]) {
-                    return true;
-                }
-            }
+        if (!dataSource) {
+            return {
+                levels: this.levels,
+                smoothingMode: this.smoothingMode,
+                smoothingFactor: this.smoothingFactor,
+                colormapEnabled: false,
+                colormap: "",
+                color: "",
+                thickness: 1,
+                visible: true,
+                dashMode: ""
+            };
         }
-        return false;
+        return {
+            levels: this.levels,
+            smoothingMode: this.smoothingMode,
+            smoothingFactor: this.smoothingFactor,
+            colormapEnabled: dataSource.contourConfig.colormapEnabled,
+            colormap: dataSource.contourConfig.colormap,
+            color: dataSource.contourConfig.color,
+            thickness: dataSource.contourConfig.thickness,
+            visible: dataSource.contourConfig.visible,
+            dashMode: dataSource.contourConfig.dashMode
+        };
     }
 
-    @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} | null {
+    get contourConfigChanged(): boolean {
+        const dataSource = AppStore.Instance.contourDataSource;
+        if (!dataSource) {
+            return false;
+        }
+        const config = dataSource.contourConfig;
+        const currentConfig = this.currentContourConfig;
+        return (
+            !_.isEqual(config.levels, currentConfig.levels) ||
+            config.smoothingMode !== currentConfig.smoothingMode ||
+            config.smoothingFactor !== currentConfig.smoothingFactor ||
+            config.colormapEnabled !== currentConfig.colormapEnabled ||
+            config.colormap !== currentConfig.colormap ||
+            config.color !== currentConfig.color ||
+            config.thickness !== currentConfig.thickness ||
+            config.visible !== currentConfig.visible ||
+            config.dashMode !== currentConfig.dashMode
+        );
+    }
+
+    get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} | null {
         const dataSource = AppStore.Instance.contourDataSource;
         const histogram = dataSource?.renderConfig?.contourHistogram;
 

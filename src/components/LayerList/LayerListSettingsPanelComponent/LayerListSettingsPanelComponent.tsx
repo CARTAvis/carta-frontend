@@ -2,7 +2,7 @@ import * as React from "react";
 import {Alignment, Button, FormGroup, HTMLSelect, MenuDivider, MenuItem, PopoverPosition, Tab, Tabs, Text} from "@blueprintjs/core";
 import {ItemRendererProps, Select} from "@blueprintjs/select";
 import classNames from "classnames";
-import {computed, makeObservable} from "mobx";
+import {makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent} from "components/Shared";
@@ -32,7 +32,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
         };
     }
 
-    @computed get widgetStore(): LayerListWidgetStore | null {
+    get widgetStore(): LayerListWidgetStore | null {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.layerListWidgets) {
             const widgetStore = widgetsStore.layerListWidgets.get(this.props.id);

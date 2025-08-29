@@ -63,8 +63,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         this.stageResizeOffset = {x: 0, y: 0};
 
         // Sync stage when matched, tracking frame's spatialReference only.
+        const propsFrame = this.props.frame;
         reaction(
-            () => this.props.frame?.spatialReference,
+            () => propsFrame?.spatialReference,
             spatialReference => {
                 if (spatialReference) {
                     this.syncStage(spatialReference.centerMovement, spatialReference.zoomLevel);
@@ -74,7 +75,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
         reaction(
             () => {
-                const frame = this.props.frame;
+                const frame = propsFrame;
                 if (frame) {
                     if (frame.spatialReference) {
                         // Update stage when spatial reference move/zoom(frame is sibling),
@@ -86,7 +87,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 return undefined;
             },
             (reference, prevReference) => {
-                const frame = this.props.frame;
+                const frame = propsFrame;
                 if (reference && (reference.centerMovement.x !== prevReference?.centerMovement?.x || reference.centerMovement.y !== prevReference?.centerMovement?.y || reference.zoom !== prevReference?.zoom) && frame) {
                     this.syncStage(reference.centerMovement, reference.zoom);
                 }

@@ -1,7 +1,7 @@
 import * as React from "react";
 import {Button, FormGroup, MenuItem, TagInput} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, SafeNumericInput, SCALING_POPOVER_PROPS, ScalingSelectComponent} from "components/Shared";
@@ -27,7 +27,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
     @observable enteredMaxValue: number | undefined;
     @observable scalingType: FrameScaling = FrameScaling.LINEAR;
 
-    @computed get minValue(): number {
+    get minValue(): number {
         if (this.enteredMinValue === undefined && this.props.frame?.renderConfig?.contourHistogram) {
             return getPercentiles(this.props.frame.renderConfig.contourHistogram, [0.1])[0];
         } else {
@@ -35,7 +35,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
         }
     }
 
-    @computed get maxValue(): number {
+    get maxValue(): number {
         if (this.enteredMaxValue === undefined && this.props.frame?.renderConfig?.contourHistogram) {
             return getPercentiles(this.props.frame.renderConfig.contourHistogram, [99.9])[0];
         } else {
@@ -96,7 +96,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
     @observable enteredStepValue: number | undefined;
     @observable multiplierValue: number = 1;
 
-    @computed get startValue(): number {
+    get startValue(): number {
         if (this.enteredStartValue === undefined && this.props.frame?.renderConfig?.contourHistogram?.stdDev && this.props.frame.renderConfig.contourHistogram.stdDev > 0) {
             const mean = this.props.frame.renderConfig.contourHistogram.mean ?? 0;
             return mean + 5.0 * this.props.frame.renderConfig.contourHistogram.stdDev;
@@ -105,7 +105,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
         }
     }
 
-    @computed get stepValue(): number {
+    get stepValue(): number {
         if (this.enteredStepValue === undefined && this.props.frame?.renderConfig?.contourHistogram?.stdDev && this.props.frame.renderConfig.contourHistogram.stdDev > 0) {
             return 4.0 * this.props.frame.renderConfig.contourHistogram.stdDev;
         } else {
@@ -162,7 +162,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
     @observable lowerPercentage: number = 20;
     @observable upperPercentage: number = 100;
 
-    @computed get refValue(): number {
+    get refValue(): number {
         if (this.enteredRefValue === undefined && this.props.frame?.renderConfig?.contourHistogram) {
             return getPercentiles(this.props.frame.renderConfig.contourHistogram, [99.9])[0];
         } else {
@@ -220,7 +220,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
     @observable enteredSigmaValue: number | undefined;
     @observable sigmaLevels: number[] = [-5, 5, 9, 13, 17];
 
-    @computed get meanValue(): number {
+    get meanValue(): number {
         if (this.enteredMeanValue === undefined && this.props.frame?.renderConfig?.contourHistogram?.stdDev && this.props.frame.renderConfig.contourHistogram.stdDev > 0) {
             return this.props.frame.renderConfig.contourHistogram.mean ?? 0;
         } else {
@@ -228,7 +228,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
         }
     }
 
-    @computed get sigmaValue(): number {
+    get sigmaValue(): number {
         if (this.enteredSigmaValue === undefined && this.props.frame?.renderConfig?.contourHistogram?.stdDev && this.props.frame.renderConfig.contourHistogram.stdDev > 0) {
             return this.props.frame.renderConfig.contourHistogram.stdDev;
         } else {
