@@ -38,7 +38,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     constructor(props: RasterViewComponentProps) {
         super(props);
         makeObservable(this);
-        
+
         // Initialize observable properties
         this.channels = props.channel;
         this.image = props.image;
@@ -74,7 +74,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.image = this.props.image;
             this.imageStore = this.props.image?.store as FrameStore;
         }
-        
+
         requestAnimationFrame(() => this.updateCanvas());
     }
 
