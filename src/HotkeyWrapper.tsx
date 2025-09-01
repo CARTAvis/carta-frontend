@@ -177,7 +177,6 @@ function HotkeyWrapper() {} // tslint:disable-line
 HotkeyWrapper.prototype = Object.create(HotkeyContainer.prototype);
 HotkeyWrapper.prototype.renderHotkeys = () => HotkeyContainer.RenderHotkeys();
 
-// Add global event handler to debug phonetic input method keys
 HotkeyWrapper.prototype.componentDidMount = function () {
     document.addEventListener("keydown", this.handleGlobalKeydown);
 };
