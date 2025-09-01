@@ -1,7 +1,6 @@
 import * as React from "react";
 import {Classes, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
 import classNames from "classnames";
-import {action} from "mobx";
 import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
@@ -195,12 +194,12 @@ HotkeyWrapper.prototype.handleGlobalKeydown = function (event: KeyboardEvent) {
         if (event.key === "\u201C") {
             // Option+[ in English input method produces '“' (U+201C)
             event.preventDefault();
-            action(() => appStore?.prevImage())();
+            appStore.prevImage();
             return;
         } else if (event.key === "\u2018") {
             // Option+] in English input method produces '‘' (U+2018)
             event.preventDefault();
-            action(() => appStore?.nextImage())();
+            appStore.nextImage();
             return;
         }
     }
