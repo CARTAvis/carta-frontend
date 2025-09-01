@@ -4,8 +4,8 @@ import {action, autorun, computed, makeObservable, observable, override, reactio
 import tinycolor from "tinycolor2";
 
 import {VERTICAL_RANGE_PADDING} from "components/Shared";
-import {IntensityUnitType, LineSettings, MomentSelectingMode, MultiProfileCategory, PlotType, POLARIZATIONS, RegionId, RegionsType, SmoothingType, SpectralProfilerSettingsTabs, SpectralSystem, TelemetryAction} from "enums";
-import {FindIntensityUnitType, GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, type IntensityConfig, IsIntensitySupported, type LineKey, Point2D} from "models";
+import {LineSettings, MomentSelectingMode, MultiProfileCategory, PlotType, POLARIZATIONS, RegionId, RegionsType, SmoothingType, SpectralProfilerSettingsTabs, SpectralSystem, TelemetryAction} from "enums";
+import {GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, type IntensityConfig, IsIntensitySupported, type LineKey, Point2D} from "models";
 import {TelemetryService} from "services";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
 import {RegionWidgetStore, type SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
@@ -725,7 +725,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 if (this.profileSelectionStore.isStatsTypeFluxDensityOnly && this.profileSelectionStore.isCoordinatesPangleOnly) {
                     return "";
                 } else if (this.profileSelectionStore.isStatsTypeFluxDensityOnly && unitString) {
-                    return FindIntensityUnitType(unitString) === IntensityUnitType.Kelvin ? unitString : unitString.substring(0, unitString.indexOf("/"));
+                    return pixelToFluxDensityUnit(unitString);
                 } else if (this.profileSelectionStore.isStatsTypeSumSqOnly) {
                     return `(${unitString})^2`;
                 } else {

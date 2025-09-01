@@ -17,14 +17,14 @@ The files will be installed to your `node-modules` directory. For a system-wide 
 
 You can install specific frontend versions by appending `@` plus the version number. For example,
 ```
-npm i carta-frontend@1.4.0
-npm i carta-frontend@2.0.0-beta.0
+npm i carta-frontend@4.1.0
+npm i carta-frontend@5.0.0-beta.1c
 ```
 The available versions are listed in the [npmjs.com carta-frontend versions tab](https://www.npmjs.com/package/carta-frontend?activeTab=versions).
 
 Alternatively, the pre-built production frontend can be downloaded directly without npm. For example,
 ```
-wget https://registry.npmjs.org/carta-frontend/-/carta-frontend-2.0.0.tgz
+wget https://registry.npmjs.org/carta-frontend/-/carta-frontend-5.0.0.tgz
 ```
 The standalone `tgz` archive file extracts as `package/build` in your current directory.
 
@@ -52,18 +52,18 @@ The PPA also provides a `carta` metapackage which automatically installs the CAR
 ### RPM
 
 RPMs are for users of Red Hat Enterprise Linux (RHEL) and other Red Hat-based Linux distributions, e.g. CentOS. 
-To install the latest release version, add the appropriate repository file depending on whether you are using RHEL7 (**el7**) or RHEL8 (**el8**):
+To install the latest release version, add the appropriate repository file depending on whether you are using RHEL8 (**el8**) or RHEL9 (**el9**):
 
-```
-sudo curl https://packages.cartavis.org/cartavis-el7.repo --output /etc/yum.repos.d/cartavis.repo
-```
-or
 ```
 sudo curl https://packages.cartavis.org/cartavis-el8.repo --output /etc/yum.repos.d/cartavis.repo
 ```
-Then the frontend component can be installed using `yum` or `dnf` :
+or
 ```
-sudo yum install carta-frontend
+sudo curl https://packages.cartavis.org/cartavis-el9.repo --output /etc/yum.repos.d/cartavis.repo
+```
+Then the frontend component can be installed using `dnf` or `yum`:
+```
+sudo dnf install carta-frontend
 ```
 The RPM package install location for the frontend is `/usr/share/carta/frontend/`.
 
@@ -78,7 +78,7 @@ If you wish to modify or develop the CARTA frontend, you may build a production 
 
 The build process relies heavily on `npm` and `nodejs`, so make sure they are installed and accessible.
 
-We recommend using [Docker](https://www.docker.com) or [Singularity](https://apptainer.org/docs/) to perform WebAssembly compilation. If neither is available, the Emscripten compiler (`emcc` version 2.0.14 recommended) needs to be available in the build environment. Installation instructions are available on the [Emscripten homepage](https://emscripten.org/docs/getting_started/downloads.html).
+We recommend using [Docker](https://www.docker.com) or [Singularity](https://apptainer.org/docs/) to perform WebAssembly compilation. If neither is available, the Emscripten compiler (`emcc` version 4.0.3 recommended) needs to be available in the build environment. Installation instructions are available on the [Emscripten homepage](https://emscripten.org/docs/getting_started/downloads.html).
 
 ### Build process (using Docker/Singularity)
 Initialise submodules and install package dependencies:

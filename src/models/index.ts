@@ -8,6 +8,7 @@ export * from "./ControlMap/ControlMap";
 export * from "./Ctype/CtypeDefinition";
 export * from "./Cursor/CursorInfo";
 export * from "./Cursor/CursorPosition";
+export * from "./DataSize/DataSize";
 export * from "./Event/Event";
 export * from "./FileFilterMode/FileFilterMode";
 export * from "./FrameView/FrameView";

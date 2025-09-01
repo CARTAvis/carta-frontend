@@ -2,12 +2,13 @@ import * as React from "react";
 import {ColorResult} from "react-color";
 import {AnchorButton, Button, Classes, type DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
+import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput, ScrollShadow} from "components/Shared";
-import {DialogId, HelpType, VectorOverlaySource} from "enums";
+import {DialogId, HelpType, VectorOverlaySource, POLARIZATIONS} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
@@ -35,6 +36,7 @@ export class VectorOverlayDialogComponent extends React.Component {
     @observable debiasing: boolean;
     @observable qError: number;
     @observable uError: number;
+    @observable thresholdOption: CARTA.PolarizationType.I | CARTA.PolarizationType.Plinear;
 
     private static readonly DefaultWidth = 500;
     private static readonly DefaultHeight = 720;
@@ -70,6 +72,7 @@ export class VectorOverlayDialogComponent extends React.Component {
             this.threshold = config.threshold;
             this.thresholdEnabled = config.thresholdEnabled;
             this.debiasing = config.debiasing;
+            this.thresholdOption = config.thresholdOption;
         } else {
             this.angularSource = VectorOverlaySource.Current;
             this.intensitySource = VectorOverlaySource.Current;
@@ -79,6 +82,7 @@ export class VectorOverlayDialogComponent extends React.Component {
             this.thresholdEnabled = false;
             this.threshold = 0;
             this.debiasing = false;
+            this.thresholdOption = CARTA.PolarizationType.Plinear;
         }
     };
 
@@ -100,7 +104,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                 return true;
             }
 
-            if (config.thresholdEnabled && config.threshold !== this.threshold) {
+            if (config.thresholdEnabled && (config.threshold !== this.threshold || config.thresholdOption !== this.thresholdOption)) {
                 return true;
             }
         }
@@ -127,7 +131,8 @@ export class VectorOverlayDialogComponent extends React.Component {
                 this.threshold,
                 this.debiasing,
                 this.qError,
-                this.uError
+                this.uError,
+                this.thresholdOption
             );
             dataSource.applyVectorOverlay();
         }
@@ -175,6 +180,10 @@ export class VectorOverlayDialogComponent extends React.Component {
 
     @action private handleDebiasingChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
         this.debiasing = ev.currentTarget.checked;
+    };
+
+    @action private handleThresholdOptionChanged = (ev: React.ChangeEvent<HTMLSelectElement>) => {
+        this.thresholdOption = parseInt(ev.currentTarget.value);
     };
 
     private renderIntensityParameters() {
@@ -276,6 +285,11 @@ export class VectorOverlayDialogComponent extends React.Component {
         const intensityOnly = dataSource.vectorOverlayConfig.angularSource === VectorOverlaySource.None;
         const angleOnly = dataSource.vectorOverlayConfig.intensitySource === VectorOverlaySource.None;
 
+        const computedPIOptionAvailable = dataSource.hasLinearStokes;
+        const stokesIOptionAvailable = dataSource.polarizations.includes(POLARIZATIONS.I);
+        const thresholdOptionDisabled = !(computedPIOptionAvailable && stokesIOptionAvailable);
+        const numberOfAvailableOptions = (computedPIOptionAvailable ? 1 : 0) + (stokesIOptionAvailable ? 1 : 0);
+
         const configPanel = (
             <div className="vector-overlay-config-panel">
                 <FormGroup inline={true} label="Angular source">
@@ -284,7 +298,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                             None
                         </option>
                         <option value={VectorOverlaySource.Current}>Current image</option>
-                        {dataSource.hasLinearStokes && <option value={VectorOverlaySource.Computed}>Computed PA</option>}
+                        {computedPIOptionAvailable && <option value={VectorOverlaySource.Computed}>Computed PA</option>}
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Intensity source">
@@ -293,7 +307,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                             None
                         </option>
                         <option value={VectorOverlaySource.Current}>Current image</option>
-                        {dataSource.hasLinearStokes && (
+                        {computedPIOptionAvailable && (
                             <option value={VectorOverlaySource.Computed} data-testid="vector-field-intensity-source-dropdown-computed-pi">
                                 Computed PI
                             </option>
@@ -324,6 +338,12 @@ export class VectorOverlayDialogComponent extends React.Component {
                 </FormGroup>
                 <FormGroup inline={true} label="Threshold enabled">
                     <Switch checked={this.thresholdEnabled} onChange={this.handleThresholdEnabledChanged} data-testid="vector-field-threshold-toggle" />
+                    {this.thresholdEnabled && numberOfAvailableOptions > 0 && (
+                        <HTMLSelect value={this.thresholdOption} onChange={ev => this.handleThresholdOptionChanged(ev)} data-testid="vector-field-threshold-option-dropdown" disabled={thresholdOptionDisabled}>
+                            {computedPIOptionAvailable && <option value={CARTA.PolarizationType.Plinear}>Computed PI</option>}
+                            {stokesIOptionAvailable && <option value={CARTA.PolarizationType.I}>Stokes I</option>}
+                        </HTMLSelect>
+                    )}
                 </FormGroup>
                 <FormGroup disabled={!this.thresholdEnabled} inline={true} label="Threshold" labelInfo={dataSource.headerUnit ? `(${dataSource.headerUnit})` : ""}>
                     <SafeNumericInput disabled={!this.thresholdEnabled} placeholder="Threshold" buttonPosition="none" value={this.threshold} onValueChange={this.handleThresholdChanged} data-testid="vector-field-threshold-input" />

@@ -3,7 +3,7 @@
 .file-browser-dialog {
     min-width: 60%;
     height: 100%;
-    user-select: none;
+    user-select: none !important;
 
     .file-path {
         margin-top: 20px;

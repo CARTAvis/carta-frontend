@@ -330,7 +330,8 @@ export class FileBrowserDialogComponent extends React.Component {
                     actionDisabled = appStore.fileLoading || !this.imageArithmeticString;
                     actionFunction = this.loadExpression;
                 } else {
-                    actionDisabled = appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo;
+                    const folderSelected = fileBrowserStore.selectedFiles && !fileBrowserStore.selectedFiles.every(file => file.isFile);
+                    actionDisabled = appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || folderSelected;
                     actionFunction = this.loadSelectedFiles;
                 }
                 if (appending) {
@@ -762,7 +763,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 loading={fileBrowserStore.loadingList}
                                 extendedLoading={fileBrowserStore.extendedLoading}
                                 fileProgress={fileProgress}
-                                listResponse={fileBrowserStore.getfileListByMode}
+                                fileList={fileBrowserStore.getfileListByMode}
                                 fileBrowserMode={fileBrowserStore.browserMode}
                                 selectedFile={fileBrowserStore.selectedFile}
                                 selectedHDU={fileBrowserStore.selectedHDU}

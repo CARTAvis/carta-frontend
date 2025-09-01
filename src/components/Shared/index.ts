@@ -8,6 +8,7 @@ export * from "./CoordinateComponent/CoordinateComponent";
 export * from "./CoordinateComponent/CoordinateComponent";
 export * from "./CoordNumericInput/CoordNumericInput";
 export * from "./ExportImageMenu/ExportImageMenuComponent";
+export * from "./FontSelect/FontSelect";
 export * from "./LinePlot/LinePlotComponent";
 export * from "./LinePlot/PlotSettings/LinePlotSettingsPanelComponent";
 export * from "./PlotTypeSelector/PlotTypeSelectorComponent";

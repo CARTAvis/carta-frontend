@@ -1349,6 +1349,7 @@ export class FrameStore {
                 const skySystem = entries.find(entry => entry.name.includes("RADESYS"))?.value;
                 if (Object.values(SystemType).includes(skySystem as SystemType)) {
                     AppStore.Instance.overlaySettings.global.setDefaultSystem(skySystem as SystemType);
+                    overlaySettings.global.setValidWcs(true);
                 }
 
                 this.spectralFrame = AST.getSpectralFrame(astFrameSet);
@@ -1377,6 +1378,7 @@ export class FrameStore {
         } else {
             // init WCS
             const astFrameSet = this.initFrame();
+            overlaySettings.global.setValidWcs(false); // initialize validWcs to false
             if (astFrameSet) {
                 this.spectralFrame = AST.getSpectralFrame(astFrameSet);
                 if (frameInfo.fileInfoExtended.depth > 1) {
@@ -2856,6 +2858,7 @@ export class FrameStore {
             smoothingFactor: config.pixelAveragingEnabled ? config.pixelAveraging : 1,
             fractional: config.fractionalIntensity,
             threshold: config.thresholdEnabled ? config.threshold : NaN,
+            thresholdOption: config.thresholdEnabled ? config.thresholdOption : NaN,
             debiasing: config.debiasing,
             qError: config.qError,
             uError: config.uError,
