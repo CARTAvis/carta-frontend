@@ -1,6 +1,7 @@
 import * as React from "react";
 import {Classes, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
 import classNames from "classnames";
+import {action} from "mobx";
 import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
@@ -25,7 +26,7 @@ export class HotkeyContainer extends React.Component {
                 canOutsideClickClose={true}
                 onClose={() => appStore.dialogStore.hideDialog(DialogId.Hotkey)}
             >
-                <div className={Classes.DIALOG_BODY}>{HotkeyContainer.RenderHotkeys(false)}</div>
+                <div className={Classes.DIALOG_BODY}>{HotkeyContainer.RenderHotkeys()}</div>
             </Dialog>
         );
     }
@@ -108,7 +109,7 @@ export class HotkeyContainer extends React.Component {
         }
     };
 
-    static RenderHotkeys(includeHidden: boolean = true) {
+    static RenderHotkeys() {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
 
@@ -146,15 +147,6 @@ export class HotkeyContainer extends React.Component {
             <Hotkey key={5} group={animatorGroupTitle} global={true} combo={`${modString}shift + down`} label="Previous Stokes cube" onKeyDown={HotkeyContainer.PrevStokes} />
         ];
 
-        // The two hotkeys are for macOS to support option + ] and option + [ to navigate between images
-        // They should only be registered when includeHidden is true to avoid showing in the help dialog
-        if (includeHidden) {
-            animatorHotkeys.push(
-                <Hotkey key={6} group={animatorGroupTitle} global={true} combo={`${modString}‘`} label="Next image" onKeyDown={appStore.nextImage} />,
-                <Hotkey key={7} group={animatorGroupTitle} global={true} combo={`${modString}“`} label="Previous image" onKeyDown={appStore.prevImage} />
-            );
-        }
-
         const fileHotkeys = [
             <Hotkey key={0} group={fileGroupTitle} global={true} combo={`${modString}O`} label="Open image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File)} />,
             <Hotkey key={1} group={fileGroupTitle} global={true} combo={`${modString}L`} label="Append image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)} />,
@@ -184,5 +176,34 @@ export class HotkeyContainer extends React.Component {
 
 function HotkeyWrapper() {} // tslint:disable-line
 HotkeyWrapper.prototype = Object.create(HotkeyContainer.prototype);
-HotkeyWrapper.prototype.renderHotkeys = () => HotkeyContainer.RenderHotkeys(false);
+HotkeyWrapper.prototype.renderHotkeys = () => HotkeyContainer.RenderHotkeys();
+
+// Add global event handler to debug phonetic input method keys
+HotkeyWrapper.prototype.componentDidMount = function() {
+    document.addEventListener('keydown', this.handleGlobalKeydown);
+};
+
+HotkeyWrapper.prototype.componentWillUnmount = function() {
+    document.removeEventListener('keydown', this.handleGlobalKeydown);
+};
+
+HotkeyWrapper.prototype.handleGlobalKeydown = function(event: KeyboardEvent) {
+    const appStore = AppStore.Instance;
+    
+    // Handle Option+[ and Option+] for English input method
+    if (event.altKey && !event.metaKey && !event.ctrlKey && !event.shiftKey) {
+        if (event.key === '\u201C') {
+            // Option+[ in English input method produces '“' (U+201C)
+            event.preventDefault();
+            action(() => appStore?.prevImage())();
+            return;
+        } else if (event.key === '\u2018') {
+            // Option+] in English input method produces '‘' (U+2018)
+            event.preventDefault();
+            action(() => appStore?.nextImage())();
+            return;
+        }
+    }
+};
+
 export const HotkeyTargetContainer = HotkeysTarget(HotkeyWrapper as any);
