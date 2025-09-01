@@ -179,25 +179,25 @@ HotkeyWrapper.prototype = Object.create(HotkeyContainer.prototype);
 HotkeyWrapper.prototype.renderHotkeys = () => HotkeyContainer.RenderHotkeys();
 
 // Add global event handler to debug phonetic input method keys
-HotkeyWrapper.prototype.componentDidMount = function() {
-    document.addEventListener('keydown', this.handleGlobalKeydown);
+HotkeyWrapper.prototype.componentDidMount = function () {
+    document.addEventListener("keydown", this.handleGlobalKeydown);
 };
 
-HotkeyWrapper.prototype.componentWillUnmount = function() {
-    document.removeEventListener('keydown', this.handleGlobalKeydown);
+HotkeyWrapper.prototype.componentWillUnmount = function () {
+    document.removeEventListener("keydown", this.handleGlobalKeydown);
 };
 
-HotkeyWrapper.prototype.handleGlobalKeydown = function(event: KeyboardEvent) {
+HotkeyWrapper.prototype.handleGlobalKeydown = function (event: KeyboardEvent) {
     const appStore = AppStore.Instance;
-    
+
     // Handle Option+[ and Option+] for English input method
     if (event.altKey && !event.metaKey && !event.ctrlKey && !event.shiftKey) {
-        if (event.key === '\u201C') {
+        if (event.key === "\u201C") {
             // Option+[ in English input method produces '“' (U+201C)
             event.preventDefault();
             action(() => appStore?.prevImage())();
             return;
-        } else if (event.key === '\u2018') {
+        } else if (event.key === "\u2018") {
             // Option+] in English input method produces '‘' (U+2018)
             event.preventDefault();
             action(() => appStore?.nextImage())();
