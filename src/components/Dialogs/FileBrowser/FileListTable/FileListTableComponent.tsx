@@ -9,8 +9,7 @@ import {action, autorun, computed, makeObservable, observable, runInAction} from
 import {observer} from "mobx-react";
 import moment from "moment";
 
-import {BrowserMode, FileFilteringType} from "enums";
-import {FileFilterMode} from "models";
+import {BrowserMode, FileFilteringType,FileFilterMode} from "enums";
 import {AppStore, type BrowserFileList, FileBrowserStore, type ISelectedFile} from "stores";
 import {toFixed} from "utilities";
 

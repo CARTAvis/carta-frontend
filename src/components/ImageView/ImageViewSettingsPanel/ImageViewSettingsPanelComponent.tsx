@@ -1,7 +1,5 @@
 import * as React from "react";
 import {Button, Classes, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, Position, Switch, Tab, type TabId, Tabs, Tooltip} from "@blueprintjs/core";
-import {type ItemRenderer, Select} from "@blueprintjs/select";
-import * as AST from "ast_wrapper";
 import classNames from "classnames";
 import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";

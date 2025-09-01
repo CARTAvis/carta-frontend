@@ -3,9 +3,9 @@ import axios, {type AxiosInstance} from "axios";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {AppToaster} from "components/Shared";
+import {PreferenceKeys} from "enums";
 import {ConvertToGB, LayoutConfig, Snippet, type Workspace, type WorkspaceListItem } from "models";
 import {AppStore} from "stores";
-import {PreferenceKeys} from "enums";
 
 const preferencesSchema = require("carta-schemas/preferences_schema_2.json");
 const snippetSchema = require("carta-schemas/snippet_schema_1.json");

@@ -11,6 +11,8 @@ export enum HelpType {
     VECTOR_OVERLAY = "Vector Overlay Configuration",
     IMAGE_FITTING = "Image Fitting",
     WORKSPACE = "Workspace Management",
+    CHANNEL_MAP_CONTROL = "Channel Map Control",
+    RENDER_CONFIG_COLOR_BLENDING = "Render Configuration Color Blending",
 
     // Widgets
     ANIMATOR = "Animator",

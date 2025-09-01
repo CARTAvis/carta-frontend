@@ -7,7 +7,6 @@ import {observer} from "mobx-react";
 import {ClearableNumericInputComponent, SafeNumericInput, SCALING_POPOVER_PROPS, ScalingSelectComponent} from "components/Shared";
 import {ContourGeneratorType, FrameScaling} from "enums";
 import {FrameStore, PreferenceStore} from "stores";
-
 import {getPercentiles, scaleValue} from "utilities";
 
 import "./ContourGeneratorPanelComponent.scss";

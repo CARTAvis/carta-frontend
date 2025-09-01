@@ -9,7 +9,7 @@ import {GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, 
 import {TelemetryService} from "services";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
 import {RegionWidgetStore, type SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
-import {clamp, genColorFromIndex, getColorForTheme, isAutoColor} from "utilities";
+import {clamp, genColorFromIndex, getColorForTheme, isAutoColor, pixelToFluxDensityUnit} from "utilities";
 
 type XBound = {xMin: number | undefined; xMax: number | undefined};
 type YBound = {yMin: number; yMax: number};

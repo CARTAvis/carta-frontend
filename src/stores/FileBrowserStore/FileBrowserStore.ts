@@ -3,7 +3,8 @@ import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, ErrorToast} from "components/Shared";
-import {FileCtypeInfo, Freq, FrequencyUnit, ImageType, LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
+import {BrowserMode, DialogId, FileFilterMode, FileInfoType, FrequencyUnit, ImageType, PreferenceKeys, RegionId, SelectionMode} from "enums";
+import {FileCtypeInfo, Freq, type LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
 import {BackendService} from "services";
 import {AppStore, DialogStore, PreferenceStore} from "stores";
 import {RegionStore} from "stores/Frame";
@@ -790,7 +791,12 @@ export class FileBrowserStore {
             case BrowserMode.Catalog:
                 return this.catalogFileList;
             default:
-                return this.fileList;
+                return this.fileList ? {
+                    directory: this.fileList.directory,
+                    parent: this.fileList.parent,
+                    files: this.fileList.files,
+                    subdirectories: this.fileList.subdirectories
+                } : null;
         }
     }
 
