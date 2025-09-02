@@ -1,6 +1,8 @@
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {Freq, FrequencyUnit} from "models";
+import {FrequencyUnit} from "enums";
+import {Freq} from "models";
+
 
 export class RestFreqStore {
     readonly headerRestFreq: Freq;

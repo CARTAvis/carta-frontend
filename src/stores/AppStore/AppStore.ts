@@ -2125,7 +2125,7 @@ export class AppStore {
         }
 
         autorun(() => {
-            this.initCarta(this.astReady, this.tileService?.zfpReady, this.cartaComputeReady, !!this.apiService?.authenticated);
+            this.initCarta(this.astReady, this.tileService?.zfpReady ?? false, this.cartaComputeReady, !!this.apiService?.authenticated);
         });
 
         autorun(() => {

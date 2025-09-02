@@ -13,6 +13,7 @@
         "@rsbuild/plugin-node-polyfill": "^1.3.0",
         "@rsbuild/plugin-react": "^1.1.1",
         "@rsbuild/plugin-sass": "^1.2.2",
+        "@rspack/binding-darwin-x64": "^0.6.2",
         "@testing-library/jest-dom": "^6.4.8",
         "@testing-library/react": "^16.0.1",
         "@testing-library/user-event": "^14.5.2",
@@ -207,6 +208,7 @@
     },
     "dependencies": {
         "patch-package": "^8.0.0",
+        "sass-embedded-darwin-x64": "^1.91.0",
         "usehooks-ts": "^3.1.0"
     },
     "overrides": {

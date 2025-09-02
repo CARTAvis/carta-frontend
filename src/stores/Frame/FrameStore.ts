@@ -34,7 +34,7 @@ import {
     ZoomPoint
 } from "models";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE, TileService} from "services";
-import {AnimatorStore, AppStore, ASTSettingsString, ChannelMapInnerOverlayStore, ChannelMapOuterOverlayStore, ImageViewOverlayStore, INITIAL_LAYOUT_ITEM, LogStore, PreferenceStore, PvPreviewOverlayStore} from "stores";
+import {AnimatorStore, AppStore, ASTSettingsString, ChannelMapInnerOverlayStore, ChannelMapOuterOverlayStore, ImageViewOverlayStore, INITIAL_LAYOUT_ITEM, LogStore, type OverlayStore, PreferenceStore, PvPreviewOverlayStore} from "stores";
 import {CENTER_POINT_INDEX, ColorbarStore, ContourConfigStore, ContourStore, RegionStore, RenderConfigStore, RestFreqStore, SIZE_POINT_INDEX, VectorOverlayConfigStore, VectorOverlayStore} from "stores/Frame";
 import {PvGeneratorWidgetStore} from "stores/Widgets";
 import {
