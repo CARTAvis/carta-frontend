@@ -42,30 +42,30 @@ export class FileBrowserStore {
     private static readonly ExtendedLoadingDelay = 500;
 
     @observable browserMode: BrowserMode = BrowserMode.File;
-    @observable appendingFrame = false;
-    @observable fileList: CARTA.IFileListResponse | null;
-    @observable selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo | null | undefined;
-    @observable selectedHDU: string | null;
-    @observable HDUfileInfoExtended: {[k: string]: CARTA.IFileInfoExtended} | null;
-    @observable regionFileInfo: string[] | null;
+    @observable appendingFrame: boolean = false;
+    @observable fileList: CARTA.IFileListResponse | null = null;
+    @observable selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo | null | undefined = undefined;
+    @observable selectedHDU: string | null = null;
+    @observable HDUfileInfoExtended: {[k: string]: CARTA.IFileInfoExtended} | null = null;
+    @observable regionFileInfo: string[] | null = null;
     @observable selectedTab: TabId = FileInfoType.IMAGE_FILE;
-    @observable loadingList = false;
-    @observable isImportingRegions = false;
-    @observable extendedLoading = false;
-    @observable loadingInfo = false;
-    @observable fileInfoResp = false;
+    @observable loadingList: boolean = false;
+    @observable isImportingRegions: boolean = false;
+    @observable extendedLoading: boolean = false;
+    @observable loadingInfo: boolean = false;
+    @observable fileInfoResp: boolean = false;
     @observable responseErrorMessage: string = "";
     @observable startingDirectory: string | null | undefined = "$BASE";
-    @observable exportFilename: string | null | undefined;
-    @observable exportCoordinateType: CARTA.CoordinateType;
-    @observable exportFileType: RegionFileType;
+    @observable exportFilename: string | null | undefined = undefined;
+    @observable exportCoordinateType: CARTA.CoordinateType = CARTA.CoordinateType.WORLD;
+    @observable exportFileType: RegionFileType = CARTA.FileType.CRTF;
     @observable exportRegionIndexes: number[] = [];
-    @observable selectedFilesCtypes: {ctype: string[]; rank: number[]};
+    @observable selectedFilesCtypes: {ctype: string[]; rank: number[]} = {ctype: [], rank: []};
 
-    @observable catalogFileList: BrowserFileList | null;
-    @observable selectedCatalogFile: CARTA.ICatalogFileInfo;
-    @observable catalogFileInfo: CARTA.ICatalogFileInfo | null;
-    @observable catalogHeaders: Array<CARTA.ICatalogHeader>;
+    @observable catalogFileList: BrowserFileList | null = null;
+    @observable selectedCatalogFile: CARTA.ICatalogFileInfo = undefined as any;
+    @observable catalogFileInfo: CARTA.ICatalogFileInfo | null = null;
+    @observable catalogHeaders: Array<CARTA.ICatalogHeader> = [];
 
     // Save image
     @observable saveFilename: string | null | undefined = "";
@@ -73,10 +73,10 @@ export class FileBrowserStore {
     @observable saveSpectralStart: number = 0;
     @observable saveSpectralEnd: number = 0;
     @observable saveSpectralStride: number = 1;
-    @observable saveStokesOption: number;
-    @observable saveRegionId: number;
+    @observable saveStokesOption: number = 0;
+    @observable saveRegionId: number = 0;
     @observable saveRestFreq: Freq = {value: 0, unit: FrequencyUnit.MHZ};
-    @observable shouldDropDegenerateAxes: boolean;
+    @observable shouldDropDegenerateAxes: boolean = false;
 
     private extendedDelayHandle: any;
 
@@ -101,12 +101,12 @@ export class FileBrowserStore {
         });
     }
 
-    @observable selectedFiles: ISelectedFile[];
+    @observable selectedFiles: ISelectedFile[] = [];
 
-    @observable isLoadingDialogOpen: boolean;
-    @observable loadingProgress: number;
-    @observable loadingCheckedCount: number;
-    @observable loadingTotalCount: number;
+    @observable isLoadingDialogOpen: boolean = false;
+    @observable loadingProgress: number = 0;
+    @observable loadingCheckedCount: number = 0;
+    @observable loadingTotalCount: number = 0;
 
     @action setImportingRegions = (isImportingRegions: boolean) => {
         this.isImportingRegions = isImportingRegions;
@@ -797,12 +797,14 @@ export class FileBrowserStore {
             case BrowserMode.Catalog:
                 return this.catalogFileList;
             default:
-                return this.fileList ? {
-                    directory: this.fileList.directory,
-                    parent: this.fileList.parent,
-                    files: this.fileList.files,
-                    subdirectories: this.fileList.subdirectories
-                } : null;
+                return this.fileList
+                    ? {
+                          directory: this.fileList.directory,
+                          parent: this.fileList.parent,
+                          files: this.fileList.files,
+                          subdirectories: this.fileList.subdirectories
+                      }
+                    : null;
         }
     }
 

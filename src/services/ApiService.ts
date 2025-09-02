@@ -4,7 +4,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 
 import {AppToaster} from "components/Shared";
 import {PreferenceKeys} from "enums";
-import {ConvertToGB, LayoutConfig, Snippet, type Workspace, type WorkspaceListItem } from "models";
+import {ConvertToGB, LayoutConfig, Snippet, type Workspace, type WorkspaceListItem} from "models";
 import {AppStore} from "stores";
 
 const preferencesSchema = require("carta-schemas/preferences_schema_2.json");
@@ -90,7 +90,6 @@ export class ApiService {
     }
 
     constructor() {
-        makeObservable(this);
         this.axiosInstance = axios.create();
         if (localStorage.getItem("authenticationType") || ApiService.RuntimeConfig.tokenRefreshAddress) {
             this.onTokenExpired();
@@ -98,6 +97,7 @@ export class ApiService {
             this._accessToken = "no_auth_configured";
             this._tokenLifetime = Number.MAX_VALUE;
         }
+        makeObservable(this);
     }
 
     private onTokenExpired = async () => {

@@ -18,7 +18,7 @@ export class DynamicLayoutStore {
         return DynamicLayoutStore.staticInstance;
     }
 
-    @observable dynamicLayoutName: string | null;
+    @observable dynamicLayoutName: string | null = null;
 
     @computed get isMappingExisted(): boolean {
         const preferenceStore = PreferenceStore.Instance;
@@ -27,8 +27,6 @@ export class DynamicLayoutStore {
 
     constructor() {
         makeObservable(this);
-
-        this.dynamicLayoutName = null;
     }
 
     matchLayoutMapping(selectedFilesCtypes: {ctype: string[]; rank: number[]}) {

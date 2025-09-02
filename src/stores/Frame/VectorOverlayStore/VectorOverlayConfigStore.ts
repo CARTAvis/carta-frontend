@@ -10,32 +10,32 @@ import {FrameStore} from "stores/Frame";
 
 export class VectorOverlayConfigStore {
     // Generator config
-    @observable enabled: boolean;
-    @observable angularSource: VectorOverlaySource;
-    @observable intensitySource: VectorOverlaySource;
-    @observable fractionalIntensity: boolean;
-    @observable pixelAveragingEnabled: boolean;
-    @observable pixelAveraging: number;
-    @observable thresholdEnabled: boolean;
-    @observable threshold: number;
-    @observable debiasing: boolean;
-    @observable qError: number;
-    @observable uError: number;
-    @observable thresholdOption: CARTA.PolarizationType.I | CARTA.PolarizationType.Plinear;
+    @observable enabled: boolean = false;
+    @observable angularSource: VectorOverlaySource = VectorOverlaySource.Current;
+    @observable intensitySource: VectorOverlaySource = VectorOverlaySource.Current;
+    @observable fractionalIntensity: boolean = false;
+    @observable pixelAveragingEnabled: boolean = false;
+    @observable pixelAveraging: number = 0;
+    @observable thresholdEnabled: boolean = false;
+    @observable threshold: number = 0;
+    @observable debiasing: boolean = false;
+    @observable qError: number = 0;
+    @observable uError: number = 0;
+    @observable thresholdOption: CARTA.PolarizationType.I | CARTA.PolarizationType.Plinear = CARTA.PolarizationType.I;
 
     // Appearance
-    @observable visible: boolean;
-    @observable thickness: number;
-    @observable colormapEnabled: boolean;
-    @observable color: RGBColor;
-    @observable colormap: string;
-    @observable colormapContrast: number;
-    @observable colormapBias: number;
-    @observable lengthMin: number;
-    @observable lengthMax: number;
-    @observable intensityMin: number | undefined;
-    @observable intensityMax: number | undefined;
-    @observable rotationOffset: number;
+    @observable visible: boolean = true;
+    @observable thickness: number = 1;
+    @observable colormapEnabled: boolean = false;
+    @observable color: RGBColor = {r: 0, g: 0, b: 0, a: 1};
+    @observable colormap: string = "";
+    @observable colormapContrast: number = 1.0;
+    @observable colormapBias: number = 0.0;
+    @observable lengthMin: number = 0;
+    @observable lengthMax: number = 20;
+    @observable intensityMin: number | undefined = undefined;
+    @observable intensityMax: number | undefined = undefined;
+    @observable rotationOffset: number = 0;
 
     private readonly preferenceStore: PreferenceStore;
     public static DefaultLengthMin = 0;

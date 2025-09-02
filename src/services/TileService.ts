@@ -146,7 +146,6 @@ export class TileService {
     };
 
     private constructor() {
-        makeObservable(this);
         this.backendService = BackendService.Instance;
         this.gl = TileWebGLService.Instance.gl;
 
@@ -190,6 +189,7 @@ export class TileService {
                 }
             };
         }
+        makeObservable(this);
     }
 
     private resetCoordinateQueue() {

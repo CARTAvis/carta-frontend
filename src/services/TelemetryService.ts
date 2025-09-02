@@ -67,7 +67,6 @@ export class TelemetryService {
     @observable private skipTelemetry: boolean;
 
     private constructor() {
-        makeObservable(this);
         this.axiosInstance = axios.create({
             baseURL: TelemetryService.ServerUrl
         });
@@ -80,6 +79,7 @@ export class TelemetryService {
         };
 
         setInterval(this.flushTelemetry, TelemetryService.SubmissionIntervalSeconds * 1000);
+        makeObservable(this);
     }
 
     @flow.bound *checkAndGenerateId(flush: boolean = false, forceNewId: boolean = false) {

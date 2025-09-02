@@ -19,10 +19,15 @@ export class SnippetStore {
 
     public static readonly ToasterTimeout = 1500;
 
-    @observable snippets: Map<string, Snippet>;
-    @observable activeSnippet: Snippet;
-    @observable activeSnippetName: string | undefined;
-    @observable isExecuting: boolean;
+    @observable snippets: Map<string, Snippet> = new Map<string, Snippet>();
+    @observable activeSnippet: Snippet = {
+        code: "",
+        frontendVersion: undefined as any,
+        snippetVersion: undefined as any,
+        categories: []
+    };
+    @observable activeSnippetName: string | undefined = "";
+    @observable isExecuting: boolean = false;
 
     private constructor() {
         makeObservable(this);

@@ -17,7 +17,7 @@ export class HelpStore {
         return HelpStore.staticInstance;
     }
 
-    @observable type: HelpType;
+    @observable type: HelpType = undefined as any;
     @observable helpVisible: boolean = false;
     @observable position: Position = Position.RIGHT;
 

@@ -19,34 +19,25 @@ type Statistic = {mean: number; count: number; validCount: number; std: number; 
 
 export class CatalogPlotWidgetStore {
     private static readonly Decimals = 4;
-    @observable indicatorInfo: Point2D | undefined;
-    @observable scatterborder: Border | undefined;
-    @observable dragmode: DragMode;
+    @observable indicatorInfo: Point2D | undefined = undefined;
+    @observable scatterborder: Border | undefined = undefined;
+    @observable dragmode: DragMode = "select";
     @observable plotType: CatalogPlotType;
-    @observable histogramBorder: XBorder | undefined;
-    @observable logScaleY: boolean;
-    @observable nBinx: number | undefined;
+    @observable histogramBorder: XBorder | undefined = undefined;
+    @observable logScaleY: boolean = true;
+    @observable nBinx: number | undefined = undefined;
     @observable xColumnName: string;
     @observable yColumnName: string | undefined;
-    @observable fitting: Fitting | null;
-    @observable minMaxX: {minVal: number; maxVal: number} | null;
-    @observable statisticColumnName: string;
-    @observable statistic: Statistic | null;
+    @observable fitting: Fitting | null = null;
+    @observable minMaxX: {minVal: number; maxVal: number} | null = null;
+    @observable statisticColumnName: string = CatalogOverlay.NONE;
+    @observable statistic: Statistic | null = null;
 
     constructor(props: CatalogPlotWidgetStoreProps) {
         makeObservable(this);
-        this.indicatorInfo = undefined;
-        this.dragmode = "select";
         this.plotType = props.plotType;
-        this.logScaleY = true;
-        this.scatterborder = undefined;
-        this.histogramBorder = undefined;
-        this.nBinx = undefined;
         this.xColumnName = props.xColumnName;
         this.yColumnName = props.yColumnName;
-        this.initLinearFitting();
-        this.statisticColumnName = CatalogOverlay.NONE;
-        this.initStatistic();
     }
 
     @action setStatisticColumn(columnName: string) {

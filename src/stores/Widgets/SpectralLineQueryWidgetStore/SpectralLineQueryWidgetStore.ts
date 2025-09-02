@@ -69,27 +69,27 @@ const FREQUENCY_RANGE_LIMIT = 2 * 1e4; // 20000 MHz
 const DEFAULT_HEADER_WIDTH = 150;
 
 export class SpectralLineQueryWidgetStore {
-    @observable queryRangeType: SpectralLineQueryRangeType;
-    @observable queryRange: NumberRange;
-    @observable queryRangeByCenter: NumberRange;
-    @observable queryUnit: SpectralLineQueryUnit;
-    @observable intensityLimitEnabled: boolean;
-    @observable intensityLimitValue: number;
-    @observable isQuerying: boolean;
-    @observable columnHeaders: Array<CARTA.ICatalogHeader>;
-    @observable redshiftType: RedshiftType;
-    @observable redshiftInput: number;
-    @observable queryResultTableRef: Table2 | undefined;
-    @observable private queryResult: Map<number, ProcessedColumnData>;
-    @observable filterResult: Map<number, ProcessedColumnData>;
-    @observable filteredRowIndexes: Array<number>;
-    @observable private isDataFiltered: boolean;
-    @observable private filterNum: number;
-    @observable numDataRows: number;
-    @observable selectedSpectralProfilerID: string | undefined;
-    @observable controlHeader: Map<string, ControlHeader>;
-    @observable sortingInfo: {columnName: string | null; sortingType: CARTA.SortingType | null};
-    @observable sortedIndexMap: Array<number>;
+    @observable queryRangeType: SpectralLineQueryRangeType = SpectralLineQueryRangeType.Range;
+    @observable queryRange: NumberRange = [0, 0];
+    @observable queryRangeByCenter: NumberRange = [0, 0];
+    @observable queryUnit: SpectralLineQueryUnit = SpectralLineQueryUnit.MHz;
+    @observable intensityLimitEnabled: boolean = true;
+    @observable intensityLimitValue: number = -5;
+    @observable isQuerying: boolean = false;
+    @observable columnHeaders: Array<CARTA.ICatalogHeader> = [];
+    @observable redshiftType: RedshiftType = RedshiftType.V;
+    @observable redshiftInput: number = 0;
+    @observable queryResultTableRef: Table2 | undefined = undefined;
+    @observable private queryResult: Map<number, ProcessedColumnData> = new Map<number, ProcessedColumnData>();
+    @observable filterResult: Map<number, ProcessedColumnData> = new Map<number, ProcessedColumnData>();
+    @observable filteredRowIndexes: Array<number> = [];
+    @observable private isDataFiltered: boolean = false;
+    @observable private filterNum: number = 0;
+    @observable numDataRows: number = 0;
+    @observable selectedSpectralProfilerID: string | undefined = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ? AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
+    @observable controlHeader: Map<string, ControlHeader> = new Map<string, ControlHeader>();
+    @observable sortingInfo: {columnName: string | null; sortingType: CARTA.SortingType | null} = {columnName: null, sortingType: null};
+    @observable sortedIndexMap: Array<number> = [];
 
     // raw copy of the shifted frequency column, does not apply shifting factor
     private shiftedFreqColumnRawData: Array<number>;
@@ -549,19 +549,7 @@ export class SpectralLineQueryWidgetStore {
 
     constructor() {
         makeObservable(this);
-        this.queryRangeType = SpectralLineQueryRangeType.Range;
-        this.queryRange = [0, 0];
-        this.queryRangeByCenter = [0, 0];
-        this.queryUnit = SpectralLineQueryUnit.MHz;
-        this.intensityLimitEnabled = true;
-        this.intensityLimitValue = -5;
-        this.isQuerying = false;
-        this.redshiftType = RedshiftType.V;
-        this.redshiftInput = 0;
-        this.queryResultTableRef = undefined;
-        this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ? AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
         this.resetQueryContents();
-        this.sortingInfo = {columnName: null, sortingType: null};
         this.initSortedIndexMap();
 
         // update selected spectral profiler when currently selected is closed

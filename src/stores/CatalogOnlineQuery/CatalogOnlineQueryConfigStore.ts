@@ -14,49 +14,31 @@ export class CatalogOnlineQueryConfigStore {
     public static readonly MAX_OBJECTS = 10000000;
     public static readonly OBJECT_SIZE = 1000;
 
-    @observable isQuerying: boolean;
-    @observable catalogDB: CatalogDatabase;
-    @observable searchRadius: number;
-    @observable coordsType: CatalogSystemType;
-    @observable coordsFormat: NumberFormatType;
-    @observable centerPixelCoord: {x: string | undefined; y: string | undefined};
-    @observable maxObject: number;
-    @observable enablePointSelection: boolean;
-    @observable radiusUnits: RadiusUnits;
-    @observable objectName: string;
-    @observable isObjectQuerying: boolean;
+    @observable isQuerying: boolean = false;
+    @observable catalogDB: CatalogDatabase = CatalogDatabase.SIMBAD;
+    @observable searchRadius: number = 1;
+    @observable coordsType: CatalogSystemType = CatalogSystemType.ICRS;
+    @observable coordsFormat: NumberFormatType = NumberFormatType.Degrees;
+    @observable centerPixelCoord: {x: string | undefined; y: string | undefined} = {x: undefined, y: undefined};
+    @observable maxObject: number = CatalogOnlineQueryConfigStore.OBJECT_SIZE;
+    @observable enablePointSelection: boolean = false;
+    @observable radiusUnits: RadiusUnits = RadiusUnits.DEGREES;
+    @observable objectName: string = "";
+    @observable isObjectQuerying: boolean = false;
     //Vizier
-    @observable vizierResource: Map<string, VizierResource>;
-    @observable vizierSelectedTableName: VizierItem[];
-    @observable vizierKeyWords: string;
+    @observable vizierResource: Map<string, VizierResource> = new Map();
+    @observable vizierSelectedTableName: VizierItem[] = [];
+    @observable vizierKeyWords: string = "";
 
     constructor() {
         makeObservable(this);
-        this.isQuerying = false;
-        this.catalogDB = CatalogDatabase.SIMBAD;
-        this.searchRadius = 1;
-        // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system
-        this.coordsType = CatalogSystemType.ICRS;
-        this.centerPixelCoord = {x: undefined, y: undefined};
-        this.maxObject = CatalogOnlineQueryConfigStore.OBJECT_SIZE;
-        this.enablePointSelection = false;
-        this.radiusUnits = RadiusUnits.DEGREES;
-        this.coordsFormat = NumberFormatType.Degrees;
-        this.objectName = "";
-        this.isObjectQuerying = false;
-        this.vizierSelectedTableName = [];
-        this.vizierResource = new Map();
-        this.vizierKeyWords = "";
-
         this.resetSearchRadius();
-
         reaction(
             () => AppStore.Instance.activeFrame,
             () => {
                 this.resetSearchRadius();
             }
         );
-
         reaction(
             () => AppStore.Instance.cursorFrozen,
             cursorFrozen => {

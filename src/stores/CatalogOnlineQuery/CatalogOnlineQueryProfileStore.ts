@@ -11,17 +11,15 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
     private static readonly VizierInitialedColumnsKeyWords = ["_r", "_RAJ2000", "_DEJ2000"];
 
     @observable catalogInfo: CatalogInfo;
-    @observable catalogHeader: Array<CARTA.CatalogHeader>;
-    @observable catalogControlHeader: Map<string, ControlHeader>;
-    @observable numVisibleRows: number;
+    @observable catalogHeader: Array<CARTA.CatalogHeader> = [];
+    @observable catalogControlHeader: Map<string, ControlHeader> = new Map();
+    @observable numVisibleRows: number = 0;
 
     constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.CatalogHeader>, catalogData: Map<number, ProcessedColumnData>, catalogType: CatalogType) {
         super(catalogType, catalogData);
         makeObservable(this);
         this.catalogInfo = catalogInfo;
-        this.catalogHeader = catalogHeader.sort((a, b) => {
-            return a.columnIndex - b.columnIndex;
-        });
+        this.catalogHeader = catalogHeader.sort((a, b) => a.columnIndex - b.columnIndex);
         this.catalogControlHeader = this.initCatalogControlHeader;
         this.numVisibleRows = catalogInfo.dataSize;
 

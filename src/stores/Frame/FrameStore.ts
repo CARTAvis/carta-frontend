@@ -111,11 +111,11 @@ export class FrameStore {
 
     public wcsInfo: AST.FrameSet;
     public readonly wcsInfoForTransformation: AST.FrameSet;
-    @observable public wcsInfoShifted: AST.FrameSet;
+    @observable public wcsInfoShifted: AST.FrameSet = undefined as any;
     public readonly wcsInfo3D: AST.FrameSet;
     public readonly validWcs: boolean = false;
     public readonly defaultWcsSystem: SystemType;
-    @observable public frameInfo: FrameInfo;
+    @observable public frameInfo: FrameInfo = undefined as any;
     public readonly overlayStore: OverlayStore;
     public readonly channelMapOuterOverlayStore: ChannelMapOuterOverlayStore;
     public readonly channelMapInnerOverlayStore: ChannelMapInnerOverlayStore;
@@ -136,7 +136,7 @@ export class FrameStore {
     public pointShapeCache: CARTA.PointAnnotationShape;
 
     // Region set for the current frame. Accessed via regionSet, to take into account region sharing
-    @observable private readonly frameRegionSet: RegionSetStore;
+    @observable private readonly frameRegionSet: RegionSetStore = undefined as any;
 
     @observable spectralType: SpectralType | null = null;
     @observable spectralUnit: SpectralUnit | null = null;
@@ -152,9 +152,9 @@ export class FrameStore {
     /**
      * View center for the relative coordinate in pixel coordinates
      */
-    @observable offsetCenter: Point2D;
-    @observable cursorInfo: CursorInfo;
-    @observable cursorValue: {position: Point2D; channel: number; value: number};
+    @observable offsetCenter: Point2D = undefined as any;
+    @observable cursorInfo: CursorInfo = undefined as any;
+    @observable cursorValue: {position: Point2D; channel: number; value: number} = undefined as any;
     @observable cursorMoving: boolean = false;
     @observable zoomLevel: number = 1;
     @observable stokes: number = 0;
@@ -168,8 +168,8 @@ export class FrameStore {
     @observable moving: boolean = false;
     @observable zooming: boolean = false;
 
-    @observable colorbarLabelCustomText: string;
-    @observable titleCustomText: string;
+    @observable colorbarLabelCustomText: string = "arbitrary units";
+    @observable titleCustomText: string = "";
     @observable overlayBeamSettings: OverlayBeamStore = new OverlayBeamStore();
     @observable spatialReference: FrameStore | null = null;
     @observable spectralReference: FrameStore | null = null;

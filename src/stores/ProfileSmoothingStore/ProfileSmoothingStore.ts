@@ -5,21 +5,21 @@ import {LineSettings, PlotType, SmoothingType} from "enums";
 import {Point2D} from "models";
 
 export class ProfileSmoothingStore {
-    @observable type: SmoothingType;
-    @observable lineColor: string;
-    @observable selectedLine: string;
-    @observable lineType: PlotType;
-    @observable lineWidth: number;
-    @observable pointRadius: number;
-    @observable isOverlayOn: boolean;
-    @observable boxcarSize: number;
-    @observable gaussianSigma: number;
-    @observable hanningSize: number;
-    @observable decimationWidth: number;
-    @observable binWidth: number;
-    @observable savitzkyGolaySize: number;
-    @observable savitzkyGolayOrder: number;
-    @observable colorMap: Map<string, string>;
+    @observable type: SmoothingType = SmoothingType.NONE;
+    @observable lineColor: string = "auto-rose";
+    @observable selectedLine: string = "";
+    @observable lineType: PlotType = PlotType.STEPS;
+    @observable lineWidth: number = 1;
+    @observable pointRadius: number = 1;
+    @observable isOverlayOn: boolean = false;
+    @observable boxcarSize: number = 2;
+    @observable gaussianSigma: number = 1.0;
+    @observable hanningSize: number = 3;
+    @observable decimationWidth: number = 3;
+    @observable binWidth: number = 2;
+    @observable savitzkyGolaySize: number = 5;
+    @observable savitzkyGolayOrder: number = 0;
+    @observable colorMap: Map<string, string> = new Map();
 
     constructor() {
         makeObservable(this);

@@ -123,35 +123,35 @@ export class AppStore {
     @observable astReady: boolean = false;
     @observable cartaComputeReady: boolean = false;
     // Frames
-    @observable previewFrames = new ObservableMap<number, FrameStore>();
+    @observable previewFrames: ObservableMap<number, FrameStore> = new ObservableMap<number, FrameStore>();
     /** The active image, which can be a loaded image, a color blended image, or a PV preivew. */
     @observable activeImage: ImageItem | null = null;
     @observable hoveredFrame: FrameStore | null = null;
     @observable contourDataSource: FrameStore | null = null;
-    @observable syncContourToFrame = true;
-    @observable syncFrameToContour = true;
+    @observable syncContourToFrame: boolean = true;
+    @observable syncFrameToContour: boolean = true;
     @observable activeWorkspace: Workspace | undefined = undefined;
 
     // Profiles and region data
-    @observable spatialProfiles: Map<string, SpatialProfileStore>;
-    @observable spectralProfiles: Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>;
-    @observable regionStats: Map<number, ObservableMap<number, ObservableMap<number, CARTA.RegionStatsData>>>;
-    @observable regionHistograms: Map<number, ObservableMap<number, ObservableMap<number, CARTA.IRegionHistogramData>>>;
+    @observable spatialProfiles: Map<string, SpatialProfileStore> = new Map();
+    @observable spectralProfiles: Map<FileId, ObservableMap<RegionId, SpectralProfileStore>> = new Map();
+    @observable regionStats: Map<number, ObservableMap<number, ObservableMap<number, CARTA.RegionStatsData>>> = new Map();
+    @observable regionHistograms: Map<number, ObservableMap<number, ObservableMap<number, CARTA.IRegionHistogramData>>> = new Map();
 
     // Reference images
-    @observable spatialReference: FrameStore | null;
-    @observable spectralReference: FrameStore | null;
-    @observable rasterScalingReference: FrameStore | null;
+    @observable spatialReference: FrameStore | null = null;
+    @observable spectralReference: FrameStore | null = null;
+    @observable rasterScalingReference: FrameStore | null = null;
 
     // ImageViewer
-    @observable activeLayer = ImageViewLayer.RegionMoving;
-    @observable cursorFrozen: boolean;
-    @observable cursorMirror = false;
-    @observable toolbarExpanded = true;
-    @observable imageRatio = 1;
-    @observable isExportingImage = false;
-    @observable private isCanvasUpdated: boolean;
-    @observable private devicePixelRatio: number;
+    @observable activeLayer: ImageViewLayer = ImageViewLayer.RegionMoving;
+    @observable cursorFrozen: boolean = false;
+    @observable cursorMirror: boolean = false;
+    @observable toolbarExpanded: boolean = true;
+    @observable imageRatio: number = 1;
+    @observable isExportingImage: boolean = false;
+    @observable private isCanvasUpdated: boolean = false;
+    @observable private devicePixelRatio: number = devicePixelRatio;
 
     // dynamic zIndex
     public zIndexManager = new FloatingObjzIndexManager();
@@ -179,8 +179,8 @@ export class AppStore {
     };
 
     // Image view
-    @observable fullViewWidth = 1;
-    @observable fullViewHeight = 1;
+    @observable fullViewWidth: number = 1;
+    @observable fullViewHeight: number = 1;
 
     @action setImageViewDimensions = (w: number, h: number) => {
         this.fullViewWidth = w;
@@ -296,13 +296,13 @@ export class AppStore {
     };
 
     // Tasks
-    @observable taskProgress: number;
-    @observable taskStartTime: number;
-    @observable taskCurrentTime: number;
-    @observable fileLoading: boolean;
-    @observable fileSaving: boolean;
-    @observable resumingSession: boolean;
-    @observable loadingWorkspace: boolean;
+    @observable taskProgress: number = 0;
+    @observable taskStartTime: number = 0;
+    @observable taskCurrentTime: number = 0;
+    @observable fileLoading: boolean = false;
+    @observable fileSaving: boolean = false;
+    @observable resumingSession: boolean = false;
+    @observable loadingWorkspace: boolean = false;
 
     @action restartTaskProgress = () => {
         this.taskProgress = 0;
@@ -354,7 +354,7 @@ export class AppStore {
     }
 
     // System theme, based on media query
-    @observable systemTheme: string;
+    @observable systemTheme: string = "";
 
     // Apply dark theme if it is forced or the system theme is dark
     @computed get darkTheme(): boolean {
@@ -366,10 +366,10 @@ export class AppStore {
     }
 
     // Spectral matching type, initialized by global preferences, modified by the Image List Settings
-    @observable spectralMatchingType: SpectralType;
+    @observable spectralMatchingType: SpectralType = SpectralType.VRAD;
 
     // Match generated moment image(s) to the spatial reference image
-    @observable momentToMatch: boolean;
+    @observable momentToMatch: boolean = true;
 
     /** All the loaded images in the image list. */
     @computed get frames(): FrameStore[] {

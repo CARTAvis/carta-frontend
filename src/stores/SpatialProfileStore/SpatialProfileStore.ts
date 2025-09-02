@@ -8,11 +8,11 @@ type Coordinate = string | null | undefined; // combination of I/Q/U/V stokes & 
 export class SpatialProfileStore {
     readonly regionId: number;
     readonly fileId: number;
-    @observable channel: number | null | undefined;
-    @observable value: number | null | undefined;
-    @observable x: number | null | undefined;
-    @observable y: number | null | undefined;
-    @observable profiles: Map<Coordinate, ProcessedSpatialProfile>;
+    @observable channel: number | null | undefined = undefined;
+    @observable value: number | null | undefined = undefined;
+    @observable x: number | null | undefined = undefined;
+    @observable y: number | null | undefined = undefined;
+    @observable profiles: Map<Coordinate, ProcessedSpatialProfile> = new Map<Coordinate, ProcessedSpatialProfile>();
 
     constructor(fileId: number = 0, regionId: number = 0) {
         makeObservable(this);

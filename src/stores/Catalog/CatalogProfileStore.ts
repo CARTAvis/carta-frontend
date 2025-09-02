@@ -27,9 +27,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         super(catalogType, catalogData);
         makeObservable(this);
         this.catalogInfo = catalogInfo;
-        this.catalogHeader = catalogHeader.sort((a, b) => {
-            return a.columnIndex - b.columnIndex;
-        });
+        this.catalogHeader = catalogHeader.sort((a, b) => a.columnIndex - b.columnIndex);
         this.catalogControlHeader = this.initCatalogControlHeader;
         this.catalogFilterRequest = this.initCatalogFilterRequest;
         this.updatingDataStream = false;
@@ -37,9 +35,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         this.selectedPointIndices = [];
         this.filterDataSize = undefined;
         this.maxRows = catalogInfo.dataSize;
-
         const coordinateSystem = catalogInfo.fileInfo.coosys?.[0];
-
         if (coordinateSystem) {
             const system = AbstractCatalogProfileStore.getCatalogSystem(coordinateSystem.system);
             this.catalogCoordinateSystem = {
@@ -56,7 +52,6 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
                 coordinate: this.systemCoordinateMap.get(CatalogSystemType.ICRS)
             };
         }
-
         const initTableRows = CatalogProfileStore.InitTableRows;
         if (catalogInfo.dataSize < initTableRows) {
             this.numVisibleRows = catalogInfo.dataSize;

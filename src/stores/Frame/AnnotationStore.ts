@@ -14,8 +14,8 @@ import {RegionStore} from "./Region/RegionStore";
 const NUMBER_OF_POINT_TRANSFORMED = 201;
 
 export class PointAnnotationStore extends RegionStore {
-    @observable pointShape: CARTA.PointAnnotationShape;
-    @observable pointWidth: number;
+    @observable pointShape: CARTA.PointAnnotationShape = CARTA.PointAnnotationShape.SQUARE;
+    @observable pointWidth: number = 6;
 
     constructor(
         backendService: BackendService,
@@ -34,8 +34,8 @@ export class PointAnnotationStore extends RegionStore {
     ) {
         super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, rotation, name, color, lineWidth, dashLength);
         makeObservable(this);
-        this.pointShape = pointShape || CARTA.PointAnnotationShape.SQUARE;
-        this.pointWidth = pointWidth || 6;
+        this.pointShape = pointShape;
+        this.pointWidth = pointWidth;
         this.modifiedTimestamp = performance.now();
     }
 

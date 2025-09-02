@@ -7,7 +7,7 @@ import {AppStore} from "stores";
 import {RegionWidgetStore} from "stores/Widgets";
 
 export class StatsWidgetStore extends RegionWidgetStore {
-    @observable coordinate: string;
+    @observable coordinate: string = "z";
 
     @action setCoordinate = (coordinate: string) => {
         // Check coordinate validity
@@ -27,7 +27,6 @@ export class StatsWidgetStore extends RegionWidgetStore {
     constructor() {
         super(RegionsType.CLOSED);
         makeObservable(this);
-        this.coordinate = "z";
     }
 
     public static CalculateRequirementsMap(widgetsMap: Map<string, StatsWidgetStore>) {

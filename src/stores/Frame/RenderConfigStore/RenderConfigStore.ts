@@ -167,28 +167,28 @@ export class RenderConfigStore {
     static readonly CONTRAST_MIN = 0;
     static readonly CONTRAST_MAX = 2;
 
-    @observable scaling: FrameScaling;
-    @observable colorMapIndex: number;
+    @observable scaling: FrameScaling = FrameScaling.LINEAR;
+    @observable colorMapIndex: number = 0;
     @observable bias: number = 0;
     @observable contrast: number = 1;
-    @observable gamma: number;
-    @observable alpha: number;
-    @observable inverted: boolean;
-    @observable channelHistogram: CARTA.IHistogram;
-    @observable cubeHistogram: CARTA.IHistogram | null;
-    @observable useCubeHistogram: boolean;
-    @observable useCubeHistogramContours: boolean;
-    @observable cubeHistogramProgress: number;
-    @observable selectedPercentile: number[];
-    @observable histChannel: number;
-    @observable stokesIndex: number;
-    @observable scaleMin: number[];
-    @observable scaleMax: number[];
-    @observable visible: boolean;
+    @observable gamma: number = 1;
+    @observable alpha: number = 1;
+    @observable inverted: boolean = false;
+    @observable channelHistogram: CARTA.IHistogram = undefined as any;
+    @observable cubeHistogram: CARTA.IHistogram | null = null;
+    @observable useCubeHistogram: boolean = false;
+    @observable useCubeHistogramContours: boolean = false;
+    @observable cubeHistogramProgress: number = 0;
+    @observable selectedPercentile: number[] = [];
+    @observable histChannel: number = 0;
+    @observable stokesIndex: number = 0;
+    @observable scaleMin: number[] = [];
+    @observable scaleMax: number[] = [];
+    @observable visible: boolean = true;
     @observable previewHistogramMax: number | null = null;
     @observable previewHistogramMin: number | null = null;
-    @observable customColormapHexEnd: string;
-    @observable customColormapHexStart: string;
+    @observable customColormapHexEnd: string = "";
+    @observable customColormapHexStart: string = "";
 
     private frame: FrameStore;
 

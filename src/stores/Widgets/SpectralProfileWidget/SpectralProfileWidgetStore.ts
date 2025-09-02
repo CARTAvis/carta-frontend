@@ -35,32 +35,32 @@ export type MultiPlotData = {
 };
 
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
-    @observable minX: number | undefined;
-    @observable maxX: number | undefined;
-    @observable minY: number | undefined;
-    @observable maxY: number | undefined;
-    @observable cursorX: number;
-    @observable channel: number;
-    @observable markerTextVisible: boolean;
-    @observable isMouseMoveIntoLinePlots: boolean;
-    @observable isStreamingData: boolean;
-    @observable isHighlighted: boolean;
-    @observable private spectralLinesMHz: SpectralLine[];
-    @observable intensityUnit: string | undefined;
+    @observable minX: number | undefined = undefined;
+    @observable maxX: number | undefined = undefined;
+    @observable minY: number | undefined = undefined;
+    @observable maxY: number | undefined = undefined;
+    @observable cursorX: number = 0;
+    @observable channel: number = 0;
+    @observable markerTextVisible: boolean = false;
+    @observable isMouseMoveIntoLinePlots: boolean = false;
+    @observable isStreamingData: boolean = false;
+    @observable isHighlighted: boolean = false;
+    @observable private spectralLinesMHz: SpectralLine[] = [];
+    @observable intensityUnit: string | undefined = undefined;
 
     // style settings
-    @observable plotType: PlotType;
-    @observable meanRmsVisible: boolean;
-    @observable primaryLineColor: string;
-    @observable lineColorMap: Map<LineKey, string>;
-    @observable lineWidth: number;
-    @observable linePlotPointSize: number;
-    @observable linePlotInitXYBoundaries: {minXVal: number | undefined; maxXVal: number | undefined; minYVal: number | undefined; maxYVal: number | undefined};
-    @observable settingsTabId: SpectralProfilerSettingsTabs;
+    @observable plotType: PlotType = PlotType.STEPS;
+    @observable meanRmsVisible: boolean = false;
+    @observable primaryLineColor: string = genColorFromIndex(0); // default auto-blue color in Hex code
+    @observable lineColorMap: Map<LineKey, string> = new Map<LineKey, string>([[SpectralProfileWidgetStore.PRIMARY_LINE_KEY, genColorFromIndex(0)]]);
+    @observable lineWidth: number = 1;
+    @observable linePlotPointSize: number = 1.5;
+    @observable linePlotInitXYBoundaries: {minXVal: number | undefined; maxXVal: number | undefined; minYVal: number | undefined; maxYVal: number | undefined} = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
+    @observable settingsTabId: SpectralProfilerSettingsTabs = SpectralProfilerSettingsTabs.CONVERSION;
 
-    @observable secondaryAxisCursorInfoVisible: boolean;
+    @observable secondaryAxisCursorInfoVisible: boolean = false;
 
-    @observable keep: boolean;
+    @observable keep: boolean = false;
 
     // line key will be "Primary" in single line mode
     public static readonly PRIMARY_LINE_KEY = "Primary";
@@ -360,21 +360,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     constructor(coordinate: string = "z") {
         super(RegionsType.CLOSED_AND_POINT);
         makeObservable<SpectralProfileWidgetStore, "spectralLinesMHz" | "updateRanges">(this);
-        this.isStreamingData = false;
-        this.isHighlighted = false;
-        this.spectralLinesMHz = [];
-
-        // Describes how the data is visualised
-        this.plotType = PlotType.STEPS;
-        this.meanRmsVisible = false;
-        this.secondaryAxisCursorInfoVisible = false;
-        this.markerTextVisible = false;
-        this.primaryLineColor = genColorFromIndex(0); // default auto-blue color in Hex code
-        this.lineColorMap = new Map<LineKey, string>([[SpectralProfileWidgetStore.PRIMARY_LINE_KEY, this.primaryLineColor]]);
-        this.linePlotPointSize = 1.5;
-        this.lineWidth = 1;
-        this.linePlotInitXYBoundaries = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
-
         this.smoothingStore = new ProfileSmoothingStore();
         this.fittingStore = new ProfileFittingStore(this);
         this.profileSelectionStore = new SpectralProfileSelectionStore(this, coordinate);
@@ -384,9 +369,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.momentMask = CARTA.MomentMask.None;
         this.maskRange = [0, 1];
         this.selectedMoments = [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM];
-        this.settingsTabId = SpectralProfilerSettingsTabs.CONVERSION;
-        this.keep = false;
-
         this.setMultiProfileIntensityUnit(this.effectiveFrame?.headerUnit);
 
         reaction(

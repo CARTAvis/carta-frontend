@@ -4,12 +4,12 @@ import {BeamType} from "enums";
 import {PreferenceStore} from "stores";
 
 export class OverlayBeamStore {
-    @observable visible: boolean;
-    @observable color: string;
-    @observable type: BeamType;
-    @observable width: number;
-    @observable shiftX: number;
-    @observable shiftY: number;
+    @observable visible: boolean = false;
+    @observable color: string = "";
+    @observable type: BeamType = BeamType.Open;
+    @observable width: number = 0;
+    @observable shiftX: number = 0;
+    @observable shiftY: number = 0;
 
     constructor() {
         makeObservable(this);

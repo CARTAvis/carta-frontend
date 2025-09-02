@@ -14,26 +14,26 @@ import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 const DEFAULT_STOKES = "current";
 
 export class SpatialProfileWidgetStore extends RegionWidgetStore {
-    @observable coordinate: string;
-    @observable selectedStokes: string;
-    @observable minX: number | undefined;
-    @observable maxX: number | undefined;
-    @observable minY: number | undefined;
-    @observable maxY: number | undefined;
-    @observable cursorX: number;
-    @observable markerTextVisible: boolean;
-    @observable isMouseMoveIntoLinePlots: boolean;
+    @observable coordinate: string = "x";
+    @observable selectedStokes: string = DEFAULT_STOKES;
+    @observable minX: number | undefined = undefined;
+    @observable maxX: number | undefined = undefined;
+    @observable minY: number | undefined = undefined;
+    @observable maxY: number | undefined = undefined;
+    @observable cursorX: number = 0;
+    @observable markerTextVisible: boolean = false;
+    @observable isMouseMoveIntoLinePlots: boolean = false;
 
     // settings
-    @observable wcsAxisVisible: boolean;
-    @observable plotType: PlotType;
-    @observable meanRmsVisible: boolean;
-    @observable primaryLineColor: string;
-    @observable lineWidth: number;
-    @observable linePlotPointSize: number;
-    @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number};
-    readonly smoothingStore: ProfileSmoothingStore;
-    @observable settingsTabId: SpatialProfilerSettingsTabs;
+    @observable wcsAxisVisible: boolean = true;
+    @observable plotType: PlotType = PlotType.STEPS;
+    @observable meanRmsVisible: boolean = false;
+    @observable primaryLineColor: string = "auto-blue";
+    @observable lineWidth: number = 1;
+    @observable linePlotPointSize: number = 1.5;
+    @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number} = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
+    readonly smoothingStore: ProfileSmoothingStore = new ProfileSmoothingStore();
+    @observable settingsTabId: SpatialProfilerSettingsTabs = SpatialProfilerSettingsTabs.STYLING;
 
     @override setRegionId = (fileId: number, regionId: number) => {
         this.regionIdMap.set(fileId, regionId);
@@ -119,22 +119,9 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
     constructor(coordinate: string = "x") {
         super(RegionsType.POINT_AND_LINES);
         makeObservable(this);
-        // Describes which data is being visualised
-        this.coordinate = coordinate;
-        this.selectedStokes = DEFAULT_STOKES;
-
-        // Describes how the data is visualised
-        this.plotType = PlotType.STEPS;
-        this.meanRmsVisible = false;
-        this.markerTextVisible = false;
-        this.wcsAxisVisible = true;
-        this.primaryLineColor = "auto-blue";
-        this.linePlotPointSize = 1.5;
-        this.lineWidth = 1;
-        this.linePlotInitXYBoundaries = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
-        this.smoothingStore = new ProfileSmoothingStore();
-        this.settingsTabId = SpatialProfilerSettingsTabs.STYLING;
-
+        if (coordinate !== undefined) {
+            this.coordinate = coordinate;
+        }
         autorun(() => {
             if (this.effectiveFrame) {
                 this.selectedStokes = DEFAULT_STOKES;

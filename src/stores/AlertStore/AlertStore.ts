@@ -16,12 +16,12 @@ export class AlertStore {
         return AlertStore.staticInstance;
     }
 
-    @observable alertVisible: boolean;
-    @observable alertText: string | React.ReactNode;
-    @observable alertIcon: IconName | MaybeElement;
-    @observable alertType: AlertType;
-    @observable interactiveAlertText: string | React.ReactNode;
-    @observable showDashboardLink: boolean;
+    @observable alertVisible: boolean = false;
+    @observable alertText: string | React.ReactNode = "";
+    @observable alertIcon: IconName | MaybeElement = undefined;
+    @observable alertType: AlertType = AlertType.Info;
+    @observable interactiveAlertText: string | React.ReactNode = "";
+    @observable showDashboardLink: boolean = false;
     private interactionPromise: Deferred<boolean> | null;
 
     @action showAlert = (text: string | React.ReactNode, icon?: IconName | MaybeElement, showDashboard = false) => {
@@ -66,7 +66,5 @@ export class AlertStore {
 
     private constructor() {
         makeObservable(this);
-        this.alertVisible = false;
-        this.showDashboardLink = false;
     }
 }

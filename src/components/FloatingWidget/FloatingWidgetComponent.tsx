@@ -6,7 +6,7 @@ import * as GoldenLayout from "golden-layout";
 import {observer} from "mobx-react";
 
 import {PlaceholderComponent, PvPreviewComponent, RenderConfigComponent} from "components";
-import {HelpType,ImageType} from "enums";
+import {HelpType, ImageType} from "enums";
 import {AppStore, CatalogStore, HelpStore, LayoutStore, WidgetConfig} from "stores";
 
 import "./FloatingWidgetComponent.scss";

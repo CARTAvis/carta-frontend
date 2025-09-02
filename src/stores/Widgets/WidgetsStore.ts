@@ -134,25 +134,25 @@ export class WidgetsStore {
     }
 
     // Floating widgets
-    @observable floatingWidgets: WidgetConfig[];
+    @observable floatingWidgets: WidgetConfig[] = [];
     // Widget Stores
-    @observable renderConfigWidgets: Map<string, RenderConfigWidgetStore>;
-    @observable spatialProfileWidgets: Map<string, SpatialProfileWidgetStore>;
-    @observable spectralProfileWidgets: Map<string, SpectralProfileWidgetStore>;
-    @observable statsWidgets: Map<string, StatsWidgetStore>;
-    @observable histogramWidgets: Map<string, HistogramWidgetStore>;
-    @observable layerListWidgets: Map<string, LayerListWidgetStore>;
-    @observable logWidgets: Map<string, EmptyWidgetStore>;
-    @observable regionListWidgets: Map<string, EmptyWidgetStore>;
-    @observable animatorWidgets: Map<string, EmptyWidgetStore>;
-    @observable channelMapControlWidgets: Map<string, EmptyWidgetStore>;
-    @observable stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore>;
-    @observable floatingSettingsWidgets: Map<string, string>;
-    @observable catalogWidgets: Map<string, CatalogWidgetStore>;
-    @observable catalogPlotWidgets: Map<string, CatalogPlotWidgetStore>;
-    @observable spectralLineQueryWidgets: Map<string, SpectralLineQueryWidgetStore>;
-    @observable cursorInfoWidgets: Map<string, EmptyWidgetStore>;
-    @observable pvGeneratorWidgets: Map<string, PvGeneratorWidgetStore>;
+    @observable renderConfigWidgets: Map<string, RenderConfigWidgetStore> = new Map<string, RenderConfigWidgetStore>();
+    @observable spatialProfileWidgets: Map<string, SpatialProfileWidgetStore> = new Map<string, SpatialProfileWidgetStore>();
+    @observable spectralProfileWidgets: Map<string, SpectralProfileWidgetStore> = new Map<string, SpectralProfileWidgetStore>();
+    @observable statsWidgets: Map<string, StatsWidgetStore> = new Map<string, StatsWidgetStore>();
+    @observable histogramWidgets: Map<string, HistogramWidgetStore> = new Map<string, HistogramWidgetStore>();
+    @observable layerListWidgets: Map<string, LayerListWidgetStore> = new Map<string, LayerListWidgetStore>();
+    @observable logWidgets: Map<string, EmptyWidgetStore> = new Map<string, EmptyWidgetStore>();
+    @observable regionListWidgets: Map<string, EmptyWidgetStore> = new Map<string, EmptyWidgetStore>();
+    @observable animatorWidgets: Map<string, EmptyWidgetStore> = new Map<string, EmptyWidgetStore>();
+    @observable channelMapControlWidgets: Map<string, EmptyWidgetStore> = new Map<string, EmptyWidgetStore>();
+    @observable stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore> = new Map<string, StokesAnalysisWidgetStore>();
+    @observable floatingSettingsWidgets: Map<string, string> = new Map<string, string>();
+    @observable catalogWidgets: Map<string, CatalogWidgetStore> = new Map<string, CatalogWidgetStore>();
+    @observable catalogPlotWidgets: Map<string, CatalogPlotWidgetStore> = new Map<string, CatalogPlotWidgetStore>();
+    @observable spectralLineQueryWidgets: Map<string, SpectralLineQueryWidgetStore> = new Map<string, SpectralLineQueryWidgetStore>();
+    @observable cursorInfoWidgets: Map<string, EmptyWidgetStore> = new Map<string, EmptyWidgetStore>();
+    @observable pvGeneratorWidgets: Map<string, PvGeneratorWidgetStore> = new Map<string, PvGeneratorWidgetStore>();
 
     private widgetsMap: Map<string, Map<string, any>>;
     private defaultFloatingWidgetOffset: number;

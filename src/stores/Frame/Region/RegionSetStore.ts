@@ -12,10 +12,10 @@ import {isAstBadPoint, scale2D, transformPoint} from "utilities";
 import {RegionStore} from "./RegionStore";
 
 export class RegionSetStore {
-    @observable regions: RegionStore[];
-    @observable selectedRegion: RegionStore | null;
-    @observable mode: RegionMode;
-    @observable newRegionType: CARTA.RegionType;
+    @observable regions: RegionStore[] = [];
+    @observable selectedRegion: RegionStore | null = null;
+    @observable mode: RegionMode = RegionMode.MOVING;
+    @observable newRegionType: CARTA.RegionType = CARTA.RegionType.POINT;
     @observable opacity: number = 1;
     @observable locked: boolean = false;
     @observable isHoverImage: Boolean = false;

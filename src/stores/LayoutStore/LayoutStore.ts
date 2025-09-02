@@ -23,20 +23,15 @@ export class LayoutStore {
     private layoutNameToBeSaved: string;
 
     // self-defined structure: {layoutName: config, layoutName: config, ...}
-    @observable dockedLayout: GoldenLayout | null;
+    @observable dockedLayout: GoldenLayout | null = null;
     @observable currentLayoutName: string;
-    @observable private layouts: any;
-    @observable supportsServer: boolean;
-    @observable layoutDialogMode: LayoutDialogMode | undefined;
+    @observable private layouts: any = {};
+    @observable supportsServer: boolean = false;
+    @observable layoutDialogMode: LayoutDialogMode | undefined = LayoutDialogMode.Layout;
 
     private constructor() {
         makeObservable<LayoutStore, "layouts">(this);
-        this.dockedLayout = null;
-        this.layouts = {};
-        this.supportsServer = false;
         this.initLayoutsFromPresets();
-
-        this.layoutDialogMode = LayoutDialogMode.Layout;
     }
 
     public layoutExists = (layoutName: string): boolean => {

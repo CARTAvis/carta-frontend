@@ -17,11 +17,11 @@ interface showDialogOptions {
 export class DialogStore {
     private static staticInstance: DialogStore;
 
-    @observable workspaceDialogMode = WorkspaceDialogMode.Hidden;
+    @observable workspaceDialogMode: WorkspaceDialogMode = WorkspaceDialogMode.Hidden;
     @observable selectedFileInfoDialogTab: TabId = FileInfoType.IMAGE_HEADER;
-    @observable externalPageDialogUrl: string;
-    @observable externalPageDialogTitle: string;
-    @observable dialogVisible = new Map<string, boolean>();
+    @observable externalPageDialogUrl: string = "";
+    @observable externalPageDialogTitle: string = "";
+    @observable dialogVisible: Map<string, boolean> = new Map();
 
     constructor() {
         makeObservable(this);

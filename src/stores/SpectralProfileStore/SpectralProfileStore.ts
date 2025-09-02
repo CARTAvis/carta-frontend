@@ -7,7 +7,7 @@ type Coordinate = string;
 export class SpectralProfileStore {
     readonly fileId: number;
     readonly regionId: number;
-    @observable profiles: Map<Coordinate, ObservableMap<CARTA.StatsType, ProcessedSpectralProfile>>;
+    @observable profiles: Map<Coordinate, ObservableMap<CARTA.StatsType, ProcessedSpectralProfile>> = new Map<Coordinate, ObservableMap<CARTA.StatsType, ProcessedSpectralProfile>>();
 
     constructor(fileId: number = 0, regionId: number = 0) {
         makeObservable(this);

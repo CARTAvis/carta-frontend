@@ -90,7 +90,6 @@ export class BackendService {
     private readonly decoderMap: Map<CARTA.EventType, {messageClass: any; handler: HandlerFunction}>;
 
     private constructor() {
-        makeObservable(this);
         this.loggingEnabled = true;
         this.deferredMap = new Map<number, Deferred<IBackendResponse>>();
 
@@ -114,6 +113,7 @@ export class BackendService {
         this.fittingProgressStream = new Subject<CARTA.FittingProgress>();
         this.vectorTileStream = new Subject<CARTA.VectorOverlayTileData>();
         this.pvPreviewStream = new Subject<CARTA.PvPreviewData>();
+        makeObservable(this);
 
         // Construct handler and decoder maps
         this.decoderMap = new Map<CARTA.EventType, {messageClass: any; handler: HandlerFunction}>([

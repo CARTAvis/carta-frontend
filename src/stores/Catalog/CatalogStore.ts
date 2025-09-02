@@ -27,28 +27,21 @@ export class CatalogStore {
     private static readonly ArcsecUnits = ["arcsec", "arcsecond"];
     private static readonly ArcminUnits = ["arcmin", "arcminute"];
 
-    @observable private _catalogGLData: Map<number, CatalogOverlayCoords>;
-    @observable catalogCounts: Map<number, number>;
+    @observable private _catalogGLData: Map<number, CatalogOverlayCoords> = new Map();
+    @observable catalogCounts: Map<number, number> = new Map();
     // image file id : catalog file Id
-    @observable imageAssociatedCatalogId: Map<number, Array<number>>;
+    @observable imageAssociatedCatalogId: Map<number, Array<number>> = new Map();
     // catalog component Id : catalog file Id
-    @observable catalogProfiles: Map<string, number>;
+    @observable catalogProfiles: Map<string, number> = new Map();
     // catalog plot component Id : catalog file Id and associated catalog plot widget id
-    @observable catalogPlots: Map<string, ObservableMap<number, string>>;
+    @observable catalogPlots: Map<string, ObservableMap<number, string>> = new Map();
     // catalog file Id : catalog Profile store
-    @observable catalogProfileStores: Map<number, CatalogProfileStore | CatalogOnlineQueryProfileStore>;
+    @observable catalogProfileStores: Map<number, CatalogProfileStore | CatalogOnlineQueryProfileStore> = new Map();
     // catalog file Id : catalog widget storeId
-    @observable catalogWidgets: Map<number, string>;
+    @observable catalogWidgets: Map<number, string> = new Map();
 
     private constructor() {
         makeObservable(this);
-        this._catalogGLData = new Map<number, CatalogOverlayCoords>();
-        this.imageAssociatedCatalogId = new Map<number, Array<number>>();
-        this.catalogProfiles = new Map<string, number>();
-        this.catalogPlots = new Map<string, ObservableMap<number, string>>();
-        this.catalogProfileStores = new Map<number, CatalogProfileStore | CatalogOnlineQueryProfileStore>();
-        this.catalogWidgets = new Map<number, string>();
-        this.catalogCounts = new Map<number, number>();
     }
 
     @computed get catalogGLData() {

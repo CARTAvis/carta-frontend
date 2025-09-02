@@ -8,19 +8,19 @@ import {ContourDashMode} from "enums";
 import {PreferenceStore} from "stores";
 
 export class ContourConfigStore {
-    @observable enabled: boolean;
-    @observable levels: number[];
-    @observable smoothingMode: CARTA.SmoothingMode;
-    @observable smoothingFactor: number;
+    @observable enabled: boolean = false;
+    @observable levels: number[] = [];
+    @observable smoothingMode: CARTA.SmoothingMode = 0;
+    @observable smoothingFactor: number = 0;
 
-    @observable color: RGBColor;
-    @observable colormapEnabled: boolean;
-    @observable colormap: string;
-    @observable colormapContrast: number;
-    @observable colormapBias: number;
-    @observable dashMode: ContourDashMode;
-    @observable thickness: number;
-    @observable visible: boolean;
+    @observable color: RGBColor = {r: 0, g: 0, b: 0, a: 1};
+    @observable colormapEnabled: boolean = false;
+    @observable colormap: string = "";
+    @observable colormapContrast: number = 1.0;
+    @observable colormapBias: number = 0.0;
+    @observable dashMode: ContourDashMode = ContourDashMode.NegativeOnly;
+    @observable thickness: number = 1;
+    @observable visible: boolean = true;
 
     private readonly preferenceStore: PreferenceStore;
 

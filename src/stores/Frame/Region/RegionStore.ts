@@ -20,21 +20,21 @@ export const SIZE_POINT_INDEX = 1;
 
 export class RegionStore {
     readonly fileId: number;
-    @observable regionId: number;
-    @observable name: string;
-    @observable color: string;
-    @observable lineWidth: number;
-    @observable dashLength: number;
-    @observable regionType: CARTA.RegionType;
-    @observable coordinate: CoordinateMode;
+    @observable regionId: number = -1;
+    @observable name: string = "";
+    @observable color: string = "";
+    @observable lineWidth: number = 2;
+    @observable dashLength: number = 0;
+    @observable regionType: CARTA.RegionType = CARTA.RegionType.POINT;
+    @observable coordinate: CoordinateMode = CoordinateMode.Image;
     // Shallow observable, since control point updates are atomic
-    @observable.shallow controlPoints: Point2D[];
-    @observable rotation: number;
-    @observable editing: boolean;
-    @observable creating: boolean;
+    @observable.shallow controlPoints: Point2D[] = [];
+    @observable rotation: number = 0;
+    @observable editing: boolean = false;
+    @observable creating: boolean = false;
     @observable locked: boolean = false;
-    @observable isSimplePolygon: boolean;
-    @observable activeFrame: FrameStore;
+    @observable isSimplePolygon: boolean = true;
+    @observable activeFrame: FrameStore = undefined as any;
     @observable lineRegionSampleWidth: number = 3;
 
     static readonly MIN_LINE_WIDTH = 0.5;

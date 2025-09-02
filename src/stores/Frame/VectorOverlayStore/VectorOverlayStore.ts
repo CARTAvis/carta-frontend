@@ -11,10 +11,10 @@ export interface VectorOverlayTile {
 }
 
 export class VectorOverlayStore {
-    @observable progress: number;
-    @observable tiles: VectorOverlayTile[];
-    @observable intensityMin: number | undefined;
-    @observable intensityMax: number | undefined;
+    @observable progress: number = 0;
+    @observable tiles: VectorOverlayTile[] = [];
+    @observable intensityMin: number | undefined = undefined;
+    @observable intensityMax: number | undefined = undefined;
 
     private readonly gl: WebGL2RenderingContext | null;
     private readonly frame: FrameStore;

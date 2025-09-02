@@ -9,34 +9,34 @@ import {closeTo, isAutoColor} from "utilities";
 import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
 export class HistogramWidgetStore extends RegionWidgetStore {
-    @observable settingsTabId: HistogramSettingsTabs;
+    @observable settingsTabId: HistogramSettingsTabs = HistogramSettingsTabs.STYLING;
 
-    @observable coordinate: string;
-    @observable minX: number | undefined;
-    @observable maxX: number | undefined;
-    @observable minY: number | undefined;
-    @observable maxY: number | undefined;
-    @observable cursorX: number;
-    @observable isMouseMoveIntoLinePlots: boolean;
+    @observable coordinate: string = "z";
+    @observable minX: number | undefined = undefined;
+    @observable maxX: number | undefined = undefined;
+    @observable minY: number | undefined = undefined;
+    @observable maxY: number | undefined = undefined;
+    @observable cursorX: number = 0;
+    @observable isMouseMoveIntoLinePlots: boolean = false;
 
     // settings
-    @observable logScaleY: boolean;
-    @observable plotType: PlotType;
-    @observable primaryLineColor: string;
-    @observable lineWidth: number;
-    @observable linePlotPointSize: number;
-    @observable meanRmsVisible: boolean;
-    @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number};
+    @observable logScaleY: boolean = true;
+    @observable plotType: PlotType = PlotType.STEPS;
+    @observable primaryLineColor: string = "auto-blue";
+    @observable lineWidth: number = 1;
+    @observable linePlotPointSize: number = 1.5;
+    @observable meanRmsVisible: boolean = false;
+    @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number} = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
 
     // Current config settings
-    @observable currentAutoBounds: boolean;
-    @observable currentMinPix: number | undefined;
-    @observable currentMaxPix: number | undefined;
-    @observable currentAutoBins: boolean;
-    @observable currentNumBins: number | null | undefined;
+    @observable currentAutoBounds: boolean = true;
+    @observable currentMinPix: number | undefined = undefined;
+    @observable currentMaxPix: number | undefined = undefined;
+    @observable currentAutoBins: boolean = true;
+    @observable currentNumBins: number | null | undefined = null;
 
     // Maximum number of histogram bins on the slider
-    @observable maxNumBins: number;
+    @observable maxNumBins: number = NaN;
 
     // Config settings in the protobuf message
     public fixedNumBins: boolean;
@@ -331,31 +331,14 @@ export class HistogramWidgetStore extends RegionWidgetStore {
 
     constructor() {
         super(RegionsType.CLOSED);
-        makeObservable(this);
-        this.logScaleY = true;
-        this.plotType = PlotType.STEPS;
-        this.primaryLineColor = "auto-blue";
-        this.linePlotPointSize = 1.5;
-        this.lineWidth = 1;
-        this.linePlotInitXYBoundaries = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
-        this.coordinate = "z";
-
-        // Initialize current config values
-        this.currentAutoBounds = true;
         this.resetBounds();
-        this.currentAutoBins = true;
         this.resetNumBins();
-
-        // Initialize config settings in the protobuf message
         this.fixedNumBins = false;
         this.numBins = -1;
         this.fixedBounds = false;
         this.minPix = 0;
         this.maxPix = 0;
-
-        // Initialize the maximum number of histogram bins on the slider
         this.maxNumBins = (this.effectiveFrame?.renderConfig.histogram?.numBins ?? NaN) * 2;
-
         autorun(() => {
             // Update the config parameters
             if (this.isAbleToGenerate) {
@@ -378,6 +361,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                 }
             }
         });
+        makeObservable(this);
     }
 
     // settings

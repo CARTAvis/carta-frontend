@@ -3,10 +3,9 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {FrequencyUnit} from "enums";
 import {Freq} from "models";
 
-
 export class RestFreqStore {
     readonly headerRestFreq: Freq;
-    @observable customRestFreq: Freq;
+    @observable customRestFreq: Freq = undefined as any;
 
     @computed get restFreqInHz(): number | undefined {
         if (this.inValidInput) {
