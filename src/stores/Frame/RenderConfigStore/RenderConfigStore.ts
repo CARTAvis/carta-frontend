@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {FrameScaling} from "enums";
-import {WorkspaceRenderConfig} from "models";
+import type {WorkspaceRenderConfig} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {clamp, getColorsForValues, getColorsFromHex, getPercentiles, scaleValueInverse} from "utilities";
