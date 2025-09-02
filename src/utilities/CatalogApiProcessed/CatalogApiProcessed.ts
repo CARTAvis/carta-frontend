@@ -75,14 +75,19 @@ export class CatalogApiProcessing {
         const raIndex = headers.filter(header => header.name === "ra")[0]?.columnIndex ?? NaN;
         const decIndex = headers.filter(header => header.name === "dec")[0]?.columnIndex ?? NaN;
 
-        const frame = AppStore.Instance.activeFrame;
+        const activeFrame = AppStore.Instance.activeFrame;
+        if (!activeFrame) {
+            console.warn("No active frame to process Simbad data.");
+            return dataMap;
+        }
+
         const raformat = `${NumberFormatType.HMS}.${6}`;
         const deformat = `${NumberFormatType.DMS}.${6}`;
-        const wcsCopy = AST.copy(frame.wcsInfo);
-        if (frame.isXY || frame.isYX) {
+        const wcsCopy = AST.copy(activeFrame.wcsInfo);
+        if (activeFrame.isXY || activeFrame.isYX) {
             AST.set(wcsCopy, `System=${SystemType.ICRS}`);
-            AST.set(wcsCopy, `Format(${frame.dirX})=${frame.isXY ? `${raformat}` : `${deformat}`}`);
-            AST.set(wcsCopy, `Format(${frame.dirY})=${frame.isXY ? `${deformat}` : `${raformat}`}`);
+            AST.set(wcsCopy, `Format(${activeFrame.dirX})=${activeFrame.isXY ? `${raformat}` : `${deformat}`}`);
+            AST.set(wcsCopy, `Format(${activeFrame.dirY})=${activeFrame.isXY ? `${deformat}` : `${raformat}`}`);
         }
         const fraction = Math.PI / 180.0;
 

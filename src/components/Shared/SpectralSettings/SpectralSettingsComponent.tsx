@@ -29,11 +29,11 @@ export class SpectralSettingsComponent extends React.Component<{
             return {value: coord, label: coord === nativeSpectralCoordinate ? coord + " (Native WCS)" : coord, key: coord};
         });
         const spectralSystemOptions: OptionProps[] =
-            frame?.spectralSystemsSupported?.length > 0
+            frame?.spectralSystemsSupported && frame.spectralSystemsSupported.length > 0
                 ? frame.spectralSystemsSupported.map(system => {
                       return {value: system, label: system, key: system};
                   })
-                : [{value: frame?.spectralAxis?.specsys, label: frame?.spectralAxis?.specsys}];
+                : [{value: frame?.spectralAxis?.specsys ?? "", label: frame?.spectralAxis?.specsys ?? ""}];
         const disableCoordinateSetting = this.props.disable;
         const disableSystemSetting = this.props.disable || !frame || !frame.isSpectralSystemConvertible;
 
@@ -54,7 +54,7 @@ export class SpectralSettingsComponent extends React.Component<{
                             disabled={disableCoordinateSetting}
                             value={frame && frame.spectralCoordinateSecondary ? frame.spectralCoordinateSecondary : ""}
                             options={spectralCoordinateOptions}
-                            onChange={event => this.props.onSpectralCoordinateChangeSecondary(event.currentTarget.value as string)}
+                            onChange={event => this.props.onSpectralCoordinateChangeSecondary?.(event.currentTarget.value as string)}
                         />
                     </FormGroup>
                 )}

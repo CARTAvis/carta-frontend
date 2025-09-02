@@ -339,7 +339,7 @@ export class SpectralLineQueryWidgetStore {
         }
     }
 
-    @action setSortingInfo(columnName: string, sortingType: CARTA.SortingType) {
+    @action setSortingInfo(columnName: string, sortingType: CARTA.SortingType | null) {
         this.sortingInfo = {columnName, sortingType};
         this.updateSortedIndexMap();
     }

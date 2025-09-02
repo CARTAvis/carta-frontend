@@ -1,7 +1,7 @@
 import * as React from "react";
 import {AnchorButton, Classes, Dialog, FormGroup, InputGroup, Intent, TagInput} from "@blueprintjs/core";
 import classNames from "classnames";
-import {action, computed, makeObservable} from "mobx";
+import {action, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {AlertStore, AppStore, SnippetStore} from "stores";
@@ -52,13 +52,17 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
         }
     };
 
-    @computed get validInput() {
+    get validInput() {
         const snippetStore = SnippetStore.Instance;
-        return snippetStore.activeSnippetName?.length > 0 && snippetStore.activeSnippet?.categories;
+        return (snippetStore.activeSnippetName?.length ?? 0) > 0 && snippetStore.activeSnippet?.categories;
     }
 
     saveSnippet = async () => {
         const snippetStore = SnippetStore.Instance;
+
+        if (!snippetStore.activeSnippetName || !snippetStore.activeSnippet?.categories) {
+            return;
+        }
 
         if (snippetStore.snippets.has(snippetStore.activeSnippetName)) {
             const confirmed = await AlertStore.Instance.showInteractiveAlert(`Are you sure to overwrite the existing snippet ${snippetStore.activeSnippetName}?`);

@@ -74,7 +74,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                                     onClick={ev => this.props.onItemSelect(item.value, index)}
                                     icon={this.props.itemSelected?.includes(item.value) ? "tick" : "blank"}
                                     shouldDismissPopover={false}
-                                    data-testid={"spectral-profiler-" + this.props.categoryName.toLowerCase() + "-dropdown-" + item.label.split(" ").join("-").toLowerCase()}
+                                    data-testid={"spectral-profiler-" + this.props.categoryName.toLowerCase() + "-dropdown-" + (item.label || "").split(" ").join("-").toLowerCase()}
                                 />
                             ))}
                         </Menu>
@@ -179,7 +179,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     dropdownTooltip={{
                         nonActive: "Click to select an image.",
                         active: "Click to select an image. Images matched by toggling both spatial(XY) and spectral(Z) matching via Image List widget are highlighted.",
-                        disabled: undefined
+                        disabled: ""
                     }}
                 />
                 <ProfileSelectionButtonComponent
@@ -207,7 +207,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     dropdownTooltip={{
                         nonActive: "Click to select a region.",
                         active: "Click to select multiple regions.",
-                        disabled: undefined
+                        disabled: ""
                     }}
                 />
                 <ProfileSelectionButtonComponent
@@ -275,17 +275,17 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
 export class SpectralProfilerToolbarComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore; id: string}> {
     private smoothingShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.SMOOTHING);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title ?? "", this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
     };
 
     private momentsShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.MOMENTS);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title ?? "", this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
     };
 
     private fittingShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.FITTING);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title ?? "", this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
     };
 
     public render() {

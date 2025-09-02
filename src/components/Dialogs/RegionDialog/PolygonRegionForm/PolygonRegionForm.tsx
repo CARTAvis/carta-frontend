@@ -39,7 +39,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
         return (wcsString: string): boolean => {
             const region = this.props.region;
             const pointWCS = getFormattedWCSPoint(this.props.wcsInfo, region.controlPoints[index]);
-            if (isWCSStringFormatValid(wcsString, isXCoordinate ? AppStore.Instance.overlaySettings.numbers.formatTypeX : AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
+            if (pointWCS && isWCSStringFormatValid(wcsString, isXCoordinate ? AppStore.Instance.overlaySettings.numbers.formatTypeX : AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
                 const newPoint = getPixelValueFromWCS(this.props.wcsInfo, isXCoordinate ? {x: wcsString, y: pointWCS.y} : {x: pointWCS.x, y: wcsString});
                 if (!newPoint) {
                     return false;
@@ -83,7 +83,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
                     inputType={InputType.XCoord}
                     value={point.x}
                     onChange={this.handlePointChange(index, true)}
-                    valueWcs={pointWCS?.x}
+                    valueWcs={pointWCS?.x || null}
                     onChangeWcs={this.handleWCSPointChange(index, true)}
                     wcsDisabled={!this.props.wcsInfo || !pointWCS}
                 />
@@ -94,12 +94,12 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
                     inputType={InputType.YCoord}
                     value={point.y}
                     onChange={this.handlePointChange(index, false)}
-                    valueWcs={pointWCS?.y}
+                    valueWcs={pointWCS?.y || null}
                     onChangeWcs={this.handleWCSPointChange(index, false)}
                     wcsDisabled={!this.props.wcsInfo || !pointWCS}
                 />
             );
-            const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${WCSPoint2D.ToString(pointWCS)}` : `Image: ${Point2D.ToString(point, "px", 3)}`;
+            const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${pointWCS ? WCSPoint2D.ToString(pointWCS) : ""}` : `Image: ${Point2D.ToString(point, "px", 3)}`;
             return (
                 <FormGroup label={`Point ${index}`} labelInfo={pxUnit} inline={true} key={index}>
                     {xInput}

@@ -162,7 +162,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         this.setLoadingDataStatus(true);
     }
 
-    @action setSortingInfo(columnName: string, sortingType: CARTA.SortingType) {
+    @action setSortingInfo(columnName: string, sortingType: CARTA.SortingType | null) {
         this.sortingInfo = {columnName, sortingType};
     }
 

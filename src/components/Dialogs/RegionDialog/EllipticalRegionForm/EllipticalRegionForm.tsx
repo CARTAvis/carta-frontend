@@ -2,12 +2,11 @@ import * as React from "react";
 import {FormGroup, InputGroup} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {computed} from "mobx";
 import {observer} from "mobx-react";
 
 import {CoordinateComponent, CoordNumericInput, ImageCoordNumericInput} from "components/Shared";
 import {CoordinateMode, InputType} from "enums";
-import {Point2D} from "models";
+import {isValidWcsPoint, Point2D} from "models";
 import {AppStore} from "stores";
 import {FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
@@ -19,20 +18,24 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
     private static readonly REGION_PIXEL_EPS = 1.0e-3;
 
     // size determined by reference frame
-    @computed get sizeWCS(): WCSPoint2D {
+    get sizeWCS(): WCSPoint2D | null {
         const region = this.props.region;
         if (!region || region.controlPoints.length !== 2 || !region.size || !this.props.frame) {
             return null;
         }
         const size = this.props.region.size;
         const wcsSize = this.props.frame.getWcsSizeInArcsec(size);
-        if (wcsSize) {
-            return {x: formattedArcsec(wcsSize.x, WCS_PRECISION), y: formattedArcsec(wcsSize.y, WCS_PRECISION)};
+        if (isValidWcsPoint(wcsSize)) {
+            const formattedX = formattedArcsec(wcsSize.x, WCS_PRECISION);
+            const formattedY = formattedArcsec(wcsSize.y, WCS_PRECISION);
+            if (formattedX && formattedY) {
+                return {x: formattedX, y: formattedY};
+            }
         }
         return null;
     }
 
-    @computed get centerWCS(): WCSPoint2D {
+    get centerWCS(): WCSPoint2D | null {
         const region = this.props.region;
         if (!region || !this.props.wcsInfo) {
             return null;
@@ -64,11 +67,14 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
 
     private handleCenterWCSXChange = (wcsString: string): boolean => {
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX)) {
-            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.centerWCS.y});
-            const existingValue = this.props.region.center.x;
-            if (isFinite(newPoint?.x) && !closeTo(newPoint.x, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
-                this.props.region.setCenter(newPoint);
-                return true;
+            const centerWCS = this.centerWCS;
+            if (centerWCS) {
+                const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: centerWCS.y});
+                const existingValue = this.props.region.center.x;
+                if (newPoint && isFinite(newPoint.x) && !closeTo(newPoint.x, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
+                    this.props.region.setCenter(newPoint);
+                    return true;
+                }
             }
         }
         return false;
@@ -76,11 +82,14 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
 
     private handleCenterWCSYChange = (wcsString: string): boolean => {
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
-            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.centerWCS.x, y: wcsString});
-            const existingValue = this.props.region.center.y;
-            if (isFinite(newPoint?.y) && !closeTo(newPoint.y, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
-                this.props.region.setCenter(newPoint);
-                return true;
+            const centerWCS = this.centerWCS;
+            if (centerWCS) {
+                const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: centerWCS.x, y: wcsString});
+                const existingValue = this.props.region.center.y;
+                if (newPoint && isFinite(newPoint.y) && !closeTo(newPoint.y, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
+                    this.props.region.setCenter(newPoint);
+                    return true;
+                }
             }
         }
         return false;
@@ -96,11 +105,14 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
     };
 
     private handleMajorAxisWCSChange = (wcsString: string): boolean => {
-        const value = this.props.frame.getImageXValueFromArcsec(getValueFromArcsecString(wcsString));
-        const existingValue = this.props.region.size.x;
-        if (isFinite(value) && value > 0 && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setSize({x: value, y: this.props.region.size.y});
-            return true;
+        const arcsecValue = getValueFromArcsecString(wcsString);
+        if (arcsecValue !== null) {
+            const value = this.props.frame.getImageXValueFromArcsec(arcsecValue);
+            const existingValue = this.props.region.size.x;
+            if (isFinite(value) && value > 0 && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
+                this.props.region.setSize({x: value, y: this.props.region.size.y});
+                return true;
+            }
         }
         return false;
     };
@@ -115,11 +127,14 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
     };
 
     private handleMinorAxisWCSChange = (wcsString: string): boolean => {
-        const value = this.props.frame.getImageYValueFromArcsec(getValueFromArcsecString(wcsString));
-        const existingValue = this.props.region.size.y;
-        if (isFinite(value) && value > 0 && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setSize({x: this.props.region.size.x, y: value});
-            return true;
+        const arcsecValue = getValueFromArcsecString(wcsString);
+        if (arcsecValue !== null) {
+            const value = this.props.frame.getImageYValueFromArcsec(arcsecValue);
+            const existingValue = this.props.region.size.y;
+            if (isFinite(value) && value > 0 && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
+                this.props.region.setSize({x: this.props.region.size.x, y: value});
+                return true;
+            }
         }
         return false;
     };
@@ -154,7 +169,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
                 inputType={InputType.XCoord}
                 value={centerPoint?.x}
                 onChange={this.handleCenterXChange}
-                valueWcs={centerWCSPoint?.x}
+                valueWcs={centerWCSPoint?.x || null}
                 onChangeWcs={this.handleCenterWCSXChange}
                 wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
             />
@@ -165,12 +180,12 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
                 inputType={InputType.YCoord}
                 value={centerPoint?.y}
                 onChange={this.handleCenterYChange}
-                valueWcs={centerWCSPoint?.y}
+                valueWcs={centerWCSPoint?.y || null}
                 onChangeWcs={this.handleCenterWCSYChange}
                 wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
             />
         );
-        const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
+        const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${centerWCSPoint ? WCSPoint2D.ToString(centerWCSPoint) : ""}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
 
         const size = region.size;
         const sizeWCS = this.sizeWCS;
@@ -180,7 +195,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
                 inputType={InputType.Size}
                 value={size.x}
                 onChange={this.handleMajorAxisChange}
-                valueWcs={sizeWCS?.x}
+                valueWcs={sizeWCS?.x || null}
                 onChangeWcs={this.handleMajorAxisWCSChange}
                 wcsDisabled={!this.props.wcsInfo}
                 customPlaceholder="Semi-major"
@@ -192,13 +207,13 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
                 inputType={InputType.Size}
                 value={size.y}
                 onChange={this.handleMinorAxisChange}
-                valueWcs={sizeWCS?.y}
+                valueWcs={sizeWCS?.y || null}
                 onChangeWcs={this.handleMinorAxisWCSChange}
                 wcsDisabled={!this.props.wcsInfo}
                 customPlaceholder="Semi-minor"
             />
         );
-        const sizeInfoString = region.coordinate === CoordinateMode.Image ? `(Semi-major, Semi-minor): ${WCSPoint2D.ToString(sizeWCS)}` : `Image: ${Point2D.ToString(size, "px", 3)}`;
+        const sizeInfoString = region.coordinate === CoordinateMode.Image ? `(Semi-major, Semi-minor): ${sizeWCS ? WCSPoint2D.ToString(sizeWCS) : ""}` : `Image: ${Point2D.ToString(size, "px", 3)}`;
         const pxUnit = region.coordinate === CoordinateMode.Image ? "(px)" : "";
         return (
             <div className="region-form">

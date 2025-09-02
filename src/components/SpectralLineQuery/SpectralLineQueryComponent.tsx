@@ -3,7 +3,7 @@ import SplitPane, {Pane} from "react-split-pane";
 import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay2, Popover, Position, Spinner, Switch, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {FilterableTableComponent, FilterableTableComponentProps, ResizeDetector, SafeNumericInput} from "components/Shared";
@@ -29,8 +29,8 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     @observable height: number;
     @observable widgetId: string;
     @observable headerTableColumnWidths: Array<number>;
-    private headerTableRef: Table2;
-    private resultTableRef: Table2;
+    private headerTableRef: Table2 | undefined;
+    private resultTableRef: Table2 | undefined;
     private scrollToTopHandle;
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
@@ -54,7 +54,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         this.headerTableColumnWidths = [150, 70, 300];
     }
 
-    @computed get widgetStore(): SpectralLineQueryWidgetStore {
+    get widgetStore(): SpectralLineQueryWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.spectralLineQueryWidgets) {
             const widgetStore = widgetsStore.spectralLineQueryWidgets.get(this.props.id);
@@ -63,7 +63,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             }
         }
         console.log("can't find store for widget");
-        return null;
+        throw new Error("Widget store not found");
     }
 
     @action onResize = (width: number, height: number) => {
@@ -157,23 +157,29 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     }
 
     private createHeaderTable() {
-        const headerNames = [];
-        const headerDescriptions = [];
+        const headerNames: string[] = [];
+        const headerDescriptions: string[] = [];
+        const spectralHeaders: SpectralLineHeaders[] = [];
         this.widgetStore.columnHeaders?.forEach(header => {
-            headerNames.push(header.name);
-            headerDescriptions.push(header.description);
+            if (header.name != null) {
+                headerNames.push(header.name);
+                spectralHeaders.push(header.name as SpectralLineHeaders);
+            }
+            if (header.description != null) {
+                headerDescriptions.push(header.description);
+            }
         });
-        const tableColumns = [];
+        const tableColumns: React.ReactElement[] = [];
         const columnName = this.renderDataColumn(HeaderTableColumnName.Name, headerNames);
         tableColumns.push(columnName);
-        const columnDisplaySwitch = this.renderButtonColumns(HeaderTableColumnName.Display, headerNames);
+        const columnDisplaySwitch = this.renderButtonColumns(HeaderTableColumnName.Display, spectralHeaders);
         tableColumns.push(columnDisplaySwitch);
         const columnDescription = this.renderDataColumn(HeaderTableColumnName.Description, headerDescriptions);
         tableColumns.push(columnDescription);
 
         return (
             <Table2
-                ref={ref => (this.headerTableRef = ref)}
+                ref={ref => (this.headerTableRef = ref ?? undefined)}
                 numRows={this.widgetStore.columnHeaders?.length}
                 enableRowReordering={false}
                 renderMode={RenderMode.BATCH}
@@ -245,8 +251,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     };
 
     private updateSortRequest = (columnName: string, sortingType: CARTA.SortingType, columnIndex: number) => {
-        const widgetStore = this.widgetStore;
-        widgetStore.setSortingInfo(columnName, sortingType);
+        this.widgetStore.setSortingInfo(columnName, sortingType);
     };
 
     render() {
@@ -383,13 +388,16 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             numVisibleRows: widgetStore.numVisibleRows > 0 ? widgetStore.numVisibleRows + 3 : widgetStore.numVisibleRows,
             flipRowSelection: widgetStore.selectSingleLine,
             updateTableRef: ref => {
-                this.resultTableRef = ref;
+                this.resultTableRef = ref ?? undefined;
             },
             updateSortRequest: this.updateSortRequest,
-            sortingInfo: widgetStore.sortingInfo,
+            sortingInfo: {
+                columnName: widgetStore.sortingInfo.columnName ?? "",
+                sortingType: widgetStore.sortingInfo.sortingType
+            },
             disableSort: false,
             updateColumnFilter: widgetStore.setColumnFilter,
-            columnWidths: widgetStore.resultTableColumnWidths,
+            columnWidths: widgetStore.resultTableColumnWidths?.filter((width): width is number => width != null || width !== undefined),
             updateTableColumnWidth: widgetStore.setResultTableColumnWidth,
             tableHeaders: widgetStore.columnHeaders,
             applyFilterWithEnter: this.handleFilter
@@ -446,7 +454,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                     </div>
                     <Overlay2 className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={widgetStore.isQuerying} usePortal={false}>
                         <div className="query-loading-overlay" data-testid="spectral-line-query-loading-icon">
-                            <Spinner intent={Intent.PRIMARY} size={30} value={null} />
+                            <Spinner intent={Intent.PRIMARY} size={30} value={undefined} />
                         </div>
                     </Overlay2>
                 </div>

@@ -13,7 +13,7 @@ import {RegionStore} from "./RegionStore";
 
 export class RegionSetStore {
     @observable regions: RegionStore[];
-    @observable selectedRegion: RegionStore;
+    @observable selectedRegion: RegionStore | null;
     @observable mode: RegionMode;
     @observable newRegionType: CARTA.RegionType;
     @observable opacity: number = 1;
@@ -34,7 +34,7 @@ export class RegionSetStore {
         this.newRegionType = preference.regionType;
         this.mode = RegionMode.MOVING;
         this.addPointRegion(frame.center, true);
-        this.selectedRegion = this.regions[0];
+        this.selectedRegion = this.regions[0] ?? null;
     }
 
     public updateCursorRegionPosition = (pos: Point2D) => {
@@ -262,7 +262,9 @@ export class RegionSetStore {
         try {
             const ack = await this.backendService.setRegion(fileId, -1, region);
             console.log(`Updating regionID from ${region.regionId} to ${ack.regionId}`);
-            region.setRegionId(ack.regionId);
+            if (ack.regionId != null) {
+                region.setRegionId(ack.regionId);
+            }
         } catch (err) {
             console.log(err);
         }

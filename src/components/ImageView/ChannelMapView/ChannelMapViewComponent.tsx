@@ -79,6 +79,10 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
         return <NonIdealState icon={"error"} title={"Not supported"} description={"Color blending images in channel map view is not supported"} />;
     }
 
+    if (!image) {
+        return <NonIdealState icon={"folder-open"} title={"No image available"} description={"No image data to display"} />;
+    }
+
     const overlayComponents = channelMapStore.channelArray.map((channel, index) => {
         const column = index % channelMapStore.numColumns;
         const row = Math.floor(index / channelMapStore.numColumns);
@@ -156,7 +160,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
             />
             <CursorOverlayComponent
                 cursorInfo={frame.cursorInfo}
-                cursorValue={frame.cursorInfo.isInsideImage ? frame.cursorValue.value : undefined}
+                cursorValue={frame.cursorInfo.isInsideImage ? (frame.cursorValue.value ?? 0) : 0}
                 isValueCurrent={frame.isCursorValueCurrent}
                 spectralInfo={frame.spectralInfo}
                 width={outerViewWidth}
@@ -211,7 +215,7 @@ const ChannelMapInnerOverlayComponent = observer(({frame, docked}: {frame: Frame
     const gapX = frame.channelMapInnerOverlayStore.gapX;
     const gapY = frame.channelMapInnerOverlayStore.gapY;
 
-    const canvasRef = React.useRef(null);
+    const canvasRef = React.useRef<Map<number, {overlayType: "left" | "bottom" | "inner"; node: HTMLCanvasElement}> | null>(null);
     const getCanvasRefMap = (): Map<number, {overlayType: "left" | "bottom" | "inner"; node: HTMLCanvasElement}> => {
         if (!canvasRef.current) {
             canvasRef.current = new Map();

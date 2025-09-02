@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Tab, Tabs} from "@blueprintjs/core";
-import {autorun, computed} from "mobx";
+import {autorun} from "mobx";
 import {observer} from "mobx-react";
 import type {LineKey} from "models";
 
@@ -37,7 +37,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
         };
     }
 
-    @computed get widgetStore(): StokesAnalysisWidgetStore {
+    get widgetStore(): StokesAnalysisWidgetStore | null {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.stokesAnalysisWidgets) {
             const widgetStore = widgetsStore.stokesAnalysisWidgets.get(this.props.id);
@@ -54,7 +54,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
         const appStore = AppStore.Instance;
 
         autorun(() => {
-            if (this.widgetStore) {
+            if (this.widgetStore && this.props.floatingSettingsId) {
                 const frame = this.widgetStore.effectiveFrame;
                 if (frame) {
                     const regionId = this.widgetStore.effectiveRegionId;
@@ -67,18 +67,23 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
     }
 
     handleEqualAxesValuesChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.widgetStore.setEqualAxesValue(changeEvent.target.checked);
+        this.widgetStore?.setEqualAxesValue(changeEvent.target.checked);
     };
 
     handleInvertedColorMapChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.widgetStore.setInvertedColorMap(changeEvent.target.checked);
+        this.widgetStore?.setInvertedColorMap(changeEvent.target.checked);
     };
+
     handleSelectedTabChanged = (newTabId: React.ReactText) => {
-        this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
+        this.widgetStore?.setSettingsTabId(Number.parseInt(newTabId.toString()));
     };
 
     render() {
         const widgetStore = this.widgetStore;
+        if (!widgetStore) {
+            return null;
+        }
+
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
             lineColorMap: new Map<LineKey, string>([
                 ["Primary", widgetStore.primaryLineColor],
@@ -130,12 +135,16 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
                             id={StokesAnalysisSettingsTabs.CONVERSION}
                             title="Conversion"
                             panel={
-                                <SpectralSettingsComponent
-                                    frame={widgetStore.effectiveFrame}
-                                    onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
-                                    onSpectralSystemChange={widgetStore.setSpectralSystem}
-                                    disable={!hasStokes || !widgetStore.effectiveFrame?.isSpectralChannel}
-                                />
+                                widgetStore.effectiveFrame ? (
+                                    <SpectralSettingsComponent
+                                        frame={widgetStore.effectiveFrame}
+                                        onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
+                                        onSpectralSystemChange={widgetStore.setSpectralSystem}
+                                        disable={!hasStokes || !widgetStore.effectiveFrame?.isSpectralChannel}
+                                    />
+                                ) : (
+                                    <div>No frame available</div>
+                                )
                             }
                         />
                         <Tab id={StokesAnalysisSettingsTabs.LINE_PLOT_STYLING} title="Line Plot Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps} />} />

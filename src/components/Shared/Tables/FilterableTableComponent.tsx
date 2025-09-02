@@ -38,9 +38,9 @@ export class FilterableTableComponentProps {
     updateByInfiniteScroll?: (rowIndexEnd: number) => void;
     updateTableColumnWidth?: (width: number, columnName: string) => void;
     updateSelectedRow?: (dataIndex: number[]) => void;
-    updateSortRequest?: (columnName: string, sortingType: CARTA.SortingType, columnIndex: number) => void;
+    updateSortRequest?: (columnName: string, sortingType: CARTA.SortingType | null, columnIndex: number) => void;
     flipRowSelection?: (rowIndex: number) => void;
-    sortingInfo?: {columnName: string; sortingType: CARTA.SortingType};
+    sortingInfo?: {columnName: string; sortingType: CARTA.SortingType | null};
     disableSort?: boolean;
     tableHeaders?: Array<CARTA.ICatalogHeader>;
     sortedIndexMap?: Array<number>;
@@ -54,7 +54,7 @@ export class FilterableTableComponentProps {
 export class FilterableTableComponent extends React.Component<FilterableTableComponentProps> {
     private readonly SortingTypelinkedList = {
         head: {
-            value: null,
+            value: null as CARTA.SortingType | null,
             next: {
                 value: CARTA.SortingType.Ascending,
                 next: {
@@ -105,8 +105,8 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
     };
 
     private renderCheckboxColumnHeaderCell = (columnIndex: number, columnHeader: CARTA.ICatalogHeader, columnData: any, selectionType: RowSelectionType) => {
-        const controlHeader = this.props.filter?.get(columnHeader.name);
-        const filterSyntax = this.getFilterSyntax(columnHeader.dataType);
+        const controlHeader = columnHeader.name ? this.props.filter?.get(columnHeader.name) : undefined;
+        const filterSyntax = columnHeader.dataType ? this.getFilterSyntax(columnHeader.dataType) : null;
         return (
             <ColumnHeaderCell>
                 <ColumnHeaderCell>
@@ -116,11 +116,11 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                         inline={true}
                         onChange={() => {
                             if (selectionType === RowSelectionType.None || selectionType === RowSelectionType.All) {
-                                columnData?.forEach((isSelected, rowIndex) => this.props.flipRowSelection(rowIndex));
+                                columnData?.forEach((isSelected, rowIndex) => this.props.flipRowSelection?.(rowIndex));
                             } else {
                                 columnData?.forEach((isSelected, rowIndex) => {
                                     if (isSelected) {
-                                        this.props.flipRowSelection(rowIndex);
+                                        this.props.flipRowSelection?.(rowIndex);
                                     }
                                 });
                             }
@@ -129,13 +129,13 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                     />
                 </ColumnHeaderCell>
                 <ColumnHeaderCell isActive={controlHeader?.filter !== ""}>
-                    <Tooltip hoverOpenDelay={250} hoverCloseDelay={0} content={filterSyntax} position={Position.BOTTOM}>
+                    <Tooltip hoverOpenDelay={250} hoverCloseDelay={0} content={filterSyntax ?? undefined} position={Position.BOTTOM}>
                         <InputGroup
                             key={"column-popover-" + columnIndex}
                             small={true}
                             placeholder="Click to filter"
                             value={controlHeader?.filter ?? ""}
-                            onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, columnHeader.name)}
+                            onChange={ev => columnHeader.name && this.props.updateColumnFilter?.(ev.currentTarget.value, columnHeader.name)}
                         />
                     </Tooltip>
                 </ColumnHeaderCell>
@@ -146,7 +146,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
     private renderCheckboxCell = (rowIndex: number, columnIndex: number, columnData: any) => {
         return (
             <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={false}>
-                <React.Fragment>{rowIndex < columnData?.length ? <Checkbox checked={columnData[rowIndex]} onChange={() => this.props.flipRowSelection(rowIndex)} /> : null}</React.Fragment>
+                <React.Fragment>{rowIndex < columnData?.length ? <Checkbox checked={columnData[rowIndex]} onChange={() => this.props.flipRowSelection?.(rowIndex)} /> : null}</React.Fragment>
             </Cell>
         );
     };
@@ -158,8 +158,8 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
 
         return (
             <Column
-                key={columnHeader.name}
-                name={columnHeader.name}
+                key={columnHeader.name ?? "checkbox"}
+                name={columnHeader.name ?? ""}
                 columnHeaderCellRenderer={(columnIndex: number) => this.renderCheckboxColumnHeaderCell(columnIndex, columnHeader, columnData, selectionType)}
                 cellRenderer={columnData?.length ? (rowIndex, columnIndex) => this.renderCheckboxCell(rowIndex, columnIndex, columnData) : undefined}
             />
@@ -169,8 +169,8 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
     private renderDataColumnWithFilter = (columnHeader: CARTA.ICatalogHeader, columnData: Array<any> | NodeJS.TypedArray) => {
         return (
             <Column
-                key={columnHeader.name}
-                name={columnHeader.name}
+                key={columnHeader.name ?? "data"}
+                name={columnHeader.name ?? ""}
                 columnHeaderCellRenderer={(columnIndex: number) => this.renderColumnHeaderCell(columnIndex, columnHeader)}
                 cellRenderer={columnData?.length ? (rowIndex, columnIndex) => this.renderCell(rowIndex, columnIndex, columnData, columnHeader) : undefined}
             />
@@ -181,7 +181,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         const dataIndex = this.props.selectedDataIndex;
         let rowIndex = index;
         if (this.props.sortedIndexMap) {
-            rowIndex = this.props.showSelectedData ? this.props.sortedIndices[rowIndex] : this.props.sortedIndexMap[rowIndex];
+            rowIndex = this.props.showSelectedData && this.props.sortedIndices ? this.props.sortedIndices[rowIndex] : this.props.sortedIndexMap[rowIndex];
         }
         let cellContext = rowIndex < columnData.length ? columnData[rowIndex] : "";
         if (typeof cellContext === "boolean" && this.props.catalogType === CatalogType.FILE) {
@@ -215,10 +215,14 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         );
     };
 
-    private getNextSortingType = () => {
+    private getNextSortingType = (): CARTA.SortingType | null => {
         const sortingInfo = this.props.sortingInfo;
-        let currentNode = this.SortingTypelinkedList.head;
-        while (currentNode.next) {
+        if (!sortingInfo) {
+            return null;
+        }
+
+        let currentNode: any = this.SortingTypelinkedList.head;
+        while (currentNode?.next) {
             if (currentNode.value === sortingInfo.sortingType) {
                 return currentNode.next.value;
             }
@@ -228,19 +232,19 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
     };
 
     private renderColumnHeaderCell = (columnIndex: number, column: CARTA.ICatalogHeader) => {
-        if (!isFinite(columnIndex) || !column) {
+        if (!isFinite(columnIndex) || !column || !column.name) {
             return null;
         }
-        const controlheader = this.props.filter?.get(column.name);
-        const filterSyntax = this.getFilterSyntax(column.dataType);
+        const controlheader = column.name ? this.props.filter?.get(column.name) : undefined;
+        const filterSyntax = column.dataType ? this.getFilterSyntax(column.dataType) : null;
         const sortingInfo = this.props.sortingInfo;
-        const headerDescription = this.props.tableHeaders?.[controlheader?.dataIndex]?.description;
+        const headerDescription = controlheader?.dataIndex != null ? this.props.tableHeaders?.[controlheader.dataIndex]?.description : undefined;
         const disableSort = this.props.disableSort;
         const nameRenderer = () => {
             // sharing css with fileList table
             let sortIcon = "sort";
             let iconClass = "sort-icon inactive";
-            let nextSortType = 0;
+            let nextSortType: CARTA.SortingType | null = CARTA.SortingType.Ascending;
             if (sortingInfo?.columnName === column.name) {
                 nextSortType = this.getNextSortingType();
                 if (sortingInfo?.sortingType === CARTA.SortingType.Descending) {
@@ -252,7 +256,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 }
             }
             return (
-                <div className="sort-label" onClick={() => (disableSort ? null : this.props.updateSortRequest(column.name, nextSortType, column.columnIndex))}>
+                <div className="sort-label" onClick={() => (disableSort || !column.name || !column.columnIndex ? null : this.props.updateSortRequest?.(column.name, nextSortType, column.columnIndex))}>
                     <Label disabled={disableSort} className={classNames(Classes.INLINE, "label")} data-testid={"filterable-table-header-" + columnIndex}>
                         <Icon className={iconClass} icon={sortIcon as IconName} />
                         <Tooltip hoverOpenDelay={250} hoverCloseDelay={0} content={headerDescription ?? "Description not avaliable"} position={Position.BOTTOM} popoverClassName={classNames({[Classes.DARK]: AppStore.Instance.darkTheme})}>
@@ -267,13 +271,13 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
             <ColumnHeaderCell>
                 <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer} />
                 <ColumnHeaderCell isActive={controlheader?.filter !== ""}>
-                    <Tooltip hoverOpenDelay={250} hoverCloseDelay={0} content={filterSyntax} position={Position.BOTTOM}>
+                    <Tooltip hoverOpenDelay={250} hoverCloseDelay={0} content={filterSyntax ?? undefined} position={Position.BOTTOM}>
                         <InputGroup
                             key={"column-popover-" + columnIndex}
                             small={true}
                             placeholder="Click to filter"
                             value={controlheader?.filter ?? ""}
-                            onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, column.name)}
+                            onChange={ev => column.name && this.props.updateColumnFilter?.(ev.currentTarget.value, column.name)}
                             onKeyDown={this.handleKeyDown}
                             data-testid={"filterable-table-filter-input-" + columnIndex}
                         />
@@ -306,23 +310,25 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
 
     private updateTableColumnWidth = (index: number, size: number) => {
         const header = this.props.columnHeaders[index];
-        if (header && this.props.updateTableColumnWidth) {
+        if (header?.name && this.props.updateTableColumnWidth) {
             this.props.updateTableColumnWidth(size, header.name);
         }
     };
 
     private onRowIndexSelection = (selectedRegions: Region[]) => {
         if (selectedRegions.length > 0) {
-            let selectedDataIndex = [];
+            let selectedDataIndex: number[] = [];
             for (let i = 0; i < selectedRegions.length; i++) {
                 const region = selectedRegions[i];
-                const start = region.rows[0];
-                const end = region.rows[1];
-                if (start === end) {
-                    selectedDataIndex.push(start);
-                } else {
-                    for (let j = start; j <= end; j++) {
-                        selectedDataIndex.push(j);
+                if (region.rows && region.rows.length >= 2) {
+                    const start = region.rows[0];
+                    const end = region.rows[1];
+                    if (start === end) {
+                        selectedDataIndex.push(start);
+                    } else {
+                        for (let j = start; j <= end; j++) {
+                            selectedDataIndex.push(j);
+                        }
                     }
                 }
             }
@@ -332,20 +338,22 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
 
     render() {
         const table = this.props;
-        const tableColumns = [];
+        const tableColumns: JSX.Element[] = [];
         const tableData = table.dataset;
-        let lineSelectionIndex: number;
+        let lineSelectionIndex: number | undefined;
         table.columnHeaders?.forEach(header => {
             const columnIndex = header.columnIndex;
-            let dataArray = tableData.get(columnIndex)?.data;
-            const column = header.name === SpectralLineHeaders.LineSelection && this.props.flipRowSelection ? this.renderCheckboxColumn(header, dataArray) : this.renderDataColumnWithFilter(header, dataArray);
-            tableColumns.push(column);
-            if (header.name === SpectralLineHeaders.LineSelection) {
-                lineSelectionIndex = columnIndex;
+            if (columnIndex != null) {
+                let dataArray = tableData.get(columnIndex)?.data;
+                const column = header.name === SpectralLineHeaders.LineSelection && this.props.flipRowSelection ? this.renderCheckboxColumn(header, dataArray) : this.renderDataColumnWithFilter(header, dataArray ?? []);
+                tableColumns.push(column);
+                if (header.name === SpectralLineHeaders.LineSelection) {
+                    lineSelectionIndex = columnIndex;
+                }
             }
         });
 
-        const tableCheckData = this.props.dataset.get(lineSelectionIndex)?.data.slice();
+        const tableCheckData = lineSelectionIndex != null ? this.props.dataset.get(lineSelectionIndex)?.data?.slice() : undefined;
 
         const className = classNames("column-filter-table", {[Classes.DARK]: AppStore.Instance.darkTheme});
 
@@ -366,7 +374,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 columnWidths={table.columnWidths}
                 onCompleteRender={table.onCompleteRender}
                 cellRendererDependencies={[tableCheckData]} // trigger re-render on line selection change
-                getCellClipboardData={null}
+                getCellClipboardData={undefined}
             >
                 {tableColumns}
             </Table2>

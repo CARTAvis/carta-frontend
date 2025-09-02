@@ -7,6 +7,7 @@ import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {CatalogDatabase, RadiusUnits, SystemType} from "enums";
+import {Point2D, WCSPoint2D} from "models";
 import {CatalogApiService} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, NUMBER_FORMAT_LABEL, type VizierItem} from "stores";
 import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
@@ -17,8 +18,8 @@ const KEYCODE_ENTER = 13;
 
 @observer
 export class CatalogQueryComponent extends React.Component {
-    @observable resultSize: number;
-    @observable objectSize: number;
+    @observable resultSize: number | undefined;
+    @observable objectSize: number | undefined;
 
     constructor(props: any) {
         super(props);
@@ -27,15 +28,15 @@ export class CatalogQueryComponent extends React.Component {
         this.objectSize = undefined;
     }
 
-    @action setResultSize(resultSize: number) {
+    @action setResultSize(resultSize: number | undefined) {
         this.resultSize = resultSize;
     }
 
-    @action setObjectSize(objectSize: number) {
+    @action setObjectSize(objectSize: number | undefined) {
         this.objectSize = objectSize;
     }
 
-    @computed get resultInfo(): string {
+    @computed get resultInfo(): string | undefined {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         if (configStore.isQuerying) {
             return `Querying ${configStore.catalogDB}`;
@@ -43,7 +44,7 @@ export class CatalogQueryComponent extends React.Component {
             return `Querying ${CatalogDatabase.SIMBAD}`;
         } else if (this.resultSize === 0) {
             return "No objects found";
-        } else if (this.resultSize >= 1) {
+        } else if (this.resultSize && this.resultSize >= 1) {
             if (configStore.catalogDB === CatalogDatabase.VIZIER) {
                 return `Found ${this.resultSize} table(s)`;
             } else {
@@ -51,7 +52,7 @@ export class CatalogQueryComponent extends React.Component {
             }
         } else if (this.objectSize === 0) {
             return `Object ${configStore.objectName} not found`;
-        } else if (this.objectSize >= 1) {
+        } else if (this.objectSize && this.objectSize >= 1) {
             return `Updated Center Coordinates according ${configStore.objectName}`;
         }
         return undefined;
@@ -67,7 +68,7 @@ export class CatalogQueryComponent extends React.Component {
 
         const disable = configStore.isQuerying || configStore.isObjectQuerying;
         let sourceIndicater;
-        let objectSize = this.objectSize;
+        let objectSize: number | undefined = this.objectSize;
         if (configStore.disableObjectSearch) {
             objectSize = undefined;
         }
@@ -156,7 +157,7 @@ export class CatalogQueryComponent extends React.Component {
                     >
                         <Button text={appStore.overlaySettings.global.system} disabled={disable} rightIcon="double-caret-vertical" />
                     </Select>
-                    <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
+                    <Tooltip content={`Format: ${formatX ? NUMBER_FORMAT_LABEL.get(formatX) || "Unknown" : "Unknown"}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <SafeNumericInput
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
@@ -168,7 +169,7 @@ export class CatalogQueryComponent extends React.Component {
                             data-testid="catalog-query-center-x-input"
                         />
                     </Tooltip>
-                    <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
+                    <Tooltip content={`Format: ${formatY ? NUMBER_FORMAT_LABEL.get(formatY) || "Unknown" : "Unknown"}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <SafeNumericInput
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
@@ -210,7 +211,7 @@ export class CatalogQueryComponent extends React.Component {
                             itemPredicate={this.filterVizierTable}
                             noResults={<MenuItem disabled={true} text="No results." />}
                             tagInputProps={{
-                                onRemove: v => configStore.removeVizierSelectedTable(v.toString()),
+                                onRemove: v => v && configStore.removeVizierSelectedTable(v.toString()),
                                 rightElement: <Button icon="cross" minimal={true} onClick={() => configStore.resetVizierSelectedTable()} />,
                                 tagProps: {minimal: true}
                             }}
@@ -227,7 +228,7 @@ export class CatalogQueryComponent extends React.Component {
                 <ScrollShadow>{configBoard}</ScrollShadow>
                 <Overlay2 autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={disable} usePortal={false}>
                     <div className="query-loading-overlay">
-                        <Spinner intent={Intent.PRIMARY} size={30} value={null} />
+                        <Spinner intent={Intent.PRIMARY} size={30} />
                     </div>
                 </Overlay2>
                 <div className="query-footer">
@@ -260,21 +261,28 @@ export class CatalogQueryComponent extends React.Component {
             configStore.setQueryStatus(true);
             configStore.resetVizier();
             const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.FK5);
-            const resources = await CatalogApiService.Instance.queryVizierTableName(centerCoord, configStore.searchRadius, configStore.radiusUnits, configStore.vizierKeyWords);
-            configStore.setQueryStatus(false);
-            configStore.setVizierQueryResult(resources);
-            this.setResultSize(resources.size);
+            if (centerCoord.x && centerCoord.y) {
+                const resources = await CatalogApiService.Instance.queryVizierTableName(centerCoord as WCSPoint2D, configStore.searchRadius, configStore.radiusUnits, configStore.vizierKeyWords);
+                configStore.setQueryStatus(false);
+                configStore.setVizierQueryResult(resources);
+                this.setResultSize(resources.size);
+            } else {
+                configStore.setQueryStatus(false);
+                this.setResultSize(0);
+            }
         }
     };
 
     private loadVizierCatalogs = async () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
-        const sources = configStore.selectedVizierSource;
+        const sources = configStore.selectedVizierSource.filter(source => source !== undefined);
         const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.FK5);
-        configStore.setQueryStatus(true);
-        const resources = await CatalogApiService.Instance.queryVizierSource(centerCoord, configStore.searchRadius, configStore.radiusUnits, configStore.maxObject, sources);
-        CatalogApiService.Instance.appendVizierCatalog(resources);
-        configStore.setQueryStatus(false);
+        if (centerCoord.x && centerCoord.y) {
+            configStore.setQueryStatus(true);
+            const resources = await CatalogApiService.Instance.queryVizierSource(centerCoord as WCSPoint2D, configStore.searchRadius, configStore.radiusUnits, configStore.maxObject, sources);
+            CatalogApiService.Instance.appendVizierCatalog(resources);
+            configStore.setQueryStatus(false);
+        }
     };
 
     private handleObjectUpdate = () => {
@@ -291,7 +299,9 @@ export class CatalogQueryComponent extends React.Component {
                     const j = this.getDataIndex("dec", response.data?.metadata);
                     if (i && j && size) {
                         const pixelCoord = configStore.convertToPixel({x: response.data?.data[0][i], y: response.data?.data[0][j]});
-                        configStore.updateCenterPixelCoord(pixelCoord);
+                        if (pixelCoord && pixelCoord.x !== undefined && pixelCoord.y !== undefined) {
+                            configStore.updateCenterPixelCoord(pixelCoord as Point2D);
+                        }
                     }
                 }
             })
@@ -343,7 +353,7 @@ export class CatalogQueryComponent extends React.Component {
                 active={itemProps.modifiers.active}
                 icon={isFilmSelected ? "tick" : "blank"}
                 key={table.name}
-                label={table.name}
+                label={table.name || undefined}
                 onClick={itemProps.handleClick}
                 text={`${itemProps.index + 1}. ${table.description}`}
                 shouldDismissPopover={false}
@@ -375,7 +385,11 @@ export class CatalogQueryComponent extends React.Component {
             return;
         }
 
-        const frame = AppStore.Instance.activeFrame.spatialReference ?? AppStore.Instance.activeFrame;
+        const activeFrame = AppStore.Instance.activeFrame;
+        if (!activeFrame) {
+            return;
+        }
+        const frame = activeFrame.spatialReference ?? activeFrame;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
         const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
@@ -401,7 +415,11 @@ export class CatalogQueryComponent extends React.Component {
             return;
         }
 
-        const frame = AppStore.Instance.activeFrame.spatialReference ?? AppStore.Instance.activeFrame;
+        const activeFrame = AppStore.Instance.activeFrame;
+        if (!activeFrame) {
+            return;
+        }
+        const frame = activeFrame.spatialReference ?? activeFrame;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
         const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);

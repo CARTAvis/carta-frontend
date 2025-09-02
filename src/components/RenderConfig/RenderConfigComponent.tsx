@@ -2,7 +2,7 @@ import * as React from "react";
 import {Button, ButtonGroup, Colors, FormGroup, HTMLSelect, NonIdealState, type OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";
@@ -43,14 +43,15 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
     private cachedFrame: FrameStore;
     private cachedHistogram: CARTA.IHistogram;
+    private widgetId: string;
 
     @observable width: number;
     @observable height: number;
 
-    @computed get widgetStore(): RenderConfigWidgetStore {
+    get widgetStore(): RenderConfigWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.renderConfigWidgets) {
-            const widgetStore = widgetsStore.renderConfigWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.renderConfigWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -59,35 +60,39 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         return new RenderConfigWidgetStore();
     }
 
-    @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} {
+    get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} | null {
         const frame = AppStore.Instance.activeFrame;
-        if (frame && frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
+        if (frame?.renderConfig?.histogram?.bins?.length && frame.renderConfig.histogram.firstBinCenter != null && frame.renderConfig.histogram.binWidth != null) {
             const histogram = frame.renderConfig.histogram;
+            const bins = histogram.bins!;
+            const firstBinCenter = histogram.firstBinCenter!;
+            const binWidth = histogram.binWidth!;
+
             let minIndex = 0;
-            let maxIndex = histogram.bins.length - 1;
+            let maxIndex = bins.length - 1;
 
             // Truncate array if zoomed in (sidestepping ChartJS bug with off-canvas rendering and speeding up layout)
-            if (!this.widgetStore.isAutoScaledX) {
-                minIndex = Math.floor((this.widgetStore.minX - histogram.firstBinCenter) / histogram.binWidth);
-                minIndex = clamp(minIndex, 0, histogram.bins.length - 1);
-                maxIndex = Math.ceil((this.widgetStore.maxX - histogram.firstBinCenter) / histogram.binWidth);
-                maxIndex = clamp(maxIndex, 0, histogram.bins.length - 1);
+            if (!this.widgetStore.isAutoScaledX && this.widgetStore.minX != null && this.widgetStore.maxX != null) {
+                minIndex = Math.floor((this.widgetStore.minX - firstBinCenter) / binWidth);
+                minIndex = clamp(minIndex, 0, bins.length - 1);
+                maxIndex = Math.ceil((this.widgetStore.maxX - firstBinCenter) / binWidth);
+                maxIndex = clamp(maxIndex, 0, bins.length - 1);
             }
 
-            let xMin = histogram.firstBinCenter + histogram.binWidth * minIndex;
-            let xMax = histogram.firstBinCenter + histogram.binWidth * maxIndex;
-            let yMin = histogram.bins[minIndex];
+            let xMin = firstBinCenter + binWidth * minIndex;
+            let xMax = firstBinCenter + binWidth * maxIndex;
+            let yMin = bins[minIndex];
             let yMax = yMin;
 
-            let values: Array<{x: number; y: number}>;
+            let values: Array<{x: number; y: number}> = [];
             const N = maxIndex - minIndex;
             if (N > 0 && !isNaN(N)) {
                 values = new Array(maxIndex - minIndex);
 
                 for (let i = minIndex; i <= maxIndex; i++) {
-                    values[i - minIndex] = {x: histogram.firstBinCenter + histogram.binWidth * i, y: histogram.bins[i]};
-                    yMin = Math.min(yMin, histogram.bins[i]);
-                    yMax = Math.max(yMax, histogram.bins[i]);
+                    values[i - minIndex] = {x: firstBinCenter + binWidth * i, y: bins[i]};
+                    yMin = Math.min(yMin, bins[i]);
+                    yMax = Math.max(yMax, bins[i]);
                 }
             }
             return {values, xMin, xMax, yMin, yMax};
@@ -99,16 +104,20 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         super(props);
         makeObservable(this);
 
+        this.widgetId = props.id;
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === RenderConfigComponent.WIDGET_CONFIG.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addRenderConfigWidget();
-            appStore.widgetsStore.changeWidgetId(props.id, id);
+            if (id) {
+                appStore.widgetsStore.changeWidgetId(props.id, id);
+                this.widgetId = id;
+            }
         } else {
-            if (!appStore.widgetsStore.renderConfigWidgets.has(this.props.id)) {
-                console.log(`can't find store for widget with id=${this.props.id}`);
-                appStore.widgetsStore.renderConfigWidgets.set(this.props.id, new RenderConfigWidgetStore());
+            if (!appStore.widgetsStore.renderConfigWidgets.has(this.widgetId)) {
+                console.log(`can't find store for widget with id=${this.widgetId}`);
+                appStore.widgetsStore.renderConfigWidgets.set(this.widgetId, new RenderConfigWidgetStore());
             }
         }
 
@@ -134,7 +143,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         const frame = AppStore.Instance.activeFrame;
 
         if (frame !== this.cachedFrame) {
-            this.cachedFrame = frame;
+            this.cachedFrame = frame as FrameStore;
             this.widgetStore.clearXYBounds();
         }
     }
@@ -170,18 +179,24 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
     handlePercentileRankClick = (value: number) => {
         const appStore = AppStore.Instance;
-        if (!appStore.activeFrame.renderConfig.setPercentileRank(value)) {
+        if (appStore.activeFrame && !appStore.activeFrame.renderConfig.setPercentileRank(value)) {
             appStore.alertStore.showAlert(`Couldn't set percentile of rank ${value}%`);
             appStore.logStore.addError(`Couldn't set percentile of rank ${value}%`, ["render"]);
         }
     };
 
     handlePercentileRankSelectChanged = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        AppStore.Instance.activeFrame.renderConfig.setPercentileRank(+event.currentTarget.value);
+        const activeFrame = AppStore.Instance.activeFrame;
+        if (activeFrame) {
+            activeFrame.renderConfig.setPercentileRank(+event.currentTarget.value);
+        }
     };
 
     setCustomPercentileRank = () => {
-        AppStore.Instance.activeFrame.renderConfig.setPercentileRank(-1);
+        const activeFrame = AppStore.Instance.activeFrame;
+        if (activeFrame) {
+            activeFrame.renderConfig.setPercentileRank(-1);
+        }
     };
 
     handleCubeHistogramSelected = () => {
@@ -236,7 +251,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             }
 
             const frame = AppStore.Instance.activeFrame;
-            if (frame.requiredUnit) {
+            if (frame?.requiredUnit) {
                 numberString += ` ${frame.requiredUnit}`;
             }
 
@@ -310,7 +325,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     type: this.widgetStore.plotType,
                     borderColor: primaryLineColor
                 };
-                linePlotProps.multiPlotPropsMap.set("histogram", histogramProps);
+                linePlotProps.multiPlotPropsMap?.set("histogram", histogramProps);
 
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
                 if (this.widgetStore.isAutoScaledX) {
@@ -329,7 +344,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     linePlotProps.yMax = this.widgetStore.maxY;
                 }
                 // Fix log plot min bounds for entries with zeros in them
-                if (this.widgetStore.logScaleY && linePlotProps.yMin <= 0) {
+                if (this.widgetStore.logScaleY && linePlotProps.yMin !== undefined && linePlotProps.yMin <= 0) {
                     linePlotProps.yMin = 0.5;
                 }
             }
@@ -357,7 +372,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 }
             ];
 
-            if (this.widgetStore.meanRmsVisible && frame.renderConfig.histogram && frame.renderConfig.histogram.stdDev > 0) {
+            if (this.widgetStore.meanRmsVisible && frame.renderConfig.histogram && frame.renderConfig.histogram.stdDev != null && frame.renderConfig.histogram.stdDev > 0 && frame.renderConfig.histogram.mean != null) {
                 linePlotProps.markers.push({
                     value: frame.renderConfig.histogram.mean,
                     id: "marker-mean",
@@ -385,13 +400,13 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     scaleValue(x, frame.renderConfig.scaling, frame.renderConfig.alpha, frame.renderConfig.gamma, frame.renderConfig.bias, frame.renderConfig.contrast, appStore.preferenceStore?.useSmoothedBiasContrast)
                 );
                 // fit to the histogram y axis
-                if (linePlotProps.logY) {
-                    colormapScalingY = colormapScalingY.map(x => Math.pow(10, Math.log10(linePlotProps.yMin) + x * (Math.log10(linePlotProps.yMax) - Math.log10(linePlotProps.yMin))));
-                } else {
-                    colormapScalingY = colormapScalingY.map(x => linePlotProps.yMin + x * (linePlotProps.yMax - linePlotProps.yMin));
+                if (linePlotProps.logY && linePlotProps.yMin !== undefined && linePlotProps.yMax !== undefined) {
+                    colormapScalingY = colormapScalingY.map(x => Math.pow(10, Math.log10(linePlotProps.yMin!) + x * (Math.log10(linePlotProps.yMax!) - Math.log10(linePlotProps.yMin!))));
+                } else if (linePlotProps.yMin !== undefined && linePlotProps.yMax !== undefined) {
+                    colormapScalingY = colormapScalingY.map(x => linePlotProps.yMin! + x * (linePlotProps.yMax! - linePlotProps.yMin!));
                 }
 
-                let colormapScalingData = [];
+                let colormapScalingData: {x: number; y: number}[] = [];
                 for (let i = 0; i < COLORSCALE_LENGTH; i++) {
                     colormapScalingData.push({x: colormapScalingX[i], y: colormapScalingY[i]});
                 }
@@ -405,7 +420,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     opacity: 0.5,
                     noExport: true
                 };
-                linePlotProps.multiPlotPropsMap.set("colormapScaling", colormapScalingProps);
+                linePlotProps.multiPlotPropsMap?.set("colormapScaling", colormapScalingProps);
             }
         }
 
@@ -492,7 +507,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     <TaskProgressDialogComponent
                         isOpen={frame.renderConfig.useCubeHistogram && frame.renderConfig.cubeHistogramProgress < 1.0}
                         progress={frame.renderConfig.cubeHistogramProgress}
-                        timeRemaining={appStore.estimatedTaskRemainingTime}
+                        timeRemaining={appStore.estimatedTaskRemainingTime || 0}
                         cancellable={true}
                         onCancel={this.handleCubeHistogramCancelled}
                         text={"Calculating cube histogram"}

@@ -41,7 +41,7 @@ export class AboutDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: true,
             lazy: true,
-            isOpen: dialogStore.dialogVisible.get(DialogId.About),
+            isOpen: dialogStore.dialogVisible.get(DialogId.About) ?? false,
             className: "about-dialog",
             canEscapeKeyClose: true,
             title: "About CARTA"

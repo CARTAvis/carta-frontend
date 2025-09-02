@@ -59,8 +59,8 @@ export interface WorkspaceVectorOverlayConfig {
     colormapBias: number;
     lengthMin: number;
     lengthMax: number;
-    intensityMin: number;
-    intensityMax: number;
+    intensityMin: number | undefined;
+    intensityMax: number | undefined;
     rotationOffset: number;
 }
 

@@ -36,11 +36,11 @@ export class LayoutDialogComponent extends React.Component {
     }
 
     @computed get validName(): boolean {
-        return this.layoutName.match(/^[^~`!*()\-+=[.'?<>/|\\:;&]+$/)?.length > 0;
+        return (this.layoutName.match(/^[^~`!*()\-+=[.'?<>/|\\:;&]+$/)?.length ?? 0) > 0;
     }
 
     @computed get validRename(): boolean {
-        return this.layoutRename.match(/^[^~`!*()\-+=[.'?<>/|\\:;&]+$/)?.length > 0;
+        return (this.layoutRename.match(/^[^~`!*()\-+=[.'?<>/|\\:;&]+$/)?.length ?? 0) > 0;
     }
 
     @action onMouseEnter = (layoutName: string) => {
@@ -230,7 +230,7 @@ export class LayoutDialogComponent extends React.Component {
                         <Tab
                             id={LayoutDialogMode.DynamicLayout}
                             title="Dynamic Layout"
-                            panel={<LayoutMappingComponent orderedLayoutNames={layoutStore.orderedLayoutNames} existLayoutMapping={preferenceStore.existLayoutMapping} activeFrame={appStore.activeFrame} />}
+                            panel={<LayoutMappingComponent orderedLayoutNames={layoutStore.orderedLayoutNames} existLayoutMapping={preferenceStore.existLayoutMapping} activeFrame={appStore.activeFrame as any} />}
                         />
                     </Tabs>
                 </ScrollShadow>
@@ -253,7 +253,7 @@ export class LayoutDialogComponent extends React.Component {
             className: "layout-dialog",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Layout),
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Layout) || false,
             title: "Layout"
         };
 

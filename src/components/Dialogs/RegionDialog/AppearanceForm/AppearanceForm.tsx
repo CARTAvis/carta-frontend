@@ -43,14 +43,16 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
 
     private handlePointShapeChange = (item: CARTA.PointAnnotationShape) => {
         const appStore = AppStore.Instance;
-        const region = appStore.activeFrame.regionSet.selectedRegion;
-        const frame = appStore.activeFrame.spatialReference ?? appStore.activeFrame;
+        const region = appStore.activeFrame?.regionSet.selectedRegion;
+        const frame = appStore.activeFrame?.spatialReference ?? appStore.activeFrame;
         (region as PointAnnotationStore).setPointShape(item);
-        frame.pointShapeCache = item;
+        if (frame) {
+            frame.pointShapeCache = item;
+        }
     };
 
     private handleCompassAnnotationArrowhead = (selection: string) => {
-        const region = AppStore.Instance.activeFrame.regionSet.selectedRegion as CompassAnnotationStore;
+        const region = AppStore.Instance.activeFrame?.regionSet.selectedRegion as CompassAnnotationStore;
         switch (selection) {
             case "north":
                 region.setNorthArrowhead(true);

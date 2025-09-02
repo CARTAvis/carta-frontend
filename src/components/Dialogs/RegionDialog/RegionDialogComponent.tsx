@@ -55,7 +55,12 @@ export class RegionDialogComponent extends React.Component {
         }
     };
 
-    private handleFocusClicked = () => AppStore.Instance.activeFrame.regionSet.selectedRegion.focusCenter();
+    private handleFocusClicked = () => {
+        const appStore = AppStore.Instance;
+        if (appStore.activeFrame?.regionSet.selectedRegion) {
+            appStore.activeFrame.regionSet.selectedRegion.focusCenter();
+        }
+    };
 
     public render() {
         const appStore = AppStore.Instance;
@@ -65,14 +70,14 @@ export class RegionDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: true,
             lazy: true,
-            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Region),
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Region) ?? false,
             className: "region-dialog",
             canEscapeKeyClose: true,
             title: "No region selected"
         };
 
         let bodyContent, configurationPanel;
-        let region: RegionStore;
+        let region: RegionStore | null = null;
         let editableRegion = false;
         if (!appStore.activeFrame || !appStore.activeFrame.regionSet.selectedRegion) {
             bodyContent = RegionDialogComponent.MissingRegionNode;

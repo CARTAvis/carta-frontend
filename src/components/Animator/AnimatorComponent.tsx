@@ -225,7 +225,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                     {!hideSliders && (
                         <React.Fragment>
                             <Slider value={imageIndex} min={0} max={numImages - 1} showTrackFill={false} labelValues={imageTick} labelPrecision={0} onChange={this.onImageChanged} disabled={appStore.animatorStore.animationActive} />
-                            <div className="slider-info">{appStore.activeImage.store.filename}</div>
+                            <div className="slider-info">{appStore.activeImage?.store.filename ?? ""}</div>
                         </React.Fragment>
                     )}
                 </div>
@@ -233,7 +233,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         }
 
         // Channel Control
-        if (numChannels > 1) {
+        if (numChannels > 1 && activeFrame) {
             const numLabels = 5;
             const channelStep = numChannels > 10 ? Math.floor((numChannels - 1) / (numLabels - 1)) : 1;
             const channelTickPre =
@@ -291,7 +291,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         }
 
         // Stokes Control
-        if (numStokes > 1) {
+        if (numStokes > 1 && activeFrame) {
             stokesSlider = (
                 <div className={classNames("animator-slider", "stokes-slider", {"tiled-label": this.width < 750})} data-testid="animator-polarization-slider">
                     <Radio value={AnimationMode.STOKES} disabled={appStore.animatorStore.animationActive} checked={appStore.animatorStore.animationMode === AnimationMode.STOKES} onChange={this.onAnimationModeChanged} label="Polarization" />
@@ -314,7 +314,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                                 showTrackFill={false}
                                 max={activeFrame.polarizations.length - 1}
                                 labelRenderer={(val: number) => {
-                                    return isFinite(val) && val >= 0 && val < activeFrame?.polarizationInfo?.length ? activeFrame.polarizationInfo[val] : `${val}`;
+                                    return isFinite(val) && val >= 0 && val < (activeFrame?.polarizationInfo?.length ?? 0) ? (activeFrame.polarizationInfo?.[val] ?? `${val}`) : `${val}`;
                                 }}
                                 onChange={this.onStokesChanged}
                                 disabled={appStore.animatorStore.animationActive}

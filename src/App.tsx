@@ -80,7 +80,9 @@ export class App extends React.Component {
 
     private setAppContainerRef = (ref: HTMLDivElement | null) => {
         this.appContainerRef.current = ref;
-        AppStore.Instance.setAppContainer(ref);
+        if (ref) {
+            AppStore.Instance.setAppContainer(ref);
+        }
     };
 
     public render() {
@@ -95,7 +97,7 @@ export class App extends React.Component {
                 <UIControllerComponent />
                 {alertComponent}
                 <TaskProgressDialogComponent
-                    progress={undefined}
+                    progress={0}
                     timeRemaining={0}
                     isOpen={appStore.resumingSession || appStore.loadingWorkspace}
                     cancellable={false}

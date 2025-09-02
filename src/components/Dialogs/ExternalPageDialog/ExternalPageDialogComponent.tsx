@@ -27,7 +27,7 @@ export class ExternalPageDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.ExternalPage),
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.ExternalPage) ?? false,
             title: appStore.dialogStore.externalPageDialogTitle
         };
 

@@ -35,7 +35,16 @@ export class TelemetryDialogComponent extends React.Component {
         const classes = classNames("telemetry-dialog", {[Classes.DARK]: appStore.darkTheme});
 
         return (
-            <Dialog icon="data-connection" canOutsideClickClose={false} isCloseButtonShown={false} lazy={true} isOpen={appReady && consentRequired && preferenceReady} className={classes} canEscapeKeyClose={false} title="CARTA Usage Data">
+            <Dialog
+                icon="data-connection"
+                canOutsideClickClose={false}
+                isCloseButtonShown={false}
+                lazy={true}
+                isOpen={!!(appReady && consentRequired && preferenceReady)}
+                className={classes}
+                canEscapeKeyClose={false}
+                title="CARTA Usage Data"
+            >
                 <div className={Classes.DIALOG_BODY}>
                     <div className="image-div">
                         <img src={"carta_logo.png"} width={80} alt={"carta logo"} />

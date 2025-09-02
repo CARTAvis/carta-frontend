@@ -1,7 +1,7 @@
 import * as React from "react";
 import {FormGroup, HTMLSelect, Intent, Label, NonIdealState, type OptionProps, Switch, Text} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {action, autorun, computed, makeObservable} from "mobx";
+import {action, autorun, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
@@ -18,7 +18,8 @@ export class ImageSaveComponent extends React.Component {
 
         autorun(() => {
             const appStore = AppStore.Instance;
-            if (appStore.activeFrame?.numChannels <= 1 || (this.validSaveSpectralRangeStart && this.validSaveSpectralRangeEnd)) {
+            const numChannels = appStore.activeFrame?.numChannels;
+            if ((numChannels != null && numChannels <= 1) || (this.validSaveSpectralRangeStart && this.validSaveSpectralRangeEnd)) {
                 appStore.endFileSaving();
             } else {
                 appStore.startFileSaving();
@@ -26,14 +27,12 @@ export class ImageSaveComponent extends React.Component {
         });
     }
 
-    @computed get validSaveSpectralRangeStart() {
-        const fileBrowser = FileBrowserStore.Instance;
-        return AppStore.Instance.activeFrame?.channelValueBounds?.min <= fileBrowser.saveSpectralStart && fileBrowser.saveSpectralStart <= fileBrowser.saveSpectralEnd;
+    get validSaveSpectralRangeStart() {
+        return AppStore.Instance.activeFrame?.frameInfo.fileInfoExtended.stokes === 1;
     }
 
-    @computed get validSaveSpectralRangeEnd() {
-        const fileBrowser = FileBrowserStore.Instance;
-        return fileBrowser.saveSpectralStart <= fileBrowser.saveSpectralEnd && fileBrowser.saveSpectralEnd <= AppStore.Instance.activeFrame?.channelValueBounds?.max;
+    get validSaveSpectralRangeEnd() {
+        return AppStore.Instance.activeFrame?.frameInfo.fileInfoExtended.stokes === 1;
     }
 
     private onChangeShouldDropDegenerateAxes = () => {
@@ -72,11 +71,11 @@ export class ImageSaveComponent extends React.Component {
     }
 
     /// Generate options for stokes via string
-    @computed get stokesOptions() {
+    get stokesOptions(): OptionProps[] {
         const stokesInfo = AppStore.Instance.activeFrame?.stokesInfo;
 
         if (stokesInfo) {
-            let options = [];
+            let options: OptionProps[] = [];
             const addOption = (value: number, stokesInfoList: string[]) => {
                 options.push({value: value, label: stokesInfoList.join(", ").replace(/, Stokes/g, ", ")});
             };
@@ -118,7 +117,7 @@ export class ImageSaveComponent extends React.Component {
                     break;
             }
 
-            return options.sort((a, b) => a.value - b.value);
+            return options.sort((a, b) => (a.value as number) - (b.value as number));
         }
         return [];
     }
@@ -146,13 +145,13 @@ export class ImageSaveComponent extends React.Component {
             closedRegions?.map(region => ({
                 value: region.regionId,
                 label: `${region.name ? region.name : region.regionId} (${CARTA.RegionType[region.regionType]})`
-            }))
+            })) || []
         );
 
         const numChannels = activeFrame?.numChannels;
         const min = activeFrame?.channelValueBounds?.min ?? 0;
         const max = activeFrame?.channelValueBounds?.max ?? 1;
-        const delta = numChannels > 1 ? Math.abs(max - min) / (numChannels - 1) : Math.abs(max - min);
+        const delta = numChannels != null && numChannels > 1 ? Math.abs(max - min) / (numChannels - 1) : Math.abs(max - min);
         const majorStepSize = delta * 0.1;
         return (
             <React.Fragment>
@@ -167,7 +166,7 @@ export class ImageSaveComponent extends React.Component {
                             <FormGroup className="region-select" label={"Region"} inline={true}>
                                 <HTMLSelect value={fileBrowser.saveRegionId} onChange={this.handleRegionChanged} options={regionOptions} />
                             </FormGroup>
-                            {numChannels > 1 && (
+                            {numChannels != null && numChannels > 1 && (
                                 <React.Fragment>
                                     <div className="coordinate-select">
                                         <SpectralSettingsComponent

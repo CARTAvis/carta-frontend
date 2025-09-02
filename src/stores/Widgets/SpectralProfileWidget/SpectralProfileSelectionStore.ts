@@ -35,7 +35,7 @@ type Profile = {
     };
     comments: string[];
     intensityConfig: IntensityConfig;
-    intensityUnit: string;
+    intensityUnit: string | undefined;
 };
 
 export class SpectralProfileSelectionStore {
@@ -272,7 +272,7 @@ export class SpectralProfileSelectionStore {
             const matchedFrameIds = appStore.spatialAndSpectalMatchedFileIds;
 
             // Highlight matched active option
-            if (matchedFrameIds?.length > 1 && matchedFrameIds?.includes(appStore.activeFrameFileId)) {
+            if (matchedFrameIds?.length > 1 && appStore.activeFrameFileId && matchedFrameIds?.includes(appStore.activeFrameFileId)) {
                 const activeOption = options.find(option => option.value === ACTIVE_FILE_ID);
                 if (activeOption) {
                     activeOption.label = "Active (matched)";

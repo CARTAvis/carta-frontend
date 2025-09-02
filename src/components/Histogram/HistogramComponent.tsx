@@ -2,7 +2,7 @@ import * as React from "react";
 import {NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
-import {autorun, computed, makeObservable} from "mobx";
+import {autorun, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
@@ -19,6 +19,8 @@ import "./HistogramComponent.scss";
 
 @observer
 export class HistogramComponent extends React.Component<WidgetProps> {
+    private widgetId: string;
+
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "histogram",
@@ -33,13 +35,13 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         };
     }
 
-    private cachedFrame: FrameStore;
+    private cachedFrame: FrameStore | null = null;
     private currentLinePlotProps: LinePlotComponentProps;
 
-    @computed get widgetStore(): HistogramWidgetStore {
+    get widgetStore(): HistogramWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.histogramWidgets) {
-            const widgetStore = widgetsStore.histogramWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.histogramWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -48,9 +50,9 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         return new HistogramWidgetStore();
     }
 
-    @computed get isTargetData(): boolean {
+    get isTargetData(): boolean {
         const regionHistogramData = this.getRegionHistogramData();
-        if (!regionHistogramData) {
+        if (!regionHistogramData || !regionHistogramData.config) {
             return false;
         }
 
@@ -61,22 +63,25 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         if (regionHistogramData.config.fixedNumBins && regionHistogramData.config.numBins !== this.widgetStore.numBins) {
             return false;
         }
-        return !regionHistogramData.config.fixedBounds || (closeTo(regionHistogramData.config.bounds.min, this.widgetStore.minPix) && closeTo(regionHistogramData.config.bounds.max, this.widgetStore.maxPix));
+        return (
+            !(regionHistogramData.config.fixedBounds ?? false) ||
+            (regionHistogramData.config.bounds ? closeTo(regionHistogramData.config.bounds.min ?? 0, this.widgetStore.minPix ?? 0) && closeTo(regionHistogramData.config.bounds.max ?? 0, this.widgetStore.maxPix ?? 0) : false)
+        );
     }
 
-    @computed get histogramData(): CARTA.IHistogram {
+    get histogramData(): CARTA.IHistogram | null {
         const regionHistogramData = this.getRegionHistogramData();
-        return regionHistogramData ? regionHistogramData.histograms : null;
+        return regionHistogramData?.histograms ?? null;
     }
 
-    @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} {
+    get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} | null {
         const histogram = this.histogramData;
-        if (histogram) {
+        if (histogram && histogram.bins && histogram.firstBinCenter !== null && histogram.firstBinCenter !== undefined && histogram.binWidth !== null && histogram.binWidth !== undefined) {
             let minIndex = 0;
             let maxIndex = histogram.bins.length - 1;
 
             // Truncate array if zoomed in (sidestepping ChartJS bug with off-canvas rendering and speeding up layout)
-            if (!this.widgetStore.isAutoScaledX) {
+            if (!this.widgetStore.isAutoScaledX && this.widgetStore.minX !== undefined && this.widgetStore.maxX !== undefined) {
                 minIndex = Math.floor((this.widgetStore.minX - histogram.firstBinCenter) / histogram.binWidth);
                 minIndex = clamp(minIndex, 0, histogram.bins.length - 1);
                 maxIndex = Math.ceil((this.widgetStore.maxX - histogram.firstBinCenter) / histogram.binWidth);
@@ -85,7 +90,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
 
             let xMin = histogram.firstBinCenter + histogram.binWidth * minIndex;
             let xMax = histogram.firstBinCenter + histogram.binWidth * maxIndex;
-            let yMin = histogram.bins[minIndex];
+            let yMin = histogram.bins[minIndex] ?? 0;
             let yMax = yMin;
 
             // Cache automatic settings for histogram min and max values
@@ -100,15 +105,16 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                 this.widgetStore.resetNumBins();
             }
 
-            let values: Array<{x: number; y: number}>;
+            let values: Array<{x: number; y: number}> = [];
             const N = maxIndex - minIndex;
             if (N > 0 && !isNaN(N)) {
                 values = new Array(maxIndex - minIndex);
 
                 for (let i = minIndex; i <= maxIndex; i++) {
-                    values[i - minIndex] = {x: histogram.firstBinCenter + histogram.binWidth * i, y: histogram.bins[i]};
-                    yMin = Math.min(yMin, histogram.bins[i]);
-                    yMax = Math.max(yMax, histogram.bins[i]);
+                    const binValue = histogram.bins[i] ?? 0;
+                    values[i - minIndex] = {x: histogram.firstBinCenter + histogram.binWidth * i, y: binValue};
+                    yMin = Math.min(yMin, binValue);
+                    yMax = Math.max(yMax, binValue);
                 }
             }
             return {values, xMin, xMax, yMin, yMax};
@@ -116,8 +122,8 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    @computed get exportHeaders(): string[] {
-        let headerString = [];
+    get exportHeaders(): string[] {
+        let headerString: string[] = [];
 
         // region info
         const frame = this.widgetStore.effectiveFrame;
@@ -136,16 +142,21 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         super(props);
         makeObservable(this);
 
+        this.widgetId = props.id ?? "";
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === HistogramComponent.WIDGET_CONFIG.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addHistogramWidget();
-            appStore.widgetsStore.changeWidgetId(props.id, id);
+            if (id) {
+                appStore.widgetsStore.changeWidgetId(props.id as string, id);
+                this.widgetId = id;
+            }
         } else {
-            if (!appStore.widgetsStore.histogramWidgets.has(this.props.id)) {
-                console.log(`can't find store for widget with id=${this.props.id}`);
-                appStore.widgetsStore.histogramWidgets.set(this.props.id, new HistogramWidgetStore());
+            const widgetId = this.widgetId;
+            if (widgetId && !appStore.widgetsStore.histogramWidgets.has(widgetId)) {
+                console.log(`can't find store for widget with id=${widgetId}`);
+                appStore.widgetsStore.histogramWidgets.set(widgetId, new HistogramWidgetStore());
             }
         }
         // Update widget title when region or coordinate changes
@@ -163,9 +174,15 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                     }
                 }
                 const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                appStore.widgetsStore.setWidgetTitle(this.props.id, `Histogram: ${regionString} ${selectedString}`);
+                const widgetId = this.widgetId;
+                if (widgetId) {
+                    appStore.widgetsStore.setWidgetTitle(widgetId, `Histogram: ${regionString} ${selectedString}`);
+                }
             } else {
-                appStore.widgetsStore.setWidgetTitle(this.props.id, `Histogram`);
+                const widgetId = this.widgetId;
+                if (widgetId) {
+                    appStore.widgetsStore.setWidgetTitle(widgetId, `Histogram`);
+                }
             }
             const widgetStore = this.widgetStore;
             if (widgetStore) {
@@ -181,7 +198,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         const frame = this.widgetStore.effectiveFrame;
 
         if (frame !== this.cachedFrame) {
-            this.cachedFrame = frame;
+            this.cachedFrame = frame ?? null;
             this.widgetStore.clearXYBounds();
         }
     }
@@ -217,7 +234,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         return profilerInfo;
     };
 
-    private getRegionHistogramData = (): CARTA.IRegionHistogramData => {
+    private getRegionHistogramData = (): CARTA.IRegionHistogramData | null => {
         if (!this.widgetStore.effectiveFrame) {
             return null;
         }
@@ -232,6 +249,10 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             return null;
         }
 
+        if (regionId === null) {
+            return null;
+        }
+
         const regionMap = frameMap.get(regionId);
         if (!regionMap) {
             return null;
@@ -241,7 +262,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         const stokes = stokesIndex >= this.widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes ? this.widgetStore.effectiveFrame.polarizations[stokesIndex] : stokesIndex;
         const regionHistogramData = regionMap.get(stokes === -1 ? this.widgetStore.effectiveFrame.requiredStokes : stokes);
 
-        return regionHistogramData ? regionHistogramData : null;
+        return regionHistogramData ?? null;
     };
 
     render() {
@@ -258,9 +279,10 @@ export class HistogramComponent extends React.Component<WidgetProps> {
 
         let unit = "";
         if (frame && frame.headerUnit) {
-            if ([POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(this.widgetStore.effectivePolarization)) {
+            const effectivePolarization = this.widgetStore.effectivePolarization;
+            if (effectivePolarization && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(effectivePolarization)) {
                 unit = "%";
-            } else if (this.widgetStore.effectivePolarization === POLARIZATIONS.Pangle) {
+            } else if (effectivePolarization === POLARIZATIONS.Pangle) {
                 unit = "degree";
             } else {
                 unit = frame.headerUnit;
@@ -317,7 +339,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                         linePlotProps.yMax = this.widgetStore.maxY;
                     }
                     // Fix log plot min bounds for entries with zeros in them
-                    if (this.widgetStore.logScaleY && linePlotProps.yMin <= 0) {
+                    if (this.widgetStore.logScaleY && linePlotProps.yMin !== undefined && linePlotProps.yMin <= 0) {
                         linePlotProps.yMin = 0.5;
                     }
                 }

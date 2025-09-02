@@ -2,7 +2,7 @@ import * as React from "react";
 import {AnchorButton, Button, ButtonGroup, Classes, Collapse, FormGroup, Icon, MenuItem, PopoverPosition, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {type ItemPredicate, type ItemRendererProps, Select} from "@blueprintjs/select";
 import FuzzySearch from "fuzzy-search";
-import {action, autorun, computed, makeObservable} from "mobx";
+import {action, autorun, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {CatalogOverlayComponent} from "components";
@@ -39,6 +39,8 @@ const KEYCODE_ENTER = 13;
 @observer
 export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<WidgetProps> {
     private catalogFileNames: Map<number, string>;
+    private widgetId: string;
+    private floatingSettingsId: string | undefined;
     private catalogOverlayShape: Array<CatalogOverlayShape> = [
         CatalogOverlayShape.BOX_LINED,
         CatalogOverlayShape.CIRCLE_FILLED,
@@ -70,28 +72,41 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         };
     }
 
-    @computed get widgetStore(): CatalogWidgetStore {
+    get widgetStore(): CatalogWidgetStore | undefined {
         const catalogStore = CatalogStore.Instance;
-        const catalogWidgetStoreId = catalogStore.catalogWidgets.get(this.catalogFileId);
+        const catalogFileId = this.catalogFileId;
+        if (catalogFileId === undefined) {
+            return undefined;
+        }
+        const catalogWidgetStoreId = catalogStore.catalogWidgets.get(catalogFileId);
+        if (!catalogWidgetStoreId) {
+            return undefined;
+        }
         return WidgetsStore.Instance.catalogWidgets.get(catalogWidgetStoreId);
     }
 
-    @computed get catalogFileId() {
-        return CatalogStore.Instance.catalogProfiles?.get(this.props.id);
+    get catalogFileId() {
+        return CatalogStore.Instance.catalogProfiles?.get(this.widgetId);
     }
 
-    @computed get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore {
-        return CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
+    get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined {
+        const catalogFileId = this.catalogFileId;
+        if (catalogFileId === undefined) {
+            return undefined;
+        }
+        return CatalogStore.Instance.catalogProfileStores.get(catalogFileId);
     }
 
-    @computed get axisOption() {
+    get axisOption() {
         const profileStore = this.profileStore;
-        let axisOptions = [];
+        let axisOptions: string[] = [];
         axisOptions.push(CatalogOverlay.NONE);
         profileStore?.catalogControlHeader?.forEach((header, columnName) => {
-            const dataType = profileStore.catalogHeader[header.dataIndex].dataType;
-            if (CatalogOverlayComponent.axisDataType.includes(dataType) && header.display) {
-                axisOptions.push(columnName);
+            if (header.dataIndex !== undefined) {
+                const dataType = profileStore.catalogHeader[header.dataIndex]?.dataType;
+                if (dataType && CatalogOverlayComponent.axisDataType.includes(dataType) && header.display) {
+                    axisOptions.push(columnName);
+                }
             }
         });
         return axisOptions;
@@ -100,30 +115,37 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
+        this.widgetId = props.id;
+        this.floatingSettingsId = props.floatingSettingsId;
 
         const appStore = AppStore.Instance;
         this.catalogFileNames = new Map<number, string>();
         autorun(() => {
             const catalogStore = CatalogStore.Instance;
-            const catalogWidgetStoreId = catalogStore.catalogWidgets.get(this.catalogFileId);
-            const activeFiles = catalogStore.activeCatalogFiles;
-            if (!catalogWidgetStoreId) {
-                WidgetsStore.Instance.addCatalogWidget(this.catalogFileId);
-            }
-
-            if (activeFiles?.includes(this.catalogFileId)) {
-                const fileName = catalogStore.getCatalogFileNames([this.catalogFileId]).get(this.catalogFileId);
-                if (fileName) {
-                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Catalog Settings: ${fileName}`);
+            const catalogFileId = this.catalogFileId;
+            if (catalogFileId !== undefined) {
+                const catalogWidgetStoreId = catalogStore.catalogWidgets.get(catalogFileId);
+                const activeFiles = catalogStore.activeCatalogFiles;
+                if (!catalogWidgetStoreId) {
+                    WidgetsStore.Instance.addCatalogWidget(catalogFileId);
                 }
-            } else {
-                appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Catalog Settings`);
+
+                if (activeFiles?.includes(catalogFileId)) {
+                    const fileName = catalogStore.getCatalogFileNames([catalogFileId]).get(catalogFileId);
+                    if (fileName && this.floatingSettingsId) {
+                        appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Catalog Settings: ${fileName}`);
+                    }
+                } else {
+                    if (this.floatingSettingsId) {
+                        appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Catalog Settings`);
+                    }
+                }
             }
         });
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
-        CatalogStore.Instance.catalogProfiles.set(this.props.id, fileId);
+        CatalogStore.Instance.catalogProfiles?.set(this.widgetId, fileId);
     };
 
     public render() {
@@ -131,18 +153,23 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         const darkTheme = AppStore.Instance.darkTheme;
 
         const widgetStore = this.widgetStore;
+        if (!widgetStore) {
+            return null;
+        }
+
         const catalogStore = CatalogStore.Instance;
         const catalogFileIds = catalogStore.activeCatalogFiles;
 
-        let catalogFileItems = [];
+        let catalogFileItems: number[] = [];
         catalogFileIds.forEach(value => {
             catalogFileItems.push(value);
         });
         this.catalogFileNames = CatalogStore.Instance.getCatalogFileNames(catalogFileIds);
-        const fileName = this.catalogFileNames.get(this.catalogFileId);
+        const catalogFileId = this.catalogFileId;
+        const fileName = catalogFileId !== undefined ? this.catalogFileNames.get(catalogFileId) : undefined;
         let activeFileName = "";
-        if (fileName !== undefined) {
-            activeFileName = `${this.catalogFileId}: ${fileName}`;
+        if (fileName !== undefined && catalogFileId !== undefined) {
+            activeFileName = `${catalogFileId}: ${fileName}`;
         }
         const disabledOverlayPanel = catalogFileIds.length <= 0;
         const disableSizeMap = disabledOverlayPanel || widgetStore.disableSizeMap;
@@ -185,7 +212,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             label="Clip min"
                             max={widgetStore.sizeColumnMax.clipd}
                             integerOnly={false}
-                            value={widgetStore.sizeColumnMin.clipd}
+                            value={widgetStore.sizeColumnMin.clipd ?? 0}
                             onValueChanged={val => widgetStore.setSizeColumnMin(val, "clipd")}
                             onValueCleared={() => widgetStore.resetSizeColumnValue("min")}
                             displayExponential={true}
@@ -205,7 +232,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             label="Clip max"
                             min={widgetStore.sizeColumnMin.clipd}
                             integerOnly={false}
-                            value={widgetStore.sizeColumnMax.clipd}
+                            value={widgetStore.sizeColumnMax.clipd ?? 0}
                             onValueChanged={val => widgetStore.setSizeColumnMax(val, "clipd")}
                             onValueCleared={() => widgetStore.resetSizeColumnValue("max")}
                             displayExponential={true}
@@ -315,7 +342,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             label="Clip min"
                             max={widgetStore.sizeMinorColumnMax.clipd}
                             integerOnly={false}
-                            value={widgetStore.sizeMinorColumnMin.clipd}
+                            value={widgetStore.sizeMinorColumnMin.clipd ?? 0}
                             onValueChanged={val => widgetStore.setSizeMinorColumnMin(val, "clipd")}
                             onValueCleared={() => widgetStore.resetSizeMinorColumnValue("min")}
                             displayExponential={true}
@@ -335,7 +362,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                             label="Clip max"
                             min={widgetStore.sizeMinorColumnMin.clipd}
                             integerOnly={false}
-                            value={widgetStore.sizeMinorColumnMax.clipd}
+                            value={widgetStore.sizeMinorColumnMax.clipd ?? 0}
                             onValueChanged={val => widgetStore.setSizeMinorColumnMax(val, "clipd")}
                             onValueCleared={() => widgetStore.resetSizeMinorColumnValue("max")}
                             displayExponential={true}
@@ -588,7 +615,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         label="Clip min"
                         max={widgetStore.colorColumnMax.clipd}
                         integerOnly={false}
-                        value={widgetStore.colorColumnMin.clipd}
+                        value={widgetStore.colorColumnMin.clipd ?? 0}
                         onValueChanged={val => widgetStore.setColorColumnMin(val, "clipd")}
                         onValueCleared={() => widgetStore.resetColorColumnValue("min")}
                         displayExponential={true}
@@ -598,7 +625,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         label="Clip max"
                         min={widgetStore.colorColumnMin.clipd}
                         integerOnly={false}
-                        value={widgetStore.colorColumnMax.clipd}
+                        value={widgetStore.colorColumnMax.clipd ?? 0}
                         onValueChanged={val => widgetStore.setColorColumnMax(val, "clipd")}
                         onValueCleared={() => widgetStore.resetColorColumnValue("max")}
                         displayExponential={true}
@@ -667,7 +694,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         label="Clip min"
                         max={widgetStore.orientationMax.clipd}
                         integerOnly={false}
-                        value={widgetStore.orientationMin.clipd}
+                        value={widgetStore.orientationMin.clipd ?? 0}
                         onValueChanged={val => widgetStore.setOrientationMin(val, "clipd")}
                         onValueCleared={() => widgetStore.resetOrientationValue("min")}
                         displayExponential={true}
@@ -677,7 +704,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         label="Clip max"
                         min={widgetStore.orientationMin.clipd}
                         integerOnly={false}
-                        value={widgetStore.orientationMax.clipd}
+                        value={widgetStore.orientationMax.clipd ?? 0}
                         onValueChanged={val => widgetStore.setOrientationMax(val, "clipd")}
                         onValueCleared={() => widgetStore.resetOrientationValue("max")}
                         displayExponential={true}
@@ -770,6 +797,9 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         }
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
+        if (!widgetStore) {
+            return;
+        }
         const pointSize = widgetStore.sizeMajor ? widgetStore.pointSizebyType : widgetStore.minorPointSizebyType;
 
         switch (type) {
@@ -820,15 +850,18 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     };
 
     private handleSelectedTabChanged = (newTabId: React.ReactText) => {
-        this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
+        this.widgetStore?.setSettingsTabId(Number.parseInt(newTabId.toString()));
     };
 
     private handleSelectedAxisTabChanged = (newTabId: React.ReactText) => {
-        this.widgetStore.setSizeAxisTab(Number.parseInt(newTabId.toString()));
+        this.widgetStore?.setSizeAxisTab(Number.parseInt(newTabId.toString()));
     };
 
     private getCatalogShape = (shape: CatalogOverlayShape) => {
         const widgetStore = this.widgetStore;
+        if (!widgetStore) {
+            return <Icon icon="circle" color={Colors.TURQUOISE3} />;
+        }
         let color = widgetStore.catalogColor;
         switch (shape) {
             case CatalogOverlayShape.CIRCLE_LINED:

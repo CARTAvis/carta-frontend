@@ -134,7 +134,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
     private filterLinearTicks = (axis: Scale, removeAdditionalTicks: boolean = true) => {
         let removeFirstTick = false;
         let removeLastTick = false;
-        let roundingDecimalDigits: number;
+        let roundingDecimalDigits: number | undefined;
         const ticks = removeAdditionalTicks ? this.removeAdditionalTicks(axis.ticks) : axis.ticks;
         // Get inter-tick distance
         if (ticks && ticks.length >= 4) {
@@ -208,8 +208,9 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
     private skipLinearLongTicks = (axis: Scale) => {
         if (axis.ticks && axis.ticks.length >= 4) {
             const interTickPixelDist = axis.getPixelForValue(axis.ticks[2].value) - axis.getPixelForValue(axis.ticks[1].value);
-            if (interTickPixelDist < axis.ticks[0].label.length * 6 + 5) {
-                const ticks = [];
+            const firstTickLabel = axis.ticks[0].label;
+            if (interTickPixelDist < (firstTickLabel?.length || 0) * 6 + 5) {
+                const ticks: Tick[] = [];
                 // keep the last tick label for skipping the last one might cause a loop change between axis.width and interTickDisk
                 const skipOdd = axis.ticks.length % 2 === 0;
                 for (let i = skipOdd ? 1 : 0; i < axis.ticks.length; i = i + 2) {
@@ -383,7 +384,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         display: this.props.showXAxisTicks === undefined ? true : this.props.showXAxisTicks,
                         maxRotation: 0,
                         color: labelColor,
-                        callback: PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeX)
+                        callback: PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeX ?? TickType.Automatic)
                     },
                     grid: {
                         color: grid => (grid.tick.value === 0 && this.props.showZeroLine ? this.props.xZeroLineColor : gridColor),
@@ -406,7 +407,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         includeBounds: false,
                         color: labelColor,
                         maxRotation: 0,
-                        callback: this.props.topAxisTickFormatter ? this.props.topAxisTickFormatter : PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeX)
+                        callback: this.props.topAxisTickFormatter ? this.props.topAxisTickFormatter : PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeX ?? TickType.Automatic)
                     }
                 },
                 y: {
@@ -421,7 +422,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         includeBounds: false,
                         color: labelColor,
                         display: this.props.showYAxisTicks === undefined ? true : this.props.showYAxisTicks,
-                        callback: PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeY)
+                        callback: PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeY ?? TickType.Automatic)
                     },
                     grid: {
                         color: grid => (grid.tick.value === 0 && this.props.showZeroLine ? this.props.xZeroLineColor : gridColor),
@@ -438,12 +439,12 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             }
         };
 
-        if (this.props.logY) {
-            plotOptions.scales["y"].afterBuildTicks = this.filterYLogTicks;
-            plotOptions.scales["y"].type = "logarithmic";
-        } else {
-            plotOptions.scales["y"].afterBuildTicks = this.filterYLinearTicks;
-            plotOptions.scales["y"].type = "linear";
+        if (this.props.logY && plotOptions.scales?.y) {
+            plotOptions.scales.y.afterBuildTicks = this.filterYLogTicks;
+            plotOptions.scales.y.type = "logarithmic";
+        } else if (plotOptions.scales?.y) {
+            plotOptions.scales.y.afterBuildTicks = this.filterYLinearTicks;
+            plotOptions.scales.y.type = "linear";
         }
 
         let plotData: ChartDataset<"scatter">[] = [];
@@ -482,7 +483,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     datasetConfig.pointStyle = "line";
                     datasetConfig.segment = {
                         borderColor: segment => {
-                            return this.props.multiColorSingleLineColors[segment.p0DataIndex];
+                            return this.props.multiColorSingleLineColors?.[segment.p0DataIndex] || lineColor;
                         }
                     };
                 }
@@ -494,7 +495,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             plotData.push(datasetConfig);
         }
 
-        if (this.props.multiPlotPropsMap?.size > 0) {
+        if (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0) {
             this.props.multiPlotPropsMap.forEach((props, key) => {
                 if (props.hidden) {
                     return;

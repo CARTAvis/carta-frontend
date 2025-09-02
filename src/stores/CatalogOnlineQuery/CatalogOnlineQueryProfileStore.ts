@@ -74,7 +74,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
         return controlHeaders;
     }
 
-    @action setSortingInfo(columnName: string, sortingType: CARTA.SortingType) {
+    @action setSortingInfo(columnName: string, sortingType: CARTA.SortingType | null) {
         this.sortingInfo = {columnName, sortingType};
         this.updateSortedIndexMap();
     }

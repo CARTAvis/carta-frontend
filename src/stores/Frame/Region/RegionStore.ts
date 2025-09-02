@@ -6,7 +6,7 @@ import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {CoordinateMode} from "enums";
 import type {CustomIconName} from "icons/CustomIcons";
-import {Point2D} from "models";
+import {isValidWcsPoint, Point2D} from "models";
 import {BackendService} from "services";
 import {AppStore, PreferenceStore, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
@@ -226,16 +226,17 @@ export class RegionStore {
                 const size = subtract2D(this.controlPoints[0], this.controlPoints[1]);
                 return {x: Math.abs(size.x), y: Math.abs(size.y)};
             default:
-                return {x: undefined, y: undefined};
+                return {x: 0, y: 0};
         }
     }
 
     @computed get wcsSize(): Point2D {
         const frame = this.activeFrame;
         if (!this.size || !frame?.validWcs) {
-            return {x: undefined, y: undefined};
+            return {x: 0, y: 0};
         }
-        return frame.getWcsSizeInArcsec(this.size);
+        const wcsSize = frame.getWcsSizeInArcsec(this.size);
+        return isValidWcsPoint(wcsSize) ? wcsSize : {x: 0, y: 0};
     }
 
     @computed get boundingBox(): Point2D {
