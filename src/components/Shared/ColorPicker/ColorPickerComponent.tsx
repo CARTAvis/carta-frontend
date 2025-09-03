@@ -21,7 +21,7 @@ interface ColorPickerComponentProps {
 export class ColorPickerComponent extends React.Component<ColorPickerComponentProps> {
     private static readonly CHANGE_DELAY = 100;
 
-    @observable displayColorPicker: boolean;
+    @observable displayColorPicker: boolean = false;
 
     constructor(props: ColorPickerComponentProps) {
         super(props);

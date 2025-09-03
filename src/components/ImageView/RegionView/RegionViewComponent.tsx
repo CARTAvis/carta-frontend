@@ -40,8 +40,8 @@ const KEYCODE_ESC = 27;
 
 @observer
 export class RegionViewComponent extends React.Component<RegionViewComponentProps> {
-    @observable creatingRegion: RegionStore | null;
-    @observable currentCursorPos: Point2D;
+    @observable creatingRegion: RegionStore | null = null;
+    @observable currentCursorPos: Point2D = {x: 0, y: 0};
 
     private stageRef;
     private stageResizeOffset: Point2D;
@@ -57,10 +57,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     constructor(props: any) {
         super(props);
-        makeObservable(this);
 
         this.stageRef = React.createRef();
         this.stageResizeOffset = {x: 0, y: 0};
+
+        makeObservable(this);
 
         // Sync stage when matched, tracking frame's spatialReference only.
         const propsFrame = this.props.frame;

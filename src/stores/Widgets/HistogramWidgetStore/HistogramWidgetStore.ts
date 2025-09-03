@@ -36,7 +36,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     @observable currentNumBins: number | null | undefined = null;
 
     // Maximum number of histogram bins on the slider
-    @observable maxNumBins: number = NaN;
+    @observable maxNumBins: number;
 
     // Config settings in the protobuf message
     public fixedNumBins: boolean;
@@ -333,12 +333,16 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         super(RegionsType.CLOSED);
         this.resetBounds();
         this.resetNumBins();
+
         this.fixedNumBins = false;
         this.numBins = -1;
         this.fixedBounds = false;
         this.minPix = 0;
         this.maxPix = 0;
         this.maxNumBins = (this.effectiveFrame?.renderConfig.histogram?.numBins ?? NaN) * 2;
+
+        makeObservable(this);
+
         autorun(() => {
             // Update the config parameters
             if (this.isAbleToGenerate) {
@@ -361,7 +365,6 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                 }
             }
         });
-        makeObservable(this);
     }
 
     // settings

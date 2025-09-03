@@ -41,12 +41,12 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     private cachedFormattedCoordinates: string[];
     private widgetId: string;
 
-    @observable width: number;
-    @observable height: number;
+    @observable width: number = 650;
+    @observable height: number = 250;
 
     // auto-scaling range
-    @observable autoScaleHorizontalMin: number;
-    @observable autoScaleHorizontalMax: number;
+    @observable autoScaleHorizontalMin: number = 0;
+    @observable autoScaleHorizontalMax: number = 1;
 
     get widgetStore(): SpatialProfileWidgetStore {
         const widgetsStore = WidgetsStore.Instance;

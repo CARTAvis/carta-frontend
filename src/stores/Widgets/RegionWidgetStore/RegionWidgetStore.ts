@@ -10,16 +10,14 @@ export const ACTIVE_FILE_ID = -1;
 
 export class RegionWidgetStore {
     protected readonly appStore: AppStore;
-    @observable fileId: number;
-    @observable regionIdMap: Map<number, number>;
+    @observable fileId: number = ACTIVE_FILE_ID;
+    @observable regionIdMap: Map<number, number> = new Map<number, number>();
     @observable type: RegionsType;
 
     constructor(type: RegionsType) {
-        makeObservable(this);
         this.appStore = AppStore.Instance;
-        this.fileId = ACTIVE_FILE_ID;
         this.type = type;
-        this.regionIdMap = new Map<number, number>();
+        makeObservable(this);
     }
 
     @action clearFrameEntry = (fileId: number) => {

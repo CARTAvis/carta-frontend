@@ -29,8 +29,8 @@ enum HeaderTableColumnName {
 @observer
 export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @observable private catalogTableRef: Table2 | undefined = undefined;
-    @observable private height: number;
-    @observable private width: number;
+    @observable private height: number = 400;
+    @observable private width: number = 720;
 
     @observable private isShowHeader: boolean = true;
     private prevPosition: number = 60;
@@ -163,13 +163,15 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
-        makeObservable(this);
+
         this.widgetId = props.id;
 
         if (!CatalogStore.Instance.catalogProfiles.has(this.widgetId)) {
             CatalogStore.Instance.catalogProfiles.set(this.widgetId, 1);
         }
         this.catalogFileNames = new Map<number, string>();
+
+        makeObservable(this);
 
         autorun(() => {
             const appStore = AppStore.Instance;

@@ -20,7 +20,7 @@ import "./RootMenuComponent.scss";
 
 @observer
 export class RootMenuComponent extends React.Component {
-    @observable documentationAlertVisible: boolean;
+    @observable documentationAlertVisible: boolean = false;
     @observable disableCheckRelease: boolean = false;
 
     @action toggleDisableCheckRelease = () => {

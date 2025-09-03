@@ -145,7 +145,6 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
-        makeObservable(this);
         this.genAxisOptions();
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
@@ -161,6 +160,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                 appStore.widgetsStore.pvGeneratorWidgets.set(this.props.id, new PvGeneratorWidgetStore());
             }
         }
+        makeObservable(this);
     }
 
     @action setisValidSpectralRange = (bool: boolean) => {

@@ -21,8 +21,8 @@ export class StokesDialogComponent extends React.Component {
     private static readonly MinWidth = 300;
     private static readonly MinHeight = 250;
 
-    @observable stokes: Map<string, CARTA.IStokesFile>;
-    @observable stokesHeader: Map<string, CARTA.IFileInfoExtended>;
+    @observable stokes: Map<string, CARTA.IStokesFile> = new Map();
+    @observable stokesHeader: Map<string, CARTA.IFileInfoExtended> = new Map();
 
     @action updateStokesType = (fileName: string, type: CARTA.PolarizationType) => {
         let currentStoke = this.stokes.get(fileName);
@@ -78,8 +78,6 @@ export class StokesDialogComponent extends React.Component {
     constructor(props) {
         super(props);
         makeObservable(this);
-        this.stokes = new Map();
-        this.stokesHeader = new Map();
 
         reaction(
             () => this.stokesDialogVisible,

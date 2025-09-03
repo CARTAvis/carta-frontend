@@ -18,7 +18,6 @@ export class SpatialProfileStore {
         makeObservable(this);
         this.fileId = fileId;
         this.regionId = regionId;
-        this.profiles = new Map<Coordinate, ProcessedSpatialProfile>();
     }
 
     public getProfile = (coordinate: Coordinate): ProcessedSpatialProfile | undefined => {

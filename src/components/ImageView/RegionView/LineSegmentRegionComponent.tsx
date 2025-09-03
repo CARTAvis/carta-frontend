@@ -33,7 +33,7 @@ const DOUBLE_CLICK_THRESHOLD = 300;
 
 @observer
 export class LineSegmentRegionComponent extends React.Component<LineSegmentRegionComponentProps> {
-    @observable hoverIndex: number;
+    @observable hoverIndex: number = -1;
     @observable hoverIntersection: Point2D | null = null;
 
     private previousCursorStyle: string;

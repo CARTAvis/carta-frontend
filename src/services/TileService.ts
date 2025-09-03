@@ -88,7 +88,7 @@ export class TileService {
     private currentlyStreamingTileRange: number[];
 
     @observable remainingTiles: number = 0;
-    @observable workersReady: boolean[] | undefined = undefined;
+    @observable workersReady: boolean[] | undefined;
 
     @computed get zfpReady() {
         return this.workersReady && this.workersReady.every(v => v);

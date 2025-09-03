@@ -1,6 +1,6 @@
 import {type Region, Regions} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
-import {action, computed, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 
 import {CatalogOverlay, CatalogSystemType, CatalogTextureType, CatalogType, CatalogUpdateMode} from "enums";
 import {CatalogWebGLService} from "services";
@@ -34,19 +34,24 @@ export abstract class AbstractCatalogProfileStore {
     abstract setMaxRows(maxRows: number): void;
     abstract setSortingInfo(columnName: string, sortingType: CARTA.SortingType, columnIndex?: number): void;
 
-    @observable loadingData: boolean;
-    @observable catalogType: CatalogType;
-    @observable catalogFilterRequest: CARTA.ICatalogFilterRequest;
-    @observable catalogCoordinateSystem: {system: CatalogSystemType; equinox: string | null | undefined; epoch: string | null | undefined; coordinate: {x: CatalogOverlay; y: CatalogOverlay} | undefined};
-    @observable filterDataSize: number | undefined;
-    @observable progress: number;
-    @observable updatingDataStream: boolean;
-    @observable updateTableView: boolean;
-    @observable updateMode: CatalogUpdateMode;
-    @observable selectedPointIndices: number[];
-    @observable sortingInfo: {columnName: string | null; sortingType: CARTA.SortingType | null};
-    @observable sortedIndexMap: number[];
-    @observable filterIndexMap: number[];
+    @observable loadingData: boolean = false;
+    @observable catalogType: CatalogType = CatalogType.SIMBAD;
+    @observable catalogFilterRequest: CARTA.ICatalogFilterRequest = {};
+    @observable catalogCoordinateSystem: {system: CatalogSystemType; equinox: string | null | undefined; epoch: string | null | undefined; coordinate: {x: CatalogOverlay; y: CatalogOverlay} | undefined} = {
+        system: CatalogSystemType.ICRS,
+        equinox: null,
+        epoch: null,
+        coordinate: {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}
+    };
+    @observable filterDataSize: number | undefined = undefined;
+    @observable progress: number = 0;
+    @observable updatingDataStream: boolean = false;
+    @observable updateTableView: boolean = false;
+    @observable updateMode: CatalogUpdateMode = CatalogUpdateMode.TableUpdate;
+    @observable selectedPointIndices: number[] = [];
+    @observable sortingInfo: {columnName: string | null; sortingType: CARTA.SortingType | null} = {columnName: null, sortingType: null};
+    @observable sortedIndexMap: number[] = [];
+    @observable filterIndexMap: number[] = [];
 
     private _catalogData: Map<number, ProcessedColumnData>;
     public static readonly CoordinateSystemName = new Map<CatalogSystemType, string>([
@@ -71,15 +76,7 @@ export abstract class AbstractCatalogProfileStore {
     constructor(catalogType: CatalogType, catalogData: Map<number, ProcessedColumnData>) {
         this._catalogData = catalogData;
         this.catalogType = catalogType;
-        this.updatingDataStream = false;
-        this.updateTableView = false;
-        this.filterDataSize = undefined;
-        this.selectedPointIndices = [];
-        this.updateMode = CatalogUpdateMode.TableUpdate;
-        this.sortingInfo = {columnName: null, sortingType: null};
-        this.sortedIndexMap = [];
-        this.filterIndexMap = [];
-        this.loadingData = false;
+        makeObservable(this);
     }
 
     get catalogData(): Map<number, ProcessedColumnData> {

@@ -202,7 +202,9 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     constructor() {
         super(RegionsType.LINE);
         makeObservable(this);
+
         this.regionIdMap.set(ACTIVE_FILE_ID, RegionId.NONE);
+
         reaction(
             () => this.effectiveFrame?.channelValueBounds,
             channelValueBounds => {

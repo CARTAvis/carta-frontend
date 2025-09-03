@@ -28,15 +28,11 @@ export class PointAnnotationStore extends RegionStore {
         name: string = "",
         color: string = Colors.TURQUOISE5,
         lineWidth: number = 2,
-        dashLength: number = 0,
-        pointShape: CARTA.PointAnnotationShape = CARTA.PointAnnotationShape.SQUARE,
-        pointWidth: number = 6
+        dashLength: number = 0
     ) {
         super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, rotation, name, color, lineWidth, dashLength);
-        makeObservable(this);
-        this.pointShape = pointShape;
-        this.pointWidth = pointWidth;
         this.modifiedTimestamp = performance.now();
+        makeObservable(this);
     }
 
     @action setPointShape = (pointShape: CARTA.PointAnnotationShape) => {
@@ -90,8 +86,8 @@ export class TextAnnotationStore extends RegionStore {
         dashLength: number = 0
     ) {
         super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, rotation, name, color, lineWidth, dashLength);
-        makeObservable(this);
         this.modifiedTimestamp = performance.now();
+        makeObservable(this);
     }
 
     @action setText = (text: string) => {
@@ -233,9 +229,9 @@ export class CompassAnnotationStore extends RegionStore {
         dashLength: number = 0
     ) {
         super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, rotation, name, color, lineWidth, dashLength);
-        makeObservable(this);
         this.modifiedTimestamp = performance.now();
         this.setLength(controlPoints[1].x, true);
+        makeObservable(this);
     }
 
     @action setLabel = (label: string, isNorth: boolean) => {
@@ -431,8 +427,8 @@ export class RulerAnnotationStore extends RegionStore {
         dashLength: number = 0
     ) {
         super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, rotation, name, color, lineWidth, dashLength);
-        makeObservable(this);
         this.modifiedTimestamp = performance.now();
+        makeObservable(this);
     }
 
     @action setFontSize = (fontSize: number) => {

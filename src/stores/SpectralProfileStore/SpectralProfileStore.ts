@@ -13,7 +13,6 @@ export class SpectralProfileStore {
         makeObservable(this);
         this.fileId = fileId;
         this.regionId = regionId;
-        this.profiles = new Map<Coordinate, ObservableMap<CARTA.StatsType, ProcessedSpectralProfile>>();
     }
 
     public getProfile = (coordinate: Coordinate, statsType: CARTA.StatsType): ProcessedSpectralProfile | null | undefined => {

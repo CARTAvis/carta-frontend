@@ -1222,7 +1222,6 @@ export class FrameStore {
     }
 
     constructor(frameInfo: FrameInfo, pvGeneratorWidget?: PvGeneratorWidgetStore) {
-        makeObservable(this);
         this.logStore = LogStore.Instance;
         this.backendService = BackendService.Instance;
         const preferenceStore = PreferenceStore.Instance;
@@ -1514,6 +1513,8 @@ export class FrameStore {
                 }
             }
         );
+
+        makeObservable(this);
     }
 
     updateWcsSystem = (formatStringX: string | undefined, formatStyingY: string | undefined, explicitSystem: SystemType | undefined) => {

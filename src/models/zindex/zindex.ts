@@ -1,11 +1,10 @@
 import {action, computed, makeObservable, observable} from "mobx";
 
 export class FloatingObjzIndexManager {
-    @observable private floatingObjs;
+    @observable private floatingObjs = new Map<string, number>();
 
     constructor() {
         makeObservable(this);
-        this.floatingObjs = new Map<string, number>();
     }
 
     @computed public get floatingObjsNum() {
@@ -27,10 +26,10 @@ export class FloatingObjzIndexManager {
             const selectedzIndex = this.floatingObjs.get(id);
             const numFloatingObj = this.floatingObjs.size;
 
-            if (numFloatingObj > 1 && selectedzIndex < numFloatingObj) {
+            if (numFloatingObj > 1 && selectedzIndex && selectedzIndex < numFloatingObj) {
                 for (let key of this.floatingObjs.keys()) {
                     let currentObjzIndex = this.floatingObjs.get(key);
-                    if (currentObjzIndex >= selectedzIndex) {
+                    if (currentObjzIndex && currentObjzIndex >= selectedzIndex) {
                         this.floatingObjs.set(key, currentObjzIndex - 1);
                     }
                 }
@@ -45,10 +44,10 @@ export class FloatingObjzIndexManager {
             const selectedzIndex = this.floatingObjs.get(id);
             const numFloatingObj = this.floatingObjs.size;
 
-            if (selectedzIndex < numFloatingObj) {
+            if (selectedzIndex && selectedzIndex < numFloatingObj) {
                 for (let key of this.floatingObjs.keys()) {
                     let currentObjzIndex = this.floatingObjs.get(key);
-                    if (currentObjzIndex > selectedzIndex) {
+                    if (currentObjzIndex && currentObjzIndex > selectedzIndex) {
                         this.floatingObjs.set(key, currentObjzIndex - 1);
                     }
                 }

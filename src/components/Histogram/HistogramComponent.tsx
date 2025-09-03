@@ -140,7 +140,6 @@ export class HistogramComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
-        makeObservable(this);
 
         this.widgetId = props.id ?? "";
         const appStore = AppStore.Instance;
@@ -159,6 +158,9 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                 appStore.widgetsStore.histogramWidgets.set(widgetId, new HistogramWidgetStore());
             }
         }
+
+        makeObservable(this);
+
         // Update widget title when region or coordinate changes
         autorun(() => {
             if (this.widgetStore && this.widgetStore.effectiveFrame) {

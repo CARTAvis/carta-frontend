@@ -10,36 +10,30 @@ import {PreferenceStore} from "stores";
 export class ContourConfigStore {
     @observable enabled: boolean = false;
     @observable levels: number[] = [];
-    @observable smoothingMode: CARTA.SmoothingMode = 0;
-    @observable smoothingFactor: number = 0;
+    @observable smoothingMode: CARTA.SmoothingMode;
+    @observable smoothingFactor: number;
 
-    @observable color: RGBColor = {r: 0, g: 0, b: 0, a: 1};
+    @observable color: RGBColor;
     @observable colormapEnabled: boolean = false;
-    @observable colormap: string = "";
+    @observable colormap: string;
     @observable colormapContrast: number = 1.0;
     @observable colormapBias: number = 0.0;
     @observable dashMode: ContourDashMode = ContourDashMode.NegativeOnly;
-    @observable thickness: number = 1;
+    @observable thickness: number;
     @observable visible: boolean = true;
 
     private readonly preferenceStore: PreferenceStore;
 
     constructor(preferenceStore: PreferenceStore) {
-        makeObservable(this);
         this.preferenceStore = preferenceStore;
-        this.enabled = false;
-        this.levels = [];
         this.smoothingMode = this.preferenceStore.contourSmoothingMode;
         this.smoothingFactor = this.preferenceStore.contourSmoothingFactor;
 
         this.color = tinycolor(this.preferenceStore.contourColor).toRgb();
         this.colormapEnabled = this.preferenceStore.contourColormapEnabled;
         this.colormap = this.preferenceStore.contourColormap;
-        this.colormapBias = 0.0;
-        this.colormapContrast = 1.0;
         this.thickness = this.preferenceStore.contourThickness;
-        this.dashMode = ContourDashMode.NegativeOnly;
-        this.visible = true;
+        makeObservable(this);
     }
 
     @action setEnabled(val: boolean) {

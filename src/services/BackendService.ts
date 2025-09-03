@@ -57,8 +57,8 @@ export class BackendService {
 
     @observable connectionStatus: ConnectionStatus = ConnectionStatus.CLOSED;
     readonly loggingEnabled: boolean;
-    @observable connectionDropped: boolean;
-    @observable endToEndPing: number;
+    @observable connectionDropped: boolean = false;
+    @observable endToEndPing: number = NaN;
 
     public animationId: number;
     public sessionId: number;
@@ -90,12 +90,13 @@ export class BackendService {
     private readonly decoderMap: Map<CARTA.EventType, {messageClass: any; handler: HandlerFunction}>;
 
     private constructor() {
+        makeObservable(this);
+
         this.loggingEnabled = true;
         this.deferredMap = new Map<number, Deferred<IBackendResponse>>();
 
         this.eventCounter = 1;
         this.sessionId = 0;
-        this.endToEndPing = NaN;
         this.animationId = INVALID_ANIMATION_ID;
         this.rasterTileStream = new Subject<CARTA.RasterTileData>();
         this.rasterSyncStream = new Subject<CARTA.RasterTileSync>();
@@ -113,7 +114,6 @@ export class BackendService {
         this.fittingProgressStream = new Subject<CARTA.FittingProgress>();
         this.vectorTileStream = new Subject<CARTA.VectorOverlayTileData>();
         this.pvPreviewStream = new Subject<CARTA.PvPreviewData>();
-        makeObservable(this);
 
         // Construct handler and decoder maps
         this.decoderMap = new Map<CARTA.EventType, {messageClass: any; handler: HandlerFunction}>([

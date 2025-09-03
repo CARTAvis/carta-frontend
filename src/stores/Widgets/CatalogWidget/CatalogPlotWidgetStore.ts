@@ -34,10 +34,10 @@ export class CatalogPlotWidgetStore {
     @observable statistic: Statistic | null = null;
 
     constructor(props: CatalogPlotWidgetStoreProps) {
-        makeObservable(this);
         this.plotType = props.plotType;
         this.xColumnName = props.xColumnName;
         this.yColumnName = props.yColumnName;
+        makeObservable(this);
     }
 
     @action setStatisticColumn(columnName: string) {

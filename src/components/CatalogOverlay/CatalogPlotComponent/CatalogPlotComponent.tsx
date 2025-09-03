@@ -20,11 +20,11 @@ import "./CatalogPlotComponent.scss";
 
 @observer
 export class CatalogPlotComponent extends React.Component<WidgetProps> {
-    @observable width: number;
-    @observable height: number;
-    @observable profileId: string;
-    @observable catalogFileId: number;
-    @observable componentId: string;
+    @observable width: number = 680;
+    @observable height: number = 350;
+    @observable profileId: string = "";
+    @observable catalogFileId: number = 0;
+    @observable componentId: string = "";
     private plotType: CatalogPlotType;
     private histogramY: {yMin?: number; yMax?: number};
     private static emptyColumn = "None";
@@ -37,7 +37,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             id: "catalog-plot",
             type: "catalog-plot",
             minWidth: 320,
-            minHeight: 400,
+            minHeight: 200,
             defaultWidth: 680,
             defaultHeight: 350,
             title: "Catalog Plot",
@@ -48,13 +48,15 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
-        makeObservable(this);
 
         this.histogramY = {yMin: undefined, yMax: undefined};
         const catalogPlot = CatalogStore.Instance.getAssociatedIdByWidgetId(this.props.id);
         this.componentId = catalogPlot.catalogPlotComponentId;
         this.catalogFileId = catalogPlot.catalogFileId;
         this.catalogFileNames = new Map<number, string>();
+
+        makeObservable(this);
+
         autorun(() => {
             const profileStore = this.profileStore;
             const widgetStore = this.widgetStore;

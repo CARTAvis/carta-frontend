@@ -18,14 +18,12 @@ const KEYCODE_ENTER = 13;
 
 @observer
 export class CatalogQueryComponent extends React.Component {
-    @observable resultSize: number | undefined;
-    @observable objectSize: number | undefined;
+    @observable resultSize: number | undefined = undefined;
+    @observable objectSize: number | undefined = undefined;
 
     constructor(props: any) {
         super(props);
         makeObservable(this);
-        this.resultSize = undefined;
-        this.objectSize = undefined;
     }
 
     @action setResultSize(resultSize: number | undefined) {

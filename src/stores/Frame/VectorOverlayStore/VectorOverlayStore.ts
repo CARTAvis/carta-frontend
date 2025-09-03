@@ -23,8 +23,6 @@ export class VectorOverlayStore {
         makeObservable(this);
         this.gl = VectorOverlayWebGLService.Instance.gl;
         this.frame = frame;
-        this.intensityMin = undefined;
-        this.intensityMax = undefined;
     }
 
     @computed get isComplete() {

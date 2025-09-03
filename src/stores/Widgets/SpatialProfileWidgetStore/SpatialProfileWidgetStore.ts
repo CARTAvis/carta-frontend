@@ -118,7 +118,6 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
 
     constructor(coordinate: string = "x") {
         super(RegionsType.POINT_AND_LINES);
-        makeObservable(this);
         if (coordinate !== undefined) {
             this.coordinate = coordinate;
         }
@@ -127,6 +126,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
                 this.selectedStokes = DEFAULT_STOKES;
             }
         });
+        makeObservable(this);
     }
 
     @computed get isXProfile(): boolean {

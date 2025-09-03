@@ -45,8 +45,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     private cachedHistogram: CARTA.IHistogram;
     private widgetId: string;
 
-    @observable width: number;
-    @observable height: number;
+    @observable width: number = 650;
+    @observable height: number = 225;
 
     get widgetStore(): RenderConfigWidgetStore {
         const widgetsStore = WidgetsStore.Instance;

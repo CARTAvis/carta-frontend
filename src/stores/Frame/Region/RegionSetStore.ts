@@ -13,9 +13,9 @@ import {RegionStore} from "./RegionStore";
 
 export class RegionSetStore {
     @observable regions: RegionStore[] = [];
-    @observable selectedRegion: RegionStore | null = null;
+    @observable selectedRegion: RegionStore | null;
     @observable mode: RegionMode = RegionMode.MOVING;
-    @observable newRegionType: CARTA.RegionType = CARTA.RegionType.POINT;
+    @observable newRegionType: CARTA.RegionType;
     @observable opacity: number = 1;
     @observable locked: boolean = false;
     @observable isHoverImage: Boolean = false;
@@ -26,15 +26,13 @@ export class RegionSetStore {
     private readonly preference: PreferenceStore;
 
     constructor(frame: FrameStore, preference: PreferenceStore, backendService: BackendService) {
-        makeObservable(this);
         this.frame = frame;
         this.backendService = backendService;
         this.preference = preference;
-        this.regions = [];
         this.newRegionType = preference.regionType;
-        this.mode = RegionMode.MOVING;
         this.addPointRegion(frame.center, true);
         this.selectedRegion = this.regions[0] ?? null;
+        makeObservable(this);
     }
 
     public updateCursorRegionPosition = (pos: Point2D) => {
@@ -244,7 +242,7 @@ export class RegionSetStore {
             case CARTA.RegionType.ANNTEXT:
                 return new TextAnnotationStore(...commonInputs, this.preference.annotationColor, this.preference.textAnnotationLineWidth, this.preference.annotationDashLength);
             case CARTA.RegionType.ANNPOINT:
-                return new PointAnnotationStore(...commonInputs, ...annotationStyles, this.pointShapeCache || this.preference.pointAnnotationShape, this.preference.pointAnnotationWidth);
+                return new PointAnnotationStore(...commonInputs, ...annotationStyles);
             case CARTA.RegionType.ANNVECTOR:
                 return new VectorAnnotationStore(...commonInputs, ...annotationStyles);
             case CARTA.RegionType.ANNELLIPSE:

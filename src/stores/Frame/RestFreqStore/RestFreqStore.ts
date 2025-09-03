@@ -5,7 +5,7 @@ import {Freq} from "models";
 
 export class RestFreqStore {
     readonly headerRestFreq: Freq;
-    @observable customRestFreq: Freq = undefined as any;
+    @observable customRestFreq: Freq;
 
     @computed get restFreqInHz(): number | undefined {
         if (this.inValidInput) {
@@ -27,10 +27,10 @@ export class RestFreqStore {
     }
 
     constructor(headerRestFreq: number) {
-        makeObservable(this);
         const defaultRestFreq = Freq.convertUnitFromHz(headerRestFreq);
         this.headerRestFreq = defaultRestFreq;
         this.customRestFreq = defaultRestFreq;
+        makeObservable(this);
     }
 
     /**

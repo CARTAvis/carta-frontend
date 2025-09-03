@@ -114,12 +114,15 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
     constructor(props: WidgetProps) {
         super(props);
-        makeObservable(this);
+
         this.widgetId = props.id;
         this.floatingSettingsId = props.floatingSettingsId;
 
         const appStore = AppStore.Instance;
         this.catalogFileNames = new Map<number, string>();
+
+        makeObservable(this);
+
         autorun(() => {
             const catalogStore = CatalogStore.Instance;
             const catalogFileId = this.catalogFileId;

@@ -40,11 +40,11 @@ type Profile = {
 
 export class SpectralProfileSelectionStore {
     // profile selection
-    @observable activeProfileCategory: MultiProfileCategory;
-    @observable selectedFileIds: number[];
-    @observable selectedRegionIds: number[];
-    @observable selectedStatsTypes: CARTA.StatsType[];
-    @observable selectedCoordinates: string[];
+    @observable activeProfileCategory: MultiProfileCategory = MultiProfileCategory.NONE;
+    @observable selectedFileIds: number[] = [];
+    @observable selectedRegionIds: number[] = [];
+    @observable selectedStatsTypes: CARTA.StatsType[] = [];
+    @observable selectedCoordinates: string[] = [];
 
     private readonly widgetStore: SpectralProfileWidgetStore;
     private readonly DEFAULT_COORDINATE: string;
@@ -693,6 +693,7 @@ export class SpectralProfileSelectionStore {
 
     constructor(widgetStore: SpectralProfileWidgetStore, coordinate: string) {
         makeObservable(this);
+
         this.widgetStore = widgetStore;
         this.DEFAULT_COORDINATE = coordinate;
         this.initSingleMode();

@@ -33,11 +33,11 @@ const HistogramSelect = Select<boolean>;
 
 @observer
 export class ContourDialogComponent extends React.Component {
-    @observable showCubeHistogramAlert: boolean;
+    @observable showCubeHistogramAlert: boolean = false;
     @observable currentTab: ContourDialogTabs = ContourDialogTabs.Levels;
-    @observable levels: number[];
-    @observable smoothingMode: CARTA.SmoothingMode;
-    @observable smoothingFactor: number;
+    @observable levels: number[] = [];
+    @observable smoothingMode: CARTA.SmoothingMode = CARTA.SmoothingMode.NoSmoothing;
+    @observable smoothingFactor: number = 0;
 
     private static readonly DefaultWidth = 600;
     private static readonly DefaultHeight = 700;
@@ -50,10 +50,11 @@ export class ContourDialogComponent extends React.Component {
 
     constructor(props: {appStore: AppStore}) {
         super(props);
-        makeObservable(this);
 
         this.widgetStore = new RenderConfigWidgetStore();
         this.setDefaultContourParameters();
+
+        makeObservable(this);
 
         autorun(() => {
             const appStore = AppStore.Instance;

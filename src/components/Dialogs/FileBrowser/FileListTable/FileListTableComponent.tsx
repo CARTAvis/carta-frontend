@@ -49,7 +49,7 @@ export interface FileListTableComponentProps {
 
 @observer
 export class FileListTableComponent extends React.Component<FileListTableComponentProps> {
-    @observable selectedRegions: Region[];
+    @observable selectedRegions: Region[] = [];
     @observable columnWidths = [360, 80, 90, 106];
 
     private static readonly RowHeight = 22;
@@ -272,12 +272,13 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
     constructor(props: FileListTableComponentProps) {
         super(props);
-        makeObservable(this);
 
         // Initialize cached values
         this.cachedFileList = props.fileList;
         this.cachedSortingString = props.sortingString;
         this.cachedFilterString = props.filterString;
+
+        makeObservable(this);
     }
 
     componentDidUpdate(prevProps: FileListTableComponentProps) {

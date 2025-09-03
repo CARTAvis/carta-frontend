@@ -26,16 +26,16 @@ const DataSourceSelect = Select<FrameStore>;
 @observer
 export class VectorOverlayDialogComponent extends React.Component {
     @observable currentTab: VectorOverlayDialogTabs = VectorOverlayDialogTabs.Configuration;
-    @observable angularSource: VectorOverlaySource;
-    @observable intensitySource: VectorOverlaySource;
-    @observable pixelAveragingEnabled: boolean;
-    @observable pixelAveraging: number;
-    @observable thresholdEnabled: boolean;
-    @observable threshold: number;
-    @observable fractionalIntensity: boolean;
-    @observable debiasing: boolean;
-    @observable qError: number;
-    @observable uError: number;
+    @observable angularSource: VectorOverlaySource = VectorOverlaySource.Current;
+    @observable intensitySource: VectorOverlaySource = VectorOverlaySource.Current;
+    @observable pixelAveragingEnabled: boolean = false;
+    @observable pixelAveraging: number = 1;
+    @observable thresholdEnabled: boolean = false;
+    @observable threshold: number = 0;
+    @observable fractionalIntensity: boolean = false;
+    @observable debiasing: boolean = false;
+    @observable qError: number = 0;
+    @observable uError: number = 0;
     @observable thresholdOption: CARTA.PolarizationType.I | CARTA.PolarizationType.Plinear;
 
     private static readonly DefaultWidth = 500;
@@ -55,8 +55,8 @@ export class VectorOverlayDialogComponent extends React.Component {
 
     constructor(props: {appStore: AppStore}) {
         super(props);
-        makeObservable(this);
         this.setDefaultVectorOverlayParameters();
+        makeObservable(this);
     }
 
     @action setDefaultVectorOverlayParameters = () => {

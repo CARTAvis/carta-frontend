@@ -63,8 +63,8 @@ export class TelemetryService {
     private readonly sessionId: string;
     private readonly axiosInstance: AxiosInstance;
     private db: IDBPDatabase<TelemetryDb>;
-    @observable private uuid: string;
-    @observable private skipTelemetry: boolean;
+    @observable private uuid: string = "";
+    @observable private skipTelemetry: boolean = false;
 
     private constructor() {
         this.axiosInstance = axios.create({

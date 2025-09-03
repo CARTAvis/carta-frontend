@@ -38,12 +38,13 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     constructor(props: RasterViewComponentProps) {
         super(props);
-        makeObservable(this);
 
         // Initialize observable properties
         this.channels = props.channel;
         this.image = props.image;
         this.imageStore = props.image?.store as FrameStore;
+
+        makeObservable(this);
     }
 
     componentDidMount() {

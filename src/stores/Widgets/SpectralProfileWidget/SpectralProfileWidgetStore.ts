@@ -66,12 +66,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     public static readonly PRIMARY_LINE_KEY = "Primary";
 
     // moment settings
-    @observable momentRegionId: number;
-    @observable selectingMode: MomentSelectingMode;
-    @observable channelValueRange: NumberRange;
-    @observable momentMask: CARTA.MomentMask;
-    @observable maskRange: NumberRange;
-    @observable selectedMoments: CARTA.Moment[];
+    @observable momentRegionId: number = RegionId.ACTIVE;
+    @observable selectingMode: MomentSelectingMode = MomentSelectingMode.NONE;
+    @observable channelValueRange: NumberRange = [0, 0];
+    @observable momentMask: CARTA.MomentMask = CARTA.MomentMask.None;
+    @observable maskRange: NumberRange = [0, 1];
+    @observable selectedMoments: CARTA.Moment[] = [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM];
 
     readonly smoothingStore: ProfileSmoothingStore;
     readonly profileSelectionStore: SpectralProfileSelectionStore;
@@ -360,15 +360,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     constructor(coordinate: string = "z") {
         super(RegionsType.CLOSED_AND_POINT);
         makeObservable<SpectralProfileWidgetStore, "spectralLinesMHz" | "updateRanges">(this);
+
         this.smoothingStore = new ProfileSmoothingStore();
         this.fittingStore = new ProfileFittingStore(this);
         this.profileSelectionStore = new SpectralProfileSelectionStore(this, coordinate);
-        this.selectingMode = MomentSelectingMode.NONE;
-        this.momentRegionId = RegionId.ACTIVE;
-        this.channelValueRange = [0, 0];
-        this.momentMask = CARTA.MomentMask.None;
-        this.maskRange = [0, 1];
-        this.selectedMoments = [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM];
         this.setMultiProfileIntensityUnit(this.effectiveFrame?.headerUnit);
 
         reaction(

@@ -31,8 +31,8 @@ export class VectorOverlayConfigStore {
     @observable colormap: string = "";
     @observable colormapContrast: number = 1.0;
     @observable colormapBias: number = 0.0;
-    @observable lengthMin: number = 0;
-    @observable lengthMax: number = 20;
+    @observable lengthMin: number = VectorOverlayConfigStore.DefaultLengthMin;
+    @observable lengthMax: number = VectorOverlayConfigStore.DefaultLengthMax;
     @observable intensityMin: number | undefined = undefined;
     @observable intensityMax: number | undefined = undefined;
     @observable rotationOffset: number = 0;
@@ -42,31 +42,19 @@ export class VectorOverlayConfigStore {
     public static DefaultLengthMax = 20;
 
     constructor(preferenceStore: PreferenceStore, frame: FrameStore) {
-        makeObservable(this);
         this.preferenceStore = preferenceStore;
-        this.enabled = false;
         this.angularSource = frame.hasLinearStokes ? VectorOverlaySource.Computed : VectorOverlaySource.Current;
         this.intensitySource = frame.hasLinearStokes ? VectorOverlaySource.Computed : VectorOverlaySource.Current;
         this.fractionalIntensity = this.preferenceStore.vectorOverlayFractionalIntensity;
         this.pixelAveraging = this.preferenceStore.vectorOverlayPixelAveraging;
         this.pixelAveragingEnabled = this.preferenceStore.vectorOverlayPixelAveraging > 0;
-        this.threshold = 0;
-        this.thresholdEnabled = false;
-        this.debiasing = false;
         this.thresholdOption = frame.hasLinearStokes ? CARTA.PolarizationType.Plinear : CARTA.PolarizationType.I;
 
         this.color = tinycolor(this.preferenceStore.vectorOverlayColor).toRgb();
         this.colormapEnabled = this.preferenceStore.vectorOverlayColormapEnabled;
         this.colormap = this.preferenceStore.vectorOverlayColormap;
-        this.colormapBias = 0.0;
-        this.colormapContrast = 1.0;
         this.thickness = this.preferenceStore.vectorOverlayThickness;
-        this.lengthMin = VectorOverlayConfigStore.DefaultLengthMin;
-        this.lengthMax = VectorOverlayConfigStore.DefaultLengthMax;
-        this.intensityMin = undefined;
-        this.intensityMax = undefined;
-        this.rotationOffset = 0;
-        this.visible = true;
+        makeObservable(this);
     }
 
     @action setEnabled(val: boolean) {

@@ -23,7 +23,7 @@ interface HistogramConfigProps {
 
 @observer
 export class HistogramConfigComponent extends React.Component<HistogramConfigProps> {
-    @observable showCubeHistogramAlert: boolean;
+    @observable showCubeHistogramAlert: boolean = false;
 
     constructor(props: any) {
         super(props);

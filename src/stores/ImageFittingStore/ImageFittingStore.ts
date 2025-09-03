@@ -28,11 +28,11 @@ export class ImageFittingStore {
     /** ID of the region currently selected for fitting. Set to 0 for the current field of view, or -1 for the full image. */
     @observable selectedRegionId: number = FOV_REGION_ID;
     /** Stores the initial values and fixed flags for each Gaussian component. */
-    @observable components: ImageFittingIndividualStore[];
+    @observable components: ImageFittingIndividualStore[] = [];
     /** Indicates whether to auto‑generate initial values when requesting for fitting. */
     @observable isAutoInitVal: boolean = true;
     /** Index of the component currently selected in the UI. */
-    @observable selectedComponentIndex: number;
+    @observable selectedComponentIndex: number = 0;
     /** Constant background offset. */
     @observable backgroundOffset: number = 0;
     /** Indicates whether to fix the background offset when fitting. */
@@ -615,14 +615,14 @@ export class ImageFittingStore {
 }
 
 class ImageFittingIndividualStore {
-    @observable center: Point2D;
-    @observable amplitude: number;
-    @observable fwhm: Point2D;
-    @observable pa: number;
-    @observable centerFixed: {x: boolean; y: boolean};
-    @observable amplitudeFixed: boolean;
-    @observable fwhmFixed: {x: boolean; y: boolean};
-    @observable paFixed: boolean;
+    @observable center: Point2D = {x: NaN, y: NaN};
+    @observable amplitude: number = NaN;
+    @observable fwhm: Point2D = {x: NaN, y: NaN};
+    @observable pa: number = NaN;
+    @observable centerFixed: {x: boolean; y: boolean} = {x: false, y: false};
+    @observable amplitudeFixed: boolean = false;
+    @observable fwhmFixed: {x: boolean; y: boolean} = {x: false, y: false};
+    @observable paFixed: boolean = false;
 
     @action setCenterX = (val: number): boolean => {
         if (isFinite(val)) {
@@ -706,14 +706,6 @@ class ImageFittingIndividualStore {
 
     constructor() {
         makeObservable(this);
-        this.center = {x: NaN, y: NaN};
-        this.amplitude = NaN;
-        this.fwhm = {x: NaN, y: NaN};
-        this.pa = NaN;
-        this.centerFixed = {x: false, y: false};
-        this.amplitudeFixed = false;
-        this.fwhmFixed = {x: false, y: false};
-        this.paFixed = false;
     }
 
     @computed get centerWcs(): WCSPoint2D | null {

@@ -82,8 +82,6 @@ export class FileBrowserStore {
 
     constructor() {
         makeObservable(this);
-        this.exportCoordinateType = CARTA.CoordinateType.WORLD;
-        this.exportFileType = CARTA.FileType.CRTF;
 
         autorun(() => {
             const activeFrame = AppStore.Instance.activeFrame;

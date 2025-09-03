@@ -98,8 +98,6 @@ export class WidgetConfig implements DefaultWidgetConfig {
     };
 
     constructor(id: string, defaultConfig: DefaultWidgetConfig) {
-        makeObservable(this);
-
         this.id = id;
         this.type = defaultConfig.type;
         this.minWidth = defaultConfig.minWidth;
@@ -114,6 +112,7 @@ export class WidgetConfig implements DefaultWidgetConfig {
         this.parentType = defaultConfig.parentType;
         this.helpType = defaultConfig.helpType;
         this.componentId = defaultConfig.componentId;
+        makeObservable(this);
     }
 }
 
@@ -347,23 +346,6 @@ export class WidgetsStore {
 
     private constructor() {
         makeObservable(this);
-        this.spatialProfileWidgets = new Map<string, SpatialProfileWidgetStore>();
-        this.spectralProfileWidgets = new Map<string, SpectralProfileWidgetStore>();
-        this.statsWidgets = new Map<string, StatsWidgetStore>();
-        this.histogramWidgets = new Map<string, HistogramWidgetStore>();
-        this.renderConfigWidgets = new Map<string, RenderConfigWidgetStore>();
-        this.animatorWidgets = new Map<string, EmptyWidgetStore>();
-        this.channelMapControlWidgets = new Map<string, EmptyWidgetStore>();
-        this.layerListWidgets = new Map<string, LayerListWidgetStore>();
-        this.logWidgets = new Map<string, EmptyWidgetStore>();
-        this.regionListWidgets = new Map<string, EmptyWidgetStore>();
-        this.stokesAnalysisWidgets = new Map<string, StokesAnalysisWidgetStore>();
-        this.catalogWidgets = new Map<string, CatalogWidgetStore>();
-        this.floatingSettingsWidgets = new Map<string, string>();
-        this.catalogPlotWidgets = new Map<string, CatalogPlotWidgetStore>();
-        this.spectralLineQueryWidgets = new Map<string, SpectralLineQueryWidgetStore>();
-        this.cursorInfoWidgets = new Map<string, EmptyWidgetStore>();
-        this.pvGeneratorWidgets = new Map<string, PvGeneratorWidgetStore>();
 
         this.widgetsMap = new Map<string, Map<string, any>>([
             [SpatialProfilerComponent.WIDGET_CONFIG.type, this.spatialProfileWidgets],
@@ -384,7 +366,6 @@ export class WidgetsStore {
             [PvGeneratorComponent.WIDGET_CONFIG.type, this.pvGeneratorWidgets]
         ]);
 
-        this.floatingWidgets = [];
         this.defaultFloatingWidgetOffset = 100;
 
         reaction(() => this.imageViewWidgetTitle, this.updateImageWidgetTitle);

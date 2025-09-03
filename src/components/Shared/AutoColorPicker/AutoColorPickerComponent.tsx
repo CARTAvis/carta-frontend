@@ -26,7 +26,7 @@ const CUSTOM_COLOR_OPTION = "custom-color";
 @observer
 export class AutoColorPickerComponent extends React.Component<AutoColorPickerComponentProps> {
     private static readonly CHANGE_DELAY = 100;
-    @observable displayColorPicker: boolean;
+    @observable displayColorPicker: boolean = false;
 
     get autoColor(): string {
         return getColorForTheme(this.props.color);

@@ -207,8 +207,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         makeObservable(this);
 
         this.imagePanelRefs = [];
-        const appStore = AppStore.Instance;
 
+        const appStore = AppStore.Instance;
         autorun(() => {
             const visibleFrames = appStore.imageViewConfigStore.visibleFrames;
             if (!visibleFrames.length) {

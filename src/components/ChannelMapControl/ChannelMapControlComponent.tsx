@@ -27,8 +27,8 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
         };
     }
 
-    @observable width: number;
-    @observable height: number;
+    @observable width: number = 490;
+    @observable height: number = 600;
 
     constructor(props: any) {
         super(props);

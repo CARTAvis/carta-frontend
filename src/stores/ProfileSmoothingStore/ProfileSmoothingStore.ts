@@ -23,20 +23,6 @@ export class ProfileSmoothingStore {
 
     constructor() {
         makeObservable(this);
-        this.type = SmoothingType.NONE;
-        this.lineColor = "auto-rose";
-        this.lineType = PlotType.STEPS;
-        this.lineWidth = 1;
-        this.pointRadius = 1;
-        this.isOverlayOn = false;
-        this.boxcarSize = 2;
-        this.gaussianSigma = 1.0;
-        this.hanningSize = 3;
-        this.decimationWidth = 3;
-        this.binWidth = 2;
-        this.savitzkyGolaySize = 5;
-        this.savitzkyGolayOrder = 0;
-        this.colorMap = new Map();
     }
 
     @action setType = (val: SmoothingType) => {

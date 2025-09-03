@@ -25,7 +25,6 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
 
     constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.CatalogHeader>, catalogData: Map<number, ProcessedColumnData>, catalogType: CatalogType = CatalogType.FILE) {
         super(catalogType, catalogData);
-        makeObservable(this);
         this.catalogInfo = catalogInfo;
         this.catalogHeader = catalogHeader.sort((a, b) => a.columnIndex - b.columnIndex);
         this.catalogControlHeader = this.initCatalogControlHeader;
@@ -60,6 +59,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
             this.numVisibleRows = initTableRows;
             this.subsetEndIndex = initTableRows;
         }
+        makeObservable(this);
     }
 
     @action setUserFilter(catalogFilterRequest: CARTA.CatalogFilterRequest) {

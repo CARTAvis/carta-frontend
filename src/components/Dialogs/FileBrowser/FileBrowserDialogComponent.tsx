@@ -19,7 +19,7 @@ import "./FileBrowserDialogComponent.scss";
 
 @observer
 export class FileBrowserDialogComponent extends React.Component {
-    @observable overwriteExistingFileAlertVisible: boolean;
+    @observable overwriteExistingFileAlertVisible: boolean = false;
     @observable fileFilterString: string = "";
     @observable debouncedFilterString: string = "";
     @observable enableImageArithmetic: boolean = false;
@@ -35,8 +35,8 @@ export class FileBrowserDialogComponent extends React.Component {
 
     constructor(props: any) {
         super(props);
-        makeObservable(this);
         this.imageArithmeticInputRef = React.createRef<HTMLInputElement>();
+        makeObservable(this);
     }
 
     private handleTabChange = (newId: TabId) => {

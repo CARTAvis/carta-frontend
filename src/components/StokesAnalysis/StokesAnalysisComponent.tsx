@@ -51,8 +51,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         };
     }
 
-    @observable width: number;
-    @observable height: number;
+    @observable width: number = 520;
+    @observable height: number = 650;
 
     get widgetStore(): StokesAnalysisWidgetStore {
         const widgetsStore = WidgetsStore.Instance;

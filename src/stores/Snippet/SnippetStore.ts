@@ -33,7 +33,6 @@ export class SnippetStore {
         makeObservable(this);
         this.setDefaultSnippets();
         this.clearActiveSnippet();
-        this.isExecuting = false;
     }
 
     public snippetExists = (name: string): boolean => {

@@ -33,8 +33,8 @@ export class StatsComponent extends React.Component<WidgetProps> {
         };
     }
 
-    @observable width: number = 0;
-    @observable height: number = 0;
+    @observable width: number = 490;
+    @observable height: number = 325;
     @observable isMouseEntered = false;
 
     get widgetStore(): StatsWidgetStore {

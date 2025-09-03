@@ -18,8 +18,8 @@ export interface ProfileFittingComponentProps {
 
 @observer
 export class ProfileFittingComponent extends React.Component<ProfileFittingComponentProps> {
-    @observable isShowingLog: boolean;
-    @observable isShowingResultButton: boolean;
+    @observable isShowingLog: boolean = false;
+    @observable isShowingResultButton: boolean = false;
     private fittingStore: ProfileFittingStore;
     private widgetStore: SpectralProfileWidgetStore;
 
@@ -201,10 +201,11 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
 
     constructor(props: ProfileFittingComponentProps) {
         super(props);
-        this.isShowingLog = false;
+        makeObservable(this);
+
         this.fittingStore = props.fittingStore;
         this.widgetStore = props.widgetStore;
-        makeObservable(this);
+
         autorun(() => {
             // clear fitting data when the profile data changed
             if (this.widgetStore?.profileSelectionStore?.profiles[0]) {

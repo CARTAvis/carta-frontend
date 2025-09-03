@@ -31,14 +31,13 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         };
     }
 
-    @observable width: number;
-    @observable height: number;
-    @observable numericInputType: NumericInputType;
+    @observable width: number = 650;
+    @observable height: number = 200;
+    @observable numericInputType: NumericInputType = NumericInputType.FrameRate;
 
     constructor(props: any) {
         super(props);
         makeObservable(this);
-        this.numericInputType = NumericInputType.FrameRate;
     }
 
     @action onResize = (width: number, height: number) => {
