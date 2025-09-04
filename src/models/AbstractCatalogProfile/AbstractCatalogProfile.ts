@@ -44,7 +44,7 @@ export abstract class AbstractCatalogProfileStore {
         coordinate: {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}
     };
     @observable filterDataSize: number | undefined = undefined;
-    @observable progress: number = 0;
+    @observable progress: number;
     @observable updatingDataStream: boolean = false;
     @observable updateTableView: boolean = false;
     @observable updateMode: CatalogUpdateMode = CatalogUpdateMode.TableUpdate;

@@ -46,7 +46,7 @@ export class ImageFittingStore {
     /** Whether a fitting request is currently being processed. */
     @observable isFitting: boolean = false;
     /** Progress of the current fitting request, from 0 to 1 (multiply by 100 for %). */
-    @observable progress: number = 0;
+    @observable progress: number;
     /** Whether cancel is in progress. */
     @observable isCancelling: boolean = false;
 
