@@ -15,23 +15,23 @@ export class ProfileFittingStore {
     @observable slope: number = 0;
     @observable lockedYIntercept: boolean = false;
     @observable lockedSlope: boolean = false;
-    @observable resultYIntercept: number;
-    @observable resultSlope: number;
-    @observable resultYInterceptError: number;
-    @observable resultSlopeError: number;
+    @observable resultYIntercept: number = 0;
+    @observable resultSlope: number = 0;
+    @observable resultYInterceptError: number = 0;
+    @observable resultSlopeError: number = 0;
     @observable selectedIndex: number = 0;
-    @observable hasResult: boolean;
-    @observable resultLog: string;
-    @observable resultResidual: Float32Array | Float64Array;
-    @observable isCursorSelectingYIntercept: boolean;
-    @observable isCursorSelectingSlope: boolean;
-    @observable isCursorSelectingComponent: boolean;
+    @observable hasResult: boolean = false;
+    @observable resultLog: string = "";
+    @observable resultResidual: Float32Array | Float64Array = new Float32Array();
+    @observable isCursorSelectingYIntercept: boolean = false;
+    @observable isCursorSelectingSlope: boolean = false;
+    @observable isCursorSelectingComponent: boolean = false;
     @observable isAutoDetectWithCont: boolean = false;
     @observable isAutoDetectWithFitting: boolean = false;
-    @observable hasAutoDetectResult: boolean;
-    @observable detectedComponentN: number;
+    @observable hasAutoDetectResult: boolean = false;
+    @observable detectedComponentN: number = 0;
     @observable enableResidual: boolean = true;
-    @observable originData: {x: number[]; y: Float32Array | Float64Array};
+    @observable originData: {x: number[]; y: Float32Array | Float64Array} = {x: [], y: new Float32Array()};
 
     private readonly widgetStore: SpectralProfileWidgetStore;
 
@@ -89,7 +89,7 @@ export class ProfileFittingStore {
         return null;
     }
 
-    @computed get componentPlottingBoxes(): LinePlotInsideBoxMarker[] {
+    get componentPlottingBoxes(): LinePlotInsideBoxMarker[] {
         const boxes: LinePlotInsideBoxMarker[] = [];
         if (this.components) {
             for (let i = 0; i < this.components.length; i++) {
@@ -115,7 +115,7 @@ export class ProfileFittingStore {
         return boxes;
     }
 
-    @computed get componentResultNumber(): LinePlotInsideTextMarker[] {
+    get componentResultNumber(): LinePlotInsideTextMarker[] {
         const texts: LinePlotInsideTextMarker[] = [];
         if (this.components && this.hasResult) {
             for (let i = 0; i < this.components.length; i++) {
