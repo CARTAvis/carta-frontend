@@ -46,10 +46,10 @@ export function getReferencePixel(frame: FrameStore): Point2D {
 /**
  * Calculates the pixel size in degrees for a specific axis of an astronomical image
  * using WCS (World Coordinate System) header information.
- * 
+ *
  * This function follows FITS WCS conventions to determine pixel scale by examining
  * CD matrix elements or CDELT/PC matrix combinations in the FITS header.
- * 
+ *
  * @param frame - The FrameStore containing the astronomical image data and headers
  * @param axis - The axis number (1 or 2) for which to calculate pixel size
  * @returns The pixel size in degrees, or NaN if calculation fails
@@ -78,7 +78,7 @@ export function getPixelSize(frame: FrameStore, axis: number): number {
     // CD1_1, CD1_2, CD2_1, CD2_2 directly give coordinate derivatives
     const cd1Header = getHeaderNumericValue(find(entry => (entry.name ?? "") === `CD1_${axis}`));
     const cd2Header = getHeaderNumericValue(find(entry => (entry.name ?? "") === `CD2_${axis}`));
-    
+
     // Calculate effective CD matrix elements
     // Prefer direct CD values if available, otherwise compute from CDELT * PC
     // This handles both CD matrix and CDELT+PC matrix representations

@@ -344,7 +344,7 @@ export class CompassAnnotationStore extends RegionStore {
         const left = frameView.xMin;
         const right = frameView.xMax;
         const width = right - left;
-        const height = top - bottom
+        const height = top - bottom;
 
         const xPixelSizeRad = (getPixelSize(this.activeFrame, 1) * Math.PI) / 180;
         const yPixelSizeRad = (getPixelSize(this.activeFrame, 2) * Math.PI) / 180;
