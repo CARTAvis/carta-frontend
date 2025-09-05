@@ -23,6 +23,7 @@ enum PVAxis {
 export class PvGeneratorComponent extends React.Component<WidgetProps> {
     axesOrder = {};
     @observable isValidSpectralRange: boolean = true;
+    private widgetId: string;
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -41,7 +42,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     get widgetStore(): PvGeneratorWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.pvGeneratorWidgets) {
-            const widgetStore = widgetsStore.pvGeneratorWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.pvGeneratorWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -145,6 +146,8 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
+        makeObservable(this);
+        this.widgetId = props.id;
         this.genAxisOptions();
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
@@ -153,11 +156,12 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             const id = appStore.widgetsStore.addPvGeneratorWidget();
             if (id) {
                 appStore.widgetsStore.changeWidgetId(props.id, id);
+                this.widgetId = id; // Update the stored widget ID
             }
         } else {
-            if (!appStore.widgetsStore.pvGeneratorWidgets.has(this.props.id)) {
-                console.log(`can't find store for widget with id=${this.props.id}`);
-                appStore.widgetsStore.pvGeneratorWidgets.set(this.props.id, new PvGeneratorWidgetStore());
+            if (!appStore.widgetsStore.pvGeneratorWidgets.has(this.widgetId)) {
+                console.log(`can't find store for widget with id=${this.widgetId}`);
+                appStore.widgetsStore.pvGeneratorWidgets.set(this.widgetId, new PvGeneratorWidgetStore());
             }
         }
         makeObservable(this);
@@ -198,7 +202,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     };
 
     private onPreviewButtonClicked = () => {
-        this.widgetStore.requestPV(true, this.props.id);
+        this.widgetStore.requestPV(true, this.widgetId);
     };
 
     private onGenerateButtonClicked = () => {
@@ -446,7 +450,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                         progress={frame?.requestingPVProgress ?? 0}
                         timeRemaining={appStore.estimatedTaskRemainingTime ?? 0}
                         cancellable={true}
-                        onCancel={this.widgetStore.requestingPVCancelled(this.props.id)}
+                        onCancel={this.widgetStore.requestingPVCancelled(this.widgetId)}
                         text={"Generating PV"}
                         isCancelling={!!frame?.isRequestPVCancelling}
                     />
