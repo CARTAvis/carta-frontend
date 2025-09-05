@@ -21,7 +21,7 @@ import "./CatalogPlotComponent.scss";
 @observer
 export class CatalogPlotComponent extends React.Component<WidgetProps> {
     @observable width: number = 680;
-    @observable height: number = 350;
+    @observable height: number = 425;
     @observable profileId: string = "";
     @observable catalogFileId: number = 0;
     @observable componentId: string = "";
@@ -39,7 +39,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             minWidth: 320,
             minHeight: 200,
             defaultWidth: 680,
-            defaultHeight: 350,
+            defaultHeight: 425,
             title: "Catalog Plot",
             isCloseable: true,
             componentId: "catalog-plot-component"
@@ -202,6 +202,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     plotType: this.plotType
                 };
                 const scatterPlotId = appStore.widgetsStore.addCatalogPlotWidget(scatterProps);
+                console.log("qq", scatterPlotId);
                 if (scatterPlotId) {
                     catalogStore.setCatalogPlots(this.componentId, this.catalogFileId, scatterPlotId);
                     return scatterPlotId;
