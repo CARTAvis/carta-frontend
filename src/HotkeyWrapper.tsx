@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Classes, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
+import {Classes, Dialog, Hotkey, Hotkeys, useHotkeys} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
@@ -7,15 +7,12 @@ import {ImageViewLayer} from "components";
 import {AppStore, BrowserMode, DialogId} from "stores";
 import {RegionMode} from "stores/Frame";
 
-// There are some issues with the Blueprint hotkey target decorator, so this rather hacky workaround is needed for now
-// Once the issues are fixed, the decorator can be used and the functions can be made non-static
-
-interface HotkeyContainerState {
+interface HotkeyServiceState {
     columnCount: number;
 }
 
 @observer
-export class HotkeyContainer extends React.Component<{}, HotkeyContainerState> {
+export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
     private resizeListener: () => void;
 
     constructor(props: {}) {
@@ -91,7 +88,7 @@ export class HotkeyContainer extends React.Component<{}, HotkeyContainerState> {
                             alignItems: "start"
                         }}
                     >
-                        {HotkeyContainer.RenderHotkeysInColumns(false, this.state?.columnCount || this.calculateColumnCount())}
+                        {HotkeyService.RenderHotkeysInColumns(this.state?.columnCount || this.calculateColumnCount())}
                     </div>
                 </div>
             </Dialog>
@@ -176,9 +173,225 @@ export class HotkeyContainer extends React.Component<{}, HotkeyContainerState> {
         }
     };
 
-    static GetHotkeyDefinitions(isHiddenHotkeysIncluded: boolean = true) {
+    // Unified hotkey definitions used by both display and registration systems
+    static GetUnifiedHotkeyDefinitions(isHiddenHotkeysIncluded: boolean = true) {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
+
+        return [
+            // 3) Frame controls
+            {
+                combo: `${modString}]`,
+                group: "3) Frame controls",
+                label: "Next image",
+                global: true,
+                allowInInput: false,
+                preventDefault: true,
+                onKeyDown: () => appStore.nextImage()
+            },
+            {
+                combo: `${modString}[`,
+                group: "3) Frame controls",
+                label: "Previous image",
+                global: true,
+                allowInInput: false,
+                preventDefault: true,
+                onKeyDown: () => appStore.prevImage()
+            },
+            {
+                combo: `${modString}up`,
+                group: "3) Frame controls",
+                label: "Next channel",
+                global: true,
+                allowInInput: false,
+                preventDefault: true,
+                onKeyDown: HotkeyService.NextChannel
+            },
+            {
+                combo: `${modString}down`,
+                group: "3) Frame controls",
+                label: "Previous channel",
+                global: true,
+                allowInInput: false,
+                preventDefault: true,
+                onKeyDown: HotkeyService.PrevChannel
+            },
+            {
+                combo: `${modString}shift + up`,
+                group: "3) Frame controls",
+                label: "Next Stokes cube",
+                global: true,
+                allowInInput: false,
+                preventDefault: true,
+                onKeyDown: HotkeyService.NextStokes
+            },
+            {
+                combo: `${modString}shift + down`,
+                group: "3) Frame controls",
+                label: "Previous Stokes cube",
+                global: true,
+                allowInInput: false,
+                preventDefault: true,
+                onKeyDown: HotkeyService.PrevStokes
+            },
+
+            // Hidden hotkeys for input method compatibility (only included if requested)
+            ...(isHiddenHotkeysIncluded
+                ? [
+                      {
+                          combo: `${modString}‘`,
+                          group: "3) Frame controls",
+                          label: "Next image",
+                          global: true,
+                          allowInInput: false,
+                          preventDefault: true,
+                          onKeyDown: () => appStore.nextImage()
+                      },
+                      {
+                          combo: `${modString}“`,
+                          group: "3) Frame controls",
+                          label: "Previous image",
+                          global: true,
+                          allowInInput: false,
+                          preventDefault: true,
+                          onKeyDown: () => appStore.prevImage()
+                      }
+                  ]
+                : []),
+
+            // 2) Regions
+            {
+                combo: "c",
+                group: "2) Regions",
+                label: "Toggle region creation mode",
+                global: true,
+                allowInInput: false,
+                onKeyDown: HotkeyService.ToggleCreateMode
+            },
+            {
+                combo: "l",
+                group: "2) Regions",
+                label: "Toggle current region lock",
+                global: true,
+                allowInInput: false,
+                onKeyDown: HotkeyService.ToggleRegionLock
+            },
+            {
+                combo: "shift+l",
+                group: "2) Regions",
+                label: "Unlock all regions",
+                global: true,
+                allowInInput: false,
+                onKeyDown: HotkeyService.UnlockAllRegions
+            },
+            {
+                combo: "delete",
+                group: "2) Regions",
+                label: "Delete selected region",
+                global: true,
+                allowInInput: false,
+                preventDefault: true,
+                onKeyDown: () => appStore.deleteSelectedRegion()
+            },
+            {
+                combo: "backspace",
+                group: "2) Regions",
+                label: "Delete selected region",
+                global: true,
+                allowInInput: false,
+                preventDefault: true,
+                onKeyDown: () => appStore.deleteSelectedRegion()
+            },
+            {
+                combo: "esc",
+                group: "2) Regions",
+                label: "Deselect/Cancel region creation",
+                global: true,
+                allowInInput: false,
+                onKeyDown: HotkeyService.HandleRegionEsc
+            },
+
+            // 4) File controls
+            {
+                combo: `${modString}O`,
+                group: "4) File controls",
+                label: "Open image",
+                global: true,
+                allowInInput: false,
+                onKeyDown: () => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File)
+            },
+            {
+                combo: `${modString}L`,
+                group: "4) File controls",
+                label: "Append image",
+                global: true,
+                allowInInput: false,
+                onKeyDown: () => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)
+            },
+            {
+                combo: `${modString}W`,
+                group: "4) File controls",
+                label: "Close image",
+                global: true,
+                allowInInput: false,
+                onKeyDown: () => appStore.closeCurrentFile(true)
+            },
+            {
+                combo: `${modString}S`,
+                group: "4) File controls",
+                label: "Save image",
+                global: true,
+                allowInInput: false,
+                onKeyDown: () => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)
+            },
+            {
+                combo: `${modString}G`,
+                group: "4) File controls",
+                label: "Import catalog",
+                global: true,
+                allowInInput: false,
+                onKeyDown: () => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)
+            },
+            {
+                combo: `${modString}E`,
+                group: "4) File controls",
+                label: "Export image",
+                global: true,
+                allowInInput: false,
+                onKeyDown: () => appStore.exportImage(1)
+            },
+
+            // 5) Other
+            {
+                combo: "shift+d",
+                group: "5) Other",
+                label: "Toggle light/dark theme",
+                global: true,
+                allowInInput: false,
+                onKeyDown: HotkeyService.ToggleDarkTheme
+            },
+            {
+                combo: "f",
+                group: "5) Other",
+                label: "Freeze/unfreeze cursor position",
+                global: true,
+                allowInInput: false,
+                onKeyDown: () => appStore.toggleCursorFrozen()
+            },
+            {
+                combo: "g",
+                group: "5) Other",
+                label: "Mirror cursor on multipanel view",
+                global: true,
+                allowInInput: false,
+                onKeyDown: () => appStore.toggleCursorMirror()
+            }
+        ];
+    }
+
+    // For display in custom hotkeys dialog
+    static GetHotkeyDefinitions(isHiddenHotkeysIncluded: boolean = true) {
+        const unifiedHotkeys = HotkeyService.GetUnifiedHotkeyDefinitions(isHiddenHotkeysIncluded);
 
         const navigationGroupTitle = "1) Navigation";
         const regionGroupTitle = "2) Regions";
@@ -193,49 +406,32 @@ export class HotkeyContainer extends React.Component<{}, HotkeyContainerState> {
             <Hotkey key={3} group={navigationGroupTitle} global={true} combo="mouse-wheel" label="Zoom image" />
         ];
 
-        const regionHotKeys = [
-            <Hotkey key={0} group={regionGroupTitle} global={true} combo="c" label="Toggle region creation mode" onKeyDown={HotkeyContainer.ToggleCreateMode} />,
-            <Hotkey key={1} group={regionGroupTitle} global={true} combo="l" label="Toggle current region lock" onKeyDown={HotkeyContainer.ToggleRegionLock} />,
-            <Hotkey key={2} group={regionGroupTitle} global={true} combo="shift + l" label="Unlock all regions" onKeyDown={HotkeyContainer.UnlockAllRegions} />,
-            <Hotkey key={3} group={regionGroupTitle} global={true} combo="delete" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion} />,
-            <Hotkey key={4} group={regionGroupTitle} global={true} combo="backspace" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion} />,
-            <Hotkey key={5} group={regionGroupTitle} global={true} combo="esc" label="Deselect region/Cancel region creation" onKeyDown={HotkeyContainer.HandleRegionEsc} />,
-            <Hotkey key={6} group={regionGroupTitle} global={true} combo="mod" label="Switch region creation mode" />,
-            <Hotkey key={7} group={regionGroupTitle} global={true} combo={"shift"} label="Symmetric region creation" />,
-            <Hotkey key={8} group={regionGroupTitle} global={true} combo="double-click" label="Region properties" />
+        const regionDisplayOnlyHotkeys = [
+            <Hotkey key={100} group={regionGroupTitle} global={true} combo="mod" label="Switch region creation mode" />,
+            <Hotkey key={101} group={regionGroupTitle} global={true} combo="shift" label="Symmetric region creation" />,
+            <Hotkey key={102} group={regionGroupTitle} global={true} combo="double-click" label="Region properties" />
         ];
 
-        const animatorHotkeys = [
-            <Hotkey key={0} group={animatorGroupTitle} global={true} combo={`${modString}]`} label="Next image" onKeyDown={appStore.nextImage} />,
-            <Hotkey key={1} group={animatorGroupTitle} global={true} combo={`${modString}[`} label="Previous image" onKeyDown={appStore.prevImage} />,
-            <Hotkey key={2} group={animatorGroupTitle} global={true} combo={`${modString}up`} label="Next channel" onKeyDown={HotkeyContainer.NextChannel} />,
-            <Hotkey key={3} group={animatorGroupTitle} global={true} combo={`${modString}down`} label="Previous channel" onKeyDown={HotkeyContainer.PrevChannel} />,
-            <Hotkey key={4} group={animatorGroupTitle} global={true} combo={`${modString}shift + up`} label="Next Stokes cube" onKeyDown={HotkeyContainer.NextStokes} />,
-            <Hotkey key={5} group={animatorGroupTitle} global={true} combo={`${modString}shift + down`} label="Previous Stokes cube" onKeyDown={HotkeyContainer.PrevStokes} />
-        ];
+        const regionHotKeys: React.ReactElement[] = [];
+        const animatorHotkeys: React.ReactElement[] = [];
+        const fileHotkeys: React.ReactElement[] = [];
+        const otherHotKeys: React.ReactElement[] = [];
 
-        if (isHiddenHotkeysIncluded) {
-            animatorHotkeys.push(
-                // ‘ and “ can be typed with option + ] and option + [ on macOS
-                <Hotkey key={6} group={animatorGroupTitle} global={true} combo={`${modString}‘`} label="Next image" onKeyDown={appStore.nextImage} />,
-                <Hotkey key={7} group={animatorGroupTitle} global={true} combo={`${modString}“`} label="Previous image" onKeyDown={appStore.prevImage} />
-            );
-        }
+        unifiedHotkeys.forEach((hotkey, index) => {
+            const hotkeyElement = <Hotkey key={index} group={hotkey.group} global={hotkey.global} combo={hotkey.combo} label={hotkey.label} onKeyDown={hotkey.onKeyDown} />;
 
-        const fileHotkeys = [
-            <Hotkey key={0} group={fileGroupTitle} global={true} combo={`${modString}O`} label="Open image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File)} />,
-            <Hotkey key={1} group={fileGroupTitle} global={true} combo={`${modString}L`} label="Append image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)} />,
-            <Hotkey key={2} group={fileGroupTitle} global={true} combo={`${modString}W`} label="Close image" onKeyDown={() => appStore.closeCurrentFile(true)} />,
-            <Hotkey key={3} group={fileGroupTitle} global={true} combo={`${modString}S`} label="Save image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)} />,
-            <Hotkey key={4} group={fileGroupTitle} global={true} combo={`${modString}G`} label="Import catalog" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)} />,
-            <Hotkey key={5} group={fileGroupTitle} global={true} combo={`${modString}E`} label="Export image" onKeyDown={() => appStore.exportImage(1)} />
-        ];
+            if (hotkey.group === regionGroupTitle) {
+                regionHotKeys.push(hotkeyElement);
+            } else if (hotkey.group === animatorGroupTitle) {
+                animatorHotkeys.push(hotkeyElement);
+            } else if (hotkey.group === fileGroupTitle) {
+                fileHotkeys.push(hotkeyElement);
+            } else if (hotkey.group === otherGroupTitle) {
+                otherHotKeys.push(hotkeyElement);
+            }
+        });
 
-        const otherHotKeys = [
-            <Hotkey key={0} group={otherGroupTitle} global={true} combo="shift + D" label="Toggle light/dark theme" onKeyDown={HotkeyContainer.ToggleDarkTheme} />,
-            <Hotkey key={1} group={otherGroupTitle} global={true} combo="F" label="Freeze/unfreeze cursor position" onKeyDown={appStore.toggleCursorFrozen} />,
-            <Hotkey key={2} group={otherGroupTitle} global={true} combo="G" label="Mirror cursor on multipanel view" onKeyDown={appStore.toggleCursorMirror} />
-        ];
+        regionHotKeys.push(...regionDisplayOnlyHotkeys);
 
         return {
             navigationHotKeys,
@@ -246,161 +442,57 @@ export class HotkeyContainer extends React.Component<{}, HotkeyContainerState> {
         };
     }
 
-    static RenderHotkeysInColumns(isHiddenHotkeysIncluded: boolean = true, columnCount: number = 3) {
-        const hotkeys = HotkeyContainer.GetHotkeyDefinitions(isHiddenHotkeysIncluded);
+    static RenderHotkeysInColumns(columnCount: number = 3) {
+        const hotkeys = HotkeyService.GetHotkeyDefinitions(false);
+        const hotkeyGroups = [hotkeys.navigationHotKeys, hotkeys.regionHotKeys, hotkeys.animatorHotkeys, hotkeys.fileHotkeys, hotkeys.otherHotKeys];
 
-        if (columnCount === 1) {
-            // Single column: all hotkeys together
-            return [
-                <div key="column1">
-                    <Hotkeys>
-                        {hotkeys.navigationHotKeys}
-                        {hotkeys.regionHotKeys}
-                        {hotkeys.animatorHotkeys}
-                        {hotkeys.fileHotkeys}
-                        {hotkeys.otherHotKeys}
-                    </Hotkeys>
-                </div>
-            ];
-        } else if (columnCount === 2) {
-            // Two columns: balanced distribution
-            const column1 = (
-                <div key="column1">
-                    <Hotkeys>
-                        {hotkeys.navigationHotKeys}
-                        {hotkeys.regionHotKeys}
-                    </Hotkeys>
-                </div>
-            );
+        // Define how to distribute groups across columns
+        const columnDistributions = {
+            1: [[0, 1, 2, 3, 4]], // All groups in one column
+            2: [
+                [0, 1],
+                [2, 3, 4]
+            ], // First two groups in column 1, rest in column 2
+            3: [[0, 1], [2, 3], [4]] // Distribute across three columns
+        };
 
-            const column2 = (
-                <div key="column2">
-                    <Hotkeys>
-                        {hotkeys.animatorHotkeys}
-                        {hotkeys.fileHotkeys}
-                        {hotkeys.otherHotKeys}
-                    </Hotkeys>
-                </div>
-            );
+        const distribution = columnDistributions[columnCount] || columnDistributions[3];
 
-            return [column1, column2];
-        } else {
-            // Three columns: original layout
-            const column1 = (
-                <div key="column1">
-                    <Hotkeys>
-                        {hotkeys.navigationHotKeys}
-                        {hotkeys.regionHotKeys}
-                    </Hotkeys>
-                </div>
-            );
-
-            const column2 = (
-                <div key="column2">
-                    <Hotkeys>
-                        {hotkeys.animatorHotkeys}
-                        {hotkeys.fileHotkeys}
-                    </Hotkeys>
-                </div>
-            );
-
-            const column3 = (
-                <div key="column3">
-                    <Hotkeys>{hotkeys.otherHotKeys}</Hotkeys>
-                </div>
-            );
-
-            return [column1, column2, column3];
-        }
-    }
-
-    static RenderHotkeys(isHiddenHotkeysIncluded: boolean = true) {
-        const hotkeys = HotkeyContainer.GetHotkeyDefinitions(isHiddenHotkeysIncluded);
-
-        return (
-            <Hotkeys>
-                {hotkeys.regionHotKeys}
-                {hotkeys.navigationHotKeys}
-                {hotkeys.animatorHotkeys}
-                {hotkeys.fileHotkeys}
-                {hotkeys.otherHotKeys}
-            </Hotkeys>
-        );
+        return distribution.map((groupIndices: number[], columnIndex: number) => (
+            <div key={`column${columnIndex + 1}`}>
+                <Hotkeys>{groupIndices.map(index => hotkeyGroups[index])}</Hotkeys>
+            </div>
+        ));
     }
 }
 
-function HotkeyWrapper(this: any, props: any) {
-    // Initialize state manually since we can't call ES6 class constructor with .call()
-    this.state = {
-        columnCount: this.calculateColumnCount()
-    };
-    this.resizeListener = () => {
-        const newColumnCount = this.calculateColumnCount();
-        if (newColumnCount !== this.state.columnCount) {
-            this.setState({columnCount: newColumnCount});
-        }
-    };
+export function HotkeysRegistrar() {
+    const hotkeys = React.useMemo(() => HotkeyService.GetUnifiedHotkeyDefinitions(true), []);
+
+    useHotkeys(hotkeys);
+
+    // Directly handle Shift+? to open custom hotkeys dialog
+    React.useEffect(() => {
+        const onKeyDown = (event: KeyboardEvent) => {
+            // Only handle if not in an editable element
+            const target = event.target as Element;
+            if (target && (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target.closest("input, textarea, [contenteditable]"))) {
+                return;
+            }
+
+            if (event.shiftKey && !event.altKey && !event.metaKey && !event.ctrlKey && (event.key === "?" || event.key === "/")) {
+                event.preventDefault();
+                event.stopPropagation();
+                const currentAppStore = AppStore.Instance;
+                if (!currentAppStore.dialogStore.dialogVisible.get(DialogId.Hotkey)) {
+                    currentAppStore.dialogStore.showDialog(DialogId.Hotkey);
+                }
+            }
+        };
+
+        document.addEventListener("keydown", onKeyDown, true);
+        return () => document.removeEventListener("keydown", onKeyDown, true);
+    }, []);
+
+    return null;
 }
-HotkeyWrapper.prototype = Object.create(HotkeyContainer.prototype);
-HotkeyWrapper.prototype.constructor = HotkeyWrapper;
-HotkeyWrapper.prototype.renderHotkeys = () => HotkeyContainer.RenderHotkeys();
-
-HotkeyWrapper.prototype.componentDidMount = function () {
-    // Call parent's componentDidMount to set up resize listener
-    if (HotkeyContainer.prototype.componentDidMount) {
-        HotkeyContainer.prototype.componentDidMount.call(this);
-    }
-    // Use capture phase so we can intercept certain keys (e.g. Shift+?) before Blueprint's handlers
-    document.addEventListener("keydown", this.handleGlobalKeydown, true);
-};
-
-HotkeyWrapper.prototype.componentWillUnmount = function () {
-    // Call parent's componentWillUnmount to clean up resize listener
-    if (HotkeyContainer.prototype.componentWillUnmount) {
-        HotkeyContainer.prototype.componentWillUnmount.call(this);
-    }
-    document.removeEventListener("keydown", this.handleGlobalKeydown, true);
-};
-
-HotkeyWrapper.prototype.handleGlobalKeydown = function (event: KeyboardEvent) {
-    const appStore = AppStore.Instance;
-
-    // Helper to detect if an element (or its ancestors) is an editable control
-    const isEditable = (el: Element | null): boolean => {
-        if (!el) return false;
-        if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) return true;
-        const he = el as HTMLElement;
-        if (he && (he.isContentEditable || he.getAttribute("contenteditable") !== null)) return true;
-        // Common ARIA roles used by input components
-        const role = he?.getAttribute?.("role");
-        if (role && ["textbox", "searchbox", "combobox", "spinbutton"].includes(role)) return true;
-        // Check ancestors for editable containers
-        return !!el.closest(
-            'input, textarea, select, [contenteditable], [role="textbox"], [role="searchbox"], [role="combobox"], [role="spinbutton"]'
-        );
-    };
-
-    // Ignore when focus is inside editable elements (inputs, textareas, selects, or contenteditable)
-    const target = (event.target as Element) ?? null;
-    const activeEl = (document.activeElement as Element) ?? null;
-    if (isEditable(target) || isEditable(activeEl)) {
-        return;
-    }
-
-    // Intercept Shift+? to open our custom Hotkeys dialog and block Blueprint's default dialog
-    // This prevents React 18 warnings from Blueprint's legacy ReactDOM.render path.
-    if (event.shiftKey && !event.altKey && !event.metaKey && !event.ctrlKey && (event.key === "?" || event.key === "/")) {
-        event.preventDefault();
-        event.stopPropagation();
-        if (typeof event.stopImmediatePropagation === "function") {
-            event.stopImmediatePropagation();
-        }
-        // Ensure only one instance of our dialog is shown
-        if (!appStore.dialogStore.dialogVisible.get(DialogId.Hotkey)) {
-            appStore.dialogStore.showDialog(DialogId.Hotkey);
-        }
-        return;
-    }
-};
-
-export const HotkeyTargetContainer = HotkeysTarget(HotkeyWrapper as any);

@@ -51,7 +51,7 @@ async function fetchConfig() {
     const container = document.getElementById("root") as HTMLElement;
     const root = createRoot(container);
     root.render(
-        <HotkeysProvider renderDialog={() => <></>}>
+        <HotkeysProvider>
             <OverlaysProvider>
                 <App />
             </OverlaysProvider>
