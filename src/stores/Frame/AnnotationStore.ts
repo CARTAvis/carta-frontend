@@ -350,8 +350,10 @@ export class CompassAnnotationStore extends RegionStore {
         const yAxis = 2;
         const xPixelSizeRad = (getPixelSize(this.activeFrame, xAxis) * Math.PI) / 180;
         const yPixelSizeRad = (getPixelSize(this.activeFrame, yAxis) * Math.PI) / 180;
-        const angularWidth = !Number.isNaN(xPixelSizeRad) ? Math.abs(xPixelSizeRad * width) : 6.18;
-        const angularHeight = !Number.isNaN(yPixelSizeRad) ? Math.abs(yPixelSizeRad * height) : 6.18;
+
+        const DEFAULT_COMPASS_ANGULAR_SIZE_RAD = 6.18; // Fallback angular size in radians for compass rendering
+        const angularWidth = !Number.isNaN(xPixelSizeRad) ? Math.abs(xPixelSizeRad * width) : DEFAULT_COMPASS_ANGULAR_SIZE_RAD;
+        const angularHeight = !Number.isNaN(yPixelSizeRad) ? Math.abs(yPixelSizeRad * height) : DEFAULT_COMPASS_ANGULAR_SIZE_RAD;
 
         const eastApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, xAxis, transformed.x, transformed.y, angularWidth);
         const northApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, yAxis, transformed.x, transformed.y, angularHeight);
