@@ -390,7 +390,7 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
     }
 
     // For display in custom hotkeys dialog
-    static GetHotkeyDefinitions(isHiddenHotkeysIncluded: boolean = true) {
+    static GetHotkeyDefinitionsForDisplay(isHiddenHotkeysIncluded: boolean = true) {
         const unifiedHotkeys = HotkeyService.GetUnifiedHotkeyDefinitions(isHiddenHotkeysIncluded);
 
         const navigationGroupTitle = "1) Navigation";
@@ -443,7 +443,7 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
     }
 
     static RenderHotkeysInColumns(columnCount: number = 3) {
-        const hotkeys = HotkeyService.GetHotkeyDefinitions(false);
+        const hotkeys = HotkeyService.GetHotkeyDefinitionsForDisplay(false);
         const hotkeyGroups = [hotkeys.navigationHotKeys, hotkeys.regionHotKeys, hotkeys.animatorHotkeys, hotkeys.fileHotkeys, hotkeys.otherHotKeys];
 
         // Define how to distribute groups across columns
