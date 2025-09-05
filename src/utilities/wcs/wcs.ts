@@ -43,24 +43,54 @@ export function getReferencePixel(frame: FrameStore): Point2D {
     return {x, y};
 }
 
+/**
+ * Calculates the pixel size in degrees for a specific axis of an astronomical image
+ * using WCS (World Coordinate System) header information.
+ * 
+ * This function follows FITS WCS conventions to determine pixel scale by examining
+ * CD matrix elements or CDELT/PC matrix combinations in the FITS header.
+ * 
+ * @param frame - The FrameStore containing the astronomical image data and headers
+ * @param axis - The axis number (1 or 2) for which to calculate pixel size
+ * @returns The pixel size in degrees, or NaN if calculation fails
+ */
 export function getPixelSize(frame: FrameStore, axis: number): number {
+    // Extract header entries from the frame's file information
     const headerEntries = frame?.frameInfo?.fileInfoExtended?.headerEntries;
     if (!headerEntries) {
         return NaN;
     }
 
-    // First try the usual CDELT value
-    let header = headerEntries.find(entry => entry.name === `CDELT${axis}`);
-    if (!header) {
-        // Otherwise revert to PC matrix
-        header = headerEntries.find(entry => entry.name === `PC${axis}_${axis}`);
-        if (!header) {
-            // Finally, try the deprecated CD matrix
-            header = headerEntries.find(entry => entry.name === `CD${axis}_${axis}`);
-        }
-    }
+    // Helper function to find header entries matching a predicate
+    const find = (pred: (entry: CARTA.IHeaderEntry) => boolean) => headerEntries.find(pred);
 
-    return getHeaderNumericValue(header);
+    // Get CDELT value - coordinate increment at reference point (degrees/pixel)
+    // CDELT represents the nominal coordinate increment per pixel
+    const cdelt = getHeaderNumericValue(find(entry => (entry.name ?? "").includes(`CDELT${axis}`)));
+
+    // Get PC matrix elements - rotation/scaling transformation matrix
+    // PC1_1, PC1_2, PC2_1, PC2_2 define rotation and scaling between pixel and world coordinates
+    const pc1 = getHeaderNumericValue(find(entry => (entry.name ?? "") === `PC1_${axis}`));
+    const pc2 = getHeaderNumericValue(find(entry => (entry.name ?? "") === `PC2_${axis}`));
+
+    // Get CD matrix elements - coordinate transformation matrix (degrees/pixel)
+    // CD matrix combines coordinate increment and rotation/scaling in one step
+    // CD1_1, CD1_2, CD2_1, CD2_2 directly give coordinate derivatives
+    const cd1Header = getHeaderNumericValue(find(entry => (entry.name ?? "") === `CD1_${axis}`));
+    const cd2Header = getHeaderNumericValue(find(entry => (entry.name ?? "") === `CD2_${axis}`));
+    
+    // Calculate effective CD matrix elements
+    // Prefer direct CD values if available, otherwise compute from CDELT * PC
+    // This handles both CD matrix and CDELT+PC matrix representations
+    const cd1 = isFinite(cd1Header) ? cd1Header : isFinite(cdelt) && isFinite(pc1) ? cdelt * pc1 : NaN;
+    const cd2 = isFinite(cd2Header) ? cd2Header : isFinite(cdelt) && isFinite(pc2) ? cdelt * pc2 : NaN;
+
+    // Calculate pixel size as the magnitude of the CD vector
+    // This gives the actual pixel scale accounting for rotation and skew
+    // sqrt(cd1**2 + cd2**2) represents the length of the coordinate transformation vector
+    const pixelSizeDeg = Math.sqrt(cd1 ** 2 + cd2 ** 2);
+
+    return pixelSizeDeg;
 }
 
 export function getFormattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: Point2D) {
