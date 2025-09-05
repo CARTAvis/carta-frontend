@@ -25,7 +25,7 @@ export class HotkeyContainer extends React.Component {
                 canOutsideClickClose={true}
                 onClose={() => appStore.dialogStore.hideDialog(DialogId.Hotkey)}
             >
-                <div className={Classes.DIALOG_BODY}>{HotkeyContainer.RenderHotkeys()}</div>
+                <div className={Classes.DIALOG_BODY}>{HotkeyContainer.RenderHotkeys(false)}</div>
             </Dialog>
         );
     }
@@ -108,7 +108,7 @@ export class HotkeyContainer extends React.Component {
         }
     };
 
-    static RenderHotkeys() {
+    static RenderHotkeys(isHiddenHotkeysIncluded: boolean = true) {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
 
@@ -146,6 +146,13 @@ export class HotkeyContainer extends React.Component {
             <Hotkey key={5} group={animatorGroupTitle} global={true} combo={`${modString}shift + down`} label="Previous Stokes cube" onKeyDown={HotkeyContainer.PrevStokes} />
         ];
 
+        if (isHiddenHotkeysIncluded) {
+            animatorHotkeys.push(
+                <Hotkey key={6} group={animatorGroupTitle} global={true} combo={`${modString}‘`} label="Next image" onKeyDown={appStore.nextImage} />,
+                <Hotkey key={7} group={animatorGroupTitle} global={true} combo={`${modString}“`} label="Previous image" onKeyDown={appStore.prevImage} />
+            );
+        }
+
         const fileHotkeys = [
             <Hotkey key={0} group={fileGroupTitle} global={true} combo={`${modString}O`} label="Open image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File)} />,
             <Hotkey key={1} group={fileGroupTitle} global={true} combo={`${modString}L`} label="Append image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)} />,
@@ -178,29 +185,30 @@ HotkeyWrapper.prototype = Object.create(HotkeyContainer.prototype);
 HotkeyWrapper.prototype.renderHotkeys = () => HotkeyContainer.RenderHotkeys();
 
 HotkeyWrapper.prototype.componentDidMount = function () {
-    document.addEventListener("keydown", this.handleGlobalKeydown);
+    // Use capture phase so we can intercept certain keys (e.g. Shift+?) before Blueprint's handlers
+    document.addEventListener("keydown", this.handleGlobalKeydown, true);
 };
 
 HotkeyWrapper.prototype.componentWillUnmount = function () {
-    document.removeEventListener("keydown", this.handleGlobalKeydown);
+    document.removeEventListener("keydown", this.handleGlobalKeydown, true);
 };
 
 HotkeyWrapper.prototype.handleGlobalKeydown = function (event: KeyboardEvent) {
     const appStore = AppStore.Instance;
 
-    // Handle Option+[ and Option+] for English input method
-    if (event.altKey && !event.metaKey && !event.ctrlKey && !event.shiftKey) {
-        if (event.key === "\u201C") {
-            // Option+[ in English input method produces '“' (U+201C)
-            event.preventDefault();
-            appStore.prevImage();
-            return;
-        } else if (event.key === "\u2018") {
-            // Option+] in English input method produces '‘' (U+2018)
-            event.preventDefault();
-            appStore.nextImage();
-            return;
+    // Intercept Shift+? to open our custom Hotkeys dialog and block Blueprint's default dialog
+    // This prevents React 18 warnings from Blueprint's legacy ReactDOM.render path.
+    if (event.shiftKey && !event.altKey && !event.metaKey && !event.ctrlKey && (event.key === "?" || event.key === "/")) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (typeof event.stopImmediatePropagation === "function") {
+            event.stopImmediatePropagation();
         }
+        // Ensure only one instance of our dialog is shown
+        if (!appStore.dialogStore.dialogVisible.get(DialogId.Hotkey)) {
+            appStore.dialogStore.showDialog(DialogId.Hotkey);
+        }
+        return;
     }
 };
 
