@@ -173,6 +173,36 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
         }
     };
 
+    // Check if any BlueprintJS menu/popover is currently open and visible
+    static IsMenuOpen = (): boolean => {
+        try {
+            // Check for visible popover with menu content
+            const popovers = document.querySelectorAll('.bp5-popover-content, .bp4-popover-content, .bp3-popover-content');
+            for (const popover of popovers) {
+                const style = window.getComputedStyle(popover);
+                // Only consider it open if it's actually visible and has substantial opacity
+                if (style.display !== 'none' && 
+                    style.visibility !== 'hidden' && 
+                    parseFloat(style.opacity) > 0.8) {
+                    
+                    // Check if it contains a menu (not just any popover content)
+                    const menu = popover.querySelector('.bp5-menu, .bp4-menu, .bp3-menu');
+                    if (menu) {
+                        const menuStyle = window.getComputedStyle(menu);
+                        if (menuStyle.display !== 'none' && menuStyle.visibility !== 'hidden') {
+                            return true;
+                        }
+                    }
+                }
+            }
+            
+            return false;
+        } catch (error) {
+            // If there's any error, assume no menu is open to allow hotkeys to work
+            return false;
+        }
+    };
+
     // Unified hotkey definitions used by both display and registration systems
     static GetUnifiedHotkeyDefinitions(isHiddenHotkeysIncluded: boolean = true) {
         const appStore = AppStore.Instance;
