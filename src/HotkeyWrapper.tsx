@@ -10,8 +10,64 @@ import {RegionMode} from "stores/Frame";
 // There are some issues with the Blueprint hotkey target decorator, so this rather hacky workaround is needed for now
 // Once the issues are fixed, the decorator can be used and the functions can be made non-static
 
+interface HotkeyContainerState {
+    columnCount: number;
+}
+
 @observer
-export class HotkeyContainer extends React.Component {
+export class HotkeyContainer extends React.Component<{}, HotkeyContainerState> {
+    private resizeListener: () => void;
+
+    constructor(props: {}) {
+        super(props);
+        this.state = {
+            columnCount: this.calculateColumnCount()
+        };
+        this.resizeListener = () => {
+            const newColumnCount = this.calculateColumnCount();
+            if (newColumnCount !== this.state.columnCount) {
+                this.setState({columnCount: newColumnCount});
+            }
+        };
+    }
+
+    componentDidMount() {
+        window.addEventListener("resize", this.resizeListener);
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener("resize", this.resizeListener);
+    }
+
+    private calculateColumnCount(): number {
+        const screenWidth = window.innerWidth;
+        if (screenWidth < 840) {
+            return 1;
+        } else if (screenWidth < 1280) {
+            return 2;
+        } else {
+            return 3;
+        }
+    }
+
+    private getDialogWidth(): string {
+        const columnCount = this.state?.columnCount || this.calculateColumnCount();
+        switch (columnCount) {
+            case 1:
+                return "400px";
+            case 2:
+                return "800px";
+            case 3:
+            default:
+                return "1200px";
+        }
+    }
+
+    private getGridColumns(): string {
+        const columnCount = this.state?.columnCount || this.calculateColumnCount();
+        return Array(columnCount).fill("1fr").join(" ");
+    }
+
     public render() {
         const appStore = AppStore.Instance;
         const className = classNames(Classes.HOTKEY_DIALOG, {[Classes.DARK]: appStore.darkTheme});
@@ -24,8 +80,20 @@ export class HotkeyContainer extends React.Component {
                 canEscapeKeyClose={true}
                 canOutsideClickClose={true}
                 onClose={() => appStore.dialogStore.hideDialog(DialogId.Hotkey)}
+                style={{width: this.getDialogWidth(), maxWidth: "90vw"}}
             >
-                <div className={Classes.DIALOG_BODY}>{HotkeyContainer.RenderHotkeys(false)}</div>
+                <div className={Classes.DIALOG_BODY}>
+                    <div
+                        style={{
+                            display: "grid",
+                            gridTemplateColumns: this.getGridColumns(),
+                            gap: "20px",
+                            alignItems: "start"
+                        }}
+                    >
+                        {HotkeyContainer.RenderHotkeysInColumns(false, this.state?.columnCount || this.calculateColumnCount())}
+                    </div>
+                </div>
             </Dialog>
         );
     }
@@ -108,7 +176,7 @@ export class HotkeyContainer extends React.Component {
         }
     };
 
-    static RenderHotkeys(isHiddenHotkeysIncluded: boolean = true) {
+    static GetHotkeyDefinitions(isHiddenHotkeysIncluded: boolean = true) {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
 
@@ -129,7 +197,7 @@ export class HotkeyContainer extends React.Component {
             <Hotkey key={0} group={regionGroupTitle} global={true} combo="c" label="Toggle region creation mode" onKeyDown={HotkeyContainer.ToggleCreateMode} />,
             <Hotkey key={1} group={regionGroupTitle} global={true} combo="l" label="Toggle current region lock" onKeyDown={HotkeyContainer.ToggleRegionLock} />,
             <Hotkey key={2} group={regionGroupTitle} global={true} combo="shift + l" label="Unlock all regions" onKeyDown={HotkeyContainer.UnlockAllRegions} />,
-            <Hotkey key={3} group={regionGroupTitle} global={true} combo="del" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion} />,
+            <Hotkey key={3} group={regionGroupTitle} global={true} combo="delete" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion} />,
             <Hotkey key={4} group={regionGroupTitle} global={true} combo="backspace" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion} />,
             <Hotkey key={5} group={regionGroupTitle} global={true} combo="esc" label="Deselect region/Cancel region creation" onKeyDown={HotkeyContainer.HandleRegionEsc} />,
             <Hotkey key={6} group={regionGroupTitle} global={true} combo="mod" label="Switch region creation mode" />,
@@ -148,6 +216,7 @@ export class HotkeyContainer extends React.Component {
 
         if (isHiddenHotkeysIncluded) {
             animatorHotkeys.push(
+                // ‘ and “ can be typed with option + ] and option + [ on macOS
                 <Hotkey key={6} group={animatorGroupTitle} global={true} combo={`${modString}‘`} label="Next image" onKeyDown={appStore.nextImage} />,
                 <Hotkey key={7} group={animatorGroupTitle} global={true} combo={`${modString}“`} label="Previous image" onKeyDown={appStore.prevImage} />
             );
@@ -168,33 +237,155 @@ export class HotkeyContainer extends React.Component {
             <Hotkey key={2} group={otherGroupTitle} global={true} combo="G" label="Mirror cursor on multipanel view" onKeyDown={appStore.toggleCursorMirror} />
         ];
 
+        return {
+            navigationHotKeys,
+            regionHotKeys,
+            animatorHotkeys,
+            fileHotkeys,
+            otherHotKeys
+        };
+    }
+
+    static RenderHotkeysInColumns(isHiddenHotkeysIncluded: boolean = true, columnCount: number = 3) {
+        const hotkeys = HotkeyContainer.GetHotkeyDefinitions(isHiddenHotkeysIncluded);
+
+        if (columnCount === 1) {
+            // Single column: all hotkeys together
+            return [
+                <div key="column1">
+                    <Hotkeys>
+                        {hotkeys.navigationHotKeys}
+                        {hotkeys.regionHotKeys}
+                        {hotkeys.animatorHotkeys}
+                        {hotkeys.fileHotkeys}
+                        {hotkeys.otherHotKeys}
+                    </Hotkeys>
+                </div>
+            ];
+        } else if (columnCount === 2) {
+            // Two columns: balanced distribution
+            const column1 = (
+                <div key="column1">
+                    <Hotkeys>
+                        {hotkeys.navigationHotKeys}
+                        {hotkeys.regionHotKeys}
+                    </Hotkeys>
+                </div>
+            );
+
+            const column2 = (
+                <div key="column2">
+                    <Hotkeys>
+                        {hotkeys.animatorHotkeys}
+                        {hotkeys.fileHotkeys}
+                        {hotkeys.otherHotKeys}
+                    </Hotkeys>
+                </div>
+            );
+
+            return [column1, column2];
+        } else {
+            // Three columns: original layout
+            const column1 = (
+                <div key="column1">
+                    <Hotkeys>
+                        {hotkeys.navigationHotKeys}
+                        {hotkeys.regionHotKeys}
+                    </Hotkeys>
+                </div>
+            );
+
+            const column2 = (
+                <div key="column2">
+                    <Hotkeys>
+                        {hotkeys.animatorHotkeys}
+                        {hotkeys.fileHotkeys}
+                    </Hotkeys>
+                </div>
+            );
+
+            const column3 = (
+                <div key="column3">
+                    <Hotkeys>{hotkeys.otherHotKeys}</Hotkeys>
+                </div>
+            );
+
+            return [column1, column2, column3];
+        }
+    }
+
+    static RenderHotkeys(isHiddenHotkeysIncluded: boolean = true) {
+        const hotkeys = HotkeyContainer.GetHotkeyDefinitions(isHiddenHotkeysIncluded);
+
         return (
             <Hotkeys>
-                {regionHotKeys}
-                {navigationHotKeys}
-                {animatorHotkeys}
-                {fileHotkeys}
-                {otherHotKeys}
+                {hotkeys.regionHotKeys}
+                {hotkeys.navigationHotKeys}
+                {hotkeys.animatorHotkeys}
+                {hotkeys.fileHotkeys}
+                {hotkeys.otherHotKeys}
             </Hotkeys>
         );
     }
 }
 
-function HotkeyWrapper() {} // tslint:disable-line
+function HotkeyWrapper(this: any, props: any) {
+    // Initialize state manually since we can't call ES6 class constructor with .call()
+    this.state = {
+        columnCount: this.calculateColumnCount()
+    };
+    this.resizeListener = () => {
+        const newColumnCount = this.calculateColumnCount();
+        if (newColumnCount !== this.state.columnCount) {
+            this.setState({columnCount: newColumnCount});
+        }
+    };
+}
 HotkeyWrapper.prototype = Object.create(HotkeyContainer.prototype);
+HotkeyWrapper.prototype.constructor = HotkeyWrapper;
 HotkeyWrapper.prototype.renderHotkeys = () => HotkeyContainer.RenderHotkeys();
 
 HotkeyWrapper.prototype.componentDidMount = function () {
+    // Call parent's componentDidMount to set up resize listener
+    if (HotkeyContainer.prototype.componentDidMount) {
+        HotkeyContainer.prototype.componentDidMount.call(this);
+    }
     // Use capture phase so we can intercept certain keys (e.g. Shift+?) before Blueprint's handlers
     document.addEventListener("keydown", this.handleGlobalKeydown, true);
 };
 
 HotkeyWrapper.prototype.componentWillUnmount = function () {
+    // Call parent's componentWillUnmount to clean up resize listener
+    if (HotkeyContainer.prototype.componentWillUnmount) {
+        HotkeyContainer.prototype.componentWillUnmount.call(this);
+    }
     document.removeEventListener("keydown", this.handleGlobalKeydown, true);
 };
 
 HotkeyWrapper.prototype.handleGlobalKeydown = function (event: KeyboardEvent) {
     const appStore = AppStore.Instance;
+
+    // Helper to detect if an element (or its ancestors) is an editable control
+    const isEditable = (el: Element | null): boolean => {
+        if (!el) return false;
+        if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) return true;
+        const he = el as HTMLElement;
+        if (he && (he.isContentEditable || he.getAttribute("contenteditable") !== null)) return true;
+        // Common ARIA roles used by input components
+        const role = he?.getAttribute?.("role");
+        if (role && ["textbox", "searchbox", "combobox", "spinbutton"].includes(role)) return true;
+        // Check ancestors for editable containers
+        return !!el.closest(
+            'input, textarea, select, [contenteditable], [role="textbox"], [role="searchbox"], [role="combobox"], [role="spinbutton"]'
+        );
+    };
+
+    // Ignore when focus is inside editable elements (inputs, textareas, selects, or contenteditable)
+    const target = (event.target as Element) ?? null;
+    const activeEl = (document.activeElement as Element) ?? null;
+    if (isEditable(target) || isEditable(activeEl)) {
+        return;
+    }
 
     // Intercept Shift+? to open our custom Hotkeys dialog and block Blueprint's default dialog
     // This prevents React 18 warnings from Blueprint's legacy ReactDOM.render path.
