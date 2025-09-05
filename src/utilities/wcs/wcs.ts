@@ -66,7 +66,7 @@ export function getPixelSize(frame: FrameStore, axis: number): number {
 
     // Get CDELT value - coordinate increment at reference point (degrees/pixel)
     // CDELT represents the nominal coordinate increment per pixel
-    const cdelt = getHeaderNumericValue(find(entry => (entry.name ?? "").includes(`CDELT${axis}`)));
+    const cdelt = getHeaderNumericValue(find(entry => (entry.name ?? "") === `CDELT${axis}`));
 
     // Get PC matrix elements - rotation/scaling transformation matrix
     // PC1_1, PC1_2, PC2_1, PC2_2 define rotation and scaling between pixel and world coordinates
