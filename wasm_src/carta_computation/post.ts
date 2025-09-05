@@ -79,48 +79,37 @@ addOnPostRun(function () {
         return destHeapFloat;
     };
 
-    Module.CalculateCatalogSize = (data: Float32Array, min: number, max: number, sizeMin: number, sizeMax: number, scaling: number, area: boolean, devicePixelRatio: number, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
+    function withWasmData(data: Float32Array, callback: (ptr: number, len: number) => void): Float32Array {
         const N = data.length;
         const bytes_per_element = data.BYTES_PER_ELEMENT;
         const dataOnWasmHeap = Module._malloc(N * bytes_per_element);
-
-        Module.HEAPF32.set(data, dataOnWasmHeap / bytes_per_element);
-
-        if (area) {
-            calculateCatalogMap(1, dataOnWasmHeap, N, min, max, sizeMin, sizeMax, scaling, alpha, gamma, devicePixelRatio, false);
-        } else {
-            calculateCatalogMap(0, dataOnWasmHeap, N, min, max, sizeMin, sizeMax, scaling, alpha, gamma, devicePixelRatio, false);
+        try {
+            Module.HEAPF32.set(data, dataOnWasmHeap / bytes_per_element);
+            callback(dataOnWasmHeap, N);
+            const result = new Float32Array(Module.HEAPF32.buffer, dataOnWasmHeap, N);
+            return result.slice();
+        } finally {
+            Module._free(dataOnWasmHeap);
         }
+    }
 
-        const float32 = new Float32Array(Module.HEAPF32.buffer, dataOnWasmHeap, N);
-        Module._free(dataOnWasmHeap);
-        return float32.slice();
+    Module.CalculateCatalogSize = (data: Float32Array, min: number, max: number, sizeMin: number, sizeMax: number, scaling: number, area: boolean, devicePixelRatio: number, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
+        return withWasmData(data, (dataOnWasmHeap, N) => {
+            const mapType = area ? 1 : 0;
+            calculateCatalogMap(mapType, dataOnWasmHeap, N, min, max, sizeMin, sizeMax, scaling, alpha, gamma, devicePixelRatio, false);
+        });
     };
 
     Module.CalculateCatalogColor = (data: Float32Array, invert: boolean, min: number, max: number, scaling: number, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
-        const N = data.length;
-        const bytes_per_element = data.BYTES_PER_ELEMENT;
-        const dataOnWasmHeap = Module._malloc(N * bytes_per_element);
-        Module.HEAPF32.set(data, dataOnWasmHeap / bytes_per_element);
-
-        calculateCatalogMap(2, dataOnWasmHeap, N, min, max, 0.0, 0.0, scaling, alpha, gamma, 1, invert);
-
-        const float32 = new Float32Array(Module.HEAPF32.buffer, dataOnWasmHeap, N);
-        Module._free(dataOnWasmHeap);
-        return float32.slice();
+        return withWasmData(data, (dataOnWasmHeap, N) => {
+            calculateCatalogMap(2, dataOnWasmHeap, N, min, max, 0.0, 0.0, scaling, alpha, gamma, 1, invert);
+        });
     };
 
     Module.CalculateCatalogOrientation = (data: Float32Array, min: number, max: number, angleMin: number, angleMax: number, scaling: number, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
-        const N = data.length;
-        const bytes_per_element = data.BYTES_PER_ELEMENT;
-        const dataOnWasmHeap = Module._malloc(N * bytes_per_element);
-        Module.HEAPF32.set(data, dataOnWasmHeap / bytes_per_element);
-
-        calculateCatalogMap(3, dataOnWasmHeap, N, min, max, angleMin, angleMax, scaling, alpha, gamma, 1, false);
-
-        const float32 = new Float32Array(Module.HEAPF32.buffer, dataOnWasmHeap, N);
-        Module._free(dataOnWasmHeap);
-        return float32.slice();
+        return withWasmData(data, (dataOnWasmHeap, N) => {
+            calculateCatalogMap(3, dataOnWasmHeap, N, min, max, angleMin, angleMax, scaling, alpha, gamma, 1, false);
+        });
     };
 
     Module.ConvertInt64Array = (data: Uint8Array, signed: boolean): Float64Array => {
