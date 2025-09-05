@@ -346,13 +346,15 @@ export class CompassAnnotationStore extends RegionStore {
         const width = right - left;
         const height = top - bottom;
 
-        const xPixelSizeRad = (getPixelSize(this.activeFrame, 1) * Math.PI) / 180;
-        const yPixelSizeRad = (getPixelSize(this.activeFrame, 2) * Math.PI) / 180;
+        const xAxis = 1;
+        const yAxis = 2;
+        const xPixelSizeRad = (getPixelSize(this.activeFrame, xAxis) * Math.PI) / 180;
+        const yPixelSizeRad = (getPixelSize(this.activeFrame, yAxis) * Math.PI) / 180;
         const angularWidth = !Number.isNaN(xPixelSizeRad) ? Math.abs(xPixelSizeRad * width) : 6.18;
         const angularHeight = !Number.isNaN(yPixelSizeRad) ? Math.abs(yPixelSizeRad * height) : 6.18;
 
-        const northApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, 2, transformed.x, transformed.y, angularHeight);
-        const eastApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, 1, transformed.x, transformed.y, angularWidth);
+        const eastApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, xAxis, transformed.x, transformed.y, angularWidth);
+        const northApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, yAxis, transformed.x, transformed.y, angularHeight);
 
         return {northApproximatePoints, eastApproximatePoints};
     }
