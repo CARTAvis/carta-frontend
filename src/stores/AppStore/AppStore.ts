@@ -958,7 +958,6 @@ export class AppStore {
             }
 
             this.widgetsStore.pvGeneratorWidgets.get(pvGeneratorWidgetId)?.removePreviewFrame(parseInt(pvGeneratorWidgetId.split("-")[2]));
-            this.widgetsStore.removeFloatingWidget(pvGeneratorWidgetId);
             this.previewFrames.delete(fileId);
 
             // clear existing requirements for the frame
