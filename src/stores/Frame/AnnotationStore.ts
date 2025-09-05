@@ -24,6 +24,7 @@ export enum Font {
 }
 
 const NUMBER_OF_POINT_TRANSFORMED = 201;
+const DEFAULT_COMPASS_ANGULAR_SIZE_RAD = 6.18; // Fallback angular size in radians for compass rendering
 
 export class PointAnnotationStore extends RegionStore {
     @observable pointShape: CARTA.PointAnnotationShape;
@@ -351,7 +352,6 @@ export class CompassAnnotationStore extends RegionStore {
         const xPixelSizeRad = (getPixelSize(this.activeFrame, xAxis) * Math.PI) / 180;
         const yPixelSizeRad = (getPixelSize(this.activeFrame, yAxis) * Math.PI) / 180;
 
-        const DEFAULT_COMPASS_ANGULAR_SIZE_RAD = 6.18; // Fallback angular size in radians for compass rendering
         const angularWidth = !Number.isNaN(xPixelSizeRad) ? Math.abs(xPixelSizeRad * width) : DEFAULT_COMPASS_ANGULAR_SIZE_RAD;
         const angularHeight = !Number.isNaN(yPixelSizeRad) ? Math.abs(yPixelSizeRad * height) : DEFAULT_COMPASS_ANGULAR_SIZE_RAD;
 
