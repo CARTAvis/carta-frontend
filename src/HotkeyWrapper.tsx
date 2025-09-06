@@ -173,36 +173,6 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
         }
     };
 
-    // Check if any BlueprintJS menu/popover is currently open and visible
-    static IsMenuOpen = (): boolean => {
-        try {
-            // Check for visible popover with menu content
-            const popovers = document.querySelectorAll('.bp5-popover-content, .bp4-popover-content, .bp3-popover-content');
-            for (const popover of popovers) {
-                const style = window.getComputedStyle(popover);
-                // Only consider it open if it's actually visible and has substantial opacity
-                if (style.display !== 'none' && 
-                    style.visibility !== 'hidden' && 
-                    parseFloat(style.opacity) > 0.8) {
-                    
-                    // Check if it contains a menu (not just any popover content)
-                    const menu = popover.querySelector('.bp5-menu, .bp4-menu, .bp3-menu');
-                    if (menu) {
-                        const menuStyle = window.getComputedStyle(menu);
-                        if (menuStyle.display !== 'none' && menuStyle.visibility !== 'hidden') {
-                            return true;
-                        }
-                    }
-                }
-            }
-            
-            return false;
-        } catch (error) {
-            // If there's any error, assume no menu is open to allow hotkeys to work
-            return false;
-        }
-    };
-
     // Unified hotkey definitions used by both display and registration systems
     static GetUnifiedHotkeyDefinitions(isHiddenHotkeysIncluded: boolean = true) {
         const appStore = AppStore.Instance;
@@ -217,7 +187,7 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
                 global: true,
                 allowInInput: false,
                 preventDefault: true,
-                onKeyDown: () => appStore.nextImage()
+                onKeyDown: appStore.nextImage
             },
             {
                 combo: `${modString}[`,
@@ -226,7 +196,7 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
                 global: true,
                 allowInInput: false,
                 preventDefault: true,
-                onKeyDown: () => appStore.prevImage()
+                onKeyDown: appStore.prevImage
             },
             {
                 combo: `${modString}up`,
@@ -275,7 +245,7 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
                           global: true,
                           allowInInput: false,
                           preventDefault: true,
-                          onKeyDown: () => appStore.nextImage()
+                          onKeyDown: appStore.nextImage
                       },
                       {
                           combo: `${modString}“`,
@@ -284,7 +254,7 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
                           global: true,
                           allowInInput: false,
                           preventDefault: true,
-                          onKeyDown: () => appStore.prevImage()
+                          onKeyDown: appStore.prevImage
                       }
                   ]
                 : []),
@@ -296,6 +266,7 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
                 label: "Toggle region creation mode",
                 global: true,
                 allowInInput: false,
+                preventDefault: true,
                 onKeyDown: HotkeyService.ToggleCreateMode
             },
             {
@@ -304,6 +275,7 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
                 label: "Toggle current region lock",
                 global: true,
                 allowInInput: false,
+                preventDefault: true,
                 onKeyDown: HotkeyService.ToggleRegionLock
             },
             {
@@ -312,6 +284,7 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
                 label: "Unlock all regions",
                 global: true,
                 allowInInput: false,
+                preventDefault: true,
                 onKeyDown: HotkeyService.UnlockAllRegions
             },
             {
@@ -321,7 +294,7 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
                 global: true,
                 allowInInput: false,
                 preventDefault: true,
-                onKeyDown: () => appStore.deleteSelectedRegion()
+                onKeyDown: appStore.deleteSelectedRegion
             },
             {
                 combo: "backspace",
@@ -330,7 +303,7 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
                 global: true,
                 allowInInput: false,
                 preventDefault: true,
-                onKeyDown: () => appStore.deleteSelectedRegion()
+                onKeyDown: appStore.deleteSelectedRegion
             },
             {
                 combo: "esc",
@@ -338,6 +311,7 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
                 label: "Deselect/Cancel region creation",
                 global: true,
                 allowInInput: false,
+                preventDefault: true,
                 onKeyDown: HotkeyService.HandleRegionEsc
             },
 
@@ -348,6 +322,7 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
                 label: "Open image",
                 global: true,
                 allowInInput: false,
+                preventDefault: true,
                 onKeyDown: () => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File)
             },
             {
@@ -356,6 +331,7 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
                 label: "Append image",
                 global: true,
                 allowInInput: false,
+                preventDefault: true,
                 onKeyDown: () => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)
             },
             {
@@ -364,6 +340,7 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
                 label: "Close image",
                 global: true,
                 allowInInput: false,
+                preventDefault: true,
                 onKeyDown: () => appStore.closeCurrentFile(true)
             },
             {
@@ -372,6 +349,7 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
                 label: "Save image",
                 global: true,
                 allowInInput: false,
+                preventDefault: true,
                 onKeyDown: () => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)
             },
             {
@@ -380,6 +358,7 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
                 label: "Import catalog",
                 global: true,
                 allowInInput: false,
+                preventDefault: true,
                 onKeyDown: () => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)
             },
             {
@@ -388,6 +367,7 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
                 label: "Export image",
                 global: true,
                 allowInInput: false,
+                preventDefault: true,
                 onKeyDown: () => appStore.exportImage(1)
             },
 
@@ -398,6 +378,7 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
                 label: "Toggle light/dark theme",
                 global: true,
                 allowInInput: false,
+                preventDefault: true,
                 onKeyDown: HotkeyService.ToggleDarkTheme
             },
             {
@@ -406,7 +387,8 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
                 label: "Freeze/unfreeze cursor position",
                 global: true,
                 allowInInput: false,
-                onKeyDown: () => appStore.toggleCursorFrozen()
+                preventDefault: true,
+                onKeyDown: appStore.toggleCursorFrozen
             },
             {
                 combo: "g",
@@ -414,7 +396,8 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
                 label: "Mirror cursor on multipanel view",
                 global: true,
                 allowInInput: false,
-                onKeyDown: () => appStore.toggleCursorMirror()
+                preventDefault: true,
+                onKeyDown: appStore.toggleCursorMirror
             }
         ];
     }
