@@ -81,7 +81,7 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
                 canEscapeKeyClose={true}
                 canOutsideClickClose={true}
                 onClose={() => appStore.dialogStore.hideDialog(DialogId.Hotkey)}
-                style={{width: this.getDialogWidth(), maxWidth: "90vw"}}
+                style={{width: this.getDialogWidth(), maxWidth: "95vw"}}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <div
