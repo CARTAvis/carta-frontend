@@ -21,9 +21,13 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
             columnCount: this.calculateColumnCount()
         };
         this.resizeListener = () => {
-            const newColumnCount = this.calculateColumnCount();
-            if (newColumnCount !== this.state.columnCount) {
-                this.setState({columnCount: newColumnCount});
+            // Only update column count if the hotkeys dialog is open
+            const appStore = AppStore.Instance;
+            if (appStore.dialogStore.dialogVisible.get(DialogId.Hotkey)) {
+                const newColumnCount = this.calculateColumnCount();
+                if (newColumnCount !== this.state.columnCount) {
+                    this.setState({columnCount: newColumnCount});
+                }
             }
         };
     }
