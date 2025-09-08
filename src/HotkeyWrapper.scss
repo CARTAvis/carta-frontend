@@ -2,10 +2,11 @@
 $col-w: 360px; /* column width */
 $gap: 20px; /* column gap */
 $pad: 20px; /* Blueprint dialog body horizontal padding per side */
+$breakpoint-buffer: 100px; /* additional buffer for responsive breakpoint calculations */
 
 // Calculate breakpoint values
-$breakpoint-2col: $col-w * 2 + $gap + $pad * 2 + $pad * 5;
-$breakpoint-3col: $col-w * 3 + $gap * 2 + $pad * 2 + $pad * 5;
+$breakpoint-2col: $col-w * 2 + $gap + $pad * 2 + $breakpoint-buffer;
+$breakpoint-3col: $col-w * 3 + $gap * 2 + $pad * 2 + $breakpoint-buffer;
 
 .bp5-dialog.hotkeys-dialog {
     /* 1 col = 1×col-w + 0×gap + 2×pad */
