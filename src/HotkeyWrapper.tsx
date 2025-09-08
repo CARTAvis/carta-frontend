@@ -6,69 +6,11 @@ import {observer} from "mobx-react";
 import {ImageViewLayer} from "components";
 import {AppStore, BrowserMode, DialogId} from "stores";
 import {RegionMode} from "stores/Frame";
+
 import "./HotkeyWrapper.scss";
 
-interface HotkeyServiceState {
-    columnCount: number;
-}
-
 @observer
-export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
-    private resizeListener: () => void;
-
-    constructor(props: {}) {
-        super(props);
-        this.state = {
-            columnCount: this.calculateColumnCount()
-        };
-        this.resizeListener = () => {
-            // Only update column count if the hotkeys dialog is open
-            const appStore = AppStore.Instance;
-            if (appStore.dialogStore.dialogVisible.get(DialogId.Hotkey)) {
-                const newColumnCount = this.calculateColumnCount();
-                if (newColumnCount !== this.state.columnCount) {
-                    this.setState({columnCount: newColumnCount});
-                }
-            }
-        };
-    }
-
-    componentDidMount() {
-        window.addEventListener("resize", this.resizeListener);
-    }
-
-    componentWillUnmount() {
-        window.removeEventListener("resize", this.resizeListener);
-    }
-
-    private calculateColumnCount(): number {
-        const screenWidth = window.innerWidth;
-        if (screenWidth < 840) {
-            return 1;
-        } else if (screenWidth < 1280) {
-            return 2;
-        } else {
-            return 3;
-        }
-    }
-
-    private getDialogWidth(): string {
-        const columnCount = this.state?.columnCount || this.calculateColumnCount();
-        switch (columnCount) {
-            case 1:
-                return "400px";
-            case 2:
-                return "800px";
-            case 3:
-            default:
-                return "1200px";
-        }
-    }
-
-    private getGridColumns(): string {
-        const columnCount = this.state?.columnCount || this.calculateColumnCount();
-        return Array(columnCount).fill("1fr").join(" ");
-    }
+export class HotkeyService extends React.Component<{}> {
 
     public render() {
         const appStore = AppStore.Instance;
@@ -82,12 +24,9 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
                 canEscapeKeyClose={true}
                 canOutsideClickClose={true}
                 onClose={() => appStore.dialogStore.hideDialog(DialogId.Hotkey)}
-                style={{width: this.getDialogWidth()}}
             >
                 <div className={Classes.DIALOG_BODY}>
-                    <div className="hotkeys-grid" style={{gridTemplateColumns: this.getGridColumns()}}>
-                        {HotkeyService.RenderHotkeysInColumns(this.state?.columnCount || this.calculateColumnCount())}
-                    </div>
+                    <div className="hotkeys-grid">{HotkeyService.RenderHotkeyGroups()}</div>
                 </div>
             </Dialog>
         );
@@ -270,9 +209,7 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
 
     // For display in custom hotkeys dialog
     static GetHotkeyDefinitionsForDisplay() {
-        const toElements = (hotkeys: any[]) => hotkeys.map((hotkey, index) => (
-            <Hotkey key={index} group={hotkey.group} global={hotkey.global} combo={hotkey.combo} label={hotkey.label} onKeyDown={hotkey.onKeyDown} />
-        ));
+        const toElements = (hotkeys: any[]) => hotkeys.map((hotkey, index) => <Hotkey key={index} group={hotkey.group} global={hotkey.global} combo={hotkey.combo} label={hotkey.label} onKeyDown={hotkey.onKeyDown} />);
 
         // 1) Navigation
         const navigationHotKeys: React.ReactElement[] = toElements(HotkeyService.GetNavigationDisplayOnlyHotkeys());
@@ -300,25 +237,14 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
         };
     }
 
-    static RenderHotkeysInColumns(columnCount: number = 3) {
+    static RenderHotkeyGroups() {
         const hotkeys = HotkeyService.GetHotkeyDefinitionsForDisplay();
         const hotkeyGroups = [hotkeys.navigationHotKeys, hotkeys.regionHotKeys, hotkeys.animatorHotkeys, hotkeys.fileHotkeys, hotkeys.otherHotKeys];
 
-        // Define how to distribute groups across columns
-        const columnDistributions = {
-            1: [[0, 1, 2, 3, 4]], // All groups in one column
-            2: [
-                [0, 1],
-                [2, 3, 4]
-            ], // First two groups in column 1, rest in column 2
-            3: [[0, 1], [2, 3], [4]] // Distribute across three columns
-        };
-
-        const distribution = columnDistributions[columnCount] || columnDistributions[3];
-
-        return distribution.map((groupIndices: number[], columnIndex: number) => (
-            <div key={`column${columnIndex + 1}`}>
-                <Hotkeys>{groupIndices.map(index => hotkeyGroups[index])}</Hotkeys>
+        // Render each group; placement handled purely by CSS multi-column
+        return hotkeyGroups.map((group, idx) => (
+            <div className="hotkeys-item" key={`hotkeys-group-${idx}`}>
+                <Hotkeys>{group}</Hotkeys>
             </div>
         ));
     }
@@ -326,13 +252,7 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
 
 export function HotkeysRegistrar() {
     const hotkeys = React.useMemo(
-        () => [
-            ...HotkeyService.GetFrameControlHotkeys(),
-            ...HotkeyService.GetFrameControlHiddenHotkeys(),
-            ...HotkeyService.GetRegionHotkeys(),
-            ...HotkeyService.GetFileControlHotkeys(),
-            ...HotkeyService.GetOtherHotkeys()
-        ],
+        () => [...HotkeyService.GetFrameControlHotkeys(), ...HotkeyService.GetFrameControlHiddenHotkeys(), ...HotkeyService.GetRegionHotkeys(), ...HotkeyService.GetFileControlHotkeys(), ...HotkeyService.GetOtherHotkeys()],
         []
     );
 

@@ -1,10 +1,45 @@
-.hotkeys-dialog {
+/* SCSS sizing variables */
+$col-w: 360px; /* column width */
+$gap: 20px; /* column gap */
+$pad: 20px; /* Blueprint dialog body horizontal padding per side */
+
+// Calculate breakpoint values
+$breakpoint-2col: $col-w * 2 + $gap + $pad * 2 + $pad * 5;
+$breakpoint-3col: $col-w * 3 + $gap * 2 + $pad * 2 + $pad * 5;
+
+.bp5-dialog.hotkeys-dialog {
+    /* 1 col = 1×col-w + 0×gap + 2×pad */
+    width: $col-w + $pad * 2;
     max-width: 95vw;
 }
 
-.hotkeys-grid {
-    display: grid;
-    gap: 20px;
-    align-items: start;
+@media (min-width: $breakpoint-2col) {
+    .bp5-dialog.hotkeys-dialog {
+        /* 2 cols = 2×col-w + 1×gap + 2×pad */
+        width: $col-w * 2 + $gap + $pad * 2;
+    }
 }
 
+@media (min-width: $breakpoint-3col) {
+    .bp5-dialog.hotkeys-dialog {
+        /* 3 cols = 3×col-w + 2×gap + 2×pad */
+        width: $col-w * 3 + $gap * 2 + $pad * 2;
+    }
+}
+
+.hotkeys-grid {
+    /* Multi-column layout: top-to-bottom, then next column */
+    column-width: $col-w;
+    column-gap: $gap;
+    width: 100%;
+}
+
+.hotkeys-item {
+    /* Keep group intact within a column */
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+    page-break-inside: avoid;
+    display: block;
+    width: 100%;
+    margin-bottom: $gap; /* vertical spacing between groups */
+}
