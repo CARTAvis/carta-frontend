@@ -11,7 +11,6 @@ import "./HotkeyWrapper.scss";
 
 @observer
 export class HotkeyService extends React.Component<{}> {
-
     public render() {
         const appStore = AppStore.Instance;
         const className = classNames(Classes.HOTKEY_DIALOG, {[Classes.DARK]: appStore.darkTheme});
