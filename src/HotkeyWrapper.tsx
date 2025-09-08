@@ -171,278 +171,125 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
         }
     };
 
-    // Unified hotkey definitions used by both display and registration systems
-    static GetUnifiedHotkeyDefinitions(isHiddenHotkeysIncluded: boolean = true) {
-        const appStore = AppStore.Instance;
-        const modString = appStore.modifierString;
-
-        return [
-            // 3) Frame controls
-            {
-                combo: `${modString}]`,
-                group: "3) Frame controls",
-                label: "Next image",
-                global: true,
-                allowInInput: false,
-                preventDefault: true,
-                onKeyDown: appStore.nextImage
-            },
-            {
-                combo: `${modString}[`,
-                group: "3) Frame controls",
-                label: "Previous image",
-                global: true,
-                allowInInput: false,
-                preventDefault: true,
-                onKeyDown: appStore.prevImage
-            },
-            {
-                combo: `${modString}up`,
-                group: "3) Frame controls",
-                label: "Next channel",
-                global: true,
-                allowInInput: false,
-                preventDefault: true,
-                onKeyDown: HotkeyService.NextChannel
-            },
-            {
-                combo: `${modString}down`,
-                group: "3) Frame controls",
-                label: "Previous channel",
-                global: true,
-                allowInInput: false,
-                preventDefault: true,
-                onKeyDown: HotkeyService.PrevChannel
-            },
-            {
-                combo: `${modString}shift + up`,
-                group: "3) Frame controls",
-                label: "Next Stokes cube",
-                global: true,
-                allowInInput: false,
-                preventDefault: true,
-                onKeyDown: HotkeyService.NextStokes
-            },
-            {
-                combo: `${modString}shift + down`,
-                group: "3) Frame controls",
-                label: "Previous Stokes cube",
-                global: true,
-                allowInInput: false,
-                preventDefault: true,
-                onKeyDown: HotkeyService.PrevStokes
-            },
-
-            // Hidden hotkeys for input method compatibility (only included if requested)
-            ...(isHiddenHotkeysIncluded
-                ? [
-                      {
-                          combo: `${modString}‘`,
-                          group: "3) Frame controls",
-                          label: "Next image",
-                          global: true,
-                          allowInInput: false,
-                          preventDefault: true,
-                          onKeyDown: appStore.nextImage
-                      },
-                      {
-                          combo: `${modString}“`,
-                          group: "3) Frame controls",
-                          label: "Previous image",
-                          global: true,
-                          allowInInput: false,
-                          preventDefault: true,
-                          onKeyDown: appStore.prevImage
-                      }
-                  ]
-                : []),
-
-            // 2) Regions
-            {
-                combo: "c",
-                group: "2) Regions",
-                label: "Toggle region creation mode",
-                global: true,
-                allowInInput: false,
-                preventDefault: true,
-                onKeyDown: HotkeyService.ToggleCreateMode
-            },
-            {
-                combo: "l",
-                group: "2) Regions",
-                label: "Toggle current region lock",
-                global: true,
-                allowInInput: false,
-                preventDefault: true,
-                onKeyDown: HotkeyService.ToggleRegionLock
-            },
-            {
-                combo: "shift+l",
-                group: "2) Regions",
-                label: "Unlock all regions",
-                global: true,
-                allowInInput: false,
-                preventDefault: true,
-                onKeyDown: HotkeyService.UnlockAllRegions
-            },
-            {
-                combo: "delete",
-                group: "2) Regions",
-                label: "Delete selected region",
-                global: true,
-                allowInInput: false,
-                preventDefault: true,
-                onKeyDown: appStore.deleteSelectedRegion
-            },
-            {
-                combo: "backspace",
-                group: "2) Regions",
-                label: "Delete selected region",
-                global: true,
-                allowInInput: false,
-                preventDefault: true,
-                onKeyDown: appStore.deleteSelectedRegion
-            },
-            {
-                combo: "esc",
-                group: "2) Regions",
-                label: "Deselect/Cancel region creation",
-                global: true,
-                allowInInput: false,
-                preventDefault: true,
-                onKeyDown: HotkeyService.HandleRegionEsc
-            },
-
-            // 4) File controls
-            {
-                combo: `${modString}O`,
-                group: "4) File controls",
-                label: "Open image",
-                global: true,
-                allowInInput: false,
-                preventDefault: true,
-                onKeyDown: () => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File)
-            },
-            {
-                combo: `${modString}L`,
-                group: "4) File controls",
-                label: "Append image",
-                global: true,
-                allowInInput: false,
-                preventDefault: true,
-                onKeyDown: () => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)
-            },
-            {
-                combo: `${modString}W`,
-                group: "4) File controls",
-                label: "Close image",
-                global: true,
-                allowInInput: false,
-                preventDefault: true,
-                onKeyDown: () => appStore.closeCurrentFile(true)
-            },
-            {
-                combo: `${modString}S`,
-                group: "4) File controls",
-                label: "Save image",
-                global: true,
-                allowInInput: false,
-                preventDefault: true,
-                onKeyDown: () => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)
-            },
-            {
-                combo: `${modString}G`,
-                group: "4) File controls",
-                label: "Import catalog",
-                global: true,
-                allowInInput: false,
-                preventDefault: true,
-                onKeyDown: () => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)
-            },
-            {
-                combo: `${modString}E`,
-                group: "4) File controls",
-                label: "Export image",
-                global: true,
-                allowInInput: false,
-                preventDefault: true,
-                onKeyDown: () => appStore.exportImage(1)
-            },
-
-            // 5) Other
-            {
-                combo: "shift+d",
-                group: "5) Other",
-                label: "Toggle light/dark theme",
-                global: true,
-                allowInInput: false,
-                preventDefault: true,
-                onKeyDown: HotkeyService.ToggleDarkTheme
-            },
-            {
-                combo: "f",
-                group: "5) Other",
-                label: "Freeze/unfreeze cursor position",
-                global: true,
-                allowInInput: false,
-                preventDefault: true,
-                onKeyDown: appStore.toggleCursorFrozen
-            },
-            {
-                combo: "g",
-                group: "5) Other",
-                label: "Mirror cursor on multipanel view",
-                global: true,
-                allowInInput: false,
-                preventDefault: true,
-                onKeyDown: appStore.toggleCursorMirror
-            }
+    // For display in custom hotkeys dialog
+    static GetNavigationDisplayOnlyHotkeys() {
+        const group = "1) Navigation";
+        const base = {group, global: true};
+        const items = [
+            {combo: "click", label: "Pan image"},
+            {combo: "middle-click", label: "Pan image (inside region)"},
+            {combo: "mod + click", label: "Pan image (inside region)"},
+            {combo: "mouse-wheel", label: "Zoom image"}
         ];
+        return items.map(item => ({...base, ...item}));
     }
 
     // For display in custom hotkeys dialog
-    static GetHotkeyDefinitionsForDisplay(isHiddenHotkeysIncluded: boolean = true) {
-        const unifiedHotkeys = HotkeyService.GetUnifiedHotkeyDefinitions(isHiddenHotkeysIncluded);
-
-        const navigationGroupTitle = "1) Navigation";
-        const regionGroupTitle = "2) Regions";
-        const animatorGroupTitle = "3) Frame controls";
-        const fileGroupTitle = "4) File controls";
-        const otherGroupTitle = "5) Other";
-
-        const navigationHotKeys = [
-            <Hotkey key={0} group={navigationGroupTitle} global={true} combo="click" label="Pan image" />,
-            <Hotkey key={1} group={navigationGroupTitle} global={true} combo="middle-click" label="Pan image (inside region)" />,
-            <Hotkey key={2} group={navigationGroupTitle} global={true} combo="mod+click" label="Pan image (inside region)" />,
-            <Hotkey key={3} group={navigationGroupTitle} global={true} combo="mouse-wheel" label="Zoom image" />
+    static GetRegionDisplayOnlyHotkeys() {
+        const group = "2) Regions";
+        const base = {group, global: true};
+        const items = [
+            {combo: "mod", label: "Switch region creation mode"},
+            {combo: "shift", label: "Symmetric region creation"},
+            {combo: "double-click", label: "Region properties"}
         ];
+        return items.map(item => ({...base, ...item}));
+    }
 
-        const regionDisplayOnlyHotkeys = [
-            <Hotkey key={100} group={regionGroupTitle} global={true} combo="mod" label="Switch region creation mode" />,
-            <Hotkey key={101} group={regionGroupTitle} global={true} combo="shift" label="Symmetric region creation" />,
-            <Hotkey key={102} group={regionGroupTitle} global={true} combo="double-click" label="Region properties" />
+    static GetRegionHotkeys() {
+        const appStore = AppStore.Instance;
+        const group = "2) Regions";
+        const base = {group, global: true, allowInInput: false, preventDefault: true};
+        const items = [
+            {combo: "c", label: "Toggle region creation mode", onKeyDown: HotkeyService.ToggleCreateMode},
+            {combo: "l", label: "Toggle current region lock", onKeyDown: HotkeyService.ToggleRegionLock},
+            {combo: "shift + l", label: "Unlock all regions", onKeyDown: HotkeyService.UnlockAllRegions},
+            {combo: "delete", label: "Delete selected region", onKeyDown: appStore.deleteSelectedRegion},
+            {combo: "backspace", label: "Delete selected region", onKeyDown: appStore.deleteSelectedRegion},
+            {combo: "esc", label: "Deselect/Cancel region creation", onKeyDown: HotkeyService.HandleRegionEsc}
         ];
+        return items.map(item => ({...base, ...item}));
+    }
 
-        const regionHotKeys: React.ReactElement[] = [];
-        const animatorHotkeys: React.ReactElement[] = [];
-        const fileHotkeys: React.ReactElement[] = [];
-        const otherHotKeys: React.ReactElement[] = [];
+    static GetFrameControlHotkeys() {
+        const appStore = AppStore.Instance;
+        const modString = appStore.modifierString;
+        const group = "3) Frame controls";
+        const base = {group, global: true, allowInInput: false, preventDefault: true};
+        const items = [
+            {combo: `${modString}]`, label: "Next image", onKeyDown: appStore.nextImage},
+            {combo: `${modString}[`, label: "Previous image", onKeyDown: appStore.prevImage},
+            {combo: `${modString}up`, label: "Next channel", onKeyDown: HotkeyService.NextChannel},
+            {combo: `${modString}down`, label: "Previous channel", onKeyDown: HotkeyService.PrevChannel},
+            {combo: `${modString}shift + up`, label: "Next Stokes cube", onKeyDown: HotkeyService.NextStokes},
+            {combo: `${modString}shift + down`, label: "Previous Stokes cube", onKeyDown: HotkeyService.PrevStokes}
+        ];
+        return items.map(item => ({...base, ...item}));
+    }
 
-        unifiedHotkeys.forEach((hotkey, index) => {
-            const hotkeyElement = <Hotkey key={index} group={hotkey.group} global={hotkey.global} combo={hotkey.combo} label={hotkey.label} onKeyDown={hotkey.onKeyDown} />;
+    // Hidden hotkeys for input method compatibility
+    static GetFrameControlHiddenHotkeys() {
+        const appStore = AppStore.Instance;
+        const modString = appStore.modifierString;
+        const group = "3) Frame controls";
+        const base = {group, global: true, allowInInput: false, preventDefault: true};
+        const items = [
+            {combo: `${modString}‘`, label: "Next image", onKeyDown: appStore.nextImage},
+            {combo: `${modString}“`, label: "Previous image", onKeyDown: appStore.prevImage}
+        ];
+        return items.map(item => ({...base, ...item}));
+    }
 
-            if (hotkey.group === regionGroupTitle) {
-                regionHotKeys.push(hotkeyElement);
-            } else if (hotkey.group === animatorGroupTitle) {
-                animatorHotkeys.push(hotkeyElement);
-            } else if (hotkey.group === fileGroupTitle) {
-                fileHotkeys.push(hotkeyElement);
-            } else if (hotkey.group === otherGroupTitle) {
-                otherHotKeys.push(hotkeyElement);
-            }
-        });
+    static GetFileControlHotkeys() {
+        const appStore = AppStore.Instance;
+        const modString = appStore.modifierString;
+        const group = "4) File controls";
+        const base = {group, global: true, allowInInput: false, preventDefault: true};
+        const items = [
+            {combo: `${modString}O`, label: "Open image", onKeyDown: () => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File)},
+            {combo: `${modString}L`, label: "Append image", onKeyDown: () => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)},
+            {combo: `${modString}W`, label: "Close image", onKeyDown: () => appStore.closeCurrentFile(true)},
+            {combo: `${modString}S`, label: "Save image", onKeyDown: () => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)},
+            {combo: `${modString}G`, label: "Import catalog", onKeyDown: () => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)},
+            {combo: `${modString}E`, label: "Export image", onKeyDown: () => appStore.exportImage(1)}
+        ];
+        return items.map(item => ({...base, ...item}));
+    }
 
+    static GetOtherHotkeys() {
+        const appStore = AppStore.Instance;
+        const group = "5) Other";
+        const base = {group, global: true, allowInInput: false, preventDefault: true};
+        const items = [
+            {combo: "shift + d", label: "Toggle light/dark theme", onKeyDown: HotkeyService.ToggleDarkTheme},
+            {combo: "f", label: "Freeze/unfreeze cursor position", onKeyDown: appStore.toggleCursorFrozen},
+            {combo: "g", label: "Mirror cursor on multipanel view", onKeyDown: appStore.toggleCursorMirror}
+        ];
+        return items.map(item => ({...base, ...item}));
+    }
+
+    // For display in custom hotkeys dialog
+    static GetHotkeyDefinitionsForDisplay() {
+        const toElements = (hotkeys: any[]) => hotkeys.map((hotkey, index) => (
+            <Hotkey key={index} group={hotkey.group} global={hotkey.global} combo={hotkey.combo} label={hotkey.label} onKeyDown={hotkey.onKeyDown} />
+        ));
+
+        // 1) Navigation
+        const navigationHotKeys: React.ReactElement[] = toElements(HotkeyService.GetNavigationDisplayOnlyHotkeys());
+
+        // 2) Regions
+        const regionHotKeys: React.ReactElement[] = toElements(HotkeyService.GetRegionHotkeys());
+        const regionDisplayOnlyHotkeys: React.ReactElement[] = toElements(HotkeyService.GetRegionDisplayOnlyHotkeys());
         regionHotKeys.push(...regionDisplayOnlyHotkeys);
+
+        // 3) Frame controls
+        const animatorHotkeys: React.ReactElement[] = toElements(HotkeyService.GetFrameControlHotkeys());
+
+        // 4) File controls
+        const fileHotkeys: React.ReactElement[] = toElements(HotkeyService.GetFileControlHotkeys());
+
+        // 5) Other
+        const otherHotKeys: React.ReactElement[] = toElements(HotkeyService.GetOtherHotkeys());
 
         return {
             navigationHotKeys,
@@ -454,7 +301,7 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
     }
 
     static RenderHotkeysInColumns(columnCount: number = 3) {
-        const hotkeys = HotkeyService.GetHotkeyDefinitionsForDisplay(false);
+        const hotkeys = HotkeyService.GetHotkeyDefinitionsForDisplay();
         const hotkeyGroups = [hotkeys.navigationHotKeys, hotkeys.regionHotKeys, hotkeys.animatorHotkeys, hotkeys.fileHotkeys, hotkeys.otherHotKeys];
 
         // Define how to distribute groups across columns
@@ -478,7 +325,16 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
 }
 
 export function HotkeysRegistrar() {
-    const hotkeys = React.useMemo(() => HotkeyService.GetUnifiedHotkeyDefinitions(true), []);
+    const hotkeys = React.useMemo(
+        () => [
+            ...HotkeyService.GetFrameControlHotkeys(),
+            ...HotkeyService.GetFrameControlHiddenHotkeys(),
+            ...HotkeyService.GetRegionHotkeys(),
+            ...HotkeyService.GetFileControlHotkeys(),
+            ...HotkeyService.GetOtherHotkeys()
+        ],
+        []
+    );
 
     useHotkeys(hotkeys);
 
