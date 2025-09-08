@@ -6,6 +6,7 @@ import {observer} from "mobx-react";
 import {ImageViewLayer} from "components";
 import {AppStore, BrowserMode, DialogId} from "stores";
 import {RegionMode} from "stores/Frame";
+import "./HotkeyWrapper.scss";
 
 interface HotkeyServiceState {
     columnCount: number;
@@ -77,21 +78,14 @@ export class HotkeyService extends React.Component<{}, HotkeyServiceState> {
             <Dialog
                 portalClassName="dialog-portal"
                 isOpen={appStore.dialogStore.dialogVisible.get(DialogId.Hotkey)}
-                className={className}
+                className={classNames(className, "hotkeys-dialog")}
                 canEscapeKeyClose={true}
                 canOutsideClickClose={true}
                 onClose={() => appStore.dialogStore.hideDialog(DialogId.Hotkey)}
-                style={{width: this.getDialogWidth(), maxWidth: "95vw"}}
+                style={{width: this.getDialogWidth()}}
             >
                 <div className={Classes.DIALOG_BODY}>
-                    <div
-                        style={{
-                            display: "grid",
-                            gridTemplateColumns: this.getGridColumns(),
-                            gap: "20px",
-                            alignItems: "start"
-                        }}
-                    >
+                    <div className="hotkeys-grid" style={{gridTemplateColumns: this.getGridColumns()}}>
                         {HotkeyService.RenderHotkeysInColumns(this.state?.columnCount || this.calculateColumnCount())}
                     </div>
                 </div>
