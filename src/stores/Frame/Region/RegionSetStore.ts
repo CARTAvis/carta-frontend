@@ -278,6 +278,10 @@ export class RegionSetStore {
 
     @action selectRegion = (region: RegionStore) => {
         if (this.regions.indexOf(region) >= 0) {
+            // Deselect point from previously selected region
+            if (this.selectedRegion && this.selectedRegion !== region && this.selectedRegion.supportsPointSelection) {
+                this.selectedRegion.deselectPoint();
+            }
             this.selectedRegion = region;
         }
     };

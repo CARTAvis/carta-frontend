@@ -115,11 +115,13 @@ interface AnchorProps {
     y: number;
     rotation: number;
     isRotator: boolean;
+    isSelected?: boolean;
     onMouseEnter: (ev) => void;
     onMouseOut: (ev) => void;
     onDragStart: (ev) => void;
     onDragEnd: (ev) => void;
     onDragMove: (ev) => void;
+    onClick?: (ev) => void;
     onDblClick?: (ev) => void;
     isLineRegion?: boolean;
 }
@@ -138,14 +140,19 @@ export const Anchor = (props: AnchorProps) => {
         ctx.fillStrokeShape(shape);
     };
 
+    // Use different colors for selected anchors
+    const fillColor = props.isSelected ? "#007cbb" : "white";
+    const strokeColor = props.isSelected ? "#ffffff" : "black";
+    const strokeWidth = props.isSelected ? 2 : 1;
+
     return (
         <Shape
             x={props.x}
             y={props.y}
             rotation={props.rotation}
-            fill={"white"}
-            strokeWidth={1}
-            stroke={"black"}
+            fill={fillColor}
+            strokeWidth={strokeWidth}
+            stroke={strokeColor}
             strokeScaleEnabled={false}
             draggable={true}
             key={props.anchor}
@@ -155,6 +162,7 @@ export const Anchor = (props: AnchorProps) => {
             onDragStart={props.onDragStart}
             onDragEnd={props.onDragEnd}
             onDragMove={props.onDragMove}
+            onClick={props.onClick}
             onDblClick={props.onDblClick}
             sceneFunc={props.isRotator ? handleCircleDraw : handleRectDraw}
         />

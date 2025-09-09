@@ -85,9 +85,20 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         }
     };
 
-    private handleAnchorDragStart = () => {
+    private handleAnchorDragStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         this.props.onSelect?.(this.props.region);
         this.props.region.beginEditing();
+        
+        // Select the specific point being dragged for polygon/polyline regions
+        if (konvaEvent.currentTarget) {
+            const node = konvaEvent.target;
+            const index = node.index;
+            const anchor = node.id();
+            
+            if (!anchor.includes("rotator") && index >= 0 && index < this.props.region.controlPoints.length && this.props.region.supportsPointSelection) {
+                this.props.region.selectPoint(index);
+            }
+        }
     };
 
     private handleAnchorDragEnd = () => {
@@ -218,6 +229,19 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         }
     };
 
+    private handleAnchorClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        // Select the specific point for polygon/polyline regions
+        if (konvaEvent.currentTarget) {
+            const node = konvaEvent.target;
+            const index = node.index;
+            const anchor = node.id();
+            
+            if (!anchor.includes("rotator") && index >= 0 && index < this.props.region.controlPoints.length && this.props.region.supportsPointSelection) {
+                this.props.region.selectPoint(index);
+            }
+        }
+    };
+
     @action handleDragStart = () => {
         this.props.onSelect?.(this.props.region);
         this.props.region.beginEditing();
@@ -245,6 +269,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
     };
 
     private anchorNode(x: number, y: number, rotation: number = 0, key: number, isRotator: boolean = false): React.ReactNode {
+        const isSelected = !isRotator && this.props.region.supportsPointSelection && this.props.region.selectedPointIndex === key;
         return (
             <Anchor
                 key={key}
@@ -253,11 +278,13 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 y={y}
                 rotation={rotation}
                 isRotator={isRotator}
+                isSelected={isSelected}
                 onMouseEnter={this.handleAnchorMouseEnter}
                 onMouseOut={this.handleAnchorMouseOut}
                 onDragStart={this.handleAnchorDragStart}
                 onDragEnd={this.handleAnchorDragEnd}
                 onDragMove={this.handleAnchorDrag}
+                onClick={this.handleAnchorClick}
                 onDblClick={
                     this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE || this.props.region.regionType === CARTA.RegionType.ANNVECTOR ? null : this.handleAnchorDoubleClick
                 }

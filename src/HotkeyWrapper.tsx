@@ -102,11 +102,30 @@ export class HotkeyService extends React.Component<{}> {
         if (appStore.activeFrame && appStore.activeFrame.regionSet) {
             const regionSet = appStore.activeFrame.regionSet;
             if (regionSet.selectedRegion) {
-                regionSet.deselectRegion();
+                // First try to deselect point, then deselect region
+                if (regionSet.selectedRegion.hasSelectedPoint) {
+                    regionSet.selectedRegion.deselectPoint();
+                } else {
+                    regionSet.deselectRegion();
+                }
             } else if (regionSet.mode === RegionMode.CREATING) {
                 regionSet.setMode(RegionMode.MOVING);
                 appStore.updateActiveLayer(ImageViewLayer.RegionMoving);
             }
+        }
+    };
+
+    static SelectNextPoint = () => {
+        const appStore = AppStore.Instance;
+        if (appStore.activeFrame?.regionSet.selectedRegion?.supportsPointSelection) {
+            appStore.activeFrame.regionSet.selectedRegion.selectNextPoint();
+        }
+    };
+
+    static SelectPreviousPoint = () => {
+        const appStore = AppStore.Instance;
+        if (appStore.activeFrame?.regionSet.selectedRegion?.supportsPointSelection) {
+            appStore.activeFrame.regionSet.selectedRegion.selectPreviousPoint();
         }
     };
 
@@ -123,8 +142,12 @@ export class HotkeyService extends React.Component<{}> {
             const actualDeltaX = deltaX * baseIncrement * (accelerated ? acceleratedMultiplier * zoomMultiplier : 1);
             const actualDeltaY = deltaY * baseIncrement * (accelerated ? acceleratedMultiplier * zoomMultiplier : 1);
 
-            // For polygon and polyline, need to move all control points
-            if (region.regionType === CARTA.RegionType.POLYGON || region.regionType === CARTA.RegionType.POLYLINE || region.regionType === CARTA.RegionType.ANNPOLYGON || region.regionType === CARTA.RegionType.ANNPOLYLINE) {
+            // Check if a specific point is selected for polygon/polyline regions
+            if (region.supportsPointSelection && region.hasSelectedPoint) {
+                // Move only the selected point
+                region.moveSelectedPoint(actualDeltaX, actualDeltaY);
+            } else if (region.regionType === CARTA.RegionType.POLYGON || region.regionType === CARTA.RegionType.POLYLINE || region.regionType === CARTA.RegionType.ANNPOLYGON || region.regionType === CARTA.RegionType.ANNPOLYLINE) {
+                // Move all control points (entire region)
                 const newControlPoints = region.controlPoints.map(point => ({
                     x: point.x + actualDeltaX,
                     y: point.y + actualDeltaY
@@ -176,9 +199,11 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "shift + l", label: "Unlock all regions", onKeyDown: HotkeyService.UnlockAllRegions},
             {combo: "delete", label: "Delete selected region", onKeyDown: appStore.deleteSelectedRegion},
             {combo: "backspace", label: "Delete selected region", onKeyDown: appStore.deleteSelectedRegion},
-            {combo: "esc", label: "Deselect/Cancel region creation", onKeyDown: HotkeyService.HandleRegionEsc},
-            {combo: "up + down", label: <>Move region vertically<br/>&nbsp;&nbsp;&nbsp;(+ shift for faster move)</>, onKeyDown: undefined},
-            {combo: "left + right", label: <>Move region horizontally<br/>&nbsp;&nbsp;&nbsp;(+ shift for faster move)</>, onKeyDown: undefined}
+            {combo: "esc", label: "Deselect point/region or cancel creation", onKeyDown: HotkeyService.HandleRegionEsc},
+            {combo: "tab", label: "Select next point (polygon/polyline)", onKeyDown: HotkeyService.SelectNextPoint},
+            {combo: "shift + tab", label: "Select previous point (polygon/polyline)", onKeyDown: HotkeyService.SelectPreviousPoint},
+            {combo: "up + down", label: <>Move region/point vertically<br/>&nbsp;&nbsp;&nbsp;(+ shift for faster move)</>, onKeyDown: undefined},
+            {combo: "left + right", label: <>Move region/point horizontally<br/>&nbsp;&nbsp;&nbsp;(+ shift for faster move)</>, onKeyDown: undefined}
         ];
         return items.map(item => ({...base, ...item}));
     }

@@ -35,6 +35,7 @@ export class RegionStore {
     @observable isSimplePolygon: boolean;
     @observable activeFrame: FrameStore;
     @observable lineRegionSampleWidth: number = 3;
+    @observable selectedPointIndex: number = -1; // -1 means no point selected, >=0 means specific control point selected
 
     static readonly MIN_LINE_WIDTH = 0.5;
     static readonly MAX_LINE_WIDTH = 10;
@@ -342,6 +343,17 @@ export class RegionStore {
             }
         }
         return false;
+    }
+
+    @computed get supportsPointSelection(): boolean {
+        return this.regionType === CARTA.RegionType.POLYGON || 
+               this.regionType === CARTA.RegionType.POLYLINE ||
+               this.regionType === CARTA.RegionType.ANNPOLYGON ||
+               this.regionType === CARTA.RegionType.ANNPOLYLINE;
+    }
+
+    @computed get hasSelectedPoint(): boolean {
+        return this.selectedPointIndex >= 0 && this.selectedPointIndex < this.controlPoints.length;
     }
 
     public static GetRegionProperties = (regionType: CARTA.RegionType, controlPoints: Point2D[], rotation: number): string => {
@@ -666,6 +678,47 @@ export class RegionStore {
     @action setLocked = (locked: boolean) => {
         if (this.regionId !== CURSOR_REGION_ID) {
             this.locked = locked;
+        }
+    };
+
+    @action selectPoint = (index: number) => {
+        if (this.supportsPointSelection && index >= 0 && index < this.controlPoints.length) {
+            this.selectedPointIndex = index;
+        }
+    };
+
+    @action deselectPoint = () => {
+        this.selectedPointIndex = -1;
+    };
+
+    @action selectNextPoint = () => {
+        if (this.supportsPointSelection && this.controlPoints.length > 0) {
+            if (this.selectedPointIndex < 0) {
+                this.selectedPointIndex = 0;
+            } else {
+                this.selectedPointIndex = (this.selectedPointIndex + 1) % this.controlPoints.length;
+            }
+        }
+    };
+
+    @action selectPreviousPoint = () => {
+        if (this.supportsPointSelection && this.controlPoints.length > 0) {
+            if (this.selectedPointIndex < 0) {
+                this.selectedPointIndex = this.controlPoints.length - 1;
+            } else {
+                this.selectedPointIndex = (this.selectedPointIndex - 1 + this.controlPoints.length) % this.controlPoints.length;
+            }
+        }
+    };
+
+    @action moveSelectedPoint = (deltaX: number, deltaY: number) => {
+        if (this.hasSelectedPoint) {
+            const currentPoint = this.controlPoints[this.selectedPointIndex];
+            const newPoint = {
+                x: currentPoint.x + deltaX,
+                y: currentPoint.y + deltaY
+            };
+            this.setControlPoint(this.selectedPointIndex, newPoint);
         }
     };
 
