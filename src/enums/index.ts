@@ -3,6 +3,7 @@ export * from "./animation";
 export * from "./catalog";
 export * from "./connection";
 export * from "./contour";
+export * from "./dataSizeConverter";
 export * from "./dialog";
 export * from "./fileBrowser";
 export * from "./help";
