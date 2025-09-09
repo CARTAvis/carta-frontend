@@ -100,7 +100,7 @@
         "build": "npm run git-info; npm-run-all build-wrappers build-protobuf link-schemas build-ts",
         "build-docker": "npm run git-info; npm-run-all build-wrappers-docker build-protobuf link-schemas build-ts",
         "build-singularity": "npm run git-info; npm-run-all build-wrappers-singularity build-protobuf link-schemas build-ts",
-        "build-ts": "npm run strict-null-checks && BUILD_DATE=$(node -p 'new Date()') rsbuild build",
+        "build-ts": "npm run strict-null-checks && rsbuild build",
         "preview": "rsbuild preview",
         "build-libs": "./wasm_libs/build_libs.sh",
         "build-libs-docker": "./build_wasm_libs_docker.sh",
