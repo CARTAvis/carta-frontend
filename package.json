@@ -207,7 +207,6 @@
     },
     "dependencies": {
         "patch-package": "^8.0.0",
-        "sass-embedded-darwin-x64": "^1.91.0",
         "usehooks-ts": "^3.1.0"
     },
     "overrides": {
