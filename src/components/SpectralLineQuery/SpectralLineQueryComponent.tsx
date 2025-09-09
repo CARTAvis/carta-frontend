@@ -249,7 +249,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private updateSortRequest = (columnName: string, sortingType: CARTA.SortingType, columnIndex: number) => {
+    private updateSortRequest = (columnName: string, sortingType: CARTA.SortingType) => {
         this.widgetStore.setSortingInfo(columnName, sortingType);
     };
 

@@ -518,7 +518,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private updateSortRequest = (columnName: string, sortingType: CARTA.SortingType | null, columnIndex: number) => {
+    private updateSortRequest = (columnName: string, sortingType: CARTA.SortingType | null) => {
         const profileStore = this.profileStore;
         const catalogFileId = this.catalogFileId;
         const appStore = AppStore.Instance;
@@ -798,6 +798,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         // Filter out undefined values to match expected Array<number> type
         const validColumnWidths = tableColumnWidths.filter((w): w is number => w != null || w !== undefined);
 
+        console.log("qq", profileStore.sortingInfo.columnName);
         const dataTableProps: FilterableTableComponentProps = {
             dataset: catalogTable.dataset ?? new Map(),
             filter: profileStore.catalogControlHeader,
