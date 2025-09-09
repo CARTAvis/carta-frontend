@@ -346,10 +346,7 @@ export class RegionStore {
     }
 
     @computed get supportsPointSelection(): boolean {
-        return this.regionType === CARTA.RegionType.POLYGON || 
-               this.regionType === CARTA.RegionType.POLYLINE ||
-               this.regionType === CARTA.RegionType.ANNPOLYGON ||
-               this.regionType === CARTA.RegionType.ANNPOLYLINE;
+        return this.regionType === CARTA.RegionType.POLYGON || this.regionType === CARTA.RegionType.POLYLINE || this.regionType === CARTA.RegionType.ANNPOLYGON || this.regionType === CARTA.RegionType.ANNPOLYLINE;
     }
 
     @computed get hasSelectedPoint(): boolean {

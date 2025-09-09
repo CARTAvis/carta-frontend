@@ -88,13 +88,13 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
     private handleAnchorDragStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         this.props.onSelect?.(this.props.region);
         this.props.region.beginEditing();
-        
+
         // Select the specific point being dragged for polygon/polyline regions
         if (konvaEvent.currentTarget) {
             const node = konvaEvent.target;
             const index = node.index;
             const anchor = node.id();
-            
+
             if (!anchor.includes("rotator") && index >= 0 && index < this.props.region.controlPoints.length && this.props.region.supportsPointSelection) {
                 this.props.region.selectPoint(index);
             }
@@ -235,7 +235,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             const node = konvaEvent.target;
             const index = node.index;
             const anchor = node.id();
-            
+
             if (!anchor.includes("rotator") && index >= 0 && index < this.props.region.controlPoints.length && this.props.region.supportsPointSelection) {
                 this.props.region.selectPoint(index);
             }

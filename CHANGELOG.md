@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed VizieR database query ([#2480](https://github.com/CARTAvis/carta-frontend/issues/2480)).
 * Fixed an issue where the PV generator widget and progress bar did not appear when creating a new PV image while another PV image was already open ([#2349](https://github.com/CARTAvis/carta-frontend/issues/2349)).
 * Fixed hotkeys for navigating to the next and previous images, resolved keyboard event conflicts between the image viewer and the dropdown menu, and automatically resized the hotkeys dialog ([#2575](https://github.com/CARTAvis/carta-frontend/issues/2575), [#758](https://github.com/CARTAvis/carta-frontend/issues/758)).
+* Added support for moving regions or control points of polygon/polyline with arrow keys ([#292](https://github.com/CARTAvis/carta-frontend/issues/292)).
 
 ## [5.0.3]
 

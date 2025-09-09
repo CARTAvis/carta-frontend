@@ -133,12 +133,12 @@ export class HotkeyService extends React.Component<{}> {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame?.regionSet.selectedRegion) {
             const region = appStore.activeFrame.regionSet.selectedRegion;
-            
+
             // Calculate movement distance based on acceleration and zoom level
             const baseIncrement = 1;
             const acceleratedMultiplier = 10;
             const zoomMultiplier = Math.max(1, 1 / appStore.activeFrame.zoomLevel);
-            
+
             const actualDeltaX = deltaX * baseIncrement * (accelerated ? acceleratedMultiplier * zoomMultiplier : 1);
             const actualDeltaY = deltaY * baseIncrement * (accelerated ? acceleratedMultiplier * zoomMultiplier : 1);
 
@@ -200,10 +200,50 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "delete", label: "Delete selected region", onKeyDown: appStore.deleteSelectedRegion},
             {combo: "backspace", label: "Delete selected region", onKeyDown: appStore.deleteSelectedRegion},
             {combo: "esc", label: "Deselect region/point or cancel creation", onKeyDown: HotkeyService.HandleRegionEsc},
-            {combo: "tab", label: <>Select next point<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(polygon/polyline)</>, onKeyDown: HotkeyService.SelectNextPoint},
-            {combo: "shift + tab", label: <>Select previous point<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(polygon/polyline)</>, onKeyDown: HotkeyService.SelectPreviousPoint},
-            {combo: "up + down", label: <>Move region/point vertically<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(+ shift for faster move)</>, onKeyDown: undefined},
-            {combo: "left + right", label: <>Move region/point horizontally<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(+ shift for faster move)</>, onKeyDown: undefined}
+            {
+                combo: "tab",
+                label: (
+                    <>
+                        Select next point
+                        <br />
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(polygon/polyline)
+                    </>
+                ),
+                onKeyDown: HotkeyService.SelectNextPoint
+            },
+            {
+                combo: "shift + tab",
+                label: (
+                    <>
+                        Select previous point
+                        <br />
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(polygon/polyline)
+                    </>
+                ),
+                onKeyDown: HotkeyService.SelectPreviousPoint
+            },
+            {
+                combo: "up + down",
+                label: (
+                    <>
+                        Move region/point vertically
+                        <br />
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(+ shift for faster move)
+                    </>
+                ),
+                onKeyDown: undefined
+            },
+            {
+                combo: "left + right",
+                label: (
+                    <>
+                        Move region/point horizontally
+                        <br />
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(+ shift for faster move)
+                    </>
+                ),
+                onKeyDown: undefined
+            }
         ];
         return items.map(item => ({...base, ...item}));
     }
@@ -326,7 +366,14 @@ export class HotkeyService extends React.Component<{}> {
 
 export function HotkeysRegistrar() {
     const hotkeys = React.useMemo(
-        () => [...HotkeyService.GetFrameControlHotkeys(), ...HotkeyService.GetFrameControlHiddenHotkeys(), ...HotkeyService.GetRegionHotkeys(), ...HotkeyService.GetRegionHiddenHotkeys(), ...HotkeyService.GetFileControlHotkeys(), ...HotkeyService.GetOtherHotkeys()],
+        () => [
+            ...HotkeyService.GetFrameControlHotkeys(),
+            ...HotkeyService.GetFrameControlHiddenHotkeys(),
+            ...HotkeyService.GetRegionHotkeys(),
+            ...HotkeyService.GetRegionHiddenHotkeys(),
+            ...HotkeyService.GetFileControlHotkeys(),
+            ...HotkeyService.GetOtherHotkeys()
+        ],
         []
     );
 
