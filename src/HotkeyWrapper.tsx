@@ -110,23 +110,31 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
-    static MoveSelectedRegion = (deltaX: number, deltaY: number) => {
+    static MoveSelectedRegion = (deltaX: number, deltaY: number, accelerated = false) => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame?.regionSet.selectedRegion) {
             const region = appStore.activeFrame.regionSet.selectedRegion;
+            
+            // Calculate movement distance based on acceleration and zoom level
+            const baseIncrement = 1;
+            const acceleratedMultiplier = 10;
+            const zoomMultiplier = Math.max(1, 1 / appStore.activeFrame.zoomLevel);
+            
+            const actualDeltaX = deltaX * baseIncrement * (accelerated ? acceleratedMultiplier * zoomMultiplier : 1);
+            const actualDeltaY = deltaY * baseIncrement * (accelerated ? acceleratedMultiplier * zoomMultiplier : 1);
 
             // For polygon and polyline, need to move all control points
             if (region.regionType === CARTA.RegionType.POLYGON || region.regionType === CARTA.RegionType.POLYLINE || region.regionType === CARTA.RegionType.ANNPOLYGON || region.regionType === CARTA.RegionType.ANNPOLYLINE) {
                 const newControlPoints = region.controlPoints.map(point => ({
-                    x: point.x + deltaX,
-                    y: point.y + deltaY
+                    x: point.x + actualDeltaX,
+                    y: point.y + actualDeltaY
                 }));
                 region.setControlPoints(newControlPoints);
             } else {
                 // For other region types, use setCenter
                 const newCenter = {
-                    x: region.center.x + deltaX,
-                    y: region.center.y + deltaY
+                    x: region.center.x + actualDeltaX,
+                    y: region.center.y + actualDeltaY
                 };
                 region.setCenter(newCenter);
             }
@@ -169,10 +177,24 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "delete", label: "Delete selected region", onKeyDown: appStore.deleteSelectedRegion},
             {combo: "backspace", label: "Delete selected region", onKeyDown: appStore.deleteSelectedRegion},
             {combo: "esc", label: "Deselect/Cancel region creation", onKeyDown: HotkeyService.HandleRegionEsc},
-            {combo: "up", label: "Move selected region up", onKeyDown: () => HotkeyService.MoveSelectedRegion(0, 1)},
-            {combo: "down", label: "Move selected region down", onKeyDown: () => HotkeyService.MoveSelectedRegion(0, -1)},
-            {combo: "left", label: "Move selected region left", onKeyDown: () => HotkeyService.MoveSelectedRegion(-1, 0)},
-            {combo: "right", label: "Move selected region right", onKeyDown: () => HotkeyService.MoveSelectedRegion(1, 0)}
+            {combo: "up + down", label: <>Move region vertically<br/>&nbsp;&nbsp;&nbsp;(+ shift for faster move)</>, onKeyDown: undefined},
+            {combo: "left + right", label: <>Move region horizontally<br/>&nbsp;&nbsp;&nbsp;(+ shift for faster move)</>, onKeyDown: undefined}
+        ];
+        return items.map(item => ({...base, ...item}));
+    }
+
+    static GetRegionHiddenHotkeys() {
+        const group = "2) Regions";
+        const base = {group, global: true, allowInInput: false, preventDefault: true};
+        const items = [
+            {combo: "up", label: "Move selected region up (fine)", onKeyDown: () => HotkeyService.MoveSelectedRegion(0, 1, false)},
+            {combo: "down", label: "Move selected region down (fine)", onKeyDown: () => HotkeyService.MoveSelectedRegion(0, -1, false)},
+            {combo: "left", label: "Move selected region left (fine)", onKeyDown: () => HotkeyService.MoveSelectedRegion(-1, 0, false)},
+            {combo: "right", label: "Move selected region right (fine)", onKeyDown: () => HotkeyService.MoveSelectedRegion(1, 0, false)},
+            {combo: "shift + up", label: "Move selected region up (coarse)", onKeyDown: () => HotkeyService.MoveSelectedRegion(0, 1, true)},
+            {combo: "shift + down", label: "Move selected region down (coarse)", onKeyDown: () => HotkeyService.MoveSelectedRegion(0, -1, true)},
+            {combo: "shift + left", label: "Move selected region left (coarse)", onKeyDown: () => HotkeyService.MoveSelectedRegion(-1, 0, true)},
+            {combo: "shift + right", label: "Move selected region right (coarse)", onKeyDown: () => HotkeyService.MoveSelectedRegion(1, 0, true)}
         ];
         return items.map(item => ({...base, ...item}));
     }
@@ -279,7 +301,7 @@ export class HotkeyService extends React.Component<{}> {
 
 export function HotkeysRegistrar() {
     const hotkeys = React.useMemo(
-        () => [...HotkeyService.GetFrameControlHotkeys(), ...HotkeyService.GetFrameControlHiddenHotkeys(), ...HotkeyService.GetRegionHotkeys(), ...HotkeyService.GetFileControlHotkeys(), ...HotkeyService.GetOtherHotkeys()],
+        () => [...HotkeyService.GetFrameControlHotkeys(), ...HotkeyService.GetFrameControlHiddenHotkeys(), ...HotkeyService.GetRegionHotkeys(), ...HotkeyService.GetRegionHiddenHotkeys(), ...HotkeyService.GetFileControlHotkeys(), ...HotkeyService.GetOtherHotkeys()],
         []
     );
 
