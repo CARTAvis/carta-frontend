@@ -38,7 +38,7 @@ export class FilterableTableComponentProps {
     updateByInfiniteScroll?: (rowIndexEnd: number) => void;
     updateTableColumnWidth?: (width: number, columnName: string) => void;
     updateSelectedRow?: (dataIndex: number[]) => void;
-    updateSortRequest?: (columnName: string, sortingType: CARTA.SortingType | null, columnIndex: number) => void;
+    updateSortRequest?: (columnName: string, sortingType: CARTA.SortingType | null) => void;
     flipRowSelection?: (rowIndex: number) => void;
     sortingInfo?: {columnName: string; sortingType: CARTA.SortingType | null};
     disableSort?: boolean;
@@ -256,7 +256,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 }
             }
             return (
-                <div className="sort-label" onClick={() => (disableSort || !column.name || !column.columnIndex ? null : this.props.updateSortRequest?.(column.name, nextSortType, column.columnIndex))}>
+                <div className="sort-label" onClick={() => (disableSort || !column.name ? null : this.props.updateSortRequest?.(column.name, nextSortType))}>
                     <Label disabled={disableSort} className={classNames(Classes.INLINE, "label")} data-testid={"filterable-table-header-" + columnIndex}>
                         <Icon className={iconClass} icon={sortIcon as IconName} />
                         <Tooltip hoverOpenDelay={250} hoverCloseDelay={0} content={headerDescription ?? "Description not avaliable"} position={Position.BOTTOM} popoverClassName={classNames({[Classes.DARK]: AppStore.Instance.darkTheme})}>
