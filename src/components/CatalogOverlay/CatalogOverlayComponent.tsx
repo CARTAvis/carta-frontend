@@ -10,21 +10,13 @@ import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, FilterableTableComponent, FilterableTableComponentProps, ResizeDetector} from "components/Shared";
-import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType, CatalogUpdateMode, HelpType, ImageViewLayer, PreferenceKeys, RegionMode} from "enums";
+import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType, CatalogUpdateMode, HeaderTableColumnName, HelpType, ImageViewLayer, PreferenceKeys, RegionMode} from "enums";
 import {AbstractCatalogProfileStore} from "models";
 import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps, WidgetsStore} from "stores";
 import {type CatalogPlotWidgetStoreProps, CatalogWidgetStore} from "stores/Widgets";
 import {clamp, type ProcessedColumnData, toFixed} from "utilities";
 
 import "./CatalogOverlayComponent.scss";
-
-enum HeaderTableColumnName {
-    Name = "Name",
-    Unit = "Unit",
-    Type = "Type",
-    Display = "Display",
-    Description = "Description"
-}
 
 @observer
 export class CatalogOverlayComponent extends React.Component<WidgetProps> {

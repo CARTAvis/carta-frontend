@@ -87,3 +87,11 @@ export enum CatalogSizeUnits {
     ARCMIN = "arcmin",
     DEG = "deg"
 }
+
+export enum HeaderTableColumnName {
+    Name = "Name",
+    Unit = "Unit",
+    Type = "Type",
+    Display = "Display",
+    Description = "Description"
+}

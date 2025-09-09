@@ -7,17 +7,11 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {FilterableTableComponent, FilterableTableComponentProps, ResizeDetector, SafeNumericInput} from "components/Shared";
-import {HelpType, RedshiftType, SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "enums";
+import {HeaderTableColumnName, HelpType, RedshiftType, SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "enums";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {SpectralLineQueryWidgetStore} from "stores/Widgets";
 
 import "./SpectralLineQueryComponent.scss";
-
-enum HeaderTableColumnName {
-    Name = "Name",
-    Description = "Description",
-    Display = "Display"
-}
 
 const KEYCODE_ENTER = 13;
 const MINIMUM_WIDTH = 450;
