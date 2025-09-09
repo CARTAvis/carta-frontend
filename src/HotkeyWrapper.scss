@@ -1,3 +1,5 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 /* SCSS sizing variables */
 $col-w: 360px; /* column width */
 $gap: 20px; /* column gap */
@@ -8,21 +10,21 @@ $breakpoint-buffer: 100px; /* additional buffer for responsive breakpoint calcul
 $breakpoint-2col: $col-w * 2 + $gap + $pad * 2 + $breakpoint-buffer;
 $breakpoint-3col: $col-w * 3 + $gap * 2 + $pad * 2 + $breakpoint-buffer;
 
-.bp5-dialog.hotkeys-dialog {
+.#{$ns}-dialog.hotkeys-dialog {
     /* 1 col = 1×col-w + 0×gap + 2×pad */
     width: $col-w + $pad * 2;
     max-width: 95vw;
 }
 
 @media (min-width: $breakpoint-2col) {
-    .bp5-dialog.hotkeys-dialog {
+    .#{$ns}-dialog.hotkeys-dialog {
         /* 2 cols = 2×col-w + 1×gap + 2×pad */
         width: $col-w * 2 + $gap + $pad * 2;
     }
 }
 
 @media (min-width: $breakpoint-3col) {
-    .bp5-dialog.hotkeys-dialog {
+    .#{$ns}-dialog.hotkeys-dialog {
         /* 3 cols = 3×col-w + 2×gap + 2×pad */
         width: $col-w * 3 + $gap * 2 + $pad * 2;
     }
