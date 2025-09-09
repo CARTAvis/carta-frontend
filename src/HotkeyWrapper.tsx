@@ -179,7 +179,7 @@ export class HotkeyService extends React.Component<{}> {
 
     // For display in custom hotkeys dialog
     static GetRegionDisplayOnlyHotkeys() {
-        const group = "2) Regions";
+        const group = "3) Regions";
         const base = {group, global: true};
         const items = [
             {combo: "mod", label: "Switch region creation mode"},
@@ -191,7 +191,7 @@ export class HotkeyService extends React.Component<{}> {
 
     static GetRegionHotkeys() {
         const appStore = AppStore.Instance;
-        const group = "2) Regions";
+        const group = "3) Regions";
         const base = {group, global: true, allowInInput: false, preventDefault: true};
         const items = [
             {combo: "c", label: "Toggle region creation mode", onKeyDown: HotkeyService.ToggleCreateMode},
@@ -199,17 +199,17 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "shift + l", label: "Unlock all regions", onKeyDown: HotkeyService.UnlockAllRegions},
             {combo: "delete", label: "Delete selected region", onKeyDown: appStore.deleteSelectedRegion},
             {combo: "backspace", label: "Delete selected region", onKeyDown: appStore.deleteSelectedRegion},
-            {combo: "esc", label: "Deselect point/region or cancel creation", onKeyDown: HotkeyService.HandleRegionEsc},
-            {combo: "tab", label: "Select next point (polygon/polyline)", onKeyDown: HotkeyService.SelectNextPoint},
-            {combo: "shift + tab", label: "Select previous point (polygon/polyline)", onKeyDown: HotkeyService.SelectPreviousPoint},
-            {combo: "up + down", label: <>Move region/point vertically<br/>&nbsp;&nbsp;&nbsp;(+ shift for faster move)</>, onKeyDown: undefined},
-            {combo: "left + right", label: <>Move region/point horizontally<br/>&nbsp;&nbsp;&nbsp;(+ shift for faster move)</>, onKeyDown: undefined}
+            {combo: "esc", label: "Deselect region/point or cancel creation", onKeyDown: HotkeyService.HandleRegionEsc},
+            {combo: "tab", label: <>Select next point<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(polygon/polyline)</>, onKeyDown: HotkeyService.SelectNextPoint},
+            {combo: "shift + tab", label: <>Select previous point<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(polygon/polyline)</>, onKeyDown: HotkeyService.SelectPreviousPoint},
+            {combo: "up + down", label: <>Move region/point vertically<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(+ shift for faster move)</>, onKeyDown: undefined},
+            {combo: "left + right", label: <>Move region/point horizontally<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(+ shift for faster move)</>, onKeyDown: undefined}
         ];
         return items.map(item => ({...base, ...item}));
     }
 
     static GetRegionHiddenHotkeys() {
-        const group = "2) Regions";
+        const group = "3) Regions";
         const base = {group, global: true, allowInInput: false, preventDefault: true};
         const items = [
             {combo: "up", label: "Move selected region up (fine)", onKeyDown: () => HotkeyService.MoveSelectedRegion(0, 1, false)},
@@ -227,7 +227,7 @@ export class HotkeyService extends React.Component<{}> {
     static GetFrameControlHotkeys() {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
-        const group = "3) Frame controls";
+        const group = "4) Frame controls";
         const base = {group, global: true, allowInInput: false, preventDefault: true};
         const items = [
             {combo: `${modString}]`, label: "Next image", onKeyDown: appStore.nextImage},
@@ -244,7 +244,7 @@ export class HotkeyService extends React.Component<{}> {
     static GetFrameControlHiddenHotkeys() {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
-        const group = "3) Frame controls";
+        const group = "4) Frame controls";
         const base = {group, global: true, allowInInput: false, preventDefault: true};
         const items = [
             {combo: `${modString}‘`, label: "Next image", onKeyDown: appStore.nextImage},
@@ -256,7 +256,7 @@ export class HotkeyService extends React.Component<{}> {
     static GetFileControlHotkeys() {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
-        const group = "4) File controls";
+        const group = "2) File controls";
         const base = {group, global: true, allowInInput: false, preventDefault: true};
         const items = [
             {combo: `${modString}O`, label: "Open image", onKeyDown: () => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File)},
@@ -313,7 +313,7 @@ export class HotkeyService extends React.Component<{}> {
 
     static RenderHotkeyGroups() {
         const hotkeys = HotkeyService.GetHotkeyDefinitionsForDisplay();
-        const hotkeyGroups = [hotkeys.navigationHotKeys, hotkeys.regionHotKeys, hotkeys.animatorHotkeys, hotkeys.fileHotkeys, hotkeys.otherHotKeys];
+        const hotkeyGroups = [hotkeys.navigationHotKeys, hotkeys.fileHotkeys, hotkeys.regionHotKeys, hotkeys.animatorHotkeys, hotkeys.otherHotKeys];
 
         // Render each group; placement handled purely by CSS multi-column
         return hotkeyGroups.map((group, idx) => (
