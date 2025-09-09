@@ -13,7 +13,6 @@
         "@rsbuild/plugin-node-polyfill": "^1.3.0",
         "@rsbuild/plugin-react": "^1.1.1",
         "@rsbuild/plugin-sass": "^1.2.2",
-        "@rspack/binding-darwin-x64": "^0.6.2",
         "@testing-library/jest-dom": "^6.4.8",
         "@testing-library/react": "^16.0.1",
         "@testing-library/user-event": "^14.5.2",
@@ -219,5 +218,16 @@
         "@typescript-eslint/typescript-estree": "^7.15.0",
         "@typescript-eslint/parser": "^7.15.0",
         "@types/trusted-types": "^2.0.7"
+    },
+    "optionalDependencies": {
+        "@rspack/binding-darwin-arm64": "^0.6.2",
+        "@rspack/binding-darwin-x64": "^0.6.2",
+        "@rspack/binding-linux-arm64-gnu": "^0.6.2",
+        "@rspack/binding-linux-arm64-musl": "^0.6.2",
+        "@rspack/binding-linux-x64-gnu": "^0.6.2",
+        "@rspack/binding-linux-x64-musl": "^0.6.2",
+        "@rspack/binding-win32-arm64-msvc": "^0.6.2",
+        "@rspack/binding-win32-ia32-msvc": "^0.6.2",
+        "@rspack/binding-win32-x64-msvc": "^0.6.2"
     }
 }
