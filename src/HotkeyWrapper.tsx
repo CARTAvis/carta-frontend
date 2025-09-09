@@ -1,5 +1,6 @@
 import * as React from "react";
 import {Classes, Dialog, Hotkey, Hotkeys, useHotkeys} from "@blueprintjs/core";
+import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
@@ -109,6 +110,29 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
+    static MoveSelectedRegion = (deltaX: number, deltaY: number) => {
+        const appStore = AppStore.Instance;
+        if (appStore.activeFrame?.regionSet.selectedRegion) {
+            const region = appStore.activeFrame.regionSet.selectedRegion;
+
+            // For polygon and polyline, need to move all control points
+            if (region.regionType === CARTA.RegionType.POLYGON || region.regionType === CARTA.RegionType.POLYLINE || region.regionType === CARTA.RegionType.ANNPOLYGON || region.regionType === CARTA.RegionType.ANNPOLYLINE) {
+                const newControlPoints = region.controlPoints.map(point => ({
+                    x: point.x + deltaX,
+                    y: point.y + deltaY
+                }));
+                region.setControlPoints(newControlPoints);
+            } else {
+                // For other region types, use setCenter
+                const newCenter = {
+                    x: region.center.x + deltaX,
+                    y: region.center.y + deltaY
+                };
+                region.setCenter(newCenter);
+            }
+        }
+    };
+
     // For display in custom hotkeys dialog
     static GetNavigationDisplayOnlyHotkeys() {
         const group = "1) Navigation";
@@ -144,7 +168,11 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "shift + l", label: "Unlock all regions", onKeyDown: HotkeyService.UnlockAllRegions},
             {combo: "delete", label: "Delete selected region", onKeyDown: appStore.deleteSelectedRegion},
             {combo: "backspace", label: "Delete selected region", onKeyDown: appStore.deleteSelectedRegion},
-            {combo: "esc", label: "Deselect/Cancel region creation", onKeyDown: HotkeyService.HandleRegionEsc}
+            {combo: "esc", label: "Deselect/Cancel region creation", onKeyDown: HotkeyService.HandleRegionEsc},
+            {combo: "up", label: "Move selected region up", onKeyDown: () => HotkeyService.MoveSelectedRegion(0, 1)},
+            {combo: "down", label: "Move selected region down", onKeyDown: () => HotkeyService.MoveSelectedRegion(0, -1)},
+            {combo: "left", label: "Move selected region left", onKeyDown: () => HotkeyService.MoveSelectedRegion(-1, 0)},
+            {combo: "right", label: "Move selected region right", onKeyDown: () => HotkeyService.MoveSelectedRegion(1, 0)}
         ];
         return items.map(item => ({...base, ...item}));
     }
