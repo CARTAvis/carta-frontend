@@ -101,31 +101,7 @@
             }
         }
     </style>
-    <script>
-        // Suppress benign ResizeObserver errors
-        // Source: https://github.com/radix-ui/primitives/issues/2313#issuecomment-1986338145
-        // These are benign errors that occur when ResizeObserver can't deliver all observations
-        // within a single animation frame, which is common with modern UI libraries.
-        function isResizeObserverError(message) {
-            return message && (
-                message.includes('ResizeObserver loop limit exceeded') ||
-                message.includes('ResizeObserver loop completed with undelivered notifications.')
-            );
-        }
-
-        window.addEventListener('error', function(e) {
-            if (isResizeObserverError(e.message)) {
-                e.stopImmediatePropagation();
-            }
-        });
-        
-        // Also handle unhandled promise rejections for ResizeObserver
-        window.addEventListener('unhandledrejection', function(e) {
-            if (e.reason && isResizeObserverError(e.reason.message)) {
-                e.preventDefault();
-            }
-        });
-    </script>
+    
 </head>
 <body>
 <noscript>

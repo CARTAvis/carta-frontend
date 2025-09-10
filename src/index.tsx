@@ -17,6 +17,28 @@ import {App} from "./App";
 
 import "./index.scss";
 
+// Stop error resizeObserver
+// From https://github.com/ReactTooltip/react-tooltip/issues/1104#issuecomment-2142860676
+const debounce = (callback: (...args: any[]) => void, delay: number) => {
+    let tid: any;
+    return function (...args: any[]) {
+        // eslint-disable-next-line no-restricted-globals
+        const ctx = self;
+        tid && clearTimeout(tid);
+        tid = setTimeout(() => {
+            callback.apply(ctx, args);
+        }, delay);
+    };
+};
+
+const _ = (window as any).ResizeObserver;
+(window as any).ResizeObserver = class ResizeObserver extends _ {
+    constructor(callback: (...args: any[]) => void) {
+        callback = debounce(callback, 20);
+        super(callback);
+    }
+};
+
 for (const val of [allMaps, linearPng, logPng, sqrtPng, squaredPng, gammaPng, powerPng]) {
     new Image().src = val;
 }
