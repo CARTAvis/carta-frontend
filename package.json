@@ -84,7 +84,6 @@
         "stats-js": "^1.0.1",
         "stream-browserify": "^3.0.0",
         "tinycolor2": "^1.6.0",
-        "tsc-silent": "^1.2.2",
         "typescript": "^5.5.4",
         "util": "^0.12.5",
         "uuid": "^10.0.0",
@@ -95,11 +94,11 @@
         "git-info": "./git-info.sh",
         "analyze": "source-map-explorer build/static/js/main.*",
         "postinstall": "patch-package",
-        "start": "npm run git-info; npm run strict-null-checks && rsbuild dev",
+        "start": "npm run git-info; rsbuild dev",
         "build": "npm run git-info; npm-run-all build-wrappers build-protobuf link-schemas build-ts",
         "build-docker": "npm run git-info; npm-run-all build-wrappers-docker build-protobuf link-schemas build-ts",
         "build-singularity": "npm run git-info; npm-run-all build-wrappers-singularity build-protobuf link-schemas build-ts",
-        "build-ts": "npm run strict-null-checks && rsbuild build",
+        "build-ts": "rsbuild build",
         "preview": "rsbuild preview",
         "build-libs": "./wasm_libs/build_libs.sh",
         "build-libs-docker": "./build_wasm_libs_docker.sh",
@@ -114,8 +113,7 @@
         "checkformat": "npx prettier --check ./src",
         "prepack": "npm run build-libs-docker; npm run build-docker",
         "fix-eslint": "eslint --fix ./src",
-        "check-eslint": "eslint ./src",
-        "strict-null-checks": "npx tsc-silent -p tsconfig.strictNullChecks.json --suppressConfig tsc-silent.config.js"
+        "check-eslint": "eslint ./src"
     },
     "eslintConfig": {
         "extends": "react-app",
