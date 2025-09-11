@@ -10,6 +10,14 @@ import {RegionMode} from "stores/Frame";
 
 import "./HotkeyWrapper.scss";
 
+enum HotkeyGroup {
+    Navigation = "Navigation",
+    Regions = "Regions",
+    FrameControls = "Frame controls",
+    FileControls = "File controls",
+    Other = "Other"
+}
+
 @observer
 export class HotkeyService extends React.Component<{}> {
     public render() {
@@ -165,8 +173,8 @@ export class HotkeyService extends React.Component<{}> {
     };
 
     // For display in custom hotkeys dialog
-    static GetNavigationDisplayOnlyHotkeys() {
-        const group = "1) Navigation";
+    static NavigationDisplayHotkeys() {
+        const group = HotkeyGroup.Navigation;
         const base = {group, global: true};
         const items = [
             {combo: "click", label: "Pan image"},
@@ -178,8 +186,8 @@ export class HotkeyService extends React.Component<{}> {
     }
 
     // For display in custom hotkeys dialog
-    static GetRegionDisplayOnlyHotkeys() {
-        const group = "3) Regions";
+    static RegionDisplayHotkeys() {
+        const group = HotkeyGroup.Regions;
         const base = {group, global: true};
         const items = [
             {combo: "mod", label: "Switch region creation mode"},
@@ -189,9 +197,9 @@ export class HotkeyService extends React.Component<{}> {
         return items.map(item => ({...base, ...item}));
     }
 
-    static GetRegionHotkeys() {
+    static RegionHotkeys() {
         const appStore = AppStore.Instance;
-        const group = "3) Regions";
+        const group = HotkeyGroup.Regions;
         const base = {group, global: true, allowInInput: false, preventDefault: true};
         const items = [
             {combo: "c", label: "Toggle region creation mode", onKeyDown: HotkeyService.ToggleCreateMode},
@@ -264,10 +272,10 @@ export class HotkeyService extends React.Component<{}> {
         return items.map(item => ({...base, ...item}));
     }
 
-    static GetFrameControlHotkeys() {
+    static FrameControlHotkeys() {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
-        const group = "4) Frame controls";
+        const group = HotkeyGroup.FrameControls;
         const base = {group, global: true, allowInInput: false, preventDefault: true};
         const items = [
             {combo: `${modString}]`, label: "Next image", onKeyDown: appStore.nextImage},
@@ -281,10 +289,10 @@ export class HotkeyService extends React.Component<{}> {
     }
 
     // Hidden hotkeys for input method compatibility
-    static GetFrameControlHiddenHotkeys() {
+    static FrameControlHiddenHotkeys() {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
-        const group = "4) Frame controls";
+        const group = HotkeyGroup.FrameControls;
         const base = {group, global: true, allowInInput: false, preventDefault: true};
         const items = [
             {combo: `${modString}‘`, label: "Next image", onKeyDown: appStore.nextImage},
@@ -293,10 +301,10 @@ export class HotkeyService extends React.Component<{}> {
         return items.map(item => ({...base, ...item}));
     }
 
-    static GetFileControlHotkeys() {
+    static FileControlHotkeys() {
         const appStore = AppStore.Instance;
         const modString = appStore.modifierString;
-        const group = "2) File controls";
+        const group = HotkeyGroup.FileControls;
         const base = {group, global: true, allowInInput: false, preventDefault: true};
         const items = [
             {combo: `${modString}O`, label: "Open image", onKeyDown: () => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File)},
@@ -309,9 +317,9 @@ export class HotkeyService extends React.Component<{}> {
         return items.map(item => ({...base, ...item}));
     }
 
-    static GetOtherHotkeys() {
+    static OtherHotkeys() {
         const appStore = AppStore.Instance;
-        const group = "5) Other";
+        const group = HotkeyGroup.Other;
         const base = {group, global: true, allowInInput: false, preventDefault: true};
         const items = [
             {combo: "shift + d", label: "Toggle light/dark theme", onKeyDown: HotkeyService.ToggleDarkTheme},
@@ -323,24 +331,27 @@ export class HotkeyService extends React.Component<{}> {
 
     // For display in custom hotkeys dialog
     static GetHotkeyDefinitionsForDisplay() {
-        const toElements = (hotkeys: any[]) => hotkeys.map((hotkey, index) => <Hotkey key={index} group={hotkey.group} global={hotkey.global} combo={hotkey.combo} label={hotkey.label} onKeyDown={hotkey.onKeyDown} />);
+        const toElements = (hotkeys: any[]) =>
+            hotkeys.map((hotkey, index) => {
+                return <Hotkey key={index} group={hotkey.group} global={hotkey.global} combo={hotkey.combo} label={hotkey.label} onKeyDown={hotkey.onKeyDown} />;
+            });
 
         // 1) Navigation
-        const navigationHotKeys: React.ReactElement[] = toElements(HotkeyService.GetNavigationDisplayOnlyHotkeys());
+        const navigationHotKeys: React.ReactElement[] = toElements(HotkeyService.NavigationDisplayHotkeys());
 
         // 2) Regions
-        const regionHotKeys: React.ReactElement[] = toElements(HotkeyService.GetRegionHotkeys());
-        const regionDisplayOnlyHotkeys: React.ReactElement[] = toElements(HotkeyService.GetRegionDisplayOnlyHotkeys());
+        const regionHotKeys: React.ReactElement[] = toElements(HotkeyService.RegionHotkeys());
+        const regionDisplayOnlyHotkeys: React.ReactElement[] = toElements(HotkeyService.RegionDisplayHotkeys());
         regionHotKeys.push(...regionDisplayOnlyHotkeys);
 
         // 3) Frame controls
-        const animatorHotkeys: React.ReactElement[] = toElements(HotkeyService.GetFrameControlHotkeys());
+        const animatorHotkeys: React.ReactElement[] = toElements(HotkeyService.FrameControlHotkeys());
 
         // 4) File controls
-        const fileHotkeys: React.ReactElement[] = toElements(HotkeyService.GetFileControlHotkeys());
+        const fileHotkeys: React.ReactElement[] = toElements(HotkeyService.FileControlHotkeys());
 
         // 5) Other
-        const otherHotKeys: React.ReactElement[] = toElements(HotkeyService.GetOtherHotkeys());
+        const otherHotKeys: React.ReactElement[] = toElements(HotkeyService.OtherHotkeys());
 
         return {
             navigationHotKeys,
@@ -365,17 +376,7 @@ export class HotkeyService extends React.Component<{}> {
 }
 
 export function HotkeysRegistrar() {
-    const hotkeys = React.useMemo(
-        () => [
-            ...HotkeyService.GetFrameControlHotkeys(),
-            ...HotkeyService.GetFrameControlHiddenHotkeys(),
-            ...HotkeyService.GetRegionHotkeys(),
-            ...HotkeyService.GetRegionHiddenHotkeys(),
-            ...HotkeyService.GetFileControlHotkeys(),
-            ...HotkeyService.GetOtherHotkeys()
-        ],
-        []
-    );
+    const hotkeys = React.useMemo(() => [...HotkeyService.FrameControlHotkeys(), ...HotkeyService.FrameControlHiddenHotkeys(), ...HotkeyService.RegionHotkeys(), ...HotkeyService.GetRegionHiddenHotkeys(), ...HotkeyService.FileControlHotkeys(), ...HotkeyService.OtherHotkeys()], []);
 
     useHotkeys(hotkeys);
 
