@@ -123,6 +123,16 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
+    static EnterPointSelection = () => {
+        const appStore = AppStore.Instance;
+        if (appStore.activeFrame?.regionSet.selectedRegion) {
+            const region = appStore.activeFrame.regionSet.selectedRegion;
+            if (region.supportsPointSelection && !region.hasSelectedPoint) {
+                region.selectPoint(0);
+            }
+        }
+    };
+
     static SelectNextPoint = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame?.regionSet.selectedRegion?.supportsPointSelection) {
@@ -249,6 +259,7 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "delete", label: "Delete selected region", onKeyDown: appStore.deleteSelectedRegion},
             {combo: "backspace", label: "Delete selected region", onKeyDown: appStore.deleteSelectedRegion},
             {combo: "esc", label: "Deselect region/point or cancel creation", onKeyDown: HotkeyService.HandleRegionEsc},
+            {combo: "enter", label: "Enter point selection mode", onKeyDown: HotkeyService.EnterPointSelection},
             {combo: "tab", label: "Select next region/point", onKeyDown: HotkeyService.SelectNextRegionOrPoint},
             {combo: "shift + tab", label: "Select previous region/point", onKeyDown: HotkeyService.SelectPreviousRegionOrPoint},
             {combo: "up + down", label: "Move region/point vertically", onKeyDown: undefined},
