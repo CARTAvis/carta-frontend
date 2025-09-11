@@ -137,6 +137,48 @@ export class HotkeyService extends React.Component<{}> {
         }
     };
 
+    static SelectNextRegion = () => {
+        const appStore = AppStore.Instance;
+        appStore.activeFrame?.regionSet.selectNextRegion();
+    };
+
+    static SelectPreviousRegion = () => {
+        const appStore = AppStore.Instance;
+        appStore.activeFrame?.regionSet.selectPreviousRegion();
+    };
+
+    static SelectNextRegionOrPoint = () => {
+        const appStore = AppStore.Instance;
+        const regionSet = appStore.activeFrame?.regionSet;
+        if (!regionSet) {
+            return;
+        }
+
+        const region = regionSet.selectedRegion;
+        // Only cycle points if a control point is already selected; otherwise go to next region
+        if (region?.hasSelectedPoint) {
+            region.selectNextPoint();
+        } else {
+            regionSet.selectNextRegion();
+        }
+    };
+
+    static SelectPreviousRegionOrPoint = () => {
+        const appStore = AppStore.Instance;
+        const regionSet = appStore.activeFrame?.regionSet;
+        if (!regionSet) {
+            return;
+        }
+
+        const region = regionSet.selectedRegion;
+        // Only cycle points if a control point is already selected; otherwise go to previous region
+        if (region?.hasSelectedPoint) {
+            region.selectPreviousPoint();
+        } else {
+            regionSet.selectPreviousRegion();
+        }
+    };
+
     static MoveSelectedRegion = (deltaX: number, deltaY: number, acceleratedMultiplier: number) => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame?.regionSet.selectedRegion) {
@@ -207,28 +249,8 @@ export class HotkeyService extends React.Component<{}> {
             {combo: "delete", label: "Delete selected region", onKeyDown: appStore.deleteSelectedRegion},
             {combo: "backspace", label: "Delete selected region", onKeyDown: appStore.deleteSelectedRegion},
             {combo: "esc", label: "Deselect region/point or cancel creation", onKeyDown: HotkeyService.HandleRegionEsc},
-            {
-                combo: "tab",
-                label: (
-                    <>
-                        Select next point
-                        <br />
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(polygon/polyline)
-                    </>
-                ),
-                onKeyDown: HotkeyService.SelectNextPoint
-            },
-            {
-                combo: "shift + tab",
-                label: (
-                    <>
-                        Select previous point
-                        <br />
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(polygon/polyline)
-                    </>
-                ),
-                onKeyDown: HotkeyService.SelectPreviousPoint
-            },
+            {combo: "tab", label: "Select next region/point", onKeyDown: HotkeyService.SelectNextRegionOrPoint},
+            {combo: "shift + tab", label: "Select previous region/point", onKeyDown: HotkeyService.SelectPreviousRegionOrPoint},
             {combo: "up + down", label: "Move region/point vertically", onKeyDown: undefined},
             {combo: "left + right", label: "Move region/point horizontally", onKeyDown: undefined}
         ];

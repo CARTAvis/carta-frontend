@@ -292,6 +292,54 @@ export class RegionSetStore {
         }
     };
 
+    @action selectNextRegion = () => {
+        if (!this.regions || this.regions.length <= 1) {
+            return;
+        }
+
+        const selectableIndices = this.regions
+            .map((r, i) => ({r, i}))
+            .filter(({r}) => r.regionId !== CURSOR_REGION_ID)
+            .map(({i}) => i);
+
+        if (selectableIndices.length === 0) {
+            return;
+        }
+
+        const currentIndex = this.regions.indexOf(this.selectedRegion);
+        const currentPos = selectableIndices.indexOf(currentIndex);
+        const nextIndex = currentPos === -1 ? selectableIndices[0] : selectableIndices[(currentPos + 1) % selectableIndices.length];
+        this.selectRegionByIndex(nextIndex);
+        // When navigating via keyboard, do not auto-select any control point on the newly selected region
+        if (this.selectedRegion?.supportsPointSelection) {
+            this.selectedRegion.deselectPoint();
+        }
+    };
+
+    @action selectPreviousRegion = () => {
+        if (!this.regions || this.regions.length <= 1) {
+            return;
+        }
+
+        const selectableIndices = this.regions
+            .map((r, i) => ({r, i}))
+            .filter(({r}) => r.regionId !== CURSOR_REGION_ID)
+            .map(({i}) => i);
+
+        if (selectableIndices.length === 0) {
+            return;
+        }
+
+        const currentIndex = this.regions.indexOf(this.selectedRegion);
+        const currentPos = selectableIndices.indexOf(currentIndex);
+        const prevIndex = currentPos === -1 ? selectableIndices[selectableIndices.length - 1] : selectableIndices[(currentPos - 1 + selectableIndices.length) % selectableIndices.length];
+        this.selectRegionByIndex(prevIndex);
+        // When navigating via keyboard, do not auto-select any control point on the newly selected region
+        if (this.selectedRegion?.supportsPointSelection) {
+            this.selectedRegion.deselectPoint();
+        }
+    };
+
     @action deselectRegion = () => {
         this.selectedRegion = null;
     };
