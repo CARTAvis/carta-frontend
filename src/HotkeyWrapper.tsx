@@ -10,11 +10,11 @@ import {RegionMode} from "stores/Frame";
 import "./HotkeyWrapper.scss";
 
 enum HotkeyGroup {
-    Navigation = "1) Navigation",
-    Regions = "2) Regions",
-    FrameControls = "3) Frame controls",
-    FileControls = "4) File controls",
-    Other = "5) Other"
+    Navigation = "Navigation",
+    Regions = "Regions",
+    FrameControls = "Frame controls",
+    FileControls = "File controls",
+    Other = "Other"
 }
 
 @observer
