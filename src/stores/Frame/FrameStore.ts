@@ -2309,9 +2309,12 @@ export class FrameStore {
     };
 
     @computed get offsetCenterWCS(): WCSPoint2D {
-        // re-calculate with different wcs system
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        // re-calculate with different wcs system and format
+        /* eslint-disable @typescript-eslint/no-unused-vars */
         const system = AppStore.Instance.overlaySettings.global.explicitSystem;
+        const formatX = AppStore.Instance.overlaySettings.numbers.formatTypeX;
+        const formatY = AppStore.Instance.overlaySettings.numbers.formatTypeY;
+        /* eslint-enable @typescript-eslint/no-unused-vars */
         if (!this.wcsInfoShifted) {
             return null;
         }
