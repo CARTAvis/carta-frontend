@@ -13,8 +13,8 @@ import {SWATCH_COLORS, toFixed} from "utilities";
 import "./ImageViewSettingsPanelComponent.scss";
 
 enum ImageViewSettingsPanelTabs {
-    PAN_AND_ZOOM = "Pan and Zoom",
-    GLOBAL = "Global",
+    NAVIGATION = "Navigation",
+    DISPLAY = "Display",
     TITLE = "Title",
     TICKS = "Ticks",
     GRIDS = "Grids",
@@ -29,15 +29,29 @@ enum ImageViewSettingsPanelTabs {
 
 @observer
 export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps> {
-    @observable selectedTab: TabId = ImageViewSettingsPanelTabs.PAN_AND_ZOOM;
-    @observable panAndZoomCoord: CoordinateMode = CoordinateMode.World;
+    @observable selectedTab: TabId = ImageViewSettingsPanelTabs.NAVIGATION;
+    @observable navigationCoord: CoordinateMode = CoordinateMode.World;
 
     @action private setSelectedTab = (tab: TabId) => {
         this.selectedTab = tab;
     };
 
-    @action private setPanAndZoomCoord = (coord: CoordinateMode) => {
-        this.panAndZoomCoord = coord;
+    @action private setNavigationCoord = (coord: CoordinateMode) => {
+        this.navigationCoord = coord;
+    };
+
+    private supportsHmsDmsFormat = (): boolean => {
+        const appStore = AppStore.Instance;
+        const currentSystem = appStore.overlaySettings.global.explicitSystem;
+
+        if (this.navigationCoord === CoordinateMode.Image) {
+            return false;
+        }
+
+        // HMS/DMS format is only supported for equatorial coordinate systems
+        return currentSystem === SystemType.FK4 ||
+               currentSystem === SystemType.FK5 ||
+               currentSystem === SystemType.ICRS;
     };
 
     constructor(props: any) {
@@ -46,7 +60,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
 
         autorun(() => {
             if (!AppStore.Instance.activeFrame?.isPVImage && this.selectedTab === ImageViewSettingsPanelTabs.CONVERSION) {
-                this.selectedTab = ImageViewSettingsPanelTabs.GLOBAL;
+                this.selectedTab = ImageViewSettingsPanelTabs.DISPLAY;
             }
         });
     }
@@ -93,17 +107,81 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const isPVImage = frame?.isPVImage;
 
         const getInfoString = (value: number, valueWcs: string) => {
-            return this.panAndZoomCoord === CoordinateMode.Image ? `WCS: ${valueWcs}` : `Image: ${toFixed(value, 3)} px`;
+            const defaultSystem = global.defaultSystem;
+            return this.navigationCoord === CoordinateMode.Image ? `${defaultSystem}: ${valueWcs}` : `Image: ${toFixed(value, 3)} px`;
         };
-        const fovLabelInfo = this.panAndZoomCoord === CoordinateMode.Image ? "(px)" : "";
-        const panAndZoomPanel = (
-            <div className="panel-pan-and-zoom">
-                <FormGroup inline={true} label="Coordinate">
-                    <CoordinateComponent selectedValue={this.panAndZoomCoord} onChange={this.setPanAndZoomCoord} />
+        const navigationPanel = (
+            <div className="panel-navigation">
+                <FormGroup inline={true} label="Coordinate system">
+                    <CoordinateComponent selectedValue={this.navigationCoord} onChange={this.setNavigationCoord} />
                 </FormGroup>
-                <FormGroup inline={true} label="Center (X)" labelInfo={fovLabelInfo}>
+                {this.supportsHmsDmsFormat() && (
+                    <>
+                        <FormGroup inline={true} label="Format (X)">
+                            <HTMLSelect
+                                options={[
+                                    {label: NUMBER_FORMAT_LABEL.get(NumberFormatType.HMS), value: NumberFormatType.HMS},
+                                    {label: NUMBER_FORMAT_LABEL.get(NumberFormatType.DMS), value: NumberFormatType.DMS},
+                                    {label: NUMBER_FORMAT_LABEL.get(NumberFormatType.Degrees), value: NumberFormatType.Degrees}
+                                ]}
+                                value={numbers.formatTypeX || NumberFormatType.Degrees}
+                                onChange={(event: React.FormEvent<HTMLSelectElement>) => {
+                                    numbers.setCustomFormat(true);
+                                    numbers.setFormatX(event.currentTarget.value as NumberFormatType);
+                                }}
+                            />
+                        </FormGroup>
+                        <FormGroup inline={true} label="Format (Y)">
+                            <HTMLSelect
+                                options={[
+                                    {label: NUMBER_FORMAT_LABEL.get(NumberFormatType.HMS), value: NumberFormatType.HMS},
+                                    {label: NUMBER_FORMAT_LABEL.get(NumberFormatType.DMS), value: NumberFormatType.DMS},
+                                    {label: NUMBER_FORMAT_LABEL.get(NumberFormatType.Degrees), value: NumberFormatType.Degrees}
+                                ]}
+                                value={numbers.formatTypeY || NumberFormatType.Degrees}
+                                onChange={(event: React.FormEvent<HTMLSelectElement>) => {
+                                    numbers.setCustomFormat(true);
+                                    numbers.setFormatY(event.currentTarget.value as NumberFormatType);
+                                }}
+                            />
+                        </FormGroup>
+                    </>
+                )}
+                {(global.explicitSystem === SystemType.Image) && (
+                    <>
+                        <FormGroup inline={true} label="Format (X)">
+                            <HTMLSelect
+                                options={[{label: "Pixels", value: "Pixels"}]}
+                                disabled={true}
+                            />
+                        </FormGroup>
+                        <FormGroup inline={true} label="Format (Y)">
+                            <HTMLSelect
+                                options={[{label: "Pixels", value: "Pixels"}]}
+                                disabled={true}
+                            />
+                        </FormGroup>
+                    </>
+                )}
+                {global.explicitSystem !== SystemType.Image && !this.supportsHmsDmsFormat() && (
+                    <>
+                        <FormGroup inline={true} label="Format (X)">
+                            <HTMLSelect
+                                options={[{label: NUMBER_FORMAT_LABEL.get(NumberFormatType.Degrees), value: NumberFormatType.Degrees}]}
+                                disabled={true}
+                            />
+                        </FormGroup>
+                        <FormGroup inline={true} label="Format (Y)">
+                            <HTMLSelect
+                                options={[{label: NUMBER_FORMAT_LABEL.get(NumberFormatType.Degrees), value: NumberFormatType.Degrees}]}
+                                disabled={true}
+                            />
+                        </FormGroup>
+                    </>
+                )}
+                <FormGroup inline={true} label="Center (X)">
                     <CoordNumericInput
-                        coord={this.panAndZoomCoord}
+                        coord={this.navigationCoord}
                         inputType={InputType.XCoord}
                         value={frame?.center?.x}
                         onChange={val => frame?.setCenter(val, frame?.center?.y)}
@@ -113,9 +191,9 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     />
                     <span className="info-string">{getInfoString(frame?.center?.x, frame?.centerWCS?.x)}</span>
                 </FormGroup>
-                <FormGroup inline={true} label="Center (Y)" labelInfo={fovLabelInfo}>
+                <FormGroup inline={true} label="Center (Y)">
                     <CoordNumericInput
-                        coord={this.panAndZoomCoord}
+                        coord={this.navigationCoord}
                         inputType={InputType.YCoord}
                         value={frame?.center?.y}
                         onChange={val => frame?.setCenter(frame?.center?.x, val)}
@@ -125,9 +203,9 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     />
                     <span className="info-string">{getInfoString(frame?.center?.y, frame?.centerWCS?.y)}</span>
                 </FormGroup>
-                <FormGroup inline={true} label="Size (X)" labelInfo={fovLabelInfo}>
+                <FormGroup inline={true} label="Size (X)">
                     <CoordNumericInput
-                        coord={this.panAndZoomCoord}
+                        coord={this.navigationCoord}
                         inputType={InputType.Size}
                         value={frame?.fovSize?.x}
                         onChange={frame?.zoomToSizeX}
@@ -138,9 +216,9 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     />
                     <span className="info-string">{getInfoString(frame?.fovSize?.x, frame?.fovSizeWCS?.x)}</span>
                 </FormGroup>
-                <FormGroup inline={true} label="Size (Y)" labelInfo={fovLabelInfo}>
+                <FormGroup inline={true} label="Size (Y)">
                     <CoordNumericInput
-                        coord={this.panAndZoomCoord}
+                        coord={this.navigationCoord}
                         inputType={InputType.Size}
                         value={frame?.fovSize?.y}
                         onChange={frame?.zoomToSizeY}
@@ -160,9 +238,9 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     </Collapse>
                 </FormGroup>
                 <Collapse isOpen={frame?.isOffsetCoord}>
-                    <FormGroup inline={true} label="Offset center (X)" labelInfo={fovLabelInfo}>
+                    <FormGroup inline={true} label="Offset center (X)">
                         <CoordNumericInput
-                            coord={this.panAndZoomCoord}
+                            coord={this.navigationCoord}
                             inputType={InputType.XCoord}
                             value={frame?.offsetCenter?.x}
                             onChange={val => frame?.setOffsetCenter(val, frame?.offsetCenter?.y)}
@@ -172,9 +250,9 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         />
                         <span className="info-string">{getInfoString(frame?.offsetCenter?.x, frame?.offsetCenterWCS?.x)}</span>
                     </FormGroup>
-                    <FormGroup inline={true} label="Offset center (Y)" labelInfo={fovLabelInfo}>
+                    <FormGroup inline={true} label="Offset center (Y)">
                         <CoordNumericInput
-                            coord={this.panAndZoomCoord}
+                            coord={this.navigationCoord}
                             inputType={InputType.YCoord}
                             value={frame?.offsetCenter?.y}
                             onChange={val => frame?.setOffsetCenter(frame?.offsetCenter?.x, val)}
@@ -188,7 +266,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
             </div>
         );
 
-        const globalPanel = (
+        const displayPanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Enable multi-panel">
                     <Switch checked={preferences.imageMultiPanelEnabled} onChange={ev => appStore.widgetsStore.setImageMultiPanelEnabled(ev.currentTarget.checked)} />
@@ -232,14 +310,6 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         options={Object.keys(LabelType).map(key => ({label: key, value: LabelType[key]}))}
                         value={global.labelType}
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => global.setLabelType(event.currentTarget.value as LabelType)}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Coordinate system" disabled={!global.validWcs} helperText={disabledIfNoWcs}>
-                    <HTMLSelect
-                        options={Object.keys(SystemType).map(key => ({label: key, value: SystemType[key]}))}
-                        value={global.system}
-                        disabled={!global.validWcs}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => global.setSystem(event.currentTarget.value as SystemType)}
                     />
                 </FormGroup>
             </div>
@@ -408,33 +478,6 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 <Collapse isOpen={numbers.customColor}>
                     <FormGroup inline={true} label="Color" disabled={!numbers.visible}>
                         {numbers.visible && <AutoColorPickerComponent color={numbers.color} presetColors={SWATCH_COLORS} setColor={numbers.setColor} disableAlpha={true} />}
-                    </FormGroup>
-                </Collapse>
-                <FormGroup inline={true} label="Custom format" disabled={!numbers.validWcs} helperText={disabledIfNoWcs}>
-                    <Switch checked={numbers.customFormat} disabled={!numbers.validWcs} onChange={ev => numbers.setCustomFormat(ev.currentTarget.checked)} />
-                </FormGroup>
-                <Collapse isOpen={numbers.customFormat && numbers.validWcs}>
-                    <FormGroup inline={true} label="Format" labelInfo="(X)">
-                        <HTMLSelect
-                            options={[
-                                {label: NUMBER_FORMAT_LABEL.get(NumberFormatType.HMS), value: NumberFormatType.HMS},
-                                {label: NUMBER_FORMAT_LABEL.get(NumberFormatType.DMS), value: NumberFormatType.DMS},
-                                {label: NUMBER_FORMAT_LABEL.get(NumberFormatType.Degrees), value: NumberFormatType.Degrees}
-                            ]}
-                            value={numbers.formatX}
-                            onChange={(event: React.FormEvent<HTMLSelectElement>) => numbers.setFormatX(event.currentTarget.value as NumberFormatType)}
-                        />
-                    </FormGroup>
-                    <FormGroup inline={true} label="Format" labelInfo="(Y)">
-                        <HTMLSelect
-                            options={[
-                                {label: NUMBER_FORMAT_LABEL.get(NumberFormatType.HMS), value: NumberFormatType.HMS},
-                                {label: NUMBER_FORMAT_LABEL.get(NumberFormatType.DMS), value: NumberFormatType.DMS},
-                                {label: NUMBER_FORMAT_LABEL.get(NumberFormatType.Degrees), value: NumberFormatType.Degrees}
-                            ]}
-                            value={numbers.formatY}
-                            onChange={(event: React.FormEvent<HTMLSelectElement>) => numbers.setFormatY(event.currentTarget.value as NumberFormatType)}
-                        />
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Custom precision" disabled={!numbers.validWcs} helperText={disabledIfNoWcs}>
@@ -757,8 +800,8 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         return (
             <div className={className}>
                 <Tabs id="imageViewSettingsTabs" vertical={true} selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
-                    <Tab id={ImageViewSettingsPanelTabs.PAN_AND_ZOOM} title={ImageViewSettingsPanelTabs.PAN_AND_ZOOM} panel={<ScrollShadow>{panAndZoomPanel}</ScrollShadow>} />
-                    <Tab id={ImageViewSettingsPanelTabs.GLOBAL} title={ImageViewSettingsPanelTabs.GLOBAL} panel={<ScrollShadow>{globalPanel}</ScrollShadow>} />
+                    <Tab id={ImageViewSettingsPanelTabs.NAVIGATION} title={ImageViewSettingsPanelTabs.NAVIGATION} panel={<ScrollShadow>{navigationPanel}</ScrollShadow>} />
+                    <Tab id={ImageViewSettingsPanelTabs.DISPLAY} title={ImageViewSettingsPanelTabs.DISPLAY} panel={<ScrollShadow>{displayPanel}</ScrollShadow>} />
                     <Tab id={ImageViewSettingsPanelTabs.TITLE} title={ImageViewSettingsPanelTabs.TITLE} panel={<ScrollShadow>{titlePanel}</ScrollShadow>} />
                     <Tab id={ImageViewSettingsPanelTabs.TICKS} title={ImageViewSettingsPanelTabs.TICKS} panel={<ScrollShadow>{ticksPanel}</ScrollShadow>} />
                     <Tab id={ImageViewSettingsPanelTabs.GRIDS} title={ImageViewSettingsPanelTabs.GRIDS} panel={<ScrollShadow>{gridPanel}</ScrollShadow>} data-testid="image-view-settings-grid-tab-title" />
