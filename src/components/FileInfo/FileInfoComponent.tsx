@@ -436,7 +436,7 @@ export class FileInfoComponent extends React.Component<{
                     content={
                         <InputGroup
                             className="header-search-input"
-                            autoFocus={false}
+                            autoFocus={true}
                             placeholder={"Search text"}
                             leftIcon="search-text"
                             rightElement={searchIter}
