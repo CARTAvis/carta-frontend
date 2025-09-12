@@ -121,6 +121,7 @@ export class CatalogQueryComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
+        const global = appStore.overlaySettings.global;
 
         if (!appStore || !appStore.activeFrame) {
             return <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;
@@ -203,7 +204,18 @@ export class CatalogQueryComponent extends React.Component {
                         </Button>
                     </Tooltip>
                 </FormGroup>
-                <FormGroup inline={false} label="Center coordinates" disabled={disable}>
+                <FormGroup inline={true} label="Center coordinates" disabled={disable}>
+                    <RadioGroup
+                        onChange={this.handleFormatToggle}
+                        selectedValue={this.localCoordinateFormat}
+                        disabled={disable}
+                        inline={true}
+                    >
+                        <Radio value={LocalCoordinateFormat.Degrees} label="Degrees" />
+                        <Radio value={LocalCoordinateFormat.HMSDMS} label="HMS/DMS" disabled={!this.supportsHmsDmsFormat()} />
+                    </RadioGroup>
+                </FormGroup>
+                <FormGroup inline={true} disabled={disable} style={{marginTop: -15}}>
                     <Select
                         items={Object.values(SystemType).filter(sys => sys !== SystemType.Image)}
                         activeItem={null}
@@ -214,7 +226,7 @@ export class CatalogQueryComponent extends React.Component {
                         filterable={false}
                         resetOnSelect={true}
                     >
-                        <Button text={appStore.overlaySettings.global.system} disabled={disable} rightIcon="double-caret-vertical" />
+                        <Button text={this.getSystemTypeKey(global.explicitSystem)} disabled={disable} rightIcon="double-caret-vertical" />
                     </Select>
                     <Tooltip content={`Format: ${this.getLocalFormatLabel('x')}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <SafeNumericInput
@@ -244,7 +256,7 @@ export class CatalogQueryComponent extends React.Component {
                         <Button icon="locate" disabled={disable} onClick={() => configStore.setFrameCenter()} data-testid="catalog-query-reset-center-button" />
                     </Tooltip>
                 </FormGroup>
-                <FormGroup inline={true} label="Coordinate format" disabled={disable}>
+                {/* <FormGroup inline={true} label="Coordinate format" disabled={disable}>
                     <RadioGroup
                         onChange={this.handleFormatToggle}
                         selectedValue={this.localCoordinateFormat}
@@ -254,7 +266,7 @@ export class CatalogQueryComponent extends React.Component {
                         <Radio value={LocalCoordinateFormat.Degrees} label="Degrees" />
                         <Radio value={LocalCoordinateFormat.HMSDMS} label="HMS/DMS" disabled={!this.supportsHmsDmsFormat()} />
                     </RadioGroup>
-                </FormGroup>
+                </FormGroup> */}
                 <ClearableNumericInputComponent
                     label={isVizier ? "Max number of objects per catalog" : "Max number of objects"}
                     min={CatalogOnlineQueryConfigStore.MIN_OBJECTS}
@@ -402,7 +414,17 @@ export class CatalogQueryComponent extends React.Component {
     };
 
     private renderSysTypePopOver = (type: SystemType, itemProps: ItemRendererProps) => {
-        return <MenuItem key={type} text={type} onClick={itemProps.handleClick} />;
+        return <MenuItem key={type} text={this.getSystemTypeKey(type)} onClick={itemProps.handleClick} />;
+    };
+
+    private getSystemTypeKey = (value: string): string => {
+        // Special case: if SystemType.Image, display as SystemType.Auto
+        if (value === SystemType.Image) {
+            const global = AppStore.Instance.overlaySettings.global;
+            global.setSystem(SystemType.Auto);
+            return Object.keys(SystemType).find(key => SystemType[key] === SystemType.Auto);
+        }
+        return Object.keys(SystemType).find(key => SystemType[key] === value) || value;
     };
 
     private vizierItemRenderer = (table: VizierItem, itemProps: ItemRendererProps) => {
@@ -541,8 +563,8 @@ export class CatalogQueryComponent extends React.Component {
     };
 
     private handleSystemTypeChange = (type: SystemType) => {
-        const appStore = AppStore.Instance;
-        appStore.overlaySettings.global.setSystem(type);
+        const global = AppStore.Instance.overlaySettings.global;
+        global.setSystem(type);
         
         // If switching to a system that doesn't support HMS/DMS, automatically switch local format to degrees
         if (!this.supportsHmsDmsFormat() && this.localCoordinateFormat === LocalCoordinateFormat.HMSDMS) {
