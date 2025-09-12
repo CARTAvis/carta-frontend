@@ -49,9 +49,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         }
 
         // HMS/DMS format is only supported for equatorial coordinate systems
-        return currentSystem === SystemType.FK4 ||
-               currentSystem === SystemType.FK5 ||
-               currentSystem === SystemType.ICRS;
+        return currentSystem === SystemType.FK4 || currentSystem === SystemType.FK5 || currentSystem === SystemType.ICRS;
     };
 
     constructor(props: any) {
@@ -147,35 +145,23 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         </FormGroup>
                     </>
                 )}
-                {(global.explicitSystem === SystemType.Image) && (
+                {global.explicitSystem === SystemType.Image && (
                     <>
                         <FormGroup inline={true} label="Format (X)">
-                            <HTMLSelect
-                                options={[{label: "Pixels", value: "Pixels"}]}
-                                disabled={true}
-                            />
+                            <HTMLSelect options={[{label: "Pixels", value: "Pixels"}]} disabled={true} />
                         </FormGroup>
                         <FormGroup inline={true} label="Format (Y)">
-                            <HTMLSelect
-                                options={[{label: "Pixels", value: "Pixels"}]}
-                                disabled={true}
-                            />
+                            <HTMLSelect options={[{label: "Pixels", value: "Pixels"}]} disabled={true} />
                         </FormGroup>
                     </>
                 )}
                 {global.explicitSystem !== SystemType.Image && !this.supportsHmsDmsFormat() && (
                     <>
                         <FormGroup inline={true} label="Format (X)">
-                            <HTMLSelect
-                                options={[{label: NUMBER_FORMAT_LABEL.get(NumberFormatType.Degrees), value: NumberFormatType.Degrees}]}
-                                disabled={true}
-                            />
+                            <HTMLSelect options={[{label: NUMBER_FORMAT_LABEL.get(NumberFormatType.Degrees), value: NumberFormatType.Degrees}]} disabled={true} />
                         </FormGroup>
                         <FormGroup inline={true} label="Format (Y)">
-                            <HTMLSelect
-                                options={[{label: NUMBER_FORMAT_LABEL.get(NumberFormatType.Degrees), value: NumberFormatType.Degrees}]}
-                                disabled={true}
-                            />
+                            <HTMLSelect options={[{label: NUMBER_FORMAT_LABEL.get(NumberFormatType.Degrees), value: NumberFormatType.Degrees}]} disabled={true} />
                         </FormGroup>
                     </>
                 )}

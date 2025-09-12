@@ -23,7 +23,7 @@ export class CoordinateComponent extends React.Component<ICoordinateComponentPro
 
         // Auto-set format to degrees when switching to non-HMS/DMS coordinate systems
         const targetSystem = newSystem === SystemType.Auto ? global.explicitSystem : newSystem;
-        
+
         // Set coordinate mode based on target system
         if (targetSystem === SystemType.Image) {
             this.props.onChange(CoordinateMode.Image);
@@ -33,9 +33,9 @@ export class CoordinateComponent extends React.Component<ICoordinateComponentPro
 
         // Set the new system
         global.setSystem(newSystem);
-        
+
         const supportsHmsDms = targetSystem === SystemType.FK4 || targetSystem === SystemType.FK5 || targetSystem === SystemType.ICRS;
-        
+
         if (!supportsHmsDms && numbers.customFormat) {
             if (numbers.formatTypeX !== NumberFormatType.Degrees) {
                 numbers.setFormatX(NumberFormatType.Degrees);
@@ -50,11 +50,7 @@ export class CoordinateComponent extends React.Component<ICoordinateComponentPro
         const global = AppStore.Instance.overlaySettings.global;
         return (
             <div className="coordinate-panel">
-                <HTMLSelect
-                    options={Object.keys(SystemType).map(key => ({label: key, value: SystemType[key]}))}
-                    value={global.system === SystemType.Auto ? global.explicitSystem : global.system}
-                    onChange={this.handleSystemChange}
-                />
+                <HTMLSelect options={Object.keys(SystemType).map(key => ({label: key, value: SystemType[key]}))} value={global.system === SystemType.Auto ? global.explicitSystem : global.system} onChange={this.handleSystemChange} />
             </div>
         );
     }

@@ -17,7 +17,7 @@ import "./CatalogOnlineQueryComponent.scss";
 // Local enum for coordinate format selection
 enum LocalCoordinateFormat {
     HMSDMS = "hmsdms",
-    Degrees = "degrees",
+    Degrees = "degrees"
 }
 
 const KEYCODE_ENTER = 13;
@@ -37,9 +37,7 @@ export class CatalogQueryComponent extends React.Component {
         const appStore = AppStore.Instance;
         if (appStore?.overlaySettings) {
             const formatX = appStore.overlaySettings.numbers.formatTypeX;
-            this.localCoordinateFormat = (formatX !== NumberFormatType.Degrees)
-                ? LocalCoordinateFormat.HMSDMS
-                : LocalCoordinateFormat.Degrees;
+            this.localCoordinateFormat = formatX !== NumberFormatType.Degrees ? LocalCoordinateFormat.HMSDMS : LocalCoordinateFormat.Degrees;
         }
     }
 
@@ -63,7 +61,7 @@ export class CatalogQueryComponent extends React.Component {
 
         // Create a temporary AST transform with the desired format
         const tempTransform = AST.copy(astTransform);
-        
+
         // Set the format based on local coordinate format
         if (this.localCoordinateFormat === LocalCoordinateFormat.HMSDMS && this.supportsHmsDmsFormat()) {
             AST.set(tempTransform, "Format(1)=hms.10, Format(2)=dms.10");
@@ -74,23 +72,23 @@ export class CatalogQueryComponent extends React.Component {
         const wcsCoords = getFormattedWCSPoint(tempTransform, pixelCoords);
 
         AST.deleteObject(tempTransform);
-        
+
         return wcsCoords;
     }
 
     // Get format label for tooltips
-    private getLocalFormatLabel(axis: 'x' | 'y'): string {
+    private getLocalFormatLabel(axis: "x" | "y"): string {
         if (this.localCoordinateFormat === LocalCoordinateFormat.HMSDMS && this.supportsHmsDmsFormat()) {
-            return axis === 'x' ? NUMBER_FORMAT_LABEL.get(NumberFormatType.HMS) || 'HMS' : NUMBER_FORMAT_LABEL.get(NumberFormatType.DMS) || 'DMS';
+            return axis === "x" ? NUMBER_FORMAT_LABEL.get(NumberFormatType.HMS) || "HMS" : NUMBER_FORMAT_LABEL.get(NumberFormatType.DMS) || "DMS";
         } else {
-            return NUMBER_FORMAT_LABEL.get(NumberFormatType.Degrees) || 'Degrees';
+            return NUMBER_FORMAT_LABEL.get(NumberFormatType.Degrees) || "Degrees";
         }
     }
 
     // Get the appropriate format type for validation
-    private getLocalFormatType(axis: 'x' | 'y'): NumberFormatType {
+    private getLocalFormatType(axis: "x" | "y"): NumberFormatType {
         if (this.localCoordinateFormat === LocalCoordinateFormat.HMSDMS && this.supportsHmsDmsFormat()) {
-            return axis === 'x' ? NumberFormatType.HMS : NumberFormatType.DMS;
+            return axis === "x" ? NumberFormatType.HMS : NumberFormatType.DMS;
         } else {
             return NumberFormatType.Degrees;
         }
@@ -205,12 +203,7 @@ export class CatalogQueryComponent extends React.Component {
                     </Tooltip>
                 </FormGroup>
                 <FormGroup inline={true} label="Center coordinates" disabled={disable}>
-                    <RadioGroup
-                        onChange={this.handleFormatToggle}
-                        selectedValue={this.localCoordinateFormat}
-                        disabled={disable}
-                        inline={true}
-                    >
+                    <RadioGroup onChange={this.handleFormatToggle} selectedValue={this.localCoordinateFormat} disabled={disable} inline={true}>
                         <Radio value={LocalCoordinateFormat.Degrees} label="Degrees" />
                         <Radio value={LocalCoordinateFormat.HMSDMS} label="HMS/DMS" disabled={!this.supportsHmsDmsFormat()} />
                     </RadioGroup>
@@ -228,7 +221,7 @@ export class CatalogQueryComponent extends React.Component {
                     >
                         <Button text={this.getSystemTypeKey(global.explicitSystem)} disabled={disable} rightIcon="double-caret-vertical" />
                     </Select>
-                    <Tooltip content={`Format: ${this.getLocalFormatLabel('x')}`} position={Position.BOTTOM} hoverOpenDelay={300}>
+                    <Tooltip content={`Format: ${this.getLocalFormatLabel("x")}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <SafeNumericInput
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
@@ -240,7 +233,7 @@ export class CatalogQueryComponent extends React.Component {
                             data-testid="catalog-query-center-x-input"
                         />
                     </Tooltip>
-                    <Tooltip content={`Format: ${this.getLocalFormatLabel('y')}`} position={Position.BOTTOM} hoverOpenDelay={300}>
+                    <Tooltip content={`Format: ${this.getLocalFormatLabel("y")}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <SafeNumericInput
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
@@ -479,7 +472,7 @@ export class CatalogQueryComponent extends React.Component {
         if (wcsString === centerWcsPoint.x) {
             return;
         }
-        if (isWCSStringFormatValid(wcsString, this.getLocalFormatType('x'))) {
+        if (isWCSStringFormatValid(wcsString, this.getLocalFormatType("x"))) {
             // Parse using a temporary transform matching local format
             const tempTransform = AST.copy(wcsInfo);
             if (this.localCoordinateFormat === LocalCoordinateFormat.HMSDMS && this.supportsHmsDmsFormat()) {
@@ -513,7 +506,7 @@ export class CatalogQueryComponent extends React.Component {
         if (wcsString === centerWcsPoint.y) {
             return;
         }
-        if (isWCSStringFormatValid(wcsString, this.getLocalFormatType('y'))) {
+        if (isWCSStringFormatValid(wcsString, this.getLocalFormatType("y"))) {
             // Parse using a temporary transform matching local format
             const tempTransform = AST.copy(wcsInfo);
             if (this.localCoordinateFormat === LocalCoordinateFormat.HMSDMS && this.supportsHmsDmsFormat()) {
@@ -536,23 +529,21 @@ export class CatalogQueryComponent extends React.Component {
         const currentSystem = appStore.overlaySettings.global.explicitSystem;
 
         // HMS/DMS format is only supported for equatorial coordinate systems
-        return currentSystem === SystemType.FK4 ||
-               currentSystem === SystemType.FK5 ||
-               currentSystem === SystemType.ICRS;
+        return currentSystem === SystemType.FK4 || currentSystem === SystemType.FK5 || currentSystem === SystemType.ICRS;
     };
 
     private isHmsDmsFormat = (): boolean => {
         const appStore = AppStore.Instance;
         const formatX = appStore.overlaySettings.numbers.formatTypeX;
         const formatY = appStore.overlaySettings.numbers.formatTypeY;
-        
+
         // Return true if using HMS/DMS format
         return formatX === NumberFormatType.HMS && formatY === NumberFormatType.DMS;
     };
 
     private handleFormatToggle = (event: React.FormEvent<HTMLInputElement>) => {
         const selectedValue = (event.target as HTMLInputElement).value as LocalCoordinateFormat;
-        
+
         // Only change local format, don't affect global imageview settings
         if (selectedValue === LocalCoordinateFormat.HMSDMS && !this.supportsHmsDmsFormat()) {
             // If HMS/DMS not supported, stay with degrees
@@ -565,7 +556,7 @@ export class CatalogQueryComponent extends React.Component {
     private handleSystemTypeChange = (type: SystemType) => {
         const global = AppStore.Instance.overlaySettings.global;
         global.setSystem(type);
-        
+
         // If switching to a system that doesn't support HMS/DMS, automatically switch local format to degrees
         if (!this.supportsHmsDmsFormat() && this.localCoordinateFormat === LocalCoordinateFormat.HMSDMS) {
             this.setLocalCoordinateFormat(LocalCoordinateFormat.Degrees);
