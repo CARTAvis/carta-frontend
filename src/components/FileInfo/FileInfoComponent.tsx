@@ -426,16 +426,17 @@ export class FileInfoComponent extends React.Component<{
                 <Popover
                     position={Position.LEFT}
                     interactionKind={PopoverInteractionKind.CLICK_TARGET_ONLY}
+                    usePortal={false}
                     modifiers={{
                         arrow: {enabled: false},
-                        offset: {enabled: true, options: {offset: [0, 10]}}
+                        offset: {enabled: true, options: {offset: [0, 200]}}
                     }}
                     onOpening={() => this.handleSearchPanelClicked(true)}
                     onClosing={() => this.handleSearchPanelClicked(false)}
                     content={
                         <InputGroup
                             className="header-search-input"
-                            autoFocus={true}
+                            autoFocus={false}
                             placeholder={"Search text"}
                             leftIcon="search-text"
                             rightElement={searchIter}
