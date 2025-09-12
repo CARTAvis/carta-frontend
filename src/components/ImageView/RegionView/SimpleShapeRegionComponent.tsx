@@ -12,6 +12,7 @@ import {add2D, angle2D, rotate2D, scale2D, subtract2D, transformPoint} from "uti
 
 import {Anchor} from "./InvariantShapes";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
+import {SelectionType} from "./types";
 
 interface SimpleShapeRegionComponentProps {
     region: RegionStore;
@@ -20,9 +21,10 @@ interface SimpleShapeRegionComponentProps {
     layerHeight: number;
     listening: boolean;
     selected: boolean;
+    activeSelected?: boolean;
     isRegionCornerMode: boolean;
     stageRef: any;
-    onSelect?: (region: RegionStore) => void;
+    onSelect?: (region: RegionStore, evt?: MouseEvent) => void;
     onDoubleClick?: (region: RegionStore) => void;
 }
 
@@ -56,8 +58,8 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
     private handleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const mouseEvent = konvaEvent.evt;
-        if (mouseEvent.button === 0 && !(mouseEvent.ctrlKey || mouseEvent.metaKey)) {
-            this.props.onSelect?.(this.props.region);
+        if (mouseEvent.button === 0) {
+            this.props.onSelect?.(this.props.region, mouseEvent);
         }
     };
 
@@ -464,6 +466,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                     y={posCanvas.y}
                     rotation={-region.rotation}
                     isRotator={config.anchor === "rotator"}
+                    selectionType={this.props.activeSelected ? SelectionType.Active : SelectionType.Secondary}
                     onMouseEnter={this.handleAnchorMouseEnter}
                     onMouseOut={this.handleAnchorMouseOut}
                     onDragStart={this.handleAnchorDragStart}

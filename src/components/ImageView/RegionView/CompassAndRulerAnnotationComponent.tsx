@@ -11,6 +11,7 @@ import {add2D, pointDistance, subtract2D, transformPoint} from "utilities";
 
 import {Anchor} from "./InvariantShapes";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
+import {SelectionType} from "./types";
 
 interface CompassRulerAnnotationProps {
     key: number;
@@ -26,7 +27,7 @@ interface CompassRulerAnnotationProps {
 
 const NEW_ANCHOR_MAX_DISTANCE = 16;
 
-export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) => {
+export const CompassAnnotation = observer((props: CompassRulerAnnotationProps & {activeSelected?: boolean}) => {
     const shapeRef = React.useRef();
     const northLabelRef = React.useRef<Konva.Text>();
     const eastLabelRef = React.useRef<Konva.Text>();
@@ -262,9 +263,21 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
             <Group>
                 {props.selected && (
                     <>
-                        <Anchor anchor={"origin"} x={originPoints.x} y={originPoints.y} {...anchorCommonProps} />
-                        <Anchor anchor={"northTip"} x={northPointArray[northPointArray.length - 2] + mousePoint.current.x} y={northPointArray[northPointArray.length - 1] + mousePoint.current.y} {...anchorCommonProps} />
-                        <Anchor anchor={"eastTip"} x={eastPointArray[eastPointArray.length - 2] + mousePoint.current.x} y={eastPointArray[eastPointArray.length - 1] + mousePoint.current.y} {...anchorCommonProps} />
+                        <Anchor anchor={"origin"} x={originPoints.x} y={originPoints.y} selectionType={props.activeSelected ? SelectionType.Active : SelectionType.Secondary} {...anchorCommonProps} />
+                        <Anchor
+                            anchor={"northTip"}
+                            x={northPointArray[northPointArray.length - 2] + mousePoint.current.x}
+                            y={northPointArray[northPointArray.length - 1] + mousePoint.current.y}
+                            selectionType={props.activeSelected ? SelectionType.Active : SelectionType.Secondary}
+                            {...anchorCommonProps}
+                        />
+                        <Anchor
+                            anchor={"eastTip"}
+                            x={eastPointArray[eastPointArray.length - 2] + mousePoint.current.x}
+                            y={eastPointArray[eastPointArray.length - 1] + mousePoint.current.y}
+                            selectionType={props.activeSelected ? SelectionType.Active : SelectionType.Secondary}
+                            {...anchorCommonProps}
+                        />
                     </>
                 )}
             </Group>
@@ -272,7 +285,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
     );
 });
 
-export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => {
+export const RulerAnnotation = observer((props: CompassRulerAnnotationProps & {activeSelected?: boolean}) => {
     const shapeRef = React.useRef();
     const mousePoint = React.useRef({x: 0, y: 0});
     const distanceTextRef = React.useRef<Konva.Text>();

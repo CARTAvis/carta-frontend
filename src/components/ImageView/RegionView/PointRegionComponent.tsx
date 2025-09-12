@@ -9,6 +9,7 @@ import {transformPoint} from "utilities";
 
 import {Point} from "./InvariantShapes";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
+import {SelectionType} from "./types";
 
 interface PointRegionComponentProps {
     region: RegionStore;
@@ -16,8 +17,9 @@ interface PointRegionComponentProps {
     layerWidth: number;
     layerHeight: number;
     selected: boolean;
+    activeSelected?: boolean;
     stageRef: any;
-    onSelect?: (region: RegionStore) => void;
+    onSelect?: (region: RegionStore, evt?: MouseEvent) => void;
     onDoubleClick?: (region: RegionStore) => void;
 }
 
@@ -33,8 +35,8 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
 
     private handleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const mouseEvent = konvaEvent.evt;
-        if (mouseEvent.button === 0 && !(mouseEvent.ctrlKey || mouseEvent.metaKey)) {
-            this.props.onSelect?.(this.props.region);
+        if (mouseEvent.button === 0) {
+            this.props.onSelect?.(this.props.region, mouseEvent);
         }
     };
 
@@ -97,6 +99,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
                 onDblClick={this.handleDoubleClick}
                 pointShape={region.pointShape}
                 pointWidth={region.pointWidth}
+                selectionType={this.props.activeSelected ? SelectionType.Active : SelectionType.Secondary}
             />
         );
     }

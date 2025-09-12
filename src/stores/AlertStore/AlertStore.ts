@@ -29,6 +29,15 @@ export class AlertStore {
     @observable showDashboardLink: boolean;
     private interactionPromise: Deferred<boolean> | null;
 
+    private keyDownHandler = (e: KeyboardEvent) => {
+        // Only intercept Enter when interactive or retry alert is visible
+        if (this.alertVisible && (this.alertType === AlertType.Interactive || this.alertType === AlertType.Retry) && e.key === "Enter" && !e.shiftKey && !e.altKey && !e.metaKey && !e.ctrlKey) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.handleInteractiveAlertClosed(true);
+        }
+    };
+
     @action showAlert = (text: string | React.ReactNode, icon?: IconName | MaybeElement, showDashboard = false) => {
         this.alertText = text;
         this.alertIcon = icon;
@@ -48,6 +57,10 @@ export class AlertStore {
         this.alertVisible = true;
         this.showDashboardLink = showDashboard;
         this.interactionPromise = new Deferred<boolean>();
+
+        // Add keyboard event listener for Enter key confirmation
+        document.addEventListener("keydown", this.keyDownHandler, true);
+
         return this.interactionPromise.promise;
     };
 
@@ -58,11 +71,19 @@ export class AlertStore {
         this.alertVisible = true;
         this.showDashboardLink = showDashboard;
         this.interactionPromise = new Deferred<boolean>();
+
+        // Add keyboard event listener for Enter key confirmation (Retry alerts also support Enter)
+        document.addEventListener("keydown", this.keyDownHandler, true);
+
         return this.interactionPromise.promise;
     };
 
     @action handleInteractiveAlertClosed = (confirmed: boolean) => {
         this.alertVisible = false;
+
+        // Remove keyboard event listener when alert is closed
+        document.removeEventListener("keydown", this.keyDownHandler, true);
+
         if (this.interactionPromise) {
             this.interactionPromise.resolve(confirmed);
             this.interactionPromise = null;

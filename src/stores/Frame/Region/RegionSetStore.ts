@@ -22,6 +22,7 @@ export enum RegionsOpacity {
 export class RegionSetStore {
     @observable regions: RegionStore[];
     @observable selectedRegion: RegionStore;
+    @observable selectedRegionIds: Set<number> = new Set();
     @observable mode: RegionMode;
     @observable newRegionType: CARTA.RegionType;
     @observable opacity: number = 1;
@@ -44,6 +45,54 @@ export class RegionSetStore {
         this.addPointRegion(frame.center, true);
         this.selectedRegion = this.regions[0];
     }
+
+    /**
+     * Multi-selection helpers
+     */
+    @computed get selectedCount(): number {
+        return this.selectedRegionIds.size;
+    }
+
+    @action clearSelection = () => {
+        this.selectedRegionIds = new Set();
+        // Keep cursor region focused when clearing selection
+        const cursor = this.regions?.find(r => r.regionId === CURSOR_REGION_ID);
+        this.selectedRegion = cursor ?? null;
+    };
+
+    @action setSelectionByIds = (ids: number[], focusRegionId?: number) => {
+        const newSet = new Set<number>();
+        for (const id of ids) {
+            if (id !== CURSOR_REGION_ID && this.regionMap.has(id)) {
+                newSet.add(id);
+            }
+        }
+        this.selectedRegionIds = newSet;
+
+        if (ids.length === 0) {
+            // When no ids provided, clear multi-selection and focus cursor region
+            const cursor = this.regions?.find(r => r.regionId === CURSOR_REGION_ID);
+            this.selectedRegion = cursor ?? null;
+            return;
+        }
+
+        if (focusRegionId && ids.includes(focusRegionId) && this.regionMap.has(focusRegionId)) {
+            this.selectRegion(this.regionMap.get(focusRegionId));
+        } else if (ids.length > 0) {
+            const last = ids[ids.length - 1];
+            const region = this.regionMap.get(last);
+            if (region) this.selectRegion(region);
+        }
+    };
+
+    @action selectSingleRegion = (region: RegionStore) => {
+        if (!region || region.regionId === CURSOR_REGION_ID) {
+            this.clearSelection();
+            return;
+        }
+        this.selectedRegionIds = new Set([region.regionId]);
+        this.selectRegion(region);
+    };
 
     public updateCursorRegionPosition = (pos: Point2D) => {
         if (pos && this.regions.length > 0) {

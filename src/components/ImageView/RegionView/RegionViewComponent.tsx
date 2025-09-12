@@ -259,7 +259,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             ((regionType !== CARTA.RegionType.LINE && regionType !== CARTA.RegionType.ANNLINE && regionType !== CARTA.RegionType.ANNVECTOR) || this.creatingRegion.controlPoints.length === 2)
         ) {
             this.creatingRegion.endCreating();
-            frame.regionSet.selectRegion(this.creatingRegion);
+            frame.regionSet.selectSingleRegion(this.creatingRegion);
         } else {
             frame.regionSet.deleteRegion(this.creatingRegion);
         }
@@ -477,8 +477,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         this.mouseClickDistance = pointDistanceSquared(mouseEvent, this.mousePreviousClick);
         this.mousePreviousClick = {x: mouseEvent.x, y: mouseEvent.y};
 
-        // Ignore clicks that aren't on the stage, unless it's a secondary click
-        if (konvaEvent.target !== konvaEvent.currentTarget && !isSecondaryClick) {
+        // Ignore clicks that aren't on the stage. Allow middle-click to pass through for panning,
+        // but block modifier-clicks on regions so they don't pan/center when clicking a region.
+        const isMiddleClick = mouseEvent.button === 1;
+        if (konvaEvent.target !== konvaEvent.currentTarget && !isMiddleClick) {
             return;
         }
 
@@ -487,9 +489,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             return;
         }
 
-        // Deselect selected region if in drag-to-pan mode and user clicks on the stage
-        if (this.props.dragPanningEnabled && !isSecondaryClick) {
-            frame.regionSet.deselectRegion();
+        // Clicking on empty stage (non-region) should clear selection and highlight cursor region
+        // Apply only to primary clicks (left button) and when not using secondary modifiers
+        if (!isSecondaryClick && mouseEvent.button === 0) {
+            frame.regionSet.clearSelection();
         }
 
         if (frame.wcsInfo && this.props.onClickToCenter && (!this.props.dragPanningEnabled || isSecondaryClick)) {
@@ -744,12 +747,48 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
 @observer
 class RegionComponents extends React.Component<{frame: FrameStore; regions: RegionStore[]; width: number; height: number; stageRef: any}> {
+    private pivotIndex: number = -1;
+
+    private handleSelect = (region: RegionStore, evt?: MouseEvent) => {
+        const frame = this.props.frame;
+        const regionSet = frame.regionSet;
+        const regions = this.props.regions;
+
+        const isCtrl = evt?.ctrlKey || evt?.metaKey;
+        const isShift = evt?.shiftKey;
+        const index = regions.findIndex(r => r.regionId === region.regionId);
+
+        if (isCtrl && regionSet.selectedRegionIds.size > 0) {
+            const current = new Set(regionSet.selectedRegionIds);
+            if (current.has(region.regionId)) {
+                // Toggle off even if it's the only selected region
+                current.delete(region.regionId);
+            } else {
+                current.add(region.regionId);
+            }
+            // If nothing remains selected, clear focus to allow full deselect
+            const ids = Array.from(current);
+            regionSet.setSelectionByIds(ids, ids.includes(region.regionId) ? region.regionId : undefined);
+        } else if (isShift && regionSet.selectedRegionIds.size > 0 && this.pivotIndex >= 0 && index >= 0) {
+            const start = Math.min(this.pivotIndex, index);
+            const end = Math.max(this.pivotIndex, index);
+            const ids: number[] = [];
+            for (let i = start; i <= end; i++) {
+                const r = regions?.[i];
+                if (r) ids.push(r.regionId);
+            }
+            regionSet.setSelectionByIds(ids, region.regionId);
+        } else {
+            regionSet.selectSingleRegion(region);
+            this.pivotIndex = index;
+        }
+    };
     private handleRegionDoubleClicked = (region: RegionStore) => {
         const appStore = AppStore.Instance;
         if (region) {
             const frame = appStore.getFrame(region.fileId);
             if (frame) {
-                frame.regionSet.selectRegion(region);
+                frame.regionSet.selectSingleRegion(region);
                 appStore.dialogStore.showDialog(DialogId.Region);
             }
         }
@@ -761,23 +800,25 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: Regi
         if (!AppStore.Instance.fileBrowserStore.isLoadingDialogOpen && regions?.length) {
             const regionSet = this.props.frame?.regionSet;
             return regions.map(r => {
+                const isActive = r === regionSet.selectedRegion;
                 const commonProps = {
                     region: r,
                     frame: this.props.frame,
                     layerWidth: this.props.width,
                     layerHeight: this.props.height,
                     stageRef: this.props.stageRef,
-                    selected: r === regionSet.selectedRegion,
-                    onSelect: regionSet.selectRegion,
+                    selected: regionSet.selectedRegionIds.has(r.regionId) || isActive,
+                    activeSelected: isActive,
+                    onSelect: this.handleSelect,
                     onDoubleClick: this.handleRegionDoubleClicked
                 };
 
                 if (r.regionType === CARTA.RegionType.POINT || r.regionType === CARTA.RegionType.ANNPOINT) {
                     return <PointRegionComponent {...commonProps} key={r.regionId} />;
                 } else if (r.regionType === CARTA.RegionType.ANNCOMPASS) {
-                    return <CompassAnnotation {...commonProps} key={r.regionId} />;
+                    return <CompassAnnotation {...commonProps} key={r.regionId} activeSelected={isActive} />;
                 } else if (r.regionType === CARTA.RegionType.ANNRULER) {
-                    return <RulerAnnotation {...commonProps} key={r.regionId} />;
+                    return <RulerAnnotation {...commonProps} key={r.regionId} activeSelected={isActive} />;
                 } else {
                     const allProps = {
                         ...commonProps,

@@ -10,7 +10,7 @@ import {observer} from "mobx-react";
 import {ResizeDetector} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore, BrowserMode, DefaultWidgetConfig, DialogId, DialogStore, FileBrowserStore, HelpType, WidgetProps} from "stores";
-import {FrameStore, RegionsOpacity, RegionStore, WCS_PRECISION} from "stores/Frame";
+import {CURSOR_REGION_ID, FrameStore, RegionsOpacity, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {clamp, formattedArcsec, getFormattedWCSPoint, length2D, toFixed} from "utilities";
 
 import "./RegionListComponent.scss";
@@ -28,6 +28,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private static readonly ROW_HEIGHT = 35;
     private static readonly HEADER_ROW_HEIGHT = 25;
     private listRef = React.createRef<any>();
+    private tableRef = React.createRef<HTMLDivElement>();
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -57,6 +58,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     @observable lastVisibleRow: number = 0;
     @observable regionsVisibility: RegionsOpacity = RegionsOpacity.Visible;
     @observable regionsLock: boolean = false;
+    private rowPivotIndex: number = -1;
 
     private scrollToSelected = (selected: any) => {
         const listRefCurrent = this.listRef.current;
@@ -65,6 +67,17 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             return;
         } else {
             this.listRef.current.scrollToItem(selected, "smart");
+        }
+    };
+
+    @action private handleBackgroundClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+        const target = event.target as HTMLElement;
+        // If click is not on a row or the header, treat as background click and clear selection
+        const clickedRow = target.closest(".row");
+        const clickedHeader = target.closest(".row-header");
+        if (!clickedRow && !clickedHeader) {
+            const frame = AppStore.Instance.activeFrame;
+            frame?.regionSet.clearSelection();
         }
     };
 
@@ -152,11 +165,161 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         DialogStore.Instance.showDialog(DialogId.Region);
     };
 
+    // When the Region List has focus, arrow keys navigate selection instead of moving regions
+    @action private handleKeyDown = (ev: React.KeyboardEvent<HTMLDivElement>) => {
+        const appStore = AppStore.Instance;
+        const regionSet = appStore.activeFrame?.regionSet;
+        if (!regionSet) return;
+
+        const key = ev.key;
+        const isArrowUp = key === "ArrowUp";
+        const isArrowDown = key === "ArrowDown";
+        const isArrowLeft = key === "ArrowLeft";
+        const isArrowRight = key === "ArrowRight";
+        const isArrow = isArrowUp || isArrowDown || isArrowLeft || isArrowRight;
+        if (!isArrow) return;
+
+        // Prevent global hotkeys from moving regions on canvas
+        ev.preventDefault();
+        ev.stopPropagation();
+
+        // Left/Right: no-op in this focused mode (explicitly do nothing)
+        if (isArrowLeft || isArrowRight) {
+            return;
+        }
+
+        // Up/Down: navigate selection; with Shift => range (multi) selection
+        const dir = isArrowUp ? -1 : 1;
+        const allList = this.validRegions; // includes cursor
+        const listNoCursor = allList.filter(r => r.regionId !== CURSOR_REGION_ID);
+        const noModifier = !ev.shiftKey && !ev.ctrlKey && !ev.metaKey && !ev.altKey;
+        // Use full list (including cursor) when no modifiers; otherwise use list without cursor
+        const list = noModifier ? allList : listNoCursor;
+        const count = list.length;
+        if (count === 0) return;
+
+        const focusedId = regionSet.selectedRegion?.regionId ?? -1;
+        let focusedIndex = list.findIndex(r => r.regionId === focusedId);
+
+        if (ev.shiftKey) {
+            // If already at boundaries, do nothing (avoid wrap-around)
+            if ((isArrowUp && focusedIndex <= 0) || (isArrowDown && focusedIndex >= count - 1)) {
+                if (focusedIndex >= 0) {
+                    const validIdx = this.validRegions.findIndex(r => r.regionId === list[focusedIndex]?.regionId);
+                    if (validIdx >= 0) this.scrollToSelected(validIdx);
+                }
+                return;
+            }
+            // Establish pivot if not set yet; normalize existing pivot (from clicks) to filtered list
+            let pivotIndex = -1;
+            if (this.rowPivotIndex >= 0) {
+                const pivotRegion = this.validRegions?.[this.rowPivotIndex];
+                if (pivotRegion) {
+                    pivotIndex = list.findIndex(r => r.regionId === pivotRegion.regionId);
+                }
+            }
+            if (pivotIndex < 0 || pivotIndex >= count) {
+                pivotIndex = focusedIndex >= 0 ? focusedIndex : dir > 0 ? 0 : count - 1;
+            }
+            this.rowPivotIndex = this.validRegions.findIndex(r => r.regionId === list[pivotIndex]?.regionId);
+
+            // Determine next focused index
+            if (focusedIndex < 0) {
+                // If nothing focused yet, start from boundary toward dir
+                focusedIndex = dir > 0 ? -1 : count;
+            }
+            const nextIndex = clamp(focusedIndex + dir, 0, count - 1);
+
+            const start = Math.min(pivotIndex, nextIndex);
+            const end = Math.max(pivotIndex, nextIndex);
+            const ids: number[] = [];
+            for (let i = start; i <= end; i++) {
+                const r = list[i];
+                if (r) ids.push(r.regionId);
+            }
+            // Focus on a non-cursor region id (list excludes cursor already)
+            regionSet.setSelectionByIds(ids, list[nextIndex]?.regionId);
+            const nextValidIdx = this.validRegions.findIndex(r => r.regionId === list[nextIndex]?.regionId);
+            if (nextValidIdx >= 0) this.scrollToSelected(nextValidIdx);
+        } else {
+            // Single selection navigation
+            let next: number;
+            if (noModifier) {
+                // Wrap around at boundaries when no modifiers are pressed
+                if (focusedIndex < 0) {
+                    next = dir > 0 ? 0 : count - 1;
+                } else {
+                    next = (focusedIndex + dir + count) % count;
+                }
+            } else {
+                // With any modifier (except Shift), keep clamped behavior
+                next = clamp((focusedIndex < 0 ? (dir > 0 ? -1 : count) : focusedIndex) + dir, 0, count - 1);
+            }
+            const region = list[next];
+            if (region) {
+                regionSet.selectSingleRegion(region);
+                // Store pivot in the unfiltered index space used by clicks/rows
+                this.rowPivotIndex = this.validRegions.findIndex(r => r.regionId === region.regionId);
+                if (this.rowPivotIndex >= 0) this.scrollToSelected(this.rowPivotIndex);
+            }
+        }
+    };
+
     private handleRegionDeleteClicked = async () => {
         const appStore = AppStore.Instance;
-        const confirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete all regions?");
-        if (confirmed) {
-            await appStore.deleteAllRegions();
+        const frame = appStore.activeFrame;
+        if (!frame) return;
+
+        // Determine if we have a multi-selection to delete
+        const regionSet = frame.regionSet;
+        const selected = this.validRegions.filter(r => regionSet.selectedRegionIds.has(r.regionId) && r.regionId !== CURSOR_REGION_ID && !r.locked);
+
+        if (selected.length > 0) {
+            const confirmed = await appStore.alertStore.showInteractiveAlert(`Delete ${selected.length} selected region(s)?`);
+            if (confirmed) {
+                // Delete selected regions
+                selected.forEach(r => appStore.deleteRegion(r));
+                regionSet.clearSelection();
+            }
+        } else {
+            const confirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete all regions?");
+            if (confirmed) {
+                appStore.deleteAllRegions();
+            }
+        }
+    };
+
+    @action private handleRowClicked = (event: React.MouseEvent, region: RegionStore, index: number) => {
+        const frame = AppStore.Instance.activeFrame;
+        if (!frame) return;
+
+        const isCtrlPressed = event.ctrlKey || event.metaKey;
+        const isShiftPressed = event.shiftKey;
+
+        const regionSet = frame.regionSet;
+        const current = new Set(regionSet.selectedRegionIds);
+        if (isCtrlPressed && current.size > 0) {
+            if (current.has(region.regionId)) {
+                // Toggle off even if it's the only selected region
+                current.delete(region.regionId);
+            } else {
+                current.add(region.regionId);
+            }
+            const ids = Array.from(current);
+            regionSet.setSelectionByIds(ids, ids.includes(region.regionId) ? region.regionId : undefined);
+        } else if (isShiftPressed && current.size > 0 && this.rowPivotIndex >= 0) {
+            // Range selection between pivot and current
+            const start = Math.min(this.rowPivotIndex, index);
+            const end = Math.max(this.rowPivotIndex, index);
+            const ids: number[] = [];
+            for (let i = start; i <= end; i++) {
+                const r = this.validRegions?.[i];
+                if (r) ids.push(r.regionId);
+            }
+            regionSet.setSelectionByIds(ids, region.regionId);
+        } else {
+            regionSet.selectSingleRegion(region);
+            this.rowPivotIndex = index;
         }
     };
 
@@ -247,10 +410,13 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         // openOnTargetFocus={false} is to prevent the tooltip popup after the warning message.
         const floatRenderer = () => {
+            const hasDeletableSelection = this.validRegions.some(r => frame.regionSet.selectedRegionIds.has(r.regionId) && r.regionId !== CURSOR_REGION_ID && !r.locked);
+            const deleteTooltip = hasDeletableSelection ? "Delete selected regions" : "Delete all regions";
+            const deleteDisabled = !hasDeletableSelection && this.validRegions.length <= 1;
             return (
                 <ButtonGroup className="float" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
-                    <Tooltip content="Delete all regions" position={Position.TOP_LEFT} openOnTargetFocus={false}>
-                        <AnchorButton icon={"trash"} onClick={this.handleRegionDeleteClicked} style={{cursor: "pointer"}} disabled={this.validRegions.length <= 1} />
+                    <Tooltip content={deleteTooltip} position={Position.TOP_LEFT} openOnTargetFocus={false}>
+                        <AnchorButton icon={"trash"} onClick={this.handleRegionDeleteClicked} style={{cursor: "pointer"}} disabled={deleteDisabled} />
                     </Tooltip>
                     <Tooltip content="Import regions" position={Position.TOP_LEFT}>
                         <AnchorButton icon={"cloud-download"} onClick={this.handleRegionImportClicked} style={{cursor: "pointer"}} />
@@ -315,7 +481,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             if (!region) {
                 return null;
             }
-            const className = classNames("row", {[Classes.DARK]: darkTheme, selected: selectedRegion?.regionId === region.regionId});
+            const isActive = selectedRegion?.regionId === region.regionId;
+            const isSecondarySelected = !isActive && frame.regionSet.selectedRegionIds.has(region.regionId);
+            const className = classNames("row", {[Classes.DARK]: darkTheme, active: isActive, selected: isSecondarySelected});
 
             let centerContent: React.ReactNode;
             if (isFinite(region.center.x) && isFinite(region.center.y)) {
@@ -434,7 +602,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             style.overflowX = "hidden";
 
             return (
-                <div className={className} key={region.regionId} onClick={() => frame.regionSet.selectRegion(region)} style={style} data-testid={"region-list-table-row-" + (props.index + 1)}>
+                <div className={className} key={region.regionId} onClick={ev => this.handleRowClicked(ev, region, props.index)} style={style} data-testid={"region-list-table-row-" + (props.index + 1)}>
                     {lockEntry}
                     {focusEntry}
                     {exportEntry}
@@ -457,8 +625,18 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         return (
             <ResizeDetector onResize={this.onResize}>
-                <div className="region-list-widget">
-                    <div className={classNames("region-list-table", {[Classes.DARK]: darkTheme})} data-testid="region-list-table">
+                <div className="region-list-widget" onClick={this.handleBackgroundClick}>
+                    <div
+                        className={classNames("region-list-table", {[Classes.DARK]: darkTheme})}
+                        data-testid="region-list-table"
+                        onClick={this.handleBackgroundClick}
+                        // Make focusable to capture arrow key events
+                        tabIndex={0}
+                        ref={this.tableRef}
+                        onKeyDown={this.handleKeyDown}
+                        // Ensure clicks focus this container so it receives key events
+                        onMouseDown={ev => (ev.currentTarget as HTMLDivElement).focus()}
+                    >
                         <FixedSizeList itemSize={RegionListComponent.HEADER_ROW_HEIGHT} height={RegionListComponent.HEADER_ROW_HEIGHT} itemCount={1} width="100%" className="list-header">
                             {headerRenderer(this.regionsVisibility, this.regionsLock)}
                         </FixedSizeList>

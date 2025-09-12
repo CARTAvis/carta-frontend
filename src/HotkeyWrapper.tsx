@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
 import {AppStore, BrowserMode, DialogId} from "stores";
-import {RegionMode} from "stores/Frame";
+import {CURSOR_REGION_ID, RegionMode} from "stores/Frame";
 
 import "./HotkeyWrapper.scss";
 
@@ -109,11 +109,17 @@ export class HotkeyService extends React.Component<{}> {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame && appStore.activeFrame.regionSet) {
             const regionSet = appStore.activeFrame.regionSet;
+            // If there is multi-selection, clear it and return
+            if (regionSet.selectedCount > 0) {
+                regionSet.clearSelection();
+                return;
+            }
+            // Otherwise follow existing behavior: cancel point or creation mode
             if (regionSet.selectedRegion) {
-                // First try to deselect point, then deselect region
                 if (regionSet.selectedRegion.hasSelectedPoint) {
                     regionSet.selectedRegion.deselectPoint();
-                } else {
+                } else if (regionSet.selectedRegion.regionId !== CURSOR_REGION_ID) {
+                    // Do not deselect the cursor region on ESC
                     regionSet.deselectRegion();
                 }
             } else if (regionSet.mode === RegionMode.CREATING) {
@@ -194,6 +200,11 @@ export class HotkeyService extends React.Component<{}> {
         if (appStore.activeFrame?.regionSet.selectedRegion) {
             const region = appStore.activeFrame.regionSet.selectedRegion;
 
+            // Do not move the cursor region with arrow keys
+            if (!region || region.regionId === CURSOR_REGION_ID) {
+                return;
+            }
+
             // Calculate movement distance based on acceleration and zoom level
             const baseIncrement = 1;
             const zoomMultiplier = Math.max(1, 1 / appStore.activeFrame.zoomLevel);
@@ -230,7 +241,7 @@ export class HotkeyService extends React.Component<{}> {
         const items = [
             {combo: "click", label: "Pan image"},
             {combo: "middle-click", label: "Pan image (inside region)"},
-            {combo: "mod + click", label: "Pan image (inside region)"},
+            {combo: "mod + click", label: "Pan image (outside region)"},
             {combo: "mouse-wheel", label: "Zoom image"}
         ];
         return items.map(item => ({...base, ...item}));
@@ -249,24 +260,98 @@ export class HotkeyService extends React.Component<{}> {
     }
 
     static RegionHotkeys() {
-        const appStore = AppStore.Instance;
         const group = HotkeyGroup.Regions;
         const base = {group, global: true, allowInInput: false, preventDefault: true};
         const items = [
             {combo: "c", label: "Toggle region creation mode", onKeyDown: HotkeyService.ToggleCreateMode},
             {combo: "l", label: "Toggle current region lock", onKeyDown: HotkeyService.ToggleRegionLock},
             {combo: "shift + l", label: "Unlock all regions", onKeyDown: HotkeyService.UnlockAllRegions},
-            {combo: "delete", label: "Delete selected region", onKeyDown: appStore.deleteSelectedRegion},
-            {combo: "backspace", label: "Delete selected region", onKeyDown: appStore.deleteSelectedRegion},
+            {combo: "delete", label: "Delete selected region(s)", onKeyDown: HotkeyService.ConfirmDeleteRegions},
+            {combo: "backspace", label: "Delete selected region(s)", onKeyDown: HotkeyService.ConfirmDeleteRegions},
             {combo: "esc", label: "Deselect region/point or cancel creation", onKeyDown: HotkeyService.HandleRegionEsc},
             {combo: "enter", label: "Enter point selection mode", onKeyDown: HotkeyService.EnterPointSelection},
-            {combo: "tab", label: "Select next region/point", onKeyDown: HotkeyService.SelectNextRegionOrPoint},
-            {combo: "shift + tab", label: "Select previous region/point", onKeyDown: HotkeyService.SelectPreviousRegionOrPoint},
+            // Make Tab/Shift+Tab effective only when a non-cursor active region exists
+            {
+                combo: "tab",
+                label: "Select next region/point",
+                preventDefault: false,
+                onKeyDown: (e: KeyboardEvent) => HotkeyService.OnTabNext(e)
+            },
+            {
+                combo: "shift + tab",
+                label: "Select previous region/point",
+                preventDefault: false,
+                onKeyDown: (e: KeyboardEvent) => HotkeyService.OnTabPrev(e)
+            },
             {combo: "up + down", label: "Move region/point vertically", onKeyDown: undefined},
             {combo: "left + right", label: "Move region/point horizontally", onKeyDown: undefined}
         ];
         return items.map(item => ({...base, ...item}));
     }
+
+    // Only handle Tab/Shift+Tab when there is an active non-cursor region
+    static HasActiveRegion(): boolean {
+        const appStore = AppStore.Instance;
+        const region = appStore.activeFrame?.regionSet.selectedRegion;
+        return !!region && region.regionId !== CURSOR_REGION_ID;
+    }
+
+    static OnTabNext(e: KeyboardEvent) {
+        if (HotkeyService.HasActiveRegion()) {
+            e.preventDefault();
+            e.stopPropagation();
+            HotkeyService.SelectNextRegionOrPoint();
+        }
+    }
+
+    static OnTabPrev(e: KeyboardEvent) {
+        if (HotkeyService.HasActiveRegion()) {
+            e.preventDefault();
+            e.stopPropagation();
+            HotkeyService.SelectPreviousRegionOrPoint();
+        }
+    }
+
+    static ConfirmDeleteRegions = async () => {
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
+        const regionSet = frame?.regionSet;
+        if (!frame || !regionSet) return;
+
+        // Only show confirmation when Region List has focus; otherwise delete immediately
+        const activeEl = (document?.activeElement as Element) || null;
+        const isRegionListFocused = !!activeEl && !!activeEl.closest(".region-list-table");
+        if (!isRegionListFocused) {
+            appStore.deleteSelectedRegion();
+            return;
+        }
+
+        // All non-cursor regions
+        const nonCursorRegions = regionSet.regions.filter(r => r.regionId !== CURSOR_REGION_ID);
+        if (nonCursorRegions.length === 0) return; // nothing deletable
+
+        // Build selection list from multi-select set or single selectedRegion
+        const selectedIds = Array.from(regionSet.selectedRegionIds ?? []);
+        let toDelete = nonCursorRegions.filter(r => selectedIds.includes(r.regionId) && !r.locked);
+
+        if (toDelete.length === 0 && regionSet.selectedRegion && regionSet.selectedRegion.regionId !== CURSOR_REGION_ID && !regionSet.selectedRegion.locked) {
+            toDelete = [regionSet.selectedRegion];
+        }
+
+        if (toDelete.length > 0) {
+            const confirmed = await appStore.alertStore.showInteractiveAlert(`Delete ${toDelete.length} selected region(s)?`);
+            if (!confirmed) return;
+            toDelete.forEach(r => appStore.deleteRegion(r));
+            regionSet.clearSelection();
+            return;
+        }
+
+        // No explicit selection; confirm deleting all regions
+        const confirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete all regions?");
+        if (confirmed) {
+            appStore.deleteAllRegions();
+        }
+    };
 
     static RegionHiddenHotkeys() {
         const appStore = AppStore.Instance;
@@ -397,7 +482,17 @@ export class HotkeyService extends React.Component<{}> {
 }
 
 export function HotkeysRegistrar() {
-    const hotkeys = React.useMemo(() => [...HotkeyService.FrameControlHotkeys(), ...HotkeyService.FrameControlHiddenHotkeys(), ...HotkeyService.RegionHotkeys(), ...HotkeyService.RegionHiddenHotkeys(), ...HotkeyService.FileControlHotkeys(), ...HotkeyService.OtherHotkeys()], []);
+    const hotkeys = React.useMemo(
+        () => [
+            ...HotkeyService.FrameControlHotkeys(),
+            ...HotkeyService.FrameControlHiddenHotkeys(),
+            ...HotkeyService.RegionHotkeys(),
+            ...HotkeyService.RegionHiddenHotkeys(),
+            ...HotkeyService.FileControlHotkeys(),
+            ...HotkeyService.OtherHotkeys()
+        ],
+        []
+    );
 
     useHotkeys(hotkeys);
 

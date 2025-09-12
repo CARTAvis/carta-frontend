@@ -13,6 +13,7 @@ import {add2D, angle2D, average2D, closestPointOnLine, rotate2D, subtract2D, tra
 
 import {Anchor, NonEditableAnchor, ROTATOR_ANCHOR_HEIGHT} from "./InvariantShapes";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
+import {SelectionType} from "./types";
 
 interface LineSegmentRegionComponentProps {
     region: RegionStore;
@@ -21,9 +22,10 @@ interface LineSegmentRegionComponentProps {
     layerHeight: number;
     listening: boolean;
     selected: boolean;
+    activeSelected?: boolean;
     isRegionCornerMode: boolean;
     stageRef: any;
-    onSelect?: (region: RegionStore) => void;
+    onSelect?: (region: RegionStore, evt?: MouseEvent) => void;
     onDoubleClick?: (region: RegionStore) => void;
 }
 
@@ -60,9 +62,9 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
     @action private handleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const mouseEvent = konvaEvent.evt;
 
-        if (mouseEvent.button === 0 && !(mouseEvent.ctrlKey || mouseEvent.metaKey)) {
+        if (mouseEvent.button === 0) {
             const region = this.props.region;
-            this.props.onSelect?.(region);
+            this.props.onSelect?.(region, mouseEvent);
 
             // Add a new control point to the region between two existing control points
             if (
@@ -279,6 +281,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 rotation={rotation}
                 isRotator={isRotator}
                 isSelected={isSelected}
+                selectionType={this.props.activeSelected ? SelectionType.Active : SelectionType.Secondary}
                 onMouseEnter={this.handleAnchorMouseEnter}
                 onMouseOut={this.handleAnchorMouseOut}
                 onDragStart={this.handleAnchorDragStart}

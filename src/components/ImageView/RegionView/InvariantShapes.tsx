@@ -4,6 +4,8 @@ import Konva from "konva";
 
 import {AppStore} from "stores";
 
+import {SelectionType} from "./types";
+
 const SQUARE_ANCHOR_WIDTH = 7;
 const CIRCLE_ANCHOR_RADIUS = SQUARE_ANCHOR_WIDTH / Math.sqrt(2);
 export const ROTATOR_ANCHOR_HEIGHT = 15;
@@ -61,6 +63,7 @@ interface PointProps {
     color: string;
     opacity: number;
     selectionOpacity: number;
+    selectionType?: SelectionType;
     listening: boolean;
     onDragStart: (ev) => void;
     onDragEnd: (ev) => void;
@@ -92,7 +95,7 @@ export const Point = (props: PointProps) => {
                     y={props.y}
                     rotation={props.rotation}
                     sceneFunc={handlePointBoundDraw}
-                    stroke={"white"}
+                    stroke={props.selectionType === SelectionType.Secondary ? "#8a9ba8" : "white"}
                     strokeWidth={1}
                     strokeScaleEnabled={false}
                     opacity={props.selectionOpacity}
@@ -116,6 +119,7 @@ interface AnchorProps {
     rotation: number;
     isRotator: boolean;
     isSelected?: boolean;
+    selectionType?: SelectionType;
     onMouseEnter: (ev) => void;
     onMouseOut: (ev) => void;
     onDragStart: (ev) => void;
@@ -140,9 +144,14 @@ export const Anchor = (props: AnchorProps) => {
         ctx.fillStrokeShape(shape);
     };
 
-    // Use different colors for selected anchors
-    const fillColor = props.isSelected ? "#007cbb" : "white";
-    const strokeColor = props.isSelected ? "#ffffff" : "black";
+    // Colors:
+    // - Selected point: blue fill, white stroke
+    // - Active region anchors: white fill, black stroke
+    // - Secondary-selected anchors: gray fill/stroke
+    const isSecondary = props.selectionType === SelectionType.Secondary;
+    // Secondary anchors use a slightly darker gray fill for visibility
+    const fillColor = props.isSelected ? "#007cbb" : isSecondary ? "#b5b5b5" : "white";
+    const strokeColor = props.isSelected ? "#ffffff" : isSecondary ? "#8a9ba8" : "black";
     const strokeWidth = props.isSelected ? 2 : 1;
 
     return (
