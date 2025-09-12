@@ -1,16 +1,24 @@
 import * as React from "react";
-import {AnchorButton, Button, Classes, FormGroup, Icon, InputGroup, Intent, MenuItem, NonIdealState, Overlay2, PopoverPosition, Position, Spinner, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, FormGroup, Icon, InputGroup, Intent, MenuItem, NonIdealState, Overlay2, PopoverPosition, Position, Radio, RadioGroup, Spinner, Tooltip} from "@blueprintjs/core";
 import {ItemRendererProps, MultiSelect, Select} from "@blueprintjs/select";
+import * as AST from "ast_wrapper";
 import FuzzySearch from "fuzzy-search";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, SafeNumericInput, ScrollShadow} from "components/Shared";
+import {Point2D} from "models";
 import {CatalogApiService, CatalogDatabase} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, NUMBER_FORMAT_LABEL, RadiusUnits, SystemType, VizierItem} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, NUMBER_FORMAT_LABEL, NumberFormatType, RadiusUnits, SystemType, VizierItem} from "stores";
 import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
 import "./CatalogOnlineQueryComponent.scss";
+
+// Local enum for coordinate format selection
+enum LocalCoordinateFormat {
+    HMSDMS = "hmsdms",
+    Degrees = "degrees",
+}
 
 const KEYCODE_ENTER = 13;
 
@@ -18,12 +26,21 @@ const KEYCODE_ENTER = 13;
 export class CatalogQueryComponent extends React.Component {
     @observable resultSize: number;
     @observable objectSize: number;
+    @observable localCoordinateFormat: LocalCoordinateFormat = LocalCoordinateFormat.Degrees;
 
     constructor(props: any) {
         super(props);
         makeObservable(this);
         this.resultSize = undefined;
         this.objectSize = undefined;
+        // Initialize local format based on current global settings
+        const appStore = AppStore.Instance;
+        if (appStore?.overlaySettings) {
+            const formatX = appStore.overlaySettings.numbers.formatTypeX;
+            this.localCoordinateFormat = (formatX !== NumberFormatType.Degrees)
+                ? LocalCoordinateFormat.HMSDMS
+                : LocalCoordinateFormat.Degrees;
+        }
     }
 
     @action setResultSize(resultSize: number) {
@@ -32,6 +49,51 @@ export class CatalogQueryComponent extends React.Component {
 
     @action setObjectSize(objectSize: number) {
         this.objectSize = objectSize;
+    }
+
+    @action setLocalCoordinateFormat(format: LocalCoordinateFormat) {
+        this.localCoordinateFormat = format;
+    }
+
+    // Get formatted WCS point using local coordinate format settings
+    private getLocalFormattedWCSPoint(astTransform: any, pixelCoords: Point2D) {
+        if (!astTransform) {
+            return null;
+        }
+
+        // Create a temporary AST transform with the desired format
+        const tempTransform = AST.copy(astTransform);
+        
+        // Set the format based on local coordinate format
+        if (this.localCoordinateFormat === LocalCoordinateFormat.HMSDMS && this.supportsHmsDmsFormat()) {
+            AST.set(tempTransform, "Format(1)=hms.10, Format(2)=dms.10");
+        } else {
+            AST.set(tempTransform, "Format(1)=d.10, Format(2)=d.10");
+        }
+
+        const wcsCoords = getFormattedWCSPoint(tempTransform, pixelCoords);
+
+        AST.deleteObject(tempTransform);
+        
+        return wcsCoords;
+    }
+
+    // Get format label for tooltips
+    private getLocalFormatLabel(axis: 'x' | 'y'): string {
+        if (this.localCoordinateFormat === LocalCoordinateFormat.HMSDMS && this.supportsHmsDmsFormat()) {
+            return axis === 'x' ? NUMBER_FORMAT_LABEL.get(NumberFormatType.HMS) || 'HMS' : NUMBER_FORMAT_LABEL.get(NumberFormatType.DMS) || 'DMS';
+        } else {
+            return NUMBER_FORMAT_LABEL.get(NumberFormatType.Degrees) || 'Degrees';
+        }
+    }
+
+    // Get the appropriate format type for validation
+    private getLocalFormatType(axis: 'x' | 'y'): NumberFormatType {
+        if (this.localCoordinateFormat === LocalCoordinateFormat.HMSDMS && this.supportsHmsDmsFormat()) {
+            return axis === 'x' ? NumberFormatType.HMS : NumberFormatType.DMS;
+        } else {
+            return NumberFormatType.Degrees;
+        }
     }
 
     @computed get resultInfo(): string {
@@ -78,10 +140,9 @@ export class CatalogQueryComponent extends React.Component {
         }
 
         const frame = appStore.activeFrame.spatialReference ?? appStore.activeFrame;
-        const formatX = appStore.overlaySettings.numbers.formatTypeX;
-        const formatY = appStore.overlaySettings.numbers.formatTypeY;
         const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
-        const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
+        // Use local coordinate format for rendering to reflect HMS/DMS <-> Degrees toggle
+        const centerWcsPoint = this.getLocalFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
         const isVizier = configStore.catalogDB === CatalogDatabase.VIZIER;
 
         const configBoard = (
@@ -146,7 +207,7 @@ export class CatalogQueryComponent extends React.Component {
                     <Select
                         items={Object.values(SystemType).filter(sys => sys !== SystemType.Image)}
                         activeItem={null}
-                        onItemSelect={type => appStore.overlaySettings.global.setSystem(type)}
+                        onItemSelect={this.handleSystemTypeChange}
                         itemRenderer={this.renderSysTypePopOver}
                         disabled={disable}
                         popoverProps={{minimal: true}}
@@ -155,7 +216,7 @@ export class CatalogQueryComponent extends React.Component {
                     >
                         <Button text={appStore.overlaySettings.global.system} disabled={disable} rightIcon="double-caret-vertical" />
                     </Select>
-                    <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
+                    <Tooltip content={`Format: ${this.getLocalFormatLabel('x')}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <SafeNumericInput
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
@@ -167,7 +228,7 @@ export class CatalogQueryComponent extends React.Component {
                             data-testid="catalog-query-center-x-input"
                         />
                     </Tooltip>
-                    <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
+                    <Tooltip content={`Format: ${this.getLocalFormatLabel('y')}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <SafeNumericInput
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
@@ -182,6 +243,17 @@ export class CatalogQueryComponent extends React.Component {
                     <Tooltip content="Reset to current view center" disabled={disable} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <Button icon="locate" disabled={disable} onClick={() => configStore.setFrameCenter()} data-testid="catalog-query-reset-center-button" />
                     </Tooltip>
+                </FormGroup>
+                <FormGroup inline={true} label="Coordinate format" disabled={disable}>
+                    <RadioGroup
+                        onChange={this.handleFormatToggle}
+                        selectedValue={this.localCoordinateFormat}
+                        disabled={disable}
+                        inline={true}
+                    >
+                        <Radio value={LocalCoordinateFormat.Degrees} label="Degrees" />
+                        <Radio value={LocalCoordinateFormat.HMSDMS} label="HMS/DMS" disabled={!this.supportsHmsDmsFormat()} />
+                    </RadioGroup>
                 </FormGroup>
                 <ClearableNumericInputComponent
                     label={isVizier ? "Max number of objects per catalog" : "Max number of objects"}
@@ -377,7 +449,7 @@ export class CatalogQueryComponent extends React.Component {
         const frame = AppStore.Instance.activeFrame.spatialReference ?? AppStore.Instance.activeFrame;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
-        const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
+        const centerWcsPoint = this.getLocalFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
         if (!centerWcsPoint) {
             return;
         }
@@ -385,8 +457,16 @@ export class CatalogQueryComponent extends React.Component {
         if (wcsString === centerWcsPoint.x) {
             return;
         }
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX)) {
-            const newPoint = getPixelValueFromWCS(wcsInfo, {x: wcsString, y: centerWcsPoint.y});
+        if (isWCSStringFormatValid(wcsString, this.getLocalFormatType('x'))) {
+            // Parse using a temporary transform matching local format
+            const tempTransform = AST.copy(wcsInfo);
+            if (this.localCoordinateFormat === LocalCoordinateFormat.HMSDMS && this.supportsHmsDmsFormat()) {
+                AST.set(tempTransform, "Format(1)=hms.10, Format(2)=dms.10");
+            } else {
+                AST.set(tempTransform, "Format(1)=d.10, Format(2)=d.10");
+            }
+            const newPoint = getPixelValueFromWCS(tempTransform, {x: wcsString, y: centerWcsPoint.y});
+            AST.deleteObject(tempTransform);
             if (newPoint && isFinite(newPoint.x)) {
                 configStore.updateCenterPixelCoord(newPoint);
                 return;
@@ -403,7 +483,7 @@ export class CatalogQueryComponent extends React.Component {
         const frame = AppStore.Instance.activeFrame.spatialReference ?? AppStore.Instance.activeFrame;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
-        const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
+        const centerWcsPoint = this.getLocalFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
         if (!centerWcsPoint) {
             return;
         }
@@ -411,13 +491,62 @@ export class CatalogQueryComponent extends React.Component {
         if (wcsString === centerWcsPoint.y) {
             return;
         }
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
-            const newPoint = getPixelValueFromWCS(wcsInfo, {x: centerWcsPoint.x, y: wcsString});
+        if (isWCSStringFormatValid(wcsString, this.getLocalFormatType('y'))) {
+            // Parse using a temporary transform matching local format
+            const tempTransform = AST.copy(wcsInfo);
+            if (this.localCoordinateFormat === LocalCoordinateFormat.HMSDMS && this.supportsHmsDmsFormat()) {
+                AST.set(tempTransform, "Format(1)=hms.10, Format(2)=dms.10");
+            } else {
+                AST.set(tempTransform, "Format(1)=d.10, Format(2)=d.10");
+            }
+            const newPoint = getPixelValueFromWCS(tempTransform, {x: centerWcsPoint.x, y: wcsString});
+            AST.deleteObject(tempTransform);
             if (newPoint && isFinite(newPoint.y)) {
                 configStore.updateCenterPixelCoord(newPoint);
                 return;
             }
         }
         ev.currentTarget.value = centerWcsPoint.y;
+    };
+
+    private supportsHmsDmsFormat = (): boolean => {
+        const appStore = AppStore.Instance;
+        const currentSystem = appStore.overlaySettings.global.explicitSystem;
+
+        // HMS/DMS format is only supported for equatorial coordinate systems
+        return currentSystem === SystemType.FK4 ||
+               currentSystem === SystemType.FK5 ||
+               currentSystem === SystemType.ICRS;
+    };
+
+    private isHmsDmsFormat = (): boolean => {
+        const appStore = AppStore.Instance;
+        const formatX = appStore.overlaySettings.numbers.formatTypeX;
+        const formatY = appStore.overlaySettings.numbers.formatTypeY;
+        
+        // Return true if using HMS/DMS format
+        return formatX === NumberFormatType.HMS && formatY === NumberFormatType.DMS;
+    };
+
+    private handleFormatToggle = (event: React.FormEvent<HTMLInputElement>) => {
+        const selectedValue = (event.target as HTMLInputElement).value as LocalCoordinateFormat;
+        
+        // Only change local format, don't affect global imageview settings
+        if (selectedValue === LocalCoordinateFormat.HMSDMS && !this.supportsHmsDmsFormat()) {
+            // If HMS/DMS not supported, stay with degrees
+            this.setLocalCoordinateFormat(LocalCoordinateFormat.Degrees);
+        } else {
+            this.setLocalCoordinateFormat(selectedValue);
+        }
+    };
+
+    private handleSystemTypeChange = (type: SystemType) => {
+        const appStore = AppStore.Instance;
+        appStore.overlaySettings.global.setSystem(type);
+        
+        // If switching to a system that doesn't support HMS/DMS, automatically switch local format to degrees
+        if (!this.supportsHmsDmsFormat() && this.localCoordinateFormat === LocalCoordinateFormat.HMSDMS) {
+            this.setLocalCoordinateFormat(LocalCoordinateFormat.Degrees);
+        }
     };
 }
