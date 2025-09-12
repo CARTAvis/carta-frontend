@@ -249,7 +249,7 @@ export class CatalogQueryComponent extends React.Component {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         if (configStore.catalogDB === CatalogDatabase.SIMBAD) {
             // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system
-            const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS);
+            const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS, "10");
             const query = `SELECT Top ${configStore.maxObject} *, DISTANCE(POINT('ICRS', ${centerCoord.x},${centerCoord.y}), POINT('ICRS', ra, dec)) as dist FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',${centerCoord.x},${centerCoord.y},${configStore.radiusAsDeg}))=1 AND ra IS NOT NULL AND dec IS NOT NULL order by dist`;
             configStore.setQueryStatus(true);
             const dataSize = await CatalogApiService.Instance.appendSimbadCatalog(query);
