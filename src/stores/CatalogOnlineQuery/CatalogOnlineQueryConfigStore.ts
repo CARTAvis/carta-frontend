@@ -310,12 +310,17 @@ export class CatalogOnlineQueryConfigStore {
         return tables;
     }
 
+    private getEffectivePrecision(precision?: string): string {
+        const overlay = AppStore.Instance.overlaySettings;
+        return precision ?? (overlay.numbers.customPrecision ? overlay.numbers.precision.toString() : "*");
+    }
+
     convertToDeg(pixelCoords: Point2D, system?: SystemType, precision?: string): {x: string | undefined; y: string | undefined} {
         const frame = this.activeFrame;
         const overlay = AppStore.Instance.overlaySettings;
         let p: {x: string | undefined; y: string | undefined} = {x: undefined, y: undefined};
         if (frame && overlay) {
-            const effectivePrecision = precision ? precision : overlay.numbers.customPrecision ? overlay.numbers.precision : "*";
+            const effectivePrecision = this.getEffectivePrecision(precision);
             const format = `${NumberFormatType.Degrees}.${effectivePrecision}`;
             const wcsCopy = AST.copy(frame.wcsInfo);
             let astString = new ASTSettingsString();
@@ -338,7 +343,7 @@ export class CatalogOnlineQueryConfigStore {
         const overlay = AppStore.Instance.overlaySettings;
         let p: {x: number | undefined; y: number | undefined} | null = {x: undefined, y: undefined};
         if (frame && overlay) {
-            const effectivePrecision = precision ? precision : overlay.numbers.customPrecision ? overlay.numbers.precision : "*";
+            const effectivePrecision = this.getEffectivePrecision(precision);
             const format = `${NumberFormatType.Degrees}.${effectivePrecision}`;
             const wcsCopy = AST.copy(frame.wcsInfo);
             if (frame.isXY || frame.isYX) {
