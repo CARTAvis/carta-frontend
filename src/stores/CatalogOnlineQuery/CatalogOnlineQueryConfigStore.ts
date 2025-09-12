@@ -310,13 +310,13 @@ export class CatalogOnlineQueryConfigStore {
         return tables;
     }
 
-    convertToDeg(pixelCoords: Point2D, system?: SystemType): {x: string | undefined; y: string | undefined} {
+    convertToDeg(pixelCoords: Point2D, system?: SystemType, precision?: string): {x: string | undefined; y: string | undefined} {
         const frame = this.activeFrame;
         const overlay = AppStore.Instance.overlaySettings;
         let p: {x: string | undefined; y: string | undefined} = {x: undefined, y: undefined};
         if (frame && overlay) {
-            const precision = overlay.numbers.customPrecision ? overlay.numbers.precision : "*";
-            const format = `${NumberFormatType.Degrees}.${precision}`;
+            const effectivePrecision = precision ? precision : overlay.numbers.customPrecision ? overlay.numbers.precision : "*";
+            const format = `${NumberFormatType.Degrees}.${effectivePrecision}`;
             const wcsCopy = AST.copy(frame.wcsInfo);
             let astString = new ASTSettingsString();
             const sys = system ? system : overlay.global.explicitSystem ? overlay.global.explicitSystem : SystemType.ICRS;
@@ -333,13 +333,13 @@ export class CatalogOnlineQueryConfigStore {
         return p;
     }
 
-    convertToPixel(coords: Point2D): {x: number | undefined; y: number | undefined} | null {
+    convertToPixel(coords: Point2D, precision?: string): {x: number | undefined; y: number | undefined} | null {
         const frame = this.activeFrame;
         const overlay = AppStore.Instance.overlaySettings;
         let p: {x: number | undefined; y: number | undefined} | null = {x: undefined, y: undefined};
         if (frame && overlay) {
-            const precision = overlay.numbers.customPrecision ? overlay.numbers.precision : "*";
-            const format = `${NumberFormatType.Degrees}.${precision}`;
+            const effectivePrecision = precision ? precision : overlay.numbers.customPrecision ? overlay.numbers.precision : "*";
+            const format = `${NumberFormatType.Degrees}.${effectivePrecision}`;
             const wcsCopy = AST.copy(frame.wcsInfo);
             if (frame.isXY || frame.isYX) {
                 AST.set(wcsCopy, `System=${SystemType.ICRS}`);
