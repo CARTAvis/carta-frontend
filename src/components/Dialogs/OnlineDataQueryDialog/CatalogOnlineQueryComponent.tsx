@@ -258,7 +258,7 @@ export class CatalogQueryComponent extends React.Component {
         } else if (configStore.catalogDB === CatalogDatabase.VIZIER) {
             configStore.setQueryStatus(true);
             configStore.resetVizier();
-            const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.FK5);
+            const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.FK5, "10");
             const resources = await CatalogApiService.Instance.queryVizierTableName(centerCoord, configStore.searchRadius, configStore.radiusUnits, configStore.vizierKeyWords);
             configStore.setQueryStatus(false);
             configStore.setVizierQueryResult(resources);
@@ -269,7 +269,7 @@ export class CatalogQueryComponent extends React.Component {
     private loadVizierCatalogs = async () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const sources = configStore.selectedVizierSource;
-        const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.FK5);
+        const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.FK5, "10");
         configStore.setQueryStatus(true);
         const resources = await CatalogApiService.Instance.queryVizierSource(centerCoord, configStore.searchRadius, configStore.radiusUnits, configStore.maxObject, sources);
         CatalogApiService.Instance.appendVizierCatalog(resources);
