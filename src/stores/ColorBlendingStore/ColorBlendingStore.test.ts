@@ -1,7 +1,8 @@
 import {action, observable} from "mobx";
 
-import {AppStore, RenderConfigStore} from "stores";
-import {getColorsForValues} from "utilities";
+import {AppStore} from "../AppStore/AppStore";
+import {RenderConfigStore} from "../Frame/RenderConfigStore/RenderConfigStore";
+import {getColorsForValues} from "../../utilities";
 
 import {ColorBlendingStore} from "./ColorBlendingStore";
 
@@ -29,9 +30,9 @@ describe("ColorBlendingStore", () => {
 
     beforeEach(() => {
         jest.spyOn(AppStore, "Instance", "get").mockImplementation(() => {
-            return {spatialReference: mockSpatialReference};
+            return {spatialReference: mockSpatialReference} as any;
         });
-        setMatchedFrames([mockMatchedFrame1, mockMatchedFrame2]);
+        setMatchedFrames([mockMatchedFrame1 as any, mockMatchedFrame2 as any]);
         colorBlendingStore = new ColorBlendingStore(0);
     });
 
@@ -63,19 +64,19 @@ describe("ColorBlendingStore", () => {
         it("adds a layer correctly", () => {
             setMatchedFrames([mockMatchedFrame1, mockMatchedFrame2, mockMatchedFrame3]);
 
-            colorBlendingStore.addSelectedFrame(mockMatchedFrame3);
+            colorBlendingStore.addSelectedFrame(mockMatchedFrame3 as any);
             expect(colorBlendingStore.selectedFrames).toContain(mockMatchedFrame3);
             expect(colorBlendingStore.alpha).toHaveLength(4);
         });
 
         it("fails when the frame is unmatched", () => {
-            colorBlendingStore.addSelectedFrame(mockMatchedFrame4);
+            colorBlendingStore.addSelectedFrame(mockMatchedFrame4 as any);
             expect(mockConsoleError).toHaveBeenCalledWith("The selected frame is not matched to the base frame.");
             expect(colorBlendingStore.selectedFrames).toEqual([mockMatchedFrame1, mockMatchedFrame2]);
         });
 
         it("fails when the frame is used in other layers", () => {
-            colorBlendingStore.addSelectedFrame(mockMatchedFrame1);
+            colorBlendingStore.addSelectedFrame(mockMatchedFrame1 as any);
             expect(mockConsoleError).toHaveBeenCalledWith("The selected frame is selected in other layers.");
             expect(colorBlendingStore.selectedFrames).toEqual([mockMatchedFrame1, mockMatchedFrame2]);
         });
@@ -85,18 +86,18 @@ describe("ColorBlendingStore", () => {
         it("sets a layer correctly", () => {
             setMatchedFrames([mockMatchedFrame1, mockMatchedFrame2, mockMatchedFrame3]);
 
-            colorBlendingStore.setSelectedFrame(0, mockMatchedFrame3);
+            colorBlendingStore.setSelectedFrame(0, mockMatchedFrame3 as any);
             expect(colorBlendingStore.selectedFrames[0]).toBe(mockMatchedFrame3);
         });
 
         it("fails when the frame is unmatched", () => {
-            colorBlendingStore.setSelectedFrame(0, mockMatchedFrame4);
+            colorBlendingStore.setSelectedFrame(0, mockMatchedFrame4 as any);
             expect(mockConsoleError).toHaveBeenCalledWith("The selected frame is not matched to the base frame.");
             expect(colorBlendingStore.selectedFrames[0]).toBe(mockMatchedFrame1);
         });
 
         it("fails when the frame is used in other layers", () => {
-            colorBlendingStore.setSelectedFrame(1, mockMatchedFrame1);
+            colorBlendingStore.setSelectedFrame(1, mockMatchedFrame1 as any);
             expect(mockConsoleError).toHaveBeenCalledWith("The selected frame is selected in other layers.");
             expect(colorBlendingStore.selectedFrames[1]).toBe(mockMatchedFrame2);
         });
@@ -104,10 +105,10 @@ describe("ColorBlendingStore", () => {
         it("fails when the index is invalid", () => {
             setMatchedFrames([mockMatchedFrame1, mockMatchedFrame2, mockMatchedFrame3]);
 
-            colorBlendingStore.setSelectedFrame(-1, mockMatchedFrame3);
+            colorBlendingStore.setSelectedFrame(-1, mockMatchedFrame3 as any);
             expect(mockConsoleError).toHaveBeenCalledWith("Invalid layer index.");
 
-            colorBlendingStore.setSelectedFrame(2, mockMatchedFrame3);
+            colorBlendingStore.setSelectedFrame(2, mockMatchedFrame3 as any);
             expect(mockConsoleError).toHaveBeenCalledWith("Invalid layer index.");
         });
     });
@@ -205,7 +206,7 @@ describe("ColorBlendingStore", () => {
             const blue = [0, 180, 235, 255];
             const violet = [127, 0, 255, 255]; // Violet
             const mockRainbowGradient = {color: [...violet, ...blue, ...green, ...orange, ...red], size: 5};
-            getColorsForValues.mockReturnValue(mockRainbowGradient);
+            (getColorsForValues as jest.Mock).mockReturnValue(mockRainbowGradient);
 
             // one layer
             colorBlendingStore.selectedFrames = [];
@@ -213,13 +214,13 @@ describe("ColorBlendingStore", () => {
             expect(mockReferenceSetColorMap).toHaveBeenCalledWith("Red");
 
             // two layers
-            colorBlendingStore.selectedFrames = [{renderConfig: {setColorMap: mockSetColorMap1, setCustomHexEnd: mockSetCustomHexEnd1}}];
+            colorBlendingStore.selectedFrames = [{renderConfig: {setColorMap: mockSetColorMap1, setCustomHexEnd: mockSetCustomHexEnd1}} as any];
             colorBlendingStore.applyColormapSet("Rainbow");
             expect(mockReferenceSetColorMap).toHaveBeenCalledWith("Red");
             expect(mockSetColorMap1).toHaveBeenCalledWith("Violet");
 
             // three layers
-            colorBlendingStore.selectedFrames = [{renderConfig: {setColorMap: mockSetColorMap1, setCustomHexEnd: mockSetCustomHexEnd1}}, {renderConfig: {setColorMap: mockSetColorMap2, setCustomHexEnd: mockSetCustomHexEnd2}}];
+            colorBlendingStore.selectedFrames = [{renderConfig: {setColorMap: mockSetColorMap1, setCustomHexEnd: mockSetCustomHexEnd1}} as any, {renderConfig: {setColorMap: mockSetColorMap2, setCustomHexEnd: mockSetCustomHexEnd2}} as any];
             colorBlendingStore.applyColormapSet("Rainbow");
             expect(mockReferenceSetColorMap).toHaveBeenCalledWith("Red");
             expect(mockSetCustomHexEnd1).toHaveBeenCalledWith("#80feb3");
@@ -237,13 +238,13 @@ describe("ColorBlendingStore", () => {
             expect(mockReferenceSetColorMap).toHaveBeenCalledWith("Red");
 
             // two layers
-            colorBlendingStore.selectedFrames = [{renderConfig: {setColorMap: mockSetColorMap1}}];
+            colorBlendingStore.selectedFrames = [{renderConfig: {setColorMap: mockSetColorMap1}} as any];
             colorBlendingStore.applyColormapSet("RGB");
             expect(mockReferenceSetColorMap).toHaveBeenCalledWith("Red");
             expect(mockSetColorMap1).toHaveBeenCalledWith("Blue");
 
             // three layers
-            colorBlendingStore.selectedFrames = [{renderConfig: {setColorMap: mockSetColorMap1}}, {renderConfig: {setColorMap: mockSetColorMap2}}];
+            colorBlendingStore.selectedFrames = [{renderConfig: {setColorMap: mockSetColorMap1}} as any, {renderConfig: {setColorMap: mockSetColorMap2}} as any];
             colorBlendingStore.applyColormapSet("RGB");
             expect(mockReferenceSetColorMap).toHaveBeenCalledWith("Red");
             expect(mockSetColorMap1).toHaveBeenCalledWith("Green");

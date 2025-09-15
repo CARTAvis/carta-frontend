@@ -29,17 +29,17 @@ describe("AngularSize", () => {
                 .mockImplementationOnce(() => 2);
 
             let size = AngularSize.convertFromArcsec(1);
-            expect(mockConvertValueFromArcsec).toBeCalledWith(1, AngularSizeUnit.ARCSEC);
+            expect(mockConvertValueFromArcsec).toHaveBeenCalledWith(1, AngularSizeUnit.ARCSEC);
             expect(size?.value).toEqual(1);
             expect(size?.unit).toEqual(AngularSizeUnit.ARCSEC);
 
             size = AngularSize.convertFromArcsec(120);
-            expect(mockConvertValueFromArcsec).toBeCalledWith(120, AngularSizeUnit.ARCMIN);
+            expect(mockConvertValueFromArcsec).toHaveBeenCalledWith(120, AngularSizeUnit.ARCMIN);
             expect(size?.value).toEqual(2);
             expect(size?.unit).toEqual(AngularSizeUnit.ARCMIN);
 
             size = AngularSize.convertFromArcsec(7200);
-            expect(mockConvertValueFromArcsec).toBeCalledWith(7200, AngularSizeUnit.DEG);
+            expect(mockConvertValueFromArcsec).toHaveBeenCalledWith(7200, AngularSizeUnit.DEG);
             expect(size?.value).toEqual(2);
             expect(size?.unit).toEqual(AngularSizeUnit.DEG);
         });
@@ -48,12 +48,12 @@ describe("AngularSize", () => {
             mockConvertValueFromArcsec.mockImplementationOnce(() => 1).mockImplementationOnce(() => 0.001);
 
             let size = AngularSize.convertFromArcsec(0.001, true);
-            expect(mockConvertValueFromArcsec).toBeCalledWith(0.001, AngularSizeUnit.MILLIARCSEC);
+            expect(mockConvertValueFromArcsec).toHaveBeenCalledWith(0.001, AngularSizeUnit.MILLIARCSEC);
             expect(size?.value).toEqual(1);
             expect(size?.unit).toEqual(AngularSizeUnit.MILLIARCSEC);
 
             size = AngularSize.convertFromArcsec(0.001, false);
-            expect(mockConvertValueFromArcsec).toBeCalledWith(0.001, AngularSizeUnit.ARCSEC);
+            expect(mockConvertValueFromArcsec).toHaveBeenCalledWith(0.001, AngularSizeUnit.ARCSEC);
             expect(size?.value).toEqual(0.001);
             expect(size?.unit).toEqual(AngularSizeUnit.ARCSEC);
         });
