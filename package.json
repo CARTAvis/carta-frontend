@@ -81,6 +81,7 @@
         "react-iframe": "^1.8.5",
         "react-konva": "^18.2.10",
         "react-plotly.js": "^2.6.0",
+        "react-refresh": "^0.17.0",
         "react-rnd": "^10.4.11",
         "react-scroll-to-bottom": "^4.2.0",
         "react-simple-code-editor": "^0.14.1",
