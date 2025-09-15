@@ -10,21 +10,21 @@ const mockSetActiveImage = jest.fn();
 // Mock RenderConfigStore to handle import chain
 jest.mock("stores/Frame", () => ({
     RenderConfigStore: {
-        COLOR_MAPS_SELECTED: ['viridis', 'plasma', 'inferno', 'magma'],
+        COLOR_MAPS_SELECTED: ["viridis", "plasma", "inferno", "magma"],
         COLOR_MAPS_MONO: new Map([
-            ['red', '#ff0000'],
-            ['green', '#00ff00'],
-            ['blue', '#0000ff']
+            ["red", "#ff0000"],
+            ["green", "#00ff00"],
+            ["blue", "#0000ff"]
         ]),
-        COLOR_MAPS_CUSTOM: 'custom',
-        COLOR_MAPS_PANEL: 'panel',
-        COLOR_MAPS_ALL: ['viridis', 'plasma', 'inferno', 'magma', 'red', 'green', 'blue', 'custom', 'panel'],
+        COLOR_MAPS_CUSTOM: "custom",
+        COLOR_MAPS_PANEL: "panel",
+        COLOR_MAPS_ALL: ["viridis", "plasma", "inferno", "magma", "red", "green", "blue", "custom", "panel"],
         SCALING_TYPES: new Map([
-            ['linear', 'Linear'],
-            ['log', 'Log'],
-            ['sqrt', 'Square Root'],
-            ['square', 'Square'],
-            ['power', 'Power']
+            ["linear", "Linear"],
+            ["log", "Log"],
+            ["sqrt", "Square Root"],
+            ["square", "Square"],
+            ["power", "Power"]
         ])
     }
 }));
@@ -56,7 +56,7 @@ jest.mock("stores", () => {
 
 describe("ImageViewConfigStore", () => {
     const imageViewConfigStore = ImageViewConfigStore.Instance;
-    
+
     // Create mock FrameInfo objects
     const mockFrameInfo1 = {
         fileId: 0,
@@ -70,7 +70,7 @@ describe("ImageViewConfigStore", () => {
         beamTable: [],
         generated: false
     };
-    
+
     const mockFrameInfo2 = {
         fileId: 1,
         directory: "/mock/path",
@@ -83,7 +83,7 @@ describe("ImageViewConfigStore", () => {
         beamTable: [],
         generated: false
     };
-    
+
     const mockFrameInfo3 = {
         fileId: 2,
         directory: "/mock/path",
@@ -96,7 +96,7 @@ describe("ImageViewConfigStore", () => {
         beamTable: [],
         generated: false
     };
-    
+
     const mockFrame1 = new FrameStore(mockFrameInfo1);
     const mockFrame2 = new FrameStore(mockFrameInfo2);
     const mockFrame3 = new FrameStore(mockFrameInfo3);

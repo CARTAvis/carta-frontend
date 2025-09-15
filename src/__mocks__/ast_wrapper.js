@@ -2,7 +2,7 @@
 
 const mockAstWrapper = {
     onReady: Promise.resolve(),
-    
+
     // Mock AST wrapper functions
     emptyFitsChan: jest.fn(() => 1),
     putFits: jest.fn(),
@@ -43,27 +43,27 @@ const mockAstWrapper = {
     axPointList: jest.fn(() => 1),
     makeSwappedFrameSet: jest.fn(() => 1),
     setColor: jest.fn(),
-    
+
     // Mock coordinate functions
-    getFormattedCoordinates: jest.fn(() => ({ x: "0", y: "0" })),
-    getWCSValueFromFormattedString: jest.fn(() => ({ x: 0, y: 0 })),
-    transformPointArrays: jest.fn(() => ({ x: new Float64Array([0]), y: new Float64Array([0]) })),
-    transform3DPointArrays: jest.fn(() => ({ x: new Float64Array([0]), y: new Float64Array([0]), z: new Float64Array([0]) })),
+    getFormattedCoordinates: jest.fn(() => ({x: "0", y: "0"})),
+    getWCSValueFromFormattedString: jest.fn(() => ({x: 0, y: 0})),
+    transformPointArrays: jest.fn(() => ({x: new Float64Array([0]), y: new Float64Array([0])})),
+    transform3DPointArrays: jest.fn(() => ({x: new Float64Array([0]), y: new Float64Array([0]), z: new Float64Array([0])})),
     getGeodesicPointArray: jest.fn(() => new Float64Array([0, 0])),
     getAxisPointArray: jest.fn(() => new Float64Array([0, 0])),
-    transformPoint: jest.fn(() => ({ x: 0, y: 0 })),
-    transform3DPoint: jest.fn(() => ({ x: 0, y: 0, z: 0 })),
+    transformPoint: jest.fn(() => ({x: 0, y: 0})),
+    transform3DPoint: jest.fn(() => ({x: 0, y: 0, z: 0})),
     transformSpectralPoint: jest.fn(() => 0),
     transformSpectralPointArray: jest.fn(() => new Float64Array([0])),
-    normalizeCoordinates: jest.fn(() => ({ x: 0, y: 0 })),
+    normalizeCoordinates: jest.fn(() => ({x: 0, y: 0})),
     getTransformGrid: jest.fn(() => new Float32Array([0])),
-    
+
     // Mock memory management
     _malloc: jest.fn(() => 0),
     _free: jest.fn(),
-    HEAPF64: { buffer: new ArrayBuffer(8), set: jest.fn() },
-    HEAPF32: { buffer: new ArrayBuffer(4), set: jest.fn() },
-    
+    HEAPF64: {buffer: new ArrayBuffer(8), set: jest.fn()},
+    HEAPF32: {buffer: new ArrayBuffer(4), set: jest.fn()},
+
     // Mock constants
     LABEL_EXTERIOR: 0,
     LABEL_INTERIOR: 1,
@@ -76,18 +76,9 @@ const mockAstWrapper = {
     SYS_GALACTIC: 3,
     SYS_ICRS: 4,
     SYS_J2000: 5,
-    
+
     // Mock fonts array - this is what FontSelect component is looking for
-    fonts: [
-        "{size} sans-serif",
-        "italic {size} sans-serif",
-        "bold {size} sans-serif",
-        "bold italic {size} sans-serif",
-        "{size} times",
-        "italic {size} times",
-        "bold {size} times",
-        "bold italic {size} times"
-    ]
+    fonts: ["{size} sans-serif", "italic {size} sans-serif", "bold {size} sans-serif", "bold italic {size} sans-serif", "{size} times", "italic {size} times", "bold {size} times", "bold italic {size} times"]
 };
 
 // For ES modules compatibility (import * as AST)
