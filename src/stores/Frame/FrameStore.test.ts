@@ -1,14 +1,14 @@
 import {CARTA} from "carta-protobuf";
 
-import * as SpectralDefinition from "models/Spectral/SpectralDefinition.ts";
 import {FrameInfo, FrameStore} from "stores";
+import * as SpectralDefinition from "../../models/Spectral/SpectralDefinition";
 
 const stokesCubeframeInfo: FrameInfo = {
     fileId: 0,
     directory: "",
     hdu: "",
-    fileInfo: new CARTA.FileInfo({HDUList: ["0"], name: "", size: 17280, type: 3}),
-    fileInfoExtended: new CARTA.FileInfoExtended({
+    fileInfo: {HDUList: ["0"], name: "", size: 17280, type: 3} as any,
+    fileInfoExtended: {
         dimensions: 4,
         height: 2,
         width: 2,
@@ -37,28 +37,34 @@ const stokesCubeframeInfo: FrameInfo = {
             {name: "CRPIX4", value: "1", entryType: 1, numericValue: 1},
             {name: "CUNIT4"}
         ]
-    }),
+    } as any,
     fileFeatureFlags: 0,
-    renderMode: CARTA.RenderMode.RASTER,
+    renderMode: 0,
     beamTable: [
-        new CARTA.Beam({majorAxis: 0.9315811991691589, minorAxis: 0.8433393239974976, pa: 42.576087951660156}),
-        new CARTA.Beam({channel: 1, majorAxis: 0.9315744042396545, minorAxis: 0.8433324098587036, pa: 42.5771484375}),
-        new CARTA.Beam({channel: 2, majorAxis: 0.9315680265426636, minorAxis: 0.843326985836029, pa: 42.57808303833008}),
-        new CARTA.Beam({stokes: 1, majorAxis: 0.931560754776001, minorAxis: 0.8433191776275635, pa: 42.579010009765625}),
-        new CARTA.Beam({channel: 1, stokes: 1, majorAxis: 0.9315542578697205, minorAxis: 0.8433099985122681, pa: 42.58040237426758}),
-        new CARTA.Beam({channel: 2, stokes: 1, majorAxis: 0.9315447807312012, minorAxis: 0.8433027863502502, pa: 42.58256912231445})
-    ]
+        {channel: 0, stokes: 0, majorAxis: 0.9315811991691589, minorAxis: 0.8433393239974976, pa: 42.576087951660156},
+        {channel: 1, stokes: 0, majorAxis: 0.9315744042396545, minorAxis: 0.8433324098587036, pa: 42.5771484375},
+        {channel: 2, stokes: 0, majorAxis: 0.9315680265426636, minorAxis: 0.843326985836029, pa: 42.57808303833008},
+        {channel: 0, stokes: 1, majorAxis: 0.931560754776001, minorAxis: 0.8433191776275635, pa: 42.579010009765625},
+        {channel: 1, stokes: 1, majorAxis: 0.9315542578697205, minorAxis: 0.8433099985122681, pa: 42.58040237426758},
+        {channel: 2, stokes: 1, majorAxis: 0.9315447807312012, minorAxis: 0.8433027863502502, pa: 42.58256912231445}
+    ] as any,
+    lelExpr: false,
+    generated: false
 };
 
-const emptyframeInfo = {
+const emptyframeInfo: FrameInfo = {
     fileId: 0,
     directory: "",
     hdu: "",
-    fileInfo: new CARTA.FileInfo(),
-    fileInfoExtended: new CARTA.FileInfoExtended(),
+    fileInfo: {} as any,
+    fileInfoExtended: {
+        headerEntries: []
+    } as any,
     fileFeatureFlags: 0,
     renderMode: 0,
-    beamTable: []
+    beamTable: [],
+    lelExpr: false,
+    generated: false
 };
 
 describe("FrameStore", () => {
@@ -109,7 +115,7 @@ describe("FrameStore", () => {
                 {channel: 2, majorAxis: 0.9315680265426636, minorAxis: 0.843326985836029, pa: 42.57808303833008}
             ]);
             mockSpectralAxis.mockImplementation(() => {
-                return {type: {code: "FREQ"}};
+                return {type: {code: "FREQ", unit: "GHz"}};
             });
             mockChannelInfo.mockImplementation(() => {
                 return {values: [90.73634849111, 90.73631797353188, 90.73628745595375]};

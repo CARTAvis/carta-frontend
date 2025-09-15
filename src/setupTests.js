@@ -1,9 +1,11 @@
 import "@testing-library/jest-dom";
 import "jest-canvas-mock";
 
+// Set up global mocks
 window.URL.createObjectURL = () => {};
 global.WebGL2RenderingContext = null;
 
+// Mock matchMedia for Blueprint.js components
 Object.defineProperty(window, "matchMedia", {
     writable: true,
     value: query => ({
@@ -17,16 +19,3 @@ Object.defineProperty(window, "matchMedia", {
         dispatchEvent: () => {}
     })
 });
-
-jest.mock("ast_wrapper", () => ({
-    fonts: [],
-    onReady: new Promise(() => {}),
-    emptyFitsChan: () => {},
-    getFrameFromFitsChan: () => {},
-    initDummyFrame: () => {},
-    putFits: () => {},
-    setColor: () => {},
-    geodesicDistance: () => {}
-}));
-jest.mock("carta_computation", () => ({onReady: new Promise(() => {})}));
-jest.mock("gsl_wrapper", () => ({}));
