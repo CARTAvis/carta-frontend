@@ -52,8 +52,8 @@ export function getReferencePixel(frame: FrameStore): Point2D {
  * @returns An object with `{ x, y }` pixel sizes in degrees; `NaN` values if they cannot be determined
  */
 export function getPixelSizes(frame: FrameStore, renderedAxesNumbers: [number, number]): {x: number; y: number} {
-    const crpix1 = frame?.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name.indexOf(`CRPIX${renderedAxesNumbers[0]}`) !== -1);
-    const crpix2 = frame?.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name.indexOf(`CRPIX${renderedAxesNumbers[1]}`) !== -1);
+    const crpix1 = frame?.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name?.indexOf(`CRPIX${renderedAxesNumbers[0]}`) !== -1);
+    const crpix2 = frame?.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name?.indexOf(`CRPIX${renderedAxesNumbers[1]}`) !== -1);
 
     if (crpix1 && crpix2) {
         const crpix1Val = getHeaderNumericValue(crpix1);
