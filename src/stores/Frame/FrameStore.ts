@@ -1454,7 +1454,6 @@ export class FrameStore {
         if (hasUnits && !sameUnits) {
             this.framePixelRatio = NaN;
         } else {
-            // Assumes non-rotated pixels
             const pixelSize = getPixelSizes(this, this.renderedAxesNumbers);
             this.framePixelRatio = Math.abs(pixelSize.x / pixelSize.y);
             // Correct for numerical errors in CDELT values if they're within 0.1% of each other
