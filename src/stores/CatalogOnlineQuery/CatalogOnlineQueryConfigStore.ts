@@ -317,7 +317,7 @@ export class CatalogOnlineQueryConfigStore {
 
     private getEffectivePrecision(precision?: string): string {
         if (precision && !this.isValidPrecisionString(precision)) {
-            console.warn(`Invalid precision string: ${precision}. Using default precision *.`);
+            console.warn(`Invalid precision string: ${precision}. Expected '*' or a non-negative integer. Using default precision *.`);
         }
         const overlay = AppStore.Instance.overlaySettings;
         const effectivePrecision = precision ?? (overlay.numbers.customPrecision ? overlay.numbers.precision.toString() : "*");
