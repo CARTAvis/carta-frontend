@@ -6,7 +6,7 @@ import {action, makeObservable, observable} from "mobx";
 import {Point2D} from "models";
 import {BackendService} from "services";
 import {FrameStore} from "stores/Frame";
-import {getPixelSize, transformPoint} from "utilities";
+import {getPixelSizes, transformPoint} from "utilities";
 
 import {RegionStore} from "./Region/RegionStore";
 
@@ -348,7 +348,7 @@ export class CompassAnnotationStore extends RegionStore {
         const width = right - left;
         const height = top - bottom;
 
-        const pixelSize = getPixelSize(this.activeFrame, renderedAxesNumbers);
+        const pixelSize = getPixelSizes(this.activeFrame, renderedAxesNumbers);
         const xPixelSizeRad = (pixelSize.x * Math.PI) / 180;
         const yPixelSizeRad = (pixelSize.y * Math.PI) / 180;
 

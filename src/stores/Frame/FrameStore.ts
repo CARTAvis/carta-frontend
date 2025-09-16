@@ -74,7 +74,7 @@ import {
     getAngleInRad,
     getFormattedWCSPoint,
     getHeaderNumericValue,
-    getPixelSize,
+    getPixelSizes,
     getPixelValueFromWCS,
     GetRequiredTiles,
     getTransformedChannel,
@@ -1455,7 +1455,7 @@ export class FrameStore {
             this.framePixelRatio = NaN;
         } else {
             // Assumes non-rotated pixels
-            const pixelSize = getPixelSize(this, this.renderedAxesNumbers);
+            const pixelSize = getPixelSizes(this, this.renderedAxesNumbers);
             this.framePixelRatio = Math.abs(pixelSize.x / pixelSize.y);
             // Correct for numerical errors in CDELT values if they're within 0.1% of each other
             if (Math.abs(this.framePixelRatio - 1.0) < 0.001) {
@@ -1950,7 +1950,7 @@ export class FrameStore {
         if (this.isPVImage || this.isUVImage || this.isSwappedZ) {
             return null;
         }
-        const pixelSizeDeg = getPixelSize(this, this.renderedAxesNumbers);
+        const pixelSizeDeg = getPixelSizes(this, this.renderedAxesNumbers);
         if (isFinite(pixelSizeDeg.x) && isFinite(pixelSizeDeg.y)) {
             const xUnitSize = Math.round(pixelSizeDeg.x * 3600 * 1e6) / 1e6;
             const yUnitSize = Math.round(pixelSizeDeg.y * 3600 * 1e6) / 1e6;
