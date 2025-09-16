@@ -348,16 +348,14 @@ export class CompassAnnotationStore extends RegionStore {
         const width = right - left;
         const height = top - bottom;
 
-        const xAxis = 1;
-        const yAxis = 2;
-        const xPixelSizeRad = (getPixelSize(this.activeFrame, xAxis, renderedAxesNumbers) * Math.PI) / 180;
-        const yPixelSizeRad = (getPixelSize(this.activeFrame, yAxis, renderedAxesNumbers) * Math.PI) / 180;
+        const xPixelSizeRad = (getPixelSize(this.activeFrame, renderedAxesNumbers[0], renderedAxesNumbers) * Math.PI) / 180;
+        const yPixelSizeRad = (getPixelSize(this.activeFrame, renderedAxesNumbers[1], renderedAxesNumbers) * Math.PI) / 180;
 
         const angularWidth = !Number.isNaN(xPixelSizeRad) ? Math.abs(xPixelSizeRad * width) : DEFAULT_COMPASS_ANGULAR_SIZE_RAD;
         const angularHeight = !Number.isNaN(yPixelSizeRad) ? Math.abs(yPixelSizeRad * height) : DEFAULT_COMPASS_ANGULAR_SIZE_RAD;
 
-        const eastApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, xAxis, transformed.x, transformed.y, angularWidth);
-        const northApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, yAxis, transformed.x, transformed.y, angularHeight);
+        const eastApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, renderedAxesNumbers[0], transformed.x, transformed.y, angularWidth);
+        const northApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, renderedAxesNumbers[1], transformed.x, transformed.y, angularHeight);
 
         return {northApproximatePoints, eastApproximatePoints};
     }
