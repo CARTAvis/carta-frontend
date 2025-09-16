@@ -1454,7 +1454,7 @@ export class FrameStore {
         if (hasUnits && !sameUnits) {
             this.framePixelRatio = NaN;
         } else {
-            const pixelSize = getPixelSizes(this, this.renderedAxesNumbers);
+            const pixelSize = getPixelSizes(this);
             this.framePixelRatio = Math.abs(pixelSize.x / pixelSize.y);
             // Correct for numerical errors in CDELT values if they're within 0.1% of each other
             if (Math.abs(this.framePixelRatio - 1.0) < 0.001) {
@@ -1949,7 +1949,7 @@ export class FrameStore {
         if (this.isPVImage || this.isUVImage || this.isSwappedZ) {
             return null;
         }
-        const pixelSizeDeg = getPixelSizes(this, this.renderedAxesNumbers);
+        const pixelSizeDeg = getPixelSizes(this);
         if (isFinite(pixelSizeDeg.x) && isFinite(pixelSizeDeg.y)) {
             const xUnitSize = Math.round(pixelSizeDeg.x * 3600 * 1e6) / 1e6;
             const yUnitSize = Math.round(pixelSizeDeg.y * 3600 * 1e6) / 1e6;

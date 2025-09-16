@@ -48,10 +48,10 @@ export function getReferencePixel(frame: FrameStore): Point2D {
  * measuring WCS geodesic distances around the reference pixel (CRPIX).
  *
  * @param frame - The `FrameStore` providing WCS transform (`frame.wcsInfo`) and FITS headers
- * @param renderedAxesNumbers - Tuple of rendered axes (e.g., `[xAxis, yAxis]`) indicating which CRPIX values to use
  * @returns An object with `{ x, y }` pixel sizes in degrees; `NaN` values if they cannot be determined
  */
-export function getPixelSizes(frame: FrameStore, renderedAxesNumbers: [number, number]): {x: number; y: number} {
+export function getPixelSizes(frame: FrameStore): {x: number; y: number} {
+    const renderedAxesNumbers = frame.renderedAxesNumbers;
     const crpix1 = frame?.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name?.indexOf(`CRPIX${renderedAxesNumbers[0]}`) !== -1);
     const crpix2 = frame?.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name?.indexOf(`CRPIX${renderedAxesNumbers[1]}`) !== -1);
 

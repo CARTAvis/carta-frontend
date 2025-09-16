@@ -339,7 +339,6 @@ export class CompassAnnotationStore extends RegionStore {
         const originPoint = spatiallyMatched ? transformPoint(spatialTransform, this.controlPoints[0], false) : this.controlPoints[0];
         const transformed = AST.transformPoint(wcsInfo, originPoint.x, originPoint.y);
 
-        const renderedAxesNumbers = this.activeFrame.renderedAxesNumbers;
         const frameView = this.activeFrame.requiredFrameViewForRegionRender;
         const top = frameView.yMax;
         const bottom = frameView.yMin;
@@ -348,7 +347,7 @@ export class CompassAnnotationStore extends RegionStore {
         const width = right - left;
         const height = top - bottom;
 
-        const pixelSize = getPixelSizes(this.activeFrame, renderedAxesNumbers);
+        const pixelSize = getPixelSizes(this.activeFrame);
         const xPixelSizeRad = (pixelSize.x * Math.PI) / 180;
         const yPixelSizeRad = (pixelSize.y * Math.PI) / 180;
 
