@@ -320,8 +320,7 @@ export class CatalogOnlineQueryConfigStore {
             console.warn(`Invalid precision string: ${precision}. Expected '*' or a non-negative integer. Using default precision *.`);
         }
         const overlay = AppStore.Instance.overlaySettings;
-        const effectivePrecision = precision ?? (overlay.numbers.customPrecision ? overlay.numbers.precision.toString() : "*");
-        return this.isValidPrecisionString(effectivePrecision) ? effectivePrecision : "*";
+        return precision ?? (overlay.numbers.customPrecision ? overlay.numbers.precision.toString() : "*");
     }
 
     convertToDeg(pixelCoords: Point2D, system?: SystemType, precision?: string): {x: string | undefined; y: string | undefined} {
