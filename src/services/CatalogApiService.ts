@@ -187,7 +187,7 @@ export class CatalogApiService {
                 const headers = CatalogApiProcessing.ProcessSimbadMetaData(response.data?.metadata);
                 const columnData = CatalogApiProcessing.ProcessSimbadData(response.data?.data, headers);
                 const coosys: CARTA.ICoosys = {system: configStore.coordsType};
-                const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS, "10");
+                const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS, CatalogOnlineQueryConfigStore.QUERY_DEG_PRECISION);
                 const fileName = `${configStore.catalogDB}_${configStore.coordsType}_${centerCoord.x}_${centerCoord.y}_${configStore.searchRadius}${configStore.radiusUnits}`;
                 const catalogFileInfo: CARTA.ICatalogFileInfo = {
                     name: fileName,

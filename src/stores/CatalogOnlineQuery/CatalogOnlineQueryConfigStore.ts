@@ -19,6 +19,7 @@ export class CatalogOnlineQueryConfigStore {
     public static readonly MIN_OBJECTS = 1;
     public static readonly MAX_OBJECTS = 10000000;
     public static readonly OBJECT_SIZE = 1000;
+    public static readonly QUERY_DEG_PRECISION = "10";
 
     @observable isQuerying: boolean;
     @observable catalogDB: CatalogDatabase;
