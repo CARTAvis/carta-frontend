@@ -1951,11 +1951,11 @@ export class FrameStore {
         if (this.isPVImage || this.isUVImage || this.isSwappedZ) {
             return null;
         }
-        const xPixelSize = getPixelSize(this, this.renderedAxesNumbers[0], this.renderedAxesNumbers);
-        const yPixelSize = getPixelSize(this, this.renderedAxesNumbers[1], this.renderedAxesNumbers);
-        if (isFinite(xPixelSize) && isFinite(yPixelSize)) {
-            const xUnitSize = Math.round(xPixelSize * 1e6) / 1e6;
-            const yUnitSize = Math.round(yPixelSize * 1e6) / 1e6;
+        const xPixelSizeDeg = getPixelSize(this, this.renderedAxesNumbers[0], this.renderedAxesNumbers);
+        const yPixelSizeDeg = getPixelSize(this, this.renderedAxesNumbers[1], this.renderedAxesNumbers);
+        if (isFinite(xPixelSizeDeg) && isFinite(yPixelSizeDeg)) {
+            const xUnitSize = Math.round(xPixelSizeDeg * 3600 * 1e6) / 1e6;
+            const yUnitSize = Math.round(yPixelSizeDeg * 3600 * 1e6) / 1e6;
             return {x: xUnitSize, y: yUnitSize};
         }
         return null;
