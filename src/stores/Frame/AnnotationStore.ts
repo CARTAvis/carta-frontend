@@ -355,8 +355,8 @@ export class CompassAnnotationStore extends RegionStore {
         const angularWidth = isFinite(xPixelSizeRad) ? Math.abs(xPixelSizeRad * width) : DEFAULT_COMPASS_ANGULAR_SIZE_RAD;
         const angularHeight = isFinite(yPixelSizeRad) ? Math.abs(yPixelSizeRad * height) : DEFAULT_COMPASS_ANGULAR_SIZE_RAD;
 
-        const eastApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, renderedAxesNumbers[0], transformed.x, transformed.y, angularWidth);
-        const northApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, renderedAxesNumbers[1], transformed.x, transformed.y, angularHeight);
+        const eastApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, this.activeFrame.dirX, transformed.x, transformed.y, angularWidth);
+        const northApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, this.activeFrame.dirY, transformed.x, transformed.y, angularHeight);
 
         return {northApproximatePoints, eastApproximatePoints};
     }
