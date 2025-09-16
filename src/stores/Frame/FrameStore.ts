@@ -1455,8 +1455,8 @@ export class FrameStore {
             this.framePixelRatio = NaN;
         } else {
             // Assumes non-rotated pixels
-            const cDelt1 = getPixelSize(this, this.renderedAxesNumbers[0]);
-            const cDelt2 = getPixelSize(this, this.renderedAxesNumbers[1]);
+            const cDelt1 = getPixelSize(this, this.renderedAxesNumbers[0], this.renderedAxesNumbers);
+            const cDelt2 = getPixelSize(this, this.renderedAxesNumbers[1], this.renderedAxesNumbers);
             this.framePixelRatio = Math.abs(cDelt1 / cDelt2);
             // Correct for numerical errors in CDELT values if they're within 0.1% of each other
             if (Math.abs(this.framePixelRatio - 1.0) < 0.001) {
@@ -1951,16 +1951,12 @@ export class FrameStore {
         if (this.isPVImage || this.isUVImage || this.isSwappedZ) {
             return null;
         }
-        const crpix1 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRPIX${this.renderedAxesNumbers[0]}`) !== -1);
-        const crpix2 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRPIX${this.renderedAxesNumbers[1]}`) !== -1);
-        if (crpix1 && crpix2) {
-            const crpix1Val = getHeaderNumericValue(crpix1);
-            const crpix2Val = getHeaderNumericValue(crpix2);
-            const xUnitSize = Math.round(AST.geodesicDistance(this.wcsInfo, crpix1Val, crpix2Val, crpix1Val + 1, crpix2Val) * 1e6) / 1e6;
-            const yUnitSize = Math.round(AST.geodesicDistance(this.wcsInfo, crpix1Val, crpix2Val, crpix1Val, crpix2Val + 1) * 1e6) / 1e6;
-            if (isFinite(xUnitSize) && isFinite(yUnitSize)) {
-                return {x: xUnitSize, y: yUnitSize};
-            }
+        const xPixelSize = getPixelSize(this, this.renderedAxesNumbers[0], this.renderedAxesNumbers);
+        const yPixelSize = getPixelSize(this, this.renderedAxesNumbers[1], this.renderedAxesNumbers);
+        if (isFinite(xPixelSize) && isFinite(yPixelSize)) {
+            const xUnitSize = Math.round(xPixelSize * 1e6) / 1e6;
+            const yUnitSize = Math.round(yPixelSize * 1e6) / 1e6;
+            return {x: xUnitSize, y: yUnitSize};
         }
         return null;
     };
