@@ -1455,9 +1455,8 @@ export class FrameStore {
             this.framePixelRatio = NaN;
         } else {
             // Assumes non-rotated pixels
-            const cDelt1 = getPixelSize(this, this.renderedAxesNumbers[0], this.renderedAxesNumbers);
-            const cDelt2 = getPixelSize(this, this.renderedAxesNumbers[1], this.renderedAxesNumbers);
-            this.framePixelRatio = Math.abs(cDelt1 / cDelt2);
+            const pixelSize = getPixelSize(this, this.renderedAxesNumbers);
+            this.framePixelRatio = Math.abs(pixelSize.x / pixelSize.y);
             // Correct for numerical errors in CDELT values if they're within 0.1% of each other
             if (Math.abs(this.framePixelRatio - 1.0) < 0.001) {
                 this.framePixelRatio = 1.0;
@@ -1951,11 +1950,10 @@ export class FrameStore {
         if (this.isPVImage || this.isUVImage || this.isSwappedZ) {
             return null;
         }
-        const xPixelSizeDeg = getPixelSize(this, this.renderedAxesNumbers[0], this.renderedAxesNumbers);
-        const yPixelSizeDeg = getPixelSize(this, this.renderedAxesNumbers[1], this.renderedAxesNumbers);
-        if (isFinite(xPixelSizeDeg) && isFinite(yPixelSizeDeg)) {
-            const xUnitSize = Math.round(xPixelSizeDeg * 3600 * 1e6) / 1e6;
-            const yUnitSize = Math.round(yPixelSizeDeg * 3600 * 1e6) / 1e6;
+        const pixelSizeDeg = getPixelSize(this, this.renderedAxesNumbers);
+        if (isFinite(pixelSizeDeg.x) && isFinite(pixelSizeDeg.y)) {
+            const xUnitSize = Math.round(pixelSizeDeg.x * 3600 * 1e6) / 1e6;
+            const yUnitSize = Math.round(pixelSizeDeg.y * 3600 * 1e6) / 1e6;
             return {x: xUnitSize, y: yUnitSize};
         }
         return null;

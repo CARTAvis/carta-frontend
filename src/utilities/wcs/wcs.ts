@@ -44,28 +44,25 @@ export function getReferencePixel(frame: FrameStore): Point2D {
 }
 
 /**
- * Calculates the pixel size in degrees along a given rendered axis by
- * measuring geodesic distance in WCS at the reference pixel position.
+ * Calculates the pixel sizes (in degrees per pixel) along the rendered X and Y axes by
+ * measuring WCS geodesic distances around the reference pixel (CRPIX).
  *
- * @param frame - The `FrameStore` providing WCS info (`frame.wcsInfo`) and headers
- * @param axis - Rendered world axis number for which to calculate pixel size
- * @param renderedAxesNumbers - Tuple of rendered axes (e.g. `[xAxis, yAxis]`)
- * @returns Pixel size in degrees, or `NaN` if it cannot be determined
+ * @param frame - The `FrameStore` providing WCS transform (`frame.wcsInfo`) and FITS headers
+ * @param renderedAxesNumbers - Tuple of rendered axes (e.g., `[xAxis, yAxis]`) indicating which CRPIX values to use
+ * @returns An object with `{ x, y }` pixel sizes in degrees; `NaN` values if they cannot be determined
  */
-export function getPixelSize(frame: FrameStore, axis: number, renderedAxesNumbers: [number, number]): number {
+export function getPixelSize(frame: FrameStore, renderedAxesNumbers: [number, number]): {x: number; y: number} {
     const crpix1 = frame?.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name.indexOf(`CRPIX${renderedAxesNumbers[0]}`) !== -1);
     const crpix2 = frame?.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name.indexOf(`CRPIX${renderedAxesNumbers[1]}`) !== -1);
 
     if (crpix1 && crpix2) {
         const crpix1Val = getHeaderNumericValue(crpix1);
         const crpix2Val = getHeaderNumericValue(crpix2);
-        if (axis === renderedAxesNumbers[0]) {
-            return AST.geodesicDistance(frame.wcsInfo, crpix1Val - 0.5, crpix2Val, crpix1Val + 0.5, crpix2Val) / 3600;
-        } else if (axis === renderedAxesNumbers[1]) {
-            return AST.geodesicDistance(frame.wcsInfo, crpix1Val, crpix2Val - 0.5, crpix1Val, crpix2Val + 0.5) / 3600;
-        }
+        const xPixelSizeDeg = AST.geodesicDistance(frame.wcsInfo, crpix1Val - 0.5, crpix2Val, crpix1Val + 0.5, crpix2Val) / 3600;
+        const yPixelSizeDeg = AST.geodesicDistance(frame.wcsInfo, crpix1Val, crpix2Val - 0.5, crpix1Val, crpix2Val + 0.5) / 3600;
+        return {x: xPixelSizeDeg, y: yPixelSizeDeg};
     }
-    return NaN;
+    return {x: NaN, y: NaN};
 }
 
 export function getFormattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: Point2D) {

@@ -348,8 +348,9 @@ export class CompassAnnotationStore extends RegionStore {
         const width = right - left;
         const height = top - bottom;
 
-        const xPixelSizeRad = (getPixelSize(this.activeFrame, renderedAxesNumbers[0], renderedAxesNumbers) * Math.PI) / 180;
-        const yPixelSizeRad = (getPixelSize(this.activeFrame, renderedAxesNumbers[1], renderedAxesNumbers) * Math.PI) / 180;
+        const pixelSize = getPixelSize(this.activeFrame, renderedAxesNumbers);
+        const xPixelSizeRad = (pixelSize.x * Math.PI) / 180;
+        const yPixelSizeRad = (pixelSize.y * Math.PI) / 180;
 
         const angularWidth = isFinite(xPixelSizeRad) ? Math.abs(xPixelSizeRad * width) : DEFAULT_COMPASS_ANGULAR_SIZE_RAD;
         const angularHeight = isFinite(yPixelSizeRad) ? Math.abs(yPixelSizeRad * height) : DEFAULT_COMPASS_ANGULAR_SIZE_RAD;
