@@ -311,9 +311,17 @@ export class CatalogOnlineQueryConfigStore {
         return tables;
     }
 
+    private isValidPrecisionString(precision: string): boolean {
+        return precision === "*" || /^[0-9]+$/.test(precision);
+    }
+
     private getEffectivePrecision(precision?: string): string {
+        if (precision && !this.isValidPrecisionString(precision)) {
+            console.warn(`Invalid precision string: ${precision}. Using default precision *.`);
+        }
         const overlay = AppStore.Instance.overlaySettings;
-        return precision ?? (overlay.numbers.customPrecision ? overlay.numbers.precision.toString() : "*");
+        const effectivePrecision = precision ?? (overlay.numbers.customPrecision ? overlay.numbers.precision.toString() : "*");
+        return this.isValidPrecisionString(effectivePrecision) ? effectivePrecision : "*";
     }
 
     convertToDeg(pixelCoords: Point2D, system?: SystemType, precision?: string): {x: string | undefined; y: string | undefined} {
@@ -321,8 +329,7 @@ export class CatalogOnlineQueryConfigStore {
         const overlay = AppStore.Instance.overlaySettings;
         let p: {x: string | undefined; y: string | undefined} = {x: undefined, y: undefined};
         if (frame && overlay) {
-            const effectivePrecision = this.getEffectivePrecision(precision);
-            const format = `${NumberFormatType.Degrees}.${effectivePrecision}`;
+            const format = `${NumberFormatType.Degrees}.${this.getEffectivePrecision(precision)}`;
             const wcsCopy = AST.copy(frame.wcsInfo);
             let astString = new ASTSettingsString();
             const sys = system ? system : overlay.global.explicitSystem ? overlay.global.explicitSystem : SystemType.ICRS;
