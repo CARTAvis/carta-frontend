@@ -112,7 +112,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
                 region.setControlPoint(0, positionImageSpace);
             } else if (anchor.id() === "northTip" || anchor.id() === "eastTip") {
                 if (!frame.validWcs) {
-                    region.setLength(distance * frame.zoomLevel);
+                    region.setLength((distance * frame.zoomLevel) / imageRatio);
                 } else {
                     region.setLength((distance * (frame.spatialReference?.zoomLevel || frame.zoomLevel)) / imageRatio);
                 }
