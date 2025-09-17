@@ -337,7 +337,6 @@ export class CompassAnnotationStore extends RegionStore {
 
     public getCompassApproximation(wcsInfo: AST.FrameSet, spatiallyMatched?: boolean, spatialTransform?: AST.Mapping): {northApproximatePoints: number[]; eastApproximatePoints: number[]} {
         const originPoint = spatiallyMatched ? transformPoint(spatialTransform, this.controlPoints[0], false) : this.controlPoints[0];
-        const transformed = AST.transformPoint(wcsInfo, originPoint.x, originPoint.y);
 
         const frameView = this.activeFrame.requiredFrameViewForRegionRender;
         const top = frameView.yMax;
@@ -346,6 +345,26 @@ export class CompassAnnotationStore extends RegionStore {
         const right = frameView.xMax;
         const width = right - left;
         const height = top - bottom;
+
+        if (!wcsInfo || !this.activeFrame.validWcs) {
+            const compassSize = this.length;
+            const centerX = originPoint.x;
+            const centerY = originPoint.y;
+
+            const northApproximatePoints: number[] = [];
+            const eastApproximatePoints: number[] = [];
+
+            for (let i = 0; i < NUMBER_OF_POINT_TRANSFORMED; i++) {
+                const t = i / (NUMBER_OF_POINT_TRANSFORMED - 1);
+                
+                northApproximatePoints.push(centerX, centerY + t * compassSize);
+                eastApproximatePoints.push(centerX - t * compassSize, centerY);
+            }
+
+            return {northApproximatePoints, eastApproximatePoints};
+        }
+
+        const transformed = AST.transformPoint(wcsInfo, originPoint.x, originPoint.y);
 
         const pixelSize = getPixelSizes(this.activeFrame);
         const xPixelSizeRad = (pixelSize.x * Math.PI) / 180;
