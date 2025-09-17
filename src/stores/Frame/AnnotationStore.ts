@@ -24,7 +24,6 @@ export enum Font {
 }
 
 const NUMBER_OF_POINT_TRANSFORMED = 201;
-const DEFAULT_COMPASS_ANGULAR_SIZE_RAD = 6.18; // Fallback angular size in radians for compass rendering
 
 export class PointAnnotationStore extends RegionStore {
     @observable pointShape: CARTA.PointAnnotationShape;
@@ -338,45 +337,41 @@ export class CompassAnnotationStore extends RegionStore {
     public getCompassApproximation(wcsInfo: AST.FrameSet, spatiallyMatched?: boolean, spatialTransform?: AST.Mapping): {northApproximatePoints: number[]; eastApproximatePoints: number[]} {
         const originPoint = spatiallyMatched ? transformPoint(spatialTransform, this.controlPoints[0], false) : this.controlPoints[0];
 
-        const frameView = this.activeFrame.requiredFrameViewForRegionRender;
-        const top = frameView.yMax;
-        const bottom = frameView.yMin;
-        const left = frameView.xMin;
-        const right = frameView.xMax;
-        const width = right - left;
-        const height = top - bottom;
+        if (wcsInfo && this.activeFrame.validWcs) {
+            const frameView = this.activeFrame.requiredFrameViewForRegionRender;
+            const top = frameView.yMax;
+            const bottom = frameView.yMin;
+            const left = frameView.xMin;
+            const right = frameView.xMax;
+            const width = right - left;
+            const height = top - bottom;
 
-        if (!wcsInfo || !this.activeFrame.validWcs) {
+            const transformed = AST.transformPoint(wcsInfo, originPoint.x, originPoint.y);
+
+            const pixelSize = getPixelSizes(this.activeFrame);
+            const xPixelSizeRad = (pixelSize.x * Math.PI) / 180;
+            const yPixelSizeRad = (pixelSize.y * Math.PI) / 180;
+            const angularWidth = Math.abs(xPixelSizeRad * width);
+            const angularHeight = Math.abs(yPixelSizeRad * height);
+
+            const eastApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, this.activeFrame.dirX, transformed.x, transformed.y, angularWidth);
+            const northApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, this.activeFrame.dirY, transformed.x, transformed.y, angularHeight);
+            return {northApproximatePoints, eastApproximatePoints};
+        } else {
+            // fallback to pixel coordinate
             const compassSize = this.length;
             const centerX = originPoint.x;
             const centerY = originPoint.y;
-
             const northApproximatePoints: number[] = [];
             const eastApproximatePoints: number[] = [];
 
             for (let i = 0; i < NUMBER_OF_POINT_TRANSFORMED; i++) {
                 const t = i / (NUMBER_OF_POINT_TRANSFORMED - 1);
-                
                 northApproximatePoints.push(centerX, centerY + t * compassSize);
                 eastApproximatePoints.push(centerX - t * compassSize, centerY);
             }
-
             return {northApproximatePoints, eastApproximatePoints};
         }
-
-        const transformed = AST.transformPoint(wcsInfo, originPoint.x, originPoint.y);
-
-        const pixelSize = getPixelSizes(this.activeFrame);
-        const xPixelSizeRad = (pixelSize.x * Math.PI) / 180;
-        const yPixelSizeRad = (pixelSize.y * Math.PI) / 180;
-
-        const angularWidth = isFinite(xPixelSizeRad) ? Math.abs(xPixelSizeRad * width) : DEFAULT_COMPASS_ANGULAR_SIZE_RAD;
-        const angularHeight = isFinite(yPixelSizeRad) ? Math.abs(yPixelSizeRad * height) : DEFAULT_COMPASS_ANGULAR_SIZE_RAD;
-
-        const eastApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, this.activeFrame.dirX, transformed.x, transformed.y, angularWidth);
-        const northApproximatePoints = AST.getAxisPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, this.activeFrame.dirY, transformed.x, transformed.y, angularHeight);
-
-        return {northApproximatePoints, eastApproximatePoints};
     }
 
     public getAnnotationStyles = () => {
