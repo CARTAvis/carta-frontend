@@ -51,15 +51,14 @@ export function getReferencePixel(frame: FrameStore): Point2D {
  * @returns An object with `{ x, y }` pixel sizes in degrees; `NaN` values if they cannot be determined
  */
 export function getPixelSizes(frame: FrameStore): {x: number; y: number} {
-    const renderedAxesNumbers = frame.renderedAxesNumbers;
-    const crpix1 = frame?.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name === `CRPIX${renderedAxesNumbers[0]}`);
-    const crpix2 = frame?.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name === `CRPIX${renderedAxesNumbers[1]}`);
+    const crpixX = frame?.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name === `CRPIX${frame.dirXNumber}`);
+    const crpixY = frame?.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name === `CRPIX${frame.dirYNumber}`);
 
-    if (crpix1 && crpix2) {
-        const crpix1Val = getHeaderNumericValue(crpix1);
-        const crpix2Val = getHeaderNumericValue(crpix2);
-        const xPixelSizeDeg = AST.geodesicDistance(frame.wcsInfo, crpix1Val - 0.5, crpix2Val, crpix1Val + 0.5, crpix2Val) / 3600;
-        const yPixelSizeDeg = AST.geodesicDistance(frame.wcsInfo, crpix1Val, crpix2Val - 0.5, crpix1Val, crpix2Val + 0.5) / 3600;
+    if (crpixX && crpixY) {
+        const crpixXVal = getHeaderNumericValue(crpixX);
+        const crpixYVal = getHeaderNumericValue(crpixY);
+        const xPixelSizeDeg = AST.geodesicDistance(frame.wcsInfo, crpixXVal - 0.5, crpixYVal, crpixXVal + 0.5, crpixYVal) / 3600;
+        const yPixelSizeDeg = AST.geodesicDistance(frame.wcsInfo, crpixXVal, crpixYVal - 0.5, crpixXVal, crpixYVal + 0.5) / 3600;
         return {x: xPixelSizeDeg, y: yPixelSizeDeg};
     }
     return {x: NaN, y: NaN};
