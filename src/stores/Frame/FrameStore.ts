@@ -271,6 +271,10 @@ export class FrameStore {
             return this.framePixelRatio;
         }
 
+        if (!this.validWcs) {
+            return 1.0;
+        }
+
         return this.renderWidth / this.frameInfo.fileInfoExtended.width / (this.renderHeight / this.frameInfo.fileInfoExtended.height);
     }
 
