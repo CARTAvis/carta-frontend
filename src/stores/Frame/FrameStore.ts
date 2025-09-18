@@ -274,6 +274,10 @@ export class FrameStore {
         return this.renderWidth / this.frameInfo.fileInfoExtended.width / (this.renderHeight / this.frameInfo.fileInfoExtended.height);
     }
 
+    @computed get isNormalImage(): boolean {
+        return !this.isPVImage && !this.isUVImage && !this.isSwappedZ;
+    }
+
     get hasSquarePixels(): boolean {
         if (isFinite(this.framePixelRatio)) {
             return this.framePixelRatio === 1.0;
@@ -1467,7 +1471,8 @@ export class FrameStore {
         this.initSupportedSpectralConversion();
         this.initCenter();
         this.zoomLevel = preferenceStore.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
-        this.pixelUnitSizeArcsec = this.getPixelUnitSize();
+        const pixelSizesArcsec = getPixelSizes(this, 6);
+        this.pixelUnitSizeArcsec = this.isNormalImage && isFinite(pixelSizesArcsec.x) && isFinite(pixelSizesArcsec.y) ? pixelSizesArcsec : null;
 
         // init spectral settings
         if (this.spectralAxis && IsSpectralTypeSupported(this.spectralAxis.type.code as string) && IsSpectralUnitSupported(this.spectralAxis.type.unit as string)) {
@@ -1945,19 +1950,6 @@ export class FrameStore {
         this.zooming = false;
     };
 
-    private getPixelUnitSize = () => {
-        if (this.isPVImage || this.isUVImage || this.isSwappedZ) {
-            return null;
-        }
-        const pixelSizeDeg = getPixelSizes(this);
-        if (isFinite(pixelSizeDeg.x) && isFinite(pixelSizeDeg.y)) {
-            const xUnitSize = Math.round(pixelSizeDeg.x * 3600 * 1e6) / 1e6;
-            const yUnitSize = Math.round(pixelSizeDeg.y * 3600 * 1e6) / 1e6;
-            return {x: xUnitSize, y: yUnitSize};
-        }
-        return null;
-    };
-
     /**
      * Converts positions from WCS coordinates to image coordinates.
      *
@@ -2011,7 +2003,7 @@ export class FrameStore {
         let cursorPosWCS, cursorPosFormatted;
         let precisionX = 0;
         let precisionY = 0;
-        if (((this.validWcs || this.isYX) && AppStore.Instance.overlaySettings.isWcsCoordinates) || this.isPVImage || this.isUVImage || this.isSwappedZ) {
+        if (((this.validWcs || this.isYX) && AppStore.Instance.overlaySettings.isWcsCoordinates) || !this.isNormalImage) {
             // We need to compare X and Y coordinates in both directions
             // to avoid a confusing drop in precision at rounding threshold
             const offsetBlock = [
@@ -2030,9 +2022,9 @@ export class FrameStore {
             while (precisionX < FrameStore.CursorInfoMaxPrecision && precisionY < FrameStore.CursorInfoMaxPrecision) {
                 let astString = new ASTSettingsString();
                 const overlaySettings = AppStore.Instance.overlaySettings;
-                astString.add(`Format(${this.dirX})`, this.isPVImage || this.isUVImage || this.isSwappedZ ? undefined : overlaySettings.numbers.cursorFormatStringX(precisionX));
-                astString.add(`Format(${this.dirY})`, this.isPVImage || this.isUVImage || this.isSwappedZ ? undefined : overlaySettings.numbers.cursorFormatStringY(precisionY));
-                astString.add("System", this.isPVImage || this.isUVImage || this.isSwappedZ ? "cartesian" : overlaySettings.global.explicitSystem);
+                astString.add(`Format(${this.dirX})`, this.isNormalImage ? overlaySettings.numbers.cursorFormatStringX(precisionX) : undefined);
+                astString.add(`Format(${this.dirY})`, this.isNormalImage ? overlaySettings.numbers.cursorFormatStringY(precisionY) : undefined);
+                astString.add("System", this.isNormalImage ? overlaySettings.global.explicitSystem : "cartesian");
 
                 let formattedNeighbourhood = normalizedNeighbourhood.map(pos => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString(), true));
                 let [p, n1, n2] = formattedNeighbourhood;
@@ -2296,7 +2288,7 @@ export class FrameStore {
     };
 
     @action updateOffsetCenter = () => {
-        if (!this.isPVImage && !this.isPreview && !this.isSwappedZ && !this.isUVImage) {
+        if (this.isNormalImage && !this.isPreview) {
             this.setOffsetCenter(this.center.x, this.center.y);
         }
     };

@@ -44,22 +44,36 @@ export function getReferencePixel(frame: FrameStore): Point2D {
 }
 
 /**
- * Calculates the pixel sizes (in degrees per pixel) along the rendered X and Y axes by
+ * Calculates the pixel sizes (in arcseconds per pixel) along the rendered X and Y axes by
  * measuring WCS geodesic distances around the reference pixel (CRPIX).
  *
  * @param frame - The `FrameStore` providing WCS transform (`frame.wcsInfo`) and FITS headers
- * @returns An object with `{ x, y }` pixel sizes in degrees; `NaN` values if they cannot be determined
+ * @param rounding - Optional number of decimal places to round the pixel size in arcseconds.
+ *                   If omitted, raw (unrounded) arcsecond values are returned.
+ * @returns An object with `{ x, y }` pixel sizes in arcseconds; `NaN` values if they cannot be determined
  */
-export function getPixelSizes(frame: FrameStore): {x: number; y: number} {
+export function getPixelSizes(frame: FrameStore, rounding?: number): {x: number; y: number} {
     const crpixX = frame?.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name === `CRPIX${frame.dirXNumber}`);
     const crpixY = frame?.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name === `CRPIX${frame.dirYNumber}`);
 
     if (crpixX && crpixY) {
         const crpixXVal = getHeaderNumericValue(crpixX);
         const crpixYVal = getHeaderNumericValue(crpixY);
-        const xPixelSizeDeg = AST.geodesicDistance(frame.wcsInfo, crpixXVal - 0.5, crpixYVal, crpixXVal + 0.5, crpixYVal) / 3600;
-        const yPixelSizeDeg = AST.geodesicDistance(frame.wcsInfo, crpixXVal, crpixYVal - 0.5, crpixXVal, crpixYVal + 0.5) / 3600;
-        return {x: xPixelSizeDeg, y: yPixelSizeDeg};
+        const xPixelSizeArcsec = AST.geodesicDistance(frame.wcsInfo, crpixXVal - 0.5, crpixYVal, crpixXVal + 0.5, crpixYVal);
+        const yPixelSizeArcsec = AST.geodesicDistance(frame.wcsInfo, crpixXVal, crpixYVal - 0.5, crpixXVal, crpixYVal + 0.5);
+
+        if (!isFinite(xPixelSizeArcsec) || !isFinite(yPixelSizeArcsec)) {
+            return {x: NaN, y: NaN};
+        }
+
+        if (isFinite(rounding as number)) {
+            const factor = Math.pow(10, rounding as number);
+            return {
+                x: Math.round(xPixelSizeArcsec * factor) / factor,
+                y: Math.round(yPixelSizeArcsec * factor) / factor
+            };
+        }
+        return {x: xPixelSizeArcsec, y: yPixelSizeArcsec};
     }
     return {x: NaN, y: NaN};
 }
