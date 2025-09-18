@@ -271,7 +271,7 @@ export class FrameStore {
             return this.framePixelRatio;
         }
 
-        if (!this.validWcs && this.isNormalImage) {
+        if (this.isNormalImage && !this.validWcs) {
             return 1.0;
         }
 
