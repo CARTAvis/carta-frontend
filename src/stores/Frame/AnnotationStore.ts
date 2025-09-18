@@ -353,8 +353,8 @@ export class CompassAnnotationStore extends RegionStore {
         const transformed = AST.transformPoint(wcsInfo, originPoint.x, originPoint.y);
 
         const pixelSizeArcsec = getPixelSizes(this.activeFrame);
-        const xPixelSizeRad = (pixelSizeArcsec.x / 3600 * Math.PI) / 180;
-        const yPixelSizeRad = (pixelSizeArcsec.y / 3600 * Math.PI) / 180;
+        const xPixelSizeRad = ((pixelSizeArcsec.x / 3600) * Math.PI) / 180;
+        const yPixelSizeRad = ((pixelSizeArcsec.y / 3600) * Math.PI) / 180;
         const angularWidth = Math.abs(xPixelSizeRad * width);
         const angularHeight = Math.abs(yPixelSizeRad * height);
 
