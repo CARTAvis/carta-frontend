@@ -166,7 +166,7 @@ export class AppStore {
     public zIndexManager = new FloatingObjzIndexManager();
 
     // ImportRegion
-    // true if there is a successful message to be processed, false if no message needs to be processed
+    // Track whether ImportRegionAck has been received to determine file browser behavior during session resume
     private hasReceivedImportRegionAck = false;
 
     private appContainer: HTMLElement;
