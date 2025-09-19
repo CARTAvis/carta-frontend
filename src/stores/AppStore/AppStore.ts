@@ -2549,8 +2549,8 @@ export class AppStore {
         this.backendService.connectionDropped = false;
 
         // Reset file browser loading states
-        this.fileBrowserStore.resetLoadingStates();
         this.fileBrowserStore.setImportingRegions(false);
+        this.fileBrowserStore.resetLoadingStates();
         if (this.hasReceivedImportRegionAck) {
             this.fileBrowserStore.hideFileBrowser();
             this.hasReceivedImportRegionAck = false;
