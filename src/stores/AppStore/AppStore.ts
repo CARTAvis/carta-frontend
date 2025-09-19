@@ -165,6 +165,10 @@ export class AppStore {
     // dynamic zIndex
     public zIndexManager = new FloatingObjzIndexManager();
 
+    // ImportRegion
+    // true if there is a successful message to be processed, false if no message needs to be processed
+    private hasReceivedImportRegionAck = false;
+
     private appContainer: HTMLElement;
     private fileCounter = 0;
     private previousConnectionStatus: ConnectionStatus;
@@ -1254,6 +1258,7 @@ export class AppStore {
         try {
             const ack = yield this.backendService.importRegion(directory, file, type, frame.frameInfo.fileId);
             if (frame && ack.success && ack.regions) {
+                this.hasReceivedImportRegionAck = true;
                 const regions = Object.entries(ack.regions);
                 const regionStyleMap = new Map<string, CARTA.IRegionStyle>(Object.entries(ack.regionStyles));
                 let startIndex = 0;
@@ -1265,11 +1270,13 @@ export class AppStore {
                 this.fileBrowserStore.setImportingRegions(false);
                 this.fileBrowserStore.resetLoadingStates();
                 this.fileBrowserStore.hideFileBrowser();
+                this.hasReceivedImportRegionAck = false;
             }
         } catch (err) {
             console.error(err);
             this.fileBrowserStore.setImportingRegions(false);
             this.fileBrowserStore.resetLoadingStates();
+            this.hasReceivedImportRegionAck = false;
             AppToaster.show(ErrorToast(err));
         }
     }
@@ -2540,6 +2547,14 @@ export class AppStore {
         this.initRequirements();
         this.resumingSession = false;
         this.backendService.connectionDropped = false;
+
+        // Reset file browser loading states
+        this.fileBrowserStore.resetLoadingStates();
+        this.fileBrowserStore.setImportingRegions(false);
+        if (this.hasReceivedImportRegionAck) {
+            this.fileBrowserStore.hideFileBrowser();
+            this.hasReceivedImportRegionAck = false;
+        }
     };
 
     @flow.bound
