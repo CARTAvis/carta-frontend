@@ -333,7 +333,11 @@ export class CatalogOnlineQueryConfigStore {
             let astString = new ASTSettingsString();
             const sys = system ? system : overlay.global.explicitSystem ? overlay.global.explicitSystem : SystemType.ICRS;
             if (frame.isXY || frame.isYX) {
-                AST.set(wcsCopy, `System=${sys}`);
+                if (sys === SystemType.FK4) {
+                    AST.set(wcsCopy, `System=${sys} Equinox=B1950.0, Epoch=B1950.0`);
+                } else {
+                    AST.set(wcsCopy, `System=${sys} Equinox=J2000.0, Epoch=J2000.0`);
+                };
                 astString.add(`Format(${frame.dirX})`, format);
                 astString.add(`Format(${frame.dirY})`, format);
             }

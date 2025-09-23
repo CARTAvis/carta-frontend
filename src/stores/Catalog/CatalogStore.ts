@@ -330,13 +330,9 @@ export class CatalogStore {
             let system = "System=" + catalogFrame;
             AST.set(wcsCopy, system);
             if (catalogFrame === CatalogSystemType.FK4) {
-                AST.set(wcsCopy, "Epoch=B1950");
-                AST.set(wcsCopy, "Equinox=1950");
-            }
-
-            if (catalogFrame === CatalogSystemType.FK5) {
-                AST.set(wcsCopy, "Epoch=J2000");
-                AST.set(wcsCopy, "Equinox=2000");
+                AST.set(wcsCopy, "Equinox=B1950.0, Epoch=B1950.0");
+            } else {
+                AST.set(wcsCopy, "Equinox=J2000.0, Epoch=J2000.0");
             }
 
             const xWCSValues = new Float64Array(N);

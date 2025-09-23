@@ -103,6 +103,13 @@ export class OverlayGlobalSettings {
         const isWcsFrameAndSystem = typeof this.explicitSystem !== "undefined" && this.explicitSystem !== SystemType.Image && frame.validWcs;
         if (isWcsFrameAndSystem) {
             astString.add("System", this.explicitSystem);
+            if (this.explicitSystem === SystemType.FK4) {
+                astString.add("Equinox", "B1950.0");
+                astString.add("Epoch", "B1950.0");
+            } else {
+                astString.add("Equinox", "J2000.0");
+                astString.add("Epoch", "J2000.0");
+            }
         }
 
         if (!AppStore.Instance.overlaySettings.labels?.customText) {
@@ -131,9 +138,11 @@ export class OverlayGlobalSettings {
 
         if ((frame?.isXY || frame?.isYX) && !frame?.isPVImage && isWcsFrameAndSystem) {
             if (this.system === SystemType.FK4) {
-                astString.add("Equinox", "1950");
+                astString.add("Equinox", "B1950.0");
+                astString.add("Epoch", "B1950.0");
             } else {
-                astString.add("Equinox", "2000");
+                astString.add("Equinox", "J2000.0");
+                astString.add("Epoch", "J2000.0");
             }
         }
 
@@ -1055,6 +1064,11 @@ export class OverlaySettings {
             AppStore.Instance.frames.forEach(frame => {
                 if (frame?.validWcs && frame?.wcsInfoForTransformation && this.global.explicitSystem && this.global.explicitSystem !== SystemType.Image) {
                     AST.set(frame.wcsInfoForTransformation, `System=${this.global.explicitSystem}`);
+                    if (this.global.explicitSystem === SystemType.FK4) {
+                        AST.set(frame.wcsInfoForTransformation, "Equinox=B1950.0, Epoch=B1950.0");
+                    } else {
+                        AST.set(frame.wcsInfoForTransformation, "Equinox=J2000.0, Epoch=J2000.0");
+                    }
                 }
             });
         });

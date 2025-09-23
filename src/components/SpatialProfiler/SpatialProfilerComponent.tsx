@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, ResizeDetector, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {Point2D, POLARIZATIONS} from "models";
-import {AppStore, ASTSettingsString, DefaultWidgetConfig, HelpType, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, ASTSettingsString, DefaultWidgetConfig, HelpType, SpatialProfileStore, SystemType, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {RegionId, SpatialProfileWidgetStore} from "stores/Widgets";
 import {binarySearchByX, clamp, formattedExponential, getColorForTheme, toFixed, transformPoint} from "utilities";
@@ -384,7 +384,15 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
 
         let astString = new ASTSettingsString();
-        astString.add("System", AppStore.Instance.overlaySettings.global.explicitSystem);
+        const explicitSystem = AppStore.Instance.overlaySettings.global.explicitSystem;
+        astString.add("System", explicitSystem);
+        if (explicitSystem === SystemType.FK4) {
+            astString.add("Equinox", "B1950.0");
+            astString.add("Epoch", "B1950.0");
+        } else {
+            astString.add("Equinox", "J2000.0");
+            astString.add("Epoch", "J2000.0");
+        }
 
         if (this.widgetStore.isXProfile) {
             for (let i = 0; i < ticks.length; i++) {
