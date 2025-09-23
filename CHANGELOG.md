@@ -10,8 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Disable text selection in file browser ([#2574](https://github.com/CARTAvis/carta-frontend/issues/2574)).
 * Fixed VizieR database query ([#2480](https://github.com/CARTAvis/carta-frontend/issues/2480)).
 * Fixed an issue where the PV generator widget and progress bar did not appear when creating a new PV image while another PV image was already open ([#2349](https://github.com/CARTAvis/carta-frontend/issues/2349)).
-* Fixed incorrect pixel aspect ratio, compass size, and the failure to switch to pixel coordinates when images contained incomplete ``CDELTi`` and ``PCi_j`` information or had non-uniform pixel sizes ([#2382](https://github.com/CARTAvis/carta-frontend/issues/2382), [#2399](https://github.com/CARTAvis/carta-frontend/issues/2399), [#2602](https://github.com/CARTAvis/carta-frontend/issues/2602)).
-* Set the default pixel aspect ratio to unity when images lack valid WCS information ([#2604](https://github.com/CARTAvis/carta-frontend/issues/2604)).`
+* Fixed incorrect aspect ratio and compass size when images contained incomplete ``CDELTi`` and ``PCi_j`` information ([#2382](https://github.com/CARTAvis/carta-frontend/issues/2382), [#2399](https://github.com/CARTAvis/carta-frontend/issues/2399)).
+* Fixed the failure to switch to pixel coordinates when images had non-square pixels ([#2602](https://github.com/CARTAvis/carta-frontend/issues/2602)).
+
+### Changed
+* Set the default aspect ratio to unity when images lacked valid WCS information ([#2604](https://github.com/CARTAvis/carta-frontend/issues/2604)).
 
 ## [5.0.3]
 
