@@ -1608,7 +1608,7 @@ export class FrameStore {
                     } else {
                         AST.set(this.wcsInfo, "Equinox=J2000.0, Epoch=J2000.0");
                     }
-                    
+
                     if (this.wcsInfoShifted) {
                         AST.setI(this.wcsInfoShifted, "Current", 2);
                         AST.set(this.wcsInfoShifted, `Format(${this.dirX})=${formatStringX}, Format(${this.dirY})=${formatStyingY}, System=${explicitSystem}`);
