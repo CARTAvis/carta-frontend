@@ -86,7 +86,7 @@ export function getUnformattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: 
         const currentSystem = AST.getString(astTransform, "System");
         if (currentSystem === SystemType.FK4) {
             AST.set(astTransform, "Equinox=B1950.0, Epoch=B1950.0");
-        } else {
+        } else if (currentSystem === SystemType.FK5 || currentSystem === SystemType.Ecliptic || currentSystem === SystemType.Galactic) {
             AST.set(astTransform, "Equinox=J2000.0, Epoch=J2000.0");
         }
 

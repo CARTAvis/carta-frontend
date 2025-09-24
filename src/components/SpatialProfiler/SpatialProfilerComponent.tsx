@@ -389,7 +389,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         if (explicitSystem === SystemType.FK4) {
             astString.add("Equinox", "B1950.0");
             astString.add("Epoch", "B1950.0");
-        } else {
+        } else if (explicitSystem === SystemType.FK5 || explicitSystem === SystemType.Ecliptic || explicitSystem === SystemType.Galactic) {
             astString.add("Equinox", "J2000.0");
             astString.add("Epoch", "J2000.0");
         }

@@ -331,7 +331,7 @@ export class CatalogStore {
             AST.set(wcsCopy, system);
             if (catalogFrame === CatalogSystemType.FK4) {
                 AST.set(wcsCopy, "Equinox=B1950.0, Epoch=B1950.0");
-            } else {
+            } else if (catalogFrame === CatalogSystemType.FK5 || catalogFrame === CatalogSystemType.Ecliptic || catalogFrame === CatalogSystemType.Galactic) {
                 AST.set(wcsCopy, "Equinox=J2000.0, Epoch=J2000.0");
             }
 

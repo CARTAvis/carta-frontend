@@ -106,7 +106,7 @@ export class OverlayGlobalSettings {
             if (this.explicitSystem === SystemType.FK4) {
                 astString.add("Equinox", "B1950.0");
                 astString.add("Epoch", "B1950.0");
-            } else {
+            } else if (this.explicitSystem === SystemType.FK5 || this.explicitSystem === SystemType.Ecliptic || this.explicitSystem === SystemType.Galactic) {
                 astString.add("Equinox", "J2000.0");
                 astString.add("Epoch", "J2000.0");
             }
@@ -140,7 +140,7 @@ export class OverlayGlobalSettings {
             if (this.system === SystemType.FK4) {
                 astString.add("Equinox", "B1950.0");
                 astString.add("Epoch", "B1950.0");
-            } else {
+            } else if (this.system === SystemType.FK5 || this.system === SystemType.Ecliptic || this.system === SystemType.Galactic) {
                 astString.add("Equinox", "J2000.0");
                 astString.add("Epoch", "J2000.0");
             }
@@ -1066,7 +1066,7 @@ export class OverlaySettings {
                     AST.set(frame.wcsInfoForTransformation, `System=${this.global.explicitSystem}`);
                     if (this.global.explicitSystem === SystemType.FK4) {
                         AST.set(frame.wcsInfoForTransformation, "Equinox=B1950.0, Epoch=B1950.0");
-                    } else {
+                    } else if (this.global.explicitSystem === SystemType.FK5 || this.global.explicitSystem === SystemType.Ecliptic || this.global.explicitSystem === SystemType.Galactic) {
                         AST.set(frame.wcsInfoForTransformation, "Equinox=J2000.0, Epoch=J2000.0");
                     }
                 }

@@ -1605,7 +1605,7 @@ export class FrameStore {
                     AST.set(this.wcsInfo, `Format(${this.dirX})=${formatStringX}, Format(${this.dirY})=${formatStyingY}, System=${explicitSystem}`);
                     if (explicitSystem === SystemType.FK4) {
                         AST.set(this.wcsInfo, "Equinox=B1950.0, Epoch=B1950.0");
-                    } else {
+                    } else if (explicitSystem === SystemType.FK5 || explicitSystem === SystemType.Ecliptic || explicitSystem === SystemType.Galactic) {
                         AST.set(this.wcsInfo, "Equinox=J2000.0, Epoch=J2000.0");
                     }
 
@@ -1614,7 +1614,7 @@ export class FrameStore {
                         AST.set(this.wcsInfoShifted, `Format(${this.dirX})=${formatStringX}, Format(${this.dirY})=${formatStyingY}, System=${explicitSystem}`);
                         if (explicitSystem === SystemType.FK4) {
                             AST.set(this.wcsInfoShifted, "Equinox=B1950.0, Epoch=B1950.0");
-                        } else {
+                        } else if (explicitSystem === SystemType.FK5 || explicitSystem === SystemType.Ecliptic || explicitSystem === SystemType.Galactic) {
                             AST.set(this.wcsInfoShifted, "Equinox=J2000.0, Epoch=J2000.0");
                         }
                     }
@@ -2056,7 +2056,7 @@ export class FrameStore {
                 if (system === SystemType.FK4) {
                     astString.add("Equinox", "B1950.0");
                     astString.add("Epoch", "B1950.0");
-                } else {
+                } else if (system === SystemType.FK5 || system === SystemType.Ecliptic || system === SystemType.Galactic) {
                     astString.add("Equinox", "J2000.0");
                     astString.add("Epoch", "J2000.0");
                 }

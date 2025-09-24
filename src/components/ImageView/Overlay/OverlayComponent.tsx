@@ -244,7 +244,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY}, System=${explicitSystem},` + dirAxesSetting);
                 if (explicitSystem === SystemType.FK4) {
                     AST.set(frame.wcsInfo, "Equinox=B1950.0, Epoch=B1950.0");
-                } else {
+                } else if (explicitSystem === SystemType.FK5 || explicitSystem === SystemType.Ecliptic || explicitSystem === SystemType.Galactic) {
                     AST.set(frame.wcsInfo, "Equinox=J2000.0, Epoch=J2000.0");
                 }
             }

@@ -334,9 +334,11 @@ export class CatalogOnlineQueryConfigStore {
             const sys = system ? system : overlay.global.explicitSystem ? overlay.global.explicitSystem : SystemType.ICRS;
             if (frame.isXY || frame.isYX) {
                 if (sys === SystemType.FK4) {
-                    AST.set(wcsCopy, `System=${sys} Equinox=B1950.0, Epoch=B1950.0`);
+                    AST.set(wcsCopy, `System=${sys}, Equinox=B1950.0, Epoch=B1950.0`);
+                } else if (sys === SystemType.FK5 || sys === SystemType.Ecliptic || sys === SystemType.Galactic) {
+                    AST.set(wcsCopy, `System=${sys}, Equinox=J2000.0, Epoch=J2000.0`);
                 } else {
-                    AST.set(wcsCopy, `System=${sys} Equinox=J2000.0, Epoch=J2000.0`);
+                    AST.set(wcsCopy, `System=${sys}`);
                 }
                 astString.add(`Format(${frame.dirX})`, format);
                 astString.add(`Format(${frame.dirY})`, format);
