@@ -2549,11 +2549,50 @@ export class AppStore {
         this.backendService.connectionDropped = false;
 
         // Reset file browser loading states
-        this.fileBrowserStore.setImportingRegions(false);
-        this.fileBrowserStore.resetLoadingStates();
-        if (this.hasReceivedImportRegionAck) {
-            this.fileBrowserStore.hideFileBrowser();
-            this.hasReceivedImportRegionAck = false;
+        if (this.fileBrowserStore.isImportingRegions) {
+            this.fileBrowserStore.setImportingRegions(false);
+            this.fileBrowserStore.resetLoadingStates();
+            if (this.hasReceivedImportRegionAck) {
+                this.fileBrowserStore.hideFileBrowser();
+                this.hasReceivedImportRegionAck = false;
+            }
+        }
+
+        const frame = this.activeFrame;
+
+        // Reset PV generator states
+        if (frame?.isRequestingPV) {
+            frame.resetPvRequestState();
+            frame.setIsRequestPVCancelling(false);
+            this.endFileLoading();
+        }
+
+        // Reset moment generator states
+        if (frame?.isRequestingMoments) {
+            frame.resetMomentRequestState();
+            this.endFileLoading();
+        }
+
+        // Reset cube histogram states
+        if (frame?.renderConfig?.useCubeHistogram) {
+            frame.renderConfig.setUseCubeHistogram(false);
+            this.cancelCubeHistogramRequest();
+        }
+
+        // Reset cube histogram states for contour
+        const dataSource = this.contourDataSource;
+        if (dataSource?.renderConfig?.useCubeHistogramContours) {
+            dataSource.renderConfig.setUseCubeHistogramContours(false);
+            this.cancelCubeHistogramRequest(dataSource.frameInfo.fileId);
+        }
+
+        // Reset fitting states
+        const fittingStore = this.imageFittingStore;
+        if (fittingStore?.isFitting) {
+            if (this.fileLoading) {
+                this.endFileLoading();
+            }
+            fittingStore.resetFittingState();
         }
     };
 
