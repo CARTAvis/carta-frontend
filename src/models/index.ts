@@ -10,6 +10,7 @@ export * from "./Cursor/CursorInfo";
 export * from "./Cursor/CursorPosition";
 export * from "./Event/Event";
 export * from "./FileFilterMode/FileFilterMode";
+export * from "./FlexLayoutConfig";
 export * from "./FrameView/FrameView";
 export * from "./Freq/Freq";
 export * from "./ImageType/ImageType";

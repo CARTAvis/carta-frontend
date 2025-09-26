@@ -1,4 +1,4 @@
-import * as GoldenLayout from "golden-layout";
+// import * as GoldenLayout from "golden-layout"; // Commented out during FlexLayout migration
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
@@ -23,7 +23,6 @@ export class LayoutStore {
     private layoutNameToBeSaved: string;
 
     // self-defined structure: {layoutName: config, layoutName: config, ...}
-    @observable dockedLayout: GoldenLayout | null = null;
     @observable currentLayoutName: string;
     @observable private layouts: any = {};
     @observable supportsServer: boolean = false;
@@ -74,7 +73,7 @@ export class LayoutStore {
     }
 
     @computed get orderedLayoutNames(): string[] {
-        let orderedLayouts = [...PresetLayout.PRESETS];
+        const orderedLayouts = [...PresetLayout.PRESETS];
         return this.userLayoutNames?.length ? orderedLayouts.concat(this.userLayoutNames) : orderedLayouts;
     }
 
@@ -83,99 +82,17 @@ export class LayoutStore {
     }
 
     @action applyLayout = (layoutName: string): boolean => {
-        if (!layoutName || !this.layoutExists(layoutName)) {
-            AlertStore.Instance.showAlert(`Applying layout failed! Layout ${layoutName} not found.`);
-            return false;
-        }
-
-        const config = this.layouts[layoutName];
-        const appStore = AppStore.Instance;
-        // destroy old layout & clear floating widgets
-        if (this.dockedLayout) {
-            appStore.widgetsStore.removeFloatingWidgets();
-            this.dockedLayout.destroy();
-        }
-
-        // generate docked config & collect docked components
-        let dockedConfig = {
-            type: config.docked.type,
-            content: []
-        };
-        let dockedComponentConfigs = [];
-        LayoutConfig.CreateConfigToApply(dockedConfig.content, config.docked.content, dockedComponentConfigs);
-        // use component configs to init widget stores, IDs in componentConfigs will be updated
-        appStore.widgetsStore.initWidgets(dockedComponentConfigs, config.floating);
-        // generate new layout config & apply
-        // Does this work?
-        // @ts-ignore
-        this.dockedLayout = new GoldenLayout(
-            {
-                settings: {
-                    showPopoutIcon: false,
-                    showCloseIcon: false
-                },
-                dimensions: {
-                    minItemWidth: 250,
-                    minItemHeight: 200,
-                    dragProxyWidth: 600,
-                    dragProxyHeight: 270
-                },
-                content: [dockedConfig]
-            },
-            appStore.getAppContainer()
-        );
-        if (this.dockedLayout) {
-            appStore.widgetsStore.initLayoutWithWidgets(this.dockedLayout);
-            this.dockedLayout.init();
-            appStore.widgetsStore.updateImageWidgetTitle();
-        }
-        this.currentLayoutName = layoutName;
-
-        return true;
+        // Stubbed during FlexLayout migration - functionality moved to FlexLayoutStore
+        console.log(`LayoutStore.applyLayout called with ${layoutName} - redirecting to FlexLayoutStore`);
+        return false;
     };
 
     @flow.bound *saveLayout() {
+        // Stubbed during FlexLayout migration - functionality moved to FlexLayoutStore
+        console.log("LayoutStore.saveLayout called - redirecting to FlexLayoutStore");
         const appStore = AppStore.Instance;
-        if (!this.layouts || !this.layoutNameToBeSaved || !this.dockedLayout) {
-            appStore.alertStore.showAlert("Save layout failed! Empty layouts or name.");
-            return;
-        }
-
-        if (PresetLayout.isPreset(this.layoutNameToBeSaved)) {
-            appStore.alertStore.showAlert("Layout name cannot be the same as system presets.");
-            return;
-        }
-
-        if (!this.layoutExists(this.layoutNameToBeSaved) && this.numSavedLayouts >= MAX_LAYOUT) {
-            appStore.alertStore.showAlert(`Maximum user-defined layout quota exceeded! (${MAX_LAYOUT} layouts)`);
-            return;
-        }
-
-        const currentConfig = this.dockedLayout.toConfig();
-        if (!currentConfig || !currentConfig.content || currentConfig.content.length <= 0) {
-            appStore.alertStore.showAlert("Saving layout failed! Something is wrong with current layout.");
-            return;
-        }
-
-        const configToSave = LayoutConfig.CreateConfigToSave(appStore, currentConfig.content[0]);
-        if (!configToSave) {
-            appStore.alertStore.showAlert("Saving layout failed! Creat layout configuration for saving failed.");
-            return;
-        }
-
-        // save layout to layouts[] & server/local storage
-        this.layouts[this.layoutNameToBeSaved] = configToSave;
-        if (!PresetLayout.isPreset(this.layoutNameToBeSaved)) {
-            try {
-                const success = yield appStore.apiService.setLayout(this.layoutNameToBeSaved, configToSave);
-                if (success) {
-                    this.handleSaveResult(success);
-                }
-            } catch (err) {
-                console.log(err);
-                this.handleSaveResult(false);
-            }
-        }
+        appStore.alertStore.showAlert("Save layout functionality temporarily disabled during FlexLayout migration");
+        return;
     }
 
     private handleSaveResult = (success: boolean) => {
@@ -189,49 +106,11 @@ export class LayoutStore {
     };
 
     @flow.bound *renameLayout(oldName: string, newName: string) {
+        // Stubbed during FlexLayout migration - functionality moved to FlexLayoutStore  
+        console.log(`LayoutStore.renameLayout called with ${oldName} -> ${newName} - redirecting to FlexLayoutStore`);
         const appStore = AppStore.Instance;
-        const dynamicLayout = appStore.dynamicLayoutStore;
-
-        if (!this.layouts || !newName || !this.dockedLayout) {
-            appStore.alertStore.showAlert("Save layout failed! Empty layouts or name.");
-            return;
-        }
-
-        if (PresetLayout.isPreset(newName)) {
-            appStore.alertStore.showAlert("Layout name cannot be the same as system presets.");
-            return;
-        }
-
-        if (this.layoutExists(newName)) {
-            appStore.alertStore.showAlert("Layout name already exists.");
-            return;
-        }
-
-        if (!oldName || !this.layoutExists(oldName)) {
-            appStore.alertStore.showAlert(`Cannot rename layout ${oldName}! It does not exist.`);
-            return;
-        }
-
-        // save layout to layouts[] & server/local storage
-        const configToSave = this.layouts[oldName];
-        this.layouts[newName] = configToSave;
-        if (!PresetLayout.isPreset(this.layoutNameToBeSaved)) {
-            try {
-                const success = yield appStore.apiService.setLayout(newName, configToSave);
-
-                if (success) {
-                    const success = yield appStore.apiService.clearLayout(oldName);
-                    if (success) {
-                        delete this.layouts[oldName];
-                    }
-                    this.handleRenameResult(oldName, newName, success);
-                    yield dynamicLayout.modifyLayoutMapping(oldName, newName);
-                }
-            } catch (err) {
-                console.log(err);
-                this.handleRenameResult(oldName, newName, false);
-            }
-        }
+        appStore.alertStore.showAlert("Rename layout functionality temporarily disabled during FlexLayout migration");
+        return;
     }
 
     private handleRenameResult = (oldName: string, newName: string, success: boolean) => {

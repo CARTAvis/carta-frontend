@@ -3,7 +3,7 @@ import {Alert, Classes, Intent} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {FloatingWidgetManagerComponent, UIControllerComponent} from "components";
+import {FlexLayoutContainer, FloatingWidgetManagerComponent, UIControllerComponent} from "components";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {ResizeDetector} from "components/Shared";
 import {AlertType} from "enums";
@@ -20,12 +20,10 @@ import "./layout-theme.scss";
 export class App extends React.Component {
     private appContainerRef: React.MutableRefObject<HTMLDivElement | null> = React.createRef<HTMLDivElement>();
 
-    // GoldenLayout resize handler
+    // FlexLayout resize handler
     onContainerResize = (width, height) => {
-        const appStore = AppStore.Instance;
-        if (appStore.layoutStore.dockedLayout) {
-            appStore.layoutStore.dockedLayout.updateSize(width, height);
-        }
+        // FlexLayout handles resizing automatically through CSS
+        // No manual intervention needed like GoldenLayout
     };
 
     private renderAlertComponent = (alertStore: AlertStore, darkTheme: boolean) => {
@@ -88,7 +86,7 @@ export class App extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
         const className = classNames("App", {[Classes.DARK]: appStore.darkTheme});
-        const glClassName = classNames("gl-container-app", {"dark-theme": appStore.darkTheme});
+        const flexClassName = classNames("flex-container-app", {"dark-theme": appStore.darkTheme});
 
         const alertComponent = this.renderAlertComponent(appStore.alertStore, appStore.darkTheme);
 
@@ -104,7 +102,9 @@ export class App extends React.Component {
                     text={appStore.resumingSession ? "Resuming session..." : "Loading workspace..."}
                 />
                 <ResizeDetector onResize={this.onContainerResize} throttleTime={200} targetRef={this.appContainerRef}>
-                    <div className={glClassName} ref={this.setAppContainerRef} />
+                    <div className={flexClassName} ref={this.setAppContainerRef}>
+                        <FlexLayoutContainer darkTheme={appStore.darkTheme} />
+                    </div>
                 </ResizeDetector>
                 <HotkeyTargetContainer />
                 <FloatingWidgetManagerComponent />

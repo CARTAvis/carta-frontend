@@ -97,3 +97,50 @@ $shadow-color: rgba($blue2, 0.1);
         overflow: auto;
     }
 }
+
+// Drag-to-dock visual feedback styles
+body.floating-widget-dragging {
+    cursor: grabbing !important;
+    
+    * {
+        cursor: grabbing !important;
+    }
+}
+
+.potential-drop-zone {
+    position: relative;
+    
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border: 2px dashed rgba($blue2, 0.4);
+        border-radius: 4px;
+        pointer-events: none;
+        z-index: 1000;
+        transition: border-color 0.2s ease;
+    }
+    
+    &.active-drop-zone::before {
+        border-color: $blue2;
+        border-style: solid;
+        background-color: rgba($blue2, 0.1);
+    }
+}
+
+// Dark theme support for drop zones
+.dark-theme {
+    .potential-drop-zone {
+        &::before {
+            border-color: rgba($blue4, 0.4);
+        }
+        
+        &.active-drop-zone::before {
+            border-color: $blue4;
+            background-color: rgba($blue4, 0.1);
+        }
+    }
+}

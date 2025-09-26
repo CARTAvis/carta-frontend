@@ -2,12 +2,12 @@ import * as React from "react";
 import {Rnd} from "react-rnd";
 import {Classes, Icon, Position, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
-import * as GoldenLayout from "golden-layout";
+import * as FlexLayout from "flexlayout-react";
 import {observer} from "mobx-react";
 
-import {PlaceholderComponent, PvPreviewComponent, RenderConfigComponent} from "components";
+import {PvPreviewComponent, RenderConfigComponent} from "components";
 import {HelpType, ImageType} from "enums";
-import {AppStore, CatalogStore, HelpStore, LayoutStore, WidgetConfig} from "stores";
+import {AppStore, CatalogStore, FlexLayoutStore, HelpStore, WidgetConfig} from "stores";
 
 import "./FloatingWidgetComponent.scss";
 
@@ -27,9 +27,10 @@ class FloatingWidgetComponentProps {
 export class FloatingWidgetComponent extends React.Component<FloatingWidgetComponentProps> {
     private pinElementRef: HTMLElement | null = null;
     private rnd: Rnd | null = null;
+    private isDragging: boolean = false;
+    private dragStartPosition: {x: number, y: number} | null = null;
 
     componentDidMount() {
-        this.updateDragSource();
         if (this.rnd) {
             this.rnd.updateSize({width: this.props.widgetConfig.defaultWidth, height: this.props.widgetConfig.defaultHeight});
             this.rnd.updatePosition({
@@ -40,46 +41,12 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
     }
 
     componentDidUpdate() {
-        this.updateDragSource();
         if (this.rnd) {
             this.rnd.updateSize({width: this.props.widgetConfig.defaultWidth, height: this.props.widgetConfig.defaultHeight});
             this.rnd.updatePosition({
                 x: this.props.widgetConfig.defaultX ?? 0,
                 y: this.props.widgetConfig.defaultY ?? 0
             });
-        }
-    }
-
-    updateDragSource() {
-        const layoutStore = LayoutStore.Instance;
-        if (layoutStore.dockedLayout && this.pinElementRef) {
-            // Check for existing drag sources
-            const layout = layoutStore.dockedLayout;
-            const matchingSources = layout["_dragSources"].filter(d => d._itemConfig.id === this.props.widgetConfig.id);
-            const existingSource = matchingSources.find(d => d._element[0] === this.pinElementRef);
-            if (existingSource) {
-                return;
-            }
-
-            // Render config widget
-            let itemConfig: GoldenLayout.ItemConfigType;
-
-            itemConfig = {
-                type: "react-component",
-                component: this.props.widgetConfig.type,
-                title: this.props.widgetConfig.title,
-                id: this.props.widgetConfig.id,
-                isClosable: this.props.widgetConfig.isCloseable,
-                props: {id: this.props.widgetConfig.type === PvPreviewComponent.WIDGET_CONFIG.type ? this.props.widgetConfig.parentId : this.props.widgetConfig.id, docked: true}
-            };
-
-            if (this.props.widgetConfig.type === PlaceholderComponent.WIDGET_CONFIG.type) {
-                itemConfig.props.label = this.props.widgetConfig.title;
-            }
-
-            if (this.pinElementRef && itemConfig) {
-                layout.createDragSource(this.pinElementRef, itemConfig);
-            }
         }
     }
 
@@ -137,6 +104,122 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         }
     };
 
+    private findTabsetUnderPoint = (x: number, y: number): string | null => {
+        const flexLayoutStore = FlexLayoutStore.Instance;
+        if (!flexLayoutStore.model) return null;
+
+        // Get element at point to find the closest tabset
+        const elementAtPoint = document.elementFromPoint(x, y);
+        if (!elementAtPoint) return null;
+
+        // Find the closest tabset element
+        const tabsetElement = elementAtPoint.closest('.flexlayout__tabset');
+        if (!tabsetElement) return null;
+
+        // Get all tabsets from the model and match by index
+        // This is a simplified approach - in production, you might want to add
+        // data attributes to DOM elements to match them with model nodes
+        const root = flexLayoutStore.model.getRoot();
+        const tabsets: FlexLayout.TabSetNode[] = [];
+        
+        const visitNode = (node: FlexLayout.Node) => {
+            if (node.getType() === "tabset") {
+                tabsets.push(node as FlexLayout.TabSetNode);
+            }
+            const children = node.getChildren();
+            if (children) {
+                for (const child of children) {
+                    visitNode(child);
+                }
+            }
+        };
+        
+        visitNode(root);
+
+        // Find the index of the tabset element in the DOM
+        const allTabsetElements = document.querySelectorAll('.flexlayout__tabset');
+        const tabsetIndex = Array.from(allTabsetElements).indexOf(tabsetElement as Element);
+        
+        // Return the corresponding tabset ID from the model
+        if (tabsetIndex >= 0 && tabsetIndex < tabsets.length) {
+            return tabsets[tabsetIndex].getId();
+        }
+        
+        // Fallback: return the first tabset if we can't match exactly
+        return tabsets.length > 0 ? tabsets[0].getId() : null;
+    };
+
+    private pinToTabset = (targetTabsetId: string | null = null) => {
+        const flexLayoutStore = FlexLayoutStore.Instance;
+        if (flexLayoutStore.model && this.props.widgetConfig) {
+            // Create a new tab in the FlexLayout model
+            const tabConfig = {
+                type: "tab",
+                component: this.props.widgetConfig.type,
+                name: this.props.widgetConfig.title,
+                id: this.props.widgetConfig.id,
+                config: {
+                    id: this.props.widgetConfig.type === PvPreviewComponent.WIDGET_CONFIG.type ? this.props.widgetConfig.parentId : this.props.widgetConfig.id,
+                    docked: true
+                }
+            };
+
+            // Use provided tabset or find the best one
+            let finalTargetTabsetId = targetTabsetId || "TABSET_1"; // Default fallback
+            
+            if (!targetTabsetId) {
+                try {
+                    // Try to find an active tabset or the first available tabset
+                    const root = flexLayoutStore.model.getRoot();
+                    const tabsets: FlexLayout.TabSetNode[] = [];
+                    
+                    // Collect all tabsets
+                    const visitNode = (node: FlexLayout.Node) => {
+                        if (node.getType() === "tabset") {
+                            tabsets.push(node as FlexLayout.TabSetNode);
+                        }
+                        const children = node.getChildren();
+                        if (children) {
+                            for (const child of children) {
+                                visitNode(child);
+                            }
+                        }
+                    };
+                    
+                    visitNode(root);
+                    
+                    // Prefer active tabset, otherwise use the first one found
+                    const activeTabset = tabsets.find(tabset => {
+                        const selectedNode = tabset.getSelectedNode();
+                        return selectedNode !== null;
+                    });
+                    
+                    if (activeTabset) {
+                        finalTargetTabsetId = activeTabset.getId();
+                    } else if (tabsets.length > 0) {
+                        finalTargetTabsetId = tabsets[0].getId();
+                    }
+                    
+                } catch (error) {
+                    console.warn("Could not find optimal tabset for pinning, using default:", error);
+                }
+            }
+
+            // Add the tab to the target tabset
+            const action = FlexLayout.Actions.addNode(tabConfig, finalTargetTabsetId, FlexLayout.DockLocation.CENTER, -1);
+            flexLayoutStore.model.doAction(action);
+
+            // Close the floating widget
+            if (this.props.onClosed) {
+                this.props.onClosed();
+            }
+        }
+    };
+
+    private onPinButtonClick = () => {
+        this.pinToTabset();
+    };
+
     public render() {
         const headerHeight = 25;
         const appStore = AppStore.Instance;
@@ -162,11 +245,79 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 dragGrid={[25, 25]}
                 minWidth={widgetConfig.minWidth}
                 minHeight={widgetConfig.minHeight + headerHeight}
-                bounds={".gl-container-app"}
+                bounds={".flex-layout-container"}
                 dragHandleClassName={"floating-title"}
                 onMouseDown={this.props.onSelected}
+                onDragStart={(e, data) => {
+                    this.isDragging = true;
+                    this.dragStartPosition = {x: data.x, y: data.y};
+                    console.log("Drag started at:", data.x, data.y);
+                    
+                    // Add visual feedback for drag-to-dock
+                    document.body.classList.add('floating-widget-dragging');
+                    
+                    // Highlight potential drop zones
+                    const tabsets = document.querySelectorAll('.flexlayout__tabset');
+                    tabsets.forEach(tabset => {
+                        tabset.classList.add('potential-drop-zone');
+                    });
+                }}
+                onDrag={(e, data) => {
+                    if (!this.isDragging) return;
+                    
+                    // Check if we're over a tabset
+                    const centerX = data.x + (this.rnd?.resizable.size.width || 0) / 2;
+                    const centerY = data.y + 10;
+                    const tabsetId = this.findTabsetUnderPoint(centerX, centerY);
+                    
+                    // Update drop zone highlighting
+                    const tabsets = document.querySelectorAll('.flexlayout__tabset');
+                    tabsets.forEach((tabset, index) => {
+                        tabset.classList.remove('active-drop-zone');
+                        
+                        // If this is the tabset under cursor, highlight it
+                        if (tabsetId) {
+                            const elementAtPoint = document.elementFromPoint(centerX, centerY);
+                            const targetTabset = elementAtPoint?.closest('.flexlayout__tabset');
+                            if (targetTabset === tabset) {
+                                tabset.classList.add('active-drop-zone');
+                            }
+                        }
+                    });
+                }}
                 onDragStop={(e, data) => {
+                    this.isDragging = false;
+                    
+                    // Remove visual feedback
+                    document.body.classList.remove('floating-widget-dragging');
+                    const tabsets = document.querySelectorAll('.flexlayout__tabset');
+                    tabsets.forEach(tabset => {
+                        tabset.classList.remove('potential-drop-zone', 'active-drop-zone');
+                    });
+                    
+                    // Check if we should dock to a tabset
+                    const centerX = data.x + (this.rnd?.resizable.size.width || 0) / 2;
+                    const centerY = data.y + 10; // Use top of widget for drop detection
+                    const targetTabsetId = this.findTabsetUnderPoint(centerX, centerY);
+                    
+                    if (targetTabsetId && this.dragStartPosition) {
+                        // Calculate drag distance to determine if this was intentional docking
+                        const dragDistance = Math.sqrt(
+                            Math.pow(data.x - this.dragStartPosition.x, 2) + 
+                            Math.pow(data.y - this.dragStartPosition.y, 2)
+                        );
+                        
+                        // Only dock if dragged a meaningful distance (> 50px) to avoid accidental docking
+                        if (dragDistance > 50) {
+                            console.log("Docking to tabset:", targetTabsetId);
+                            this.pinToTabset(targetTabsetId);
+                            return; // Don't update position if we're docking
+                        }
+                    }
+                    
+                    // Normal drag behavior - update position
                     widgetConfig.setDefaultPosition(data.lastX, data.lastY);
+                    this.dragStartPosition = null;
                 }}
                 onResizeStop={(e, direction, element, delta, position) => {
                     // manually add the height of the root-menu div to position y
@@ -200,8 +351,8 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                         </div>
                     )}
                     {this.props.showPinButton && (
-                        <div className={buttonClass} ref={ref => (this.pinElementRef = ref)} onClick={() => console.log("pin!")} data-testid={this.props.widgetConfig?.id + "-header-dock-button"}>
-                            <Tooltip content="Drag pin to dock this widget" position={Position.BOTTOM_RIGHT}>
+                        <div className={buttonClass} ref={ref => (this.pinElementRef = ref)} onClick={this.onPinButtonClick} data-testid={this.props.widgetConfig?.id + "-header-dock-button"}>
+                            <Tooltip content="Click to dock this widget to the layout" position={Position.BOTTOM_RIGHT}>
                                 <Icon icon={"pin"} />
                             </Tooltip>
                         </div>

@@ -12,3 +12,4 @@ export * from "./SpectralProfileWidget/SpectralProfileSelectionStore";
 export * from "./SpectralProfileWidget/SpectralProfileWidgetStore";
 export * from "./StatsWidgetStore/StatsWidgetStore";
 export * from "./StokesAnalysisWidgetStore/StokesAnalysisWidgetStore";
+export * from "./WidgetsStore";

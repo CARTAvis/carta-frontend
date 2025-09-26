@@ -6,6 +6,7 @@ export * from "./CatalogOverlay/CatalogPlotComponent/CatalogPlotComponent";
 export * from "./ChannelMapControl/ChannelMapControlComponent";
 export * from "./CursorInfo/CursorInfoComponent";
 export * from "./FileInfo/FileInfoComponent";
+export * from "./FlexLayoutContainer/FlexLayoutContainer";
 export * from "./FloatingWidget/FloatingWidgetComponent";
 export * from "./FloatingWidgetManager/FloatingWidgetManagerComponent";
 export * from "./HelpDrawer/HelpDrawerComponent";

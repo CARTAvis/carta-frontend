@@ -10,6 +10,7 @@ export * from "./ColorBlendingStore/ColorBlendingStore";
 export * from "./DialogStore/DialogStore";
 export * from "./DynamicLayoutStore/DynamicLayoutStore";
 export * from "./FileBrowserStore/FileBrowserStore";
+export * from "./FlexLayoutStore";
 export * from "./Frame";
 export * from "./HelpStore/HelpStore";
 export * from "./HipsQueryStore/HipsQueryStore";

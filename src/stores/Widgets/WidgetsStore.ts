@@ -1,6 +1,6 @@
 import {Classes} from "@blueprintjs/core";
 import classNames from "classnames";
-import * as GoldenLayout from "golden-layout";
+import * as FlexLayout from "flexlayout-react";
 import $ from "jquery";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
@@ -439,22 +439,8 @@ export class WidgetsStore {
         }
     }
 
-    // create drag source for ToolbarMenuComponent
-    private static CreateDragSource(layout: GoldenLayout, widgetConfig: DefaultWidgetConfig, elementId: string) {
-        const glConfig: GoldenLayout.ReactComponentConfig = {
-            type: "react-component",
-            component: widgetConfig.type,
-            title: widgetConfig.title,
-            id: widgetConfig.id,
-            isClosable: widgetConfig.isCloseable,
-            props: {appStore: AppStore.Instance, id: widgetConfig.id, docked: true}
-        };
-
-        const widgetElement = document.getElementById(elementId);
-        if (widgetElement) {
-            layout.createDragSource(widgetElement, glConfig);
-        }
-    }
+    // create drag source for ToolbarMenuComponent - FlexLayout doesn't use drag sources
+    // This functionality is now handled by FlexLayout's built-in tab creation
 
     private getNextId = (defaultId: string) => {
         const widgets = this.widgetsMap.get(defaultId);
@@ -617,7 +603,7 @@ export class WidgetsStore {
                 savedConfigId = savedConfig.plotType;
             }
             const id = this.addWidgetByType(savedConfigId, savedConfig.widgetSettings);
-            let config = new WidgetConfig(id, WidgetsStore.GetDefaultWidgetConfig(savedConfig.id));
+            const config = new WidgetConfig(id, WidgetsStore.GetDefaultWidgetConfig(savedConfig.id));
             config.setDefaultSize(savedConfig.defaultWidth || config.defaultWidth, savedConfig.defaultHeight || config.defaultHeight);
             if (config.componentId) {
                 config.componentId = config.id;
@@ -632,7 +618,7 @@ export class WidgetsStore {
         }
     };
 
-    public initWidgets = (componentConfigs: any[], floating: any[]) => {
+    public initLayoutWithWidgets = (componentConfigs: any[], floating: any[]) => {
         // init docked widgets
         componentConfigs.forEach(componentConfig => {
             if (componentConfig.id && componentConfig.props) {
@@ -652,107 +638,103 @@ export class WidgetsStore {
         floating.forEach(savedConfig => this.createFloatingWidget(savedConfig));
     };
 
-    public initLayoutWithWidgets = (layout: GoldenLayout) => {
-        if (!layout) {
-            console.log("Invalid parameters!");
+    // New method for FlexLayout initialization
+    public initFlexLayoutWithWidgets = (model: FlexLayout.Model) => {
+        if (!model) {
+            console.log("Invalid FlexLayout model!");
             return;
         }
 
-        layout.registerComponent("placeholder", PlaceholderComponent);
-        layout.registerComponent("image-view", ImageViewComponent);
-        layout.registerComponent("spatial-profiler", SpatialProfilerComponent);
-        layout.registerComponent("spectral-profiler", SpectralProfilerComponent);
-        layout.registerComponent("spectral-line-query", SpectralLineQueryComponent);
-        layout.registerComponent("stats", StatsComponent);
-        layout.registerComponent("histogram", HistogramComponent);
-        layout.registerComponent("render-config", RenderConfigComponent);
-        layout.registerComponent("region-list", RegionListComponent);
-        layout.registerComponent("layer-list", LayerListComponent);
-        layout.registerComponent("cursor-info", CursorInfoComponent);
-        layout.registerComponent("pv-generator", PvGeneratorComponent);
-        layout.registerComponent("pv-preview", PvPreviewComponent);
-        layout.registerComponent("log", LogComponent);
-        layout.registerComponent("animator", AnimatorComponent);
-        layout.registerComponent("channel-map-control", ChannelMapControlComponent);
-        layout.registerComponent("stokes", StokesAnalysisComponent);
-        layout.registerComponent("catalog-overlay", CatalogOverlayComponent);
-        layout.registerComponent("catalog-plot", CatalogPlotComponent);
-
-        const showCogWidgets = ["image-view", "spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes", "catalog-overlay", "layer-list"];
-        const hideHelpButtonWidgets = ["pv-preview"];
-        // add drag source buttons for ToolbarMenuComponent
-        this.CARTAWidgets.forEach((props, widgetType) => {
-            const widgetButtonID = widgetType.replace(/\s+/g, "") + "Button";
-            WidgetsStore.CreateDragSource(layout, props.widgetConfig, widgetButtonID);
-        });
-
-        layout.on("stackCreated", stack => {
-            const unpinButton = this.getControlButton("lm-pin", "detach", "unpin").on("click", () => this.unpinWidget(stack.getActiveContentItem()));
-            const helpButton = this.getControlButton("lm-help", "help", "help").on("click", ev => this.onHelpPinedClick(ev, stack.getActiveContentItem()));
-            const cogPinedButton = this.getControlButton("lm_settings", "settings", "cog").on("click", ev => WidgetsStore.Instance.onCogPinedClick(stack.getActiveContentItem()));
-            const nextPageButton = this.getControlButton("lm-image-panel-next", "next image", "step-forward").on("click", this.onNextPageClick);
-            const imagePanelButton = this.getControlButton("lm-image-panel", "switch to multi-panel", "square").on("click", this.onImagePanelButtonClick);
-            const channelMapButton = this.getControlButton("lm-channel-map-panel", "enable/disable channel map", "heat-grid").on("click", this.onChannelMapButtonClick);
-            this.updateImagePanelButton();
-            const previousPageButton = this.getControlButton("lm-image-panel-previous", "previous image", "step-backward").on("click", this.onPreviousPageClick);
-            stack.header.controlsContainer.prepend([channelMapButton, previousPageButton, imagePanelButton, nextPageButton, cogPinedButton, helpButton, unpinButton]);
-
-            stack.on("activeContentItemChanged", (contentItem: any) => {
-                if (stack && stack.config && stack.header.controlsContainer && stack.config.content.length) {
-                    const config = stack.getActiveContentItem().config;
-                    const component = config.component;
-                    const stackHeaderControlButtons = stack.header.controlsContainer[0];
-
-                    // show/hide help button
-                    $(stackHeaderControlButtons)
-                        ?.find("li.lm-help")
-                        ?.attr("style", hideHelpButtonWidgets.includes(component) ? "display:none;" : "");
-
-                    // show/hide cog button
-                    $(stackHeaderControlButtons)
-                        ?.find("li.lm_settings")
-                        ?.attr("style", showCogWidgets.includes(component) ? "" : "display:none;");
-
-                    // show/hide image panel buttons
-                    $(stackHeaderControlButtons)
-                        ?.find("li.lm-image-panel-next, li.lm-image-panel, li.lm-image-panel-previous, li.lm-channel-map-panel")
-                        ?.attr("style", component === "image-view" ? "" : "display:none;");
-
-                    // disable unpin button when active tab is image-view
-                    $(stackHeaderControlButtons)
-                        ?.find("li.lm-pin")
-                        ?.attr("style", component === "image-view" ? "display:none;" : "");
-
-                    if (component === "image-view") {
-                        this.updateImagePanelPageButtons();
-                    }
-
-                    stack.header.tabs.forEach(tab => {
-                        $(tab.element)?.attr("data-testid", tab.contentItem.config.id + "-header-title");
-                        $(tab.closeElement)?.attr("data-testid", tab.contentItem.config.id + "-header-close-button");
-                    });
-                    if (component === "image-view") {
-                        $(stackHeaderControlButtons)
-                            ?.find("li.lm-image-panel")
-                            ?.attr("data-testid", config.id + "-multipanel-view-switch");
-                    }
-                    if (showCogWidgets.includes(component)) {
-                        $(stackHeaderControlButtons)
-                            ?.find("li.lm_settings")
-                            ?.attr("data-testid", config.id + "-header-settings-button");
-                    }
-
-                    this.updateRenderConfigSettingsVisibility();
-                }
-            });
-        });
-        layout.on("componentCreated", this.handleItemCreation);
-        layout.on("itemDestroyed", this.handleItemRemoval);
-        layout.on("stateChanged", this.handleStateUpdates);
+        // Initialize widget stores for all tabs in the model
+        this.initializeWidgetStoresFromModel(model);
     };
 
-    private getControlButton = (className: string, title: string, icon: string) => {
-        return $(`<li class="${className}" title="${title}"><span class="${classNames(Classes.ICON_STANDARD, Classes.iconClass(icon))}" style/></li>`);
+    private initializeWidgetStoresFromModel = (model: FlexLayout.Model) => {
+        // Traverse the model and initialize widget stores for each tab
+        const visitNode = (node: FlexLayout.Node) => {
+            if (node.getType() === "tab") {
+                const tabNode = node as FlexLayout.TabNode;
+                const config = tabNode.getConfig();
+                if (config && config.id && config.type) {
+                    this.initializeWidgetStore(config.type, config.id);
+                }
+            }
+            
+            const children = node.getChildren();
+            if (children) {
+                children.forEach(child => visitNode(child));
+            }
+        };
+
+        visitNode(model.getRoot());
+    };
+
+    private initializeWidgetStore = (type: string, id: string) => {
+        // Initialize appropriate widget store based on type
+        switch (type) {
+            case "render-config":
+                if (!this.renderConfigWidgets.has(id)) {
+                    this.renderConfigWidgets.set(id, new RenderConfigWidgetStore());
+                }
+                break;
+            case "spatial-profiler":
+                if (!this.spatialProfileWidgets.has(id)) {
+                    this.spatialProfileWidgets.set(id, new SpatialProfileWidgetStore());
+                }
+                break;
+            case "spectral-profiler":
+                if (!this.spectralProfileWidgets.has(id)) {
+                    this.spectralProfileWidgets.set(id, new SpectralProfileWidgetStore());
+                }
+                break;
+            case "stats":
+                if (!this.statsWidgets.has(id)) {
+                    this.statsWidgets.set(id, new StatsWidgetStore());
+                }
+                break;
+            case "histogram":
+                if (!this.histogramWidgets.has(id)) {
+                    this.histogramWidgets.set(id, new HistogramWidgetStore());
+                }
+                break;
+            case "layer-list":
+                if (!this.layerListWidgets.has(id)) {
+                    this.layerListWidgets.set(id, new LayerListWidgetStore());
+                }
+                break;
+            case "stokes":
+                if (!this.stokesAnalysisWidgets.has(id)) {
+                    this.stokesAnalysisWidgets.set(id, new StokesAnalysisWidgetStore());
+                }
+                break;
+            case "catalog-overlay":
+                if (!this.catalogWidgets.has(id)) {
+                    this.catalogWidgets.set(id, new CatalogWidgetStore(0)); // Use 0 as default catalog file ID
+                }
+                break;
+            case "catalog-plot":
+                if (!this.catalogPlotWidgets.has(id)) {
+                    this.catalogPlotWidgets.set(id, new CatalogPlotWidgetStore({} as CatalogPlotWidgetStoreProps));
+                }
+                break;
+            case "spectral-line-query":
+                if (!this.spectralLineQueryWidgets.has(id)) {
+                    this.spectralLineQueryWidgets.set(id, new SpectralLineQueryWidgetStore());
+                }
+                break;
+            case "pv-generator":
+                if (!this.pvGeneratorWidgets.has(id)) {
+                    this.pvGeneratorWidgets.set(id, new PvGeneratorWidgetStore());
+                }
+                break;
+            // Add other widget types as needed
+            default:
+                // Create empty widget store for simple widgets
+                if (!this.logWidgets.has(id)) {
+                    this.logWidgets.set(id, new EmptyWidgetStore());
+                }
+                break;
+        }
     };
 
     public toWidgetSettingsConfig = (widgetType: string, widgetID: string | undefined) => {
@@ -787,111 +769,7 @@ export class WidgetsStore {
         return widgetStore?.toConfig?.();
     };
 
-    @action onCogPinedClick = (item: GoldenLayout.ContentItem) => {
-        const parentItemConfig = item.config as GoldenLayout.ReactComponentConfig;
-        const parentId = parentItemConfig.id as string;
-        const parentType = parentItemConfig.component;
-        const parentTitle = parentItemConfig.title;
-
-        // apply for image viewer, stokes, spectral profiler, spatial profiler, Render Config, Histogram, Catalog Overlay, Layer List
-        const floatingSettingsAppliedWidgets = [
-            ImageViewComponent.WIDGET_CONFIG.type,
-            StokesAnalysisComponent.WIDGET_CONFIG.type,
-            SpectralProfilerComponent.WIDGET_CONFIG.type,
-            SpatialProfilerComponent.WIDGET_CONFIG.type,
-            RenderConfigComponent.WIDGET_CONFIG.type,
-            HistogramComponent.WIDGET_CONFIG.type,
-            CatalogOverlayComponent.WIDGET_CONFIG.type,
-            LayerListComponent.WIDGET_CONFIG.type
-        ];
-        if (floatingSettingsAppliedWidgets.indexOf(parentType) === -1) {
-            return;
-        }
-        // Get floating settings config
-        const defaultConfig = WidgetsStore.GetDefaultWidgetSettingsConfig(parentType);
-        const id = this.addFloatingSettingsWidget(null, parentId, defaultConfig.type);
-        if (id !== null) {
-            let widgetConfig = new WidgetConfig(id, defaultConfig);
-            widgetConfig.title = parentType === "image-view" ? "Image View Settings" : parentTitle + " Settings";
-            widgetConfig.parentId = parentId;
-            widgetConfig.parentType = parentType;
-            if (widgetConfig.id) {
-                this.addFloatingWidget(widgetConfig);
-            }
-        }
-    };
-
-    @action unpinWidget = (item: GoldenLayout.ContentItem) => {
-        const itemConfig = item.config as GoldenLayout.ReactComponentConfig;
-        const id = itemConfig.id as string;
-        const type = itemConfig.component;
-        const title = itemConfig.title;
-
-        // Avoid floating ImageViewComponent
-        if (type === ImageViewComponent.WIDGET_CONFIG.type) {
-            return;
-        }
-
-        // Get widget type from config
-        let widgetConfig = new WidgetConfig(id, WidgetsStore.GetDefaultWidgetConfig(type));
-        widgetConfig.title = title;
-
-        if (type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
-            widgetConfig.componentId = id;
-        }
-
-        if (type === PvPreviewComponent.WIDGET_CONFIG.type) {
-            widgetConfig.parentId = itemConfig.props.id;
-            widgetConfig.parentType = PvPreviewComponent.WIDGET_CONFIG.parentType;
-        }
-
-        const catalogPlotWidgetStore = this.catalogPlotWidgets.get(id);
-        if (catalogPlotWidgetStore) {
-            widgetConfig.helpType = catalogPlotWidgetStore.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT : HelpType.CATALOG_SCATTER_PLOT;
-        }
-
-        // Set default size and position from the existing item
-        const container = item["container"] as GoldenLayout.Container;
-        if (container && container.width && container.height) {
-            // Snap size to grid
-            widgetConfig.setDefaultSize(Math.round(container.width / 25.0) * 25, Math.round(container.height / 25.0) * 25);
-            const el = container["_element"][0] as HTMLElement;
-            // Snap position to grid and adjust for title and container offset
-            widgetConfig.setDefaultPosition(Math.round(el.offsetLeft / 25.0) * 25 + 5, Math.round(el.offsetTop / 25.0) * 25 - 25);
-        }
-
-        this.addFloatingWidget(widgetConfig);
-        const config = item.config as GoldenLayout.ReactComponentConfig;
-        config.component = "floated";
-        item.remove();
-    };
-
-    @action onHelpPinedClick = (ev: JQuery.ClickEvent<HTMLElement>, item: GoldenLayout.ContentItem) => {
-        const itemConfig = item.config as GoldenLayout.ReactComponentConfig;
-        const type = itemConfig.component;
-        // Get widget config from type
-        let widgetConfig = WidgetsStore.GetDefaultWidgetConfig(type);
-        const container = item["container"] as GoldenLayout.Container;
-        let centerX = 0;
-        if (container && container.width) {
-            centerX = ev.target.getBoundingClientRect().right + 36 - container.width * 0.5; // 36(px) is the length between help button and right border of widget
-        }
-
-        if (widgetConfig.helpType && !Array.isArray(widgetConfig.helpType)) {
-            HelpStore.Instance.showHelpDrawer(widgetConfig.helpType, centerX);
-        } else {
-            const id = itemConfig.id as string;
-            const catalogPlotWidgetStore = this.catalogPlotWidgets.get(id);
-            if (catalogPlotWidgetStore) {
-                HelpStore.Instance.showHelpDrawer(catalogPlotWidgetStore.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT : HelpType.CATALOG_SCATTER_PLOT, centerX);
-            }
-
-            const renderConfigWidgetStore = this.renderConfigWidgets.get(id);
-            if (renderConfigWidgetStore) {
-                HelpStore.Instance.showHelpDrawer(AppStore.Instance.activeImage?.type === ImageType.COLOR_BLENDING ? HelpType.RENDER_CONFIG_COLOR_BLENDING : HelpType.RENDER_CONFIG, centerX);
-            }
-        }
-    };
+    // endregion
 
     onImagePanelButtonClick = () => {
         const channelMapStore = AppStore.Instance.channelMapStore;
@@ -915,6 +793,8 @@ export class WidgetsStore {
 
     private updateImagePanelButton = () => {
         const imagePanelMode = AppStore.Instance.imageViewConfigStore.imagePanelMode;
+        // TODO: Implement for FlexLayout - find and update image panel button
+        // This needs to be adapted for FlexLayout's tab system
         const imagePanelButton = $(".lm_goldenlayout")?.find("li.lm-image-panel[style!='display:none;']");
         if (imagePanelButton) {
             imagePanelButton.attr("title", this.getImagePanelButtonTooltip(imagePanelMode));
@@ -951,6 +831,8 @@ export class WidgetsStore {
     updateImagePanelPageButtons = () => {
         const appStore = AppStore.Instance;
         const config = appStore.imageViewConfigStore;
+        // TODO: Implement for FlexLayout - find and update navigation buttons
+        // This needs to be adapted for FlexLayout's tab system
         const nextPageButton = $(".lm_goldenlayout")?.find("li.lm-image-panel-next[style!='display:none;']");
         if (nextPageButton) {
             nextPageButton.attr("style", config.currentImagePage < config.numImagePages - 1 ? "" : "cursor: not-allowed; opacity: 0.2");
@@ -967,15 +849,11 @@ export class WidgetsStore {
     /** Hides the settings buttons of docked render config widgets when color blending images are active. */
     updateRenderConfigSettingsVisibility = () => {
         const isBlending = AppStore.Instance.activeImage?.type === ImageType.COLOR_BLENDING;
-        const layout = AppStore.Instance.layoutStore?.dockedLayout;
-        const renderConfigWidgets = layout?.root?.getItemsByFilter((item: any) => item.config.component === RenderConfigComponent.WIDGET_CONFIG.type && !item.container.isHidden) ?? [];
-        for (const widget of renderConfigWidgets) {
-            $(widget.parent.element)
-                ?.find("li.lm_settings")
-                ?.attr("style", isBlending ? "display:none;" : "");
-        }
+        // TODO: Implement for FlexLayout - need to find and update render config widgets
+        // This functionality needs to be adapted for FlexLayout architecture
     };
 
+    /*
     @action handleItemCreation = (item: GoldenLayout.ContentItem) => {
         const config = item.config as GoldenLayout.ReactComponentConfig;
         const id = config.id as string;
@@ -1035,6 +913,7 @@ export class WidgetsStore {
             }
         }
     };
+    */
 
     // endregion
 
@@ -1055,18 +934,10 @@ export class WidgetsStore {
 
     /** Updates the title of the image view widget using {@link imageViewWidgetTitle}. */
     @action updateImageWidgetTitle = () => {
-        const layout = LayoutStore.Instance.dockedLayout;
         const newTitle = this.imageViewWidgetTitle;
-
-        // Update GL title by searching for image-view components
-        if (layout?.root) {
-            const imageViewComponents = layout.root.getItemsByFilter((item: any) => item.config.component === ImageViewComponent.WIDGET_CONFIG.type);
-            if (imageViewComponents.length) {
-                if (imageViewComponents[0].config && imageViewComponents[0].config.title !== newTitle) {
-                    imageViewComponents[0].setTitle(newTitle);
-                }
-            }
-        }
+        
+        // TODO: Implement for FlexLayout - need to find and update image-view tabs
+        // This functionality needs to be adapted for FlexLayout's tab system
 
         // Update floating window title
         const imageViewWidget = this.floatingWidgets.find(w => w.type === ImageViewComponent.WIDGET_CONFIG.type);
@@ -1076,14 +947,8 @@ export class WidgetsStore {
     };
 
     @action setWidgetTitle(id: string, title: string) {
-        const layoutStore = LayoutStore.Instance;
-        if (layoutStore.dockedLayout && layoutStore.dockedLayout.root) {
-            const matchingComponents = layoutStore.dockedLayout.root.getItemsByFilter(item => item.config.id === id);
-            if (matchingComponents.length) {
-                matchingComponents[0].setTitle(title);
-            }
-        }
-
+        // TODO: Implement for FlexLayout - find and update docked widget titles
+        
         const widget = this.floatingWidgets.find(w => w.id === id);
         if (widget) {
             widget.title = title;
@@ -1091,14 +956,8 @@ export class WidgetsStore {
     }
 
     @action setWidgetComponentTitle(componentId: string, title: string) {
-        const layoutStore = LayoutStore.Instance;
-        if (layoutStore.dockedLayout && layoutStore.dockedLayout.root) {
-            const matchingComponents = layoutStore.dockedLayout.root.getItemsById(componentId);
-            if (matchingComponents.length) {
-                matchingComponents[0].setTitle(title);
-            }
-        }
-
+        // TODO: Implement for FlexLayout - find and update docked widget titles by component ID
+        
         const widgetComponent = this.floatingWidgets.find(w => w.componentId === componentId);
         if (widgetComponent) {
             widgetComponent.title = title;
@@ -1212,7 +1071,7 @@ export class WidgetsStore {
     private getNextComponentId = (config: DefaultWidgetConfig) => {
         // Find the next appropriate ID
         let nextIndex = 0;
-        let componentIds: string[] = [];
+        const componentIds: string[] = [];
 
         if (config.type === CatalogPlotComponent.WIDGET_CONFIG.type) {
             CatalogStore.Instance.catalogPlots.forEach((catalogWidgetMap, componentId) => {
@@ -1236,7 +1095,7 @@ export class WidgetsStore {
     createFloatingCatalogWidget = (catalogFileId: number): {widgetStoreId: string | null; widgetComponentId: string} => {
         const widgetStoreId = this.addCatalogWidget(catalogFileId);
         const widgetComponentId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
-        let config = new WidgetConfig(widgetComponentId, CatalogOverlayComponent.WIDGET_CONFIG);
+        const config = new WidgetConfig(widgetComponentId, CatalogOverlayComponent.WIDGET_CONFIG);
         config.componentId = widgetComponentId;
         this.addFloatingWidget(config);
         return {widgetStoreId: widgetStoreId, widgetComponentId: widgetComponentId};
@@ -1246,7 +1105,7 @@ export class WidgetsStore {
         const appStore = AppStore.Instance;
         const catalogFileNum = appStore.catalogNum;
         const componentId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
-        let config = new WidgetConfig(componentId, CatalogOverlayComponent.WIDGET_CONFIG);
+        const config = new WidgetConfig(componentId, CatalogOverlayComponent.WIDGET_CONFIG);
         config.componentId = componentId;
         if (catalogFileNum) {
             CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileNum);
@@ -1631,14 +1490,7 @@ export class WidgetsStore {
                 }
             });
 
-            const layoutStore = LayoutStore.Instance;
-            if (layoutStore.dockedLayout && layoutStore.dockedLayout.root) {
-                const matchingComponents = layoutStore.dockedLayout.root.getItemsByFilter(item => item.config.id === associatedFloatingSettingsId);
-                if (matchingComponents.length) {
-                    matchingComponents[0].remove();
-                }
-            }
-
+            // Remove associated floating settings widget
             if (associatedFloatingSettingsId) {
                 this.removeFloatingWidget(associatedFloatingSettingsId, true);
                 this.floatingSettingsWidgets.delete(associatedFloatingSettingsId);

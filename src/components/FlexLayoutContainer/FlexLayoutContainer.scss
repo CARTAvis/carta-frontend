@@ -1,0 +1,313 @@
+// Import styles from FloatingWidgetComponent for consistent theming
+@use "sass:color";
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+@import "../FloatingWidget/FloatingWidgetComponent.scss";
+
+// Import layout theme variables for additional styling
+@import "../../layout-theme.scss";
+
+.flex-layout-container {
+    top: 48px;
+    bottom: 5px;
+    left: 5px;
+    right: 5px;
+    position: absolute;
+    z-index: -100;
+
+
+    // Use FloatingWidget variables for consistent theming
+    --widget-background: #{$widget-background};
+    --widget-background-dark: #{$widget-background-dark};
+    --title-color: #{$title-color};
+    --title-color-dark: #{$title-color-dark};
+    --selected-title-color: #{$widget-background};
+    --selected-title-color-dark: #{$widget-background-dark};
+    --border-color: #{$border-color};
+    --border-color-dark: #{$border-color-dark};
+    --title-height: #{$title-height};
+
+    .flexlayout__tabset_container {
+        border : 1px solid var(--border-color);
+    }
+    
+    // Ensure FlexLayout takes full container space
+    .flexlayout__layout {
+        width: 100%;
+        height: 100%;
+        --color-background: var(--widget-background);
+        --color-tabset-divider-line: var(--widget-background);
+    }
+
+    .flexlayout__tabset_tabbar_inner_top {
+        background-color: white;
+    }
+
+    .flexlayout__tabset_tabbar_inner_tab_container {
+        // border: 1px solid #000;
+        border-bottom: none;
+    }
+
+    .tab-title {
+        width: 100%;
+        height: $title-height;
+        background-color: $widget-background;
+        color: $title-color;
+        font-size: 14px;
+
+        &.selected {
+            background-color: color.adjust($widget-background, $lightness: -10%);
+        }
+
+        &.selected {
+            color: $selected-title-color;
+        }
+
+        display: flex;
+
+        .floating-title {
+            padding-left: 5px;
+            padding-top: 3px;
+            font-size: 14px;
+            cursor: move;
+            flex: 1 1 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .floating-header-button {
+            padding-right: 5px;
+            padding-top: 3px;
+            cursor: pointer;
+            opacity: 0.4;
+            color: black;
+            &:hover {
+                opacity: 1;
+            }
+        }
+    }
+
+    // Apply FloatingWidget styling to FlexLayout components for consistency
+    .flexlayout__tabset {
+
+        .flexlayout__tab_button {
+            background: var(--widget-background);
+        }
+
+        .flexlayout__tabset_header {
+            background: var(--widget-background);
+            height: var(--title-height);
+        }
+
+        .flexlayout__tab {
+            // Use FloatingWidget header styling for tabs
+            background: color.adjust($widget-background, $lightness: -5%);
+            color: var(--title-color);
+            border: 1px solid var(--border-color);
+            border-bottom: none;
+            border-radius: 5px;
+            margin-right: 2px;
+            padding: 3px 10px 4px;
+            font-size: 14px;
+            
+            &.flexlayout__tab--selected {
+                background: var(--widget-background);
+                color: var(--selected-title-color);
+                box-shadow: 2px -2px 2px -2px rgba($selected-title-color, 0.2);
+                padding-bottom: 5px;
+            }
+
+            &:hover:not(.flexlayout__tab--selected) {
+                background: var(--widget-background);
+                color: color.adjust($title-color, $lightness: -20%);
+            }
+        }
+
+        .flexlayout__tab_toolbar {
+            background-color: white;
+        }
+
+        // Use FloatingWidget button styling for toolbar buttons
+        .floating-header-button {
+            width: 18px;
+            height: 18px;
+            padding: 2px;
+            cursor: pointer;
+            opacity: 0.4;
+            color: black;
+            border: none;
+            background: transparent;
+            
+            &:hover {
+                opacity: 1;
+            }
+
+            // Blueprint.js button override
+            &.bp5-button {
+                min-height: 18px;
+                min-width: 18px;
+                padding: 2px;
+            }
+        }
+    }
+
+    // Splitter styling using FloatingWidget border colors
+    .flexlayout__splitter {
+        background: white;
+        transition: opacity 200ms ease;
+
+        &:hover {
+            background: color.adjust($border-color, $lightness: -10%);
+            opacity: 1;
+        }
+        
+        &.#{$ns}-dark {
+            background: var(--border-color-dark);
+            
+            &:hover {
+                background: color.adjust($border-color-dark, $lightness: 10%);
+            }
+        }
+    }
+
+    // Tab icons styling
+    .flexlayout-tab-content {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        .tab-icon {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .tab-title {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+
+    // Dark theme support using FloatingWidget variables
+    &.dark-theme {
+
+        .flexlayout__layout {
+            --color-background: #{$widget-background-dark};
+            --color-tabset-divider-line: var(--widget-background-dark);
+        }
+
+        .tab-title {
+            background-color: color.adjust($widget-background-dark, $lightness: 10%);
+
+            &.selected {
+                background-color: color.adjust($widget-background, $lightness: -10%);
+                background-color: color.adjust($widget-background-dark, $lightness: 15%);
+            }
+
+            &.selected {
+                color: $selected-title-color;
+                color: $white;
+            }
+
+            color: $title-color-dark;
+
+            .floating-header-button {
+                background-color: color.adjust($widget-background-dark, $lightness: 10%);
+                color: white;
+            }
+        }
+
+        .flexlayout__tabset-selected {
+            background: var(--widget-background-dark);
+        }
+
+        .flexlayout__tabset {
+
+        .flexlayout__tab_button {
+            background: var(--widget-background-dark);
+        }
+
+            .flexlayout__tabset_header {
+                background: var(--widget-background-dark);
+            }
+
+            .flexlayout__tab {
+                background: color.adjust($widget-background-dark, $lightness: 10%);
+                color: var(--title-color-dark);
+                border: 1px solid var(--border-color-dark);
+
+
+                &.flexlayout__tab--selected {
+                    background: var(--widget-background-dark);
+                    color: var(--selected-title-color-dark);
+                    box-shadow: 2px -2px 2px -2px rgba($selected-title-color-dark, 0.2);
+                }
+
+                &:hover:not(.flexlayout__tab--selected) {
+                    background: var(--widget-background-dark);
+                    color: color.adjust($title-color-dark, $lightness: 20%);
+                }
+            }
+
+            .floating-header-button {
+                color: white;
+                
+                &:hover {
+                    opacity: 1;
+                }
+            }
+        }
+
+        .flexlayout__tabset_content {
+            background: var(--widget-background-dark);
+            border: 1px solid var(--border-color-dark);
+        }
+
+        .flexlayout__splitter {
+            background: var(--border-color-dark);
+
+            &:hover {
+                background: color.adjust($border-color-dark, $lightness: 10%);
+            }
+        }
+    }
+
+    // Drop zone styling for drag-to-dock functionality
+    .flexlayout__tabset {
+        transition: all 0.2s ease;
+        
+        &.potential-drop-zone {
+            position: relative;
+            
+            &::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                border: 2px dashed rgba($selected-title-color, 0.4);
+                border-radius: 4px;
+                pointer-events: none;
+                z-index: 1000;
+                transition: all 0.2s ease;
+            }
+            
+            &.active-drop-zone::before {
+                border-color: var(--selected-title-color);
+                border-style: solid;
+                background-color: rgba($selected-title-color, 0.1);
+            }
+        }
+    }
+
+    // Dark theme drop zone support
+    &.dark-theme .flexlayout__tabset {
+        &.potential-drop-zone::before {
+            border-color: rgba($selected-title-color-dark, 0.4);
+        }
+        
+        &.active-drop-zone::before {
+            border-color: var(--selected-title-color-dark);
+            background-color: rgba($selected-title-color-dark, 0.1);
+        }
+    }
+}
