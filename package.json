@@ -134,9 +134,6 @@
         "check-eslint": "eslint ./src"
     },
     "eslintConfig": {
-        "extends": [
-            "plugin:@typescript-eslint/recommended"
-        ],
         "parser": "@typescript-eslint/parser",
         "plugins": [
             "import",
@@ -162,7 +159,8 @@
             "simple-import-sort/exports": "error",
             "import/newline-after-import": "error",
             "import/no-duplicates": "error",
-            "tsdoc/syntax": "error"
+            "tsdoc/syntax": "error",
+            "prefer-const": "error"
         },
         "overrides": [
             {
