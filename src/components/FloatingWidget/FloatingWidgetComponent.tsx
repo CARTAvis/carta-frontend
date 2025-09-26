@@ -25,19 +25,20 @@ class FloatingWidgetComponentProps {
 
 @observer
 export class FloatingWidgetComponent extends React.Component<FloatingWidgetComponentProps> {
+    private static readonly HEADER_HEIGHT = 25;
+    private static readonly ROOT_MENU_HEIGHT = 40;
     private pinElementRef: HTMLElement;
     private rnd: Rnd;
 
     componentDidMount() {
         this.updateDragSource();
-        this.rnd.updateSize({width: this.props.widgetConfig.defaultWidth, height: this.props.widgetConfig.defaultHeight});
-        this.rnd.updatePosition({x: this.props.widgetConfig.defaultX, y: this.props.widgetConfig.defaultY});
+        const widgetConfig = this.props.widgetConfig;
+        this.rnd.updateSize({width: widgetConfig.defaultWidth, height: widgetConfig.defaultHeight + FloatingWidgetComponent.HEADER_HEIGHT});
+        this.rnd.updatePosition({x: widgetConfig.defaultX, y: widgetConfig.defaultY});
     }
 
     componentDidUpdate() {
         this.updateDragSource();
-        this.rnd.updateSize({width: this.props.widgetConfig.defaultWidth, height: this.props.widgetConfig.defaultHeight});
-        this.rnd.updatePosition({x: this.props.widgetConfig.defaultX, y: this.props.widgetConfig.defaultY});
     }
 
     updateDragSource() {
@@ -72,6 +73,23 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
             }
         }
     }
+
+    private handleResizeStop = (e: any, direction: any, element: HTMLElement, delta: any, position: any) => {
+        const widgetConfig = this.props.widgetConfig;
+
+        // manually add the height of the root-menu div to position y
+        // work-around for the change of the position definition from react-rnd v9 (absolute position) to v10 (relative position from the bounds)
+        const absPosition = {x: position.x, y: position.y + FloatingWidgetComponent.ROOT_MENU_HEIGHT};
+
+        const newWidth = widgetConfig.defaultWidth + delta.width;
+        const newHeight = widgetConfig.defaultHeight + delta.height;
+
+        widgetConfig.setDefaultPosition(absPosition.x, absPosition.y);
+        widgetConfig.setDefaultSize(newWidth, newHeight);
+
+        this.rnd.updatePosition(absPosition);
+        this.rnd.updateSize({width: newWidth, height: newHeight + FloatingWidgetComponent.HEADER_HEIGHT});
+    };
 
     private onClickHelpButton = () => {
         const centerX = (this.rnd.draggable.state as any).x + this.rnd.resizable.size.width * 0.5;
@@ -113,7 +131,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
     };
 
     public render() {
-        const headerHeight = 25;
+        const headerHeight = FloatingWidgetComponent.HEADER_HEIGHT;
         const appStore = AppStore.Instance;
         const className = classNames("floating-widget", {[Classes.DARK]: appStore.darkTheme});
         const titleClass = classNames("floating-header", {selected: this.props.isSelected, [Classes.DARK]: appStore.darkTheme});
@@ -142,15 +160,9 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 onMouseDown={this.props.onSelected}
                 onDragStop={(e, data) => {
                     widgetConfig.setDefaultPosition(data.lastX, data.lastY);
+                    this.rnd.updatePosition({x: data.lastX, y: data.lastY});
                 }}
-                onResizeStop={(e, direction, element, delta, position) => {
-                    // manually add the height of the root-menu div to position y
-                    // work-around for the change of the position definition from react-rnd v9 (absolute position) to v10 (relative position from the bounds)
-                    const rootMenuHeight = 40;
-                    const absPosition = {x: position.x, y: position.y + rootMenuHeight};
-                    widgetConfig.setDefaultPosition(absPosition.x, absPosition.y);
-                    widgetConfig.setDefaultSize(widgetConfig.defaultWidth + delta.width, widgetConfig.defaultHeight + delta.height);
-                }}
+                onResizeStop={this.handleResizeStop}
             >
                 <div className={titleClass}>
                     <div className={"floating-title"} data-testid={this.props.widgetConfig?.id + "-header-title"}>
