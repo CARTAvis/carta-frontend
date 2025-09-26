@@ -1,11 +1,28 @@
 import {defineConfig} from "@rsbuild/core";
+import {pluginEslint} from '@rsbuild/plugin-eslint';
+import {pluginNodePolyfill} from "@rsbuild/plugin-node-polyfill";
 import {pluginReact} from "@rsbuild/plugin-react";
 import {pluginSass} from "@rsbuild/plugin-sass";
-import {pluginNodePolyfill} from "@rsbuild/plugin-node-polyfill";
 import {pluginGlsl} from "rsbuild-plugin-glsl";
 
+const defaultOptions = {
+    extensions: ["js", "jsx", "ts", "tsx"],
+    exclude: [
+        "node_modules",
+        "wasm_src",
+        "docs_website",
+    ],
+    // enable: process.env.NODE_ENV === "production",
+};
+
 export default defineConfig({
-    plugins: [pluginReact(), pluginSass(), pluginNodePolyfill(), pluginGlsl()],
+    plugins: [
+        pluginReact(),
+        pluginEslint({ eslintPluginOptions: defaultOptions }),
+        pluginSass(),
+        pluginNodePolyfill(),
+        pluginGlsl()
+    ],
     source: {
         decorators: {
             version: "legacy",
