@@ -57,7 +57,7 @@ export class CatalogApiService {
 
     public queryVizierTableName = async (point: WCSPoint2D, radius: number, unit: RadiusUnits, keyWords: string): Promise<Map<string, VizierResource>> => {
         let resources: Map<string, VizierResource> = new Map();
-        let radiusUnits = this.getRadiusUnits(unit);
+        const radiusUnits = this.getRadiusUnits(unit);
         // http://cdsarc.u-strasbg.fr/doc/asu-summary.htx
         // _RA, _DE are a shorthand for _RA(J2000,J2000), _DE(J2000,J2000)
         // -meta.max = 100000, use a large number to get all tables(same number as vizier use for their websit). default is 500.
@@ -89,14 +89,14 @@ export class CatalogApiService {
 
     public queryVizierSource = async (point: WCSPoint2D, radius: number, unit: RadiusUnits, max: number, sources: VizierResource[]): Promise<Map<string, VizierResource>> => {
         let resources: Map<string, VizierResource> = new Map();
-        let radiusUnits = this.getRadiusUnits(unit);
+        const radiusUnits = this.getRadiusUnits(unit);
         let sourceString = "-source=";
         sources.forEach(element => {
             sourceString += `${element.table.name},`;
         });
 
         // _RA, _DE are a shorthand for _RA(J2000,J2000), _DE(J2000,J2000)
-        let query = `votable?${sourceString}&-c=${point.x} ${point.y}&-c.eq=J2000&-c.${radiusUnits}=${radius}&-out.max=${max}&-sort=_r&-corr=pos&-out.add=_r,_RA,_DE&-oc.form=d&-out.meta=hud`;
+        const query = `votable?${sourceString}&-c=${point.x} ${point.y}&-c.eq=J2000&-c.${radiusUnits}=${radius}&-out.max=${max}&-sort=_r&-corr=pos&-out.add=_r,_RA,_DE&-oc.form=d&-out.meta=hud`;
 
         try {
             const response = await this.axiosInstanceVizier.get(query);
@@ -132,7 +132,7 @@ export class CatalogApiService {
                 description: "Online VizieR Catalog",
                 coosys: [coosy]
             };
-            let catalogInfo: CatalogInfo = {
+            const catalogInfo: CatalogInfo = {
                 fileId,
                 fileInfo: catalogFileInfo,
                 dataSize: size,
@@ -195,7 +195,7 @@ export class CatalogApiService {
                     description: "Online Simbad Catalog",
                     coosys: [coosys]
                 };
-                let catalogInfo: CatalogInfo = {
+                const catalogInfo: CatalogInfo = {
                     fileId,
                     fileInfo: catalogFileInfo,
                     dataSize: response.data?.data?.length ?? 0,

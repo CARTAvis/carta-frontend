@@ -227,7 +227,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                 const minPix = widgetStore.minPix;
                 const maxPix = widgetStore.maxPix;
 
-                let histogramConfig = regionRequirements.histograms.find(
+                const histogramConfig = regionRequirements.histograms.find(
                     config =>
                         config.coordinate === coordinate &&
                         config.fixedNumBins === fixedNumBins &&
@@ -279,13 +279,13 @@ export class HistogramWidgetStore extends RegionWidgetStore {
 
         // Go through updated requirements entries and find differences
         updatedRequirements.forEach((updatedFrameRequirements, fileId) => {
-            let frameRequirements = originalRequirements.get(fileId);
+            const frameRequirements = originalRequirements.get(fileId);
             if (!frameRequirements) {
                 // If there are no existing requirements for this fileId, all entries for this file are new
                 updatedFrameRequirements.forEach(regionRequirements => diffList.push(regionRequirements));
             } else {
                 updatedFrameRequirements.forEach((updatedRegionRequirements, regionId) => {
-                    let regionRequirements = frameRequirements?.get(regionId);
+                    const regionRequirements = frameRequirements?.get(regionId);
                     if (!regionRequirements) {
                         // If there are no existing requirements for this regionId, this is a new entry
                         diffList.push(updatedRegionRequirements);

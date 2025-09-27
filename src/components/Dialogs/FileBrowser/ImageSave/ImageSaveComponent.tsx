@@ -75,7 +75,7 @@ export class ImageSaveComponent extends React.Component {
         const stokesInfo = AppStore.Instance.activeFrame?.stokesInfo;
 
         if (stokesInfo) {
-            let options: OptionProps[] = [];
+            const options: OptionProps[] = [];
             const addOption = (value: number, stokesInfoList: string[]) => {
                 options.push({value: value, label: stokesInfoList.join(", ").replace(/, Stokes/g, ", ")});
             };

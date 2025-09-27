@@ -294,7 +294,7 @@ export class CatalogOnlineQueryConfigStore {
             const precision = overlay.numbers.customPrecision ? overlay.numbers.precision : "*";
             const format = `${NumberFormatType.Degrees}.${precision}`;
             const wcsCopy = AST.copy(frame.wcsInfo);
-            let astString = new ASTSettingsString();
+            const astString = new ASTSettingsString();
             const sys = system ? system : overlay.global.explicitSystem ? overlay.global.explicitSystem : SystemType.ICRS;
             if (frame.isXY || frame.isYX) {
                 AST.set(wcsCopy, `System=${sys}`);

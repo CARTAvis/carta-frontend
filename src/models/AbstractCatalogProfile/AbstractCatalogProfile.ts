@@ -124,8 +124,8 @@ export abstract class AbstractCatalogProfileStore {
         const yColumn = columnsData.get(yHeaderInfo.columnIndex);
 
         if (xColumn && xColumn.dataType !== CARTA.ColumnType.String && xColumn.dataType !== CARTA.ColumnType.Bool && yColumn && yColumn.dataType !== CARTA.ColumnType.String && yColumn.dataType !== CARTA.ColumnType.Bool) {
-            let wcsX = xColumn.data as Array<number>;
-            let wcsY = yColumn.data as Array<number>;
+            const wcsX = xColumn.data as Array<number>;
+            const wcsY = yColumn.data as Array<number>;
             return {wcsX, wcsY, xHeaderInfo, yHeaderInfo};
         } else {
             return {xHeaderInfo, yHeaderInfo};
@@ -138,7 +138,7 @@ export abstract class AbstractCatalogProfileStore {
         const headerInfo = this.catalogHeader[header?.dataIndex ?? NaN];
         const xColumn = this.catalogData.get(headerInfo.columnIndex);
         if (xColumn && xColumn.dataType !== CARTA.ColumnType.String && xColumn.dataType !== CARTA.ColumnType.Bool) {
-            let wcsData = xColumn.data as TypedArray;
+            const wcsData = xColumn.data as TypedArray;
             return {wcsData, headerInfo};
         } else {
             return {headerInfo};
@@ -146,10 +146,10 @@ export abstract class AbstractCatalogProfileStore {
     }
 
     public getUserFilters(): CARTA.FilterConfig[] {
-        let userFilters: CARTA.FilterConfig[] = [];
+        const userFilters: CARTA.FilterConfig[] = [];
         this.catalogControlHeader.forEach((value, key) => {
             if (value.filter !== undefined && value.display && value.dataIndex !== undefined) {
-                let filter = new CARTA.FilterConfig();
+                const filter = new CARTA.FilterConfig();
                 const dataType = this.catalogHeader[value.dataIndex].dataType;
                 filter.columnName = key;
                 if (dataType === CARTA.ColumnType.String) {
@@ -199,7 +199,7 @@ export abstract class AbstractCatalogProfileStore {
     }
 
     @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader> {
-        let displayedColumnHeaders: CARTA.CatalogHeader[] = [];
+        const displayedColumnHeaders: CARTA.CatalogHeader[] = [];
         this.catalogControlHeader.forEach((value, key) => {
             if (value.display && this.catalogHeader && value.dataIndex !== undefined) {
                 displayedColumnHeaders.push(this.catalogHeader[value.dataIndex]);
@@ -209,7 +209,7 @@ export abstract class AbstractCatalogProfileStore {
     }
 
     @computed get selectedData(): Map<number, ProcessedColumnData> {
-        let catalogColumnsData = this.catalogData;
+        const catalogColumnsData = this.catalogData;
         const selectedPointIndices = this.selectedPointIndices;
         const displayed = this.displayedColumnHeaders.map(catalogHeader => {
             return catalogHeader.columnIndex;
@@ -312,7 +312,7 @@ export abstract class AbstractCatalogProfileStore {
     }
 
     getSortedIndices(selectedPointIndices: number[]): number[] {
-        let indices = new Array(selectedPointIndices.length);
+        const indices = new Array(selectedPointIndices.length);
         if (this.sortedIndexMap.length && selectedPointIndices.length && !this.isFileBasedCatalog) {
             for (let index = 0; index < selectedPointIndices.length; index++) {
                 const i = selectedPointIndices[index];
@@ -325,7 +325,7 @@ export abstract class AbstractCatalogProfileStore {
     }
 
     getOriginIndices(selectedPointIndices: number[]): number[] {
-        let indices = new Array(selectedPointIndices.length);
+        const indices = new Array(selectedPointIndices.length);
         if (this.sortedIndexMap.length && selectedPointIndices.length && !this.isFileBasedCatalog) {
             for (let index = 0; index < selectedPointIndices.length; index++) {
                 const i = selectedPointIndices[index];
@@ -345,10 +345,10 @@ export abstract class AbstractCatalogProfileStore {
         const catalogStore = CatalogStore.Instance;
         const coordsArray = CatalogStore.Instance.catalogGLData.get(this.catalogFileId);
         if (coordsArray?.x?.length) {
-            let selectedX: number[] = [];
-            let selectedY: number[] = [];
+            const selectedX: number[] = [];
+            const selectedY: number[] = [];
             const selectedData = new Uint8Array(coordsArray.x.length);
-            let matchedIndices = this.getSortedIndices(pointIndices);
+            const matchedIndices = this.getSortedIndices(pointIndices);
             for (let index = 0; index < matchedIndices.length; index++) {
                 const i = matchedIndices[index];
                 const x = coordsArray.x[i];

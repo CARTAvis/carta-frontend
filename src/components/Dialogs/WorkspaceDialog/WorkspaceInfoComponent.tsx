@@ -48,7 +48,7 @@ export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceList
                     await fetchFileInfo(res);
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 setErrorMessage(err);
             }
             setIsFetchingWorkspace(false);
@@ -60,7 +60,7 @@ export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceList
         if (workspaceListItem) {
             fetchWorkspace(workspaceListItem.name);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line
     }, [workspaceListItem]);
 
     if (!workspaceListItem) {

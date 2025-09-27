@@ -1,8 +1,8 @@
 import {action, observable} from "mobx";
 
+import {getColorsForValues} from "../../utilities";
 import {AppStore} from "../AppStore/AppStore";
 import {RenderConfigStore} from "../Frame/RenderConfigStore/RenderConfigStore";
-import {getColorsForValues} from "../../utilities";
 
 import {ColorBlendingStore} from "./ColorBlendingStore";
 

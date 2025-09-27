@@ -55,7 +55,7 @@ export class RegionSetStore {
     private getTempRegionId = () => {
         let regionId = -1;
         if (this.regions.length) {
-            let minRegionId = Math.min(...this.regions.map(r => r.regionId));
+            const minRegionId = Math.min(...this.regions.map(r => r.regionId));
             regionId = Math.min(regionId, minRegionId - 1);
         }
         return regionId;
@@ -210,7 +210,7 @@ export class RegionSetStore {
         try {
             await this.requestSetRegion(this.frame.frameInfo.fileId, region);
         } catch (err) {
-            console.log(err);
+            console.error(err);
         }
 
         return region;
@@ -264,7 +264,7 @@ export class RegionSetStore {
                 region.setRegionId(ack.regionId);
             }
         } catch (err) {
-            console.log(err);
+            console.error(err);
         }
     };
 
@@ -291,7 +291,7 @@ export class RegionSetStore {
                 this.selectedRegion = this.regions[0];
             }
             const selectedInd = this.regions.findIndex(r => r === region);
-            let exportRegionIndexes = FileBrowserStore.Instance.exportRegionIndexes.filter(x => x !== selectedInd).map(x => (x > selectedInd ? x - 1 : x));
+            const exportRegionIndexes = FileBrowserStore.Instance.exportRegionIndexes.filter(x => x !== selectedInd).map(x => (x > selectedInd ? x - 1 : x));
             FileBrowserStore.Instance.updateExportRegionIndexes(exportRegionIndexes);
             this.regions = this.regions.filter(r => r !== region);
             if (!region.isTemporary) {

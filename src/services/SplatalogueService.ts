@@ -139,9 +139,9 @@ export class SplatalogueService {
         if (freqMin > freqMax) {
             [freqMin, freqMax] = [freqMax, freqMin];
         }
-        let freqFrom = new Array(20).fill("");
+        const freqFrom = new Array(20).fill("");
         freqFrom[0] = freqMin.toString();
-        let freqTo = new Array(20).fill("");
+        const freqTo = new Array(20).fill("");
         freqTo[0] = freqMax.toString();
         const unit = "MHz";
 

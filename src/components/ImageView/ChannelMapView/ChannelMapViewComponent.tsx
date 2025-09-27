@@ -254,9 +254,9 @@ const ChannelMapInnerOverlayComponent = observer(({frame, docked}: {frame: Frame
             ctx.clearRect(0, 0, destCanvas.width, destCanvas.height);
             ctx.imageSmoothingEnabled = false;
 
-            let x = 0,
-                y = 0,
-                w = sourceWidth,
+            let x = 0
+            const y = 0
+            let w = sourceWidth,
                 h = sourceHeight;
             if (overlayType === "left") {
                 h -= innerPaddingBottom;

@@ -436,7 +436,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 : region.regionType === CARTA.RegionType.ANNTEXT
                   ? {x: (region.size.x * AppStore.Instance.imageRatio) / zoomLevel / (2 * (frame.spatialTransform?.scale ?? 1)), y: (region.size.y * AppStore.Instance.imageRatio) / zoomLevel / (2 * (frame.spatialTransform?.scale ?? 1))}
                   : {x: region.size.y, y: region.size.x};
-        let anchorConfigs = [
+        const anchorConfigs = [
             {anchor: "top", offset: {x: 0, y: offset.y}},
             {anchor: "bottom", offset: {x: 0, y: -offset.y}},
             {anchor: "left", offset: {x: -offset.x, y: 0}},

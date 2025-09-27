@@ -22,7 +22,7 @@ export class LayerListWidgetStore {
 
     @computed get restFreqFrameOptions() {
         const appStore = AppStore.Instance;
-        let options = [
+        const options = [
             {
                 label: "Active",
                 frameIndex: -1,

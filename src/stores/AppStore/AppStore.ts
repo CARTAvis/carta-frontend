@@ -474,7 +474,7 @@ export class AppStore {
     }
 
     @computed get spatialAndSpectalMatchedFileIds(): number[] {
-        let matchedIds: number[] = [];
+        const matchedIds: number[] = [];
         const spatialReferenceId = this.spatialReference?.frameInfo?.fileId;
         const spectralReferenceId = this.spectralReference?.frameInfo?.fileId;
 
@@ -574,7 +574,7 @@ export class AppStore {
             generated
         );
 
-        let newFrame = new FrameStore(frameInfo);
+        const newFrame = new FrameStore(frameInfo);
 
         // Place frame in frame array (replace frame with the same ID if it exists)
         const existingFrameIndex = this.imageViewConfigStore.getImageListIndex(ImageType.FRAME, ack.fileId ?? 0);
@@ -767,7 +767,7 @@ export class AppStore {
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
             return ack.openFileAck?.fileId;
         } catch (err) {
-            console.log(err);
+            console.error(err);
             this.alertStore.showAlert(`Error loading files: ${err}`);
             this.endFileLoading();
             throw err;
@@ -1136,9 +1136,9 @@ export class AppStore {
             const ack = yield this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize);
             this.endFileLoading();
             if (frame && ack.success && ack.dataSize) {
-                let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
+                const catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
                 const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
-                let catalogWidgetId = this.updateCatalogProfile(fileId, frame);
+                const catalogWidgetId = this.updateCatalogProfile(fileId, frame);
                 if (catalogWidgetId) {
                     TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: ack.headers.length, row: ack.dataSize, remote: false});
                     this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
@@ -1167,7 +1167,7 @@ export class AppStore {
         let associatedCatalogFiles: number[] = [];
         const catalogStore = CatalogStore.Instance;
         const catalogComponentSize = catalogStore.catalogProfiles.size;
-        let currentAssociatedCatalogFile = catalogStore.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
+        const currentAssociatedCatalogFile = catalogStore.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
         if (currentAssociatedCatalogFile?.length) {
             associatedCatalogFiles = currentAssociatedCatalogFile;
         } else {
@@ -2211,7 +2211,7 @@ export class AppStore {
                 }
             }
 
-            for (let profile of spectralProfileData.profiles) {
+            for (const profile of spectralProfileData.profiles) {
                 profileStore.setProfile(ProtobufProcessing.ProcessSpectralProfile(profile, spectralProfileData.progress));
             }
         }
@@ -2472,7 +2472,7 @@ export class AppStore {
             }
         } catch (err) {
             this.telemetryService.addTelemetryEntry(TelemetryAction.RetryConnection, {status: "failed"});
-            console.log(err);
+            console.error(err);
         }
     };
 
@@ -3399,7 +3399,7 @@ export class AppStore {
         if (val && val instanceof Map) {
             const obj = {};
             const map = val as Map<any, any>;
-            for (let [key, value] of map) {
+            for (const [key, value] of map) {
                 obj[key] = value;
             }
             return obj;
@@ -3512,7 +3512,7 @@ export class AppStore {
                     stats.dom.style.left = "initial";
                 })
                 .catch(err => {
-                    console.log(err);
+                    console.error(err);
                 });
         }
     };

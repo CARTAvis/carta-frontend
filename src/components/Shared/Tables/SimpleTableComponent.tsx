@@ -58,7 +58,7 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
 
         table.columnHeaders?.forEach(header => {
             const columnIndex = header.columnIndex;
-            let dataArray = tableData.get(columnIndex)?.data;
+            const dataArray = tableData.get(columnIndex)?.data;
             const column = this.renderDataColumn(header.name, dataArray);
             tableColumns.push(column);
         });

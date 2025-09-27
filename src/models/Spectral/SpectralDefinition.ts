@@ -169,7 +169,7 @@ export const IsIntensitySupported = (unitStr: string): boolean => {
 
 export type IntensityConfig = {nativeIntensityUnit: string; bmaj?: number[]; bmin?: number[]; cdelta1?: number; cdelta2?: number; freqGHz?: number[]};
 const FindConvertibleIntensityTypes = (config: IntensityConfig): IntensityUnitType[] => {
-    let options: IntensityUnitType[] = [];
+    const options: IntensityUnitType[] = [];
     const type = FindIntensityUnitType(config?.nativeIntensityUnit);
     if (type !== IntensityUnitType.Unsupported) {
         if (type === IntensityUnitType.Kelvin) {
@@ -213,7 +213,7 @@ const FindConvertibleIntensityTypes = (config: IntensityConfig): IntensityUnitTy
 
 export const GetIntensityOptions = (config: IntensityConfig): string[] => {
     const convertibleTypes = FindConvertibleIntensityTypes(config);
-    let supportedOptions: string[] = [];
+    const supportedOptions: string[] = [];
     convertibleTypes?.forEach(type => {
         supportedOptions.push(...(IntensityOptionsMap.get(type) ?? []));
     });

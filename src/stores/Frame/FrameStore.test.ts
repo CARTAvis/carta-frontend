@@ -1,6 +1,5 @@
-import {CARTA} from "carta-protobuf";
-
 import {FrameInfo, FrameStore} from "stores";
+
 import * as SpectralDefinition from "../../models/Spectral/SpectralDefinition";
 
 const stokesCubeframeInfo: FrameInfo = {

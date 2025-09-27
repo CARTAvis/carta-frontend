@@ -106,8 +106,8 @@ export class VectorOverlayStore {
             let vertexData = new Float32Array(tileWidth * tileHeight * 4);
             let numVertices = 0;
             // Vertex offsets: Tile offset + half of the block averaging size, and move to middle of the pixel;
-            let offsetX = (tileMip ?? 1) * ((tileX ?? 0) * 256 + 0.5) - 0.5;
-            let offsetY = (tileMip ?? 1) * ((tileY ?? 0) * 256 + 0.5) - 0.5;
+            const offsetX = (tileMip ?? 1) * ((tileX ?? 0) * 256 + 0.5) - 0.5;
+            const offsetY = (tileMip ?? 1) * ((tileY ?? 0) * 256 + 0.5) - 0.5;
             for (let j = 0; j < tileHeight; j++) {
                 for (let i = 0; i < tileWidth; i++) {
                     const index = i + tileWidth * j;

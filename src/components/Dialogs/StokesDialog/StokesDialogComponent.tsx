@@ -25,7 +25,7 @@ export class StokesDialogComponent extends React.Component {
     @observable stokesHeader: Map<string, CARTA.IFileInfoExtended> = new Map();
 
     @action updateStokesType = (fileName: string, type: CARTA.PolarizationType) => {
-        let currentStoke = this.stokes.get(fileName);
+        const currentStoke = this.stokes.get(fileName);
         if (currentStoke && currentStoke.polarizationType !== type) {
             this.stokes.forEach((stokeFile, stokeFileName) => {
                 if (stokeFileName !== fileName && stokeFile.polarizationType === type) {
@@ -54,7 +54,7 @@ export class StokesDialogComponent extends React.Component {
     };
 
     @computed get fileNames(): string[] {
-        let files: string[] = [];
+        const files: string[] = [];
         this.stokes.forEach((type, file) => {
             files.push(file);
         });
@@ -212,7 +212,7 @@ export class StokesDialogComponent extends React.Component {
     private loadSelectedFiles = async () => {
         const {activeFrame, dynamicLayoutStore, fileBrowserStore, layoutStore} = AppStore.Instance;
 
-        let stokeFiles: CARTA.IStokesFile[] = [];
+        const stokeFiles: CARTA.IStokesFile[] = [];
         this.stokes.forEach(file => {
             stokeFiles.push(file);
         });

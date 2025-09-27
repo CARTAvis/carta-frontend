@@ -66,7 +66,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
 
             // check if image corners are on the same side of the line region. from https://stackoverflow.com/a/1560510
             let sideValue = 0;
-            for (let corner of imageCorners) {
+            for (const corner of imageCorners) {
                 sideValue = sideValue + Math.sign((endPoint.x - startPoint.x) * (corner.y - startPoint.y) - (endPoint.y - startPoint.y) * (corner.x - startPoint.x));
             }
 

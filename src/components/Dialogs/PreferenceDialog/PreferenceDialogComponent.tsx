@@ -152,7 +152,7 @@ export class PreferenceDialogComponent extends React.Component {
             await copyToClipboard(appStore.telemetryService.decodedUserId);
             AppToaster.show(SuccessToast("clipboard", "Copied user ID to clipboard."));
         } catch (err) {
-            console.log(err);
+            console.error(err);
         }
     };
 
@@ -533,7 +533,7 @@ export class PreferenceDialogComponent extends React.Component {
             </React.Fragment>
         );
 
-        let regionTypes: JSX.Element[] = [];
+        const regionTypes: JSX.Element[] = [];
         RegionStore.AVAILABLE_REGION_TYPES.forEach((name, regionType) => {
             regionTypes.push(
                 <option key={regionType} value={regionType}>
@@ -626,7 +626,7 @@ export class PreferenceDialogComponent extends React.Component {
             </React.Fragment>
         );
 
-        let annotationTypes: JSX.Element[] = [];
+        const annotationTypes: JSX.Element[] = [];
         RegionStore.AVAILABLE_ANNOTATION_TYPES.forEach((name, annotationType) => {
             annotationTypes.push(
                 <option key={annotationType} value={annotationType}>

@@ -612,7 +612,7 @@ export class FrameStore {
     }
 
     @computed get intensityConfig(): IntensityConfig {
-        let config: IntensityConfig = {nativeIntensityUnit: this.headerUnit ?? ""};
+        const config: IntensityConfig = {nativeIntensityUnit: this.headerUnit ?? ""};
         const beams = this.beamAllChannels;
         if (beams?.length) {
             config["bmaj"] = beams.map(b => b.majorAxis ?? 0);
@@ -777,9 +777,9 @@ export class FrameStore {
 
     @computed
     private get isProjDistort(): boolean {
-        let checkPoints = [1, 2, Math.floor(this.dirAxisSize / 2), this.dirAxisSize];
-        let wcsValues = [0, 0, 0, 0];
-        let coord = [0, 0];
+        const checkPoints = [1, 2, Math.floor(this.dirAxisSize / 2), this.dirAxisSize];
+        const wcsValues = [0, 0, 0, 0];
+        const coord = [0, 0];
         for (let i = 0; i < checkPoints.length; i++) {
             coord[this.dirAxis - 1] = checkPoints[i];
             const value = AST.transform3DPoint(this.wcsInfo3D, coord[0], coord[1], this.requiredChannel, true);
@@ -818,7 +818,7 @@ export class FrameStore {
         AST.set(this.wcsInfo3D, `Format(3)=${this.depthAxisFormat}`);
 
         // Lambda function for WCS transformation
-        let wcs = (channel: number): string => {
+        const wcs = (channel: number): string => {
             const wcs = AST.transform3DPoint(this.wcsInfo3D, 0, 0, channel, true);
             // The range of depth axis is 0 ~ 360 for RA/longitude, or -90 ~ +90 for DEC/latitude
             const wcsVal = this.dirX > this.dirY && wcs.z < 0 ? wcs.z + 2 * Math.PI : wcs.z;
@@ -830,7 +830,7 @@ export class FrameStore {
 
         // Only show effective digit number
         let endPos = wcs1.length;
-        let len = wcs1.length;
+        const len = wcs1.length;
         for (let i = len - WCS_PRECISION - 1; i < len; i++) {
             if (wcs1.charAt(i) !== wcs2.charAt(i)) {
                 endPos = i + 2 < len ? i + 2 : len;
@@ -994,7 +994,7 @@ export class FrameStore {
 
     @computed get spectralSiblings(): FrameStore[] {
         if (this.spectralReference) {
-            let siblings: FrameStore[] = [];
+            const siblings: FrameStore[] = [];
             siblings.push(this.spectralReference);
             siblings.push(...this.spectralReference.secondarySpectralImages.slice().filter(f => f !== this));
             return siblings;
@@ -1005,7 +1005,7 @@ export class FrameStore {
 
     @computed get spatialSiblings(): FrameStore[] {
         if (this.spatialReference) {
-            let siblings: FrameStore[] = [];
+            const siblings: FrameStore[] = [];
             siblings.push(this.spatialReference);
             siblings.push(...this.spatialReference.secondarySpatialImages.slice().filter(f => f !== this));
             return siblings;
@@ -1016,7 +1016,7 @@ export class FrameStore {
 
     @computed get renderConfigSiblings(): FrameStore[] {
         if (this.rasterScalingReference) {
-            let siblings: FrameStore[] = [];
+            const siblings: FrameStore[] = [];
             siblings.push(this.rasterScalingReference);
             siblings.push(...this.rasterScalingReference.secondaryRasterScalingImages.slice().filter(f => f !== this));
             return siblings;
@@ -1080,7 +1080,7 @@ export class FrameStore {
     }
 
     @computed get stokesOptions(): {value: number; label: string}[] {
-        let stokesOptions: {value: number; label: string}[] = [];
+        const stokesOptions: {value: number; label: string}[] = [];
         if (this.frameInfo && this.frameInfo.fileInfoExtended && this.frameInfo.fileInfoExtended.headerEntries) {
             const ctype = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.value?.toUpperCase() === "STOKES");
             if (ctype && ctype.name?.indexOf("CTYPE") !== -1) {
@@ -1642,7 +1642,7 @@ export class FrameStore {
         const regStokesNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.stokesNumber}`);
 
         const fitsChan = AST.emptyFitsChan();
-        for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
+        for (const entry of this.frameInfo.fileInfoExtended.headerEntries) {
             let name = entry.name;
             if (name?.match(regOtherAxes) || name?.match(regStokesNumber) || name === "HISTORY") {
                 continue;
@@ -1690,7 +1690,7 @@ export class FrameStore {
         const regStokesNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.stokesNumber}`);
 
         const fitsChan = AST.emptyFitsChan();
-        for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
+        for (const entry of this.frameInfo.fileInfoExtended.headerEntries) {
             let name = entry.name;
 
             if (name?.match(regOtherAxes) || name?.match(regStokesNumber) || name?.match(regSpectralNumber) || name === "HISTORY") {
@@ -1739,7 +1739,7 @@ export class FrameStore {
         const regSpectralNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.spectralNumber}`);
         const regStokesNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.stokesNumber}`);
 
-        for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
+        for (const entry of this.frameInfo.fileInfoExtended.headerEntries) {
             let name = entry.name;
 
             if (name?.match(regOtherAxes) || name?.match(regStokesNumber) || name === "HISTORY") {
@@ -1788,7 +1788,7 @@ export class FrameStore {
         const regSpectralNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.spectralNumber}`);
         const regStokesNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.stokesNumber}`);
 
-        for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
+        for (const entry of this.frameInfo.fileInfoExtended.headerEntries) {
             let name = entry.name;
 
             if (name?.match(regOtherAxes) || name?.match(regStokesNumber) || name === "HISTORY") {
@@ -1844,7 +1844,7 @@ export class FrameStore {
         // Get rendered and hidden direction axes formats
         const entries = this.frameInfo.fileInfoExtended.headerEntries;
         const axisName = entries.find(entry => entry.name?.includes(`CTYPE${this.dirAxis}`));
-        let axisValue = axisName?.value ?? "Unknown";
+        const axisValue = axisName?.value ?? "Unknown";
         if (axisValue.match(/^GLON/) || axisValue.match(/^GLAT/)) {
             this.dirAxisFormat = "d.*";
             this.depthAxisFormat = `d.${WCS_PRECISION}`;
@@ -1942,14 +1942,14 @@ export class FrameStore {
             const normalizedNeighbourhood = cursorNeighbourhood.map(pos => AST.normalizeCoordinates(this.wcsInfo, pos.x, pos.y));
 
             while (precisionX < FrameStore.CursorInfoMaxPrecision && precisionY < FrameStore.CursorInfoMaxPrecision) {
-                let astString = new ASTSettingsString();
+                const astString = new ASTSettingsString();
                 const overlaySettings = AppStore.Instance.overlaySettings;
                 astString.add(`Format(${this.dirX})`, this.isPVImage || this.isUVImage || this.isSwappedZ ? undefined : overlaySettings.numbers.cursorFormatStringX(precisionX));
                 astString.add(`Format(${this.dirY})`, this.isPVImage || this.isUVImage || this.isSwappedZ ? undefined : overlaySettings.numbers.cursorFormatStringY(precisionY));
                 astString.add("System", this.isPVImage || this.isUVImage || this.isSwappedZ ? "cartesian" : overlaySettings.global.explicitSystem);
 
-                let formattedNeighbourhood = normalizedNeighbourhood.map(pos => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString(), true));
-                let [p, n1, n2] = formattedNeighbourhood;
+                const formattedNeighbourhood = normalizedNeighbourhood.map(pos => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString(), true));
+                const [p, n1, n2] = formattedNeighbourhood;
                 if (!p.x || !p.y || p.x === "<bad>" || p.y === "<bad>") {
                     cursorPosFormatted = null;
                     break;
@@ -2084,7 +2084,7 @@ export class FrameStore {
     };
 
     public getRegionProperties(regionId: number): string[] {
-        let propertyString: string[] = [];
+        const propertyString: string[] = [];
         const region = this.getRegion(regionId);
         if (region) {
             propertyString.push(region.regionProperties);

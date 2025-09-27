@@ -52,7 +52,7 @@ export class LayoutStore {
             }
         } catch (err) {
             AlertStore.Instance.showAlert("Loading user-defined layout failed!");
-            console.log(err);
+            console.error(err);
         }
     }
 
@@ -74,7 +74,7 @@ export class LayoutStore {
     }
 
     @computed get orderedLayoutNames(): string[] {
-        let orderedLayouts = [...PresetLayout.PRESETS];
+        const orderedLayouts = [...PresetLayout.PRESETS];
         return this.userLayoutNames?.length ? orderedLayouts.concat(this.userLayoutNames) : orderedLayouts;
     }
 
@@ -97,11 +97,11 @@ export class LayoutStore {
         }
 
         // generate docked config & collect docked components
-        let dockedConfig = {
+        const dockedConfig = {
             type: config.docked.type,
             content: []
         };
-        let dockedComponentConfigs = [];
+        const dockedComponentConfigs = [];
         LayoutConfig.CreateConfigToApply(dockedConfig.content, config.docked.content, dockedComponentConfigs);
         // use component configs to init widget stores, IDs in componentConfigs will be updated
         appStore.widgetsStore.initWidgets(dockedComponentConfigs, config.floating);
@@ -172,7 +172,7 @@ export class LayoutStore {
                     this.handleSaveResult(success);
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 this.handleSaveResult(false);
             }
         }
@@ -228,7 +228,7 @@ export class LayoutStore {
                     yield dynamicLayout.modifyLayoutMapping(oldName, newName);
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 this.handleRenameResult(oldName, newName, false);
             }
         }
@@ -264,7 +264,7 @@ export class LayoutStore {
                 }
                 this.handleDeleteResult(layoutName, success);
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 this.handleDeleteResult(layoutName, false);
             }
         }

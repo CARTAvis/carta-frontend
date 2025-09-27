@@ -102,7 +102,7 @@ export class FittingDialogComponent extends React.Component {
     render() {
         const appStore = AppStore.Instance;
         const fittingStore = appStore.imageFittingStore;
-        let component = fittingStore.components[fittingStore.selectedComponentIndex];
+        const component = fittingStore.components[fittingStore.selectedComponentIndex];
 
         const dialogProps: DialogProps = {
             icon: <CustomIcon icon="imageFitting" size={CustomIcon.SIZE_LARGE} />,

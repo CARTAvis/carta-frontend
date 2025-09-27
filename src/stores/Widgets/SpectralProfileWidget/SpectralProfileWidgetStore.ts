@@ -464,18 +464,18 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
         // Determine points/smoothingPoints/colors/yBound/progress
         let numProfiles = 0;
-        let data: Point2D[][] = [];
-        let secondaryXData: number[][] = [];
-        let smoothedData: Point2D[][] = [];
-        let colors: (string | undefined)[] = [];
-        let labels: {image: string | undefined; plot: string}[] = [];
-        let comments: string[][] = [];
-        let xBound = {xMin: Number.MAX_VALUE, xMax: -Number.MAX_VALUE};
-        let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
+        const data: Point2D[][] = [];
+        const secondaryXData: number[][] = [];
+        const smoothedData: Point2D[][] = [];
+        const colors: (string | undefined)[] = [];
+        const labels: {image: string | undefined; plot: string}[] = [];
+        const comments: string[][] = [];
+        const xBound = {xMin: Number.MAX_VALUE, xMax: -Number.MAX_VALUE};
+        const yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
         let yMean: number | undefined;
         let yRms: number | undefined;
         let progressSum: number = 0;
-        let dataIndexes: {startIndex: number; endIndex: number}[] = [];
+        const dataIndexes: {startIndex: number; endIndex: number}[] = [];
         const wantMeanRms = profiles.length === 1;
         const profileColorMap = this.lineColorMap;
         const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
@@ -670,7 +670,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         // 2. showing multiple profiles of different images in radio/optical velocity.(observation sources are not aligned now)
         const disablePlot = frame?.isCoordChannel || (frame?.isCoordVelocity && this.profileSelectionStore.isShowingProfilesOfMultiImages);
 
-        let transformedSpectralLines: SpectralLine[] = [];
+        const transformedSpectralLines: SpectralLine[] = [];
         if (frame && !disablePlot) {
             this.spectralLinesMHz?.forEach(spectralLine => {
                 const transformedValue = frame.convertFreqMHzToSettingWCS(spectralLine?.value);
@@ -743,7 +743,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 if (!regionRequirements.spectralProfiles) {
                     regionRequirements.spectralProfiles = [];
                 }
-                let existingSpectralConfig = regionRequirements.spectralProfiles.find(profiles => profiles.coordinate === spectralConfig.coordinate);
+                const existingSpectralConfig = regionRequirements.spectralProfiles.find(profiles => profiles.coordinate === spectralConfig.coordinate);
                 if (!existingSpectralConfig) {
                     // create new spectral config
                     regionRequirements.spectralProfiles.push({coordinate: spectralConfig.coordinate, statsTypes: spectralConfig.statsTypes});
@@ -788,13 +788,13 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
         // Go through updated requirements entries and find differences
         updatedRequirements.forEach((updatedFrameRequirements, fileId) => {
-            let frameRequirements = originalRequirements.get(fileId);
+            const frameRequirements = originalRequirements.get(fileId);
             if (!frameRequirements) {
                 // If there are no existing requirements for this fileId, all entries for this file are new
                 updatedFrameRequirements.forEach(regionRequirements => diffList.push(regionRequirements));
             } else {
                 updatedFrameRequirements.forEach((updatedRegionRequirements, regionId) => {
-                    let regionRequirements = frameRequirements?.get(regionId);
+                    const regionRequirements = frameRequirements?.get(regionId);
                     if (!regionRequirements) {
                         // If there are no existing requirements for this regionId, this is a new entry
                         diffList.push(updatedRegionRequirements);
@@ -974,10 +974,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
               ySmoothedRms: number | undefined;
           }
         | undefined => {
-        let points: Point2D[] = [];
+        const points: Point2D[] = [];
         let smoothedPoints: Point2D[] = [];
-        let xBound = this.getBoundX(frameChannelValues);
-        let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
+        const xBound = this.getBoundX(frameChannelValues);
+        const yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
         let yMean: number | undefined;
         let yRms: number | undefined;
         let ySmoothedMean: number | undefined;

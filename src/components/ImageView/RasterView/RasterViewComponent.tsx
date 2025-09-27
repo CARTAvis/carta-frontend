@@ -81,7 +81,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     }
 
     componentWillUnmount(): void {
-        this.sub && this.sub.unsubscribe();
+        if (this.sub) {
+            this.sub.unsubscribe();
+        }
     }
 
     private renderMultipleCanvas = (frame: FrameStore) => {
@@ -291,7 +293,11 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
             // Skip rendering if frame is hidden
             if (frame.renderConfig.visible) {
-                this.props.image?.type === ImageType.PV_PREVIEW ? this.renderSingleTileCanvas(frame) : this.renderTiledCanvas(frame, channel);
+                if (this.props.image?.type === ImageType.PV_PREVIEW) {
+                    this.renderSingleTileCanvas(frame)
+                } else {
+                    this.renderTiledCanvas(frame, channel)
+                }
             }
         }
     }
@@ -442,7 +448,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             mip: 1
         };
         let bottomLeft = {x: tileImageView.xMin - full.xMin - 0.5, y: tileImageView.yMin - full.yMin - 0.5};
-        let tileScaling = scale2D({x: 1, y: 1}, mip * spatialRef.zoomLevel);
+        const tileScaling = scale2D({x: 1, y: 1}, mip * spatialRef.zoomLevel);
 
         if (frame.spatialReference && frame.spatialTransform) {
             bottomLeft = add2D(bottomLeft, frame.spatialTransform.translation);

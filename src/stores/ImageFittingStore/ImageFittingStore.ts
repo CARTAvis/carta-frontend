@@ -402,8 +402,8 @@ export class ImageFittingStore {
                 const centerXUnit = centerFixedX ? "" : formatTypeX === NumberFormatType.HMS ? "s" : "arcsec";
                 const centerYUnit = centerFixedY ? "" : formatTypeY === NumberFormatType.HMS ? "s" : "arcsec";
 
-                let fwhmValueWCS = frame.getWcsSizeInArcsec(value.fwhm as Point2D);
-                let fwhmErrorWCS = frame.getWcsSizeInArcsec(error.fwhm as Point2D);
+                const fwhmValueWCS = frame.getWcsSizeInArcsec(value.fwhm as Point2D);
+                const fwhmErrorWCS = frame.getWcsSizeInArcsec(error.fwhm as Point2D);
                 const isValidFwhmValueWCS = !isNaN(fwhmValueWCS.x) && !isNaN(fwhmValueWCS.y) && isFinite(fwhmValueWCS.x) && isFinite(fwhmValueWCS.y);
                 const isValidFwhmErrorWCS = !isNaN(fwhmErrorWCS.x) && !isNaN(fwhmErrorWCS.y) && isFinite(fwhmErrorWCS.x) && isFinite(fwhmErrorWCS.y);
                 let fwhmUnit = AngularSizeUnit.ARCSEC;
@@ -473,7 +473,7 @@ export class ImageFittingStore {
             newRegions?.forEach(r => r?.setDashLength(2));
             AppToaster.show(SuccessToast("tick", `Created ${params?.length} ellipse regions.`));
         } catch (err) {
-            console.log(err);
+            console.error(err);
         }
     };
 

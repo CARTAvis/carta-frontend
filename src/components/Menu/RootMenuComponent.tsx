@@ -172,7 +172,7 @@ export class RootMenuComponent extends React.Component {
         const modString = appStore.modifierString;
         const connectionStatus = appStore.backendService.connectionStatus;
 
-        let serverMenu: React.ReactNode[] = [];
+        const serverMenu: React.ReactNode[] = [];
 
         const apiService = appStore.apiService;
         if (apiService.authenticated && ApiService.RuntimeConfig.dashboardAddress) {
@@ -193,7 +193,7 @@ export class RootMenuComponent extends React.Component {
                         await copyToClipboard(appStore.backendService.sessionId.toString());
                         AppToaster.show(SuccessToast("clipboard", "Session ID copied!"));
                     } catch (err) {
-                        console.log(err);
+                        console.error(err);
                     }
                 }}
             />
@@ -220,7 +220,7 @@ export class RootMenuComponent extends React.Component {
                         }
                         AppToaster.show(SuccessToast("clipboard", "Session URL copied!"));
                     } catch (err) {
-                        console.log(err);
+                        console.error(err);
                     }
                 }}
             />
@@ -378,7 +378,7 @@ export class RootMenuComponent extends React.Component {
         const vectorOverlayLoading =
             appStore.activeFrame && typeof appStore.activeFrame.vectorOverlayStore?.progress === "number" && appStore.activeFrame.vectorOverlayStore.progress >= 0 && appStore.activeFrame.vectorOverlayStore.progress < 1;
         let loadingTooltipFragment;
-        let loadingIndicatorClass = "contour-loading-icon";
+        const loadingIndicatorClass = "contour-loading-icon";
         let showLoadingIndicator = false;
 
         if (tilesLoading || contoursLoading || vectorOverlayLoading) {

@@ -247,10 +247,10 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         const overlayFrames = appStore.vectorOverlayFrames.get(baseFrame);
         if (overlayFrames) {
             for (const frame of overlayFrames) {
-                let {angularSource, intensitySource, thickness, rotationOffset, color, colormapBias, colormapContrast, colormapEnabled, colormap, intensityMin, intensityMax, lengthMin, lengthMax} = frame.vectorOverlayConfig;
+                // let {angularSource, intensitySource, thickness, rotationOffset, color, colormapBias, colormapContrast, colormapEnabled, colormap, intensityMin, intensityMax, lengthMin, lengthMax} = frame.vectorOverlayConfig;
                 const config = frame.vectorOverlayConfig;
-                intensityMin = isFinite(intensityMin ?? NaN) ? intensityMin : frame.vectorOverlayStore.intensityMin;
-                intensityMax = isFinite(intensityMax ?? NaN) ? intensityMax : frame.vectorOverlayStore.intensityMax;
+                config.intensityMin = isFinite(config.intensityMin ?? NaN) ? config.intensityMin : frame.vectorOverlayStore.intensityMin;
+                config.intensityMax = isFinite(config.intensityMax ?? NaN) ? config.intensityMax : frame.vectorOverlayStore.intensityMax;
 
                 frame.vectorOverlayStore.tiles?.forEach(t => {
                     const numVertices = t.numVertices;

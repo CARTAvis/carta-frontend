@@ -109,6 +109,7 @@ export class TelemetryService {
                 }
             } catch (err) {
                 console.warn("Could not generate telemetry UUID");
+                console.error(err);
                 return false;
             }
         }
@@ -125,6 +126,7 @@ export class TelemetryService {
             }
         } catch (err) {
             console.warn("Malformed telemetry token");
+            console.error(err);
             return false;
         }
 
@@ -154,6 +156,7 @@ export class TelemetryService {
             await this.axiosInstance.post("/api/submit", [entry]);
         } catch (err) {
             console.log("Telemetry server unavailable");
+            console.error(err);
         }
     }
 
@@ -174,6 +177,7 @@ export class TelemetryService {
             await this.axiosInstance.post("/api/submit", [entry]);
         } catch (err) {
             console.log("Telemetry server unavailable");
+            console.error(err);
         }
     }
 
@@ -217,6 +221,7 @@ export class TelemetryService {
                 }
             } catch (err) {
                 console.debug("Telemetry server not available");
+                console.error(err);
             }
         }
     };

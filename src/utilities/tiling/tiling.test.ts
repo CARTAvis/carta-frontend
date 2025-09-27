@@ -242,8 +242,8 @@ test("returns the correct list of tiles when viewing a tall section partially ri
 test("give correct result when generating tiles for a 16K image at full resolution using 256x256 tiles", () => {
     const result = GetRequiredTiles({xMin: 0, xMax: 16384, yMin: 0, yMax: 16384, mip: 1}, {x: 16384, y: 16384}, Tile256);
 
-    let xRange = Array.from({length: 64}, (v, k) => k);
-    let yRange = Array.from({length: 64}, (v, k) => k);
+    const xRange = Array.from({length: 64}, (v, k) => k);
+    const yRange = Array.from({length: 64}, (v, k) => k);
 
     const expected: TileCoordinate[] = [];
     xRange.forEach(x => {

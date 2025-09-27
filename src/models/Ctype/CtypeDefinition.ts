@@ -43,7 +43,7 @@ export const CtypeName = new Map<string, string>([
 ]);
 
 export function CtypeAbbrToName(ctypes: string): string {
-    let ctypeName: string[] = [];
+    const ctypeName: string[] = [];
 
     ctypes.split(",").forEach(ctype => {
         ctypeName.push(CtypeName.has(ctype) ? (CtypeName.get(ctype) as string) : ctype);
@@ -58,8 +58,8 @@ export function FileCtypeInfo(headerEntries: CARTA.IFileInfoExtended | CARTA.IHe
         return {ctype: "", rank: 0};
     }
 
-    let tempCtypes = {};
-    let tempNaxes = {};
+    const tempCtypes = {};
+    const tempNaxes = {};
     let ctypes: any[] = [];
 
     (headerEntries as any[]).forEach(header => {

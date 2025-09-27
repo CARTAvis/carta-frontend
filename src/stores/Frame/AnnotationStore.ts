@@ -509,10 +509,6 @@ export class RulerAnnotationStore extends RegionStore {
     };
 
     public getCurveApproximation(wcsInfo: AST.FrameSet, mapping?: AST.Mapping): {xApproximatePoints: number[]; yApproximatePoints: number[]; hypotenuseApproximatePoints: number[]; corner: Point2D} {
-        let xApproximatePoints;
-        let yApproximatePoints;
-        let hypotenuseApproximatePoints;
-
         const xIn = new Float64Array(2);
         const yIn = new Float64Array(2);
 
@@ -537,9 +533,9 @@ export class RulerAnnotationStore extends RegionStore {
         const start = {x: startX, y: startY};
         const finish = {x: finishX, y: finishY};
 
-        xApproximatePoints = AST.getGeodesicPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, corner, start);
-        yApproximatePoints = AST.getGeodesicPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, finish, corner);
-        hypotenuseApproximatePoints = AST.getGeodesicPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, start, finish);
+        const xApproximatePoints = AST.getGeodesicPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, corner, start);
+        const yApproximatePoints = AST.getGeodesicPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, finish, corner);
+        const hypotenuseApproximatePoints = AST.getGeodesicPointArray(wcsInfo, NUMBER_OF_POINT_TRANSFORMED, start, finish);
 
         return {xApproximatePoints, yApproximatePoints, hypotenuseApproximatePoints, corner: transformPoint(wcsInfo, corner, false)};
     }

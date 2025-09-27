@@ -24,7 +24,7 @@ export function getSortedIndexMap(
         if (hasFilter) {
             sortedIndexMap = getInitIndexMap(numVisibleRows);
         }
-        let queryColumn = sortData.get(dataIndex);
+        const queryColumn = sortData.get(dataIndex);
 
         switch (queryColumn?.dataType) {
             case CARTA.ColumnType.String:
@@ -57,7 +57,7 @@ export function getSortedIndexMap(
 }
 
 export function getInitIndexMap(numVisibleRows: number): number[] {
-    let sortedIndexMap: number[] = [];
+    const sortedIndexMap: number[] = [];
     for (let index = 0; index < numVisibleRows; index++) {
         sortedIndexMap.push(index);
     }

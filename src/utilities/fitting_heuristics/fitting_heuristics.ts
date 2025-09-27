@@ -183,7 +183,7 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
     // Note that when estimating the continuum, if the input spectrum are dominated with line features (especially when their distributions have mirror symmetry), the final estimated continuum may not be ideal.
     // Therefore, the following line feature identification procedures (2nd and 3rd) may not work well.
 
-    let x: number[] = xInput;
+    const x: number[] = xInput;
     let y: number[] = yInput;
 
     let order;

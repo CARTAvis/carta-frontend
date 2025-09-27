@@ -53,11 +53,11 @@ export class SpectralProfileSelectionStore {
     // and SpectralConfig is specially for CalculateRequirementsMap in SpectralProfileWidgetStore.
     // P.S. this.profileConfigs has the key statType & SpectralConfig has the key statsType's'
     public getFormattedSpectralConfigs = (): SpectralConfig[] => {
-        let formattedSpectralConfigs: SpectralConfig[] = [];
+        const formattedSpectralConfigs: SpectralConfig[] = [];
         const profileConfigs = this.profileConfigs;
         if (profileConfigs?.length > 0) {
             if (this.activeProfileCategory === MultiProfileCategory.STATISTIC) {
-                let statsTypes: CARTA.StatsType[] = [];
+                const statsTypes: CARTA.StatsType[] = [];
                 profileConfigs.forEach(profileConfig => statsTypes.push(profileConfig.statsType));
                 formattedSpectralConfigs.push({
                     fileId: profileConfigs[0].fileId,
@@ -87,7 +87,7 @@ export class SpectralProfileSelectionStore {
     };
 
     @computed private get profileConfigs(): ProfileConfig[] {
-        let profileConfigs: ProfileConfig[] = [];
+        const profileConfigs: ProfileConfig[] = [];
         if (this.selectedFrame && this.selectedRegionIds?.length > 0 && this.selectedStatsTypes?.length > 0 && this.selectedCoordinates?.length > 0) {
             if (this.activeProfileCategory === MultiProfileCategory.NONE || this.activeProfileCategory === MultiProfileCategory.IMAGE) {
                 const region = this.widgetStore.effectiveRegion;
@@ -183,7 +183,7 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get profiles(): Profile[] {
-        let profiles: Profile[] = [];
+        const profiles: Profile[] = [];
         this.profileConfigs?.forEach(profileConfig => {
             const appStore = AppStore.Instance;
             const frame = appStore.getFrame(profileConfig.fileId ?? NaN);
@@ -344,7 +344,7 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get coordinateOptions(): LineOption[] {
-        let options = [{value: "z", label: "Current"}];
+        const options = [{value: "z", label: "Current"}];
         if (this.selectedFrame?.hasStokes) {
             this.selectedFrame.polarizationInfo?.forEach(polarization => options.push({value: `${polarization.replace("Stokes ", "")}z`, label: polarization}));
         }

@@ -55,7 +55,7 @@ export function getPercentiles(histogram: CARTA.IHistogram, ranks: number[]): nu
     const minVal = (histogram.firstBinCenter ?? NaN) - (histogram.binWidth ?? NaN) / 2.0;
     const dx = histogram.binWidth ?? NaN;
     const vals = histogram.bins;
-    let remainingRanks = ranks.slice();
+    const remainingRanks = ranks.slice();
     let cumulativeSum = 0;
 
     let totalSum = 0;
@@ -67,7 +67,7 @@ export function getPercentiles(histogram: CARTA.IHistogram, ranks: number[]): nu
         return [];
     }
 
-    let calculatedPercentiles: number[] = [];
+    const calculatedPercentiles: number[] = [];
 
     for (let i = 0; i < vals.length && remainingRanks.length; i++) {
         const currentFraction = cumulativeSum / totalSum;

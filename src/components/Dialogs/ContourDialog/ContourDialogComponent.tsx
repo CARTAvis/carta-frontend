@@ -165,8 +165,8 @@ export class ContourDialogComponent extends React.Component {
             maxIndex = clamp(maxIndex, 0, histogram.bins.length - 1);
         }
 
-        let xMin = histogram.firstBinCenter + histogram.binWidth * minIndex;
-        let xMax = histogram.firstBinCenter + histogram.binWidth * maxIndex;
+        const xMin = histogram.firstBinCenter + histogram.binWidth * minIndex;
+        const xMax = histogram.firstBinCenter + histogram.binWidth * maxIndex;
         let yMin = histogram.bins[minIndex];
         let yMax = yMin;
 
@@ -367,7 +367,7 @@ export class ContourDialogComponent extends React.Component {
         const currentPlotData = this.plotData;
         if (currentPlotData) {
             // set line color
-            let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
+            const primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
             linePlotProps.lineColor = primaryLineColor;
 
             // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
@@ -435,7 +435,7 @@ export class ContourDialogComponent extends React.Component {
             });
         }
 
-        let sortedLevels = this.levels
+        const sortedLevels = this.levels
             .slice()
             .sort((a, b) => a - b)
             .map(level => (Math.abs(level) < 0.1 ? toExponential(level, 2) : toFixed(level, 2)));

@@ -62,9 +62,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
             }
 
             // Render config widget
-            let itemConfig: GoldenLayout.ItemConfigType;
-
-            itemConfig = {
+            const itemConfig: GoldenLayout.ItemConfigType = {
                 type: "react-component",
                 component: this.props.widgetConfig.type,
                 title: this.props.widgetConfig.title,

@@ -39,7 +39,7 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
     }, AutoColorPickerComponent.CHANGE_DELAY);
 
     private renderColorBlock = (color: string) => {
-        let className = "dropdown-color";
+        const className = "dropdown-color";
         return (
             <div className={className} style={{backgroundColor: color, opacity: this.props.disabled ? 0.5 : 1}}>
                 &nbsp;

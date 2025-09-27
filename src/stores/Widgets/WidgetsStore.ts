@@ -617,7 +617,7 @@ export class WidgetsStore {
                 savedConfigId = savedConfig.plotType;
             }
             const id = this.addWidgetByType(savedConfigId, savedConfig.widgetSettings);
-            let config = new WidgetConfig(id, WidgetsStore.GetDefaultWidgetConfig(savedConfig.id));
+            const config = new WidgetConfig(id, WidgetsStore.GetDefaultWidgetConfig(savedConfig.id));
             config.setDefaultSize(savedConfig.defaultWidth || config.defaultWidth, savedConfig.defaultHeight || config.defaultHeight);
             if (config.componentId) {
                 config.componentId = config.id;
@@ -811,7 +811,7 @@ export class WidgetsStore {
         const defaultConfig = WidgetsStore.GetDefaultWidgetSettingsConfig(parentType);
         const id = this.addFloatingSettingsWidget(null, parentId, defaultConfig.type);
         if (id !== null) {
-            let widgetConfig = new WidgetConfig(id, defaultConfig);
+            const widgetConfig = new WidgetConfig(id, defaultConfig);
             widgetConfig.title = parentType === "image-view" ? "Image View Settings" : parentTitle + " Settings";
             widgetConfig.parentId = parentId;
             widgetConfig.parentType = parentType;
@@ -833,7 +833,7 @@ export class WidgetsStore {
         }
 
         // Get widget type from config
-        let widgetConfig = new WidgetConfig(id, WidgetsStore.GetDefaultWidgetConfig(type));
+        const widgetConfig = new WidgetConfig(id, WidgetsStore.GetDefaultWidgetConfig(type));
         widgetConfig.title = title;
 
         if (type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
@@ -870,7 +870,7 @@ export class WidgetsStore {
         const itemConfig = item.config as GoldenLayout.ReactComponentConfig;
         const type = itemConfig.component;
         // Get widget config from type
-        let widgetConfig = WidgetsStore.GetDefaultWidgetConfig(type);
+        const widgetConfig = WidgetsStore.GetDefaultWidgetConfig(type);
         const container = item["container"] as GoldenLayout.Container;
         let centerX = 0;
         if (container && container.width) {
@@ -1212,7 +1212,7 @@ export class WidgetsStore {
     private getNextComponentId = (config: DefaultWidgetConfig) => {
         // Find the next appropriate ID
         let nextIndex = 0;
-        let componentIds: string[] = [];
+        const componentIds: string[] = [];
 
         if (config.type === CatalogPlotComponent.WIDGET_CONFIG.type) {
             CatalogStore.Instance.catalogPlots.forEach((catalogWidgetMap, componentId) => {
@@ -1236,7 +1236,7 @@ export class WidgetsStore {
     createFloatingCatalogWidget = (catalogFileId: number): {widgetStoreId: string | null; widgetComponentId: string} => {
         const widgetStoreId = this.addCatalogWidget(catalogFileId);
         const widgetComponentId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
-        let config = new WidgetConfig(widgetComponentId, CatalogOverlayComponent.WIDGET_CONFIG);
+        const config = new WidgetConfig(widgetComponentId, CatalogOverlayComponent.WIDGET_CONFIG);
         config.componentId = widgetComponentId;
         this.addFloatingWidget(config);
         return {widgetStoreId: widgetStoreId, widgetComponentId: widgetComponentId};
@@ -1246,7 +1246,7 @@ export class WidgetsStore {
         const appStore = AppStore.Instance;
         const catalogFileNum = appStore.catalogNum;
         const componentId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
-        let config = new WidgetConfig(componentId, CatalogOverlayComponent.WIDGET_CONFIG);
+        const config = new WidgetConfig(componentId, CatalogOverlayComponent.WIDGET_CONFIG);
         config.componentId = componentId;
         if (catalogFileNum) {
             CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileNum);

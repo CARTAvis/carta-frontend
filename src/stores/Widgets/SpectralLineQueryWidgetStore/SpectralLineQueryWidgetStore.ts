@@ -177,7 +177,7 @@ export class SpectralLineQueryWidgetStore {
     };
 
     @action private updateFilterResult = (rowIndexes: Array<number>) => {
-        let filterResult = new Map<number, ProcessedColumnData>();
+        const filterResult = new Map<number, ProcessedColumnData>();
         if (rowIndexes?.length === this.numDataRows) {
             this.queryResult.forEach((column, columnIndex) => {
                 filterResult.set(columnIndex, column);
@@ -186,7 +186,7 @@ export class SpectralLineQueryWidgetStore {
         } else {
             this.queryResult.forEach((column, columnIndex) => {
                 const columnData = column.data;
-                let filteredData: any[] = [];
+                const filteredData: any[] = [];
                 if (columnData) {
                     rowIndexes.forEach(dataIndex => {
                         if (dataIndex >= 0 && dataIndex < columnData.length) {
@@ -369,7 +369,7 @@ export class SpectralLineQueryWidgetStore {
     }
 
     @computed get displayedColumnHeaders(): Array<CARTA.ICatalogHeader> {
-        let displayedColumnHeaders: CARTA.ICatalogHeader[] = [];
+        const displayedColumnHeaders: CARTA.ICatalogHeader[] = [];
         this.controlHeader?.forEach(controlHeader => {
             if (controlHeader.display && controlHeader.dataIndex !== undefined && controlHeader.dataIndex < this.columnHeaders?.length) {
                 displayedColumnHeaders.push(this.columnHeaders[controlHeader.dataIndex]);
@@ -389,7 +389,7 @@ export class SpectralLineQueryWidgetStore {
     }
 
     @computed get filters(): string[] {
-        let filters: string[] = [];
+        const filters: string[] = [];
         this.controlHeader.forEach(value => {
             if (value.filter) {
                 filters.push(value.filter);
@@ -434,7 +434,7 @@ export class SpectralLineQueryWidgetStore {
     }
 
     private preprocessHeaders = (ackHeaders: CARTA.ICatalogHeader[]): Array<CARTA.CatalogHeader> => {
-        let columnHeaders: CARTA.CatalogHeader[] = [];
+        const columnHeaders: CARTA.CatalogHeader[] = [];
 
         // 1. collect headers & add description
         ackHeaders?.forEach(header => {
@@ -472,7 +472,7 @@ export class SpectralLineQueryWidgetStore {
         // Since ```ackColumns``` has no line selection boolean column (but ```headers``` does), ackColumns.get(i - 1) extracts correct column data.
         const columns = new Map<number, ProcessedColumnData>();
         for (let i = 1; i < headers.length; i++) {
-            let selectColumn = ackColumns.get(i - 1);
+            const selectColumn = ackColumns.get(i - 1);
             columns.set(i, {
                 dataType: selectColumn?.dataType,
                 data: selectColumn?.data

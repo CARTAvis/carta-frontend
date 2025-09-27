@@ -44,7 +44,7 @@ export class ColorbarStore {
             roundBase = Math.pow(10, precision);
             const min = Math.round(scaleMinVal * roundBase) / roundBase;
 
-            let numbers: number[] = [];
+            const numbers: number[] = [];
             let val = min > scaleMinVal ? min : Math.round((min + dy) * roundBase) / roundBase;
             while (val < scaleMaxVal) {
                 numbers.push(val);

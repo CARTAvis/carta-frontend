@@ -146,7 +146,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 N = coordinateData.values.length;
                 values = new Array(N);
                 fullResolutionValues = new Array(N);
-                let xArray: number[] = new Array(N);
+                const xArray: number[] = new Array(N);
                 const numPixels = this.width;
                 const decimationFactor = Math.round(N / numPixels);
                 let startIndex: number | undefined;
@@ -197,7 +197,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             } else {
                 N = Math.floor(Math.min(xMax - xMin + 1, coordinateData.values.length));
                 if (N > 0) {
-                    let xArray: number[] = new Array(coordinateData.values.length);
+                    const xArray: number[] = new Array(coordinateData.values.length);
                     for (let i = 0; i < coordinateData.values.length; i++) {
                         xArray[i] = i;
                     }
@@ -400,7 +400,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             return;
         }
 
-        let astString = new ASTSettingsString();
+        const astString = new ASTSettingsString();
         astString.add("System", AppStore.Instance.overlaySettings.global.explicitSystem);
 
         if (this.widgetStore.isXProfile && this.profileStore?.y != null) {
@@ -441,7 +441,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         // Start trimming from the next digit of pointInfo to avoid offset between pointInfo and upper wcs axis value
         const initialTrimLength = this.cachedFormattedCoordinates[0].length - decimalIndex - 1 - (pointInfoPrecision + 1);
         for (let trim = initialTrimLength; trim > 0; trim--) {
-            let trimmedArray = this.cachedFormattedCoordinates.slice();
+            const trimmedArray = this.cachedFormattedCoordinates.slice();
             for (let i = 0; i < trimmedArray.length; i++) {
                 trimmedArray[i] = trimmedArray[i].slice(0, -trim);
             }
@@ -480,7 +480,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     };
 
     private genProfilerInfo = (): string[] => {
-        let profilerInfo: string[] = [];
+        const profilerInfo: string[] = [];
         if (this.plotData) {
             if (this.widgetStore.isMouseMoveIntoLinePlots) {
                 // handle the value when cursor is in profiler
@@ -562,7 +562,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         const xLabel = this.lineAxis ? `${this.lineAxis.label} (${this.lineAxis.unit ?? ""})` : `${isXProfile ? "X" : "Y"} coordinate`;
         const imageName = appStore.activeFrame ? appStore.activeFrame.filename : undefined;
         const plotName = `${this.lineAxis ? "" : isXProfile ? "X " : "Y "}profile`;
-        let linePlotProps: LinePlotComponentProps = {
+        const linePlotProps: LinePlotComponentProps = {
             xLabel: xLabel,
             yLabel: "Value",
             darkMode: appStore.darkTheme,
@@ -611,7 +611,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     linePlotProps.fullResolutionData = currentPlotData.fullResolutionValues;
 
                     // set line color
-                    let primaryLineColor = getColorForTheme(widgetStore.primaryLineColor);
+                    const primaryLineColor = getColorForTheme(widgetStore.primaryLineColor);
                     linePlotProps.lineColor = primaryLineColor;
                     const smoothingStore = widgetStore.smoothingStore;
                     if (smoothingStore.type !== SmoothingType.NONE && currentPlotData?.smoothingValues) {
@@ -619,7 +619,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                             linePlotProps.lineColor = "#00000000";
                         }
 
-                        let smoothingPlotProps: MultiPlotProps = {
+                        const smoothingPlotProps: MultiPlotProps = {
                             imageName: imageName || "Unknown",
                             plotName: `${plotName}-smoothed`,
                             data: currentPlotData.smoothingValues,

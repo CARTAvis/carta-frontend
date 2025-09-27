@@ -191,7 +191,7 @@ export class ImageViewConfigStore {
 
     /** The frames visible on the current page, including the loaded images and the layers of the color blended images. */
     @computed get visibleFrames(): FrameStore[] {
-        let frames: Set<FrameStore> = new Set();
+        const frames: Set<FrameStore> = new Set();
         this.visibleImages.forEach(imageItem => {
             if (imageItem?.type === ImageType.FRAME) {
                 const frame = imageItem?.store;

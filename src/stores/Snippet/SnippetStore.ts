@@ -76,7 +76,7 @@ export class SnippetStore {
             }
         } catch (err) {
             AlertStore.Instance.showAlert("Loading user-defined snippets failed!");
-            console.log(err);
+            console.error(err);
         }
     }
 
@@ -97,6 +97,7 @@ export class SnippetStore {
                 f = new AsyncFunction(this.activeSnippet.code);
             } catch (e) {
                 f = undefined;
+                console.error(e);
             }
             return f;
         }
@@ -152,6 +153,7 @@ export class SnippetStore {
             }
         } catch (err) {
             AlertStore.Instance.showAlert(`Saving snippet ${name} failed!`);
+            console.error(err);
             return false;
         }
     }
@@ -172,6 +174,7 @@ export class SnippetStore {
             }
         } catch (err) {
             AlertStore.Instance.showAlert(`Deleting snippet ${name} failed!`);
+            console.error(err);
             return false;
         }
     }

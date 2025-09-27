@@ -122,7 +122,7 @@ export class AnimatorStore {
             appStore.tileService.setAnimationEnabled(true);
             console.log("Animation started successfully");
         } catch (err) {
-            console.log(err);
+            console.error(err);
             appStore.tileService.setAnimationEnabled(false);
         }
         if (this.stopHandle !== undefined) {
@@ -231,7 +231,7 @@ export class AnimatorStore {
             return undefined;
         }
 
-        let startFrame: CARTA.IAnimationFrame = {
+        const startFrame: CARTA.IAnimationFrame = {
             channel: frame.channel,
             stokes: frame.requiredPolarizationIndex
         };

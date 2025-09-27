@@ -74,8 +74,8 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
 
     // return regionRequirements spectralProfiles coordinate array
     private static requiredCoordinate(widgetStore: StokesAnalysisWidgetStore): Array<StokesCoordinate> {
-        let requiredCoordinate = StokesAnalysisWidgetStore.requestDataType;
-        let Iz = requiredCoordinate.indexOf(StokesCoordinate.TotalIntensity);
+        const requiredCoordinate = StokesAnalysisWidgetStore.requestDataType;
+        const Iz = requiredCoordinate.indexOf(StokesCoordinate.TotalIntensity);
         if (widgetStore.fractionalPolVisible) {
             if (Iz < 0) {
                 requiredCoordinate.push(StokesCoordinate.TotalIntensity);
@@ -120,7 +120,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
                     }
 
                     coordinates.forEach(coordinate => {
-                        let spectralConfig = regionRequirements?.spectralProfiles.find(profiles => profiles.coordinate === coordinate);
+                        const spectralConfig = regionRequirements?.spectralProfiles.find(profiles => profiles.coordinate === coordinate);
                         if (!spectralConfig) {
                             // create new spectral config
                             regionRequirements?.spectralProfiles.push({coordinate, statsTypes: [statsType]});

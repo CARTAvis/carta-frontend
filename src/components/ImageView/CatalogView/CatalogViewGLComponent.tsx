@@ -194,9 +194,9 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 }
                 const featherWidth = (shape.featherWidth ?? 0) * AppStore.Instance.pixelRatio;
                 const lineThickness = catalogWidgetStore.thickness * (shape.thicknessBase ?? 1) * AppStore.Instance.pixelRatio;
-                let color = tinycolor(catalogWidgetStore.catalogColor).toRgb();
-                let selectedSourceColor = tinycolor(catalogWidgetStore.highlightColor).toRgb();
-                let pointSize = catalogWidgetStore.isImagePixelSize ? catalogWidgetStore.catalogSize : catalogWidgetStore.catalogSize + (shape.diameterBase ?? 0);
+                const color = tinycolor(catalogWidgetStore.catalogColor).toRgb();
+                const selectedSourceColor = tinycolor(catalogWidgetStore.highlightColor).toRgb();
+                const pointSize = catalogWidgetStore.isImagePixelSize ? catalogWidgetStore.catalogSize : catalogWidgetStore.catalogSize + (shape.diameterBase ?? 0);
                 this.gl.uniform1f(shaderUniforms.LineThickness, lineThickness);
                 this.gl.uniform1i(shaderUniforms.ShowSelectedSource, catalogWidgetStore.showSelectedData ? 1.0 : 0.0);
                 // frameView
@@ -226,7 +226,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     rotationAngle = -sourceFrame.spatialTransform.rotation;
                     scaleAdjustment = sourceFrame.spatialTransform.scale;
                 } else {
-                    let baseRequiredView = sourceFrame.requiredFrameView;
+                    const baseRequiredView = sourceFrame.requiredFrameView;
                     rangeScale = {
                         x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
                         y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin)
@@ -348,7 +348,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         const clickEvent = event.nativeEvent;
         const catalogStore = CatalogStore.Instance;
 
-        let selectedPoint: {fileId: number | undefined; minIndex: number | undefined; minDistanceSquared: number} = {fileId: undefined, minIndex: undefined, minDistanceSquared: Number.MAX_VALUE};
+        const selectedPoint: {fileId: number | undefined; minIndex: number | undefined; minDistanceSquared: number} = {fileId: undefined, minIndex: undefined, minDistanceSquared: Number.MAX_VALUE};
         catalogStore.catalogGLData?.forEach((catalog, fileId) => {
             const frame = AppStore.Instance.getFrame(catalogStore.getFrameIdByCatalogId(fileId));
             if (!frame) {

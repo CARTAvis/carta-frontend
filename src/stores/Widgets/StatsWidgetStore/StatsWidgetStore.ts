@@ -58,7 +58,7 @@ export class StatsWidgetStore extends RegionWidgetStore {
                     regionRequirements.statsConfigs = [];
                 }
 
-                let histogramConfig = regionRequirements?.statsConfigs.find(config => config.coordinate === coordinate);
+                const histogramConfig = regionRequirements?.statsConfigs.find(config => config.coordinate === coordinate);
                 if (!histogramConfig) {
                     regionRequirements?.statsConfigs.push({coordinate: coordinate, statsTypes: AppStore.DEFAULT_STATS_TYPES});
                 }
@@ -94,13 +94,13 @@ export class StatsWidgetStore extends RegionWidgetStore {
 
         // Go through updated requirements entries and find differences
         updatedRequirements.forEach((updatedFrameRequirements, fileId) => {
-            let frameRequirements = originalRequirements.get(fileId);
+            const frameRequirements = originalRequirements.get(fileId);
             if (!frameRequirements) {
                 // If there are no existing requirements for this fileId, all entries for this file are new
                 updatedFrameRequirements.forEach(regionRequirements => diffList.push(regionRequirements));
             } else {
                 updatedFrameRequirements.forEach((updatedRegionRequirements, regionId) => {
-                    let regionRequirements = frameRequirements?.get(regionId);
+                    const regionRequirements = frameRequirements?.get(regionId);
                     if (!regionRequirements) {
                         // If there are no existing requirements for this regionId, this is a new entry
                         diffList.push(updatedRegionRequirements);

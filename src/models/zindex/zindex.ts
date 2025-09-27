@@ -27,8 +27,8 @@ export class FloatingObjzIndexManager {
             const numFloatingObj = this.floatingObjs.size;
 
             if (numFloatingObj > 1 && selectedzIndex && selectedzIndex < numFloatingObj) {
-                for (let key of this.floatingObjs.keys()) {
-                    let currentObjzIndex = this.floatingObjs.get(key);
+                for (const key of this.floatingObjs.keys()) {
+                    const currentObjzIndex = this.floatingObjs.get(key);
                     if (currentObjzIndex && currentObjzIndex >= selectedzIndex) {
                         this.floatingObjs.set(key, currentObjzIndex - 1);
                     }
@@ -45,8 +45,8 @@ export class FloatingObjzIndexManager {
             const numFloatingObj = this.floatingObjs.size;
 
             if (selectedzIndex && selectedzIndex < numFloatingObj) {
-                for (let key of this.floatingObjs.keys()) {
-                    let currentObjzIndex = this.floatingObjs.get(key);
+                for (const key of this.floatingObjs.keys()) {
+                    const currentObjzIndex = this.floatingObjs.get(key);
                     if (currentObjzIndex && currentObjzIndex > selectedzIndex) {
                         this.floatingObjs.set(key, currentObjzIndex - 1);
                     }

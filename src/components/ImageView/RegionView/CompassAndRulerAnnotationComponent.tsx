@@ -208,7 +208,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
 
     React.useEffect(() => {
         updateOffset();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line
     }, []);
 
     const generateProps = (north: boolean) => {

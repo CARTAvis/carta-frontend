@@ -195,7 +195,7 @@ export class FloatingWidgetManagerComponent extends React.Component {
                     const showPinButton = this.showPin(w);
                     const id = w.componentId ? w.componentId : w.id;
 
-                    let zIndex = zIndexManager.findIndex(id);
+                    const zIndex = zIndexManager.findIndex(id);
                     const numFloatingObjs = zIndexManager.floatingObjsNum;
 
                     return (

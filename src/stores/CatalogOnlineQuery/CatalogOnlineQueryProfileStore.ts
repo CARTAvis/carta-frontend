@@ -65,7 +65,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
                 } else if (this.catalogType === CatalogType.VIZIER && (CatalogOnlineQueryProfileStore.VizierInitialedColumnsKeyWords.includes(header.name) || index < PreferenceStore.Instance.catalogDisplayedColumnSize)) {
                     display = true;
                 }
-                let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, filter: "", columnWidth: null};
+                const controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, filter: "", columnWidth: null};
                 controlHeaders.set(header.name, controlHeader);
             }
         }

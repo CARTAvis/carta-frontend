@@ -11,14 +11,15 @@ const defaultOptions = {
         "node_modules",
         "wasm_src",
         "docs_website",
+        "protobuf"
     ],
-    // enable: process.env.NODE_ENV === "production",
+    
 };
 
 export default defineConfig({
     plugins: [
         pluginReact(),
-        pluginEslint({ eslintPluginOptions: defaultOptions }),
+        pluginEslint({ eslintPluginOptions: defaultOptions, enable: process.env.NODE_ENV === "production" }),
         pluginSass(),
         pluginNodePolyfill(),
         pluginGlsl()

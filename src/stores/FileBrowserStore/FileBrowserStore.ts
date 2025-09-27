@@ -227,7 +227,7 @@ export class FileBrowserStore {
                 }
             }
         } catch (err) {
-            console.log(err);
+            console.error(err);
             AppToaster.show(ErrorToast(`Error loading file list for directory ${directory}`));
         }
         this.loadingList = false;
@@ -280,7 +280,7 @@ export class FileBrowserStore {
             }
             this.fileInfoResp = true;
         } catch (err) {
-            console.log(err);
+            console.error(err);
             this.responseErrorMessage = err;
             this.fileInfoResp = false;
             this.HDUfileInfoExtended = null;
@@ -305,7 +305,7 @@ export class FileBrowserStore {
             }
             this.fileInfoResp = true;
         } catch (err) {
-            console.log(err);
+            console.error(err);
             this.responseErrorMessage = err;
             this.fileInfoResp = false;
             this.regionFileInfo = null;
@@ -333,7 +333,7 @@ export class FileBrowserStore {
             }
             this.fileInfoResp = true;
         } catch (err) {
-            console.log(err);
+            console.error(err);
             this.responseErrorMessage = err;
             this.fileInfoResp = false;
             this.catalogFileInfo = null;
@@ -385,7 +385,7 @@ export class FileBrowserStore {
                 polarizationType: FileBrowserStore.GetStokesType(response.info?.[k], response.file)
             };
         } catch (err) {
-            console.log(err);
+            console.error(err);
             return undefined;
         }
     };
@@ -653,7 +653,7 @@ export class FileBrowserStore {
         const backendService = BackendService.Instance;
 
         const filesCtype: string[] = [];
-        let filesCtypeRank: number[] = [];
+        const filesCtypeRank: number[] = [];
 
         for (let i = 0; i < this.selectedFiles.length; i++) {
             const res = yield backendService.getFileInfo(this.fileList?.directory, this.selectedFiles[i].fileInfo?.name, this.selectedFiles[i].hdu);
@@ -878,7 +878,7 @@ export class FileBrowserStore {
     }
 
     @computed get exportRegionOptions(): LineOption[] {
-        let options: LineOption[] = [];
+        const options: LineOption[] = [];
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         if (frame?.regionSet?.regions) {

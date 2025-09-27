@@ -43,7 +43,7 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
     }, ColorPickerComponent.CHANGE_DELAY);
 
     public render() {
-        let popoverClassName = classNames("color-picker-popup", {[Classes.DARK]: this.props.darkTheme});
+        const popoverClassName = classNames("color-picker-popup", {[Classes.DARK]: this.props.darkTheme});
         const buttonColor = tinycolor(this.props.color).toString();
 
         return (

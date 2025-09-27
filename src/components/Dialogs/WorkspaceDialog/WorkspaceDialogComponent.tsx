@@ -77,7 +77,7 @@ export const WorkspaceDialogComponent = observer(() => {
                     return;
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
             }
             AppToaster.show(ErrorToast("Error saving workspace"));
             setIsFetching(false);
@@ -100,7 +100,7 @@ export const WorkspaceDialogComponent = observer(() => {
                     return;
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
             }
             setIsFetching(false);
         },

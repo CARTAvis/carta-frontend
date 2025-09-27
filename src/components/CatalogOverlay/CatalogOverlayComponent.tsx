@@ -498,7 +498,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             if (profileStore.isFileBasedCatalog) {
                 profileStore.updateTableStatus(false);
                 profileStore.resetFilterRequest();
-                let filter = profileStore.updateRequestDataSize;
+                const filter = profileStore.updateRequestDataSize;
                 if (filter.imageBounds) {
                     filter.imageBounds.xColumnName = catalogWidgetStore.xAxis;
                     filter.imageBounds.yColumnName = catalogWidgetStore.yAxis;
@@ -524,7 +524,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             profileStore.setSortingInfo(columnName, sortingType);
             if (profileStore.isFileBasedCatalog) {
                 profileStore.resetFilterRequest();
-                let filter = profileStore.updateRequestDataSize;
+                const filter = profileStore.updateRequestDataSize;
                 filter.sortColumn = columnName;
                 filter.sortingType = sortingType;
                 appStore.sendCatalogFilter(filter);
@@ -612,7 +612,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 }
                 if (profileStore.shouldUpdateData) {
                     profileStore.setUpdatingDataStream(true);
-                    let catalogFilter = profileStore.updateRequestDataSize;
+                    const catalogFilter = profileStore.updateRequestDataSize;
                     appStore.sendCatalogFilter(catalogFilter);
                 }
                 break;
@@ -676,7 +676,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private renderFileIdPopOver = (fileId: number, itemProps: ItemRendererProps) => {
         const fileName = this.catalogFileNames.get(fileId);
-        let text = `${fileId}: ${fileName}`;
+        const text = `${fileId}: ${fileName}`;
         return <MenuItem key={fileId} text={text} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
@@ -686,7 +686,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     @action private handleSplitChange = (newSize: number) => {
         // 130 is from 132, the height of widget excluding the header and table, subtracting 2 for the split bar width(?)
-        let position = clamp((newSize / (this.height - 130)) * 100, CatalogWidgetStore.MinTableSeparatorPosition, CatalogWidgetStore.MaxTableSeparatorPosition);
+        const position = clamp((newSize / (this.height - 130)) * 100, CatalogWidgetStore.MinTableSeparatorPosition, CatalogWidgetStore.MaxTableSeparatorPosition);
         if (position) {
             this.isShowHeader = position === 100 ? false : true;
             this.prevPosition = position < 60 ? position : 60;
@@ -860,13 +860,13 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             </tr>
         ) : null;
 
-        let catalogFileItems: number[] = [];
+        const catalogFileItems: number[] = [];
         catalogFileIds.forEach(value => {
             catalogFileItems.push(value);
         });
         this.catalogFileNames = CatalogStore.Instance.getCatalogFileNames(catalogFileIds);
 
-        let systemOptions: CatalogSystemType[] = [];
+        const systemOptions: CatalogSystemType[] = [];
         AbstractCatalogProfileStore.CoordinateSystemName.forEach((value, key) => {
             systemOptions.push(key);
         });

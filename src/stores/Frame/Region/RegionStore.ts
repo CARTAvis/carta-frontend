@@ -392,8 +392,8 @@ export class RegionStore {
             if (this.regionType === CARTA.RegionType.ELLIPSE || this.regionType === CARTA.RegionType.ANNELLIPSE) {
                 approximatePoints = getApproximateEllipsePoints(astTransform, this.center, this.size.y, this.size.x, this.rotation, RegionStore.TARGET_VERTEX_COUNT);
             } else if (this.regionType === CARTA.RegionType.RECTANGLE || this.regionType === CARTA.RegionType.ANNRECTANGLE || this.regionType === CARTA.RegionType.ANNTEXT) {
-                let halfWidth = this.size.x / 2;
-                let halfHeight = this.size.y / 2;
+                const halfWidth = this.size.x / 2;
+                const halfHeight = this.size.y / 2;
                 const rotation = (this.rotation * Math.PI) / 180.0;
                 const points: Point2D[] = [
                     add2D(this.center, rotate2D({x: -halfWidth, y: -halfHeight}, rotation)),
@@ -519,7 +519,11 @@ export class RegionStore {
             if (!this.editing && !skipUpdate) {
                 this.updateRegion();
             } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.creating && this.isPreviewCut) {
-                PreferenceStore.Instance.lowBandwidthMode ? this.lowBandWidthThrottledUpdateRegion(true) : this.throttledUpdateRegion(true);
+                if (PreferenceStore.Instance.lowBandwidthMode) {
+                    this.lowBandWidthThrottledUpdateRegion(true);
+                } else {
+                    this.throttledUpdateRegion(true);
+                }
             }
             if (this.regionType === CARTA.RegionType.POLYGON || this.regionType === CARTA.RegionType.ANNPOLYGON) {
                 this.simplePolygonTest(index);
@@ -557,7 +561,11 @@ export class RegionStore {
         if (!this.editing && !skipUpdate) {
             this.updateRegion();
         } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.creating && this.isPreviewCut) {
-            PreferenceStore.Instance.lowBandwidthMode ? this.lowBandWidthThrottledUpdateRegion(true) : this.throttledUpdateRegion(true);
+            if (PreferenceStore.Instance.lowBandwidthMode) {
+                this.lowBandWidthThrottledUpdateRegion(true);
+            } else {
+                this.throttledUpdateRegion(true);
+            }
         }
     };
 
@@ -645,7 +653,7 @@ export class RegionStore {
                 console.log(`Updating regionID from ${this.regionId} to ${ack.regionId}`);
                 this.setRegionId(ack.regionId);
             } catch (err) {
-                console.log(err);
+                console.error(err);
             }
         }
     }
@@ -701,7 +709,7 @@ export class RegionStore {
                     await this.backendService.setRegion(this.fileId, this.regionId, this, isRequestingPreview);
                     console.log("Region updated");
                 } catch (err) {
-                    console.log(err);
+                    console.error(err);
                 }
             }
         }

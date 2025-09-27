@@ -90,7 +90,7 @@ export class ProfileSmoothingStore {
     };
 
     @computed get exportData() {
-        let exportData: Map<string, string> = new Map<string, string>();
+        const exportData: Map<string, string> = new Map<string, string>();
         exportData.set("smooth", this.type);
         if (this.type === SmoothingType.BOXCAR) {
             exportData.set("kernel", String(this.boxcarSize));
@@ -110,7 +110,7 @@ export class ProfileSmoothingStore {
     }
 
     @computed get comments(): string[] {
-        let comments: string[] = [];
+        const comments: string[] = [];
         this.exportData?.forEach((content, title) => comments.push(`${title}: ${content}`));
         return comments;
     }
@@ -148,7 +148,7 @@ export class ProfileSmoothingStore {
     }
 
     private getLocalGroupStartEndIndexes(fullLength: number, xMinIndex: number | undefined, xMaxIndex: number, width: number) {
-        let firstGroupStartIndex = (xMinIndex ?? NaN) % width === 0 ? xMinIndex : (xMinIndex ?? NaN) - ((xMinIndex ?? NaN) % width);
+        const firstGroupStartIndex = (xMinIndex ?? NaN) % width === 0 ? xMinIndex : (xMinIndex ?? NaN) - ((xMinIndex ?? NaN) % width);
         let lastGroupEndIndex = xMaxIndex % width === width - 1 ? xMaxIndex : xMaxIndex - (xMaxIndex % width) + (width - 1);
         if (lastGroupEndIndex > fullLength - 1) {
             lastGroupEndIndex = fullLength - 1;
@@ -193,11 +193,11 @@ export class ProfileSmoothingStore {
                 const indexes = this.getLocalGroupStartEndIndexes(x.length, xMinIndex, xMaxIndex, this.decimationWidth);
                 const localYs = y.subarray(indexes.firstIndex, indexes.lastIndex + 1);
                 const localXs = x.slice(indexes.firstIndex, indexes.lastIndex + 1);
-                let decimatedValues = GSL.decimation(localXs, localYs, this.decimationWidth);
+                const decimatedValues = GSL.decimation(localXs, localYs, this.decimationWidth);
                 smoothingXs = decimatedValues.x;
                 smoothingYs = decimatedValues.y;
             } else {
-                let decimatedValues = GSL.decimation(x, y, this.decimationWidth);
+                const decimatedValues = GSL.decimation(x, y, this.decimationWidth);
                 smoothingXs = decimatedValues.x;
                 smoothingYs = decimatedValues.y;
             }
@@ -233,7 +233,7 @@ export class ProfileSmoothingStore {
         if (!smoothingValues.y) {
             return [];
         }
-        let smoothingArray: Point2D[] = new Array(smoothingValues.x.length);
+        const smoothingArray: Point2D[] = new Array(smoothingValues.x.length);
 
         for (let i = 0; i < smoothingValues.x.length; i++) {
             smoothingArray[i] = {x: smoothingValues.x[i], y: smoothingValues.y[i]};
@@ -256,7 +256,7 @@ export class ProfileSmoothingStore {
             decimatedValues = GSL.decimation(x, y, decimationWidth);
         }
 
-        let decimatedArray: Point2D[] = new Array(decimatedValues.x.length);
+        const decimatedArray: Point2D[] = new Array(decimatedValues.x.length);
         for (let i = 0; i < decimatedValues.x.length; i++) {
             decimatedArray[i] = {x: decimatedValues.x[i], y: decimatedValues.y[i]};
         }

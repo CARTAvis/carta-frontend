@@ -17,7 +17,7 @@ export const ShareWorkspaceDialogComponent = observer(() => {
     const appStore = AppStore.Instance;
 
     // Reset the dialog when the active workspace changes
-    let shareWorkspaceDialogVisible = appStore.dialogStore.dialogVisible.get(DialogId.ShareWorkspace);
+    const shareWorkspaceDialogVisible = appStore.dialogStore.dialogVisible.get(DialogId.ShareWorkspace);
     useEffect(() => {
         setShareKey("");
         setIsGeneratingLink(false);
@@ -51,7 +51,7 @@ export const ShareWorkspaceDialogComponent = observer(() => {
             const shareKey = await appStore.apiService.getSharedWorkspaceKey(activeWorkspace.id);
             setShareKey(shareKey ?? "");
         } catch (err) {
-            console.log(err);
+            console.error(err);
             AppToaster.show(WarningToast("Could not generate a sharing link."));
         }
     };

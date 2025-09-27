@@ -317,7 +317,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
 
     private onRowIndexSelection = (selectedRegions: Region[]) => {
         if (selectedRegions.length > 0) {
-            let selectedDataIndex: number[] = [];
+            const selectedDataIndex: number[] = [];
             for (let i = 0; i < selectedRegions.length; i++) {
                 const region = selectedRegions[i];
                 if (region.rows && region.rows.length >= 2) {
@@ -344,7 +344,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         table.columnHeaders?.forEach(header => {
             const columnIndex = header.columnIndex;
             if (columnIndex != null) {
-                let dataArray = tableData.get(columnIndex)?.data;
+                const dataArray = tableData.get(columnIndex)?.data;
                 const column = header.name === SpectralLineHeaders.LineSelection && this.props.flipRowSelection ? this.renderCheckboxColumn(header, dataArray) : this.renderDataColumnWithFilter(header, dataArray ?? []);
                 tableColumns.push(column);
                 if (header.name === SpectralLineHeaders.LineSelection) {

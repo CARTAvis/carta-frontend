@@ -104,7 +104,7 @@ export class TileService {
     public decompressPreviewRasterData(previewData: CARTA.PvPreviewData) {
         const compressedArray = previewData.imageData;
         const nanEncodings32 = new Int32Array(previewData.nanEncodings.slice(0).buffer);
-        let compressedView = new Uint8Array(Math.max(compressedArray.byteLength, previewData.width * previewData.height * 4));
+        const compressedView = new Uint8Array(Math.max(compressedArray.byteLength, previewData.width * previewData.height * 4));
         compressedView.set(compressedArray);
 
         const eventArgs = {
@@ -607,7 +607,7 @@ export class TileService {
             this.channelMap.set(tileMessage.fileId, {channel: tileMessage.channel, stokes: tileMessage.stokes});
         }
 
-        for (let tile of tileMessage.tiles ?? []) {
+        for (const tile of tileMessage.tiles ?? []) {
             const encodedCoordinate = TileCoordinate.Encode(tile.x ?? NaN, tile.y ?? NaN, tile.layer ?? NaN);
             const gpuCacheCoordinate = TileCoordinate.AddFileIdAndChannel(encodedCoordinate, tileMessage?.fileId ?? NaN, tileMessage?.channel ?? NaN);
             // Remove from the requested tile map. If in animation mode, don't check if we're still requesting tiles
@@ -646,7 +646,7 @@ export class TileService {
         const compressedArray = tile.imageData;
         const workerIndex = this.compressionRequestCounter % this.workers.length;
         const nanEncodings32 = new Int32Array((tile.nanEncodings ?? new Uint8Array()).slice(0).buffer);
-        let compressedView = new Uint8Array(Math.max(compressedArray?.byteLength ?? NaN, (tile.width ?? NaN) * (tile.height ?? NaN) * 4));
+        const compressedView = new Uint8Array(Math.max(compressedArray?.byteLength ?? NaN, (tile.width ?? NaN) * (tile.height ?? NaN) * 4));
         compressedView.set(compressedArray ?? new Uint8Array());
 
         const key = `${fileId}_${stokes}_${channel}`;

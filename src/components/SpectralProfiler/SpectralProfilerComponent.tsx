@@ -221,7 +221,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     };
 
     private genProfilerInfo = (): ProfileInfo[] => {
-        let profilerInfo: ProfileInfo[] = [];
+        const profilerInfo: ProfileInfo[] = [];
         const frame = this.widgetStore.effectiveFrame;
         if (frame && this.plotData && this.plotData.numProfiles > 0 && this.plotData.data) {
             const isCursorInsideLinePlots = this.widgetStore.isMouseMoveIntoLinePlots;
@@ -291,7 +291,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     };
 
     private fillVisibleSpectralLines = (): LineMarker[] => {
-        let spectralLineMarkers: LineMarker[] = [];
+        const spectralLineMarkers: LineMarker[] = [];
         const spectralLines = this.widgetStore.transformedSpectralLines;
         if (spectralLines?.length > 0) {
             // find x range
@@ -324,7 +324,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"} />;
         }
 
-        let linePlotProps: LinePlotComponentProps = {
+        const linePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
             darkMode: appStore.darkTheme,
@@ -411,12 +411,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 linePlotProps.opacity = currentPlotData.progress < 1.0 ? 0.15 + currentPlotData.progress / 4.0 : 1.0;
 
                 // set line color
-                let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
+                const primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
                 linePlotProps.lineColor = primaryLineColor;
 
                 if (this.widgetStore.profileNum === 1) {
                     if (fittingStore.continuum !== FittingContinuum.NONE && !fittingStore.hasResult) {
-                        let fittingPlotProps: MultiPlotProps = {
+                        const fittingPlotProps: MultiPlotProps = {
                             imageName: currentPlotData.plotName.image,
                             plotName: currentPlotData.plotName.plot,
                             data: fittingStore.baseLinePoint2DArray,
@@ -433,7 +433,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         linePlotProps.multiPlotPropsMap.set("fittingBaseline", fittingPlotProps);
                     }
                     if (fittingStore.hasResult) {
-                        let fittingPlotProps: MultiPlotProps = {
+                        const fittingPlotProps: MultiPlotProps = {
                             imageName: currentPlotData.plotName?.image ?? "",
                             plotName: currentPlotData.plotName?.plot ?? "",
                             data: fittingStore.modelPoint2DArray,
@@ -469,7 +469,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         }
 
                         if (fittingStore.enableResidual) {
-                            let fittingResidualPlotProps: MultiPlotProps = {
+                            const fittingResidualPlotProps: MultiPlotProps = {
                                 imageName: currentPlotData.plotName?.image ?? "",
                                 plotName: currentPlotData.plotName?.plot ?? "",
                                 data: fittingStore.residualPoint2DArray,

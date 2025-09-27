@@ -215,7 +215,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     private genXline(id: string, markerColor: string, markerOpacity: number, valueCanvasSpace: number) {
         const chartArea = this.chartArea;
-        let lineSegments: JSX.Element[] = [];
+        const lineSegments: JSX.Element[] = [];
         if (chartArea) {
             lineSegments.push(<Line listening={false} key={0} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} />);
         }
@@ -228,7 +228,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     private genYline(id: string, markerColor: string, markerOpacity: number, valueCanvasSpace: number) {
         const chartArea = this.chartArea;
-        let lineSegments: JSX.Element[] = [];
+        const lineSegments: JSX.Element[] = [];
         if (chartArea) {
             lineSegments.push(<Line listening={false} key={0} points={[chartArea.left, 0, chartArea.right, 0]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} />);
         }
@@ -255,7 +255,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     private genIndicator = () => {
         const chartArea = this.chartArea;
-        let indicator: JSX.Element[] = [];
+        const indicator: JSX.Element[] = [];
         const channel = this.props.indicatorInteractionChannel;
         const markerOpacity = this.markerOpacity;
         if (
@@ -277,8 +277,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 const xPixelValue = this.getPixelValue(channelH.x, this.props.xMin, this.props.xMax, true);
                 const yPixelValue = this.getPixelValue(channelH.y, this.props.yMin, this.props.yMax, false);
                 if (xPixelValue !== undefined && yPixelValue !== undefined) {
-                    let xCanvasSpace = Math.floor(xPixelValue);
-                    let yCanvasSpace = Math.floor(yPixelValue);
+                    const xCanvasSpace = Math.floor(xPixelValue);
+                    const yCanvasSpace = Math.floor(yPixelValue);
                     indicator.push(this.genCircle("scatter-indicator-y-hovered-interaction-circle", markerColor, xCanvasSpace, yCanvasSpace));
                 }
             }
@@ -300,8 +300,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 const xPixelValue = this.getPixelValue(channelC.x, this.props.xMin, this.props.xMax, true);
                 const yPixelValue = this.getPixelValue(channelC.y, this.props.yMin, this.props.yMax, false);
                 if (xPixelValue !== undefined && yPixelValue !== undefined) {
-                    let xCanvasSpace = Math.floor(xPixelValue);
-                    let yCanvasSpace = Math.floor(yPixelValue);
+                    const xCanvasSpace = Math.floor(xPixelValue);
+                    const yCanvasSpace = Math.floor(yPixelValue);
                     indicator.push(this.genXline("scatter-indicator-x-current-interactive", markerColor, markerOpacity, xCanvasSpace));
                     indicator.push(this.genYline("scatter-indicator-y-current-interactive", markerColor, markerOpacity, yCanvasSpace));
                 }
@@ -390,8 +390,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         if (this.props.data || (this.props.multiPlotPropsMap?.size ?? 0) > 0) {
             const mouseEvent: MouseEvent = ev.evt;
             const chartArea = this.chartArea;
-            let mousePosX = clamp(mouseEvent.offsetX, chartArea.left - 1, chartArea.right + 1);
-            let mousePosY = clamp(mouseEvent.offsetY, chartArea.top - 1, chartArea.bottom + 1);
+            const mousePosX = clamp(mouseEvent.offsetX, chartArea.left - 1, chartArea.right + 1);
+            const mousePosY = clamp(mouseEvent.offsetY, chartArea.top - 1, chartArea.bottom + 1);
             // Cursor move updates
             if (this.interactionMode === InteractionMode.NONE && this.props.graphCursorMoved) {
                 const cursorXPosGraphSpace = this.getValueForPixelX(mousePosX);
@@ -509,14 +509,14 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 if (this.isSelecting && this.zoomMode !== ZoomMode.NONE) {
                     let minCanvasSpace = Math.min(this.selectionBoxStart.x, this.selectionBoxEnd.x);
                     let maxCanvasSpace = Math.max(this.selectionBoxStart.x, this.selectionBoxEnd.x);
-                    let minX = this.getValueForPixelX(minCanvasSpace);
-                    let maxX = this.getValueForPixelX(maxCanvasSpace);
+                    const minX = this.getValueForPixelX(minCanvasSpace);
+                    const maxX = this.getValueForPixelX(maxCanvasSpace);
 
                     minCanvasSpace = Math.min(this.selectionBoxStart.y, this.selectionBoxEnd.y);
                     maxCanvasSpace = Math.max(this.selectionBoxStart.y, this.selectionBoxEnd.y);
                     // Canvas space y-axis is inverted, so min/max are switched when transforming to graph space
-                    let minY = this.getValueForPixelY(maxCanvasSpace);
-                    let maxY = this.getValueForPixelY(minCanvasSpace);
+                    const minY = this.getValueForPixelY(maxCanvasSpace);
+                    const maxY = this.getValueForPixelY(minCanvasSpace);
 
                     if (this.zoomMode === ZoomMode.X && this.props.graphZoomedX && minX !== undefined && maxX !== undefined) {
                         this.props.graphZoomedX(minX, maxX);
@@ -542,11 +542,11 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 return;
             }
             const delta = wheelEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? wheelEvent.deltaY : wheelEvent.deltaY * lineHeight;
-            let currentRangeX = this.props.xMax - this.props.xMin;
+            const currentRangeX = this.props.xMax - this.props.xMin;
             const fractionX = (wheelEvent.offsetX - chartArea.left) / (chartArea.right - chartArea.left);
             const rangeChangeX = zoomSpeed * delta * currentRangeX;
 
-            let currentRangeY = this.props.yMax - this.props.yMin;
+            const currentRangeY = this.props.yMax - this.props.yMin;
             const fractionY = (wheelEvent.offsetY - chartArea.top) / (chartArea.bottom - chartArea.top);
             const rangeChangeY = zoomSpeed * delta * currentRangeY;
 

@@ -9,7 +9,7 @@ export class WCSMatching {
     };
 
     public static getNameFromType = (matchingType: WCSMatchingType): string => {
-        let string = WCSMatchingType[matchingType];
+        const string = WCSMatchingType[matchingType];
         return this.capitalizeFirstLetter(string);
     };
 

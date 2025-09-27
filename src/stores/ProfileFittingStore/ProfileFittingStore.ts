@@ -78,7 +78,7 @@ export class ProfileFittingStore {
             let x = this.widgetStore.plotData.fittingData.x;
             let y = this.widgetStore.plotData.fittingData.y;
             if (y) {
-                let nonNaNIndex = y.findIndex(yi => !isNaN(yi));
+                const nonNaNIndex = y.findIndex(yi => !isNaN(yi));
                 if (nonNaNIndex > 0) {
                     x = x.slice(nonNaNIndex, x.length - nonNaNIndex);
                     y = y.slice(nonNaNIndex, y.length - nonNaNIndex);
@@ -249,7 +249,7 @@ export class ProfileFittingStore {
             const x = this.originData.x;
             const individualModelPoint2DArrays = new Array<Point2D[]>();
             for (const component of this.components) {
-                let individualResultPoint2DArray: Point2D[] = [];
+                const individualResultPoint2DArray: Point2D[] = [];
                 for (let i = 0; i < x.length; i++) {
                     const yi =
                         this.function === FittingFunction.GAUSSIAN ? gaussian(x[i], component.resultAmp, component.resultCenter, component.resultFwhm) : lorentzian(x[i], component.resultAmp, component.resultCenter, component.resultFwhm);

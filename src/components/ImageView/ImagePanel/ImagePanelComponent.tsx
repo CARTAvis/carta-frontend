@@ -135,7 +135,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
             const isColorBlending = this.props.image?.type === ImageType.COLOR_BLENDING;
             const className = classNames("image-panel-div", {active: isActive});
 
-            let style: React.CSSProperties = {
+            const style: React.CSSProperties = {
                 width: frame.overlayStore.viewWidth,
                 height: frame.overlayStore.viewHeight
             };

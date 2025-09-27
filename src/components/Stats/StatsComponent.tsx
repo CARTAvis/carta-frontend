@@ -52,9 +52,9 @@ export class StatsComponent extends React.Component<WidgetProps> {
     get statsData(): CARTA.RegionStatsData | null {
         const appStore = AppStore.Instance;
         if (this.widgetStore.effectiveFrame) {
-            let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
-            let regionId = this.widgetStore.effectiveRegionId;
-            let coordinate = this.widgetStore.coordinate;
+            const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+            const regionId = this.widgetStore.effectiveRegionId;
+            const coordinate = this.widgetStore.coordinate;
 
             const frameMap = appStore.regionStats.get(fileId);
             if (!frameMap) {
@@ -216,9 +216,9 @@ export class StatsComponent extends React.Component<WidgetProps> {
             } else {
                 regionInfo += "# full image\n";
             }
-            let channelInfo = frame.channelInfo ? `# channel: ${frame.spectralInfo.channel}\n` : "";
-            let stokesInfo = frame.hasStokes ? `# stokes: ${frame.requiredPolarizationInfo}\n` : "";
-            let comment = `${channelInfo}${stokesInfo}${regionInfo}`;
+            const channelInfo = frame.channelInfo ? `# channel: ${frame.spectralInfo.channel}\n` : "";
+            const stokesInfo = frame.hasStokes ? `# stokes: ${frame.requiredPolarizationInfo}\n` : "";
+            const comment = `${channelInfo}${stokesInfo}${regionInfo}`;
 
             const header = "# Statistic\tValue\tUnit\n";
 
@@ -262,7 +262,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             // stretch value column to cover width
             const valueWidth = Math.max(0, this.width - StatsComponent.NAME_COLUMN_WIDTH);
 
-            let rows: JSX.Element[] = [];
+            const rows: JSX.Element[] = [];
             StatsComponent.STATS_NAME_MAP.forEach((name, type) => {
                 if (this.statsData?.statistics) {
                     const index = this.statsData.statistics.findIndex(s => s.statsType === type);

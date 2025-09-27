@@ -419,7 +419,7 @@ export class CatalogWidgetStore {
      * @param val - maximum size of catalog source in pixel or square pixel
      */
     @action setSizeMax(val: number) {
-        let areaMode = this.sizeArea;
+        const areaMode = this.sizeArea;
         if (areaMode) {
             this.sizeMax.area = val;
         } else {
@@ -434,7 +434,7 @@ export class CatalogWidgetStore {
      * @param val - minimum size of catalog source in pixel or square pixel
      */
     @action setSizeMin(val: number) {
-        let areaMode = this.sizeArea;
+        const areaMode = this.sizeArea;
         if (areaMode) {
             this.sizeMin.area = val;
         } else {
@@ -544,7 +544,7 @@ export class CatalogWidgetStore {
      * @param val - maximum minor axis of catalog source in pixel or square pixel
      */
     @action setMinorSizeMax(val: number) {
-        let areaMode = this.sizeMinorArea;
+        const areaMode = this.sizeMinorArea;
         if (areaMode) {
             this.sizeMinorMax.area = val;
         } else {
@@ -557,7 +557,7 @@ export class CatalogWidgetStore {
      * @param val - minimum minor axis of catalog source in pixel or square pixel
      */
     @action setMinorSizeMin(val: number) {
-        let areaMode = this.sizeMinorArea;
+        const areaMode = this.sizeMinorArea;
         if (areaMode) {
             this.sizeMinorMin.area = val;
         } else {
@@ -828,7 +828,7 @@ export class CatalogWidgetStore {
     @computed get orientationMapData(): Float32Array {
         const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
         if (!this.disableOrientationMap && catalogProfileStore) {
-            let column = catalogProfileStore.get1DPlotData(this.orientationMapColumn).wcsData;
+            const column = catalogProfileStore.get1DPlotData(this.orientationMapColumn).wcsData;
             return column ? Float32Array.from(column) : new Float32Array(0);
         } else {
             return new Float32Array(0);
@@ -836,7 +836,7 @@ export class CatalogWidgetStore {
     }
 
     orientationArray(): Float32Array {
-        let column = this.orientationMapData;
+        const column = this.orientationMapData;
         if (!this.disableOrientationMap && column?.length && this.orientationMin.clipd !== undefined && this.orientationMax.clipd !== undefined) {
             return CARTACompute.CalculateCatalogOrientation(column, this.orientationMin.clipd, this.orientationMax.clipd, this.angleMin, this.angleMax, this.orientationScalingType);
         }
@@ -849,7 +849,7 @@ export class CatalogWidgetStore {
     @computed get colorMapData(): Float32Array {
         const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
         if (!this.disableColorMap && catalogProfileStore) {
-            let column = catalogProfileStore.get1DPlotData(this.colorMapColumn).wcsData;
+            const column = catalogProfileStore.get1DPlotData(this.colorMapColumn).wcsData;
             return column ? Float32Array.from(column) : new Float32Array(0);
         } else {
             return new Float32Array(0);
@@ -870,7 +870,7 @@ export class CatalogWidgetStore {
     @computed get sizeMapData(): Float32Array {
         const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
         if (!this.disableSizeMap && catalogProfileStore) {
-            let column = catalogProfileStore.get1DPlotData(this.sizeMapColumn).wcsData;
+            const column = catalogProfileStore.get1DPlotData(this.sizeMapColumn).wcsData;
             return column ? Float32Array.from(column) : new Float32Array(0);
         } else {
             return new Float32Array(0);
@@ -883,7 +883,7 @@ export class CatalogWidgetStore {
     @computed get sizeMinorMapData(): Float32Array {
         const catalogProfileStore = CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
         if (!this.disableSizeMinorMap && catalogProfileStore) {
-            let column = catalogProfileStore.get1DPlotData(this.sizeMinorMapColumn).wcsData;
+            const column = catalogProfileStore.get1DPlotData(this.sizeMinorMapColumn).wcsData;
             return column ? Float32Array.from(column) : new Float32Array(0);
         } else {
             return new Float32Array(0);
@@ -907,20 +907,20 @@ export class CatalogWidgetStore {
     }
 
     sizeArray(): Float32Array {
-        let column = this.sizeMapData;
+        const column = this.sizeMapData;
         if (!this.disableSizeMap && column?.length && this.sizeColumnMin.clipd !== undefined && this.sizeColumnMax.clipd !== undefined) {
             const pointSize = this.pointSizebyType;
-            let min = (this.isImagePixelSize ? 0 : this.sizeArea ? this.shapeSettings?.areaBase : this.shapeSettings?.diameterBase) ?? NaN;
+            const min = (this.isImagePixelSize ? 0 : this.sizeArea ? this.shapeSettings?.areaBase : this.shapeSettings?.diameterBase) ?? NaN;
             return CARTACompute.CalculateCatalogSize(column, this.sizeColumnMin.clipd, this.sizeColumnMax.clipd, pointSize.min + min, pointSize.max + min, this.sizeScalingType, this.sizeArea, this.pixelSizeFactor);
         }
         return new Float32Array(0);
     }
 
     sizeMinorArray(): Float32Array {
-        let column = this.sizeMinorMapData;
+        const column = this.sizeMinorMapData;
         if (!this.disableSizeMinorMap && column?.length && this.sizeMinorColumnMin.clipd !== undefined && this.sizeMinorColumnMax.clipd !== undefined) {
             const pointSize = this.minorPointSizebyType;
-            let min = (this.isImagePixelSize ? 0 : this.sizeArea ? this.shapeSettings?.areaBase : this.shapeSettings?.diameterBase) ?? NaN;
+            const min = (this.isImagePixelSize ? 0 : this.sizeArea ? this.shapeSettings?.areaBase : this.shapeSettings?.diameterBase) ?? NaN;
             return CARTACompute.CalculateCatalogSize(column, this.sizeMinorColumnMin.clipd, this.sizeMinorColumnMax.clipd, pointSize.min + min, pointSize.max + min, this.sizeMinorScalingType, this.sizeMinorArea, this.pixelSizeFactor);
         }
         return new Float32Array(0);

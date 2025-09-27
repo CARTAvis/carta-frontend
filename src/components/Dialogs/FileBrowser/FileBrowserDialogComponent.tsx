@@ -102,7 +102,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 try {
                     await this.loadFile(fileBrowserStore.selectedFiles[i], i > 0);
                 } catch (err) {
-                    console.log(err);
+                    console.error(err);
                 }
             }
             appStore.setLoadingMultipleFiles(false);
@@ -679,7 +679,7 @@ export class FileBrowserDialogComponent extends React.Component {
             </Popover>
         );
 
-        let sideMenu = (
+        const sideMenu = (
             <div>
                 {fileTypeMenu}
                 {coordinateTypeMenu}
@@ -846,7 +846,7 @@ export class FileBrowserDialogComponent extends React.Component {
         const actionButton = this.renderActionButton(fileBrowserStore.browserMode, fileBrowserStore.appendingFrame);
 
         let fileInput: React.ReactNode;
-        let paneClassName = "file-panes";
+        const paneClassName = "file-panes";
 
         if (fileBrowserStore.browserMode === BrowserMode.SaveFile) {
             fileInput = this.renderSaveFilenameInput();
@@ -1025,7 +1025,7 @@ export class FileBrowserDialogComponent extends React.Component {
 
     @computed get pathItems() {
         const fileBrowserStore = FileBrowserStore.Instance;
-        let pathItems: BreadcrumbProps[] = [
+        const pathItems: BreadcrumbProps[] = [
             {
                 icon: "desktop",
                 onClick: () => this.handleBreadcrumbClicked("")

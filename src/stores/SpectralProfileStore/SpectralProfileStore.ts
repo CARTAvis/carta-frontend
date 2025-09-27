@@ -16,7 +16,7 @@ export class SpectralProfileStore {
     }
 
     public getProfile = (coordinate: Coordinate, statsType: CARTA.StatsType): ProcessedSpectralProfile | null | undefined => {
-        let coordinateMap = this.profiles.get(coordinate);
+        const coordinateMap = this.profiles.get(coordinate);
         if (coordinateMap) {
             return coordinateMap.get(statsType);
         }

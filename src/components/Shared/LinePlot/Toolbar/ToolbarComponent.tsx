@@ -33,7 +33,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     };
 
     render() {
-        let styleProps: CSSProperties = {
+        const styleProps: CSSProperties = {
             opacity: this.props.visible ? 1 : 0
         };
         const className = classNames("profiler-toolbar", {[Classes.DARK]: this.props.darkMode});

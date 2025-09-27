@@ -258,10 +258,10 @@ export class RenderConfigStore {
         }
         const indexArray = Array.from(Array(colorsForValues.size).keys()).map(x => (this.inverted ? 1 - x / colorsForValues.size : x / colorsForValues.size));
         const scaledArray = indexArray.map(x => 1.0 - scaleValueInverse(x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast, AppStore.Instance?.preferenceStore?.useSmoothedBiasContrast));
-        let rbgString = (index: number): string => `rgb(${colorsForValues!.color[index * 4]}, ${colorsForValues!.color[index * 4 + 1]}, ${colorsForValues!.color[index * 4 + 2]}, ${colorsForValues!.color[index * 4 + 3]})`;
+        const rbgString = (index: number): string => `rgb(${colorsForValues!.color[index * 4]}, ${colorsForValues!.color[index * 4 + 1]}, ${colorsForValues!.color[index * 4 + 2]}, ${colorsForValues!.color[index * 4 + 3]})`;
 
         // Fix: Explicitly type colorscale as (number | string)[]
-        let colorscale: (number | string)[] = [];
+        const colorscale: (number | string)[] = [];
         if (this.contrast === 0) {
             for (let i = 0; i < colorsForValues.size; i++) {
                 if (scaledArray[i] === (this.inverted ? 1 : 0)) {

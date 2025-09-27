@@ -79,8 +79,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 maxIndex = clamp(maxIndex, 0, bins.length - 1);
             }
 
-            let xMin = firstBinCenter + binWidth * minIndex;
-            let xMax = firstBinCenter + binWidth * maxIndex;
+            const xMin = firstBinCenter + binWidth * minIndex;
+            const xMax = firstBinCenter + binWidth * maxIndex;
             let yMin = bins[minIndex];
             let yMax = yMin;
 
@@ -240,7 +240,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     }, 100);
 
     private genProfilerInfo = (): string[] => {
-        let profilerInfo: string[] = [];
+        const profilerInfo: string[] = [];
         if (this.widgetStore.cursorX !== undefined) {
             let numberString;
             // Switch between standard and scientific notation
@@ -289,7 +289,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
         const imageName = frame.filename;
         const plotName = `channel ${frame.channel} histogram`;
-        let linePlotProps: LinePlotComponentProps = {
+        const linePlotProps: LinePlotComponentProps = {
             xLabel: unitString,
             darkMode: appStore.darkTheme,
             imageName: imageName,
@@ -318,7 +318,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         if (frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
             const currentPlotData = this.plotData;
             if (currentPlotData) {
-                let histogramProps: MultiPlotProps = {
+                const histogramProps: MultiPlotProps = {
                     imageName: imageName,
                     plotName: plotName,
                     data: currentPlotData.values,
@@ -406,7 +406,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     colormapScalingY = colormapScalingY.map(x => linePlotProps.yMin! + x * (linePlotProps.yMax! - linePlotProps.yMin!));
                 }
 
-                let colormapScalingData: {x: number; y: number}[] = [];
+                const colormapScalingData: {x: number; y: number}[] = [];
                 for (let i = 0; i < COLORSCALE_LENGTH; i++) {
                     colormapScalingData.push({x: colormapScalingX[i], y: colormapScalingY[i]});
                 }

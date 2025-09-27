@@ -273,7 +273,7 @@ export class CatalogStore {
     }
 
     getCatalogFileNames(fileIds: Array<number>) {
-        let fileList = new Map<number, string>();
+        const fileList = new Map<number, string>();
         fileIds.forEach(catalogFileId => {
             const catalogProfileStore = this.catalogProfileStores.get(catalogFileId);
             if (catalogProfileStore) {
@@ -313,14 +313,14 @@ export class CatalogStore {
         if (xWcsData?.length === yWcsData?.length && xWcsData?.length > 0) {
             const N = xWcsData.length;
 
-            let xFraction = CatalogStore.GetFractionFromUnit(xUnit.toLocaleLowerCase());
-            let yFraction = CatalogStore.GetFractionFromUnit(yUnit.toLocaleLowerCase());
+            const xFraction = CatalogStore.GetFractionFromUnit(xUnit.toLocaleLowerCase());
+            const yFraction = CatalogStore.GetFractionFromUnit(yUnit.toLocaleLowerCase());
 
-            let wcsCopy = AST.copy(wcsInfo);
+            const wcsCopy = AST.copy(wcsInfo);
             if (wcsCopy !== 0 && AppStore.Instance.overlaySettings.isImgCoordinates) {
                 AST.setI(wcsCopy, "Current", 2);
             }
-            let system = "System=" + catalogFrame;
+            const system = "System=" + catalogFrame;
             AST.set(wcsCopy, system);
             if (catalogFrame === CatalogSystemType.FK4) {
                 AST.set(wcsCopy, "Epoch=B1950");
@@ -348,7 +348,7 @@ export class CatalogStore {
     }
 
     getFrameMinMaxPoints(frameId: number): {minX: number; maxX: number; minY: number; maxY: number} {
-        let minMax = {minX: Number.MAX_VALUE, maxX: -Number.MAX_VALUE, minY: Number.MAX_VALUE, maxY: -Number.MAX_VALUE};
+        const minMax = {minX: Number.MAX_VALUE, maxX: -Number.MAX_VALUE, minY: Number.MAX_VALUE, maxY: -Number.MAX_VALUE};
         this.imageAssociatedCatalogId.get(frameId)?.forEach(catalogId => {
             const coords = this.catalogGLData.get(catalogId);
             const count = this.catalogCounts.get(catalogId);

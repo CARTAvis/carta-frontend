@@ -43,7 +43,7 @@ export class ASTSettingsString {
 
     add(name: string, value: any, storeIf: boolean = true) {
         if (value !== undefined && storeIf) {
-            let storedValue = typeof value === "boolean" ? (value ? 1 : 0) : value;
+            const storedValue = typeof value === "boolean" ? (value ? 1 : 0) : value;
             this.stringList.push(`${name}=${storedValue}`);
         }
     }
@@ -70,7 +70,7 @@ export class OverlayGlobalSettings {
     @observable validWcs: boolean = false;
 
     public styleString(frame?: FrameStore) {
-        let astString = new ASTSettingsString();
+        const astString = new ASTSettingsString();
         astString.add("Labelling", this.labelType);
         astString.add("Color", AstColorsIndex.GLOBAL);
         astString.add("Tol", toFixed(this.tolerance / 100, 2), this.tolerance >= 0.001); // convert to fraction
@@ -178,7 +178,7 @@ export class OverlayTitleSettings {
     @observable customText: boolean = false;
 
     @computed get styleString() {
-        let astString = new ASTSettingsString();
+        const astString = new ASTSettingsString();
         astString.add("DrawTitle", this.show);
         astString.add("Font(Title)", this.font);
         astString.add("Size(Title)", this.fontSize * AppStore.Instance.imageRatio);
@@ -234,7 +234,7 @@ export class OverlayGridSettings {
     @observable gapY: number = 0.2;
 
     @computed get styleString() {
-        let astString = new ASTSettingsString();
+        const astString = new ASTSettingsString();
         astString.add("Grid", this.visible);
         astString.add("Color(Grid)", AstColorsIndex.GRID, this.customColor);
         astString.add("Width(Grid)", this.width * AppStore.Instance.imageRatio, this.width > 0);
@@ -284,7 +284,7 @@ export class OverlayBorderSettings {
     @observable width: number = 1;
 
     @computed get styleString() {
-        let astString = new ASTSettingsString();
+        const astString = new ASTSettingsString();
         astString.add("Border", this.visible);
         astString.add("Color(Border)", AstColorsIndex.BORDER, this.customColor);
         astString.add("Width(Border)", this.width * AppStore.Instance.imageRatio, this.width > 0);
@@ -326,7 +326,7 @@ export class OverlayTickSettings {
     @observable majorLength: number = 2; // percentage
 
     @computed get styleString() {
-        let astString = new ASTSettingsString();
+        const astString = new ASTSettingsString();
         astString.add("TickAll", this.drawAll);
         astString.add("MinTick(1)", this.densityX, this.customDensity);
         astString.add("MinTick(2)", this.densityY, this.customDensity);
@@ -394,7 +394,7 @@ export class OverlayAxisSettings {
     }
 
     @computed get styleString() {
-        let astString = new ASTSettingsString();
+        const astString = new ASTSettingsString();
 
         astString.add("DrawAxes", this.visible);
         astString.add("Color(Axes)", AstColorsIndex.AXIS, this.customColor);
@@ -482,7 +482,7 @@ export class OverlayNumberSettings {
             return undefined;
         }
 
-        let format = this.customFormat ? this.formatX : this.defaultFormatX;
+        const format = this.customFormat ? this.formatX : this.defaultFormatX;
         return `${format}.${precision}`;
     }
 
@@ -491,12 +491,12 @@ export class OverlayNumberSettings {
             return undefined;
         }
 
-        let format = this.customFormat ? this.formatY : this.defaultFormatY;
+        const format = this.customFormat ? this.formatY : this.defaultFormatY;
         return `${format}.${precision}`;
     }
 
     @computed get styleString() {
-        let astString = new ASTSettingsString();
+        const astString = new ASTSettingsString();
 
         astString.add("NumLab", this.show);
         astString.add("Font(NumLab)", this.font);
@@ -585,7 +585,7 @@ export class OverlayLabelSettings {
     }
 
     @computed get styleString() {
-        let astString = new ASTSettingsString();
+        const astString = new ASTSettingsString();
 
         const appStore = AppStore.Instance;
 
@@ -1133,7 +1133,7 @@ export class ImageViewOverlayStore {
     }
 
     defaultStyleString(frame?: FrameStore): ASTSettingsString {
-        let astString = new ASTSettingsString();
+        const astString = new ASTSettingsString();
         astString.addSection(OverlaySettings.Instance.global.styleString(frame));
         astString.addSection(OverlaySettings.Instance.title.styleString);
         astString.addSection(OverlaySettings.Instance.grid.styleString);

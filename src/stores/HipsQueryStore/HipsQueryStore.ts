@@ -234,7 +234,7 @@ export class HipsQueryStore {
         try {
             await AppStore.Instance.loadRemoteFile(message);
         } catch (err) {
-            console.log(err);
+            console.error(err);
         }
         this.setIsLoading(false);
     };
@@ -260,7 +260,7 @@ export class HipsQueryStore {
         try {
             await AppStore.Instance.loadRemoteFile(message);
         } catch (err) {
-            console.log(err);
+            console.error(err);
         }
         this.setIsLoading(false);
     };

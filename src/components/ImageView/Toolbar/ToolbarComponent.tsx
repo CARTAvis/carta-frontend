@@ -165,7 +165,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             </Menu>
         );
 
-        let coordinateSystem = overlay.global.system;
+        const coordinateSystem = overlay.global.system;
 
         const coordinateSystemMenu = (
             <Menu>

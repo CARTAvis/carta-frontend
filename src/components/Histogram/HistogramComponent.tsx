@@ -88,8 +88,8 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                 maxIndex = clamp(maxIndex, 0, histogram.bins.length - 1);
             }
 
-            let xMin = histogram.firstBinCenter + histogram.binWidth * minIndex;
-            let xMax = histogram.firstBinCenter + histogram.binWidth * maxIndex;
+            const xMin = histogram.firstBinCenter + histogram.binWidth * minIndex;
+            const xMax = histogram.firstBinCenter + histogram.binWidth * maxIndex;
             let yMin = histogram.bins[minIndex] ?? 0;
             let yMax = yMin;
 
@@ -123,7 +123,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
     }
 
     get exportHeaders(): string[] {
-        let headerString: string[] = [];
+        const headerString: string[] = [];
 
         // region info
         const frame = this.widgetStore.effectiveFrame;
@@ -210,7 +210,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
     }, 100);
 
     private genProfilerInfo = (unit: string): string[] => {
-        let profilerInfo: string[] = [];
+        const profilerInfo: string[] = [];
         if (this.plotData) {
             if (this.widgetStore.isMouseMoveIntoLinePlots) {
                 const nearest = binarySearchByX(this.plotData.values, this.widgetStore.cursorX);
@@ -295,7 +295,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         const plotName = `channel ${frame.channel} histogram`;
 
         if (this.isTargetData || !this.currentLinePlotProps) {
-            let linePlotProps: LinePlotComponentProps = {
+            const linePlotProps: LinePlotComponentProps = {
                 xLabel: unit ? `Value (${unit})` : "Value",
                 yLabel: "Count",
                 darkMode: appStore.darkTheme,
