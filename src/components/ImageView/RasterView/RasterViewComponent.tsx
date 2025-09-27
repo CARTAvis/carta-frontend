@@ -294,9 +294,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             // Skip rendering if frame is hidden
             if (frame.renderConfig.visible) {
                 if (this.props.image?.type === ImageType.PV_PREVIEW) {
-                    this.renderSingleTileCanvas(frame)
+                    this.renderSingleTileCanvas(frame);
                 } else {
-                    this.renderTiledCanvas(frame, channel)
+                    this.renderTiledCanvas(frame, channel);
                 }
             }
         }

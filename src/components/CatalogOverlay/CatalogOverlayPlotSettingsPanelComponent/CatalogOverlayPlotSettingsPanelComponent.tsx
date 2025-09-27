@@ -810,7 +810,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 if (isFinite(val) && val !== pointSize.min && val < pointSize.max && val >= CatalogWidgetStore.SizeMapMin) {
                     const inputVal = val;
                     if (widgetStore.sizeAxisTabId === CatalogSettingsTabs.SIZE_MINOR) {
-                        widgetStore.setMinorSizeMin(inputVal)
+                        widgetStore.setMinorSizeMin(inputVal);
                     } else {
                         widgetStore.setSizeMin(inputVal);
                     }
