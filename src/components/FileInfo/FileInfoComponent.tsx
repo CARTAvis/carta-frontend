@@ -421,14 +421,17 @@ export class FileInfoComponent extends React.Component<{
             </ButtonGroup>
         );
 
+        const searchBarPopperDistance = 200;
+
         return !this.props.isLoading && !this.props.errorMessage && this.props.fileInfoExtended && this.props.selectedTab === FileInfoType.IMAGE_HEADER ? (
             <ButtonGroup className="header-search-button" style={{opacity: this.isMouseEntered || this.isSearchOpened ? 1 : 0}}>
                 <Popover
                     position={Position.LEFT}
                     interactionKind={PopoverInteractionKind.CLICK_TARGET_ONLY}
+                    usePortal={false}
                     modifiers={{
                         arrow: {enabled: false},
-                        offset: {enabled: true, options: {offset: [0, 10]}}
+                        offset: {enabled: true, options: {offset: [0, searchBarPopperDistance]}}
                     }}
                     onOpening={() => this.handleSearchPanelClicked(true)}
                     onClosing={() => this.handleSearchPanelClicked(false)}
