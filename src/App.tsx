@@ -10,7 +10,7 @@ import {AlertType} from "enums";
 import {ApiService} from "services";
 import {AlertStore, AppStore} from "stores";
 
-import {HotkeyTargetContainer} from "./HotkeyWrapper";
+import {HotkeyService, HotkeysRegistrar} from "./HotkeyWrapper";
 
 import "./App.scss";
 import "./layout-base.scss";
@@ -106,7 +106,8 @@ export class App extends React.Component {
                 <ResizeDetector onResize={this.onContainerResize} throttleTime={200} targetRef={this.appContainerRef}>
                     <div className={glClassName} ref={this.setAppContainerRef} />
                 </ResizeDetector>
-                <HotkeyTargetContainer />
+                <HotkeysRegistrar />
+                <HotkeyService />
                 <FloatingWidgetManagerComponent />
             </div>
         );
