@@ -204,7 +204,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     plotType: this.plotType
                 };
                 const scatterPlotId = appStore.widgetsStore.addCatalogPlotWidget(scatterProps);
-                console.log("qq", scatterPlotId);
                 if (scatterPlotId) {
                     catalogStore.setCatalogPlots(this.componentId, this.catalogFileId, scatterPlotId);
                     return scatterPlotId;

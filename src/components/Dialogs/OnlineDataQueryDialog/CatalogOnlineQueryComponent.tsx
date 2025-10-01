@@ -72,9 +72,9 @@ export class CatalogQueryComponent extends React.Component {
         }
 
         if (objectSize === 0) {
-            sourceIndicater = <Icon icon="cross" intent="warning" iconSize={30} />;
+            sourceIndicater = <Icon icon="cross" intent="warning" size={30} />;
         } else if (objectSize === 1) {
-            sourceIndicater = <Icon icon="tick" intent="success" iconSize={30} />;
+            sourceIndicater = <Icon icon="tick" intent="success" size={30} />;
         }
 
         const frame = appStore.activeFrame.spatialReference ?? appStore.activeFrame;
