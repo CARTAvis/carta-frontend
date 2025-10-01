@@ -82,7 +82,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 const newFrame = AST.frame(2, "Domain=PIXEL");
                 AST.addFrame(tempWcsInfo, 1, scaleMapping, newFrame);
                 AST.setI(tempWcsInfo, "Base", frame.isOffsetCoord ? 4 : 3);
-                AST.setI(tempWcsInfo, "Current", frame.isOffsetCoord && OverlaySettings.Instance.isImgCoordinates ? 3 : 2);
+                AST.setI(tempWcsInfo, "Current", OverlaySettings.Instance.isImgCoordinates ? 3 : 2);
             }
 
             if (frame.isOffsetCoord && OverlaySettings.Instance.isWcsCoordinates) {

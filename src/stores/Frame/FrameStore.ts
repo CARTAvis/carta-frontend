@@ -74,7 +74,7 @@ import {
     getAngleInRad,
     getFormattedWCSPoint,
     getHeaderNumericValue,
-    getPixelSize,
+    getPixelSizes,
     getPixelValueFromWCS,
     GetRequiredTiles,
     getTransformedChannel,
@@ -271,7 +271,15 @@ export class FrameStore {
             return this.framePixelRatio;
         }
 
+        if (this.isNormalImage && !this.validWcs) {
+            return 1.0;
+        }
+
         return this.renderWidth / this.frameInfo.fileInfoExtended.width / (this.renderHeight / this.frameInfo.fileInfoExtended.height);
+    }
+
+    @computed get isNormalImage(): boolean {
+        return !this.isPVImage && !this.isUVImage && !this.isSwappedZ;
     }
 
     get hasSquarePixels(): boolean {
@@ -1411,10 +1419,8 @@ export class FrameStore {
         if (hasUnits && !sameUnits) {
             this.framePixelRatio = NaN;
         } else {
-            // Assumes non-rotated pixels
-            const cDelt1 = getPixelSize(this, this.renderedAxesNumbers[0]);
-            const cDelt2 = getPixelSize(this, this.renderedAxesNumbers[1]);
-            this.framePixelRatio = Math.abs(cDelt1 / cDelt2);
+            const pixelSize = getPixelSizes(this);
+            this.framePixelRatio = Math.abs(pixelSize.x / pixelSize.y);
             // Correct for numerical errors in CDELT values if they're within 0.1% of each other
             if (Math.abs(this.framePixelRatio - 1.0) < 0.001) {
                 this.framePixelRatio = 1.0;
@@ -1426,7 +1432,8 @@ export class FrameStore {
         this.initSupportedSpectralConversion();
         this.initCenter();
         this.zoomLevel = preferenceStore.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
-        this.pixelUnitSizeArcsec = this.getPixelUnitSize();
+        const pixelSizesArcsec = getPixelSizes(this, 6);
+        this.pixelUnitSizeArcsec = this.isNormalImage && isFinite(pixelSizesArcsec.x) && isFinite(pixelSizesArcsec.y) ? pixelSizesArcsec : null;
 
         // init spectral settings
         if (this.spectralAxis && IsSpectralTypeSupported(this.spectralAxis.type.code as string) && IsSpectralUnitSupported(this.spectralAxis.type.unit as string)) {
@@ -1904,25 +1911,27 @@ export class FrameStore {
         this.zooming = false;
     };
 
-    private getPixelUnitSize = () => {
-        if (this.isPVImage || this.isUVImage || this.isSwappedZ) {
-            return null;
-        }
-        const crpix1 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.indexOf(`CRPIX${this.renderedAxesNumbers[0]}`) !== -1);
-        const crpix2 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.indexOf(`CRPIX${this.renderedAxesNumbers[1]}`) !== -1);
-        if (crpix1 && crpix2) {
-            const crpix1Val = getHeaderNumericValue(crpix1);
-            const crpix2Val = getHeaderNumericValue(crpix2);
-            const xUnitSize = Math.round(AST.geodesicDistance(this.wcsInfo, crpix1Val, crpix2Val, crpix1Val + 1, crpix2Val) * 1e6) / 1e6;
-            const yUnitSize = Math.round(AST.geodesicDistance(this.wcsInfo, crpix1Val, crpix2Val, crpix1Val, crpix2Val + 1) * 1e6) / 1e6;
-            if (isFinite(xUnitSize) && isFinite(yUnitSize)) {
-                return {x: xUnitSize, y: yUnitSize};
-            }
-        }
-        return null;
+    /**
+     * Converts positions from WCS coordinates to image coordinates.
+     *
+     * @param wcsList - An array of positions in WCS coordinates.
+     * @returns An array of corresponding positions in image coordinates.
+     */
+    getImagePosFromWCS = (wcsList: WCSPoint2D[]): Point2D[] => {
+        return wcsList.map(wcs => getPixelValueFromWCS(this.wcsInfoForTransformation, wcs));
     };
 
-    public getRegion = (regionId: number): RegionStore | undefined => {
+    /**
+     * Converts positions from image coordinates to WCS coordinates.
+     *
+     * @param posList - An array of positions in image coordinates.
+     * @returns An array of corresponding positions in WCS coordinates.
+     */
+    getWCSFromImagePos = (posList: Point2D[]): WCSPoint2D[] => {
+        return posList.map(p => getFormattedWCSPoint(this.wcsInfoForTransformation, p));
+    };
+
+    public getRegion = (regionId: number): RegionStore => {
         return this.regionSet?.regions?.find(r => r.regionId === regionId);
     };
 
@@ -1955,7 +1964,7 @@ export class FrameStore {
         let cursorPosWCS, cursorPosFormatted;
         let precisionX = 0;
         let precisionY = 0;
-        if (((this.validWcs || this.isYX) && AppStore.Instance.overlaySettings.isWcsCoordinates) || this.isPVImage || this.isUVImage || this.isSwappedZ) {
+        if (((this.validWcs || this.isYX) && AppStore.Instance.overlaySettings.isWcsCoordinates) || !this.isNormalImage) {
             // We need to compare X and Y coordinates in both directions
             // to avoid a confusing drop in precision at rounding threshold
             const offsetBlock = [
@@ -1974,9 +1983,9 @@ export class FrameStore {
             while (precisionX < FrameStore.CursorInfoMaxPrecision && precisionY < FrameStore.CursorInfoMaxPrecision) {
                 let astString = new ASTSettingsString();
                 const overlaySettings = AppStore.Instance.overlaySettings;
-                astString.add(`Format(${this.dirX})`, this.isPVImage || this.isUVImage || this.isSwappedZ ? undefined : overlaySettings.numbers.cursorFormatStringX(precisionX));
-                astString.add(`Format(${this.dirY})`, this.isPVImage || this.isUVImage || this.isSwappedZ ? undefined : overlaySettings.numbers.cursorFormatStringY(precisionY));
-                astString.add("System", this.isPVImage || this.isUVImage || this.isSwappedZ ? "cartesian" : overlaySettings.global.explicitSystem);
+                astString.add(`Format(${this.dirX})`, this.isNormalImage ? overlaySettings.numbers.cursorFormatStringX(precisionX) : undefined);
+                astString.add(`Format(${this.dirY})`, this.isNormalImage ? overlaySettings.numbers.cursorFormatStringY(precisionY) : undefined);
+                astString.add("System", this.isNormalImage ? overlaySettings.global.explicitSystem : "cartesian");
 
                 let formattedNeighbourhood = normalizedNeighbourhood.map(pos => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString(), true));
                 let [p, n1, n2] = formattedNeighbourhood;
@@ -2240,7 +2249,7 @@ export class FrameStore {
     };
 
     @action updateOffsetCenter = () => {
-        if (!this.isPVImage && !this.isPreview && !this.isSwappedZ && !this.isUVImage) {
+        if (this.isNormalImage && !this.isPreview) {
             this.setOffsetCenter(this.center.x, this.center.y);
         }
     };
