@@ -113,9 +113,12 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
                     positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
                 }
 
-                if (anchor.id() === "origin") {
-                    region.setControlPoint(0, positionImageSpace);
-                } else if (anchor.id() === "northTip" || anchor.id() === "eastTip") {
+            if (anchor.id() === "origin") {
+                region.setControlPoint(0, positionImageSpace);
+            } else if (anchor.id() === "northTip" || anchor.id() === "eastTip") {
+                if (!frame.validWcs) {
+                    region.setLength((distance * frame.zoomLevel) / imageRatio);
+                } else {
                     region.setLength((distance * (frame.spatialReference?.zoomLevel || frame.zoomLevel)) / imageRatio);
                 }
             }
@@ -139,28 +142,20 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
 
     for (let i = 0; i < northApproxPoints.length; i += 2) {
         const point = transformedImageToCanvasPos({x: northApproxPoints[i], y: northApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-        if (point.x !== undefined && point.y !== undefined && originPoints.x !== undefined && originPoints.y !== undefined) {
-            const validPoint = {x: point.x, y: point.y};
-            const validOriginPoints = {x: originPoints.x, y: originPoints.y};
-            if (pointDistance(validPoint, validOriginPoints) >= (region.length * imageRatio) / zoomLevel) {
-                break;
-            }
-            northPointArray[i] = point.x - mousePoint.current.x;
-            northPointArray[i + 1] = point.y - mousePoint.current.y;
+        if (pointDistance(point, originPoints) >= (region.length * imageRatio) / zoomLevel) {
+            break;
         }
+        northPointArray[i] = point.x - mousePoint.current.x;
+        northPointArray[i + 1] = point.y - mousePoint.current.y;
     }
 
     for (let i = 0; i < eastApproxPoints.length; i += 2) {
         const point = transformedImageToCanvasPos({x: eastApproxPoints[i], y: eastApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-        if (point.x !== undefined && point.y !== undefined && originPoints.x !== undefined && originPoints.y !== undefined) {
-            const validPoint = {x: point.x, y: point.y};
-            const validOriginPoints = {x: originPoints.x, y: originPoints.y};
-            if (pointDistance(validPoint, validOriginPoints) >= (region.length * imageRatio) / zoomLevel) {
-                break;
-            }
-            eastPointArray[i] = point.x - mousePoint.current.x;
-            eastPointArray[i + 1] = point.y - mousePoint.current.y;
+        if (pointDistance(point, originPoints) >= (region.length * imageRatio) / zoomLevel) {
+            break;
         }
+        eastPointArray[i] = point.x - mousePoint.current.x;
+        eastPointArray[i + 1] = point.y - mousePoint.current.y;
     }
 
     // Dummy variables for triggering re-render
