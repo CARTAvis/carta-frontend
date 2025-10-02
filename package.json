@@ -9,7 +9,7 @@
         "@babel/preset-env": "^7.28.3",
         "@babel/preset-react": "^7.27.1",
         "@babel/preset-typescript": "^7.27.1",
-        "@blueprintjs/tslint-config": "^4.1.6",
+        "@blueprintjs/eslint-plugin": "^6.1.16",
         "@blueprintjs/core": "^6.3.1",
         "@blueprintjs/icons": "^6.1.0",
         "@blueprintjs/select": "^6.0.5",
@@ -139,7 +139,8 @@
             "import",
             "@typescript-eslint",
             "simple-import-sort",
-            "eslint-plugin-tsdoc"
+            "eslint-plugin-tsdoc",
+            "@blueprintjs"
         ],
         "rules": {
             "@typescript-eslint/no-unused-expressions": "error",
@@ -166,7 +167,9 @@
             "import/newline-after-import": "error",
             "import/no-duplicates": "error",
             "tsdoc/syntax": "error",
-            "prefer-const": "error"
+            "prefer-const": "error",
+            "@blueprintjs/classes-constants": "error",
+            "@blueprintjs/html-components": "error"
         },
         "overrides": [
             {

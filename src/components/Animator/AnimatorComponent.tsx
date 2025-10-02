@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Button, ButtonGroup, Classes, ControlGroup, HTMLSelect, type IconName, Menu, MenuItem, NonIdealState, type NumberRange, Popover, Position, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, ButtonGroup, Classes, ControlGroup, HTMLSelect, type IconName, Menu, MenuItem, NonIdealState, type NumberRange, Popover, Position, Pre, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -262,7 +262,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                                 disabled={appStore.animatorStore.animationActive}
                             />
                             <div className="slider-info" data-testid="animator-slider-info">
-                                <pre>{activeFrame.depthAxisInfo}</pre>
+                                <Pre>{activeFrame.depthAxisInfo}</Pre>
                             </div>
                         </React.Fragment>
                     )}
