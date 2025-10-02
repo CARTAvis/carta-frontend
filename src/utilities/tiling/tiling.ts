@@ -1,5 +1,5 @@
 import type {FrameView} from "models/FrameView/FrameView";
-import {Point2D} from "models/Point2D/Point2D";
+import {type Point2D} from "models/Point2D/Point2D";
 import {TileCoordinate} from "models/Tile/TileCoordinate";
 
 export function TileSort(a: TileCoordinate, b: TileCoordinate) {

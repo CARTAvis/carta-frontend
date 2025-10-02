@@ -3,9 +3,9 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
 import {AngularSizeUnit, NumberFormatType} from "enums";
-import {AngularSize, isValidWcsPoint, Point2D, WCSPoint2D} from "models";
+import {AngularSize, isValidWcsPoint, type Point2D, type WCSPoint2D} from "models";
 import {AppStore} from "stores";
-import {FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
+import {type FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
 import {angle2D, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid, pointDistance, rotate2D, scale2D, subtract2D, toExponential} from "utilities";
 

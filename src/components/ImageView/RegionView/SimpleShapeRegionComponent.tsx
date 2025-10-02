@@ -1,13 +1,13 @@
 import * as React from "react";
 import {Ellipse, Group, Line, Rect, Text} from "react-konva";
 import {CARTA} from "carta-protobuf";
-import Konva from "konva";
+import type Konva from "konva";
 import {action} from "mobx";
 import {observer} from "mobx-react";
 
-import {Point2D} from "models";
+import {type Point2D} from "models";
 import {AppStore} from "stores";
-import {FrameStore, RegionStore, TextAnnotationStore} from "stores/Frame";
+import {type FrameStore, type RegionStore, type TextAnnotationStore} from "stores/Frame";
 import {add2D, angle2D, rotate2D, scale2D, subtract2D, transformPoint} from "utilities";
 
 import {Anchor} from "./InvariantShapes";

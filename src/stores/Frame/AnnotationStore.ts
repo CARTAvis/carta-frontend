@@ -4,9 +4,9 @@ import {CARTA} from "carta-protobuf";
 import {action, makeObservable, observable} from "mobx";
 
 import {Font, FontStyle} from "enums";
-import {Point2D} from "models";
-import {BackendService} from "services";
-import {FrameStore} from "stores/Frame";
+import {type Point2D} from "models";
+import {type BackendService} from "services";
+import {type FrameStore} from "stores/Frame";
 import {getPixelSizes, transformPoint} from "utilities";
 
 import {RegionStore} from "./Region/RegionStore";

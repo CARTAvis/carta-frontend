@@ -1,6 +1,6 @@
 import {Classes} from "@blueprintjs/core";
 import classNames from "classnames";
-import * as GoldenLayout from "golden-layout";
+import type * as GoldenLayout from "golden-layout";
 import $ from "jquery";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 

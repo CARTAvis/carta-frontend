@@ -1,15 +1,15 @@
 import * as React from "react";
 import {NonIdealState} from "@blueprintjs/core";
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import {autorun, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
+import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
 import {HelpType, POLARIZATIONS, TickType} from "enums";
-import {Point2D} from "models";
+import {type Point2D} from "models";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
-import {FrameStore} from "stores/Frame";
+import {type FrameStore} from "stores/Frame";
 import {HistogramWidgetStore} from "stores/Widgets";
 import {binarySearchByX, clamp, closeTo, getColorForTheme, toExponential, toFixed} from "utilities";
 

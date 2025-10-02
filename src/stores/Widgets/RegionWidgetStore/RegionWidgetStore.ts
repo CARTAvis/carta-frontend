@@ -4,7 +4,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 
 import {RegionId, RegionsType} from "enums";
 import {AppStore} from "stores";
-import {FrameStore, RegionStore} from "stores/Frame";
+import {type FrameStore, type RegionStore} from "stores/Frame";
 
 export const ACTIVE_FILE_ID = -1;
 

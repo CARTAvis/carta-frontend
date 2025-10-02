@@ -8,7 +8,7 @@ import {TaskProgressDialogComponent} from "components/Dialogs";
 import {ResizeDetector} from "components/Shared";
 import {AlertType} from "enums";
 import {ApiService} from "services";
-import {AlertStore, AppStore} from "stores";
+import {type AlertStore, AppStore} from "stores";
 
 import {HotkeyService, HotkeysRegistrar} from "./HotkeyWrapper";
 

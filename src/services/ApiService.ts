@@ -4,7 +4,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 
 import {AppToaster} from "components/Shared";
 import {ConvertToGB, PreferenceKeys} from "enums";
-import {LayoutConfig, Snippet, type Workspace, type WorkspaceListItem} from "models";
+import {LayoutConfig, type Snippet, type Workspace, type WorkspaceListItem} from "models";
 import {AppStore} from "stores";
 
 const preferencesSchema = require("carta-schemas/preferences_schema_2.json");

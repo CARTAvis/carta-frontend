@@ -9,7 +9,7 @@ import {ScrollShadow} from "components/Shared";
 import {DialogId, HelpType} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore} from "stores";
-import {RegionStore} from "stores/Frame";
+import {type RegionStore} from "stores/Frame";
 
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
 import {CompassRulerRegionForm} from "./CompassRulerRegionForm/CompassRulerRegionForm";

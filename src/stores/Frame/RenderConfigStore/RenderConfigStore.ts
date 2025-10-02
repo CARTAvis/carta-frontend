@@ -1,10 +1,10 @@
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 import type {WorkspaceRenderConfig} from "models";
 
 import {FrameScaling} from "enums";
-import {AppStore, PreferenceStore} from "stores";
-import {FrameStore} from "stores/Frame";
+import {AppStore, type PreferenceStore} from "stores";
+import {type FrameStore} from "stores/Frame";
 import {clamp, getColorsForValues, getColorsFromHex, getPercentiles, scaleValueInverse} from "utilities";
 
 export class RenderConfigStore {

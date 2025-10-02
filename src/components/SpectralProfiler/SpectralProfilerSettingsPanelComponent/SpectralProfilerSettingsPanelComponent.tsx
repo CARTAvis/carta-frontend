@@ -3,10 +3,10 @@ import {FormGroup, HTMLSelect, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {autorun} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScrollShadow, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
+import {LinePlotSettingsPanelComponent, type LinePlotSettingsPanelComponentProps, ScrollShadow, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
 import {HelpType, MultiProfileCategory, SpectralProfilerSettingsTabs} from "enums";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
-import {SpectralProfileWidgetStore} from "stores/Widgets";
+import {type SpectralProfileWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 
 import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGeneratorComponent";

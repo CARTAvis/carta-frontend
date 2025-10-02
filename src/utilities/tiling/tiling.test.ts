@@ -1,5 +1,5 @@
-import {FrameView} from "../../models/FrameView/FrameView";
-import {Point2D} from "../../models/Point2D/Point2D";
+import {type FrameView} from "../../models/FrameView/FrameView";
+import {type Point2D} from "../../models/Point2D/Point2D";
 import {TileCoordinate} from "../../models/Tile/TileCoordinate";
 
 import {GetRequiredTiles, LayerToMip, MipToLayer, TileSortEncoded} from "./tiling";

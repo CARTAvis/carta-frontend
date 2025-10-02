@@ -1,9 +1,9 @@
 import type {RGBColor} from "react-color";
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
 
-import {ContourDashMode, FrameScaling, VectorOverlaySource} from "enums";
+import {type ContourDashMode, type FrameScaling, type VectorOverlaySource} from "enums";
 
-import {Point2D} from "./Point2D/Point2D";
+import {type Point2D} from "./Point2D/Point2D";
 
 export interface WorkspaceRenderConfig {
     scaling?: FrameScaling;

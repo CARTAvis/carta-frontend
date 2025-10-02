@@ -1,6 +1,6 @@
 import * as React from "react";
 import {FormGroup, InputGroup} from "@blueprintjs/core";
-import * as AST from "ast_wrapper";
+import type * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
@@ -8,7 +8,7 @@ import {CoordinateComponent, CoordNumericInput, SafeNumericInput} from "componen
 import {CoordinateMode, InputType} from "enums";
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
-import {CompassAnnotationStore, RegionStore} from "stores/Frame";
+import {type CompassAnnotationStore, type RegionStore} from "stores/Frame";
 import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
 const KEYCODE_ENTER = 13;

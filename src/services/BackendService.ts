@@ -5,7 +5,7 @@ import {Subject, throwError} from "rxjs";
 import {ConnectionStatus, TelemetryAction} from "enums";
 import {ApiService, TelemetryService} from "services";
 import {AppStore, PreferenceStore} from "stores";
-import {RegionStore} from "stores/Frame";
+import {type RegionStore} from "stores/Frame";
 import {mapToObject} from "utilities";
 
 export const INVALID_ANIMATION_ID = -1;

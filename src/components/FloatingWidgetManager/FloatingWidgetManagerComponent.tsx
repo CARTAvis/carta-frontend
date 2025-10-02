@@ -32,7 +32,7 @@ import {
     StokesAnalysisSettingsPanelComponent
 } from "components";
 import {ImageType} from "enums";
-import {AppStore, CatalogStore, WidgetConfig, WidgetsStore} from "stores";
+import {AppStore, CatalogStore, type WidgetConfig, WidgetsStore} from "stores";
 
 @observer
 export class FloatingWidgetManagerComponent extends React.Component {

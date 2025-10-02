@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 
 import {ImageType} from "enums";
 import {type CursorInfo} from "models";
-import {AppStore, FrameStore} from "stores";
+import {AppStore, type FrameStore} from "stores";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
 import {ColorbarComponent} from "../Colorbar/ColorbarComponent";

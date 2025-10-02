@@ -2,14 +2,14 @@ import * as React from "react";
 import SplitPane, {Pane} from "react-split-pane";
 import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay2, Popover, Position, Spinner, Switch, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {FilterableTableComponent, FilterableTableComponentProps, ResizeDetector, SafeNumericInput} from "components/Shared";
-import {HeaderTableColumnName, HelpType, RedshiftType, SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "enums";
+import {FilterableTableComponent, type FilterableTableComponentProps, ResizeDetector, SafeNumericInput} from "components/Shared";
+import {HeaderTableColumnName, HelpType, RedshiftType, type SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "enums";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
-import {SpectralLineQueryWidgetStore} from "stores/Widgets";
+import {type SpectralLineQueryWidgetStore} from "stores/Widgets";
 
 import "./SpectralLineQueryComponent.scss";
 

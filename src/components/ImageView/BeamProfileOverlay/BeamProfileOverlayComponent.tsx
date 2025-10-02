@@ -5,9 +5,9 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {BeamType} from "enums";
-import {Point2D} from "models";
+import {type Point2D} from "models";
 import {AppStore} from "stores";
-import {FrameStore} from "stores/Frame";
+import {type FrameStore} from "stores/Frame";
 import {getColorForTheme} from "utilities";
 
 import "./BeamProfileOverlayComponent.scss";

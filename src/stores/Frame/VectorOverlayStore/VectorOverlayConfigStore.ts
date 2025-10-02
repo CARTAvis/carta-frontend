@@ -5,8 +5,8 @@ import type {WorkspaceVectorOverlayConfig} from "models";
 import tinycolor from "tinycolor2";
 
 import {VectorOverlaySource} from "enums";
-import {PreferenceStore} from "stores";
-import {FrameStore} from "stores/Frame";
+import {type PreferenceStore} from "stores";
+import {type FrameStore} from "stores/Frame";
 
 export class VectorOverlayConfigStore {
     // Generator config

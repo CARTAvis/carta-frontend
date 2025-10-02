@@ -1,7 +1,7 @@
 import * as React from "react";
 import {Scatter} from "react-chartjs-2";
 import {Colors} from "@blueprintjs/core";
-import {Chart, type ChartArea, type ChartDataset, type ChartOptions, Legend, LinearScale, LineElement, LogarithmicScale, type Plugin, PointElement, Scale, type Tick} from "chart.js";
+import {Chart, type ChartArea, type ChartDataset, type ChartOptions, Legend, LinearScale, LineElement, LogarithmicScale, type Plugin, PointElement, type Scale, type Tick} from "chart.js";
 import * as _ from "lodash";
 import tinycolor from "tinycolor2";
 

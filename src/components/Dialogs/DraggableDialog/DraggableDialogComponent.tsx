@@ -5,7 +5,7 @@ import {type ResizeEnable, Rnd} from "react-rnd";
 import {Button, Classes, Dialog, type DialogProps} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
-import {HelpType} from "enums";
+import {type HelpType} from "enums";
 import {AppStore, HelpStore} from "stores";
 
 import "./DraggableDialogComponent.scss";

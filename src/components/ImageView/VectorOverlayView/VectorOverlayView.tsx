@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 import {VectorOverlaySource} from "enums";
 import {VectorOverlayWebGLService} from "services";
 import {AppStore} from "stores";
-import {FrameStore, RenderConfigStore} from "stores/Frame";
+import {type FrameStore, RenderConfigStore} from "stores/Frame";
 import {GL2, rotate2D, scale2D, subtract2D} from "utilities";
 
 import "./VectorOverlayView.scss";

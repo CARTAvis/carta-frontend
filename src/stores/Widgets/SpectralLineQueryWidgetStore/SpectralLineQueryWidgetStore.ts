@@ -1,5 +1,5 @@
 import type {NumberRange} from "@blueprintjs/core";
-import {Table2} from "@blueprintjs/table";
+import {type Table2} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, flow, makeObservable, observable} from "mobx";
 

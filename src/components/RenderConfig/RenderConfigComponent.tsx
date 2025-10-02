@@ -6,15 +6,15 @@ import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";
-import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
+import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent, ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {HelpType, ImageType, PlotType} from "enums";
-import {Point2D} from "models";
+import {type Point2D} from "models";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
-import {FrameStore, RenderConfigStore} from "stores/Frame";
+import {type FrameStore, RenderConfigStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
 import {clamp, getColorForTheme, scaleValue, toExponential, toFixed} from "utilities";
 
-import {MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {type MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
 import {ColorBlendingConfigComponent} from "./ColorBlendingConfigComponent/ColorBlendingConfigComponent";
 import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";

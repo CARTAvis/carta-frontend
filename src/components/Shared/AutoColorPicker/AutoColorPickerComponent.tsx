@@ -1,5 +1,5 @@
 import * as React from "react";
-import {ColorResult, SketchPicker} from "react-color";
+import {type ColorResult, SketchPicker} from "react-color";
 import {Button, Classes, MenuItem, Popover, PopoverPosition} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import classNames from "classnames";

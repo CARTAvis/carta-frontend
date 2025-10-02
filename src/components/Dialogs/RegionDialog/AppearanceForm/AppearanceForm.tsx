@@ -1,5 +1,5 @@
 import * as React from "react";
-import {ColorResult} from "react-color";
+import {type ColorResult} from "react-color";
 import {FormGroup, HTMLSelect, Label, type OptionProps, Switch} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 import {ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput} from "components/Shared";
 import {Font, FontStyle} from "enums";
 import {AppStore} from "stores";
-import {CompassAnnotationStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore, VectorAnnotationStore} from "stores/Frame";
+import {type CompassAnnotationStore, type PointAnnotationStore, RegionStore, type RulerAnnotationStore, type TextAnnotationStore, type VectorAnnotationStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 
 import "./AppearanceForm.scss";

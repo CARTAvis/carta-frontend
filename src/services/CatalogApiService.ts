@@ -4,7 +4,7 @@ import {action} from "mobx";
 
 import {AppToaster, ErrorToast, WarningToast} from "components/Shared";
 import {CatalogDatabase, CatalogType, DialogId, RadiusUnits, SystemType, TelemetryAction} from "enums";
-import {type CatalogInfo, WCSPoint2D} from "models";
+import {type CatalogInfo, type WCSPoint2D} from "models";
 import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore} from "stores";
 import {CatalogApiProcessing, type ProcessedColumnData, type VizierResource} from "utilities";
 

@@ -1,6 +1,6 @@
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {FrequencyUnit} from "enums";
+import {type FrequencyUnit} from "enums";
 import {Freq} from "models";
 
 export class RestFreqStore {

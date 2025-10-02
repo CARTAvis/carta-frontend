@@ -2,13 +2,13 @@ import * as React from "react";
 import {Arrow, Group, Line} from "react-konva";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import Konva from "konva";
+import type Konva from "konva";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {type Point2D} from "models";
 import {AppStore} from "stores";
-import {FrameStore, RegionStore, VectorAnnotationStore} from "stores/Frame";
+import {type FrameStore, type RegionStore, type VectorAnnotationStore} from "stores/Frame";
 import {add2D, angle2D, average2D, closestPointOnLine, rotate2D, subtract2D, transformPoint} from "utilities";
 
 import {Anchor, NonEditableAnchor, ROTATOR_ANCHOR_HEIGHT} from "./InvariantShapes";
