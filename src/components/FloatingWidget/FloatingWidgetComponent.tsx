@@ -2,12 +2,12 @@ import * as React from "react";
 import {Rnd} from "react-rnd";
 import {Classes, Icon, Position, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
-import * as GoldenLayout from "golden-layout";
+import type * as GoldenLayout from "golden-layout";
 import {observer} from "mobx-react";
 
 import {PlaceholderComponent, PvPreviewComponent, RenderConfigComponent} from "components";
 import {HelpType, ImageType} from "enums";
-import {AppStore, CatalogStore, HelpStore, LayoutStore, WidgetConfig} from "stores";
+import {AppStore, CatalogStore, HelpStore, LayoutStore, type WidgetConfig} from "stores";
 
 import "./FloatingWidgetComponent.scss";
 

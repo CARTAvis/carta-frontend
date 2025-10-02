@@ -4,11 +4,11 @@ import {CARTA} from "carta-protobuf";
 import {autorun} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, SafeNumericInput, ScrollShadow, SmoothingSettingsComponent} from "components/Shared";
+import {LinePlotSettingsPanelComponent, type LinePlotSettingsPanelComponentProps, SafeNumericInput, ScrollShadow, SmoothingSettingsComponent} from "components/Shared";
 import {HelpType, RegionId, SpatialProfilerSettingsTabs} from "enums";
 import {type LineKey} from "models";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
-import {SpatialProfileWidgetStore} from "stores/Widgets";
+import {type SpatialProfileWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 
 import "./SpatialProfilerSettingsPanelComponent.scss";

@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 
 import {AutoColorPickerComponent, fontSelect, ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {HelpType} from "enums";
-import {AppStore, type DefaultWidgetConfig, WidgetProps} from "stores";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 import {clamp, SWATCH_COLORS} from "utilities";
 
 import "./ChannelMapControlComponent.scss";

@@ -3,9 +3,9 @@ import {action, computed, makeObservable, observable, ObservableMap} from "mobx"
 
 import {CatalogSystemType} from "enums";
 import {CatalogWebGLService} from "services";
-import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, WidgetsStore} from "stores";
-import {FrameStore} from "stores/Frame";
-import {CatalogWidgetStore} from "stores/Widgets";
+import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, WidgetsStore} from "stores";
+import {type FrameStore} from "stores/Frame";
+import {type CatalogWidgetStore} from "stores/Widgets";
 import {minMaxArray} from "utilities";
 
 type CatalogOverlayCoords = {

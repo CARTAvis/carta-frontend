@@ -19,7 +19,7 @@ import {
     IsSpectralSystemSupported,
     IsSpectralTypeSupported,
     IsSpectralUnitSupported,
-    Point2D,
+    type Point2D,
     POLARIZATION_LABELS,
     SPECTRAL_COORDS_SUPPORTED,
     SPECTRAL_DEFAULT_UNIT,
@@ -28,15 +28,15 @@ import {
     type SpectralTypeSet,
     STANDARD_POLARIZATIONS,
     STANDARD_SPECTRAL_TYPE_SETS,
-    TileCoordinate,
+    type TileCoordinate,
     Transform2D,
-    WCSPoint2D,
+    type WCSPoint2D,
     ZoomPoint
 } from "models";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE, TileService} from "services";
 import {AnimatorStore, AppStore, ASTSettingsString, ChannelMapInnerOverlayStore, ChannelMapOuterOverlayStore, ImageViewOverlayStore, INITIAL_LAYOUT_ITEM, LogStore, type OverlayStore, PreferenceStore, PvPreviewOverlayStore} from "stores";
-import {CENTER_POINT_INDEX, ColorbarStore, ContourConfigStore, ContourStore, RegionStore, RenderConfigStore, RestFreqStore, SIZE_POINT_INDEX, VectorOverlayConfigStore, VectorOverlayStore} from "stores/Frame";
-import {PvGeneratorWidgetStore} from "stores/Widgets";
+import {CENTER_POINT_INDEX, ColorbarStore, ContourConfigStore, ContourStore, type RegionStore, RenderConfigStore, RestFreqStore, SIZE_POINT_INDEX, VectorOverlayConfigStore, VectorOverlayStore} from "stores/Frame";
+import {type PvGeneratorWidgetStore} from "stores/Widgets";
 import {
     clamp,
     formattedArcsec,

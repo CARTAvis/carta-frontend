@@ -1,5 +1,5 @@
 import * as React from "react";
-import {ColorResult, RGBColor, SketchPicker} from "react-color";
+import {type ColorResult, type RGBColor, SketchPicker} from "react-color";
 import {Button, Classes, Popover, PopoverPosition} from "@blueprintjs/core";
 import classNames from "classnames";
 import * as _ from "lodash";

@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 
 import {Font, ProfilerInfoComponent} from "components/Shared";
 import {AppStore} from "stores";
-import {FrameStore} from "stores/Frame";
+import {type FrameStore} from "stores/Frame";
 import {clamp, getColorForTheme} from "utilities";
 
 import "./ColorbarComponent.scss";

@@ -2,7 +2,7 @@ import * as AST from "ast_wrapper";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {CatalogDatabase, CatalogSystemType, NumberFormatType, RadiusUnits, SystemType} from "enums";
-import {Point2D} from "models";
+import {type Point2D} from "models";
 import {AppStore, ASTSettingsString} from "stores";
 import {clamp, getPixelValueFromWCS, transformPoint, type VizierResource} from "utilities";
 

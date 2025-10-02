@@ -1,7 +1,7 @@
 import {computed, makeObservable} from "mobx";
 
 import {OverlaySettings} from "stores";
-import {FrameStore} from "stores/Frame";
+import {type FrameStore} from "stores/Frame";
 import {clamp} from "utilities";
 
 const COLORBAR_TICK_NUM_MIN = 3;

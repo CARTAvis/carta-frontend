@@ -1,6 +1,6 @@
 import type {ColorBlendingStore, FrameStore} from "stores";
 
-import {ImageType} from "enums";
+import {type ImageType} from "enums";
 
 export type ImageViewItem =
     | {

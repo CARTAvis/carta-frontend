@@ -1,6 +1,6 @@
 import {Group, Shape} from "react-konva";
 import {CARTA} from "carta-protobuf";
-import Konva from "konva";
+import type Konva from "konva";
 
 import {AppStore} from "stores";
 

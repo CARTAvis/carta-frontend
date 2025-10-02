@@ -2,7 +2,7 @@ import type {TabId} from "@blueprintjs/core";
 import {action, makeObservable, observable} from "mobx";
 
 import {DialogId, FileInfoType, WorkspaceDialogMode} from "enums";
-import {Snippet} from "models";
+import {type Snippet} from "models";
 import {AppStore, SnippetStore} from "stores";
 
 interface showDialogOptions {

@@ -9,7 +9,7 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {ScrollShadow} from "components/Shared";
 import {DialogId, HelpType, LayoutDialogMode, PreferenceKeys} from "enums";
 import {CtypeAbbrToName, PresetLayout} from "models";
-import {AppStore, FrameStore, INITIAL_LAYOUT_ITEM, PreferenceStore} from "stores";
+import {AppStore, type FrameStore, INITIAL_LAYOUT_ITEM, PreferenceStore} from "stores";
 
 import "./LayoutDialogComponent.scss";
 

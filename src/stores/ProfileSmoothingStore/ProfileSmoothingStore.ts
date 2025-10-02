@@ -2,7 +2,7 @@ import * as GSL from "gsl_wrapper";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {LineSettings, PlotType, SmoothingType} from "enums";
-import {Point2D} from "models";
+import {type Point2D} from "models";
 
 export class ProfileSmoothingStore {
     @observable type: SmoothingType = SmoothingType.NONE;

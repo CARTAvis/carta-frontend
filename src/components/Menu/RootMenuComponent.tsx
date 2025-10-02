@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 import {AppToaster, ExportImageMenuComponent, SuccessToast} from "components/Shared";
 import {BrowserMode, ConnectionStatus, DialogId, ImageType, PreferenceKeys, WidgetType, WorkspaceDialogMode} from "enums";
 import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
-import {CARTA_INFO, type ImageViewItem, Snippet} from "models";
+import {CARTA_INFO, type ImageViewItem, type Snippet} from "models";
 import {ApiService} from "services";
 import {AppStore, SnippetStore, WidgetsStore} from "stores";
 import {copyToClipboard, toFixed} from "utilities";

@@ -1,4 +1,4 @@
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
 import {action, makeObservable, observable, ObservableMap} from "mobx";
 import type {ProcessedSpectralProfile} from "utilities";
 

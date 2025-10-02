@@ -1,4 +1,4 @@
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
 import type {TypedArray} from "utilities";
 
 import {FrameScaling} from "enums";

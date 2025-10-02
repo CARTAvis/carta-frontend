@@ -21,11 +21,11 @@ import {
     type FrameView,
     type ImageItem,
     type ImageViewItem,
-    Point2D,
+    type Point2D,
     PresetLayout,
     type RegionId,
     Theme,
-    TileCoordinate,
+    type TileCoordinate,
     ToFileListFilterMode,
     type Workspace,
     type WorkspaceFile
@@ -45,7 +45,7 @@ import {
     ImageFittingStore,
     ImageViewConfigStore,
     LayoutStore,
-    LogEntry,
+    type LogEntry,
     LogStore,
     OverlaySettings,
     PreferenceStore,
@@ -55,8 +55,8 @@ import {
     SpectralProfileStore,
     WidgetsStore
 } from "stores";
-import {CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
-import {HistogramWidgetStore, PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
+import {type CompassAnnotationStore, CURSOR_REGION_ID, type FrameInfo, FrameStore, type PointAnnotationStore, type RegionStore, type RulerAnnotationStore, type TextAnnotationStore} from "stores/Frame";
+import {HistogramWidgetStore, type PvGeneratorWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
 import {distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
 
 import GitCommit from "../../static/gitInfo";

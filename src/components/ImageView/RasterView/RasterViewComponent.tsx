@@ -2,14 +2,14 @@ import * as React from "react";
 import classNames from "classnames";
 import {makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Subscription} from "rxjs";
+import {type Subscription} from "rxjs";
 import tinycolor from "tinycolor2";
 
 import {ImageType} from "enums";
-import {type FrameView, type ImageItem, Point2D, TileCoordinate} from "models";
+import {type FrameView, type ImageItem, type Point2D, TileCoordinate} from "models";
 import {PreviewWebGLService, type RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService, TileWebGLService} from "services";
 import {AppStore} from "stores";
-import {FrameStore} from "stores/Frame";
+import {type FrameStore} from "stores/Frame";
 import {add2D, copyToFP32Texture, createFP32Texture, getColorForTheme, GetRequiredTiles, GL2, LayerToMip, scale2D, smoothStep} from "utilities";
 
 import "./RasterViewComponent.scss";

@@ -10,8 +10,8 @@ import {observer} from "mobx-react";
 import {ResizeDetector} from "components/Shared";
 import {BrowserMode, DialogId, HelpType, RegionsOpacity} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
-import {AppStore, type DefaultWidgetConfig, DialogStore, FileBrowserStore, WidgetProps} from "stores";
-import {FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
+import {AppStore, type DefaultWidgetConfig, DialogStore, FileBrowserStore, type WidgetProps} from "stores";
+import {type FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {clamp, formattedArcsec, getFormattedWCSPoint, length2D, toFixed} from "utilities";
 
 import "./RegionListComponent.scss";

@@ -1,7 +1,7 @@
 import {Position} from "@blueprintjs/core";
 import {action, makeObservable, observable} from "mobx";
 
-import {HelpType} from "enums";
+import {type HelpType} from "enums";
 
 export class HelpStore {
     private static staticInstance: HelpStore;

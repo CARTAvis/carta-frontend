@@ -4,7 +4,7 @@ import {action, autorun, computed, makeObservable, observable, reaction} from "m
 import {MultiProfileCategory, POLARIZATIONS, RegionId} from "enums";
 import {GetIntensityOptions, type IntensityConfig, type LineKey, type LineOption, POLARIZATION_LABELS, STATISTICS_TEXT, StatsTypeString, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES} from "models";
 import {AppStore} from "stores";
-import {FrameStore} from "stores/Frame";
+import {type FrameStore} from "stores/Frame";
 import {ACTIVE_FILE_ID, SpectralProfileWidgetStore} from "stores/Widgets";
 import {genColorFromIndex, type ProcessedSpectralProfile} from "utilities";
 

@@ -1,12 +1,12 @@
-import * as AST from "ast_wrapper";
+import type * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {RegionMode, RegionsOpacity} from "enums";
-import {Point2D, Transform2D} from "models";
-import {BackendService} from "services";
-import {FileBrowserStore, PreferenceStore} from "stores";
-import {CompassAnnotationStore, CURSOR_REGION_ID, FrameStore, PointAnnotationStore, RulerAnnotationStore, TextAnnotationStore, VectorAnnotationStore} from "stores/Frame";
+import {RegionMode, type RegionsOpacity} from "enums";
+import {type Point2D, Transform2D} from "models";
+import {type BackendService} from "services";
+import {FileBrowserStore, type PreferenceStore} from "stores";
+import {CompassAnnotationStore, CURSOR_REGION_ID, type FrameStore, PointAnnotationStore, RulerAnnotationStore, TextAnnotationStore, VectorAnnotationStore} from "stores/Frame";
 import {isAstBadPoint, scale2D, transformPoint} from "utilities";
 
 import {RegionStore} from "./RegionStore";

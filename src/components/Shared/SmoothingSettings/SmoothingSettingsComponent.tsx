@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 
 import {AutoColorPickerComponent, PlotTypeSelectorComponent, SafeNumericInput} from "components/Shared";
 import {LineSettings, PlotType, SmoothingType} from "enums";
-import {ProfileSmoothingStore} from "stores";
+import {type ProfileSmoothingStore} from "stores";
 import {SWATCH_COLORS} from "utilities";
 
 import "./SmoothingSettingsComponent.scss";

@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import type {MaybeElement} from "@blueprintjs/core";
 import type {IconName} from "@blueprintjs/icons";
 import {action, makeObservable, observable} from "mobx";

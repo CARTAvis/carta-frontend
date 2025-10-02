@@ -6,8 +6,8 @@ import {observer} from "mobx-react";
 
 import {ResizeDetector, SimpleTableComponent} from "components/Shared";
 import {HelpType, ImageType} from "enums";
-import {AppStore, type DefaultWidgetConfig, WidgetProps} from "stores";
-import {FrameStore} from "stores/Frame";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
+import {type FrameStore} from "stores/Frame";
 import {formattedExponential, toFixed} from "utilities";
 
 import "./CursorInfoComponent.scss";

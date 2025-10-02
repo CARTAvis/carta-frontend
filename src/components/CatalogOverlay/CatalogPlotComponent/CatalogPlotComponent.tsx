@@ -8,12 +8,12 @@ import * as GSL from "gsl_wrapper";
 import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable, reaction, runInAction} from "mobx";
 import {observer} from "mobx-react";
-import * as Plotly from "plotly.js";
+import type * as Plotly from "plotly.js";
 
 import {ClearableNumericInputComponent, ProfilerInfoComponent, ResizeDetector} from "components/Shared";
 import {CatalogPlotType, CatalogUpdateMode} from "enums";
-import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
-import {type Border, CatalogPlotWidgetStore, type CatalogPlotWidgetStoreProps, CatalogWidgetStore, type DragMode, type XBorder} from "stores/Widgets";
+import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {type Border, type CatalogPlotWidgetStore, type CatalogPlotWidgetStoreProps, type CatalogWidgetStore, type DragMode, type XBorder} from "stores/Widgets";
 import {minMaxArray, toFixed, type TypedArray} from "utilities";
 
 import "./CatalogPlotComponent.scss";

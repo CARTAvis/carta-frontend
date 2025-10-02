@@ -2,7 +2,7 @@ import Ajv from "ajv";
 
 import {CatalogOverlayComponent} from "components";
 import {PresetLayout} from "models";
-import {AppStore, CatalogStore, WidgetConfig, WidgetsStore} from "stores";
+import {AppStore, CatalogStore, type WidgetConfig, type WidgetsStore} from "stores";
 import {findDeep} from "utilities";
 import {smoothStepOffset} from "utilities/math/math";
 

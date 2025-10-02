@@ -1,4 +1,4 @@
-import {Point2D} from "models";
+import {type Point2D} from "models";
 
 export interface CursorInfo {
     posImageSpace: Point2D;

@@ -3,8 +3,8 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 
 import {LabelType, NumberFormatType, SystemType} from "enums";
 import {WCSType} from "models";
-import {AlertStore, AppStore, PreferenceStore, PvGeneratorWidgetStore} from "stores";
-import {FrameStore, OverlayBeamStore, WCS_PRECISION} from "stores/Frame";
+import {AlertStore, AppStore, PreferenceStore, type PvGeneratorWidgetStore} from "stores";
+import {type FrameStore, type OverlayBeamStore, WCS_PRECISION} from "stores/Frame";
 import {clamp, getColorForTheme, toFixed} from "utilities";
 
 const AST_DEFAULT_COLOR = "auto-blue";

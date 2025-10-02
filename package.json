@@ -130,7 +130,7 @@
         "reformat": "npx prettier --write ./src",
         "checkformat": "npx prettier --check ./src",
         "prepack": "npm run build-libs-docker; npm run build-docker",
-        "fix-eslint": "eslint --fix ./src",
+        "fix-eslint": "eslint --fix ./src; npx prettier --write ./src",
         "check-eslint": "eslint ./src"
     },
     "eslintConfig": {
@@ -143,6 +143,12 @@
         ],
         "rules": {
             "@typescript-eslint/no-unused-expressions": "error",
+            "@typescript-eslint/consistent-type-imports": [
+                "error",
+                {
+                    "fixStyle": "inline-type-imports"
+                }
+            ],
             "import/no-webpack-loader-syntax": "off",
             "no-unused-expressions": "off",
             "no-unused-vars": "off",

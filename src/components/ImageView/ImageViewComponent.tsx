@@ -6,8 +6,8 @@ import {observer} from "mobx-react";
 
 import {ResizeDetector} from "components/Shared";
 import {HelpType, ImageType} from "enums";
-import {Point2D, Zoom} from "models";
-import {AppStore, type DefaultWidgetConfig, Padding, type WidgetProps} from "stores";
+import {type Point2D, Zoom} from "models";
+import {AppStore, type DefaultWidgetConfig, type Padding, type WidgetProps} from "stores";
 import {toFixed} from "utilities";
 
 import {ChannelMapViewComponent} from "./ChannelMapView/ChannelMapViewComponent";

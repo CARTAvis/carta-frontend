@@ -6,16 +6,16 @@ import type {LineKey} from "models";
 
 import {
     LinePlotSettingsPanelComponent,
-    LinePlotSettingsPanelComponentProps,
+    type LinePlotSettingsPanelComponentProps,
     ScatterPlotSettingsPanelComponent,
-    ScatterPlotSettingsPanelComponentProps,
+    type ScatterPlotSettingsPanelComponentProps,
     ScrollShadow,
     SmoothingSettingsComponent,
     SpectralSettingsComponent
 } from "components/Shared";
 import {HelpType, StokesAnalysisSettingsTabs} from "enums";
 import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
-import {StokesAnalysisWidgetStore} from "stores/Widgets";
+import {type StokesAnalysisWidgetStore} from "stores/Widgets";
 
 import "./StokesAnalysisSettingsPanelComponent.scss";
 

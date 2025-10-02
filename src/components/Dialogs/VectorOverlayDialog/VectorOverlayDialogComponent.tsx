@@ -1,5 +1,5 @@
 import * as React from "react";
-import {ColorResult} from "react-color";
+import {type ColorResult} from "react-color";
 import {AnchorButton, Button, Classes, type DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
@@ -11,7 +11,7 @@ import {ClearableNumericInputComponent, ColormapComponent, ColorPickerComponent,
 import {DialogId, HelpType, POLARIZATIONS, VectorOverlaySource} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore} from "stores";
-import {FrameStore} from "stores/Frame";
+import {type FrameStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 
 import "./VectorOverlayDialogComponent.scss";

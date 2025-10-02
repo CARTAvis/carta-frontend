@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 import {ResizeDetector} from "components/Shared";
 import {HelpType, ImageType, LayerListSettingsTabs} from "enums";
 import {type ImageItem} from "models";
-import {AppStore, type DefaultWidgetConfig, WidgetProps} from "stores";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 
 import "./LayerListComponent.scss";
 

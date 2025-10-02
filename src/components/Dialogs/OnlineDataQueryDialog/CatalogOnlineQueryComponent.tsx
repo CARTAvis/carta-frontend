@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {CatalogDatabase, RadiusUnits, SystemType} from "enums";
-import {Point2D, WCSPoint2D} from "models";
+import {type Point2D, type WCSPoint2D} from "models";
 import {CatalogApiService} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, NUMBER_FORMAT_LABEL, type VizierItem} from "stores";
 import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";

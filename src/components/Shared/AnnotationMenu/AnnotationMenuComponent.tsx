@@ -1,6 +1,6 @@
 import * as React from "react";
 import {type IconName, MenuItem} from "@blueprintjs/core";
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
 
 import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
 import {RegionStore} from "stores/Frame";

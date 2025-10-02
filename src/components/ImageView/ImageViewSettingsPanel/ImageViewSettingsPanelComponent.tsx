@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 
 import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, fontSelect, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
 import {BeamType, CoordinateMode, HelpType, ImagePanelMode, InputType, LabelType, NumberFormatType, PreferenceKeys, SystemType} from "enums";
-import {AppStore, type DefaultWidgetConfig, NUMBER_FORMAT_LABEL, WidgetProps} from "stores";
+import {AppStore, type DefaultWidgetConfig, NUMBER_FORMAT_LABEL, type WidgetProps} from "stores";
 import {ColorbarStore} from "stores/Frame";
 import {SWATCH_COLORS, toFixed} from "utilities";
 

@@ -1,9 +1,9 @@
 import axios from "axios";
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {HipsCoord, HipsProjection} from "enums";
-import {Point2D} from "models";
+import {type Point2D} from "models";
 import {AppStore} from "stores";
 
 /** A HiPS survey. */

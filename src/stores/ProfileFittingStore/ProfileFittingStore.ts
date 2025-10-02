@@ -3,8 +3,8 @@ import {action, computed, makeObservable, observable} from "mobx";
 
 import type {LinePlotInsideBoxMarker, LinePlotInsideTextMarker} from "components/Shared/LinePlot/LinePlotComponent";
 import {FittingContinuum, FittingFunction} from "enums";
-import {Point2D} from "models";
-import {SpectralProfileWidgetStore} from "stores/Widgets";
+import {type Point2D} from "models";
+import {type SpectralProfileWidgetStore} from "stores/Widgets";
 import {autoDetecting, gaussian, getColorForTheme, lorentzian, toFixed} from "utilities";
 
 export class ProfileFittingStore {

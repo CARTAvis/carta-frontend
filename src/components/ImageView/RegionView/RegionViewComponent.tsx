@@ -2,7 +2,7 @@ import * as React from "react";
 import {Layer, Line, Stage} from "react-konva";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
-import Konva from "konva";
+import type Konva from "konva";
 import * as _ from "lodash";
 import {action, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
@@ -10,7 +10,7 @@ import {observer} from "mobx-react";
 import {DialogId, ImageViewLayer, RegionMode} from "enums";
 import {type CursorInfo, type Point2D, ZoomPoint} from "models";
 import {AppStore, PreferenceStore} from "stores";
-import {FrameStore, type RegionStore} from "stores/Frame";
+import {type FrameStore, type RegionStore} from "stores/Frame";
 import {add2D, average2D, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
 
 import {CompassAnnotation, RulerAnnotation} from "./CompassAndRulerAnnotationComponent";

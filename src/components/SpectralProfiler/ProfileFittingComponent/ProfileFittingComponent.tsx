@@ -5,8 +5,8 @@ import {observer} from "mobx-react";
 
 import {SafeNumericInput} from "components/Shared";
 import {FittingContinuum, FittingFunction} from "enums";
-import {AppStore, ProfileFittingStore} from "stores";
-import {SpectralProfileWidgetStore} from "stores/Widgets";
+import {AppStore, type ProfileFittingStore} from "stores";
+import {type SpectralProfileWidgetStore} from "stores/Widgets";
 import {exportTxtFile, getTimestamp} from "utilities";
 
 import "./ProfileFittingComponent.scss";
