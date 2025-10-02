@@ -93,7 +93,6 @@
         "react-window": "^1.8.10",
         "rsbuild-plugin-glsl": "^1.0.1",
         "rxjs": "^7.8.1",
-        "sass-embedded": "^1.93.2",
         "semver": "^7.6.3",
         "source-map-explorer": "^2.5.3",
         "stats-js": "^1.0.1",
@@ -239,6 +238,12 @@
         "@rspack/binding-linux-arm64-gnu": "^1.5.5",
         "@rspack/binding-linux-arm64-musl": "^1.5.5",
         "@rspack/binding-linux-x64-gnu": "^1.5.5",
-        "@rspack/binding-linux-x64-musl": "^1.5.5"
+        "@rspack/binding-linux-x64-musl": "^1.5.5",
+        "sass-embedded-darwin-arm64": "1.93.2",
+        "sass-embedded-darwin-x64": "1.93.2",
+        "sass-embedded-linux-arm64": "1.93.2",
+        "sass-embedded-linux-musl-arm64": "1.93.2",
+        "sass-embedded-linux-musl-x64": "1.93.2",
+        "sass-embedded-linux-x64": "1.93.2"
     }
 }
