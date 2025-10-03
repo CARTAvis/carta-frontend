@@ -289,6 +289,14 @@
             }
         }
     }
+
+    .#{$ns}-code-block {
+        font-family: monospace;
+        box-shadow: none;
+        background: none;
+        padding: 0;
+        margin: 0;
+    }
 }
 
 .catalog-select {
