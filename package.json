@@ -26,7 +26,7 @@
         "@types/jest": "^30.0.0",
         "@types/jquery": "^3.5.33",
         "@types/lodash": "^4.17.20",
-        "@types/node": "^20.14.13",
+        "@types/node": "^24.7.0",
         "@types/plotly.js": "^3.0.6",
         "@types/prismjs": "^1.26.5",
         "@types/react": "^18.3.12",
@@ -97,7 +97,7 @@
         "stream-browserify": "^3.0.0",
         "tinycolor2": "^1.6.0",
         "ts-jest": "^29.4.4",
-        "typescript": "^5.5.4",
+        "typescript": "^5.9.3",
         "util": "^0.12.5",
         "uuid": "^13.0.0",
         "worker-loader": "^3.0.8",
@@ -229,7 +229,7 @@
     "overrides": {
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
-        "typescript": "^5.5.4",
+        "typescript": "^5.9.3",
         "fork-ts-checker-webpack-plugin": "^6.5.3",
         "@types/trusted-types": "^2.0.7"
     },
@@ -240,11 +240,11 @@
         "@rspack/binding-linux-arm64-musl": "^1.5.5",
         "@rspack/binding-linux-x64-gnu": "^1.5.5",
         "@rspack/binding-linux-x64-musl": "^1.5.5",
-        "sass-embedded-darwin-arm64": "1.93.2",
-        "sass-embedded-darwin-x64": "1.93.2",
-        "sass-embedded-linux-arm64": "1.93.2",
-        "sass-embedded-linux-musl-arm64": "1.93.2",
-        "sass-embedded-linux-musl-x64": "1.93.2",
-        "sass-embedded-linux-x64": "1.93.2"
+        "sass-embedded-darwin-arm64": "^1.93.2",
+        "sass-embedded-darwin-x64": "^1.93.2",
+        "sass-embedded-linux-arm64": "^1.93.2",
+        "sass-embedded-linux-musl-arm64": "^1.93.2",
+        "sass-embedded-linux-musl-x64": "^1.93.2",
+        "sass-embedded-linux-x64": "^1.93.2"
     }
 }
