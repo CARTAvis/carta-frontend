@@ -376,16 +376,7 @@ export class FileInfoComponent extends React.Component<{
         };
 
         const numHeaders = entries?.length || 0;
-        return (
-            <List
-                className={classNames("header-list", Classes.CODE_BLOCK)}
-                rowComponent={renderHeaderRow}
-                rowCount={numHeaders}
-                rowHeight={18}
-                rowProps={{} as any}
-                listRef={this.listRef as any}
-            />
-        );
+        return <List className={classNames("header-list", Classes.CODE_BLOCK)} rowComponent={renderHeaderRow} rowCount={numHeaders} rowHeight={18} rowProps={{} as any} listRef={this.listRef as any} />;
     };
 
     private renderHeaderToolbar = () => {

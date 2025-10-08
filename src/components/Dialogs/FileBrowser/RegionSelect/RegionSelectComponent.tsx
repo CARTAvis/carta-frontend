@@ -146,12 +146,7 @@ export class RegionSelectComponent extends React.Component {
         const fileBrowserStore = FileBrowserStore.Instance;
         return (
             <div className="region-list">
-                <List
-                    rowComponent={this.renderRegionRow}
-                    rowCount={fileBrowserStore.exportRegionOptions.length}
-                    rowHeight={24}
-                    rowProps={{} as any}
-                />
+                <List rowComponent={this.renderRegionRow} rowCount={fileBrowserStore.exportRegionOptions.length} rowHeight={24} rowProps={{} as any} />
             </div>
         );
     };
