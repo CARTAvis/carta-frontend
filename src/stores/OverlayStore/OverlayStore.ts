@@ -4,7 +4,7 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {WCSType} from "models";
 import {AlertStore, AppStore, PreferenceStore, PvGeneratorWidgetStore} from "stores";
 import {FrameStore, OverlayBeamStore, WCS_PRECISION} from "stores/Frame";
-import {clamp, getColorForTheme, setAstStringSystem, setAstSystem, toFixed} from "utilities";
+import {ASTSettingsString, clamp, getColorForTheme, setAstStringSystem, setAstSystem, toFixed} from "utilities";
 
 const AST_DEFAULT_COLOR = "auto-blue";
 
@@ -57,31 +57,6 @@ export class Padding {
     right: number;
     top: number;
     bottom: number;
-}
-
-export class ASTSettingsString {
-    stringList: Array<string>;
-
-    constructor() {
-        this.stringList = [];
-    }
-
-    add(name: string, value: any, storeIf: boolean = true) {
-        if (value !== undefined && storeIf) {
-            let storedValue = typeof value === "boolean" ? (value ? 1 : 0) : value;
-            this.stringList.push(`${name}=${storedValue}`);
-        }
-    }
-
-    addSection(section: string) {
-        if (section !== undefined) {
-            this.stringList.push(section);
-        }
-    }
-
-    toString() {
-        return this.stringList.filter(str => str.length > 0).join(", ");
-    }
 }
 
 export class OverlayGlobalSettings {
