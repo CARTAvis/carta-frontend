@@ -100,7 +100,7 @@ export class OverlayGlobalSettings {
         astString.add("Color", AstColorsIndex.GLOBAL);
         astString.add("Tol", toFixed(this.tolerance / 100, 2), this.tolerance >= 0.001); // convert to fraction
 
-        const isWcsFrameAndSystem = typeof this.explicitSystem !== "undefined" && this.explicitSystem !== SystemType.Image && frame.validWcs;
+        const isWcsFrameAndSystem = typeof this.explicitSystem !== "undefined" && this.explicitSystem !== SystemType.Image && frame?.validWcs;
         if (isWcsFrameAndSystem) {
             setAstStringSystem(astString, this.explicitSystem);
         }
@@ -127,10 +127,6 @@ export class OverlayGlobalSettings {
             const systemNameY = getSystemName(symbolY, isSysPixel, haveUnitY, this?.explicitSystem);
             astString.add("Label(1)", `"${labelX.replace(/%/g, "%%%%").replace(/"/g, "”")}${systemNameX}"`, labelX !== undefined);
             astString.add("Label(2)", `"${labelY.replace(/%/g, "%%%%").replace(/"/g, "”")}${systemNameY}"`, labelY !== undefined);
-        }
-
-        if ((frame?.isXY || frame?.isYX) && !frame?.isPVImage && isWcsFrameAndSystem) {
-            setAstStringSystem(astString, this.explicitSystem, true);
         }
 
         return astString.toString();
