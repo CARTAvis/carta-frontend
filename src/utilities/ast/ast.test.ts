@@ -1,3 +1,9 @@
+import * as AST from "ast_wrapper";
+
+import {SystemType} from "../../stores";
+
+import {ASTSettingsString, setAstStringSystem, setAstSystem} from "./ast";
+
 jest.mock("ast_wrapper", () => ({
     __esModule: true,
     set: jest.fn(),
@@ -5,12 +11,6 @@ jest.mock("ast_wrapper", () => ({
     getString: jest.fn().mockReturnValue(""),
     fonts: []
 }));
-
-import * as AST from "ast_wrapper";
-
-import {SystemType} from "../../stores";
-
-import {ASTSettingsString, setAstStringSystem, setAstSystem} from "./ast";
 
 describe("ASTSettingsString", () => {
     test("adds values and converts booleans to numeric flags", () => {
