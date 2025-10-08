@@ -144,7 +144,6 @@ export function getUnformattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: 
             AST.setI(astTransform, "Current", 2);
         }
 
-        // Handle epoch and equinox setting based on coordinate system
         const currentSystem = AST.getString(astTransform, "System");
         setAstSystem(astTransform, currentSystem as SystemType, true);
 

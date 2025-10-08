@@ -2031,10 +2031,9 @@ export class FrameStore {
             while (precisionX < FrameStore.CursorInfoMaxPrecision && precisionY < FrameStore.CursorInfoMaxPrecision) {
                 let astString = new ASTSettingsString();
                 const overlaySettings = AppStore.Instance.overlaySettings;
-                const system = this.isNormalImage ? overlaySettings.global.explicitSystem : SystemType.Image;
                 astString.add(`Format(${this.dirX})`, this.isNormalImage ? overlaySettings.numbers.cursorFormatStringX(precisionX) : undefined);
                 astString.add(`Format(${this.dirY})`, this.isNormalImage ? overlaySettings.numbers.cursorFormatStringY(precisionY) : undefined);
-                setAstStringSystem(astString, system);
+                setAstStringSystem(astString, this.isNormalImage ? overlaySettings.global.explicitSystem : SystemType.Image);
 
                 let formattedNeighbourhood = normalizedNeighbourhood.map(pos => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString(), true));
                 let [p, n1, n2] = formattedNeighbourhood;
