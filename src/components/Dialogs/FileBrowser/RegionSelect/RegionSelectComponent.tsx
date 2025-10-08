@@ -1,6 +1,5 @@
 import * as React from "react";
-import AutoSizer from "react-virtualized-auto-sizer";
-import {FixedSizeList as List} from "react-window";
+import {List} from "react-window";
 import {Checkbox, Icon, type IconName, Pre} from "@blueprintjs/core";
 import {computed, makeObservable} from "mobx";
 import {Observer, observer} from "mobx-react";
@@ -116,7 +115,7 @@ export class RegionSelectComponent extends React.Component {
         );
     };
 
-    private renderRegionOptions = ({index, style}: {index: number; style: React.CSSProperties}) => {
+    private renderRegionRow = ({index, style, ariaAttributes}: {index: number; style: React.CSSProperties; ariaAttributes: any}) => {
         return (
             <Observer>
                 {() => {
@@ -124,18 +123,19 @@ export class RegionSelectComponent extends React.Component {
                     const item = fileBrowserStore.exportRegionOptions[index];
 
                     return (
-                        <Checkbox
-                            style={style}
-                            checked={fileBrowserStore.exportRegionIndexes?.includes(item.value as number)}
-                            labelElement={
-                                <React.Fragment>
-                                    {item.isCustomIcon ? <CustomIcon icon={item.icon as CustomIconName} /> : <Icon icon={item.icon as IconName} />}
-                                    <span>&ensp;</span>
-                                    {item.active ? <b>{item.label} (Active)</b> : item.label}
-                                </React.Fragment>
-                            }
-                            onChange={() => this.handleSelectRegionChanged(item.value as number)}
-                        />
+                        <div style={style} {...ariaAttributes}>
+                            <Checkbox
+                                checked={fileBrowserStore.exportRegionIndexes?.includes(item.value as number)}
+                                labelElement={
+                                    <React.Fragment>
+                                        {item.isCustomIcon ? <CustomIcon icon={item.icon as CustomIconName} /> : <Icon icon={item.icon as IconName} />}
+                                        <span>&ensp;</span>
+                                        {item.active ? <b>{item.label} (Active)</b> : item.label}
+                                    </React.Fragment>
+                                }
+                                onChange={() => this.handleSelectRegionChanged(item.value as number)}
+                            />
+                        </div>
                     );
                 }}
             </Observer>
@@ -146,13 +146,12 @@ export class RegionSelectComponent extends React.Component {
         const fileBrowserStore = FileBrowserStore.Instance;
         return (
             <div className="region-list">
-                <AutoSizer>
-                    {({height, width}) => (
-                        <List itemSize={24} itemCount={fileBrowserStore.exportRegionOptions.length} width={width} height={height}>
-                            {this.renderRegionOptions}
-                        </List>
-                    )}
-                </AutoSizer>
+                <List
+                    rowComponent={this.renderRegionRow}
+                    rowCount={fileBrowserStore.exportRegionOptions.length}
+                    rowHeight={24}
+                    rowProps={{} as any}
+                />
             </div>
         );
     };

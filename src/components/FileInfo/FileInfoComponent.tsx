@@ -1,6 +1,5 @@
 import * as React from "react";
-import AutoSizer from "react-virtualized-auto-sizer";
-import {FixedSizeList as List} from "react-window";
+import {List} from "react-window";
 import {Button, ButtonGroup, Classes, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, NonIdealState, type OptionProps, Popover, PopoverInteractionKind, Position, Pre, Spinner, Tab, type TabId, Tabs, Text} from "@blueprintjs/core";
 import {type CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -102,12 +101,13 @@ export class FileInfoComponent extends React.Component<{
         if (!listRefCurrent) {
             return;
         }
-        const origOffset = listRefCurrent.state.scrollOffset;
-        const height = listRefCurrent.props.height;
-        const itemSize = listRefCurrent.props.itemSize;
-        const targetPosition = 10 + this.matchedIterLocation.line * itemSize;
-        if (targetPosition > origOffset + height - itemSize || targetPosition < origOffset) {
-            this.listRef.current.scrollTo(targetPosition - height / 2);
+        // For react-window 2.0, use the scrollToRow method
+        if (this.matchedIterLocation.line >= 0) {
+            listRefCurrent.scrollToRow({
+                index: this.matchedIterLocation.line,
+                align: "center",
+                behavior: "auto"
+            });
         }
     };
 
@@ -349,23 +349,23 @@ export class FileInfoComponent extends React.Component<{
         }
         this.selectedFile = this.props.selectedFile;
 
-        const renderHeaderRow = ({index, style}) => {
+        const renderHeaderRow = ({index, style, ariaAttributes}) => {
             if (index < 0 || index >= entries?.length) {
                 return null;
             }
             const header = entries[index];
             if (this.isSearchOpened && this.props.selectedTab === FileInfoType.IMAGE_HEADER && this.searchString !== "") {
                 return (
-                    <div style={style} className="header-entry">
+                    <div style={style} className="header-entry" {...ariaAttributes}>
                         {this.highlightString(index, header.name, header.value, header.comment)}
                     </div>
                 );
             } else {
                 if (header.name === "END") {
-                    return <div style={style} className="header-name">{`${header.name}`}</div>;
+                    return <div style={style} className="header-name" {...ariaAttributes}>{`${header.name}`}</div>;
                 } else {
                     return (
-                        <div style={style} className="header-entry" data-testid={"header-entry-" + index}>
+                        <div style={style} className="header-entry" data-testid={"header-entry-" + index} {...ariaAttributes}>
                             <span className="header-name">{header.name}</span>
                             <span className="header-value"> = {`${header.value}`}</span>
                             {header.comment && <span className="header-comment"> / {header.comment} </span>}
@@ -377,13 +377,14 @@ export class FileInfoComponent extends React.Component<{
 
         const numHeaders = entries?.length || 0;
         return (
-            <AutoSizer>
-                {({height, width}) => (
-                    <List className={classNames("header-list", Classes.CODE_BLOCK)} itemCount={numHeaders} itemSize={18} height={height} width={width} ref={this.listRef}>
-                        {renderHeaderRow}
-                    </List>
-                )}
-            </AutoSizer>
+            <List
+                className={classNames("header-list", Classes.CODE_BLOCK)}
+                rowComponent={renderHeaderRow}
+                rowCount={numHeaders}
+                rowHeight={18}
+                rowProps={{} as any}
+                listRef={this.listRef as any}
+            />
         );
     };
 
