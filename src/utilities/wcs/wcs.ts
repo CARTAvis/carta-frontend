@@ -2,9 +2,56 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 
 import {Point2D, SPECTRAL_DEFAULT_UNIT, SpectralType, WCSPoint2D} from "models";
-import {NumberFormatType, OverlaySettings, SystemType} from "stores";
+import {ASTSettingsString, NumberFormatType, OverlaySettings, SystemType} from "stores";
 import {FrameStore} from "stores/Frame";
 import {add2D, magDir2D, polygonPerimeter, rotate2D, scale2D, subtract2D, trimFitsComment} from "utilities";
+
+/**
+ * Get the Equinox and Epoch values for a given coordinate system
+ * @param system - The coordinate system type
+ * @returns An object with equinox and epoch strings, or null if not applicable
+ */
+export function getEquinoxEpochForSystem(system: SystemType): {equinox: string; epoch: string} | null {
+    if (system === SystemType.FK4) {
+        return {equinox: "B1950.0", epoch: "B1950.0"};
+    } else if (system === SystemType.FK5 || system === SystemType.Ecliptic || system === SystemType.Galactic) {
+        return {equinox: "J2000.0", epoch: "J2000.0"};
+    }
+    return null;
+}
+
+/**
+ * Set the System on an AST settings string and add Equinox/Epoch for that system when applicable.
+ * @param astString - The AST settings string to update
+ * @param system - The coordinate system to set and to use for Equinox/Epoch values
+ * @param skipSystem - Whether to only add Equinox/Epoch values, skip adding the System to the AST settings string
+ */
+export function setAstStringSystem(astString: ASTSettingsString, system: SystemType, skipSystem: boolean = false): void {
+    if (!skipSystem) {
+        astString.add("System", system);
+    }
+    const values = getEquinoxEpochForSystem(system);
+    if (values) {
+        astString.add("Equinox", values.equinox);
+        astString.add("Epoch", values.epoch);
+    }
+}
+
+/**
+ * Set the System on an AST FrameSet and apply Equinox/Epoch for that system when applicable.
+ * @param astTransform - The AST FrameSet to configure
+ * @param system - The coordinate system to set and to use for Equinox/Epoch values
+ * @param skipSystem - Whether to only apply Equinox/Epoch values, skip setting the System
+ */
+export function setAstSystem(astTransform: AST.FrameSet, system: SystemType, skipSystem: boolean = false): void {
+    if (!skipSystem) {
+        AST.set(astTransform, `System=${system}`);
+    }
+    const values = getEquinoxEpochForSystem(system);
+    if (values) {
+        AST.set(astTransform, `Equinox=${values.equinox}, Epoch=${values.epoch}`);
+    }
+}
 
 export function isWCSStringFormatValid(wcsString: string, format: NumberFormatType | undefined): boolean {
     if (!wcsString || !format) {
@@ -84,11 +131,7 @@ export function getUnformattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: 
 
         // Handle epoch and equinox setting based on coordinate system
         const currentSystem = AST.getString(astTransform, "System");
-        if (currentSystem === SystemType.FK4) {
-            AST.set(astTransform, "Equinox=B1950.0, Epoch=B1950.0");
-        } else if (currentSystem === SystemType.FK5 || currentSystem === SystemType.Ecliptic || currentSystem === SystemType.Galactic) {
-            AST.set(astTransform, "Equinox=J2000.0, Epoch=J2000.0");
-        }
+        setAstSystem(astTransform, currentSystem as SystemType, true);
 
         const pointWCS = transformPoint(astTransform, pixelCoords);
         const normVals = AST.normalizeCoordinates(astTransform, pointWCS.x, pointWCS.y);

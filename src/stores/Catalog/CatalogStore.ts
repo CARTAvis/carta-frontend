@@ -6,7 +6,7 @@ import {CatalogWebGLService} from "services";
 import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {CatalogWidgetStore} from "stores/Widgets";
-import {minMaxArray} from "utilities";
+import {minMaxArray, setAstSystem} from "utilities";
 
 type CatalogOverlayCoords = {
     x: Float32Array;
@@ -327,13 +327,8 @@ export class CatalogStore {
             if (wcsCopy !== 0 && AppStore.Instance.overlaySettings.isImgCoordinates) {
                 AST.setI(wcsCopy, "Current", 2);
             }
-            let system = "System=" + catalogFrame;
-            AST.set(wcsCopy, system);
-            if (catalogFrame === CatalogSystemType.FK4) {
-                AST.set(wcsCopy, "Equinox=B1950.0, Epoch=B1950.0");
-            } else if (catalogFrame === CatalogSystemType.FK5 || catalogFrame === CatalogSystemType.Ecliptic || catalogFrame === CatalogSystemType.Galactic) {
-                AST.set(wcsCopy, "Equinox=J2000.0, Epoch=J2000.0");
-            }
+
+            setAstSystem(wcsCopy, catalogFrame as any);
 
             const xWCSValues = new Float64Array(N);
             const yWCSValues = new Float64Array(N);

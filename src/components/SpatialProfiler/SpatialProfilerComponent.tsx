@@ -9,10 +9,10 @@ import {observer} from "mobx-react";
 
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, ResizeDetector, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {Point2D, POLARIZATIONS} from "models";
-import {AppStore, ASTSettingsString, DefaultWidgetConfig, HelpType, SpatialProfileStore, SystemType, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, ASTSettingsString, DefaultWidgetConfig, HelpType, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {RegionId, SpatialProfileWidgetStore} from "stores/Widgets";
-import {binarySearchByX, clamp, formattedExponential, getColorForTheme, toFixed, transformPoint} from "utilities";
+import {binarySearchByX, clamp, formattedExponential, getColorForTheme, setAstStringSystem,toFixed, transformPoint} from "utilities";
 
 import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
@@ -385,14 +385,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
         let astString = new ASTSettingsString();
         const explicitSystem = AppStore.Instance.overlaySettings.global.explicitSystem;
-        astString.add("System", explicitSystem);
-        if (explicitSystem === SystemType.FK4) {
-            astString.add("Equinox", "B1950.0");
-            astString.add("Epoch", "B1950.0");
-        } else if (explicitSystem === SystemType.FK5 || explicitSystem === SystemType.Ecliptic || explicitSystem === SystemType.Galactic) {
-            astString.add("Equinox", "J2000.0");
-            astString.add("Epoch", "J2000.0");
-        }
+        setAstStringSystem(astString, explicitSystem);
 
         if (this.widgetStore.isXProfile) {
             for (let i = 0; i < ticks.length; i++) {

@@ -87,6 +87,8 @@ import {
     ProtobufProcessing,
     rotate2D,
     round2D,
+    setAstStringSystem,
+    setAstSystem,
     subtract2D,
     toFixed,
     transformPoint,
@@ -1602,21 +1604,13 @@ export class FrameStore {
                     }
                 } else {
                     AST.setI(this.wcsInfo, "Current", 2);
-                    AST.set(this.wcsInfo, `Format(${this.dirX})=${formatStringX}, Format(${this.dirY})=${formatStyingY}, System=${explicitSystem}`);
-                    if (explicitSystem === SystemType.FK4) {
-                        AST.set(this.wcsInfo, "Equinox=B1950.0, Epoch=B1950.0");
-                    } else if (explicitSystem === SystemType.FK5 || explicitSystem === SystemType.Ecliptic || explicitSystem === SystemType.Galactic) {
-                        AST.set(this.wcsInfo, "Equinox=J2000.0, Epoch=J2000.0");
-                    }
+                    AST.set(this.wcsInfo, `Format(${this.dirX})=${formatStringX}, Format(${this.dirY})=${formatStyingY}`);
+                    setAstSystem(this.wcsInfo, explicitSystem);
 
                     if (this.wcsInfoShifted) {
                         AST.setI(this.wcsInfoShifted, "Current", 2);
-                        AST.set(this.wcsInfoShifted, `Format(${this.dirX})=${formatStringX}, Format(${this.dirY})=${formatStyingY}, System=${explicitSystem}`);
-                        if (explicitSystem === SystemType.FK4) {
-                            AST.set(this.wcsInfoShifted, "Equinox=B1950.0, Epoch=B1950.0");
-                        } else if (explicitSystem === SystemType.FK5 || explicitSystem === SystemType.Ecliptic || explicitSystem === SystemType.Galactic) {
-                            AST.set(this.wcsInfoShifted, "Equinox=J2000.0, Epoch=J2000.0");
-                        }
+                        AST.set(this.wcsInfoShifted, `Format(${this.dirX})=${formatStringX}, Format(${this.dirY})=${formatStyingY}`);
+                        setAstSystem(this.wcsInfoShifted, explicitSystem);
                     }
                 }
             }
@@ -2049,17 +2043,10 @@ export class FrameStore {
                 let astString = new ASTSettingsString();
                 const overlaySettings = AppStore.Instance.overlaySettings;
                 const explicitSystem = overlaySettings.global.explicitSystem;
-                const system = this.isPVImage || this.isUVImage || this.isSwappedZ ? "cartesian" : explicitSystem;
+                const system = this.isPVImage || this.isUVImage || this.isSwappedZ ? SystemType.Image : explicitSystem;
                 astString.add(`Format(${this.dirX})`, this.isPVImage || this.isUVImage || this.isSwappedZ ? undefined : overlaySettings.numbers.cursorFormatStringX(precisionX));
                 astString.add(`Format(${this.dirY})`, this.isPVImage || this.isUVImage || this.isSwappedZ ? undefined : overlaySettings.numbers.cursorFormatStringY(precisionY));
-                astString.add("System", system);
-                if (system === SystemType.FK4) {
-                    astString.add("Equinox", "B1950.0");
-                    astString.add("Epoch", "B1950.0");
-                } else if (system === SystemType.FK5 || system === SystemType.Ecliptic || system === SystemType.Galactic) {
-                    astString.add("Equinox", "J2000.0");
-                    astString.add("Epoch", "J2000.0");
-                }
+                setAstStringSystem(astString, system);
 
                 let formattedNeighbourhood = normalizedNeighbourhood.map(pos => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString(), true));
                 let [p, n1, n2] = formattedNeighbourhood;

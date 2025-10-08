@@ -4,7 +4,7 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {WCSType} from "models";
 import {AlertStore, AppStore, PreferenceStore, PvGeneratorWidgetStore} from "stores";
 import {FrameStore, OverlayBeamStore, WCS_PRECISION} from "stores/Frame";
-import {clamp, getColorForTheme, toFixed} from "utilities";
+import {clamp, getColorForTheme, setAstStringSystem, setAstSystem, toFixed} from "utilities";
 
 const AST_DEFAULT_COLOR = "auto-blue";
 
@@ -102,14 +102,7 @@ export class OverlayGlobalSettings {
 
         const isWcsFrameAndSystem = typeof this.explicitSystem !== "undefined" && this.explicitSystem !== SystemType.Image && frame.validWcs;
         if (isWcsFrameAndSystem) {
-            astString.add("System", this.explicitSystem);
-            if (this.explicitSystem === SystemType.FK4) {
-                astString.add("Equinox", "B1950.0");
-                astString.add("Epoch", "B1950.0");
-            } else if (this.explicitSystem === SystemType.FK5 || this.explicitSystem === SystemType.Ecliptic || this.explicitSystem === SystemType.Galactic) {
-                astString.add("Equinox", "J2000.0");
-                astString.add("Epoch", "J2000.0");
-            }
+            setAstStringSystem(astString, this.explicitSystem);
         }
 
         if (!AppStore.Instance.overlaySettings.labels?.customText) {
@@ -137,13 +130,7 @@ export class OverlayGlobalSettings {
         }
 
         if ((frame?.isXY || frame?.isYX) && !frame?.isPVImage && isWcsFrameAndSystem) {
-            if (this.system === SystemType.FK4) {
-                astString.add("Equinox", "B1950.0");
-                astString.add("Epoch", "B1950.0");
-            } else if (this.system === SystemType.FK5 || this.system === SystemType.Ecliptic || this.system === SystemType.Galactic) {
-                astString.add("Equinox", "J2000.0");
-                astString.add("Epoch", "J2000.0");
-            }
+            setAstStringSystem(astString, this.explicitSystem, true);
         }
 
         return astString.toString();
@@ -1063,12 +1050,7 @@ export class OverlaySettings {
             this.setFormatsFromSystem();
             AppStore.Instance.frames.forEach(frame => {
                 if (frame?.validWcs && frame?.wcsInfoForTransformation && this.global.explicitSystem && this.global.explicitSystem !== SystemType.Image) {
-                    AST.set(frame.wcsInfoForTransformation, `System=${this.global.explicitSystem}`);
-                    if (this.global.explicitSystem === SystemType.FK4) {
-                        AST.set(frame.wcsInfoForTransformation, "Equinox=B1950.0, Epoch=B1950.0");
-                    } else if (this.global.explicitSystem === SystemType.FK5 || this.global.explicitSystem === SystemType.Ecliptic || this.global.explicitSystem === SystemType.Galactic) {
-                        AST.set(frame.wcsInfoForTransformation, "Equinox=J2000.0, Epoch=J2000.0");
-                    }
+                    setAstSystem(frame.wcsInfoForTransformation, this.global.explicitSystem);
                 }
             });
         });

@@ -5,7 +5,8 @@ import * as _ from "lodash";
 import {observer} from "mobx-react";
 
 import {ImageItem, ImageType, SPECTRAL_TYPE_STRING} from "models";
-import {AppStore, OverlaySettings, OverlayStore, PreferenceStore, SystemType} from "stores";
+import {AppStore, OverlaySettings, OverlayStore, PreferenceStore} from "stores";
+import {setAstSystem} from "utilities";
 
 import "./OverlayComponent.scss";
 
@@ -241,12 +242,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             const formatStyingY = this.props.overlaySettings.numbers.formatStringY;
             const explicitSystem = this.props.overlaySettings.global.explicitSystem;
             if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined && OverlaySettings.Instance.isWcsCoordinates && frame.validWcs) {
-                AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY}, System=${explicitSystem},` + dirAxesSetting);
-                if (explicitSystem === SystemType.FK4) {
-                    AST.set(frame.wcsInfo, "Equinox=B1950.0, Epoch=B1950.0");
-                } else if (explicitSystem === SystemType.FK5 || explicitSystem === SystemType.Ecliptic || explicitSystem === SystemType.Galactic) {
-                    AST.set(frame.wcsInfo, "Equinox=J2000.0, Epoch=J2000.0");
-                }
+                AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY},` + dirAxesSetting);
+                setAstSystem(frame.wcsInfo, explicitSystem);
             }
         }
 
