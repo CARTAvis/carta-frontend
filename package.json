@@ -223,8 +223,8 @@
         ]
     },
     "dependencies": {
-        "patch-package": "^8.0.0",
-        "usehooks-ts": "^3.1.0"
+        "patch-package": "^8.0.1",
+        "usehooks-ts": "^3.1.1"
     },
     "overrides": {
         "react": "^18.3.1",
