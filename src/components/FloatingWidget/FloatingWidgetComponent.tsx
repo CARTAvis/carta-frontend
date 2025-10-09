@@ -32,13 +32,24 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
 
     componentDidMount() {
         this.updateDragSource();
-        const widgetConfig = this.props.widgetConfig;
-        this.rnd.updateSize({width: widgetConfig.defaultWidth, height: widgetConfig.defaultHeight + FloatingWidgetComponent.HEADER_HEIGHT});
-        this.rnd.updatePosition({x: widgetConfig.defaultX, y: widgetConfig.defaultY});
+        this.updatePositionAndSize();
     }
 
-    componentDidUpdate() {
+    componentDidUpdate(prevProps: FloatingWidgetComponentProps) {
         this.updateDragSource();
+
+        const prevConfig = prevProps.widgetConfig;
+        const currConfig = this.props.widgetConfig;
+        
+        if (
+            prevConfig !== currConfig ||
+            prevConfig.defaultX !== currConfig.defaultX ||
+            prevConfig.defaultY !== currConfig.defaultY ||
+            prevConfig.defaultWidth !== currConfig.defaultWidth ||
+            prevConfig.defaultHeight !== currConfig.defaultHeight
+        ) {
+            this.updatePositionAndSize();
+        }
     }
 
     updateDragSource() {
@@ -74,21 +85,10 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         }
     }
 
-    private handleResizeStop = (e: any, direction: any, element: HTMLElement, delta: any, position: any) => {
+    private updatePositionAndSize = () => {
         const widgetConfig = this.props.widgetConfig;
-
-        // manually add the height of the root-menu div to position y
-        // work-around for the change of the position definition from react-rnd v9 (absolute position) to v10 (relative position from the bounds)
-        const absPosition = {x: position.x, y: position.y + FloatingWidgetComponent.ROOT_MENU_HEIGHT};
-
-        const newWidth = widgetConfig.defaultWidth + delta.width;
-        const newHeight = widgetConfig.defaultHeight + delta.height;
-
-        widgetConfig.setDefaultPosition(absPosition.x, absPosition.y);
-        widgetConfig.setDefaultSize(newWidth, newHeight);
-
-        this.rnd.updatePosition(absPosition);
-        this.rnd.updateSize({width: newWidth, height: newHeight + FloatingWidgetComponent.HEADER_HEIGHT});
+        this.rnd.updateSize({width: widgetConfig.defaultWidth, height: widgetConfig.defaultHeight + FloatingWidgetComponent.HEADER_HEIGHT});
+        this.rnd.updatePosition({x: widgetConfig.defaultX, y: widgetConfig.defaultY});
     };
 
     private onClickHelpButton = () => {
@@ -160,9 +160,14 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 onMouseDown={this.props.onSelected}
                 onDragStop={(e, data) => {
                     widgetConfig.setDefaultPosition(data.lastX, data.lastY);
-                    this.rnd.updatePosition({x: data.lastX, y: data.lastY});
                 }}
-                onResizeStop={this.handleResizeStop}
+                onResizeStop={(e, direction, element, delta, position) => {
+                    // manually add the height of the root-menu div to position y
+                    // work-around for the change of the position definition from react-rnd v9 (absolute position) to v10 (relative position from the bounds)
+                    const absPosition = {x: position.x, y: position.y + FloatingWidgetComponent.ROOT_MENU_HEIGHT};
+                    widgetConfig.setDefaultPosition(absPosition.x, absPosition.y);
+                    widgetConfig.setDefaultSize(widgetConfig.defaultWidth + delta.width, widgetConfig.defaultHeight + delta.height);
+                }}
             >
                 <div className={titleClass}>
                     <div className={"floating-title"} data-testid={this.props.widgetConfig?.id + "-header-title"}>
