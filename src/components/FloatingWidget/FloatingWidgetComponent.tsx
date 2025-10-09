@@ -40,7 +40,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
 
         const prevConfig = prevProps.widgetConfig;
         const currConfig = this.props.widgetConfig;
-        
+
         if (
             prevConfig !== currConfig ||
             prevConfig.defaultX !== currConfig.defaultX ||
