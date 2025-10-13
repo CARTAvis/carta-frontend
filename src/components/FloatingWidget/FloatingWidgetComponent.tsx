@@ -25,8 +25,8 @@ class FloatingWidgetComponentProps {
 
 @observer
 export class FloatingWidgetComponent extends React.Component<FloatingWidgetComponentProps> {
-    private static readonly HEADER_HEIGHT = 25;
-    private static readonly ROOT_MENU_HEIGHT = 40;
+    private static readonly HeaderHeight = 25;
+    private static readonly RootMenuHeight = 40;
     private pinElementRef: HTMLElement;
     private rnd: Rnd;
 
@@ -87,7 +87,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
 
     private updatePositionAndSize = () => {
         const widgetConfig = this.props.widgetConfig;
-        this.rnd.updateSize({width: widgetConfig.defaultWidth, height: widgetConfig.defaultHeight + FloatingWidgetComponent.HEADER_HEIGHT});
+        this.rnd.updateSize({width: widgetConfig.defaultWidth, height: widgetConfig.defaultHeight + FloatingWidgetComponent.HeaderHeight});
         this.rnd.updatePosition({x: widgetConfig.defaultX, y: widgetConfig.defaultY});
     };
 
@@ -131,7 +131,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
     };
 
     public render() {
-        const headerHeight = FloatingWidgetComponent.HEADER_HEIGHT;
+        const headerHeight = FloatingWidgetComponent.HeaderHeight;
         const appStore = AppStore.Instance;
         const className = classNames("floating-widget", {[Classes.DARK]: appStore.darkTheme});
         const titleClass = classNames("floating-header", {selected: this.props.isSelected, [Classes.DARK]: appStore.darkTheme});
@@ -164,7 +164,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 onResizeStop={(e, direction, element, delta, position) => {
                     // manually add the height of the root-menu div to position y
                     // work-around for the change of the position definition from react-rnd v9 (absolute position) to v10 (relative position from the bounds)
-                    const absPosition = {x: position.x, y: position.y + FloatingWidgetComponent.ROOT_MENU_HEIGHT};
+                    const absPosition = {x: position.x, y: position.y + FloatingWidgetComponent.RootMenuHeight};
                     widgetConfig.setDefaultPosition(absPosition.x, absPosition.y);
                     widgetConfig.setDefaultSize(widgetConfig.defaultWidth + delta.width, widgetConfig.defaultHeight + delta.height);
                 }}
