@@ -618,11 +618,6 @@ export class CatalogWidgetStore {
             this.sizeMapColumn = column;
             this.sizeColumnMin = {default: undefined, clipd: undefined};
             this.sizeColumnMax = {default: undefined, clipd: undefined};
-            if (this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
-                const result = minMaxArray(this.sizeMapData);
-                this.setSizeMax(result.maxVal);
-                this.setSizeMin(result.minVal);
-            }
             if (column === CatalogOverlay.NONE) {
                 this.sizeArea = false;
                 this.sizeColumnMinLocked = false;
@@ -757,11 +752,6 @@ export class CatalogWidgetStore {
             this.sizeMinorMapColumn = column;
             this.sizeMinorColumnMin = {default: undefined, clipd: undefined};
             this.sizeMinorColumnMax = {default: undefined, clipd: undefined};
-            if (this.catalogDisplayMode === CatalogDisplayMode.WORLD) {
-                const result = minMaxArray(this.sizeMinorMapData);
-                this.setMinorSizeMax(result.maxVal);
-                this.setMinorSizeMin(result.minVal);
-            }
             if (column === CatalogOverlay.NONE) {
                 this.sizeMinorArea = false;
                 this.sizeMinorColumnMinLocked = false;
@@ -1008,7 +998,8 @@ export class CatalogWidgetStore {
     sizeArray(): Float32Array {
         let column = this.sizeMapData;
         if (!this.disableSizeMap && column?.length && this.sizeColumnMin.clipd !== undefined && this.sizeColumnMax.clipd !== undefined) {
-            const pointSize = this.pointSizebyType;
+            // in the CatalogDisplayMode.WORLD mode, column values are mapped to themselves, i.e., values don't change.
+            const pointSize = this.catalogDisplayMode === CatalogDisplayMode.WORLD ? {min: this.sizeColumnMin.clipd, max: this.sizeColumnMax.clipd} : this.pointSizebyType;
             let min = (this.isImagePixelSize ? 0 : this.sizeArea ? this.shapeSettings?.areaBase : this.shapeSettings?.diameterBase) ?? NaN;
             return CARTACompute.CalculateCatalogSize(column, this.sizeColumnMin.clipd, this.sizeColumnMax.clipd, pointSize.min + min, pointSize.max + min, this.sizeScalingType, this.sizeArea, this.pixelSizeFactor);
         }
@@ -1018,7 +1009,8 @@ export class CatalogWidgetStore {
     sizeMinorArray(): Float32Array {
         let column = this.sizeMinorMapData;
         if (!this.disableSizeMinorMap && column?.length && this.sizeMinorColumnMin.clipd !== undefined && this.sizeMinorColumnMax.clipd !== undefined) {
-            const pointSize = this.minorPointSizebyType;
+            // in the CatalogDisplayMode.WORLD mode, column values are mapped to themselves, i.e., values don't change.
+            const pointSize = this.catalogDisplayMode === CatalogDisplayMode.WORLD ? {min: this.sizeMinorColumnMin.clipd, max: this.sizeMinorColumnMax.clipd} : this.minorPointSizebyType;
             let min = (this.isImagePixelSize ? 0 : this.sizeArea ? this.shapeSettings?.areaBase : this.shapeSettings?.diameterBase) ?? NaN;
             return CARTACompute.CalculateCatalogSize(column, this.sizeMinorColumnMin.clipd, this.sizeMinorColumnMax.clipd, pointSize.min + min, pointSize.max + min, this.sizeMinorScalingType, this.sizeMinorArea, this.pixelSizeFactor);
         }
