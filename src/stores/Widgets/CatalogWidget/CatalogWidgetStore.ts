@@ -998,10 +998,10 @@ export class CatalogWidgetStore {
     sizeArray(): Float32Array {
         let column = this.sizeMapData;
         if (!this.disableSizeMap && column?.length && this.sizeColumnMin.clipd !== undefined && this.sizeColumnMax.clipd !== undefined) {
-            // in the CatalogDisplayMode.WORLD mode, column values are mapped to themselves, i.e., values don't change.
-            const pointSize = this.catalogDisplayMode === CatalogDisplayMode.WORLD ? {min: this.sizeColumnMin.clipd, max: this.sizeColumnMax.clipd} : this.pointSizebyType;
+            const pointSize = this.pointSizebyType;
             let min = (this.isImagePixelSize ? 0 : this.sizeArea ? this.shapeSettings?.areaBase : this.shapeSettings?.diameterBase) ?? NaN;
-            return CARTACompute.CalculateCatalogSize(column, this.sizeColumnMin.clipd, this.sizeColumnMax.clipd, pointSize.min + min, pointSize.max + min, this.sizeScalingType, this.sizeArea, this.pixelSizeFactor);
+            const isWorld = this.catalogDisplayMode === CatalogDisplayMode.WORLD;
+            return CARTACompute.CalculateCatalogSize(column, this.sizeColumnMin.clipd, this.sizeColumnMax.clipd, pointSize.min + min, pointSize.max + min, this.sizeScalingType, this.sizeArea, this.pixelSizeFactor, isWorld);
         }
         return new Float32Array(0);
     }
@@ -1009,10 +1009,20 @@ export class CatalogWidgetStore {
     sizeMinorArray(): Float32Array {
         let column = this.sizeMinorMapData;
         if (!this.disableSizeMinorMap && column?.length && this.sizeMinorColumnMin.clipd !== undefined && this.sizeMinorColumnMax.clipd !== undefined) {
-            // in the CatalogDisplayMode.WORLD mode, column values are mapped to themselves, i.e., values don't change.
-            const pointSize = this.catalogDisplayMode === CatalogDisplayMode.WORLD ? {min: this.sizeMinorColumnMin.clipd, max: this.sizeMinorColumnMax.clipd} : this.minorPointSizebyType;
+            const pointSize = this.minorPointSizebyType;
             let min = (this.isImagePixelSize ? 0 : this.sizeArea ? this.shapeSettings?.areaBase : this.shapeSettings?.diameterBase) ?? NaN;
-            return CARTACompute.CalculateCatalogSize(column, this.sizeMinorColumnMin.clipd, this.sizeMinorColumnMax.clipd, pointSize.min + min, pointSize.max + min, this.sizeMinorScalingType, this.sizeMinorArea, this.pixelSizeFactor);
+            const isWorld = this.catalogDisplayMode === CatalogDisplayMode.WORLD;
+            return CARTACompute.CalculateCatalogSize(
+                column,
+                this.sizeMinorColumnMin.clipd,
+                this.sizeMinorColumnMax.clipd,
+                pointSize.min + min,
+                pointSize.max + min,
+                this.sizeMinorScalingType,
+                this.sizeMinorArea,
+                this.pixelSizeFactor,
+                isWorld
+            );
         }
         return new Float32Array(0);
     }
