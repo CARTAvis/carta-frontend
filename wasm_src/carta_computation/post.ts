@@ -97,17 +97,22 @@ Module.GenerateVertexData = (sourceVertices: Float32Array, indexOffsets: Int32Ar
     return destHeapFloat;
 };
 
-Module.CalculateCatalogSize = (data: Float32Array, min: number, max: number, sizeMin: number, sizeMax: number, scaling: number, area: boolean, devicePixelRatio: number, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
+Module.CalculateCatalogSize = (data: Float32Array, min: number, max: number, sizeMin: number, sizeMax: number, scaling: number, area: boolean, devicePixelRatio: number, isWorld: boolean = false, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
     const N = data.length;
     const bytes_per_element = data.BYTES_PER_ELEMENT;
     const dataOnWasmHeap = Module._malloc(N * bytes_per_element);
 
     Module.HEAPF32.set(data, dataOnWasmHeap / bytes_per_element);
 
-    if (area) {
-        calculateCatalogMap(1, dataOnWasmHeap, N, min, max, sizeMin, sizeMax, scaling, alpha, gamma, devicePixelRatio, false);
+    if (isWorld) {
+        // calculate angular size with considering devicePixelRatio but no mapping
+        calculateCatalogMap(4, dataOnWasmHeap, N, min, max, sizeMin, sizeMax, scaling, alpha, gamma, devicePixelRatio, false);
     } else {
-        calculateCatalogMap(0, dataOnWasmHeap, N, min, max, sizeMin, sizeMax, scaling, alpha, gamma, devicePixelRatio, false);
+        if (area) {
+            calculateCatalogMap(1, dataOnWasmHeap, N, min, max, sizeMin, sizeMax, scaling, alpha, gamma, devicePixelRatio, false);
+        } else {
+            calculateCatalogMap(0, dataOnWasmHeap, N, min, max, sizeMin, sizeMax, scaling, alpha, gamma, devicePixelRatio, false);
+        }
     }
 
     const float32 = new Float32Array(Module.HEAPF32.buffer, dataOnWasmHeap, N);
