@@ -115,7 +115,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         ev.currentTarget.value = existingValue;
     };
 
-    @action setHeaderTableColumnWidts(vals: Array<number>) {
+    @action setHeaderTableColumnWidths(vals: Array<number>) {
         this.headerTableColumnWidths = vals;
     }
 

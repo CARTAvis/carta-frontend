@@ -390,7 +390,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 minColumnWidth={30}
                 enableGhostCells={true}
                 numFrozenColumns={1}
-                columnWidths={this.widgetStore.headerTableColumnWidts}
+                columnWidths={this.widgetStore.headerTableColumnWidths}
                 onColumnWidthChanged={this.updateHeaderTableColumnSize}
                 enableRowResizing={false}
                 cellRendererDependencies={[headerDisplays, this.profileStore.loadingData]} // trigger re-render on controlHeader change
@@ -402,8 +402,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private updateHeaderTableColumnSize = (index: number, size: number) => {
         const widgetsStore = this.widgetStore;
-        if (widgetsStore.headerTableColumnWidts) {
-            widgetsStore.headerTableColumnWidts[index] = size;
+        if (widgetsStore.headerTableColumnWidths) {
+            widgetsStore.headerTableColumnWidths[index] = size;
         }
     };
 
