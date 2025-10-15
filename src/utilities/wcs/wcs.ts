@@ -43,24 +43,39 @@ export function getReferencePixel(frame: FrameStore): Point2D {
     return {x, y};
 }
 
-export function getPixelSize(frame: FrameStore, axis: number): number {
-    const headerEntries = frame?.frameInfo?.fileInfoExtended?.headerEntries;
-    if (!headerEntries) {
-        return NaN;
-    }
+/**
+ * Calculates the pixel sizes (in arcseconds per pixel) along the rendered X and Y axes by
+ * measuring WCS geodesic distances around the reference pixel (CRPIX).
+ *
+ * @param frame - The `FrameStore` providing WCS transform (`frame.wcsInfo`) and FITS headers
+ * @param rounding - Optional number of decimal places to round the pixel size in arcseconds.
+ *                   If omitted, raw (unrounded) arcsecond values are returned.
+ * @returns An object with `{ x, y }` pixel sizes in arcseconds; `NaN` values if they cannot be determined
+ */
+export function getPixelSizes(frame: FrameStore, rounding?: number): {x: number; y: number} {
+    const crpixX = frame?.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name === `CRPIX${frame.dirXNumber}`);
+    const crpixY = frame?.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name === `CRPIX${frame.dirYNumber}`);
 
-    // First try the usual CDELT value
-    let header = headerEntries.find(entry => entry.name === `CDELT${axis}`);
-    if (!header) {
-        // Otherwise revert to PC matrix
-        header = headerEntries.find(entry => entry.name === `PC${axis}_${axis}`);
-        if (!header) {
-            // Finally, try the deprecated CD matrix
-            header = headerEntries.find(entry => entry.name === `CD${axis}_${axis}`);
+    if (crpixX && crpixY) {
+        const crpixXVal = getHeaderNumericValue(crpixX);
+        const crpixYVal = getHeaderNumericValue(crpixY);
+        const xPixelSizeArcsec = AST.geodesicDistance(frame.wcsInfo, crpixXVal - 0.5, crpixYVal, crpixXVal + 0.5, crpixYVal);
+        const yPixelSizeArcsec = AST.geodesicDistance(frame.wcsInfo, crpixXVal, crpixYVal - 0.5, crpixXVal, crpixYVal + 0.5);
+
+        if (!isFinite(xPixelSizeArcsec) || !isFinite(yPixelSizeArcsec)) {
+            return {x: NaN, y: NaN};
         }
-    }
 
-    return getHeaderNumericValue(header);
+        if (isFinite(rounding as number)) {
+            const factor = Math.pow(10, rounding as number);
+            return {
+                x: Math.round(xPixelSizeArcsec * factor) / factor,
+                y: Math.round(yPixelSizeArcsec * factor) / factor
+            };
+        }
+        return {x: xPixelSizeArcsec, y: yPixelSizeArcsec};
+    }
+    return {x: NaN, y: NaN};
 }
 
 export function getFormattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: Point2D) {
