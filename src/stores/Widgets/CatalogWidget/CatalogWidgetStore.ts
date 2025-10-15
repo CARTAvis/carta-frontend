@@ -99,8 +99,8 @@ export class CatalogWidgetStore {
     ]);
 
     @observable catalogFileId: number;
-    @observable headerTableColumnWidts: Array<number>;
-    @observable dataTableColumnWidts: Array<number>;
+    @observable headerTableColumnWidths: Array<number>;
+    @observable dataTableColumnWidths: Array<number>;
     @observable showSelectedData: boolean;
     @observable catalogTableAutoScroll: boolean;
     @observable catalogPlotType: CatalogPlotType;
@@ -156,7 +156,7 @@ export class CatalogWidgetStore {
     constructor(catalogFileId: number) {
         makeObservable(this);
         this.catalogFileId = catalogFileId;
-        this.headerTableColumnWidts = [150, 75, 65, 100, 230];
+        this.headerTableColumnWidths = [150, 75, 65, 100, 230];
         this.showSelectedData = false;
         this.catalogTableAutoScroll = false;
         this.catalogPlotType = CatalogPlotType.ImageOverlay;
@@ -806,12 +806,12 @@ export class CatalogWidgetStore {
         this.worldSizeUnit = unit;
     }
 
-    @action setHeaderTableColumnWidts(vals: Array<number>) {
-        this.headerTableColumnWidts = vals;
+    @action setHeaderTableColumnWidths(vals: Array<number>) {
+        this.headerTableColumnWidths = vals;
     }
 
-    @action setDataTableColumnWidts(vals: Array<number>) {
-        this.dataTableColumnWidts = vals;
+    @action setDataTableColumnWidths(vals: Array<number>) {
+        this.dataTableColumnWidths = vals;
     }
 
     @action setShowSelectedData(val: boolean) {
