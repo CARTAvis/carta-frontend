@@ -111,7 +111,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         return destArr;
     }
 
-    updateCatalogData(catalogFilter: CARTA.CatalogFilterResponse, catalogData: Map<number, ProcessedColumnData>) {
+    @action updateCatalogData(catalogFilter: CARTA.CatalogFilterResponse, catalogData: Map<number, ProcessedColumnData>) {
         let subsetDataSize = catalogFilter.subsetDataSize;
         const subsetEndIndex = catalogFilter.subsetEndIndex;
         const startIndex = subsetEndIndex - subsetDataSize;
@@ -120,7 +120,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         this.filterDataSize = catalogFilter.filterDataSize;
 
         if (this.subsetEndIndex <= this.filterDataSize) {
-            let numVisibleRows = this.numVisibleRows + subsetDataSize;
+            let numVisibleRows = this.isUpdateColumnMode ? this.numVisibleRows : this.numVisibleRows + subsetDataSize;
             catalogData.forEach((newData, key) => {
                 let currentData = this.catalogData.get(key);
                 if (!currentData) {
@@ -168,10 +168,12 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
     };
 
     @action resetFilterRequest() {
-        this.setUpdateMode(CatalogUpdateMode.TableUpdate);
-        this.clearData();
-        this.setNumVisibleRows(0);
-        this.setSubsetEndIndex(0);
+        if (!this.isUpdateColumnMode) {
+            this.setUpdateMode(CatalogUpdateMode.TableUpdate);
+            this.clearData();
+            this.setNumVisibleRows(0);
+            this.setSubsetEndIndex(0);
+        }
         this.setLoadingDataStatus(true);
     }
 
@@ -234,9 +236,9 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
 
     @computed get updateRequestDataSize() {
         this.catalogFilterRequest.subsetStartIndex = this.subsetEndIndex;
-        if (this.maxRows <= this.numVisibleRows) {
+        if (this.maxRows <= this.numVisibleRows || this.isUpdateColumnMode) {
             this.catalogFilterRequest.subsetStartIndex = 0;
-            this.catalogFilterRequest.subsetDataSize = this.maxRows;
+            this.catalogFilterRequest.subsetDataSize = this.isUpdateColumnMode ? this.subsetEndIndex : this.maxRows;
             return this.catalogFilterRequest;
         }
         const dataSize = this.maxRows - this.numVisibleRows;
