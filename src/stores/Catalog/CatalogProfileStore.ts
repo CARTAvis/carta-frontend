@@ -146,6 +146,11 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
             this.setNumVisibleRows(numVisibleRows);
             this.subsetEndIndex = subsetEndIndex;
         }
+
+        // Reset column update mode flag after processing the filter response
+        if (this.isUpdateColumnMode) {
+            this.setIsUpdateColumn(false);
+        }
     }
 
     @action.bound setNumVisibleRows(val: number) {

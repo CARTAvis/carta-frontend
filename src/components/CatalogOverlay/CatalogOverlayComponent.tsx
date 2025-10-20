@@ -216,17 +216,20 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const val = changeEvent.target.checked;
         const header = profileStore.catalogControlHeader.get(columnName);
         profileStore.setHeaderDisplay(val, columnName);
-        if ((val === true || (header.filter !== "" && val === false)) && profileStore.isFileBasedCatalog) {
+
+        const needsFilterUpdate = (val === true || (header.filter !== "" && val === false)) && profileStore.isFileBasedCatalog;
+
+        if (needsFilterUpdate) {
             profileStore.setIsUpdateColumn(true);
             this.handleFilterRequest();
         }
+
         if (catalogWidgetStore.xAxis === columnName) {
             catalogWidgetStore.setxAxis(CatalogOverlay.NONE);
         }
         if (catalogWidgetStore.yAxis === columnName) {
             catalogWidgetStore.setyAxis(CatalogOverlay.NONE);
         }
-        profileStore.setIsUpdateColumn(false); // set to false after filter request sent even no filter request sent
     }
 
     private renderDataColumn(columnName: string, columnData: any) {
@@ -418,9 +421,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private handleFilterRequest = () => {
         const profileStore = this.profileStore;
-        if ((profileStore.loadOntoImage || !profileStore.updateTableView || !profileStore.hasFilter) && !profileStore.isUpdateColumnMode) {
+
+        // Skip if normal conditions prevent filtering AND we're not in column update mode
+        const shouldSkipRequest = !profileStore.isUpdateColumnMode && (profileStore.loadOntoImage || !profileStore.updateTableView || !profileStore.hasFilter);
+
+        if (shouldSkipRequest) {
             return;
         }
+
         const catalogWidgetStore = this.widgetStore;
         const appStore = AppStore.Instance;
         if (profileStore && appStore) {
