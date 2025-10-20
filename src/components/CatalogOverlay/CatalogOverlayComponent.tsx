@@ -58,7 +58,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             minWidth: 720,
             minHeight: 400,
             defaultWidth: 720,
-            defaultHeight: 400,
+            defaultHeight: 600,
             title: "Catalog",
             isCloseable: true,
             helpType: HelpType.CATALOG_OVERLAY,
@@ -217,6 +217,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const header = profileStore.catalogControlHeader.get(columnName);
         profileStore.setHeaderDisplay(val, columnName);
         if ((val === true || (header.filter !== "" && val === false)) && profileStore.isFileBasedCatalog) {
+            profileStore.setIsUpdateColumn(true);
             this.handleFilterRequest();
         }
         if (catalogWidgetStore.xAxis === columnName) {
@@ -225,6 +226,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (catalogWidgetStore.yAxis === columnName) {
             catalogWidgetStore.setyAxis(CatalogOverlay.NONE);
         }
+        profileStore.setIsUpdateColumn(false); // set to false after filter request sent even no filter request sent
     }
 
     private renderDataColumn(columnName: string, columnData: any) {
@@ -416,7 +418,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private handleFilterRequest = () => {
         const profileStore = this.profileStore;
-        if (profileStore.loadOntoImage || !profileStore.updateTableView || !profileStore.hasFilter) {
+        if ((profileStore.loadOntoImage || !profileStore.updateTableView || !profileStore.hasFilter) && !profileStore.isUpdateColumnMode) {
             return;
         }
         const catalogWidgetStore = this.widgetStore;
