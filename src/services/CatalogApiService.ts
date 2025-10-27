@@ -149,7 +149,7 @@ export class CatalogApiService {
     @action loadCatalog = (fileId: number, catalogInfo: CatalogInfo, headers: CARTA.CatalogHeader[], columnData: Map<number, ProcessedColumnData>, type: CatalogType) => {
         const appStore = AppStore.Instance;
         if (!appStore.activeFrame) {
-            AppToaster.show(ErrorToast("Please load the image file"));
+            AppToaster.show(ErrorToast("Please load an image file"));
             return;
         }
         const catalogWidgetId = appStore.updateCatalogProfile(fileId, appStore.activeFrame);
@@ -178,7 +178,7 @@ export class CatalogApiService {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         if (!frame) {
-            AppToaster.show(ErrorToast("Please load the image file"));
+            AppToaster.show(ErrorToast("Please load an image file"));
             throw new Error("No image file");
         }
 

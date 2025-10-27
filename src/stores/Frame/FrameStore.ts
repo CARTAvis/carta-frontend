@@ -691,7 +691,7 @@ export class FrameStore {
             }
             // convert frequency to velocity
             const velocityVal = this.astSpectralTransform(SpectralType.VRAD, SpectralUnit.KMS, this.spectralSystem, freqVal);
-            if (velocityVal && isFinite(velocityVal)) {
+            if (velocityVal !== undefined && isFinite(velocityVal)) {
                 result.velocityString = `Velocity: ${toFixed(velocityVal, 4)} km/s`;
             }
         } else if (spectralType.code === "VRAD") {
@@ -699,7 +699,7 @@ export class FrameStore {
             // convert velocity value to unit in km/s
             if (this.isSpectralCoordinateConvertible && this.spectralAxis?.type.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.VRAD)) {
                 const velocityKMS = this.astSpectralTransform(SpectralType.VRAD, SpectralUnit.KMS, this.spectralSystem, velocityVal);
-                if (velocityKMS && isFinite(velocityKMS)) {
+                if (velocityKMS !== undefined && isFinite(velocityKMS)) {
                     result.spectralString = `Velocity (${this.spectralSystem}): ${toFixed(velocityKMS, 4)} km/s`;
                 }
             }
