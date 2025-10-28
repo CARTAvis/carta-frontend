@@ -318,17 +318,18 @@ export class CatalogStore {
 
     private static TransformCatalogData(xWcsData: Array<number>, yWcsData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType): {xImageCoords: Float64Array; yImageCoords: Float64Array} {
         if (xWcsData?.length === yWcsData?.length && xWcsData?.length > 0) {
+            const overlay = AppStore.Instance.overlaySettings;
             const N = xWcsData.length;
 
             let xFraction = CatalogStore.GetFractionFromUnit(xUnit.toLocaleLowerCase());
             let yFraction = CatalogStore.GetFractionFromUnit(yUnit.toLocaleLowerCase());
 
             let wcsCopy = AST.copy(wcsInfo);
-            if (wcsCopy !== 0 && AppStore.Instance.overlaySettings.isImgCoordinates) {
+            if (wcsCopy !== 0 && overlay.isImgCoordinates) {
                 AST.setI(wcsCopy, "Current", 2);
             }
 
-            setAstSystem(wcsCopy, catalogFrame as any);
+            setAstSystem(wcsCopy, catalogFrame, overlay.global);
 
             const xWCSValues = new Float64Array(N);
             const yWCSValues = new Float64Array(N);

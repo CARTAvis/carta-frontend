@@ -243,7 +243,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             const explicitSystem = this.props.overlaySettings.global.explicitSystem;
             if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined && OverlaySettings.Instance.isWcsCoordinates && frame.validWcs) {
                 AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY},` + dirAxesSetting);
-                setAstSystem(frame.wcsInfo, explicitSystem);
+                setAstSystem(frame.wcsInfo, explicitSystem, this.props.overlaySettings.global);
             }
         }
 

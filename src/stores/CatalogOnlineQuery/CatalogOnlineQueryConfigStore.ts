@@ -333,7 +333,7 @@ export class CatalogOnlineQueryConfigStore {
             let astString = new ASTSettingsString();
             const sys = system ? system : overlay.global.explicitSystem ? overlay.global.explicitSystem : SystemType.ICRS;
             if (frame.isXY || frame.isYX) {
-                setAstSystem(wcsCopy, sys);
+                setAstSystem(wcsCopy, sys, overlay.global);
                 astString.add(`Format(${frame.dirX})`, format);
                 astString.add(`Format(${frame.dirY})`, format);
             }

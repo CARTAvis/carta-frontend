@@ -98,7 +98,7 @@ export function getUnformattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: 
         }
 
         const currentSystem = AST.getString(astTransform, "System");
-        setAstSystem(astTransform, currentSystem as SystemType, true);
+        setAstSystem(astTransform, currentSystem as SystemType, OverlaySettings.Instance.global, true);
 
         const pointWCS = transformPoint(astTransform, pixelCoords);
         const normVals = AST.normalizeCoordinates(astTransform, pointWCS.x, pointWCS.y);

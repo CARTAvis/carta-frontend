@@ -67,6 +67,8 @@ export class OverlayGlobalSettings {
 
     // We need this so that we know what to do if it's set to native
     @observable defaultSystem: SystemType;
+    @observable defaultEquinox: string;
+    @observable defaultEpoch: string;
     @observable validWcs: boolean;
 
     public styleString(frame?: FrameStore) {
@@ -77,7 +79,7 @@ export class OverlayGlobalSettings {
 
         const isWcsFrameAndSystem = typeof this.explicitSystem !== "undefined" && this.explicitSystem !== SystemType.Image && frame?.validWcs;
         if (isWcsFrameAndSystem) {
-            setAstStringSystem(astString, this.explicitSystem);
+            setAstStringSystem(astString, this.explicitSystem, this);
         }
 
         if (!AppStore.Instance.overlaySettings.labels?.customText) {
@@ -159,6 +161,14 @@ export class OverlayGlobalSettings {
 
     @action setDefaultSystem(system: SystemType) {
         this.defaultSystem = system;
+    }
+
+    @action setDefaultEquinox(equinox: string) {
+        this.defaultEquinox = equinox;
+    }
+
+    @action setDefaultEpoch(epoch: string) {
+        this.defaultEpoch = epoch;
     }
 
     @action setValidWcs(validWcs: boolean) {
@@ -1021,7 +1031,7 @@ export class OverlaySettings {
             this.setFormatsFromSystem();
             AppStore.Instance.frames.forEach(frame => {
                 if (frame?.validWcs && frame?.wcsInfoForTransformation && this.global.explicitSystem && this.global.explicitSystem !== SystemType.Image) {
-                    setAstSystem(frame.wcsInfoForTransformation, this.global.explicitSystem);
+                    setAstSystem(frame.wcsInfoForTransformation, this.global.explicitSystem, this.global);
                 }
             });
         });
@@ -1092,6 +1102,9 @@ export class OverlaySettings {
         this.numbers.setValidWcs(frame.validWcs);
 
         this.global.setDefaultSystem(frame.defaultWcsSystem);
+        this.global.setDefaultEquinox(frame.defaultWcsEquinox);
+        this.global.setDefaultEpoch(frame.defaultWcsEpoch);
+
         this.setFormatsFromSystem();
 
         if (this.global.system === SystemType.Auto) {
