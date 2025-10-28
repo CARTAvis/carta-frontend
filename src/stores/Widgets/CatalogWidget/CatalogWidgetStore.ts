@@ -61,6 +61,15 @@ export enum CatalogSizeUnits {
     DEG = "deg"
 }
 
+// defined to be consistent with the enum in carta_computation.cc
+enum CatalogMapType {
+    SIZE_DIAMETER = 0,
+    SIZE_AREA = 1,
+    COLOR = 2,
+    ORIENTATION = 3,
+    SIZE_DIAMETER_ANGULAR = 4
+}
+
 export class CatalogWidgetStore {
     public static readonly MinOverlaySize = 1;
     public static readonly MaxOverlaySize = 50;
@@ -1010,8 +1019,9 @@ export class CatalogWidgetStore {
         if (!this.disableSizeMap && column?.length && this.sizeColumnMin.clipd !== undefined && this.sizeColumnMax.clipd !== undefined) {
             const pointSize = this.pointSizebyType;
             let min = (this.isImagePixelSize ? 0 : this.sizeArea ? this.shapeSettings?.areaBase : this.shapeSettings?.diameterBase) ?? NaN;
-            const isWorld = this.catalogDisplayMode === CatalogDisplayMode.WORLD;
-            return CARTACompute.CalculateCatalogSize(column, this.sizeColumnMin.clipd, this.sizeColumnMax.clipd, pointSize.min + min, pointSize.max + min, this.sizeScalingType, this.sizeArea, this.pixelSizeFactor, isWorld);
+            const sizeMapType = this.catalogDisplayMode === CatalogDisplayMode.WORLD ? CatalogMapType.SIZE_DIAMETER_ANGULAR : this.sizeArea ? CatalogMapType.SIZE_AREA : CatalogMapType.SIZE_DIAMETER;
+
+            return CARTACompute.CalculateCatalogSize(column, this.sizeColumnMin.clipd, this.sizeColumnMax.clipd, pointSize.min + min, pointSize.max + min, this.sizeScalingType, sizeMapType, this.pixelSizeFactor);
         }
         return new Float32Array(0);
     }
@@ -1021,18 +1031,9 @@ export class CatalogWidgetStore {
         if (!this.disableSizeMinorMap && column?.length && this.sizeMinorColumnMin.clipd !== undefined && this.sizeMinorColumnMax.clipd !== undefined) {
             const pointSize = this.minorPointSizebyType;
             let min = (this.isImagePixelSize ? 0 : this.sizeArea ? this.shapeSettings?.areaBase : this.shapeSettings?.diameterBase) ?? NaN;
-            const isWorld = this.catalogDisplayMode === CatalogDisplayMode.WORLD;
-            return CARTACompute.CalculateCatalogSize(
-                column,
-                this.sizeMinorColumnMin.clipd,
-                this.sizeMinorColumnMax.clipd,
-                pointSize.min + min,
-                pointSize.max + min,
-                this.sizeMinorScalingType,
-                this.sizeMinorArea,
-                this.pixelSizeFactor,
-                isWorld
-            );
+            const sizeMapType = this.catalogDisplayMode === CatalogDisplayMode.WORLD ? CatalogMapType.SIZE_DIAMETER_ANGULAR : this.sizeMinorArea ? CatalogMapType.SIZE_AREA : CatalogMapType.SIZE_DIAMETER;
+
+            return CARTACompute.CalculateCatalogSize(column, this.sizeMinorColumnMin.clipd, this.sizeMinorColumnMax.clipd, pointSize.min + min, pointSize.max + min, this.sizeMinorScalingType, sizeMapType, this.pixelSizeFactor);
         }
         return new Float32Array(0);
     }
