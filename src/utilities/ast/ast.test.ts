@@ -5,11 +5,12 @@ import {SystemType} from "../../stores";
 
 import {ASTSettingsString, setAstStringSystem, setAstSystem} from "./ast";
 
-const gs = (defaultSystem: SystemType, defaultEquinox: string, defaultEpoch: string) => ({
-    defaultSystem,
-    defaultEquinox,
-    defaultEpoch
-} as any);
+const gs = (defaultSystem: SystemType, defaultEquinox: string, defaultEpoch: string) =>
+    ({
+        defaultSystem,
+        defaultEquinox,
+        defaultEpoch
+    }) as any;
 
 const astOut = (system: SystemType | CatalogSystemType, global: any, skipSystem: boolean = false) => {
     const s = new ASTSettingsString();
@@ -110,8 +111,7 @@ describe("setAstStringSystem", () => {
         ["ICRS equinox and epoch", SystemType.ICRS, "System=ICRS, Equinox=J2000.0, Epoch=J2000.0"],
         ["Galactic equinox and epoch", SystemType.Galactic, "System=GALACTIC, Equinox=J2000.0, Epoch=J2000.0"],
         ["Ecliptic equinox and epoch", SystemType.Ecliptic, "System=ECLIPTIC, Equinox=J2000.0, Epoch=J2000.0"]
-    ] as Array<[string, SystemType, string]>)
-    ("applies FK4 overlay defaults for %s", (_description, system, expected) => {
+    ] as Array<[string, SystemType, string]>)("applies FK4 overlay defaults for %s", (_description, system, expected) => {
         expect(astOut(system, defaultFK4)).toBe(expected);
     });
 
@@ -121,8 +121,7 @@ describe("setAstStringSystem", () => {
         ["ICRS equinox and epoch", SystemType.ICRS, "System=ICRS, Equinox=J2000.0, Epoch=J2000.0"],
         ["Galactic equinox and epoch", SystemType.Galactic, "System=GALACTIC, Equinox=J2000.0, Epoch=J2000.0"],
         ["Ecliptic equinox and epoch", SystemType.Ecliptic, "System=ECLIPTIC, Equinox=J2000.0, Epoch=J2000.0"]
-    ] as Array<[string, SystemType, string]>)
-    ("applies FK5 overlay defaults for %s", (_description, system, expected) => {
+    ] as Array<[string, SystemType, string]>)("applies FK5 overlay defaults for %s", (_description, system, expected) => {
         expect(astOut(system, defaultFK5)).toBe(expected);
     });
 
@@ -132,8 +131,7 @@ describe("setAstStringSystem", () => {
         ["ICRS equinox and epoch", SystemType.ICRS, "System=ICRS, Equinox=J2000.0, Epoch=J2000.0"],
         ["Galactic equinox and epoch", SystemType.Galactic, "System=GALACTIC, Equinox=J2000.0, Epoch=J2000.0"],
         ["Ecliptic equinox and epoch", SystemType.Ecliptic, "System=ECLIPTIC, Equinox=J2000.0, Epoch=J2000.0"]
-    ] as Array<[string, SystemType, string]>)
-    ("applies ICRS overlay defaults and fallback for %s", (_description, system, expected) => {
+    ] as Array<[string, SystemType, string]>)("applies ICRS overlay defaults and fallback for %s", (_description, system, expected) => {
         expect(astOut(system, defaultICRS)).toBe(expected);
     });
 
@@ -143,8 +141,7 @@ describe("setAstStringSystem", () => {
         [SystemType.ICRS, "J2000.0", "J2000.0", "System=ICRS, Equinox=J2000.0, Epoch=J2000.0"],
         [SystemType.Galactic, "J2000.0", "J2000.0", "System=GALACTIC, Equinox=J2000.0, Epoch=J2000.0"],
         [SystemType.Ecliptic, "J2020.0", "J2000.0", "System=ECLIPTIC, Equinox=J2020.0, Epoch=J2000.0"]
-    ] as Array<[SystemType, string, string, string]>)
-    ("uses overlay defaults when defaultSystem=%s and system matches default", (defaultSystem, defaultEquinox, defaultEpoch, expected) => {
+    ] as Array<[SystemType, string, string, string]>)("uses overlay defaults when defaultSystem=%s and system matches default", (defaultSystem, defaultEquinox, defaultEpoch, expected) => {
         const customGlobalSettings = gs(defaultSystem, defaultEquinox, defaultEpoch);
         expect(astOut(defaultSystem, customGlobalSettings)).toBe(expected);
     });
