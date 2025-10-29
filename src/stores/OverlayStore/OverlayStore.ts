@@ -375,12 +375,14 @@ export class OverlayTickSettings {
     @observable majorLength: number; // percentage
 
     @computed get styleString() {
+        const epsilon = 0.0001; // this prevents the ticks go out of the border by reducing the sub-pixel rendering blurry
+
         let astString = new ASTSettingsString();
         astString.add("TickAll", this.drawAll);
         astString.add("MinTick(1)", this.densityX, this.customDensity);
         astString.add("MinTick(2)", this.densityY, this.customDensity);
         astString.add("Color(Ticks)", AstColorsIndex.TICK, this.customColor);
-        astString.add("Width(Ticks)", this.width * AppStore.Instance.imageRatio, this.width > 0);
+        astString.add("Width(Ticks)", (this.width + epsilon) * AppStore.Instance.pixelRatio, this.width > 0);
         astString.add("MinTickLen", toFixed(this.length / 100, 2)); // convert to fraction
         astString.add("MajTickLen", toFixed(this.majorLength / 100, 2)); // convert to fraction
         return astString.toString();
