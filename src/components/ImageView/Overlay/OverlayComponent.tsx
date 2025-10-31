@@ -43,8 +43,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     updateImageDimensions() {
         if (this.canvas) {
-            this.canvas.width = this.props.overlayStore.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
-            this.canvas.height = this.props.overlayStore.viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
+            this.canvas.width = this.props.overlayStore.viewWidth * AppStore.Instance.pixelRatio;
+            this.canvas.height = this.props.overlayStore.viewHeight * AppStore.Instance.pixelRatio;
         }
     }
 
@@ -204,7 +204,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const labelsColor = this.props.overlaySettings.labels.color;
         const darktheme = AppStore.Instance.darkTheme;
         const title = this.props.overlaySettings.title.customText ? this.props.image?.store?.titleCustomText : this.props.image?.store?.filename;
-        const ratio = AppStore.Instance.imageRatio;
+        const ratio = AppStore.Instance.pixelRatio;
         const raDecReference = this.props.overlaySettings.labels.raDecReference;
         const titleStyleString = this.props.overlaySettings.title.styleString;
         const gridStyleString = this.props.overlaySettings.grid.styleString;

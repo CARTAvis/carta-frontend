@@ -4,7 +4,7 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {WCSType} from "models";
 import {AlertStore, AppStore, PreferenceStore, PvGeneratorWidgetStore} from "stores";
 import {FrameStore, OverlayBeamStore, WCS_PRECISION} from "stores/Frame";
-import {clamp, getColorForTheme, toFixed} from "utilities";
+import {clamp, getAngleInRad, getColorForTheme, getUnformattedWCSPoint, toFixed} from "utilities";
 
 const AST_DEFAULT_COLOR = "auto-blue";
 
@@ -275,10 +275,20 @@ export class OverlayGridSettings {
         let astString = new ASTSettingsString();
         astString.add("Grid", this.visible);
         astString.add("Color(Grid)", AstColorsIndex.GRID, this.customColor);
-        astString.add("Width(Grid)", this.width * AppStore.Instance.imageRatio, this.width > 0);
-        astString.add("Gap(1)", this.gapX * AppStore.Instance.imageRatio, this.customGap);
-        astString.add("Gap(2)", this.gapY * AppStore.Instance.imageRatio, this.customGap);
+        astString.add("Width(Grid)", this.width * AppStore.Instance.pixelRatio, this.width > 0);
+        astString.add("Gap(1)", this.gapX * this.unitPixelSize.x, this.customGap);
+        astString.add("Gap(2)", this.gapY * this.unitPixelSize.y, this.customGap);
         return astString.toString();
+    }
+
+    @computed get unitPixelSize(): {x: number; y: number} {
+        const appStore = AppStore.Instance;
+        const frame = appStore.spatialReference;
+        const pixelUnitSizeArcsec = frame.pixelUnitSizeArcsec;
+        const centerInRad = getUnformattedWCSPoint(frame.wcsInfo, frame.center);
+        return OverlaySettings.Instance.global.explicitSystem === SystemType.Image
+            ? {x: 1, y: 1}
+            : {x: (getAngleInRad(pixelUnitSizeArcsec.x) * appStore.imageRatio) / Math.cos(centerInRad.y), y: getAngleInRad(pixelUnitSizeArcsec.y) * appStore.imageRatio};
     }
 
     constructor() {
@@ -288,8 +298,8 @@ export class OverlayGridSettings {
         this.color = AST_DEFAULT_COLOR;
         this.width = 1;
         this.customGap = false;
-        this.gapX = 0.2;
-        this.gapY = 0.2;
+        this.gapX = 100;
+        this.gapY = 100;
     }
 
     @action setVisible(visible: boolean = true) {
@@ -463,7 +473,7 @@ export class OverlayAxisSettings {
 
         astString.add("DrawAxes", this.visible);
         astString.add("Color(Axes)", AstColorsIndex.AXIS, this.customColor);
-        astString.add("Width(Axes)", this.width * AppStore.Instance.imageRatio, this.width > 0);
+        astString.add("Width(Axes)", this.width * AppStore.Instance.pixelRatio, this.width > 0);
 
         return astString.toString();
     }

@@ -339,11 +339,11 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Switch checked={grid.customGap} disabled={!grid.visible} onChange={ev => grid.setCustomGap(ev.currentTarget.checked)} />
                 </FormGroup>
                 <Collapse isOpen={grid.customGap}>
-                    <FormGroup inline={true} label="Gap" labelInfo="(X)" disabled={!grid.visible}>
-                        <SafeNumericInput placeholder="Gap" min={0.001} stepSize={0.01} minorStepSize={0.001} majorStepSize={0.1} value={grid.gapX} disabled={!grid.visible} onValueChange={(value: number) => grid.setGapX(value)} />
+                    <FormGroup inline={true} label="Gap X" labelInfo="(px)" disabled={!grid.visible}>
+                        <SafeNumericInput placeholder="Gap" min={1} stepSize={10} minorStepSize={10} majorStepSize={100} value={grid.gapX} disabled={!grid.visible} onValueChange={(value: number) => grid.setGapX(value)} />
                     </FormGroup>
-                    <FormGroup inline={true} label="Gap" labelInfo="(Y)" disabled={!grid.visible}>
-                        <SafeNumericInput placeholder="Gap" min={0.001} stepSize={0.01} minorStepSize={0.001} majorStepSize={0.1} value={grid.gapY} disabled={!grid.visible} onValueChange={(value: number) => grid.setGapY(value)} />
+                    <FormGroup inline={true} label="Gap Y" labelInfo="(px)" disabled={!grid.visible}>
+                        <SafeNumericInput placeholder="Gap" min={1} stepSize={10} minorStepSize={10} majorStepSize={100} value={grid.gapY} disabled={!grid.visible} onValueChange={(value: number) => grid.setGapY(value)} />
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Pixel grid">
