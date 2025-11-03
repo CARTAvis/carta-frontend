@@ -165,10 +165,6 @@ export class AppStore {
     // dynamic zIndex
     public zIndexManager = new FloatingObjzIndexManager();
 
-    // ImportRegion
-    // Track whether ImportRegionAck has been received to determine file browser behavior during session resume
-    private hasReceivedImportRegionAck = false;
-
     private appContainer: HTMLElement;
     private fileCounter = 0;
     private previousConnectionStatus: ConnectionStatus;
@@ -1258,7 +1254,7 @@ export class AppStore {
         try {
             const ack = yield this.backendService.importRegion(directory, file, type, frame.frameInfo.fileId);
             if (frame && ack.success && ack.regions) {
-                this.hasReceivedImportRegionAck = true;
+                this.fileBrowserStore.setHasReceivedImportRegionAck(true);
                 const regions = Object.entries(ack.regions);
                 const regionStyleMap = new Map<string, CARTA.IRegionStyle>(Object.entries(ack.regionStyles));
                 let startIndex = 0;
@@ -1270,13 +1266,11 @@ export class AppStore {
                 this.fileBrowserStore.setImportingRegions(false);
                 this.fileBrowserStore.resetLoadingStates();
                 this.fileBrowserStore.hideFileBrowser();
-                this.hasReceivedImportRegionAck = false;
             }
         } catch (err) {
             console.error(err);
             this.fileBrowserStore.setImportingRegions(false);
             this.fileBrowserStore.resetLoadingStates();
-            this.hasReceivedImportRegionAck = false;
             AppToaster.show(ErrorToast(err));
         }
     }
@@ -2551,11 +2545,10 @@ export class AppStore {
         // Reset file browser loading states
         if (this.fileBrowserStore.isImportingRegions) {
             this.fileBrowserStore.setImportingRegions(false);
-            this.fileBrowserStore.resetLoadingStates();
-            if (this.hasReceivedImportRegionAck) {
+            if (this.fileBrowserStore.hasReceivedImportRegionAck) {
                 this.fileBrowserStore.hideFileBrowser();
-                this.hasReceivedImportRegionAck = false;
             }
+            this.fileBrowserStore.resetLoadingStates();
         }
 
         const frame = this.activeFrame;
