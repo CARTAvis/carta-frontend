@@ -1,7 +1,7 @@
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 
-import {Point2D, SPECTRAL_DEFAULT_UNIT, SpectralType, WCSPoint2D} from "models";
+import {CatalogSystemType, Point2D, SPECTRAL_DEFAULT_UNIT, SpectralType, WCSPoint2D} from "models";
 import {NumberFormatType, OverlaySettings, SystemType} from "stores";
 import {FrameStore} from "stores/Frame";
 import {add2D, magDir2D, polygonPerimeter, rotate2D, scale2D, setAstSystem, subtract2D, trimFitsComment} from "utilities";
@@ -98,7 +98,12 @@ export function getUnformattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: 
         }
 
         const currentSystem = AST.getString(astTransform, "System");
-        setAstSystem(astTransform, currentSystem as SystemType, OverlaySettings.Instance.global, true);
+        const validSystemTypes = [...Object.values(SystemType), ...Object.values(CatalogSystemType)];
+        if (validSystemTypes.includes(currentSystem as SystemType | CatalogSystemType)) {
+            setAstSystem(astTransform, currentSystem as SystemType | CatalogSystemType, OverlaySettings.Instance.global, true);
+        } else {
+            console.warn(`Unknown system type from AST: ${currentSystem}, skipping system configuration`);
+        }
 
         const pointWCS = transformPoint(astTransform, pixelCoords);
         const normVals = AST.normalizeCoordinates(astTransform, pointWCS.x, pointWCS.y);
