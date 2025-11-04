@@ -12,9 +12,11 @@ export class Render3DDataStore {
     @observable width: number;
     @observable height: number;
     @observable depth: number;
-    @observable numSlices: number; 
+    @observable numSlices: number;
     @observable datacube: Float32Array; // keep as readonly, the observable is lastslice. update lastslice when updating array. in component observe lastslice in usememo
     @observable lastSlice: number; // last slice updated, use to check if the data is updated
+
+    private dimensionsSet: boolean = false;
 
     constructor(fileId: number = 0, regionId: number = 0, viewerId: number, width: number = 0, height:number = 0, depth: number = 0, numSlices: number = 1) {
         makeObservable(this);
@@ -39,11 +41,13 @@ export class Render3DDataStore {
             this.setDecompressed3DData(decompressedData);
 
         } else if (render3DData.compressionType === CARTA.CompressionType.ZFP) {
+            console.log('to tileservice')
             if (render3DData.slice > 1) {
                 TileService.Instance.decompress3DRender3DData(render3DData);
             } else {
                 TileService.Instance.decompressRender3DData(render3DData);
             }
+            console.log('from tileservice')
         }
     }
 
@@ -67,10 +71,14 @@ export class Render3DDataStore {
     }
 
     @action setDimensions = (width: number, height: number, depth: number) => {
+        if (this.dimensionsSet) {
+            return;
+        }
         this.width = width;
         this.height = height;
         this.depth = depth;
         this.datacube = new Float32Array(width * height * depth);
+        this.dimensionsSet = true;
     }
 
     @action setNumSlices = (numSlices: number) => {

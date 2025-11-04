@@ -384,8 +384,12 @@ export class Render3DComponent extends React.Component<WidgetProps> {
                 </span>
             );
 
-            const isAbleToVisualize = this.levels.length > 0;
+            const isAbleToVisualizeIsoSurface = this.levels.length > 0;
             // const isAbleToVisualize = this.levels.length > 0 && this.isRegionIntersectedWithImage && !this.isRegionInOnePixel && isValidSpectralRange && this.isCubeBelowLimit;
+            const isAbleToVisualizeVolume = true;
+            // make it so there is a limit on the size of the cube to be visualized. Around 500 000 000 voxels should be fine.
+            // const isCubeBelowLimit = dataSource ? (dataSource.frameInfo.fileInfoExtended.width / this.widgetStore.xyRebin) * (dataSource.frameInfo.fileInfoExtended.height / this.widgetStore.xyRebin) * (dataSource.frameInfo.fileInfoExtended.depth / this.widgetStore.zRebin) < 500000000 : false;
+
 
         // RENDERING PANELS
 
@@ -439,8 +443,8 @@ export class Render3DComponent extends React.Component<WidgetProps> {
                     <Tab id={IsoSurfaceTabs.Styling} title="Styling" panel={isoSurfaceStylingPanel} panelClassName="isosurfaces-styling-panel" data-testid="isosurfaces-styling-tab-title" />
                 </Tabs>
                 <div className="generate-button">
-                    <Tooltip disabled={isAbleToVisualize} content={hint} position={Position.BOTTOM}>
-                        <AnchorButton intent="success" disabled={!isAbleToVisualize} text="Visualize" onClick={this.onVisualizeIsoSurfaceButtonClicked} />
+                    <Tooltip disabled={isAbleToVisualizeIsoSurface} content={hint} position={Position.BOTTOM}>
+                        <AnchorButton intent="success" disabled={!isAbleToVisualizeIsoSurface} text="Visualize" onClick={this.onVisualizeIsoSurfaceButtonClicked} />
                     </Tooltip>
                 </div>
             </div>
@@ -449,8 +453,8 @@ export class Render3DComponent extends React.Component<WidgetProps> {
         const volumePanel = (
             <div>volume
                 <div className="generate-button">
-                    <Tooltip disabled={true} content={hint} position={Position.BOTTOM}>
-                        <AnchorButton intent="success" disabled={!true} text="Visualize" onClick={this.onVisualizeVolumeButtonClicked} />
+                    <Tooltip disabled={isAbleToVisualizeVolume} content={hint} position={Position.BOTTOM}>
+                        <AnchorButton intent="success" disabled={!isAbleToVisualizeVolume} text="Visualize" onClick={this.onVisualizeVolumeButtonClicked} />
                     </Tooltip>
                 </div>
             </div>

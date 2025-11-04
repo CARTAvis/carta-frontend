@@ -98,6 +98,9 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         if (this.minVal === undefined && this.frame && this.frame.renderConfig.isoSurfaceHistogram) {
             return getPercentiles(this.frame.renderConfig.isoSurfaceHistogram, [0.0005])[0];
         } else {
+            if (!this.minVal) {
+                this.minVal = -1.0;
+            }
             return this.minVal;
         }
     }
@@ -106,6 +109,9 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         if (this.maxVal === undefined && this.frame && this.frame.renderConfig.isoSurfaceHistogram) {
             return getPercentiles(this.frame.renderConfig.isoSurfaceHistogram, [99.9995])[0];
         } else {
+            if (!this.maxVal) {
+                this.maxVal = 5;
+            }
             return this.maxVal;
         }
     }
@@ -256,12 +262,12 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         gui.add(parameters, 'scaleZ', 0.1, 10.0).onChange(update);
 
         // render3d animation
-        useFrame(() => {
-            if (meshRef.current) {
-                meshRef.current.rotation.y += 0.01;
-                meshRef.current.rotation.x += 0.005;
-            }
-        });
+        // useFrame(() => {
+        //     if (meshRef.current) {
+        //         meshRef.current.rotation.y += 0.01;
+        //         meshRef.current.rotation.x += 0.005;
+        //     }
+        // });
 
         useEffect(() => {
             gl.getContext().getExtension("OES_texture_float");
