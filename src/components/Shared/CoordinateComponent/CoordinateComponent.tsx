@@ -16,17 +16,15 @@ interface ICoordinateComponentProps {
 @observer
 export class CoordinateComponent extends React.Component<ICoordinateComponentProps> {
     public render() {
+        // exclude SystemType.Image from the dropdown options
+        const systemTypeOptions = Object.values(SystemType).filter(option => option !== SystemType.Image);
         return (
             <div className="coordinate-panel">
                 <RadioGroup inline={true} onChange={ev => this.props.onChange(ev.currentTarget.value as CoordinateMode)} selectedValue={this.props.selectedValue} disabled={this.props.disableCoordinate}>
                     <Radio label={CoordinateMode.Image} value={CoordinateMode.Image} />
                     <Radio label={CoordinateMode.World} value={CoordinateMode.World} />
                 </RadioGroup>
-                <HTMLSelect
-                    options={Object.keys(SystemType).map(key => ({label: key, value: SystemType[key]}))}
-                    value={AppStore.Instance.overlaySettings.global.system}
-                    onChange={ev => AppStore.Instance.overlaySettings.global.setSystem(ev.currentTarget.value as SystemType)}
-                />
+                <HTMLSelect options={systemTypeOptions} value={AppStore.Instance.overlaySettings.global.system} onChange={ev => AppStore.Instance.overlaySettings.global.setSystem(ev.currentTarget.value as SystemType)} />
             </div>
         );
     }
