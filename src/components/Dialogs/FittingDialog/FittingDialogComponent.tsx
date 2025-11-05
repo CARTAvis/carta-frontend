@@ -76,9 +76,14 @@ export class FittingDialogComponent extends React.Component {
     };
 
     private renderInfoString = (point: Point2D, pointWcs: WCSPoint2D) => {
+        const isImgCoordinates = AppStore.Instance.overlaySettings.isImgCoordinates;
         return (
             <span className="info-string">
-                {this.coord === CoordinateMode.Image ? `WCS: ${pointWcs?.x || pointWcs?.y ? WCSPoint2D.ToString(pointWcs) : "-"}` : `Image: ${isFinite(point?.x) || isFinite(point?.y) ? Point2D.ToString(point, "px", 3) : "-"}`}
+                {this.coord === CoordinateMode.Image
+                    ? isImgCoordinates
+                        ? ""
+                        : `WCS: ${pointWcs?.x || pointWcs?.y ? WCSPoint2D.ToString(pointWcs) : "-"}`
+                    : `Image: ${isFinite(point?.x) || isFinite(point?.y) ? Point2D.ToString(point, "px", 3) : "-"}`}
             </span>
         );
     };
