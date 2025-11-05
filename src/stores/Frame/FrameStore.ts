@@ -2526,7 +2526,7 @@ export class FrameStore {
         });
     }
 
-    @action updateFromVectorOverlayData(vectorOverlayData: CARTA.IVectorOverlayTileData) {
+    @action updateFromVectorOverlayData(vectorOverlayData: CARTA.VectorOverlayTileData) {
         if (!this.vectorOverlayStore.isComplete && vectorOverlayData.progress > 0) {
             this.vectorOverlayStore.addData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
         } else {
