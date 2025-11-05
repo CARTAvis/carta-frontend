@@ -97,12 +97,13 @@ export function getUnformattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: 
             AST.setI(astTransform, "Current", 2);
         }
 
-        const currentSystem = AST.getString(astTransform, "System");
+        const currentSystem = AST.getString(astTransform, "System") as SystemType | CatalogSystemType;
         const validSystemTypes = [...Object.values(SystemType), ...Object.values(CatalogSystemType)];
-        if (validSystemTypes.includes(currentSystem as SystemType | CatalogSystemType)) {
-            setAstSystem(astTransform, currentSystem as SystemType | CatalogSystemType, OverlaySettings.Instance.global, true);
+        if (validSystemTypes.includes(currentSystem)) {
+            setAstSystem(astTransform, currentSystem, OverlaySettings.Instance.global, true);
         } else {
             console.warn(`Unknown system type from AST: ${currentSystem}, skipping system configuration`);
+            return null;
         }
 
         const pointWCS = transformPoint(astTransform, pixelCoords);
