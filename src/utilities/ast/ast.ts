@@ -52,8 +52,8 @@ function getEquinoxEpochForSystem(system: SystemType | CatalogSystemType): {equi
  * Set the `System` on an AST settings string and add `Equinox`/`Epoch` for that system when applicable.
  *
  * Behavior:
- * - For image/pixel systems (`Image`, `Pixel0`, `Pixel1`): only `System` may be added (unless `skipSystem`), and no `Equinox`/`Epoch` are appended.
- * - For other systems: `System` is added (unless `skipSystem`), and `Equinox`/`Epoch` are determined by the system and defaults.
+ * - For image/pixel systems (`Image`, `Pixel0`, `Pixel1`): only `System` is added, and no `Equinox`/`Epoch` are appended.
+ * - For other systems: `System` is added, and `Equinox`/`Epoch` are determined by the system and defaults.
  * - If `system` equals the `defaultSystem` in `overlayGlobalSettings`:
  *   - `FK4`: use `defaultEquinox` and `defaultEpoch` from `overlayGlobalSettings`.
  *   - `FK5`/`Ecliptic`: use `defaultEquinox` and the epoch from the standard values for the system.
@@ -63,22 +63,16 @@ function getEquinoxEpochForSystem(system: SystemType | CatalogSystemType): {equi
  * @param astString - The AST settings string to update
  * @param system - The coordinate system to set and to use for Equinox/Epoch values
  * @param overlayGlobalSettings - The overlay global settings containing defaults
- * @param skipSystem - Whether to only add Equinox/Epoch values and skip adding `System`
  */
-export function setAstStringSystem(astString: ASTSettingsString, system: SystemType | CatalogSystemType, overlayGlobalSettings: OverlayGlobalSettings, skipSystem: boolean = false): void {
+export function setAstStringSystem(astString: ASTSettingsString, system: SystemType | CatalogSystemType, overlayGlobalSettings: OverlayGlobalSettings): void {
     const global = overlayGlobalSettings;
     const defaultSystem = global.defaultSystem;
 
+    astString.add("System", system);
+
     // For Image (pixel) coordinates, do not add Equinox or Epoch
     if (system === SystemType.Image || system === CatalogSystemType.Pixel0 || system === CatalogSystemType.Pixel1) {
-        if (!skipSystem) {
-            astString.add("System", system);
-        }
         return;
-    }
-
-    if (!skipSystem) {
-        astString.add("System", system);
     }
 
     const values = getEquinoxEpochForSystem(system);
@@ -109,11 +103,10 @@ export function setAstStringSystem(astString: ASTSettingsString, system: SystemT
  * @param astTransform - The AST `FrameSet` to configure
  * @param system - The coordinate system to set and to use for Equinox/Epoch values
  * @param overlayGlobalSettings - The overlay global settings containing defaults
- * @param skipSystem - Whether to only apply Equinox/Epoch values and skip setting `System`
  */
-export function setAstSystem(astTransform: AST.FrameSet, system: SystemType | CatalogSystemType, overlayGlobalSettings: OverlayGlobalSettings, skipSystem: boolean = false): void {
+export function setAstSystem(astTransform: AST.FrameSet, system: SystemType | CatalogSystemType, overlayGlobalSettings: OverlayGlobalSettings): void {
     const astString = new ASTSettingsString();
-    setAstStringSystem(astString, system, overlayGlobalSettings, skipSystem);
+    setAstStringSystem(astString, system, overlayGlobalSettings);
     if (astString.toString().length > 0) {
         AST.set(astTransform, astString.toString());
     }
