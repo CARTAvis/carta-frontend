@@ -1,10 +1,10 @@
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 
-import {CatalogSystemType, Point2D, SPECTRAL_DEFAULT_UNIT, SpectralType, WCSPoint2D} from "models";
-import {NumberFormatType, OverlaySettings, SystemType} from "stores";
+import {Point2D, SPECTRAL_DEFAULT_UNIT, SpectralType, WCSPoint2D} from "models";
+import {NumberFormatType, OverlaySettings} from "stores";
 import {FrameStore} from "stores/Frame";
-import {add2D, magDir2D, polygonPerimeter, rotate2D, scale2D, setAstSystem, subtract2D, trimFitsComment} from "utilities";
+import {add2D, magDir2D, polygonPerimeter, rotate2D, scale2D, subtract2D, trimFitsComment} from "utilities";
 
 export function isWCSStringFormatValid(wcsString: string, format: NumberFormatType | undefined): boolean {
     if (!wcsString || !format) {
@@ -95,15 +95,6 @@ export function getUnformattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: 
         if (OverlaySettings.Instance.isImgCoordinates) {
             // need second frame(WCS frame) in the frame to get WCS point
             AST.setI(astTransform, "Current", 2);
-        }
-
-        const currentSystem = AST.getString(astTransform, "System") as SystemType | CatalogSystemType;
-        const validSystemTypes = [...Object.values(SystemType), ...Object.values(CatalogSystemType)];
-        if (validSystemTypes.includes(currentSystem)) {
-            setAstSystem(astTransform, currentSystem, OverlaySettings.Instance.global, true);
-        } else {
-            console.warn(`Unknown system type from AST: ${currentSystem}, skipping system configuration`);
-            return null;
         }
 
         const pointWCS = transformPoint(astTransform, pixelCoords);
