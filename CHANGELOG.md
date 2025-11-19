@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed incorrect aspect ratio and compass size when images contained incomplete `CDELTi` and `PCi_j` information ([#2382](https://github.com/CARTAvis/carta-frontend/issues/2382), [#2399](https://github.com/CARTAvis/carta-frontend/issues/2399)).
 * Fixed the failure to switch to pixel coordinates when images had non-square pixels ([#2602](https://github.com/CARTAvis/carta-frontend/issues/2602)).
 * Made file header search bar move with the window ([#1459](https://github.com/CARTAvis/carta-frontend/issues/1459)).
+* Fixed the last image being positioned incorrectly when using the fixed-grid multi-panel layout ([#2620](https://github.com/CARTAvis/carta-frontend/issues/2620)).
 ### Changed
 * Set the default aspect ratio to unity when images lacked valid WCS information ([#2604](https://github.com/CARTAvis/carta-frontend/issues/2604)).
 
