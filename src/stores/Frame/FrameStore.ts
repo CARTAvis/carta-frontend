@@ -1715,7 +1715,7 @@ export class FrameStore {
 
             const entryString = `${name}=  ${value}`;
 
-            const nameKey = name.trim().toUpperCase();
+            const nameKey = name?.trim().toUpperCase() ?? "";
             const valueKey = value.replace(/^'+|'+$/g, "").toUpperCase();
             if (nameKey === "RADESYS" && valueKey === "FK4") {
                 system = SystemType.FK4;
@@ -1784,7 +1784,7 @@ export class FrameStore {
 
             const entryString = `${name}=  ${value}`;
 
-            const nameKey = name.trim().toUpperCase();
+            const nameKey = name?.trim().toUpperCase() ?? "";
             const valueKey = value.replace(/^'+|'+$/g, "").toUpperCase();
             if (nameKey === "RADESYS" && valueKey === "FK4") {
                 system = SystemType.FK4;
@@ -1860,7 +1860,7 @@ export class FrameStore {
 
             const entryString = `${name}=  ${value}`;
 
-            const nameKey = name.trim().toUpperCase();
+            const nameKey = name?.trim().toUpperCase() ?? "";
             const valueKey = value.replace(/^'+|'+$/g, "").toUpperCase();
             if (nameKey === "RADESYS" && valueKey === "FK4") {
                 system = SystemType.FK4;
@@ -1929,7 +1929,7 @@ export class FrameStore {
 
             const entryString = `${name}=  ${value}`;
 
-            const nameKey = name.trim().toUpperCase();
+            const nameKey = name?.trim().toUpperCase() ?? "";
             const valueKey = value.replace(/^'+|'+$/g, "").toUpperCase();
             if (nameKey === "RADESYS" && valueKey === "FK4") {
                 system = SystemType.FK4;
@@ -2047,7 +2047,7 @@ export class FrameStore {
             while (precisionX < FrameStore.CursorInfoMaxPrecision && precisionY < FrameStore.CursorInfoMaxPrecision) {
                 let astString = new ASTSettingsString();
                 const overlaySettings = AppStore.Instance.overlaySettings;
-                const system = this.isNormalImage ? overlaySettings.global.explicitSystem : SystemType.Image;
+                const system = this.isNormalImage ? (overlaySettings.global.explicitSystem ?? SystemType.Image) : SystemType.Image;
                 astString.add(`Format(${this.dirX})`, this.isNormalImage ? overlaySettings.numbers.cursorFormatStringX(precisionX) : undefined);
                 astString.add(`Format(${this.dirY})`, this.isNormalImage ? overlaySettings.numbers.cursorFormatStringY(precisionY) : undefined);
                 setAstStringSystem(astString, system, overlaySettings.global);
@@ -2177,7 +2177,7 @@ export class FrameStore {
             } else {
                 if ((this.spectralAxis && !this.spectralAxis.valid) || this.isSpectralPropsEqual) {
                     return this.channelInfo.getChannelIndexWCS(x);
-                } else {
+                } else if (this.spectralFrame && this.spectralType && this.spectralUnit && this.spectralSystem) {
                     // invert x in selected widget wcs to frame's default wcs
                     const tx = AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, x, false);
                     return this.channelInfo.getChannelIndexWCS(tx);
