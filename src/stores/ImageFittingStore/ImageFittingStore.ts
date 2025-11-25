@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
-import {AngularSize, AngularSizeUnit, Point2D, WCSPoint2D} from "models";
+import {AngularSize, AngularSizeUnit, isValidWcsPoint, Point2D, WCSPoint2D} from "models";
 import {AppStore, NumberFormatType} from "stores";
 import {FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
@@ -391,7 +391,7 @@ export class ImageFittingStore {
                 if (formatTypeY === NumberFormatType.Degrees && centerValueWCS) {
                     centerValueWCS.y += " (deg)";
                 }
-                const centerErrorWCS = frame.getWcsSizeInArcsec(error.center as Point2D);
+                const centerErrorWCS = frame.getWcsSizeInArcsec(error.center as Point2D) ?? {x: NaN, y: NaN};
                 if (formatTypeX === NumberFormatType.HMS) {
                     centerErrorWCS.x /= 15; // convert from arcsec to sec
                 }
@@ -403,8 +403,10 @@ export class ImageFittingStore {
 
                 let fwhmValueWCS = frame.getWcsSizeInArcsec(value.fwhm as Point2D);
                 let fwhmErrorWCS = frame.getWcsSizeInArcsec(error.fwhm as Point2D);
+                const isValidFwhmValueWCS = !isNaN(fwhmValueWCS.x) && !isNaN(fwhmValueWCS.y) && isFinite(fwhmValueWCS.x) && isFinite(fwhmValueWCS.y);
+                const isValidFwhmErrorWCS = !isNaN(fwhmErrorWCS.x) && !isNaN(fwhmErrorWCS.y) && isFinite(fwhmErrorWCS.x) && isFinite(fwhmErrorWCS.y);
                 let fwhmUnit = AngularSizeUnit.ARCSEC;
-                if (fwhmValueWCS && fwhmErrorWCS) {
+                if (isValidFwhmValueWCS && isValidFwhmErrorWCS) {
                     if (Math.abs(fwhmValueWCS.x) < Math.abs(fwhmValueWCS.y)) {
                         ({value: fwhmValueWCS.x, unit: fwhmUnit} = AngularSize.convertFromArcsec(fwhmValueWCS.x, true));
                         fwhmValueWCS.y = AngularSize.convertValueFromArcsec(fwhmValueWCS.y, fwhmUnit);
@@ -727,7 +729,7 @@ class ImageFittingIndividualStore {
     @computed get fwhmWcs(): WCSPoint2D | null {
         const frame = AppStore.Instance.imageFittingStore?.effectiveFrame;
         const wcsSize = frame?.getWcsSizeInArcsec(this.fwhm);
-        if (!wcsSize) {
+        if (!isValidWcsPoint(wcsSize)) {
             return null;
         }
         const x = formattedArcsec(wcsSize.x, WCS_PRECISION);
@@ -800,7 +802,10 @@ class ImageFittingIndividualStore {
         const frame = AppStore.Instance.imageFittingStore?.effectiveFrame;
         const sizeInArcsec = getValueFromArcsecString(val);
         if (val && frame && sizeInArcsec !== null) {
-            return this.setFwhmX(frame.getImageXValueFromArcsec(sizeInArcsec));
+            const imageValue = frame.getImageXValueFromArcsec(sizeInArcsec);
+            if (!isNaN(imageValue) && isFinite(imageValue)) {
+                return this.setFwhmX(imageValue);
+            }
         }
         return false;
     };
@@ -809,7 +814,10 @@ class ImageFittingIndividualStore {
         const frame = AppStore.Instance.imageFittingStore?.effectiveFrame;
         const sizeInArcsec = getValueFromArcsecString(val);
         if (val && frame && sizeInArcsec !== null) {
-            return this.setFwhmY(frame.getImageYValueFromArcsec(sizeInArcsec));
+            const imageValue = frame.getImageYValueFromArcsec(sizeInArcsec);
+            if (imageValue !== null) {
+                return this.setFwhmY(imageValue);
+            }
         }
         return false;
     };
