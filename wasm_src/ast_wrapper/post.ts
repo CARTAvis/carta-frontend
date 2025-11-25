@@ -298,7 +298,7 @@ Module.transform3DPoint = function (transformFrameSet: number, xIn: number, yIn:
     return res;
 };
 
-Module.transformSpectralPoint = function (spectralFrameFrom: number, specType: string, specUnit: string, specSys: string, zIn: number, forward: boolean = true) {
+Module.transformSpectralPoint = function (spectralFrameFrom: number | null, specType: string | null, specUnit: string | null, specSys: string | null, zIn: number, forward: boolean = true) {
     // Return empty array if arguments are invalid
     const N = 1;
     Module.HEAPF64.set(new Float64Array([zIn]), Module.zIn / 8);

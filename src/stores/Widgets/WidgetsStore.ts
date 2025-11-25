@@ -1080,7 +1080,7 @@ export class WidgetsStore {
     @computed get imageViewWidgetTitle() {
         const activeImage = AppStore.Instance.activeImage;
         const visibleImages = AppStore.Instance.imageViewConfigStore.visibleImages;
-        const titleImage = activeImage?.type !== ImageType.PV_PREVIEW && visibleImages.includes(activeImage) ? activeImage : visibleImages[0];
+        const titleImage = activeImage?.type !== ImageType.PV_PREVIEW && activeImage && visibleImages.includes(activeImage) ? activeImage : visibleImages[0];
 
         let newTitle;
         if (titleImage) {

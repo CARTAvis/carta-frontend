@@ -88,7 +88,7 @@ export const IsSpectralSystemSupported = (systemStr: string): boolean => {
     return Object.values(SpectralSystem).includes(normalizedStr as SpectralSystem);
 };
 
-export const GetFreqInGHz = (unit: string, value: number): number => {
+export const GetFreqInGHz = (unit: string | undefined, value: number): number => {
     if (unit && Object.values(FrequencyUnit).includes(unit as FrequencyUnit) && isFinite(value)) {
         if (unit === FrequencyUnit.GHZ) {
             return value;
@@ -121,7 +121,7 @@ export const SPECTRAL_DEFAULT_UNIT = new Map<SpectralType, SpectralUnit>([
     [SpectralType.AWAV, SpectralUnit.MM]
 ]);
 
-export const GenCoordinateLabel = (type: SpectralType, unit: SpectralUnit): string => {
+export const GenCoordinateLabel = (type: SpectralType | null, unit: SpectralUnit | null): string => {
     return `${type ? SPECTRAL_TYPE_STRING.get(type) : ""}${unit ? " (" + unit + ")" : ""}`;
 };
 

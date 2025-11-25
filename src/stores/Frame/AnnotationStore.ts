@@ -335,7 +335,7 @@ export class CompassAnnotationStore extends RegionStore {
     };
 
     public getCompassApproximation(wcsInfo: AST.FrameSet, spatiallyMatched?: boolean, spatialTransform?: AST.Mapping): {northApproximatePoints: number[]; eastApproximatePoints: number[]} {
-        const originPoint = spatiallyMatched ? transformPoint(spatialTransform, this.controlPoints[0], false) : this.controlPoints[0];
+        const originPoint = spatiallyMatched && spatialTransform ? transformPoint(spatialTransform, this.controlPoints[0], false) : this.controlPoints[0];
 
         // Early return for invalid WCS - rendering component handles this case separately
         if (!wcsInfo || !this.activeFrame.validWcs) {
@@ -349,9 +349,7 @@ export class CompassAnnotationStore extends RegionStore {
         const right = frameView.xMax;
         const width = right - left;
         const height = top - bottom;
-
         const transformed = AST.transformPoint(wcsInfo, originPoint.x, originPoint.y);
-
         const pixelSizeArcsec = getPixelSizes(this.activeFrame);
         const xPixelSizeRad = ((pixelSizeArcsec.x / 3600) * Math.PI) / 180;
         const yPixelSizeRad = ((pixelSizeArcsec.y / 3600) * Math.PI) / 180;
