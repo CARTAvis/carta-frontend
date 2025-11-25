@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed the failure to switch to pixel coordinates when images had non-square pixels ([#2602](https://github.com/CARTAvis/carta-frontend/issues/2602)).
 * Made file header search bar move with the window ([#1459](https://github.com/CARTAvis/carta-frontend/issues/1459)).
 * Fixed a screen freeze issue that occurred when resuming a disconnected session with unfinished tasks showing a progress bar ([#2082](https://github.com/CARTAvis/carta-frontend/issues/2082)).
+* Increased the precision of the coordinate used in the query ([#1669](https://github.com/CARTAvis/carta-frontend/issues/1669)).
 ### Changed
 * Set the default aspect ratio to unity when images lacked valid WCS information ([#2604](https://github.com/CARTAvis/carta-frontend/issues/2604)).
 
