@@ -1255,7 +1255,8 @@ export class AppStore {
         try {
             const ack = yield this.backendService.importRegion(directory, file, type, frame.frameInfo.fileId);
             if (frame && ack.success && ack.regions) {
-                const regions = Object.entries(ack.regions);
+                this.fileBrowserStore.setHasReceivedImportRegionAck(true);
+                const regions = Object.entries(ack.regions) as [string, CARTA.IRegionInfo][];
                 const regionStyleMap = new Map<string, CARTA.IRegionStyle>(Object.entries(ack.regionStyles));
                 let startIndex = 0;
                 while (startIndex < regions.length) {
@@ -2541,6 +2542,52 @@ export class AppStore {
         this.initRequirements();
         this.resumingSession = false;
         this.backendService.connectionDropped = false;
+
+        // Reset file browser loading states
+        if (this.fileBrowserStore.isImportingRegions) {
+            this.fileBrowserStore.setImportingRegions(false);
+            if (this.fileBrowserStore.hasReceivedImportRegionAck) {
+                this.fileBrowserStore.hideFileBrowser();
+            }
+            this.fileBrowserStore.resetLoadingStates();
+        }
+
+        const frame = this.activeFrame;
+
+        // Reset PV generator states
+        if (frame?.isRequestingPV) {
+            frame.resetPvRequestState();
+            frame.setIsRequestPVCancelling(false);
+            this.endFileLoading();
+        }
+
+        // Reset moment generator states
+        if (frame?.isRequestingMoments) {
+            frame.resetMomentRequestState();
+            this.endFileLoading();
+        }
+
+        // Reset cube histogram states
+        if (frame?.renderConfig?.useCubeHistogram) {
+            frame.renderConfig.setUseCubeHistogram(false);
+            this.cancelCubeHistogramRequest();
+        }
+
+        // Reset cube histogram states for contour
+        const dataSource = this.contourDataSource;
+        if (dataSource?.renderConfig?.useCubeHistogramContours) {
+            dataSource.renderConfig.setUseCubeHistogramContours(false);
+            this.cancelCubeHistogramRequest(dataSource.frameInfo.fileId);
+        }
+
+        // Reset fitting states
+        const fittingStore = this.imageFittingStore;
+        if (fittingStore?.isFitting) {
+            if (this.fileLoading) {
+                this.endFileLoading();
+            }
+            fittingStore.resetFittingState();
+        }
     };
 
     @flow.bound

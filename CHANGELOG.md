@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Fixed VizieR database query ([#2480](https://github.com/CARTAvis/carta-frontend/issues/2480)).
+* Fixed a screen freeze issue that occurred when resuming a disconnected session with unfinished tasks showing a progress bar ([#2082](https://github.com/CARTAvis/carta-frontend/issues/2082)).
 * Fixed incorrect angular sizes for catalog sources when size data was missing or zero ([#2609](https://github.com/CARTAvis/carta-frontend/issues/2609)).
 * Fixed missing data in the newly enabled catalog columns ([#2611](https://github.com/CARTAvis/carta-frontend/issues/2611)).
 
