@@ -5,16 +5,16 @@ import {ContourWebGLService} from "services";
 import {GL2} from "utilities";
 
 export class ContourStore {
-    @observable progress: number;
-    @observable numGeneratedVertices: number[];
+    @observable progress: number = 0;
+    @observable numGeneratedVertices: number[] = [];
     @observable vertexCount: number = 0;
     @observable chunkCount: number = 0;
 
-    private indexOffsets: Int32Array[];
-    private vertexData: Float32Array[];
-    private vertexBuffers: WebGLBuffer[];
+    private indexOffsets: Int32Array[] = [];
+    private vertexData: (Float32Array | null)[] = [];
+    private vertexBuffers: WebGLBuffer[] = [];
 
-    private gl: WebGL2RenderingContext;
+    private gl: WebGL2RenderingContext | null;
     // Number of vertex data "float" values (normals are actually int16, so both coordinates count as one 32-bit value)
     // Each vertex is repeated twice
     private static VertexDataElements = 8;
@@ -83,9 +83,11 @@ export class ContourStore {
         }
 
         // TODO: handle buffer cleanup when no longer needed
-        this.vertexBuffers.push(this.gl.createBuffer());
-        this.gl.bindBuffer(GL2.ARRAY_BUFFER, this.vertexBuffers[index]);
-        this.gl.bufferData(GL2.ARRAY_BUFFER, this.vertexData[index], GL2.STATIC_DRAW);
+        if (this.gl) {
+            this.vertexBuffers.push(this.gl.createBuffer()!);
+            this.gl.bindBuffer(GL2.ARRAY_BUFFER, this.vertexBuffers[index]);
+            this.gl.bufferData(GL2.ARRAY_BUFFER, this.vertexData[index], GL2.STATIC_DRAW);
+        }
 
         // Clear CPU memory after copying to GPU
         this.vertexData[index] = null;
@@ -110,7 +112,7 @@ export class ContourStore {
     bindBuffer(index: number) {
         if (!this.vertexBuffers || index >= this.vertexBuffers.length) {
             console.log(`WebGL buffer missing`);
-        } else {
+        } else if (this.gl) {
             this.gl.bindBuffer(GL2.ARRAY_BUFFER, this.vertexBuffers[index]);
         }
     }
