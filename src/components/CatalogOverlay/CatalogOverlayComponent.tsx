@@ -430,7 +430,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
         // Ensure columnWidths array matches the number of columns (5 columns total)
         const expectedColumnCount = 5; // Name, Unit, Type, Display, Description
-        let columnWidths = widgetStore.headerTableColumnWidts;
+        let columnWidths = widgetStore.headerTableColumnWidths;
         if (!columnWidths || columnWidths.length !== expectedColumnCount) {
             columnWidths = new Array(expectedColumnCount).fill(undefined);
         }
@@ -447,7 +447,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 minColumnWidth={30}
                 enableGhostCells={true}
                 numFrozenColumns={1}
-                columnWidths={this.widgetStore.headerTableColumnWidts}
+                columnWidths={this.widgetStore.headerTableColumnWidths}
                 onColumnWidthChanged={this.updateHeaderTableColumnSize}
                 enableRowResizing={false}
                 cellRendererDependencies={[headerDisplays, profileStore.loadingData]} // trigger re-render on controlHeader change
@@ -459,8 +459,22 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private updateHeaderTableColumnSize = (index: number, size: number) => {
         const widgetsStore = this.widgetStore;
-        if (widgetsStore.headerTableColumnWidts) {
-            widgetsStore.headerTableColumnWidts[index] = size;
+        if (widgetsStore) {
+            // Ensure the array exists and has the correct length (5 columns)
+            if (!widgetsStore.headerTableColumnWidths) {
+                widgetsStore.headerTableColumnWidths = new Array(5).fill(undefined);
+            } else if (widgetsStore.headerTableColumnWidths.length !== 5) {
+                // Resize array to match expected column count
+                const newArray = new Array(5).fill(undefined);
+                for (let i = 0; i < Math.min(widgetsStore.headerTableColumnWidths.length, 5); i++) {
+                    newArray[i] = widgetsStore.headerTableColumnWidths[i];
+                }
+                widgetsStore.headerTableColumnWidths = newArray;
+            }
+
+            if (index >= 0 && index < widgetsStore.headerTableColumnWidths.length) {
+                widgetsStore.headerTableColumnWidths[index] = size;
+            }
         }
     };
 
@@ -476,10 +490,20 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private handleFilterRequest = () => {
         const profileStore = this.profileStore;
-        if (profileStore.loadOntoImage || !profileStore.updateTableView || !profileStore.hasFilter) {
+        const catalogWidgetStore = this.widgetStore;
+        const catalogFileId = this.catalogFileId;
+
+        if (!profileStore || !catalogWidgetStore || !catalogFileId) {
             return;
         }
-        const catalogWidgetStore = this.widgetStore;
+
+        // Skip if normal conditions prevent filtering AND we're not in column update mode
+        const shouldSkipRequest = !profileStore.isUpdateColumnMode && (profileStore.loadOntoImage || !profileStore.updateTableView || !profileStore.hasFilter);
+
+        if (shouldSkipRequest) {
+            return;
+        }
+
         const appStore = AppStore.Instance;
         if (profileStore && appStore) {
             this.resetSelectedPointIndices();

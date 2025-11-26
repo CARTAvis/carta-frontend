@@ -87,8 +87,10 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
 
     private updatePositionAndSize = () => {
         const widgetConfig = this.props.widgetConfig;
-        this.rnd.updateSize({width: widgetConfig.defaultWidth, height: widgetConfig.defaultHeight + FloatingWidgetComponent.HeaderHeight});
-        this.rnd.updatePosition({x: widgetConfig.defaultX, y: widgetConfig.defaultY});
+        if (this.rnd) {
+            this.rnd.updateSize({width: widgetConfig.defaultWidth, height: widgetConfig.defaultHeight + FloatingWidgetComponent.HeaderHeight});
+            this.rnd.updatePosition({x: widgetConfig.defaultX ?? 0, y: widgetConfig.defaultY ?? 0});
+        }
     };
 
     private onClickHelpButton = () => {
