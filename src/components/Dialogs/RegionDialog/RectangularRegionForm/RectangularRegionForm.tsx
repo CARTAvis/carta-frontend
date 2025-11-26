@@ -343,7 +343,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
             />
         );
-        const centerInfoString = region.coordinate === CoordinateMode.Image ? (isImgCoordinates ? "" : `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}`) : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
+        const centerInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
 
         const isRotated = Math.abs(region.rotation) > 1e-3;
         // bottom left
@@ -373,7 +373,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 wcsDisabled={!this.props.wcsInfo || !bottomLeftWCSPoint || isRotated}
             />
         );
-        const bottomLeftInfoString = region.coordinate === CoordinateMode.Image ? (isImgCoordinates ? "" : `WCS: ${WCSPoint2D.ToString(bottomLeftWCSPoint)}`) : `Image: ${Point2D.ToString(this.bottomLeftPoint, "px", 3)}`;
+        const bottomLeftInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : WCSPoint2D.ToString(bottomLeftWCSPoint)}` : `Image: ${Point2D.ToString(this.bottomLeftPoint, "px", 3)}`;
 
         // top right
         const topRightPoint = this.topRightPoint;
@@ -402,7 +402,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 wcsDisabled={!this.props.wcsInfo || !topRightWCSPoint || isRotated}
             />
         );
-        const topRightInfoString = region.coordinate === CoordinateMode.Image ? (isImgCoordinates ? "" : `WCS: ${WCSPoint2D.ToString(topRightWCSPoint)}`) : `Image: ${Point2D.ToString(this.topRightPoint, "px", 3)}`;
+        const topRightInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : WCSPoint2D.ToString(topRightWCSPoint)}` : `Image: ${Point2D.ToString(this.topRightPoint, "px", 3)}`;
 
         // size
         const size = isTextAnnotation ? scale2D(region.size, AppStore.Instance.imageRatio / this.props.frame.zoomLevel) : region.size;
@@ -431,7 +431,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 customPlaceholder="Height"
             />
         );
-        const sizeInfoString = region.coordinate === CoordinateMode.Image ? (isImgCoordinates ? "" : `WCS: ${WCSPoint2D.ToString(this.sizeWCS)}`) : `Image: ${Point2D.ToString(size, "px", 3)}`;
+        const sizeInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : WCSPoint2D.ToString(this.sizeWCS)}` : `Image: ${Point2D.ToString(size, "px", 3)}`;
         const pxUnit = region.coordinate === CoordinateMode.Image ? "(px)" : "";
 
         return (

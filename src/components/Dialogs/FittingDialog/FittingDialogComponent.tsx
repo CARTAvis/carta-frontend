@@ -80,9 +80,7 @@ export class FittingDialogComponent extends React.Component {
         return (
             <span className="info-string">
                 {this.coord === CoordinateMode.Image
-                    ? isImgCoordinates
-                        ? ""
-                        : `WCS: ${pointWcs?.x || pointWcs?.y ? WCSPoint2D.ToString(pointWcs) : "-"}`
+                    ? `WCS: ${!isImgCoordinates && (pointWcs?.x || pointWcs?.y) ? WCSPoint2D.ToString(pointWcs) : "-"}`
                     : `Image: ${isFinite(point?.x) || isFinite(point?.y) ? Point2D.ToString(point, "px", 3) : "-"}`}
             </span>
         );

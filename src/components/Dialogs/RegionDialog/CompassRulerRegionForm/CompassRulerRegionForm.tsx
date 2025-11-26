@@ -143,12 +143,12 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                 )}
                 <FormGroup label={region.regionType === CARTA.RegionType.ANNCOMPASS ? "Origin" : "Start"} labelInfo={wcsInfo ? "" : " (px)"} inline={true}>
                     {this.coordinateInput(WCSStart, WCSFinish, false)}
-                    {wcsInfo ? <span className="info-string">{isWCS && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[0], "px", 3)}` : isImgCoordinates ? "" : `WCS: ${WCSPoint2D.ToString(WCSStart)}`}</span> : ""}
+                    {wcsInfo ? <span className="info-string">{isWCS && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[0], "px", 3)}` : `WCS: ${isImgCoordinates ? "-" : WCSPoint2D.ToString(WCSStart)}`}</span> : ""}
                 </FormGroup>
                 {region.regionType === CARTA.RegionType.ANNRULER && (
                     <FormGroup label="Finish" labelInfo={wcsInfo ? "" : " (px)"} inline={true}>
                         {this.coordinateInput(WCSStart, WCSFinish, true)}
-                        {wcsInfo ? <span className="info-string">{isWCS && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[1], "px", 3)}` : isImgCoordinates ? "" : `WCS: ${WCSPoint2D.ToString(WCSFinish)}`}</span> : ""}
+                        {wcsInfo ? <span className="info-string">{isWCS && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[1], "px", 3)}` : `WCS: ${isImgCoordinates ? "-" : WCSPoint2D.ToString(WCSFinish)}`}</span> : ""}
                     </FormGroup>
                 )}
             </div>

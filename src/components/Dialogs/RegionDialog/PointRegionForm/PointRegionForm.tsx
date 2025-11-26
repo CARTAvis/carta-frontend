@@ -109,7 +109,7 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
             />
         );
 
-        const infoString = region.coordinate === CoordinateMode.Image ? (isImgCoordinates ? "" : `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}`) : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
+        const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
         const pxUnit = region.coordinate === CoordinateMode.Image ? "(px)" : "";
         return (
             <div className="region-form">
