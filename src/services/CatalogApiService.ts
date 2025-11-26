@@ -148,6 +148,10 @@ export class CatalogApiService {
 
     @action loadCatalog = (fileId: number, catalogInfo: CatalogInfo, headers: CARTA.CatalogHeader[], columnData: Map<number, ProcessedColumnData>, type: CatalogType) => {
         const appStore = AppStore.Instance;
+        if (!appStore.activeFrame) {
+            AppToaster.show(ErrorToast("Please load an image file"));
+            return;
+        }
         const catalogWidgetId = appStore.updateCatalogProfile(fileId, appStore.activeFrame);
         if (catalogWidgetId) {
             TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: headers.length, row: catalogInfo.dataSize, remote: true});
@@ -174,7 +178,7 @@ export class CatalogApiService {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         if (!frame) {
-            AppToaster.show(ErrorToast("Please load the image file"));
+            AppToaster.show(ErrorToast("Please load an image file"));
             throw new Error("No image file");
         }
 
@@ -187,7 +191,7 @@ export class CatalogApiService {
                 const headers = CatalogApiProcessing.ProcessSimbadMetaData(response.data?.metadata);
                 const columnData = CatalogApiProcessing.ProcessSimbadData(response.data?.data, headers);
                 const coosys: CARTA.ICoosys = {system: configStore.coordsType};
-                const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS);
+                const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS, CatalogOnlineQueryConfigStore.QUERY_DEG_PRECISION);
                 const fileName = `${configStore.catalogDB}_${configStore.coordsType}_${centerCoord.x}_${centerCoord.y}_${configStore.searchRadius}${configStore.radiusUnits}`;
                 const catalogFileInfo: CARTA.ICatalogFileInfo = {
                     name: fileName,

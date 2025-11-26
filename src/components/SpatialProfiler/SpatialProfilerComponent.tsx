@@ -9,10 +9,10 @@ import {observer} from "mobx-react";
 
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, ResizeDetector, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {Point2D, POLARIZATIONS} from "models";
-import {AppStore, ASTSettingsString, DefaultWidgetConfig, HelpType, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpType, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {RegionId, SpatialProfileWidgetStore} from "stores/Widgets";
-import {binarySearchByX, clamp, formattedExponential, getColorForTheme, toFixed, transformPoint} from "utilities";
+import {ASTSettingsString, binarySearchByX, clamp, formattedExponential, getColorForTheme, setAstStringSystem, toFixed, transformPoint} from "utilities";
 
 import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
@@ -384,7 +384,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
 
         let astString = new ASTSettingsString();
-        astString.add("System", AppStore.Instance.overlaySettings.global.explicitSystem);
+        const global = AppStore.Instance.overlaySettings.global;
+        setAstStringSystem(astString, global.explicitSystem, global);
 
         if (this.widgetStore.isXProfile) {
             for (let i = 0; i < ticks.length; i++) {

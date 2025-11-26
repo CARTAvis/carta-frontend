@@ -6,7 +6,7 @@ import {computed} from "mobx";
 import {observer} from "mobx-react";
 
 import {CoordinateComponent, CoordNumericInput, ImageCoordNumericInput, InputType} from "components/Shared";
-import {Point2D, WCSPoint2D} from "models";
+import {isValidWcsPoint, Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
 import {CoordinateMode, FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid, length2D} from "utilities";
@@ -41,7 +41,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         }
         const size = this.props.region.size;
         const wcsSize = this.props.frame.getWcsSizeInArcsec(size);
-        if (wcsSize) {
+        if (isValidWcsPoint(wcsSize)) {
             return formattedArcsec(length2D(wcsSize), WCS_PRECISION);
         }
         return null;

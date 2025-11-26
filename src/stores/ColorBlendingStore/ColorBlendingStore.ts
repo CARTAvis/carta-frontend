@@ -128,13 +128,13 @@ export class ColorBlendingStore {
     };
 
     /** The frame from the base layer. */
-    @computed get baseFrame(): FrameStore {
+    @computed get baseFrame(): FrameStore | null {
         return AppStore.Instance.spatialReference;
     }
 
     /** The frames from all the layers. */
     @computed get frames(): FrameStore[] {
-        return [this.baseFrame, ...this.selectedFrames];
+        return this.baseFrame ? [this.baseFrame, ...this.selectedFrames] : [...this.selectedFrames];
     }
 
     constructor(id: number) {

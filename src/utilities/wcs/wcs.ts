@@ -6,7 +6,7 @@ import {NumberFormatType, OverlaySettings} from "stores";
 import {FrameStore} from "stores/Frame";
 import {add2D, magDir2D, polygonPerimeter, rotate2D, scale2D, subtract2D, trimFitsComment} from "utilities";
 
-export function isWCSStringFormatValid(wcsString: string, format: NumberFormatType | undefined): boolean {
+export function isWCSStringFormatValid(wcsString: string | null, format: NumberFormatType | undefined): boolean {
     if (!wcsString || !format) {
         return false;
     }
@@ -97,8 +97,6 @@ export function getUnformattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: 
             AST.setI(astTransform, "Current", 2);
         }
 
-        const equinox = AST.getString(astTransform, "System") === "FK4" ? "1950.0" : "2000.0";
-        AST.set(astTransform, `Equinox=${equinox}`);
         const pointWCS = transformPoint(astTransform, pixelCoords);
         const normVals = AST.normalizeCoordinates(astTransform, pointWCS.x, pointWCS.y);
 

@@ -30,7 +30,8 @@ typedef enum {
     SIZE_DIAMETER = 0,
     SIZE_AREA = 1,
     COLOR = 2,
-    ORIENTATION = 3
+    ORIENTATION = 3,
+    SIZE_DIAMETER_ANGULAR = 4
 } CatalogMapType;
 
 const float MiterLimit = 1.5f;
@@ -277,6 +278,11 @@ void calculateCatalogMap(int mapType, float* data, size_t N, float dataMin, floa
                 float v = clamp(data[i], dataMin, dataMax);
                 float value = scaleValue(v, scaling, alpha, gamma);
                 data[i] = ((value - columnMin) / range * (clipMax - clipMin) + clipMin) * pixelSizeFactor;
+            }
+            break;
+        case SIZE_DIAMETER_ANGULAR:
+            for (size_t i = 0; i < N; i++) {
+                data[i] = data[i] * pixelSizeFactor;
             }
             break;
         case SIZE_AREA:
