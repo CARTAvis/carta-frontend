@@ -1,4 +1,5 @@
 export * from "./array/array";
+export * from "./ast/ast";
 export * from "./CatalogApiProcessed/CatalogApiProcessed";
 export * from "./color/color";
 export * from "./export/export";

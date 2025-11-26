@@ -250,7 +250,7 @@ export class CatalogQueryComponent extends React.Component {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         if (configStore.catalogDB === CatalogDatabase.SIMBAD) {
             // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system
-            const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS);
+            const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS, CatalogOnlineQueryConfigStore.QUERY_DEG_PRECISION);
             const query = `SELECT Top ${configStore.maxObject} *, DISTANCE(POINT('ICRS', ${centerCoord.x},${centerCoord.y}), POINT('ICRS', ra, dec)) as dist FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',${centerCoord.x},${centerCoord.y},${configStore.radiusAsDeg}))=1 AND ra IS NOT NULL AND dec IS NOT NULL order by dist`;
             configStore.setQueryStatus(true);
             const dataSize = await CatalogApiService.Instance.appendSimbadCatalog(query);
@@ -259,7 +259,7 @@ export class CatalogQueryComponent extends React.Component {
         } else if (configStore.catalogDB === CatalogDatabase.VIZIER) {
             configStore.setQueryStatus(true);
             configStore.resetVizier();
-            const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.FK5);
+            const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.FK5, CatalogOnlineQueryConfigStore.QUERY_DEG_PRECISION);
             if (centerCoord.x && centerCoord.y) {
                 const resources = await CatalogApiService.Instance.queryVizierTableName(centerCoord as WCSPoint2D, configStore.searchRadius, configStore.radiusUnits, configStore.vizierKeyWords);
                 configStore.setQueryStatus(false);
@@ -275,7 +275,7 @@ export class CatalogQueryComponent extends React.Component {
     private loadVizierCatalogs = async () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const sources = configStore.selectedVizierSource.filter(source => source !== undefined);
-        const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.FK5);
+        const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.FK5, CatalogOnlineQueryConfigStore.QUERY_DEG_PRECISION);
         if (centerCoord.x && centerCoord.y) {
             configStore.setQueryStatus(true);
             const resources = await CatalogApiService.Instance.queryVizierSource(centerCoord as WCSPoint2D, configStore.searchRadius, configStore.radiusUnits, configStore.maxObject, sources);
