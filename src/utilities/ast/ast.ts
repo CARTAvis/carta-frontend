@@ -65,7 +65,6 @@ function getEquinoxEpochForSystem(system: SystemType | CatalogSystemType): {equi
  * @param overlayGlobalSettings - The overlay global settings containing defaults
  */
 export function setAstStringSystem(astString: ASTSettingsString, system: SystemType | CatalogSystemType | undefined, overlayGlobalSettings: OverlayGlobalSettings): void {
-    
     if (system === undefined) {
         return;
     }

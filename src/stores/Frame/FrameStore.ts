@@ -1445,6 +1445,7 @@ export class FrameStore {
             this.spectralUnit = SPECTRAL_DEFAULT_UNIT.get(this.spectralType) ?? null;
             this.spectralUnitSecondary = SPECTRAL_DEFAULT_UNIT.get(this.spectralType) ?? null;
         }
+        console.log("isSpectralSystemConvertible", this.isSpectralSystemConvertible, this.spectralAxis);
         if (this.isSpectralSystemConvertible) {
             this.spectralSystem = this.spectralAxis?.specsys as SpectralSystem;
         }
@@ -1644,7 +1645,7 @@ export class FrameStore {
 
     private convertSpectral = (values: Array<number>): Array<number> => {
         const N = values?.length;
-        if (!N || !this.spectralFrame || !this.spectralType || !this.spectralUnit || !this.spectralSystem) {
+        if (!N || !this.spectralFrame) {
             return [];
         }
 
