@@ -33,13 +33,13 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
         const cursorInfo = this.props.cursorInfo;
         let infoStrings: string[] = [];
         if (cursorInfo.infoWCS) {
-            infoStrings.push(`WCS:\u00a0(${cursorInfo.infoWCS.x},\u00a0${cursorInfo.infoWCS.y})`);
+            infoStrings.push(`WCS: (${cursorInfo.infoWCS.x}, ${cursorInfo.infoWCS.y})`);
         }
         if (cursorInfo.posImageSpace?.x !== -Number.MAX_VALUE || cursorInfo.posImageSpace?.y !== -Number.MAX_VALUE) {
-            infoStrings.push(`Image:\u00a0(${toFixed(cursorInfo.posImageSpace.x)},\u00a0${toFixed(cursorInfo.posImageSpace.y)})`);
+            infoStrings.push(`Image: (${toFixed(cursorInfo.posImageSpace.x)}, ${toFixed(cursorInfo.posImageSpace.y)})`);
         }
         if (this.props.cursorValue !== undefined) {
-            let valueString = `Value:\u00a0${this.props.cursorValueToPercentage ? toFixed(this.props.cursorValue, 1) + " %" : formattedExponential(this.props.cursorValue, 5, this.props.unit, true, true)}`;
+            let valueString = `Value: ${this.props.cursorValueToPercentage ? toFixed(this.props.cursorValue, 1) + " %" : formattedExponential(this.props.cursorValue, 5, this.props.unit, true, true)}`;
             if (isNaN(this.props.cursorValue)) {
                 valueString = "NaN";
             }
@@ -53,16 +53,16 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
             infoStrings.push(valueString);
         }
         if (this.props.spectralInfo.spectralString) {
-            infoStrings.push(this.props.spectralInfo.spectralString.replace(/\s/g, "\u00a0"));
+            infoStrings.push(this.props.spectralInfo.spectralString);
             if (this.props.spectralInfo.freqString) {
-                infoStrings.push(this.props.spectralInfo.freqString.replace(/\s/g, "\u00a0"));
+                infoStrings.push(this.props.spectralInfo.freqString);
             }
             if (this.props.spectralInfo.velocityString) {
-                infoStrings.push(this.props.spectralInfo.velocityString.replace(/\s/g, "\u00a0"));
+                infoStrings.push(this.props.spectralInfo.velocityString);
             }
         }
         if (this.props.currentStokes) {
-            infoStrings.push(`Polarization:\u00a0${this.props.currentStokes}`);
+            infoStrings.push(`Polarization: ${this.props.currentStokes}`);
         }
 
         const height = this.props.height !== undefined && this.props.height >= 0 ? this.props.height : 20;
@@ -89,7 +89,16 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
 
         return (
             <div className={className} style={{...styleProps, visibility: this.props.visible === false ? "hidden" : "visible"}} data-testid="viewer-cursor-info-bar">
-                <span>{infoStrings.length ? infoStrings.join("; ") : "\u00a0"}</span>
+                {infoStrings.length ? (
+                    infoStrings.map((info, index) => (
+                        <span key={index} className="cursor-info-item">
+                            {info}
+                            {index < infoStrings.length - 1 && "; "}
+                        </span>
+                    ))
+                ) : (
+                    <span>\u00a0</span>
+                )}
             </div>
         );
     }
