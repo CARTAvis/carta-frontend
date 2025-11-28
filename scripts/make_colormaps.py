@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 COLOR_MAPS_ALL = [
-    "Accent",
+    "accent",
     "afmhot",
     "autumn",
     "binary",
@@ -31,7 +31,7 @@ COLOR_MAPS_ALL = [
     "coolwarm",
     "copper",
     "cubehelix",
-    "Dark2",
+    "dark2",
     "flag",
     "gist_earth",
     "gist_gray",
@@ -44,8 +44,8 @@ COLOR_MAPS_ALL = [
     "gnuplot",
     "gnuplot2",
     "gray",
-    "Greens",
-    "Grays",
+    "greens",
+    "greys",
     "hot",
     "hsv",
     "inferno",
@@ -53,11 +53,11 @@ COLOR_MAPS_ALL = [
     "magma",
     "nipy_spectral",
     "ocean",
-    "Oranges",
+    "oranges",
     "OrRd",
-    "Paired",
-    "Pastel1",
-    "Pastel2",
+    "paired",
+    "pastel1",
+    "pastel2",
     "pink",
     "PiYG",
     "plasma",
@@ -67,19 +67,19 @@ COLOR_MAPS_ALL = [
     "PuBuGn",
     "PuOr",
     "PuRd",
-    "Purples",
+    "purples",
     "rainbow",
     "RdBu",
     "RdGy",
     "RdPu",
     "RdYlBu",
     "RdYlGn",
-    "Reds",
+    "reds",
     "seismic",
-    "Set1",
-    "Set2",
-    "Set3",
-    "Spectral",
+    "set1",
+    "set2",
+    "set3",
+    "spectral",
     "spring",
     "summer",
     "tab10",
@@ -110,6 +110,19 @@ COLOR_MAPS_ALL = [
 ]
 
 
+def get_cmaps():
+    matplotlib_cmaps = list(mpl.colormaps)
+    cmaps = []
+    for cmap in COLOR_MAPS_ALL:
+        if cmap not in matplotlib_cmaps:
+            if cmap.capitalize() not in matplotlib_cmaps:
+                raise ValueError(f"Colormap {cmap} not found")
+            else:
+                cmap = cmap.capitalize()
+        cmaps.append(mpl.colormaps.get_cmap(cmap))
+    return cmaps
+
+
 def build_image(
     cmaps: Sequence[mpl.colors.Colormap], width=1024, stripe_height=5
 ) -> np.ndarray:
@@ -126,11 +139,7 @@ def main():
     parser.add_argument("--out", type=str, default="allmaps.png")
     args = parser.parse_args()
 
-    # Get cmaps from names
-    cmaps = [mpl.colormaps.get_cmap(name) for name in COLOR_MAPS_ALL]
-
-    # Build image
-    image = build_image(cmaps)
+    image = build_image(get_cmaps())
     plt.imsave(args.out, image, dpi=72)
 
 
