@@ -71,16 +71,9 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     }
 
     @computed get widgetStore(): CatalogWidgetStore | undefined {
-        const catalogStore = CatalogStore.Instance;
         const catalogFileId = this.catalogFileId;
-        if (catalogFileId === undefined) {
-            return undefined;
-        }
-        const catalogWidgetStoreId = catalogStore.catalogWidgets.get(catalogFileId);
-        if (!catalogWidgetStoreId) {
-            return undefined;
-        }
-        return WidgetsStore.Instance.catalogWidgets.get(catalogWidgetStoreId);
+        const catalogWidgetStoreId = catalogFileId ? CatalogStore.Instance.catalogWidgets.get(catalogFileId) : undefined;
+        return catalogWidgetStoreId ? WidgetsStore.Instance.catalogWidgets.get(catalogWidgetStoreId) : undefined;
     }
 
     @computed get catalogFileId() {
@@ -89,10 +82,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
     @computed get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined {
         const catalogFileId = this.catalogFileId;
-        if (catalogFileId === undefined) {
-            return undefined;
-        }
-        return CatalogStore.Instance.catalogProfileStores.get(catalogFileId);
+        return catalogFileId ? CatalogStore.Instance.catalogProfileStores.get(catalogFileId) : undefined;
     }
 
     @computed get axisOption() {

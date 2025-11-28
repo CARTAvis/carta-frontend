@@ -217,14 +217,9 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
     };
 
     private getNextSortingType = (): CARTA.SortingType | null => {
-        const sortingInfo = this.props.sortingInfo;
-        if (!sortingInfo) {
-            return null;
-        }
-
         let currentNode: any = this.SortingTypelinkedList.head;
         while (currentNode?.next) {
-            if (currentNode.value === sortingInfo.sortingType) {
+            if (currentNode.value === this.props.sortingInfo?.sortingType) {
                 return currentNode.next.value;
             }
             currentNode = currentNode.next;

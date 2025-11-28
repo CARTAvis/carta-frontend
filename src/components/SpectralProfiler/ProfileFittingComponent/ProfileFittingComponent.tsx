@@ -102,20 +102,23 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
     };
 
     private onCenterLocked = () => {
-        if (this.props.fittingStore.selectedComponent) {
-            this.props.fittingStore.selectedComponent.setLockedCenter(!this.props.fittingStore.selectedComponent.lockedCenter);
+        const selectComponent = this.props.fittingStore.selectedComponent;
+        if (selectComponent) {
+            selectComponent.setLockedCenter(!selectComponent.lockedCenter);
         }
     };
 
     private onAmpLocked = () => {
-        if (this.props.fittingStore.selectedComponent) {
-            this.props.fittingStore.selectedComponent.setLockedAmp(!this.props.fittingStore.selectedComponent.lockedAmp);
+        const selectComponent = this.props.fittingStore.selectedComponent;
+        if (selectComponent) {
+            selectComponent.setLockedAmp(!selectComponent.lockedAmp);
         }
     };
 
     private onFwhmLocked = () => {
-        if (this.props.fittingStore.selectedComponent) {
-            this.props.fittingStore.selectedComponent.setLockedFwhm(!this.props.fittingStore.selectedComponent.lockedFwhm);
+        const selectComponent = this.props.fittingStore.selectedComponent;
+        if (selectComponent) {
+            selectComponent.setLockedFwhm(!selectComponent.lockedFwhm);
         }
     };
 

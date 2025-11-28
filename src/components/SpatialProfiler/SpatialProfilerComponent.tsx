@@ -314,7 +314,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             if (this.nearestCursorPoint && this.profileStore && this.frame) {
                 const y = this.profileStore.y;
                 const x = this.profileStore.x;
-                if (y !== null && y !== undefined && x !== null && x !== undefined) {
+                if (y != null && x != null) {
                     const pixelPoint = this.widgetStore.isXProfile ? {x: this.nearestCursorPoint.x, y} : {x, y: this.nearestCursorPoint.x};
                     return this.frame.getCursorInfo(pixelPoint);
                 }

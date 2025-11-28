@@ -123,15 +123,13 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private handleToggleHideClicked = () => {
         return (ev: React.MouseEvent<HTMLElement, MouseEvent>) => {
             const activeFrame = AppStore.Instance.activeFrame;
-            if (activeFrame) {
-                if (this.regionsLock !== activeFrame.regionSet.locked) {
-                    this.syncRegionsLocked();
-                }
-                this.toggleRegionVisibility();
-                activeFrame.regionSet.setOpacity(this.regionsVisibility);
-                if (this.regionsVisibility === RegionsOpacity.Invisible) {
-                    activeFrame.regionSet.setLocked(true);
-                }
+            if (this.regionsLock !== activeFrame?.regionSet.locked) {
+                this.syncRegionsLocked();
+            }
+            this.toggleRegionVisibility();
+            activeFrame?.regionSet.setOpacity(this.regionsVisibility);
+            if (this.regionsVisibility === RegionsOpacity.Invisible) {
+                activeFrame?.regionSet.setLocked(true);
             }
             ev.stopPropagation();
         };

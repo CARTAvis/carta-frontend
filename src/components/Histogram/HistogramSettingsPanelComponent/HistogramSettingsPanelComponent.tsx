@@ -69,33 +69,23 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
                     }
                 }
                 const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                if (this.props.floatingSettingsId) {
-                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Histogram Settings: ${regionString} ${selectedString}`);
-                }
+                this.props.floatingSettingsId && appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Histogram Settings: ${regionString} ${selectedString}`);
             } else {
-                if (this.props.floatingSettingsId) {
-                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Histogram Settings`);
-                }
+                this.props.floatingSettingsId && appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Histogram Settings`);
             }
         });
     }
 
     private handleLogScaleChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        if (this.widgetStore) {
-            this.widgetStore.setLogScale(changeEvent.target.checked);
-        }
+        this.widgetStore?.setLogScale(changeEvent.target.checked);
     };
 
     handleSelectedTabChanged = (newTabId: React.ReactText) => {
-        if (this.widgetStore) {
-            this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
-        }
+        this.widgetStore?.setSettingsTabId(Number.parseInt(newTabId.toString()));
     };
 
     handleMeanRmsChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        if (this.widgetStore) {
-            this.widgetStore.setMeanRmsVisible(changeEvent.target.checked);
-        }
+        this.widgetStore?.setMeanRmsVisible(changeEvent.target.checked);
     };
 
     handleXMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {

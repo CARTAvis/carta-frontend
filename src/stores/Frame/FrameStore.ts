@@ -2532,17 +2532,19 @@ export class FrameStore {
         }
 
         for (const contourSet of processedData.contourSets ?? []) {
-            if (contourSet.level) {
+            if (contourSet.level != null) {
                 let contourStore = this.contourStores.get(contourSet.level);
                 if (!contourStore) {
                     contourStore = new ContourStore();
                     this.contourStores.set(contourSet.level, contourStore);
                 }
 
-                if (!contourStore.isComplete && processedData.progress && processedData.progress > 0 && contourSet.coordinates) {
-                    contourStore.addContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
-                } else if (processedData.progress && contourSet.coordinates) {
-                    contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
+                if (processedData.progress != null && contourSet.coordinates) {
+                    if (!contourStore.isComplete && processedData.progress > 0) {
+                        contourStore.addContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
+                    } else {
+                        contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
+                    }
                 }
             }
         }
@@ -2556,10 +2558,12 @@ export class FrameStore {
     }
 
     @action updateFromVectorOverlayData(vectorOverlayData: CARTA.IVectorOverlayTileData) {
-        if (!this.vectorOverlayStore.isComplete && vectorOverlayData.progress && vectorOverlayData.progress > 0 && vectorOverlayData.intensityTiles && vectorOverlayData.angleTiles) {
-            this.vectorOverlayStore.addData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
-        } else if (vectorOverlayData.progress && vectorOverlayData.intensityTiles && vectorOverlayData.angleTiles) {
-            this.vectorOverlayStore.setData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
+        if (vectorOverlayData.progress != null && vectorOverlayData.intensityTiles && vectorOverlayData.angleTiles) {
+            if (!this.vectorOverlayStore.isComplete && vectorOverlayData.progress > 0) {
+                this.vectorOverlayStore.addData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
+            } else {
+                this.vectorOverlayStore.setData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
+            }
         }
     }
 

@@ -116,11 +116,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         let widgetStoreId = catalogWidgetMap.get(this.catalogFileId);
         if (!widgetStoreId) {
             widgetStoreId = this.addNewWidgetStore();
-            if (!widgetStoreId) {
-                return undefined;
-            }
         }
-        const widgetStore = WidgetsStore.Instance.catalogPlotWidgets.get(widgetStoreId);
+        const widgetStore = widgetStoreId ? WidgetsStore.Instance.catalogPlotWidgets.get(widgetStoreId) : undefined;
         return widgetStore;
     }
 
@@ -130,10 +127,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     @computed get catalogWidgetStore(): CatalogWidgetStore | undefined {
         const widgetStoreId = CatalogStore.Instance.catalogWidgets.get(this.catalogFileId);
-        if (!widgetStoreId) {
-            return undefined;
-        }
-        return WidgetsStore.Instance.catalogWidgets.get(widgetStoreId);
+        return widgetStoreId ? WidgetsStore.Instance.catalogWidgets.get(widgetStoreId) : undefined;
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
@@ -149,19 +143,16 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (plotWidgetStoreId) {
             const plotWidgetStore = widgetStore.catalogPlotWidgets.get(plotWidgetStoreId);
             const profileStore = catalogStore.catalogProfileStores.get(this.catalogFileId);
-            if (!plotWidgetStore || !profileStore) {
-                return;
-            }
-            const xColumn = plotWidgetStore.xColumnName === CatalogPlotComponent.emptyColumn;
-            const yColumn = plotWidgetStore.yColumnName === CatalogPlotComponent.emptyColumn;
-            switch (plotWidgetStore.plotType) {
+            const xColumn = plotWidgetStore?.xColumnName === CatalogPlotComponent.emptyColumn;
+            const yColumn = plotWidgetStore?.yColumnName === CatalogPlotComponent.emptyColumn;
+            switch (plotWidgetStore?.plotType) {
                 case CatalogPlotType.D2Scatter:
                     if (!xColumn && !yColumn && plotWidgetStore.scatterborder === undefined) {
                         const xColumnName = plotWidgetStore.xColumnName;
                         const yColumnName = plotWidgetStore.yColumnName;
                         if (xColumnName && yColumnName) {
-                            const scatterCoords = profileStore.get2DPlotData(xColumnName, yColumnName, profileStore.catalogData);
-                            if (scatterCoords.wcsX && scatterCoords.wcsY) {
+                            const scatterCoords = profileStore?.get2DPlotData(xColumnName, yColumnName, profileStore.catalogData);
+                            if (scatterCoords?.wcsX && scatterCoords?.wcsY) {
                                 const scatterBorder = this.getScatterBorder(scatterCoords.wcsX, scatterCoords.wcsY);
                                 plotWidgetStore.setScatterborder(scatterBorder);
                             }
@@ -172,8 +163,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     if (!xColumn && plotWidgetStore.histogramBorder === undefined) {
                         const xColumnName = plotWidgetStore.xColumnName;
                         if (xColumnName) {
-                            const histogramCoords = profileStore.get1DPlotData(xColumnName);
-                            if (histogramCoords.wcsData) {
+                            const histogramCoords = profileStore?.get1DPlotData(xColumnName);
+                            if (histogramCoords?.wcsData) {
                                 const histogramXBorder = this.getHistogramXBorder(histogramCoords.wcsData);
                                 plotWidgetStore.setHistogramXBorder(histogramXBorder);
                             }
@@ -246,10 +237,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             return undefined;
         }
         const coords = profileStore.get2DPlotData(widgetStore.xColumnName, widgetStore.yColumnName, profileStore.catalogData);
-        if (!coords.wcsX || !coords.wcsY) {
-            return undefined;
-        }
-        return this.getScatterBorder(coords.wcsX, coords.wcsY);
+        return coords.wcsX && coords.wcsY ? this.getScatterBorder(coords.wcsX, coords.wcsY) : undefined;
     }
 
     @computed get initHistogramXBorder(): XBorder | undefined {
@@ -259,10 +247,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             return undefined;
         }
         const coords = profileStore.get1DPlotData(widgetStore.xColumnName);
-        if (!coords.wcsData) {
-            return undefined;
-        }
-        return this.getHistogramXBorder(coords.wcsData);
+        return coords.wcsData ? this.getHistogramXBorder(coords.wcsData) : undefined;
     }
 
     @computed get scatterData() {
@@ -354,10 +339,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     @computed get genProfilerInfo(): string {
         let profileInfo: string = "";
         const widgetStore = this.widgetStore;
-        if (!widgetStore) {
-            return profileInfo;
-        }
-        const indicatorInfo = widgetStore.indicatorInfo;
+        const indicatorInfo = widgetStore?.indicatorInfo;
         if (indicatorInfo) {
             if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
                 profileInfo = `${widgetStore.xColumnName}: ${indicatorInfo.x}, ${widgetStore.yColumnName}: ${indicatorInfo.y}`;
@@ -537,7 +519,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         xMin: isFinite(xMin) ? xMin : currentBorder.xMin,
                         xMax: isFinite(xMax) ? xMax : currentBorder.xMax
                     };
-                    this.widgetStore.setHistogramXBorder(histogramBorder);
+                    widgetStore.setHistogramXBorder(histogramBorder);
                 }
             }
 
@@ -662,8 +644,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     private updateHistogramYrange = (figure: any, graphDiv: any) => {
         // fixed react plotlyjs bug with fixed range and changed x range
-        const widgetStore = this.widgetStore;
-        if (widgetStore?.plotType === CatalogPlotType.Histogram) {
+        if (this.widgetStore?.plotType === CatalogPlotType.Histogram) {
             const yaxis = figure.layout.yaxis.range;
             this.histogramY = {yMin: yaxis[0], yMax: yaxis[1]};
         }

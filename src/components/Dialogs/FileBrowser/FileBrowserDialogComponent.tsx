@@ -80,9 +80,7 @@ export class FileBrowserDialogComponent extends React.Component {
             appStore.frames.forEach(f => f.renderConfig.setPercentileRank(appStore.preferenceStore.percentile));
             const colorBlendingStore = appStore.imageViewConfigStore.createColorBlending();
 
-            if (colorBlendingStore) {
-                colorBlendingStore.applyColormapSet(appStore.fileBrowserStore.selectedFiles?.length <= 3 ? "RGB" : "Rainbow");
-            }
+            colorBlendingStore?.applyColormapSet(appStore.fileBrowserStore.selectedFiles?.length <= 3 ? "RGB" : "Rainbow");
         } catch (err) {
             console.error(err);
         }
@@ -108,11 +106,10 @@ export class FileBrowserDialogComponent extends React.Component {
             appStore.setLoadingMultipleFiles(false);
         } else {
             const selectedFile = fileBrowserStore.selectedFile;
-            const selectedHDU = fileBrowserStore.selectedHDU;
             if (selectedFile) {
                 await this.loadFile({
                     fileInfo: selectedFile,
-                    hdu: selectedHDU || undefined
+                    hdu: fileBrowserStore.selectedHDU || undefined
                 });
             }
         }

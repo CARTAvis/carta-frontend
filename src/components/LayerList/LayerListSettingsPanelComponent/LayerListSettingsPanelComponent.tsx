@@ -69,8 +69,8 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                     selectAllOnFocus={true}
                     onValueChanged={val => {
                         restFreqStore.setCustomVal(val);
-                        if (AppStore.Instance.frameNum <= 10 && this.widgetStore) {
-                            this.widgetStore.resetSelectedFrameIndex();
+                        if (AppStore.Instance.frameNum <= 10) {
+                            this.widgetStore?.resetSelectedFrameIndex();
                         }
                     }}
                     onValueCleared={restFreqStore.restoreDefaults}

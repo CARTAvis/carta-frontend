@@ -87,7 +87,9 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        if (!widgetStore) return;
+        if (!widgetStore) {
+            return;
+        }
 
         const minX = parseNumber(widgetStore.minX ?? widgetStore.linePlotInitXYBoundaries.minXVal, widgetStore.linePlotInitXYBoundaries.minXVal);
         const maxX = parseNumber(widgetStore.maxX ?? widgetStore.linePlotInitXYBoundaries.maxXVal, widgetStore.linePlotInitXYBoundaries.maxXVal);
@@ -105,7 +107,9 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        if (!widgetStore) return;
+        if (!widgetStore) {
+            return;
+        }
 
         const minX = parseNumber(widgetStore.minX ?? widgetStore.linePlotInitXYBoundaries.minXVal, widgetStore.linePlotInitXYBoundaries.minXVal);
         const maxX = parseNumber(widgetStore.maxX ?? widgetStore.linePlotInitXYBoundaries.maxXVal, widgetStore.linePlotInitXYBoundaries.maxXVal);
@@ -123,7 +127,9 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        if (!widgetStore) return;
+        if (!widgetStore) {
+            return;
+        }
 
         const minY = parseNumber(widgetStore.minY ?? widgetStore.linePlotInitXYBoundaries.minYVal, widgetStore.linePlotInitXYBoundaries.minYVal);
         const maxY = parseNumber(widgetStore.maxY ?? widgetStore.linePlotInitXYBoundaries.maxYVal, widgetStore.linePlotInitXYBoundaries.maxYVal);
@@ -141,7 +147,9 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        if (!widgetStore) return;
+        if (!widgetStore) {
+            return;
+        }
 
         const minY = parseNumber(widgetStore.minY ?? widgetStore.linePlotInitXYBoundaries.minYVal, widgetStore.linePlotInitXYBoundaries.minYVal);
         const maxY = parseNumber(widgetStore.maxY ?? widgetStore.linePlotInitXYBoundaries.maxYVal, widgetStore.linePlotInitXYBoundaries.maxYVal);
