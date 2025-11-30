@@ -110,7 +110,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
             const parentId = widgetsStore.floatingSettingsWidgets.get(this.props.widgetConfig.id);
             let settingsTab: number | undefined;
 
-            if (parentId) {
+            if (parentId !== undefined) {
                 switch (widgetParentType) {
                     case "spatial-profiler":
                         const spatialWidget = widgetsStore.spatialProfileWidgets.get(parentId);

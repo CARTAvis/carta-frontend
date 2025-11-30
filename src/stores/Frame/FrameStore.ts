@@ -1445,7 +1445,6 @@ export class FrameStore {
             this.spectralUnit = SPECTRAL_DEFAULT_UNIT.get(this.spectralType) ?? null;
             this.spectralUnitSecondary = SPECTRAL_DEFAULT_UNIT.get(this.spectralType) ?? null;
         }
-        console.log("isSpectralSystemConvertible", this.isSpectralSystemConvertible, this.spectralAxis);
         if (this.isSpectralSystemConvertible) {
             this.spectralSystem = this.spectralAxis?.specsys as SpectralSystem;
         }

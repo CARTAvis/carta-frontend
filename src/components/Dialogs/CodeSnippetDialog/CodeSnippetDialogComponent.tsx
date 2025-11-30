@@ -88,8 +88,8 @@ export class CodeSnippetDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const activeSnippetName = appStore.snippetStore.activeSnippetName;
         const confirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete this snippet?");
-        if (confirmed) {
-            activeSnippetName && (await appStore.snippetStore.deleteSnippet(activeSnippetName));
+        if (confirmed && activeSnippetName) {
+            await appStore.snippetStore.deleteSnippet(activeSnippetName);
             appStore.snippetStore.clearActiveSnippet();
         }
     };

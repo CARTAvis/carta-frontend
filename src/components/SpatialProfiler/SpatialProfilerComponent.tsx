@@ -432,7 +432,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
         const pointInfoPrecision = this.widgetStore.isXProfile ? this.pointInfo?.precision.x : this.pointInfo?.precision.y;
         // Skip lists with no more decimals than pointInfo
-        if (pointInfoPrecision == null || this.cachedFormattedCoordinates[0].length - decimalIndex - 1 <= pointInfoPrecision) {
+        if (pointInfoPrecision === undefined || this.cachedFormattedCoordinates[0].length - decimalIndex - 1 <= pointInfoPrecision) {
             return;
         }
         // Start trimming from the next digit of pointInfo to avoid offset between pointInfo and upper wcs axis value

@@ -467,7 +467,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const catalogWidgetStore = this.widgetStore;
         const catalogFileId = this.catalogFileId;
 
-        if (!profileStore || !catalogWidgetStore || !catalogFileId) {
+        if (!profileStore || !catalogWidgetStore || catalogFileId === undefined) {
             return;
         }
 
@@ -522,11 +522,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private updateByInfiniteScroll = () => {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
-        if (!profileStore || !catalogWidgetStore) {
-            return;
-        }
-        const selectedOnly = catalogWidgetStore.showSelectedData;
-        if (profileStore.loadingData === false && profileStore.updateMode === CatalogUpdateMode.TableUpdate && profileStore.shouldUpdateData && !selectedOnly) {
+        const selectedOnly = catalogWidgetStore?.showSelectedData;
+        if (profileStore?.loadingData === false && profileStore.updateMode === CatalogUpdateMode.TableUpdate && profileStore.shouldUpdateData && !selectedOnly) {
             profileStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
             const filter = profileStore.updateRequestDataSize;
             filter.columnIndices = profileStore.displayedColumnHeaders.map(v => v.columnIndex);
@@ -542,7 +539,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const appStore = AppStore.Instance;
         const catalogStore = CatalogStore.Instance;
 
-        if (!profileStore || !catalogWidgetStore || !catalogFileId) {
+        if (!profileStore || !catalogWidgetStore || catalogFileId === undefined) {
             return;
         }
 
@@ -569,7 +566,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const catalogWidgetStore = this.widgetStore;
         const catalogFileId = this.catalogFileId;
 
-        if (!profileStore || !catalogWidgetStore || !catalogFileId) {
+        if (!profileStore || !catalogWidgetStore || catalogFileId === undefined) {
             return;
         }
 

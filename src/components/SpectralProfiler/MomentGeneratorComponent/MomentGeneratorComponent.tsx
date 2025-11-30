@@ -61,16 +61,13 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
 
     private filterMoment: ItemPredicate<CARTA.Moment> = (query, moment, index, exactMatch) => {
         const momentContent = MOMENT_TEXT.get(moment);
-        if (!momentContent) {
-            return false;
-        }
-        const normalizedMoment = momentContent.tag.toLowerCase();
+        const normalizedMoment = momentContent?.tag.toLowerCase();
         const normalizedQuery = query.toLowerCase();
 
         if (exactMatch) {
             return normalizedMoment === normalizedQuery;
         } else {
-            return momentContent.tag.indexOf(normalizedQuery) === 0;
+            return momentContent?.tag.indexOf(normalizedQuery) === 0;
         }
     };
 

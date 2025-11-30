@@ -150,7 +150,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                 appStore.widgetsStore.changeWidgetId(props.id as string, id);
             }
         } else {
-            const widgetId = props.id ?? "";
+            const widgetId = props.id;
             if (widgetId && !appStore.widgetsStore.histogramWidgets.has(widgetId)) {
                 console.log(`can't find store for widget with id=${widgetId}`);
                 appStore.widgetsStore.histogramWidgets.set(widgetId, new HistogramWidgetStore());
@@ -171,15 +171,9 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                     }
                 }
                 const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                const widgetId = this.props.id ?? "";
-                if (widgetId) {
-                    appStore.widgetsStore.setWidgetTitle(widgetId, `Histogram: ${regionString} ${selectedString}`);
-                }
+                appStore.widgetsStore.setWidgetTitle(this.props.id, `Histogram: ${regionString} ${selectedString}`);
             } else {
-                const widgetId = this.props.id ?? "";
-                if (widgetId) {
-                    appStore.widgetsStore.setWidgetTitle(widgetId, `Histogram`);
-                }
+                appStore.widgetsStore.setWidgetTitle(this.props.id, `Histogram`);
             }
             const widgetStore = this.widgetStore;
             if (widgetStore) {
@@ -242,11 +236,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         const appStore = AppStore.Instance;
 
         const frameMap = appStore.regionHistograms.get(fileId);
-        if (!frameMap) {
-            return null;
-        }
-
-        if (regionId === null) {
+        if (!frameMap || regionId === null) {
             return null;
         }
 

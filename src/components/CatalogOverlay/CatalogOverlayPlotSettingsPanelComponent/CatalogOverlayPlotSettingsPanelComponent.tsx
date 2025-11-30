@@ -82,7 +82,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
     @computed get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined {
         const catalogFileId = this.catalogFileId;
-        return catalogFileId ? CatalogStore.Instance.catalogProfileStores.get(catalogFileId) : undefined;
+        return catalogFileId !== undefined ? CatalogStore.Instance.catalogProfileStores.get(catalogFileId) : undefined;
     }
 
     @computed get axisOption() {

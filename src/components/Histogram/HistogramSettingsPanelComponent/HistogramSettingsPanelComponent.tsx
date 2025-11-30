@@ -115,14 +115,10 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        if (!widgetStore) {
-            return;
-        }
-
-        const minX = parseNumber(widgetStore.minX ?? 0, widgetStore.linePlotInitXYBoundaries.minXVal ?? 0);
-        const maxX = parseNumber(widgetStore.maxX ?? 0, widgetStore.linePlotInitXYBoundaries.maxXVal ?? 0);
+        const minX = parseNumber(widgetStore?.minX ?? 0, widgetStore?.linePlotInitXYBoundaries.minXVal ?? 0);
+        const maxX = parseNumber(widgetStore?.maxX ?? 0, widgetStore?.linePlotInitXYBoundaries.maxXVal ?? 0);
         if (isFinite(val) && val !== maxX && val > minX) {
-            widgetStore.setXBounds(minX, val);
+            widgetStore?.setXBounds(minX, val);
         } else {
             ev.currentTarget.value = maxX.toString();
         }
@@ -135,14 +131,10 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        if (!widgetStore) {
-            return;
-        }
-
-        const minY = parseNumber(widgetStore.minY ?? 0, widgetStore.linePlotInitXYBoundaries.minYVal ?? 0);
-        const maxY = parseNumber(widgetStore.maxY ?? 0, widgetStore.linePlotInitXYBoundaries.maxYVal ?? 0);
+        const minY = parseNumber(widgetStore?.minY ?? 0, widgetStore?.linePlotInitXYBoundaries.minYVal ?? 0);
+        const maxY = parseNumber(widgetStore?.maxY ?? 0, widgetStore?.linePlotInitXYBoundaries.maxYVal ?? 0);
         if (isFinite(val) && val !== minY && val < maxY) {
-            widgetStore.setYBounds(val, maxY);
+            widgetStore?.setYBounds(val, maxY);
         } else {
             ev.currentTarget.value = minY.toString();
         }
@@ -155,14 +147,10 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        if (!widgetStore) {
-            return;
-        }
-
-        const minY = parseNumber(widgetStore.minY ?? 0, widgetStore.linePlotInitXYBoundaries.minYVal ?? 0);
-        const maxY = parseNumber(widgetStore.maxY ?? 0, widgetStore.linePlotInitXYBoundaries.maxYVal ?? 0);
+        const minY = parseNumber(widgetStore?.minY ?? 0, widgetStore?.linePlotInitXYBoundaries.minYVal ?? 0);
+        const maxY = parseNumber(widgetStore?.maxY ?? 0, widgetStore?.linePlotInitXYBoundaries.maxYVal ?? 0);
         if (isFinite(val) && val !== maxY && val > minY) {
-            widgetStore.setYBounds(minY, val);
+            widgetStore?.setYBounds(minY, val);
         } else {
             ev.currentTarget.value = maxY.toString();
         }

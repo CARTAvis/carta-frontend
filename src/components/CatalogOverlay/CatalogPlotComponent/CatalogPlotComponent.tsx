@@ -117,7 +117,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!widgetStoreId) {
             widgetStoreId = this.addNewWidgetStore();
         }
-        const widgetStore = widgetStoreId ? WidgetsStore.Instance.catalogPlotWidgets.get(widgetStoreId) : undefined;
+        const widgetStore = widgetStoreId !== undefined ? WidgetsStore.Instance.catalogPlotWidgets.get(widgetStoreId) : undefined;
         return widgetStore;
     }
 
@@ -127,7 +127,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     @computed get catalogWidgetStore(): CatalogWidgetStore | undefined {
         const widgetStoreId = CatalogStore.Instance.catalogWidgets.get(this.catalogFileId);
-        return widgetStoreId ? WidgetsStore.Instance.catalogWidgets.get(widgetStoreId) : undefined;
+        return widgetStoreId !== undefined ? WidgetsStore.Instance.catalogWidgets.get(widgetStoreId) : undefined;
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
@@ -190,7 +190,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     plotType: this.plotType
                 };
                 const scatterPlotId = appStore.widgetsStore.addCatalogPlotWidget(scatterProps);
-                if (scatterPlotId) {
+                if (scatterPlotId !== null) {
                     catalogStore.setCatalogPlots(this.componentId, this.catalogFileId, scatterPlotId);
                     return scatterPlotId;
                 }
@@ -201,7 +201,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     plotType: this.plotType
                 };
                 const histogramPlotId = appStore.widgetsStore.addCatalogPlotWidget(historgramProps);
-                if (histogramPlotId) {
+                if (histogramPlotId !== null) {
                     catalogStore.setCatalogPlots(this.componentId, this.catalogFileId, histogramPlotId);
                     return histogramPlotId;
                 }
@@ -327,6 +327,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!profileStore || !widgetStore) {
             return false;
         }
+
         if (widgetStore?.plotType === CatalogPlotType.Histogram) {
             return widgetStore.xColumnName !== emptyColumn && !profileStore.loadingData && !profileStore.updatingDataStream;
         } else if (widgetStore?.plotType === CatalogPlotType.D2Scatter) {
@@ -407,6 +408,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!widgetStore) {
             return;
         }
+
         if (type === "X") {
             widgetStore.setColumnX(column);
         } else if (type === "Y") {
@@ -460,10 +462,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     private onDoubleClick = () => {
         const widgetsStore = this.widgetStore;
-        if (!widgetsStore) {
-            return;
-        }
-        if (widgetsStore.plotType === CatalogPlotType.D2Scatter) {
+        if (widgetsStore?.plotType === CatalogPlotType.D2Scatter) {
             const initBorder = this.initScatterBorder;
             if (initBorder) {
                 widgetsStore.setScatterborder(initBorder);
@@ -471,7 +470,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         } else {
             const initBorder = this.initHistogramXBorder;
             if (initBorder) {
-                widgetsStore.setHistogramXBorder(initBorder);
+                widgetsStore?.setHistogramXBorder(initBorder);
             }
         }
     };
@@ -481,6 +480,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!widgetStore) {
             return;
         }
+
         if (event.dragmode) {
             widgetStore.setDragmode(event.dragmode);
         }
@@ -595,14 +595,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const profileStore = this.profileStore;
         const widgetsStore = this.widgetStore;
         const catalogWidgetStore = this.catalogWidgetStore;
-        if (!profileStore || !widgetsStore || !catalogWidgetStore) {
-            return;
-        }
         catalogStore.updateCatalogProfiles(this.catalogFileId);
-        profileStore.setSelectedPointIndices([], false);
-        catalogWidgetStore.setShowSelectedData(false);
-        widgetsStore.initLinearFitting();
-        widgetsStore.initStatistic();
+        profileStore?.setSelectedPointIndices([], false);
+        catalogWidgetStore?.setShowSelectedData(false);
+        widgetsStore?.initLinearFitting();
+        widgetsStore?.initStatistic();
         this.updateStatistic();
     };
 
@@ -613,6 +610,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!widgetStore) {
             return;
         }
+
         const inDragmode = selectionMode.includes(widgetStore.dragmode);
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.catalogWidgetStore;

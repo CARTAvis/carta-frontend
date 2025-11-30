@@ -103,10 +103,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     };
 
     private syncRegionsLocked = () => {
-        const activeFrame = AppStore.Instance.activeFrame;
-        if (activeFrame) {
-            activeFrame.regionSet.setLocked(this.regionsLock);
-        }
+        AppStore.Instance.activeFrame?.regionSet.setLocked(this.regionsLock);
     };
 
     private handleRegionLockClicked = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>, region: RegionStore) => {

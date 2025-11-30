@@ -186,17 +186,11 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     };
 
     handlePercentileRankSelectChanged = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        const activeFrame = AppStore.Instance.activeFrame;
-        if (activeFrame) {
-            activeFrame.renderConfig.setPercentileRank(+event.currentTarget.value);
-        }
+        AppStore.Instance.activeFrame?.renderConfig.setPercentileRank(+event.currentTarget.value);
     };
 
     setCustomPercentileRank = () => {
-        const activeFrame = AppStore.Instance.activeFrame;
-        if (activeFrame) {
-            activeFrame.renderConfig.setPercentileRank(-1);
-        }
+        AppStore.Instance.activeFrame?.renderConfig.setPercentileRank(-1);
     };
 
     handleCubeHistogramSelected = () => {

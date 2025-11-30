@@ -359,9 +359,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     const imageName = currentPlotData.labels?.[i]?.image ?? "";
                     const plotName = `Z-profile-${currentPlotData.labels?.[i]?.plot ?? ""}`.replace(/,\s/g, "-")?.replace(/\s/g, "_");
                     if (i < (currentPlotData.data?.length ?? 0)) {
-                        // if (!linePlotProps.multiPlotPropsMap) {
-                        //     linePlotProps.multiPlotPropsMap = new Map();
-                        // }
                         linePlotProps.multiPlotPropsMap = linePlotProps.multiPlotPropsMap || new Map();
                         linePlotProps.multiPlotPropsMap.set(`profile${i}`, {
                             imageName: imageName,

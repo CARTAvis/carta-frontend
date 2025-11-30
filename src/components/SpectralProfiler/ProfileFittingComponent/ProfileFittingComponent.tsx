@@ -56,21 +56,15 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
     };
 
     private onCenterValueChanged = (val: number) => {
-        if (this.props.fittingStore.selectedComponent) {
-            this.props.fittingStore.selectedComponent.setCenter(val);
-        }
+        this.props.fittingStore.selectedComponent?.setCenter(val);
     };
 
     private onAmpValueChanged = (val: number) => {
-        if (this.props.fittingStore.selectedComponent) {
-            this.props.fittingStore.selectedComponent.setAmp(val);
-        }
+        this.props.fittingStore.selectedComponent?.setAmp(val);
     };
 
     private onFwhmValueChanged = (val: number) => {
-        if (this.props.fittingStore.selectedComponent) {
-            this.props.fittingStore.selectedComponent.setFwhm(val);
-        }
+        this.props.fittingStore.selectedComponent?.setFwhm(val);
     };
 
     private onMouseOverResult = () => {
@@ -103,23 +97,17 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
 
     private onCenterLocked = () => {
         const selectComponent = this.props.fittingStore.selectedComponent;
-        if (selectComponent) {
-            selectComponent.setLockedCenter(!selectComponent.lockedCenter);
-        }
+        selectComponent?.setLockedCenter(!selectComponent.lockedCenter);
     };
 
     private onAmpLocked = () => {
         const selectComponent = this.props.fittingStore.selectedComponent;
-        if (selectComponent) {
-            selectComponent.setLockedAmp(!selectComponent.lockedAmp);
-        }
+        selectComponent?.setLockedAmp(!selectComponent.lockedAmp);
     };
 
     private onFwhmLocked = () => {
         const selectComponent = this.props.fittingStore.selectedComponent;
-        if (selectComponent) {
-            selectComponent.setLockedFwhm(!selectComponent.lockedFwhm);
-        }
+        selectComponent?.setLockedFwhm(!selectComponent.lockedFwhm);
     };
 
     private showLog = () => {

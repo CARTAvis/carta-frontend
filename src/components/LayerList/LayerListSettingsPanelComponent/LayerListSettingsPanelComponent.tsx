@@ -50,10 +50,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
     }
 
     private renderFrameOptions = (val: number, itemProps: ItemRendererProps) => {
-        if (!this.widgetStore) {
-            return null;
-        }
-        const option = this.widgetStore.restFreqFrameOptions.find(option => option.frameIndex === val);
+        const option = this.widgetStore?.restFreqFrameOptions.find(option => option.frameIndex === val);
         return <MenuItem key={option?.frameIndex} text={option?.label} disabled={option?.disable} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
