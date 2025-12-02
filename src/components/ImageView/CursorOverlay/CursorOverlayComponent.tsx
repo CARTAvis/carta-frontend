@@ -93,7 +93,7 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
                     infoStrings.map((info, index) => (
                         <span key={index} className="cursor-info-item">
                             {info}
-                            {index < infoStrings.length - 1 && "; "}
+                            {index < infoStrings.length - 1 && ";\u00a0"}
                         </span>
                     ))
                 ) : (
