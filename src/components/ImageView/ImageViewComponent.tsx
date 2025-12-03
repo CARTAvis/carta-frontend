@@ -301,7 +301,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
         return (
             <ResizeDetector onResize={this.onResize} throttleTime={33}>
-                <div className="image-view-div" style={{gridTemplateColumns: `repeat(${config.numImageColumns}, auto)`, gridTemplateRows: `repeat(${config.numImageRows}, 1fr)`}} data-testid="viewer-div">
+                <div className="image-view-div" style={{gridTemplateColumns: `repeat(${config.numImageColumns}, 1fr)`, gridTemplateRows: `repeat(${config.numImageRows}, 1fr)`}} data-testid="viewer-div">
                     {divContents}
                 </div>
             </ResizeDetector>
