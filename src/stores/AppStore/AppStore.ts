@@ -2528,7 +2528,7 @@ export class AppStore {
                 };
             }
 
-            let vectorOverlaySettings: CARTA.ISetVectorOverlayParameters;
+            let vectorOverlaySettings: CARTA.ISetVectorOverlayParameters = {};
             if (frame.vectorOverlayConfig.enabled) {
                 vectorOverlaySettings = {
                     fileId: frame.frameInfo.fileId,
