@@ -19,9 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Increased the precision of the coordinate used in the query ([#1669](https://github.com/CARTAvis/carta-frontend/issues/1669)).
 * Fixed incorrect angular sizes for catalog sources when size data was missing or zero ([#2609](https://github.com/CARTAvis/carta-frontend/issues/2609)).
 * Fixed missing data in the newly enabled catalog columns ([#2611](https://github.com/CARTAvis/carta-frontend/issues/2611)).
+* Fixed an issue that caused some images to be misaligned in partially filled panels when using the multi-panel layout ([#2620](https://github.com/CARTAvis/carta-frontend/issues/2620)).
 * Removed the incorrect WCS information when in image coordinate system ([#2614](https://github.com/CARTAvis/carta-frontend/issues/2614)).
 ### Changed
 * Set the default aspect ratio to unity when images lacked valid WCS information ([#2604](https://github.com/CARTAvis/carta-frontend/issues/2604)).
+* Changed to retrieve all columns instead of default columns from vizier ([#1958](https://github.com/CARTAvis/carta-frontend/issues/1958)).
 
 ## [5.0.3]
 
