@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Increased the precision of the coordinate used in the query ([#1669](https://github.com/CARTAvis/carta-frontend/issues/1669)).
 * Fixed incorrect angular sizes for catalog sources when size data was missing or zero ([#2609](https://github.com/CARTAvis/carta-frontend/issues/2609)).
 * Fixed missing data in the newly enabled catalog columns ([#2611](https://github.com/CARTAvis/carta-frontend/issues/2611)).
-* Fixed incorrect colormap–name pairs ([#2628](https://github.com/CARTAvis/carta-frontend/issues/2628)).
+* Fixed incorrect colormap–name pairing ([#2628](https://github.com/CARTAvis/carta-frontend/issues/2628)).
 
 ### Changed
 * Set the default aspect ratio to unity when images lacked valid WCS information ([#2604](https://github.com/CARTAvis/carta-frontend/issues/2604)).
