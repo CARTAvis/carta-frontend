@@ -175,15 +175,9 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                     }
                 }
                 const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                const widgetId = this.widgetId;
-                if (widgetId) {
-                    appStore.widgetsStore.setWidgetTitle(widgetId, `Histogram: ${regionString} ${selectedString}`);
-                }
+                appStore.widgetsStore.setWidgetTitle(this.widgetId, `Histogram: ${regionString} ${selectedString}`);
             } else {
-                const widgetId = this.widgetId;
-                if (widgetId) {
-                    appStore.widgetsStore.setWidgetTitle(widgetId, `Histogram`);
-                }
+                appStore.widgetsStore.setWidgetTitle(this.widgetId, `Histogram`);
             }
             const widgetStore = this.widgetStore;
             if (widgetStore) {
