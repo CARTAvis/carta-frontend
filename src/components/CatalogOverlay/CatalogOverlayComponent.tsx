@@ -92,7 +92,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const catalogWidgetStore = this.widgetStore;
         const catalogFileId = this.catalogFileId;
         if (catalogFileId !== undefined) {
-            
             const widgetId = CatalogStore.Instance.catalogWidgets.get(catalogFileId);
             if (!widgetId) {
                 return;
