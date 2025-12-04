@@ -50,10 +50,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
     }
 
     private renderFrameOptions = (val: number, itemProps: ItemRendererProps) => {
-        if (!this.widgetStore) {
-            return null;
-        }
-        const option = this.widgetStore.restFreqFrameOptions.find(option => option.frameIndex === val);
+        const option = this.widgetStore?.restFreqFrameOptions.find(option => option.frameIndex === val);
         return <MenuItem key={option?.frameIndex} text={option?.label} disabled={option?.disable} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
@@ -69,8 +66,8 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                     selectAllOnFocus={true}
                     onValueChanged={val => {
                         restFreqStore.setCustomVal(val);
-                        if (AppStore.Instance.frameNum <= 10 && this.widgetStore) {
-                            this.widgetStore.resetSelectedFrameIndex();
+                        if (AppStore.Instance.frameNum <= 10) {
+                            this.widgetStore?.resetSelectedFrameIndex();
                         }
                     }}
                     onValueCleared={restFreqStore.restoreDefaults}

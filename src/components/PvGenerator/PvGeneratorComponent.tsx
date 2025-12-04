@@ -90,7 +90,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     get estimatedCubeSize(): number | undefined {
         const frame = this.widgetStore?.effectiveFrame;
 
-        if (!frame?.frameInfo?.fileInfoExtended) {
+        if (!frame?.frameInfo.fileInfoExtended) {
             return undefined;
         }
 

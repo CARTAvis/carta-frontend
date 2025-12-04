@@ -56,10 +56,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             let coordinate = this.widgetStore.coordinate;
 
             const frameMap = appStore.regionStats.get(fileId);
-            if (!frameMap) {
-                return null;
-            }
-            if (regionId === null) {
+            if (!frameMap || !regionId) {
                 return null;
             }
             const regionMap = frameMap.get(regionId);
@@ -191,7 +188,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             }
 
             const value = this.statsData.statistics[index].value;
-            if (value !== null && value !== undefined) {
+            if (value != null) {
                 numString = toExponential(value, 12);
                 unitString = isFinite(value) ? unitString : "";
             }

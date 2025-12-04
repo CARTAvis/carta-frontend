@@ -299,64 +299,44 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         if (frame.spatialReference && frame.spatialTransformAST) {
             const centerReferenceImage = average2D(controlPoints);
             const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);
-            const canvasPos = transformedImageToCanvasPos(centerSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
-            if (canvasPos.x !== undefined && canvasPos.y !== undefined) {
-                centerPointCanvasSpace = {x: canvasPos.x, y: canvasPos.y};
-                const pointsSecondaryImage = region.getRegionApproximation(frame.spatialTransformAST);
-                const N = (pointsSecondaryImage as Point2D[]).length;
-                pointArray = new Array<number>(N * 2);
-                for (let i = 0; i < N; i++) {
-                    const approxPointPixelSpace = transformedImageToCanvasPos(pointsSecondaryImage[i], frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
-                    if (approxPointPixelSpace.x !== undefined && approxPointPixelSpace.y !== undefined) {
-                        pointArray[i * 2] = approxPointPixelSpace.x - centerPointCanvasSpace.x;
-                        pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPointCanvasSpace.y;
-                    }
-                }
+            centerPointCanvasSpace = transformedImageToCanvasPos(centerSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+            const pointsSecondaryImage = region.getRegionApproximation(frame.spatialTransformAST);
+            const N = (pointsSecondaryImage as Point2D[]).length;
+            pointArray = new Array<number>(N * 2);
+            for (let i = 0; i < N; i++) {
+                const approxPointPixelSpace = transformedImageToCanvasPos(pointsSecondaryImage[i], frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+                pointArray[i * 2] = approxPointPixelSpace.x - centerPointCanvasSpace.x;
+                pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPointCanvasSpace.y;
+            }
 
-                // Construct anchors if region is selected
-                if (this.props.selected && this.props.listening && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
-                    anchors = controlPoints
-                        .map((p, i) => {
-                            const pSecondaryImage = transformPoint(frame.spatialTransformAST!, p, false);
-                            const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
-                            if (pCanvasPos.x !== undefined && pCanvasPos.y !== undefined) {
-                                return this.anchorNode(pCanvasPos.x, pCanvasPos.y, rotation, i);
-                            }
-                            return null;
-                        })
-                        .filter(anchor => anchor !== null) as React.ReactNode[];
-
-                    if ((this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE || this.props.region.regionType === CARTA.RegionType.ANNVECTOR) && frame.hasSquarePixels) {
-                        // trigger rotation anchor re-render when zooming
-                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                        const zoomLevel = frame.spatialReference?.zoomLevel;
-                        const inverseScale = 1 / this.props.stageRef.current.scaleX();
-                        const rotatorOffset = ROTATOR_ANCHOR_HEIGHT * inverseScale;
-                        const rotatorAngle = (rotation * Math.PI) / 180.0;
-                        anchors.push(this.anchorNode(centerPointCanvasSpace.x + rotatorOffset * Math.sin(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.cos(rotatorAngle), rotation, 2, true));
-                    }
-                }
-
-                if (this.hoverIntersection && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
-                    const pSecondaryImage = transformPoint(frame.spatialTransformAST!, this.hoverIntersection, false);
+            // Construct anchors if region is selected
+            if (this.props.selected && this.props.listening && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
+                anchors = controlPoints.map((p, i) => {
+                    const pSecondaryImage = transformPoint(frame.spatialTransformAST!, p, false);
                     const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
-                    if (pCanvasPos.x !== undefined && pCanvasPos.y !== undefined) {
-                        newAnchor = <NonEditableAnchor x={pCanvasPos.x} y={pCanvasPos.y} rotation={rotation} />;
-                    }
+                    return this.anchorNode(pCanvasPos.x, pCanvasPos.y, rotation, i);
+                });
+
+                if ((this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE || this.props.region.regionType === CARTA.RegionType.ANNVECTOR) && frame.hasSquarePixels) {
+                    // trigger rotation anchor re-render when zooming
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const zoomLevel = frame.spatialReference?.zoomLevel;
+                    const inverseScale = 1 / this.props.stageRef.current.scaleX();
+                    const rotatorOffset = ROTATOR_ANCHOR_HEIGHT * inverseScale;
+                    const rotatorAngle = (rotation * Math.PI) / 180.0;
+                    anchors.push(this.anchorNode(centerPointCanvasSpace.x + rotatorOffset * Math.sin(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.cos(rotatorAngle), rotation, 2, true));
                 }
-            } else {
-                // Fallback when canvas position is undefined
-                centerPointCanvasSpace = {x: 0, y: 0};
-                pointArray = [];
+            }
+
+            if (this.hoverIntersection && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
+                const pSecondaryImage = transformPoint(frame.spatialTransformAST!, this.hoverIntersection, false);
+                const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+                newAnchor = <NonEditableAnchor x={pCanvasPos.x} y={pCanvasPos.y} rotation={rotation} />;
             }
         } else {
-            const transformedPoints = controlPoints
-                .map(p => {
-                    return transformedImageToCanvasPos(p, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
-                })
-                .filter(point => point.x !== undefined && point.y !== undefined) as Point2D[];
-
-            controlPoints = transformedPoints;
+            controlPoints = controlPoints.map(p => {
+                return transformedImageToCanvasPos(p, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+            });
             centerPointCanvasSpace = average2D(controlPoints);
             // Construct anchors if region is selected
             if (this.props.selected && this.props.listening && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
@@ -378,9 +358,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
 
             if (this.hoverIntersection && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
                 const anchorPositionPixelSpace = transformedImageToCanvasPos(this.hoverIntersection, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
-                if (anchorPositionPixelSpace.x !== undefined && anchorPositionPixelSpace.y !== undefined) {
-                    newAnchor = <NonEditableAnchor x={anchorPositionPixelSpace.x} y={anchorPositionPixelSpace.y} rotation={rotation} />;
-                }
+                newAnchor = <NonEditableAnchor x={anchorPositionPixelSpace.x} y={anchorPositionPixelSpace.y} rotation={rotation} />;
             }
 
             pointArray = new Array<number>(controlPoints.length * 2);

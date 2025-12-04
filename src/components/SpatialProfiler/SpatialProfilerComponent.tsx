@@ -9,10 +9,10 @@ import {observer} from "mobx-react";
 
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, ResizeDetector, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {Point2D, POLARIZATIONS} from "models";
-import {AppStore, ASTSettingsString, DefaultWidgetConfig, HelpType, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpType, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {RegionId, SpatialProfileWidgetStore} from "stores/Widgets";
-import {binarySearchByX, clamp, formattedExponential, getColorForTheme, toFixed, transformPoint} from "utilities";
+import {ASTSettingsString, binarySearchByX, clamp, formattedExponential, getColorForTheme, setAstStringSystem, toFixed, transformPoint} from "utilities";
 
 import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
@@ -315,7 +315,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             if (this.nearestCursorPoint && this.profileStore && this.frame) {
                 const y = this.profileStore.y;
                 const x = this.profileStore.x;
-                if (y !== null && y !== undefined && x !== null && x !== undefined) {
+                if (y != null && x != null) {
                     const pixelPoint = this.widgetStore.isXProfile ? {x: this.nearestCursorPoint.x, y} : {x, y: this.nearestCursorPoint.x};
                     return this.frame.getCursorInfo(pixelPoint);
                 }
@@ -400,7 +400,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
 
         let astString = new ASTSettingsString();
-        astString.add("System", AppStore.Instance.overlaySettings.global.explicitSystem);
+        const global = AppStore.Instance.overlaySettings.global;
+        setAstStringSystem(astString, global.explicitSystem, global);
 
         if (this.widgetStore.isXProfile && this.profileStore?.y != null) {
             for (let i = 0; i < ticks.length; i++) {
@@ -434,7 +435,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
         const pointInfoPrecision = this.widgetStore.isXProfile ? this.pointInfo?.precision.x : this.pointInfo?.precision.y;
         // Skip lists with no more decimals than pointInfo
-        if (pointInfoPrecision == null || this.cachedFormattedCoordinates[0].length - decimalIndex - 1 <= pointInfoPrecision) {
+        if (pointInfoPrecision === undefined || this.cachedFormattedCoordinates[0].length - decimalIndex - 1 <= pointInfoPrecision) {
             return;
         }
         // Start trimming from the next digit of pointInfo to avoid offset between pointInfo and upper wcs axis value

@@ -55,9 +55,9 @@ export class RegionDialogComponent extends React.Component {
     };
 
     private handleFocusClicked = () => {
-        const appStore = AppStore.Instance;
-        if (appStore.activeFrame?.regionSet.selectedRegion) {
-            appStore.activeFrame.regionSet.selectedRegion.focusCenter();
+        const regionSet = AppStore.Instance.activeFrame?.regionSet;
+        if (regionSet?.selectedRegion) {
+            regionSet.selectedRegion.focusCenter();
         }
     };
 

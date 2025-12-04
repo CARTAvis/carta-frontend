@@ -25,28 +25,30 @@ class FloatingWidgetComponentProps {
 
 @observer
 export class FloatingWidgetComponent extends React.Component<FloatingWidgetComponentProps> {
+    private static readonly HeaderHeight = 25;
+    private static readonly RootMenuHeight = 40;
     private pinElementRef: HTMLElement | null = null;
     private rnd: Rnd | null = null;
 
     componentDidMount() {
         this.updateDragSource();
-        if (this.rnd) {
-            this.rnd.updateSize({width: this.props.widgetConfig.defaultWidth, height: this.props.widgetConfig.defaultHeight});
-            this.rnd.updatePosition({
-                x: this.props.widgetConfig.defaultX ?? 0,
-                y: this.props.widgetConfig.defaultY ?? 0
-            });
-        }
+        this.updatePositionAndSize();
     }
 
-    componentDidUpdate() {
+    componentDidUpdate(prevProps: FloatingWidgetComponentProps) {
         this.updateDragSource();
-        if (this.rnd) {
-            this.rnd.updateSize({width: this.props.widgetConfig.defaultWidth, height: this.props.widgetConfig.defaultHeight});
-            this.rnd.updatePosition({
-                x: this.props.widgetConfig.defaultX ?? 0,
-                y: this.props.widgetConfig.defaultY ?? 0
-            });
+
+        const prevConfig = prevProps.widgetConfig;
+        const currConfig = this.props.widgetConfig;
+
+        if (
+            prevConfig !== currConfig ||
+            prevConfig.defaultX !== currConfig.defaultX ||
+            prevConfig.defaultY !== currConfig.defaultY ||
+            prevConfig.defaultWidth !== currConfig.defaultWidth ||
+            prevConfig.defaultHeight !== currConfig.defaultHeight
+        ) {
+            this.updatePositionAndSize();
         }
     }
 
@@ -83,6 +85,14 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         }
     }
 
+    private updatePositionAndSize = () => {
+        const widgetConfig = this.props.widgetConfig;
+        if (this.rnd) {
+            this.rnd.updateSize({width: widgetConfig.defaultWidth, height: widgetConfig.defaultHeight + FloatingWidgetComponent.HeaderHeight});
+            this.rnd.updatePosition({x: widgetConfig.defaultX ?? 0, y: widgetConfig.defaultY ?? 0});
+        }
+    };
+
     private onClickHelpButton = () => {
         if (!this.rnd) {
             return;
@@ -100,7 +110,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
             const parentId = widgetsStore.floatingSettingsWidgets.get(this.props.widgetConfig.id);
             let settingsTab: number | undefined;
 
-            if (parentId) {
+            if (parentId !== undefined) {
                 switch (widgetParentType) {
                     case "spatial-profiler":
                         const spatialWidget = widgetsStore.spatialProfileWidgets.get(parentId);
@@ -138,7 +148,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
     };
 
     public render() {
-        const headerHeight = 25;
+        const headerHeight = FloatingWidgetComponent.HeaderHeight;
         const appStore = AppStore.Instance;
         const className = classNames("floating-widget", {[Classes.DARK]: appStore.darkTheme});
         const titleClass = classNames("floating-header", {selected: this.props.isSelected, [Classes.DARK]: appStore.darkTheme});
@@ -171,8 +181,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 onResizeStop={(e, direction, element, delta, position) => {
                     // manually add the height of the root-menu div to position y
                     // work-around for the change of the position definition from react-rnd v9 (absolute position) to v10 (relative position from the bounds)
-                    const rootMenuHeight = 40;
-                    const absPosition = {x: position.x, y: position.y + rootMenuHeight};
+                    const absPosition = {x: position.x, y: position.y + FloatingWidgetComponent.RootMenuHeight};
                     widgetConfig.setDefaultPosition(absPosition.x, absPosition.y);
                     widgetConfig.setDefaultSize(widgetConfig.defaultWidth + delta.width, widgetConfig.defaultHeight + delta.height);
                 }}

@@ -377,8 +377,8 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             <Cell>
                 <React.Fragment>
                     <div onClick={event => this.handleEntryClicked(event, entry, rowIndex)} onDoubleClick={() => this.handleEntryDoubleClicked(entry)}>
-                        {entry.isFile && entry.size != null && isFinite(entry.size) && FileListTableComponent.GetFileSizeDisplay(entry.size)}
-                        {!entry.isFile && entry.itemCount != null && isFinite(entry.itemCount) && `${entry.itemCount} items`}
+                        {entry.isFile && entry.size !== undefined && isFinite(entry.size) && FileListTableComponent.GetFileSizeDisplay(entry.size)}
+                        {!entry.isFile && entry.itemCount !== undefined && isFinite(entry.itemCount) && `${entry.itemCount} items`}
                     </div>
                 </React.Fragment>
             </Cell>
@@ -393,7 +393,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
         const unixDate = entry.date;
         let dateString = "";
-        if (unixDate != null && unixDate > 0) {
+        if (unixDate !== undefined && unixDate > 0) {
             const t = moment.unix(unixDate);
             const isToday = moment(0, "HH").diff(t) <= 0;
             if (isToday) {

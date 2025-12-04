@@ -61,17 +61,21 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
     get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} | null {
         const frame = AppStore.Instance.activeFrame;
-        if (frame?.renderConfig?.histogram?.bins?.length && frame.renderConfig.histogram.firstBinCenter != null && frame.renderConfig.histogram.binWidth != null) {
+        if (frame) {
             const histogram = frame.renderConfig.histogram;
-            const bins = histogram.bins!;
-            const firstBinCenter = histogram.firstBinCenter!;
-            const binWidth = histogram.binWidth!;
+            const bins = histogram.bins;
+            const firstBinCenter = histogram.firstBinCenter;
+            const binWidth = histogram.binWidth;
+
+            if (!bins || bins.length === 0 || firstBinCenter == null || binWidth == null) {
+                return null;
+            }
 
             let minIndex = 0;
             let maxIndex = bins.length - 1;
 
             // Truncate array if zoomed in (sidestepping ChartJS bug with off-canvas rendering and speeding up layout)
-            if (!this.widgetStore.isAutoScaledX && this.widgetStore.minX != null && this.widgetStore.maxX != null) {
+            if (!this.widgetStore.isAutoScaledX && this.widgetStore.minX !== undefined && this.widgetStore.maxX !== undefined) {
                 minIndex = Math.floor((this.widgetStore.minX - firstBinCenter) / binWidth);
                 minIndex = clamp(minIndex, 0, bins.length - 1);
                 maxIndex = Math.ceil((this.widgetStore.maxX - firstBinCenter) / binWidth);
@@ -185,17 +189,11 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     };
 
     handlePercentileRankSelectChanged = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        const activeFrame = AppStore.Instance.activeFrame;
-        if (activeFrame) {
-            activeFrame.renderConfig.setPercentileRank(+event.currentTarget.value);
-        }
+        AppStore.Instance.activeFrame?.renderConfig.setPercentileRank(+event.currentTarget.value);
     };
 
     setCustomPercentileRank = () => {
-        const activeFrame = AppStore.Instance.activeFrame;
-        if (activeFrame) {
-            activeFrame.renderConfig.setPercentileRank(-1);
-        }
+        AppStore.Instance.activeFrame?.renderConfig.setPercentileRank(-1);
     };
 
     handleCubeHistogramSelected = () => {
@@ -311,10 +309,12 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             multiPlotPropsMap: new Map()
         };
 
-        const scaleMinVal = frame.renderConfig?.scaleMinVal;
-        const scaleMaxVal = frame.renderConfig?.scaleMaxVal;
+        const scaleMinVal = frame.renderConfig.scaleMinVal;
+        const scaleMaxVal = frame.renderConfig.scaleMaxVal;
         const primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
-        if (frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
+        const histogram = frame.renderConfig.histogram;
+
+        if (histogram && histogram.bins && histogram.bins.length) {
             const currentPlotData = this.plotData;
             if (currentPlotData) {
                 let histogramProps: MultiPlotProps = {
@@ -371,9 +371,9 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 }
             ];
 
-            if (this.widgetStore.meanRmsVisible && frame.renderConfig.histogram && frame.renderConfig.histogram.stdDev != null && frame.renderConfig.histogram.stdDev > 0 && frame.renderConfig.histogram.mean != null) {
+            if (this.widgetStore.meanRmsVisible && histogram && histogram.stdDev != null && histogram.stdDev > 0 && histogram.mean != null) {
                 linePlotProps.markers.push({
-                    value: frame.renderConfig.histogram.mean,
+                    value: histogram.mean,
                     id: "marker-mean",
                     draggable: false,
                     horizontal: false,
@@ -382,11 +382,11 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 });
 
                 linePlotProps.markers.push({
-                    value: frame.renderConfig.histogram.mean,
+                    value: histogram.mean,
                     id: "marker-rms",
                     draggable: false,
                     horizontal: false,
-                    width: frame.renderConfig.histogram.stdDev,
+                    width: histogram.stdDev,
                     opacity: 0.2,
                     color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
                 });
@@ -399,9 +399,9 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     scaleValue(x, frame.renderConfig.scaling, frame.renderConfig.alpha, frame.renderConfig.gamma, frame.renderConfig.bias, frame.renderConfig.contrast, appStore.preferenceStore?.useSmoothedBiasContrast)
                 );
                 // fit to the histogram y axis
-                if (linePlotProps.logY && linePlotProps.yMin !== undefined && linePlotProps.yMax !== undefined) {
+                if (linePlotProps.logY) {
                     colormapScalingY = colormapScalingY.map(x => Math.pow(10, Math.log10(linePlotProps.yMin!) + x * (Math.log10(linePlotProps.yMax!) - Math.log10(linePlotProps.yMin!))));
-                } else if (linePlotProps.yMin !== undefined && linePlotProps.yMax !== undefined) {
+                } else {
                     colormapScalingY = colormapScalingY.map(x => linePlotProps.yMin! + x * (linePlotProps.yMax! - linePlotProps.yMin!));
                 }
 

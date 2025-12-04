@@ -758,7 +758,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     private calcMarkerBox = (marker: LineMarker): {lowerBound: number; height: number} | undefined => {
-        if (!marker || !marker.width) {
+        if (!marker || marker.width === undefined) {
             return undefined;
         }
         const chartArea = this.chartArea;

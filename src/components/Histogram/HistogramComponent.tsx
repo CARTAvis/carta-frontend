@@ -246,11 +246,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         const appStore = AppStore.Instance;
 
         const frameMap = appStore.regionHistograms.get(fileId);
-        if (!frameMap) {
-            return null;
-        }
-
-        if (regionId === null) {
+        if (!frameMap || regionId === null) {
             return null;
         }
 

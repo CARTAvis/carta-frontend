@@ -58,21 +58,15 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
     };
 
     private onCenterValueChanged = (val: number) => {
-        if (this.fittingStore.selectedComponent) {
-            this.fittingStore.selectedComponent.setCenter(val);
-        }
+        this.props.fittingStore.selectedComponent?.setCenter(val);
     };
 
     private onAmpValueChanged = (val: number) => {
-        if (this.fittingStore.selectedComponent) {
-            this.fittingStore.selectedComponent.setAmp(val);
-        }
+        this.props.fittingStore.selectedComponent?.setAmp(val);
     };
 
     private onFwhmValueChanged = (val: number) => {
-        if (this.fittingStore.selectedComponent) {
-            this.fittingStore.selectedComponent.setFwhm(val);
-        }
+        this.props.fittingStore.selectedComponent?.setFwhm(val);
     };
 
     private onMouseOverResult = () => {
@@ -104,21 +98,18 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
     };
 
     private onCenterLocked = () => {
-        if (this.fittingStore.selectedComponent) {
-            this.fittingStore.selectedComponent.setLockedCenter(!this.fittingStore.selectedComponent.lockedCenter);
-        }
+        const selectComponent = this.props.fittingStore.selectedComponent;
+        selectComponent?.setLockedCenter(!selectComponent.lockedCenter);
     };
 
     private onAmpLocked = () => {
-        if (this.fittingStore.selectedComponent) {
-            this.fittingStore.selectedComponent.setLockedAmp(!this.fittingStore.selectedComponent.lockedAmp);
-        }
+        const selectComponent = this.props.fittingStore.selectedComponent;
+        selectComponent?.setLockedAmp(!selectComponent.lockedAmp);
     };
 
     private onFwhmLocked = () => {
-        if (this.fittingStore.selectedComponent) {
-            this.fittingStore.selectedComponent.setLockedFwhm(!this.fittingStore.selectedComponent.lockedFwhm);
-        }
+        const selectComponent = this.props.fittingStore.selectedComponent;
+        selectComponent?.setLockedFwhm(!selectComponent.lockedFwhm);
     };
 
     private showLog = () => {

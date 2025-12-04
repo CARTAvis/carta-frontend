@@ -71,10 +71,8 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
             lineHeight: height + "px"
         };
 
-        if (this.props.left && this.props.right) {
-            if (this.props.left > 0 || this.props.right > 0) {
-                styleProps.width = this.props.width - this.props.left - this.props.right;
-            }
+        if (this.props.left !== undefined && this.props.right !== undefined && (this.props.left > 0 || this.props.right > 0)) {
+            styleProps.width = this.props.width - this.props.left - this.props.right;
         }
 
         if (this.props.top !== undefined) {

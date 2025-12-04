@@ -222,9 +222,9 @@ export class ContourGeneratorPanelComponent extends React.Component<{
 
     get meanValue(): number {
         if (this.enteredMeanValue === undefined && this.props.frame?.renderConfig?.contourHistogram?.stdDev && this.props.frame.renderConfig.contourHistogram.stdDev > 0) {
-            return this.props.frame.renderConfig.contourHistogram.mean ?? 0;
+            return this.props.frame.renderConfig.contourHistogram.mean ?? NaN;
         } else {
-            return this.enteredMeanValue ?? 0;
+            return this.enteredMeanValue ?? NaN;
         }
     }
 
@@ -232,7 +232,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
         if (this.enteredSigmaValue === undefined && this.props.frame?.renderConfig?.contourHistogram?.stdDev && this.props.frame.renderConfig.contourHistogram.stdDev > 0) {
             return this.props.frame.renderConfig.contourHistogram.stdDev;
         } else {
-            return this.enteredSigmaValue ?? 1;
+            return this.enteredSigmaValue ?? NaN;
         }
     }
 

@@ -231,8 +231,8 @@ export class ContourDialogComponent extends React.Component {
         const dataSource = appStore.contourDataSource;
         if (dataSource?.renderConfig) {
             dataSource.renderConfig.setUseCubeHistogramContours(false);
-            appStore.cancelCubeHistogramRequest(dataSource.frameInfo.fileId);
         }
+        appStore.cancelCubeHistogramRequest(dataSource?.frameInfo.fileId);
     };
 
     private handleApplyContours = () => {

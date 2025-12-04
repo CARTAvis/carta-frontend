@@ -45,26 +45,28 @@ export class FileBrowserDialogComponent extends React.Component {
 
     @action private handleFileClicked = (file: ISelectedFile) => {
         FileBrowserStore.Instance.selectFile(file);
-        if (this.enableImageArithmetic && file.fileInfo?.name) {
-            // Check if the existing string has a trailing quote or not
-            const quoteRegex = /(["'])+/gm;
-            const quoteMatches = this.imageArithmeticString.match(quoteRegex);
-            const quoteCount = quoteMatches?.length || 0;
-            const trailingQuote = quoteCount % 2 !== 0;
+        if (this.enableImageArithmetic) {
+            if (file.fileInfo?.name) {
+                // Check if the existing string has a trailing quote or not
+                const quoteRegex = /(["'])+/gm;
+                const quoteMatches = this.imageArithmeticString.match(quoteRegex);
+                const quoteCount = quoteMatches?.length || 0;
+                const trailingQuote = quoteCount % 2 !== 0;
 
-            const operatorRegex = /([+\-*/(,])\s*$/gm;
-            const operatorMatches = this.imageArithmeticString.match(operatorRegex);
-            const trailingOperator = (operatorMatches?.length || 0) > 0;
+                const operatorRegex = /([+\-*/(,])\s*$/gm;
+                const operatorMatches = this.imageArithmeticString.match(operatorRegex);
+                const trailingOperator = (operatorMatches?.length || 0) > 0;
 
-            // Append the file name if there's a trailing operator or quote, otherwise just replace
-            if (trailingOperator) {
-                this.imageArithmeticString += `"${file.fileInfo.name}"`;
-            } else if (this.imageArithmeticString?.endsWith('"') && trailingQuote) {
-                this.imageArithmeticString += `${file.fileInfo.name}"`;
-            } else if (this.imageArithmeticString?.endsWith("'") && trailingQuote) {
-                this.imageArithmeticString += `${file.fileInfo.name}'`;
-            } else {
-                this.imageArithmeticString = `"${file.fileInfo.name}"`;
+                // Append the file name if there's a trailing operator or quote, otherwise just replace
+                if (trailingOperator) {
+                    this.imageArithmeticString += `"${file.fileInfo.name}"`;
+                } else if (this.imageArithmeticString?.endsWith('"') && trailingQuote) {
+                    this.imageArithmeticString += `${file.fileInfo.name}"`;
+                } else if (this.imageArithmeticString?.endsWith("'") && trailingQuote) {
+                    this.imageArithmeticString += `${file.fileInfo.name}'`;
+                } else {
+                    this.imageArithmeticString = `"${file.fileInfo.name}"`;
+                }
             }
             this.imageArithmeticInputRef.current?.focus();
         }
@@ -80,9 +82,7 @@ export class FileBrowserDialogComponent extends React.Component {
             appStore.frames.forEach(f => f.renderConfig.setPercentileRank(appStore.preferenceStore.percentile));
             const colorBlendingStore = appStore.imageViewConfigStore.createColorBlending();
 
-            if (colorBlendingStore) {
-                colorBlendingStore.applyColormapSet(appStore.fileBrowserStore.selectedFiles?.length <= 3 ? "RGB" : "Rainbow");
-            }
+            colorBlendingStore?.applyColormapSet(appStore.fileBrowserStore.selectedFiles?.length <= 3 ? "RGB" : "Rainbow");
         } catch (err) {
             console.error(err);
         }
@@ -108,13 +108,7 @@ export class FileBrowserDialogComponent extends React.Component {
             appStore.setLoadingMultipleFiles(false);
         } else {
             const selectedFile = fileBrowserStore.selectedFile;
-            const selectedHDU = fileBrowserStore.selectedHDU;
-            if (selectedFile) {
-                await this.loadFile({
-                    fileInfo: selectedFile,
-                    hdu: selectedHDU || undefined
-                });
-            }
+            await this.loadFile({fileInfo: selectedFile || undefined, hdu: fileBrowserStore.selectedHDU || undefined});
         }
     };
 

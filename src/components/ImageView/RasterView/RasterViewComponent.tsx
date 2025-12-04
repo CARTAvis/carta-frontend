@@ -85,12 +85,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private renderMultipleCanvas = (frame: FrameStore) => {
         const canvas = this.canvas;
         const channels = this.props.channel;
-        if (!channels) {
-            return;
-        }
-
         const ctx = canvas.getContext("2d");
-        if (!ctx) {
+        if (!ctx || !channels) {
             return;
         }
 
@@ -405,7 +401,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             delete rasterTile.data;
         }
 
-        if (!tileBasedRender && rasterTile.width && rasterTile.height && rasterTile.width * rasterTile.height === rasterTile.data?.length) {
+        if (!tileBasedRender && rasterTile.width != null && rasterTile.height != null && rasterTile.width * rasterTile.height === rasterTile.data?.length) {
             const texture = createFP32Texture(this.gl, rasterTile.width, rasterTile.height, GL2.TEXTURE0);
             if (texture && rasterTile.data) {
                 copyToFP32Texture(this.gl, texture, rasterTile.data, GL2.TEXTURE0, rasterTile.width, rasterTile.height, 0, 0);
