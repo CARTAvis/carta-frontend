@@ -4,7 +4,7 @@ import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import * as _ from "lodash";
-import {action, autorun, makeObservable, observable, runInAction} from "mobx";
+import {action, autorun, computed, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
@@ -96,7 +96,7 @@ export class ContourDialogComponent extends React.Component {
         }
     }
 
-    get currentContourConfig() {
+    @computed get currentContourConfig() {
         const dataSource = AppStore.Instance.contourDataSource;
         if (!dataSource) {
             return {
@@ -124,7 +124,7 @@ export class ContourDialogComponent extends React.Component {
         };
     }
 
-    get contourConfigChanged(): boolean {
+    @computed get contourConfigChanged(): boolean {
         const dataSource = AppStore.Instance.contourDataSource;
         if (!dataSource) {
             return false;
@@ -144,7 +144,7 @@ export class ContourDialogComponent extends React.Component {
         );
     }
 
-    get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} | null {
+    @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} | null {
         const dataSource = AppStore.Instance.contourDataSource;
         const histogram = dataSource?.renderConfig?.contourHistogram;
 

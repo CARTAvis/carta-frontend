@@ -63,6 +63,9 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         const frame = AppStore.Instance.activeFrame;
         if (frame) {
             const histogram = frame.renderConfig.histogram;
+            if (!histogram) {
+                return null;
+            }
             const bins = histogram.bins;
             const firstBinCenter = histogram.firstBinCenter;
             const binWidth = histogram.binWidth;

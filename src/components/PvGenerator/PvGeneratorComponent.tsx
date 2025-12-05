@@ -1,7 +1,7 @@
 import * as React from "react";
 import {AnchorButton, FormGroup, HTMLSelect, Position, Switch, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {action, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";
@@ -33,7 +33,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         };
     }
 
-    get widgetStore(): PvGeneratorWidgetStore {
+    @computed get widgetStore(): PvGeneratorWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.pvGeneratorWidgets) {
             const widgetStore = widgetsStore.pvGeneratorWidgets.get(this.widgetId);
@@ -45,7 +45,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         return new PvGeneratorWidgetStore();
     }
 
-    get isLineIntersectedWithImage(): boolean {
+    @computed get isLineIntersectedWithImage(): boolean {
         if (this.widgetStore.effectiveRegion && this.widgetStore.effectiveFrame?.frameInfo?.fileInfoExtended) {
             const startPoint = this.widgetStore.effectiveRegion.controlPoints[0];
             const endPoint = this.widgetStore.effectiveRegion.controlPoints[1];
@@ -76,7 +76,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         return false;
     }
 
-    get isLineInOnePixel(): boolean {
+    @computed get isLineInOnePixel(): boolean {
         if (this.widgetStore.effectiveRegion) {
             const startPoint = this.widgetStore.effectiveRegion.controlPoints[0];
             const endPoint = this.widgetStore.effectiveRegion.controlPoints[1];
@@ -87,7 +87,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         return false;
     }
 
-    get estimatedCubeSize(): number | undefined {
+    @computed get estimatedCubeSize(): number | undefined {
         const frame = this.widgetStore?.effectiveFrame;
 
         if (!frame?.frameInfo.fileInfoExtended) {
@@ -134,7 +134,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         return parseFloat(toFixed(estimatedSize / 1e9, 2));
     }
 
-    get isCubeSizeBelowLimit(): boolean {
+    @computed get isCubeSizeBelowLimit(): boolean {
         return (this.estimatedCubeSize ?? 0) <= PreferenceStore.Instance.pvPreviewCubeSizeLimit;
     }
 

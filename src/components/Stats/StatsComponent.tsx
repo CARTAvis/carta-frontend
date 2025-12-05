@@ -2,7 +2,7 @@ import * as React from "react";
 import {FormGroup, HTMLSelect, HTMLTable, NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
-import {action, autorun, makeObservable, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {RegionSelectorComponent, ResizeDetector} from "components/Shared";
@@ -36,7 +36,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
     @observable height: number = 0;
     @observable isMouseEntered = false;
 
-    get widgetStore(): StatsWidgetStore {
+    @computed get widgetStore(): StatsWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.statsWidgets) {
             const widgetStore = widgetsStore.statsWidgets.get(this.widgetId);
@@ -48,7 +48,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         return new StatsWidgetStore();
     }
 
-    get statsData(): CARTA.RegionStatsData | null {
+    @computed get statsData(): CARTA.RegionStatsData | null {
         const appStore = AppStore.Instance;
         if (this.widgetStore.effectiveFrame) {
             let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;

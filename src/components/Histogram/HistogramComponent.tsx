@@ -2,7 +2,7 @@ import * as React from "react";
 import {NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
-import {autorun, makeObservable} from "mobx";
+import {autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
@@ -51,7 +51,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         return new HistogramWidgetStore();
     }
 
-    get isTargetData(): boolean {
+    @computed get isTargetData(): boolean {
         const regionHistogramData = this.getRegionHistogramData();
         if (!regionHistogramData || !regionHistogramData.config) {
             return false;
@@ -70,7 +70,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         );
     }
 
-    get histogramData(): CARTA.IHistogram | null {
+    @computed get histogramData(): CARTA.IHistogram | null {
         const regionHistogramData = this.getRegionHistogramData();
         return regionHistogramData?.histograms ?? null;
     }
@@ -123,7 +123,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    get exportHeaders(): string[] {
+    @computed get exportHeaders(): string[] {
         let headerString: string[] = [];
 
         // region info

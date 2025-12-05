@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Tab, Tabs} from "@blueprintjs/core";
-import {autorun} from "mobx";
+import {autorun, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {
@@ -27,6 +27,9 @@ export enum StokesAnalysisSettingsTabs {
 
 @observer
 export class StokesAnalysisSettingsPanelComponent extends React.Component<WidgetProps> {
+    private widgetId: string;
+    private floatingSettingsId: string | undefined;
+
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "stokes-floating-settings",
@@ -46,7 +49,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
     get widgetStore(): StokesAnalysisWidgetStore | null {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.stokesAnalysisWidgets) {
-            const widgetStore = widgetsStore.stokesAnalysisWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.stokesAnalysisWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -57,16 +60,19 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
 
     constructor(props: WidgetProps) {
         super(props);
+        makeObservable(this);
         const appStore = AppStore.Instance;
+        this.widgetId = props.id;
+        this.floatingSettingsId = props.floatingSettingsId;
 
         autorun(() => {
-            if (this.widgetStore && this.props.floatingSettingsId) {
+            if (this.widgetStore && this.floatingSettingsId) {
                 const frame = this.widgetStore.effectiveFrame;
                 if (frame) {
                     const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Stokes Analysis Settings: ${regionString} ${selectedString}`);
+                    appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Stokes Analysis Settings: ${regionString} ${selectedString}`);
                 }
             }
         });

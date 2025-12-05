@@ -4,7 +4,7 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {Tick} from "chart.js";
 import * as _ from "lodash";
-import {action, autorun, makeObservable, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, ResizeDetector, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
@@ -47,7 +47,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     @observable autoScaleHorizontalMin: number;
     @observable autoScaleHorizontalMax: number;
 
-    get widgetStore(): SpatialProfileWidgetStore {
+    @computed get widgetStore(): SpatialProfileWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.spatialProfileWidgets) {
             const widgetStore = widgetsStore.spatialProfileWidgets.get(this.widgetId);
@@ -59,7 +59,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return new SpatialProfileWidgetStore();
     }
 
-    get profileStore(): SpatialProfileStore | undefined {
+    @computed get profileStore(): SpatialProfileStore | undefined {
         const widgetStore = this.widgetStore;
         if (widgetStore.effectiveFrame) {
             const profileKey = `${widgetStore.effectiveFrame.frameInfo.fileId}-${widgetStore.effectiveRegionId}`;
@@ -68,7 +68,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return undefined;
     }
 
-    get frame(): FrameStore | undefined {
+    @computed get frame(): FrameStore | undefined {
         if (this.widgetStore) {
             return AppStore.Instance.getFrame(this.widgetStore.fileId) || undefined;
         } else {
@@ -76,7 +76,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
     }
 
-    get plotData(): {
+    @computed get plotData(): {
         values: Array<Point2D>;
         fullResolutionValues: Array<Point2D>;
         smoothingValues: Array<Point2D>;
@@ -278,7 +278,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
     }
 
-    get exportHeader(): string[] {
+    @computed get exportHeader(): string[] {
         const headerString: string[] = [];
         if (this.widgetStore.effectiveRegion && this.widgetStore.effectiveFrame && this.widgetStore.effectiveRegionId !== null) {
             headerString.push(...this.widgetStore.effectiveFrame.getRegionProperties(this.widgetStore.effectiveRegionId));
@@ -287,7 +287,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     }
 
     // displaying offset/distance in the x axis for line and polyline regions
-    get lineAxis(): {label: string; min: number; max: number; unit: string} | null {
+    @computed get lineAxis(): {label: string; min: number; max: number; unit: string} | null {
         const coordinateData = this.profileStore?.getProfile(this.widgetStore.fullCoordinate);
         if (coordinateData?.lineAxis && this.widgetStore.isLineOrPolyline) {
             const lineAxis = coordinateData.lineAxis;
@@ -298,14 +298,14 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    get nearestCursorPoint(): Point2D | null {
+    @computed get nearestCursorPoint(): Point2D | null {
         if (this.widgetStore.isMouseMoveIntoLinePlots && this.plotData) {
             return binarySearchByX(this.plotData.values, this.widgetStore.cursorX)?.point ?? null;
         }
         return null;
     }
 
-    get pointInfo(): {
+    @computed get pointInfo(): {
         posImageSpace: Point2D;
         posWCS: any;
         infoWCS: any;

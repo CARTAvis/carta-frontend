@@ -6,7 +6,7 @@ import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@bluepr
 import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
 import {CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
-import {action, autorun, makeObservable, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
@@ -68,17 +68,17 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         };
     }
 
-    get catalogFileId() {
+    @computed get catalogFileId() {
         return CatalogStore.Instance.catalogProfiles?.get(this.widgetId);
     }
 
-    get widgetStore(): CatalogWidgetStore | undefined {
+    @computed get widgetStore(): CatalogWidgetStore | undefined {
         const catalogFileId = this.catalogFileId;
         const widgetStoreId = catalogFileId !== undefined ? CatalogStore.Instance.catalogWidgets.get(catalogFileId) : undefined;
         return widgetStoreId ? WidgetsStore.Instance.catalogWidgets.get(widgetStoreId) : undefined;
     }
 
-    get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined {
+    @computed get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined {
         const catalogFileId = this.catalogFileId;
         return catalogFileId !== undefined ? CatalogStore.Instance.catalogProfileStores.get(catalogFileId) : undefined;
     }
@@ -121,7 +121,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     };
 
-    get catalogDataInfo(): {dataset: Map<number, ProcessedColumnData> | undefined; numVisibleRows: number} {
+    @computed get catalogDataInfo(): {dataset: Map<number, ProcessedColumnData> | undefined; numVisibleRows: number} {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
         let dataset: Map<number, ProcessedColumnData> | undefined;
@@ -139,7 +139,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return {dataset, numVisibleRows};
     }
 
-    get enablePlotButton(): boolean {
+    @computed get enablePlotButton(): boolean {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
         const enable = !profileStore?.loadingData && !profileStore?.updatingDataStream && catalogWidgetStore?.xAxis !== CatalogOverlay.NONE;
@@ -280,7 +280,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         );
     }
 
-    get axisOption(): string[] {
+    @computed get axisOption(): string[] {
         const profileStore = this.profileStore;
         if (!profileStore) {
             return [CatalogOverlay.NONE];
@@ -307,7 +307,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return fileSearcher.search(query).length > 0;
     };
 
-    get xAxisLable(): string {
+    @computed get xAxisLable(): string {
         const catalogWidgetStore = this.widgetStore;
         const plotType = catalogWidgetStore?.catalogPlotType;
         switch (plotType) {
@@ -319,7 +319,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
-    get yAxisLable(): string {
+    @computed get yAxisLable(): string {
         const catalogWidgetStore = this.widgetStore;
         const plotType = catalogWidgetStore?.catalogPlotType;
         switch (plotType) {

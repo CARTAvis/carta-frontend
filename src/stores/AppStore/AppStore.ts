@@ -2202,7 +2202,7 @@ export class AppStore {
         }
     };
 
-    handleSpectralProfileStream = (spectralProfileData: CARTA.SpectralProfileData) => {
+    @action handleSpectralProfileStream = (spectralProfileData: CARTA.SpectralProfileData) => {
         const frame = this.frames.find(frame => frame.frameInfo.fileId === spectralProfileData.fileId);
         if (frame) {
             let frameMap = this.spectralProfiles.get(spectralProfileData.fileId);
@@ -2229,7 +2229,7 @@ export class AppStore {
         }
     };
 
-    handleRegionHistogramStream = (regionHistogramData: CARTA.RegionHistogramData) => {
+    @action handleRegionHistogramStream = (regionHistogramData: CARTA.RegionHistogramData) => {
         if (!regionHistogramData) {
             return;
         }

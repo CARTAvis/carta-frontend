@@ -3,7 +3,7 @@ import SplitPane, {Pane} from "react-split-pane";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import classNames from "classnames";
 import * as _ from "lodash";
-import {autorun, makeObservable} from "mobx";
+import {autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, PlotType, SmoothingType} from "components/Shared";
@@ -39,7 +39,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         };
     }
 
-    get widgetStore(): SpectralProfileWidgetStore {
+    @computed get widgetStore(): SpectralProfileWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.spectralProfileWidgets) {
             const widgetStore = widgetsStore.spectralProfileWidgets.get(this.widgetId);
@@ -51,11 +51,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return new SpectralProfileWidgetStore();
     }
 
-    get plotData(): MultiPlotData | null {
+    @computed get plotData(): MultiPlotData | null {
         return this.widgetStore.plotData;
     }
 
-    get isMeanRmsVisible(): boolean {
+    @computed get isMeanRmsVisible(): boolean {
         // Show Mean/RMS when only 1 profile
         return this.widgetStore.meanRmsVisible && this.plotData?.numProfiles === 1;
     }
@@ -113,7 +113,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
     };
 
-    get currentChannelValue(): number | null {
+    @computed get currentChannelValue(): number | null {
         const frame = this.widgetStore.effectiveFrame;
         if (!frame || !frame.channelValues) {
             return null;
@@ -125,7 +125,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return frame.isCoordChannel ? channel : frame.channelValues[channel];
     }
 
-    get requiredChannelValue(): number | null {
+    @computed get requiredChannelValue(): number | null {
         const frame = this.widgetStore.effectiveFrame;
         if (!frame || !frame.channelValues) {
             return null;
@@ -137,7 +137,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return frame.isCoordChannel ? channel : frame.channelValues[channel];
     }
 
-    get linePlotSelectingMode(): LinePlotSelectingMode {
+    @computed get linePlotSelectingMode(): LinePlotSelectingMode {
         if (this.widgetStore.isSelectingMomentChannelRange) {
             return LinePlotSelectingMode.HORIZONTAL;
         } else if (this.widgetStore.isSelectingMomentMaskRange) {

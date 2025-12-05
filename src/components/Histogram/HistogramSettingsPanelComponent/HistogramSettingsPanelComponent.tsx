@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Tab, Tabs} from "@blueprintjs/core";
-import {autorun} from "mobx";
+import {autorun, computed} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScrollShadow} from "components/Shared";
@@ -41,7 +41,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
         };
     }
 
-    get widgetStore(): HistogramWidgetStore | undefined {
+    @computed get widgetStore(): HistogramWidgetStore | undefined {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.histogramWidgets) {
             const widgetStore = widgetsStore.histogramWidgets.get(this.widgetId);

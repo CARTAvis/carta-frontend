@@ -2,7 +2,7 @@ import * as React from "react";
 import {AnchorButton, Button, ButtonGroup, Classes, Collapse, Colors, FormGroup, Icon, MenuItem, PopoverPosition, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {ItemPredicate, ItemRendererProps, Select} from "@blueprintjs/select";
 import FuzzySearch from "fuzzy-search";
-import {action, autorun, makeObservable} from "mobx";
+import {action, autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {CatalogOverlayComponent} from "components";
@@ -72,22 +72,22 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         };
     }
 
-    get widgetStore(): CatalogWidgetStore | undefined {
+    @computed get widgetStore(): CatalogWidgetStore | undefined {
         const catalogFileId = this.catalogFileId;
         const catalogWidgetStoreId = catalogFileId ? CatalogStore.Instance.catalogWidgets.get(catalogFileId) : undefined;
         return catalogWidgetStoreId ? WidgetsStore.Instance.catalogWidgets.get(catalogWidgetStoreId) : undefined;
     }
 
-    get catalogFileId() {
+    @computed get catalogFileId() {
         return CatalogStore.Instance.catalogProfiles?.get(this.widgetId);
     }
 
-    get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined {
+    @computed get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined {
         const catalogFileId = this.catalogFileId;
         return catalogFileId !== undefined ? CatalogStore.Instance.catalogProfileStores.get(catalogFileId) : undefined;
     }
 
-    get axisOption() {
+    @computed get axisOption() {
         const profileStore = this.profileStore;
         let axisOptions: string[] = [];
         axisOptions.push(CatalogOverlay.NONE);
