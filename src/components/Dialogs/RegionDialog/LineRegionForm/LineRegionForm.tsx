@@ -293,12 +293,14 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
     };
 
     public render() {
+        const overlaySettings = AppStore.Instance.overlaySettings;
         // dummy variables related to wcs to trigger re-render
         /* eslint-disable @typescript-eslint/no-unused-vars */
-        const system = AppStore.Instance.overlaySettings.global.explicitSystem;
-        const formatX = AppStore.Instance.overlaySettings.numbers.formatTypeX;
-        const formatY = AppStore.Instance.overlaySettings.numbers.formatTypeY;
+        const system = overlaySettings.global.explicitSystem;
+        const formatX = overlaySettings.numbers.formatTypeX;
+        const formatY = overlaySettings.numbers.formatTypeY;
         /* eslint-enable @typescript-eslint/no-unused-vars */
+        const isImgCoordinates = overlaySettings.isImgCoordinates;
 
         const region = this.props.region;
         if (!region || region.controlPoints.length !== 2 || (region.regionType !== CARTA.RegionType.LINE && region.regionType !== CARTA.RegionType.ANNLINE && region.regionType !== CARTA.RegionType.ANNVECTOR)) {
@@ -330,7 +332,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 wcsDisabled={!this.props.wcsInfo || !startWCSPoint}
             />
         );
-        const startInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${startWCSPoint ? WCSPoint2D.ToString(startWCSPoint) : ""}` : `Image: ${Point2D.ToString(this.startPoint, "px", 3)}`;
+        const startInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : startWCSPoint ? WCSPoint2D.ToString(startWCSPoint) : ""}` : `Image: ${Point2D.ToString(this.startPoint, "px", 3)}`;
 
         // end
         const endPoint = this.endPoint;
@@ -357,7 +359,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 wcsDisabled={!this.props.wcsInfo || !endWCSPoint}
             />
         );
-        const endInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${endWCSPoint ? WCSPoint2D.ToString(endWCSPoint) : ""}` : `Image: ${Point2D.ToString(this.endPoint, "px", 3)}`;
+        const endInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : endWCSPoint ? WCSPoint2D.ToString(endWCSPoint) : ""}` : `Image: ${Point2D.ToString(this.endPoint, "px", 3)}`;
 
         // center
         const centerPoint = region.center;
@@ -384,7 +386,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
             />
         );
-        const centerInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${centerWCSPoint ? WCSPoint2D.ToString(centerWCSPoint) : ""}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
+        const centerInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : centerWCSPoint ? WCSPoint2D.ToString(centerWCSPoint) : ""}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
 
         // length
 
@@ -402,7 +404,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 customPlaceholder="Length"
             />
         );
-        const lengthInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${this.lengthWCS}` : `Image: ${length.toFixed(3)} px`;
+        const lengthInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : this.lengthWCS}` : `Image: ${length.toFixed(3)} px`;
 
         const pxUnit = region.coordinate === CoordinateMode.Image ? "(px)" : "";
         return (
