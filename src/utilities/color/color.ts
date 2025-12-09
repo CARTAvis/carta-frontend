@@ -4,7 +4,6 @@ import allMaps from "static/allmaps.png";
 import tinycolor from "tinycolor2";
 
 import {AppStore} from "stores";
-import {RenderConfigStore} from "stores/Frame";
 
 export const SWATCH_COLORS = [
     Colors.BLUE3,
@@ -40,6 +39,144 @@ const SUPPORTED_COLORS = [...SELECTABLE_COLORS, "white", "black"];
 // Validate with regex ^auto-(blue|orange|green...)$
 const SUPPORTED_AUTO_COLORS_REGEX = new RegExp(`^auto-(${SUPPORTED_COLORS.join("|")})$`);
 
+/**
+ * All provided colormaps.
+ */
+export const COLOR_MAPS_ALL = [
+    "accent",
+    "afmhot",
+    "autumn",
+    "binary",
+    "Blues",
+    "bone",
+    "BrBG",
+    "brg",
+    "BuGn",
+    "BuPu",
+    "bwr",
+    "CMRmap",
+    "cool",
+    "coolwarm",
+    "copper",
+    "cubehelix",
+    "dark2",
+    "flag",
+    "gist_earth",
+    "gist_gray",
+    "gist_heat",
+    "gist_ncar",
+    "gist_rainbow",
+    "gist_stern",
+    "gist_yarg",
+    "GnBu",
+    "gnuplot",
+    "gnuplot2",
+    "gray",
+    "greens",
+    "greys",
+    "hot",
+    "hsv",
+    "inferno",
+    "jet",
+    "magma",
+    "nipy_spectral",
+    "ocean",
+    "oranges",
+    "OrRd",
+    "paired",
+    "pastel1",
+    "pastel2",
+    "pink",
+    "PiYG",
+    "plasma",
+    "PRGn",
+    "prism",
+    "PuBu",
+    "PuBuGn",
+    "PuOr",
+    "PuRd",
+    "purples",
+    "rainbow",
+    "RdBu",
+    "RdGy",
+    "RdPu",
+    "RdYlBu",
+    "RdYlGn",
+    "reds",
+    "seismic",
+    "set1",
+    "set2",
+    "set3",
+    "spectral",
+    "spring",
+    "summer",
+    "tab10",
+    "tab20",
+    "tab20b",
+    "tab20c",
+    "terrain",
+    "viridis",
+    "winter",
+    "Wistia",
+    "YlGn",
+    "YlGnBu",
+    "YlOrBr",
+    "YlOrRd",
+    "Red",
+    "Orange",
+    "Yellow",
+    "Green",
+    "Cyan",
+    "Blue",
+    "Violet",
+    "Magenta"
+];
+
+/**
+ * The selected colormaps shown in the option.
+ */
+export const COLOR_MAPS_SELECTED = [
+    "afmhot",
+    "Blues",
+    "coolwarm",
+    "cubehelix",
+    "gist_heat",
+    "gist_stern",
+    "gnuplot",
+    "gnuplot2",
+    "gray",
+    "greens",
+    "greys",
+    "hot",
+    "inferno",
+    "jet",
+    "magma",
+    "nipy_spectral",
+    "plasma",
+    "rainbow",
+    "RdBu",
+    "RdGy",
+    "reds",
+    "seismic",
+    "spectral",
+    "tab10",
+    "viridis"
+];
+
+/**
+ * Some commonly used single-color gradients.
+ */
+export const COLOR_MAPS_MONO = new Map<string, string>([
+    ["Red", "#ff0000"],
+    ["Orange", "#ffa500"],
+    ["Yellow", "#ffff00"],
+    ["Green", "#00ff00"],
+    ["Cyan", "#00ffff"],
+    ["Blue", "#0000ff"],
+    ["Violet", "#7f00ff"],
+    ["Magenta", "#ff00ff"]
+]);
+
 function initContextWithSize(width: number, height: number) {
     const canvas = document.createElement("canvas") as HTMLCanvasElement;
     canvas.width = width;
@@ -57,8 +194,7 @@ imageObj.onload = () => {
 
 // return color map as Uint8ClampedArray according colorMap
 export function getColorsForValues(colorMap: string): {color: Uint8ClampedArray; size: number} {
-    const colorMaps = RenderConfigStore.COLOR_MAPS_ALL;
-    const colorMapIndex = colorMaps.indexOf(colorMap);
+    const colorMapIndex = COLOR_MAPS_ALL.indexOf(colorMap);
 
     if (colormapContext) {
         const colorMapPixel = colormapContext?.getImageData(0, colorMapIndex * 5 + 2, imageObj.width, 1);

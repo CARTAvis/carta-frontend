@@ -7,7 +7,7 @@
 # ///
 """Generate a stacked colormap PNG from CARTA's colormap definitions.
 
-This script reads COLOR_MAPS_ALL and COLOR_MAPS_MONO from RenderConfigStore.ts,
+This script reads COLOR_MAPS_ALL and COLOR_MAPS_MONO from color.ts,
 filters out monochrome colormaps, and generates a single PNG image with each
 colormap rendered as a horizontal stripe. The output is used by the CARTA
 frontend for both colormap previews (in the dropdown selector) and as a lookup
@@ -34,7 +34,7 @@ MPL_CMAP_MAPPING = {
 
 
 def extract_color_maps(file: str | PathLike) -> tuple[list[str], list[str]]:
-    """Extract COLOR_MAPS_ALL and COLOR_MAPS_MONO from RenderConfigStore.ts."""
+    """Extract COLOR_MAPS_ALL and COLOR_MAPS_MONO from color.ts."""
     results = {
         "COLOR_MAPS_ALL": [],
         "COLOR_MAPS_MONO": [],
@@ -60,9 +60,9 @@ def validate_colormap_order(
 ) -> None:
     """Validate COLOR_MAPS_MONO entries exist and are the trailing block of COLOR_MAPS_ALL."""
     if not color_maps_all:
-        raise ValueError("COLOR_MAPS_ALL not found in RenderConfigStore.ts")
+        raise ValueError("COLOR_MAPS_ALL not found in color.ts")
     if not color_maps_mono:
-        raise ValueError("COLOR_MAPS_MONO not found in RenderConfigStore.ts")
+        raise ValueError("COLOR_MAPS_MONO not found in color.ts")
 
     missing = [name for name in color_maps_mono if name not in color_maps_all]
     if missing:
@@ -126,10 +126,9 @@ def main():
     file = (
         Path(__file__).parent.parent
         / "src"
-        / "stores"
-        / "Frame"
-        / "RenderConfigStore"
-        / "RenderConfigStore.ts"
+        / "utilities"
+        / "color"
+        / "color.ts"
     )
     color_maps_all, color_maps_mono = extract_color_maps(file)
 
