@@ -100,7 +100,7 @@ export class CatalogApiService {
         });
 
         // _RA, _DE are a shorthand for _RA(J2000,J2000), _DE(J2000,J2000)
-        let query = `votable?${sourceString}&-c=${point.x} ${point.y}&-c.eq=J2000&-c.${radiusUnits}=${radius}&-out.max=${max}&-sort=_r&-corr=pos&-out.add=_r,_RA,_DE&-oc.form=d&-out.meta=hud`;
+        let query = `votable?${sourceString}&-c=${point.x} ${point.y}&-c.eq=J2000&-c.${radiusUnits}=${radius}&-out.max=${max}&-sort=_r&-corr=pos&-out.all&-out.add=_r,_RA,_DE&-oc.form=d&-out.meta=hud`;
 
         try {
             const response = await this.axiosInstanceVizier.get(query);
