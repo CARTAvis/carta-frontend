@@ -76,12 +76,14 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
     };
 
     public render() {
+        const overlaySettings = AppStore.Instance.overlaySettings;
         // dummy variables related to wcs to trigger re-render
         /* eslint-disable @typescript-eslint/no-unused-vars */
-        const system = AppStore.Instance.overlaySettings.global.explicitSystem;
-        const formatX = AppStore.Instance.overlaySettings.numbers.formatTypeX;
-        const formatY = AppStore.Instance.overlaySettings.numbers.formatTypeY;
+        const system = overlaySettings.global.explicitSystem;
+        const formatX = overlaySettings.numbers.formatTypeX;
+        const formatY = overlaySettings.numbers.formatTypeY;
         /* eslint-enable @typescript-eslint/no-unused-vars */
+        const isImgCoordinates = overlaySettings.isImgCoordinates;
 
         const region = this.props.region as PointAnnotationStore;
         if (!region || (region.regionType !== CARTA.RegionType.POINT && region.regionType !== CARTA.RegionType.ANNPOINT)) {
@@ -113,7 +115,7 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
             />
         );
 
-        const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${centerWCSPoint ? WCSPoint2D.ToString(centerWCSPoint) : ""}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
+        const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : centerWCSPoint ? WCSPoint2D.ToString(centerWCSPoint) : ""}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
         const pxUnit = region.coordinate === CoordinateMode.Image ? "(px)" : "";
         return (
             <div className="region-form">

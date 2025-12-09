@@ -147,12 +147,14 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
     };
 
     public render() {
+        const overlaySettings = AppStore.Instance.overlaySettings;
         // dummy variables related to wcs to trigger re-render
         /* eslint-disable @typescript-eslint/no-unused-vars */
-        const system = AppStore.Instance.overlaySettings.global.explicitSystem;
-        const formatX = AppStore.Instance.overlaySettings.numbers.formatTypeX;
-        const formatY = AppStore.Instance.overlaySettings.numbers.formatTypeY;
+        const system = overlaySettings.global.explicitSystem;
+        const formatX = overlaySettings.numbers.formatTypeX;
+        const formatY = overlaySettings.numbers.formatTypeY;
         /* eslint-enable @typescript-eslint/no-unused-vars */
+        const isImgCoordinates = overlaySettings.isImgCoordinates;
 
         const region = this.props.region;
         if (!region || region.controlPoints.length !== 2 || (region.regionType !== CARTA.RegionType.ELLIPSE && region.regionType !== CARTA.RegionType.ANNELLIPSE)) {
@@ -183,7 +185,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
                 wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
             />
         );
-        const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${centerWCSPoint ? WCSPoint2D.ToString(centerWCSPoint) : ""}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
+        const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : centerWCSPoint ? WCSPoint2D.ToString(centerWCSPoint) : ""}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
 
         const size = region.size;
         const sizeWCS = this.sizeWCS;
@@ -211,7 +213,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
                 customPlaceholder="Semi-minor"
             />
         );
-        const sizeInfoString = region.coordinate === CoordinateMode.Image ? `(Semi-major, Semi-minor): ${sizeWCS ? WCSPoint2D.ToString(sizeWCS) : ""}` : `Image: ${Point2D.ToString(size, "px", 3)}`;
+        const sizeInfoString = region.coordinate === CoordinateMode.Image ? `(Semi-major, Semi-minor): ${isImgCoordinates ? "-" : sizeWCS ? WCSPoint2D.ToString(sizeWCS) : ""}` : `Image: ${Point2D.ToString(size, "px", 3)}`;
         const pxUnit = region.coordinate === CoordinateMode.Image ? "(px)" : "";
         return (
             <div className="region-form">
