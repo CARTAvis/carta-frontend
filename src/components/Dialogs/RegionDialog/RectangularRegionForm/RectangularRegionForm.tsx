@@ -409,7 +409,8 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 wcsDisabled={!this.props.wcsInfo || !bottomLeftWCSPoint || isRotated}
             />
         );
-        const bottomLeftInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : bottomLeftWCSPoint ? WCSPoint2D.ToString(bottomLeftWCSPoint) : ""}` : `Image: ${Point2D.ToString(this.bottomLeftPoint, "px", 3)}`;
+        const bottomLeftInfoString =
+            region.coordinate === CoordinateMode.Image ? `WCS: ${isImgCoordinates ? "-" : bottomLeftWCSPoint ? WCSPoint2D.ToString(bottomLeftWCSPoint) : ""}` : `Image: ${Point2D.ToString(this.bottomLeftPoint, "px", 3)}`;
 
         // top right
         const topRightPoint = this.topRightPoint;
