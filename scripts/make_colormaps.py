@@ -1,8 +1,8 @@
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
-#     "matplotlib",
-#     "numpy",
+#     "matplotlib>=3.9",
+#     "numpy>=1.25",
 # ]
 # ///
 """Generate a stacked colormap PNG from CARTA's colormap definitions.
@@ -12,6 +12,16 @@ filters out monochrome colormaps, and generates a single PNG image with each
 colormap rendered as a horizontal stripe. The output is used by the CARTA
 frontend for both colormap previews (in the dropdown selector) and as a lookup
 texture for WebGL rendering of image tiles, contours, and overlays.
+
+Usage (uv):
+    uv run scripts/make_colormaps.py              # Output to src/static/allmaps.png
+    uv run scripts/make_colormaps.py --out FILE   # Output to custom path
+Usage (python):
+    python scripts/make_colormaps.py              # Output to src/static/allmaps.png
+    python scripts/make_colormaps.py --out FILE   # Output to custom path
+
+For Python users, it is best to install dependencies matching the script header
+(python>=3.11, matplotlib>=3.9, numpy>=1.25) before running directly.
 """
 
 import argparse
