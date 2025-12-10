@@ -200,3 +200,6 @@ carta-frontend-*.tgz
 
 # eslint
 .eslintcache
+
+# Python virtual environment
+.venv/

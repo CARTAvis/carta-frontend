@@ -1,5 +1,5 @@
 # /// script
-# requires-python = ">=3.13"
+# requires-python = ">=3.11"
 # dependencies = [
 #     "matplotlib",
 #     "numpy",
@@ -12,10 +12,6 @@ filters out monochrome colormaps, and generates a single PNG image with each
 colormap rendered as a horizontal stripe. The output is used by the CARTA
 frontend for both colormap previews (in the dropdown selector) and as a lookup
 texture for WebGL rendering of image tiles, contours, and overlays.
-
-Usage:
-    uv run scripts/make_colormaps.py              # Output to src/static/allmaps.png
-    uv run scripts/make_colormaps.py --out FILE   # Output to custom path
 """
 
 import argparse
