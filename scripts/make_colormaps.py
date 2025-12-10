@@ -14,11 +14,11 @@ frontend for both colormap previews (in the dropdown selector) and as a lookup
 texture for WebGL rendering of image tiles, contours, and overlays.
 
 Usage (uv):
-    uv run scripts/make_colormaps.py              # Output to src/static/allmaps.png
-    uv run scripts/make_colormaps.py --out FILE   # Output to custom path
+    uv run make_colormaps.py              # Output to src/static/allmaps.png
+    uv run make_colormaps.py --out FILE   # Output to custom path
 Usage (python):
-    python scripts/make_colormaps.py              # Output to src/static/allmaps.png
-    python scripts/make_colormaps.py --out FILE   # Output to custom path
+    python make_colormaps.py              # Output to src/static/allmaps.png
+    python make_colormaps.py --out FILE   # Output to custom path
 
 For Python users, it is best to install dependencies matching the script header
 (python>=3.11, matplotlib>=3.9, numpy>=1.25) before running directly.
