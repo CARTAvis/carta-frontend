@@ -96,30 +96,24 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
     };
 
     private handleCenterWCSXChange = (wcsString: string): boolean => {
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX)) {
-            const centerWCS = this.centerWCS;
-            if (centerWCS) {
-                const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: centerWCS.y});
-                const existingValue = this.props.region.center.x;
-                if (newPoint && isFinite(newPoint.x) && !closeTo(newPoint.x, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
-                    this.props.region.setCenter(newPoint);
-                    return true;
-                }
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX) && this.centerWCS) {
+            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.centerWCS.y});
+            const existingValue = this.props.region.center.x;
+            if (newPoint && isFinite(newPoint.x) && !closeTo(newPoint.x, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
+                this.props.region.setCenter(newPoint);
+                return true;
             }
         }
         return false;
     };
 
     private handleCenterWCSYChange = (wcsString: string): boolean => {
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
-            const centerWCS = this.centerWCS;
-            if (centerWCS) {
-                const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: centerWCS.x, y: wcsString});
-                const existingValue = this.props.region.center.y;
-                if (newPoint && isFinite(newPoint.y) && !closeTo(newPoint.y, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
-                    this.props.region.setCenter(newPoint);
-                    return true;
-                }
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY) && this.centerWCS) {
+            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.centerWCS.x, y: wcsString});
+            const existingValue = this.props.region.center.y;
+            if (newPoint && isFinite(newPoint.y) && !closeTo(newPoint.y, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
+                this.props.region.setCenter(newPoint);
+                return true;
             }
         }
         return false;
@@ -175,15 +169,12 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
     };
 
     private handleStartXWCSChange = (wcsString: string): boolean => {
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX)) {
-            const startWCS = this.startWCS;
-            if (startWCS) {
-                const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: startWCS.y});
-                if (newPoint) {
-                    const value = newPoint.x;
-                    const existingValue = this.startPoint.x;
-                    return this.handleStartXValueChange(value, existingValue);
-                }
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX) && this.startWCS) {
+            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.startWCS.y});
+            if (newPoint) {
+                const value = newPoint.x;
+                const existingValue = this.startPoint.x;
+                return this.handleStartXValueChange(value, existingValue);
             }
         }
         return false;
@@ -207,15 +198,12 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
     };
 
     private handleStartYWCSChange = (wcsString: string): boolean => {
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
-            const startWCS = this.startWCS;
-            if (startWCS) {
-                const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: startWCS.x, y: wcsString});
-                if (newPoint) {
-                    const value = newPoint.y;
-                    const existingValue = this.startPoint.y;
-                    return this.handleStartYValueChange(value, existingValue);
-                }
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY) && this.startWCS) {
+            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.startWCS.x, y: wcsString});
+            if (newPoint) {
+                const value = newPoint.y;
+                const existingValue = this.startPoint.y;
+                return this.handleStartYValueChange(value, existingValue);
             }
         }
         return false;
@@ -239,15 +227,12 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
     };
 
     private handleEndXWCSChange = (wcsString: string): boolean => {
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX)) {
-            const endWCS = this.endWCS;
-            if (endWCS) {
-                const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: endWCS.y});
-                if (newPoint) {
-                    const value = newPoint.x;
-                    const existingValue = this.endPoint.x;
-                    return this.handleEndXValueChange(value, existingValue);
-                }
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX) && this.endWCS) {
+            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.endWCS.y});
+            if (newPoint) {
+                const value = newPoint.x;
+                const existingValue = this.endPoint.x;
+                return this.handleEndXValueChange(value, existingValue);
             }
         }
         return false;
@@ -271,15 +256,12 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
     };
 
     private handleEndYWCSChange = (wcsString: string): boolean => {
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
-            const endWCS = this.endWCS;
-            if (endWCS) {
-                const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: endWCS.x, y: wcsString});
-                if (newPoint) {
-                    const value = newPoint.y;
-                    const existingValue = this.endPoint.y;
-                    return this.handleEndYValueChange(value, existingValue);
-                }
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY) && this.endWCS) {
+            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.endWCS.x, y: wcsString});
+            if (newPoint) {
+                const value = newPoint.y;
+                const existingValue = this.endPoint.y;
+                return this.handleEndYValueChange(value, existingValue);
             }
         }
         return false;

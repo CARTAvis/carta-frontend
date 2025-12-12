@@ -756,7 +756,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
 
         // Filter out undefined values to match expected Array<number> type
-        const validColumnWidths = tableColumnWidths.filter((w): w is number => w != null || w !== undefined);
+        const validColumnWidths = tableColumnWidths.filter((w): w is number => w !== undefined);
 
         const dataTableProps: FilterableTableComponentProps = {
             dataset: catalogTable.dataset ?? new Map(),

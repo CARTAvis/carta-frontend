@@ -200,7 +200,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     }
 
     private getValueForPixelX(pixel: number) {
-        if (!this.chartArea || this.props.xMax === undefined || this.props.xMin === undefined) {
+        if (!this.chartArea || !this.props.xMax || !this.props.xMin) {
             return undefined;
         }
         const fraction = (pixel - this.chartArea.left) / (this.chartArea.right - this.chartArea.left);
@@ -208,7 +208,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     }
 
     private getValueForPixelY(pixel: number) {
-        if (!this.chartArea || this.props.yMax === undefined || this.props.yMin === undefined) {
+        if (!this.chartArea || !this.props.yMax || !this.props.yMin) {
             return undefined;
         }
         const fraction = (this.chartArea.bottom - pixel) / (this.chartArea.bottom - this.chartArea.top);

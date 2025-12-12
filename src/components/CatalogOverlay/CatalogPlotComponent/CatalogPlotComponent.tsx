@@ -17,6 +17,8 @@ import {minMaxArray, toFixed, TypedArray} from "utilities";
 
 import "./CatalogPlotComponent.scss";
 
+const DEFAULT_NUM_BINS = 10; // default fallback
+
 @observer
 export class CatalogPlotComponent extends React.Component<WidgetProps> {
     @observable width: number;
@@ -355,10 +357,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const widgetStore = this.widgetStore;
         const profileStore = this.profileStore;
         if (!widgetStore || !profileStore || !widgetStore.xColumnName) {
-            return 10; // default fallback
+            return DEFAULT_NUM_BINS;
         }
         const coords = profileStore.get1DPlotData(widgetStore.xColumnName);
-        const nBinx = Math.ceil(Math.sqrt(coords.wcsData?.length ?? 100));
+        const nBinx = coords.wcsData?.length ? Math.ceil(Math.sqrt(coords.wcsData.length)) : DEFAULT_NUM_BINS;
         return nBinx;
     }
 
@@ -607,11 +609,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private onSingleSourceClick = (event: Readonly<Plotly.PlotMouseEvent>) => {
         const selectionMode: DragMode[] = ["select", "lasso"];
         const widgetStore = this.widgetStore;
-        if (!widgetStore) {
-            return;
-        }
-
-        const inDragmode = selectionMode.includes(widgetStore.dragmode);
+        const inDragmode = widgetStore && selectionMode.includes(widgetStore.dragmode);
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.catalogWidgetStore;
         if (event?.points?.length > 0 && inDragmode && profileStore && catalogWidgetStore) {

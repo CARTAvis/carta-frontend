@@ -118,7 +118,7 @@ export class ContourDialogComponent extends React.Component {
 
     @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} | null {
         const dataSource = AppStore.Instance.contourDataSource;
-        const histogram = dataSource?.renderConfig?.contourHistogram;
+        const histogram = dataSource?.renderConfig.contourHistogram;
 
         if (!histogram?.bins?.length || histogram.firstBinCenter == null || histogram.binWidth == null) {
             return null;

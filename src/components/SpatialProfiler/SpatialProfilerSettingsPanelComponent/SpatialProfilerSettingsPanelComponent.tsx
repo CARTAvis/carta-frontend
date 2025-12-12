@@ -55,15 +55,18 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
         const appStore = AppStore.Instance;
         // Update widget title when region or coordinate changes
         autorun(() => {
-            if (this.widgetStore) {
-                const coordinate = this.widgetStore.coordinate;
-                if (appStore && coordinate && this.props.floatingSettingsId) {
-                    const coordinateString = this.widgetStore.isLineOrPolyline ? "" : coordinate.toUpperCase();
-                    const regionString = this.widgetStore.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
-                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `${coordinateString} Spatial Profile Settings: ${regionString}`);
+            const floatingSettingsId = this.props.floatingSettingsId;
+            if (floatingSettingsId) {
+                if (this.widgetStore) {
+                    const coordinate = this.widgetStore.coordinate;
+                    if (appStore && coordinate) {
+                        const coordinateString = this.widgetStore.isLineOrPolyline ? "" : coordinate.toUpperCase();
+                        const regionString = this.widgetStore.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
+                        appStore.widgetsStore.setWidgetTitle(floatingSettingsId, `${coordinateString} Spatial Profile Settings: ${regionString}`);
+                    }
+                } else {
+                    appStore.widgetsStore.setWidgetTitle(floatingSettingsId, `X Spatial Profile Settings: Cursor`);
                 }
-            } else if (this.props.floatingSettingsId) {
-                appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `X Spatial Profile Settings: Cursor`);
             }
         });
     }

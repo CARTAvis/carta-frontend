@@ -104,30 +104,24 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
     };
 
     private handleCenterWCSXChange = (wcsString: string): boolean => {
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX)) {
-            const centerWCS = this.centerWCS;
-            if (centerWCS) {
-                const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: centerWCS.y});
-                const existingValue = this.props.region.center.x;
-                if (newPoint && isFinite(newPoint.x) && !closeTo(newPoint.x, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
-                    this.props.region.setCenter(newPoint);
-                    return true;
-                }
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX) && this.centerWCS) {
+            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.centerWCS.y});
+            const existingValue = this.props.region.center.x;
+            if (newPoint && isFinite(newPoint.x) && !closeTo(newPoint.x, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
+                this.props.region.setCenter(newPoint);
+                return true;
             }
         }
         return false;
     };
 
     private handleCenterWCSYChange = (wcsString: string): boolean => {
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
-            const centerWCS = this.centerWCS;
-            if (centerWCS) {
-                const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: centerWCS.x, y: wcsString});
-                const existingValue = this.props.region.center.y;
-                if (newPoint && isFinite(newPoint.y) && !closeTo(newPoint.y, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
-                    this.props.region.setCenter(newPoint);
-                    return true;
-                }
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY) && this.centerWCS) {
+            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.centerWCS.x, y: wcsString});
+            const existingValue = this.props.region.center.y;
+            if (newPoint && isFinite(newPoint.y) && !closeTo(newPoint.y, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
+                this.props.region.setCenter(newPoint);
+                return true;
             }
         }
         return false;
@@ -204,15 +198,12 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
     };
 
     private handleLeftWCSChange = (wcsString: string, fixedScreenSize: boolean = false): boolean => {
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX)) {
-            const bottomLeftWCS = this.bottomLeftWCS;
-            if (bottomLeftWCS) {
-                const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: bottomLeftWCS.y});
-                if (newPoint) {
-                    const value = newPoint.x;
-                    const existingValue = this.bottomLeftPoint.x;
-                    return this.handleLeftValueChange(value, existingValue, fixedScreenSize);
-                }
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX) && this.bottomLeftWCS) {
+            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.bottomLeftWCS.y});
+            if (newPoint) {
+                const value = newPoint.x;
+                const existingValue = this.bottomLeftPoint.x;
+                return this.handleLeftValueChange(value, existingValue, fixedScreenSize);
             }
         }
         return false;
@@ -241,15 +232,12 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
     };
 
     private handleBottomWCSChange = (wcsString: string, fixedScreenSize: boolean = false): boolean => {
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
-            const bottomLeftWCS = this.bottomLeftWCS;
-            if (bottomLeftWCS) {
-                const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: bottomLeftWCS.x, y: wcsString});
-                if (newPoint) {
-                    const value = newPoint.y;
-                    const existingValue = this.bottomLeftPoint.y;
-                    return this.handleBottomValueChange(value, existingValue, fixedScreenSize);
-                }
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY) && this.bottomLeftWCS) {
+            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.bottomLeftWCS.x, y: wcsString});
+            if (newPoint) {
+                const value = newPoint.y;
+                const existingValue = this.bottomLeftPoint.y;
+                return this.handleBottomValueChange(value, existingValue, fixedScreenSize);
             }
         }
         return false;
@@ -278,15 +266,12 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
     };
 
     private handleRightWCSChange = (wcsString: string, fixedScreenSize: boolean = false): boolean => {
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX)) {
-            const topRightWCS = this.topRightWCS;
-            if (topRightWCS) {
-                const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: topRightWCS.y});
-                if (newPoint) {
-                    const value = newPoint.x;
-                    const existingValue = this.topRightPoint.x;
-                    return this.handleRightValueChange(value, existingValue, fixedScreenSize);
-                }
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX) && this.topRightWCS) {
+            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.topRightWCS.y});
+            if (newPoint) {
+                const value = newPoint.x;
+                const existingValue = this.topRightPoint.x;
+                return this.handleRightValueChange(value, existingValue, fixedScreenSize);
             }
         }
         return false;
@@ -315,15 +300,12 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
     };
 
     private handleTopWCSChange = (wcsString: string, fixedScreenSize: boolean = false): boolean => {
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
-            const topRightWCS = this.topRightWCS;
-            if (topRightWCS) {
-                const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: topRightWCS.x, y: wcsString});
-                if (newPoint) {
-                    const value = newPoint.y;
-                    const existingValue = this.topRightPoint.y;
-                    return this.handleTopValueChange(value, existingValue, fixedScreenSize);
-                }
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY) && this.topRightWCS) {
+            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.topRightWCS.x, y: wcsString});
+            if (newPoint) {
+                const value = newPoint.y;
+                const existingValue = this.topRightPoint.y;
+                return this.handleTopValueChange(value, existingValue, fixedScreenSize);
             }
         }
         return false;

@@ -221,10 +221,10 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 <div className="animator-slider">
                     <Radio value={AnimationMode.FRAME} disabled={appStore.animatorStore.animationActive} checked={appStore.animatorStore.animationMode === AnimationMode.FRAME} onChange={this.onAnimationModeChanged} label="Image" />
                     {hideSliders && <SafeNumericInput value={imageIndex} min={-1} max={numImages} stepSize={1} onValueChange={this.onImageChanged} fill={true} disabled={appStore.animatorStore.animationActive} />}
-                    {!hideSliders && (
+                    {!hideSliders && appStore.activeImage?.store.filename && (
                         <React.Fragment>
                             <Slider value={imageIndex} min={0} max={numImages - 1} showTrackFill={false} labelValues={imageTick} labelPrecision={0} onChange={this.onImageChanged} disabled={appStore.animatorStore.animationActive} />
-                            <div className="slider-info">{appStore.activeImage?.store.filename ?? ""}</div>
+                            <div className="slider-info">{appStore.activeImage.store.filename}</div>
                         </React.Fragment>
                     )}
                 </div>
