@@ -25,6 +25,7 @@ const INFO_HEIGHT_MAX = 100;
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     private widgetId: string;
+    private widgetStoreRef!: SpectralProfileWidgetStore;
     private readonly disposers: IReactionDisposer[] = [];
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
@@ -42,15 +43,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     }
 
     @computed get widgetStore(): SpectralProfileWidgetStore {
-        const widgetsStore = WidgetsStore.Instance;
-        if (widgetsStore.spectralProfileWidgets) {
-            const widgetStore = widgetsStore.spectralProfileWidgets.get(this.widgetId);
-            if (widgetStore) {
-                return widgetStore;
-            }
-        }
-        console.log("can't find store for widget");
-        return new SpectralProfileWidgetStore();
+        return this.widgetStoreRef;
     }
 
     @computed get plotData(): MultiPlotData | null {
@@ -82,6 +75,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 appStore.widgetsStore.addSpectralProfileWidget(this.widgetId);
             }
         }
+
+        const widgetStore = appStore.widgetsStore.spectralProfileWidgets.get(this.widgetId);
+        if (!widgetStore) {
+            throw new Error(`Can't find SpectralProfileWidgetStore for widget id=${this.widgetId}`);
+        }
+        this.widgetStoreRef = widgetStore;
 
         // Update widget title
         this.disposers.push(
