@@ -66,6 +66,13 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         AppStore.Instance.resetImageRatio();
     }
 
+    componentWillUnmount() {
+        if (this.mouseEnterHandle) {
+            clearTimeout(this.mouseEnterHandle);
+            this.mouseEnterHandle = undefined;
+        }
+    }
+
     private handleMouseMove = event => {
         const appStore = AppStore.Instance;
         const frame = this.props.frame;

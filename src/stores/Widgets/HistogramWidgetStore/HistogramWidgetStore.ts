@@ -1,5 +1,5 @@
 import {CARTA} from "carta-protobuf";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, autorun, computed, IReactionDisposer, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {HistogramSettingsTabs, LineSettings, PlotType, POLARIZATIONS, RegionsType} from "enums";
@@ -34,6 +34,8 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     @observable currentMaxPix: number | undefined = undefined;
     @observable currentAutoBins: boolean = true;
     @observable currentNumBins: number | null | undefined = null;
+
+    private readonly disposers: IReactionDisposer[] = [];
 
     // Maximum number of histogram bins on the slider
     @observable maxNumBins: number;
@@ -343,29 +345,36 @@ export class HistogramWidgetStore extends RegionWidgetStore {
 
         makeObservable(this);
 
-        autorun(() => {
-            // Update the config parameters
-            if (this.isAbleToGenerate) {
-                if (this.currentAutoBounds) {
-                    this.fixedBounds = false;
-                    this.minPix = 0;
-                    this.maxPix = 0;
-                } else {
-                    this.fixedBounds = true;
-                    this.minPix = this.currentMinPix;
-                    this.maxPix = this.currentMaxPix;
-                }
+        this.disposers.push(
+            autorun(() => {
+                // Update the config parameters
+                if (this.isAbleToGenerate) {
+                    if (this.currentAutoBounds) {
+                        this.fixedBounds = false;
+                        this.minPix = 0;
+                        this.maxPix = 0;
+                    } else {
+                        this.fixedBounds = true;
+                        this.minPix = this.currentMinPix;
+                        this.maxPix = this.currentMaxPix;
+                    }
 
-                if (this.currentAutoBins) {
-                    this.fixedNumBins = false;
-                    this.numBins = -1;
-                } else {
-                    this.fixedNumBins = true;
-                    this.numBins = this.currentNumBins;
+                    if (this.currentAutoBins) {
+                        this.fixedNumBins = false;
+                        this.numBins = -1;
+                    } else {
+                        this.fixedNumBins = true;
+                        this.numBins = this.currentNumBins;
+                    }
                 }
-            }
-        });
+            })
+        );
     }
+
+    public dispose = () => {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
+    };
 
     // settings
     @action setPrimaryLineColor = (color: string) => {

@@ -944,6 +944,8 @@ export class AppStore {
                 f.clearSpectralReference();
             }
 
+            frame.dispose?.();
+
             const removedFrameIsSpatialReference = frame === this.spatialReference;
             const removedFrameIsSpectralReference = frame === this.spectralReference;
             const removedFrameIsRasterScalingReference = frame === this.rasterScalingReference;

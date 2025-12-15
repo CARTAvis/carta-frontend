@@ -6,7 +6,7 @@ import {CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
 import * as GSL from "gsl_wrapper";
 import * as _ from "lodash";
-import {action, autorun, computed, makeObservable, observable, reaction, runInAction} from "mobx";
+import {action, autorun, computed, IReactionDisposer, makeObservable, observable, reaction, runInAction} from "mobx";
 import {observer} from "mobx-react";
 import type * as Plotly from "plotly.js";
 
@@ -31,6 +31,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private histogramY: {yMin?: number; yMax?: number};
     private static emptyColumn = "None";
     private catalogFileNames: Map<number, string>;
+    private readonly disposers: IReactionDisposer[] = [];
     private widgetId: string;
 
     private static readonly UnsupportedDataTypes = [CARTA.ColumnType.String, CARTA.ColumnType.Bool, CARTA.ColumnType.UnsupportedType];
@@ -61,53 +62,64 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
         makeObservable(this);
 
-        autorun(() => {
-            const profileStore = this.profileStore;
-            const widgetStore = this.widgetStore;
-            const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
-            if (!catalogFileIds?.includes(this.catalogFileId) && catalogFileIds?.length > 0) {
-                runInAction(() => {
-                    this.catalogFileId = catalogFileIds[0];
-                });
-            }
-            if (widgetStore) {
-                this.plotType = widgetStore.plotType;
-            }
-            if (profileStore) {
-                let progressString = "";
-                const catalogFile = profileStore.catalogInfo;
-                const fileName = catalogFile.fileInfo.name || "";
-                const appStore = AppStore.Instance;
-                const frame = appStore.activeFrame;
-                const progress = profileStore.progress;
-                if (progress && isFinite(progress) && progress < 1) {
-                    progressString = `[${toFixed(progress * 100)}% complete]`;
+        this.disposers.push(
+            autorun(() => {
+                const profileStore = this.profileStore;
+                const widgetStore = this.widgetStore;
+                const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
+                if (!catalogFileIds?.includes(this.catalogFileId) && catalogFileIds?.length > 0) {
+                    runInAction(() => {
+                        this.catalogFileId = catalogFileIds[0];
+                    });
                 }
-                if (frame && catalogFileIds?.length) {
-                    WidgetsStore.Instance.setWidgetTitle(this.widgetId, `Catalog ${this.plotType} : ${fileName} ${progressString}`);
+                if (widgetStore) {
+                    this.plotType = widgetStore.plotType;
+                }
+                if (profileStore) {
+                    let progressString = "";
+                    const catalogFile = profileStore.catalogInfo;
+                    const fileName = catalogFile.fileInfo.name || "";
+                    const appStore = AppStore.Instance;
+                    const frame = appStore.activeFrame;
+                    const progress = profileStore.progress;
+                    if (progress && isFinite(progress) && progress < 1) {
+                        progressString = `[${toFixed(progress * 100)}% complete]`;
+                    }
+                    if (frame && catalogFileIds?.length) {
+                        WidgetsStore.Instance.setWidgetTitle(this.widgetId, `Catalog ${this.plotType} : ${fileName} ${progressString}`);
+                    } else {
+                        WidgetsStore.Instance.setWidgetTitle(this.widgetId, `Catalog ${this.plotType}`);
+                    }
                 } else {
                     WidgetsStore.Instance.setWidgetTitle(this.widgetId, `Catalog ${this.plotType}`);
                 }
-            } else {
-                WidgetsStore.Instance.setWidgetTitle(this.widgetId, `Catalog ${this.plotType}`);
-            }
-        });
+            })
+        );
 
-        reaction(
-            () => this.widgetStore?.statisticColumnName,
-            () => {
-                if (this.widgetStore?.enableStatistic) {
+        this.disposers.push(
+            reaction(
+                () => this.widgetStore?.statisticColumnName,
+                () => {
+                    if (this.widgetStore?.enableStatistic) {
+                        this.updateStatistic();
+                    }
+                }
+            )
+        );
+
+        this.disposers.push(
+            reaction(
+                () => this.profileStore?.selectedPointIndices,
+                () => {
                     this.updateStatistic();
                 }
-            }
+            )
         );
+    }
 
-        reaction(
-            () => this.profileStore?.selectedPointIndices,
-            () => {
-                this.updateStatistic();
-            }
-        );
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     @action private onResize = (width: number, height: number) => {

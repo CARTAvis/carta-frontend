@@ -2,7 +2,7 @@ import * as React from "react";
 import {FormGroup, HTMLSelect, HTMLTable, NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, autorun, computed, IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {RegionSelectorComponent, ResizeDetector} from "components/Shared";
@@ -18,6 +18,7 @@ import "./StatsComponent.scss";
 @observer
 export class StatsComponent extends React.Component<WidgetProps> {
     private widgetId: string;
+    private readonly disposers: IReactionDisposer[] = [];
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -119,32 +120,41 @@ export class StatsComponent extends React.Component<WidgetProps> {
             }
         }
         // Update widget title when region or coordinate changes
-        autorun(() => {
-            if (this.widgetStore && this.widgetStore.effectiveFrame) {
-                let regionString = "Unknown";
+        this.disposers.push(
+            autorun(() => {
+                if (this.widgetStore && this.widgetStore.effectiveFrame) {
+                    let regionString = "Unknown";
 
-                const regionId = this.widgetStore.effectiveRegionId;
-                const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                if (regionId === -1) {
-                    regionString = "Image";
-                } else if (this.widgetStore.effectiveFrame.regionSet) {
-                    const region = this.widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
-                    if (region) {
-                        regionString = region.nameString;
+                    const regionId = this.widgetStore.effectiveRegionId;
+                    const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
+                    if (regionId === -1) {
+                        regionString = "Image";
+                    } else if (this.widgetStore.effectiveFrame.regionSet) {
+                        const region = this.widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
+                        if (region) {
+                            regionString = region.nameString;
+                        }
                     }
+                    appStore.widgetsStore.setWidgetTitle(this.widgetId, `Statistics: ${regionString} ${selectedString}`);
+                } else {
+                    appStore.widgetsStore.setWidgetTitle(this.widgetId, `Statistics`);
                 }
-                appStore.widgetsStore.setWidgetTitle(this.widgetId, `Statistics: ${regionString} ${selectedString}`);
-            } else {
-                appStore.widgetsStore.setWidgetTitle(this.widgetId, `Statistics`);
-            }
-        });
+            })
+        );
 
         // When frame is changed(coordinateOptions changes), coordinate stays unchanged if new frame also supports it, otherwise defaults to 'z'
-        autorun(() => {
-            if (this.widgetStore.effectiveFrame && (!this.widgetStore.effectiveFrame.coordinateOptionsZ.find(option => option.value === this.widgetStore.coordinate) || !this.widgetStore.effectiveFrame.polarizationInfo)) {
-                this.widgetStore.setCoordinate("z");
-            }
-        });
+        this.disposers.push(
+            autorun(() => {
+                if (this.widgetStore.effectiveFrame && (!this.widgetStore.effectiveFrame.coordinateOptionsZ.find(option => option.value === this.widgetStore.coordinate) || !this.widgetStore.effectiveFrame.polarizationInfo)) {
+                    this.widgetStore.setCoordinate("z");
+                }
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     @action private onResize = (width: number, height: number) => {

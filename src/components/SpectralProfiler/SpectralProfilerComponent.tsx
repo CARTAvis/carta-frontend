@@ -3,7 +3,7 @@ import SplitPane, {Pane} from "react-split-pane";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import classNames from "classnames";
 import * as _ from "lodash";
-import {autorun, computed, makeObservable} from "mobx";
+import {autorun, computed, IReactionDisposer, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {type LineMarker, LinePlotComponent, type LinePlotComponentProps} from "components/Shared";
@@ -25,6 +25,7 @@ const INFO_HEIGHT_MAX = 100;
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     private widgetId: string;
+    private readonly disposers: IReactionDisposer[] = [];
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -83,20 +84,27 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
 
         // Update widget title
-        autorun(() => {
-            let title = "Z Profile";
-            const currentData = this.plotData;
-            if (this.widgetStore && currentData && isFinite(currentData.progress)) {
-                if (currentData.progress < 1.0) {
-                    const totalProgress = currentData.numProfiles * 100;
-                    title += `: [${toFixed(currentData.progress * totalProgress)}%/${totalProgress}% complete]`;
-                    this.widgetStore.updateStreamingDataStatus(true);
-                } else {
-                    this.widgetStore.updateStreamingDataStatus(false);
+        this.disposers.push(
+            autorun(() => {
+                let title = "Z Profile";
+                const currentData = this.plotData;
+                if (this.widgetStore && currentData && isFinite(currentData.progress)) {
+                    if (currentData.progress < 1.0) {
+                        const totalProgress = currentData.numProfiles * 100;
+                        title += `: [${toFixed(currentData.progress * totalProgress)}%/${totalProgress}% complete]`;
+                        this.widgetStore.updateStreamingDataStatus(true);
+                    } else {
+                        this.widgetStore.updateStreamingDataStatus(false);
+                    }
                 }
-            }
-            appStore.widgetsStore.setWidgetTitle(this.widgetId, title);
-        });
+                appStore.widgetsStore.setWidgetTitle(this.widgetId, title);
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     onChannelChanged = (x: number) => {

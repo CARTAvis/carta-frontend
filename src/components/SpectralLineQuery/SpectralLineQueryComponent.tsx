@@ -47,6 +47,11 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         this.widgetId = props.id;
     }
 
+    componentWillUnmount() {
+        clearTimeout(this.scrollToTopHandle);
+        this.scrollToTopHandle = undefined;
+    }
+
     @computed get widgetStore(): SpectralLineQueryWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.spectralLineQueryWidgets) {

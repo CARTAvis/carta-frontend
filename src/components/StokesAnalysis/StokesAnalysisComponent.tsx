@@ -3,7 +3,7 @@ import {Colors, NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import type {ChartArea} from "chart.js";
 import * as _ from "lodash";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, autorun, computed, IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent, ResizeDetector, ScatterPlotComponent, type ScatterPlotComponentProps, VERTICAL_RANGE_PADDING} from "components/Shared";
@@ -26,6 +26,7 @@ type Point3D = {x: number; y: number; z?: number};
 @observer
 export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     private widgetId: string;
+    private readonly disposers: IReactionDisposer[] = [];
     private pointDefaultColor = Colors.GRAY2;
     private opacityOutRange = 0.1;
     private channelBorder: {xMin: number; xMax: number};
@@ -112,28 +113,35 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             }
         }
 
-        autorun(() => {
-            if (this.widgetStore) {
-                const frame = this.widgetStore.effectiveFrame;
-                let progressString = "";
-                const currentData = this.plotData;
-                if (currentData && isFinite(currentData.qProgress) && isFinite(currentData.uProgress)) {
-                    const minProgress = Math.min(currentData.qProgress, currentData.uProgress, currentData.iProgress);
-                    if (minProgress < 1) {
-                        progressString = `[${toFixed(minProgress * 100)}% complete]`;
+        this.disposers.push(
+            autorun(() => {
+                if (this.widgetStore) {
+                    const frame = this.widgetStore.effectiveFrame;
+                    let progressString = "";
+                    const currentData = this.plotData;
+                    if (currentData && isFinite(currentData.qProgress) && isFinite(currentData.uProgress)) {
+                        const minProgress = Math.min(currentData.qProgress, currentData.uProgress, currentData.iProgress);
+                        if (minProgress < 1) {
+                            progressString = `[${toFixed(minProgress * 100)}% complete]`;
+                        }
+                        this.minProgress = minProgress;
                     }
-                    this.minProgress = minProgress;
+                    if (frame) {
+                        const regionId = this.widgetStore.effectiveRegionId;
+                        const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
+                        const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
+                        appStore.widgetsStore.setWidgetTitle(this.widgetId, `Stokes Analysis : ${regionString} ${selectedString} ${progressString}`);
+                    }
+                } else {
+                    appStore.widgetsStore.setWidgetTitle(this.widgetId, `Stokes Analysis: Cursor`);
                 }
-                if (frame) {
-                    const regionId = this.widgetStore.effectiveRegionId;
-                    const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                    const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                    appStore.widgetsStore.setWidgetTitle(this.widgetId, `Stokes Analysis : ${regionString} ${selectedString} ${progressString}`);
-                }
-            } else {
-                appStore.widgetsStore.setWidgetTitle(this.widgetId, `Stokes Analysis: Cursor`);
-            }
-        });
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     @action private onResize = (width: number, height: number) => {

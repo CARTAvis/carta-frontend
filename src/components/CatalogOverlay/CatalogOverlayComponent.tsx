@@ -6,7 +6,7 @@ import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@bluepr
 import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
 import {CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, autorun, computed, IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, FilterableTableComponent, type FilterableTableComponentProps, ResizeDetector} from "components/Shared";
@@ -28,6 +28,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private prevPosition: number = 60;
     private static readonly ExpectedColumnCount: number = 5; // Name, Unit, Type, Display, Description
     private widgetId: string;
+    private readonly disposers: IReactionDisposer[] = [];
 
     private catalogHeaderTableRef: Table2 | undefined = undefined;
     private catalogFileNames: Map<number, string>;
@@ -153,29 +154,36 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
         makeObservable(this);
 
-        autorun(() => {
-            const appStore = AppStore.Instance;
-            const frame = appStore.activeFrame;
-            const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
-            const profileStore = this.profileStore;
+        this.disposers.push(
+            autorun(() => {
+                const appStore = AppStore.Instance;
+                const frame = appStore.activeFrame;
+                const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
+                const profileStore = this.profileStore;
 
-            if (profileStore) {
-                let progressString = "";
-                const fileName = profileStore.catalogInfo.fileInfo.name;
-                const progress = profileStore.progress;
-                if (progress && isFinite(progress) && progress < 1) {
-                    progressString = `[${toFixed(progress * 100)}% complete]`;
-                }
+                if (profileStore) {
+                    let progressString = "";
+                    const fileName = profileStore.catalogInfo.fileInfo.name;
+                    const progress = profileStore.progress;
+                    if (progress && isFinite(progress) && progress < 1) {
+                        progressString = `[${toFixed(progress * 100)}% complete]`;
+                    }
 
-                if (frame && catalogFileIds?.length) {
-                    WidgetsStore.Instance.setWidgetComponentTitle(this.widgetId, `Catalog : ${fileName} ${progressString}`);
+                    if (frame && catalogFileIds?.length) {
+                        WidgetsStore.Instance.setWidgetComponentTitle(this.widgetId, `Catalog : ${fileName} ${progressString}`);
+                    } else {
+                        WidgetsStore.Instance.setWidgetComponentTitle(this.widgetId, `Catalog`);
+                    }
                 } else {
                     WidgetsStore.Instance.setWidgetComponentTitle(this.widgetId, `Catalog`);
                 }
-            } else {
-                WidgetsStore.Instance.setWidgetComponentTitle(this.widgetId, `Catalog`);
-            }
-        });
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     @action private onCatalogDataTableRefUpdated = ref => {

@@ -1,6 +1,6 @@
 import type {OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {action, computed, makeObservable, observable, reaction} from "mobx";
+import {action, computed, IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
 import {PreferenceKeys, RegionId, RegionsType, type SpectralSystem, TelemetryAction} from "enums";
 import {TelemetryService} from "services";
@@ -22,6 +22,8 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     @observable pvCutRegionId: number | null = null;
     @observable previewFullViewWidth: number = 1;
     @observable previewFullViewHeight: number = 1;
+
+    private readonly disposers: IReactionDisposer[] = [];
 
     @computed get regionOptions(): OptionProps[] {
         const appStore = AppStore.Instance;
@@ -205,13 +207,20 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
 
         this.regionIdMap.set(ACTIVE_FILE_ID, RegionId.NONE);
 
-        reaction(
-            () => this.effectiveFrame?.channelValueBounds,
-            channelValueBounds => {
-                if (channelValueBounds) {
-                    this.setSpectralRange(channelValueBounds);
+        this.disposers.push(
+            reaction(
+                () => this.effectiveFrame?.channelValueBounds,
+                channelValueBounds => {
+                    if (channelValueBounds) {
+                        this.setSpectralRange(channelValueBounds);
+                    }
                 }
-            }
+            )
         );
     }
+
+    public dispose = () => {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
+    };
 }

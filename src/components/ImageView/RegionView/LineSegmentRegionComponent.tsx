@@ -48,6 +48,11 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         AppStore.Instance.resetImageRatio();
     }
 
+    componentWillUnmount() {
+        clearTimeout(this.addControlPointTimer);
+        this.addControlPointTimer = undefined;
+    }
+
     private handleContextMenu = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         konvaEvent.evt.preventDefault();
     };

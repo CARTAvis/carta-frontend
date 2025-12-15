@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import type Konva from "konva";
 import * as _ from "lodash";
-import {action, makeObservable, observable, reaction} from "mobx";
+import {action, IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DialogId, ImageViewLayer, RegionMode} from "enums";
@@ -44,6 +44,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     @observable currentCursorPos: Point2D = {x: 0, y: 0};
     @observable private frame: FrameStore;
 
+    private readonly disposers: IReactionDisposer[] = [];
     private stageRef;
     private stageResizeOffset: Point2D;
     private regionStartPoint: Point2D;
@@ -55,7 +56,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private initialPinchZoom: number;
     private initialPinchDistance: number;
     private layerRef = React.createRef<any>();
-    private disposers: Array<() => void> = [];
 
     constructor(props: any) {
         super(props);
@@ -102,6 +102,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         );
     }
 
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
+    }
+
     componentDidMount() {
         const frame = this.frame?.spatialReference ?? this.frame;
         if (frame) {
@@ -132,10 +137,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 }
             }
         }
-    }
-
-    componentWillUnmount() {
-        this.disposers.forEach(dispose => dispose());
     }
 
     updateCursorPos = _.throttle((x: number, y: number) => {

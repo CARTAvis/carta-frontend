@@ -1,7 +1,7 @@
 import * as React from "react";
 import {NonIdealState, Spinner} from "@blueprintjs/core";
 import $ from "jquery";
-import {action, autorun, makeObservable, observable} from "mobx";
+import {action, autorun, IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector} from "components/Shared";
@@ -184,6 +184,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     private ratioIndicatorTimeoutHandle;
     private cachedImageSize: Point2D;
     private cachedGridSize: Point2D;
+    private readonly disposers: IReactionDisposer[] = [];
 
     @observable showRatioIndicator: boolean = false;
 
@@ -209,30 +210,39 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         this.imagePanelRefs = [];
 
         const appStore = AppStore.Instance;
-        autorun(() => {
-            const visibleFrames = appStore.imageViewConfigStore.visibleFrames;
-            if (!visibleFrames.length) {
-                return;
-            }
 
-            const firstFrame = visibleFrames[0];
-            if (!firstFrame) {
-                return;
-            }
+        this.disposers.push(
+            autorun(() => {
+                const visibleFrames = appStore.imageViewConfigStore.visibleFrames;
+                if (!visibleFrames.length) {
+                    return;
+                }
 
-            const imageSize = {x: firstFrame.overlayStore.renderWidth, y: firstFrame.overlayStore.renderHeight};
-            const imageGridSize = {x: appStore.imageViewConfigStore.numImageColumns, y: appStore.imageViewConfigStore.numImageRows};
-            // Compare to cached image size to prevent duplicate events when changing frames
-            const imageSizeChanged = !this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y;
-            const gridSizeChanged = !this.cachedGridSize || this.cachedGridSize.x !== imageGridSize.x || this.cachedGridSize.y !== imageGridSize.y;
-            if (imageSizeChanged || gridSizeChanged) {
-                this.cachedImageSize = imageSize;
-                this.cachedGridSize = imageGridSize;
-                clearTimeout(this.ratioIndicatorTimeoutHandle);
-                this.setRatioIndicatorVisible(true);
-                this.ratioIndicatorTimeoutHandle = setTimeout(() => this.setRatioIndicatorVisible(false), 1000);
-            }
-        });
+                const firstFrame = visibleFrames[0];
+                if (!firstFrame) {
+                    return;
+                }
+
+                const imageSize = {x: firstFrame.overlayStore.renderWidth, y: firstFrame.overlayStore.renderHeight};
+                const imageGridSize = {x: appStore.imageViewConfigStore.numImageColumns, y: appStore.imageViewConfigStore.numImageRows};
+                // Compare to cached image size to prevent duplicate events when changing frames
+                const imageSizeChanged = !this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y;
+                const gridSizeChanged = !this.cachedGridSize || this.cachedGridSize.x !== imageGridSize.x || this.cachedGridSize.y !== imageGridSize.y;
+                if (imageSizeChanged || gridSizeChanged) {
+                    this.cachedImageSize = imageSize;
+                    this.cachedGridSize = imageGridSize;
+                    clearTimeout(this.ratioIndicatorTimeoutHandle);
+                    this.setRatioIndicatorVisible(true);
+                    this.ratioIndicatorTimeoutHandle = setTimeout(() => this.setRatioIndicatorVisible(false), 1000);
+                }
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
+        clearTimeout(this.ratioIndicatorTimeoutHandle);
     }
 
     private collectImagePanelRef = ref => {

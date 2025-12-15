@@ -1,7 +1,7 @@
 import type {NumberRange} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
+import {action, autorun, computed, IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
 import {POLARIZATIONS, RegionId, SpectralSystem, SpectralType, SpectralUnit, SystemType} from "enums";
 import {
@@ -130,6 +130,7 @@ export class FrameStore {
     public spectralSystemsSupported: Array<SpectralSystem> | null = null;
     public spatialTransformAST: AST.Mapping | null = null;
     private cursorMovementHandle: NodeJS.Timeout | undefined = undefined;
+    private readonly disposers: IReactionDisposer[] = [];
 
     public restFreqStore: RestFreqStore;
 
@@ -1435,105 +1436,126 @@ export class FrameStore {
         this.cursorValue = {position: {x: NaN, y: NaN}, channel: 0, value: NaN};
         this.cursorMoving = false;
 
-        reaction(
-            () => this.restFreqStore.restFreqInHz,
-            restFreq => {
-                if (this.restFreqStore.inValidInput || !restFreq || !isFinite(restFreq)) {
-                    return;
-                }
+        this.disposers.push(
+            reaction(
+                () => this.restFreqStore.restFreqInHz,
+                restFreq => {
+                    if (this.restFreqStore.inValidInput || !restFreq || !isFinite(restFreq)) {
+                        return;
+                    }
 
-                if (this.wcsInfo3D) {
-                    AST.set(this.wcsInfo3D, `RestFreq=${restFreq} Hz`);
-                }
-                if (this.spectralFrame) {
-                    AST.set(this.spectralFrame, `RestFreq=${restFreq} Hz`);
-                }
+                    if (this.wcsInfo3D) {
+                        AST.set(this.wcsInfo3D, `RestFreq=${restFreq} Hz`);
+                    }
+                    if (this.spectralFrame) {
+                        AST.set(this.spectralFrame, `RestFreq=${restFreq} Hz`);
+                    }
 
-                if (this.spectralReference) {
-                    const spectralReference = this.spectralReference;
-                    this.clearSpectralReference();
-                    this.setSpectralReference(spectralReference);
-                } else if (this.secondarySpectralImages.length > 0) {
-                    for (const frame of this.secondarySpectralImages) {
-                        frame.clearSpectralReference();
-                        frame.setSpectralReference(this);
+                    if (this.spectralReference) {
+                        const spectralReference = this.spectralReference;
+                        this.clearSpectralReference();
+                        this.setSpectralReference(spectralReference);
+                    } else if (this.secondarySpectralImages.length > 0) {
+                        for (const frame of this.secondarySpectralImages) {
+                            frame.clearSpectralReference();
+                            frame.setSpectralReference(this);
+                        }
                     }
                 }
-            }
+            )
         );
 
-        autorun(() => {
-            const overlaySettings = AppStore.Instance.overlaySettings;
-            const formatStringX = overlaySettings?.numbers?.formatStringX;
-            const formatStyingY = overlaySettings?.numbers?.formatStringY;
-            const explicitSystem = overlaySettings?.global?.explicitSystem;
-            this.updateWcsSystem(formatStringX, formatStyingY, explicitSystem);
-        });
+        this.disposers.push(
+            autorun(() => {
+                const overlaySettings = AppStore.Instance.overlaySettings;
+                const formatStringX = overlaySettings?.numbers?.formatStringX;
+                const formatStyingY = overlaySettings?.numbers?.formatStringY;
+                const explicitSystem = overlaySettings?.global?.explicitSystem;
+                this.updateWcsSystem(formatStringX, formatStyingY, explicitSystem);
+            })
+        );
 
         // requiredFrameViewForRegionRender is a copy of requiredFrameView in non-observable version,
         // to avoid triggering wasted render() in PointRegionComponent/SimpleShapeRegionComponent/LineSegmentRegionComponent
-        autorun(() => {
-            if (this.requiredFrameView) {
-                this.requiredFrameViewForRegionRender = this.requiredFrameView;
-            }
-        });
-
-        autorun(() => {
-            // update zoomLevel when image viewer is available for drawing
-            if (this.isRenderable && this.zoomLevel <= 0) {
-                this.setZoom(this.zoomLevelForFit);
-            }
-        });
-
-        autorun(() => {
-            const type = this.spectralType;
-            const unit = this.spectralUnit;
-            /* eslint-disable @typescript-eslint/no-unused-vars */
-            const specsys = this.spectralSystem;
-            const restFreq = this.restFreqStore.restFreqInHz;
-            /* eslint-enable @typescript-eslint/no-unused-vars */
-            if (this.channelInfo) {
-                if (!type && !unit) {
-                    this.setChannelValues(this.channelInfo.values);
-                } else if (this.isCoordChannel) {
-                    this.setChannelValues(this.channelInfo.indexes);
-                } else {
-                    this.setChannelValues(this.isSpectralPropsEqual ? this.channelInfo.values : this.convertSpectral(this.channelInfo.values));
+        this.disposers.push(
+            autorun(() => {
+                if (this.requiredFrameView) {
+                    this.requiredFrameViewForRegionRender = this.requiredFrameView;
                 }
-            }
-        });
+            })
+        );
 
-        autorun(() => {
-            const typeSecondary = this.spectralTypeSecondary;
-            const unitSecondary = this.spectralUnitSecondary;
-            /* eslint-disable @typescript-eslint/no-unused-vars */
-            const specsys = this.spectralSystem;
-            const restFreq = this.restFreqStore.restFreqInHz;
-            /* eslint-enable @typescript-eslint/no-unused-vars */
-            if (this.channelInfo) {
-                if (!typeSecondary && !unitSecondary) {
-                    this.setChannelSecondaryValues(this.channelInfo.values);
-                } else if (this.isCoordChannelSecondary) {
-                    this.setChannelSecondaryValues(this.channelInfo.indexes);
-                } else {
-                    this.setChannelSecondaryValues(this.isSecondarySpectralPropsEqual ? this.channelInfo.values : this.convertSpectralSecondary(this.channelInfo.values));
+        this.disposers.push(
+            autorun(() => {
+                // update zoomLevel when image viewer is available for drawing
+                if (this.isRenderable && this.zoomLevel <= 0) {
+                    this.setZoom(this.zoomLevelForFit);
                 }
-            }
-        });
+            })
+        );
+
+        this.disposers.push(
+            autorun(() => {
+                const type = this.spectralType;
+                const unit = this.spectralUnit;
+                /* eslint-disable @typescript-eslint/no-unused-vars */
+                const specsys = this.spectralSystem;
+                const restFreq = this.restFreqStore.restFreqInHz;
+                /* eslint-enable @typescript-eslint/no-unused-vars */
+                if (this.channelInfo) {
+                    if (!type && !unit) {
+                        this.setChannelValues(this.channelInfo.values);
+                    } else if (this.isCoordChannel) {
+                        this.setChannelValues(this.channelInfo.indexes);
+                    } else {
+                        this.setChannelValues(this.isSpectralPropsEqual ? this.channelInfo.values : this.convertSpectral(this.channelInfo.values));
+                    }
+                }
+            })
+        );
+
+        this.disposers.push(
+            autorun(() => {
+                const typeSecondary = this.spectralTypeSecondary;
+                const unitSecondary = this.spectralUnitSecondary;
+                /* eslint-disable @typescript-eslint/no-unused-vars */
+                const specsys = this.spectralSystem;
+                const restFreq = this.restFreqStore.restFreqInHz;
+                /* eslint-enable @typescript-eslint/no-unused-vars */
+                if (this.channelInfo) {
+                    if (!typeSecondary && !unitSecondary) {
+                        this.setChannelSecondaryValues(this.channelInfo.values);
+                    } else if (this.isCoordChannelSecondary) {
+                        this.setChannelSecondaryValues(this.channelInfo.indexes);
+                    } else {
+                        this.setChannelSecondaryValues(this.isSecondarySpectralPropsEqual ? this.channelInfo.values : this.convertSpectralSecondary(this.channelInfo.values));
+                    }
+                }
+            })
+        );
 
         // Update the image view raster tiles in channel map mode
-        reaction(
-            () => this.stokes,
-            () => {
-                const channelMapStore = AppStore.Instance.channelMapStore;
-                if (this.requiredFrameView && channelMapStore.channelMapEnabled) {
-                    channelMapStore.handlePolarizationChanged(this);
+        this.disposers.push(
+            reaction(
+                () => this.stokes,
+                () => {
+                    const channelMapStore = AppStore.Instance.channelMapStore;
+                    if (this.requiredFrameView && channelMapStore.channelMapEnabled) {
+                        channelMapStore.handlePolarizationChanged(this);
+                    }
                 }
-            }
+            )
         );
 
         makeObservable(this);
     }
+
+    public dispose = () => {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
+        clearTimeout(this.zoomTimeoutHandler);
+        clearTimeout(this.cursorMovementHandle);
+    };
 
     updateWcsSystem = (formatStringX: string | undefined, formatStyingY: string | undefined, explicitSystem: SystemType | undefined) => {
         if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined) {

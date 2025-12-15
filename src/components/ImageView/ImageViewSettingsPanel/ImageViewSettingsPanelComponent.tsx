@@ -1,7 +1,7 @@
 import * as React from "react";
 import {Button, Classes, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, Position, Switch, Tab, type TabId, Tabs, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
-import {action, autorun, makeObservable, observable} from "mobx";
+import {action, autorun, IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, fontSelect, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
@@ -31,6 +31,7 @@ enum ImageViewSettingsPanelTabs {
 export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps> {
     @observable selectedTab: TabId = ImageViewSettingsPanelTabs.PAN_AND_ZOOM;
     @observable panAndZoomCoord: CoordinateMode = CoordinateMode.World;
+    private readonly disposers: IReactionDisposer[] = [];
 
     @action private setSelectedTab = (tab: TabId) => {
         this.selectedTab = tab;
@@ -44,11 +45,18 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         super(props);
         makeObservable(this);
 
-        autorun(() => {
-            if (!AppStore.Instance.activeFrame?.isPVImage && this.selectedTab === ImageViewSettingsPanelTabs.CONVERSION) {
-                this.selectedTab = ImageViewSettingsPanelTabs.GLOBAL;
-            }
-        });
+        this.disposers.push(
+            autorun(() => {
+                if (!AppStore.Instance.activeFrame?.isPVImage && this.selectedTab === ImageViewSettingsPanelTabs.CONVERSION) {
+                    this.selectedTab = ImageViewSettingsPanelTabs.GLOBAL;
+                }
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {

@@ -1,6 +1,6 @@
 import type {NumberRange, OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {action, autorun, computed, makeObservable, observable, override, reaction} from "mobx";
+import {action, autorun, computed, IReactionDisposer, makeObservable, observable, override, reaction} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {VERTICAL_RANGE_PADDING} from "components/Shared";
@@ -76,6 +76,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     readonly smoothingStore: ProfileSmoothingStore;
     readonly profileSelectionStore: SpectralProfileSelectionStore;
     readonly fittingStore: ProfileFittingStore;
+
+    private readonly disposers: IReactionDisposer[] = [];
 
     /**
      * Set region for the spectral profiler.
@@ -366,58 +368,76 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.profileSelectionStore = new SpectralProfileSelectionStore(this, coordinate);
         this.setMultiProfileIntensityUnit(this.effectiveFrame?.headerUnit);
 
-        reaction(
-            () => this.effectiveFrame,
-            frame => {
-                if (frame) {
-                    const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
-                    if (isMultiProfileActive) {
-                        this.setMultiProfileIntensityUnit(GetIntensityConversion(frame.intensityConfig, this.intensityUnit) ? this.intensityUnit : frame.headerUnit);
+        this.disposers.push(
+            reaction(
+                () => this.effectiveFrame,
+                frame => {
+                    if (frame) {
+                        const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
+                        if (isMultiProfileActive) {
+                            this.setMultiProfileIntensityUnit(GetIntensityConversion(frame.intensityConfig, this.intensityUnit) ? this.intensityUnit : frame.headerUnit);
+                        }
                     }
                 }
-            }
+            )
         );
 
-        reaction(
-            () => this.profileSelectionStore.activeProfileCategory,
-            () => {
-                this.setMultiProfileIntensityUnit(this.intensityOptions[0]);
-            }
-        );
-
-        reaction(
-            () => this.effectiveFrame?.requiredPolarization,
-            polarization => {
-                if (this.effectiveFrame && polarization !== undefined && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear, POLARIZATIONS.Pangle].includes(polarization)) {
-                    this.setMultiProfileIntensityUnit(this.effectiveFrame.headerUnit);
+        this.disposers.push(
+            reaction(
+                () => this.profileSelectionStore.activeProfileCategory,
+                () => {
+                    this.setMultiProfileIntensityUnit(this.intensityOptions[0]);
                 }
-            }
+            )
         );
 
-        reaction(
-            () => this.effectiveFrame?.channelValueBounds,
-            channelValueBounds => {
-                if (channelValueBounds) {
+        this.disposers.push(
+            reaction(
+                () => this.effectiveFrame?.requiredPolarization,
+                polarization => {
+                    if (this.effectiveFrame && polarization !== undefined && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear, POLARIZATIONS.Pangle].includes(polarization)) {
+                        this.setMultiProfileIntensityUnit(this.effectiveFrame.headerUnit);
+                    }
+                }
+            )
+        );
+
+        this.disposers.push(
+            reaction(
+                () => this.effectiveFrame?.channelValueBounds,
+                channelValueBounds => {
+                    if (channelValueBounds) {
+                        this.updateRanges();
+                    }
+                }
+            )
+        );
+
+        this.disposers.push(
+            autorun(() => {
+                if (this.effectiveFrame) {
                     this.updateRanges();
+                    this.selectMomentRegion(RegionId.IMAGE);
                 }
-            }
+            })
         );
-
-        autorun(() => {
-            if (this.effectiveFrame) {
-                this.updateRanges();
-                this.selectMomentRegion(RegionId.IMAGE);
-            }
-        });
 
         // Update boundaries
-        autorun(() => {
-            const currentData = this.plotData;
-            if (currentData) {
-                this.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
-            }
-        });
+        this.disposers.push(
+            autorun(() => {
+                const currentData = this.plotData;
+                if (currentData) {
+                    this.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
+                }
+            })
+        );
     }
+
+    public dispose = () => {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
+        this.profileSelectionStore.dispose?.();
+    };
 
     @computed private get intensityConfig(): IntensityConfig | undefined {
         const frame = this.effectiveFrame;

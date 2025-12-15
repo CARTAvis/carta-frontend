@@ -151,6 +151,11 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return this.interactionMode === InteractionMode.PANNING;
     }
 
+    componentWillUnmount() {
+        clearTimeout(this.pendingClickHandle);
+        this.pendingClickHandle = undefined;
+    }
+
     get zoomMode(): ZoomMode {
         const absDelta = {x: Math.abs(this.selectionBoxEnd.x - this.selectionBoxStart.x), y: Math.abs(this.selectionBoxEnd.y - this.selectionBoxStart.y)};
         if (this.props.selectingMode === LinePlotSelectingMode.LINE) {

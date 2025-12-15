@@ -186,6 +186,13 @@ export class FileInfoComponent extends React.Component<{
         makeObservable(this);
     }
 
+    componentWillUnmount() {
+        clearTimeout(this.clickMatchedTimerStart);
+        clearInterval(this.clickMatchedTimer);
+        this.clickMatchedTimerStart = undefined;
+        this.clickMatchedTimer = undefined;
+    }
+
     private renderInfoTabs = () => {
         const infoTypes = this.props.infoTypes;
         const tabEntries = infoTypes.map(infoType => {

@@ -111,6 +111,10 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         makeObservable(this);
     }
 
+    componentWillUnmount() {
+        clearTimeout(this.pendingClickHandle);
+    }
+
     onPlotRefUpdated = plotRef => {
         this.plotRef = plotRef;
     };

@@ -509,6 +509,14 @@ export class WidgetsStore {
         if (widgets) {
             // remove associated floating settings according current widgetId
             this.removeAssociatedFloatingSetting(widgetId);
+            const store: any = widgets.get(widgetId);
+            if (store && typeof store.dispose === "function") {
+                try {
+                    store.dispose();
+                } catch (err) {
+                    console.error(`Failed to dispose widget store (type=${widgetType}, id=${widgetId})`, err);
+                }
+            }
             widgets.delete(widgetId);
         }
         // remove floating settings according floating settings Id

@@ -62,6 +62,11 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
         return <Button icon={"refresh"} minimal={true} small={true} onClick={handleClick} />;
     };
 
+    componentWillUnmount() {
+        clearTimeout(this.updateValuesTimer);
+        this.updateValuesTimer = undefined;
+    }
+
     render() {
         const twoDimensionBoard = (
             <React.Fragment>

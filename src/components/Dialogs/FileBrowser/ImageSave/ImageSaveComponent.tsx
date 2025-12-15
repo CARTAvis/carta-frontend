@@ -1,7 +1,7 @@
 import * as React from "react";
 import {FormGroup, HTMLSelect, Intent, Label, NonIdealState, type OptionProps, Switch, Text} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {action, autorun, computed, makeObservable} from "mobx";
+import {action, autorun, computed, IReactionDisposer, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
@@ -12,19 +12,28 @@ import "./ImageSaveComponent.scss";
 
 @observer
 export class ImageSaveComponent extends React.Component {
+    private readonly disposers: IReactionDisposer[] = [];
+
     constructor(props: any) {
         super(props);
         makeObservable(this);
 
-        autorun(() => {
-            const appStore = AppStore.Instance;
-            const numChannels = appStore.activeFrame?.numChannels;
-            if ((numChannels !== undefined && numChannels <= 1) || (this.validSaveSpectralRangeStart && this.validSaveSpectralRangeEnd)) {
-                appStore.endFileSaving();
-            } else {
-                appStore.startFileSaving();
-            }
-        });
+        this.disposers.push(
+            autorun(() => {
+                const appStore = AppStore.Instance;
+                const numChannels = appStore.activeFrame?.numChannels;
+                if ((numChannels !== undefined && numChannels <= 1) || (this.validSaveSpectralRangeStart && this.validSaveSpectralRangeEnd)) {
+                    appStore.endFileSaving();
+                } else {
+                    appStore.startFileSaving();
+                }
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     @computed get validSaveSpectralRangeStart() {

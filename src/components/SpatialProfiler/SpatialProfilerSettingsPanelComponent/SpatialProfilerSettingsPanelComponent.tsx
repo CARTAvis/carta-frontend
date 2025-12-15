@@ -1,7 +1,7 @@
 import * as React from "react";
 import {FormGroup, Tab, Tabs} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {autorun} from "mobx";
+import {autorun, IReactionDisposer} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotSettingsPanelComponent, type LinePlotSettingsPanelComponentProps, SafeNumericInput, ScrollShadow, SmoothingSettingsComponent} from "components/Shared";
@@ -19,6 +19,7 @@ const KEYCODE_ENTER = 13;
 export class SpatialProfilerSettingsPanelComponent extends React.Component<WidgetProps> {
     private widgetId: string;
     private floatingSettingsId: string | undefined;
+    private readonly disposers: IReactionDisposer[] = [];
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -55,20 +56,27 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
 
         const appStore = AppStore.Instance;
         // Update widget title when region or coordinate changes
-        autorun(() => {
-            if (this.floatingSettingsId) {
-                if (this.widgetStore) {
-                    const coordinate = this.widgetStore.coordinate;
-                    if (appStore && coordinate) {
-                        const coordinateString = this.widgetStore.isLineOrPolyline ? "" : coordinate.toUpperCase();
-                        const regionString = this.widgetStore.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
-                        appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `${coordinateString} Spatial Profile Settings: ${regionString}`);
+        this.disposers.push(
+            autorun(() => {
+                if (this.floatingSettingsId) {
+                    if (this.widgetStore) {
+                        const coordinate = this.widgetStore.coordinate;
+                        if (appStore && coordinate) {
+                            const coordinateString = this.widgetStore.isLineOrPolyline ? "" : coordinate.toUpperCase();
+                            const regionString = this.widgetStore.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
+                            appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `${coordinateString} Spatial Profile Settings: ${regionString}`);
+                        }
+                    } else {
+                        appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `X Spatial Profile Settings: Cursor`);
                     }
-                } else {
-                    appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `X Spatial Profile Settings: Cursor`);
-                }
             }
-        });
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     handleWcsAxisChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
