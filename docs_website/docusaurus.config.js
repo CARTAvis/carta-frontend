@@ -121,7 +121,7 @@ const config = {
 
     plugins: [
         [
-            "docusaurus-plugin-typedoc-api",
+            "my-docusaurus-plugin-typedoc-api",
             {
                 projectRoot: path.join(__dirname, ".."),
                 packages: [

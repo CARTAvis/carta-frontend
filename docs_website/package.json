@@ -16,18 +16,18 @@
         "checkformat": "npx prettier --check ./api ./docs ./src sidebars.js ./versioned_docs"
     },
     "dependencies": {
-        "@docusaurus/core": "^3.0.1",
-        "@docusaurus/preset-classic": "^3.0.1",
+        "@docusaurus/core": "^3.9.2",
+        "@docusaurus/preset-classic": "^3.9.2",
         "@mdx-js/react": "^3.0.0",
         "clsx": "^2.0.0",
         "docusaurus-lunr-search": "^3.3.0",
-        "docusaurus-plugin-typedoc-api": "^4.0.1",
+        "my-docusaurus-plugin-typedoc-api": "file:/Users/kchou/nmb/docusaurus-plugin-typedoc-api/packages/plugin",
         "prism-react-renderer": "^2.3.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0"
     },
     "devDependencies": {
-        "@docusaurus/module-type-aliases": "^3.0.1",
+        "@docusaurus/module-type-aliases": "^3.9.2",
         "prettier": "3.1.0"
     },
     "browserslist": {
