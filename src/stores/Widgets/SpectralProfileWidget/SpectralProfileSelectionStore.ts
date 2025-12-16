@@ -25,6 +25,8 @@ interface SpectralConfig extends CARTA.SetSpectralRequirements.ISpectralConfig {
 const MAXIMUM_PROFILES = 16;
 
 type Profile = {
+    fileId: number | undefined;
+    regionId: number | null;
     channelValues: number[];
     channelSecondaryValues: number[];
     data: ProcessedSpectralProfile | null | undefined;
@@ -33,7 +35,6 @@ type Profile = {
         image: string | undefined;
         plot: string;
     };
-    comments: string[];
     intensityConfig: IntensityConfig;
     intensityUnit: string | undefined;
 };
@@ -193,12 +194,13 @@ export class SpectralProfileSelectionStore {
             const profileData = regionProfileStoreMap?.getProfile(profileConfig.coordinate, profileConfig.statsType);
             if (frame) {
                 profiles.push({
+                    fileId: profileConfig.fileId,
+                    regionId: profileConfig.regionId,
                     channelValues: frame.channelValues,
                     channelSecondaryValues: frame.channelSecondaryValues,
                     data: profileData,
                     colorKey: profileConfig.colorKey,
                     label: profileConfig.label,
-                    comments: frame.getRegionProperties(profileConfig.regionId ?? NaN),
                     intensityConfig: frame.intensityConfig,
                     intensityUnit: frame.intensityUnit
                 });

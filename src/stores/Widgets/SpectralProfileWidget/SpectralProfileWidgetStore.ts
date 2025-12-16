@@ -14,7 +14,6 @@ import {clamp, genColorFromIndex, getColorForTheme, isAutoColor, pixelToFluxDens
 type XBound = {xMin: number | undefined; xMax: number | undefined};
 type YBound = {yMin: number; yMax: number};
 type DataPoints = Point2D[];
-type Comments = string[];
 export type MultiPlotData = {
     numProfiles: number;
     data: DataPoints[];
@@ -23,7 +22,6 @@ export type MultiPlotData = {
     fittingData: {x: number[]; y: Float32Array | Float64Array | undefined} | undefined;
     colors: (string | undefined)[];
     labels: {image: string | undefined; plot: string}[];
-    comments: Comments[];
     plotName: {image: string; plot: string};
     xMin: number | undefined;
     xMax: number | undefined;
@@ -506,7 +504,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 const profileColor = profileColorMap.get(profile.colorKey ?? "");
                 colors.push(profileColor === undefined ? undefined : getColorForTheme(profileColor));
                 labels.push(profile.label);
-                comments.push(profile.comments);
 
                 const intensityConversion = GetIntensityConversion(profile.intensityConfig, isMultiProfileActive ? this.intensityUnit : profile.intensityUnit);
                 const intensityValues = intensityConversion && profile.data.values ? intensityConversion(profile.data.values) : profile.data.values;
@@ -585,7 +582,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             fittingData,
             colors,
             labels,
-            comments,
             plotName: this.profileSelectionStore.profilesPlotName,
             xMin,
             xMax,
@@ -595,6 +591,22 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             yRms,
             progress: progressSum / numProfiles
         };
+    }
+
+    @computed get profileComments(): string[][] {
+        const profiles = this.profileSelectionStore.profiles;
+        if (!(profiles?.length > 0)) {
+            return [];
+        }
+
+        let comments: string[][] = [];
+        profiles.forEach(profile => {
+            if (profile?.data) {
+                const frame = AppStore.Instance.getFrame(profile.fileId ?? NaN);
+                comments.push(frame ? frame.getRegionProperties(profile.regionId ?? NaN) : []);
+            }
+        });
+        return comments;
     }
 
     @computed get isAutoScaledX() {

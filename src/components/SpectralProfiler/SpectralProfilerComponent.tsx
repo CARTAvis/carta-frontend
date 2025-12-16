@@ -378,7 +378,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                             data: currentPlotData.data[i],
                             type: this.widgetStore.plotType,
                             borderColor: currentPlotData.colors?.[i],
-                            comments: currentPlotData.comments?.[i],
+                            comments: this.widgetStore.profileComments?.[i],
                             order: 1,
                             hidden: smoothingStore.type !== SmoothingType.NONE && !smoothingStore.isOverlayOn,
                             followingData: this.widgetStore.profileNum === 1 && fittingStore.hasResult && smoothingStore.type === SmoothingType.NONE ? ["fittingModel", "fittingResidual"] : undefined
@@ -396,7 +396,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                             borderWidth: currentPlotData.numProfiles > 1 ? this.widgetStore.lineWidth + 1 : smoothingStore.lineWidth,
                             pointRadius: smoothingStore.pointRadius,
                             order: 0,
-                            comments: [...(currentPlotData.comments?.[i] ?? []), ...smoothingStore.comments],
+                            comments: [...(this.widgetStore.profileComments?.[i] ?? []), ...smoothingStore.comments],
                             followingData: this.widgetStore.profileNum === 1 && fittingStore.hasResult ? ["fittingModel", "fittingResidual"] : undefined
                         });
                     }
