@@ -126,7 +126,7 @@ const config = {
 
     plugins: [
         [
-            "my-docusaurus-plugin-typedoc-api",
+            "@loveluthien/docusaurus-plugin-typedoc-api",
             {
                 projectRoot: path.join(__dirname, ".."),
                 packages: [
@@ -150,28 +150,7 @@ const config = {
                 tsconfigName: "tsconfig.json"
             }
         ],
-        require.resolve("docusaurus-lunr-search"),
-        function (context, options) {
-            return {
-                name: 'custom-webpack-plugin',
-                configureWebpack(config, isServer, utils) {
-                    return {
-                        resolve: {
-                            alias: {
-                                react: path.resolve(__dirname, './node_modules/react'),
-                                'react-dom': path.resolve(__dirname, './node_modules/react-dom'),
-                                '@docusaurus/core': path.resolve(__dirname, './node_modules/@docusaurus/core'),
-                                '@docusaurus/theme-common/internal': path.resolve(__dirname, './node_modules/@docusaurus/theme-common/lib/internal.js'),
-                                '@docusaurus/theme-common/Details': path.resolve(__dirname, './node_modules/@docusaurus/theme-common/lib/components/Details/index.js'),
-                                '@docusaurus/theme-common$': path.resolve(__dirname, './node_modules/@docusaurus/theme-common/lib/index.js'),
-                                '@docusaurus/plugin-content-docs/client': path.resolve(__dirname, './node_modules/@docusaurus/plugin-content-docs/lib/client/index.js'),
-                                'react-router-dom': path.resolve(__dirname, './node_modules/react-router-dom'),
-                            },
-                        },
-                    };
-                },
-            };
-        }
+        require.resolve("docusaurus-lunr-search")
     ]
 };
 
