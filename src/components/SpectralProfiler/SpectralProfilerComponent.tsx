@@ -219,7 +219,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             const cursorXUnit = frame.spectralUnitStr;
 
             // Only generate cursor info if we have a valid cursor value
-            if (cursorXValue === null) {
+            if (!cursorXValue) {
                 return profilerInfo;
             }
 

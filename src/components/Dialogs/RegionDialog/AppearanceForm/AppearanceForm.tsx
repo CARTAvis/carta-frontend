@@ -42,10 +42,10 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
 
     private handlePointShapeChange = (item: CARTA.PointAnnotationShape) => {
         const activeFrame = AppStore.Instance.activeFrame;
-        const region = activeFrame?.regionSet.selectedRegion;
-        const frame = activeFrame?.spatialReference ?? activeFrame;
-        (region as PointAnnotationStore).setPointShape(item);
-        if (frame) {
+        if (activeFrame) {
+            const region = activeFrame.regionSet.selectedRegion;
+            const frame = activeFrame.spatialReference ?? activeFrame;
+            (region as PointAnnotationStore).setPointShape(item);
             frame.pointShapeCache = item;
         }
     };

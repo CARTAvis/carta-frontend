@@ -74,7 +74,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
     @computed get widgetStore(): CatalogWidgetStore | undefined {
         const catalogFileId = this.catalogFileId;
-        const catalogWidgetStoreId = catalogFileId ? CatalogStore.Instance.catalogWidgets.get(catalogFileId) : undefined;
+        const catalogWidgetStoreId = catalogFileId !== undefined ? CatalogStore.Instance.catalogWidgets.get(catalogFileId) : undefined;
         return catalogWidgetStoreId ? WidgetsStore.Instance.catalogWidgets.get(catalogWidgetStoreId) : undefined;
     }
 
@@ -849,10 +849,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
     private getCatalogShape = (shape: CatalogOverlayShape) => {
         const widgetStore = this.widgetStore;
-        if (!widgetStore) {
-            return <Icon icon="circle" color={Colors.TURQUOISE3} />;
-        }
-        let color = widgetStore.catalogColor;
+        const color = widgetStore?.catalogColor ?? Colors.TURQUOISE3;
         switch (shape) {
             case CatalogOverlayShape.CIRCLE_LINED:
                 return <Icon icon="circle" color={color} />;

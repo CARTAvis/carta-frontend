@@ -73,12 +73,7 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
                 inputElement.value = roundValue.toString();
             }
         }
-        if (
-            this.props.onValueChange &&
-            isFinite(valueAsNumber) &&
-            (this.props.min === undefined || !isFinite(this.props.min) || this.props.min <= valueAsNumber) &&
-            (this.props.max === undefined || !isFinite(this.props.max) || this.props.max >= valueAsNumber)
-        ) {
+        if (this.props.onValueChange && isFinite(valueAsNumber) && (!this.props.min || !isFinite(this.props.min) || this.props.min <= valueAsNumber) && (!this.props.max || !isFinite(this.props.max) || this.props.max >= valueAsNumber)) {
             this.props.onValueChange(valueAsNumber, valueAsString, inputElement);
             this.setValueString(valueAsString);
         }

@@ -70,7 +70,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             const firstBinCenter = histogram.firstBinCenter;
             const binWidth = histogram.binWidth;
 
-            if (!bins || bins.length === 0 || firstBinCenter == null || binWidth == null) {
+            if (!bins || bins.length === 0 || !firstBinCenter || !binWidth) {
                 return null;
             }
 

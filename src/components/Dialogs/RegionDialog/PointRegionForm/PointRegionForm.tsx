@@ -45,30 +45,24 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
     };
 
     private handleCenterWCSXChange = (wcsString: string): boolean => {
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX)) {
-            const centerWCS = this.centerWCS;
-            if (centerWCS) {
-                const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: centerWCS.y});
-                const existingValue = this.props.region.center.x;
-                if (newPoint && isFinite(newPoint.x) && !closeTo(newPoint.x, existingValue, PointRegionForm.REGION_PIXEL_EPS)) {
-                    this.props.region.setCenter(newPoint);
-                    return true;
-                }
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeX) && this.centerWCS) {
+            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.centerWCS.y});
+            const existingValue = this.props.region.center.x;
+            if (newPoint && isFinite(newPoint.x) && !closeTo(newPoint.x, existingValue, PointRegionForm.REGION_PIXEL_EPS)) {
+                this.props.region.setCenter(newPoint);
+                return true;
             }
         }
         return false;
     };
 
     private handleCenterWCSYChange = (wcsString: string): boolean => {
-        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY)) {
-            const centerWCS = this.centerWCS;
-            if (centerWCS) {
-                const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: centerWCS.x, y: wcsString});
-                const existingValue = this.props.region.center.y;
-                if (newPoint && isFinite(newPoint.y) && !closeTo(newPoint.y, existingValue, PointRegionForm.REGION_PIXEL_EPS)) {
-                    this.props.region.setCenter(newPoint);
-                    return true;
-                }
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlaySettings.numbers.formatTypeY) && this.centerWCS) {
+            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.centerWCS.x, y: wcsString});
+            const existingValue = this.props.region.center.y;
+            if (newPoint && isFinite(newPoint.y) && !closeTo(newPoint.y, existingValue, PointRegionForm.REGION_PIXEL_EPS)) {
+                this.props.region.setCenter(newPoint);
+                return true;
             }
         }
         return false;
