@@ -96,7 +96,6 @@ export class ContourGeneratorPanelComponent extends React.Component<{
     @observable enteredStepValue: number | undefined;
     @observable multiplierValue: number = 1;
 
-
     get startValue(): number {
         const contourHistogram = this.props.frame.renderConfig.contourHistogram;
         if (this.enteredStartValue === undefined && contourHistogram.mean && contourHistogram.stdDev && contourHistogram.stdDev > 0) {
@@ -105,7 +104,6 @@ export class ContourGeneratorPanelComponent extends React.Component<{
             return this.enteredStartValue ?? 0;
         }
     }
-
 
     get stepValue(): number {
         const contourHistogram = this.props.frame.renderConfig.contourHistogram;
@@ -223,7 +221,6 @@ export class ContourGeneratorPanelComponent extends React.Component<{
     @observable enteredSigmaValue: number | undefined;
     @observable sigmaLevels: number[] = [-5, 5, 9, 13, 17];
 
-
     get meanValue(): number {
         const contourHistogram = this.props.frame.renderConfig.contourHistogram;
         if (this.enteredMeanValue === undefined && contourHistogram.stdDev && contourHistogram.stdDev > 0) {
@@ -232,7 +229,6 @@ export class ContourGeneratorPanelComponent extends React.Component<{
             return this.enteredMeanValue ?? NaN;
         }
     }
-
 
     get sigmaValue(): number {
         const contourHistogram = this.props.frame.renderConfig.contourHistogram;
