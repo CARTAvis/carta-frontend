@@ -3,7 +3,7 @@ import SplitPane, {Pane} from "react-split-pane";
 import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay2, Popover, Position, Spinner, Switch, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
 import {type CARTA} from "carta-protobuf";
-import {action, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {FilterableTableComponent, type FilterableTableComponentProps, ResizeDetector, SafeNumericInput} from "components/Shared";
@@ -44,12 +44,13 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
+        this.widgetId = props.id;
     }
 
-    get widgetStore(): SpectralLineQueryWidgetStore {
+    @computed get widgetStore(): SpectralLineQueryWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.spectralLineQueryWidgets) {
-            const widgetStore = widgetsStore.spectralLineQueryWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.spectralLineQueryWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -108,7 +109,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         ev.currentTarget.value = existingValue;
     };
 
-    @action setHeaderTableColumnWidts(vals: Array<number>) {
+    @action setHeaderTableColumnWidths(vals: Array<number>) {
         this.headerTableColumnWidths = vals;
     }
 
@@ -389,7 +390,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             },
             disableSort: false,
             updateColumnFilter: widgetStore.setColumnFilter,
-            columnWidths: widgetStore.resultTableColumnWidths?.filter((width): width is number => width != null || width !== undefined),
+            columnWidths: widgetStore.resultTableColumnWidths?.filter((width): width is number => width !== undefined),
             updateTableColumnWidth: widgetStore.setResultTableColumnWidth,
             tableHeaders: widgetStore.columnHeaders,
             applyFilterWithEnter: this.handleFilter

@@ -51,6 +51,7 @@ export class FileBrowserStore {
     @observable selectedTab: TabId = FileInfoType.IMAGE_FILE;
     @observable loadingList: boolean = false;
     @observable isImportingRegions: boolean = false;
+    @observable hasReceivedImportRegionAck = false;
     @observable extendedLoading: boolean = false;
     @observable loadingInfo: boolean = false;
     @observable fileInfoResp: boolean = false;
@@ -108,6 +109,10 @@ export class FileBrowserStore {
 
     @action setImportingRegions = (isImportingRegions: boolean) => {
         this.isImportingRegions = isImportingRegions;
+    };
+
+    @action setHasReceivedImportRegionAck = (hasReceivedImportRegionAck: boolean) => {
+        this.hasReceivedImportRegionAck = hasReceivedImportRegionAck;
     };
 
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
@@ -688,6 +693,7 @@ export class FileBrowserStore {
         this.clearExtendedDelayTimer(true);
         this.isLoadingDialogOpen = false;
         this.updateLoadingState(0, 0, 0);
+        this.hasReceivedImportRegionAck = false;
     };
 
     @action cancelRequestingFileList = () => {

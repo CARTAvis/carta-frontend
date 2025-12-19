@@ -6,7 +6,7 @@ import {CatalogWebGLService} from "services";
 import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {type CatalogWidgetStore} from "stores/Widgets";
-import {minMaxArray} from "utilities";
+import {minMaxArray, setAstSystem} from "utilities";
 
 type CatalogOverlayCoords = {
     x: Float32Array;
@@ -311,26 +311,18 @@ export class CatalogStore {
 
     private static TransformCatalogData(xWcsData: Array<number>, yWcsData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType): {xImageCoords: Float64Array; yImageCoords: Float64Array} {
         if (xWcsData?.length === yWcsData?.length && xWcsData?.length > 0) {
+            const overlay = AppStore.Instance.overlaySettings;
             const N = xWcsData.length;
 
             const xFraction = CatalogStore.GetFractionFromUnit(xUnit.toLocaleLowerCase());
             const yFraction = CatalogStore.GetFractionFromUnit(yUnit.toLocaleLowerCase());
 
             const wcsCopy = AST.copy(wcsInfo);
-            if (wcsCopy !== 0 && AppStore.Instance.overlaySettings.isImgCoordinates) {
+            if (wcsCopy !== 0 && overlay.isImgCoordinates) {
                 AST.setI(wcsCopy, "Current", 2);
             }
-            const system = "System=" + catalogFrame;
-            AST.set(wcsCopy, system);
-            if (catalogFrame === CatalogSystemType.FK4) {
-                AST.set(wcsCopy, "Epoch=B1950");
-                AST.set(wcsCopy, "Equinox=1950");
-            }
 
-            if (catalogFrame === CatalogSystemType.FK5) {
-                AST.set(wcsCopy, "Epoch=J2000");
-                AST.set(wcsCopy, "Equinox=2000");
-            }
+            setAstSystem(wcsCopy, catalogFrame, overlay.global);
 
             const xWCSValues = new Float64Array(N);
             const yWCSValues = new Float64Array(N);

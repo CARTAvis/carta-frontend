@@ -4,16 +4,16 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import type {Tick} from "chart.js";
 import * as _ from "lodash";
-import {action, autorun, makeObservable, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent, RegionSelectorComponent, ResizeDetector, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {HelpType, PlotType, POLARIZATIONS, RegionId, SmoothingType, TickType} from "enums";
 import {type Point2D} from "models";
-import {AppStore, ASTSettingsString, type DefaultWidgetConfig, type SpatialProfileStore, type WidgetProps, WidgetsStore} from "stores";
+import {AppStore, type DefaultWidgetConfig, type SpatialProfileStore, type WidgetProps, WidgetsStore} from "stores";
 import {type FrameStore} from "stores/Frame";
 import {SpatialProfileWidgetStore} from "stores/Widgets";
-import {binarySearchByX, clamp, formattedExponential, getColorForTheme, toFixed, transformPoint} from "utilities";
+import {ASTSettingsString, binarySearchByX, clamp, formattedExponential, getColorForTheme, setAstStringSystem, toFixed, transformPoint} from "utilities";
 
 import {type MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
@@ -48,7 +48,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     @observable autoScaleHorizontalMin: number = 0;
     @observable autoScaleHorizontalMax: number = 1;
 
-    get widgetStore(): SpatialProfileWidgetStore {
+    @computed get widgetStore(): SpatialProfileWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.spatialProfileWidgets) {
             const widgetStore = widgetsStore.spatialProfileWidgets.get(this.widgetId);
@@ -60,7 +60,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return new SpatialProfileWidgetStore();
     }
 
-    get profileStore(): SpatialProfileStore | undefined {
+    @computed get profileStore(): SpatialProfileStore | undefined {
         const widgetStore = this.widgetStore;
         if (widgetStore.effectiveFrame) {
             const profileKey = `${widgetStore.effectiveFrame.frameInfo.fileId}-${widgetStore.effectiveRegionId}`;
@@ -69,7 +69,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return undefined;
     }
 
-    get frame(): FrameStore | undefined {
+    @computed get frame(): FrameStore | undefined {
         if (this.widgetStore) {
             return AppStore.Instance.getFrame(this.widgetStore.fileId) || undefined;
         } else {
@@ -77,7 +77,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
     }
 
-    get plotData(): {
+    @computed get plotData(): {
         values: Array<Point2D>;
         fullResolutionValues: Array<Point2D>;
         smoothingValues: Array<Point2D>;
@@ -279,7 +279,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
     }
 
-    get exportHeader(): string[] {
+    @computed get exportHeader(): string[] {
         const headerString: string[] = [];
         if (this.widgetStore.effectiveRegion && this.widgetStore.effectiveFrame && this.widgetStore.effectiveRegionId !== null) {
             headerString.push(...this.widgetStore.effectiveFrame.getRegionProperties(this.widgetStore.effectiveRegionId));
@@ -288,7 +288,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     }
 
     // displaying offset/distance in the x axis for line and polyline regions
-    get lineAxis(): {label: string; min: number; max: number; unit: string} | null {
+    @computed get lineAxis(): {label: string; min: number; max: number; unit: string} | null {
         const coordinateData = this.profileStore?.getProfile(this.widgetStore.fullCoordinate);
         if (coordinateData?.lineAxis && this.widgetStore.isLineOrPolyline) {
             const lineAxis = coordinateData.lineAxis;
@@ -299,14 +299,14 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    get nearestCursorPoint(): Point2D | null {
+    @computed get nearestCursorPoint(): Point2D | null {
         if (this.widgetStore.isMouseMoveIntoLinePlots && this.plotData) {
             return binarySearchByX(this.plotData.values, this.widgetStore.cursorX)?.point ?? null;
         }
         return null;
     }
 
-    get pointInfo(): {
+    @computed get pointInfo(): {
         posImageSpace: Point2D;
         posWCS: any;
         infoWCS: any;
@@ -316,7 +316,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             if (this.nearestCursorPoint && this.profileStore && this.frame) {
                 const y = this.profileStore.y;
                 const x = this.profileStore.x;
-                if (y !== null && y !== undefined && x !== null && x !== undefined) {
+                if (y != null && x != null) {
                     const pixelPoint = this.widgetStore.isXProfile ? {x: this.nearestCursorPoint.x, y} : {x, y: this.nearestCursorPoint.x};
                     return this.frame.getCursorInfo(pixelPoint);
                 }
@@ -401,7 +401,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
 
         const astString = new ASTSettingsString();
-        astString.add("System", AppStore.Instance.overlaySettings.global.explicitSystem);
+        const global = AppStore.Instance.overlaySettings.global;
+        setAstStringSystem(astString, global.explicitSystem, global);
 
         if (this.widgetStore.isXProfile && this.profileStore?.y != null) {
             for (let i = 0; i < ticks.length; i++) {
@@ -435,7 +436,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
         const pointInfoPrecision = this.widgetStore.isXProfile ? this.pointInfo?.precision.x : this.pointInfo?.precision.y;
         // Skip lists with no more decimals than pointInfo
-        if (pointInfoPrecision == null || this.cachedFormattedCoordinates[0].length - decimalIndex - 1 <= pointInfoPrecision) {
+        if (pointInfoPrecision === undefined || this.cachedFormattedCoordinates[0].length - decimalIndex - 1 <= pointInfoPrecision) {
             return;
         }
         // Start trimming from the next digit of pointInfo to avoid offset between pointInfo and upper wcs axis value

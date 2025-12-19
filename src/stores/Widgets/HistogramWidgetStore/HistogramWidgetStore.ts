@@ -161,7 +161,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.resetNumBins();
     };
 
-    resetBounds = () => {
+    @action resetBounds = () => {
         if (this.cachedMinPix === undefined) {
             this.currentMinPix = this.effectiveFrame?.renderConfig.histogramMin;
         } else {
@@ -175,7 +175,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         }
     };
 
-    resetNumBins = () => {
+    @action resetNumBins = () => {
         if (this.cachedNumBins === undefined) {
             this.currentNumBins = this.effectiveFrame?.renderConfig.histogram?.numBins;
         } else {

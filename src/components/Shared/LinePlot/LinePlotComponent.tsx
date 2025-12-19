@@ -211,7 +211,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     private getPixelForValueX(value: number) {
-        if (!this.chartArea || this.props.xMin === undefined || this.props.xMax === undefined) {
+        if (!this.chartArea || !this.props.xMin || !this.props.xMax) {
             return undefined;
         }
         const fraction = (value - this.props.xMin) / (this.props.xMax - this.props.xMin);
@@ -219,7 +219,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     private getPixelForValueY(value: number, logScale: boolean = false) {
-        if (!this.chartArea || this.props.yMin === undefined || this.props.yMax === undefined) {
+        if (!this.chartArea || !this.props.yMin || !this.props.yMax) {
             return undefined;
         }
         let fraction;
@@ -745,7 +745,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         const chartArea = this.chartArea;
         const thickness1 = this.getPixelForValueY(marker.value - marker.width / 2.0, this.props.logY);
         const thickness2 = this.getPixelForValueY(marker.value + marker.width / 2.0, this.props.logY);
-        if (thickness1 === undefined || thickness2 === undefined) {
+        if (!thickness1 || !thickness2) {
             return undefined;
         }
         const thickness = thickness1 - thickness2;
@@ -1011,10 +1011,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 const xMax = this.getPixelForValueX(box.boundary.xMax);
                 const yMin = this.getPixelForValueY(box.boundary.yMin);
                 const yMax = this.getPixelForValueY(box.boundary.yMax);
-                if (xMin === undefined || xMax === undefined || yMin === undefined || yMax === undefined) {
-                    continue;
-                }
-                if (xMin > chartArea.right || xMax < chartArea.left || yMin < chartArea.top || yMax > chartArea.bottom) {
+
+                if (!xMin || !xMax || !yMin || !yMax || xMin > chartArea.right || xMax < chartArea.left || yMin < chartArea.top || yMax > chartArea.bottom) {
                     continue;
                 }
                 const xStart = Math.max(xMin, chartArea.left);

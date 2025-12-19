@@ -2,7 +2,7 @@ import * as React from "react";
 import {Alignment, Button, FormGroup, HTMLSelect, MenuDivider, MenuItem, PopoverPosition, Tab, Tabs, Text} from "@blueprintjs/core";
 import {type ItemRendererProps, Select} from "@blueprintjs/select";
 import classNames from "classnames";
-import {makeObservable} from "mobx";
+import {computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent} from "components/Shared";
@@ -17,6 +17,8 @@ const FILENAME_END_LEN = 15;
 
 @observer
 export class LayerListSettingsPanelComponent extends React.Component<WidgetProps> {
+    private widgetId: string;
+
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "layer-list-settings",
@@ -33,10 +35,10 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
         };
     }
 
-    get widgetStore(): LayerListWidgetStore | null {
+    @computed get widgetStore(): LayerListWidgetStore | null {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.layerListWidgets) {
-            const widgetStore = widgetsStore.layerListWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.layerListWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -48,13 +50,11 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
     constructor(props) {
         super(props);
         makeObservable(this);
+        this.widgetId = props.id;
     }
 
     private renderFrameOptions = (val: number, itemProps: ItemRendererProps) => {
-        if (!this.widgetStore) {
-            return null;
-        }
-        const option = this.widgetStore.restFreqFrameOptions.find(option => option.frameIndex === val);
+        const option = this.widgetStore?.restFreqFrameOptions.find(option => option.frameIndex === val);
         return <MenuItem key={option?.frameIndex} text={option?.label} disabled={option?.disable} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
@@ -70,8 +70,8 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                     selectAllOnFocus={true}
                     onValueChanged={val => {
                         restFreqStore.setCustomVal(val);
-                        if (AppStore.Instance.frameNum <= 10 && this.widgetStore) {
-                            this.widgetStore.resetSelectedFrameIndex();
+                        if (AppStore.Instance.frameNum <= 10) {
+                            this.widgetStore?.resetSelectedFrameIndex();
                         }
                     }}
                     onValueCleared={restFreqStore.restoreDefaults}

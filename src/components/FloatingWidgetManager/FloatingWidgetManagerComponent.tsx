@@ -50,25 +50,25 @@ export class FloatingWidgetManagerComponent extends React.Component {
         switch (widget.type) {
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
                 // remove widget component only
-                if (widget.componentId) {
+                if (widget.componentId !== undefined) {
                     widgetsStore.removeFloatingWidgetComponent(widget.componentId);
                     CatalogStore.Instance.catalogProfiles.delete(widget.componentId);
                 }
                 break;
             case CatalogPlotComponent.WIDGET_CONFIG.type:
-                if (widget.componentId) {
+                if (widget.componentId !== undefined) {
                     widgetsStore.removeFloatingWidgetComponent(widget.componentId);
                     CatalogStore.Instance.clearCatalogPlotsByComponentId(widget.componentId);
                 }
                 break;
             case LayerListSettingsPanelComponent.WIDGET_CONFIG.type:
-                if (widget.parentId) {
+                if (widget.parentId !== undefined) {
                     widgetsStore.layerListWidgets.get(widget.parentId)?.resetSelectedFrameIndex();
                 }
                 widgetsStore.removeFloatingWidget(widget.id);
                 break;
             case PvPreviewComponent.WIDGET_CONFIG.type:
-                if (widget.parentId) {
+                if (widget.parentId !== undefined) {
                     widgetsStore.pvGeneratorWidgets.get(widget.parentId)?.removePreviewFrame(parseInt(widget.parentId.split("-")[2]));
                 }
                 widgetsStore.removeFloatingWidget(widget.id);

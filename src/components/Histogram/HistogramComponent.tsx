@@ -2,7 +2,7 @@ import * as React from "react";
 import {NonIdealState} from "@blueprintjs/core";
 import {type CARTA} from "carta-protobuf";
 import * as _ from "lodash";
-import {autorun, makeObservable} from "mobx";
+import {autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
@@ -50,7 +50,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         return new HistogramWidgetStore();
     }
 
-    get isTargetData(): boolean {
+    @computed get isTargetData(): boolean {
         const regionHistogramData = this.getRegionHistogramData();
         if (!regionHistogramData || !regionHistogramData.config) {
             return false;
@@ -69,7 +69,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         );
     }
 
-    get histogramData(): CARTA.IHistogram | null {
+    @computed get histogramData(): CARTA.IHistogram | null {
         const regionHistogramData = this.getRegionHistogramData();
         return regionHistogramData?.histograms ?? null;
     }
@@ -122,7 +122,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    get exportHeaders(): string[] {
+    @computed get exportHeaders(): string[] {
         const headerString: string[] = [];
 
         // region info
@@ -176,15 +176,9 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                     }
                 }
                 const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                const widgetId = this.widgetId;
-                if (widgetId) {
-                    appStore.widgetsStore.setWidgetTitle(widgetId, `Histogram: ${regionString} ${selectedString}`);
-                }
+                appStore.widgetsStore.setWidgetTitle(this.widgetId, `Histogram: ${regionString} ${selectedString}`);
             } else {
-                const widgetId = this.widgetId;
-                if (widgetId) {
-                    appStore.widgetsStore.setWidgetTitle(widgetId, `Histogram`);
-                }
+                appStore.widgetsStore.setWidgetTitle(this.widgetId, `Histogram`);
             }
             const widgetStore = this.widgetStore;
             if (widgetStore) {
@@ -247,11 +241,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         const appStore = AppStore.Instance;
 
         const frameMap = appStore.regionHistograms.get(fileId);
-        if (!frameMap) {
-            return null;
-        }
-
-        if (regionId === null) {
+        if (!frameMap || regionId === null) {
             return null;
         }
 

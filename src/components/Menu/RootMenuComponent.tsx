@@ -71,12 +71,14 @@ export class RootMenuComponent extends React.Component {
                 </MenuItem>
                 {restWidgets.map(widgetType => {
                     const widgetConfig = cartaWidgets.get(widgetType);
-                    if (!widgetConfig) {
-                        return null;
-                    }
                     const trimmedStr = widgetType.replace(/\s+/g, "");
                     return (
-                        <MenuItem key={`${trimmedStr}Menu`} text={widgetType} icon={widgetConfig.isCustomIcon ? <CustomIcon icon={widgetConfig.icon as CustomIconName} /> : (widgetConfig.icon as IconName)} onClick={widgetConfig.onClick} />
+                        <MenuItem
+                            key={`${trimmedStr}Menu`}
+                            text={widgetType}
+                            icon={widgetConfig?.isCustomIcon ? <CustomIcon icon={widgetConfig.icon as CustomIconName} /> : (widgetConfig?.icon as IconName)}
+                            onClick={widgetConfig?.onClick}
+                        />
                     );
                 })}
             </Menu>
@@ -208,13 +210,9 @@ export class RootMenuComponent extends React.Component {
                         if (url.protocol.startsWith("file")) {
                             const socketUrl = url.searchParams.get("socketUrl");
                             const token = url.searchParams.get("token");
-                            if (socketUrl) {
-                                const httpUrl = socketUrl.replace("ws", "http");
-                                const finalUrl = `${httpUrl}?token=${token}`;
-                                await copyToClipboard(finalUrl);
-                            } else {
-                                await copyToClipboard(document.URL);
-                            }
+                            const httpUrl = socketUrl?.replace("ws", "http");
+                            const finalUrl = `${httpUrl}?token=${token}`;
+                            await copyToClipboard(finalUrl);
                         } else {
                             await copyToClipboard(document.URL);
                         }
@@ -374,9 +372,8 @@ export class RootMenuComponent extends React.Component {
         }
 
         const tilesLoading = appStore.tileService.remainingTiles > 0;
-        const contoursLoading = appStore.activeFrame && typeof appStore.activeFrame.contourProgress === "number" && appStore.activeFrame.contourProgress >= 0 && appStore.activeFrame.contourProgress < 1;
-        const vectorOverlayLoading =
-            appStore.activeFrame && typeof appStore.activeFrame.vectorOverlayStore?.progress === "number" && appStore.activeFrame.vectorOverlayStore.progress >= 0 && appStore.activeFrame.vectorOverlayStore.progress < 1;
+        const contoursLoading = appStore.activeFrame && appStore.activeFrame.contourProgress >= 0 && appStore.activeFrame.contourProgress < 1;
+        const vectorOverlayLoading = appStore.activeFrame && appStore.activeFrame.vectorOverlayStore.progress >= 0 && appStore.activeFrame.vectorOverlayStore.progress < 1;
         let loadingTooltipFragment;
         const loadingIndicatorClass = "contour-loading-icon";
         let showLoadingIndicator = false;

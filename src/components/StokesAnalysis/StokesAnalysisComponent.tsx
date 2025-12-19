@@ -3,7 +3,7 @@ import {Colors, NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import type {ChartArea} from "chart.js";
 import * as _ from "lodash";
-import {action, autorun, makeObservable, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent, ResizeDetector, ScatterPlotComponent, type ScatterPlotComponentProps, VERTICAL_RANGE_PADDING} from "components/Shared";
@@ -54,7 +54,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     @observable width: number = 520;
     @observable height: number = 650;
 
-    get widgetStore(): StokesAnalysisWidgetStore {
+    @computed get widgetStore(): StokesAnalysisWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.stokesAnalysisWidgets) {
             const widgetStore = widgetsStore.stokesAnalysisWidgets.get(this.widgetId);
@@ -66,7 +66,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return new StokesAnalysisWidgetStore();
     }
 
-    get profileStore(): SpectralProfileStore | null {
+    @computed get profileStore(): SpectralProfileStore | null {
         const appStore = AppStore.Instance;
         if (this.widgetStore.effectiveFrame) {
             const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
@@ -79,7 +79,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    get exportHeaders(): string[] {
+    @computed get exportHeaders(): string[] {
         const headerString: string[] = [];
         const regionId = this.widgetStore.effectiveRegionId;
         if (regionId !== null) {
@@ -89,7 +89,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return headerString;
     }
 
-    get exportQUScatterHeaders(): string[] {
+    @computed get exportQUScatterHeaders(): string[] {
         return this.widgetStore.smoothingStore.type === SmoothingType.NONE ? this.exportHeaders : this.exportHeaders.concat(this.widgetStore.smoothingStore.comments);
     }
 
@@ -160,7 +160,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         }
     }
 
-    get currentChannelValue(): number | null {
+    @computed get currentChannelValue(): number | null {
         const frame = this.widgetStore.effectiveFrame;
         if (!frame || !frame.channelValues) {
             return null;
@@ -172,7 +172,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return frame.isCoordChannel ? channel : frame.channelValues[channel];
     }
 
-    get requiredChannelValue(): number | null {
+    @computed get requiredChannelValue(): number | null {
         const frame = this.widgetStore.effectiveFrame;
         if (!frame || !frame.channelValues) {
             return null;
@@ -675,7 +675,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return indicator;
     }
 
-    get plotData(): {
+    @computed get plotData(): {
         qValues: {dataset: Array<Point2D>; border: Border};
         uValues: {dataset: Array<Point2D>; border: Border};
         piValues: {dataset: Array<Point2D>; border: Border};

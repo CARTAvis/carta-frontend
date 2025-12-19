@@ -98,17 +98,18 @@ export class ContourGeneratorPanelComponent extends React.Component<{
     @observable multiplierValue: number = 1;
 
     get startValue(): number {
-        if (this.enteredStartValue === undefined && this.props.frame?.renderConfig?.contourHistogram?.stdDev && this.props.frame.renderConfig.contourHistogram.stdDev > 0) {
-            const mean = this.props.frame.renderConfig.contourHistogram.mean ?? 0;
-            return mean + 5.0 * this.props.frame.renderConfig.contourHistogram.stdDev;
+        const contourHistogram = this.props.frame.renderConfig.contourHistogram;
+        if (this.enteredStartValue === undefined && contourHistogram.mean && contourHistogram.stdDev && contourHistogram.stdDev > 0) {
+            return contourHistogram.mean + 5.0 * contourHistogram.stdDev;
         } else {
             return this.enteredStartValue ?? 0;
         }
     }
 
     get stepValue(): number {
-        if (this.enteredStepValue === undefined && this.props.frame?.renderConfig?.contourHistogram?.stdDev && this.props.frame.renderConfig.contourHistogram.stdDev > 0) {
-            return 4.0 * this.props.frame.renderConfig.contourHistogram.stdDev;
+        const contourHistogram = this.props.frame.renderConfig.contourHistogram;
+        if (this.enteredStepValue === undefined && contourHistogram.stdDev && contourHistogram.stdDev > 0) {
+            return 4.0 * contourHistogram.stdDev;
         } else {
             return this.enteredStepValue ?? 1;
         }
@@ -222,18 +223,20 @@ export class ContourGeneratorPanelComponent extends React.Component<{
     @observable sigmaLevels: number[] = [-5, 5, 9, 13, 17];
 
     get meanValue(): number {
-        if (this.enteredMeanValue === undefined && this.props.frame?.renderConfig?.contourHistogram?.stdDev && this.props.frame.renderConfig.contourHistogram.stdDev > 0) {
-            return this.props.frame.renderConfig.contourHistogram.mean ?? 0;
+        const contourHistogram = this.props.frame.renderConfig.contourHistogram;
+        if (this.enteredMeanValue === undefined && contourHistogram.stdDev && contourHistogram.stdDev > 0) {
+            return contourHistogram.mean ?? NaN;
         } else {
-            return this.enteredMeanValue ?? 0;
+            return this.enteredMeanValue ?? NaN;
         }
     }
 
     get sigmaValue(): number {
-        if (this.enteredSigmaValue === undefined && this.props.frame?.renderConfig?.contourHistogram?.stdDev && this.props.frame.renderConfig.contourHistogram.stdDev > 0) {
-            return this.props.frame.renderConfig.contourHistogram.stdDev;
+        const contourHistogram = this.props.frame.renderConfig.contourHistogram;
+        if (this.enteredSigmaValue === undefined && contourHistogram.stdDev && contourHistogram.stdDev > 0) {
+            return contourHistogram.stdDev;
         } else {
-            return this.enteredSigmaValue ?? 1;
+            return this.enteredSigmaValue ?? NaN;
         }
     }
 
