@@ -396,7 +396,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             },
             disableSort: false,
             updateColumnFilter: widgetStore.setColumnFilter,
-            columnWidths: widgetStore.resultTableColumnWidths?.filter((width): width is number => width != null || width !== undefined),
+            columnWidths: widgetStore.resultTableColumnWidths?.filter((width): width is number => width !== undefined),
             updateTableColumnWidth: widgetStore.setResultTableColumnWidth,
             tableHeaders: widgetStore.columnHeaders,
             applyFilterWithEnter: this.handleFilter

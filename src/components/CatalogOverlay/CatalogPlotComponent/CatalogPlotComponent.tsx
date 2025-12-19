@@ -464,7 +464,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     private onDoubleClick = () => {
         const widgetsStore = this.widgetStore;
-        if (widgetsStore?.plotType === CatalogPlotType.D2Scatter) {
+        if (!widgetsStore) {
+            return;
+        }
+
+        if (widgetsStore.plotType === CatalogPlotType.D2Scatter) {
             const initBorder = this.initScatterBorder;
             if (initBorder) {
                 widgetsStore.setScatterborder(initBorder);

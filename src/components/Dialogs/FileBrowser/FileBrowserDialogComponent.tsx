@@ -107,8 +107,7 @@ export class FileBrowserDialogComponent extends React.Component {
             }
             appStore.setLoadingMultipleFiles(false);
         } else {
-            const selectedFile = fileBrowserStore.selectedFile;
-            await this.loadFile({fileInfo: selectedFile || undefined, hdu: fileBrowserStore.selectedHDU || undefined});
+            await this.loadFile({fileInfo: fileBrowserStore.selectedFile || undefined, hdu: fileBrowserStore.selectedHDU || undefined});
         }
     };
 

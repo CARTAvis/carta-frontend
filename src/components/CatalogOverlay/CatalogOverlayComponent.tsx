@@ -423,7 +423,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 minColumnWidth={30}
                 enableGhostCells={true}
                 numFrozenColumns={1}
-                columnWidths={this.widgetStore.headerTableColumnWidths}
+                columnWidths={columnWidths}
                 onColumnWidthChanged={this.updateHeaderTableColumnSize}
                 enableRowResizing={false}
                 cellRendererDependencies={[headerDisplays, profileStore.loadingData]} // trigger re-render on controlHeader change
@@ -435,23 +435,25 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private updateHeaderTableColumnSize = (index: number, size: number) => {
         const widgetsStore = this.widgetStore;
-        if (widgetsStore) {
-            // Ensure the array exists and has the correct length (5 columns)
-            const expectedColumnCount = CatalogOverlayComponent.ExpectedColumnCount;
-            if (!widgetsStore.headerTableColumnWidths) {
-                widgetsStore.headerTableColumnWidths = new Array(expectedColumnCount).fill(undefined);
-            } else if (widgetsStore.headerTableColumnWidths.length !== expectedColumnCount) {
-                // Resize array to match expected column count
-                const newArray = new Array(expectedColumnCount).fill(undefined);
-                for (let i = 0; i < Math.min(widgetsStore.headerTableColumnWidths.length, expectedColumnCount); i++) {
-                    newArray[i] = widgetsStore.headerTableColumnWidths[i];
-                }
-                widgetsStore.headerTableColumnWidths = newArray;
-            }
+        if (!widgetsStore) {
+            return;
+        }
 
-            if (index >= 0 && index < widgetsStore.headerTableColumnWidths.length) {
-                widgetsStore.headerTableColumnWidths[index] = size;
+        // Ensure the array exists and has the correct length (5 columns)
+        const expectedColumnCount = CatalogOverlayComponent.ExpectedColumnCount;
+        if (!widgetsStore.headerTableColumnWidths) {
+            widgetsStore.headerTableColumnWidths = new Array(expectedColumnCount).fill(undefined);
+        } else if (widgetsStore.headerTableColumnWidths.length !== expectedColumnCount) {
+            // Resize array to match expected column count
+            const newArray = new Array(expectedColumnCount).fill(undefined);
+            for (let i = 0; i < Math.min(widgetsStore.headerTableColumnWidths.length, expectedColumnCount); i++) {
+                newArray[i] = widgetsStore.headerTableColumnWidths[i];
             }
+            widgetsStore.headerTableColumnWidths = newArray;
+        }
+
+        if (index >= 0 && index < widgetsStore.headerTableColumnWidths.length) {
+            widgetsStore.headerTableColumnWidths[index] = size;
         }
     };
 
