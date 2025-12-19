@@ -55,19 +55,27 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                 if (isX && isWCSStringFormatValid(value, appStore.overlaySettings.numbers.formatTypeX)) {
                     if (finish) {
                         const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, x: value});
-                        finishPixelFromWCS && region?.setControlPoint(1, finishPixelFromWCS);
+                        if (finishPixelFromWCS) {
+                            region?.setControlPoint(1, finishPixelFromWCS);
+                        }
                     } else {
                         const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, x: value});
-                        startPixelFromWCS && region?.setControlPoint(0, startPixelFromWCS);
+                        if (startPixelFromWCS) {
+                            region?.setControlPoint(0, startPixelFromWCS);
+                        }
                     }
                     return true;
                 } else if (!isX && isWCSStringFormatValid(value, appStore.overlaySettings.numbers.formatTypeY)) {
                     if (finish) {
                         const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, y: value});
-                        finishPixelFromWCS && region?.setControlPoint(1, finishPixelFromWCS);
+                        if (finishPixelFromWCS) {
+                            region?.setControlPoint(1, finishPixelFromWCS);
+                        }
                     } else {
                         const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, y: value});
-                        startPixelFromWCS && region?.setControlPoint(0, startPixelFromWCS);
+                        if (startPixelFromWCS) {
+                            region?.setControlPoint(0, startPixelFromWCS);
+                        }
                     }
                     return true;
                 }
