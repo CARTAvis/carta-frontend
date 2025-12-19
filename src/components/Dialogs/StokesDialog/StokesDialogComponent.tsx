@@ -245,10 +245,12 @@ export class StokesDialogComponent extends React.Component {
 
         if (fileBrowserStore.browserMode === BrowserMode.File) {
             const frames = appStore.frames;
-            if (!fileBrowserStore.appendingFrame || !frames.length) {
-                fileBrowserStore.fileList?.directory && (await appStore.openConcatFile(files, fileBrowserStore.fileList.directory, files[0].hdu));
-            } else {
-                fileBrowserStore.fileList?.directory && (await appStore.appendConcatFile(files, fileBrowserStore.fileList.directory, files[0].hdu));
+            if (fileBrowserStore.fileList?.directory) {
+                if (!fileBrowserStore.appendingFrame || !frames.length) {
+                    await appStore.openConcatFile(files, fileBrowserStore.fileList.directory, files[0].hdu);
+                } else {
+                    await appStore.appendConcatFile(files, fileBrowserStore.fileList.directory, files[0].hdu);
+                }
             }
         }
 
