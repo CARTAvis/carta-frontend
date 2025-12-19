@@ -6,7 +6,7 @@ import {RenderConfigStore} from "../Frame/RenderConfigStore/RenderConfigStore";
 
 import {ColorBlendingStore} from "./ColorBlendingStore";
 
-const mockConsoleError = jest.spyOn(console, "error");
+const mockConsoleError = jest.spyOn(console, "error").mockImplementation(() => {});
 
 jest.mock("utilities", () => ({
     getColorsForValues: jest.fn()
@@ -34,6 +34,10 @@ describe("ColorBlendingStore", () => {
         });
         setMatchedFrames([mockMatchedFrame1 as any, mockMatchedFrame2 as any]);
         colorBlendingStore = new ColorBlendingStore(0);
+    });
+
+    afterAll(() => {
+        mockConsoleError.mockRestore();
     });
 
     it("initializes the values correctly", () => {

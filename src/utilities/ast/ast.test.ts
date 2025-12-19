@@ -1,7 +1,6 @@
 import * as AST from "ast_wrapper";
 
-import {CatalogSystemType} from "../../models";
-import {SystemType} from "../../stores";
+import {CatalogSystemType, SystemType} from "../../enums";
 
 import {ASTSettingsString, setAstStringSystem, setAstSystem} from "./ast";
 
