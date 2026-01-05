@@ -21,7 +21,6 @@ interface TaskProgressDialogComponentProps {
 
 @observer
 export class TaskProgressDialogComponent extends React.Component<TaskProgressDialogComponentProps> {
-
     // for doc-website reference
     // eslint-disable-next-line @typescript-eslint/no-useless-constructor
     constructor(props: TaskProgressDialogComponentProps) {
