@@ -1,5 +1,5 @@
 import React from "react";
-import {useActiveDocContext, useDocsPreferredVersion,useDocsVersionCandidates, useVersions} from "@docusaurus/plugin-content-docs/client";
+import {useActiveDocContext, useDocsPreferredVersion, useDocsVersionCandidates, useVersions} from "@docusaurus/plugin-content-docs/client";
 import {useLocation} from "@docusaurus/router";
 import {useHistorySelector} from "@docusaurus/theme-common";
 import {translate} from "@docusaurus/Translate";
