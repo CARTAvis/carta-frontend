@@ -7,9 +7,9 @@ import {ImageViewLayer} from "components";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {CatalogTextureType, CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, WidgetsStore} from "stores";
-import {FrameStore, RenderConfigStore} from "stores/Frame";
+import {FrameStore} from "stores/Frame";
 import {CatalogOverlayShape} from "stores/Widgets";
-import {closestCatalogIndexToCursor, GL2, rotate2D, scale2D, subtract2D} from "utilities";
+import {closestCatalogIndexToCursor, COLOR_MAPS_ALL, GL2, rotate2D, scale2D, subtract2D} from "utilities";
 
 import "./CatalogViewGLComponent.scss";
 
@@ -265,7 +265,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 const colorTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Color);
                 if (!catalogWidgetStore.disableColorMap && colorTexture) {
                     this.gl.uniform1i(shaderUniforms.CmapEnabled, 1);
-                    this.gl.uniform1i(shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(catalogWidgetStore.colorMap));
+                    this.gl.uniform1i(shaderUniforms.CmapIndex, COLOR_MAPS_ALL.indexOf(catalogWidgetStore.colorMap));
                     this.gl.activeTexture(GL2.TEXTURE4);
                     this.gl.bindTexture(GL2.TEXTURE_2D, colorTexture);
                     this.gl.uniform1i(shaderUniforms.ColorTexture, 4);
