@@ -9,6 +9,7 @@ import {ColorBlendingStore} from "./ColorBlendingStore";
 const mockConsoleError = jest.spyOn(console, "error").mockImplementation(() => {});
 
 jest.mock("utilities", () => ({
+    ...jest.requireActual("utilities"),
     getColorsForValues: jest.fn()
 }));
 

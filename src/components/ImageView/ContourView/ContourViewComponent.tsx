@@ -5,8 +5,8 @@ import {observer} from "mobx-react";
 import {ContourDashMode} from "enums";
 import {ContourWebGLService} from "services";
 import {AnimatorStore, AppStore} from "stores";
-import {type FrameStore, RenderConfigStore} from "stores/Frame";
-import {ceilToPower, GL2, rotate2D, scale2D, subtract2D} from "utilities";
+import {type FrameStore} from "stores/Frame";
+import {ceilToPower, COLOR_MAPS_ALL, GL2, rotate2D, scale2D, subtract2D} from "utilities";
 
 import "./ContourViewComponent.scss";
 
@@ -190,7 +190,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         this.gl.uniform1f(this.contourWebGLService.shaderUniforms.PixelRatio, frame.aspectRatio);
         this.gl.uniform1i(this.contourWebGLService.shaderUniforms.CmapEnabled, frame.contourConfig.colormapEnabled ? 1 : 0);
         if (frame.contourConfig.colormapEnabled) {
-            this.gl.uniform1i(this.contourWebGLService.shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(frame.contourConfig.colormap));
+            this.gl.uniform1i(this.contourWebGLService.shaderUniforms.CmapIndex, COLOR_MAPS_ALL.indexOf(frame.contourConfig.colormap));
             this.gl.uniform1f(this.contourWebGLService.shaderUniforms.Bias, frame.contourConfig.colormapBias);
             this.gl.uniform1f(this.contourWebGLService.shaderUniforms.Contrast, frame.contourConfig.colormapContrast);
         }
