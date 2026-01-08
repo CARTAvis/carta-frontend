@@ -13,7 +13,74 @@
         "write-translations": "docusaurus write-translations",
         "write-heading-ids": "docusaurus write-heading-ids",
         "reformat": "npx prettier --write ./api ./docs ./src sidebars.js ./versioned_docs",
-        "checkformat": "npx prettier --check ./api ./docs ./src sidebars.js ./versioned_docs"
+        "checkformat": "npx prettier --check ./api ./docs ./src sidebars.js ./versioned_docs",
+        "fix-eslint": "eslint --fix ./src",
+        "postinstall": "patch-package"
+    },
+    "eslintConfig": {
+        "plugins": [
+            "simple-import-sort"
+        ],
+        "rules": {
+            "no-unused-expressions": "off",
+            "@typescript-eslint/no-unused-expressions": "error",
+            "import/no-webpack-loader-syntax": "off",
+            "no-unused-vars": "off",
+            "@typescript-eslint/no-unused-vars": [
+                "error",
+                {
+                    "args": "none"
+                }
+            ],
+            "object-curly-spacing": "off",
+            "jsx-a11y/alt-text": "off",
+            "simple-import-sort/imports": "error",
+            "simple-import-sort/exports": "error",
+            "import/newline-after-import": "error",
+            "import/no-duplicates": "error",
+            "tsdoc/syntax": "error"
+        },
+        "overrides": [
+            {
+                "files": [
+                    "*.js",
+                    "*.jsx",
+                    "*.ts",
+                    "*.tsx"
+                ],
+                "rules": {
+                    "simple-import-sort/imports": [
+                        "error",
+                        {
+                            "groups": [
+                                [
+                                    "^react",
+                                    "^@?\\w"
+                                ],
+                                [
+                                    "^(components|icons|models|services|stores|utilities)(/.*|$)"
+                                ],
+                                [
+                                    "^\\u0000"
+                                ],
+                                [
+                                    "^\\.\\.(?!/?$)",
+                                    "^\\.\\./?$"
+                                ],
+                                [
+                                    "^\\./(?=.*/)(?!/?$)",
+                                    "^\\.(?!/?$)",
+                                    "^\\./?$"
+                                ],
+                                [
+                                    "^.+\\.?(css)$"
+                                ]
+                            ]
+                        }
+                    ]
+                }
+            }
+        ]
     },
     "dependencies": {
         "@docusaurus/core": "^3.9.2",
@@ -21,14 +88,20 @@
         "@mdx-js/react": "^3.0.0",
         "clsx": "^2.0.0",
         "docusaurus-lunr-search": "^3.3.0",
-        "docusaurus-plugin-typedoc-api": "^4.0.1",
+        "@loveluthien/docusaurus-plugin-typedoc-api": "^4.5.0",
         "prism-react-renderer": "^2.3.0",
-        "react": "^18.2.0",
-        "react-dom": "^18.2.0"
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1"
     },
     "devDependencies": {
-        "@docusaurus/module-type-aliases": "^3.0.1",
+        "@docusaurus/module-type-aliases": "^3.9.2",
+        "patch-package": "^8.0.0",
         "prettier": "3.1.0"
+    },
+    "overrides": {
+        "@docusaurus/theme-common": "^3.9.2",
+        "react": "$react",
+        "react-dom": "$react-dom"
     },
     "browserslist": {
         "production": [
