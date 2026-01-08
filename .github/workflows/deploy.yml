@@ -3,7 +3,7 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - dev
+      - kuanchou/gh_page_workflow
 
 jobs:
   deploy:
@@ -19,6 +19,8 @@ jobs:
           node-version: 20
           cache: npm
 
+      - name: Clean dependencies
+        run: rm -rf node_modules
       - name: Install dependencies
         run: npm install
       - name: Build website
