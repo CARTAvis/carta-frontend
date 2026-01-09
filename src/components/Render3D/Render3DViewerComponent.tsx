@@ -160,23 +160,24 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
             this.depth = 0;
     
             this.texture = new THREE.Data3DTexture(new Float32Array(), 0, 0, 0);
-
             console.log("No render3DData available");
 
         } else {
 
-            this.width = this.render3DData.width;
-            this.height = this.render3DData.height;
-            this.depth = this.render3DData.depth;
+            if (!this.texture || this.render3DData.width !== this.width || this.height !== this.render3DData.height || this.depth !== this.render3DData.depth) {
+                this.width = this.render3DData.width;
+                this.height = this.render3DData.height;
+                this.depth = this.render3DData.depth;
 
-            // console.log("render3DData: ", this.render3DData);
-    
-            this.texture = new THREE.Data3DTexture(
-                this.render3DData.datacube,
-                this.render3DData.width,
-                this.render3DData.height,
-                this.render3DData.depth
-            );
+                this.texture = new THREE.Data3DTexture(
+                    this.render3DData.datacube,
+                    this.width,
+                    this.height,
+                    this.depth
+                );
+            } else {
+                this.texture.image.data = this.render3DData.datacube;
+            }  
         }
     
         this.texture.format = THREE.RedFormat;
@@ -261,11 +262,27 @@ export class Render3DViewerComponent extends React.Component<Render3DViewerDialo
         gui.add( parameters, 'gamma', 0.1, 2.0).onChange( update );
         gui.add(parameters, 'scaleZ', 0.1, 10.0).onChange(update);
 
-        // render3d animation
-        // useFrame(() => {
+        // rotation animation
+        // useFrame((state) => {
         //     if (meshRef.current) {
-        //         meshRef.current.rotation.y += 0.01;
-        //         meshRef.current.rotation.x += 0.005;
+        //         const t = state.clock.getElapsedTime(); 
+        //         const rotationSpeed = (2 * Math.PI) / 60; // one full rotation every / x seconds
+
+        //         // meshRef.current.rotation.y = t * rotationSpeed;
+        //         meshRef.current.rotation.x = t * rotationSpeed;
+        //     }
+        // });
+
+        // calculate frame per second rate and print to console
+        // let lastTime = performance.now();
+        // let frameCount = 0;
+        // useFrame(() => {
+        //     frameCount++;
+        //     const currentTime = performance.now();
+        //     if (currentTime - lastTime >= 2000) {
+        //         console.log(`FPS: ${frameCount}`);
+        //         frameCount = 0;
+        //         lastTime = currentTime;
         //     }
         // });
 

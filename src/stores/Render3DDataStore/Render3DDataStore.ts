@@ -41,32 +41,31 @@ export class Render3DDataStore {
             this.setDecompressed3DData(decompressedData);
 
         } else if (render3DData.compressionType === CARTA.CompressionType.ZFP) {
-            console.log('to tileservice')
             if (render3DData.slice > 1) {
                 TileService.Instance.decompress3DRender3DData(render3DData);
             } else {
                 TileService.Instance.decompressRender3DData(render3DData);
             }
-            console.log('from tileservice')
         }
     }
 
     @action setDecompressed3DData = (decompressedData: Float32Array) => {
-        // console.log("datacube length: ", this.datacube.length);
-        // console.log("decompressedData length: ", decompressedData.length);
-        // console.log("decompressedData sum: ", decompressedData.length * this.lastSlice);
-        // console.log("slice: ", this.numSlices);
-        // console.log("width: ", this.width);
-        // console.log("height: ", this.height);
-        // console.log("depth: ", this.depth);
-        // console.log("diff: ", (this.lastSlice + 1) * this.numSlices);
+        console.log("datacube length: ", this.datacube.length);
+        console.log("decompressedData length: ", decompressedData.length);
+        console.log("decompressedData sum: ", decompressedData.length * (this.lastSlice + 1));
+        console.log("slice: ", this.numSlices);
+        console.log("width: ", this.width);
+        console.log("height: ", this.height);
+        console.log("depth: ", this.depth);
+        console.log("total slices loaded: ", (this.lastSlice + 1) * this.numSlices);
         let diff = (this.lastSlice + 1) * this.numSlices;
         if (diff > this.depth) {
+            console.log('over depth');
             this.datacube.set(decompressedData.slice(0, (diff - this.depth) * this.width * this.height), this.width * this.height * this.lastSlice * this.numSlices);
         } else {
             this.datacube.set(decompressedData, this.width * this.height * this.lastSlice * this.numSlices);
         }
-        // console.log("lastSlice: ", this.lastSlice);
+        console.log("lastSlice: ", this.lastSlice);
         this.lastSlice += 1;
     }
 

@@ -194,15 +194,6 @@ export class TileService {
                     const render3DData = event.data[3];
                     const length = eventArgs.width * eventArgs.subsetHeight * render3DData.slice;
                     const resultArray = new Float32Array(buffer, 0, length);
-                    // console.log("tileservice array: ", resultArray);
-                    // console.log(AppStore.Instance.render3D);
-                    // console.log("file id: " + eventArgs.fileId);
-                    // console.log(AppStore.Instance.render3D.get(eventArgs.fileId));
-                    // console.log("region id: " + render3DData.regionId);
-                    // console.log(AppStore.Instance.render3D.get(eventArgs.fileId)?.get(render3DData.regionId));
-                    // console.log("viewer id: " + eventArgs.previewId);
-                    // console.log(AppStore.Instance.render3D.get(eventArgs.previewId));
-                    // console.log("slice: " + render3DData.slice);
 
                     // here I am using the render3DData object. Should I use eventArgs instead? it does not recognise regionID and slice
                     // previewId is viewerId
@@ -213,15 +204,6 @@ export class TileService {
                     // const render3DData = event.data[3];
                     const length = eventArgs.width * eventArgs.subsetHeight;
                     const resultArray = new Float32Array(buffer, 0, length);
-                    // console.log("tileservice array: ", resultArray);
-                    // console.log(AppStore.Instance.render3D);
-                    // console.log("file id: " + eventArgs.fileId);
-                    // console.log(AppStore.Instance.render3D.get(eventArgs.fileId));
-                    // console.log("region id: " + render3DData.regionId);
-                    // console.log(AppStore.Instance.render3D.get(eventArgs.fileId)?.get(render3DData.regionId));
-                    // console.log("viewer id: " + eventArgs.previewId);
-                    // console.log(AppStore.Instance.render3D.get(eventArgs.previewId));
-                    // console.log("slice: " + render3DData.slice);
 
                     // here I am using the render3DData object. Should I use eventArgs instead? it does not recognise regionID and slice
                     // previewId is viewerId
