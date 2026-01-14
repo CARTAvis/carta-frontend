@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed an issue that caused some images to be misaligned in partially filled panels when using the multi-panel layout ([#2620](https://github.com/CARTAvis/carta-frontend/issues/2620)).
 * Fixed cursor info bar not wrapping text properly when the image viewer panel is narrow ([#2621](https://github.com/CARTAvis/carta-frontend/issues/2621)).
 * Removed the incorrect WCS information when in image coordinate system ([#2614](https://github.com/CARTAvis/carta-frontend/issues/2614)).
+* Fixed incorrect colormap–name pairing ([#2628](https://github.com/CARTAvis/carta-frontend/issues/2628)).
 * Fixed vector overlay not updating after session resume ([#2217](https://github.com/CARTAvis/carta-frontend/issues/2217)).
 ### Changed
 * Set the default aspect ratio to unity when images lacked valid WCS information ([#2604](https://github.com/CARTAvis/carta-frontend/issues/2604)).
