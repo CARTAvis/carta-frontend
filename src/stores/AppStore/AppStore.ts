@@ -165,16 +165,16 @@ export class AppStore {
     // dynamic zIndex
     public zIndexManager = new FloatingObjzIndexManager();
 
-    private appContainer: HTMLElement;
+    private appContainer: HTMLElement | null = null;
     private fileCounter = 0;
     private previousConnectionStatus: ConnectionStatus;
     private canvasUpdatedTimer;
 
-    public getAppContainer = (): HTMLElement => {
+    public getAppContainer = (): HTMLElement | null => {
         return this.appContainer;
     };
 
-    public setAppContainer = (container: HTMLElement) => {
+    public setAppContainer = (container: HTMLElement | null) => {
         this.appContainer = container;
     };
 

@@ -79,9 +79,7 @@ export class App extends React.Component {
 
     private setAppContainerRef = (ref: HTMLDivElement | null) => {
         this.appContainerRef.current = ref;
-        if (ref) {
-            AppStore.Instance.setAppContainer(ref);
-        }
+        AppStore.Instance.setAppContainer(ref);
     };
 
     public render() {

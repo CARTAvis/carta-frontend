@@ -28,9 +28,9 @@ export enum FileInfoType {
 export class FileInfoComponent extends React.Component<{
     infoTypes: FileInfoType[];
     HDUOptions?: {HDUList: OptionProps[]; handleSelectedHDUChange: (hdu: string) => void};
-    fileInfoExtended: CARTA.IFileInfoExtended;
+    fileInfoExtended: CARTA.IFileInfoExtended | null;
     regionFileInfo: string;
-    catalogFileInfo: CARTA.ICatalogFileInfo;
+    catalogFileInfo: CARTA.ICatalogFileInfo | null;
     selectedTab: TabId;
     handleTabChange: (tab: TabId) => void;
     isLoading: boolean;
@@ -269,7 +269,7 @@ export class FileInfoComponent extends React.Component<{
             case FileInfoType.CATALOG_FILE:
                 return (
                     <Pre className="file-info-pre">
-                        <Text>{this.props.catalogFileInfo.description}</Text>
+                        <Text>{this.props.catalogFileInfo?.description}</Text>
                     </Pre>
                 );
             case FileInfoType.CATALOG_HEADER:

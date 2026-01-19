@@ -229,7 +229,7 @@ export class LayoutDialogComponent extends React.Component {
                         <Tab
                             id={LayoutDialogMode.DynamicLayout}
                             title="Dynamic Layout"
-                            panel={<LayoutMappingComponent orderedLayoutNames={layoutStore.orderedLayoutNames} existLayoutMapping={preferenceStore.existLayoutMapping} activeFrame={appStore.activeFrame as any} />}
+                            panel={<LayoutMappingComponent orderedLayoutNames={layoutStore.orderedLayoutNames} existLayoutMapping={preferenceStore.existLayoutMapping} activeFrame={appStore.activeFrame} />}
                         />
                     </Tabs>
                 </ScrollShadow>
@@ -334,7 +334,7 @@ function LayoutMappingRow({ctypes, layoutName}: {ctypes: string; layoutName: str
 interface LayoutMappingComponentProps {
     orderedLayoutNames: string[];
     existLayoutMapping: {[key: string]: string};
-    activeFrame: FrameStore;
+    activeFrame: FrameStore | null;
 }
 
 export const LayoutMappingComponent = React.memo((props: LayoutMappingComponentProps) => {
