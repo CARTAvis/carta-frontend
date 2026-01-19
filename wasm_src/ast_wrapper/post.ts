@@ -306,7 +306,7 @@ Module.transformSpectralPoint = function (spectralFrameFrom: number | null, spec
     return zOut[0];
 };
 
-Module.transformSpectralPointArray = function (spectralFrameFrom: number | null, specType: string | null, specUnit: string | null, specSys: string | null, zIn: Float64Array | Array<number>, forward: boolean = true) {
+Module.transformSpectralPointArray = function (spectralFrameFrom: number | null, specType: string | null, specUnit: string | null, specSys: string | null, zIn: Float64Array | Array<number> | undefined, forward: boolean = true) {
     // Allocate and assign WASM memory
     const N = zIn?.length;
 

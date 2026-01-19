@@ -33,7 +33,7 @@ export interface FileListTableComponentProps {
     extendedLoading?: boolean;
     fileProgress?: {total: number; checked: number};
     fileList: BrowserFileList | null;
-    selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
+    selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo | null | undefined;
     selectedHDU: string;
     filterType: FileFilteringType;
     filterString?: string;
