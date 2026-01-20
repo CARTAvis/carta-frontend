@@ -93,7 +93,7 @@ addOnPostRun(function () {
         }
     }
 
-    Module.CalculateCatalogSize = (data: Float32Array, min: number, max: number, sizeMin: number, sizeMax: number, scaling: number, mapType: number, area: boolean, devicePixelRatio: number, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
+    Module.CalculateCatalogSize = (data: Float32Array, min: number, max: number, sizeMin: number, sizeMax: number, scaling: number, mapType: number, devicePixelRatio: number, alpha: number = 1000, gamma: number = 1.5): Float32Array => {
         return withWasmData(data, (dataOnWasmHeap, N) => {
             calculateCatalogMap(mapType, dataOnWasmHeap, N, min, max, sizeMin, sizeMax, scaling, alpha, gamma, devicePixelRatio, false);
         });
