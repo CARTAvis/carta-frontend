@@ -2003,7 +2003,7 @@ export class FrameStore {
      * @returns An array of corresponding positions in image coordinates.
      */
     getImagePosFromWCS = (wcsList: WCSPoint2D[]): Point2D[] => {
-        return wcsList.map(wcs => getPixelValueFromWCS(this.wcsInfoForTransformation, wcs));
+        return wcsList.map(wcs => getPixelValueFromWCS(this.wcsInfoForTransformation, wcs)).filter((point): point is Point2D => point !== null);
     };
 
     /**
@@ -2014,7 +2014,7 @@ export class FrameStore {
      * @returns An array of corresponding positions in WCS coordinates.
      */
     getWCSFromImagePos = (posList: Point2D[]): WCSPoint2D[] => {
-        return posList.map(p => getFormattedWCSPoint(this.wcsInfoForTransformation, p));
+        return posList.map(p => getFormattedWCSPoint(this.wcsInfoForTransformation, p)).filter((point): point is WCSPoint2D => point !== null);
     };
 
     public getRegion = (regionId: number): RegionStore | undefined => {
