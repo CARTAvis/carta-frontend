@@ -2448,8 +2448,8 @@ export class AppStore {
         this.updateTaskProgress(fittingProgress.progress);
     };
 
-    handleVectorTileStream = (vectorTileData: CARTA.IVectorOverlayTileData) => {
-        const updatedFrame = this.getFrame(vectorTileData.fileId ?? -1);
+    handleVectorTileStream = (vectorTileData: CARTA.VectorOverlayTileData) => {
+        const updatedFrame = this.getFrame(vectorTileData.fileId);
         if (updatedFrame) {
             updatedFrame.updateFromVectorOverlayData(vectorTileData);
         }
@@ -2528,6 +2528,30 @@ export class AppStore {
                 };
             }
 
+            let vectorOverlaySettings: CARTA.ISetVectorOverlayParameters = {};
+            if (frame.vectorOverlayConfig.enabled) {
+                vectorOverlaySettings = {
+                    fileId: frame.frameInfo.fileId,
+                    imageBounds: {
+                        xMin: 0,
+                        xMax: frame.frameInfo.fileInfoExtended.width,
+                        yMin: 0,
+                        yMax: frame.frameInfo.fileInfoExtended.height
+                    },
+                    smoothingFactor: frame.vectorOverlayConfig.pixelAveragingEnabled ? frame.vectorOverlayConfig.pixelAveraging : 1,
+                    fractional: frame.vectorOverlayConfig.fractionalIntensity,
+                    threshold: frame.vectorOverlayConfig.thresholdEnabled ? frame.vectorOverlayConfig.threshold : NaN,
+                    thresholdOption: frame.vectorOverlayConfig.thresholdEnabled ? frame.vectorOverlayConfig.thresholdOption : NaN,
+                    debiasing: frame.vectorOverlayConfig.debiasing,
+                    qError: frame.vectorOverlayConfig.qError,
+                    uError: frame.vectorOverlayConfig.uError,
+                    stokesIntensity: frame.vectorOverlayConfig.intensitySource,
+                    stokesAngle: frame.vectorOverlayConfig.angularSource,
+                    compressionType: CARTA.CompressionType.NONE,
+                    compressionQuality: this.preferenceStore.contourCompressionLevel
+                };
+            }
+
             return {
                 file: info.fileInfo.name,
                 directory: info.directory,
@@ -2540,7 +2564,8 @@ export class AppStore {
                 regions: mapToObject(regions),
                 contourSettings,
                 stokesFiles: frame.stokesFiles,
-                supportAipsBeam: AppStore.Instance.preferenceStore.aipsBeamSupport
+                supportAipsBeam: AppStore.Instance.preferenceStore.aipsBeamSupport,
+                vectorOverlaySettings
             };
         });
 
