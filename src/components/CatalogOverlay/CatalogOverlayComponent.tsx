@@ -58,7 +58,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             minWidth: 720,
             minHeight: 400,
             defaultWidth: 720,
-            defaultHeight: 400,
+            defaultHeight: 600,
             title: "Catalog",
             isCloseable: true,
             helpType: HelpType.CATALOG_OVERLAY,
@@ -216,9 +216,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const val = changeEvent.target.checked;
         const header = profileStore.catalogControlHeader.get(columnName);
         profileStore.setHeaderDisplay(val, columnName);
-        if ((val === true || (header.filter !== "" && val === false)) && profileStore.isFileBasedCatalog) {
+
+        const shouldUpdateFilter = (val === true || (header.filter !== "" && val === false)) && profileStore.isFileBasedCatalog;
+
+        if (shouldUpdateFilter) {
+            profileStore.setIsUpdateColumn(true);
             this.handleFilterRequest();
         }
+
         if (catalogWidgetStore.xAxis === columnName) {
             catalogWidgetStore.setxAxis(CatalogOverlay.NONE);
         }
@@ -390,7 +395,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 minColumnWidth={30}
                 enableGhostCells={true}
                 numFrozenColumns={1}
-                columnWidths={this.widgetStore.headerTableColumnWidts}
+                columnWidths={this.widgetStore.headerTableColumnWidths}
                 onColumnWidthChanged={this.updateHeaderTableColumnSize}
                 enableRowResizing={false}
                 cellRendererDependencies={[headerDisplays, this.profileStore.loadingData]} // trigger re-render on controlHeader change
@@ -402,8 +407,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private updateHeaderTableColumnSize = (index: number, size: number) => {
         const widgetsStore = this.widgetStore;
-        if (widgetsStore.headerTableColumnWidts) {
-            widgetsStore.headerTableColumnWidts[index] = size;
+        if (widgetsStore.headerTableColumnWidths) {
+            widgetsStore.headerTableColumnWidths[index] = size;
         }
     };
 
@@ -416,9 +421,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private handleFilterRequest = () => {
         const profileStore = this.profileStore;
-        if (profileStore.loadOntoImage || !profileStore.updateTableView || !profileStore.hasFilter) {
+
+        // Skip if normal conditions prevent filtering AND we're not in column update mode
+        const shouldSkipRequest = !profileStore.isUpdateColumnMode && (profileStore.loadOntoImage || !profileStore.updateTableView || !profileStore.hasFilter);
+
+        if (shouldSkipRequest) {
             return;
         }
+
         const catalogWidgetStore = this.widgetStore;
         const appStore = AppStore.Instance;
         if (profileStore && appStore) {

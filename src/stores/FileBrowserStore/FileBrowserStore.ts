@@ -72,6 +72,7 @@ export class FileBrowserStore {
     @observable selectedTab: TabId = FileInfoType.IMAGE_FILE;
     @observable loadingList = false;
     @observable isImportingRegions = false;
+    @observable hasReceivedImportRegionAck = false;
     @observable extendedLoading = false;
     @observable loadingInfo = false;
     @observable fileInfoResp = false;
@@ -131,6 +132,10 @@ export class FileBrowserStore {
 
     @action setImportingRegions = (isImportingRegions: boolean) => {
         this.isImportingRegions = isImportingRegions;
+    };
+
+    @action setHasReceivedImportRegionAck = (hasReceivedImportRegionAck: boolean) => {
+        this.hasReceivedImportRegionAck = hasReceivedImportRegionAck;
     };
 
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
@@ -382,7 +387,7 @@ export class FileBrowserStore {
     /// Update the spectral range for save image file
     @action initialSaveSpectralRange = () => {
         const activeFrame = AppStore.Instance.activeFrame;
-        if (activeFrame && activeFrame.numChannels > 1 && activeFrame.isSpectralChannel) {
+        if (activeFrame && activeFrame.numChannels > 1 && activeFrame.isSpectralChannel && activeFrame.channelValueBounds) {
             this.setSaveSpectralStart(Math.min(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min));
             this.setSaveSpectralEnd(Math.max(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min));
         }
@@ -596,7 +601,13 @@ export class FileBrowserStore {
     };
 
     @action clearExportRegionIndexes = (mode: SelectionMode) => {
-        const regions = AppStore.Instance.activeFrame.regionSet.regions;
+        const activeFrame = AppStore.Instance.activeFrame;
+        if (!activeFrame || !activeFrame.regionSet) {
+            this.exportRegionIndexes = [];
+            return;
+        }
+
+        const regions = activeFrame.regionSet.regions;
         switch (mode) {
             case SelectionMode.All:
                 this.exportRegionIndexes = [];
@@ -705,6 +716,7 @@ export class FileBrowserStore {
         this.clearExtendedDelayTimer(true);
         this.isLoadingDialogOpen = false;
         this.updateLoadingState(0, 0, 0);
+        this.hasReceivedImportRegionAck = false;
     };
 
     @action cancelRequestingFileList = () => {
@@ -930,6 +942,6 @@ export class FileBrowserStore {
     }
 
     @computed get exportAnnotationNum(): number {
-        return this.exportRegionIndexes?.reduce((accum, exportIndex, i) => accum + (AppStore.Instance.activeFrame.regionSet.regions[exportIndex]?.isAnnotation ? 1 : 0), 0);
+        return this.exportRegionIndexes?.reduce((accum, exportIndex, i) => accum + (AppStore.Instance.activeFrame?.regionSet.regions[exportIndex]?.isAnnotation ? 1 : 0), 0);
     }
 }

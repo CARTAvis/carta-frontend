@@ -92,8 +92,8 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
 
         const isPVImage = frame?.isPVImage;
 
-        const getInfoString = (value: number, valueWcs: string) => {
-            return this.panAndZoomCoord === CoordinateMode.Image ? `WCS: ${valueWcs}` : `Image: ${toFixed(value, 3)} px`;
+        const getInfoString = (value: number, valueWcs: string | undefined) => {
+            return this.panAndZoomCoord === CoordinateMode.Image ? `WCS: ${global.system !== SystemType.Image ? valueWcs : "-"}` : `Image: ${toFixed(value, 3)} px`;
         };
         const fovLabelInfo = this.panAndZoomCoord === CoordinateMode.Image ? "(px)" : "";
         const panAndZoomPanel = (
@@ -107,11 +107,11 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         inputType={InputType.XCoord}
                         value={frame?.center?.x}
                         onChange={val => frame?.setCenter(val, frame?.center?.y)}
-                        valueWcs={frame?.centerWCS?.x}
-                        onChangeWcs={val => frame?.setCenterWcs(val, frame?.centerWCS?.y)}
+                        valueWcs={frame?.centerWCS?.x ?? null}
+                        onChangeWcs={val => frame?.setCenterWcs(val, frame?.centerWCS?.y ?? null)}
                         wcsDisabled={isPVImage}
                     />
-                    <span className="info-string">{getInfoString(frame?.center?.x, frame?.centerWCS?.x)}</span>
+                    <span className="info-string">{getInfoString(frame?.center?.x, frame?.centerWCS?.x ?? undefined)}</span>
                 </FormGroup>
                 <FormGroup inline={true} label="Center (Y)" labelInfo={fovLabelInfo}>
                     <CoordNumericInput
@@ -119,11 +119,11 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         inputType={InputType.YCoord}
                         value={frame?.center?.y}
                         onChange={val => frame?.setCenter(frame?.center?.x, val)}
-                        valueWcs={frame?.centerWCS?.y}
-                        onChangeWcs={val => frame?.setCenterWcs(frame?.centerWCS?.x, val)}
+                        valueWcs={frame?.centerWCS?.y ?? null}
+                        onChangeWcs={val => frame?.setCenterWcs(frame?.centerWCS?.x ?? null, val)}
                         wcsDisabled={isPVImage}
                     />
-                    <span className="info-string">{getInfoString(frame?.center?.y, frame?.centerWCS?.y)}</span>
+                    <span className="info-string">{getInfoString(frame?.center?.y, frame?.centerWCS?.y ?? undefined)}</span>
                 </FormGroup>
                 <FormGroup inline={true} label="Size (X)" labelInfo={fovLabelInfo}>
                     <CoordNumericInput
@@ -166,11 +166,11 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                             inputType={InputType.XCoord}
                             value={frame?.offsetCenter?.x}
                             onChange={val => frame?.setOffsetCenter(val, frame?.offsetCenter?.y)}
-                            valueWcs={frame?.offsetCenterWCS?.x}
-                            onChangeWcs={val => frame?.setOffsetCenterWcs(val, frame?.offsetCenterWCS?.y)}
+                            valueWcs={frame?.offsetCenterWCS?.x ?? null}
+                            onChangeWcs={val => frame?.setOffsetCenterWcs(val, frame?.offsetCenterWCS?.y ?? null)}
                             wcsDisabled={isPVImage}
                         />
-                        <span className="info-string">{getInfoString(frame?.offsetCenter?.x, frame?.offsetCenterWCS?.x)}</span>
+                        <span className="info-string">{getInfoString(frame?.offsetCenter?.x, frame?.offsetCenterWCS?.x ?? undefined)}</span>
                     </FormGroup>
                     <FormGroup inline={true} label="Offset center (Y)" labelInfo={fovLabelInfo}>
                         <CoordNumericInput
@@ -178,11 +178,11 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                             inputType={InputType.YCoord}
                             value={frame?.offsetCenter?.y}
                             onChange={val => frame?.setOffsetCenter(frame?.offsetCenter?.x, val)}
-                            valueWcs={frame?.offsetCenterWCS?.y}
-                            onChangeWcs={val => frame?.setOffsetCenterWcs(frame?.offsetCenterWCS?.x, val)}
+                            valueWcs={frame?.offsetCenterWCS?.y ?? null}
+                            onChangeWcs={val => frame?.setOffsetCenterWcs(frame?.offsetCenterWCS?.x ?? null, val)}
                             wcsDisabled={isPVImage}
                         />
-                        <span className="info-string">{getInfoString(frame?.offsetCenter?.y, frame?.offsetCenterWCS?.y)}</span>
+                        <span className="info-string">{getInfoString(frame?.offsetCenter?.y, frame?.offsetCenterWCS?.y ?? undefined)}</span>
                     </FormGroup>
                 </Collapse>
             </div>

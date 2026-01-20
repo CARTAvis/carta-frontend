@@ -4,7 +4,7 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {WCSType} from "models";
 import {AlertStore, AppStore, PreferenceStore, PvGeneratorWidgetStore} from "stores";
 import {FrameStore, OverlayBeamStore, WCS_PRECISION} from "stores/Frame";
-import {clamp, getColorForTheme, toFixed} from "utilities";
+import {ASTSettingsString, clamp, getColorForTheme, setAstStringSystem, setAstSystem, toFixed} from "utilities";
 
 const AST_DEFAULT_COLOR = "auto-blue";
 
@@ -59,31 +59,6 @@ export class Padding {
     bottom: number;
 }
 
-export class ASTSettingsString {
-    stringList: Array<string>;
-
-    constructor() {
-        this.stringList = [];
-    }
-
-    add(name: string, value: any, storeIf: boolean = true) {
-        if (value !== undefined && storeIf) {
-            let storedValue = typeof value === "boolean" ? (value ? 1 : 0) : value;
-            this.stringList.push(`${name}=${storedValue}`);
-        }
-    }
-
-    addSection(section: string) {
-        if (section !== undefined) {
-            this.stringList.push(section);
-        }
-    }
-
-    toString() {
-        return this.stringList.filter(str => str.length > 0).join(", ");
-    }
-}
-
 export class OverlayGlobalSettings {
     @observable labelType: LabelType;
     @observable color: string;
@@ -92,6 +67,8 @@ export class OverlayGlobalSettings {
 
     // We need this so that we know what to do if it's set to native
     @observable defaultSystem: SystemType;
+    @observable defaultEquinox: string;
+    @observable defaultEpoch: string;
     @observable validWcs: boolean;
 
     public styleString(frame?: FrameStore) {
@@ -100,18 +77,18 @@ export class OverlayGlobalSettings {
         astString.add("Color", AstColorsIndex.GLOBAL);
         astString.add("Tol", toFixed(this.tolerance / 100, 2), this.tolerance >= 0.001); // convert to fraction
 
-        const isWcsFrameAndSystem = typeof this.explicitSystem !== "undefined" && this.explicitSystem !== SystemType.Image && frame.validWcs;
+        const isWcsFrameAndSystem = typeof this.explicitSystem !== "undefined" && this.explicitSystem !== SystemType.Image && frame?.validWcs;
         if (isWcsFrameAndSystem) {
-            astString.add("System", this.explicitSystem);
+            setAstStringSystem(astString, this.explicitSystem, this);
         }
 
-        if (!AppStore.Instance.overlaySettings.labels?.customText) {
-            const symbolX = AST.getString(frame?.wcsInfo, "Symbol(1)");
-            const symbolY = AST.getString(frame?.wcsInfo, "Symbol(2)");
-            const labelX = AST.getString(frame?.wcsInfo, "Label(1)");
-            const labelY = AST.getString(frame?.wcsInfo, "Label(2)");
-            const haveUnitX = AST.getString(frame?.wcsInfo, "Unit(1)") !== "";
-            const haveUnitY = AST.getString(frame?.wcsInfo, "Unit(2)") !== "";
+        if (!AppStore.Instance.overlaySettings.labels?.customText && frame?.wcsInfo) {
+            const symbolX = AST.getString(frame.wcsInfo, "Symbol(1)");
+            const symbolY = AST.getString(frame.wcsInfo, "Symbol(2)");
+            const labelX = AST.getString(frame.wcsInfo, "Label(1)");
+            const labelY = AST.getString(frame.wcsInfo, "Label(2)");
+            const haveUnitX = AST.getString(frame.wcsInfo, "Unit(1)") !== "";
+            const haveUnitY = AST.getString(frame.wcsInfo, "Unit(2)") !== "";
 
             const isSysPixel = (this.explicitSystem === undefined && !(frame?.isPVImage || frame?.isSwappedZ)) || this.explicitSystem === SystemType.Image;
             const getSystemName = (symbolXY: string, isSysPixel: boolean, haveUnit: boolean, explicitSystem: SystemType) => {
@@ -123,18 +100,10 @@ export class OverlayGlobalSettings {
                     return "";
                 }
             };
-            const systemNameX = getSystemName(symbolX, isSysPixel, haveUnitX, this?.explicitSystem);
-            const systemNameY = getSystemName(symbolY, isSysPixel, haveUnitY, this?.explicitSystem);
+            const systemNameX = getSystemName(symbolX, isSysPixel, haveUnitX, this?.explicitSystem ?? SystemType.Image);
+            const systemNameY = getSystemName(symbolY, isSysPixel, haveUnitY, this?.explicitSystem ?? SystemType.Image);
             astString.add("Label(1)", `"${labelX.replace(/%/g, "%%%%").replace(/"/g, "”")}${systemNameX}"`, labelX !== undefined);
             astString.add("Label(2)", `"${labelY.replace(/%/g, "%%%%").replace(/"/g, "”")}${systemNameY}"`, labelY !== undefined);
-        }
-
-        if ((frame?.isXY || frame?.isYX) && !frame?.isPVImage && isWcsFrameAndSystem) {
-            if (this.system === SystemType.FK4) {
-                astString.add("Equinox", "1950");
-            } else {
-                astString.add("Equinox", "2000");
-            }
         }
 
         return astString.toString();
@@ -192,6 +161,14 @@ export class OverlayGlobalSettings {
 
     @action setDefaultSystem(system: SystemType) {
         this.defaultSystem = system;
+    }
+
+    @action setDefaultEquinox(equinox: string) {
+        this.defaultEquinox = equinox;
+    }
+
+    @action setDefaultEpoch(epoch: string) {
+        this.defaultEpoch = epoch;
     }
 
     @action setValidWcs(validWcs: boolean) {
@@ -500,8 +477,8 @@ export class OverlayNumberSettings {
     // Unlike most default values, we calculate and set these explicitly, instead of
     // leaving them unset and letting AST pick a default. We have to save these so that
     // we can revert to default values after setting custom values.
-    @observable defaultFormatX: NumberFormatType;
-    @observable defaultFormatY: NumberFormatType;
+    @observable defaultFormatX: NumberFormatType | undefined;
+    @observable defaultFormatY: NumberFormatType | undefined;
     @observable validWcs: boolean;
 
     constructor() {
@@ -522,14 +499,14 @@ export class OverlayNumberSettings {
         this.validWcs = false;
     }
 
-    @computed get formatTypeX(): NumberFormatType {
+    @computed get formatTypeX(): NumberFormatType | undefined {
         if (!this.validWcs) {
             return undefined;
         }
         return this.customFormat ? this.formatX : this.defaultFormatX;
     }
 
-    @computed get formatTypeY(): NumberFormatType {
+    @computed get formatTypeY(): NumberFormatType | undefined {
         if (!this.validWcs) {
             return undefined;
         }
@@ -624,11 +601,11 @@ export class OverlayNumberSettings {
         this.formatY = format;
     }
 
-    @action setDefaultFormatX(format: NumberFormatType) {
+    @action setDefaultFormatX(format: NumberFormatType | undefined) {
         this.defaultFormatX = format;
     }
 
-    @action setDefaultFormatY(format: NumberFormatType) {
+    @action setDefaultFormatY(format: NumberFormatType | undefined) {
         this.defaultFormatY = format;
     }
 
@@ -954,7 +931,7 @@ export class OverlayColorbarSettings {
             textWidth = 0;
             const textFontIndex = clamp(Math.floor(this.numberFont / 4), 0, this.textRatio.length);
             for (const frame of AppStore.Instance.imageViewConfigStore.visibleFrames) {
-                const frameTextWidth = Math.max(...frame.colorbarStore.texts.map(x => x.length - (textFontIndex === 4 ? 0 : x.match(/[.-]/g)?.length * 0.5 || 0))) * this.textRatio[textFontIndex];
+                const frameTextWidth = Math.max(...frame.colorbarStore.texts.map(x => x.length - (textFontIndex === 4 ? 0 : (x.match(/[.-]/g)?.length ?? 0) * 0.5))) * this.textRatio[textFontIndex];
                 textWidth = Math.max(textWidth, frameTextWidth);
             }
         }
@@ -978,7 +955,7 @@ export class OverlayColorbarSettings {
 
 export class OverlayBeamSettings {
     @observable selectedFileId: number;
-    @observable settingsForDisplay: OverlayBeamStore;
+    @observable settingsForDisplay: OverlayBeamStore | null;
 
     constructor() {
         makeObservable(this);
@@ -1054,7 +1031,7 @@ export class OverlaySettings {
             this.setFormatsFromSystem();
             AppStore.Instance.frames.forEach(frame => {
                 if (frame?.validWcs && frame?.wcsInfoForTransformation && this.global.explicitSystem && this.global.explicitSystem !== SystemType.Image) {
-                    AST.set(frame.wcsInfoForTransformation, `System=${this.global.explicitSystem}`);
+                    setAstSystem(frame.wcsInfoForTransformation, this.global.explicitSystem, this.global);
                 }
             });
         });
@@ -1101,7 +1078,7 @@ export class OverlaySettings {
                     break;
                 case WCSType.AUTOMATIC:
                 default:
-                    if ([SystemType.FK4, SystemType.FK5, SystemType.ICRS].indexOf(this.global.explicitSystem) > -1) {
+                    if (this.global.explicitSystem && [SystemType.FK4, SystemType.FK5, SystemType.ICRS].indexOf(this.global.explicitSystem) > -1) {
                         this.numbers.setDefaultFormatX(NumberFormatType.HMS);
                         this.numbers.setDefaultFormatY(NumberFormatType.DMS);
                     } else {
@@ -1115,8 +1092,12 @@ export class OverlaySettings {
 
         // Set starting values for custom format only if format is not already custom
         if (!this.numbers.customFormat) {
-            this.numbers.setFormatX(this.numbers.defaultFormatX);
-            this.numbers.setFormatY(this.numbers.defaultFormatY);
+            if (this.numbers.defaultFormatX) {
+                this.numbers.setFormatX(this.numbers.defaultFormatX);
+            }
+            if (this.numbers.defaultFormatY) {
+                this.numbers.setFormatY(this.numbers.defaultFormatY);
+            }
         }
     }
 
@@ -1125,6 +1106,9 @@ export class OverlaySettings {
         this.numbers.setValidWcs(frame.validWcs);
 
         this.global.setDefaultSystem(frame.defaultWcsSystem);
+        this.global.setDefaultEquinox(frame.defaultWcsEquinox);
+        this.global.setDefaultEpoch(frame.defaultWcsEpoch);
+
         this.setFormatsFromSystem();
 
         if (this.global.system === SystemType.Auto) {
@@ -1297,12 +1281,12 @@ export class PvPreviewOverlayStore extends ImageViewOverlayStore {
 
     /** The width of the entire widget on which the overlay is displayed. */
     get fullViewWidth() {
-        return this.previewWidgetStore?.previewFullViewWidth;
+        return this.previewWidgetStore?.previewFullViewWidth ?? 0;
     }
 
     /** The height of the entire widget on which the overlay is displayed. */
     get fullViewHeight() {
-        return this.previewWidgetStore?.previewFullViewHeight;
+        return this.previewWidgetStore?.previewFullViewHeight ?? 0;
     }
 
     /** The width of the overlay canvas. */

@@ -6,6 +6,7 @@ import {observer} from "mobx-react";
 
 import {ImageItem, ImageType, SPECTRAL_TYPE_STRING} from "models";
 import {AppStore, OverlaySettings, OverlayStore, PreferenceStore} from "stores";
+import {setAstSystem} from "utilities";
 
 import "./OverlayComponent.scss";
 
@@ -82,7 +83,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 const newFrame = AST.frame(2, "Domain=PIXEL");
                 AST.addFrame(tempWcsInfo, 1, scaleMapping, newFrame);
                 AST.setI(tempWcsInfo, "Base", frame.isOffsetCoord ? 4 : 3);
-                AST.setI(tempWcsInfo, "Current", frame.isOffsetCoord && OverlaySettings.Instance.isImgCoordinates ? 3 : 2);
+                AST.setI(tempWcsInfo, "Current", OverlaySettings.Instance.isImgCoordinates ? 3 : 2);
             }
 
             if (frame.isOffsetCoord && OverlaySettings.Instance.isWcsCoordinates) {
@@ -241,7 +242,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             const formatStyingY = this.props.overlaySettings.numbers.formatStringY;
             const explicitSystem = this.props.overlaySettings.global.explicitSystem;
             if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined && OverlaySettings.Instance.isWcsCoordinates && frame.validWcs) {
-                AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY}, System=${explicitSystem},` + dirAxesSetting);
+                AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY},` + dirAxesSetting);
+                setAstSystem(frame.wcsInfo, explicitSystem, this.props.overlaySettings.global);
             }
         }
 
