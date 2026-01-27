@@ -130,6 +130,7 @@ addOnPostRun(function () {
     Module.setI = Module.cwrap("setI", null, ["number", "string", "number"]);
     Module.setD = Module.cwrap("setD", null, ["number", "string", "number"]);
     Module.createTransformedFrameset = Module.cwrap("createTransformedFrameset", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
+    Module.createRotatedFrameset = Module.cwrap("createRotatedFrameset", "number", ["number", "number", "number"]);
     Module.createShiftmapFrameset = Module.cwrap("createShiftmapFrameset", "number", ["number", "number", "number", "number"]);
     Module.fillTransformGrid = Module.cwrap("fillTransformGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
     Module.pointList = Module.cwrap("pointList", "number", ["number", "number", "number", "number", "number"]);
@@ -294,7 +295,7 @@ Module.transformPoint = function (transformFrameSet: number, xIn: number, yIn: n
 };
 
 Module.transform3DPoint = function (transformFrameSet: number, xIn: number, yIn: number, zIn: number, forward: boolean = true) {
-    const N = 1;
+    // const N = 1;
     const outPtr = Module._malloc(24);
     Module.transform3D(transformFrameSet, xIn, yIn, zIn, forward, outPtr);
     const out = new Float64Array(Module.HEAPF64.buffer, outPtr, 3);

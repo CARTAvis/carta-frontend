@@ -204,6 +204,103 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo
     return wcsInfoTransformed;
 }
 
+static std::string fitsSinkBuffer;
+static void fitsSink(const char *line) {
+    fitsSinkBuffer += std::string(line) + "\n";
+}
+
+EMSCRIPTEN_KEEPALIVE AstFrameSet* createRotatedFrameset(AstFrameSet* wcsinfo, double offsetX, double offsetY)
+{
+    // Make a copy to avoid modifying the original
+    AstFrameSet* wcsinfoCopy = static_cast<AstFrameSet*> astCopy(wcsinfo);
+    
+    // Write frameset to FitsChan to access FITS headers
+    fitsSinkBuffer.clear();
+    AstFitsChan* fitsChan = astFitsChan(nullptr, fitsSink, "Encoding=FITS-WCS");
+    if (!fitsChan) {
+        cout << "Failed to create FitsChan" << endl;
+        return nullptr;
+    }
+    
+    astWrite(fitsChan, wcsinfoCopy);
+    if (!astOK) {
+        cout << "Failed to write frameset to FitsChan" << endl;
+        astClearStatus;
+        return nullptr;
+    }
+
+    // Create new FitsChan and copy all cards, setting CRVAL1 and CRVAL2 to the offset values
+    astClear(fitsChan, "Card");
+    AstFitsChan* newFitsChan = astFitsChan(nullptr, nullptr, "Encoding=FITS-WCS");
+    if (!newFitsChan) {
+        cout << "Failed to create new FitsChan" << endl;
+        return nullptr;
+    }
+
+    char card[81];
+    char newCard[81];
+    bool foundCRVAL1 = false, foundCRVAL2 = false;
+    bool foundCUNIT1 = false, foundCUNIT2 = false;
+    
+    // Copy all cards, replacing CRVAL1/CRVAL2 with offset values and CUNIT1/CUNIT2 with arcsec
+    while (astFindFits(fitsChan, "%f", card, 1)) {
+        std::string cardStr(card);
+        
+        if (cardStr.substr(0, 6) == "CRVAL1") {
+            foundCRVAL1 = true;
+            snprintf(newCard, sizeof(newCard), "CRVAL1  = %.15e", offsetX);
+            astPutFits(newFitsChan, newCard, false);
+        } else if (cardStr.substr(0, 6) == "CRVAL2") {
+            foundCRVAL2 = true;
+            snprintf(newCard, sizeof(newCard), "CRVAL2  = %.15e", offsetY);
+            astPutFits(newFitsChan, newCard, false);
+        } else if (cardStr.substr(0, 6) == "CUNIT1") {
+            foundCUNIT1 = true;
+            astPutFits(newFitsChan, "CUNIT1  = 'arcsec'", false);
+        } else if (cardStr.substr(0, 6) == "CUNIT2") {
+            foundCUNIT2 = true;
+            astPutFits(newFitsChan, "CUNIT2  = 'arcsec'", false);
+        } else {
+            astPutFits(newFitsChan, card, false);
+        }
+    }
+
+    // If CRVAL1/CRVAL2 weren't found, add them
+    if (!foundCRVAL1) {
+        snprintf(newCard, sizeof(newCard), "CRVAL1  = %.15e", offsetX);
+        astPutFits(newFitsChan, newCard, false);
+    }
+    if (!foundCRVAL2) {
+        snprintf(newCard, sizeof(newCard), "CRVAL2  = %.15e", offsetY);
+        astPutFits(newFitsChan, newCard, false);
+    }
+    
+    // If CUNIT1/CUNIT2 weren't found, add them
+    if (!foundCUNIT1) {
+        astPutFits(newFitsChan, "CUNIT1  = 'arcsec'", false);
+    }
+    if (!foundCUNIT2) {
+        astPutFits(newFitsChan, "CUNIT2  = 'arcsec'", false);
+    }
+
+    // Read the modified frameset
+    astClear(newFitsChan, "Card");
+    AstFrameSet* wcsInfoRotated = static_cast<AstFrameSet*>(astRead(newFitsChan));
+    
+    if (!wcsInfoRotated || !astIsAFrameSet(wcsInfoRotated)) {
+        cout << "Failed to read modified frameset" << endl;
+        astClearStatus;
+        return nullptr;
+    }
+
+    // Set the reference point as the origin (similar to createShiftmapFrameset)
+    AstSkyFrame *skyframe = static_cast<AstSkyFrame*>astGetFrame(wcsInfoRotated, 2);
+    astSet(skyframe, "SkyRefIs=Origin");
+    astAddFrame(wcsInfoRotated, AST__BASE, skyframe, astFrame(2, "Label(1)=X offset coordinate,Label(2)=Y offset coordinate,Domain=GRID"));
+
+    return wcsInfoRotated;
+}
+
 EMSCRIPTEN_KEEPALIVE AstFrameSet* createShiftmapFrameset(AstFrameSet* wcsinfo, double offsetX, double offsetY, double pixelOffsetX, double pixelOffsetY)
 {
     AstFrameSet* wcsinfoShifted = static_cast<AstFrameSet*> astCopy(wcsinfo);

@@ -55,8 +55,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const appStore = AppStore.Instance;
         const padding = this.props.overlayStore.padding;
 
-        const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoShifted : frame.wcsInfo;
-        const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
+        const wcsInfo = frame.isOffsetCoord ? frame.wcsInfoShifted : frame.spatialReference ? frame.transformedWcsInfo : frame.wcsInfo;
         const frameView = this.props.unscaled
             ? {
                   xMin: padding.left * appStore.pixelRatio,

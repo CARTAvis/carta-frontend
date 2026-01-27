@@ -4,6 +4,8 @@ import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
 
 import {
+    AngularSize,
+    AngularSizeUnit,
     CatalogControlMap,
     ChannelInfo,
     COMPUTED_POLARIZATIONS,
@@ -64,6 +66,7 @@ import {
     getHeaderNumericValue,
     getPixelSizes,
     getPixelValueFromWCS,
+    getReferencePixel,
     GetRequiredTiles,
     getTransformedChannel,
     getUnformattedWCSPoint,
@@ -2292,22 +2295,28 @@ export class FrameStore {
                     AST.deleteObject(this.wcsInfoShifted);
                 }
 
-                const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.offsetCenter);
+                // {x: CRPIX1, y: CRPIX2} from header (pixel)
+                const refPix = getReferencePixel(this);
+                let offset: Point2D;
 
-                if (centerInRad) {
-                    this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, centerInRad.x, centerInRad.y, this.offsetCenter.x, this.offsetCenter.y);
-                    for (const frame of this.secondarySpatialImages) {
-                        const frameCenterInRad = getUnformattedWCSPoint(frame.wcsInfo, frame.offsetCenter);
-                        if (frame.isOffsetCoord && frameCenterInRad && frame.spatialTransform) {
-                            frame.wcsInfoShifted = AST.createShiftmapFrameset(
-                                frame.wcsInfo,
-                                frameCenterInRad.x,
-                                frameCenterInRad.y,
-                                this.offsetCenter.x - frame.spatialTransform.translation.x,
-                                this.offsetCenter.y - frame.spatialTransform.translation.y
-                            );
-                        }
-                    }
+                if (AppStore.Instance.overlaySettings.isImgCoordinates) {
+                    offset = {x: this.offsetCenter.x, y: this.offsetCenter.y};
+                    this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, 0, 0, offset.x, offset.y);
+                } else {
+                    const cUnit1 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === `CUNIT1`) ?? {value: "deg"};
+
+                    const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.offsetCenter);
+                    const refPixInRad = getUnformattedWCSPoint(this.wcsInfo, refPix);
+                    const offsetInRad = centerInRad && refPixInRad ? {x: refPixInRad.x - centerInRad.x, y: refPixInRad.y - centerInRad.y} : {x: 0, y: 0};
+
+                    const radToArcsec = (180 * 3600) / Math.PI;
+                    offset = {x: AngularSize.convertValueFromArcsec(offsetInRad.x * radToArcsec, cUnit1.value as AngularSizeUnit), y: AngularSize.convertValueFromArcsec(offsetInRad.y * radToArcsec, cUnit1.value as AngularSizeUnit)};
+
+                    this.wcsInfoShifted = AST.createRotatedFrameset(this.wcsInfo, offset.x, offset.y);
+                }
+
+                for (const frame of this.secondarySpatialImages) {
+                    frame.wcsInfoShifted = this.wcsInfoShifted;
                 }
             }
         }
