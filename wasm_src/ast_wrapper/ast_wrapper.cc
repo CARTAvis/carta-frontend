@@ -208,15 +208,13 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createShiftmapFrameset(AstFrameSet* wcsinfo, d
 {
     AstFrameSet* wcsinfoShifted = static_cast<AstFrameSet*> astCopy(wcsinfo);
 
-    // 2D shifts
-    double offset[] = {-offsetX, -offsetY};
-    AstShiftMap* shiftMap = astShiftMap(2, offset, "");
+    // Use AST's built-in offset coordinate system which properly handles spherical geometry
+    // Setting attributes on the FrameSet applies them to its current frame (the SkyFrame)
+    astSetD(wcsinfoShifted, "SkyRef(1)", offsetX);
+    astSetD(wcsinfoShifted, "SkyRef(2)", offsetY);
 
-    // remapping
-    astRemapFrame(wcsinfoShifted, 2, shiftMap);
-
-    AstSkyFrame *skyframe = static_cast<AstSkyFrame*>astGetFrame(wcsinfoShifted, 2);
-    astSet(skyframe, "SkyRefIs=Origin");
+    // Set SkyRefIs to Origin to use the SkyRef position as the origin of the offset coordinate system
+    astSet(wcsinfoShifted, "SkyRefIs=Origin");
 
     // 2D pixel shifts
     double pixelOffset[] = {-pixelOffsetX, -pixelOffsetY};
