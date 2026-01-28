@@ -386,15 +386,18 @@ export class PreferenceDialogComponent extends React.Component {
         const vectorOverlayConfigPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Default pixel averaging">
-                    <SafeNumericInput
-                        placeholder="Default pixel averaging"
-                        min={0}
-                        max={64}
-                        value={preference.vectorOverlayPixelAveraging}
-                        majorStepSize={2}
-                        stepSize={2}
-                        onValueChange={value => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING, value)}
-                    />
+                    <Tooltip content="Only even numbers are allowed (minimum: 2)" position="top">
+                        <SafeNumericInput
+                            placeholder="Default pixel averaging"
+                            min={2}
+                            max={64}
+                            value={preference.vectorOverlayPixelAveraging}
+                            majorStepSize={2}
+                            minorStepSize={2}
+                            stepSize={2}
+                            onValueChange={value => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING, Math.pow(2, Math.round(Math.log2(value))))}
+                        />
+                    </Tooltip>
                 </FormGroup>
                 <FormGroup inline={true} label="Use fractional intensity">
                     <Switch checked={preference.vectorOverlayFractionalIntensity} onChange={ev => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_FRACTIONAL_INTENSITY, ev.currentTarget.checked)} />

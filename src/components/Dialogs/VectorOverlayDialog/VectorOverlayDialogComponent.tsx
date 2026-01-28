@@ -1,6 +1,6 @@
 import * as React from "react";
 import {ColorResult} from "react-color";
-import {AnchorButton, Button, Classes, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
@@ -152,10 +152,14 @@ export class VectorOverlayDialogComponent extends React.Component {
 
     @action private handlePixelAveragingEnabledChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
         this.pixelAveragingEnabled = ev.currentTarget.checked;
+        // When enabling averaging, normalize the width to a valid positive even number
+        if (ev.currentTarget.checked && this.pixelAveraging < 2) {
+            this.pixelAveraging = 2;
+        }
     };
 
     @action private handlePixelAveragingChanged = (value: number) => {
-        this.pixelAveraging = Math.floor(value * 0.5) * 2.0;
+        this.pixelAveraging = Math.max(2, Math.floor(value * 0.5) * 2.0);
     };
 
     @action private handleThresholdEnabledChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
@@ -318,17 +322,20 @@ export class VectorOverlayDialogComponent extends React.Component {
                     <Switch checked={this.pixelAveragingEnabled} onChange={this.handlePixelAveragingEnabledChanged} data-testid="vector-field-averaging-toggle" />
                 </FormGroup>
                 <FormGroup inline={true} label="Averaging width" labelInfo="(px)" disabled={!this.pixelAveragingEnabled}>
-                    <SafeNumericInput
-                        placeholder="Width (px)"
-                        min={2}
-                        max={64}
-                        value={this.pixelAveraging}
-                        majorStepSize={2}
-                        stepSize={2}
-                        onValueChange={this.handlePixelAveragingChanged}
-                        disabled={!this.pixelAveragingEnabled}
-                        data-testid="vector-field-averaging-width-input"
-                    />
+                    <Tooltip content="Only even numbers are allowed (minimum: 2)" position="top">
+                        <SafeNumericInput
+                            placeholder="Width (px)"
+                            min={2}
+                            max={64}
+                            value={this.pixelAveraging}
+                            majorStepSize={2}
+                            minorStepSize={2}
+                            stepSize={2}
+                            onValueChange={this.handlePixelAveragingChanged}
+                            disabled={!this.pixelAveragingEnabled}
+                            data-testid="vector-field-averaging-width-input"
+                        />
+                    </Tooltip>
                 </FormGroup>
                 <FormGroup inline={true} label="Polarization intensity" disabled={this.intensitySource === VectorOverlaySource.None}>
                     <RadioGroup inline={true} onChange={this.handleFractionalIntensityChanged} selectedValue={this.fractionalIntensity ? 1 : 0} disabled={this.intensitySource === VectorOverlaySource.None}>
