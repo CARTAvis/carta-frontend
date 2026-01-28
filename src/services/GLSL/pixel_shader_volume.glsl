@@ -94,8 +94,8 @@ void main(){
     // 
     uint seed = uint( gl_FragCoord.x ) * uint( 1973 ) + uint( gl_FragCoord.y ) * uint( 9277 ) + uint( uFrame ) * uint( 26699 );
     vec3 size = vec3( textureSize( uDataTexture, 0 ) );
-    float randNum = randomFloat( seed ) * 2.0 - 1.0;
-    point += rayDir * randNum * ( 1.0 / size );
+    float randNum = (randomFloat( seed ) * 2.0 - 1.0) * 0.5;
+    point += rayDir * randNum * delta;
 
     float rayVal = -3.402823466e+38;
 
