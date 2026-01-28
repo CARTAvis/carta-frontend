@@ -51,9 +51,9 @@ export class ImageViewConfigStore {
 
     /**
      * Creates a new color blended image and adds it to the image list.
-     * @returns The new color blended image.
+     * @returns The new color blended image or null if no frames are loaded.
      */
-    @action createColorBlending = (): ColorBlendingStore => {
+    @action createColorBlending = (): ColorBlendingStore | null => {
         if (this.frames.length > 0) {
             const id = this.colorBlendingImageMap.size ? Math.max(...this.colorBlendingImageMap.keys()) + 1 : 0;
             const newImage = new ColorBlendingStore(id);
@@ -77,7 +77,9 @@ export class ImageViewConfigStore {
 
         if (AppStore.Instance.isActiveImage({type: ImageType.COLOR_BLENDING, store: image})) {
             const firstImage = this.imageNum ? this.getImage(0) : null;
-            AppStore.Instance.setActiveImage(firstImage);
+            if (firstImage) {
+                AppStore.Instance.setActiveImage(firstImage);
+            }
         }
     };
 
@@ -103,7 +105,8 @@ export class ImageViewConfigStore {
         ) {
             return;
         }
-        this.imageList = Utils.reorderArray(this.imageList, oldIndex, newIndex, length);
+        const reordered = Utils.reorderArray(this.imageList, oldIndex, newIndex, length);
+        this.imageList = reordered ? reordered : this.imageList;
     };
 
     /** Removes all images from the image list. */
@@ -113,7 +116,7 @@ export class ImageViewConfigStore {
 
     /** Number of images in the image list. */
     @computed get imageNum(): number {
-        return this.imageList?.length;
+        return this.imageList.length;
     }
 
     /** Filenames in the image list. */
@@ -152,7 +155,16 @@ export class ImageViewConfigStore {
     /** The index of the current page in the image view widget. */
     @computed get currentImagePage() {
         const activeImage = AppStore.Instance.activeImage;
-        if (!this.imageNum || !activeImage || activeImage.type === ImageType.PV_PREVIEW) {
+        if (!this.imageNum || !activeImage) {
+            return 0;
+        }
+
+        if (activeImage.type === ImageType.PV_PREVIEW) {
+            const sourceFileId = activeImage.store.frameInfo.previewSourceFileId;
+            if (sourceFileId !== undefined) {
+                const index = this.getImageListIndex(ImageType.FRAME, sourceFileId);
+                return Math.floor(index / this.imagesPerPage);
+            }
             return 0;
         }
 
@@ -169,7 +181,7 @@ export class ImageViewConfigStore {
         const pageIndex = clamp(this.currentImagePage, 0, this.numImagePages);
         const firstImageIndex = pageIndex * this.imagesPerPage;
         const indexUpperBound = Math.min(firstImageIndex + this.imagesPerPage, this.imageNum);
-        const pageImages = [];
+        const pageImages: ImageViewItem[] = [];
         for (let i = firstImageIndex; i < indexUpperBound; i++) {
             pageImages.push(this.imageList[i]);
         }

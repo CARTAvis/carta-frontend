@@ -36,7 +36,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             defaultHeight: 225,
             title: "Render Configuration",
             isCloseable: true,
-            helpType: HelpType.RENDER_CONFIG
+            helpType: [HelpType.RENDER_CONFIG, HelpType.RENDER_CONFIG_COLOR_BLENDING]
         };
     }
 

@@ -15,7 +15,7 @@ export enum InputType {
 
 type WcsCoordNumericInputProps = {
     inputType: InputType;
-    valueWcs: string;
+    valueWcs: string | null;
     onChangeWcs: (val: string) => boolean; // return success or not for resetting displayed value
     disabled?: boolean;
     customPlaceholder?: string;
@@ -38,13 +38,13 @@ const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled = fals
     };
 
     let tooltipContent = "";
-    switch (inputType) {
+    switch (valueWcs && inputType) {
         case InputType.XCoord:
-            const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
+            const formatX = AppStore.Instance.overlaySettings.numbers.formatTypeX;
             tooltipContent = `Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`;
             break;
         case InputType.YCoord:
-            const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
+            const formatY = AppStore.Instance.overlaySettings.numbers.formatTypeY;
             tooltipContent = `Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`;
             break;
         case InputType.Size:
@@ -120,7 +120,7 @@ interface CoordNumericInputProps {
     inputType: InputType;
     value: number;
     onChange: (val: number) => boolean;
-    valueWcs: string;
+    valueWcs: string | null;
     onChangeWcs: (val: string) => boolean;
     disabled?: boolean;
     wcsDisabled?: boolean;
@@ -128,9 +128,10 @@ interface CoordNumericInputProps {
 }
 
 export const CoordNumericInput = ({coord, inputType, value, onChange, valueWcs, onChangeWcs, disabled = false, wcsDisabled = false, customPlaceholder = ""}: CoordNumericInputProps) => {
+    const isImgCoordinates = AppStore.Instance.overlaySettings.isImgCoordinates;
     if (coord === CoordinateMode.Image) {
         return <ImageCoordNumericInput inputType={inputType} value={value} onChange={onChange} disabled={disabled} customPlaceholder={customPlaceholder} />;
     } else {
-        return <WcsCoordNumericInput inputType={inputType} valueWcs={valueWcs} onChangeWcs={onChangeWcs} disabled={disabled || wcsDisabled || AppStore.Instance.overlayStore.isImgCoordinates} customPlaceholder={customPlaceholder} />;
+        return <WcsCoordNumericInput inputType={inputType} valueWcs={isImgCoordinates ? "" : valueWcs} onChangeWcs={onChangeWcs} disabled={disabled || wcsDisabled || isImgCoordinates} customPlaceholder={customPlaceholder} />;
     }
 };

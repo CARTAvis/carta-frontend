@@ -6,17 +6,17 @@ import {FrameStore} from "stores/Frame";
 import {createTextureFromArray, equalIfBothFinite} from "utilities";
 
 export interface VectorOverlayTile {
-    texture: WebGLTexture;
+    texture: WebGLTexture | null;
     numVertices: number;
 }
 
 export class VectorOverlayStore {
     @observable progress: number;
     @observable tiles: VectorOverlayTile[];
-    @observable intensityMin: number;
-    @observable intensityMax: number;
+    @observable intensityMin: number | undefined;
+    @observable intensityMax: number | undefined;
 
-    private readonly gl: WebGL2RenderingContext;
+    private readonly gl: WebGL2RenderingContext | null;
     private readonly frame: FrameStore;
 
     constructor(frame: FrameStore) {
@@ -36,7 +36,7 @@ export class VectorOverlayStore {
             for (const tile of this.tiles) {
                 if (tile.texture) {
                     this.gl.deleteTexture(tile.texture);
-                    tile.texture = undefined;
+                    tile.texture = null;
                 }
             }
         }
@@ -59,13 +59,13 @@ export class VectorOverlayStore {
         const numTiles = Math.max(intensityTiles.length, angleTiles.length);
 
         for (let i = 0; i < numTiles; i++) {
-            let intensityTile = intensityTiles?.[i];
-            let angleTile = angleTiles?.[i];
+            let intensityTile: CARTA.ITileData | null = intensityTiles?.[i];
+            let angleTile: CARTA.ITileData | null = angleTiles?.[i];
             if (!intensityTile?.imageData?.length) {
-                intensityTile = undefined;
+                intensityTile = null;
             }
             if (!angleTile?.imageData?.length) {
-                angleTile = undefined;
+                angleTile = null;
             }
 
             // Skip sets where both tiles are empty
@@ -74,10 +74,14 @@ export class VectorOverlayStore {
             }
 
             // Skip sets with mismatching dimensions or coordinates
-            if (!equalIfBothFinite(intensityTile?.width, angleTile?.width) || !equalIfBothFinite(intensityTile?.height, angleTile?.height)) {
+            if (!equalIfBothFinite(intensityTile?.width ?? undefined, angleTile?.width ?? undefined) || !equalIfBothFinite(intensityTile?.height ?? undefined, angleTile?.height ?? undefined)) {
                 continue;
             }
-            if (!equalIfBothFinite(intensityTile?.mip, angleTile?.mip) || !equalIfBothFinite(intensityTile?.x, angleTile?.x) || !equalIfBothFinite(intensityTile?.y, angleTile?.y)) {
+            if (
+                !equalIfBothFinite(intensityTile?.mip ?? undefined, angleTile?.mip ?? undefined) ||
+                !equalIfBothFinite(intensityTile?.x ?? undefined, angleTile?.x ?? undefined) ||
+                !equalIfBothFinite(intensityTile?.y ?? undefined, angleTile?.y ?? undefined)
+            ) {
                 continue;
             }
 
@@ -104,16 +108,16 @@ export class VectorOverlayStore {
             let vertexData = new Float32Array(tileWidth * tileHeight * 4);
             let numVertices = 0;
             // Vertex offsets: Tile offset + half of the block averaging size, and move to middle of the pixel;
-            let offsetX = tileMip * (tileX * 256 + 0.5) - 0.5;
-            let offsetY = tileMip * (tileY * 256 + 0.5) - 0.5;
+            let offsetX = (tileMip ?? 1) * ((tileX ?? 0) * 256 + 0.5) - 0.5;
+            let offsetY = (tileMip ?? 1) * ((tileY ?? 0) * 256 + 0.5) - 0.5;
             for (let j = 0; j < tileHeight; j++) {
                 for (let i = 0; i < tileWidth; i++) {
                     const index = i + tileWidth * j;
                     const intensity = intensityData[index];
                     const angle = angleData[index];
                     if (isFinite(intensity) && isFinite(angle)) {
-                        vertexData[numVertices * 4] = i * tileMip + offsetX;
-                        vertexData[numVertices * 4 + 1] = j * tileMip + offsetY;
+                        vertexData[numVertices * 4] = i * (tileMip ?? 1) + offsetX;
+                        vertexData[numVertices * 4 + 1] = j * (tileMip ?? 1) + offsetY;
                         vertexData[numVertices * 4 + 2] = intensity;
                         vertexData[numVertices * 4 + 3] = angle;
                         numVertices++;
@@ -124,7 +128,7 @@ export class VectorOverlayStore {
             }
             // Resize vertex data before creating a texture
             vertexData = new Float32Array(vertexData.buffer, 0, numVertices * 4);
-            const texture = createTextureFromArray(this.gl, vertexData, WebGLRenderingContext.TEXTURE0, 4);
+            const texture = this.gl ? createTextureFromArray(this.gl, vertexData, WebGLRenderingContext.TEXTURE0, 4) : null;
             if (!this.tiles) {
                 this.tiles = [];
             }
@@ -134,7 +138,7 @@ export class VectorOverlayStore {
             });
         }
 
-        this.intensityMin = isFinite(this.intensityMin) ? Math.min(this.intensityMin, localMin) : localMin;
-        this.intensityMax = isFinite(this.intensityMax) ? Math.max(this.intensityMax, localMax) : localMax;
+        this.intensityMin = isFinite(this.intensityMin ?? NaN) ? Math.min(this.intensityMin!, localMin) : localMin;
+        this.intensityMax = isFinite(this.intensityMax ?? NaN) ? Math.max(this.intensityMax!, localMax) : localMax;
     };
 }

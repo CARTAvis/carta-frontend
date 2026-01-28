@@ -3,10 +3,11 @@ import axios, {AxiosInstance} from "axios";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {AppToaster} from "components/Shared";
-import {LayoutConfig, Snippet, Workspace, WorkspaceListItem} from "models";
+import {ConvertToGB, LayoutConfig, Snippet, Workspace, WorkspaceListItem} from "models";
+import {AppStore, PreferenceKeys} from "stores";
 
-const preferencesSchema = require("models/preferences_schema_2.json");
-const snippetSchema = require("models/snippet_schema_1.json");
+const preferencesSchema = require("carta-schemas/preferences_schema_2.json");
+const snippetSchema = require("carta-schemas/snippet_schema_1.json");
 
 export interface RuntimeConfig {
     dashboardAddress?: string;
@@ -44,8 +45,8 @@ export class ApiService {
         }
     }
 
-    private static PreferenceValidator = new Ajv({strictTypes: false}).compile(preferencesSchema);
-    private static SnippetValidator = new Ajv({strictTypes: false}).compile(snippetSchema);
+    private static PreferenceValidator = new Ajv({strictTypes: false, allErrors: true}).compile(preferencesSchema);
+    private static SnippetValidator = new Ajv({strictTypes: false, allErrors: true}).compile(snippetSchema);
 
     @observable private _accessToken: string | undefined;
     private _tokenLifetime: number;
@@ -175,6 +176,7 @@ export class ApiService {
                 }
             } catch (err) {
                 console.log(err);
+                AppStore.Instance.alertStore.showAlert(`Failed to load preferences: preferences.json might be malformed and reset to default. Please check the backup file preferences.json.bak.`);
                 return undefined;
             }
         } else {
@@ -183,14 +185,25 @@ export class ApiService {
 
         if (preferences) {
             this.upgradePreferences(preferences);
+            console.log(preferences);
             const valid = ApiService.PreferenceValidator(preferences);
+            let deletedKeys: string[] = [];
             if (!valid) {
                 for (const error of ApiService.PreferenceValidator.errors ?? []) {
                     if (error.instancePath) {
                         console.log(`Removing invalid preference ${error.instancePath}`);
                         // Trim the leading "." from the path
-                        delete preferences[error.instancePath.substring(1)];
+                        const errorKey = error.instancePath.substring(1);
+                        // Remove the invalid preference from the preferences object
+                        delete preferences[errorKey];
+                        this.clearPreferences([errorKey]);
+                        deletedKeys.push(errorKey);
                     }
+                }
+
+                if (deletedKeys.length > 0) {
+                    // Show an alert to the user about the deleted preferences
+                    AppStore.Instance.alertStore.showAlert(`Invalid preferences reset to defaults: ${deletedKeys.join(", ")}`);
                 }
             }
         }
@@ -199,44 +212,53 @@ export class ApiService {
 
     private upgradePreferences = (preferences: any) => {
         // Upgrade to V2 if required
-        if (preferences?.version && preferences.version === 1) {
-            if (preferences.astColor || preferences.astColor === 0) {
-                switch (preferences.astColor) {
-                    case 0:
-                        preferences.astColor = "auto-black";
-                        break;
-                    case 1:
-                        preferences.astColor = "auto-white";
-                        break;
-                    case 2:
-                        preferences.astColor = "auto-red";
-                        break;
-                    case 3:
-                        preferences.astColor = "auto-forest";
-                        break;
-                    case 4:
-                        preferences.astColor = "auto-blue";
-                        break;
-                    case 5:
-                        preferences.astColor = "auto-turquoise";
-                        break;
-                    case 6:
-                        preferences.astColor = "auto-violet";
-                        break;
-                    case 7:
-                        preferences.astColor = "auto-gold";
-                        break;
-                    case 8:
-                        preferences.astColor = "auto-gray";
-                        break;
-                    default:
-                        preferences.astColor = "auto-blue";
-                        break;
-                }
+        if (preferences["version"] === 1) {
+            // Convert preferences[PreferenceKeys.WCS_OVERLAY_AST_COLOR] from a number in version 1 to a string in version 2
+            // default to "auto-blue" if the value is not in the AST_COLORS map
+            enum ASTColors {
+                black = 0,
+                white = 1,
+                red = 2,
+                forest = 3,
+                blue = 4,
+                turquoise = 5,
+                violet = 6,
+                gold = 7,
+                gray = 8
             }
-            preferences.version = 2;
-            this.setPreferences(preferences);
+            const astColorKey = PreferenceKeys.WCS_OVERLAY_AST_COLOR;
+            const color = typeof preferences[astColorKey] === "number" ? (ASTColors[preferences[astColorKey]] ?? "blue") : "blue";
+            preferences[astColorKey] = `auto-${color}`;
+            this.setPreference(astColorKey, preferences[astColorKey]);
+
+            preferences["version"] = 2;
+            this.setPreference("version", 2);
         }
+
+        // Normalize case of wcsType value, which may have been saved incorrectly in existing preferences
+        const key = PreferenceKeys.WCS_OVERLAY_WCS_TYPE;
+        if (/[A-Z]/.test(preferences[key])) {
+            preferences[key] = preferences[key].toLowerCase();
+            this.setPreference(key, preferences[key]);
+        }
+
+        // This is to ensure consistency in the unit used for the preview cube size limit
+        const cubeSizeUnitKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT;
+        const cubeSizeKey = PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT;
+
+        const conversionFactor = ConvertToGB[preferences[cubeSizeUnitKey]];
+        if (typeof conversionFactor === "number") {
+            let gbSize = preferences[cubeSizeKey] * conversionFactor;
+            if (gbSize !== preferences[cubeSizeKey]) {
+                preferences[cubeSizeKey] = gbSize;
+                this.setPreference(cubeSizeKey, preferences[cubeSizeKey]);
+            }
+        } else if (cubeSizeUnitKey in preferences) {
+            // set an invalid value to cubeSizeKey to be removed by the validator
+            preferences[cubeSizeKey] = -1;
+        }
+        delete preferences[cubeSizeUnitKey];
+        this.clearPreferences([cubeSizeUnitKey]);
     };
 
     public setPreference = async (key: string, value: any) => {

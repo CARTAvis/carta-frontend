@@ -4,8 +4,8 @@ import {observer} from "mobx-react";
 
 import {VectorOverlayWebGLService} from "services";
 import {AppStore} from "stores";
-import {FrameStore, RenderConfigStore, VectorOverlaySource} from "stores/Frame";
-import {GL2, rotate2D, scale2D, subtract2D} from "utilities";
+import {FrameStore, VectorOverlaySource} from "stores/Frame";
+import {COLOR_MAPS_ALL, GL2, rotate2D, scale2D, subtract2D} from "utilities";
 
 import "./VectorOverlayView.scss";
 
@@ -202,7 +202,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         // this.gl.uniform1f(shaderUniforms.PixelRatio, frame.aspectRatio);
         this.gl.uniform1i(shaderUniforms.CmapEnabled, frame.vectorOverlayConfig.colormapEnabled ? 1 : 0);
         if (frame.vectorOverlayConfig.colormapEnabled) {
-            this.gl.uniform1i(shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(frame.vectorOverlayConfig.colormap));
+            this.gl.uniform1i(shaderUniforms.CmapIndex, COLOR_MAPS_ALL.indexOf(frame.vectorOverlayConfig.colormap));
             this.gl.uniform1f(shaderUniforms.Bias, frame.vectorOverlayConfig.colormapBias);
             this.gl.uniform1f(shaderUniforms.Contrast, frame.vectorOverlayConfig.colormapContrast);
         } else {
@@ -251,7 +251,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         }
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
-        const padding = appStore.overlayStore.padding;
+        const padding = baseFrame.overlayStore.padding;
         const className = classNames("vector-overlay-div", {docked: this.props.docked});
 
         return (

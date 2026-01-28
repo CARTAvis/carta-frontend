@@ -61,6 +61,10 @@
                 height: calc(100% - 30px - 10px); // pane 1 h - footer h - unpinned inputs bottom margin
                 margin-top: 0;
                 margin-bottom: 10px;
+
+                .#{$ns}-form-group:last-child {
+                    margin-bottom: 0;
+                }
             }
 
             .#{$ns}-dialog-footer {
@@ -82,7 +86,7 @@
     .#{$ns}-label {
         display: flex;
         justify-content: flex-end;
-        min-width: 11em;
+        min-width: 140px;
         user-select: none;
 
         .#{$ns}-text-muted {
@@ -105,16 +109,22 @@
 
     .components-input {
         display: flex;
+        margin-right: 5px;
 
         .#{$ns}-input {
             width: 40px;
         }
     }
 
+    .components-slider {
+        flex: 1 1 auto;
+        display: flex;
+    }
+
     .#{$ns}-slider {
-        width: 40%;
+        width: 50%;
+        min-width: 110px;
         height: 30px;
-        margin-left: 20px;
         margin-right: 20px;
 
         .#{$ns}-button {

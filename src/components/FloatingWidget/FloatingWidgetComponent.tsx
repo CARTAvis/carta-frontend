@@ -5,8 +5,9 @@ import classNames from "classnames";
 import * as GoldenLayout from "golden-layout";
 import {observer} from "mobx-react";
 
-import {PlaceholderComponent, PvPreviewComponent, Render3DViewerComponent} from "components";
-import {AppStore, CatalogStore, HelpStore, LayoutStore, WidgetConfig} from "stores";
+import {PlaceholderComponent, PvPreviewComponent, RenderConfigComponent, Render3DViewerComponent} from "components";
+import {ImageType} from "models";
+import {AppStore, CatalogStore, HelpStore, HelpType, LayoutStore, WidgetConfig} from "stores";
 
 import "./FloatingWidgetComponent.scss";
 
@@ -24,19 +25,31 @@ class FloatingWidgetComponentProps {
 
 @observer
 export class FloatingWidgetComponent extends React.Component<FloatingWidgetComponentProps> {
+    private static readonly HeaderHeight = 25;
+    private static readonly RootMenuHeight = 40;
     private pinElementRef: HTMLElement;
     private rnd: Rnd;
 
     componentDidMount() {
         this.updateDragSource();
-        this.rnd.updateSize({width: this.props.widgetConfig.defaultWidth, height: this.props.widgetConfig.defaultHeight});
-        this.rnd.updatePosition({x: this.props.widgetConfig.defaultX, y: this.props.widgetConfig.defaultY});
+        this.updatePositionAndSize();
     }
 
-    componentDidUpdate() {
+    componentDidUpdate(prevProps: FloatingWidgetComponentProps) {
         this.updateDragSource();
-        this.rnd.updateSize({width: this.props.widgetConfig.defaultWidth, height: this.props.widgetConfig.defaultHeight});
-        this.rnd.updatePosition({x: this.props.widgetConfig.defaultX, y: this.props.widgetConfig.defaultY});
+
+        const prevConfig = prevProps.widgetConfig;
+        const currConfig = this.props.widgetConfig;
+
+        if (
+            prevConfig !== currConfig ||
+            prevConfig.defaultX !== currConfig.defaultX ||
+            prevConfig.defaultY !== currConfig.defaultY ||
+            prevConfig.defaultWidth !== currConfig.defaultWidth ||
+            prevConfig.defaultHeight !== currConfig.defaultHeight
+        ) {
+            this.updatePositionAndSize();
+        }
     }
 
     updateDragSource() {
@@ -72,8 +85,20 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         }
     }
 
+    private updatePositionAndSize = () => {
+        const widgetConfig = this.props.widgetConfig;
+        this.rnd.updateSize({width: widgetConfig.defaultWidth, height: widgetConfig.defaultHeight + FloatingWidgetComponent.HeaderHeight});
+        this.rnd.updatePosition({x: widgetConfig.defaultX, y: widgetConfig.defaultY});
+    };
+
     private onClickHelpButton = () => {
         const centerX = (this.rnd.draggable.state as any).x + this.rnd.resizable.size.width * 0.5;
+
+        if (this.props.widgetConfig.type === RenderConfigComponent.WIDGET_CONFIG.type) {
+            HelpStore.Instance.showHelpDrawer(AppStore.Instance.activeImage?.type === ImageType.COLOR_BLENDING ? HelpType.RENDER_CONFIG_COLOR_BLENDING : HelpType.RENDER_CONFIG, centerX);
+            return;
+        }
+
         if (Array.isArray(this.props.widgetConfig.helpType)) {
             const widgetsStore = AppStore.Instance.widgetsStore;
             const widgetParentType = this.props.widgetConfig.parentType;
@@ -106,7 +131,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
     };
 
     public render() {
-        const headerHeight = 25;
+        const headerHeight = FloatingWidgetComponent.HeaderHeight;
         const appStore = AppStore.Instance;
         const className = classNames("floating-widget", {[Classes.DARK]: appStore.darkTheme});
         const titleClass = classNames("floating-header", {selected: this.props.isSelected, [Classes.DARK]: appStore.darkTheme});
@@ -139,8 +164,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 onResizeStop={(e, direction, element, delta, position) => {
                     // manually add the height of the root-menu div to position y
                     // work-around for the change of the position definition from react-rnd v9 (absolute position) to v10 (relative position from the bounds)
-                    const rootMenuHeight = 40;
-                    const absPosition = {x: position.x, y: position.y + rootMenuHeight};
+                    const absPosition = {x: position.x, y: position.y + FloatingWidgetComponent.RootMenuHeight};
                     widgetConfig.setDefaultPosition(absPosition.x, absPosition.y);
                     widgetConfig.setDefaultSize(widgetConfig.defaultWidth + delta.width, widgetConfig.defaultHeight + delta.height);
                 }}

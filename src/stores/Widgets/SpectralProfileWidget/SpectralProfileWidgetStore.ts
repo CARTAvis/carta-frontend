@@ -5,11 +5,11 @@ import tinycolor from "tinycolor2";
 
 import {SpectralProfilerSettingsTabs} from "components";
 import {LineSettings, PlotType, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
-import {FindIntensityUnitType, GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, IntensityConfig, IntensityUnitType, IsIntensitySupported, LineKey, Point2D, POLARIZATIONS, SpectralSystem} from "models";
+import {GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, IntensityConfig, IsIntensitySupported, LineKey, Point2D, POLARIZATIONS, SpectralSystem} from "models";
 import {TelemetryAction, TelemetryService} from "services";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
 import {MultiProfileCategory, RegionId, RegionsType, RegionWidgetStore, SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
-import {clamp, getColorForTheme, isAutoColor} from "utilities";
+import {clamp, genColorFromIndex, getColorForTheme, isAutoColor, pixelToFluxDensityUnit} from "utilities";
 
 export enum MomentSelectingMode {
     NONE = 1,
@@ -230,7 +230,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (frame && this.isMomentRegionValid) {
             const channelIndex1 = frame.findChannelIndexByValue(this.channelValueRange[0]);
             const channelIndex2 = frame.findChannelIndexByValue(this.channelValueRange[1]);
-            if (isFinite(channelIndex1) && isFinite(channelIndex2)) {
+            if (channelIndex1 !== undefined && channelIndex2 !== undefined && isFinite(channelIndex1) && isFinite(channelIndex2)) {
                 const channelIndexRange: CARTA.IIntBounds = {
                     min: channelIndex1 <= channelIndex2 ? channelIndex1 : channelIndex2,
                     max: channelIndex1 <= channelIndex2 ? channelIndex2 : channelIndex1
@@ -375,7 +375,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.meanRmsVisible = false;
         this.secondaryAxisCursorInfoVisible = false;
         this.markerTextVisible = false;
-        this.primaryLineColor = "auto-blue";
+        this.primaryLineColor = genColorFromIndex(0); // default auto-blue color in Hex code
         this.lineColorMap = new Map<LineKey, string>([[SpectralProfileWidgetStore.PRIMARY_LINE_KEY, this.primaryLineColor]]);
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
@@ -558,7 +558,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             let x = profiles[0].channelValues.slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
             const intensityConversion = GetIntensityConversion(profiles[0].intensityConfig, isMultiProfileActive ? this.intensityUnit : profiles[0].intensityUnit);
             const intensityValues = intensityConversion && profiles[0].data?.values ? intensityConversion(profiles[0].data.values) : profiles[0].data?.values;
-            let y = intensityValues?.slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
+            let y: Float32Array | Float64Array | undefined = intensityValues?.slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
             if (this.smoothingStore.type !== SmoothingType.NONE && y) {
                 const smoothedData = this.smoothingStore.getSmoothingValues(x, y);
                 x = smoothedData.x;
@@ -703,7 +703,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (frame && !disablePlot) {
             this.spectralLinesMHz?.forEach(spectralLine => {
                 const transformedValue = frame.convertFreqMHzToSettingWCS(spectralLine?.value);
-                if (isFinite(transformedValue)) {
+                if (transformedValue && isFinite(transformedValue)) {
                     transformedSpectralLines.push({species: spectralLine?.species, value: transformedValue, qn: spectralLine?.qn});
                 }
             });
@@ -731,7 +731,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 if (this.profileSelectionStore.isStatsTypeFluxDensityOnly && this.profileSelectionStore.isCoordinatesPangleOnly) {
                     return "";
                 } else if (this.profileSelectionStore.isStatsTypeFluxDensityOnly && unitString) {
-                    return FindIntensityUnitType(unitString) === IntensityUnitType.Kelvin ? unitString : unitString.substring(0, unitString.indexOf("/"));
+                    return pixelToFluxDensityUnit(unitString);
                 } else if (this.profileSelectionStore.isStatsTypeSumSqOnly) {
                     return `(${unitString})^2`;
                 } else {

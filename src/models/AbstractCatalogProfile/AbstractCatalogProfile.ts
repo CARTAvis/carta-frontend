@@ -78,6 +78,7 @@ export abstract class AbstractCatalogProfileStore {
     @observable sortingInfo: {columnName: string | null; sortingType: CARTA.SortingType | null};
     @observable sortedIndexMap: number[];
     @observable filterIndexMap: number[];
+    @observable isUpdateColumnMode: boolean = false;
 
     private _catalogData: Map<number, ProcessedColumnData>;
     public static readonly CoordinateSystemName = new Map<CatalogSystemType, string>([
@@ -345,6 +346,10 @@ export abstract class AbstractCatalogProfileStore {
         this.progress = val;
     }
 
+    @action setIsUpdateColumn(val: boolean) {
+        this.isUpdateColumnMode = val;
+    }
+
     getSortedIndices(selectedPointIndices: number[]): number[] {
         let indices = new Array(selectedPointIndices.length);
         if (this.sortedIndexMap.length && selectedPointIndices.length && !this.isFileBasedCatalog) {
@@ -398,26 +403,29 @@ export abstract class AbstractCatalogProfileStore {
             if (autoPanZoom && this.updateMode === CatalogUpdateMode.ViewUpdate) {
                 const appStore = AppStore.Instance;
                 const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(this.catalogFileId));
+                const activeFrame = appStore.activeFrame;
                 const selectedDataLength = selectedX.length;
                 let positionImageSpace = {x: selectedX[0], y: selectedY[0]};
-                if (selectedDataLength > 1) {
-                    const minMaxX = minMaxArray(selectedX);
-                    const minMaxY = minMaxArray(selectedY);
-                    const width = minMaxX.maxVal - minMaxX.minVal;
-                    const height = minMaxY.maxVal - minMaxY.minVal;
-                    positionImageSpace = {x: width / 2 + minMaxX.minVal, y: height / 2 + minMaxY.minVal};
-                    const zoomLevel = Math.min(appStore.activeFrame.renderWidth / width, appStore.activeFrame.renderHeight / height);
-                    appStore.activeFrame.setZoom(zoomLevel);
-                }
+                if (activeFrame) {
+                    if (selectedDataLength > 1) {
+                        const minMaxX = minMaxArray(selectedX);
+                        const minMaxY = minMaxArray(selectedY);
+                        const width = minMaxX.maxVal - minMaxX.minVal;
+                        const height = minMaxY.maxVal - minMaxY.minVal;
+                        positionImageSpace = {x: width / 2 + minMaxX.minVal, y: height / 2 + minMaxY.minVal};
+                        const zoomLevel = Math.min(activeFrame.renderWidth / width, activeFrame.renderHeight / height);
+                        activeFrame.setZoom(zoomLevel);
+                    }
 
-                if (frame?.spatialReference && frame !== appStore.activeFrame) {
-                    positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
-                }
+                    if (frame?.spatialReference && frame !== activeFrame && frame.spatialTransformAST) {
+                        positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
+                    }
 
-                if (appStore.activeFrame.spatialReference && frame && !frame.spatialReference) {
-                    appStore.activeFrame.setCenter(positionImageSpace.x, positionImageSpace.y, false);
-                } else {
-                    appStore.activeFrame.setCenter(positionImageSpace.x, positionImageSpace.y);
+                    if (activeFrame.spatialReference && frame && !frame.spatialReference) {
+                        activeFrame.setCenter(positionImageSpace.x, positionImageSpace.y, false);
+                    } else {
+                        activeFrame.setCenter(positionImageSpace.x, positionImageSpace.y);
+                    }
                 }
             }
         }

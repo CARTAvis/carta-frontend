@@ -19,4 +19,9 @@
     span {
         pointer-events: auto;
     }
+
+    .cursor-info-item {
+        display: inline-block;
+        word-break: break-word;
+    }
 }

@@ -51,7 +51,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                 if (!wcsInfo) {
                     return false;
                 }
-                if (isX && isWCSStringFormatValid(value, appStore.overlayStore.numbers.formatTypeX)) {
+                if (isX && isWCSStringFormatValid(value, appStore.overlaySettings.numbers.formatTypeX)) {
                     if (finish) {
                         const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, x: value});
                         region?.setControlPoint(1, finishPixelFromWCS);
@@ -60,7 +60,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                         region?.setControlPoint(0, startPixelFromWCS);
                     }
                     return true;
-                } else if (!isX && isWCSStringFormatValid(value, appStore.overlayStore.numbers.formatTypeY)) {
+                } else if (!isX && isWCSStringFormatValid(value, appStore.overlaySettings.numbers.formatTypeY)) {
                     if (finish) {
                         const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, y: value});
                         region?.setControlPoint(1, finishPixelFromWCS);
@@ -102,13 +102,14 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
     };
 
     render() {
+        const overlaySettings = AppStore.Instance.overlaySettings;
         // dummy variables related to wcs to trigger re-render
         /* eslint-disable @typescript-eslint/no-unused-vars */
-        const appStore = AppStore.Instance;
-        const system = appStore.overlayStore.global.explicitSystem;
-        const formatX = appStore.overlayStore.numbers.formatTypeX;
-        const formatY = appStore.overlayStore.numbers.formatTypeY;
+        const system = overlaySettings.global.explicitSystem;
+        const formatX = overlaySettings.numbers.formatTypeX;
+        const formatY = overlaySettings.numbers.formatTypeY;
         /* eslint-enable @typescript-eslint/no-unused-vars */
+        const isImgCoordinates = overlaySettings.isImgCoordinates;
 
         const region = this.props.region;
         const wcsInfo = this.props.wcsInfo;
@@ -142,12 +143,12 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                 )}
                 <FormGroup label={region.regionType === CARTA.RegionType.ANNCOMPASS ? "Origin" : "Start"} labelInfo={wcsInfo ? "" : " (px)"} inline={true}>
                     {this.coordinateInput(WCSStart, WCSFinish, false)}
-                    {wcsInfo ? <span className="info-string">{isWCS && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[0], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSStart)}`}</span> : ""}
+                    {wcsInfo ? <span className="info-string">{isWCS && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[0], "px", 3)}` : `WCS: ${isImgCoordinates ? "-" : WCSPoint2D.ToString(WCSStart)}`}</span> : ""}
                 </FormGroup>
                 {region.regionType === CARTA.RegionType.ANNRULER && (
                     <FormGroup label="Finish" labelInfo={wcsInfo ? "" : " (px)"} inline={true}>
                         {this.coordinateInput(WCSStart, WCSFinish, true)}
-                        {wcsInfo ? <span className="info-string">{isWCS && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[1], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSFinish)}`}</span> : ""}
+                        {wcsInfo ? <span className="info-string">{isWCS && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[1], "px", 3)}` : `WCS: ${isImgCoordinates ? "-" : WCSPoint2D.ToString(WCSFinish)}`}</span> : ""}
                     </FormGroup>
                 )}
             </div>

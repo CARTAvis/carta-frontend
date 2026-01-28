@@ -1,10 +1,11 @@
 import {useState} from "react";
-import {AnchorButton, Classes, FormGroup, HTMLSelect, InputGroup, Intent, MenuItem, Overlay2, Radio, RadioGroup, Spinner} from "@blueprintjs/core";
+import {AnchorButton, Classes, FormGroup, HTMLSelect, InputGroup, Intent, MenuItem, Overlay2, Radio, RadioGroup, Spinner, Tooltip} from "@blueprintjs/core";
 import {ItemPredicate, ItemRenderer, Suggest} from "@blueprintjs/select";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {SafeNumericInput, ScrollShadow} from "components/Shared";
+import {AngularSize, AngularSizeUnit} from "models";
 import {HipsCoord, HipsProjection, HipsQueryStore, HipsSurvey} from "stores";
 
 import "./HipsQueryComponent.scss";
@@ -25,6 +26,15 @@ const renderSurveyOption: ItemRenderer<HipsSurvey> = (survey, {handleClick, hand
         return null;
     }
     return <MenuItem active={modifiers.active} disabled={modifiers.disabled} key={survey.name} onClick={handleClick} onFocus={handleFocus} roleStructure="listoption" text={survey.name} label={survey.type} />;
+};
+
+const renderPixelSize = () => {
+    const hipsQueryStore = HipsQueryStore.Instance;
+    const pixelSize = AngularSize.convertFromArcsec(hipsQueryStore.pixelSize * 3600, true);
+    if (pixelSize.unit === AngularSizeUnit.MILLIARCSEC && pixelSize.value < 0.001) {
+        return <FormGroup className="info-string" inline={true} label={`Pixel size: < 0.001 ${pixelSize.unit}`} disabled={hipsQueryStore.isLoading} />;
+    }
+    return <FormGroup className="info-string" inline={true} label={`Pixel size: ~ ${pixelSize.value.toFixed(3)} ${pixelSize.unit}`} disabled={hipsQueryStore.isLoading} />;
 };
 
 export const HipsQueryComponent = observer(() => {
@@ -79,27 +89,66 @@ export const HipsQueryComponent = observer(() => {
                         </FormGroup>
                     )}
                     <FormGroup inline={true} label="Dimension" labelInfo="(px)" disabled={hipsQueryStore.isLoading}>
-                        <SafeNumericInput
-                            placeholder="Width"
-                            min={1}
-                            majorStepSize={100}
-                            stepSize={100}
-                            value={isNaN(hipsQueryStore.size.x) ? "" : hipsQueryStore.size.x}
-                            onValueChange={hipsQueryStore.setWidth}
-                            disabled={hipsQueryStore.isLoading}
-                        />
-                        <SafeNumericInput
-                            placeholder="Height"
-                            min={1}
-                            majorStepSize={100}
-                            stepSize={100}
-                            value={isNaN(hipsQueryStore.size.y) ? "" : hipsQueryStore.size.y}
-                            onValueChange={hipsQueryStore.setHeight}
-                            disabled={hipsQueryStore.isLoading}
-                        />
+                        <Tooltip
+                            position="auto-end"
+                            content={
+                                <small>
+                                    {">="} 5 pixels and (width x height) {"<="} 50 million pixels
+                                </small>
+                            }
+                        >
+                            <SafeNumericInput
+                                placeholder="Width"
+                                min={0}
+                                majorStepSize={100}
+                                stepSize={100}
+                                value={isNaN(hipsQueryStore.size.x) ? "" : hipsQueryStore.size.x}
+                                onValueChange={hipsQueryStore.setWidth}
+                                disabled={hipsQueryStore.isLoading}
+                                intent={
+                                    (hipsQueryStore.size.x >= hipsQueryStore.HipsConstraint.MinDimension && (hipsQueryStore.size.x * hipsQueryStore.size.y <= hipsQueryStore.HipsConstraint.MaxDimension || isNaN(hipsQueryStore.size.y))) ||
+                                    isNaN(hipsQueryStore.size.x)
+                                        ? "none"
+                                        : "danger"
+                                }
+                            />
+                        </Tooltip>
+                        <Tooltip
+                            position="auto-end"
+                            content={
+                                <small>
+                                    {">="} 5 pixels and (width x height) {"<="} 50 million pixels
+                                </small>
+                            }
+                        >
+                            <SafeNumericInput
+                                placeholder="Height"
+                                min={0}
+                                majorStepSize={100}
+                                stepSize={100}
+                                value={isNaN(hipsQueryStore.size.y) ? "" : hipsQueryStore.size.y}
+                                onValueChange={hipsQueryStore.setHeight}
+                                disabled={hipsQueryStore.isLoading}
+                                intent={
+                                    (hipsQueryStore.size.y >= hipsQueryStore.HipsConstraint.MinDimension && (hipsQueryStore.size.x * hipsQueryStore.size.y <= hipsQueryStore.HipsConstraint.MaxDimension || isNaN(hipsQueryStore.size.x))) ||
+                                    isNaN(hipsQueryStore.size.y)
+                                        ? "none"
+                                        : "danger"
+                                }
+                            />
+                        </Tooltip>
                     </FormGroup>
                     <FormGroup inline={true} label="Field of view" labelInfo="(deg)" disabled={hipsQueryStore.isLoading}>
-                        <SafeNumericInput buttonPosition="none" value={isNaN(hipsQueryStore.fov) ? "" : hipsQueryStore.fov} onValueChange={hipsQueryStore.setFov} disabled={hipsQueryStore.isLoading} />
+                        <Tooltip position="auto-end" content={<small>0 to 360</small>}>
+                            <SafeNumericInput
+                                buttonPosition="none"
+                                value={isNaN(hipsQueryStore.fov) ? "" : hipsQueryStore.fov}
+                                onValueChange={hipsQueryStore.setFov}
+                                disabled={hipsQueryStore.isLoading}
+                                intent={hipsQueryStore.isFovValid || isNaN(hipsQueryStore.fov) ? "none" : "danger"}
+                            />
+                        </Tooltip>
+                        {isNaN(hipsQueryStore.pixelSize) ? "" : renderPixelSize()}
                     </FormGroup>
                     <FormGroup inline={true} label="Output system" disabled={hipsQueryStore.isLoading}>
                         <RadioGroup inline={true} onChange={ev => hipsQueryStore.setCoordsys(ev.currentTarget.value as HipsCoord)} selectedValue={hipsQueryStore.coordsys} disabled={hipsQueryStore.isLoading}>
@@ -116,7 +165,15 @@ export const HipsQueryComponent = observer(() => {
                         />
                     </FormGroup>
                     <FormGroup inline={true} label="Rotation angle" labelInfo="(deg)" disabled={hipsQueryStore.isLoading}>
-                        <SafeNumericInput buttonPosition="none" value={hipsQueryStore.rotationAngle} onValueChange={hipsQueryStore.setRotationAngle} disabled={hipsQueryStore.isLoading} />
+                        <Tooltip position="auto-end" content={<small>0 to 360</small>}>
+                            <SafeNumericInput
+                                buttonPosition="none"
+                                value={hipsQueryStore.rotationAngle}
+                                onValueChange={hipsQueryStore.setRotationAngle}
+                                disabled={hipsQueryStore.isLoading}
+                                intent={hipsQueryStore.isRotAngleValid ? "none" : "danger"}
+                            />
+                        </Tooltip>
                     </FormGroup>
                 </ScrollShadow>
             </div>

@@ -3,8 +3,8 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {CatalogSystemType, Point2D} from "models";
 import {CatalogDatabase} from "services";
-import {AppStore, ASTSettingsString, NumberFormatType, SystemType} from "stores";
-import {clamp, getPixelValueFromWCS, transformPoint, VizierResource} from "utilities";
+import {AppStore, NumberFormatType, SystemType} from "stores";
+import {ASTSettingsString, clamp, getPixelValueFromWCS, setAstSystem, transformPoint, VizierResource} from "utilities";
 
 export enum RadiusUnits {
     DEGREES = "deg",
@@ -19,6 +19,7 @@ export class CatalogOnlineQueryConfigStore {
     public static readonly MIN_OBJECTS = 1;
     public static readonly MAX_OBJECTS = 10000000;
     public static readonly OBJECT_SIZE = 1000;
+    public static readonly QUERY_DEG_PRECISION = "10";
 
     @observable isQuerying: boolean;
     @observable catalogDB: CatalogDatabase;
@@ -260,7 +261,7 @@ export class CatalogOnlineQueryConfigStore {
 
     @computed get searchRadiusInDegree(): number {
         const activeFrame = this.activeFrame;
-        if (activeFrame?.validWcs && AppStore.Instance.overlayStore.isWcsCoordinates) {
+        if (activeFrame?.validWcs && AppStore.Instance.overlaySettings.isWcsCoordinates) {
             const requiredFrameView = activeFrame.requiredFrameView;
             const diagonal1 = this.calculateDistanceFromPixelCoord({x: requiredFrameView.xMax, y: requiredFrameView.yMax}, {x: requiredFrameView.xMin, y: requiredFrameView.yMin}, true);
             const diagonal2 = this.calculateDistanceFromPixelCoord({x: requiredFrameView.xMin, y: requiredFrameView.yMax}, {x: requiredFrameView.xMax, y: requiredFrameView.yMin}, true);
@@ -310,18 +311,29 @@ export class CatalogOnlineQueryConfigStore {
         return tables;
     }
 
-    convertToDeg(pixelCoords: Point2D, system?: SystemType): {x: string | undefined; y: string | undefined} {
+    private isValidPrecisionString(precision: string): boolean {
+        return precision === "*" || /^[0-9]+$/.test(precision);
+    }
+
+    private getEffectivePrecision(precision?: string): string {
+        if (precision && !this.isValidPrecisionString(precision)) {
+            console.warn(`Invalid precision string: ${precision}. Expected '*' or a non-negative integer. Using default precision *.`);
+        }
+        const overlay = AppStore.Instance.overlaySettings;
+        return precision ?? (overlay.numbers.customPrecision ? overlay.numbers.precision.toString() : "*");
+    }
+
+    convertToDeg(pixelCoords: Point2D, system?: SystemType, precision?: string): {x: string | undefined; y: string | undefined} {
         const frame = this.activeFrame;
-        const overlay = AppStore.Instance.overlayStore;
+        const overlay = AppStore.Instance.overlaySettings;
         let p: {x: string | undefined; y: string | undefined} = {x: undefined, y: undefined};
         if (frame && overlay) {
-            const precision = overlay.numbers.customPrecision ? overlay.numbers.precision : "*";
-            const format = `${NumberFormatType.Degrees}.${precision}`;
+            const format = `${NumberFormatType.Degrees}.${this.getEffectivePrecision(precision)}`;
             const wcsCopy = AST.copy(frame.wcsInfo);
             let astString = new ASTSettingsString();
             const sys = system ? system : overlay.global.explicitSystem ? overlay.global.explicitSystem : SystemType.ICRS;
             if (frame.isXY || frame.isYX) {
-                AST.set(wcsCopy, `System=${sys}`);
+                setAstSystem(wcsCopy, sys, overlay.global);
                 astString.add(`Format(${frame.dirX})`, format);
                 astString.add(`Format(${frame.dirY})`, format);
             }
@@ -333,13 +345,13 @@ export class CatalogOnlineQueryConfigStore {
         return p;
     }
 
-    convertToPixel(coords: Point2D): {x: number | undefined; y: number | undefined} | null {
+    convertToPixel(coords: Point2D, precision?: string): {x: number | undefined; y: number | undefined} | null {
         const frame = this.activeFrame;
-        const overlay = AppStore.Instance.overlayStore;
+        const overlay = AppStore.Instance.overlaySettings;
         let p: {x: number | undefined; y: number | undefined} | null = {x: undefined, y: undefined};
         if (frame && overlay) {
-            const precision = overlay.numbers.customPrecision ? overlay.numbers.precision : "*";
-            const format = `${NumberFormatType.Degrees}.${precision}`;
+            const effectivePrecision = this.getEffectivePrecision(precision);
+            const format = `${NumberFormatType.Degrees}.${effectivePrecision}`;
             const wcsCopy = AST.copy(frame.wcsInfo);
             if (frame.isXY || frame.isYX) {
                 AST.set(wcsCopy, `System=${SystemType.ICRS}`);

@@ -4,7 +4,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {WorkspaceRenderConfig} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
-import {clamp, getColorsForValues, getColorsFromHex, getPercentiles, scaleValueInverse} from "utilities";
+import {clamp, COLOR_MAPS_ALL, COLOR_MAPS_MONO, COLOR_MAPS_SELECTED, getColorsForValues, getColorsFromHex, getPercentiles, scaleValueInverse} from "utilities";
 
 export enum FrameScaling {
     LINEAR = 0,
@@ -27,141 +27,6 @@ export class RenderConfigStore {
         [FrameScaling.POWER, "Power"]
     ]);
 
-    /**
-     * All provided colormaps.
-     */
-    static readonly COLOR_MAPS_ALL = [
-        "accent",
-        "afmhot",
-        "autumn",
-        "binary",
-        "Blues",
-        "bone",
-        "BrBG",
-        "brg",
-        "BuGn",
-        "BuPu",
-        "bwr",
-        "CMRmap",
-        "cool",
-        "coolwarm",
-        "copper",
-        "cubehelix",
-        "dark2",
-        "flag",
-        "gist_earth",
-        "gist_gray",
-        "gist_heat",
-        "gist_ncar",
-        "gist_rainbow",
-        "gist_stern",
-        "gist_yarg",
-        "GnBu",
-        "gnuplot",
-        "gnuplot2",
-        "gray",
-        "greens",
-        "greys",
-        "hot",
-        "hsv",
-        "inferno",
-        "jet",
-        "magma",
-        "nipy_spectral",
-        "ocean",
-        "oranges",
-        "OrRd",
-        "paired",
-        "pastel1",
-        "pastel2",
-        "pink",
-        "PiYG",
-        "plasma",
-        "PRGn",
-        "prism",
-        "PuBu",
-        "PuBuGn",
-        "PuOr",
-        "PuRd",
-        "purples",
-        "rainbow",
-        "RdBu",
-        "RdGy",
-        "RdPu",
-        "RdYlBu",
-        "RdYlGn",
-        "reds",
-        "seismic",
-        "set1",
-        "set2",
-        "set3",
-        "spectral",
-        "spring",
-        "summer",
-        "tab10",
-        "tab20",
-        "tab20b",
-        "tab20c",
-        "terrain",
-        "viridis",
-        "winter",
-        "Wistia",
-        "YlGn",
-        "YlGnBu",
-        "YlOrBr",
-        "YlOrRd",
-        "Red",
-        "Orange",
-        "Yellow",
-        "Green",
-        "Cyan",
-        "Blue",
-        "Violet",
-        "Magenta"
-    ];
-    /**
-     * The selected colormaps shown in the option.
-     */
-    static readonly COLOR_MAPS_SELECTED = [
-        "afmhot",
-        "Blues",
-        "coolwarm",
-        "cubehelix",
-        "gist_heat",
-        "gist_stern",
-        "gnuplot",
-        "gnuplot2",
-        "gray",
-        "greens",
-        "greys",
-        "hot",
-        "inferno",
-        "jet",
-        "magma",
-        "nipy_spectral",
-        "plasma",
-        "rainbow",
-        "RdBu",
-        "RdGy",
-        "reds",
-        "seismic",
-        "spectral",
-        "tab10",
-        "viridis"
-    ];
-    /**
-     * Some commonly used single-color gradients.
-     */
-    static readonly COLOR_MAPS_MONO = new Map<string, string>([
-        ["Red", "#ff0000"],
-        ["Orange", "#ffa500"],
-        ["Yellow", "#ffff00"],
-        ["Green", "#00ff00"],
-        ["Cyan", "#00ffff"],
-        ["Blue", "#0000ff"],
-        ["Violet", "#7f00ff"],
-        ["Magenta", "#ff00ff"]
-    ]);
     static readonly CUSTOM_COLOR_MAP_INDEX = -1;
     static readonly COLOR_MAPS_CUSTOM = "custom";
     static readonly COLOR_MAPS_PANEL = "color_panel";
@@ -185,7 +50,7 @@ export class RenderConfigStore {
     @observable alpha: number;
     @observable inverted: boolean;
     @observable channelHistogram: CARTA.IHistogram;
-    @observable cubeHistogram: CARTA.IHistogram;
+    @observable cubeHistogram: CARTA.IHistogram | null;
     @observable useCubeHistogram: boolean;
     @observable useCubeHistogramContours: boolean;
     @observable useCubeHistogramRender3D: boolean;
@@ -196,8 +61,8 @@ export class RenderConfigStore {
     @observable scaleMin: number[];
     @observable scaleMax: number[];
     @observable visible: boolean;
-    @observable previewHistogramMax: number;
-    @observable previewHistogramMin: number;
+    @observable previewHistogramMax: number | null = null;
+    @observable previewHistogramMin: number | null = null;
     @observable customColormapHexEnd: string;
     @observable customColormapHexStart: string;
 
@@ -237,7 +102,7 @@ export class RenderConfigStore {
     }
 
     public static IsColormapValid(colormap: string): boolean {
-        return RenderConfigStore.COLOR_MAPS_SELECTED.includes(colormap);
+        return COLOR_MAPS_SELECTED.includes(colormap);
     }
 
     public static IsPercentileValid(percentile: number): boolean {
@@ -245,8 +110,8 @@ export class RenderConfigStore {
     }
 
     @computed get colorMap() {
-        if (this.colorMapIndex >= 0 && this.colorMapIndex < RenderConfigStore.COLOR_MAPS_ALL.length) {
-            return RenderConfigStore.COLOR_MAPS_ALL[this.colorMapIndex];
+        if (this.colorMapIndex >= 0 && this.colorMapIndex < COLOR_MAPS_ALL.length) {
+            return COLOR_MAPS_ALL[this.colorMapIndex];
         } else if (this.colorMapIndex === RenderConfigStore.CUSTOM_COLOR_MAP_INDEX) {
             return RenderConfigStore.COLOR_MAPS_CUSTOM;
         } else {
@@ -259,20 +124,26 @@ export class RenderConfigStore {
     }
 
     @computed get colorscaleArray() {
-        let colorsForValues: {color: Uint8ClampedArray; size: number};
+        let colorsForValues: {color: Uint8ClampedArray; size: number} | undefined;
         if (this.colorMapIndex === RenderConfigStore.CUSTOM_COLOR_MAP_INDEX) {
             colorsForValues = this.customColorGradient;
-        } else if (this.colorMapIndex >= 79 && this.colorMapIndex < RenderConfigStore.COLOR_MAPS_ALL.length) {
-            colorsForValues = getColorsFromHex(this.monoColormapHex);
+        } else if (this.colorMapIndex >= 79 && this.colorMapIndex < COLOR_MAPS_ALL.length) {
+            const monoColorHex = this.monoColormapHex;
+            if (monoColorHex) {
+                colorsForValues = getColorsFromHex(monoColorHex);
+            }
         } else if (this.colorMapIndex >= 0) {
             colorsForValues = getColorsForValues(this.colorMap);
         }
-
+        if (!colorsForValues) {
+            return [];
+        }
         const indexArray = Array.from(Array(colorsForValues.size).keys()).map(x => (this.inverted ? 1 - x / colorsForValues.size : x / colorsForValues.size));
         const scaledArray = indexArray.map(x => 1.0 - scaleValueInverse(x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast, AppStore.Instance?.preferenceStore?.useSmoothedBiasContrast));
-        let rbgString = (index: number): string => `rgb(${colorsForValues.color[index * 4]}, ${colorsForValues.color[index * 4 + 1]}, ${colorsForValues.color[index * 4 + 2]}, ${colorsForValues.color[index * 4 + 3]})`;
+        let rbgString = (index: number): string => `rgb(${colorsForValues!.color[index * 4]}, ${colorsForValues!.color[index * 4 + 1]}, ${colorsForValues!.color[index * 4 + 2]}, ${colorsForValues!.color[index * 4 + 3]})`;
 
-        let colorscale = [];
+        // Fix: Explicitly type colorscale as (number | string)[]
+        let colorscale: (number | string)[] = [];
         if (this.contrast === 0) {
             for (let i = 0; i < colorsForValues.size; i++) {
                 if (scaledArray[i] === (this.inverted ? 1 : 0)) {
@@ -387,14 +258,14 @@ export class RenderConfigStore {
     };
 
     @computed get histogramMin() {
-        if (!this.histogram) {
+        if (!this.histogram || this.histogram.firstBinCenter == null || this.histogram.binWidth == null) {
             return undefined;
         }
         return this.histogram.firstBinCenter - 0.5 * this.histogram.binWidth;
     }
 
     @computed get histogramMax() {
-        if (!this.histogram) {
+        if (!this.histogram || this.histogram.firstBinCenter == null || this.histogram.binWidth == null || !this.histogram.bins) {
             return undefined;
         }
         return this.histogram.firstBinCenter + (this.histogram.bins.length + 0.5) * this.histogram.binWidth;
@@ -410,8 +281,12 @@ export class RenderConfigStore {
         this.selectedPercentile[this.stokesIndex] = rank;
         // Find max and min if the rank is 100%
         if (rank === 100) {
-            this.scaleMin[this.stokesIndex] = this.histogramMin;
-            this.scaleMax[this.stokesIndex] = this.histogramMax;
+            if (this.histogramMin !== undefined) {
+                this.scaleMin[this.stokesIndex] = this.histogramMin;
+            }
+            if (this.histogramMax !== undefined) {
+                this.scaleMax[this.stokesIndex] = this.histogramMax;
+            }
             this.updateSiblings();
             return true;
         }
@@ -439,7 +314,7 @@ export class RenderConfigStore {
         }
     };
 
-    @action updateCubeHistogram = (histogram: CARTA.IHistogram, progress: number) => {
+    @action updateCubeHistogram = (histogram: CARTA.IHistogram | null, progress: number) => {
         this.cubeHistogram = histogram;
         this.cubeHistogramProgress = progress;
         if (this.selectedPercentile[this.stokesIndex] > 0 && this.useCubeHistogram) {
@@ -464,23 +339,23 @@ export class RenderConfigStore {
     /**
      * Set index of the colormap.
      *
-     * @param index - The colormap index between -1 and array {@link RenderConfigStore.COLOR_MAPS_ALL} size. The index -1 is the custom color.
+     * @param index - The colormap index between -1 and array {@link COLOR_MAPS_ALL} size. The index -1 is the custom color.
      */
     @action setColorMapIndex = (index: number) => {
-        this.colorMapIndex = clamp(index, -1, RenderConfigStore.COLOR_MAPS_ALL.length - 1);
+        this.colorMapIndex = clamp(index, -1, COLOR_MAPS_ALL.length - 1);
         this.updateSiblings();
     };
 
     /**
      * Set the colormap.
      *
-     * @param colormap - The colormap name in {@link RenderConfigStore.COLOR_MAPS_ALL}.
+     * @param colormap - The colormap name in {@link COLOR_MAPS_ALL}.
      */
     @action setColorMap = (colormap: string) => {
-        const index = RenderConfigStore.COLOR_MAPS_ALL.indexOf(colormap);
+        const index = COLOR_MAPS_ALL.indexOf(colormap);
         if (colormap === RenderConfigStore.COLOR_MAPS_CUSTOM) {
             this.setColorMapIndex(RenderConfigStore.CUSTOM_COLOR_MAP_INDEX);
-        } else if (index >= 0 && index < RenderConfigStore.COLOR_MAPS_ALL.length) {
+        } else if (index >= 0 && index < COLOR_MAPS_ALL.length) {
             this.setColorMapIndex(index);
         }
     };
@@ -506,7 +381,7 @@ export class RenderConfigStore {
     };
 
     @computed get monoColormapHex() {
-        return RenderConfigStore.COLOR_MAPS_MONO.get(RenderConfigStore.COLOR_MAPS_ALL[this.colorMapIndex]);
+        return COLOR_MAPS_MONO.get(COLOR_MAPS_ALL[this.colorMapIndex]);
     }
 
     /**
@@ -596,7 +471,7 @@ export class RenderConfigStore {
      *
      * @param histogramMax - The upper cut of the histogram.
      */
-    @action setPreviewHistogramMax = (histogramMax: number) => {
+    @action setPreviewHistogramMax = (histogramMax: number | null) => {
         this.previewHistogramMax = histogramMax;
     };
 
@@ -605,7 +480,7 @@ export class RenderConfigStore {
      *
      * @param histogramMin - The lower cut of the histogram.
      */
-    @action setPreviewHistogramMin = (histogramMin: number) => {
+    @action setPreviewHistogramMin = (histogramMin: number | null) => {
         this.previewHistogramMin = histogramMin;
     };
 
@@ -638,18 +513,22 @@ export class RenderConfigStore {
     };
 
     @action updateFromWorkspace = (config: WorkspaceRenderConfig) => {
-        this.scaling = config.scaling;
-        this.setColorMap(config.colorMap);
-        this.setCustomHexEnd(config.customColormapHexEnd);
-        this.bias = config.bias;
-        this.contrast = config.contrast;
-        this.gamma = config.gamma;
-        this.alpha = config.alpha;
-        this.inverted = config.inverted;
-        this.visible = config.visible;
-        this.scaleMin = config.scaleMin;
-        this.scaleMax = config.scaleMax;
-        this.selectedPercentile = config.selectedPercentile;
+        this.scaling = config.scaling ?? this.scaling;
+        if (config.colorMap) {
+            this.setColorMap(config.colorMap);
+        }
+        if (config.customColormapHexEnd) {
+            this.setCustomHexEnd(config.customColormapHexEnd);
+        }
+        this.bias = config.bias ?? this.bias;
+        this.contrast = config.contrast ?? this.contrast;
+        this.gamma = config.gamma ?? this.gamma;
+        this.alpha = config.alpha ?? this.alpha;
+        this.inverted = config.inverted ?? this.inverted;
+        this.visible = config.visible ?? this.visible;
+        this.scaleMin = config.scaleMin ?? this.scaleMin;
+        this.scaleMax = config.scaleMax ?? this.scaleMax;
+        this.selectedPercentile = config.selectedPercentile ?? this.selectedPercentile;
         // TODO: Handle cube histograms properly. For now, default to false
         this.useCubeHistogram = false;
         this.useCubeHistogramContours = false;

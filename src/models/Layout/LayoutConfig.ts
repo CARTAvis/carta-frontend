@@ -6,7 +6,7 @@ import {AppStore, CatalogStore, WidgetConfig, WidgetsStore} from "stores";
 import {findDeep} from "utilities";
 import {smoothStepOffset} from "utilities/math/math";
 
-const layoutSchema = require("models/layout_schema_2.json");
+const layoutSchema = require("carta-schemas/layout_schema_2.json");
 
 const COMPONENT_CONFIG = new Map<string, any>([
     [

@@ -138,7 +138,9 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
 
         autorun(() => {
             if (this.effectiveFrame) {
-                this.selectedStokes = DEFAULT_STOKES;
+                action(() => {
+                    this.selectedStokes = DEFAULT_STOKES;
+                })();
             }
         });
     }

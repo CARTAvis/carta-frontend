@@ -4,7 +4,7 @@ import {action, autorun, computed, flow, makeObservable, observable} from "mobx"
 
 import {FileInfoType} from "components";
 import {AppToaster, ErrorToast} from "components/Shared";
-import {FileCtypeInfo, Freq, FrequencyUnit, ImageType, LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
+import {FileCtypeInfo, FileFilterMode, Freq, FrequencyUnit, ImageType, LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
 import {BackendService} from "services";
 import {AppStore, DialogId, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
 import {RegionStore} from "stores/Frame";
@@ -35,9 +35,19 @@ export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.DS9_REG;
 export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.FileType.HDF5 | CARTA.FileType.MIRIAD;
 export type CatalogFileType = CARTA.CatalogFileType.VOTable | CARTA.CatalogFileType.FITSTable;
 
+type DirectoryInfo = CARTA.IFileInfo & Omit<CARTA.IDirectoryInfo, keyof CARTA.IFileInfo>;
+
+export interface BrowserFileList {
+    directory: string | null | undefined;
+    parent: string | null | undefined;
+    files: CARTA.IFileInfo[] | CARTA.ICatalogFileInfo[] | null | undefined;
+    subdirectories: DirectoryInfo[] | null | undefined;
+}
+
 export interface ISelectedFile {
     fileInfo?: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
     hdu?: string;
+    isFile?: boolean;
 }
 
 export class FileBrowserStore {
@@ -54,7 +64,7 @@ export class FileBrowserStore {
 
     @observable browserMode: BrowserMode = BrowserMode.File;
     @observable appendingFrame = false;
-    @observable fileList: CARTA.IFileListResponse | null;
+    @observable fileList: BrowserFileList | null;
     @observable selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo | null | undefined;
     @observable selectedHDU: string | null;
     @observable HDUfileInfoExtended: {[k: string]: CARTA.IFileInfoExtended} | null;
@@ -62,6 +72,7 @@ export class FileBrowserStore {
     @observable selectedTab: TabId = FileInfoType.IMAGE_FILE;
     @observable loadingList = false;
     @observable isImportingRegions = false;
+    @observable hasReceivedImportRegionAck = false;
     @observable extendedLoading = false;
     @observable loadingInfo = false;
     @observable fileInfoResp = false;
@@ -73,7 +84,7 @@ export class FileBrowserStore {
     @observable exportRegionIndexes: number[] = [];
     @observable selectedFilesCtypes: {ctype: string[]; rank: number[]};
 
-    @observable catalogFileList: CARTA.ICatalogListResponse | null;
+    @observable catalogFileList: BrowserFileList | null;
     @observable selectedCatalogFile: CARTA.ICatalogFileInfo;
     @observable catalogFileInfo: CARTA.ICatalogFileInfo | null;
     @observable catalogHeaders: Array<CARTA.ICatalogHeader>;
@@ -123,6 +134,10 @@ export class FileBrowserStore {
         this.isImportingRegions = isImportingRegions;
     };
 
+    @action setHasReceivedImportRegionAck = (hasReceivedImportRegionAck: boolean) => {
+        this.hasReceivedImportRegionAck = hasReceivedImportRegionAck;
+    };
+
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
         switch (mode) {
             case BrowserMode.SaveFile:
@@ -164,12 +179,12 @@ export class FileBrowserStore {
         DialogStore.Instance.hideDialog(DialogId.FileBrowser);
     };
 
-    @action setFileList = (list: CARTA.IFileListResponse) => {
-        this.fileList = list;
+    @action setFileList = (fileListResponse: CARTA.IFileListResponse) => {
+        this.fileList = {directory: fileListResponse.directory, parent: fileListResponse.parent, files: fileListResponse.files, subdirectories: fileListResponse.subdirectories};
     };
 
-    @action setCatalogFileList = (list: CARTA.ICatalogListResponse) => {
-        this.catalogFileList = list;
+    @action setCatalogFileList = (fileListResponse: CARTA.ICatalogListResponse) => {
+        this.catalogFileList = {directory: fileListResponse.directory, parent: fileListResponse.parent, files: fileListResponse.files, subdirectories: fileListResponse.subdirectories};
     };
 
     private setExtendedDelayTimer() {
@@ -209,13 +224,35 @@ export class FileBrowserStore {
         try {
             if (this.browserMode === BrowserMode.File || this.browserMode === BrowserMode.SaveFile) {
                 const list = yield appStore.backendService.getFileList(directory, filterMode);
-                this.setFileList(list);
+
+                if (
+                    AppStore.Instance.preferenceStore.fileFilterMode === FileFilterMode.All &&
+                    directory &&
+                    directory !== this.startingDirectory &&
+                    directory !== "$BASE" &&
+                    list?.directory.replace(/^\/+/, "") !== directory.replace(/^\/+/, "")
+                ) {
+                    this.updateFolderInfoInFileList(list.files?.[0]);
+                } else {
+                    this.setFileList(list);
+                }
             } else if (this.browserMode === BrowserMode.Catalog) {
                 const list = yield appStore.backendService.getCatalogList(directory, filterMode);
                 this.setCatalogFileList(list);
             } else {
                 const list = yield appStore.backendService.getRegionList(directory, filterMode);
-                this.setFileList(list);
+
+                if (
+                    AppStore.Instance.preferenceStore.fileFilterMode === FileFilterMode.All &&
+                    directory &&
+                    directory !== this.startingDirectory &&
+                    directory !== "$BASE" &&
+                    list?.directory.replace(/^\/+/, "") !== directory.replace(/^\/+/, "")
+                ) {
+                    this.updateFolderInfoInFileList(list.files?.[0]);
+                } else {
+                    this.setFileList(list);
+                }
             }
         } catch (err) {
             console.log(err);
@@ -224,6 +261,31 @@ export class FileBrowserStore {
         this.loadingList = false;
         this.resetLoadingStates();
     }
+
+    /** In all files mode, updates the folder info in the file list with file info and updates the selected file info. */
+    private updateFolderInfoInFileList = (fileInfo: CARTA.IFileInfo) => {
+        if (AppStore.Instance.preferenceStore.fileFilterMode === FileFilterMode.All) {
+            const fileListDirectories = this.getfileListByMode?.subdirectories;
+
+            if (fileListDirectories) {
+                const index = fileListDirectories.findIndex(item => item.name === fileInfo.name);
+
+                if (index !== -1) {
+                    const directoryInfo = fileListDirectories[index];
+                    directoryInfo.type = fileInfo.type;
+                    directoryInfo.size = fileInfo.size;
+                    directoryInfo.HDUList = fileInfo.HDUList;
+                }
+            }
+
+            this.selectFile({fileInfo: fileInfo, hdu: fileInfo.HDUList?.[0]});
+            const selectedFileIndex = this.selectedFiles.findIndex(item => item.fileInfo?.name === fileInfo.name);
+            if (selectedFileIndex !== -1) {
+                this.selectedFiles[selectedFileIndex].fileInfo = fileInfo;
+                this.selectedFiles[selectedFileIndex].isFile = true;
+            }
+        }
+    };
 
     @flow.bound
     *getFileInfo(directory: string | null | undefined, file: string | null | undefined, hdu: string | undefined) {
@@ -241,6 +303,7 @@ export class FileBrowserStore {
                 if (HDUList?.length >= 1) {
                     this.selectedHDU = HDUList[0];
                 }
+                this.updateFileInfoInFileList(res.fileInfo);
                 this.loadingInfo = false;
             }
             this.fileInfoResp = true;
@@ -264,6 +327,7 @@ export class FileBrowserStore {
         try {
             const res = yield backendService.getRegionFileInfo(directory, file);
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
+                this.updateFileInfoInFileList(res.fileInfo);
                 this.loadingInfo = false;
                 this.regionFileInfo = res.contents;
             }
@@ -288,6 +352,7 @@ export class FileBrowserStore {
         try {
             const res = yield backendService.getCatalogFileInfo(directory, filename);
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
+                this.updateFileInfoInFileList(res.fileInfo);
                 this.loadingInfo = false;
                 this.catalogFileInfo = res.fileInfo;
                 this.catalogHeaders = res.headers.sort((a, b) => {
@@ -304,10 +369,25 @@ export class FileBrowserStore {
         }
     }
 
+    /** In all files mode, updates the file info in the file list if the file type is unknown. */
+    private updateFileInfoInFileList = (fileInfo: CARTA.IFileInfo) => {
+        if (AppStore.Instance.preferenceStore.fileFilterMode === FileFilterMode.All) {
+            const fileListFiles = this.getfileListByMode?.files;
+
+            if (fileListFiles) {
+                const index = fileListFiles.findIndex(item => item.name === fileInfo.name);
+
+                if (index !== -1 && fileListFiles[index].type === CARTA.FileType.UNKNOWN) {
+                    fileListFiles[index] = fileInfo;
+                }
+            }
+        }
+    };
+
     /// Update the spectral range for save image file
     @action initialSaveSpectralRange = () => {
         const activeFrame = AppStore.Instance.activeFrame;
-        if (activeFrame && activeFrame.numChannels > 1 && activeFrame.isSpectralChannel) {
+        if (activeFrame && activeFrame.numChannels > 1 && activeFrame.isSpectralChannel && activeFrame.channelValueBounds) {
             this.setSaveSpectralStart(Math.min(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min));
             this.setSaveSpectralEnd(Math.max(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min));
         }
@@ -521,7 +601,13 @@ export class FileBrowserStore {
     };
 
     @action clearExportRegionIndexes = (mode: SelectionMode) => {
-        const regions = AppStore.Instance.activeFrame.regionSet.regions;
+        const activeFrame = AppStore.Instance.activeFrame;
+        if (!activeFrame || !activeFrame.regionSet) {
+            this.exportRegionIndexes = [];
+            return;
+        }
+
+        const regions = activeFrame.regionSet.regions;
         switch (mode) {
             case SelectionMode.All:
                 this.exportRegionIndexes = [];
@@ -585,11 +671,9 @@ export class FileBrowserStore {
         this.selectedFiles = selection;
 
         // for dynamic layout
-        if (PreferenceStore.Instance.dynamicLayoutEnable) {
+        if (PreferenceStore.Instance.dynamicLayoutEnable && selection.length > 0 && selection.every(item => item.isFile)) {
             this.selectedFilesCtypes = yield this.selectedFilesCtypeInfo();
-            if (this.selectedFiles.length > 0) {
-                AppStore.Instance.dynamicLayoutStore.matchLayoutMapping(this.selectedFilesCtypes);
-            }
+            AppStore.Instance.dynamicLayoutStore.matchLayoutMapping(this.selectedFilesCtypes);
         }
     }
 
@@ -632,6 +716,7 @@ export class FileBrowserStore {
         this.clearExtendedDelayTimer(true);
         this.isLoadingDialogOpen = false;
         this.updateLoadingState(0, 0, 0);
+        this.hasReceivedImportRegionAck = false;
     };
 
     @action cancelRequestingFileList = () => {
@@ -734,7 +819,7 @@ export class FileBrowserStore {
         return headers;
     }
 
-    @computed get getfileListByMode(): CARTA.IFileListResponse | CARTA.ICatalogListResponse | null {
+    @computed get getfileListByMode(): BrowserFileList | null {
         switch (this.browserMode) {
             case BrowserMode.Catalog:
                 return this.catalogFileList;
@@ -857,6 +942,6 @@ export class FileBrowserStore {
     }
 
     @computed get exportAnnotationNum(): number {
-        return this.exportRegionIndexes?.reduce((accum, exportIndex, i) => accum + (AppStore.Instance.activeFrame.regionSet.regions[exportIndex]?.isAnnotation ? 1 : 0), 0);
+        return this.exportRegionIndexes?.reduce((accum, exportIndex, i) => accum + (AppStore.Instance.activeFrame?.regionSet.regions[exportIndex]?.isAnnotation ? 1 : 0), 0);
     }
 }
