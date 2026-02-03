@@ -207,19 +207,28 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo
 EMSCRIPTEN_KEEPALIVE AstFrameSet* createShiftmapFrameset(AstFrameSet* wcsinfo, double offsetX, double offsetY, double pixelOffsetX, double pixelOffsetY)
 {
     AstFrameSet* wcsinfoShifted = static_cast<AstFrameSet*> astCopy(wcsinfo);
+    int currentFrame = astGetI(wcsinfoShifted, "Current");
+    int baseFrame = astGetI(wcsinfoShifted, "Base");
 
     // Use AST's built-in offset coordinate system which properly handles spherical geometry
-    // Setting attributes on the FrameSet applies them to its current frame (the SkyFrame)
+    // Temporarily switch to the sky frame to ensure SkyRef attributes apply correctly.
+    astSetI(wcsinfoShifted, "Current", 2);
     astSetD(wcsinfoShifted, "SkyRef(1)", offsetX);
     astSetD(wcsinfoShifted, "SkyRef(2)", offsetY);
-
     // Set SkyRefIs to Origin to use the SkyRef position as the origin of the offset coordinate system
     astSet(wcsinfoShifted, "SkyRefIs=Origin");
+    astSetI(wcsinfoShifted, "Current", currentFrame);
 
     // 2D pixel shifts
     double pixelOffset[] = {-pixelOffsetX, -pixelOffsetY};
     AstShiftMap* pixelShiftMap = astShiftMap(2, pixelOffset, "");
     astAddFrame(wcsinfoShifted, AST__BASE, pixelShiftMap, astFrame(2, "Label(1)=X offset coordinate,Label(2)=Y offset coordinate,Domain=GRID"));
+
+    // If the current frame was the base (image coordinates), switch to the shifted image frame.
+    if (currentFrame == baseFrame) {
+        int shiftedFrame = astGetI(wcsinfoShifted, "Nframe");
+        astSetI(wcsinfoShifted, "Current", shiftedFrame);
+    }
 
     return wcsinfoShifted;
 }
