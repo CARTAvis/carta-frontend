@@ -217,6 +217,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createShiftmapFrameset(AstFrameSet* wcsinfo, d
     astSetD(wcsinfoShifted, "SkyRef(2)", offsetY);
     // Set SkyRefIs to Origin to use the SkyRef position as the origin of the offset coordinate system
     astSet(wcsinfoShifted, "SkyRefIs=Origin");
+    astSet(wcsinfoShifted, "Label(1)=Offset coordinate,Label(2)=Offset coordinate");
     astSetI(wcsinfoShifted, "Current", currentFrame);
 
     // 2D pixel shifts
@@ -224,7 +225,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createShiftmapFrameset(AstFrameSet* wcsinfo, d
     AstShiftMap* pixelShiftMap = astShiftMap(2, pixelOffset, "");
     astAddFrame(wcsinfoShifted, AST__BASE, pixelShiftMap, astFrame(2, "Label(1)=X offset coordinate,Label(2)=Y offset coordinate,Domain=GRID"));
 
-    // If the current frame was the base (image coordinates), switch to the shifted image frame.
+    // If the current frame was the base (image coordinates), switch to the newly-added shifted image frame.
     if (currentFrame == baseFrame) {
         int shiftedFrame = astGetI(wcsinfoShifted, "Nframe");
         astSetI(wcsinfoShifted, "Current", shiftedFrame);
