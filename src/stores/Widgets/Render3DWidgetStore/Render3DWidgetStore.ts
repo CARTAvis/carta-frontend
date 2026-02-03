@@ -120,8 +120,13 @@ export class Render3DWidgetStore extends RegionWidgetStore {
         if (!frame) {
             return;
         }
+
         let channelIndexMin = frame.findChannelIndexByValue(this.range.min);
         let channelIndexMax = frame.findChannelIndexByValue(this.range.max);
+
+        if (channelIndexMin === undefined || channelIndexMax === undefined) {
+            return;
+        }
 
         if (channelIndexMin > channelIndexMax) {
             const holder = channelIndexMax;

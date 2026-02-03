@@ -1563,6 +1563,10 @@ export class AppStore {
                 // +"-viewer-"+message.viewerId
                 WidgetsStore.Instance.createFloatingSettingsWidget("3D Rendering Viewer "+message.viewerId, id+"-viewer-"+message.viewerId, Render3DComponent.WIDGET_CONFIG.type);
 
+                if (message.viewerId == null || message.fileId == null || message.regionId == null) {
+                    AppToaster.show({icon: "warning-sign", message: "Load 3D renderig message failed.", intent: "danger", timeout: 3000});
+                    return;
+                }
                 let render3DStore = this.render3D.get(message.viewerId);
                 if (!render3DStore) {
                     // initialize render3DStore without dimensions. otherwise does not load the 3D viewer
@@ -1573,9 +1577,6 @@ export class AppStore {
             } else {
                 AppToaster.show({icon: "warning-sign", message: "Load 3D renderig failed.", intent: "danger", timeout: 3000});
             }
-            // if (ack.cancel || !ack.success) {
-            //     AppToaster.show({icon: "warning-sign", message: "Load 3D renderig failed.", intent: "danger", timeout: 3000});
-            // }
             frame.resetRender3DRequestState();
             // frame.setIsRequestPVCancelling(false);
             // this.endRender3DLoading();
@@ -2307,24 +2308,9 @@ export class AppStore {
         const frame = this.frames.find(frame => frame.frameInfo.fileId === render3DData.fileId);
         if (frame) {
             let render3DStore = this.render3D.get(render3DData.viewerId);
-            // if (!fileMap) {
-            //     fileMap = new Map<number, ObservableMap<number, Render3DDataStore>>();
-            //     this.render3D.set(render3DData.fileId, fileMap);
-            // }
-            // let regionMap = fileMap.get(render3DData.regionId);
-            // if (!regionMap) {
-            //     regionMap = new ObservableMap<number, Render3DDataStore>();
-            //     fileMap.set(render3DData.regionId, regionMap);
-            // }
-            // let render3DStore = regionMap.get(render3DData.viewerId);
-
-            // making new render3DStore probably not be needed
-            // if (!render3DStore) {
-            //     console.debug("Creating new handlerender3dstream");
-            //     render3DStore = new Render3DDataStore(render3DData.fileId, render3DData.regionId, render3DData.viewerId, render3DData.width, render3DData.height, render3DData.depth, render3DData.slice);
-            //     this.render3D.set(render3DData.viewerId, render3DStore);
-            // }
-
+            if (!render3DStore) {
+                return;
+            }
             // render3DStore has been initialized when requesting render3D, but without dimensions
             if (render3DStore.lastSlice === 0) {
                 render3DStore.setDimensions(render3DData.width, render3DData.height, render3DData.depth);

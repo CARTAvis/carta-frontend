@@ -5,7 +5,7 @@ import classNames from "classnames";
 import * as GoldenLayout from "golden-layout";
 import {observer} from "mobx-react";
 
-import {PlaceholderComponent, PvPreviewComponent, RenderConfigComponent, Render3DViewerComponent} from "components";
+import {PlaceholderComponent, PvPreviewComponent, Render3DViewerComponent,RenderConfigComponent} from "components";
 import {ImageType} from "models";
 import {AppStore, CatalogStore, HelpStore, HelpType, LayoutStore, WidgetConfig} from "stores";
 
