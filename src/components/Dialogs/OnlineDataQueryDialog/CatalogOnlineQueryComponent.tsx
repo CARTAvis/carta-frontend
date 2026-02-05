@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Button, Classes, FormGroup, Icon, InputGroup, Intent, MenuItem, NonIdealState, Overlay2, PopoverPosition, Position, Spinner, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, ControlGroup, FormGroup, Icon, InputGroup, Intent, MenuItem, NonIdealState, Overlay2, Popover, PopoverPosition, Position, Spinner, Tooltip} from "@blueprintjs/core";
 import {ItemRendererProps, MultiSelect, Select} from "@blueprintjs/select";
 import FuzzySearch from "fuzzy-search";
 import {action, computed, makeObservable, observable} from "mobx";
@@ -7,23 +7,47 @@ import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, SafeNumericInput, ScrollShadow} from "components/Shared";
 import {CatalogApiService, CatalogDatabase} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, NUMBER_FORMAT_LABEL, RadiusUnits, SystemType, VizierItem} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, NUMBER_FORMAT_LABEL, PreferenceKeys, PreferenceStore, RadiusUnits, SystemType, VizierItem} from "stores";
 import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
 import "./CatalogOnlineQueryComponent.scss";
 
 const KEYCODE_ENTER = 13;
+type MirrorBenchmarkStatus = "idle" | "pending" | "ok" | "fail";
+type MirrorBenchmark = {status: MirrorBenchmarkStatus; ms?: number};
 
 @observer
 export class CatalogQueryComponent extends React.Component {
     @observable resultSize: number;
     @observable objectSize: number;
+    @observable newMirrorUrl: string;
+    @observable dragSourceMirrorIndex?: number;
+    @observable dragOverMirrorIndex?: number;
+    @observable isBenchmarking: boolean;
+    @observable mirrorBenchmarks: Map<string, MirrorBenchmark>;
+    private mirrorBenchmarkAbort?: AbortController;
+    private lastMirrorSites: string[];
 
     constructor(props: any) {
         super(props);
         makeObservable(this);
         this.resultSize = undefined;
         this.objectSize = undefined;
+        this.newMirrorUrl = "";
+        this.dragSourceMirrorIndex = undefined;
+        this.dragOverMirrorIndex = undefined;
+        this.isBenchmarking = false;
+        this.mirrorBenchmarks = new Map();
+        this.mirrorBenchmarkAbort = undefined;
+        this.lastMirrorSites = [];
+    }
+
+    componentDidUpdate() {
+        this.syncMirrorBenchmarks();
+    }
+
+    componentWillUnmount() {
+        this.cancelMirrorBenchmark();
     }
 
     @action setResultSize(resultSize: number) {
@@ -84,24 +108,106 @@ export class CatalogQueryComponent extends React.Component {
         const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
         const isVizier = configStore.catalogDB === CatalogDatabase.VIZIER;
 
+        const mirrorSites = this.getMirrorSites(configStore.catalogDB);
+        const activeMirror = mirrorSites[0];
+
         const configBoard = (
             <div className="online-catalog-config">
-                <FormGroup inline={false} label="Database" disabled={disable} className={isVizier ? "vizier-databse" : ""}>
-                    <Select
-                        items={Object.values(CatalogDatabase)}
-                        activeItem={null}
-                        onItemSelect={db => configStore.setCatalogDB(db)}
-                        itemRenderer={this.renderDBPopOver}
-                        disabled={disable}
-                        popoverProps={{minimal: true}}
-                        filterable={false}
-                        resetOnSelect={true}
-                    >
-                        <Button text={configStore.catalogDB} disabled={disable} rightIcon="double-caret-vertical" />
-                    </Select>
-                </FormGroup>
+                <div className="catalog-db-row">
+                    <FormGroup inline={false} label="Database" disabled={disable}>
+                        <Select
+                            items={Object.values(CatalogDatabase)}
+                            activeItem={null}
+                            onItemSelect={db => configStore.setCatalogDB(db)}
+                            itemRenderer={this.renderDBPopOver}
+                            disabled={disable}
+                            popoverProps={{minimal: true}}
+                            filterable={false}
+                            resetOnSelect={true}
+                        >
+                            <Button text={configStore.catalogDB} disabled={disable} rightIcon="double-caret-vertical" />
+                        </Select>
+                    </FormGroup>
+                    <FormGroup inline={false} label="Mirror site" disabled={disable} className="mirror-site-group">
+                        <ControlGroup>
+                            <Select
+                                items={mirrorSites}
+                                activeItem={null}
+                                onItemSelect={this.handleMirrorSelect}
+                                itemRenderer={this.renderMirrorPopOver}
+                                disabled={disable}
+                                popoverProps={{minimal: true}}
+                                filterable={false}
+                                resetOnSelect={true}
+                            >
+                                <Button text={this.getMirrorLabel(activeMirror)} disabled={disable} rightIcon="double-caret-vertical" style={{minWidth: "180px", justifyContent: "space-between"}} />
+                            </Select>
+                            <Popover
+                                position={Position.BOTTOM}
+                                minimal={true}
+                                content={
+                                    <div className="mirror-manager">
+                                        <div className="mirror-manager__add-row">
+                                            <InputGroup
+                                                asyncControl={false}
+                                                placeholder="Add new mirror URL..."
+                                                disabled={disable}
+                                                value={this.newMirrorUrl}
+                                                onChange={event => this.handleMirrorInputChange(event.target.value)}
+                                                onKeyDown={e => {
+                                                    if (e.key === "Enter") this.handleAddMirror();
+                                                }}
+                                                rightElement={<Button icon="plus" minimal={true} disabled={disable || !this.newMirrorUrl.trim()} onClick={this.handleAddMirror} intent={Intent.PRIMARY} />}
+                                            />
+                                        </div>
+                                        <div className="mirror-manager__separator" />
+                                        <div className="mirror-manager__list">
+                                            {mirrorSites.map((site, index) => {
+                                                const benchmark = this.mirrorBenchmarks.get(site);
+                                                const {label, resultStyle, status} = this.getMirrorBenchmarkDisplay(benchmark);
+                                                const isDragOver = this.dragOverMirrorIndex === index;
+
+                                                return (
+                                                    <div
+                                                        key={`${site}-${index}`}
+                                                        className={`mirror-manager__item${isDragOver ? " is-drag-over" : ""}`}
+                                                        onDragOver={this.handleMirrorDragOver(index)}
+                                                        onDrop={this.handleMirrorDrop(index)}
+                                                        onDragEnd={this.handleMirrorDragEnd}
+                                                    >
+                                                        <Tooltip content="Drag to reorder" hoverOpenDelay={800} disabled={this.dragSourceMirrorIndex !== undefined}>
+                                                            <Icon icon="drag-handle-vertical" className="mirror-manager__handle" draggable={!disable} onDragStart={this.handleMirrorDragStart(index)} />
+                                                        </Tooltip>
+                                                        <InputGroup asyncControl={false} disabled={disable} value={site} onChange={event => this.handleMirrorEdit(index, event.target.value)} />
+                                                        <div className={`mirror-manager__result is-${status}`} style={resultStyle}>
+                                                            {this.renderBenchmarkResult(status, label)}
+                                                        </div>
+                                                        <Tooltip content="Remove mirror">
+                                                            <Button icon="trash" minimal={true} disabled={disable} intent={Intent.DANGER} onClick={() => this.handleRemoveMirror(index)} />
+                                                        </Tooltip>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                        <div className="mirror-manager__actions">
+                                            <Button text="Reset Defaults" icon="undo" minimal={true} disabled={disable} onClick={this.resetMirrorSites} />
+                                            <Button intent={Intent.PRIMARY} className={`mirror-manager__rank${this.isBenchmarking ? " is-loading" : ""}`} disabled={disable || mirrorSites.length === 0} onClick={this.runMirrorBenchmark}>
+                                                <span className="mirror-manager__rank-label" data-state={this.isBenchmarking ? "cancel" : "auto"}>
+                                                    <span className="mirror-manager__rank-text">Auto Rank</span>
+                                                    <span className="mirror-manager__rank-text mirror-manager__rank-text--cancel">Cancel</span>
+                                                </span>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                }
+                            >
+                                <Button icon="cog" disabled={disable} />
+                            </Popover>
+                        </ControlGroup>
+                    </FormGroup>
+                </div>
                 {isVizier ? (
-                    <FormGroup inline={false} label="Keywords (catalog title)" disabled={disable} className={isVizier ? "vizier-key-words" : ""}>
+                    <FormGroup inline={false} label="Keywords (catalog title)" disabled={disable}>
                         <InputGroup asyncControl={false} disabled={disable} onChange={event => configStore.setVizierKeyWords(event.target.value)} value={configStore.vizierKeyWords} data-testid="catalog-query-keyword-input" />
                     </FormGroup>
                 ) : null}
@@ -321,8 +427,283 @@ export class CatalogQueryComponent extends React.Component {
         this.setResultSize(undefined);
     }
 
+    private getMirrorSites = (database: CatalogDatabase): string[] => {
+        const preferences = PreferenceStore.Instance;
+        return database === CatalogDatabase.SIMBAD ? preferences.catalogQuerySimbadMirrors : preferences.catalogQueryVizierMirrors;
+    };
+
+    private setMirrorSites = (database: CatalogDatabase, sites: string[]) => {
+        const key = database === CatalogDatabase.SIMBAD ? PreferenceKeys.CATALOG_QUERY_SIMBAD_MIRRORS : PreferenceKeys.CATALOG_QUERY_VIZIER_MIRRORS;
+        this.pruneMirrorBenchmarks(sites);
+        PreferenceStore.Instance.setPreference(key, sites);
+    };
+
+    private resetMirrorSites = () => {
+        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        this.cancelMirrorBenchmark();
+        const sites = configStore.catalogDB === CatalogDatabase.SIMBAD ? PreferenceStore.defaultCatalogQuerySimbadMirrors : PreferenceStore.defaultCatalogQueryVizierMirrors;
+        this.setMirrorSites(configStore.catalogDB, sites);
+    };
+
+    private getMirrorLabel = (url: string): string => {
+        if (!url) {
+            return "Select mirror";
+        }
+        try {
+            return new URL(url).host;
+        } catch {
+            return url;
+        }
+    };
+
+    private handleMirrorSelect = (mirror: string) => {
+        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        const sites = [...this.getMirrorSites(configStore.catalogDB)];
+        const nextSites = [mirror, ...sites.filter(item => item !== mirror)];
+        this.setMirrorSites(configStore.catalogDB, nextSites);
+    };
+
+    private handleMirrorInputChange = (value: string) => {
+        this.newMirrorUrl = value;
+    };
+
+    private handleAddMirror = () => {
+        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        const url = this.newMirrorUrl.trim();
+        if (!url) {
+            return;
+        }
+        const sites = [...this.getMirrorSites(configStore.catalogDB)];
+        if (!sites.includes(url)) {
+            sites.push(url);
+            this.setMirrorSites(configStore.catalogDB, sites);
+        }
+        this.newMirrorUrl = "";
+    };
+
+    private handleRemoveMirror = (index: number) => {
+        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        const sites = [...this.getMirrorSites(configStore.catalogDB)];
+        sites.splice(index, 1);
+        this.setMirrorSites(configStore.catalogDB, sites);
+    };
+
+    private handleMirrorEdit = (index: number, value: string) => {
+        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        const sites = [...this.getMirrorSites(configStore.catalogDB)];
+        sites[index] = value;
+        this.setMirrorSites(configStore.catalogDB, sites);
+    };
+
+    private handleMirrorDragStart = (index: number) => (event: React.DragEvent<HTMLDivElement>) => {
+        this.dragSourceMirrorIndex = index;
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", index.toString());
+
+        // Set the entire item as drag image for better visual feedback
+        const dragHandle = event.currentTarget;
+        const itemElement = dragHandle.closest(".mirror-manager__item") as HTMLElement;
+        if (itemElement) {
+            event.dataTransfer.setDragImage(itemElement, 0, 0);
+        }
+    };
+
+    private handleMirrorDragOver = (index: number) => (event: React.DragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        if (this.dragOverMirrorIndex !== index) {
+            this.dragOverMirrorIndex = index;
+        }
+    };
+
+    private handleMirrorDrop = (index: number) => (event: React.DragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        const sites = [...this.getMirrorSites(configStore.catalogDB)];
+        const fromIndex = this.dragSourceMirrorIndex ?? Number(event.dataTransfer.getData("text/plain"));
+        if (!Number.isFinite(fromIndex) || fromIndex < 0 || fromIndex >= sites.length || fromIndex === index) {
+            this.resetMirrorDragState();
+            return;
+        }
+        const [moved] = sites.splice(fromIndex, 1);
+        sites.splice(index, 0, moved);
+        this.setMirrorSites(configStore.catalogDB, sites);
+        this.resetMirrorDragState();
+    };
+
+    private handleMirrorDragEnd = () => {
+        this.resetMirrorDragState();
+    };
+
+    private resetMirrorDragState = () => {
+        this.dragSourceMirrorIndex = undefined;
+        this.dragOverMirrorIndex = undefined;
+    };
+
+    @action private pruneMirrorBenchmarks = (sites: string[]) => {
+        const allowed = new Set(sites);
+        for (const key of Array.from(this.mirrorBenchmarks.keys())) {
+            if (!allowed.has(key)) {
+                this.mirrorBenchmarks.delete(key);
+            }
+        }
+    };
+
+    private formatBenchmarkMs = (ms: number): string => {
+        if (!Number.isFinite(ms)) {
+            return "";
+        }
+        if (ms >= 1000) {
+            return `${(ms / 1000).toFixed(2)}s`;
+        }
+        return `${Math.round(ms)}ms`;
+    };
+
+    private getBenchmarkHue = (ms: number): number => {
+        const ratio = Math.min(Math.max(ms / 10000, 0), 1);
+        return Math.round(120 * (1 - ratio));
+    };
+
+    private getMirrorBenchmarkDisplay = (benchmark?: MirrorBenchmark): {label: string; resultStyle?: React.CSSProperties; status: MirrorBenchmarkStatus} => {
+        if (!benchmark) {
+            return {label: "—", status: "idle"};
+        }
+
+        if (benchmark.status === "pending") {
+            return {label: "Testing…", status: "pending"};
+        }
+
+        if (benchmark.status === "fail") {
+            return {label: "Failed", status: "fail"};
+        }
+
+        if (benchmark.status === "ok" && benchmark.ms !== undefined) {
+            const hue = this.getBenchmarkHue(benchmark.ms);
+            return {
+                label: this.formatBenchmarkMs(benchmark.ms),
+                resultStyle: {["--bench-hue" as any]: hue} as React.CSSProperties,
+                status: "ok"
+            };
+        }
+
+        return {label: "—", status: benchmark.status};
+    };
+
+    @action private runMirrorBenchmark = async () => {
+        if (this.isBenchmarking) {
+            this.cancelMirrorBenchmark();
+            return;
+        }
+        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        const database = configStore.catalogDB;
+        const sites = [...this.getMirrorSites(database)];
+        if (sites.length === 0) {
+            return;
+        }
+
+        this.mirrorBenchmarkAbort = new AbortController();
+        this.isBenchmarking = true;
+        sites.forEach(site => this.mirrorBenchmarks.set(site, {status: "pending"}));
+
+        try {
+            await Promise.all(
+                sites.map(async site => {
+                    const ms = await CatalogApiService.Instance.benchmarkMirror(database, site, 10000, this.mirrorBenchmarkAbort?.signal);
+                    if (!this.isBenchmarking) {
+                        return;
+                    }
+                    if (ms === null || !Number.isFinite(ms)) {
+                        this.mirrorBenchmarks.set(site, {status: "fail"});
+                    } else {
+                        this.mirrorBenchmarks.set(site, {status: "ok", ms});
+                    }
+                })
+            );
+            if (this.isBenchmarking) {
+                this.sortMirrorsByBenchmark(database);
+            }
+        } finally {
+            this.isBenchmarking = false;
+            this.mirrorBenchmarkAbort = undefined;
+        }
+    };
+
+    private sortMirrorsByBenchmark = (database: CatalogDatabase) => {
+        const sites = [...this.getMirrorSites(database)];
+        sites.sort((a, b) => {
+            const resultA = this.mirrorBenchmarks.get(a);
+            const resultB = this.mirrorBenchmarks.get(b);
+            const scoreA = this.getBenchmarkScore(resultA);
+            const scoreB = this.getBenchmarkScore(resultB);
+            return scoreA - scoreB;
+        });
+        this.setMirrorSites(database, sites);
+    };
+
+    private getBenchmarkScore = (result?: MirrorBenchmark): number => {
+        switch (result?.status) {
+            case "pending":
+                return 1000000;
+            case "ok":
+                return result.ms ?? 2000000;
+            case "fail":
+                return 3000000;
+            default:
+                return 2000000;
+        }
+    };
+
+    @action private cancelMirrorBenchmark = () => {
+        if (!this.isBenchmarking) {
+            return;
+        }
+        this.mirrorBenchmarkAbort?.abort();
+        this.mirrorBenchmarkAbort = undefined;
+        this.isBenchmarking = false;
+        for (const [site, result] of this.mirrorBenchmarks.entries()) {
+            if (result.status === "pending") {
+                this.mirrorBenchmarks.set(site, {status: "idle"});
+            }
+        }
+    };
+
+    private syncMirrorBenchmarks = () => {
+        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        const sites = this.getMirrorSites(configStore.catalogDB);
+        if (!this.areMirrorListsEqual(this.lastMirrorSites, sites)) {
+            this.pruneMirrorBenchmarks(sites);
+            this.lastMirrorSites = [...sites];
+        }
+    };
+
+    private areMirrorListsEqual = (first: string[], second: string[]): boolean => {
+        return first.length === second.length && first.every((item, index) => item === second[index]);
+    };
+
+    private renderBenchmarkResult = (status: MirrorBenchmarkStatus, label: string): React.ReactNode => {
+        switch (status) {
+            case "pending":
+                return <Spinner size={14} intent={Intent.PRIMARY} />;
+            case "fail":
+                return (
+                    <Tooltip content="Connection failed" position="top">
+                        <Icon icon="error" intent={Intent.DANGER} />
+                    </Tooltip>
+                );
+            case "idle":
+                return <Icon icon="minus" />;
+            default:
+                return label;
+        }
+    };
+
     private renderDBPopOver = (catalogDB: CatalogDatabase, itemProps: ItemRendererProps) => {
         return <MenuItem key={catalogDB} text={catalogDB} onClick={itemProps.handleClick} />;
+    };
+
+    private renderMirrorPopOver = (mirror: string, itemProps: ItemRendererProps) => {
+        return (
+            <MenuItem key={`${mirror}-${itemProps.index}`} active={itemProps.modifiers.active} icon="globe-network" text={this.getMirrorLabel(mirror)} label={mirror} onClick={itemProps.handleClick} labelClassName="mirror-menu-item-label" />
+        );
     };
 
     private renderUnitsPopOver = (units: RadiusUnits, itemProps: ItemRendererProps) => {

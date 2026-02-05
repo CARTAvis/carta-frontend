@@ -127,6 +127,8 @@ export enum PreferenceKeys {
 
     CATALOG_DISPLAYED_COLUMN_SIZE = "catalogDisplayedColumnSize",
     CATALOG_TABLE_SEPARATOR_POSITION = "catalogTableSeparatorPosition",
+    CATALOG_QUERY_SIMBAD_MIRRORS = "catalogQuerySimbadMirrors",
+    CATALOG_QUERY_VIZIER_MIRRORS = "catalogQueryVizierMirrors",
 
     PIXEL_GRID_VISIBLE = "pixelGridVisible",
     PIXEL_GRID_COLOR = "pixelGridColor",
@@ -270,6 +272,18 @@ const DEFAULTS = {
         catalogDisplayedColumnSize: 10,
         catalogTableSeparatorPosition: "60%"
     },
+    CATALOG_QUERY: {
+        catalogQuerySimbadMirrors: ["https://simbad.u-strasbg.fr/simbad/sim-tap/", "https://simbad.cfa.harvard.edu/simbad/sim-tap/"],
+        catalogQueryVizierMirrors: [
+            "https://vizier.cds.unistra.fr/vizier/",
+            "http://vizier.nao.ac.jp/vizier/",
+            "https://vizier.iucaa.in/vizier/",
+            "https://vizier.inasan.ru/vizier/",
+            "http://vizier.china-vo.org/vizier/",
+            "https://vizier.cfa.harvard.edu/vizier/",
+            "http://vizier.idia.ac.za/vizier/"
+        ]
+    },
     STATS_PANEL: {
         statsPanelEnabled: false,
         statsPanelMode: 0
@@ -295,6 +309,14 @@ export class PreferenceStore {
             PreferenceStore.staticInstance = new PreferenceStore();
         }
         return PreferenceStore.staticInstance;
+    }
+
+    static get defaultCatalogQuerySimbadMirrors(): string[] {
+        return [...DEFAULTS.CATALOG_QUERY.catalogQuerySimbadMirrors];
+    }
+
+    static get defaultCatalogQueryVizierMirrors(): string[] {
+        return [...DEFAULTS.CATALOG_QUERY.catalogQueryVizierMirrors];
     }
 
     @observable preferences: Map<PreferenceKeys, any>;
@@ -678,6 +700,28 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION) ?? DEFAULTS.CATALOG.catalogTableSeparatorPosition;
     }
 
+    @computed get catalogQuerySimbadMirrors(): string[] {
+        const mirrors = this.preferences.get(PreferenceKeys.CATALOG_QUERY_SIMBAD_MIRRORS);
+        if (Array.isArray(mirrors)) {
+            const cleaned = mirrors.filter(value => typeof value === "string" && value.trim().length > 0);
+            if (cleaned.length > 0) {
+                return cleaned;
+            }
+        }
+        return DEFAULTS.CATALOG_QUERY.catalogQuerySimbadMirrors;
+    }
+
+    @computed get catalogQueryVizierMirrors(): string[] {
+        const mirrors = this.preferences.get(PreferenceKeys.CATALOG_QUERY_VIZIER_MIRRORS);
+        if (Array.isArray(mirrors)) {
+            const cleaned = mirrors.filter(value => typeof value === "string" && value.trim().length > 0);
+            if (cleaned.length > 0) {
+                return cleaned;
+            }
+        }
+        return DEFAULTS.CATALOG_QUERY.catalogQueryVizierMirrors;
+    }
+
     @computed get pixelGridVisible(): boolean {
         return this.preferences.get(PreferenceKeys.PIXEL_GRID_VISIBLE) ?? DEFAULTS.SILENT.pixelGridVisible;
     }
@@ -999,7 +1043,7 @@ export class PreferenceStore {
      * Reset the catalog settings
      */
     @action resetCatalogSettings = () => {
-        this.clearPreferences([PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION]);
+        this.clearPreferences([PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION, PreferenceKeys.CATALOG_QUERY_SIMBAD_MIRRORS, PreferenceKeys.CATALOG_QUERY_VIZIER_MIRRORS]);
     };
 
     /**

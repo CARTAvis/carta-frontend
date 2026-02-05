@@ -4,7 +4,7 @@ import {action} from "mobx";
 
 import {AppToaster, ErrorToast, WarningToast} from "components/Shared";
 import {CatalogInfo, CatalogType, WCSPoint2D} from "models";
-import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, DialogId, RadiusUnits, SystemType} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, DialogId, PreferenceKeys, PreferenceStore, RadiusUnits, SystemType} from "stores";
 import {CatalogApiProcessing, ProcessedColumnData, VizierResource} from "utilities";
 
 import {TelemetryAction, TelemetryService} from "./TelemetryService";
@@ -18,10 +18,6 @@ export class CatalogApiService {
     public static readonly SimbadHyperLink: {bibcode: string; mainId: string} = {bibcode: "https://ui.adsabs.harvard.edu/abs/", mainId: "https://simbad.u-strasbg.fr/simbad/sim-id?Ident="};
 
     private static staticInstance: CatalogApiService;
-    private static readonly DBMap = new Map<CatalogDatabase, {baseURL: string}>([
-        [CatalogDatabase.SIMBAD, {baseURL: "https://simbad.u-strasbg.fr/simbad/sim-tap/"}],
-        [CatalogDatabase.VIZIER, {baseURL: "https://vizier.cds.unistra.fr/viz-bin/"}]
-    ]);
     private axiosInstanceSimbad: AxiosInstance;
     private axiosInstanceVizier: AxiosInstance;
     private cancelTokenSourceSimbad: CancelTokenSource;
@@ -38,17 +34,15 @@ export class CatalogApiService {
         this.cancelTokenSourceSimbad = axios.CancelToken.source();
         this.cancelTokenSourceVizier = axios.CancelToken.source();
         this.axiosInstanceSimbad = axios.create({
-            baseURL: CatalogApiService.DBMap.get(CatalogDatabase.SIMBAD)?.baseURL,
             cancelToken: this.cancelTokenSourceSimbad.token
         });
         this.axiosInstanceVizier = axios.create({
-            baseURL: CatalogApiService.DBMap.get(CatalogDatabase.VIZIER)?.baseURL,
             cancelToken: this.cancelTokenSourceVizier.token
         });
     }
 
     public getSimbadCatalog = (query: string): Promise<AxiosResponse<any>> => {
-        return this.axiosInstanceSimbad.get(`sync?request=doQuery&lang=adql&format=json&query=${query}`);
+        return this.getWithFallback(this.axiosInstanceSimbad, CatalogDatabase.SIMBAD, `sync?request=doQuery&lang=adql&format=json&query=${query}`);
     };
 
     public cancelQuery(type: CatalogDatabase) {
@@ -58,6 +52,145 @@ export class CatalogApiService {
             this.cancelTokenSourceVizier.cancel("VizieR query canceled by the user.");
         }
     }
+
+    public benchmarkMirror = async (database: CatalogDatabase, mirrorUrl: string, timeoutMs: number = 10000, signal?: AbortSignal): Promise<number | null> => {
+        const normalized = this.normalizeMirrorUrl(database, mirrorUrl);
+        if (!normalized) {
+            return null;
+        }
+        const path = this.getBenchmarkPath(database);
+        const requestUrl = this.joinUrl(normalized, this.appendCacheBuster(path));
+        const startTime = performance.now();
+        try {
+            await axios.get(requestUrl, {timeout: timeoutMs, signal});
+            return performance.now() - startTime;
+        } catch (error) {
+            return null;
+        }
+    };
+
+    private getWithFallback = async (instance: AxiosInstance, database: CatalogDatabase, path: string): Promise<AxiosResponse<any>> => {
+        const mirrorUrls = this.getMirrorUrls(database);
+        const fallbackTimeoutMs = 5000;
+        let lastError: any;
+        for (let index = 0; index < mirrorUrls.length; index++) {
+            const baseUrl = mirrorUrls[index];
+            const requestUrl = this.joinUrl(baseUrl, path);
+            try {
+                const response = await instance.get(requestUrl, index === 0 ? undefined : {timeout: fallbackTimeoutMs});
+                if (index > 0) {
+                    this.promoteMirror(database, baseUrl);
+                }
+                return response;
+            } catch (error) {
+                if (axios.isCancel(error)) {
+                    throw error;
+                }
+                lastError = error;
+                if (!this.shouldTryNextMirror(error)) {
+                    throw error;
+                }
+            }
+        }
+        throw lastError;
+    };
+
+    private shouldTryNextMirror = (error: any): boolean => {
+        const status = error?.response?.status;
+        if (!status) {
+            return true;
+        }
+        return status >= 500 || status === 429 || status === 408;
+    };
+
+    private getMirrorUrls = (database: CatalogDatabase): string[] => {
+        const preferences = PreferenceStore.Instance;
+        const rawUrls = database === CatalogDatabase.SIMBAD ? preferences.catalogQuerySimbadMirrors : preferences.catalogQueryVizierMirrors;
+        const normalized = this.normalizeMirrorUrls(database, rawUrls);
+        if (normalized.length > 0) {
+            return normalized;
+        }
+        return database === CatalogDatabase.SIMBAD ? ["https://simbad.u-strasbg.fr/simbad/sim-tap/"] : ["https://vizier.cds.unistra.fr/viz-bin/"];
+    };
+
+    private getBenchmarkPath = (database: CatalogDatabase): string => {
+        if (database === CatalogDatabase.SIMBAD) {
+            const query = encodeURIComponent("select top 1 * from basic");
+            return `sync?request=doQuery&lang=adql&format=json&maxrec=1&query=${query}`;
+        }
+        return "votable?-source=I/239/hip_main&-out.max=1";
+    };
+
+    private appendCacheBuster = (path: string): string => {
+        const cacheBuster = `_=${Date.now()}`;
+        return path.includes("?") ? `${path}&${cacheBuster}` : `${path}?${cacheBuster}`;
+    };
+
+    private promoteMirror = (database: CatalogDatabase, normalizedBaseUrl: string) => {
+        const preferences = PreferenceStore.Instance;
+        const rawList = database === CatalogDatabase.SIMBAD ? preferences.catalogQuerySimbadMirrors : preferences.catalogQueryVizierMirrors;
+        if (!Array.isArray(rawList) || rawList.length === 0) {
+            return;
+        }
+        const normalizedList = rawList.map(url => this.normalizeMirrorUrl(database, url));
+        const targetIndex = normalizedList.findIndex(url => url === normalizedBaseUrl);
+        if (targetIndex <= 0) {
+            return;
+        }
+        const nextList = [...rawList];
+        const [moved] = nextList.splice(targetIndex, 1);
+        nextList.unshift(moved);
+        const key = database === CatalogDatabase.SIMBAD ? PreferenceKeys.CATALOG_QUERY_SIMBAD_MIRRORS : PreferenceKeys.CATALOG_QUERY_VIZIER_MIRRORS;
+        preferences.setPreference(key, nextList);
+    };
+
+    private normalizeMirrorUrls = (database: CatalogDatabase, urls: string[]): string[] => {
+        const normalized: string[] = [];
+        if (!Array.isArray(urls)) {
+            return normalized;
+        }
+        urls.forEach(url => {
+            const candidate = this.normalizeMirrorUrl(database, url);
+            if (candidate && !normalized.includes(candidate)) {
+                normalized.push(candidate);
+            }
+        });
+        return normalized;
+    };
+
+    private normalizeMirrorUrl = (database: CatalogDatabase, url: string): string | null => {
+        if (!url || typeof url !== "string") {
+            return null;
+        }
+        let normalized = url.trim();
+        if (!normalized) {
+            return null;
+        }
+
+        normalized = normalized.replace(/\/+$/, "");
+
+        if (database === CatalogDatabase.VIZIER) {
+            normalized = normalized.replace(/\/(VizieR|vizier)$/i, "");
+            normalized = normalized.replace(/\/viz-bin$/i, "/viz-bin");
+            if (!/\/viz-bin$/i.test(normalized)) {
+                normalized = `${normalized}/viz-bin`;
+            }
+        } else if (!/sim-tap$/i.test(normalized)) {
+            const hasSimbadPath = /\/simbad(\/|$)/i.test(normalized);
+            normalized = hasSimbadPath ? `${normalized}/sim-tap` : `${normalized}/simbad/sim-tap`;
+        }
+
+        return `${normalized}/`;
+    };
+
+    private joinUrl = (baseUrl: string, path: string): string => {
+        if (!baseUrl) {
+            return path;
+        }
+        const normalizedBase = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+        const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
+        return `${normalizedBase}${normalizedPath}`;
+    };
 
     public queryVizierTableName = async (point: WCSPoint2D, radius: number, unit: RadiusUnits, keyWords: string): Promise<Map<string, VizierResource>> => {
         let resources: Map<string, VizierResource> = new Map();
@@ -72,7 +205,7 @@ export class CatalogApiService {
         }
 
         try {
-            const response = await this.axiosInstanceVizier.get(query);
+            const response = await this.getWithFallback(this.axiosInstanceVizier, CatalogDatabase.VIZIER, query);
             if (response?.status === 200 && response?.data) {
                 resources = CatalogApiProcessing.ProcessVizierData(response.data);
             }
@@ -103,7 +236,7 @@ export class CatalogApiService {
         let query = `votable?${sourceString}&-c=${point.x} ${point.y}&-c.eq=J2000&-c.${radiusUnits}=${radius}&-out.max=${max}&-sort=_r&-corr=pos&-out.all&-out.add=_r,_RA,_DE&-oc.form=d&-out.meta=hud`;
 
         try {
-            const response = await this.axiosInstanceVizier.get(query);
+            const response = await this.getWithFallback(this.axiosInstanceVizier, CatalogDatabase.VIZIER, query);
             if (response?.status === 200 && response?.data) {
                 resources = CatalogApiProcessing.ProcessVizierData(response.data);
             }
