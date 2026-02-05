@@ -3253,6 +3253,19 @@ export class AppStore {
         this.setSpatialMatchingEnabled(frame, !frame.spatialReference);
     };
 
+    @action matchAllSpatial = () => {
+        if (!this.spatialReference) {
+            return;
+        }
+
+        const shouldEnable = this.frames.some(frame => frame !== this.spatialReference && !frame.spatialReference);
+        for (const frame of this.frames) {
+            if (frame !== this.spatialReference) {
+                this.setSpatialMatchingEnabled(frame, shouldEnable);
+            }
+        }
+    };
+
     @action setSpectralReference = (frame: FrameStore) => {
         const oldRef = this.spectralReference;
 
@@ -3303,6 +3316,22 @@ export class AppStore {
         }
 
         this.setSpectralMatchingEnabled(frame, !frame.spectralReference);
+    };
+
+    @action matchAllSpectral = () => {
+        if (!this.spectralReference) {
+            return;
+        }
+
+        const eligibleFrames = this.frames.filter(frame => frame !== this.spectralReference && frame.frameInfo.fileInfoExtended.depth > 1);
+        if (!eligibleFrames.length) {
+            return;
+        }
+
+        const shouldEnable = eligibleFrames.some(frame => !frame.spectralReference);
+        for (const frame of eligibleFrames) {
+            this.setSpectralMatchingEnabled(frame, shouldEnable);
+        }
     };
 
     @action setSpectralMatchingType = (spectralMatchingType: SpectralType) => {
@@ -3362,6 +3391,19 @@ export class AppStore {
         }
 
         this.setRasterScalingMatchingEnabled(frame, !frame.rasterScalingReference);
+    };
+
+    @action matchAllRasterScaling = () => {
+        if (!this.rasterScalingReference) {
+            return;
+        }
+
+        const shouldEnable = this.frames.some(frame => frame !== this.rasterScalingReference && !frame.rasterScalingReference);
+        for (const frame of this.frames) {
+            if (frame !== this.rasterScalingReference) {
+                this.setRasterScalingMatchingEnabled(frame, shouldEnable);
+            }
+        }
     };
 
     @action setMatchingEnabled = (spatial: boolean, spectral: boolean) => {
