@@ -383,11 +383,14 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             } else {
                 const frame = image?.store;
                 if (frame) {
+                    const canSetSpectralReference = frame.frameInfo.fileInfoExtended.depth > 1;
+                    const allReferencesAlreadySet = appStore.spatialReference === frame && appStore.rasterScalingReference === frame && (!canSetSpectralReference || appStore.spectralReference === frame);
                     return (
                         <Menu>
                             <MenuDivider title={frame.filename} />
+                            <MenuItem disabled={allReferencesAlreadySet} text="Set as all references" onClick={() => appStore.setAllReferences(frame)} />
                             <MenuItem disabled={appStore.spatialReference === frame} text="Set as spatial reference" onClick={() => appStore.setSpatialReference(frame)} />
-                            <MenuItem disabled={appStore.spectralReference === frame || frame.frameInfo.fileInfoExtended.depth <= 1} text="Set as spectral reference" onClick={() => appStore.setSpectralReference(frame)} />
+                            <MenuItem disabled={appStore.spectralReference === frame || !canSetSpectralReference} text="Set as spectral reference" onClick={() => appStore.setSpectralReference(frame)} />
                             <MenuItem disabled={appStore.rasterScalingReference === frame} text="Set as raster scaling reference" onClick={() => appStore.setRasterScalingReference(frame)} />
                             <MenuDivider />
                             <MenuItem disabled={!frame.isRestFreqEditable} text="Set rest frequency" onClick={() => this.restFreqShortCutOnClick(rows[0])} />

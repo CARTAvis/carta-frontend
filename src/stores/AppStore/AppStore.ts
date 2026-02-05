@@ -3366,6 +3366,26 @@ export class AppStore {
         }
     };
 
+    @flow.bound *setAllReferences(frame: FrameStore) {
+        if (!frame) {
+            return;
+        }
+
+        if (this.spatialReference !== frame) {
+            yield this.setSpatialReference(frame);
+        }
+
+        if (this.spatialReference !== frame) {
+            return;
+        }
+
+        if (frame.frameInfo.fileInfoExtended.depth > 1) {
+            this.setSpectralReference(frame);
+        }
+
+        this.setRasterScalingReference(frame);
+    }
+
     @action clearRasterScalingReference = () => {
         this.rasterScalingReference = null;
         for (const f of this.frames) {
