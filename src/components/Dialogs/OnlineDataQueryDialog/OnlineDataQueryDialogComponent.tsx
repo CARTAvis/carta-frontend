@@ -11,7 +11,7 @@ import {HipsQueryComponent} from "./HipsQueryComponent";
 import "./OnlineDataQueryDialogComponent.scss";
 
 const DEFAULT_WIDTH = 600;
-const DEFAULT_HEIGHT = 550;
+const DEFAULT_HEIGHT = 570;
 const MIN_WIDTH = 450;
 const MIN_HEIGHT = 200;
 
