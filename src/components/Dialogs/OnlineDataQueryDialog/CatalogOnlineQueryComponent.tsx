@@ -205,12 +205,12 @@ export class CatalogQueryComponent extends React.Component {
                             </Popover>
                         </ControlGroup>
                     </FormGroup>
+                    {isVizier ? (
+                        <FormGroup inline={false} label="Keywords (catalog title)" disabled={disable} className="keywords-group">
+                            <InputGroup asyncControl={false} disabled={disable} onChange={event => configStore.setVizierKeyWords(event.target.value)} value={configStore.vizierKeyWords} data-testid="catalog-query-keyword-input" />
+                        </FormGroup>
+                    ) : null}
                 </div>
-                {isVizier ? (
-                    <FormGroup inline={false} label="Keywords (catalog title)" disabled={disable}>
-                        <InputGroup asyncControl={false} disabled={disable} onChange={event => configStore.setVizierKeyWords(event.target.value)} value={configStore.vizierKeyWords} data-testid="catalog-query-keyword-input" />
-                    </FormGroup>
-                ) : null}
                 <FormGroup inline={false} label="Object" disabled={disable}>
                     <InputGroup asyncControl={false} disabled={disable} rightElement={objectSize === undefined ? null : sourceIndicater} onChange={event => this.updateObjectName(event.target.value)} value={configStore.objectName} />
                     <Tooltip content="Reset center coordinates by object" disabled={disable || configStore.disableObjectSearch} position={Position.BOTTOM} hoverOpenDelay={300}>

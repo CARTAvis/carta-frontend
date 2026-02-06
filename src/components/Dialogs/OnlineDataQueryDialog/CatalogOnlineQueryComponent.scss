@@ -30,10 +30,16 @@
         }
 
         .mirror-site-group {
-            min-width: 260px;
-
             .#{$ns}-control-group {
                 gap: 1px;
+            }
+        }
+
+        .keywords-group {
+            min-width: 200px;
+
+            .#{$ns}-input {
+                width: 100% !important;
             }
         }
     }
