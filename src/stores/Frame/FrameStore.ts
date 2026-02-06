@@ -2046,6 +2046,24 @@ export class FrameStore {
         return settingWCSValue && isFinite(settingWCSValue) ? settingWCSValue : undefined;
     };
 
+    public convertSettingWCSToFreqMHz = (value: number): number | undefined => {
+        if (!this.spectralFrame || !isFinite(value) || !this.spectralType || !this.spectralUnit || !this.spectralSystem) {
+            return undefined;
+        }
+
+        if (this.spectralType === SpectralType.FREQ && this.spectralUnit === SpectralUnit.MHZ) {
+            return value;
+        }
+
+        const nativeWCSValue = this.convertToNativeWCS(value);
+        if (nativeWCSValue === undefined || !isFinite(nativeWCSValue)) {
+            return undefined;
+        }
+
+        const freqMHzValue = this.astSpectralTransform(SpectralType.FREQ, SpectralUnit.MHZ, this.spectralSystem, nativeWCSValue);
+        return freqMHzValue !== undefined && isFinite(freqMHzValue) ? freqMHzValue : undefined;
+    };
+
     public getCursorInfo(cursorPosImageSpace: Point2D) {
         let cursorPosWCS, cursorPosFormatted;
         let precisionX = 0;

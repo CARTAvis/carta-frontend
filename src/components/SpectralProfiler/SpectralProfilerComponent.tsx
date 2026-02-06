@@ -98,7 +98,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         if (x === null || x === undefined || !isFinite(x) || AnimatorStore.Instance.animationActive || this.widgetStore.fittingStore.isCursorSelectingComponent) {
             return;
         }
-        const nearestIndex = frame.findChannelIndexByValue(x);
+        const observedX = this.widgetStore.convertDisplayXToObserved(x);
+        const nearestIndex = frame.findChannelIndexByValue(observedX);
         if (frame && isFinite(nearestIndex) && nearestIndex >= 0 && nearestIndex < frame.numChannels) {
             frame.setChannel(nearestIndex);
             if (!_.isEqual(frame, appStore.activeFrame)) {
@@ -116,7 +117,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         if (channel < 0 || channel >= frame.channelValues.length) {
             return null;
         }
-        return frame.isCoordChannel ? channel : frame.channelValues[channel];
+        const value = frame.isCoordChannel ? channel : frame.channelValues[channel];
+        return this.widgetStore.convertObservedXToDisplay(value);
     }
 
     @computed get requiredChannelValue(): number {
@@ -128,7 +130,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         if (channel < 0 || channel >= frame.channelValues.length) {
             return null;
         }
-        return frame.isCoordChannel ? channel : frame.channelValues[channel];
+        const value = frame.isCoordChannel ? channel : frame.channelValues[channel];
+        return this.widgetStore.convertObservedXToDisplay(value);
     }
 
     @computed get linePlotSelectingMode(): LinePlotSelectingMode {
@@ -206,7 +209,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             const isCursorInsideLinePlots = this.widgetStore.isMouseMoveIntoLinePlots;
             const label = isCursorInsideLinePlots ? "Cursor" : "Data";
             const cursorXValue = isCursorInsideLinePlots ? this.widgetStore.cursorX : this.currentChannelValue;
-            const cursorXUnit = frame.spectralUnitStr;
+            const cursorXUnit = this.widgetStore.spectralUnitLabel;
 
             if (this.plotData.numProfiles === 1 && !(this.widgetStore.smoothingStore.type !== SmoothingType.NONE && this.widgetStore.smoothingStore.isOverlayOn)) {
                 // Single profile, Mean/RMS is available
@@ -328,7 +331,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         const frame = this.widgetStore.effectiveFrame;
         if (frame) {
             if (frame.spectralAxis && !frame.isCoordChannel) {
-                linePlotProps.xLabel = frame.spectralLabel;
+                linePlotProps.xLabel = this.widgetStore.xAxisLabel ?? frame.spectralLabel;
             }
             if (this.widgetStore.yUnit) {
                 linePlotProps.yLabel = `Value (${this.widgetStore.yUnit})`;
