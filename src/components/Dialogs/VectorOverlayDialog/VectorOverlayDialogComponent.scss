@@ -32,6 +32,27 @@
                 min-width: 10em;
                 width: 10em;
             }
+
+            // Averaging width slider and numeric input layout
+            .#{$ns}-form-group.averaging-width-input .#{$ns}-form-content {
+                display: flex;
+                margin-left: 8px;
+
+                .#{$ns}-slider {
+                    min-width: 120px;
+                }
+
+                .#{$ns}-numeric-input .#{$ns}-input-group {
+                    margin-left: 15px;
+                    width: 48px;
+                    flex-shrink: 0;
+                }
+
+                .lock-button {
+                    margin-left: 5px;
+                    padding: 0px;
+                }
+            }
         }
 
         .parameter-line {

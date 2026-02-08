@@ -9,7 +9,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
-import {DraggableDialogComponent, LayoutMappingComponent} from "components/Dialogs";
+import {DraggableDialogComponent, LayoutMappingComponent, VectorOverlayDialogComponent} from "components/Dialogs";
 import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, ScrollShadow, SuccessToast} from "components/Shared";
 import {CompressionQuality, ConvertToGB, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {TelemetryMode} from "services";
@@ -386,18 +386,16 @@ export class PreferenceDialogComponent extends React.Component {
         const vectorOverlayConfigPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Default pixel averaging">
-                    <Tooltip content="Only even numbers are allowed (minimum: 2)" position="top">
-                        <SafeNumericInput
-                            placeholder="Default pixel averaging"
-                            min={2}
-                            max={64}
-                            value={preference.vectorOverlayPixelAveraging}
-                            majorStepSize={2}
-                            minorStepSize={2}
-                            stepSize={2}
-                            onValueChange={value => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING, Math.pow(2, Math.round(Math.log2(value))))}
-                        />
-                    </Tooltip>
+                    <SafeNumericInput
+                        placeholder="Default pixel averaging"
+                        min={1}
+                        max={VectorOverlayDialogComponent.MaxAveragingWidth}
+                        value={preference.vectorOverlayPixelAveraging}
+                        stepSize={1}
+                        majorStepSize={2}
+                        minorStepSize={1}
+                        onValueChange={value => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING, Math.round(value))}
+                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Use fractional intensity">
                     <Switch checked={preference.vectorOverlayFractionalIntensity} onChange={ev => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_FRACTIONAL_INTENSITY, ev.currentTarget.checked)} />

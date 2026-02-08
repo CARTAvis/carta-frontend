@@ -1,6 +1,6 @@
 import * as React from "react";
 import {ColorResult} from "react-color";
-import {AnchorButton, Button, Classes, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Radio, RadioGroup, Slider, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
@@ -30,6 +30,7 @@ export class VectorOverlayDialogComponent extends React.Component {
     @observable intensitySource: VectorOverlaySource;
     @observable pixelAveragingEnabled: boolean;
     @observable pixelAveraging: number;
+    @observable pixelAveragingLocked: boolean = false;
     @observable thresholdEnabled: boolean;
     @observable threshold: number;
     @observable fractionalIntensity: boolean;
@@ -42,6 +43,7 @@ export class VectorOverlayDialogComponent extends React.Component {
     private static readonly DefaultHeight = 720;
     private static readonly MinWidth = 425;
     private static readonly MinHeight = 400;
+    public static readonly MaxAveragingWidth = 64;
 
     private cachedFrame: FrameStore;
 
@@ -150,16 +152,15 @@ export class VectorOverlayDialogComponent extends React.Component {
         this.intensitySource = parseInt(ev.currentTarget.value) as VectorOverlaySource;
     };
 
-    @action private handlePixelAveragingEnabledChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
-        this.pixelAveragingEnabled = ev.currentTarget.checked;
-        // When enabling averaging, normalize the width to a valid positive even number
-        if (ev.currentTarget.checked && this.pixelAveraging < 2) {
-            this.pixelAveraging = 2;
+    @action private handlePixelAveragingChanged = (value: number) => {
+        if (!this.pixelAveragingLocked) {
+            this.pixelAveraging = Math.round(value);
+            this.pixelAveragingEnabled = this.pixelAveraging !== 1;
         }
     };
 
-    @action private handlePixelAveragingChanged = (value: number) => {
-        this.pixelAveraging = Math.max(2, Math.floor(value * 0.5) * 2.0);
+    @action private handlePixelAveragingLocked = () => {
+        this.pixelAveragingLocked = !this.pixelAveragingLocked;
     };
 
     @action private handleThresholdEnabledChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
@@ -318,23 +319,27 @@ export class VectorOverlayDialogComponent extends React.Component {
                         )}
                     </HTMLSelect>
                 </FormGroup>
-                <FormGroup inline={true} label="Pixel averaging">
-                    <Switch checked={this.pixelAveragingEnabled} onChange={this.handlePixelAveragingEnabledChanged} data-testid="vector-field-averaging-toggle" />
-                </FormGroup>
-                <FormGroup inline={true} label="Averaging width" labelInfo="(px)" disabled={!this.pixelAveragingEnabled}>
-                    <Tooltip content="Only even numbers are allowed (minimum: 2)" position="top">
-                        <SafeNumericInput
-                            placeholder="Width (px)"
-                            min={2}
-                            max={64}
-                            value={this.pixelAveraging}
-                            majorStepSize={2}
-                            minorStepSize={2}
-                            stepSize={2}
-                            onValueChange={this.handlePixelAveragingChanged}
-                            disabled={!this.pixelAveragingEnabled}
-                            data-testid="vector-field-averaging-width-input"
-                        />
+                <FormGroup inline={true} label="Averaging width" labelInfo="(px)" className="averaging-width-input">
+                    <Slider
+                        min={1}
+                        max={VectorOverlayDialogComponent.MaxAveragingWidth}
+                        value={this.pixelAveraging}
+                        onChange={this.handlePixelAveragingChanged}
+                        stepSize={1}
+                        labelStepSize={VectorOverlayDialogComponent.MaxAveragingWidth - 1}
+                        showTrackFill={false}
+                        data-testid="vector-field-averaging-width-slider"
+                    />
+                    <SafeNumericInput
+                        min={1}
+                        max={VectorOverlayDialogComponent.MaxAveragingWidth}
+                        value={this.pixelAveraging}
+                        onValueChange={this.handlePixelAveragingChanged}
+                        buttonPosition="none"
+                        data-testid="vector-field-averaging-width-input"
+                    />
+                    <Tooltip content={this.pixelAveragingLocked ? "Unlock averaging width" : "Lock averaging width"}>
+                        <Button className="lock-button" icon={this.pixelAveragingLocked ? "lock" : "unlock"} onClick={this.handlePixelAveragingLocked} />
                     </Tooltip>
                 </FormGroup>
                 <FormGroup inline={true} label="Polarization intensity" disabled={this.intensitySource === VectorOverlaySource.None}>
