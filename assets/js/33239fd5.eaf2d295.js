@@ -1,1 +1,0 @@
-"use strict";(globalThis.webpackChunkcarta_frontend_docs=globalThis.webpackChunkcarta_frontend_docs||[]).push([[3308],{782:a=>{a.exports=JSON.parse('{"banner":"","breadcrumbs":true,"gitRefName":"master","minimal":false,"pluginId":"default","scopes":[]}')}}]);

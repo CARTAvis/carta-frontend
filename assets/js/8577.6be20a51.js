@@ -1,0 +1,1 @@
+(globalThis.webpackChunkcarta_frontend_docs=globalThis.webpackChunkcarta_frontend_docs||[]).push([[8577],{549(a,c,s){"use strict";s.d(c,{A:()=>o});var n=s(8291);const o=n},5741(){}}]);

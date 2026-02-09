@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkcarta_frontend_docs=globalThis.webpackChunkcarta_frontend_docs||[]).push([[1650],{2521(a){a.exports=JSON.parse('{"name":"docusaurus-plugin-typedoc-api","id":"default"}')}}]);
