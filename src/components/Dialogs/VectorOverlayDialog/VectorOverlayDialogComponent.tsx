@@ -1,6 +1,6 @@
 import * as React from "react";
 import {ColorResult} from "react-color";
-import {AnchorButton, Button, Classes, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Radio, RadioGroup, Slider, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Radio, RadioGroup, Slider, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
@@ -30,7 +30,6 @@ export class VectorOverlayDialogComponent extends React.Component {
     @observable intensitySource: VectorOverlaySource;
     @observable pixelAveragingEnabled: boolean;
     @observable pixelAveraging: number;
-    @observable pixelAveragingLocked: boolean = false;
     @observable thresholdEnabled: boolean;
     @observable threshold: number;
     @observable fractionalIntensity: boolean;
@@ -153,14 +152,12 @@ export class VectorOverlayDialogComponent extends React.Component {
     };
 
     @action private handlePixelAveragingChanged = (value: number) => {
-        if (!this.pixelAveragingLocked) {
-            this.pixelAveraging = Math.round(value);
-            this.pixelAveragingEnabled = this.pixelAveraging !== 1;
-        }
+        this.pixelAveraging = Math.round(value);
+        this.pixelAveragingEnabled = this.pixelAveraging !== 1;
     };
 
-    @action private handlePixelAveragingLocked = () => {
-        this.pixelAveragingLocked = !this.pixelAveragingLocked;
+    @action private handlePixelAveragingBlurred = (ev: React.FocusEvent<HTMLInputElement>) => {
+        ev.currentTarget.value = this.pixelAveraging.toString();
     };
 
     @action private handleThresholdEnabledChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
@@ -335,12 +332,10 @@ export class VectorOverlayDialogComponent extends React.Component {
                         max={VectorOverlayDialogComponent.MaxAveragingWidth}
                         value={this.pixelAveraging}
                         onValueChange={this.handlePixelAveragingChanged}
+                        onBlur={this.handlePixelAveragingBlurred}
                         buttonPosition="none"
                         data-testid="vector-field-averaging-width-input"
                     />
-                    <Tooltip content={this.pixelAveragingLocked ? "Unlock averaging width" : "Lock averaging width"}>
-                        <Button className="lock-button" icon={this.pixelAveragingLocked ? "lock" : "unlock"} onClick={this.handlePixelAveragingLocked} />
-                    </Tooltip>
                 </FormGroup>
                 <FormGroup inline={true} label="Polarization intensity" disabled={this.intensitySource === VectorOverlaySource.None}>
                     <RadioGroup inline={true} onChange={this.handleFractionalIntensityChanged} selectedValue={this.fractionalIntensity ? 1 : 0} disabled={this.intensitySource === VectorOverlaySource.None}>
