@@ -1,6 +1,6 @@
 import * as React from "react";
 import {ColorResult} from "react-color";
-import {AnchorButton, Button, Classes, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Radio, RadioGroup, Slider, Switch, Tab, Tabs} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
@@ -317,23 +317,15 @@ export class VectorOverlayDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Averaging width" labelInfo="(px)" className="averaging-width-input">
-                    <Slider
-                        min={1}
-                        max={VectorOverlayDialogComponent.MaxAveragingWidth}
-                        value={this.pixelAveraging}
-                        onChange={this.handlePixelAveragingChanged}
-                        stepSize={1}
-                        labelStepSize={VectorOverlayDialogComponent.MaxAveragingWidth - 1}
-                        showTrackFill={false}
-                        data-testid="vector-field-averaging-width-slider"
-                    />
                     <SafeNumericInput
                         min={1}
                         max={VectorOverlayDialogComponent.MaxAveragingWidth}
                         value={this.pixelAveraging}
+                        stepSize={1}
+                        majorStepSize={2}
+                        minorStepSize={1}
                         onValueChange={this.handlePixelAveragingChanged}
                         onBlur={this.handlePixelAveragingBlurred}
-                        buttonPosition="none"
                         data-testid="vector-field-averaging-width-input"
                     />
                 </FormGroup>
