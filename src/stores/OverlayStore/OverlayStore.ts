@@ -82,7 +82,7 @@ export class OverlayGlobalSettings {
             setAstStringSystem(astString, this.explicitSystem, this);
         }
 
-        const labelFrameSet = frame?.isOffsetCoord ? (frame?.wcsInfoShifted ?? frame?.wcsInfo) : frame?.wcsInfo;
+        const labelFrameSet = frame?.isOffsetCoord ? (frame?.wcsInfoOffset ?? frame?.wcsInfo) : frame?.wcsInfo;
         if (!AppStore.Instance.overlaySettings.labels?.customText && labelFrameSet) {
             const symbolX = AST.getString(labelFrameSet, "Symbol(1)");
             const symbolY = AST.getString(labelFrameSet, "Symbol(2)");
