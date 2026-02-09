@@ -395,6 +395,7 @@ export class PreferenceDialogComponent extends React.Component {
                         majorStepSize={2}
                         minorStepSize={1}
                         onValueChange={value => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING, Math.round(value))}
+                        onBlur={ev => (ev.currentTarget.value = preference.vectorOverlayPixelAveraging.toString())}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Use fractional intensity">
