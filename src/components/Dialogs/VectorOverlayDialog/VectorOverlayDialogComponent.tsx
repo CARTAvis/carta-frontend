@@ -44,9 +44,9 @@ export class VectorOverlayDialogComponent extends React.Component {
     private static readonly DefaultHeight = 720;
     private static readonly MinWidth = 425;
     private static readonly MinHeight = 400;
-    /** 
+    /**
      * The maximum pixel width for averaging the vector overlay.
-    */
+     */
     public static readonly MAX_PIXEL_AVERAGING = 64;
 
     private cachedFrame: FrameStore;
