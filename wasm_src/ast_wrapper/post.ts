@@ -130,7 +130,7 @@ addOnPostRun(function () {
     Module.setI = Module.cwrap("setI", null, ["number", "string", "number"]);
     Module.setD = Module.cwrap("setD", null, ["number", "string", "number"]);
     Module.createTransformedFrameset = Module.cwrap("createTransformedFrameset", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
-    Module.createOffsetFrameset = Module.cwrap("createOffsetFrameset", "number", ["number", "number", "number", "number"]);
+    Module.createOffsetFrameset = Module.cwrap("createOffsetFrameset", "number", ["number", "number", "number", "number", "number", "number"]);
     Module.fillTransformGrid = Module.cwrap("fillTransformGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
     Module.pointList = Module.cwrap("pointList", "number", ["number", "number", "number", "number", "number"]);
     Module.axPointList = Module.cwrap("axPointList", "number", ["number", "number", "number", "number", "number", "number", "number"]);
