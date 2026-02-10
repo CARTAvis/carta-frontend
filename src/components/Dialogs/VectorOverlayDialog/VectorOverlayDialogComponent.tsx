@@ -28,6 +28,9 @@ export class VectorOverlayDialogComponent extends React.Component {
     @observable currentTab: VectorOverlayDialogTabs = VectorOverlayDialogTabs.Configuration;
     @observable angularSource: VectorOverlaySource;
     @observable intensitySource: VectorOverlaySource;
+    /**
+     * Pixel width for boxcar averaging the vector overlay. Must be an integer. 1 means no averaging.
+     */
     @observable pixelAveraging: number;
     @observable thresholdEnabled: boolean;
     @observable threshold: number;
@@ -41,7 +44,10 @@ export class VectorOverlayDialogComponent extends React.Component {
     private static readonly DefaultHeight = 720;
     private static readonly MinWidth = 425;
     private static readonly MinHeight = 400;
-    public static readonly MAX_AVERAGING_PIXEL = 64;
+    /** 
+     * The maximum pixel width for averaging the vector overlay.
+    */
+    public static readonly MAX_PIXEL_AVERAGING = 64;
 
     private cachedFrame: FrameStore;
 
@@ -313,7 +319,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Averaging width" labelInfo="(px)" className="averaging-width-input">
                     <SafeNumericInput
                         min={1}
-                        max={VectorOverlayDialogComponent.MAX_AVERAGING_PIXEL}
+                        max={VectorOverlayDialogComponent.MAX_PIXEL_AVERAGING}
                         value={this.pixelAveraging}
                         stepSize={1}
                         majorStepSize={2}
