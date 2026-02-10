@@ -29,6 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed to retrieve all columns instead of default columns from vizier ([#1958](https://github.com/CARTAvis/carta-frontend/issues/1958)).
 * Changed offset coordinate system to use spherical geometry instead of linear geometry ([#2663](https://github.com/CARTAvis/carta-frontend/issues/2663)).
 
+### Added
+* Supported pole mode for offset coordinate system ([#2663](https://github.com/CARTAvis/carta-frontend/issues/2663)).
+
 ## [5.0.3]
 
 ### Fixed
