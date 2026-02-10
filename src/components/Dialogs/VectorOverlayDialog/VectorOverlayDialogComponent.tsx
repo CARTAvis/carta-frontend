@@ -28,7 +28,6 @@ export class VectorOverlayDialogComponent extends React.Component {
     @observable currentTab: VectorOverlayDialogTabs = VectorOverlayDialogTabs.Configuration;
     @observable angularSource: VectorOverlaySource;
     @observable intensitySource: VectorOverlaySource;
-    @observable pixelAveragingEnabled: boolean;
     @observable pixelAveraging: number;
     @observable thresholdEnabled: boolean;
     @observable threshold: number;
@@ -67,7 +66,6 @@ export class VectorOverlayDialogComponent extends React.Component {
         if (config) {
             this.angularSource = config.angularSource;
             this.intensitySource = config.intensitySource;
-            this.pixelAveragingEnabled = config.pixelAveragingEnabled;
             this.pixelAveraging = config.pixelAveraging;
             this.fractionalIntensity = config.fractionalIntensity;
             this.threshold = config.threshold;
@@ -78,7 +76,6 @@ export class VectorOverlayDialogComponent extends React.Component {
             this.angularSource = VectorOverlaySource.Current;
             this.intensitySource = VectorOverlaySource.Current;
             this.pixelAveraging = preferences.vectorOverlayPixelAveraging;
-            this.pixelAveragingEnabled = preferences.vectorOverlayPixelAveraging > 0;
             this.fractionalIntensity = preferences.vectorOverlayFractionalIntensity;
             this.thresholdEnabled = false;
             this.threshold = 0;
@@ -93,7 +90,6 @@ export class VectorOverlayDialogComponent extends React.Component {
             if (
                 config.angularSource !== this.angularSource ||
                 config.intensitySource !== this.intensitySource ||
-                config.pixelAveragingEnabled !== this.pixelAveragingEnabled ||
                 config.pixelAveraging !== this.pixelAveraging ||
                 config.thresholdEnabled !== this.thresholdEnabled ||
                 config.debiasing !== this.debiasing ||
@@ -125,7 +121,6 @@ export class VectorOverlayDialogComponent extends React.Component {
             dataSource.vectorOverlayConfig.setVectorOverlayConfiguration(
                 this.angularSource,
                 this.intensitySource,
-                this.pixelAveragingEnabled,
                 this.pixelAveraging,
                 this.fractionalIntensity,
                 this.thresholdEnabled,
@@ -153,7 +148,6 @@ export class VectorOverlayDialogComponent extends React.Component {
 
     @action private handlePixelAveragingChanged = (value: number) => {
         this.pixelAveraging = Math.round(value);
-        this.pixelAveragingEnabled = this.pixelAveraging !== 1;
     };
 
     @action private handlePixelAveragingBlurred = (ev: React.FocusEvent<HTMLInputElement>) => {

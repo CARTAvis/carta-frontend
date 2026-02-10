@@ -2947,7 +2947,7 @@ export class FrameStore {
                 yMin: 0,
                 yMax: this.frameInfo.fileInfoExtended.height
             },
-            smoothingFactor: config.pixelAveragingEnabled ? config.pixelAveraging : 1,
+            smoothingFactor: config.pixelAveraging > 1 ? config.pixelAveraging : 1,
             fractional: config.fractionalIntensity,
             threshold: config.thresholdEnabled ? config.threshold : NaN,
             thresholdOption: config.thresholdEnabled ? config.thresholdOption : NaN,
