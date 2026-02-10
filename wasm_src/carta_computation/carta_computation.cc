@@ -23,7 +23,9 @@ typedef enum {
     POWER = 4,
     GAMMA = 5,
     EXP = 6,
-    CUSTOM = 7
+    CUSTOM = 7,
+    SINH = 8,
+    ASINH = 9
 } FrameScaling;
 
 typedef enum {
@@ -36,6 +38,8 @@ typedef enum {
 
 const float MiterLimit = 1.5f;
 const int VertexDataElements = 8;
+const double Ds9SinhNormalizer = sinh(3.0);
+const double Ds9AsinhNormalizer = asinh(10.0);
 
 extern "C" {
 
@@ -262,6 +266,10 @@ float scaleValue(float x, int scaling, float alpha, float gamma) {
             return (pow(alpha, x) - 1.0) / alpha;
         case GAMMA:
             return pow(x, gamma);
+        case SINH:
+            return sinh(3.0 * x) / Ds9SinhNormalizer;
+        case ASINH:
+            return asinh(10.0 * x) / Ds9AsinhNormalizer;
         default:
             return x;
     }

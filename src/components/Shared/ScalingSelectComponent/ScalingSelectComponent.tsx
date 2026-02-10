@@ -1,11 +1,13 @@
 import * as React from "react";
 import {Button, MenuItem, PopoverProps} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
-import gammaPng from "static/equations/gamma.png";
 // Equation PNG images
+import asinhPng from "static/equations/asinh.png";
+import gammaPng from "static/equations/gamma.png";
 import linearPng from "static/equations/linear.png";
 import logPng from "static/equations/log.png";
 import powerPng from "static/equations/power.png";
+import sinhPng from "static/equations/sinh.png";
 import sqrtPng from "static/equations/sqrt.png";
 import squaredPng from "static/equations/squared.png";
 
@@ -25,7 +27,9 @@ const equationPngMap = new Map([
     [FrameScaling.SQRT, sqrtPng],
     [FrameScaling.SQUARE, squaredPng],
     [FrameScaling.GAMMA, gammaPng],
-    [FrameScaling.POWER, powerPng]
+    [FrameScaling.POWER, powerPng],
+    [FrameScaling.SINH, sinhPng],
+    [FrameScaling.ASINH, asinhPng]
 ]);
 
 const ScalingSelect = Select<FrameScaling>;
@@ -37,6 +41,7 @@ export const ScalingSelectComponent: React.FC<ScalingComponentProps> = props => 
         if (!modifiers.matchesPredicate || !RenderConfigStore.SCALING_TYPES.has(scaling)) {
             return null;
         }
+        const equationImage = equationPngMap.get(scaling);
         return (
             <MenuItem
                 active={modifiers.active}
@@ -44,8 +49,8 @@ export const ScalingSelectComponent: React.FC<ScalingComponentProps> = props => 
                 label={RenderConfigStore.SCALING_TYPES.get(scaling)}
                 key={scaling}
                 onClick={handleClick}
-                text={<div className="equation-div" style={{backgroundImage: `url(${equationPngMap.get(scaling)}`, backgroundSize: "contain"}} />}
-                style={{width: "220px"}}
+                text={equationImage ? <div className="equation-div" style={{backgroundImage: `url(${equationImage})`, backgroundSize: "contain"}} /> : RenderConfigStore.SCALING_TYPES.get(scaling)}
+                style={{width: "320px"}}
             />
         );
     };

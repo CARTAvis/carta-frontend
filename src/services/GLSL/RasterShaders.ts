@@ -11,6 +11,8 @@ const pixelMacros = `
 #define GAMMA 5
 #define EXP 6
 #define CUSTOM 7
+#define SINH 8
+#define ASINH 9
 #define FLT_MAX 3.402823466e+38
 `;
 

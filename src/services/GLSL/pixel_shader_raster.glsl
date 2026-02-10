@@ -44,6 +44,18 @@ float errorFunction(float x, float c, float x0) {
     return y / (y + 1.0);
 }
 
+float asinhScale(float x) {
+    return log(x + sqrt(x * x + 1.0));
+}
+
+float sinhScale(float x) {
+    return (exp(x) - exp(-x)) / 2.0;
+}
+
+// DS9-compatible normalizers used by SINH/ASINH scales.
+const float DS9_SINH_NORMALIZER = 10.01787493; // sinh(3.0)
+const float DS9_ASINH_NORMALIZER = 2.99822295; // asinh(10.0)
+
 void main(void) {
     // Tile border
     if (uTileBorder > 0.0 && (vUV.x < uTileBorder || vUV.y < uTileBorder)) {
@@ -90,6 +102,12 @@ void main(void) {
     }
     else if (uScaleType == GAMMA) {
         x = pow(x, uGamma);
+    }
+    else if (uScaleType == SINH) {
+        x = sinhScale(3.0 * x) / DS9_SINH_NORMALIZER;
+    }
+    else if (uScaleType == ASINH) {
+        x = asinhScale(10.0 * x) / DS9_ASINH_NORMALIZER;
     }
 
     if (uUseSmoothedBiasContrast > 0) {
