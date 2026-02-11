@@ -41,7 +41,6 @@ export interface WorkspaceVectorOverlayConfig {
     angularSource: VectorOverlaySource;
     intensitySource: VectorOverlaySource;
     fractionalIntensity: boolean;
-    pixelAveragingEnabled: boolean;
     pixelAveraging: number;
     thresholdEnabled: boolean;
     threshold: number;
