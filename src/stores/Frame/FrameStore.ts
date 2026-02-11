@@ -132,7 +132,7 @@ export class FrameStore {
 
     public wcsInfo: AST.FrameSet;
     public readonly wcsInfoForTransformation: AST.FrameSet;
-    @observable public wcsInfoShifted: AST.FrameSet;
+    @observable public wcsInfoOffset: AST.FrameSet;
     public readonly wcsInfo3D: AST.FrameSet;
     public readonly validWcs: boolean = false;
     public readonly defaultWcsSystem: SystemType;
@@ -422,10 +422,10 @@ export class FrameStore {
                 AST.deleteObject(this.cachedTransformedWcsInfo);
             }
 
-            if (this.spatialReference.isOffsetCoord && !this.wcsInfoShifted) {
-                this.createWcsInfoShifted();
+            if (this.spatialReference.isOffsetCoord && !this.wcsInfoOffset) {
+                this.createWcsInfoOffset();
             }
-            const wcsInfo = this.isOffsetCoord ? this.wcsInfoShifted : this.wcsInfo;
+            const wcsInfo = this.isOffsetCoord ? this.wcsInfoOffset : this.wcsInfo;
 
             this.cachedTransformedWcsInfo = AST.createTransformedFrameset(
                 wcsInfo,
@@ -1558,9 +1558,9 @@ export class FrameStore {
                 if (explicitSystem === SystemType.Image) {
                     // Use base frame for image coordinates
                     AST.setI(this.wcsInfo, "Current", 1);
-                    if (this.wcsInfoShifted) {
-                        // Use third frame for shifted image coordinates
-                        AST.setI(this.wcsInfoShifted, "Current", 3);
+                    if (this.wcsInfoOffset) {
+                        // Use third frame for offset image coordinates
+                        AST.setI(this.wcsInfoOffset, "Current", 3);
                     }
                 } else {
                     const global = AppStore.Instance.overlaySettings.global;
@@ -1568,10 +1568,10 @@ export class FrameStore {
                     AST.set(this.wcsInfo, `Format(${this.dirX})=${formatStringX}, Format(${this.dirY})=${formatStyingY}`);
                     setAstSystem(this.wcsInfo, explicitSystem, global);
 
-                    if (this.wcsInfoShifted) {
-                        AST.setI(this.wcsInfoShifted, "Current", 2);
-                        AST.set(this.wcsInfoShifted, `Format(${this.dirX})=${formatStringX}, Format(${this.dirY})=${formatStyingY}`);
-                        setAstSystem(this.wcsInfoShifted, explicitSystem, global);
+                    if (this.wcsInfoOffset) {
+                        AST.setI(this.wcsInfoOffset, "Current", 2);
+                        AST.set(this.wcsInfoOffset, `Format(${this.dirX})=${formatStringX}, Format(${this.dirY})=${formatStyingY}`);
+                        setAstSystem(this.wcsInfoOffset, explicitSystem, global);
                     }
                 }
             }
@@ -2305,23 +2305,23 @@ export class FrameStore {
         this.setIsOffsetCoord(!this.isOffsetCoord);
     };
 
-    @action private createWcsInfoShifted = () => {
+    @action private createWcsInfoOffset = () => {
         if (this.spatialReference) {
-            this.spatialReference.createWcsInfoShifted();
+            this.spatialReference.createWcsInfoOffset();
         } else {
             if (this.wcsInfo && this.offsetCenter) {
-                if (this.wcsInfoShifted) {
-                    AST.deleteObject(this.wcsInfoShifted);
+                if (this.wcsInfoOffset) {
+                    AST.deleteObject(this.wcsInfoOffset);
                 }
 
                 const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.offsetCenter);
 
                 if (centerInRad) {
-                    this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, centerInRad.x, centerInRad.y, this.offsetCenter.x, this.offsetCenter.y);
+                    this.wcsInfoOffset = AST.createOffsetFrameset(this.wcsInfo, centerInRad.x, centerInRad.y, this.offsetCenter.x, this.offsetCenter.y);
                     for (const frame of this.secondarySpatialImages) {
                         const frameCenterInRad = getUnformattedWCSPoint(frame.wcsInfo, frame.offsetCenter);
                         if (frame.isOffsetCoord && frameCenterInRad && frame.spatialTransform) {
-                            frame.wcsInfoShifted = AST.createShiftmapFrameset(
+                            frame.wcsInfoOffset = AST.createOffsetFrameset(
                                 frame.wcsInfo,
                                 frameCenterInRad.x,
                                 frameCenterInRad.y,
@@ -2345,7 +2345,7 @@ export class FrameStore {
         // re-calculate with different wcs system
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const system = AppStore.Instance.overlaySettings.global.explicitSystem;
-        if (!this.wcsInfoShifted) {
+        if (!this.wcsInfoOffset) {
             return {x: "NaN", y: "NaN"};
         }
         return getFormattedWCSPoint(this.wcsInfoForTransformation, this.offsetCenter) ?? {x: "NaN", y: "NaN"};
@@ -2380,7 +2380,7 @@ export class FrameStore {
             }
         }
 
-        this.createWcsInfoShifted();
+        this.createWcsInfoOffset();
 
         return true;
     };
@@ -3006,11 +3006,11 @@ export class FrameStore {
 
         this.isOffsetCoord = frame.isOffsetCoord;
 
-        // initialize wcsInfoShifted if it is not existed
-        if (this.isOffsetCoord && !this.wcsInfoShifted && this.offsetCenter) {
+        // initialize wcsInfoOffset if it is not existed
+        if (this.isOffsetCoord && !this.wcsInfoOffset && this.offsetCenter) {
             const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.center);
             if (centerInRad) {
-                this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, centerInRad.x, centerInRad.y, this.offsetCenter.x, this.offsetCenter.y);
+                this.wcsInfoOffset = AST.createOffsetFrameset(this.wcsInfo, centerInRad.x, centerInRad.y, this.offsetCenter.x, this.offsetCenter.y);
             }
         }
 

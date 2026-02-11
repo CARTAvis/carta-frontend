@@ -59,7 +59,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             return;
         }
 
-        const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoShifted : frame.wcsInfo;
+        const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoOffset : frame.wcsInfo;
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
         const frameView = this.props.unscaled
             ? {
@@ -228,7 +228,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const channelMapNumRows = AppStore.Instance.channelMapStore.numRows;
         const channelMapChannelNum = AppStore.Instance.channelMapStore.numChannels;
         const offsetCoord = frame.isOffsetCoord;
-        const offsetWcs = frame.wcsInfoShifted;
+        const offsetWcs = frame.wcsInfoOffset;
 
         if (frame.isSwappedZ) {
             const requiredChannel = frame.requiredChannel;
