@@ -230,7 +230,10 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             return null;
         }
 
-        const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+        const fileId = this.widgetStore.effectiveFrame.frameInfo?.fileId;
+        if (fileId === undefined) {
+            return null;
+        }
         const regionId = this.widgetStore.effectiveRegionId;
         const coordinate = this.widgetStore.coordinate;
         const appStore = AppStore.Instance;
@@ -246,7 +249,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         }
 
         const stokesIndex = this.widgetStore.effectiveFrame.polarizationInfo.findIndex(polarization => polarization.replace("Stokes ", "") === coordinate.slice(0, coordinate.length - 1));
-        const stokes = stokesIndex >= this.widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes ? this.widgetStore.effectiveFrame.polarizations[stokesIndex] : stokesIndex;
+        const stokes = stokesIndex >= (this.widgetStore.effectiveFrame.frameInfo?.fileInfoExtended?.stokes ?? 0) ? this.widgetStore.effectiveFrame.polarizations[stokesIndex] : stokesIndex;
         const regionHistogramData = regionMap.get(stokes === -1 ? this.widgetStore.effectiveFrame.requiredStokes : stokes);
 
         return regionHistogramData ?? null;
@@ -301,7 +304,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                 zeroLineWidth: 2
             };
 
-            if (frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
+            if (frame.renderConfig?.histogram?.bins?.length) {
                 const currentPlotData = this.plotData;
                 if (currentPlotData) {
                     linePlotProps.data = currentPlotData.values;

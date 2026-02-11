@@ -108,11 +108,11 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
         if (frame?.spectralInfo?.spectralString) {
             let zCoordString: React.ReactNode[] = [];
             zCoordString.push(frame.spectralInfo.spectralString.replace(/\w+\s\(/, "")?.replace(/\):\s/, "\u000A"));
-            if (frame.spectralInfo.freqString) {
+            if (frame.spectralInfo?.freqString) {
                 zCoordString.push(<br key={0} />);
                 zCoordString.push(frame.spectralInfo.freqString.replace(/\w+:\s/, "\u000A"));
             }
-            if (frame.spectralInfo.velocityString) {
+            if (frame.spectralInfo?.velocityString) {
                 zCoordString.push(<br key={1} />);
                 zCoordString.push(frame.spectralInfo.velocityString.replace(/\w+:\s/, "\u000A"));
             }

@@ -894,7 +894,7 @@ export class BackendService {
             this.lastPongTime = performance.now();
             this.updateEndToEndPing();
             return;
-        } else if (event.data.byteLength < 8) {
+        } else if (event.data?.byteLength < 8) {
             console.log("Unknown event format");
             return;
         }
