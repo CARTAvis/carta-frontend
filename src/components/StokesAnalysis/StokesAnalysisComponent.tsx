@@ -520,7 +520,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         uProfile: Array<number>,
         type: StokesCoordinate
     ): {
-        dataset: Array<{x: number; y: number; z: number}>;
+        dataset: Array<Point3D>;
         border: Border;
     } | null {
         const frame = this.widgetStore.effectiveFrame;
@@ -537,7 +537,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         ) {
             const channelValues = frame.channelValues;
             let border = this.calculateXYborder(qProfile, uProfile, false, type);
-            let values: Array<{x: number; y: number; z: number}> = [];
+            let values: Array<Point3D> = [];
             // centered origin and equal scaler
             let equalScalerBorder = this.resizeScatterData(border.xMin, border.xMax, border.yMin, border.yMax);
             this.widgetStore.scatterOutRangePointsZIndex = [];
@@ -682,8 +682,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         uSmoothedValues: {dataset: Array<Point2D>; border: Border};
         piSmoothedValues: {dataset: Array<Point2D>; border: Border};
         paSmoothedValues: {dataset: Array<Point2D>; border: Border};
-        quValues: {dataset: Array<{x: number; y: number; z: number}>; border: Border};
-        quSmoothedValues: {dataset: Array<{x: number; y: number; z: number}>; border: Border};
+        quValues: {dataset: Array<Point3D>; border: Border};
+        quSmoothedValues: {dataset: Array<Point3D>; border: Border};
         qProgress: number;
         uProgress: number;
         iProgress: number;
@@ -729,8 +729,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             let uSmoothedDic = this.assembleLinePlotData(compositeProfile.uProfileSmoothed, compositeProfile.uSmoothedX, StokesCoordinate.LinearPolarizationU);
 
             // Create fallback empty datasets for null results
-            const emptyDataset = {dataset: [] as Array<Point2D>, border: {xMin: 0, xMax: 0, yMin: 0, yMax: 0}};
-            const emptyScatterDataset = {dataset: [] as Array<{x: number; y: number; z: number}>, border: {xMin: 0, xMax: 0, yMin: 0, yMax: 0}};
+            const emptyDataset = {dataset: new Array<Point2D>(), border: {xMin: 0, xMax: 0, yMin: 0, yMax: 0}};
+            const emptyScatterDataset = {dataset: new Array<Point3D>(), border: {xMin: 0, xMax: 0, yMin: 0, yMax: 0}};
 
             return {
                 qValues: qDic || emptyDataset,
