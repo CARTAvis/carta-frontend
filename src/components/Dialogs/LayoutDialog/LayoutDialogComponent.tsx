@@ -35,11 +35,11 @@ export class LayoutDialogComponent extends React.Component {
     }
 
     @computed get validName(): boolean {
-        return this.layoutName.match(/^[^~`!*()\-+=[.'?<>/|\\:;&]+$/)?.length > 0;
+        return (this.layoutName.match(/^[^~`!*()\-+=[.'?<>/|\\:;&]+$/)?.length ?? 0) > 0;
     }
 
     @computed get validRename(): boolean {
-        return this.layoutRename.match(/^[^~`!*()\-+=[.'?<>/|\\:;&]+$/)?.length > 0;
+        return (this.layoutRename.match(/^[^~`!*()\-+=[.'?<>/|\\:;&]+$/)?.length ?? 0) > 0;
     }
 
     @action onMouseEnter = (layoutName: string) => {
@@ -252,7 +252,7 @@ export class LayoutDialogComponent extends React.Component {
             className: "layout-dialog",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Layout),
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Layout) || false,
             title: "Layout"
         };
 
@@ -334,7 +334,7 @@ function LayoutMappingRow({ctypes, layoutName}: {ctypes: string; layoutName: str
 interface LayoutMappingComponentProps {
     orderedLayoutNames: string[];
     existLayoutMapping: {[key: string]: string};
-    activeFrame: FrameStore;
+    activeFrame: FrameStore | null;
 }
 
 export const LayoutMappingComponent = React.memo((props: LayoutMappingComponentProps) => {

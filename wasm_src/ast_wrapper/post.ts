@@ -294,7 +294,6 @@ Module.transformPoint = function (transformFrameSet: number, xIn: number, yIn: n
 };
 
 Module.transform3DPoint = function (transformFrameSet: number, xIn: number, yIn: number, zIn: number, forward: boolean = true) {
-    const N = 1;
     const outPtr = Module._malloc(24);
     Module.transform3D(transformFrameSet, xIn, yIn, zIn, forward, outPtr);
     const out = new Float64Array(Module.HEAPF64.buffer, outPtr, 3);
@@ -312,7 +311,7 @@ Module.transformSpectralPoint = function (spectralFrameFrom: number | null, spec
     return zOut[0];
 };
 
-Module.transformSpectralPointArray = function (spectralFrameFrom: number, specType: string, specUnit: string, specSys: string, zIn: Float64Array | Array<number>, forward: boolean = true) {
+Module.transformSpectralPointArray = function (spectralFrameFrom: number | null, specType: string | null, specUnit: string | null, specSys: string | null, zIn: Float64Array | Array<number> | undefined, forward: boolean = true) {
     // Allocate and assign WASM memory
     const N = zIn?.length;
 

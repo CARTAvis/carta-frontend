@@ -31,7 +31,7 @@ export const ShareWorkspaceDialogComponent = observer(() => {
         canOutsideClickClose: true,
         lazy: true,
         canEscapeKeyClose: true,
-        isOpen: shareWorkspaceDialogVisible,
+        isOpen: shareWorkspaceDialogVisible ?? false,
         onClose: () => appStore.dialogStore.hideDialog(DialogId.ShareWorkspace),
         title: `Share Workspace: ${activeWorkspace?.name ?? ""}`
     };
@@ -48,7 +48,7 @@ export const ShareWorkspaceDialogComponent = observer(() => {
                 await appStore.saveWorkspace(activeWorkspace.name);
             }
             const shareKey = await appStore.apiService.getSharedWorkspaceKey(activeWorkspace.id);
-            setShareKey(shareKey);
+            setShareKey(shareKey ?? "");
         } catch (err) {
             console.log(err);
             AppToaster.show(WarningToast("Could not generate a sharing link."));
