@@ -145,8 +145,8 @@ export const VERTICAL_RANGE_PADDING = 0.05;
 export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     private plotRef: Chart;
     private stageRef;
-    private stageClickStartX: number;
-    private stageClickStartY: number;
+    private stageClickStartX?: number;
+    private stageClickStartY?: number;
     private panPrevious: number;
     private previousClickTime: number;
     private pendingClickHandle;
@@ -207,7 +207,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     private getValueForPixelX(pixel: number) {
-        if (!this.chartArea) {
+        if (!this.chartArea || this.props.xMin === undefined || this.props.xMax === undefined) {
             return undefined;
         }
         const fraction = (pixel - this.chartArea.left) / (this.chartArea.right - this.chartArea.left);
@@ -215,7 +215,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     private getValueForPixelY(pixel: number, logScale: boolean = false) {
-        if (!this.chartArea) {
+        if (!this.chartArea || this.props.yMin === undefined || this.props.yMax === undefined) {
             return undefined;
         }
         if (logScale) {
@@ -230,7 +230,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     private getPixelForValueX(value: number) {
-        if (!this.chartArea) {
+        if (!this.chartArea || !this.props.xMin || !this.props.xMax) {
             return undefined;
         }
         const fraction = (value - this.props.xMin) / (this.props.xMax - this.props.xMin);
@@ -238,7 +238,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     private getPixelForValueY(value: number, logScale: boolean = false) {
-        if (!this.chartArea) {
+        if (!this.chartArea || !this.props.yMin || !this.props.yMax) {
             return undefined;
         }
         let fraction;
@@ -251,11 +251,13 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     private getCanvasSpaceX(x: number) {
-        return Math.floor(this.getPixelForValueX(x)) + 0.5 * devicePixelRatio;
+        const pixelValue = this.getPixelForValueX(x);
+        return pixelValue !== undefined ? Math.floor(pixelValue) + 0.5 * devicePixelRatio : 0;
     }
 
     private getCanvasSpaceY(y: number) {
-        return Math.floor(this.getPixelForValueY(y, this.props.logY)) + 0.5 * devicePixelRatio;
+        const pixelValue = this.getPixelForValueY(y, this.props.logY);
+        return pixelValue !== undefined ? Math.floor(pixelValue) + 0.5 * devicePixelRatio : 0;
     }
 
     onPlotRefUpdated = plotRef => {
@@ -326,13 +328,17 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 } else {
                     newPositionDataSpace = this.getValueForPixelX(ev.target.getAbsolutePosition().x);
                 }
-                marker.dragMove(newPositionDataSpace);
+                if (newPositionDataSpace !== undefined) {
+                    marker.dragMove(newPositionDataSpace);
+                }
             }
         }
         // Cursor move updates
         if (this.props.graphCursorMoved) {
             const cursorPosGraphSpace = this.getValueForPixelX(ev.target.getAbsolutePosition().x);
-            this.props.graphCursorMoved(cursorPosGraphSpace);
+            if (cursorPosGraphSpace !== undefined) {
+                this.props.graphCursorMoved(cursorPosGraphSpace);
+            }
         }
     };
 
@@ -370,7 +376,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     onStageMouseUp = ev => {
         const mouseEvent: MouseEvent = ev.evt;
         // Redirect clicks
-        const mouseMoveDist = {x: Math.abs(mouseEvent.offsetX - this.stageClickStartX), y: Math.abs(mouseEvent.offsetY - this.stageClickStartY)};
+        const mouseMoveDist = {x: Math.abs(mouseEvent.offsetX - (this.stageClickStartX ?? 0)), y: Math.abs(mouseEvent.offsetY - (this.stageClickStartY ?? 0))};
         if (mouseMoveDist.x < DRAG_THRESHOLD && mouseMoveDist.y < DRAG_THRESHOLD) {
             this.onStageClick(ev);
         } else {
@@ -382,7 +388,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     let endX = this.getValueForPixelX(this.selectionBoxEnd.x);
                     let startY = this.getValueForPixelY(this.selectionBoxStart.y, this.props.logY);
                     let endY = this.getValueForPixelY(this.selectionBoxEnd.y, this.props.logY);
-                    this.props.setSelectedLine(startX, endX, startY, endY);
+                    if (startX !== undefined && endX !== undefined && startY !== undefined && endY !== undefined) {
+                        this.props.setSelectedLine(startX, endX, startY, endY);
+                    }
                 } else if (this.isSelecting && this.zoomMode !== ZoomMode.NONE) {
                     let minCanvasSpace = Math.min(this.selectionBoxStart.x, this.selectionBoxEnd.x);
                     let maxCanvasSpace = Math.max(this.selectionBoxStart.x, this.selectionBoxEnd.x);
@@ -395,19 +403,27 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     let minY = this.getValueForPixelY(maxCanvasSpace, this.props.logY);
                     let maxY = this.getValueForPixelY(minCanvasSpace, this.props.logY);
 
-                    if (this.props.setSelectedRange && this.props.selectingMode === LinePlotSelectingMode.HORIZONTAL) {
+                    if (this.props.setSelectedRange && this.props.selectingMode === LinePlotSelectingMode.HORIZONTAL && minX !== undefined && maxX !== undefined) {
                         this.props.setSelectedRange(minX, maxX);
-                    } else if (this.props.setSelectedRange && this.props.selectingMode === LinePlotSelectingMode.VERTICAL) {
+                    } else if (this.props.setSelectedRange && this.props.selectingMode === LinePlotSelectingMode.VERTICAL && minY !== undefined && maxY !== undefined) {
                         this.props.setSelectedRange(minY, maxY);
-                    } else if (this.props.setSelectedInsideBox && this.props.isSelectingInsideBox && this.props.selectingMode === LinePlotSelectingMode.BOX) {
+                    } else if (
+                        this.props.setSelectedInsideBox &&
+                        this.props.isSelectingInsideBox &&
+                        this.props.selectingMode === LinePlotSelectingMode.BOX &&
+                        minX !== undefined &&
+                        maxX !== undefined &&
+                        minY !== undefined &&
+                        maxY !== undefined
+                    ) {
                         this.props.setSelectedInsideBox(minX, maxX, minY, maxY);
                     } else {
-                        if (this.zoomMode === ZoomMode.X) {
+                        if (this.zoomMode === ZoomMode.X && this.props.graphZoomedX && minX !== undefined && maxX !== undefined) {
                             this.props.graphZoomedX(minX, maxX);
                         }
-                        if (this.zoomMode === ZoomMode.Y) {
+                        if (this.zoomMode === ZoomMode.Y && this.props.graphZoomedY && minY !== undefined && maxY !== undefined) {
                             this.props.graphZoomedY(minY, maxY);
-                        } else if (this.zoomMode === ZoomMode.XY) {
+                        } else if (this.zoomMode === ZoomMode.XY && this.props.graphZoomedXY && minX !== undefined && maxX !== undefined && minY !== undefined && maxY !== undefined) {
                             this.props.graphZoomedXY(minX, maxX, minY, maxY);
                         }
                     }
@@ -437,15 +453,19 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 const currentPan = mousePosX;
                 const prevPanGraphSpace = this.getValueForPixelX(this.panPrevious);
                 const currentPanGraphSpace = this.getValueForPixelX(currentPan);
-                const delta = currentPanGraphSpace - prevPanGraphSpace;
-                this.updatePan(currentPan);
-                // Shift zoom to counteract drag's delta
-                this.props.graphZoomedX(this.props.xMin - delta, this.props.xMax - delta);
+                if (prevPanGraphSpace !== undefined && currentPanGraphSpace !== undefined && this.props.xMin !== undefined && this.props.xMax !== undefined) {
+                    const delta = currentPanGraphSpace - prevPanGraphSpace;
+                    this.updatePan(currentPan);
+                    // Shift zoom to counteract drag's delta
+                    this.props.graphZoomedX(this.props.xMin - delta, this.props.xMax - delta);
+                }
             }
             // Cursor move updates
             if (this.interactionMode === InteractionMode.NONE && this.props.graphCursorMoved) {
                 const cursorPosGraphSpace = this.getValueForPixelX(mousePosX);
-                this.props.graphCursorMoved(cursorPosGraphSpace);
+                if (cursorPosGraphSpace !== undefined) {
+                    this.props.graphCursorMoved(cursorPosGraphSpace);
+                }
             }
         }
     };
@@ -465,7 +485,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         } else {
             this.pendingClickHandle = setTimeout(() => {
                 // Ignore click-drags for click handling
-                const mouseMoveDist = {x: Math.abs(mousePoint.x - this.stageClickStartX), y: Math.abs(mousePoint.y - this.stageClickStartY)};
+                const mouseMoveDist = {x: Math.abs(mousePoint.x - (this.stageClickStartX ?? 0)), y: Math.abs(mousePoint.y - (this.stageClickStartY ?? 0))};
                 if (mouseMoveDist.x > 1 || mouseMoveDist.y > 1) {
                     return;
                 }
@@ -473,13 +493,17 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 if (this.props.graphClicked && mouseButton === 0) {
                     const xCanvasSpace = mousePoint.x;
                     const xGraphSpace = this.getValueForPixelX(xCanvasSpace);
-                    this.props.graphClicked(xGraphSpace);
+                    if (xGraphSpace !== undefined) {
+                        this.props.graphClicked(xGraphSpace);
+                    }
                 }
                 // Do right-click callback if it exists
                 else if (this.props.graphRightClicked && mouseButton === 2) {
                     const xCanvasSpace = mousePoint.x;
                     const xGraphSpace = this.getValueForPixelX(xCanvasSpace);
-                    this.props.graphRightClicked(xGraphSpace);
+                    if (xGraphSpace !== undefined) {
+                        this.props.graphRightClicked(xGraphSpace);
+                    }
                 }
             }, DOUBLE_CLICK_THRESHOLD);
         }
@@ -499,7 +523,14 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     onStageWheel = ev => {
-        if ((this.props.data || (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0)) && this.props.scrollZoom && this.props.graphZoomedX && this.chartArea) {
+        if (
+            (this.props.data || (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0)) &&
+            this.props.scrollZoom &&
+            this.props.graphZoomedX &&
+            this.chartArea &&
+            this.props.xMin !== undefined &&
+            this.props.xMax !== undefined
+        ) {
             const wheelEvent: WheelEvent = ev.evt;
             const chartArea = this.chartArea;
             const lineHeight = 15;
@@ -574,6 +605,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         composedCanvas.height = canvas.height;
 
         const ctx = composedCanvas.getContext("2d");
+        if (!ctx) {
+            return;
+        }
         ctx.fillStyle = AppStore.Instance.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0.0)" : this.props.darkMode ? Colors.DARK_GRAY2 : Colors.LIGHT_GRAY5;
         ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
         ctx.drawImage(canvas, 0, 0);
@@ -589,11 +623,12 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         }
 
         // plot Mean/RMS
-        const meanRMS = this.genMeanRMSForPngPlot();
+        const devicePixelRatio = window.devicePixelRatio || 1;
+        const meanRMS = this.genMeanRMSForPngPlot(devicePixelRatio);
         if (meanRMS?.mean) {
             // plot mean
             ctx.beginPath();
-            ctx.setLineDash([meanRMS.mean.dash]);
+            ctx.setLineDash(meanRMS.mean.dash);
             ctx.strokeStyle = meanRMS.mean.color;
             ctx.lineWidth = 1;
             ctx.moveTo(meanRMS.mean.xLeft, meanRMS.mean.y);
@@ -609,7 +644,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         }
 
         // plot spectral lines
-        const spectralLines = this.genSpectralLinesForPngPlot();
+        const spectralLines = this.genSpectralLinesForPngPlot(devicePixelRatio);
         spectralLines?.forEach(spectralLine => {
             // plot line
             ctx.beginPath();
@@ -629,11 +664,13 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         });
 
         composedCanvas.toBlob(blob => {
-            const link = document.createElement("a") as HTMLAnchorElement;
-            // Trim filename before timestamp to 200 characters to prevent browser errors
-            link.download = `${imageName}-${plotName.replace(" ", "-")}`.substring(0, 200) + `-${getTimestamp()}.png`;
-            link.href = URL.createObjectURL(blob);
-            link.dispatchEvent(new MouseEvent("click"));
+            if (blob) {
+                const link = document.createElement("a") as HTMLAnchorElement;
+                // Trim filename before timestamp to 200 characters to prevent browser errors
+                link.download = `${imageName}-${plotName.replace(" ", "-")}`.substring(0, 200) + `-${getTimestamp()}.png`;
+                link.href = URL.createObjectURL(blob);
+                link.dispatchEvent(new MouseEvent("click"));
+            }
         }, "image/png");
 
         if (showPlotxAxes) {
@@ -643,8 +680,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     exportData = () => {
         // TODO: Delete this block when LinePlotComponent fully supports multiple lines
-        if (this.props.data?.length > 0) {
-            let rows = [];
+        if (this.props.data && this.props.data.length > 0) {
+            let rows: string[] = [];
             const plotName = this.props.plotName || "unknown";
             const imageName = this.props.imageName || "unknown";
             let comment = `# ${imageName} ${plotName}`;
@@ -654,7 +691,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             if (this.props.yLabel) {
                 comment += `\n# yLabel: ${this.props.yLabel}`;
             }
-            if (this.props.comments?.length > 0) {
+            if (this.props.comments && this.props.comments.length > 0) {
                 comment += "\n" + this.props.comments.map(c => "# " + c).join("\n");
             }
 
@@ -662,7 +699,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             rows.push("# x\ty");
             const useScientificForm = plotName === "histogram" || this.props.tickTypeX === TickType.Scientific;
             const data = this.props.fullResolutionData?.some(data => data !== undefined) ? this.props.fullResolutionData : this.props.data;
-            rows = rows.concat(data.map(o => (useScientificForm ? `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}` : `${o.x}\t${toExponential(o.y, 10)}`)));
+            if (data) {
+                rows = rows.concat(data.map(o => (useScientificForm ? `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}` : `${o.x}\t${toExponential(o.y, 10)}`)));
+            }
 
             exportTsvFile(imageName, plotName, `${comment}\n${rows.join("\n")}\n`);
         }
@@ -672,7 +711,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 return;
             }
 
-            let rows = [];
+            let rows: string[] = [];
             const plotName = multiPlotProp.imageName;
             const imageName = multiPlotProp.plotName;
             let comment = `# ${imageName} ${plotName}`;
@@ -682,7 +721,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             if (this.props.yLabel) {
                 comment += `\n# yLabel: ${this.props.yLabel}`;
             }
-            if (this.props.comments?.length > 0) {
+            if (this.props.comments && this.props.comments.length > 0) {
                 comment += "\n" + this.props.comments.map(c => "# " + c).join("\n");
             }
             multiPlotProp.comments?.forEach(comment => rows.push(`# ${comment}\t`));
@@ -699,9 +738,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             multiPlotProp.data.forEach(o => {
                 let rowData = `${o.x}\t${toExponential(o.y, 10)}`;
                 // append following data
-                if (multiPlotProp.followingData) {
+                if (multiPlotProp.followingData && this.props.multiPlotPropsMap) {
                     multiPlotProp.followingData.forEach(dataName => {
-                        const followingData = this.props.multiPlotPropsMap.get(dataName);
+                        const followingData = this.props.multiPlotPropsMap!.get(dataName);
                         if (followingData?.data) {
                             followingData.data.forEach(obj => {
                                 if (obj.x === o.x) {
@@ -718,12 +757,17 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         });
     };
 
-    private calcMarkerBox = (marker: LineMarker): {lowerBound: number; height: number} => {
-        if (!marker) {
+    private calcMarkerBox = (marker: LineMarker): {lowerBound: number; height: number} | undefined => {
+        if (!marker || !marker.width) {
             return undefined;
         }
         const chartArea = this.chartArea;
-        const thickness = this.getPixelForValueY(marker.value - marker.width / 2.0, this.props.logY) - this.getPixelForValueY(marker.value + marker.width / 2.0, this.props.logY);
+        const thickness1 = this.getPixelForValueY(marker.value - marker.width / 2.0, this.props.logY);
+        const thickness2 = this.getPixelForValueY(marker.value + marker.width / 2.0, this.props.logY);
+        if (!thickness1 || !thickness2) {
+            return undefined;
+        }
+        const thickness = thickness1 - thickness2;
         const valueCanvasSpace = this.getCanvasSpaceY(marker.value);
         const lowerBound = clamp(valueCanvasSpace - thickness, chartArea.top, chartArea.bottom);
         const upperBound = clamp(valueCanvasSpace + thickness, chartArea.top, chartArea.bottom);
@@ -740,7 +784,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         const isHoverMarker = isHovering && this.hoveredMarker.id === marker.id;
         const midPoint = (chartArea.left + chartArea.right) / 2.0;
 
-        let lineSegments = null;
+        let lineSegments: JSX.Element[] = [];
         // TODO: sort out hover marker, marker with width, draggable marker
         if (!marker.width && (valueCanvasSpace < Math.floor(chartArea.top - 1) || valueCanvasSpace > Math.ceil(chartArea.bottom + 1))) {
             return undefined;
@@ -756,8 +800,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         } else {
             if (marker.width) {
                 const boxInfo = this.calcMarkerBox(marker);
-                const yTop = boxInfo?.lowerBound - valueCanvasSpace;
-                lineSegments = [<Rect listening={false} key={0} x={chartArea.left} y={yTop} width={lineWidth} height={boxInfo?.height} fill={markerColor} opacity={markerOpacity} />];
+                const yTop = (boxInfo?.lowerBound ?? 0) - valueCanvasSpace;
+                lineSegments = [<Rect listening={false} key={0} x={chartArea.left} y={yTop} width={lineWidth} height={boxInfo?.height ?? 0} fill={markerColor} opacity={markerOpacity} />];
             } else {
                 lineSegments = [<Line listening={false} key={0} points={[chartArea.left, 0, chartArea.right, 0]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} dash={marker.dash} />];
             }
@@ -769,7 +813,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         if (marker.draggable) {
             return (
                 <Group key={marker.id + "-draggable"} x={0} y={valueCanvasSpace} draggable={true} dragBoundFunc={pos => this.dragBoundsFuncHorizontal(pos, marker)} onDragMove={ev => this.onMarkerDragged(ev, marker)}>
-                    <Rect x={chartArea.left} y={-MARKER_HITBOX_THICKNESS / 2.0} width={lineWidth} height={MARKER_HITBOX_THICKNESS} onMouseEnter={() => this.setHoveredMarker(marker)} onMouseLeave={() => this.setHoveredMarker(undefined)} />
+                    <Rect x={chartArea.left} y={-MARKER_HITBOX_THICKNESS / 2.0} width={lineWidth} height={MARKER_HITBOX_THICKNESS} onMouseEnter={() => this.setHoveredMarker(marker)} onMouseLeave={() => this.setHoveredMarker(undefined!)} />
                     {lineSegments}
                 </Group>
             );
@@ -788,7 +832,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         const isHoverMarker = isHovering && this.hoveredMarker.id === marker.id;
         const midPoint = (chartArea.top + chartArea.bottom) / 2.0;
 
-        let lineSegments = null;
+        let lineSegments: JSX.Element[] = [];
         // TODO: sort out hover marker, marker with width, draggable marker
         if (!marker.width && (valueCanvasSpace < Math.floor(chartArea.left - 1) || valueCanvasSpace > Math.ceil(chartArea.right + 1))) {
             return undefined;
@@ -803,11 +847,15 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             ];
         } else {
             if (marker.width) {
-                const thickness = this.getPixelForValueX(marker.value + marker.width / 2.0) - this.getPixelForValueX(marker.value - marker.width / 2.0);
-                let lowerBound = clamp(valueCanvasSpace - thickness, chartArea.left, chartArea.right);
-                let upperBound = clamp(valueCanvasSpace + thickness, chartArea.left, chartArea.right);
-                let croppedThickness = upperBound - lowerBound;
-                lineSegments = [<Rect listening={false} key={0} x={lowerBound - valueCanvasSpace} y={chartArea.top} width={croppedThickness} height={lineHeight} fill={markerColor} opacity={markerOpacity} />];
+                const thickness1 = this.getPixelForValueX(marker.value + marker.width / 2.0);
+                const thickness2 = this.getPixelForValueX(marker.value - marker.width / 2.0);
+                if (thickness1 !== undefined && thickness2 !== undefined) {
+                    const thickness = thickness1 - thickness2;
+                    let lowerBound = clamp(valueCanvasSpace - thickness, chartArea.left, chartArea.right);
+                    let upperBound = clamp(valueCanvasSpace + thickness, chartArea.left, chartArea.right);
+                    let croppedThickness = upperBound - lowerBound;
+                    lineSegments = [<Rect listening={false} key={0} x={lowerBound - valueCanvasSpace} y={chartArea.top} width={croppedThickness} height={lineHeight} fill={markerColor} opacity={markerOpacity} />];
+                }
             } else {
                 lineSegments = [<Line listening={false} key={0} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} dash={marker.dash} />];
             }
@@ -828,7 +876,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     onDragEnd={this.onMarkerDragEnd}
                     onDragMove={ev => this.onMarkerDragged(ev, marker)}
                 >
-                    <Rect x={-MARKER_HITBOX_THICKNESS / 2.0} y={chartArea.top} width={MARKER_HITBOX_THICKNESS} height={lineHeight} onMouseEnter={() => this.setHoveredMarker(marker)} onMouseLeave={() => this.setHoveredMarker(undefined)} />
+                    <Rect x={-MARKER_HITBOX_THICKNESS / 2.0} y={chartArea.top} width={MARKER_HITBOX_THICKNESS} height={lineHeight} onMouseEnter={() => this.setHoveredMarker(marker)} onMouseLeave={() => this.setHoveredMarker(undefined!)} />
                     {lineSegments}
                 </Group>
             );
@@ -845,7 +893,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         const chartArea = this.chartArea;
         const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
 
-        let lines = [];
+        let lines: JSX.Element[] = [];
         if (this.props.markers && this.props.markers.length && chartArea) {
             // TODO: refactoring to pull out this logic from horizontal lines
             const chartAreaWidth = Math.abs(chartArea.right - chartArea.left);
@@ -860,7 +908,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     if (isNaN(valueCanvasSpace)) {
                         continue;
                     }
-                    lines.push(this.genHorizontalLine(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace));
+                    const line = this.genHorizontalLine(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace);
+                    if (line) {
+                        lines.push(line);
+                    }
                 } else {
                     let valueCanvasSpace = this.getCanvasSpaceX(marker.value);
                     if (isNaN(valueCanvasSpace)) {
@@ -868,9 +919,15 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     }
                     if (marker.interactionMarker) {
                         const markerOpacityInteraction = !marker.isMouseMove && this.isMouseEntered ? 0 : marker.opacity || 1;
-                        lines.push(this.genVerticalLine(marker, isHovering, markerColor, markerOpacityInteraction, valueCanvasSpace));
+                        const line = this.genVerticalLine(marker, isHovering, markerColor, markerOpacityInteraction, valueCanvasSpace);
+                        if (line) {
+                            lines.push(line);
+                        }
                     } else {
-                        lines.push(this.genVerticalLine(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace, isShowingVerticalLabels));
+                        const line = this.genVerticalLine(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace, isShowingVerticalLabels);
+                        if (line) {
+                            lines.push(line);
+                        }
                     }
                 }
             }
@@ -879,7 +936,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     private genSelectionRect = () => {
-        let selectionRect = null;
+        let selectionRect: JSX.Element[] | null = null;
         const chartArea = this.chartArea;
         const start = this.selectionBoxStart;
         const end = this.selectionBoxEnd;
@@ -927,9 +984,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return selectionRect;
     };
 
-    private genChartBorder = (): {x: number; y: number; width: number; height: number} => {
+    private genChartBorder = (): {x: number; y: number; width: number; height: number} | undefined => {
         const chartArea = this.chartArea;
-        let border = undefined;
+        let border: {x: number; y: number; width: number; height: number} | undefined = undefined;
+        const devicePixelRatio = window.devicePixelRatio || 1;
         if (chartArea) {
             border = {
                 x: (Math.floor(chartArea.left) - 0.5) * devicePixelRatio,
@@ -941,9 +999,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return border;
     };
 
-    private genBorderRect = () => {
+    private genBorderRect = (): JSX.Element | null => {
         const chartArea = this.chartArea;
-        let borderRect = null;
+        let borderRect: JSX.Element | null = null;
+        const devicePixelRatio = window.devicePixelRatio || 1;
         if (chartArea) {
             borderRect = (
                 // Shift by half a pixel for sharp 1px lines
@@ -963,7 +1022,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     private genInsideBoxes = () => {
         const chartArea = this.chartArea;
-        let insideBoxes = [];
+        let insideBoxes: JSX.Element[] = [];
         if (this.props.insideBoxes && chartArea) {
             for (let i = 0; i < this.props.insideBoxes.length; i++) {
                 const box = this.props.insideBoxes[i];
@@ -971,14 +1030,15 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 const xMax = this.getPixelForValueX(box.boundary.xMax);
                 const yMin = this.getPixelForValueY(box.boundary.yMin);
                 const yMax = this.getPixelForValueY(box.boundary.yMax);
-                if (xMin > chartArea.right || xMax < chartArea.left || yMin < chartArea.top || yMax > chartArea.bottom) {
+
+                if (!xMin || !xMax || !yMin || !yMax || xMin > chartArea.right || xMax < chartArea.left || yMin < chartArea.top || yMax > chartArea.bottom) {
                     continue;
                 }
                 const xStart = Math.max(xMin, chartArea.left);
                 const xEnd = Math.min(xMax, chartArea.right);
                 const yStart = Math.max(yMax, chartArea.top);
                 const yEnd = Math.min(yMin, chartArea.bottom);
-                insideBoxes.push(<Rect key={i} x={xStart} y={yStart} width={xEnd - xStart} height={yEnd - yStart} fill={box.color} opacity={box.opacity} stroke={box.strokeColor} strokeWidth={1} />);
+                insideBoxes.push(<Rect key={i} x={xStart} y={yStart} width={xEnd - xStart} height={yEnd - yStart} fill={box.color} opacity={box.opacity} stroke={box.strokeColor || undefined} strokeWidth={1} />);
                 if (box.text) {
                     insideBoxes.push(<Text key={i + "-text"} text={box.text} x={xStart} y={(yStart + yEnd) / 2} width={xEnd - xStart} align={"center"} fill={this.props.darkMode ? Colors.LIGHT_GRAY4 : Colors.GRAY1} />);
                 }
@@ -989,12 +1049,15 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     private genInsideTexts = () => {
         const chartArea = this.chartArea;
-        let insideTexts = [];
+        let insideTexts: JSX.Element[] = [];
         if (this.props.insideTexts && chartArea) {
             for (let i = 0; i < this.props.insideTexts.length; i++) {
                 const insideText = this.props.insideTexts[i];
                 const x = this.getPixelForValueX(insideText.x);
                 const y = this.getPixelForValueY(insideText.y);
+                if (x === undefined || y === undefined) {
+                    continue;
+                }
                 if (x > chartArea.right || x < chartArea.left || y < chartArea.top || y > chartArea.bottom) {
                     continue;
                 }
@@ -1017,56 +1080,64 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return insideTexts;
     };
 
-    private genMeanRMSForPngPlot = (): {
-        mean: {color: string; dash: number; y: number; xLeft: number; xRight: number};
-        RMS: {color: string; opacity: number; xLeft: number; yTop: number; width: number; height: number};
+    private genMeanRMSForPngPlot = (
+        devicePixelRatio: number
+    ): {
+        mean?: {color: string; dash: number[]; y: number; xLeft: number; xRight: number};
+        RMS?: {color: string; opacity: number; xLeft: number; yTop: number; width: number; height: number};
     } => {
-        let meanRMS = {
-            mean: undefined,
-            RMS: undefined
-        };
+        let meanRMS: {
+            mean?: {color: string; dash: number[]; y: number; xLeft: number; xRight: number};
+            RMS?: {color: string; opacity: number; xLeft: number; yTop: number; width: number; height: number};
+        } = {};
         const chartArea = this.chartArea;
-        this.props.markers?.forEach(marker => {
-            const canvasY = this.getCanvasSpaceY(marker.value);
-            if (marker?.id.match(/^marker-mean/) && !isNaN(canvasY)) {
-                meanRMS.mean = {
-                    color: marker?.color,
-                    dash: marker.dash,
-                    y: canvasY * devicePixelRatio,
-                    xLeft: chartArea.left * devicePixelRatio,
-                    xRight: chartArea.right * devicePixelRatio
-                };
-            }
-            if (marker?.id.match(/^marker-rms/) && !isNaN(canvasY)) {
-                const boxInfo = this.calcMarkerBox(marker);
-                meanRMS.RMS = {
-                    color: marker?.color,
-                    opacity: marker?.opacity,
-                    xLeft: chartArea.left * devicePixelRatio,
-                    yTop: boxInfo?.lowerBound * devicePixelRatio,
-                    width: (chartArea.right - chartArea.left) * devicePixelRatio,
-                    height: boxInfo?.height * devicePixelRatio
-                };
-            }
-        });
+        if (chartArea) {
+            this.props.markers?.forEach(marker => {
+                const canvasY = this.getCanvasSpaceY(marker.value);
+                if (marker?.id.match(/^marker-mean/) && !isNaN(canvasY)) {
+                    meanRMS.mean = {
+                        color: marker?.color || Colors.GREEN4,
+                        dash: marker.dash || [2, 2],
+                        y: canvasY * devicePixelRatio,
+                        xLeft: chartArea.left * devicePixelRatio,
+                        xRight: chartArea.right * devicePixelRatio
+                    };
+                }
+                if (marker?.id.match(/^marker-rms/) && !isNaN(canvasY)) {
+                    const boxInfo = this.calcMarkerBox(marker);
+                    if (boxInfo?.lowerBound !== undefined && boxInfo?.height !== undefined) {
+                        meanRMS.RMS = {
+                            color: marker?.color || Colors.GREEN4,
+                            opacity: marker?.opacity || 0.15,
+                            xLeft: chartArea.left * devicePixelRatio,
+                            yTop: boxInfo.lowerBound * devicePixelRatio,
+                            width: (chartArea.right - chartArea.left) * devicePixelRatio,
+                            height: boxInfo.height * devicePixelRatio
+                        };
+                    }
+                }
+            });
+        }
         return meanRMS;
     };
 
-    private genSpectralLinesForPngPlot = (): {color: string; text: string; x: number; yBottom: number; yTop: number}[] => {
-        let spectralLines = [];
+    private genSpectralLinesForPngPlot = (devicePixelRatio: number): {color: string; text: string; x: number; yBottom: number; yTop: number}[] => {
+        let spectralLines: {color: string; text: string; x: number; yBottom: number; yTop: number}[] = [];
         const chartArea = this.chartArea;
-        this.props.markers?.forEach(marker => {
-            const canvasX = this.getCanvasSpaceX(marker.value);
-            if (marker?.id.match(/^spectral-line-/) && !isNaN(canvasX)) {
-                spectralLines.push({
-                    color: marker?.color,
-                    text: marker?.label,
-                    x: canvasX * devicePixelRatio,
-                    yBottom: chartArea.bottom * devicePixelRatio,
-                    yTop: chartArea.top * devicePixelRatio
-                });
-            }
-        });
+        if (chartArea) {
+            this.props.markers?.forEach(marker => {
+                const canvasX = this.getCanvasSpaceX(marker.value);
+                if (marker?.id.match(/^spectral-line-/) && !isNaN(canvasX) && marker.color && marker.label) {
+                    spectralLines.push({
+                        color: marker.color,
+                        text: marker.label,
+                        x: canvasX * devicePixelRatio,
+                        yBottom: chartArea.bottom * devicePixelRatio,
+                        yTop: chartArea.top * devicePixelRatio
+                    });
+                }
+            });
+        }
         return spectralLines;
     };
 
@@ -1105,7 +1176,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                             </Layer>
                         </Stage>
                     )}
-                    {(this.props.data !== undefined || this.props.multiPlotPropsMap?.size > 0) && <ToolbarComponent darkMode={this.props.darkMode} visible={this.isMouseEntered} exportImage={this.exportImage} exportData={this.exportData} />}
+                    {(this.props.data !== undefined || (this.props.multiPlotPropsMap?.size ?? 0) > 0) && (
+                        <ToolbarComponent darkMode={this.props.darkMode ?? false} visible={this.isMouseEntered ?? false} exportImage={this.exportImage} exportData={this.exportData} />
+                    )}
                 </div>
             </ResizeDetector>
         );
