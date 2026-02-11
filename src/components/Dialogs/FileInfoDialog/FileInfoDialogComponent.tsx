@@ -26,7 +26,7 @@ export class FileInfoDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.FileInfo),
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.FileInfo) || false,
             title: "File Header"
         };
 

@@ -38,7 +38,7 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
         };
     }
 
-    @computed get widgetStore(): SpatialProfileWidgetStore {
+    @computed get widgetStore(): SpatialProfileWidgetStore | null {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.spatialProfileWidgets) {
             const widgetStore = widgetsStore.spatialProfileWidgets.get(this.props.id);
@@ -55,29 +55,32 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
         const appStore = AppStore.Instance;
         // Update widget title when region or coordinate changes
         autorun(() => {
-            if (this.widgetStore) {
-                const coordinate = this.widgetStore.coordinate;
-                if (appStore && coordinate) {
-                    const coordinateString = this.widgetStore.isLineOrPolyline ? "" : coordinate.toUpperCase();
-                    const regionString = this.widgetStore.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
-                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `${coordinateString} Spatial Profile Settings: ${regionString}`);
+            const floatingSettingsId = this.props.floatingSettingsId;
+            if (floatingSettingsId) {
+                if (this.widgetStore) {
+                    const coordinate = this.widgetStore.coordinate;
+                    if (appStore && coordinate) {
+                        const coordinateString = this.widgetStore.isLineOrPolyline ? "" : coordinate.toUpperCase();
+                        const regionString = this.widgetStore.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
+                        appStore.widgetsStore.setWidgetTitle(floatingSettingsId, `${coordinateString} Spatial Profile Settings: ${regionString}`);
+                    }
+                } else {
+                    appStore.widgetsStore.setWidgetTitle(floatingSettingsId, `X Spatial Profile Settings: Cursor`);
                 }
-            } else {
-                appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `X Spatial Profile Settings: Cursor`);
             }
         });
     }
 
     handleWcsAxisChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.widgetStore.setWcsAxisVisible(changeEvent.target.checked);
+        this.widgetStore?.setWcsAxisVisible(changeEvent.target.checked);
     };
 
     handleMeanRmsChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.widgetStore.setMeanRmsVisible(changeEvent.target.checked);
+        this.widgetStore?.setMeanRmsVisible(changeEvent.target.checked);
     };
 
     handleCoordinateChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        this.widgetStore.setCoordinate(changeEvent.target.value);
+        this.widgetStore?.setCoordinate(changeEvent.target.value);
     };
 
     handleXMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
@@ -87,8 +90,12 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
-        const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
+        if (!widgetStore) {
+            return;
+        }
+
+        const minX = parseNumber(widgetStore.minX ?? widgetStore.linePlotInitXYBoundaries.minXVal, widgetStore.linePlotInitXYBoundaries.minXVal);
+        const maxX = parseNumber(widgetStore.maxX ?? widgetStore.linePlotInitXYBoundaries.maxXVal, widgetStore.linePlotInitXYBoundaries.maxXVal);
         if (isFinite(val) && val !== minX && val < maxX) {
             widgetStore.setXBounds(val, maxX);
         } else {
@@ -103,8 +110,12 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
-        const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
+        if (!widgetStore) {
+            return;
+        }
+
+        const minX = parseNumber(widgetStore.minX ?? widgetStore.linePlotInitXYBoundaries.minXVal, widgetStore.linePlotInitXYBoundaries.minXVal);
+        const maxX = parseNumber(widgetStore.maxX ?? widgetStore.linePlotInitXYBoundaries.maxXVal, widgetStore.linePlotInitXYBoundaries.maxXVal);
         if (isFinite(val) && val !== maxX && val > minX) {
             widgetStore.setXBounds(minX, val);
         } else {
@@ -119,8 +130,12 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minY = parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
-        const maxY = parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
+        if (!widgetStore) {
+            return;
+        }
+
+        const minY = parseNumber(widgetStore.minY ?? widgetStore.linePlotInitXYBoundaries.minYVal, widgetStore.linePlotInitXYBoundaries.minYVal);
+        const maxY = parseNumber(widgetStore.maxY ?? widgetStore.linePlotInitXYBoundaries.maxYVal, widgetStore.linePlotInitXYBoundaries.maxYVal);
         if (isFinite(val) && val !== minY && val < maxY) {
             widgetStore.setYBounds(val, maxY);
         } else {
@@ -135,8 +150,12 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minY = parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
-        const maxY = parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
+        if (!widgetStore) {
+            return;
+        }
+
+        const minY = parseNumber(widgetStore.minY ?? widgetStore.linePlotInitXYBoundaries.minYVal, widgetStore.linePlotInitXYBoundaries.minYVal);
+        const maxY = parseNumber(widgetStore.maxY ?? widgetStore.linePlotInitXYBoundaries.maxYVal, widgetStore.linePlotInitXYBoundaries.maxYVal);
         if (isFinite(val) && val !== maxY && val > minY) {
             widgetStore.setYBounds(minY, val);
         } else {
@@ -145,12 +164,16 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
     };
 
     handleSelectedTabChanged = (newTabId: React.ReactText) => {
-        this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
+        this.widgetStore?.setSettingsTabId(Number.parseInt(newTabId.toString()));
     };
 
     render() {
         const widgetStore = this.widgetStore;
-        const lineRegionSampleWidth = this.widgetStore.effectiveRegion?.lineRegionSampleWidth;
+        if (!widgetStore) {
+            return null;
+        }
+
+        const lineRegionSampleWidth = widgetStore.effectiveRegion?.lineRegionSampleWidth;
         const profileCoordinateOptions = [
             {
                 value: "x",
@@ -183,13 +206,13 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
             userSelectedCoordinate: widgetStore.coordinate,
             handleCoordinateChanged: this.handleCoordinateChanged,
             profileCoordinateOptions: profileCoordinateOptions,
-            xMinVal: parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal),
+            xMinVal: parseNumber(widgetStore.minX ?? widgetStore.linePlotInitXYBoundaries.minXVal, widgetStore.linePlotInitXYBoundaries.minXVal),
             handleXMinChange: this.handleXMinChange,
-            xMaxVal: parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal),
+            xMaxVal: parseNumber(widgetStore.maxX ?? widgetStore.linePlotInitXYBoundaries.maxXVal, widgetStore.linePlotInitXYBoundaries.maxXVal),
             handleXMaxChange: this.handleXMaxChange,
-            yMinVal: parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal),
+            yMinVal: parseNumber(widgetStore.minY ?? widgetStore.linePlotInitXYBoundaries.minYVal, widgetStore.linePlotInitXYBoundaries.minYVal),
             handleYMinChange: this.handleYMinChange,
-            yMaxVal: parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal),
+            yMaxVal: parseNumber(widgetStore.maxY ?? widgetStore.linePlotInitXYBoundaries.maxYVal, widgetStore.linePlotInitXYBoundaries.maxYVal),
             handleYMaxChange: this.handleYMaxChange
         };
         return (

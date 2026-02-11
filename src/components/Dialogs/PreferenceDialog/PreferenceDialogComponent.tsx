@@ -533,7 +533,7 @@ export class PreferenceDialogComponent extends React.Component {
             </React.Fragment>
         );
 
-        let regionTypes = [];
+        let regionTypes: JSX.Element[] = [];
         RegionStore.AVAILABLE_REGION_TYPES.forEach((name, regionType) => {
             regionTypes.push(
                 <option key={regionType} value={regionType}>
@@ -564,7 +564,7 @@ export class PreferenceDialogComponent extends React.Component {
                             <Switch checked={preference.isHighDimPriority} onChange={() => preference.setPreference(PreferenceKeys.LAYOUT_IS_HIGH_DIM_PRIORITY, !preference.isHighDimPriority)} />
                         </Tooltip>
                     </FormGroup>
-                    <Collapse isOpen={appStore.dynamicLayoutStore.isMappingExisted || (appStore.activeFrame && appStore.activeFrame.dynamicLayout.ctype !== "")}>
+                    <Collapse isOpen={appStore.dynamicLayoutStore.isMappingExisted || (appStore.activeFrame ? appStore.activeFrame.dynamicLayout.ctype !== "" : false)}>
                         <LayoutMappingComponent orderedLayoutNames={layoutStore.orderedLayoutNames} existLayoutMapping={preference.existLayoutMapping} activeFrame={appStore.activeFrame} />
                     </Collapse>
                 </Collapse>
@@ -626,7 +626,7 @@ export class PreferenceDialogComponent extends React.Component {
             </React.Fragment>
         );
 
-        let annotationTypes = [];
+        let annotationTypes: JSX.Element[] = [];
         RegionStore.AVAILABLE_ANNOTATION_TYPES.forEach((name, annotationType) => {
             annotationTypes.push(
                 <option key={annotationType} value={annotationType}>
@@ -929,7 +929,7 @@ export class PreferenceDialogComponent extends React.Component {
             className: className,
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Preference),
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Preference) || false,
             title: "Preferences"
         };
 
