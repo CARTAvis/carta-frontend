@@ -46,8 +46,11 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
     };
 
     private handleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
-        const point = event.target.getStage().getPointerPosition();
-        this.updateValues(point.x, point.y, DOUBLE_CLICK_THRESHOLD);
+        const stage = event.target.getStage();
+        const point = stage?.getPointerPosition();
+        if (point) {
+            this.updateValues(point.x, point.y, DOUBLE_CLICK_THRESHOLD);
+        }
     };
 
     private handleDragMove = (event: Konva.KonvaEventObject<DragEvent>) => {

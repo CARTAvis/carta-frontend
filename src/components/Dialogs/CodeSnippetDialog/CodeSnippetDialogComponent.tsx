@@ -86,9 +86,10 @@ export class CodeSnippetDialogComponent extends React.Component {
 
     handleDeleteClicked = async () => {
         const appStore = AppStore.Instance;
+        const activeSnippetName = appStore.snippetStore.activeSnippetName;
         const confirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete this snippet?");
-        if (confirmed) {
-            await appStore.snippetStore.deleteSnippet(appStore.snippetStore.activeSnippetName);
+        if (confirmed && activeSnippetName) {
+            await appStore.snippetStore.deleteSnippet(activeSnippetName);
             appStore.snippetStore.clearActiveSnippet();
         }
     };
@@ -121,7 +122,7 @@ export class CodeSnippetDialogComponent extends React.Component {
             className: className,
             canEscapeKeyClose: !this.saveDialogOpen,
             canOutsideClickClose: false,
-            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Snippet),
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Snippet) ?? false,
             isCloseButtonShown: true,
             title: "Edit Code Snippet"
         };

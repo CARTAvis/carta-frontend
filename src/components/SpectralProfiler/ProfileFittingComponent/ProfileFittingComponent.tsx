@@ -56,15 +56,15 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
     };
 
     private onCenterValueChanged = (val: number) => {
-        this.props.fittingStore.selectedComponent.setCenter(val);
+        this.props.fittingStore.selectedComponent?.setCenter(val);
     };
 
     private onAmpValueChanged = (val: number) => {
-        this.props.fittingStore.selectedComponent.setAmp(val);
+        this.props.fittingStore.selectedComponent?.setAmp(val);
     };
 
     private onFwhmValueChanged = (val: number) => {
-        this.props.fittingStore.selectedComponent.setFwhm(val);
+        this.props.fittingStore.selectedComponent?.setFwhm(val);
     };
 
     private onMouseOverResult = () => {
@@ -96,15 +96,18 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
     };
 
     private onCenterLocked = () => {
-        this.props.fittingStore.selectedComponent.setLockedCenter(!this.props.fittingStore.selectedComponent.lockedCenter);
+        const selectComponent = this.props.fittingStore.selectedComponent;
+        selectComponent?.setLockedCenter(!selectComponent.lockedCenter);
     };
 
     private onAmpLocked = () => {
-        this.props.fittingStore.selectedComponent.setLockedAmp(!this.props.fittingStore.selectedComponent.lockedAmp);
+        const selectComponent = this.props.fittingStore.selectedComponent;
+        selectComponent?.setLockedAmp(!selectComponent.lockedAmp);
     };
 
     private onFwhmLocked = () => {
-        this.props.fittingStore.selectedComponent.setLockedFwhm(!this.props.fittingStore.selectedComponent.lockedFwhm);
+        const selectComponent = this.props.fittingStore.selectedComponent;
+        selectComponent?.setLockedFwhm(!selectComponent.lockedFwhm);
     };
 
     private showLog = () => {
@@ -292,72 +295,78 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                     )}
                                 </div>
                             </FormGroup>
-                            <FormGroup label="Center" inline={true}>
-                                <div className="component-input">
-                                    <SafeNumericInput
-                                        value={fittingStore.selectedComponent.center}
-                                        onValueChange={this.onCenterValueChanged}
-                                        disabled={fittingStore.selectedComponent.lockedCenter || disabled}
-                                        allowNumericCharactersOnly={false}
-                                        buttonPosition="none"
-                                        data-testid="profile-fitting-center-input"
-                                    />
-                                    <Tooltip
-                                        content={
-                                            <span>
-                                                <i>{fittingStore.selectedComponent.lockedCenter ? "Unlock center" : "Lock center"}</i>
-                                            </span>
-                                        }
-                                    >
-                                        <AnchorButton onClick={this.onCenterLocked} icon={fittingStore.selectedComponent.lockedCenter ? "lock" : "unlock"} disabled={disabled} />
-                                    </Tooltip>
-                                    {cursorSelectionButton}
-                                </div>
-                            </FormGroup>
-                            <FormGroup label="Amplitude" inline={true}>
-                                <div className="component-input">
-                                    <SafeNumericInput
-                                        value={fittingStore.selectedComponent.amp}
-                                        onValueChange={this.onAmpValueChanged}
-                                        disabled={fittingStore.selectedComponent.lockedAmp || disabled}
-                                        allowNumericCharactersOnly={false}
-                                        buttonPosition="none"
-                                        data-testid="profile-fitting-amplitude-input"
-                                    />
-                                    <Tooltip
-                                        content={
-                                            <span>
-                                                <i>{fittingStore.selectedComponent.lockedAmp ? "Unlock amplitude" : "Lock amplitude"}</i>
-                                            </span>
-                                        }
-                                    >
-                                        <AnchorButton onClick={this.onAmpLocked} icon={fittingStore.selectedComponent.lockedAmp ? "lock" : "unlock"} disabled={disabled} />
-                                    </Tooltip>
-                                    {cursorSelectionButton}
-                                </div>
-                            </FormGroup>
-                            <FormGroup label="FWHM" inline={true}>
-                                <div className="component-input">
-                                    <SafeNumericInput
-                                        value={fittingStore.selectedComponent.fwhm}
-                                        onValueChange={this.onFwhmValueChanged}
-                                        disabled={fittingStore.selectedComponent.lockedFwhm || disabled}
-                                        allowNumericCharactersOnly={false}
-                                        buttonPosition="none"
-                                        data-testid="profile-fitting-fwhm-input"
-                                    />
-                                    <Tooltip
-                                        content={
-                                            <span>
-                                                <i>{fittingStore.selectedComponent.lockedFwhm ? "Unlock FWHM" : "Lock FWHM"}</i>
-                                            </span>
-                                        }
-                                    >
-                                        <AnchorButton onClick={this.onFwhmLocked} icon={fittingStore.selectedComponent.lockedFwhm ? "lock" : "unlock"} disabled={disabled} />
-                                    </Tooltip>
-                                    {cursorSelectionButton}
-                                </div>
-                            </FormGroup>
+                            {fittingStore.selectedComponent && (
+                                <FormGroup label="Center" inline={true}>
+                                    <div className="component-input">
+                                        <SafeNumericInput
+                                            value={fittingStore.selectedComponent.center}
+                                            onValueChange={this.onCenterValueChanged}
+                                            disabled={fittingStore.selectedComponent.lockedCenter || disabled}
+                                            allowNumericCharactersOnly={false}
+                                            buttonPosition="none"
+                                            data-testid="profile-fitting-center-input"
+                                        />
+                                        <Tooltip
+                                            content={
+                                                <span>
+                                                    <i>{fittingStore.selectedComponent.lockedCenter ? "Unlock center" : "Lock center"}</i>
+                                                </span>
+                                            }
+                                        >
+                                            <AnchorButton onClick={this.onCenterLocked} icon={fittingStore.selectedComponent.lockedCenter ? "lock" : "unlock"} disabled={disabled} />
+                                        </Tooltip>
+                                        {cursorSelectionButton}
+                                    </div>
+                                </FormGroup>
+                            )}
+                            {fittingStore.selectedComponent && (
+                                <FormGroup label="Amplitude" inline={true}>
+                                    <div className="component-input">
+                                        <SafeNumericInput
+                                            value={fittingStore.selectedComponent.amp}
+                                            onValueChange={this.onAmpValueChanged}
+                                            disabled={fittingStore.selectedComponent.lockedAmp || disabled}
+                                            allowNumericCharactersOnly={false}
+                                            buttonPosition="none"
+                                            data-testid="profile-fitting-amplitude-input"
+                                        />
+                                        <Tooltip
+                                            content={
+                                                <span>
+                                                    <i>{fittingStore.selectedComponent.lockedAmp ? "Unlock amplitude" : "Lock amplitude"}</i>
+                                                </span>
+                                            }
+                                        >
+                                            <AnchorButton onClick={this.onAmpLocked} icon={fittingStore.selectedComponent.lockedAmp ? "lock" : "unlock"} disabled={disabled} />
+                                        </Tooltip>
+                                        {cursorSelectionButton}
+                                    </div>
+                                </FormGroup>
+                            )}
+                            {fittingStore.selectedComponent && (
+                                <FormGroup label="FWHM" inline={true}>
+                                    <div className="component-input">
+                                        <SafeNumericInput
+                                            value={fittingStore.selectedComponent.fwhm}
+                                            onValueChange={this.onFwhmValueChanged}
+                                            disabled={fittingStore.selectedComponent.lockedFwhm || disabled}
+                                            allowNumericCharactersOnly={false}
+                                            buttonPosition="none"
+                                            data-testid="profile-fitting-fwhm-input"
+                                        />
+                                        <Tooltip
+                                            content={
+                                                <span>
+                                                    <i>{fittingStore.selectedComponent.lockedFwhm ? "Unlock FWHM" : "Lock FWHM"}</i>
+                                                </span>
+                                            }
+                                        >
+                                            <AnchorButton onClick={this.onFwhmLocked} icon={fittingStore.selectedComponent.lockedFwhm ? "lock" : "unlock"} disabled={disabled} />
+                                        </Tooltip>
+                                        {cursorSelectionButton}
+                                    </div>
+                                </FormGroup>
+                            )}
                             <FormGroup label="Continuum" inline={true}>
                                 <div className="component-input">
                                     <HTMLSelect

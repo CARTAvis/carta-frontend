@@ -27,19 +27,19 @@ export class ContourGeneratorPanelComponent extends React.Component<{
     @observable enteredMaxValue: number | undefined;
     @observable scalingType: FrameScaling = FrameScaling.LINEAR;
 
-    @computed get minValue() {
-        if (this.enteredMinValue === undefined && this.props.frame && this.props.frame.renderConfig.contourHistogram) {
+    @computed get minValue(): number {
+        if (this.enteredMinValue === undefined && this.props.frame?.renderConfig?.contourHistogram) {
             return getPercentiles(this.props.frame.renderConfig.contourHistogram, [0.1])[0];
         } else {
-            return this.enteredMinValue;
+            return this.enteredMinValue ?? 0;
         }
     }
 
-    @computed get maxValue() {
-        if (this.enteredMaxValue === undefined && this.props.frame && this.props.frame.renderConfig.contourHistogram) {
+    @computed get maxValue(): number {
+        if (this.enteredMaxValue === undefined && this.props.frame?.renderConfig?.contourHistogram) {
             return getPercentiles(this.props.frame.renderConfig.contourHistogram, [99.9])[0];
         } else {
-            return this.enteredMaxValue;
+            return this.enteredMaxValue ?? 1;
         }
     }
 
@@ -80,7 +80,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
         } else {
             const range = this.maxValue - this.minValue;
             const numIntervals = this.numLevels - 1;
-            const levels = [];
+            const levels: number[] = [];
             for (let i = 0; i < this.numLevels; i++) {
                 const fraction = scaleValue(i / numIntervals, this.scalingType);
                 levels.push(this.minValue + range * fraction);
@@ -96,19 +96,21 @@ export class ContourGeneratorPanelComponent extends React.Component<{
     @observable enteredStepValue: number | undefined;
     @observable multiplierValue: number = 1;
 
-    @computed get startValue() {
-        if (this.enteredStartValue === undefined && this.props.frame && this.props.frame.renderConfig.contourHistogram && this.props.frame.renderConfig.contourHistogram.stdDev > 0) {
-            return this.props.frame.renderConfig.contourHistogram.mean + 5.0 * this.props.frame.renderConfig.contourHistogram.stdDev;
+    @computed get startValue(): number {
+        const contourHistogram = this.props.frame.renderConfig.contourHistogram;
+        if (this.enteredStartValue === undefined && contourHistogram.mean && contourHistogram.stdDev && contourHistogram.stdDev > 0) {
+            return contourHistogram.mean + 5.0 * contourHistogram.stdDev;
         } else {
-            return this.enteredStartValue;
+            return this.enteredStartValue ?? 0;
         }
     }
 
-    @computed get stepValue() {
-        if (this.enteredStepValue === undefined && this.props.frame && this.props.frame.renderConfig.contourHistogram && this.props.frame.renderConfig.contourHistogram.stdDev > 0) {
-            return 4.0 * this.props.frame.renderConfig.contourHistogram.stdDev;
+    @computed get stepValue(): number {
+        const contourHistogram = this.props.frame.renderConfig.contourHistogram;
+        if (this.enteredStepValue === undefined && contourHistogram.stdDev && contourHistogram.stdDev > 0) {
+            return 4.0 * contourHistogram.stdDev;
         } else {
-            return this.enteredStepValue;
+            return this.enteredStepValue ?? 1;
         }
     }
 
@@ -136,7 +138,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
         );
     }
 
-    private generateStartStepLevels = () => {
+    private generateStartStepLevels = (): number[] => {
         if (!isFinite(this.startValue) || !isFinite(this.stepValue) || !isFinite(this.multiplierValue) || !isFinite(this.numLevels)) {
             return [];
         } else if (this.numLevels <= 1) {
@@ -144,7 +146,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
         } else {
             let step = this.stepValue;
             let value = this.startValue;
-            const levels = [];
+            const levels: number[] = [];
             for (let i = 0; i < this.numLevels; i++) {
                 levels.push(value);
                 value += step;
@@ -161,11 +163,11 @@ export class ContourGeneratorPanelComponent extends React.Component<{
     @observable lowerPercentage: number = 20;
     @observable upperPercentage: number = 100;
 
-    @computed get refValue() {
-        if (this.enteredRefValue === undefined && this.props.frame && this.props.frame.renderConfig.contourHistogram) {
+    @computed get refValue(): number {
+        if (this.enteredRefValue === undefined && this.props.frame?.renderConfig?.contourHistogram) {
             return getPercentiles(this.props.frame.renderConfig.contourHistogram, [99.9])[0];
         } else {
-            return this.enteredRefValue;
+            return this.enteredRefValue ?? 1;
         }
     }
 
@@ -195,7 +197,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
         );
     }
 
-    private generatePercentageRefLevels = () => {
+    private generatePercentageRefLevels = (): number[] => {
         if (!isFinite(this.upperPercentage) || !isFinite(this.lowerPercentage) || !isFinite(this.refValue) || !isFinite(this.numLevels)) {
             return [];
         } else if (this.numLevels <= 1) {
@@ -204,7 +206,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
             const range = this.upperPercentage - this.lowerPercentage;
             const numIntervals = this.numLevels - 1;
             const interval = range / numIntervals;
-            const levels = [];
+            const levels: number[] = [];
             for (let i = 0; i < this.numLevels; i++) {
                 levels.push((this.refValue * (this.lowerPercentage + interval * i)) / 100.0);
             }
@@ -219,19 +221,21 @@ export class ContourGeneratorPanelComponent extends React.Component<{
     @observable enteredSigmaValue: number | undefined;
     @observable sigmaLevels: number[] = [-5, 5, 9, 13, 17];
 
-    @computed get meanValue() {
-        if (this.enteredMeanValue === undefined && this.props.frame && this.props.frame.renderConfig.contourHistogram && this.props.frame.renderConfig.contourHistogram.stdDev > 0) {
-            return this.props.frame.renderConfig.contourHistogram.mean;
+    @computed get meanValue(): number {
+        const contourHistogram = this.props.frame.renderConfig.contourHistogram;
+        if (this.enteredMeanValue === undefined && contourHistogram.stdDev && contourHistogram.stdDev > 0) {
+            return contourHistogram.mean ?? NaN;
         } else {
-            return this.enteredMeanValue;
+            return this.enteredMeanValue ?? NaN;
         }
     }
 
-    @computed get sigmaValue() {
-        if (this.enteredSigmaValue === undefined && this.props.frame && this.props.frame.renderConfig.contourHistogram && this.props.frame.renderConfig.contourHistogram.stdDev > 0) {
-            return this.props.frame.renderConfig.contourHistogram.stdDev;
+    @computed get sigmaValue(): number {
+        const contourHistogram = this.props.frame.renderConfig.contourHistogram;
+        if (this.enteredSigmaValue === undefined && contourHistogram.stdDev && contourHistogram.stdDev > 0) {
+            return contourHistogram.stdDev;
         } else {
-            return this.enteredSigmaValue;
+            return this.enteredSigmaValue ?? NaN;
         }
     }
 
@@ -282,7 +286,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
         );
     }
 
-    private generateMeanSigmaLevels = () => {
+    private generateMeanSigmaLevels = (): number[] => {
         return this.sigmaLevels.map(level => this.meanValue + this.sigmaValue * level).filter(level => isFinite(level));
     };
 

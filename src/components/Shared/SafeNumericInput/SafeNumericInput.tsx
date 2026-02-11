@@ -14,7 +14,7 @@ export interface SafeNumericInputProps extends NumericInputProps {
 export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
     private static minorStepSize = 0.001;
     private inputRef = React.createRef<HTMLInputElement>();
-    @observable valueString: string = this.props.value?.toString();
+    @observable valueString: string = this.props.value?.toString() ?? "";
     @observable private isFocused: boolean = false;
 
     componentDidMount() {
@@ -44,7 +44,7 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
             () => this.props.value,
             value => {
                 if (!this.isFocused) {
-                    this.setValueString(value?.toString());
+                    this.setValueString(value?.toString() ?? "");
                 }
             }
         );
@@ -75,7 +75,7 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
                 inputElement.value = roundValue.toString();
             }
         }
-        if (this.props.onValueChange && isFinite(valueAsNumber) && (!isFinite(this.props.min) || this.props.min <= valueAsNumber) && (!isFinite(this.props.max) || this.props.max >= valueAsNumber)) {
+        if (this.props.onValueChange && isFinite(valueAsNumber) && (!this.props.min || !isFinite(this.props.min) || this.props.min <= valueAsNumber) && (!this.props.max || !isFinite(this.props.max) || this.props.max >= valueAsNumber)) {
             this.props.onValueChange(valueAsNumber, valueAsString, inputElement);
             this.setValueString(valueAsString);
         }
