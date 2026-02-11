@@ -1995,6 +1995,28 @@ export class FrameStore {
         this.zooming = false;
     };
 
+    /**
+     * Converts positions from WCS coordinates to image coordinates.
+     * Note: This function is used by carta-python and must not be removed.
+     *
+     * @param wcsList - An array of positions in WCS coordinates.
+     * @returns An array of corresponding positions in image coordinates.
+     */
+    getImagePosFromWCS = (wcsList: WCSPoint2D[]): Point2D[] => {
+        return wcsList.map(wcs => getPixelValueFromWCS(this.wcsInfoForTransformation, wcs)).filter((point): point is Point2D => point !== null);
+    };
+
+    /**
+     * Converts positions from image coordinates to WCS coordinates.
+     * Note: This function is used by carta-python and must not be removed.
+     *
+     * @param posList - An array of positions in image coordinates.
+     * @returns An array of corresponding positions in WCS coordinates.
+     */
+    getWCSFromImagePos = (posList: Point2D[]): WCSPoint2D[] => {
+        return posList.map(p => getFormattedWCSPoint(this.wcsInfoForTransformation, p)).filter((point): point is WCSPoint2D => point !== null);
+    };
+
     public getRegion = (regionId: number): RegionStore | undefined => {
         return this.regionSet?.regions?.find(r => r.regionId === regionId);
     };
