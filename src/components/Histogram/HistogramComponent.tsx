@@ -231,7 +231,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         }
 
         const fileId = this.widgetStore.effectiveFrame.frameInfo?.fileId;
-        if (fileId === undefined) {
+        if (!fileId) {
             return null;
         }
         const regionId = this.widgetStore.effectiveRegionId;

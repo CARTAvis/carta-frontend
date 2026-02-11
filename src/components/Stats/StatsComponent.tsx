@@ -50,7 +50,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         const appStore = AppStore.Instance;
         if (this.widgetStore.effectiveFrame) {
             let fileId = this.widgetStore.effectiveFrame.frameInfo?.fileId;
-            if (fileId) {
+            if (!fileId) {
                 return null;
             }
             let regionId = this.widgetStore.effectiveRegionId;
