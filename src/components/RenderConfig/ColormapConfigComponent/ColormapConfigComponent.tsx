@@ -17,6 +17,8 @@ interface ColormapConfigProps {
 @observer
 export class ColormapConfigComponent extends React.Component<ColormapConfigProps> {
     @observable extendBiasContrast: boolean = false;
+    private previewBaseScaling: FrameScaling | null = null;
+    private previewCommitted: boolean = false;
 
     @action switchExtendBiasContrast = () => {
         this.extendBiasContrast = !this.extendBiasContrast;
@@ -31,6 +33,46 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
         this.props.renderConfig.setInverted(evt.currentTarget.checked);
     };
 
+    private resetScalingPreviewSession = () => {
+        this.previewBaseScaling = null;
+        this.previewCommitted = false;
+    };
+
+    private revertScalingPreview = () => {
+        const renderConfig = this.props.renderConfig;
+        if (!this.previewCommitted && this.previewBaseScaling !== null && renderConfig.scaling !== this.previewBaseScaling) {
+            renderConfig.setScaling(this.previewBaseScaling);
+        }
+        this.resetScalingPreviewSession();
+    };
+
+    private handleScalingHovered = (scaling: FrameScaling) => {
+        const renderConfig = this.props.renderConfig;
+        if (this.previewBaseScaling === null) {
+            this.previewBaseScaling = renderConfig.scaling;
+        }
+        if (renderConfig.scaling !== scaling) {
+            renderConfig.setScaling(scaling);
+        }
+    };
+
+    private handleScalingSelected = (scaling: FrameScaling) => {
+        this.previewCommitted = true;
+        this.props.renderConfig.setScaling(scaling);
+    };
+
+    private handleScalingDropdownOpenChange = (isOpen: boolean) => {
+        if (isOpen) {
+            this.resetScalingPreviewSession();
+        } else {
+            this.revertScalingPreview();
+        }
+    };
+
+    componentWillUnmount(): void {
+        this.revertScalingPreview();
+    }
+
     render() {
         if (!this.props.renderConfig) {
             return null;
@@ -43,7 +85,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
         return (
             <React.Fragment>
                 <FormGroup label={"Scaling"} inline={true}>
-                    <ScalingSelectComponent selectedItem={renderConfig.scaling} onItemSelect={renderConfig.setScaling} />
+                    <ScalingSelectComponent selectedItem={renderConfig.scaling} onItemSelect={this.handleScalingSelected} onItemHover={this.handleScalingHovered} onDropdownOpenChange={this.handleScalingDropdownOpenChange} />
                 </FormGroup>
                 <FormGroup label={"Colormap"} inline={true}>
                     <ColormapComponent

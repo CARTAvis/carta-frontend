@@ -18,6 +18,8 @@ import "./ScalingSelectComponent.scss";
 interface ScalingComponentProps {
     selectedItem: FrameScaling;
     onItemSelect: (selected: FrameScaling) => void;
+    onItemHover?: (item: FrameScaling) => void;
+    onDropdownOpenChange?: (isOpen: boolean) => void;
     disabled?: boolean;
 }
 
@@ -37,7 +39,13 @@ const SCALING_KEYS = Array.from(RenderConfigStore.SCALING_TYPES.keys());
 export const SCALING_POPOVER_PROPS: Partial<PopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 
 export const ScalingSelectComponent: React.FC<ScalingComponentProps> = props => {
-    const renderScalingSelectItem = (scaling: FrameScaling, {handleClick, modifiers, query}) => {
+    const handleActiveItemChange = (activeItem: FrameScaling | null) => {
+        if (activeItem !== null) {
+            props.onItemHover?.(activeItem);
+        }
+    };
+
+    const renderScalingSelectItem = (scaling: FrameScaling, {handleClick, modifiers}) => {
         if (!modifiers.matchesPredicate || !RenderConfigStore.SCALING_TYPES.has(scaling)) {
             return null;
         }
@@ -49,14 +57,29 @@ export const ScalingSelectComponent: React.FC<ScalingComponentProps> = props => 
                 label={RenderConfigStore.SCALING_TYPES.get(scaling)}
                 key={scaling}
                 onClick={handleClick}
+                onMouseEnter={() => props.onItemHover?.(scaling)}
                 text={equationImage ? <div className="equation-div" style={{backgroundImage: `url(${equationImage})`, backgroundSize: "contain"}} /> : RenderConfigStore.SCALING_TYPES.get(scaling)}
                 style={{width: "320px"}}
             />
         );
     };
 
+    const popoverProps = {
+        ...SCALING_POPOVER_PROPS,
+        onInteraction: (isOpen: boolean) => props.onDropdownOpenChange?.(isOpen)
+    };
+
     return (
-        <ScalingSelect activeItem={props.selectedItem} onItemSelect={props.onItemSelect} popoverProps={SCALING_POPOVER_PROPS} filterable={false} items={SCALING_KEYS} itemRenderer={renderScalingSelectItem} disabled={props.disabled}>
+        <ScalingSelect
+            activeItem={props.selectedItem}
+            onItemSelect={props.onItemSelect}
+            onActiveItemChange={handleActiveItemChange}
+            popoverProps={popoverProps}
+            filterable={false}
+            items={SCALING_KEYS}
+            itemRenderer={renderScalingSelectItem}
+            disabled={props.disabled}
+        >
             <Button text={RenderConfigStore.SCALING_TYPES.get(props.selectedItem)} rightIcon="double-caret-vertical" alignText={"right"} disabled={props.disabled} />
         </ScalingSelect>
     );
