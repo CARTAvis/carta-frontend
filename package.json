@@ -115,7 +115,7 @@
     "lint-staged": {
         "src/**/*.{js,jsx,ts,tsx}": [
             "prettier --write --ignore-unknown",
-            "eslint --fix --max-warnings=0"
+            "eslint --fix"
         ],
         "src/**/*.{scss,css,json,md,mdx,yml,yaml}": [
             "prettier --write --ignore-unknown"

@@ -21,7 +21,7 @@ while read -r local_ref local_sha remote_ref remote_sha; do
 
     [ -z "$commits" ] && continue
 
-    if git diff-tree --no-commit-id --name-only -r $commits | grep -q '^docs_website/'; then
+    if echo "$commits" | xargs git diff-tree --no-commit-id --name-only -r | grep -q '^docs_website/'; then
         docs_changed=1
         break
     fi
