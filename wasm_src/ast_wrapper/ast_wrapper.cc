@@ -406,7 +406,7 @@ EMSCRIPTEN_KEEPALIVE int pointList(AstFrameSet* wcsInfo, int npoint, double xin[
 {
     if (!wcsInfo)
     {
-        cout << "not wcsInfo" << endl;
+        cout << "Invalid wcsInfo." << endl;
         return 1;
     }
 
@@ -454,7 +454,7 @@ EMSCRIPTEN_KEEPALIVE int axPointList(AstFrameSet* wcsInfo, int npoint, int axis,
 {
     if (!wcsInfo)
     {
-        cout << "not wcsInfo" << endl;
+        cout << "Invalid wcsInfo." << endl;
         return 1;
     }
 
