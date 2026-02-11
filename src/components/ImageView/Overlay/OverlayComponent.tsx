@@ -6,7 +6,6 @@ import {observer} from "mobx-react";
 
 import {ImageItem, ImageType, SPECTRAL_TYPE_STRING} from "models";
 import {AppStore, OverlaySettings, OverlayStore, PreferenceStore} from "stores";
-import {FrameStore, SkyRefIs} from "stores/Frame";
 import {setAstSystem} from "utilities";
 
 import "./OverlayComponent.scss";
@@ -50,43 +49,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         }
     }
 
-    private getAxisSetting(referenceSizeArcsec: number) {
-        const switchFactor = 2;
-        if (referenceSizeArcsec < 60 * switchFactor) {
-            return {unit: "arcsec", format: "s.*"};
-        }
-        if (referenceSizeArcsec < 3600 * switchFactor) {
-            return {unit: "arcmin", format: "m.*"};
-        }
-        return {unit: "deg", format: "d.*"};
-    }
-
-    private getLatReferenceSize(frame: FrameStore, viewSizeArcsec: number) {
-        if (frame.skyRefIs !== SkyRefIs.Pole || !frame.wcsInfoOffset) {
-            return viewSizeArcsec;
-        }
-
-        const centerWcs = AST.transformPoint(frame.wcsInfoOffset, frame.center.x, frame.center.y, true);
-        if (!centerWcs || !isFinite(centerWcs.y)) {
-            return viewSizeArcsec;
-        }
-
-        const latValueArcsec = (Math.abs(centerWcs.y) * (3600 * 180)) / Math.PI;
-        return Math.max(viewSizeArcsec, latValueArcsec);
-    }
-
-    private getOffsetCoordAxisSettings(frame: FrameStore, viewSizeArcsec: number) {
-        const axis2ReferenceSize = this.getLatReferenceSize(frame, viewSizeArcsec);
-        const axis2Setting = this.getAxisSetting(axis2ReferenceSize);
-        const axis1Setting = frame.skyRefIs === SkyRefIs.Pole ? {unit: "deg", format: "d.*"} : axis2Setting;
-        return {
-            axis1Unit: axis1Setting.unit,
-            axis2Unit: axis2Setting.unit,
-            axis1Format: axis1Setting.format,
-            axis2Format: axis2Setting.format
-        };
-    }
-
     renderCanvas = () => {
         const settings = this.props.overlaySettings;
         const frame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image.store?.baseFrame : this.props.image?.store;
@@ -126,14 +88,27 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
             if (frame.isOffsetCoord && OverlaySettings.Instance.isWcsCoordinates) {
                 const fovSizeInArcsec = frame.getWcsSizeInArcsec(frame.fovSize);
-                const viewSizeArcsec = Math.min(fovSizeInArcsec.x, fovSizeInArcsec.y);
-                const {axis1Unit, axis2Unit, axis1Format, axis2Format} = this.getOffsetCoordAxisSettings(frame, viewSizeArcsec);
+                const viewSize = fovSizeInArcsec.x > fovSizeInArcsec.y ? fovSizeInArcsec.y : fovSizeInArcsec.x;
+                const factor = 2; // jump factor
+                let unit;
+                let format;
+
+                if (viewSize < 60 * factor) {
+                    unit = "arcsec";
+                    format = "s.*";
+                } else if (viewSize < 3600 * factor) {
+                    unit = "arcmin";
+                    format = "m.*";
+                } else {
+                    unit = "deg";
+                    format = "d.*";
+                }
 
                 // disable unit labels when custom labels on
                 if (settings.labels.customText) {
-                    AST.set(tempWcsInfo, `Format(1)=${axis1Format}, Format(2)=${axis2Format}, Unit(1)="", Unit(2)=""`);
+                    AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)="", Unit(2)=""`);
                 } else {
-                    AST.set(tempWcsInfo, `Format(1)=${axis1Format}, Format(2)=${axis2Format}, Unit(1)=${axis1Unit}, Unit(2)=${axis2Unit}`);
+                    AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)=${unit}, Unit(2)=${unit}`);
                 }
             }
 
@@ -244,7 +219,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const channelMapNumRows = AppStore.Instance.channelMapStore.numRows;
         const channelMapChannelNum = AppStore.Instance.channelMapStore.numChannels;
         const offsetCoord = frame.isOffsetCoord;
-        const skyRefIs = frame.skyRefIs;
         const offsetWcs = frame.wcsInfoOffset;
 
         if (frame.isSwappedZ) {

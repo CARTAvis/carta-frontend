@@ -1,10 +1,9 @@
 import * as React from "react";
-import {Classes, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
+import {Button, Classes, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, Position, Switch, Tab, TabId, Tabs, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {OffsetCoordinateControlsComponent} from "components/ImageView/OffsetCoordinateControls";
 import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, fontSelect, InputType, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
 import {ImagePanelMode} from "models";
 import {AppStore, BeamType, DefaultWidgetConfig, HelpType, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
@@ -155,14 +154,9 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 <FormGroup inline={true} label="Offset coordinates">
                     <Switch checked={frame?.isOffsetCoord} disabled={frame?.isPVImage || frame?.isSwappedZ || frame?.isUVImage} onChange={frame?.toggleOffsetCoord} />
                     <Collapse isOpen={frame?.isOffsetCoord}>
-                        <OffsetCoordinateControlsComponent
-                            className="offset-coord-controls"
-                            isWcsCoordinates={overlaySettings.isWcsCoordinates && overlaySettings.global.validWcs}
-                            isOffsetCoord={!!frame?.isOffsetCoord}
-                            skyRefIs={frame?.skyRefIs}
-                            onSkyRefIsChanged={value => frame?.setSkyRefIs(value)}
-                            onUpdateOffsetCenter={() => frame?.updateOffsetCenter()}
-                        />
+                        <Tooltip content="Set offset to current view center" position={Position.BOTTOM} hoverOpenDelay={300}>
+                            <Button icon="locate" disabled={!frame?.isOffsetCoord} onClick={() => frame?.updateOffsetCenter()} />
+                        </Tooltip>
                     </Collapse>
                 </FormGroup>
                 <Collapse isOpen={frame?.isOffsetCoord}>
