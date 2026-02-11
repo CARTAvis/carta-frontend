@@ -1,12 +1,12 @@
+import * as React from "react";
 import * as AST from "ast_wrapper";
 import classNames from "classnames";
 import * as _ from "lodash";
-import { observer } from "mobx-react";
-import * as React from "react";
+import {observer} from "mobx-react";
 
-import { ImageItem, ImageType, SPECTRAL_TYPE_STRING } from "models";
-import { AppStore, OverlaySettings, OverlayStore, PreferenceStore } from "stores";
-import { setAstSystem } from "utilities";
+import {ImageItem, ImageType, SPECTRAL_TYPE_STRING} from "models";
+import {AppStore, OverlaySettings, OverlayStore, PreferenceStore} from "stores";
+import {setAstSystem} from "utilities";
 
 import "./OverlayComponent.scss";
 
