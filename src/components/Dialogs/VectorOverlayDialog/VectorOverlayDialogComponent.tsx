@@ -28,7 +28,9 @@ export class VectorOverlayDialogComponent extends React.Component {
     @observable currentTab: VectorOverlayDialogTabs = VectorOverlayDialogTabs.Configuration;
     @observable angularSource: VectorOverlaySource;
     @observable intensitySource: VectorOverlaySource;
-    @observable pixelAveragingEnabled: boolean;
+    /**
+     * Pixel width for boxcar averaging the vector overlay. Must be an integer. 1 means no averaging.
+     */
     @observable pixelAveraging: number;
     @observable thresholdEnabled: boolean;
     @observable threshold: number;
@@ -42,6 +44,10 @@ export class VectorOverlayDialogComponent extends React.Component {
     private static readonly DefaultHeight = 720;
     private static readonly MinWidth = 425;
     private static readonly MinHeight = 400;
+    /**
+     * The maximum pixel width for averaging the vector overlay.
+     */
+    public static readonly MAX_PIXEL_AVERAGING = 64;
 
     private cachedFrame: FrameStore | null = null;
 
@@ -66,7 +72,6 @@ export class VectorOverlayDialogComponent extends React.Component {
         if (config) {
             this.angularSource = config.angularSource;
             this.intensitySource = config.intensitySource;
-            this.pixelAveragingEnabled = config.pixelAveragingEnabled;
             this.pixelAveraging = config.pixelAveraging;
             this.fractionalIntensity = config.fractionalIntensity;
             this.threshold = config.threshold;
@@ -77,7 +82,6 @@ export class VectorOverlayDialogComponent extends React.Component {
             this.angularSource = VectorOverlaySource.Current;
             this.intensitySource = VectorOverlaySource.Current;
             this.pixelAveraging = preferences.vectorOverlayPixelAveraging;
-            this.pixelAveragingEnabled = preferences.vectorOverlayPixelAveraging > 0;
             this.fractionalIntensity = preferences.vectorOverlayFractionalIntensity;
             this.thresholdEnabled = false;
             this.threshold = 0;
@@ -92,7 +96,6 @@ export class VectorOverlayDialogComponent extends React.Component {
             if (
                 config.angularSource !== this.angularSource ||
                 config.intensitySource !== this.intensitySource ||
-                config.pixelAveragingEnabled !== this.pixelAveragingEnabled ||
                 config.pixelAveraging !== this.pixelAveraging ||
                 config.thresholdEnabled !== this.thresholdEnabled ||
                 config.debiasing !== this.debiasing ||
@@ -124,7 +127,6 @@ export class VectorOverlayDialogComponent extends React.Component {
             dataSource.vectorOverlayConfig.setVectorOverlayConfiguration(
                 this.angularSource,
                 this.intensitySource,
-                this.pixelAveragingEnabled,
                 this.pixelAveraging,
                 this.fractionalIntensity,
                 this.thresholdEnabled,
@@ -150,12 +152,12 @@ export class VectorOverlayDialogComponent extends React.Component {
         this.intensitySource = parseInt(ev.currentTarget.value) as VectorOverlaySource;
     };
 
-    @action private handlePixelAveragingEnabledChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
-        this.pixelAveragingEnabled = ev.currentTarget.checked;
+    @action private handlePixelAveragingChanged = (value: number) => {
+        this.pixelAveraging = Math.round(value);
     };
 
-    @action private handlePixelAveragingChanged = (value: number) => {
-        this.pixelAveraging = Math.floor(value * 0.5) * 2.0;
+    @action private handlePixelAveragingBlurred = (ev: React.FocusEvent<HTMLInputElement>) => {
+        ev.currentTarget.value = this.pixelAveraging.toString();
     };
 
     @action private handleThresholdEnabledChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
@@ -336,19 +338,16 @@ export class VectorOverlayDialogComponent extends React.Component {
                         )}
                     </HTMLSelect>
                 </FormGroup>
-                <FormGroup inline={true} label="Pixel averaging">
-                    <Switch checked={this.pixelAveragingEnabled} onChange={this.handlePixelAveragingEnabledChanged} data-testid="vector-field-averaging-toggle" />
-                </FormGroup>
-                <FormGroup inline={true} label="Averaging width" labelInfo="(px)" disabled={!this.pixelAveragingEnabled}>
+                <FormGroup inline={true} label="Averaging width" labelInfo="(px)" className="averaging-width-input">
                     <SafeNumericInput
-                        placeholder="Width (px)"
-                        min={2}
-                        max={64}
+                        min={1}
+                        max={VectorOverlayDialogComponent.MAX_PIXEL_AVERAGING}
                         value={this.pixelAveraging}
+                        stepSize={1}
                         majorStepSize={2}
-                        stepSize={2}
+                        minorStepSize={1}
                         onValueChange={this.handlePixelAveragingChanged}
-                        disabled={!this.pixelAveragingEnabled}
+                        onBlur={this.handlePixelAveragingBlurred}
                         data-testid="vector-field-averaging-width-input"
                     />
                 </FormGroup>

@@ -9,7 +9,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
-import {DraggableDialogComponent, LayoutMappingComponent} from "components/Dialogs";
+import {DraggableDialogComponent, LayoutMappingComponent, VectorOverlayDialogComponent} from "components/Dialogs";
 import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, ScrollShadow, SuccessToast} from "components/Shared";
 import {CompressionQuality, ConvertToGB, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {TelemetryMode} from "services";
@@ -388,12 +388,14 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Default pixel averaging">
                     <SafeNumericInput
                         placeholder="Default pixel averaging"
-                        min={0}
-                        max={64}
+                        min={1}
+                        max={VectorOverlayDialogComponent.MAX_PIXEL_AVERAGING}
                         value={preference.vectorOverlayPixelAveraging}
+                        stepSize={1}
                         majorStepSize={2}
-                        stepSize={2}
-                        onValueChange={value => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING, value)}
+                        minorStepSize={1}
+                        onValueChange={value => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING, Math.round(value))}
+                        onBlur={ev => (ev.currentTarget.value = preference.vectorOverlayPixelAveraging.toString())}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Use fractional intensity">
