@@ -2,18 +2,7 @@ declare var Module: any;
 declare var addOnPostRun: any;
 declare var Promise: PromiseConstructor;
 
-addOnPostRun(function () {
-    Module.numArrayCoordinates = 1;
-    Module.xIn = Module._malloc(Module.numArrayCoordinates * 8);
-    Module.yIn = Module._malloc(Module.numArrayCoordinates * 8);
-    Module.xOut = Module._malloc(Module.numArrayCoordinates * 8);
-    Module.yOut = Module._malloc(Module.numArrayCoordinates * 8);
-    Module.zIn = Module._malloc(Module.numArrayCoordinates * 8);
-    Module.zOut = Module._malloc(Module.numArrayCoordinates * 8);
-
-    console.log("AST WebAssembly module loaded");
-});
-
+// Keep constants and simple assignments outside
 Module.LABEL_EXTERIOR = 0;
 Module.LABEL_INTERIOR = 1;
 Module.DEFAULT_TOLERANCE = 0.01;
@@ -75,6 +64,7 @@ Module.shapes = [
     "\u2606" // White star
 ];
 
+// Simple functions that don't depend on WASM can stay outside
 Module.setColors = function (colors) {
     Module.colors = colors;
 };
@@ -95,47 +85,62 @@ Module.setCanvas = function (canvas) {
     Module.gridContext.font = Module.font;
 };
 
-Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"]);
-Module.emptyFitsChan = Module.cwrap("emptyFitsChan", "number");
-Module.putFits = Module.cwrap("putFits", null, ["number", "string"]);
-Module.getFrameFromFitsChan = Module.cwrap("getFrameFromFitsChan", "number", ["number", "number"]);
-Module.getSpectralFrame = Module.cwrap("getSpectralFrame", "number", ["number"]);
-Module.getSkyFrameSet = Module.cwrap("getSkyFrameSet", "number", ["number"]);
-Module.getSpatialMapping = Module.cwrap("getSpatialMapping", "number", ["number", "number"]);
-Module.initDummyFrame = Module.cwrap("initDummyFrame", "number", []);
-Module.set = Module.cwrap("set", "number", ["number", "string"]);
-Module.clear = Module.cwrap("clear", "number", ["number", "string"]);
-Module.getString = Module.cwrap("getString", "string", ["number", "string"]);
-Module.dump = Module.cwrap("dump", null, ["number"]);
-Module.norm = Module.cwrap("norm", "number", ["number", "number"]);
-Module.axDistance = Module.cwrap("axDistance", "number", ["number", "number", "number", "number"]);
-Module.geodesicDistance = Module.cwrap("geodesicDistance", "number", ["number", "number", "number", "number", "number"]);
-Module.format = Module.cwrap("format", "string", ["number", "number", "number"]);
-Module.unformat = Module.cwrap("unformat", "number", ["number", "number", "string", "number"]);
-Module.transform = Module.cwrap("transform", "number", ["number", "number", "number", "number", "number", "number", "number"]);
-Module.transform3D = Module.cwrap("transform3D", "number", ["number", "number", "number", "number", "number", "number"]);
-Module.transform3DArray = Module.cwrap("transform3DArray", "number", ["number", "number", "number", "number", "number"]);
-Module.spectralTransform = Module.cwrap("spectralTransform", "number", ["number", "string", "string", "string", "number", "number", "number", "number"]);
-Module.getLastErrorMessage = Module.cwrap("getLastErrorMessage", "string");
-Module.clearLastErrorMessage = Module.cwrap("clearLastErrorMessage", null);
-Module.copy = Module.cwrap("copy", null, ["number"]);
-Module.deleteObject = Module.cwrap("deleteObject", null, ["number"]);
-Module.invert = Module.cwrap("invert", "number", ["number"]);
-Module.convert = Module.cwrap("convert", "number", ["number", "number", "string"]);
-Module.shiftMap2D = Module.cwrap("shiftMap2D", "number", ["number", "number"]);
-Module.scaleMap2D = Module.cwrap("scaleMap2D", "number", ["number", "number"]);
-Module.frame = Module.cwrap("frame", "number", ["number", "string"]);
-Module.addFrame = Module.cwrap("addFrame", null, ["number", "number", "number", "number"]);
-Module.setI = Module.cwrap("setI", null, ["number", "string", "number"]);
-Module.setD = Module.cwrap("setD", null, ["number", "string", "number"]);
-Module.createTransformedFrameset = Module.cwrap("createTransformedFrameset", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
-Module.createShiftmapFrameset = Module.cwrap("createShiftmapFrameset", "number", ["number", "number", "number", "number"]);
-Module.fillTransformGrid = Module.cwrap("fillTransformGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
-Module.pointList = Module.cwrap("pointList", "number", ["number", "number", "number", "number", "number"]);
-Module.axPointList = Module.cwrap("axPointList", "number", ["number", "number", "number", "number", "number", "number", "number"]);
-Module.makeSwappedFrameSet = Module.cwrap("makeSwappedFrameSet", "number", ["number", "number", "number", "number", "number"]);
+addOnPostRun(function () {
+    // Memory allocation for coordinate arrays
+    Module.numArrayCoordinates = 1;
+    Module.xIn = Module._malloc(Module.numArrayCoordinates * 8);
+    Module.yIn = Module._malloc(Module.numArrayCoordinates * 8);
+    Module.xOut = Module._malloc(Module.numArrayCoordinates * 8);
+    Module.yOut = Module._malloc(Module.numArrayCoordinates * 8);
+    Module.zIn = Module._malloc(Module.numArrayCoordinates * 8);
+    Module.zOut = Module._malloc(Module.numArrayCoordinates * 8);
 
-Module.currentFormatStrings = [];
+    // Move ALL cwrap calls here
+    Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"]);
+    Module.emptyFitsChan = Module.cwrap("emptyFitsChan", "number");
+    Module.putFits = Module.cwrap("putFits", null, ["number", "string"]);
+    Module.getFrameFromFitsChan = Module.cwrap("getFrameFromFitsChan", "number", ["number", "number"]);
+    Module.getSpectralFrame = Module.cwrap("getSpectralFrame", "number", ["number"]);
+    Module.getSkyFrameSet = Module.cwrap("getSkyFrameSet", "number", ["number"]);
+    Module.getSpatialMapping = Module.cwrap("getSpatialMapping", "number", ["number", "number"]);
+    Module.initDummyFrame = Module.cwrap("initDummyFrame", "number", []);
+    Module.set = Module.cwrap("set", "number", ["number", "string"]);
+    Module.clear = Module.cwrap("clear", "number", ["number", "string"]);
+    Module.getString = Module.cwrap("getString", "string", ["number", "string"]);
+    Module.dump = Module.cwrap("dump", null, ["number"]);
+    Module.norm = Module.cwrap("norm", "number", ["number", "number"]);
+    Module.axDistance = Module.cwrap("axDistance", "number", ["number", "number", "number", "number"]);
+    Module.geodesicDistance = Module.cwrap("geodesicDistance", "number", ["number", "number", "number", "number", "number"]);
+    Module.format = Module.cwrap("format", "string", ["number", "number", "number"]);
+    Module.unformat = Module.cwrap("unformat", "number", ["number", "number", "string", "number"]);
+    Module.transform = Module.cwrap("transform", "number", ["number", "number", "number", "number", "number", "number", "number"]);
+    Module.transform3D = Module.cwrap("transform3D", "number", ["number", "number", "number", "number", "number", "number"]);
+    Module.transform3DArray = Module.cwrap("transform3DArray", "number", ["number", "number", "number", "number", "number"]);
+    Module.spectralTransform = Module.cwrap("spectralTransform", "number", ["number", "string", "string", "string", "number", "number", "number", "number"]);
+    Module.getLastErrorMessage = Module.cwrap("getLastErrorMessage", "string");
+    Module.clearLastErrorMessage = Module.cwrap("clearLastErrorMessage", null);
+    Module.copy = Module.cwrap("copy", null, ["number"]);
+    Module.deleteObject = Module.cwrap("deleteObject", null, ["number"]);
+    Module.invert = Module.cwrap("invert", "number", ["number"]);
+    Module.convert = Module.cwrap("convert", "number", ["number", "number", "string"]);
+    Module.shiftMap2D = Module.cwrap("shiftMap2D", "number", ["number", "number"]);
+    Module.scaleMap2D = Module.cwrap("scaleMap2D", "number", ["number", "number"]);
+    Module.frame = Module.cwrap("frame", "number", ["number", "string"]);
+    Module.addFrame = Module.cwrap("addFrame", null, ["number", "number", "number", "number"]);
+    Module.setI = Module.cwrap("setI", null, ["number", "string", "number"]);
+    Module.setD = Module.cwrap("setD", null, ["number", "string", "number"]);
+    Module.createTransformedFrameset = Module.cwrap("createTransformedFrameset", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
+    Module.createShiftmapFrameset = Module.cwrap("createShiftmapFrameset", "number", ["number", "number", "number", "number"]);
+    Module.fillTransformGrid = Module.cwrap("fillTransformGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
+    Module.pointList = Module.cwrap("pointList", "number", ["number", "number", "number", "number", "number"]);
+    Module.axPointList = Module.cwrap("axPointList", "number", ["number", "number", "number", "number", "number", "number", "number"]);
+    Module.makeSwappedFrameSet = Module.cwrap("makeSwappedFrameSet", "number", ["number", "number", "number", "number", "number"]);
+
+    // Initialize other data structures that depend on WASM being ready
+    Module.currentFormatStrings = [];
+
+    console.log("AST WebAssembly module loaded");
+});
 
 Module.getFormattedCoordinates = function (wcsInfo: number, x: number, y: number, formatString: string, tempFormat: boolean) {
     let prevString;
