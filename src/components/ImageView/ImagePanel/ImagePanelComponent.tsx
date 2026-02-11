@@ -40,7 +40,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         }
     };
 
-    @computed get frame(): FrameStore {
+    @computed get frame(): FrameStore | null {
         return this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image.store?.baseFrame : this.props.image?.store;
     }
 
@@ -130,14 +130,14 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
 
         const frame = this.frame;
         const overlaySettings = appStore.overlaySettings;
-        if (this.frame?.isRenderable && appStore.astReady) {
+        if (frame?.isRenderable && appStore.astReady) {
             const isActive = appStore.isActiveImage(this.props.image) && (appStore.imageViewConfigStore.imagesPerPage > 1 || appStore.previewFrames.size > 0);
             const isColorBlending = this.props.image?.type === ImageType.COLOR_BLENDING;
             const className = classNames("image-panel-div", {active: isActive});
 
             let style: React.CSSProperties = {
-                width: this.frame.overlayStore.viewWidth,
-                height: this.frame.overlayStore.viewHeight
+                width: frame.overlayStore.viewWidth,
+                height: frame.overlayStore.viewHeight
             };
             if (isActive) {
                 // Disable border radius rounding in inner corners
@@ -169,31 +169,31 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                     {showContour && <ContourViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />}
                     {showVector && <VectorOverlayViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />}
                     {appStore.overlaySettings?.visible && <OverlayComponent image={this.props.image} overlaySettings={overlaySettings} overlayStore={frame.overlayStore} docked={this.props.docked} />}
-                    {this.cursorInfoRequired && this.frame.cursorInfo && !isColorBlending && (
+                    {this.cursorInfoRequired && frame.cursorInfo && !isColorBlending && (
                         <CursorOverlayComponent
                             cursorInfo={frame.cursorInfo}
-                            cursorValue={frame.cursorInfo.isInsideImage ? (frame.isPreview && frame.previewCursorValue ? frame.previewCursorValue.value : frame.cursorValue.value) : undefined}
+                            cursorValue={frame.cursorInfo.isInsideImage ? ((frame.isPreview && frame.previewCursorValue ? frame.previewCursorValue.value : frame.cursorValue.value) ?? 0) : 0}
                             isValueCurrent={frame.isCursorValueCurrent}
                             spectralInfo={frame.spectralInfo}
-                            width={this.frame.overlayStore.viewWidth}
+                            width={frame.overlayStore.viewWidth}
                             left={frame.overlayStore.padding.left}
                             right={frame.overlayStore.padding.right}
                             docked={this.props.docked}
-                            unit={this.frame.requiredUnit}
+                            unit={frame.requiredUnit}
                             top={frame.overlayStore.padding.top}
-                            currentStokes={appStore.activeFrame.requiredPolarizationInfo}
-                            cursorValueToPercentage={this.frame.requiredUnit === "%"}
-                            isPreview={this.frame.isPreview}
+                            currentStokes={appStore.activeFrame?.requiredPolarizationInfo}
+                            cursorValueToPercentage={frame.requiredUnit === "%"}
+                            isPreview={frame.isPreview}
                         />
                     )}
                     {appStore.overlaySettings.colorbar.visible && !isColorBlending && <ColorbarComponent frame={frame} onCursorHoverValueChanged={this.setPixelHighlightValue} />}
-                    {!isColorBlending && <BeamProfileOverlayComponent frame={this.frame} top={frame.overlayStore.padding.top} left={frame.overlayStore.padding.left} docked={this.props.docked} padding={10} />}
+                    {!isColorBlending && <BeamProfileOverlayComponent frame={frame} top={frame.overlayStore.padding.top} left={frame.overlayStore.padding.left} docked={this.props.docked} padding={10} />}
                     <CatalogViewGLComponent frame={frame} docked={this.props.docked} />
                     <RegionViewComponent
                         ref={this.getRegionViewRef}
-                        frame={this.frame}
-                        width={this.frame.renderWidth}
-                        height={this.frame.renderHeight}
+                        frame={frame}
+                        width={frame.renderWidth}
+                        height={frame.renderHeight}
                         top={frame.overlayStore.padding.top}
                         left={frame.overlayStore.padding.left}
                         onClickToCenter={this.onClickToCenter}
@@ -204,7 +204,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                         <ToolbarComponent
                             docked={this.props.docked}
                             visible={this.imageToolbarVisible}
-                            frame={this.frame}
+                            frame={frame}
                             activeLayer={activeLayer}
                             onActiveLayerChange={appStore.updateActiveLayer}
                             onRegionViewZoom={this.onRegionViewZoom}

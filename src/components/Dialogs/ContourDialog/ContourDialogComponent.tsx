@@ -43,7 +43,7 @@ export class ContourDialogComponent extends React.Component {
     private static readonly MinHeight = 450;
 
     private readonly widgetStore: RenderConfigWidgetStore;
-    private cachedFrame: FrameStore;
+    private cachedFrame: FrameStore | null;
     private cachedHistogram: CARTA.IHistogram;
 
     constructor(props: {appStore: AppStore}) {
@@ -116,40 +116,42 @@ export class ContourDialogComponent extends React.Component {
         return false;
     }
 
-    @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} {
+    @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} | null {
         const dataSource = AppStore.Instance.contourDataSource;
-        if (dataSource && dataSource.renderConfig.contourHistogram && dataSource.renderConfig.contourHistogram.bins && dataSource.renderConfig.contourHistogram.bins.length) {
-            const histogram = dataSource.renderConfig.contourHistogram;
-            let minIndex = 0;
-            let maxIndex = histogram.bins.length - 1;
+        const histogram = dataSource?.renderConfig.contourHistogram;
 
-            // Truncate array if zoomed in (sidestepping ChartJS bug with off-canvas rendering and speeding up layout)
-            if (!this.widgetStore.isAutoScaledX) {
-                minIndex = Math.floor((this.widgetStore.minX - histogram.firstBinCenter) / histogram.binWidth);
-                minIndex = clamp(minIndex, 0, histogram.bins.length - 1);
-                maxIndex = Math.ceil((this.widgetStore.maxX - histogram.firstBinCenter) / histogram.binWidth);
-                maxIndex = clamp(maxIndex, 0, histogram.bins.length - 1);
-            }
-
-            let xMin = histogram.firstBinCenter + histogram.binWidth * minIndex;
-            let xMax = histogram.firstBinCenter + histogram.binWidth * maxIndex;
-            let yMin = histogram.bins[minIndex];
-            let yMax = yMin;
-
-            let values: Array<{x: number; y: number}>;
-            const N = maxIndex - minIndex;
-            if (N > 0 && !isNaN(N)) {
-                values = new Array(maxIndex - minIndex);
-
-                for (let i = minIndex; i <= maxIndex; i++) {
-                    values[i - minIndex] = {x: histogram.firstBinCenter + histogram.binWidth * i, y: histogram.bins[i]};
-                    yMin = Math.min(yMin, histogram.bins[i]);
-                    yMax = Math.max(yMax, histogram.bins[i]);
-                }
-            }
-            return {values, xMin, xMax, yMin, yMax};
+        if (!histogram?.bins?.length || histogram.firstBinCenter == null || histogram.binWidth == null) {
+            return null;
         }
-        return null;
+
+        let minIndex = 0;
+        let maxIndex = histogram.bins.length - 1;
+
+        // Truncate array if zoomed in (sidestepping ChartJS bug with off-canvas rendering and speeding up layout)
+        if (!this.widgetStore.isAutoScaledX && this.widgetStore.minX != null && this.widgetStore.maxX != null) {
+            minIndex = Math.floor((this.widgetStore.minX - histogram.firstBinCenter) / histogram.binWidth);
+            minIndex = clamp(minIndex, 0, histogram.bins.length - 1);
+            maxIndex = Math.ceil((this.widgetStore.maxX - histogram.firstBinCenter) / histogram.binWidth);
+            maxIndex = clamp(maxIndex, 0, histogram.bins.length - 1);
+        }
+
+        let xMin = histogram.firstBinCenter + histogram.binWidth * minIndex;
+        let xMax = histogram.firstBinCenter + histogram.binWidth * maxIndex;
+        let yMin = histogram.bins[minIndex];
+        let yMax = yMin;
+
+        let values: Array<{x: number; y: number}> = [];
+        const N = maxIndex - minIndex;
+        if (N > 0 && !isNaN(N)) {
+            values = new Array(maxIndex - minIndex);
+
+            for (let i = minIndex; i <= maxIndex; i++) {
+                values[i - minIndex] = {x: histogram.firstBinCenter + histogram.binWidth * i, y: histogram.bins[i]};
+                yMin = Math.min(yMin, histogram.bins[i]);
+                yMax = Math.max(yMax, histogram.bins[i]);
+            }
+        }
+        return {values, xMin, xMax, yMin, yMax};
     }
 
     private renderDataSourceSelectItem = (frame: FrameStore, {handleClick, modifiers, query}) => {
@@ -199,10 +201,10 @@ export class ContourDialogComponent extends React.Component {
     private handleCubeHistogramCancelled = () => {
         const appStore = AppStore.Instance;
         const dataSource = appStore.contourDataSource;
-        if (dataSource && dataSource.renderConfig) {
+        if (dataSource?.renderConfig) {
             dataSource.renderConfig.setUseCubeHistogramContours(false);
         }
-        appStore.cancelCubeHistogramRequest(dataSource.frameInfo.fileId);
+        appStore.cancelCubeHistogramRequest(dataSource?.frameInfo.fileId);
     };
 
     private handleApplyContours = () => {
@@ -283,7 +285,7 @@ export class ContourDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Contour),
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Contour) ?? false,
             className: "contour-dialog",
             canEscapeKeyClose: true,
             title: "Contour Configuration"
@@ -358,7 +360,7 @@ export class ContourDialogComponent extends React.Component {
                 linePlotProps.yMax = this.widgetStore.maxY;
             }
             // Fix log plot min bounds for entries with zeros in them
-            if (this.widgetStore.logScaleY && linePlotProps.yMin <= 0) {
+            if (this.widgetStore.logScaleY && linePlotProps.yMin != null && linePlotProps.yMin <= 0) {
                 linePlotProps.yMin = 0.5;
             }
 
@@ -379,9 +381,12 @@ export class ContourDialogComponent extends React.Component {
             linePlotProps.markers = [];
         }
 
-        if (this.widgetStore.meanRmsVisible && dataSource.renderConfig.contourHistogram && dataSource.renderConfig.contourHistogram.stdDev > 0) {
+        if (this.widgetStore.meanRmsVisible && dataSource.renderConfig.contourHistogram?.stdDev && dataSource.renderConfig.contourHistogram.stdDev > 0) {
+            const mean = dataSource.renderConfig.contourHistogram.mean ?? 0;
+            const stdDev = dataSource.renderConfig.contourHistogram.stdDev;
+
             linePlotProps.markers.push({
-                value: dataSource.renderConfig.contourHistogram.mean,
+                value: mean,
                 id: "marker-mean",
                 draggable: false,
                 horizontal: false,
@@ -390,11 +395,11 @@ export class ContourDialogComponent extends React.Component {
             });
 
             linePlotProps.markers.push({
-                value: dataSource.renderConfig.contourHistogram.mean,
+                value: mean,
                 id: "marker-rms",
                 draggable: false,
                 horizontal: false,
-                width: dataSource.renderConfig.contourHistogram.stdDev,
+                width: stdDev,
                 opacity: 0.2,
                 color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
             });
@@ -530,7 +535,7 @@ export class ContourDialogComponent extends React.Component {
                 <TaskProgressDialogComponent
                     isOpen={dataSource.renderConfig.useCubeHistogramContours && dataSource.renderConfig.cubeHistogramProgress < 1.0}
                     progress={dataSource.renderConfig.cubeHistogramProgress}
-                    timeRemaining={appStore.estimatedTaskRemainingTime}
+                    timeRemaining={appStore.estimatedTaskRemainingTime ?? 0}
                     cancellable={true}
                     onCancel={this.handleCubeHistogramCancelled}
                     text={"Calculating cube histogram"}

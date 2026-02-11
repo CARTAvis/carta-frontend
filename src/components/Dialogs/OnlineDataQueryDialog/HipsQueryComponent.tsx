@@ -179,7 +179,7 @@ export const HipsQueryComponent = observer(() => {
             </div>
             <Overlay2 autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={hipsQueryStore.isLoading} usePortal={false}>
                 <div className="query-loading-overlay">
-                    <Spinner intent={Intent.PRIMARY} size={30} value={null} />
+                    <Spinner intent={Intent.PRIMARY} size={30} />
                 </div>
             </Overlay2>
             <div className={classNames(Classes.DIALOG_FOOTER_ACTIONS, "query-footer")}>

@@ -2,7 +2,9 @@ const migratedFiles = [
     "utilities",
     "models",
     "services",
-    "stores"
+    "stores",
+    "App.tsx",
+    "components"
 ];
 
 module.exports = {

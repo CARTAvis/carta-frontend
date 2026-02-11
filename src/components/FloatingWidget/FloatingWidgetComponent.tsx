@@ -27,8 +27,8 @@ class FloatingWidgetComponentProps {
 export class FloatingWidgetComponent extends React.Component<FloatingWidgetComponentProps> {
     private static readonly HeaderHeight = 25;
     private static readonly RootMenuHeight = 40;
-    private pinElementRef: HTMLElement;
-    private rnd: Rnd;
+    private pinElementRef: HTMLElement | null = null;
+    private rnd: Rnd | null = null;
 
     componentDidMount() {
         this.updateDragSource();
@@ -87,11 +87,17 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
 
     private updatePositionAndSize = () => {
         const widgetConfig = this.props.widgetConfig;
+        if (!this.rnd) {
+            return;
+        }
         this.rnd.updateSize({width: widgetConfig.defaultWidth, height: widgetConfig.defaultHeight + FloatingWidgetComponent.HeaderHeight});
-        this.rnd.updatePosition({x: widgetConfig.defaultX, y: widgetConfig.defaultY});
+        this.rnd.updatePosition({x: widgetConfig.defaultX ?? 0, y: widgetConfig.defaultY ?? 0});
     };
 
     private onClickHelpButton = () => {
+        if (!this.rnd) {
+            return;
+        }
         const centerX = (this.rnd.draggable.state as any).x + this.rnd.resizable.size.width * 0.5;
 
         if (this.props.widgetConfig.type === RenderConfigComponent.WIDGET_CONFIG.type) {
@@ -103,29 +109,41 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
             const widgetsStore = AppStore.Instance.widgetsStore;
             const widgetParentType = this.props.widgetConfig.parentType;
             const parentId = widgetsStore.floatingSettingsWidgets.get(this.props.widgetConfig.id);
-            let settingsTab: number;
-            switch (widgetParentType) {
-                case "spatial-profiler":
-                    settingsTab = widgetsStore.spatialProfileWidgets.get(parentId).settingsTabId;
-                    break;
-                case "spectral-profiler":
-                    settingsTab = widgetsStore.spectralProfileWidgets.get(parentId).settingsTabId;
-                    break;
-                case "catalog-overlay":
-                    const catalogStore = CatalogStore.Instance;
-                    const catalogFileId = catalogStore.catalogProfiles.get(parentId);
-                    if (catalogFileId) {
-                        const catalogWidgetStoreId = catalogStore.catalogWidgets.get(catalogFileId);
-                        settingsTab = widgetsStore.catalogWidgets.get(catalogWidgetStoreId).settingsTabId;
-                    }
-                    break;
-                case "stokes":
-                default:
-                    settingsTab = widgetsStore.stokesAnalysisWidgets.get(parentId).settingsTabId;
-                    break;
+            let settingsTab: number | undefined;
+
+            if (parentId !== undefined) {
+                switch (widgetParentType) {
+                    case "spatial-profiler":
+                        const spatialWidget = widgetsStore.spatialProfileWidgets.get(parentId);
+                        settingsTab = spatialWidget?.settingsTabId;
+                        break;
+                    case "spectral-profiler":
+                        const spectralWidget = widgetsStore.spectralProfileWidgets.get(parentId);
+                        settingsTab = spectralWidget?.settingsTabId;
+                        break;
+                    case "catalog-overlay":
+                        const catalogStore = CatalogStore.Instance;
+                        const catalogFileId = catalogStore.catalogProfiles.get(parentId);
+                        if (catalogFileId) {
+                            const catalogWidgetStoreId = catalogStore.catalogWidgets.get(catalogFileId);
+                            if (catalogWidgetStoreId) {
+                                const catalogWidget = widgetsStore.catalogWidgets.get(catalogWidgetStoreId);
+                                settingsTab = catalogWidget?.settingsTabId;
+                            }
+                        }
+                        break;
+                    case "stokes":
+                    default:
+                        const stokesWidget = widgetsStore.stokesAnalysisWidgets.get(parentId);
+                        settingsTab = stokesWidget?.settingsTabId;
+                        break;
+                }
             }
-            HelpStore.Instance.showHelpDrawer(this.props.widgetConfig.helpType[settingsTab], centerX);
-        } else {
+
+            if (settingsTab !== undefined && this.props.widgetConfig.helpType[settingsTab]) {
+                HelpStore.Instance.showHelpDrawer(this.props.widgetConfig.helpType[settingsTab], centerX);
+            }
+        } else if (this.props.widgetConfig.helpType) {
             HelpStore.Instance.showHelpDrawer(this.props.widgetConfig.helpType, centerX);
         }
     };
@@ -146,8 +164,8 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 className={className}
                 style={{zIndex: this.props.zIndex}}
                 default={{
-                    x: widgetConfig.defaultX,
-                    y: widgetConfig.defaultY,
+                    x: widgetConfig.defaultX ?? 0,
+                    y: widgetConfig.defaultY ?? 0,
                     width: widgetConfig.defaultWidth,
                     height: widgetConfig.defaultHeight + headerHeight
                 }}
@@ -176,7 +194,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                     {this.props.showFloatingSettingsButton && (
                         <div
                             className={buttonClass}
-                            onClick={() => appStore.widgetsStore.createFloatingSettingsWidget(widgetConfig.title, widgetConfig.id, widgetConfig.type)}
+                            onClick={() => appStore.widgetsStore.createFloatingSettingsWidget(widgetConfig.title ?? "", widgetConfig.id ?? "", widgetConfig.type)}
                             data-testid={this.props.widgetConfig?.id + "-header-settings-button"}
                         >
                             <Tooltip content="Settings" position={Position.BOTTOM_RIGHT}>

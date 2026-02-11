@@ -38,7 +38,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
         };
     }
 
-    @computed get widgetStore(): HistogramWidgetStore {
+    @computed get widgetStore(): HistogramWidgetStore | undefined {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.histogramWidgets) {
             const widgetStore = widgetsStore.histogramWidgets.get(this.props.id);
@@ -47,7 +47,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
             }
         }
         console.log("can't find store for widget");
-        return null;
+        return undefined;
     }
 
     constructor(props: WidgetProps) {
@@ -69,23 +69,23 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
                     }
                 }
                 const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Histogram Settings: ${regionString} ${selectedString}`);
+                this.props.floatingSettingsId && appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Histogram Settings: ${regionString} ${selectedString}`);
             } else {
-                appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Histogram Settings`);
+                this.props.floatingSettingsId && appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Histogram Settings`);
             }
         });
     }
 
     private handleLogScaleChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.widgetStore.setLogScale(changeEvent.target.checked);
+        this.widgetStore?.setLogScale(changeEvent.target.checked);
     };
 
     handleSelectedTabChanged = (newTabId: React.ReactText) => {
-        this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
+        this.widgetStore?.setSettingsTabId(Number.parseInt(newTabId.toString()));
     };
 
     handleMeanRmsChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.widgetStore.setMeanRmsVisible(changeEvent.target.checked);
+        this.widgetStore?.setMeanRmsVisible(changeEvent.target.checked);
     };
 
     handleXMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
@@ -95,8 +95,12 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
-        const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
+        if (!widgetStore) {
+            return;
+        }
+
+        const minX = parseNumber(widgetStore.minX ?? 0, widgetStore.linePlotInitXYBoundaries.minXVal ?? 0);
+        const maxX = parseNumber(widgetStore.maxX ?? 0, widgetStore.linePlotInitXYBoundaries.maxXVal ?? 0);
         if (isFinite(val) && val !== minX && val < maxX) {
             widgetStore.setXBounds(val, maxX);
         } else {
@@ -111,10 +115,10 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
-        const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
+        const minX = parseNumber(widgetStore?.minX ?? 0, widgetStore?.linePlotInitXYBoundaries.minXVal ?? 0);
+        const maxX = parseNumber(widgetStore?.maxX ?? 0, widgetStore?.linePlotInitXYBoundaries.maxXVal ?? 0);
         if (isFinite(val) && val !== maxX && val > minX) {
-            widgetStore.setXBounds(minX, val);
+            widgetStore?.setXBounds(minX, val);
         } else {
             ev.currentTarget.value = maxX.toString();
         }
@@ -127,10 +131,10 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minY = parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
-        const maxY = parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
+        const minY = parseNumber(widgetStore?.minY ?? 0, widgetStore?.linePlotInitXYBoundaries.minYVal ?? 0);
+        const maxY = parseNumber(widgetStore?.maxY ?? 0, widgetStore?.linePlotInitXYBoundaries.maxYVal ?? 0);
         if (isFinite(val) && val !== minY && val < maxY) {
-            widgetStore.setYBounds(val, maxY);
+            widgetStore?.setYBounds(val, maxY);
         } else {
             ev.currentTarget.value = minY.toString();
         }
@@ -143,10 +147,10 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minY = parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
-        const maxY = parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
+        const minY = parseNumber(widgetStore?.minY ?? 0, widgetStore?.linePlotInitXYBoundaries.minYVal ?? 0);
+        const maxY = parseNumber(widgetStore?.maxY ?? 0, widgetStore?.linePlotInitXYBoundaries.maxYVal ?? 0);
         if (isFinite(val) && val !== maxY && val > minY) {
-            widgetStore.setYBounds(minY, val);
+            widgetStore?.setYBounds(minY, val);
         } else {
             ev.currentTarget.value = maxY.toString();
         }
@@ -154,6 +158,10 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
 
     render() {
         const widgetStore = this.widgetStore;
+        if (!widgetStore) {
+            return null;
+        }
+
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
             lineColorMap: new Map<LineKey, string>([["Primary", widgetStore.primaryLineColor]]),
             lineOptions: [{value: "Primary", label: "Primary"}],
@@ -171,13 +179,13 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
             handleLogScaleChanged: this.handleLogScaleChanged,
             meanRmsVisible: widgetStore.meanRmsVisible,
             handleMeanRmsChanged: this.handleMeanRmsChanged,
-            xMinVal: parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal),
+            xMinVal: parseNumber(widgetStore.minX ?? 0, widgetStore.linePlotInitXYBoundaries.minXVal ?? 0),
             handleXMinChange: this.handleXMinChange,
-            xMaxVal: parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal),
+            xMaxVal: parseNumber(widgetStore.maxX ?? 0, widgetStore.linePlotInitXYBoundaries.maxXVal ?? 0),
             handleXMaxChange: this.handleXMaxChange,
-            yMinVal: parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal),
+            yMinVal: parseNumber(widgetStore.minY ?? 0, widgetStore.linePlotInitXYBoundaries.minYVal ?? 0),
             handleYMinChange: this.handleYMinChange,
-            yMaxVal: parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal),
+            yMaxVal: parseNumber(widgetStore.maxY ?? 0, widgetStore.linePlotInitXYBoundaries.maxYVal ?? 0),
             handleYMaxChange: this.handleYMaxChange
         };
 

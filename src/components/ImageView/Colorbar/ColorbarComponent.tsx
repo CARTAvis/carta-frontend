@@ -127,9 +127,9 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         let stageTop = 0;
         let stageLeft = 0;
         let rectX = colorbarSettings.offset + (isOnePixBorder ? 0.5 / devicePixelRatio : 0);
-        let rectY = yOffset - (isOnePixBorder && (isIntPosition(yOffset) ? 0.5 / devicePixelRatio : 0));
+        let rectY = yOffset - (isOnePixBorder ? (isIntPosition(yOffset) ? 0.5 / devicePixelRatio : 0) : 0);
         let rectWidth = colorbarSettings.width;
-        let rectHeight = colorbarSettingsHeight + (isOnePixBorder && (!isIntPosition(colorbarSettingsHeight) ? (isIntPosition(yOffset) ? 0.5 : -0.5) / devicePixelRatio : 0));
+        let rectHeight = colorbarSettingsHeight + (isOnePixBorder ? (!isIntPosition(colorbarSettingsHeight) ? (isIntPosition(yOffset) ? 0.5 : -0.5) / devicePixelRatio : 0) : 0);
         let rectGradientStart = {x: 0, y: 0};
         let rectGradientEnd = {x: 0, y: colorbarSettingsHeight};
         let labelXPos = colorbarSettings.rightBorderPos + colorbarSettings.numberWidth + colorbarSettings.textGap;
@@ -151,7 +151,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
             stageHeight = stageWidth;
             stageWidth = viewWidth;
             rectY = rectX;
-            rectX = yOffset + (isOnePixBorder && (isIntPosition(yOffset) ? 0.5 / devicePixelRatio : 0));
+            rectX = yOffset + (isOnePixBorder ? (isIntPosition(yOffset) ? 0.5 / devicePixelRatio : 0) : 0);
             [rectWidth, rectHeight] = [rectHeight, rectWidth];
             [rectGradientStart.x, rectGradientStart.y, rectGradientEnd.x, rectGradientEnd.y] = [rectGradientEnd.y, rectGradientEnd.x, rectGradientStart.y, rectGradientStart.x];
             [labelXPos, labelYPos] = [labelYPos, labelXPos];
@@ -173,14 +173,14 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                 height={rectHeight}
                 fillLinearGradientStartPoint={rectGradientStart}
                 fillLinearGradientEndPoint={rectGradientEnd}
-                fillLinearGradientColorStops={colorbarSettings.gradientVisible ? frame.renderConfig.colorscaleArray : null}
-                stroke={colorbarSettings.borderVisible ? getColor(colorbarSettings.borderCustomColor, colorbarSettings.borderColor) : null}
+                fillLinearGradientColorStops={colorbarSettings.gradientVisible ? frame.renderConfig.colorscaleArray : undefined}
+                stroke={colorbarSettings.borderVisible ? getColor(colorbarSettings.borderCustomColor, colorbarSettings.borderColor) : undefined}
                 strokeWidth={colorbarSettings.borderWidth / devicePixelRatio}
             />
         );
 
-        let ticks = [];
-        let numbers = [];
+        let ticks: JSX.Element[] = [];
+        let numbers: JSX.Element[] = [];
         if (colorbarSettings.tickVisible || colorbarSettings.numberVisible) {
             const texts = frame.colorbarStore.texts;
             const positions = frame.colorbarStore.positions;
@@ -188,7 +188,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
             for (let i = 0; i < positions.length; i++) {
                 if (colorbarSettings.tickVisible) {
                     // to avoid blurry ticks when width <= 1px, offset to .5 px position
-                    const position = positions[i] - (colorbarSettings.tickWidth * appStore.imageRatio <= 1 && positions[i] - Math.floor(positions[i]) - 0.5 / devicePixelRatio);
+                    const position = positions[i] - (colorbarSettings.tickWidth * appStore.imageRatio <= 1 ? positions[i] - Math.floor(positions[i]) - 0.5 / devicePixelRatio : 0);
                     let tickPoints = [colorbarSettings.rightBorderPos - colorbarSettings.tickLen, position, colorbarSettings.rightBorderPos, position];
                     if (colorbarSettings.position !== "right") {
                         // rotate to horizontal by swapping
@@ -230,7 +230,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                             text={texts[i]}
                             x={numberXPos}
                             y={numberYPos}
-                            width={colorbarSettings.numberRotation !== 0 || colorbarSettings.position !== "right" ? colorbarSettingsHeight : null}
+                            width={colorbarSettings.numberRotation !== 0 || colorbarSettings.position !== "right" ? colorbarSettingsHeight : undefined}
                             align={"center"}
                             fill={getColor(colorbarSettings.numberCustomColor, colorbarSettings.numberColor)}
                             fontFamily={this.astFonts[colorbarSettings.numberFont].family}

@@ -165,16 +165,16 @@ export class AppStore {
     // dynamic zIndex
     public zIndexManager = new FloatingObjzIndexManager();
 
-    private appContainer: HTMLElement;
+    private appContainer: HTMLElement | null = null;
     private fileCounter = 0;
     private previousConnectionStatus: ConnectionStatus;
     private canvasUpdatedTimer;
 
-    public getAppContainer = (): HTMLElement => {
+    public getAppContainer = (): HTMLElement | null => {
         return this.appContainer;
     };
 
-    public setAppContainer = (container: HTMLElement) => {
+    public setAppContainer = (container: HTMLElement | null) => {
         this.appContainer = container;
     };
 
@@ -2538,7 +2538,7 @@ export class AppStore {
                         yMin: 0,
                         yMax: frame.frameInfo.fileInfoExtended.height
                     },
-                    smoothingFactor: frame.vectorOverlayConfig.pixelAveragingEnabled ? frame.vectorOverlayConfig.pixelAveraging : 1,
+                    smoothingFactor: frame.vectorOverlayConfig.pixelAveraging,
                     fractional: frame.vectorOverlayConfig.fractionalIntensity,
                     threshold: frame.vectorOverlayConfig.thresholdEnabled ? frame.vectorOverlayConfig.threshold : NaN,
                     thresholdOption: frame.vectorOverlayConfig.thresholdEnabled ? frame.vectorOverlayConfig.thresholdOption : NaN,

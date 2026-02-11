@@ -40,7 +40,7 @@ const KEYCODE_ESC = 27;
 
 @observer
 export class RegionViewComponent extends React.Component<RegionViewComponentProps> {
-    @observable creatingRegion: RegionStore;
+    @observable creatingRegion: RegionStore | null;
     @observable currentCursorPos: Point2D;
 
     private stageRef;
@@ -132,7 +132,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private getCursorPosImageSpace = (offsetX: number, offsetY: number): Point2D => {
         const frame = this.props.frame;
         let cursorPosImageSpace = canvasToTransformedImagePos(offsetX, offsetY, frame, this.props.width, this.props.height);
-        if (frame.spatialReference) {
+        if (frame.spatialReference && frame.spatialTransformAST) {
             cursorPosImageSpace = transformPoint(frame.spatialTransformAST, cursorPosImageSpace, true);
         }
         return cursorPosImageSpace;
@@ -378,10 +378,13 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 this.dragPanning = true;
                 if (this.props.frame) {
                     const frame = this.props.frame.spatialReference || this.props.frame;
-                    const stagePosition = konvaEvent.target.getStage().getPosition();
-                    this.initialStagePosition = stagePosition;
-                    this.initialDragCenter = frame.center;
-                    frame.startMoving();
+                    const stage = konvaEvent.target.getStage();
+                    if (stage) {
+                        const stagePosition = stage.getPosition();
+                        this.initialStagePosition = stagePosition;
+                        this.initialDragCenter = frame.center;
+                        frame.startMoving();
+                    }
                 }
             }
         }
@@ -407,8 +410,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             }
 
             if (isPanDrag) {
-                const stagePosition = konvaEvent.target.getStage().getPosition();
-                this.handlePan(stagePosition);
+                const stage = konvaEvent.target.getStage();
+                if (stage) {
+                    const stagePosition = stage.getPosition();
+                    this.handlePan(stagePosition);
+                }
             }
         }
     };
@@ -671,7 +677,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
         AppStore.Instance.updateLayerPixelRatio(this.layerRef);
 
-        let creatingLine = null;
+        let creatingLine: JSX.Element | null = null;
         if (
             this.currentCursorPos &&
             (this.creatingRegion?.regionType === CARTA.RegionType.POLYGON ||
@@ -683,7 +689,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             let firstControlPoint = this.creatingRegion.controlPoints[0];
             let lastControlPoint = this.creatingRegion.controlPoints[this.creatingRegion.controlPoints.length - 1];
 
-            if (frame.spatialReference) {
+            if (frame.spatialReference && frame.spatialTransformAST) {
                 firstControlPoint = transformPoint(frame.spatialTransformAST, firstControlPoint, false);
                 lastControlPoint = transformPoint(frame.spatialTransformAST, lastControlPoint, false);
             }
@@ -692,16 +698,16 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             const cusorCanvasPos = adjustPosToMutatedStage(this.currentCursorPos, this.stageRef.current);
             let points: number[];
             if (this.creatingRegion.controlPoints.length > 1 && this.creatingRegion?.regionType !== CARTA.RegionType.POLYLINE && this.creatingRegion?.regionType !== CARTA.RegionType.ANNPOLYLINE) {
-                points = [lineStart.x, lineStart.y, cusorCanvasPos.x, cusorCanvasPos.y, lineEnd.x, lineEnd.y];
+                points = [lineStart.x ?? 0, lineStart.y ?? 0, cusorCanvasPos.x ?? 0, cusorCanvasPos.y ?? 0, lineEnd.x ?? 0, lineEnd.y ?? 0];
             } else {
-                points = [lineEnd.x, lineEnd.y, cusorCanvasPos.x, cusorCanvasPos.y];
+                points = [lineEnd.x ?? 0, lineEnd.y ?? 0, cusorCanvasPos.x ?? 0, cusorCanvasPos.y ?? 0];
             }
             creatingLine = (
                 <Line points={points} dash={[5]} stroke={this.creatingRegion.color} strokeWidth={this.creatingRegion.lineWidth} strokeScaleEnabled={false} opacity={0.5} lineJoin={"round"} listening={false} perfectDrawEnabled={false} />
             );
         }
 
-        let cursor: string;
+        let cursor: string = "default";
         if (regionSet.mode === RegionMode.CREATING) {
             cursor = "crosshair";
         } else if (regionSet.selectedRegion && regionSet.selectedRegion.editing) {
@@ -722,8 +728,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     onWheel={this.handleWheel}
                     onMouseMove={this.handleMove}
                     onDblClick={this.handleStageDoubleClick}
-                    onMouseDown={regionSet.mode === RegionMode.CREATING ? this.handleMouseDown : null}
-                    onMouseUp={regionSet.mode === RegionMode.CREATING ? this.handleMouseUp : null}
+                    onMouseDown={regionSet.mode === RegionMode.CREATING ? this.handleMouseDown : undefined}
+                    onMouseUp={regionSet.mode === RegionMode.CREATING ? this.handleMouseUp : undefined}
                     draggable={regionSet.mode !== RegionMode.CREATING && this.props.dragPanningEnabled}
                     onDragStart={this.handleDragStart}
                     onDragMove={this.handleDragMove}
