@@ -41,11 +41,13 @@ const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled = fals
     switch (valueWcs && inputType) {
         case InputType.XCoord:
             const formatX = AppStore.Instance.overlaySettings.numbers.formatTypeX;
-            tooltipContent = `Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`;
+            const formatXLabel = formatX ? NUMBER_FORMAT_LABEL.get(formatX) : undefined;
+            tooltipContent = `Format: ${formatXLabel ?? "Unknown"}`;
             break;
         case InputType.YCoord:
             const formatY = AppStore.Instance.overlaySettings.numbers.formatTypeY;
-            tooltipContent = `Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`;
+            const formatYLabel = formatY ? NUMBER_FORMAT_LABEL.get(formatY) : undefined;
+            tooltipContent = `Format: ${formatYLabel ?? "Unknown"}`;
             break;
         case InputType.Size:
             tooltipContent = "Format: arcsec(\"), arcmin('), or degrees(deg)";

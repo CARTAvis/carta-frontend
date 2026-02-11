@@ -21,12 +21,15 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
     }
 
     get sliderValue(): number {
-        return this.widgetStore.currentNumBins <= this.widgetStore.maxNumBins ? this.widgetStore.currentNumBins : this.widgetStore.maxNumBins;
+        const currentNumBins = this.widgetStore.currentNumBins ?? 0;
+        const maxNumBins = this.widgetStore.maxNumBins;
+        return currentNumBins <= maxNumBins ? currentNumBins : maxNumBins;
     }
 
     get sliderMaxValue(): number {
         if (this.resetMaxNumBins) {
-            this.widgetStore.setMaxNumBins(this.widgetStore.currentNumBins * 2);
+            const currentNumBins = this.widgetStore.currentNumBins ?? 0;
+            this.widgetStore.setMaxNumBins(currentNumBins * 2);
             this.resetMaxNumBins = false;
         }
         return this.widgetStore.maxNumBins;
@@ -43,7 +46,8 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
     private onMinPixChanged = (minPix: number) => {
         this.widgetStore.setMinPix(minPix);
 
-        if (minPix >= this.widgetStore.currentMaxPix) {
+        const currentMaxPix = this.widgetStore.currentMaxPix;
+        if (currentMaxPix !== undefined && minPix >= currentMaxPix) {
             this.minPixIntent = Intent.DANGER;
         } else {
             this.minPixIntent = Intent.NONE;
@@ -54,7 +58,8 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
     private onMaxPixChanged = (maxPix: number) => {
         this.widgetStore.setMaxPix(maxPix);
 
-        if (maxPix <= this.widgetStore.currentMinPix) {
+        const currentMinPix = this.widgetStore.currentMinPix;
+        if (currentMinPix !== undefined && maxPix <= currentMinPix) {
             this.maxPixIntent = Intent.DANGER;
         } else {
             this.maxPixIntent = Intent.NONE;

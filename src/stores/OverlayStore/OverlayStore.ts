@@ -82,13 +82,14 @@ export class OverlayGlobalSettings {
             setAstStringSystem(astString, this.explicitSystem, this);
         }
 
-        if (!AppStore.Instance.overlaySettings.labels?.customText && frame?.wcsInfo) {
-            const symbolX = AST.getString(frame.wcsInfo, "Symbol(1)");
-            const symbolY = AST.getString(frame.wcsInfo, "Symbol(2)");
-            const labelX = AST.getString(frame.wcsInfo, "Label(1)");
-            const labelY = AST.getString(frame.wcsInfo, "Label(2)");
-            const haveUnitX = AST.getString(frame.wcsInfo, "Unit(1)") !== "";
-            const haveUnitY = AST.getString(frame.wcsInfo, "Unit(2)") !== "";
+        const labelFrameSet = frame?.isOffsetCoord ? (frame?.wcsInfoOffset ?? frame?.wcsInfo) : frame?.wcsInfo;
+        if (!AppStore.Instance.overlaySettings.labels?.customText && labelFrameSet) {
+            const symbolX = AST.getString(labelFrameSet, "Symbol(1)");
+            const symbolY = AST.getString(labelFrameSet, "Symbol(2)");
+            const labelX = AST.getString(labelFrameSet, "Label(1)");
+            const labelY = AST.getString(labelFrameSet, "Label(2)");
+            const haveUnitX = AST.getString(labelFrameSet, "Unit(1)") !== "";
+            const haveUnitY = AST.getString(labelFrameSet, "Unit(2)") !== "";
 
             const isSysPixel = (this.explicitSystem === undefined && !(frame?.isPVImage || frame?.isSwappedZ)) || this.explicitSystem === SystemType.Image;
             const getSystemName = (symbolXY: string, isSysPixel: boolean, haveUnit: boolean, explicitSystem: SystemType) => {

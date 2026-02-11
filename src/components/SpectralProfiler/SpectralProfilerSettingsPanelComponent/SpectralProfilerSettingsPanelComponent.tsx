@@ -47,7 +47,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         };
     }
 
-    @computed get widgetStore(): SpectralProfileWidgetStore {
+    @computed get widgetStore(): SpectralProfileWidgetStore | null {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.spectralProfileWidgets) {
             const widgetStore = widgetsStore.spectralProfileWidgets.get(this.props.id);
@@ -69,14 +69,17 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                     const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Z Profile Settings: ${regionString} ${selectedString}`);
+                    const id = this.props.floatingSettingsId;
+                    if (id) {
+                        appStore.widgetsStore.setWidgetTitle(id, `Z Profile Settings: ${regionString} ${selectedString}`);
+                    }
                 }
             }
         });
     }
 
     handleMeanRmsChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.widgetStore.setMeanRmsVisible(changeEvent.target.checked);
+        this.widgetStore?.setMeanRmsVisible(changeEvent.target.checked);
     };
 
     handleXMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
@@ -86,10 +89,10 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
-        const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
+        const minX = parseNumber(widgetStore?.minX ?? 0, widgetStore?.linePlotInitXYBoundaries.minXVal ?? 0);
+        const maxX = parseNumber(widgetStore?.maxX ?? 0, widgetStore?.linePlotInitXYBoundaries.maxXVal ?? 0);
         if (isFinite(val) && val !== minX && val < maxX) {
-            widgetStore.setXBounds(val, maxX);
+            widgetStore?.setXBounds(val, maxX);
         } else {
             ev.currentTarget.value = minX.toString();
         }
@@ -102,10 +105,10 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
-        const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
+        const minX = parseNumber(widgetStore?.minX ?? 0, widgetStore?.linePlotInitXYBoundaries.minXVal ?? 0);
+        const maxX = parseNumber(widgetStore?.maxX ?? 0, widgetStore?.linePlotInitXYBoundaries.maxXVal ?? 0);
         if (isFinite(val) && val !== maxX && val > minX) {
-            widgetStore.setXBounds(minX, val);
+            widgetStore?.setXBounds(minX, val);
         } else {
             ev.currentTarget.value = maxX.toString();
         }
@@ -118,10 +121,10 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minY = parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
-        const maxY = parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
+        const minY = parseNumber(widgetStore?.minY ?? 0, widgetStore?.linePlotInitXYBoundaries.minYVal ?? 0);
+        const maxY = parseNumber(widgetStore?.maxY ?? 0, widgetStore?.linePlotInitXYBoundaries.maxYVal ?? 0);
         if (isFinite(val) && val !== minY && val < maxY) {
-            widgetStore.setYBounds(val, maxY);
+            widgetStore?.setYBounds(val, maxY);
         } else {
             ev.currentTarget.value = minY.toString();
         }
@@ -134,21 +137,25 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minY = parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
-        const maxY = parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
+        const minY = parseNumber(widgetStore?.minY ?? 0, widgetStore?.linePlotInitXYBoundaries.minYVal ?? 0);
+        const maxY = parseNumber(widgetStore?.maxY ?? 0, widgetStore?.linePlotInitXYBoundaries.maxYVal ?? 0);
         if (isFinite(val) && val !== maxY && val > minY) {
-            widgetStore.setYBounds(minY, val);
+            widgetStore?.setYBounds(minY, val);
         } else {
             ev.currentTarget.value = maxY.toString();
         }
     };
 
     handleSelectedTabChanged = (newTabId: React.ReactText) => {
-        this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
+        this.widgetStore?.setSettingsTabId(Number.parseInt(newTabId.toString()));
     };
 
     render() {
         const widgetStore = this.widgetStore;
+        if (!widgetStore) {
+            return null;
+        }
+
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
             lineColorMap: widgetStore.lineColorMap,
             lineOrderedKeys: widgetStore.profileSelectionStore.profileOrderedKeys,
@@ -165,13 +172,13 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             isAutoScaledX: widgetStore.isAutoScaledX,
             isAutoScaledY: widgetStore.isAutoScaledY,
             clearXYBounds: widgetStore.clearXYBounds,
-            xMinVal: parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal),
+            xMinVal: parseNumber(widgetStore.minX ?? 0, widgetStore.linePlotInitXYBoundaries.minXVal ?? 0),
             handleXMinChange: this.handleXMinChange,
-            xMaxVal: parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal),
+            xMaxVal: parseNumber(widgetStore.maxX ?? 0, widgetStore.linePlotInitXYBoundaries.maxXVal ?? 0),
             handleXMaxChange: this.handleXMaxChange,
-            yMinVal: parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal),
+            yMinVal: parseNumber(widgetStore.minY ?? 0, widgetStore.linePlotInitXYBoundaries.minYVal ?? 0),
             handleYMinChange: this.handleYMinChange,
-            yMaxVal: parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal),
+            yMaxVal: parseNumber(widgetStore.maxY ?? 0, widgetStore.linePlotInitXYBoundaries.maxYVal ?? 0),
             handleYMaxChange: this.handleYMaxChange
         };
 
@@ -186,19 +193,21 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                             title="Conversion"
                             panel={
                                 <React.Fragment>
-                                    <SpectralSettingsComponent
-                                        frame={widgetStore.effectiveFrame}
-                                        onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
-                                        onSpectralCoordinateChangeSecondary={widgetStore.setSpectralCoordinateSecondary}
-                                        onSpectralSystemChange={widgetStore.setSpectralSystem}
-                                        secondaryAxisCursorInfoVisible={widgetStore.secondaryAxisCursorInfoVisible}
-                                        disable={widgetStore.effectiveFrame?.isPVImage || !widgetStore.effectiveFrame?.isSpectralChannel}
-                                    />
+                                    {widgetStore.effectiveFrame && (
+                                        <SpectralSettingsComponent
+                                            frame={widgetStore.effectiveFrame}
+                                            onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
+                                            onSpectralCoordinateChangeSecondary={widgetStore.setSpectralCoordinateSecondary}
+                                            onSpectralSystemChange={widgetStore.setSpectralSystem}
+                                            secondaryAxisCursorInfoVisible={widgetStore.secondaryAxisCursorInfoVisible}
+                                            disable={widgetStore.effectiveFrame?.isPVImage || !widgetStore.effectiveFrame?.isSpectralChannel}
+                                        />
+                                    )}
                                     <FormGroup label={"Intensity unit"} inline={true}>
                                         <HTMLSelect
                                             value={isMultiProfileActive ? widgetStore.intensityUnit : widgetStore.effectiveFrame?.intensityUnit}
-                                            options={widgetStore.isIntensityConvertible ? widgetStore.intensityOptions : [widgetStore.effectiveFrame?.headerUnit]}
-                                            onChange={ev => (isMultiProfileActive ? widgetStore.setMultiProfileIntensityUnit(ev.currentTarget.value) : widgetStore.effectiveFrame.setIntensityUnit(ev.currentTarget.value))}
+                                            options={widgetStore.isIntensityConvertible ? widgetStore.intensityOptions : widgetStore.effectiveFrame?.headerUnit ? [widgetStore.effectiveFrame.headerUnit] : []}
+                                            onChange={ev => (isMultiProfileActive ? widgetStore.setMultiProfileIntensityUnit(ev.currentTarget.value) : widgetStore.effectiveFrame?.setIntensityUnit(ev.currentTarget.value))}
                                             data-testid="spectral-profiler-settings-intensity-unit-dropdown"
                                         />
                                     </FormGroup>

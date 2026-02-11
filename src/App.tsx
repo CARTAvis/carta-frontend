@@ -94,7 +94,7 @@ export class App extends React.Component {
                 <UIControllerComponent />
                 {alertComponent}
                 <TaskProgressDialogComponent
-                    progress={undefined}
+                    progress={0}
                     timeRemaining={0}
                     isOpen={appStore.resumingSession || appStore.loadingWorkspace}
                     cancellable={false}

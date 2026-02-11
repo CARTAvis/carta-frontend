@@ -49,7 +49,7 @@ export class VectorOverlayDialogComponent extends React.Component {
      */
     public static readonly MAX_PIXEL_AVERAGING = 64;
 
-    private cachedFrame: FrameStore;
+    private cachedFrame: FrameStore | null = null;
 
     componentDidUpdate() {
         const appStore = AppStore.Instance;
@@ -196,29 +196,51 @@ export class VectorOverlayDialogComponent extends React.Component {
         }
 
         const config = frame.vectorOverlayConfig;
-        const intensityMin = isFinite(config.intensityMin) ? config.intensityMin : frame.vectorOverlayStore.intensityMin;
-        const intensityMax = isFinite(config.intensityMax) ? config.intensityMax : frame.vectorOverlayStore.intensityMax;
+        const intensityMin = config.intensityMin !== undefined && isFinite(config.intensityMin) ? config.intensityMin : frame.vectorOverlayStore.intensityMin;
+        const intensityMax = config.intensityMax !== undefined && isFinite(config.intensityMax) ? config.intensityMax : frame.vectorOverlayStore.intensityMax;
 
         return (
             <FormGroup label="Intensity" labelInfo={config.fractionalIntensity ? "(%)" : frame.headerUnit ? `(${frame.headerUnit})` : ""} inline={true}>
                 <div className="parameter-container">
                     <div className="parameter-line parameter-intensity">
-                        <ClearableNumericInputComponent
-                            label="Min"
-                            value={intensityMin}
-                            placeholder="Automatic"
-                            onValueChanged={val => config.setIntensityRange(val, config.intensityMax)}
-                            onValueCleared={() => config.setIntensityRange(undefined, config.intensityMax)}
-                            displayExponential={true}
-                        />
-                        <ClearableNumericInputComponent
-                            label="Max"
-                            value={intensityMax}
-                            placeholder="Automatic"
-                            onValueChanged={val => config.setIntensityRange(config.intensityMin, val)}
-                            onValueCleared={() => config.setIntensityRange(config.intensityMin, undefined)}
-                            displayExponential={true}
-                        />
+                        {intensityMin !== undefined ? (
+                            <ClearableNumericInputComponent
+                                label="Min"
+                                value={intensityMin}
+                                placeholder="Automatic"
+                                onValueChanged={val => config.setIntensityRange(val, config.intensityMax)}
+                                onValueCleared={() => config.setIntensityRange(undefined, config.intensityMax)}
+                                displayExponential={true}
+                            />
+                        ) : (
+                            <ClearableNumericInputComponent
+                                label="Min"
+                                value={0}
+                                placeholder="Automatic"
+                                onValueChanged={val => config.setIntensityRange(val, config.intensityMax)}
+                                onValueCleared={() => config.setIntensityRange(undefined, config.intensityMax)}
+                                displayExponential={true}
+                            />
+                        )}
+                        {intensityMax !== undefined ? (
+                            <ClearableNumericInputComponent
+                                label="Max"
+                                value={intensityMax}
+                                placeholder="Automatic"
+                                onValueChanged={val => config.setIntensityRange(config.intensityMin, val)}
+                                onValueCleared={() => config.setIntensityRange(config.intensityMin, undefined)}
+                                displayExponential={true}
+                            />
+                        ) : (
+                            <ClearableNumericInputComponent
+                                label="Max"
+                                value={1}
+                                placeholder="Automatic"
+                                onValueChanged={val => config.setIntensityRange(config.intensityMin, val)}
+                                onValueCleared={() => config.setIntensityRange(config.intensityMin, undefined)}
+                                displayExponential={true}
+                            />
+                        )}
                     </div>
                 </div>
             </FormGroup>
@@ -260,7 +282,7 @@ export class VectorOverlayDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Vector),
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Vector) ?? false,
             className: "vector-overlay-dialog",
             canEscapeKeyClose: true,
             title: "Vector Overlay Configuration"
