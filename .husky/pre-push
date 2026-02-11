@@ -1,0 +1,35 @@
+#!/usr/bin/env sh
+
+set -e
+
+zero_hash="0000000000000000000000000000000000000000"
+docs_changed=0
+
+echo "[pre-push] Running root checks..."
+npm run check-eslint
+npm run checkformat
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+    [ -z "$local_sha" ] && continue
+    [ "$local_sha" = "$zero_hash" ] && continue
+
+    if [ "$remote_sha" = "$zero_hash" ]; then
+        commits="$(git rev-list "$local_sha" --not --remotes)"
+    else
+        commits="$(git rev-list "$remote_sha..$local_sha")"
+    fi
+
+    [ -z "$commits" ] && continue
+
+    if git diff-tree --no-commit-id --name-only -r $commits | grep -q '^docs_website/'; then
+        docs_changed=1
+        break
+    fi
+done
+
+if [ "$docs_changed" -eq 1 ]; then
+    echo "[pre-push] docs_website changes detected. Running docs checkformat..."
+    npm --prefix docs_website run checkformat
+else
+    echo "[pre-push] No docs_website changes detected. Skipping docs checkformat."
+fi

@@ -38,10 +38,12 @@
         "glob-to-regexp": "^0.4.1",
         "golden-layout": "^1.5.9",
         "html2canvas": "^1.4.1",
+        "husky": "^9.1.7",
         "idb": "^8.0.0",
         "jest-canvas-mock": "^2.5.2",
         "jwt-decode": "^4.0.0",
         "konva": "^9.3.16",
+        "lint-staged": "^16.2.7",
         "lodash": "^4.17.15",
         "mnemonist": "^0.39.8",
         "mobx": "^6.13.1",
@@ -87,6 +89,7 @@
         "git-info": "./git-info.sh",
         "analyze": "source-map-explorer build/static/js/main.*",
         "postinstall": "patch-package",
+        "prepare": "husky",
         "start": "npm run git-info; npm run strict-null-checks && react-scripts start",
         "build": "npm run git-info; npm-run-all build-wrappers build-protobuf link-schemas build-ts",
         "build-docker": "npm run git-info; npm-run-all build-wrappers-docker build-protobuf link-schemas build-ts",
@@ -108,6 +111,18 @@
         "fix-eslint": "eslint --fix ./src",
         "check-eslint": "eslint ./src",
         "strict-null-checks": "npx tsc-silent -p tsconfig.strictNullChecks.json --suppressConfig tsc-silent.config.js"
+    },
+    "lint-staged": {
+        "src/**/*.{js,jsx,ts,tsx}": [
+            "prettier --write --ignore-unknown",
+            "eslint --fix --max-warnings=0"
+        ],
+        "src/**/*.{scss,css,json,md,mdx,yml,yaml}": [
+            "prettier --write --ignore-unknown"
+        ],
+        "docs_website/**/*.{js,jsx,ts,tsx,md,mdx,json,css,scss,yml,yaml}": [
+            "prettier --write --ignore-unknown"
+        ]
     },
     "eslintConfig": {
         "extends": "react-app",

@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+
+set -e
+
+echo "[pre-commit] Running lint-staged..."
+npx lint-staged
