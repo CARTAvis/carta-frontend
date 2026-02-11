@@ -5,8 +5,8 @@ const {version} = require("../../../package.json");
 
 const isDev = version.includes("-dev") || version.includes("-beta");
 const majorMinorVersionMatch = `${version}`.match(/^(\d+)\.(\d+)/);
-const majorMinorVersion = majorMinorVersionMatch ? `${majorMinorVersionMatch[1]}.${majorMinorVersionMatch[2]}` : "latest";
-const docsVersion = isDev ? "latest" : majorMinorVersion;
+const majorMinorVersion = majorMinorVersionMatch ? `${majorMinorVersionMatch[1]}.${majorMinorVersionMatch[2]}` : "dev";
+const docsVersion = isDev ? "dev" : majorMinorVersion;
 
 const build_date = preval`module.exports = new Date()`;
 const date = moment(build_date).format("D MMM YYYY");
