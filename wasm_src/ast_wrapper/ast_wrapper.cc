@@ -15,7 +15,7 @@ EMSCRIPTEN_KEEPALIVE void clearLastErrorMessage() {
     strncpy(lastErrorMessage, "", sizeof(lastErrorMessage));
 }
 
-void astPutErr_(int status_value, const char* message)
+void astPutErr_(int statusValue, const char* message)
 {
 	int* status = astGetStatusPtr;
 	(void) fprintf(stderr, "%s%s\n", astOK ? "!! " : "!  ", message);
@@ -35,15 +35,15 @@ EMSCRIPTEN_KEEPALIVE AstFitsChan* emptyFitsChan()
     return astFitsChan(nullptr, nullptr, "");
 }
 
-EMSCRIPTEN_KEEPALIVE void putFits(AstFitsChan* fitschan, const char* card)
+EMSCRIPTEN_KEEPALIVE void putFits(AstFitsChan* fitsChan, const char* card)
 {
-    astPutFits(fitschan, card, true);
+    astPutFits(fitsChan, card, true);
 }
 
-EMSCRIPTEN_KEEPALIVE AstFrameSet* getFrameFromFitsChan(AstFitsChan* fitschan, bool checkSkyDomain)
+EMSCRIPTEN_KEEPALIVE AstFrameSet* getFrameFromFitsChan(AstFitsChan* fitsChan, bool checkSkyDomain)
 {
-    astClear(fitschan, "Card");
-    AstFrameSet* frameSet = static_cast<AstFrameSet*>(astRead(fitschan));
+    astClear(fitsChan, "Card");
+    AstFrameSet* frameSet = static_cast<AstFrameSet*>(astRead(fitsChan));
     if (!frameSet || !astIsAFrameSet(frameSet))
     {
         cout << "Creating frame set failed." << endl;
@@ -87,14 +87,14 @@ EMSCRIPTEN_KEEPALIVE AstSpecFrame* getSpectralFrame(AstFrameSet* frameSet)
         cout << "Spectral frame not found." << endl;
         return nullptr;
     }
-    AstSpecFrame *specframe = static_cast<AstSpecFrame*>astGetFrame(found, AST__CURRENT);
-    if (!specframe)
+    AstSpecFrame *specFrame = static_cast<AstSpecFrame*>astGetFrame(found, AST__CURRENT);
+    if (!specFrame)
     {
         cout << "Getting spectral frame failed." << endl;
         return nullptr;
     }
 
-    return static_cast<AstSpecFrame*> astCopy(specframe);
+    return static_cast<AstSpecFrame*> astCopy(specFrame);
 }
 
 EMSCRIPTEN_KEEPALIVE AstFrameSet* getSkyFrameSet(AstFrameSet* frameSet)
@@ -106,8 +106,8 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* getSkyFrameSet(AstFrameSet* frameSet)
     }
 
     // Create 2D base frame
-    AstFrame *baseframe = astFrame(2, "Title=Pixel Coordinates,Domain=GRID,Label(1)=X coordinate,Label(2)=Y coordinate");
-    if (!baseframe)
+    AstFrame *baseFrame = astFrame(2, "Title=Pixel Coordinates,Domain=GRID,Label(1)=X coordinate,Label(2)=Y coordinate");
+    if (!baseFrame)
     {
         cout << "Create 2D base frame failed." << endl;
         return nullptr;
@@ -126,8 +126,8 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* getSkyFrameSet(AstFrameSet* frameSet)
         cout << "Sky frame not found." << endl;
         return nullptr;
     }
-    AstSkyFrame *skyframe = static_cast<AstSkyFrame*>astGetFrame(found, AST__CURRENT);
-    if (!skyframe)
+    AstSkyFrame *skyFrame = static_cast<AstSkyFrame*>astGetFrame(found, AST__CURRENT);
+    if (!skyFrame)
     {
         cout << "Getting sky frame failed." << endl;
         return nullptr;
@@ -145,15 +145,15 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* getSkyFrameSet(AstFrameSet* frameSet)
     }
 
     // Create frame set with base frame, sky frame, 2D mapping
-    AstFrameSet *skyframeSet = astFrameSet(baseframe, "");
-    if (!skyframeSet)
+    AstFrameSet *skyFrameSet = astFrameSet(baseFrame, "");
+    if (!skyFrameSet)
     {
         cout << "Creating sky frame set failed." << endl;
         return nullptr;
     }
-    astAddFrame(skyframeSet, AST__CURRENT, astSimplify(map2D), skyframe);
+    astAddFrame(skyFrameSet, AST__CURRENT, astSimplify(map2D), skyFrame);
 
-    return skyframeSet;
+    return skyFrameSet;
 }
 
 EMSCRIPTEN_KEEPALIVE AstCmpMap* getSpatialMapping(AstFrameSet* src, AstFrameSet* dest) {
@@ -169,7 +169,7 @@ EMSCRIPTEN_KEEPALIVE AstCmpMap* getSpatialMapping(AstFrameSet* src, AstFrameSet*
     return spatialMapping;
 }
 
-EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo, double offsetX, double offsetY, double angle, double originX, double originY, double scaleX, double scaleY)
+EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsInfo, double offsetX, double offsetY, double angle, double originX, double originY, double scaleX, double scaleY)
 {
     // 2D scale and rotation matrix
     double sinTheta = sin(angle);
@@ -182,10 +182,10 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo
         return nullptr;
     }
 
-    AstFrame* pixFrame = static_cast<AstFrame*> astGetFrame(wcsinfo, AST__BASE);
+    AstFrame* pixFrame = static_cast<AstFrame*> astGetFrame(wcsInfo, AST__BASE);
     AstFrame* pixFrameCopy = static_cast<AstFrame*> astCopy(pixFrame);
-    AstFrame* skyFrame = static_cast<AstFrame*> astGetFrame(wcsinfo, AST__CURRENT);
-    AstMapping* pixToSkyMapping = static_cast<AstMapping*> astGetMapping(wcsinfo, AST__BASE, AST__CURRENT);
+    AstFrame* skyFrame = static_cast<AstFrame*> astGetFrame(wcsInfo, AST__CURRENT);
+    AstMapping* pixToSkyMapping = static_cast<AstMapping*> astGetMapping(wcsInfo, AST__BASE, AST__CURRENT);
     AstFrameSet* wcsInfoTransformed = astFrameSet(pixFrame, "");
 
     // 2D shifts
@@ -204,34 +204,34 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo
     return wcsInfoTransformed;
 }
 
-EMSCRIPTEN_KEEPALIVE AstFrameSet* createOffsetFrameset(AstFrameSet* wcsinfo, double offsetX, double offsetY, double pixelOffsetX, double pixelOffsetY)
+EMSCRIPTEN_KEEPALIVE AstFrameSet* createOffsetFrameset(AstFrameSet* wcsInfo, double offsetX, double offsetY, double pixelOffsetX, double pixelOffsetY)
 {
-    AstFrameSet* wcsinfoOffset = static_cast<AstFrameSet*> astCopy(wcsinfo);
-    int currentFrame = astGetI(wcsinfoOffset, "Current");
-    int baseFrame = astGetI(wcsinfoOffset, "Base");
+    AstFrameSet* wcsInfoOffset = static_cast<AstFrameSet*> astCopy(wcsInfo);
+    int currentFrame = astGetI(wcsInfoOffset, "Current");
+    int baseFrame = astGetI(wcsInfoOffset, "Base");
 
     // Use AST's built-in offset coordinate system which properly handles spherical geometry
     // Temporarily switch to the sky frame to ensure SkyRef attributes apply correctly.
-    astSetI(wcsinfoOffset, "Current", 2);
-    astSetD(wcsinfoOffset, "SkyRef(1)", offsetX);
-    astSetD(wcsinfoOffset, "SkyRef(2)", offsetY);
+    astSetI(wcsInfoOffset, "Current", 2);
+    astSetD(wcsInfoOffset, "SkyRef(1)", offsetX);
+    astSetD(wcsInfoOffset, "SkyRef(2)", offsetY);
     // Set SkyRefIs to Origin to use the SkyRef position as the origin of the offset coordinate system
-    astSet(wcsinfoOffset, "SkyRefIs=Origin");
-    astSet(wcsinfoOffset, "Label(1)=Offset coordinate,Label(2)=Offset coordinate");
-    astSetI(wcsinfoOffset, "Current", currentFrame);
+    astSet(wcsInfoOffset, "SkyRefIs=Origin");
+    astSet(wcsInfoOffset, "Label(1)=Offset coordinate,Label(2)=Offset coordinate");
+    astSetI(wcsInfoOffset, "Current", currentFrame);
 
     // 2D pixel offset
     double pixelOffset[] = {-pixelOffsetX, -pixelOffsetY};
     AstShiftMap* pixelShiftMap = astShiftMap(2, pixelOffset, "");
-    astAddFrame(wcsinfoOffset, AST__BASE, pixelShiftMap, astFrame(2, "Label(1)=X offset coordinate,Label(2)=Y offset coordinate,Domain=GRID"));
+    astAddFrame(wcsInfoOffset, AST__BASE, pixelShiftMap, astFrame(2, "Label(1)=X offset coordinate,Label(2)=Y offset coordinate,Domain=GRID"));
 
     // If the current frame was the base (image coordinates), switch to the newly-added offset image frame.
     if (currentFrame == baseFrame) {
-        int offsetFrame = astGetI(wcsinfoOffset, "Nframe");
-        astSetI(wcsinfoOffset, "Current", offsetFrame);
+        int offsetFrame = astGetI(wcsInfoOffset, "Nframe");
+        astSetI(wcsInfoOffset, "Current", offsetFrame);
     }
 
-    return wcsinfoOffset;
+    return wcsInfoOffset;
 }
 
 EMSCRIPTEN_KEEPALIVE AstFrameSet* initDummyFrame()
@@ -242,10 +242,10 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initDummyFrame()
     return frameSet;
 }
 
-EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double imageX2, double imageY1, double imageY2, double width, double height,
+EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsInfo, double imageX1, double imageX2, double imageY1, double imageY2, double width, double height,
                                         double paddingLeft, double paddingRight, double paddingTop, double paddingBottom, const char* args)
 {
-    if (!wcsinfo)
+    if (!wcsInfo)
     {
         return 1;
     }
@@ -267,7 +267,7 @@ EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double i
 
     float gbox[] = {(float)xleft, (float)ybottom, (float)xright, (float)ytop};
     double pbox[] = {imageX1, imageY1, imageX2, imageY2};
-    plot = astPlot(wcsinfo, gbox, pbox, args);
+    plot = astPlot(wcsInfo, gbox, pbox, args);
 
 
     astBBuf(plot);
@@ -283,14 +283,14 @@ EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double i
     return 0;
 }
 
-EMSCRIPTEN_KEEPALIVE const char* format(AstFrameSet* wcsinfo, int axis, double value)
+EMSCRIPTEN_KEEPALIVE const char* format(AstFrameSet* wcsInfo, int axis, double value)
 {
-    if (!wcsinfo)
+    if (!wcsInfo)
     {
         return nullptr;
     }
 
-    const char* formattedVal = astFormat(wcsinfo, axis, value);
+    const char* formattedVal = astFormat(wcsInfo, axis, value);
     if (!astOK)
     {
         astClearStatus;
@@ -299,14 +299,14 @@ EMSCRIPTEN_KEEPALIVE const char* format(AstFrameSet* wcsinfo, int axis, double v
     return formattedVal;
 }
 
-EMSCRIPTEN_KEEPALIVE int unformat(AstFrameSet* wcsinfo, int axis, const char* formattedString, double *value)
+EMSCRIPTEN_KEEPALIVE int unformat(AstFrameSet* wcsInfo, int axis, const char* formattedString, double *value)
 {
-    if (!wcsinfo)
+    if (!wcsInfo)
     {
         return 1;
     }
 
-    astUnformat(wcsinfo, axis, formattedString, value);
+    astUnformat(wcsInfo, axis, formattedString, value);
     if (!astOK)
     {
         astClearStatus;
@@ -315,14 +315,14 @@ EMSCRIPTEN_KEEPALIVE int unformat(AstFrameSet* wcsinfo, int axis, const char* fo
     return 0;
 }
 
-EMSCRIPTEN_KEEPALIVE int set(AstFrameSet* wcsinfo, const char* attrib)
+EMSCRIPTEN_KEEPALIVE int set(AstFrameSet* wcsInfo, const char* attrib)
 {
-    if (!wcsinfo)
+    if (!wcsInfo)
     {
         return 1;
     }
 
-    astSet(wcsinfo, attrib);
+    astSet(wcsInfo, attrib);
     if (!astOK)
     {
         astClearStatus;
@@ -358,41 +358,41 @@ EMSCRIPTEN_KEEPALIVE int clear(AstObject* obj, const char* attrib)
     return 0;
 }
 
-EMSCRIPTEN_KEEPALIVE void dump(AstFrameSet* wcsinfo)
+EMSCRIPTEN_KEEPALIVE void dump(AstFrameSet* wcsInfo)
 {
-    if (wcsinfo)
+    if (wcsInfo)
     {
-        astShow(wcsinfo);
+        astShow(wcsInfo);
     }
 }
 
-EMSCRIPTEN_KEEPALIVE const char* getString(AstFrameSet* wcsinfo, const char* attribute)
+EMSCRIPTEN_KEEPALIVE const char* getString(AstFrameSet* wcsInfo, const char* attribute)
 {
-    if (!wcsinfo || !astHasAttribute(wcsinfo, attribute))
+    if (!wcsInfo || !astHasAttribute(wcsInfo, attribute))
     {
         return nullptr;
     }
-    return astGetC(wcsinfo, attribute);
+    return astGetC(wcsInfo, attribute);
 }
 
-EMSCRIPTEN_KEEPALIVE int norm(AstFrameSet* wcsinfo, double inout[])
+EMSCRIPTEN_KEEPALIVE int norm(AstFrameSet* wcsInfo, double inout[])
 {
-    if (!wcsinfo)
+    if (!wcsInfo)
     {
         return 1;
     }
-    astNorm(wcsinfo, inout);
+    astNorm(wcsInfo, inout);
     return 0;
 }
 
-EMSCRIPTEN_KEEPALIVE int transform(AstFrameSet* wcsinfo, int npoint, const double xin[], const double yin[], int forward, double xout[], double yout[])
+EMSCRIPTEN_KEEPALIVE int transform(AstFrameSet* wcsInfo, int npoint, const double xin[], const double yin[], int forward, double xout[], double yout[])
 {
-    if (!wcsinfo)
+    if (!wcsInfo)
     {
         return 1;
     }
 
-    astTran2(wcsinfo, npoint, xin, yin, forward, xout, yout);
+    astTran2(wcsInfo, npoint, xin, yin, forward, xout, yout);
     if (!astOK)
     {
         astClearStatus;
@@ -402,18 +402,18 @@ EMSCRIPTEN_KEEPALIVE int transform(AstFrameSet* wcsinfo, int npoint, const doubl
 }
 
 //xin and yin needs to be transformed
-EMSCRIPTEN_KEEPALIVE int pointList(AstFrameSet* wcsinfo, int npoint, double xin[], double yin[], double out[])
+EMSCRIPTEN_KEEPALIVE int pointList(AstFrameSet* wcsInfo, int npoint, double xin[], double yin[], double out[])
 {
-    if (!wcsinfo)
+    if (!wcsInfo)
     {
-        cout << "not wcsinfo" << endl;
+        cout << "not wcsInfo" << endl;
         return 1;
     }
 
     double start[] = {xin[0], yin[0]};
     double finish[] = {xin[1], yin[1]};
 
-    double dist = astDistance(wcsinfo, start, finish);
+    double dist = astDistance(wcsInfo, start, finish);
     double discreteDist = dist/npoint;
     double output[2];
 
@@ -424,12 +424,12 @@ EMSCRIPTEN_KEEPALIVE int pointList(AstFrameSet* wcsinfo, int npoint, double xin[
     
     for(int i = 0; i < npoint; i++) {
         double distance = discreteDist * i;
-        astOffset(wcsinfo, start, finish, distance, output);
+        astOffset(wcsInfo, start, finish, distance, output);
         xout[i] = output[0];
         yout[i] = output[1];
     }
 
-    astTran2(wcsinfo, npoint, xout, yout, 0, xOut, yOut);
+    astTran2(wcsInfo, npoint, xout, yout, 0, xOut, yOut);
 
     for(int i = 0; i < npoint; i++) {
          out[i * 2] = xOut[i];
@@ -450,11 +450,11 @@ EMSCRIPTEN_KEEPALIVE int pointList(AstFrameSet* wcsinfo, int npoint, double xin[
 }
 
 //point list along the direction of axis
-EMSCRIPTEN_KEEPALIVE int axPointList(AstFrameSet* wcsinfo, int npoint, int axis, double x, double y, double dist, double out[])
+EMSCRIPTEN_KEEPALIVE int axPointList(AstFrameSet* wcsInfo, int npoint, int axis, double x, double y, double dist, double out[])
 {
-    if (!wcsinfo)
+    if (!wcsInfo)
     {
-        cout << "not wcsinfo" << endl;
+        cout << "not wcsInfo" << endl;
         return 1;
     }
 
@@ -470,17 +470,17 @@ EMSCRIPTEN_KEEPALIVE int axPointList(AstFrameSet* wcsinfo, int npoint, int axis,
         double distance = discreteDist * i;
 
         if(axis == 1) {
-            output = astAxOffset(wcsinfo, axis, x, distance);
+            output = astAxOffset(wcsInfo, axis, x, distance);
             xout[i] = output;
             yout[i] = y;
         } else if (axis == 2) {
-            output = astAxOffset(wcsinfo, axis, y, distance);
+            output = astAxOffset(wcsInfo, axis, y, distance);
             xout[i] = x;
             yout[i] = output;
         }
     }
 
-    astTran2(wcsinfo, npoint, xout, yout, 0, xOut, yOut);
+    astTran2(wcsInfo, npoint, xout, yout, 0, xOut, yOut);
 
     for(int i = 0; i < npoint; i++) {
          out[i * 2] = xOut[i];
@@ -500,15 +500,15 @@ EMSCRIPTEN_KEEPALIVE int axPointList(AstFrameSet* wcsinfo, int npoint, int axis,
     return 0;
 }
 
-EMSCRIPTEN_KEEPALIVE int transform3D(AstSpecFrame* wcsinfo, double x, double y, double z, const int forward, double* out)
+EMSCRIPTEN_KEEPALIVE int transform3D(AstSpecFrame* wcsInfo, double x, double y, double z, const int forward, double* out)
 {
-    if (!wcsinfo)
+    if (!wcsInfo)
     {
         return 1;
     }
 
     double in[] = {x, y, z};
-    astTranN(wcsinfo, 1, 3, 1, in, forward, 3, 1, out);
+    astTranN(wcsInfo, 1, 3, 1, in, forward, 3, 1, out);
     if (!astOK)
     {
         astClearStatus;
@@ -517,14 +517,14 @@ EMSCRIPTEN_KEEPALIVE int transform3D(AstSpecFrame* wcsinfo, double x, double y, 
     return 0;
 }
 
-EMSCRIPTEN_KEEPALIVE int transform3DArray(AstFrameSet* wcsinfo, int npoint, double in[], const int forward, double out[])
+EMSCRIPTEN_KEEPALIVE int transform3DArray(AstFrameSet* wcsInfo, int npoint, double in[], const int forward, double out[])
 {
-    if (!wcsinfo)
+    if (!wcsInfo)
     {
         return 1;
     }
 
-    astTranN(wcsinfo, npoint, 3, npoint, in, forward, 3, npoint, out);  
+    astTranN(wcsInfo, npoint, 3, npoint, in, forward, 3, npoint, out);  
     if (!astOK)
     {
         astClearStatus;
@@ -588,9 +588,9 @@ EMSCRIPTEN_KEEPALIVE void invert(AstFrameSet* src)
     astInvert(src);
 }
 
-EMSCRIPTEN_KEEPALIVE AstFrameSet* convert(AstFrameSet* from, AstFrameSet* to, const char* domainlist)
+EMSCRIPTEN_KEEPALIVE AstFrameSet* convert(AstFrameSet* from, AstFrameSet* to, const char* domainList)
 {
-    return static_cast<AstFrameSet*> astConvert(from, to, domainlist);
+    return static_cast<AstFrameSet*> astConvert(from, to, domainList);
 }
 
 EMSCRIPTEN_KEEPALIVE AstShiftMap* shiftMap2D(double x, double y)
@@ -599,32 +599,32 @@ EMSCRIPTEN_KEEPALIVE AstShiftMap* shiftMap2D(double x, double y)
     return astShiftMap(2, coords, "");
 }
 
-EMSCRIPTEN_KEEPALIVE double axDistance(AstFrameSet* wcsinfo, int axis, double v1, double v2)
+EMSCRIPTEN_KEEPALIVE double axDistance(AstFrameSet* wcsInfo, int axis, double v1, double v2)
 {
-    return astAxDistance(wcsinfo, axis, v1, v2);
+    return astAxDistance(wcsInfo, axis, v1, v2);
 }
 
-EMSCRIPTEN_KEEPALIVE double geodesicDistance(AstFrameSet* wcsinfo, double x1, double y1, double x2, double y2)
+EMSCRIPTEN_KEEPALIVE double geodesicDistance(AstFrameSet* wcsInfo, double x1, double y1, double x2, double y2)
 {
     const double x[] = {x1, x2};
     const double y[] = {y1, y2};
     double xtran[2];
     double ytran[2];
-    astTran2(wcsinfo, 2, x, y, 1, xtran, ytran);
+    astTran2(wcsInfo, 2, x, y, 1, xtran, ytran);
 
     double start[] = {xtran[0], ytran[0]};
     double finish[] = {xtran[1], ytran[1]};
-    return astDistance(wcsinfo, start, finish) * 180.0 / M_PI * 3600.0;
+    return astDistance(wcsInfo, start, finish) * 180.0 / M_PI * 3600.0;
 }
 
-EMSCRIPTEN_KEEPALIVE AstFrame* frame(int naxes, const char* options)
+EMSCRIPTEN_KEEPALIVE AstFrame* frame(int numAxes, const char* options)
 {
-    return astFrame(naxes, options);
+    return astFrame(numAxes, options);
 }
 
-EMSCRIPTEN_KEEPALIVE void addFrame(AstFrameSet* frameSet, int iframe, AstMapping* map, AstFrame* frame)
+EMSCRIPTEN_KEEPALIVE void addFrame(AstFrameSet* frameSet, int index, AstMapping* map, AstFrame* frame)
 {
-    astAddFrame(frameSet, iframe, map, frame);
+    astAddFrame(frameSet, index, map, frame);
 }
 
 EMSCRIPTEN_KEEPALIVE AstMatrixMap* scaleMap2D(double sx, double sy)
