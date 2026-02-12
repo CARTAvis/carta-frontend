@@ -55,6 +55,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private initialPinchZoom: number;
     private initialPinchDistance: number;
     private layerRef = React.createRef<any>();
+    private disposers: Array<() => void> = [];
 
     constructor(props: any) {
         super(props);
@@ -65,34 +66,38 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         this.stageResizeOffset = {x: 0, y: 0};
 
         // Sync stage when matched, tracking frame's spatialReference only.
-        reaction(
-            () => this.frame?.spatialReference,
-            spatialReference => {
-                if (spatialReference) {
-                    this.syncStage(spatialReference.centerMovement, spatialReference.zoomLevel);
+        this.disposers.push(
+            reaction(
+                () => this.frame?.spatialReference,
+                spatialReference => {
+                    if (spatialReference) {
+                        this.syncStage(spatialReference.centerMovement, spatialReference.zoomLevel);
+                    }
                 }
-            }
+            )
         );
 
-        reaction(
-            () => {
-                const frame = this.frame;
-                if (frame) {
-                    if (frame.spatialReference) {
-                        // Update stage when spatial reference move/zoom(frame is sibling),
-                        // tracking spatial reference's centerMovement/zoomLevel to move/zoom stage.
-                        return {centerMovement: frame.spatialReference.centerMovement, zoom: frame.spatialReference.zoomLevel};
+        this.disposers.push(
+            reaction(
+                () => {
+                    const frame = this.frame;
+                    if (frame) {
+                        if (frame.spatialReference) {
+                            // Update stage when spatial reference move/zoom(frame is sibling),
+                            // tracking spatial reference's centerMovement/zoomLevel to move/zoom stage.
+                            return {centerMovement: frame.spatialReference.centerMovement, zoom: frame.spatialReference.zoomLevel};
+                        }
+                        return {centerMovement: frame.centerMovement, zoom: frame.zoomLevel};
                     }
-                    return {centerMovement: frame.centerMovement, zoom: frame.zoomLevel};
+                    return undefined;
+                },
+                (reference, prevReference) => {
+                    const frame = this.frame;
+                    if (reference && (reference.centerMovement.x !== prevReference?.centerMovement?.x || reference.centerMovement.y !== prevReference?.centerMovement?.y || reference.zoom !== prevReference?.zoom) && frame) {
+                        this.syncStage(reference.centerMovement, reference.zoom);
+                    }
                 }
-                return undefined;
-            },
-            (reference, prevReference) => {
-                const frame = this.frame;
-                if (reference && (reference.centerMovement.x !== prevReference?.centerMovement?.x || reference.centerMovement.y !== prevReference?.centerMovement?.y || reference.zoom !== prevReference?.zoom) && frame) {
-                    this.syncStage(reference.centerMovement, reference.zoom);
-                }
-            }
+            )
         );
     }
 
@@ -126,6 +131,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 }
             }
         }
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(dispose => dispose());
     }
 
     updateCursorPos = _.throttle((x: number, y: number) => {
