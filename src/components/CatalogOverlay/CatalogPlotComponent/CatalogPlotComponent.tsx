@@ -40,7 +40,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             id: "catalog-plot",
             type: "catalog-plot",
             minWidth: 320,
-            minHeight: 200,
+            minHeight: 400,
             defaultWidth: 680,
             defaultHeight: 400,
             title: "Catalog Plot",

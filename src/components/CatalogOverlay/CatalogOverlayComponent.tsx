@@ -21,7 +21,7 @@ import "./CatalogOverlayComponent.scss";
 @observer
 export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @observable private catalogTableRef: Table2 | undefined = undefined;
-    @observable private height: number = 400;
+    @observable private height: number = 600;
     @observable private width: number = 720;
 
     @observable private isShowHeader: boolean = true;
