@@ -253,7 +253,7 @@ export class ContourDialogComponent extends React.Component {
         appStore.contourDataSource.clearContours();
     };
 
-    private handleGraphClicked = (x: number) => {
+    @action private handleGraphClicked = (x: number) => {
         this.levels.push(x);
         this.levels.sort((a, b) => a - b);
     };
@@ -478,7 +478,7 @@ export class ContourDialogComponent extends React.Component {
         const configPanel = (
             <div className="contour-config-panel">
                 <FormGroup inline={true} label="Smoothing mode">
-                    <HTMLSelect value={this.smoothingMode} onChange={ev => (this.smoothingMode = Number(ev.currentTarget.value))}>
+                    <HTMLSelect value={this.smoothingMode} onChange={ev => runInAction(() => (this.smoothingMode = Number(ev.currentTarget.value)))}>
                         <option key={CARTA.SmoothingMode.NoSmoothing} value={CARTA.SmoothingMode.NoSmoothing}>
                             No smoothing
                         </option>

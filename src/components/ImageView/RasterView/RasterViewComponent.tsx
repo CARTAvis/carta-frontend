@@ -1,6 +1,6 @@
 import * as React from "react";
 import classNames from "classnames";
-import {makeObservable, observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Subscription} from "rxjs";
 import tinycolor from "tinycolor2";
@@ -65,7 +65,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         });
     }
 
-    componentDidUpdate(prevProps: RasterViewComponentProps) {
+    @action componentDidUpdate(prevProps: RasterViewComponentProps) {
         // Update observable properties when props change
         if (prevProps.channel !== this.props.channel) {
             this.channels = this.props.channel;
