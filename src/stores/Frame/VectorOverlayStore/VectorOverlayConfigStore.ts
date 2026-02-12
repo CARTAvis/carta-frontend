@@ -14,7 +14,6 @@ export class VectorOverlayConfigStore {
     @observable angularSource: VectorOverlaySource = VectorOverlaySource.Current;
     @observable intensitySource: VectorOverlaySource = VectorOverlaySource.Current;
     @observable fractionalIntensity: boolean = false;
-    @observable pixelAveragingEnabled: boolean = false;
     @observable pixelAveraging: number = 0;
     @observable thresholdEnabled: boolean = false;
     @observable threshold: number = 0;
@@ -47,7 +46,6 @@ export class VectorOverlayConfigStore {
         this.intensitySource = frame.hasLinearStokes ? VectorOverlaySource.Computed : VectorOverlaySource.Current;
         this.fractionalIntensity = this.preferenceStore.vectorOverlayFractionalIntensity;
         this.pixelAveraging = this.preferenceStore.vectorOverlayPixelAveraging;
-        this.pixelAveragingEnabled = this.preferenceStore.vectorOverlayPixelAveraging > 0;
         this.thresholdOption = frame.hasLinearStokes ? CARTA.PolarizationType.Plinear : CARTA.PolarizationType.I;
 
         this.color = tinycolor(this.preferenceStore.vectorOverlayColor).toRgb();
@@ -72,7 +70,6 @@ export class VectorOverlayConfigStore {
     @action setVectorOverlayConfiguration = (
         angularSource: VectorOverlaySource,
         intensitySource: VectorOverlaySource,
-        pixelAveragingEnabled: boolean,
         pixelAveraging: number,
         fractionalIntensity: boolean,
         thresholdEnabled: boolean,
@@ -84,7 +81,6 @@ export class VectorOverlayConfigStore {
     ) => {
         this.angularSource = angularSource;
         this.intensitySource = intensitySource;
-        this.pixelAveragingEnabled = pixelAveragingEnabled;
         this.pixelAveraging = pixelAveraging;
         this.fractionalIntensity = fractionalIntensity;
         this.thresholdEnabled = thresholdEnabled;
@@ -148,7 +144,6 @@ export class VectorOverlayConfigStore {
     @action updateFromWorkspace = (config: WorkspaceVectorOverlayConfig) => {
         this.angularSource = config.angularSource;
         this.intensitySource = config.intensitySource;
-        this.pixelAveragingEnabled = config.pixelAveragingEnabled;
         this.pixelAveraging = config.pixelAveraging;
         this.fractionalIntensity = config.fractionalIntensity;
         this.thresholdEnabled = config.thresholdEnabled;

@@ -68,9 +68,9 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                     const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                    const title = this.floatingSettingsId;
-                    if (title) {
-                        appStore.widgetsStore.setWidgetTitle(title, `Z Profile Settings: ${regionString} ${selectedString}`);
+                    const id = this.floatingSettingsId;
+                    if (id) {
+                        appStore.widgetsStore.setWidgetTitle(id, `Z Profile Settings: ${regionString} ${selectedString}`);
                     }
                 }
             }
@@ -78,9 +78,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
     }
 
     handleMeanRmsChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        if (this.widgetStore) {
-            this.widgetStore.setMeanRmsVisible(changeEvent.target.checked);
-        }
+        this.widgetStore?.setMeanRmsVisible(changeEvent.target.checked);
     };
 
     handleXMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
@@ -90,13 +88,10 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        if (!widgetStore) {
-            return;
-        }
-        const minX = parseNumber(widgetStore.minX ?? 0, widgetStore.linePlotInitXYBoundaries.minXVal ?? 0);
-        const maxX = parseNumber(widgetStore.maxX ?? 0, widgetStore.linePlotInitXYBoundaries.maxXVal ?? 0);
+        const minX = parseNumber(widgetStore?.minX ?? 0, widgetStore?.linePlotInitXYBoundaries.minXVal ?? 0);
+        const maxX = parseNumber(widgetStore?.maxX ?? 0, widgetStore?.linePlotInitXYBoundaries.maxXVal ?? 0);
         if (isFinite(val) && val !== minX && val < maxX) {
-            widgetStore.setXBounds(val, maxX);
+            widgetStore?.setXBounds(val, maxX);
         } else {
             ev.currentTarget.value = minX.toString();
         }
@@ -109,13 +104,10 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        if (!widgetStore) {
-            return;
-        }
-        const minX = parseNumber(widgetStore.minX ?? 0, widgetStore.linePlotInitXYBoundaries.minXVal ?? 0);
-        const maxX = parseNumber(widgetStore.maxX ?? 0, widgetStore.linePlotInitXYBoundaries.maxXVal ?? 0);
+        const minX = parseNumber(widgetStore?.minX ?? 0, widgetStore?.linePlotInitXYBoundaries.minXVal ?? 0);
+        const maxX = parseNumber(widgetStore?.maxX ?? 0, widgetStore?.linePlotInitXYBoundaries.maxXVal ?? 0);
         if (isFinite(val) && val !== maxX && val > minX) {
-            widgetStore.setXBounds(minX, val);
+            widgetStore?.setXBounds(minX, val);
         } else {
             ev.currentTarget.value = maxX.toString();
         }
@@ -128,13 +120,10 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        if (!widgetStore) {
-            return;
-        }
-        const minY = parseNumber(widgetStore.minY ?? 0, widgetStore.linePlotInitXYBoundaries.minYVal ?? 0);
-        const maxY = parseNumber(widgetStore.maxY ?? 0, widgetStore.linePlotInitXYBoundaries.maxYVal ?? 0);
+        const minY = parseNumber(widgetStore?.minY ?? 0, widgetStore?.linePlotInitXYBoundaries.minYVal ?? 0);
+        const maxY = parseNumber(widgetStore?.maxY ?? 0, widgetStore?.linePlotInitXYBoundaries.maxYVal ?? 0);
         if (isFinite(val) && val !== minY && val < maxY) {
-            widgetStore.setYBounds(val, maxY);
+            widgetStore?.setYBounds(val, maxY);
         } else {
             ev.currentTarget.value = minY.toString();
         }
@@ -147,22 +136,17 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        if (!widgetStore) {
-            return;
-        }
-        const minY = parseNumber(widgetStore.minY ?? 0, widgetStore.linePlotInitXYBoundaries.minYVal ?? 0);
-        const maxY = parseNumber(widgetStore.maxY ?? 0, widgetStore.linePlotInitXYBoundaries.maxYVal ?? 0);
+        const minY = parseNumber(widgetStore?.minY ?? 0, widgetStore?.linePlotInitXYBoundaries.minYVal ?? 0);
+        const maxY = parseNumber(widgetStore?.maxY ?? 0, widgetStore?.linePlotInitXYBoundaries.maxYVal ?? 0);
         if (isFinite(val) && val !== maxY && val > minY) {
-            widgetStore.setYBounds(minY, val);
+            widgetStore?.setYBounds(minY, val);
         } else {
             ev.currentTarget.value = maxY.toString();
         }
     };
 
     handleSelectedTabChanged = (newTabId: React.ReactText) => {
-        if (this.widgetStore) {
-            this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
-        }
+        this.widgetStore?.setSettingsTabId(Number.parseInt(newTabId.toString()));
     };
 
     render() {

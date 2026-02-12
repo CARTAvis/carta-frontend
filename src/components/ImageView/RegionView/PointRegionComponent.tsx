@@ -74,23 +74,10 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
         if (frame.spatialReference && frame.spatialTransformAST && frame.spatialTransform) {
             const pointReferenceImage = region.center;
             const pointSecondaryImage = transformPoint(frame.spatialTransformAST, pointReferenceImage, false);
-            const canvasPos = transformedImageToCanvasPos(pointSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
-            if (canvasPos.x !== undefined && canvasPos.y !== undefined) {
-                centerPixelSpace = {x: canvasPos.x, y: canvasPos.y};
-                rotation = (-frame.spatialTransform.rotation * 180.0) / Math.PI;
-            } else {
-                // Fallback when canvas position is undefined
-                centerPixelSpace = {x: 0, y: 0};
-                rotation = 0;
-            }
+            centerPixelSpace = transformedImageToCanvasPos(pointSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
+            rotation = (-frame.spatialTransform.rotation * 180.0) / Math.PI;
         } else {
-            const canvasPos = transformedImageToCanvasPos(region.center, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
-            if (canvasPos.x !== undefined && canvasPos.y !== undefined) {
-                centerPixelSpace = {x: canvasPos.x, y: canvasPos.y};
-            } else {
-                // Fallback when canvas position is undefined
-                centerPixelSpace = {x: 0, y: 0};
-            }
+            centerPixelSpace = transformedImageToCanvasPos(region.center, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
             rotation = 0;
         }
 

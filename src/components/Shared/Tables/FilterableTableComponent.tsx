@@ -216,14 +216,9 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
     };
 
     private getNextSortingType = (): CARTA.SortingType | null => {
-        const sortingInfo = this.props.sortingInfo;
-        if (!sortingInfo) {
-            return null;
-        }
-
         let currentNode: any = this.SortingTypelinkedList.head;
         while (currentNode?.next) {
-            if (currentNode.value === sortingInfo.sortingType) {
+            if (currentNode.value === this.props.sortingInfo?.sortingType) {
                 return currentNode.next.value;
             }
             currentNode = currentNode.next;
@@ -235,10 +230,10 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         if (!isFinite(columnIndex) || !column || !column.name) {
             return null;
         }
-        const controlheader = column.name ? this.props.filter?.get(column.name) : undefined;
+        const controlHeader = column.name ? this.props.filter?.get(column.name) : undefined;
         const filterSyntax = column.dataType ? this.getFilterSyntax(column.dataType) : null;
         const sortingInfo = this.props.sortingInfo;
-        const headerDescription = controlheader?.dataIndex != null ? this.props.tableHeaders?.[controlheader.dataIndex]?.description : undefined;
+        const headerDescription = controlHeader?.dataIndex != null ? this.props.tableHeaders?.[controlHeader.dataIndex]?.description : undefined;
         const disableSort = this.props.disableSort;
         const nameRenderer = () => {
             // sharing css with fileList table
@@ -270,13 +265,13 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         return (
             <ColumnHeaderCell>
                 <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer} />
-                <ColumnHeaderCell isActive={controlheader?.filter !== ""}>
+                <ColumnHeaderCell isActive={controlHeader?.filter !== ""}>
                     <Tooltip hoverOpenDelay={250} hoverCloseDelay={0} content={filterSyntax ?? undefined} position={Position.BOTTOM}>
                         <InputGroup
                             key={"column-popover-" + columnIndex}
                             small={true}
                             placeholder="Click to filter"
-                            value={controlheader?.filter ?? ""}
+                            value={controlHeader?.filter ?? ""}
                             onChange={ev => column.name && this.props.updateColumnFilter?.(ev.currentTarget.value, column.name)}
                             onKeyDown={this.handleKeyDown}
                             data-testid={"filterable-table-filter-input-" + columnIndex}

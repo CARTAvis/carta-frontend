@@ -3,7 +3,7 @@ import SplitPane, {Pane} from "react-split-pane";
 import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay2, Popover, Position, Pre, Spinner, Switch, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
 import {type CARTA} from "carta-protobuf";
-import {action, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {FilterableTableComponent, type FilterableTableComponentProps, ResizeDetector, SafeNumericInput} from "components/Shared";
@@ -21,8 +21,8 @@ const PLOT_LINES_LIMIT = 1000;
 export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     @observable width: number = 750;
     @observable height: number = 600;
-    @observable widgetId: string = "";
     @observable headerTableColumnWidths: Array<number> = [150, 70, 300];
+    private widgetId: string;
     private headerTableRef: Table2 | undefined;
     private resultTableRef: Table2 | undefined;
     private scrollToTopHandle;
@@ -44,12 +44,13 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
+        this.widgetId = props.id;
     }
 
-    get widgetStore(): SpectralLineQueryWidgetStore {
+    @computed get widgetStore(): SpectralLineQueryWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.spectralLineQueryWidgets) {
-            const widgetStore = widgetsStore.spectralLineQueryWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.spectralLineQueryWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -108,7 +109,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         ev.currentTarget.value = existingValue;
     };
 
-    @action setHeaderTableColumnWidts(vals: Array<number>) {
+    @action setHeaderTableColumnWidths(vals: Array<number>) {
         this.headerTableColumnWidths = vals;
     }
 
@@ -389,7 +390,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             },
             disableSort: false,
             updateColumnFilter: widgetStore.setColumnFilter,
-            columnWidths: widgetStore.resultTableColumnWidths?.filter((width): width is number => width != null || width !== undefined),
+            columnWidths: widgetStore.resultTableColumnWidths?.filter((width): width is number => width !== undefined),
             updateTableColumnWidth: widgetStore.setResultTableColumnWidth,
             tableHeaders: widgetStore.columnHeaders,
             applyFilterWithEnter: this.handleFilter

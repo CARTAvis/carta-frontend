@@ -3,7 +3,7 @@ import {Colors, NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import type {ChartArea} from "chart.js";
 import * as _ from "lodash";
-import {action, autorun, makeObservable, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent, ResizeDetector, ScatterPlotComponent, type ScatterPlotComponentProps, VERTICAL_RANGE_PADDING} from "components/Shared";
@@ -54,7 +54,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     @observable width: number = 520;
     @observable height: number = 650;
 
-    get widgetStore(): StokesAnalysisWidgetStore {
+    @computed get widgetStore(): StokesAnalysisWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.stokesAnalysisWidgets) {
             const widgetStore = widgetsStore.stokesAnalysisWidgets.get(this.widgetId);
@@ -66,7 +66,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return new StokesAnalysisWidgetStore();
     }
 
-    get profileStore(): SpectralProfileStore | null {
+    @computed get profileStore(): SpectralProfileStore | null {
         const appStore = AppStore.Instance;
         if (this.widgetStore.effectiveFrame) {
             const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
@@ -79,7 +79,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    get exportHeaders(): string[] {
+    @computed get exportHeaders(): string[] {
         const headerString: string[] = [];
         const regionId = this.widgetStore.effectiveRegionId;
         if (regionId !== null) {
@@ -89,7 +89,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return headerString;
     }
 
-    get exportQUScatterHeaders(): string[] {
+    @computed get exportQUScatterHeaders(): string[] {
         return this.widgetStore.smoothingStore.type === SmoothingType.NONE ? this.exportHeaders : this.exportHeaders.concat(this.widgetStore.smoothingStore.comments);
     }
 
@@ -160,7 +160,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         }
     }
 
-    get currentChannelValue(): number | null {
+    @computed get currentChannelValue(): number | null {
         const frame = this.widgetStore.effectiveFrame;
         if (!frame || !frame.channelValues) {
             return null;
@@ -172,7 +172,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return frame.isCoordChannel ? channel : frame.channelValues[channel];
     }
 
-    get requiredChannelValue(): number | null {
+    @computed get requiredChannelValue(): number | null {
         const frame = this.widgetStore.effectiveFrame;
         if (!frame || !frame.channelValues) {
             return null;
@@ -426,7 +426,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         }
     }
 
-    private resizeScatterData(xMin: number, xMax: number, yMin: number, yMax: number): {xMin: number; xMax: number; yMin: number; yMax: number} {
+    private resizeScatterData(xMin: number, xMax: number, yMin: number, yMax: number): Border {
         if (!this.widgetStore.equalAxes) {
             return {xMin: xMin, xMax: xMax, yMin: yMin, yMax: yMax};
         }
@@ -524,7 +524,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         uProfile: Array<number>,
         type: StokesCoordinate
     ): {
-        dataset: Array<{x: number; y: number; z: number}>;
+        dataset: Array<Point3D>;
         border: Border;
     } | null {
         const frame = this.widgetStore.effectiveFrame;
@@ -541,7 +541,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         ) {
             const channelValues = frame.channelValues;
             const border = this.calculateXYborder(qProfile, uProfile, false, type);
-            const values: Array<{x: number; y: number; z: number}> = [];
+            const values: Array<Point3D> = [];
             // centered origin and equal scaler
             const equalScalerBorder = this.resizeScatterData(border.xMin, border.xMax, border.yMin, border.yMax);
             this.widgetStore.scatterOutRangePointsZIndex = [];
@@ -576,7 +576,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return `rgba(${colorMap[index]}, ${colorMap[index + 1]}, ${colorMap[index + 2]}, ${opacity})`;
     }
 
-    private fillScatterColor(data: Array<{x: number; y: number; z?: number}>, interactionBorder: {xMin: number; xMax: number}, zIndex: boolean): Array<string> {
+    private fillScatterColor(data: Array<Point3D>, interactionBorder: {xMin: number; xMax: number}, zIndex: boolean): Array<string> {
         const scatterColors: string[] = [];
         const widgetStore = this.widgetStore;
         if (data && data.length && zIndex && interactionBorder && widgetStore) {
@@ -587,7 +587,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 return scatterColors;
             }
             const reversed = this.getColorMapOrder(frame);
-            const localPoints: Array<{x: number; y: number; z?: number}> = [];
+            const localPoints: Array<Point3D> = [];
             for (let index = 0; index < data.length; index++) {
                 const point = data[index];
                 if (point.z !== undefined && point.z >= xlinePlotRange.xMin && point.z <= xlinePlotRange.xMax) {
@@ -628,13 +628,15 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return lineColors;
     }
 
-    private closestChannel(channel: number, data: Array<{x: number; y: number; z?: number}>): number {
-        var mid;
-        var lo = 0;
-        var hi = data.length - 1;
+    private closestChannel(channel: number, data: Array<Point3D>): number {
+        let mid;
+        let midZ;
+        let lo = 0;
+        let hi = data.length - 1;
         while (hi - lo > 1) {
             mid = Math.floor((lo + hi) / 2);
-            if (data[mid].z !== undefined && data[mid].z! < channel) {
+            midZ = data[mid].z;
+            if (midZ && midZ < channel) {
                 lo = mid;
             } else {
                 hi = mid;
@@ -646,7 +648,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return data[hi].z!;
     }
 
-    private getScatterChannel(data: Array<{x: number; y: number; z?: number}>, channel: {channelCurrent: number; channelHovered: number}, zIndex: boolean): {currentChannel: Point3D; hoveredChannel: Point3D} {
+    private getScatterChannel(data: Array<Point3D>, channel: {channelCurrent: number; channelHovered: number}, zIndex: boolean): {currentChannel: Point3D; hoveredChannel: Point3D} {
         const indicator = {currentChannel: data[0], hoveredChannel: data[0]};
         if (data && data.length && zIndex && channel) {
             const channelCurrent = channel.channelCurrent;
@@ -675,7 +677,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return indicator;
     }
 
-    get plotData(): {
+    @computed get plotData(): {
         qValues: {dataset: Array<Point2D>; border: Border};
         uValues: {dataset: Array<Point2D>; border: Border};
         piValues: {dataset: Array<Point2D>; border: Border};
@@ -684,8 +686,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         uSmoothedValues: {dataset: Array<Point2D>; border: Border};
         piSmoothedValues: {dataset: Array<Point2D>; border: Border};
         paSmoothedValues: {dataset: Array<Point2D>; border: Border};
-        quValues: {dataset: Array<{x: number; y: number; z: number}>; border: Border};
-        quSmoothedValues: {dataset: Array<{x: number; y: number; z: number}>; border: Border};
+        quValues: {dataset: Array<Point3D>; border: Border};
+        quSmoothedValues: {dataset: Array<Point3D>; border: Border};
         qProgress: number;
         uProgress: number;
         iProgress: number;
@@ -731,8 +733,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             const uSmoothedDic = this.assembleLinePlotData(compositeProfile.uProfileSmoothed, compositeProfile.uSmoothedX, StokesCoordinate.LinearPolarizationU);
 
             // Create fallback empty datasets for null results
-            const emptyDataset = {dataset: [] as Point2D[], border: {xMin: 0, xMax: 0, yMin: 0, yMax: 0}};
-            const emptyScatterDataset = {dataset: [] as Array<{x: number; y: number; z: number}>, border: {xMin: 0, xMax: 0, yMin: 0, yMax: 0}};
+            const emptyDataset = {dataset: new Array<Point2D>(), border: {xMin: 0, xMax: 0, yMin: 0, yMax: 0}};
+            const emptyScatterDataset = {dataset: new Array<Point3D>(), border: {xMin: 0, xMax: 0, yMin: 0, yMax: 0}};
 
             return {
                 qValues: qDic || emptyDataset,

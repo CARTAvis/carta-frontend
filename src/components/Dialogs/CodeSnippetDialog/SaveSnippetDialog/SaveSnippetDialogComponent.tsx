@@ -1,7 +1,7 @@
 import * as React from "react";
 import {AnchorButton, Classes, Dialog, FormGroup, InputGroup, Intent, TagInput} from "@blueprintjs/core";
 import classNames from "classnames";
-import {action, makeObservable} from "mobx";
+import {action, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {AlertStore, AppStore, SnippetStore} from "stores";
@@ -52,7 +52,7 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
         }
     };
 
-    get validInput() {
+    @computed get validInput() {
         const snippetStore = SnippetStore.Instance;
         return (snippetStore.activeSnippetName?.length ?? 0) > 0 && snippetStore.activeSnippet?.categories;
     }

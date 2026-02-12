@@ -104,23 +104,19 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
             let positionImageSpace = canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, props.layerWidth, props.layerHeight);
             const controlPoint = frame.spatialReference && frame.spatialTransformAST ? transformPoint(frame.spatialTransformAST, region.controlPoints[0], false) : region.controlPoints[0];
             const originPoints = transformedImageToCanvasPos(controlPoint, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+            const distance = pointDistance(anchorPos, originPoints);
 
-            if (originPoints.x !== undefined && originPoints.y !== undefined) {
-                const validOriginPoints = {x: originPoints.x, y: originPoints.y};
-                const distance = pointDistance(anchorPos, validOriginPoints);
+            if (frame.spatialReference && frame.spatialTransformAST) {
+                positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
+            }
 
-                if (frame.spatialReference && frame.spatialTransformAST) {
-                    positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
-                }
-
-                if (anchor.id() === "origin") {
-                    region.setControlPoint(0, positionImageSpace);
-                } else if (anchor.id() === "northTip" || anchor.id() === "eastTip") {
-                    if (!frame.validWcs) {
-                        region.setLength((distance * frame.zoomLevel) / imageRatio);
-                    } else {
-                        region.setLength((distance * (frame.spatialReference?.zoomLevel || frame.zoomLevel)) / imageRatio);
-                    }
+            if (anchor.id() === "origin") {
+                region.setControlPoint(0, positionImageSpace);
+            } else if (anchor.id() === "northTip" || anchor.id() === "eastTip") {
+                if (!frame.validWcs) {
+                    region.setLength((distance * frame.zoomLevel) / imageRatio);
+                } else {
+                    region.setLength((distance * (frame.spatialReference?.zoomLevel || frame.zoomLevel)) / imageRatio);
                 }
             }
         }
@@ -151,28 +147,20 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
     } else {
         for (let i = 0; i < northApproxPoints.length; i += 2) {
             const point = transformedImageToCanvasPos({x: northApproxPoints[i], y: northApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-            if (point.x !== undefined && point.y !== undefined && originPoints.x !== undefined && originPoints.y !== undefined) {
-                const validPoint = {x: point.x, y: point.y};
-                const validOriginPoints = {x: originPoints.x, y: originPoints.y};
-                if (pointDistance(validPoint, validOriginPoints) >= (region.length * imageRatio) / zoomLevel) {
-                    break;
-                }
-                northPointArray[i] = point.x - mousePoint.current.x;
-                northPointArray[i + 1] = point.y - mousePoint.current.y;
+            if (pointDistance(point, originPoints) >= (region.length * imageRatio) / zoomLevel) {
+                break;
             }
+            northPointArray[i] = point.x - mousePoint.current.x;
+            northPointArray[i + 1] = point.y - mousePoint.current.y;
         }
 
         for (let i = 0; i < eastApproxPoints.length; i += 2) {
             const point = transformedImageToCanvasPos({x: eastApproxPoints[i], y: eastApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-            if (point.x !== undefined && point.y !== undefined && originPoints.x !== undefined && originPoints.y !== undefined) {
-                const validPoint = {x: point.x, y: point.y};
-                const validOriginPoints = {x: originPoints.x, y: originPoints.y};
-                if (pointDistance(validPoint, validOriginPoints) >= (region.length * imageRatio) / zoomLevel) {
-                    break;
-                }
-                eastPointArray[i] = point.x - mousePoint.current.x;
-                eastPointArray[i + 1] = point.y - mousePoint.current.y;
+            if (pointDistance(point, originPoints) >= (region.length * imageRatio) / zoomLevel) {
+                break;
             }
+            eastPointArray[i] = point.x - mousePoint.current.x;
+            eastPointArray[i + 1] = point.y - mousePoint.current.y;
         }
     }
 
@@ -287,7 +275,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
                 />
             </Group>
             <Group>
-                {props.selected && originPoints.x !== undefined && originPoints.y !== undefined && (
+                {props.selected && (
                     <>
                         <Anchor anchor={"origin"} x={originPoints.x} y={originPoints.y} {...anchorCommonProps} />
                         <Anchor anchor={"northTip"} x={northPointArray[northPointArray.length - 2] + mousePoint.current.x} y={northPointArray[northPointArray.length - 1] + mousePoint.current.y} {...anchorCommonProps} />
@@ -417,7 +405,8 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     const canvasPosStart = transformedImageToCanvasPos(secondaryImagePointStart, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
     const canvasPosFinish = transformedImageToCanvasPos(secondaryImagePointFinish, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
 
-    const wcsInfo = frame?.validWcs && AppStore.Instance.overlaySettings.isWcsCoordinates ? frame.wcsInfoForTransformation : frame.wcsInfo; // calculate pixel distance for no valid WCS data images
+    const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoOffset : frame.wcsInfoForTransformation;
+    const wcsInfo = frame?.validWcs && AppStore.Instance.overlaySettings.isWcsCoordinates ? wcsInfoSelected : frame.wcsInfo; // calculate pixel distance for no valid WCS data images
     const approxPoints = region.getCurveApproximation(wcsInfo, frame.spatialTransformAST || undefined);
 
     const xApproxPoints = approxPoints.xApproximatePoints;
@@ -430,42 +419,36 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
 
     for (let i = 0; i < xPointArray.length; i += 2) {
         const point = transformedImageToCanvasPos({x: xApproxPoints[i], y: xApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-        if (point.x !== undefined && point.y !== undefined) {
-            xPointArray[i] = point.x - mousePoint.current.x;
-            xPointArray[i + 1] = point.y - mousePoint.current.y;
-        }
+        xPointArray[i] = point.x - mousePoint.current.x;
+        xPointArray[i + 1] = point.y - mousePoint.current.y;
     }
 
     for (let i = 0; i < yPointArray.length; i += 2) {
         const point = transformedImageToCanvasPos({x: yApproxPoints[i], y: yApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-        if (point.x !== undefined && point.y !== undefined) {
-            yPointArray[i] = point.x - mousePoint.current.x;
-            yPointArray[i + 1] = point.y - mousePoint.current.y;
-        }
+        yPointArray[i] = point.x - mousePoint.current.x;
+        yPointArray[i + 1] = point.y - mousePoint.current.y;
     }
 
     for (let i = 0; i < hypotenusePointArray.length; i += 2) {
         const point = transformedImageToCanvasPos({x: hypotenuseApproxPoints[i], y: hypotenuseApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-        if (point.x !== undefined && point.y !== undefined) {
-            hypotenusePointArray[i] = point.x - mousePoint.current.x;
-            hypotenusePointArray[i + 1] = point.y - mousePoint.current.y;
-        }
+        hypotenusePointArray[i] = point.x - mousePoint.current.x;
+        hypotenusePointArray[i + 1] = point.y - mousePoint.current.y;
     }
 
     let xCenterPoints, xDistanceText, yCenterPoints, yDistanceText;
     if (region.auxiliaryTextVisible) {
         const xCenterPointIndex = Math.floor(xPointArray.length / 2) % 2 === 0 ? Math.floor(xPointArray.length / 2) : Math.floor(xPointArray.length / 2) + 1;
         xCenterPoints = {x: xPointArray[xCenterPointIndex], y: xPointArray[xCenterPointIndex + 1]};
-        xDistanceText = getDistanceText(frame.wcsInfo, secondaryImagePointStart, cornerPoint);
+        xDistanceText = getDistanceText(wcsInfo, secondaryImagePointStart, cornerPoint);
 
         const yCenterPointIndex = Math.floor(yPointArray.length / 2) % 2 === 0 ? Math.floor(yPointArray.length / 2) : Math.floor(yPointArray.length / 2) + 1;
         yCenterPoints = {x: yPointArray[yCenterPointIndex], y: yPointArray[yCenterPointIndex + 1]};
-        yDistanceText = getDistanceText(frame.wcsInfo, cornerPoint, secondaryImagePointFinish);
+        yDistanceText = getDistanceText(wcsInfo, cornerPoint, secondaryImagePointFinish);
     }
 
     const centerPointIndex = Math.floor(hypotenusePointArray.length / 2) % 2 === 0 ? Math.floor(hypotenusePointArray.length / 2) : Math.floor(hypotenusePointArray.length / 2) + 1;
     const centerPoints = {x: hypotenusePointArray[centerPointIndex], y: hypotenusePointArray[centerPointIndex + 1]};
-    const distanceText = getDistanceText(frame.wcsInfo, secondaryImagePointStart, secondaryImagePointFinish);
+    const distanceText = getDistanceText(wcsInfo, secondaryImagePointStart, secondaryImagePointFinish);
 
     // Dummy variables for triggering re-render
     /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
@@ -595,7 +578,7 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
                 {region.auxiliaryLineVisible && <Line closed points={[xPointArray[0], xPointArray[1], hypotenusePointArray[0], hypotenusePointArray[1], yPointArray[0], yPointArray[1]]} opacity={0} />}
             </Group>
             <Group>
-                {props.selected && canvasPosStart.x !== undefined && canvasPosStart.y !== undefined && canvasPosFinish.x !== undefined && canvasPosFinish.y !== undefined && (
+                {props.selected && (
                     <>
                         <Anchor
                             anchor={"start"}

@@ -4,7 +4,7 @@ import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import * as _ from "lodash";
-import {action, autorun, makeObservable, observable, runInAction} from "mobx";
+import {action, autorun, computed, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
@@ -98,7 +98,7 @@ export class ContourDialogComponent extends React.Component {
         }
     }
 
-    get currentContourConfig() {
+    @computed get currentContourConfig() {
         const dataSource = AppStore.Instance.contourDataSource;
         if (!dataSource) {
             return {
@@ -126,7 +126,7 @@ export class ContourDialogComponent extends React.Component {
         };
     }
 
-    get contourConfigChanged(): boolean {
+    @computed get contourConfigChanged(): boolean {
         const dataSource = AppStore.Instance.contourDataSource;
         if (!dataSource) {
             return false;
@@ -146,9 +146,9 @@ export class ContourDialogComponent extends React.Component {
         );
     }
 
-    get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} | null {
+    @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} | null {
         const dataSource = AppStore.Instance.contourDataSource;
-        const histogram = dataSource?.renderConfig?.contourHistogram;
+        const histogram = dataSource?.renderConfig.contourHistogram;
 
         if (!histogram?.bins?.length || histogram.firstBinCenter == null || histogram.binWidth == null) {
             return null;
@@ -233,8 +233,8 @@ export class ContourDialogComponent extends React.Component {
         const dataSource = appStore.contourDataSource;
         if (dataSource?.renderConfig) {
             dataSource.renderConfig.setUseCubeHistogramContours(false);
-            appStore.cancelCubeHistogramRequest(dataSource.frameInfo.fileId);
         }
+        appStore.cancelCubeHistogramRequest(dataSource?.frameInfo.fileId);
     };
 
     private handleApplyContours = () => {
@@ -255,7 +255,7 @@ export class ContourDialogComponent extends React.Component {
         appStore.contourDataSource.clearContours();
     };
 
-    private handleGraphClicked = (x: number) => {
+    @action private handleGraphClicked = (x: number) => {
         this.levels.push(x);
         this.levels.sort((a, b) => a - b);
     };
@@ -480,7 +480,7 @@ export class ContourDialogComponent extends React.Component {
         const configPanel = (
             <div className="contour-config-panel">
                 <FormGroup inline={true} label="Smoothing mode">
-                    <HTMLSelect value={this.smoothingMode} onChange={ev => (this.smoothingMode = Number(ev.currentTarget.value))}>
+                    <HTMLSelect value={this.smoothingMode} onChange={ev => runInAction(() => (this.smoothingMode = Number(ev.currentTarget.value)))}>
                         <option key={CARTA.SmoothingMode.NoSmoothing} value={CARTA.SmoothingMode.NoSmoothing}>
                             No smoothing
                         </option>

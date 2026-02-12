@@ -56,15 +56,17 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
         const appStore = AppStore.Instance;
         // Update widget title when region or coordinate changes
         autorun(() => {
-            if (this.widgetStore) {
-                const coordinate = this.widgetStore.coordinate;
-                if (appStore && coordinate && this.floatingSettingsId) {
-                    const coordinateString = this.widgetStore.isLineOrPolyline ? "" : coordinate.toUpperCase();
-                    const regionString = this.widgetStore.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
-                    appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `${coordinateString} Spatial Profile Settings: ${regionString}`);
+            if (this.floatingSettingsId) {
+                if (this.widgetStore) {
+                    const coordinate = this.widgetStore.coordinate;
+                    if (appStore && coordinate) {
+                        const coordinateString = this.widgetStore.isLineOrPolyline ? "" : coordinate.toUpperCase();
+                        const regionString = this.widgetStore.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
+                        appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `${coordinateString} Spatial Profile Settings: ${regionString}`);
+                    }
+                } else {
+                    appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `X Spatial Profile Settings: Cursor`);
                 }
-            } else if (this.floatingSettingsId) {
-                appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `X Spatial Profile Settings: Cursor`);
             }
         });
     }
@@ -88,7 +90,9 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        if (!widgetStore) return;
+        if (!widgetStore) {
+            return;
+        }
 
         const minX = parseNumber(widgetStore.minX ?? widgetStore.linePlotInitXYBoundaries.minXVal, widgetStore.linePlotInitXYBoundaries.minXVal);
         const maxX = parseNumber(widgetStore.maxX ?? widgetStore.linePlotInitXYBoundaries.maxXVal, widgetStore.linePlotInitXYBoundaries.maxXVal);
@@ -106,7 +110,9 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        if (!widgetStore) return;
+        if (!widgetStore) {
+            return;
+        }
 
         const minX = parseNumber(widgetStore.minX ?? widgetStore.linePlotInitXYBoundaries.minXVal, widgetStore.linePlotInitXYBoundaries.minXVal);
         const maxX = parseNumber(widgetStore.maxX ?? widgetStore.linePlotInitXYBoundaries.maxXVal, widgetStore.linePlotInitXYBoundaries.maxXVal);
@@ -124,7 +130,9 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        if (!widgetStore) return;
+        if (!widgetStore) {
+            return;
+        }
 
         const minY = parseNumber(widgetStore.minY ?? widgetStore.linePlotInitXYBoundaries.minYVal, widgetStore.linePlotInitXYBoundaries.minYVal);
         const maxY = parseNumber(widgetStore.maxY ?? widgetStore.linePlotInitXYBoundaries.maxYVal, widgetStore.linePlotInitXYBoundaries.maxYVal);
@@ -142,7 +150,9 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        if (!widgetStore) return;
+        if (!widgetStore) {
+            return;
+        }
 
         const minY = parseNumber(widgetStore.minY ?? widgetStore.linePlotInitXYBoundaries.minYVal, widgetStore.linePlotInitXYBoundaries.minYVal);
         const maxY = parseNumber(widgetStore.maxY ?? widgetStore.linePlotInitXYBoundaries.maxYVal, widgetStore.linePlotInitXYBoundaries.maxYVal);

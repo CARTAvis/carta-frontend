@@ -1,6 +1,6 @@
 import * as React from "react";
 import classNames from "classnames";
-import {makeObservable, observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {type Subscription} from "rxjs";
 import tinycolor from "tinycolor2";
@@ -38,13 +38,12 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     constructor(props: RasterViewComponentProps) {
         super(props);
+        makeObservable(this);
 
         // Initialize observable properties
         this.channels = props.channel;
         this.image = props.image;
         this.imageStore = props.image?.store as FrameStore;
-
-        makeObservable(this);
     }
 
     componentDidMount() {
@@ -67,7 +66,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         });
     }
 
-    componentDidUpdate(prevProps: RasterViewComponentProps) {
+    @action componentDidUpdate(prevProps: RasterViewComponentProps) {
         // Update observable properties when props change
         if (prevProps.channel !== this.props.channel) {
             this.channels = this.props.channel;
@@ -89,12 +88,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private renderMultipleCanvas = (frame: FrameStore) => {
         const canvas = this.canvas;
         const channels = this.props.channel;
-        if (!channels) {
-            return;
-        }
-
         const ctx = canvas.getContext("2d");
-        if (!ctx) {
+        if (!ctx || !channels) {
             return;
         }
 
@@ -413,7 +408,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             delete rasterTile.data;
         }
 
-        if (!tileBasedRender && rasterTile.width && rasterTile.height && rasterTile.width * rasterTile.height === rasterTile.data?.length) {
+        if (!tileBasedRender && rasterTile.width != null && rasterTile.height != null && rasterTile.width * rasterTile.height === rasterTile.data?.length) {
             const texture = createFP32Texture(this.gl, rasterTile.width, rasterTile.height, GL2.TEXTURE0);
             if (texture && rasterTile.data) {
                 copyToFP32Texture(this.gl, texture, rasterTile.data, GL2.TEXTURE0, rasterTile.width, rasterTile.height, 0, 0);

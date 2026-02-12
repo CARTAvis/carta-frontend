@@ -9,7 +9,7 @@ import {closeTo, isAutoColor} from "utilities";
 import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
 export class HistogramWidgetStore extends RegionWidgetStore {
-    @observable settingsTabId: HistogramSettingsTabs = HistogramSettingsTabs.STYLING;
+    @observable settingsTabId: HistogramSettingsTabs = HistogramSettingsTabs.CONFIG;
 
     @observable coordinate: string = "z";
     @observable minX: number | undefined = undefined;
@@ -161,7 +161,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.resetNumBins();
     };
 
-    resetBounds = () => {
+    @action resetBounds = () => {
         if (this.cachedMinPix === undefined) {
             this.currentMinPix = this.effectiveFrame?.renderConfig.histogramMin;
         } else {
@@ -175,7 +175,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         }
     };
 
-    resetNumBins = () => {
+    @action resetNumBins = () => {
         if (this.cachedNumBins === undefined) {
             this.currentNumBins = this.effectiveFrame?.renderConfig.histogram?.numBins;
         } else {

@@ -1,16 +1,17 @@
 import {action, observable} from "mobx";
 
-import {getColorsForValues} from "../../utilities";
+jest.mock("components/Shared", () => ({
+    AppToaster: {show: jest.fn()}
+}));
+
+import * as colorUtils from "../../utilities/color/color";
 import {AppStore} from "../AppStore/AppStore";
 import {RenderConfigStore} from "../Frame/RenderConfigStore/RenderConfigStore";
 
 import {ColorBlendingStore} from "./ColorBlendingStore";
 
-const mockConsoleError = jest.spyOn(console, "error");
-
-jest.mock("utilities", () => ({
-    getColorsForValues: jest.fn()
-}));
+const mockConsoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+const getColorsForValues = jest.spyOn(colorUtils, "getColorsForValues");
 
 describe("ColorBlendingStore", () => {
     let colorBlendingStore: ColorBlendingStore;
@@ -21,10 +22,10 @@ describe("ColorBlendingStore", () => {
 
     const mockReferenceSetColorMap = jest.fn();
     const mockSpatialReference = observable({
-        secondarySpatialImages: [],
+        secondarySpatialImages: [] as any[],
         renderConfig: {setColorMap: mockReferenceSetColorMap}
     });
-    const setMatchedFrames = action(frames => {
+    const setMatchedFrames = action((frames: any[]) => {
         mockSpatialReference.secondarySpatialImages = frames;
     });
 
@@ -34,6 +35,10 @@ describe("ColorBlendingStore", () => {
         });
         setMatchedFrames([mockMatchedFrame1 as any, mockMatchedFrame2 as any]);
         colorBlendingStore = new ColorBlendingStore(0);
+    });
+
+    afterAll(() => {
+        mockConsoleError.mockRestore();
     });
 
     it("initializes the values correctly", () => {
@@ -205,8 +210,8 @@ describe("ColorBlendingStore", () => {
             const green = [128, 254, 179, 255]; // #80feb3
             const blue = [0, 180, 235, 255];
             const violet = [127, 0, 255, 255]; // Violet
-            const mockRainbowGradient = {color: [...violet, ...blue, ...green, ...orange, ...red], size: 5};
-            (getColorsForValues as jest.Mock).mockReturnValue(mockRainbowGradient);
+            const mockRainbowGradient = {color: new Uint8ClampedArray([...violet, ...blue, ...green, ...orange, ...red]), size: 5};
+            getColorsForValues.mockReturnValue(mockRainbowGradient);
 
             // one layer
             colorBlendingStore.selectedFrames = [];

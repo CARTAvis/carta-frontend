@@ -34,10 +34,11 @@ import {
     ZoomPoint
 } from "models";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE, TileService} from "services";
-import {AnimatorStore, AppStore, ASTSettingsString, ChannelMapInnerOverlayStore, ChannelMapOuterOverlayStore, ImageViewOverlayStore, INITIAL_LAYOUT_ITEM, LogStore, type OverlayStore, PreferenceStore, PvPreviewOverlayStore} from "stores";
+import {AnimatorStore, AppStore, ChannelMapInnerOverlayStore, ChannelMapOuterOverlayStore, ImageViewOverlayStore, INITIAL_LAYOUT_ITEM, LogStore, type OverlayStore, PreferenceStore, PvPreviewOverlayStore} from "stores";
 import {CENTER_POINT_INDEX, ColorbarStore, ContourConfigStore, ContourStore, type RegionStore, RenderConfigStore, RestFreqStore, SIZE_POINT_INDEX, VectorOverlayConfigStore, VectorOverlayStore} from "stores/Frame";
 import {type PvGeneratorWidgetStore} from "stores/Widgets";
 import {
+    ASTSettingsString,
     clamp,
     formattedArcsec,
     formattedFrequency,
@@ -58,6 +59,8 @@ import {
     ProtobufProcessing,
     rotate2D,
     round2D,
+    setAstStringSystem,
+    setAstSystem,
     subtract2D,
     toFixed,
     transformPoint,
@@ -111,10 +114,12 @@ export class FrameStore {
 
     public wcsInfo: AST.FrameSet;
     public readonly wcsInfoForTransformation: AST.FrameSet;
-    @observable public wcsInfoShifted: AST.FrameSet = undefined as any;
+    @observable public wcsInfoOffset: AST.FrameSet = undefined as any;
     public readonly wcsInfo3D: AST.FrameSet;
     public readonly validWcs: boolean = false;
     public readonly defaultWcsSystem: SystemType;
+    public readonly defaultWcsEquinox: string;
+    public readonly defaultWcsEpoch: string;
     @observable public frameInfo: FrameInfo = undefined as any;
     public readonly overlayStore: OverlayStore;
     public readonly channelMapOuterOverlayStore: ChannelMapOuterOverlayStore;
@@ -399,10 +404,10 @@ export class FrameStore {
                 AST.deleteObject(this.cachedTransformedWcsInfo);
             }
 
-            if (this.spatialReference.isOffsetCoord && !this.wcsInfoShifted) {
-                this.createWcsInfoShifted();
+            if (this.spatialReference.isOffsetCoord && !this.wcsInfoOffset) {
+                this.createWcsInfoOffset();
             }
-            const wcsInfo = this.isOffsetCoord ? this.wcsInfoShifted : this.wcsInfo;
+            const wcsInfo = this.isOffsetCoord ? this.wcsInfoOffset : this.wcsInfo;
 
             this.cachedTransformedWcsInfo = AST.createTransformedFrameset(
                 wcsInfo,
@@ -468,7 +473,7 @@ export class FrameStore {
             if (isFinite(delta) && (unit === "deg" || unit === "rad")) {
                 if (this.frameInfo.beamTable && this.frameInfo.beamTable.length > 0) {
                     const beam = this.getBeam(this.requiredChannel, this.requiredStokes);
-                    if (beam && beam.majorAxis && isFinite(beam.majorAxis) && beam.majorAxis > 0 && beam.minorAxis && isFinite(beam.minorAxis) && beam.minorAxis > 0 && beam.pa && isFinite(beam.pa)) {
+                    if (beam && beam.majorAxis != null && isFinite(beam.majorAxis) && beam.majorAxis > 0 && beam.minorAxis != null && isFinite(beam.minorAxis) && beam.minorAxis > 0 && beam.pa != null && isFinite(beam.pa)) {
                         return {
                             x: beam.majorAxis / (unit === "deg" ? 3600 : (180 * 3600) / Math.PI) / Math.abs(delta),
                             y: beam.minorAxis / (unit === "deg" ? 3600 : (180 * 3600) / Math.PI) / Math.abs(delta),
@@ -654,13 +659,13 @@ export class FrameStore {
             // convert frequency value to unit in GHz
             if (this.isSpectralCoordinateConvertible && this.spectralAxis?.type.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.FREQ)) {
                 const freqGHz = this.astSpectralTransform(SpectralType.FREQ, SpectralUnit.GHZ, this.spectralSystem, freqVal);
-                if (freqGHz && isFinite(freqGHz)) {
+                if (freqGHz !== undefined && isFinite(freqGHz)) {
                     result.spectralString = `Frequency (${this.spectralSystem}): ${formattedFrequency(freqGHz)}`;
                 }
             }
             // convert frequency to velocity
             const velocityVal = this.astSpectralTransform(SpectralType.VRAD, SpectralUnit.KMS, this.spectralSystem, freqVal);
-            if (velocityVal && isFinite(velocityVal)) {
+            if (velocityVal !== undefined && isFinite(velocityVal)) {
                 result.velocityString = `Velocity: ${toFixed(velocityVal, 4)} km/s`;
             }
         } else if (spectralType.code === "VRAD") {
@@ -668,13 +673,13 @@ export class FrameStore {
             // convert velocity value to unit in km/s
             if (this.isSpectralCoordinateConvertible && this.spectralAxis?.type.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.VRAD)) {
                 const velocityKMS = this.astSpectralTransform(SpectralType.VRAD, SpectralUnit.KMS, this.spectralSystem, velocityVal);
-                if (velocityKMS && isFinite(velocityKMS)) {
+                if (velocityKMS !== undefined && isFinite(velocityKMS)) {
                     result.spectralString = `Velocity (${this.spectralSystem}): ${toFixed(velocityKMS, 4)} km/s`;
                 }
             }
             // convert velocity to frequency
             const freqGHz = this.astSpectralTransform(SpectralType.FREQ, SpectralUnit.GHZ, this.spectralSystem, velocityVal);
-            if (freqGHz && isFinite(freqGHz)) {
+            if (freqGHz !== undefined && isFinite(freqGHz)) {
                 result.freqString = `Frequency: ${formattedFrequency(freqGHz)}`;
             }
         }
@@ -1312,7 +1317,11 @@ export class FrameStore {
                 const entries = this.frameInfo.fileInfoExtended.headerEntries;
                 const skySystem = entries.find(entry => entry.name?.includes("RADESYS"))?.value;
                 if (Object.values(SystemType).includes(skySystem as SystemType)) {
-                    AppStore.Instance.overlaySettings.global.setDefaultSystem(skySystem as SystemType);
+                    const equinox = AST.getString(this.wcsInfo, "Equinox");
+                    const epoch = AST.getString(this.wcsInfo, "Epoch");
+                    overlaySettings.global.setDefaultSystem(skySystem as SystemType);
+                    overlaySettings.global.setDefaultEquinox(equinox);
+                    overlaySettings.global.setDefaultEpoch(epoch);
                     overlaySettings.global.setValidWcs(true);
                 }
 
@@ -1366,6 +1375,8 @@ export class FrameStore {
                     AST.set(this.wcsInfoForTransformation, `Format(${this.dirY})=${overlaySettings.numbers.formatTypeY}.${WCS_PRECISION}`);
                     this.validWcs = true;
                     this.defaultWcsSystem = AST.getString(this.wcsInfo, "System") as SystemType;
+                    this.defaultWcsEquinox = AST.getString(this.wcsInfo, "Equinox");
+                    this.defaultWcsEpoch = AST.getString(this.wcsInfo, "Epoch");
                     overlaySettings.setDefaultsFromFrame(this);
                 }
             }
@@ -1530,16 +1541,20 @@ export class FrameStore {
                 if (explicitSystem === SystemType.Image) {
                     // Use base frame for image coordinates
                     AST.setI(this.wcsInfo, "Current", 1);
-                    if (this.wcsInfoShifted) {
-                        // Use third frame for shifted image coordinates
-                        AST.setI(this.wcsInfoShifted, "Current", 3);
+                    if (this.wcsInfoOffset) {
+                        // Use third frame for offset image coordinates
+                        AST.setI(this.wcsInfoOffset, "Current", 3);
                     }
                 } else {
+                    const global = AppStore.Instance.overlaySettings.global;
                     AST.setI(this.wcsInfo, "Current", 2);
-                    AST.set(this.wcsInfo, `Format(${this.dirX})=${formatStringX}, Format(${this.dirY})=${formatStyingY}, System=${explicitSystem}`);
-                    if (this.wcsInfoShifted) {
-                        AST.setI(this.wcsInfoShifted, "Current", 2);
-                        AST.set(this.wcsInfoShifted, `Format(${this.dirX})=${formatStringX}, Format(${this.dirY})=${formatStyingY}, System=${explicitSystem}`);
+                    AST.set(this.wcsInfo, `Format(${this.dirX})=${formatStringX}, Format(${this.dirY})=${formatStyingY}`);
+                    setAstSystem(this.wcsInfo, explicitSystem, global);
+
+                    if (this.wcsInfoOffset) {
+                        AST.setI(this.wcsInfoOffset, "Current", 2);
+                        AST.set(this.wcsInfoOffset, `Format(${this.dirX})=${formatStringX}, Format(${this.dirY})=${formatStyingY}`);
+                        setAstSystem(this.wcsInfoOffset, explicitSystem, global);
                     }
                 }
             }
@@ -1612,7 +1627,7 @@ export class FrameStore {
 
     private convertSpectral = (values: Array<number>): Array<number> => {
         const N = values?.length;
-        if (!N || !this.spectralFrame || !this.spectralType || !this.spectralUnit || !this.spectralSystem) {
+        if (!N || !this.spectralFrame) {
             return [];
         }
 
@@ -1649,6 +1664,10 @@ export class FrameStore {
         const regStokesNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.stokesNumber}`);
 
         const fitsChan = AST.emptyFitsChan();
+
+        let system = "";
+        let epoch = "";
+
         for (const entry of this.frameInfo.fileInfoExtended.headerEntries) {
             let name = entry.name;
             if (name?.match(regOtherAxes) || name?.match(regStokesNumber) || name === "HISTORY") {
@@ -1678,7 +1697,24 @@ export class FrameStore {
             }
 
             const entryString = `${name}=  ${value}`;
+
+            const nameKey = name?.trim().toUpperCase() ?? "";
+            const valueKey = value.replace(/^'+|'+$/g, "").toUpperCase();
+            if (nameKey === "RADESYS" && valueKey === "FK4") {
+                system = SystemType.FK4;
+            }
+            if (nameKey === "DATE-OBS") {
+                epoch = entryString;
+                continue;
+            }
+
             AST.putFits(fitsChan, entryString);
+        }
+
+        if (system === SystemType.FK4 && epoch) {
+            // Only add epoch if the native system is FK4.
+            // Otherwise, coordinate conversion will be incorrect.
+            AST.putFits(fitsChan, epoch);
         }
         return AST.getFrameFromFitsChan(fitsChan, false);
     };
@@ -1697,6 +1733,10 @@ export class FrameStore {
         const regStokesNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.stokesNumber}`);
 
         const fitsChan = AST.emptyFitsChan();
+
+        let system = "";
+        let epoch = "";
+
         for (const entry of this.frameInfo.fileInfoExtended.headerEntries) {
             let name = entry.name;
 
@@ -1726,7 +1766,24 @@ export class FrameStore {
             }
 
             const entryString = `${name}=  ${value}`;
+
+            const nameKey = name?.trim().toUpperCase() ?? "";
+            const valueKey = value.replace(/^'+|'+$/g, "").toUpperCase();
+            if (nameKey === "RADESYS" && valueKey === "FK4") {
+                system = SystemType.FK4;
+            }
+            if (nameKey === "DATE-OBS") {
+                epoch = entryString;
+                continue;
+            }
+
             AST.putFits(fitsChan, entryString);
+        }
+
+        if (system === SystemType.FK4 && epoch) {
+            // Only add epoch if the native system is FK4.
+            // Otherwise, coordinate conversion will be incorrect.
+            AST.putFits(fitsChan, epoch);
         }
         return AST.getFrameFromFitsChan(fitsChan, false);
     };
@@ -1745,6 +1802,9 @@ export class FrameStore {
         const regDirYNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.dirYNumber}`);
         const regSpectralNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.spectralNumber}`);
         const regStokesNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.stokesNumber}`);
+
+        let system = "";
+        let epoch = "";
 
         for (const entry of this.frameInfo.fileInfoExtended.headerEntries) {
             let name = entry.name;
@@ -1782,7 +1842,24 @@ export class FrameStore {
             }
 
             const entryString = `${name}=  ${value}`;
+
+            const nameKey = name?.trim().toUpperCase() ?? "";
+            const valueKey = value.replace(/^'+|'+$/g, "").toUpperCase();
+            if (nameKey === "RADESYS" && valueKey === "FK4") {
+                system = SystemType.FK4;
+            }
+            if (nameKey === "DATE-OBS") {
+                epoch = entryString;
+                continue;
+            }
+
             AST.putFits(fitsChan, entryString);
+        }
+
+        if (system === SystemType.FK4 && epoch) {
+            // Only add epoch if the native system is FK4.
+            // Otherwise, coordinate conversion will be incorrect.
+            AST.putFits(fitsChan, epoch);
         }
         return AST.getFrameFromFitsChan(fitsChan, checkSkyDomain);
     };
@@ -1794,6 +1871,9 @@ export class FrameStore {
         const regDirYNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.dirYNumber}`);
         const regSpectralNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.spectralNumber}`);
         const regStokesNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.stokesNumber}`);
+
+        let system = "";
+        let epoch = "";
 
         for (const entry of this.frameInfo.fileInfoExtended.headerEntries) {
             let name = entry.name;
@@ -1831,7 +1911,24 @@ export class FrameStore {
             }
 
             const entryString = `${name}=  ${value}`;
+
+            const nameKey = name?.trim().toUpperCase() ?? "";
+            const valueKey = value.replace(/^'+|'+$/g, "").toUpperCase();
+            if (nameKey === "RADESYS" && valueKey === "FK4") {
+                system = SystemType.FK4;
+            }
+            if (nameKey === "DATE-OBS") {
+                epoch = entryString;
+                continue;
+            }
+
             AST.putFits(fitsChan, entryString);
+        }
+
+        if (system === SystemType.FK4 && epoch) {
+            // Only add epoch if the native system is FK4.
+            // Otherwise, coordinate conversion will be incorrect.
+            AST.putFits(fitsChan, epoch);
         }
         return AST.getFrameFromFitsChan(fitsChan, false);
     };
@@ -1879,6 +1976,28 @@ export class FrameStore {
 
     @action private endZoom = () => {
         this.zooming = false;
+    };
+
+    /**
+     * Converts positions from WCS coordinates to image coordinates.
+     * Note: This function is used by carta-python and must not be removed.
+     *
+     * @param wcsList - An array of positions in WCS coordinates.
+     * @returns An array of corresponding positions in image coordinates.
+     */
+    getImagePosFromWCS = (wcsList: WCSPoint2D[]): Point2D[] => {
+        return wcsList.map(wcs => getPixelValueFromWCS(this.wcsInfoForTransformation, wcs)).filter((point): point is Point2D => point !== null);
+    };
+
+    /**
+     * Converts positions from image coordinates to WCS coordinates.
+     * Note: This function is used by carta-python and must not be removed.
+     *
+     * @param posList - An array of positions in image coordinates.
+     * @returns An array of corresponding positions in WCS coordinates.
+     */
+    getWCSFromImagePos = (posList: Point2D[]): WCSPoint2D[] => {
+        return posList.map(p => getFormattedWCSPoint(this.wcsInfoForTransformation, p)).filter((point): point is WCSPoint2D => point !== null);
     };
 
     public getRegion = (regionId: number): RegionStore | undefined => {
@@ -1933,9 +2052,10 @@ export class FrameStore {
             while (precisionX < FrameStore.CursorInfoMaxPrecision && precisionY < FrameStore.CursorInfoMaxPrecision) {
                 const astString = new ASTSettingsString();
                 const overlaySettings = AppStore.Instance.overlaySettings;
+                const system = this.isNormalImage ? (overlaySettings.global.explicitSystem ?? SystemType.Image) : SystemType.Image;
                 astString.add(`Format(${this.dirX})`, this.isNormalImage ? overlaySettings.numbers.cursorFormatStringX(precisionX) : undefined);
                 astString.add(`Format(${this.dirY})`, this.isNormalImage ? overlaySettings.numbers.cursorFormatStringY(precisionY) : undefined);
-                astString.add("System", this.isNormalImage ? overlaySettings.global.explicitSystem : "cartesian");
+                setAstStringSystem(astString, system, overlaySettings.global);
 
                 const formattedNeighbourhood = normalizedNeighbourhood.map(pos => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString(), true));
                 const [p, n1, n2] = formattedNeighbourhood;
@@ -2062,7 +2182,7 @@ export class FrameStore {
             } else {
                 if ((this.spectralAxis && !this.spectralAxis.valid) || this.isSpectralPropsEqual) {
                     return this.channelInfo.getChannelIndexWCS(x);
-                } else {
+                } else if (this.spectralFrame && this.spectralType && this.spectralUnit && this.spectralSystem) {
                     // invert x in selected widget wcs to frame's default wcs
                     const tx = AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, x, false);
                     return this.channelInfo.getChannelIndexWCS(tx);
@@ -2168,23 +2288,23 @@ export class FrameStore {
         this.setIsOffsetCoord(!this.isOffsetCoord);
     };
 
-    @action private createWcsInfoShifted = () => {
+    @action private createWcsInfoOffset = () => {
         if (this.spatialReference) {
-            this.spatialReference.createWcsInfoShifted();
+            this.spatialReference.createWcsInfoOffset();
         } else {
             if (this.wcsInfo && this.offsetCenter) {
-                if (this.wcsInfoShifted) {
-                    AST.deleteObject(this.wcsInfoShifted);
+                if (this.wcsInfoOffset) {
+                    AST.deleteObject(this.wcsInfoOffset);
                 }
 
                 const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.offsetCenter);
 
                 if (centerInRad) {
-                    this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, centerInRad.x, centerInRad.y, this.offsetCenter.x, this.offsetCenter.y);
+                    this.wcsInfoOffset = AST.createOffsetFrameset(this.wcsInfo, centerInRad.x, centerInRad.y, this.offsetCenter.x, this.offsetCenter.y);
                     for (const frame of this.secondarySpatialImages) {
                         const frameCenterInRad = getUnformattedWCSPoint(frame.wcsInfo, frame.offsetCenter);
                         if (frame.isOffsetCoord && frameCenterInRad && frame.spatialTransform) {
-                            frame.wcsInfoShifted = AST.createShiftmapFrameset(
+                            frame.wcsInfoOffset = AST.createOffsetFrameset(
                                 frame.wcsInfo,
                                 frameCenterInRad.x,
                                 frameCenterInRad.y,
@@ -2208,7 +2328,7 @@ export class FrameStore {
         // re-calculate with different wcs system
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const system = AppStore.Instance.overlaySettings.global.explicitSystem;
-        if (!this.wcsInfoShifted) {
+        if (!this.wcsInfoOffset) {
             return {x: "NaN", y: "NaN"};
         }
         return getFormattedWCSPoint(this.wcsInfoForTransformation, this.offsetCenter) ?? {x: "NaN", y: "NaN"};
@@ -2243,7 +2363,7 @@ export class FrameStore {
             }
         }
 
-        this.createWcsInfoShifted();
+        this.createWcsInfoOffset();
 
         return true;
     };
@@ -2416,17 +2536,19 @@ export class FrameStore {
         }
 
         for (const contourSet of processedData.contourSets ?? []) {
-            if (contourSet.level) {
+            if (contourSet.level != null) {
                 let contourStore = this.contourStores.get(contourSet.level);
                 if (!contourStore) {
                     contourStore = new ContourStore();
                     this.contourStores.set(contourSet.level, contourStore);
                 }
 
-                if (!contourStore.isComplete && processedData.progress && processedData.progress > 0 && contourSet.coordinates) {
-                    contourStore.addContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
-                } else if (processedData.progress && contourSet.coordinates) {
-                    contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
+                if (processedData.progress != null && contourSet.coordinates) {
+                    if (!contourStore.isComplete && processedData.progress > 0) {
+                        contourStore.addContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
+                    } else {
+                        contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
+                    }
                 }
             }
         }
@@ -2440,10 +2562,12 @@ export class FrameStore {
     }
 
     @action updateFromVectorOverlayData(vectorOverlayData: CARTA.IVectorOverlayTileData) {
-        if (!this.vectorOverlayStore.isComplete && vectorOverlayData.progress && vectorOverlayData.progress > 0 && vectorOverlayData.intensityTiles && vectorOverlayData.angleTiles) {
-            this.vectorOverlayStore.addData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
-        } else if (vectorOverlayData.progress && vectorOverlayData.intensityTiles && vectorOverlayData.angleTiles) {
-            this.vectorOverlayStore.setData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
+        if (vectorOverlayData.progress != null && vectorOverlayData.intensityTiles && vectorOverlayData.angleTiles) {
+            if (!this.vectorOverlayStore.isComplete && vectorOverlayData.progress > 0) {
+                this.vectorOverlayStore.addData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
+            } else {
+                this.vectorOverlayStore.setData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
+            }
         }
     }
 
@@ -2810,7 +2934,7 @@ export class FrameStore {
                 yMin: 0,
                 yMax: this.frameInfo.fileInfoExtended.height
             },
-            smoothingFactor: config.pixelAveragingEnabled ? config.pixelAveraging : 1,
+            smoothingFactor: config.pixelAveraging,
             fractional: config.fractionalIntensity,
             threshold: config.thresholdEnabled ? config.threshold : NaN,
             thresholdOption: config.thresholdEnabled ? config.thresholdOption : NaN,
@@ -2865,11 +2989,11 @@ export class FrameStore {
 
         this.isOffsetCoord = frame.isOffsetCoord;
 
-        // initialize wcsInfoShifted if it is not existed
-        if (this.isOffsetCoord && !this.wcsInfoShifted && this.offsetCenter) {
+        // initialize wcsInfoOffset if it is not existed
+        if (this.isOffsetCoord && !this.wcsInfoOffset && this.offsetCenter) {
             const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.center);
             if (centerInRad) {
-                this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, centerInRad.x, centerInRad.y, this.offsetCenter.x, this.offsetCenter.y);
+                this.wcsInfoOffset = AST.createOffsetFrameset(this.wcsInfo, centerInRad.x, centerInRad.y, this.offsetCenter.x, this.offsetCenter.y);
             }
         }
 

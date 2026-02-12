@@ -93,7 +93,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const isPVImage = frame?.isPVImage;
 
         const getInfoString = (value: number, valueWcs: string | undefined) => {
-            return this.panAndZoomCoord === CoordinateMode.Image ? `WCS: ${valueWcs}` : `Image: ${toFixed(value, 3)} px`;
+            return this.panAndZoomCoord === CoordinateMode.Image ? `WCS: ${global.system !== SystemType.Image ? valueWcs : "-"}` : `Image: ${toFixed(value, 3)} px`;
         };
         const fovLabelInfo = this.panAndZoomCoord === CoordinateMode.Image ? "(px)" : "";
         const panAndZoomPanel = (

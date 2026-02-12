@@ -5,7 +5,7 @@ import {LabelType, NumberFormatType, SystemType} from "enums";
 import {WCSType} from "models";
 import {AlertStore, AppStore, PreferenceStore, type PvGeneratorWidgetStore} from "stores";
 import {type FrameStore, type OverlayBeamStore, WCS_PRECISION} from "stores/Frame";
-import {clamp, getColorForTheme, toFixed} from "utilities";
+import {ASTSettingsString, clamp, getColorForTheme, setAstStringSystem, setAstSystem, toFixed} from "utilities";
 
 const AST_DEFAULT_COLOR = "auto-blue";
 
@@ -34,31 +34,6 @@ export class Padding {
     bottom: number;
 }
 
-export class ASTSettingsString {
-    stringList: Array<string>;
-
-    constructor() {
-        this.stringList = [];
-    }
-
-    add(name: string, value: any, storeIf: boolean = true) {
-        if (value !== undefined && storeIf) {
-            const storedValue = typeof value === "boolean" ? (value ? 1 : 0) : value;
-            this.stringList.push(`${name}=${storedValue}`);
-        }
-    }
-
-    addSection(section: string) {
-        if (section !== undefined) {
-            this.stringList.push(section);
-        }
-    }
-
-    toString() {
-        return this.stringList.filter(str => str.length > 0).join(", ");
-    }
-}
-
 export class OverlayGlobalSettings {
     @observable labelType: LabelType = LabelType.Exterior;
     @observable color: string;
@@ -67,6 +42,8 @@ export class OverlayGlobalSettings {
 
     // We need this so that we know what to do if it's set to native
     @observable defaultSystem: SystemType = SystemType.Auto;
+    @observable defaultEquinox: string;
+    @observable defaultEpoch: string;
     @observable validWcs: boolean = false;
 
     public styleString(frame?: FrameStore) {
@@ -77,16 +54,17 @@ export class OverlayGlobalSettings {
 
         const isWcsFrameAndSystem = typeof this.explicitSystem !== "undefined" && this.explicitSystem !== SystemType.Image && frame?.validWcs;
         if (isWcsFrameAndSystem) {
-            astString.add("System", this.explicitSystem);
+            setAstStringSystem(astString, this.explicitSystem, this);
         }
 
-        if (!AppStore.Instance.overlaySettings.labels?.customText && frame?.wcsInfo) {
-            const symbolX = AST.getString(frame.wcsInfo, "Symbol(1)");
-            const symbolY = AST.getString(frame.wcsInfo, "Symbol(2)");
-            const labelX = AST.getString(frame.wcsInfo, "Label(1)");
-            const labelY = AST.getString(frame.wcsInfo, "Label(2)");
-            const haveUnitX = AST.getString(frame.wcsInfo, "Unit(1)") !== "";
-            const haveUnitY = AST.getString(frame.wcsInfo, "Unit(2)") !== "";
+        const labelFrameSet = frame?.isOffsetCoord ? (frame?.wcsInfoOffset ?? frame?.wcsInfo) : frame?.wcsInfo;
+        if (!AppStore.Instance.overlaySettings.labels?.customText && labelFrameSet) {
+            const symbolX = AST.getString(labelFrameSet, "Symbol(1)");
+            const symbolY = AST.getString(labelFrameSet, "Symbol(2)");
+            const labelX = AST.getString(labelFrameSet, "Label(1)");
+            const labelY = AST.getString(labelFrameSet, "Label(2)");
+            const haveUnitX = AST.getString(labelFrameSet, "Unit(1)") !== "";
+            const haveUnitY = AST.getString(labelFrameSet, "Unit(2)") !== "";
 
             const isSysPixel = (this.explicitSystem === undefined && !(frame?.isPVImage || frame?.isSwappedZ)) || this.explicitSystem === SystemType.Image;
             const getSystemName = (symbolXY: string, isSysPixel: boolean, haveUnit: boolean, explicitSystem: SystemType) => {
@@ -102,14 +80,6 @@ export class OverlayGlobalSettings {
             const systemNameY = getSystemName(symbolY, isSysPixel, haveUnitY, this?.explicitSystem ?? SystemType.Image);
             astString.add("Label(1)", `"${labelX.replace(/%/g, "%%%%").replace(/"/g, "”")}${systemNameX}"`, labelX !== undefined);
             astString.add("Label(2)", `"${labelY.replace(/%/g, "%%%%").replace(/"/g, "”")}${systemNameY}"`, labelY !== undefined);
-        }
-
-        if ((frame?.isXY || frame?.isYX) && !frame?.isPVImage && isWcsFrameAndSystem) {
-            if (this.system === SystemType.FK4) {
-                astString.add("Equinox", "1950");
-            } else {
-                astString.add("Equinox", "2000");
-            }
         }
 
         return astString.toString();
@@ -161,6 +131,14 @@ export class OverlayGlobalSettings {
 
     @action setDefaultSystem(system: SystemType) {
         this.defaultSystem = system;
+    }
+
+    @action setDefaultEquinox(equinox: string) {
+        this.defaultEquinox = equinox;
+    }
+
+    @action setDefaultEpoch(epoch: string) {
+        this.defaultEpoch = epoch;
     }
 
     @action setValidWcs(validWcs: boolean) {
@@ -921,7 +899,7 @@ export class OverlaySettings {
             this.setFormatsFromSystem();
             AppStore.Instance.frames.forEach(frame => {
                 if (frame?.validWcs && frame?.wcsInfoForTransformation && this.global.explicitSystem && this.global.explicitSystem !== SystemType.Image) {
-                    AST.set(frame.wcsInfoForTransformation, `System=${this.global.explicitSystem}`);
+                    setAstSystem(frame.wcsInfoForTransformation, this.global.explicitSystem, this.global);
                 }
             });
         });
@@ -996,6 +974,9 @@ export class OverlaySettings {
         this.numbers.setValidWcs(frame.validWcs);
 
         this.global.setDefaultSystem(frame.defaultWcsSystem);
+        this.global.setDefaultEquinox(frame.defaultWcsEquinox);
+        this.global.setDefaultEpoch(frame.defaultWcsEpoch);
+
         this.setFormatsFromSystem();
 
         if (this.global.system === SystemType.Auto) {

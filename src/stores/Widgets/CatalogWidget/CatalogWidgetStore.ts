@@ -10,6 +10,15 @@ import {clamp, minMaxArray} from "utilities";
 
 export type ValueClip = "size-min" | "size-max" | "angle-min" | "angle-max";
 
+// defined to be consistent with the enum in carta_computation.cc
+enum CatalogMapType {
+    SIZE_DIAMETER = 0,
+    SIZE_AREA = 1,
+    COLOR = 2,
+    ORIENTATION = 3,
+    SIZE_DIAMETER_ANGULAR = 4
+}
+
 export class CatalogWidgetStore {
     public static readonly MinOverlaySize = 1;
     public static readonly MaxOverlaySize = 50;
@@ -48,8 +57,8 @@ export class CatalogWidgetStore {
     ]);
 
     @observable catalogFileId: number = 0;
-    @observable headerTableColumnWidts: Array<number> = [150, 75, 65, 100, 230];
-    @observable dataTableColumnWidts: Array<number> = [];
+    @observable headerTableColumnWidths: Array<number> = [150, 75, 65, 100, 230];
+    @observable dataTableColumnWidths: Array<number> = [];
     @observable showSelectedData: boolean = false;
     @observable catalogTableAutoScroll: boolean = false;
     @observable catalogPlotType: CatalogPlotType = CatalogPlotType.ImageOverlay;
@@ -717,12 +726,12 @@ export class CatalogWidgetStore {
         this.worldSizeUnit = unit;
     }
 
-    @action setHeaderTableColumnWidts(vals: Array<number>) {
-        this.headerTableColumnWidts = vals;
+    @action setHeaderTableColumnWidths(vals: Array<number>) {
+        this.headerTableColumnWidths = vals;
     }
 
-    @action setDataTableColumnWidts(vals: Array<number>) {
-        this.dataTableColumnWidts = vals;
+    @action setDataTableColumnWidths(vals: Array<number>) {
+        this.dataTableColumnWidths = vals;
     }
 
     @action setShowSelectedData(val: boolean) {
@@ -911,7 +920,9 @@ export class CatalogWidgetStore {
         if (!this.disableSizeMap && column?.length && this.sizeColumnMin.clipd !== undefined && this.sizeColumnMax.clipd !== undefined) {
             const pointSize = this.pointSizebyType;
             const min = (this.isImagePixelSize ? 0 : this.sizeArea ? this.shapeSettings?.areaBase : this.shapeSettings?.diameterBase) ?? NaN;
-            return CARTACompute.CalculateCatalogSize(column, this.sizeColumnMin.clipd, this.sizeColumnMax.clipd, pointSize.min + min, pointSize.max + min, this.sizeScalingType, this.sizeArea, this.pixelSizeFactor);
+            const sizeMapType = this.catalogDisplayMode === CatalogDisplayMode.WORLD ? CatalogMapType.SIZE_DIAMETER_ANGULAR : this.sizeArea ? CatalogMapType.SIZE_AREA : CatalogMapType.SIZE_DIAMETER;
+
+            return CARTACompute.CalculateCatalogSize(column, this.sizeColumnMin.clipd, this.sizeColumnMax.clipd, pointSize.min + min, pointSize.max + min, this.sizeScalingType, sizeMapType, this.pixelSizeFactor);
         }
         return new Float32Array(0);
     }
@@ -921,7 +932,9 @@ export class CatalogWidgetStore {
         if (!this.disableSizeMinorMap && column?.length && this.sizeMinorColumnMin.clipd !== undefined && this.sizeMinorColumnMax.clipd !== undefined) {
             const pointSize = this.minorPointSizebyType;
             const min = (this.isImagePixelSize ? 0 : this.sizeArea ? this.shapeSettings?.areaBase : this.shapeSettings?.diameterBase) ?? NaN;
-            return CARTACompute.CalculateCatalogSize(column, this.sizeMinorColumnMin.clipd, this.sizeMinorColumnMax.clipd, pointSize.min + min, pointSize.max + min, this.sizeMinorScalingType, this.sizeMinorArea, this.pixelSizeFactor);
+            const sizeMapType = this.catalogDisplayMode === CatalogDisplayMode.WORLD ? CatalogMapType.SIZE_DIAMETER_ANGULAR : this.sizeMinorArea ? CatalogMapType.SIZE_AREA : CatalogMapType.SIZE_DIAMETER;
+
+            return CARTACompute.CalculateCatalogSize(column, this.sizeMinorColumnMin.clipd, this.sizeMinorColumnMax.clipd, pointSize.min + min, pointSize.max + min, this.sizeMinorScalingType, sizeMapType, this.pixelSizeFactor);
         }
         return new Float32Array(0);
     }

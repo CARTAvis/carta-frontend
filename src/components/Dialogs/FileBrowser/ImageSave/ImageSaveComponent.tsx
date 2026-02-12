@@ -1,7 +1,7 @@
 import * as React from "react";
 import {FormGroup, HTMLSelect, Intent, Label, NonIdealState, type OptionProps, Switch, Text} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {action, autorun, makeObservable} from "mobx";
+import {action, autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
@@ -19,7 +19,7 @@ export class ImageSaveComponent extends React.Component {
         autorun(() => {
             const appStore = AppStore.Instance;
             const numChannels = appStore.activeFrame?.numChannels;
-            if ((numChannels != null && numChannels <= 1) || (this.validSaveSpectralRangeStart && this.validSaveSpectralRangeEnd)) {
+            if ((numChannels !== undefined && numChannels <= 1) || (this.validSaveSpectralRangeStart && this.validSaveSpectralRangeEnd)) {
                 appStore.endFileSaving();
             } else {
                 appStore.startFileSaving();
@@ -27,12 +27,16 @@ export class ImageSaveComponent extends React.Component {
         });
     }
 
-    get validSaveSpectralRangeStart() {
-        return AppStore.Instance.activeFrame?.frameInfo.fileInfoExtended.stokes === 1;
+    @computed get validSaveSpectralRangeStart() {
+        const fileBrowser = FileBrowserStore.Instance;
+        const min = AppStore.Instance.activeFrame?.channelValueBounds?.min;
+        return min !== undefined && min <= fileBrowser.saveSpectralStart && fileBrowser.saveSpectralStart <= fileBrowser.saveSpectralEnd;
     }
 
-    get validSaveSpectralRangeEnd() {
-        return AppStore.Instance.activeFrame?.frameInfo.fileInfoExtended.stokes === 1;
+    @computed get validSaveSpectralRangeEnd() {
+        const fileBrowser = FileBrowserStore.Instance;
+        const max = AppStore.Instance.activeFrame?.channelValueBounds?.max;
+        return max !== undefined && fileBrowser.saveSpectralStart <= fileBrowser.saveSpectralEnd && fileBrowser.saveSpectralEnd <= max;
     }
 
     private onChangeShouldDropDegenerateAxes = () => {
@@ -151,7 +155,7 @@ export class ImageSaveComponent extends React.Component {
         const numChannels = activeFrame?.numChannels;
         const min = activeFrame?.channelValueBounds?.min ?? 0;
         const max = activeFrame?.channelValueBounds?.max ?? 1;
-        const delta = numChannels != null && numChannels > 1 ? Math.abs(max - min) / (numChannels - 1) : Math.abs(max - min);
+        const delta = numChannels !== undefined && numChannels > 1 ? Math.abs(max - min) / (numChannels - 1) : Math.abs(max - min);
         const majorStepSize = delta * 0.1;
         return (
             <React.Fragment>
@@ -166,7 +170,7 @@ export class ImageSaveComponent extends React.Component {
                             <FormGroup className="region-select" label={"Region"} inline={true}>
                                 <HTMLSelect value={fileBrowser.saveRegionId} onChange={this.handleRegionChanged} options={regionOptions} />
                             </FormGroup>
-                            {numChannels != null && numChannels > 1 && (
+                            {numChannels !== undefined && numChannels > 1 && (
                                 <React.Fragment>
                                     <div className="coordinate-select">
                                         <SpectralSettingsComponent

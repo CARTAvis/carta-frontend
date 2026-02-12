@@ -6,6 +6,7 @@ const path = require("path");
 const versions = require('./versions.json');
 const packageJson = require('../package.json');
 
+
 const lightCodeTheme = themes.github;
 const darkCodeTheme = themes.dracula;
 const devVersion = packageJson.version;
@@ -29,6 +30,7 @@ const apiButton = `
     <a class="navbar__link menu__link api_link" onclick="${apiOnClick}">API</a>
 `;
 
+// eslint-disable-next-line tsdoc/syntax
 /** @type {import('@docusaurus/types').Config} */
 const config = {
     title: "CARTA Frontend Documentation",
@@ -48,7 +50,12 @@ const config = {
     trailingSlash: false,
 
     onBrokenLinks: "warn",
-    onBrokenMarkdownLinks: "warn",
+
+    markdown: {
+        hooks: {
+            onBrokenMarkdownLinks: "warn"
+        }
+    },
 
     // Even if you don't use internalization, you can use this field to set useful
     // metadata like html lang. For example, if your site is Chinese, you may want
@@ -61,6 +68,7 @@ const config = {
     presets: [
         [
             "classic",
+            // eslint-disable-next-line tsdoc/syntax
             /** @type {import('@docusaurus/preset-classic').Options} */
             ({
                 docs: {
@@ -82,6 +90,7 @@ const config = {
     ],
 
     themeConfig:
+        // eslint-disable-next-line tsdoc/syntax
         /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
         ({
             navbar: {
@@ -127,7 +136,7 @@ const config = {
 
     plugins: [
         [
-            "docusaurus-plugin-typedoc-api",
+            "@loveluthien/docusaurus-plugin-typedoc-api",
             {
                 projectRoot: path.join(__dirname, ".."),
                 packages: [

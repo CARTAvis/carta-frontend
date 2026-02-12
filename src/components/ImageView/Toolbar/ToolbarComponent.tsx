@@ -239,10 +239,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const handleDistanceMeasuringClicked = () => {
             this.handleActiveLayerClicked(ImageViewLayer.RegionCreating);
             const activeFrame = appStore.activeFrame;
-            if (activeFrame) {
-                activeFrame.regionSet.setNewRegionType(CARTA.RegionType.ANNRULER);
-                activeFrame.regionSet.setMode(RegionMode.CREATING);
-            }
+            activeFrame?.regionSet.setNewRegionType(CARTA.RegionType.ANNRULER);
+            activeFrame?.regionSet.setMode(RegionMode.CREATING);
         };
 
         return (

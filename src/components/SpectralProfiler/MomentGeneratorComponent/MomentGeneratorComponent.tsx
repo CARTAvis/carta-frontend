@@ -62,16 +62,13 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
 
     private filterMoment: ItemPredicate<CARTA.Moment> = (query, moment, index, exactMatch) => {
         const momentContent = MOMENT_TEXT.get(moment);
-        if (!momentContent) {
-            return false;
-        }
-        const normalizedMoment = momentContent.tag.toLowerCase();
+        const normalizedMoment = momentContent?.tag.toLowerCase();
         const normalizedQuery = query.toLowerCase();
 
         if (exactMatch) {
             return normalizedMoment === normalizedQuery;
         } else {
-            return momentContent.tag.indexOf(normalizedQuery) === 0;
+            return momentContent?.tag.indexOf(normalizedQuery) === 0;
         }
     };
 
@@ -179,13 +176,11 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
             </React.Fragment>
         );
 
-        const spectralPanel = (
+        const spectralPanel = frame && (
             <React.Fragment>
-                {frame && (
-                    <SpectralSettingsComponent frame={frame} onSpectralCoordinateChange={widgetStore.setSpectralCoordinate} onSpectralSystemChange={widgetStore.setSpectralSystem} disable={frame?.isPVImage || !frame?.isSpectralChannel} />
-                )}
-                {frame && frame.numChannels > 1 && (
-                    <FormGroup label="Range" inline={true} labelInfo={frame?.spectralUnit ? `(${frame.spectralUnit})` : ""}>
+                <SpectralSettingsComponent frame={frame} onSpectralCoordinateChange={widgetStore.setSpectralCoordinate} onSpectralSystemChange={widgetStore.setSpectralSystem} disable={frame.isPVImage || !frame.isSpectralChannel} />
+                {frame.numChannels > 1 && (
+                    <FormGroup label="Range" inline={true} labelInfo={frame.spectralUnit ? `(${frame.spectralUnit})` : ""}>
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
                                 <SafeNumericInput value={widgetStore.channelValueRange[0]} buttonPosition="none" onValueChange={val => this.onChannelFromChanged(val)} data-testid="moment-generator-spectral-range-from-input" />
@@ -201,7 +196,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                         </div>
                     </FormGroup>
                 )}
-                {frame && <React.Fragment>{this.renderRestFreqInput(frame)}</React.Fragment>}
+                <React.Fragment>{this.renderRestFreqInput(frame)}</React.Fragment>
             </React.Fragment>
         );
 
@@ -310,7 +305,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     {momentsPanel}
                 </div>
                 <TaskProgressDialogComponent
-                    isOpen={!!(frame && frame.isRequestingMoments && frame.requestingMomentsProgress < 1)}
+                    isOpen={!!frame && frame.isRequestingMoments && frame.requestingMomentsProgress < 1}
                     progress={frame?.requestingMomentsProgress ?? 0}
                     timeRemaining={appStore.estimatedTaskRemainingTime ?? 0}
                     cancellable={true}

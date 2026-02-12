@@ -136,7 +136,9 @@ export const Anchor = (props: AnchorProps) => {
 
     const handleCircleDraw = (ctx, shape) => {
         const stage = shape.getStage();
-        if (!stage) return;
+        if (!stage) {
+            return;
+        }
 
         const inverseScale = 1 / stage.scaleX();
         const radius = CIRCLE_ANCHOR_RADIUS * inverseScale;
@@ -197,7 +199,9 @@ export const CursorMarker = (props: CursorMarkerProps) => {
 
     const handleCrossDraw = (ctx, shape) => {
         const stage = shape.getStage();
-        if (!stage) return;
+        if (!stage) {
+            return;
+        }
 
         const inverseScale = 1 / stage.scaleX();
         const offset = -CURSOR_CROSS_CENTER_SQUARE * 0.5 * inverseScale;

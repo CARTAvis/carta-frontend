@@ -156,16 +156,16 @@ export class AppStore {
     // dynamic zIndex
     public zIndexManager = new FloatingObjzIndexManager();
 
-    private appContainer: HTMLElement;
+    private appContainer: HTMLElement | null = null;
     private fileCounter = 0;
     private previousConnectionStatus: ConnectionStatus;
     private canvasUpdatedTimer;
 
-    public getAppContainer = (): HTMLElement => {
+    public getAppContainer = (): HTMLElement | null => {
         return this.appContainer;
     };
 
-    public setAppContainer = (container: HTMLElement) => {
+    public setAppContainer = (container: HTMLElement | null) => {
         this.appContainer = container;
     };
 
@@ -1262,6 +1262,7 @@ export class AppStore {
         try {
             const ack = yield this.backendService.importRegion(directory, file, type, frame.frameInfo.fileId);
             if (frame && ack.success && ack.regions) {
+                this.fileBrowserStore.setHasReceivedImportRegionAck(true);
                 const regions = Object.entries(ack.regions) as [string, CARTA.IRegionInfo][];
                 const regionStyleMap = new Map<string, CARTA.IRegionStyle>(Object.entries(ack.regionStyles));
                 let startIndex = 0;
@@ -2188,7 +2189,7 @@ export class AppStore {
         }
     };
 
-    handleSpectralProfileStream = (spectralProfileData: CARTA.SpectralProfileData) => {
+    @action handleSpectralProfileStream = (spectralProfileData: CARTA.SpectralProfileData) => {
         const frame = this.frames.find(frame => frame.frameInfo.fileId === spectralProfileData.fileId);
         if (frame) {
             let frameMap = this.spectralProfiles.get(spectralProfileData.fileId);
@@ -2215,7 +2216,7 @@ export class AppStore {
         }
     };
 
-    handleRegionHistogramStream = (regionHistogramData: CARTA.RegionHistogramData) => {
+    @action handleRegionHistogramStream = (regionHistogramData: CARTA.RegionHistogramData) => {
         if (!regionHistogramData) {
             return;
         }
@@ -2434,8 +2435,8 @@ export class AppStore {
         this.updateTaskProgress(fittingProgress.progress);
     };
 
-    handleVectorTileStream = (vectorTileData: CARTA.IVectorOverlayTileData) => {
-        const updatedFrame = this.getFrame(vectorTileData.fileId ?? -1);
+    handleVectorTileStream = (vectorTileData: CARTA.VectorOverlayTileData) => {
+        const updatedFrame = this.getFrame(vectorTileData.fileId);
         if (updatedFrame) {
             updatedFrame.updateFromVectorOverlayData(vectorTileData);
         }
@@ -2514,6 +2515,30 @@ export class AppStore {
                 };
             }
 
+            let vectorOverlaySettings: CARTA.ISetVectorOverlayParameters = {};
+            if (frame.vectorOverlayConfig.enabled) {
+                vectorOverlaySettings = {
+                    fileId: frame.frameInfo.fileId,
+                    imageBounds: {
+                        xMin: 0,
+                        xMax: frame.frameInfo.fileInfoExtended.width,
+                        yMin: 0,
+                        yMax: frame.frameInfo.fileInfoExtended.height
+                    },
+                    smoothingFactor: frame.vectorOverlayConfig.pixelAveraging,
+                    fractional: frame.vectorOverlayConfig.fractionalIntensity,
+                    threshold: frame.vectorOverlayConfig.thresholdEnabled ? frame.vectorOverlayConfig.threshold : NaN,
+                    thresholdOption: frame.vectorOverlayConfig.thresholdEnabled ? frame.vectorOverlayConfig.thresholdOption : NaN,
+                    debiasing: frame.vectorOverlayConfig.debiasing,
+                    qError: frame.vectorOverlayConfig.qError,
+                    uError: frame.vectorOverlayConfig.uError,
+                    stokesIntensity: frame.vectorOverlayConfig.intensitySource,
+                    stokesAngle: frame.vectorOverlayConfig.angularSource,
+                    compressionType: CARTA.CompressionType.NONE,
+                    compressionQuality: this.preferenceStore.contourCompressionLevel
+                };
+            }
+
             return {
                 file: info.fileInfo.name,
                 directory: info.directory,
@@ -2526,7 +2551,8 @@ export class AppStore {
                 regions: mapToObject(regions),
                 contourSettings,
                 stokesFiles: frame.stokesFiles,
-                supportAipsBeam: AppStore.Instance.preferenceStore.aipsBeamSupport
+                supportAipsBeam: AppStore.Instance.preferenceStore.aipsBeamSupport,
+                vectorOverlaySettings
             };
         });
 
@@ -2563,6 +2589,52 @@ export class AppStore {
         this.initRequirements();
         this.resumingSession = false;
         this.backendService.connectionDropped = false;
+
+        // Reset file browser loading states
+        if (this.fileBrowserStore.isImportingRegions) {
+            this.fileBrowserStore.setImportingRegions(false);
+            if (this.fileBrowserStore.hasReceivedImportRegionAck) {
+                this.fileBrowserStore.hideFileBrowser();
+            }
+            this.fileBrowserStore.resetLoadingStates();
+        }
+
+        const frame = this.activeFrame;
+
+        // Reset PV generator states
+        if (frame?.isRequestingPV) {
+            frame.resetPvRequestState();
+            frame.setIsRequestPVCancelling(false);
+            this.endFileLoading();
+        }
+
+        // Reset moment generator states
+        if (frame?.isRequestingMoments) {
+            frame.resetMomentRequestState();
+            this.endFileLoading();
+        }
+
+        // Reset cube histogram states
+        if (frame?.renderConfig?.useCubeHistogram) {
+            frame.renderConfig.setUseCubeHistogram(false);
+            this.cancelCubeHistogramRequest();
+        }
+
+        // Reset cube histogram states for contour
+        const dataSource = this.contourDataSource;
+        if (dataSource?.renderConfig?.useCubeHistogramContours) {
+            dataSource.renderConfig.setUseCubeHistogramContours(false);
+            this.cancelCubeHistogramRequest(dataSource.frameInfo.fileId);
+        }
+
+        // Reset fitting states
+        const fittingStore = this.imageFittingStore;
+        if (fittingStore?.isFitting) {
+            if (this.fileLoading) {
+                this.endFileLoading();
+            }
+            fittingStore.resetFittingState();
+        }
     };
 
     @flow.bound

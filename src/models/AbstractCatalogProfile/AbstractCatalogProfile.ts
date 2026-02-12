@@ -52,6 +52,7 @@ export abstract class AbstractCatalogProfileStore {
     @observable sortingInfo: {columnName: string | null; sortingType: CARTA.SortingType | null} = {columnName: null, sortingType: null};
     @observable sortedIndexMap: number[] = [];
     @observable filterIndexMap: number[] = [];
+    @observable isUpdateColumnMode: boolean = false;
 
     private _catalogData: Map<number, ProcessedColumnData>;
     public static readonly CoordinateSystemName = new Map<CatalogSystemType, string>([
@@ -309,6 +310,10 @@ export abstract class AbstractCatalogProfileStore {
 
     @action setProgress(val: number) {
         this.progress = val;
+    }
+
+    @action setIsUpdateColumn(val: boolean) {
+        this.isUpdateColumnMode = val;
     }
 
     getSortedIndices(selectedPointIndices: number[]): number[] {
