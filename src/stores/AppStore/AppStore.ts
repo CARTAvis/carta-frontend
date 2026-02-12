@@ -2527,7 +2527,7 @@ export class AppStore {
                         yMin: 0,
                         yMax: frame.frameInfo.fileInfoExtended.height
                     },
-                    smoothingFactor: frame.vectorOverlayConfig.pixelAveragingEnabled ? frame.vectorOverlayConfig.pixelAveraging : 1,
+                    smoothingFactor: frame.vectorOverlayConfig.pixelAveraging,
                     fractional: frame.vectorOverlayConfig.fractionalIntensity,
                     threshold: frame.vectorOverlayConfig.thresholdEnabled ? frame.vectorOverlayConfig.threshold : NaN,
                     thresholdOption: frame.vectorOverlayConfig.thresholdEnabled ? frame.vectorOverlayConfig.thresholdOption : NaN,

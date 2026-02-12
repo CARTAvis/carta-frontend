@@ -272,13 +272,12 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
     constructor(props: FileListTableComponentProps) {
         super(props);
+        makeObservable(this);
 
         // Initialize cached values
         this.cachedFileList = props.fileList;
         this.cachedSortingString = props.sortingString;
         this.cachedFilterString = props.filterString;
-
-        makeObservable(this);
     }
 
     componentDidUpdate(prevProps: FileListTableComponentProps) {

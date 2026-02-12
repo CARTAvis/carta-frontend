@@ -104,7 +104,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
     constructor(props: WidgetProps) {
         super(props);
-
+        makeObservable(this);
         this.widgetId = props.id;
         this.floatingSettingsId = props.floatingSettingsId;
 

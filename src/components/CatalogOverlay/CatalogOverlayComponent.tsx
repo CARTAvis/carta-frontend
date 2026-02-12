@@ -143,7 +143,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
-
+        makeObservable(this);
         this.widgetId = props.id;
 
         if (!CatalogStore.Instance.catalogProfiles.has(this.widgetId)) {
