@@ -9,7 +9,7 @@ import {closeTo, isAutoColor} from "utilities";
 import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
 export class HistogramWidgetStore extends RegionWidgetStore {
-    @observable settingsTabId: HistogramSettingsTabs = HistogramSettingsTabs.STYLING;
+    @observable settingsTabId: HistogramSettingsTabs = HistogramSettingsTabs.CONFIG;
 
     @observable coordinate: string = "z";
     @observable minX: number | undefined = undefined;
