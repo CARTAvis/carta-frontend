@@ -44,6 +44,10 @@ export default defineConfig({
     },
     tools: {
         rspack: {
+            node: {
+                __filename: false,
+                __dirname: false,
+            },
             resolveLoader: {
                 alias: {
                     "worker-loader": require.resolve("worker-rspack-loader"),
