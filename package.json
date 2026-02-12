@@ -9,6 +9,7 @@
         "@babel/preset-env": "^7.28.3",
         "@babel/preset-react": "^7.27.1",
         "@babel/preset-typescript": "^7.27.1",
+        "@blueprintjs/eslint-plugin": "^5.0.0",
         "@blueprintjs/tslint-config": "^4.1.6",
         "@blueprintjs/core": "^5.11.0",
         "@blueprintjs/icons": "^5.7.1",
