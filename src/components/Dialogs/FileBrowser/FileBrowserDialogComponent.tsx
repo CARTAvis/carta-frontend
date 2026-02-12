@@ -925,7 +925,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 fileProgress={fileProgress}
                                 fileList={fileBrowserStore.getfileListByMode}
                                 fileBrowserMode={fileBrowserStore.browserMode}
-                                selectedFile={fileBrowserStore.selectedFile as any}
+                                selectedFile={fileBrowserStore.selectedFile}
                                 selectedHDU={fileBrowserStore.selectedHDU || ""}
                                 filterString={this.debouncedFilterString}
                                 filterType={appStore.preferenceStore.fileFilteringType}
@@ -942,9 +942,9 @@ export class FileBrowserDialogComponent extends React.Component {
                             <FileInfoComponent
                                 infoTypes={FileBrowserDialogComponent.GetFileInfoTypes(fileBrowserStore.browserMode)}
                                 HDUOptions={{HDUList: fileBrowserStore.HDUList || [], handleSelectedHDUChange: fileBrowserStore.selectHDU}}
-                                fileInfoExtended={fileBrowserStore.fileInfoExtended as any}
+                                fileInfoExtended={fileBrowserStore.fileInfoExtended}
                                 regionFileInfo={fileBrowserStore.regionFileInfo ? fileBrowserStore.regionFileInfo.join("\n") : ""}
-                                catalogFileInfo={fileBrowserStore.catalogFileInfo as any}
+                                catalogFileInfo={fileBrowserStore.catalogFileInfo}
                                 selectedTab={fileBrowserStore.selectedTab as FileInfoType}
                                 handleTabChange={this.handleTabChange}
                                 isLoading={fileBrowserStore.loadingInfo}

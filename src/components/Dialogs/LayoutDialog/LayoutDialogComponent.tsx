@@ -2,7 +2,7 @@ import type {CSSProperties} from "react";
 import * as React from "react";
 import {AnchorButton, ButtonGroup, Classes, Collapse, type DialogProps, FormGroup, HTMLSelect, HTMLTable, InputGroup, Intent, Position, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
-import {action, computed, flow, makeObservable, observable} from "mobx";
+import {action, computed, flow, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
@@ -191,7 +191,7 @@ export class LayoutDialogComponent extends React.Component {
                             </AnchorButton>
                             <AnchorButton
                                 icon="edit"
-                                onClick={() => (this.editingLayoutName = this.editingLayoutName === layoutName ? "" : layoutName)}
+                                onClick={() => runInAction(() => (this.editingLayoutName = this.editingLayoutName === layoutName ? "" : layoutName))}
                                 disabled={PresetLayout.PRESETS.includes(layoutName)}
                                 active={this.editingLayoutName === layoutName}
                             />
@@ -230,7 +230,7 @@ export class LayoutDialogComponent extends React.Component {
                         <Tab
                             id={LayoutDialogMode.DynamicLayout}
                             title="Dynamic Layout"
-                            panel={<LayoutMappingComponent orderedLayoutNames={layoutStore.orderedLayoutNames} existLayoutMapping={preferenceStore.existLayoutMapping} activeFrame={appStore.activeFrame as any} />}
+                            panel={<LayoutMappingComponent orderedLayoutNames={layoutStore.orderedLayoutNames} existLayoutMapping={preferenceStore.existLayoutMapping} activeFrame={appStore.activeFrame} />}
                         />
                     </Tabs>
                 </ScrollShadow>
@@ -335,7 +335,7 @@ function LayoutMappingRow({ctypes, layoutName}: {ctypes: string; layoutName: str
 interface LayoutMappingComponentProps {
     orderedLayoutNames: string[];
     existLayoutMapping: {[key: string]: string};
-    activeFrame: FrameStore;
+    activeFrame: FrameStore | null;
 }
 
 export const LayoutMappingComponent = React.memo((props: LayoutMappingComponentProps) => {

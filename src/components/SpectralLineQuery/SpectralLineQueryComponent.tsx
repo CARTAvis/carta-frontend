@@ -19,10 +19,11 @@ const PLOT_LINES_LIMIT = 1000;
 
 @observer
 export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
+    
     @observable width: number = 750;
     @observable height: number = 600;
-    @observable widgetId: string = "";
     @observable headerTableColumnWidths: Array<number> = [150, 70, 300];
+    private widgetId: string;
     private headerTableRef: Table2 | undefined;
     private resultTableRef: Table2 | undefined;
     private scrollToTopHandle;

@@ -2,7 +2,8 @@ declare var Module: any;
 declare var addOnPostRun: any;
 const ctx: Worker = self as any;
 const FLT_MAX = 3.402823466e+38;
-// Allocate a 4 MB uncompressed buffer and 1 MB uncompressed buffer
+
+// Initialize module properties
 Module.nDataBytes = 4e6;
 Module.nDataBytesCompressed = 1e6;
 Module.dataPtr = null;
@@ -13,9 +14,10 @@ Module.dataHeapUint = null;
 Module.debugOutput = false;
 Module.id = -1;
 
-const zfpDecompress = Module.cwrap("zfpDecompress", "number", ["number", "number", "number", "number", "number", "number"]);
-
 addOnPostRun(() => {
+    // Move all cwrap calls here
+    const zfpDecompress = Module.cwrap("zfpDecompress", "number", ["number", "number", "number", "number", "number", "number"]);
+
     // Allocate a 4 MB uncompressed buffer and 1 MB uncompressed buffer
     Module.nDataBytes = 4e6;
     Module.nDataBytesCompressed = 1e6;
@@ -26,44 +28,44 @@ addOnPostRun(() => {
     Module.dataHeapUint = new Uint8Array(Module.HEAPU8.buffer, Module.dataPtrUint, Module.nDataBytesCompressed);
 
     ctx.postMessage(["ready"]);
+
+    Module.zfpDecompressUint8WASM = function (u8: Uint8Array, compressedSize: number, nx: number, ny: number, precision: number) {
+        let newNumDataBytes = nx * ny * 4;
+        if (!Module.dataPtr || newNumDataBytes > Module.nDataBytes) {
+            if (Module.dataHeap) {
+                Module._free(Module.dataHeap.byteOffset);
+            }
+            Module.nDataBytes = newNumDataBytes;
+            Module.dataPtr = Module._malloc(Module.nDataBytes);
+            Module.dataHeap = new Uint8Array(Module.HEAPU8.buffer, Module.dataPtr, Module.nDataBytes);
+            if (Module.debugOutput) {
+                console.log(`ZFP Worker ${Module.id} allocating new uncompressed buffer (${Module.nDataBytes / 1000} KB)`);
+            }
+            Module.resultFloat = new Float32Array(Module.dataHeap.buffer, Module.dataHeap.byteOffset, nx * ny);
+        }
+
+        let newNumDataBytesCompressed = u8.length;
+        if (!Module.dataPtrUint || newNumDataBytesCompressed > Module.nDataBytesCompressed) {
+            if (Module.dataHeapUint) {
+                Module._free(Module.dataHeapUint.byteOffset);
+            }
+            Module.nDataBytesCompressed = newNumDataBytesCompressed;
+            Module.dataPtrUint = Module._malloc(Module.nDataBytesCompressed);
+            Module.dataHeapUint = new Uint8Array(Module.HEAPU8.buffer, Module.dataPtrUint, Module.nDataBytesCompressed);
+            if (Module.debugOutput) {
+                console.log(`ZFP Worker ${Module.id} allocating new compressed buffer (${Module.nDataBytesCompressed / 1000} KB)`);
+            }
+        }
+
+        Module.dataHeapUint.set(new Uint8Array(u8.buffer, u8.byteOffset, compressedSize));
+        // Call function and get result
+        zfpDecompress(Math.floor(precision), Module.dataHeap.byteOffset, nx, ny, Module.dataHeapUint.byteOffset, compressedSize);
+
+        // Free memory
+        return new Float32Array(Module.resultFloat.buffer, Module.resultFloat.byteOffset, nx * ny);
+        // END WASM
+    };
 });
-
-Module.zfpDecompressUint8WASM = function (u8: Uint8Array, compressedSize: number, nx: number, ny: number, precision: number) {
-    let newNumDataBytes = nx * ny * 4;
-    if (!Module.dataPtr || newNumDataBytes > Module.nDataBytes) {
-        if (Module.dataHeap) {
-            Module._free(Module.dataHeap.byteOffset);
-        }
-        Module.nDataBytes = newNumDataBytes;
-        Module.dataPtr = Module._malloc(Module.nDataBytes);
-        Module.dataHeap = new Uint8Array(Module.HEAPU8.buffer, Module.dataPtr, Module.nDataBytes);
-        if (Module.debugOutput) {
-            console.log(`ZFP Worker ${Module.id} allocating new uncompressed buffer (${Module.nDataBytes / 1000} KB)`);
-        }
-        Module.resultFloat = new Float32Array(Module.dataHeap.buffer, Module.dataHeap.byteOffset, nx * ny);
-    }
-
-    let newNumDataBytesCompressed = u8.length;
-    if (!Module.dataPtrUint || newNumDataBytesCompressed > Module.nDataBytesCompressed) {
-        if (Module.dataHeapUint) {
-            Module._free(Module.dataHeapUint.byteOffset);
-        }
-        Module.nDataBytesCompressed = newNumDataBytesCompressed;
-        Module.dataPtrUint = Module._malloc(Module.nDataBytesCompressed);
-        Module.dataHeapUint = new Uint8Array(Module.HEAPU8.buffer, Module.dataPtrUint, Module.nDataBytesCompressed);
-        if (Module.debugOutput) {
-            console.log(`ZFP Worker ${Module.id} allocating new compressed buffer (${Module.nDataBytesCompressed / 1000} KB)`);
-        }
-    }
-
-    Module.dataHeapUint.set(new Uint8Array(u8.buffer, u8.byteOffset, compressedSize));
-    // Call function and get result
-    zfpDecompress(Math.floor(precision), Module.dataHeap.byteOffset, nx, ny, Module.dataHeapUint.byteOffset, compressedSize);
-
-    // Free memory
-    return new Float32Array(Module.resultFloat.buffer, Module.resultFloat.byteOffset, nx * ny);
-    // END WASM
-};
 
 ctx.onmessage = (event => {
     if (event.data && Array.isArray(event.data) && event.data.length > 1) {
