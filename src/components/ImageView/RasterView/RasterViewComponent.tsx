@@ -1,5 +1,6 @@
 import * as React from "react";
 import classNames from "classnames";
+import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Subscription} from "rxjs";
 import tinycolor from "tinycolor2";
@@ -30,8 +31,22 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private gl: WebGL2RenderingContext;
     private static readonly Float32Max = 3.402823466e38;
 
+    @observable private channels: number[] | undefined;
+    @observable private image: ImageItem | undefined;
+    @observable private imageStore: FrameStore | undefined;
+
+    constructor(props: RasterViewComponentProps) {
+        super(props);
+        makeObservable(this);
+
+        // Initialize observable properties
+        this.channels = props.channel;
+        this.image = props.image;
+        this.imageStore = props.image?.store as FrameStore;
+    }
+
     componentDidMount() {
-        const isPreview = this.props.image?.type === ImageType.PV_PREVIEW;
+        const isPreview = this.image?.type === ImageType.PV_PREVIEW;
         const gl = isPreview ? PreviewWebGLService.Instance.gl : TileWebGLService.Instance.gl;
         if (!gl) {
             return;
@@ -44,17 +59,27 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
 
         this.sub = TileService.Instance.tileStream.subscribe(tileMessage => {
-            if ((!isFinite(this.props.channel?.length ?? NaN) && (!AppStore.Instance.channelMapStore.channelMapEnabled || (this.props.image.store as FrameStore).isPreview)) || this.props.channel?.includes(tileMessage.channel ?? 0)) {
+            if ((!isFinite(this.channels?.length ?? NaN) && (!AppStore.Instance.channelMapStore.channelMapEnabled || this.imageStore?.isPreview)) || this.channels?.includes(tileMessage.channel ?? 0)) {
                 requestAnimationFrame(() => this.updateCanvas());
             }
         });
     }
 
+    @action componentDidUpdate(prevProps: RasterViewComponentProps) {
+        // Update observable properties when props change
+        if (prevProps.channel !== this.props.channel) {
+            this.channels = this.props.channel;
+        }
+        if (prevProps.image !== this.props.image) {
+            this.image = this.props.image;
+            this.imageStore = this.props.image?.store as FrameStore;
+        }
+
+        requestAnimationFrame(() => this.updateCanvas());
+    }
+
     componentWillUnmount(): void {
         this.sub && this.sub.unsubscribe();
-    }
-    componentDidUpdate() {
-        requestAnimationFrame(() => this.updateCanvas());
     }
 
     private renderMultipleCanvas = (frame: FrameStore) => {

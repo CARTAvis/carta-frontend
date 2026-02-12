@@ -36,6 +36,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @observable private isShowHeader: boolean = true;
     private prevPosition: number = 60;
     private static readonly ExpectedColumnCount: number = 5; // Name, Unit, Type, Display, Description
+    private widgetId: string;
 
     private catalogHeaderTableRef: Table2 | undefined = undefined;
     private catalogFileNames: Map<number, string>;
@@ -68,7 +69,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     @computed get catalogFileId() {
-        return CatalogStore.Instance.catalogProfiles?.get(this.props.id);
+        return CatalogStore.Instance.catalogProfiles?.get(this.widgetId);
     }
 
     @computed get widgetStore(): CatalogWidgetStore | undefined {
@@ -83,7 +84,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
-        CatalogStore.Instance.catalogProfiles.set(this.props.id, fileId);
+        CatalogStore.Instance.catalogProfiles.set(this.widgetId, fileId);
     };
 
     @action handleFileCloseClick = () => {
@@ -95,7 +96,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             if (!widgetId) {
                 return;
             }
-            appStore.removeCatalog(catalogFileId, widgetId, this.props.id);
+            appStore.removeCatalog(catalogFileId, widgetId, this.widgetId);
             catalogWidgetStore?.resetMaps();
         }
     };
@@ -152,9 +153,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
+        this.widgetId = props.id;
 
-        if (!CatalogStore.Instance.catalogProfiles.has(this.props.id)) {
-            CatalogStore.Instance.catalogProfiles.set(this.props.id, 1);
+        if (!CatalogStore.Instance.catalogProfiles.has(this.widgetId)) {
+            CatalogStore.Instance.catalogProfiles.set(this.widgetId, 1);
         }
         this.catalogFileNames = new Map<number, string>();
 
@@ -173,12 +175,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 }
 
                 if (frame && catalogFileIds?.length) {
-                    WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog : ${fileName} ${progressString}`);
+                    WidgetsStore.Instance.setWidgetComponentTitle(this.widgetId, `Catalog : ${fileName} ${progressString}`);
                 } else {
-                    WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog`);
+                    WidgetsStore.Instance.setWidgetComponentTitle(this.widgetId, `Catalog`);
                 }
             } else {
-                WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog`);
+                WidgetsStore.Instance.setWidgetComponentTitle(this.widgetId, `Catalog`);
             }
         });
     }
@@ -716,7 +718,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private shortcutoOnClick = (type: CatalogSettingsTabs) => {
         this.widgetStore?.setSettingsTabId(type);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WIDGET_CONFIG.title ?? "", this.props.id, CatalogOverlayComponent.WIDGET_CONFIG.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WIDGET_CONFIG.title ?? "", this.widgetId, CatalogOverlayComponent.WIDGET_CONFIG.type);
     };
 
     private onCompleteRender = () => {

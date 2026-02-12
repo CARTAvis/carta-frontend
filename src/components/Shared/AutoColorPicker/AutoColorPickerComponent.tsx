@@ -4,7 +4,7 @@ import {Button, Classes, MenuItem, Popover, PopoverPosition} from "@blueprintjs/
 import {Select} from "@blueprintjs/select";
 import classNames from "classnames";
 import * as _ from "lodash";
-import {computed, makeObservable, observable} from "mobx";
+import {makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {AppStore} from "stores";
@@ -28,7 +28,7 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
     private static readonly CHANGE_DELAY = 100;
     @observable displayColorPicker: boolean;
 
-    @computed get autoColor(): string {
+    get autoColor(): string {
         return getColorForTheme(this.props.color);
     }
 

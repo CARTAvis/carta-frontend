@@ -26,8 +26,8 @@ const PLOT_LINES_LIMIT = 1000;
 export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     @observable width: number;
     @observable height: number;
-    @observable widgetId: string;
     @observable headerTableColumnWidths: Array<number>;
+    private widgetId: string;
     private headerTableRef: Table2 | undefined;
     private resultTableRef: Table2 | undefined;
     private scrollToTopHandle;
@@ -49,6 +49,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
+        this.widgetId = props.id;
 
         this.headerTableColumnWidths = [150, 70, 300];
     }
@@ -56,7 +57,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     @computed get widgetStore(): SpectralLineQueryWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.spectralLineQueryWidgets) {
-            const widgetStore = widgetsStore.spectralLineQueryWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.spectralLineQueryWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }

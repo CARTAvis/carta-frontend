@@ -2,7 +2,6 @@ import * as React from "react";
 import {FormGroup, InputGroup} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {computed} from "mobx";
 import {observer} from "mobx-react";
 
 import {CoordinateComponent, CoordNumericInput, InputType} from "components/Shared";
@@ -15,7 +14,7 @@ import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatVa
 export class PointRegionForm extends React.Component<{region: RegionStore; wcsInfo: AST.FrameSet}> {
     private static readonly REGION_PIXEL_EPS = 1.0e-3;
 
-    @computed get centerWCS(): WCSPoint2D | null {
+    get centerWCS(): WCSPoint2D | null {
         const region = this.props.region;
         if (!region || !this.props.wcsInfo) {
             return null;

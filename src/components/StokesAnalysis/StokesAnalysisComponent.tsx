@@ -24,6 +24,7 @@ type Point3D = {x: number; y: number; z?: number};
 
 @observer
 export class StokesAnalysisComponent extends React.Component<WidgetProps> {
+    private widgetId: string;
     private pointDefaultColor = Colors.GRAY2;
     private opacityOutRange = 0.1;
     private channelBorder: {xMin: number; xMax: number};
@@ -55,7 +56,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     @computed get widgetStore(): StokesAnalysisWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.stokesAnalysisWidgets) {
-            const widgetStore = widgetsStore.stokesAnalysisWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.stokesAnalysisWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -95,16 +96,18 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         super(props);
         makeObservable(this);
 
+        this.widgetId = props.id;
         const appStore = AppStore.Instance;
         if (!props.docked && props.id === StokesAnalysisComponent.WIDGET_CONFIG.type) {
             const id = appStore.widgetsStore.addStokesWidget();
             if (id) {
                 appStore.widgetsStore.changeWidgetId(props.id, id);
+                this.widgetId = id;
             }
         } else {
-            if (!appStore.widgetsStore.stokesAnalysisWidgets.has(this.props.id)) {
-                console.log(`can't find store for widget with id=${this.props.id}`);
-                appStore.widgetsStore.stokesAnalysisWidgets.set(this.props.id, new StokesAnalysisWidgetStore());
+            if (!appStore.widgetsStore.stokesAnalysisWidgets.has(this.widgetId)) {
+                console.log(`can't find store for widget with id=${this.widgetId}`);
+                appStore.widgetsStore.stokesAnalysisWidgets.set(this.widgetId, new StokesAnalysisWidgetStore());
             }
         }
 
@@ -124,10 +127,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                    appStore.widgetsStore.setWidgetTitle(this.props.id, `Stokes Analysis : ${regionString} ${selectedString} ${progressString}`);
+                    appStore.widgetsStore.setWidgetTitle(this.widgetId, `Stokes Analysis : ${regionString} ${selectedString} ${progressString}`);
                 }
             } else {
-                appStore.widgetsStore.setWidgetTitle(this.props.id, `Stokes Analysis: Cursor`);
+                appStore.widgetsStore.setWidgetTitle(this.widgetId, `Stokes Analysis: Cursor`);
             }
         });
     }
@@ -1296,7 +1299,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 <div className={"stokes-widget"}>
                     <div className={className}>
                         <div className="profile-plot-toolbar">
-                            <StokesAnalysisToolbarComponent widgetStore={this.widgetStore} id={this.props.id} />
+                            <StokesAnalysisToolbarComponent widgetStore={this.widgetStore} id={this.widgetId} />
                         </div>
                         <div className="profile-plot-qup">
                             <div className="profile-plot-qu">

@@ -39,6 +39,8 @@ const KEYCODE_ENTER = 13;
 @observer
 export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<WidgetProps> {
     private catalogFileNames: Map<number, string>;
+    private widgetId: string;
+    private floatingSettingsId: string | undefined;
     private catalogOverlayShape: Array<CatalogOverlayShape> = [
         CatalogOverlayShape.BOX_LINED,
         CatalogOverlayShape.CIRCLE_FILLED,
@@ -77,7 +79,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     }
 
     @computed get catalogFileId() {
-        return CatalogStore.Instance.catalogProfiles?.get(this.props.id);
+        return CatalogStore.Instance.catalogProfiles?.get(this.widgetId);
     }
 
     @computed get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore | undefined {
@@ -103,6 +105,8 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
+        this.widgetId = props.id;
+        this.floatingSettingsId = props.floatingSettingsId;
 
         const appStore = AppStore.Instance;
         this.catalogFileNames = new Map<number, string>();
@@ -118,12 +122,12 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
                 if (activeFiles?.includes(catalogFileId)) {
                     const fileName = catalogStore.getCatalogFileNames([catalogFileId]).get(catalogFileId);
-                    if (fileName && this.props.floatingSettingsId) {
-                        appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Catalog Settings: ${fileName}`);
+                    if (fileName && this.floatingSettingsId) {
+                        appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Catalog Settings: ${fileName}`);
                     }
                 } else {
-                    if (this.props.floatingSettingsId) {
-                        appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Catalog Settings`);
+                    if (this.floatingSettingsId) {
+                        appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Catalog Settings`);
                     }
                 }
             }
@@ -131,7 +135,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
-        CatalogStore.Instance.catalogProfiles?.set(this.props.id, fileId);
+        CatalogStore.Instance.catalogProfiles?.set(this.widgetId, fileId);
     };
 
     public render() {

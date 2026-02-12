@@ -75,7 +75,7 @@ export class ImageSaveComponent extends React.Component {
     }
 
     /// Generate options for stokes via string
-    @computed get stokesOptions(): OptionProps[] {
+    get stokesOptions(): OptionProps[] {
         const stokesInfo = AppStore.Instance.activeFrame?.stokesInfo;
 
         if (stokesInfo) {

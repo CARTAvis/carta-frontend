@@ -170,7 +170,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return this.interactionMode === InteractionMode.PANNING;
     }
 
-    @computed get zoomMode(): ZoomMode {
+    get zoomMode(): ZoomMode {
         const absDelta = {x: Math.abs(this.selectionBoxEnd.x - this.selectionBoxStart.x), y: Math.abs(this.selectionBoxEnd.y - this.selectionBoxStart.y)};
         if (this.props.selectingMode === LinePlotSelectingMode.LINE) {
             return ZoomMode.NONE;
@@ -187,7 +187,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         }
     }
 
-    @computed get cursorShape(): string {
+    get cursorShape(): string {
         const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
         if (this.isPanning || isHovering) {
             return "move";

@@ -38,6 +38,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     }
 
     private cachedFormattedCoordinates: string[];
+    private widgetId: string;
 
     @observable width: number;
     @observable height: number;
@@ -49,7 +50,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     @computed get widgetStore(): SpatialProfileWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.spatialProfileWidgets) {
-            const widgetStore = widgetsStore.spatialProfileWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.spatialProfileWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -329,6 +330,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         super(props);
         makeObservable(this);
 
+        this.widgetId = props.id;
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === SpatialProfilerComponent.WIDGET_CONFIG.type) {
@@ -336,11 +338,12 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             const id = appStore.widgetsStore.addSpatialProfileWidget();
             if (id) {
                 appStore.widgetsStore.changeWidgetId(props.id, id);
+                this.widgetId = id;
             }
         } else {
-            if (!appStore.widgetsStore.spatialProfileWidgets.has(this.props.id)) {
-                console.log(`can't find store for widget with id=${this.props.id}`);
-                appStore.widgetsStore.spatialProfileWidgets.set(this.props.id, new SpatialProfileWidgetStore());
+            if (!appStore.widgetsStore.spatialProfileWidgets.has(this.widgetId)) {
+                console.log(`can't find store for widget with id=${this.widgetId}`);
+                appStore.widgetsStore.spatialProfileWidgets.set(this.widgetId, new SpatialProfileWidgetStore());
             }
         }
         // Update widget title when region or coordinate changes
@@ -351,13 +354,13 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 if (appStore && coordinate) {
                     const coordinateString = this.widgetStore.isLineOrPolyline ? "" : coordinate.toUpperCase();
                     const regionString = this.widgetStore.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
-                    appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString} Profile: ${regionString}`);
+                    appStore.widgetsStore.setWidgetTitle(this.widgetId, `${coordinateString} Profile: ${regionString}`);
                 }
                 if (currentData) {
                     this.widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
                 }
             } else {
-                appStore.widgetsStore.setWidgetTitle(this.props.id, `X Profile: Cursor`);
+                appStore.widgetsStore.setWidgetTitle(this.widgetId, `X Profile: Cursor`);
             }
         });
 

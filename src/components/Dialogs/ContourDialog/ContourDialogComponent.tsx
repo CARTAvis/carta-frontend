@@ -3,6 +3,7 @@ import {Alert, AnchorButton, Button, Classes, Colors, DialogProps, FormGroup, HT
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
+import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
 
@@ -95,25 +96,52 @@ export class ContourDialogComponent extends React.Component {
         }
     }
 
+    @computed get currentContourConfig() {
+        const dataSource = AppStore.Instance.contourDataSource;
+        if (!dataSource) {
+            return {
+                levels: this.levels,
+                smoothingMode: this.smoothingMode,
+                smoothingFactor: this.smoothingFactor,
+                colormapEnabled: false,
+                colormap: "",
+                color: "",
+                thickness: 1,
+                visible: true,
+                dashMode: ""
+            };
+        }
+        return {
+            levels: this.levels,
+            smoothingMode: this.smoothingMode,
+            smoothingFactor: this.smoothingFactor,
+            colormapEnabled: dataSource.contourConfig.colormapEnabled,
+            colormap: dataSource.contourConfig.colormap,
+            color: dataSource.contourConfig.color,
+            thickness: dataSource.contourConfig.thickness,
+            visible: dataSource.contourConfig.visible,
+            dashMode: dataSource.contourConfig.dashMode
+        };
+    }
+
     @computed get contourConfigChanged(): boolean {
         const dataSource = AppStore.Instance.contourDataSource;
-        if (dataSource) {
-            const numContourLevels = this.levels.length;
-            if (dataSource.contourConfig.smoothingMode !== this.smoothingMode) {
-                return true;
-            } else if (dataSource.contourConfig.smoothingFactor !== this.smoothingFactor) {
-                return true;
-            } else if (dataSource.contourConfig.levels.length !== numContourLevels) {
-                return true;
-            }
-
-            for (let i = 0; i < numContourLevels; i++) {
-                if (dataSource.contourConfig.levels[i] !== this.levels[i]) {
-                    return true;
-                }
-            }
+        if (!dataSource) {
+            return false;
         }
-        return false;
+        const config = dataSource.contourConfig;
+        const currentConfig = this.currentContourConfig;
+        return (
+            !_.isEqual(config.levels, currentConfig.levels) ||
+            config.smoothingMode !== currentConfig.smoothingMode ||
+            config.smoothingFactor !== currentConfig.smoothingFactor ||
+            config.colormapEnabled !== currentConfig.colormapEnabled ||
+            config.colormap !== currentConfig.colormap ||
+            config.color !== currentConfig.color ||
+            config.thickness !== currentConfig.thickness ||
+            config.visible !== currentConfig.visible ||
+            config.dashMode !== currentConfig.dashMode
+        );
     }
 
     @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} | null {
@@ -225,7 +253,7 @@ export class ContourDialogComponent extends React.Component {
         appStore.contourDataSource.clearContours();
     };
 
-    private handleGraphClicked = (x: number) => {
+    @action private handleGraphClicked = (x: number) => {
         this.levels.push(x);
         this.levels.sort((a, b) => a - b);
     };
@@ -450,7 +478,7 @@ export class ContourDialogComponent extends React.Component {
         const configPanel = (
             <div className="contour-config-panel">
                 <FormGroup inline={true} label="Smoothing mode">
-                    <HTMLSelect value={this.smoothingMode} onChange={ev => (this.smoothingMode = Number(ev.currentTarget.value))}>
+                    <HTMLSelect value={this.smoothingMode} onChange={ev => runInAction(() => (this.smoothingMode = Number(ev.currentTarget.value)))}>
                         <option key={CARTA.SmoothingMode.NoSmoothing} value={CARTA.SmoothingMode.NoSmoothing}>
                             No smoothing
                         </option>

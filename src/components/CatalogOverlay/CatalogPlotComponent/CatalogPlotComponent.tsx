@@ -30,6 +30,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private histogramY: {yMin?: number; yMax?: number};
     private static emptyColumn = "None";
     private catalogFileNames: Map<number, string>;
+    private widgetId: string;
 
     private static readonly UnsupportedDataTypes = [CARTA.ColumnType.String, CARTA.ColumnType.Bool, CARTA.ColumnType.UnsupportedType];
 
@@ -51,8 +52,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         super(props);
         makeObservable(this);
 
+        this.widgetId = props.id;
         this.histogramY = {yMin: undefined, yMax: undefined};
-        const catalogPlot = CatalogStore.Instance.getAssociatedIdByWidgetId(this.props.id);
+        const catalogPlot = CatalogStore.Instance.getAssociatedIdByWidgetId(this.widgetId);
         this.componentId = catalogPlot.catalogPlotComponentId;
         this.catalogFileId = catalogPlot.catalogFileId;
         this.catalogFileNames = new Map<number, string>();
@@ -79,12 +81,12 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     progressString = `[${toFixed(progress * 100)}% complete]`;
                 }
                 if (frame && catalogFileIds?.length) {
-                    WidgetsStore.Instance.setWidgetTitle(this.props.id, `Catalog ${this.plotType} : ${fileName} ${progressString}`);
+                    WidgetsStore.Instance.setWidgetTitle(this.widgetId, `Catalog ${this.plotType} : ${fileName} ${progressString}`);
                 } else {
-                    WidgetsStore.Instance.setWidgetTitle(this.props.id, `Catalog ${this.plotType}`);
+                    WidgetsStore.Instance.setWidgetTitle(this.widgetId, `Catalog ${this.plotType}`);
                 }
             } else {
-                WidgetsStore.Instance.setWidgetTitle(this.props.id, `Catalog ${this.plotType}`);
+                WidgetsStore.Instance.setWidgetTitle(this.widgetId, `Catalog ${this.plotType}`);
             }
         });
 

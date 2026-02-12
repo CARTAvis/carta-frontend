@@ -16,6 +16,8 @@ const FILENAME_END_LEN = 15;
 
 @observer
 export class LayerListSettingsPanelComponent extends React.Component<WidgetProps> {
+    private widgetId: string;
+
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "layer-list-settings",
@@ -35,7 +37,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
     @computed get widgetStore(): LayerListWidgetStore | null {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.layerListWidgets) {
-            const widgetStore = widgetsStore.layerListWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.layerListWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -47,6 +49,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
     constructor(props) {
         super(props);
         makeObservable(this);
+        this.widgetId = props.id;
     }
 
     private renderFrameOptions = (val: number, itemProps: ItemRendererProps) => {

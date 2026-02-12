@@ -19,40 +19,42 @@ export interface ProfileFittingComponentProps {
 export class ProfileFittingComponent extends React.Component<ProfileFittingComponentProps> {
     @observable isShowingLog: boolean;
     @observable isShowingResultButton: boolean;
+    private fittingStore: ProfileFittingStore;
+    private widgetStore: SpectralProfileWidgetStore;
 
     private onFunctionChanged = ev => {
         this.reset();
-        this.props.fittingStore.setFunction(parseInt(ev.target.value));
+        this.fittingStore.setFunction(parseInt(ev.target.value));
     };
 
     private onContinuumValueChanged = ev => {
-        this.props.fittingStore.setYIntercept(0);
-        this.props.fittingStore.setSlope(0);
-        this.props.fittingStore.setContinuum(parseInt(ev.target.value));
+        this.fittingStore.setYIntercept(0);
+        this.fittingStore.setSlope(0);
+        this.fittingStore.setContinuum(parseInt(ev.target.value));
     };
 
     private onYInterceptValueChanged = (val: number) => {
-        this.props.fittingStore.setYIntercept(val);
+        this.fittingStore.setYIntercept(val);
     };
 
     private onSlopeValueChanged = (val: number) => {
-        this.props.fittingStore.setSlope(val);
+        this.fittingStore.setSlope(val);
     };
 
     private onYInterceptValueLocked = () => {
-        this.props.fittingStore.setLockedYIntercept(!this.props.fittingStore.lockedYIntercept);
+        this.fittingStore.setLockedYIntercept(!this.fittingStore.lockedYIntercept);
     };
 
     private onSlopeValueLocked = () => {
-        this.props.fittingStore.setLockedSlope(!this.props.fittingStore.lockedSlope);
+        this.fittingStore.setLockedSlope(!this.fittingStore.lockedSlope);
     };
 
     private cursorSelectingYIntercept = () => {
-        this.props.fittingStore.setIsCursorSelectingYIntercept(!this.props.fittingStore.isCursorSelectingYIntercept);
+        this.fittingStore.setIsCursorSelectingYIntercept(!this.fittingStore.isCursorSelectingYIntercept);
     };
 
     private cursorSelectingSlope = () => {
-        this.props.fittingStore.setIsCursorSelectingSlope(!this.props.fittingStore.isCursorSelectingSlope);
+        this.fittingStore.setIsCursorSelectingSlope(!this.fittingStore.isCursorSelectingSlope);
     };
 
     private onCenterValueChanged = (val: number) => {
@@ -76,23 +78,23 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
     };
 
     private autoDetect = () => {
-        this.props.fittingStore.setHasResult(false);
-        this.props.fittingStore.setComponents(1, true);
-        if (this.props.widgetStore?.plotData?.fittingData) {
-            this.props.fittingStore.autoDetect();
-            if (this.props.fittingStore.isAutoDetectWithFitting) {
+        this.fittingStore.setHasResult(false);
+        this.fittingStore.setComponents(1, true);
+        if (this.widgetStore?.plotData?.fittingData) {
+            this.fittingStore.autoDetect();
+            if (this.fittingStore.isAutoDetectWithFitting) {
                 this.fitData();
             }
         }
-        this.props.fittingStore.setHasAutoDetectResult(true);
+        this.fittingStore.setHasAutoDetectResult(true);
     };
 
     private deleteComponent = () => {
-        this.props.fittingStore.deleteSelectedComponent();
+        this.fittingStore.deleteSelectedComponent();
     };
 
     private cursorSelecting = () => {
-        this.props.fittingStore.setIsCursorSelectingComponentOn(!this.props.fittingStore.isCursorSelectingComponent);
+        this.fittingStore.setIsCursorSelectingComponentOn(!this.fittingStore.isCursorSelectingComponent);
     };
 
     private onCenterLocked = () => {
@@ -120,16 +122,16 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
 
     private saveLog = () => {
         let headerString = "";
-        const frame = this.props.widgetStore.effectiveFrame;
+        const frame = this.widgetStore.effectiveFrame;
         if (frame && frame.frameInfo && frame.regionSet) {
             headerString += `# image: ${frame.filename}\n`;
 
-            const regionId = this.props.widgetStore.effectiveRegionId;
+            const regionId = this.widgetStore.effectiveRegionId;
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
 
             // statistic type, ignore when region == cursor
             if (regionId !== 0) {
-                headerString += `# statistic: ${this.props.widgetStore.profileSelectionStore.selectedStatsTypes[0]}\n`;
+                headerString += `# statistic: ${this.widgetStore.profileSelectionStore.selectedStatsTypes[0]}\n`;
             }
             // region info
             if (region) {
@@ -140,13 +142,13 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
             }
         }
 
-        const content = `${headerString}\n${this.props.fittingStore.resultLog}`;
+        const content = `${headerString}\n${this.fittingStore.resultLog}`;
         const fileName = `Profile_Fitting_Result_Log-${getTimestamp()}`;
         exportTxtFile(fileName, content);
     };
 
     @action private reset = () => {
-        const fittingStore = this.props.fittingStore;
+        const fittingStore = this.fittingStore;
         fittingStore.setComponents(1, true);
         fittingStore.setHasResult(false);
         fittingStore.setContinuum(FittingContinuum.NONE);
@@ -161,8 +163,8 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
     };
 
     private fitData = () => {
-        if (this.props.fittingStore.readyToFit) {
-            this.props.fittingStore.fitData();
+        if (this.fittingStore.readyToFit) {
+            this.fittingStore.fitData();
         }
     };
 
@@ -190,14 +192,16 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
     constructor(props: ProfileFittingComponentProps) {
         super(props);
         this.isShowingLog = false;
+        this.fittingStore = props.fittingStore;
+        this.widgetStore = props.widgetStore;
         makeObservable(this);
         autorun(() => {
             // clear fitting data when the profile data changed
-            if (this.props.widgetStore?.profileSelectionStore?.profiles[0]) {
+            if (this.widgetStore?.profileSelectionStore?.profiles[0]) {
                 this.reset();
             }
 
-            if (this.props.widgetStore?.smoothingStore?.type) {
+            if (this.widgetStore?.smoothingStore?.type) {
                 this.reset();
             }
         });
@@ -205,8 +209,8 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
 
     render() {
         const appStore = AppStore.Instance;
-        const fittingStore = this.props.fittingStore;
-        const disabled = this.props.widgetStore.profileNum > 1;
+        const fittingStore = this.fittingStore;
+        const disabled = this.widgetStore.profileNum > 1;
 
         const cursorSelectionButton = (
             <Tooltip

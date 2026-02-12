@@ -1,6 +1,6 @@
 import * as React from "react";
 import {FormGroup, HTMLSelect, Switch, Tab, Tabs} from "@blueprintjs/core";
-import {autorun, computed} from "mobx";
+import {autorun} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScrollShadow, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
@@ -25,6 +25,9 @@ export enum SpectralProfilerSettingsTabs {
 
 @observer
 export class SpectralProfilerSettingsPanelComponent extends React.Component<WidgetProps> {
+    private widgetId: string;
+    private floatingSettingsId: string | undefined;
+
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "spectral-profiler-floating-settings",
@@ -47,10 +50,10 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         };
     }
 
-    @computed get widgetStore(): SpectralProfileWidgetStore | null {
+    get widgetStore(): SpectralProfileWidgetStore | null {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.spectralProfileWidgets) {
-            const widgetStore = widgetsStore.spectralProfileWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.spectralProfileWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -61,6 +64,9 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
     constructor(props: WidgetProps) {
         super(props);
+        this.widgetId = props.id;
+        this.floatingSettingsId = props.floatingSettingsId;
+
         const appStore = AppStore.Instance;
         autorun(() => {
             if (this.widgetStore) {
@@ -69,7 +75,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                     const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                    const id = this.props.floatingSettingsId;
+                    const id = this.floatingSettingsId;
                     if (id) {
                         appStore.widgetsStore.setWidgetTitle(id, `Z Profile Settings: ${regionString} ${selectedString}`);
                     }

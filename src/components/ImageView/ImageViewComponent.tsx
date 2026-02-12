@@ -1,7 +1,7 @@
 import * as React from "react";
 import {NonIdealState, Spinner} from "@blueprintjs/core";
 import $ from "jquery";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector} from "components/Shared";
@@ -244,7 +244,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         this.imagePanelRefs.push(ref);
     };
 
-    @computed get panels() {
+    get panels() {
         const appStore = AppStore.Instance;
         const config = appStore.imageViewConfigStore;
         const visibleImages = config.visibleImages;
