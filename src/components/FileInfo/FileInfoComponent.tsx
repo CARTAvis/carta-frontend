@@ -1,5 +1,4 @@
 import * as React from "react";
-import AutoSizer from "react-virtualized-auto-sizer";
 import {List} from "react-window";
 import {Button, ButtonGroup, Classes, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, NonIdealState, type OptionProps, Popover, PopoverInteractionKind, Position, Pre, Spinner, Tab, type TabId, Tabs, Text} from "@blueprintjs/core";
 import {type CARTA} from "carta-protobuf";
@@ -370,22 +369,7 @@ export class FileInfoComponent extends React.Component<{
         };
 
         const numHeaders = entries?.length || 0;
-        return (
-            <AutoSizer>
-                {({height, width}) => (
-                    <List
-                        className={classNames("header-list", Classes.CODE_BLOCK)}
-                        rowCount={numHeaders}
-                        rowHeight={18}
-                        defaultHeight={height}
-                        style={{height, width}}
-                        listRef={this.listRef}
-                        rowComponent={renderHeaderRow}
-                        rowProps={{} as any}
-                    />
-                )}
-            </AutoSizer>
-        );
+        return <List className={classNames("header-list", Classes.CODE_BLOCK)} rowComponent={renderHeaderRow} rowCount={numHeaders} rowHeight={18} rowProps={{} as any} listRef={this.listRef as any} />;
     };
 
     private renderHeaderToolbar = () => {

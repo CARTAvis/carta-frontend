@@ -23,7 +23,7 @@ enum OnlineDataQueryDialogTabs {
 
 export const OnlineDataQueryDialogComponent = observer(() => {
     const appStore = AppStore.Instance;
-    const className = classNames("online-data-query-dialog", {"bp3-dark": appStore.darkTheme});
+    const className = classNames("online-data-query-dialog", {[Classes.DARK]: appStore.darkTheme});
     const dialogProps: DialogProps = {
         icon: "geosearch",
         className: className,

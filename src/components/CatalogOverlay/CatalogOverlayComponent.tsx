@@ -1,6 +1,6 @@
 import * as React from "react";
 import SplitPane, {Pane} from "react-split-pane";
-import {AnchorButton, Button, ButtonGroup, Classes, FormGroup, Intent, MenuItem, NonIdealState, PopoverPosition, Switch, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, ButtonGroup, Classes, FormGroup, Intent, MenuItem, NonIdealState, PopoverPosition, Pre, Switch, Tooltip} from "@blueprintjs/core";
 import {type ItemPredicate, type ItemRendererProps, Select} from "@blueprintjs/select";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
 import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
@@ -816,7 +816,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const tableInfo = catalogFileDataSize ? (
             <tr>
                 <td className="td-label">
-                    <pre>{info}</pre>
+                    <Pre>{info}</Pre>
                 </td>
             </tr>
         ) : null;
