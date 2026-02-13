@@ -86,7 +86,7 @@ export class TelemetryService {
         const url = new URL(window.location.href);
         const skipTelemetry = url.searchParams.get("skipTelemetry");
         // Check for URL query parameter or build-time flag for skipping telemetry
-        if (skipTelemetry || process.env.REACT_APP_SKIP_TELEMETRY === "true") {
+        if (skipTelemetry || process.env.PUBLIC_REACT_APP_SKIP_TELEMETRY === "true") {
             console.log(`Skipping telemetry due to ${skipTelemetry ? "URL override" : "build-time override"}`);
             this.skipTelemetry = true;
             return false;
