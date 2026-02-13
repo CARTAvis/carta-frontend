@@ -46,7 +46,7 @@ export class ContourDialogComponent extends React.Component {
 
     private readonly widgetStore: RenderConfigWidgetStore;
     private cachedFrame: FrameStore | null;
-    private cachedHistogram: CARTA.IHistogram | null;
+    private cachedHistogram: CARTA.IHistogram;
 
     constructor(props: {appStore: AppStore}) {
         super(props);

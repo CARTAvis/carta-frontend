@@ -39,7 +39,7 @@ export class RenderConfigStore {
     @observable gamma: number;
     @observable alpha: number;
     @observable inverted: boolean = false;
-    @observable channelHistogram: CARTA.IHistogram | null = null;
+    @observable channelHistogram: CARTA.IHistogram = undefined as any;
     @observable cubeHistogram: CARTA.IHistogram | null = null;
     @observable useCubeHistogram: boolean = false;
     @observable useCubeHistogramContours: boolean = false;

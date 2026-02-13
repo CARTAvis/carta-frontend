@@ -22,8 +22,8 @@ export class SnippetStore {
     @observable snippets: Map<string, Snippet> = new Map<string, Snippet>();
     @observable activeSnippet: Snippet = {
         code: "",
-        frontendVersion: Snippet.FrontendVersion,
-        snippetVersion: Snippet.SnippetVersion,
+        frontendVersion: undefined as any,
+        snippetVersion: undefined as any,
         categories: []
     };
     @observable activeSnippetName: string | undefined = "";

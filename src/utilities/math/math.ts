@@ -47,7 +47,7 @@ export function normalising(a: number, b: number) {
     return (a / b) * 100;
 }
 
-export function getPercentiles(histogram: CARTA.IHistogram | null | undefined, ranks: number[]): number[] {
+export function getPercentiles(histogram: CARTA.IHistogram, ranks: number[]): number[] {
     if (!ranks || !ranks.length || !histogram || !histogram.bins?.length) {
         return [];
     }

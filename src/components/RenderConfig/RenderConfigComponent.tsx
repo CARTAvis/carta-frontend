@@ -42,7 +42,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     }
 
     private cachedFrame: FrameStore;
-    private cachedHistogram: CARTA.IHistogram | null;
+    private cachedHistogram: CARTA.IHistogram;
     private widgetId: string;
 
     @observable width: number = 650;
