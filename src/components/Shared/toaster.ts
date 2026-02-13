@@ -3,7 +3,7 @@ import {type IconName, OverlayToaster, Position, type ToastProps} from "@bluepri
 
 import {copyToClipboard} from "utilities";
 
-const toaster = OverlayToaster.create(
+const toaster = OverlayToaster.createAsync(
     {
         className: "app-toaster",
         position: Position.BOTTOM
