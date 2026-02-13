@@ -35,15 +35,13 @@ export default defineConfig({
     dev: {
         lazyCompilation: false,
     },
-    server: {
-        open: true,
-    },
     output: {
         distPath: {
             root: "build"
         }
     },
     server: {
+        open: true,
         port: 3000,
         host: "localhost"
     },
