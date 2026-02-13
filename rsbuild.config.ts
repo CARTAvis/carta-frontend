@@ -5,21 +5,20 @@ import {pluginReact} from "@rsbuild/plugin-react";
 import {pluginSass} from "@rsbuild/plugin-sass";
 import {pluginGlsl} from "rsbuild-plugin-glsl";
 
-const defaultOptions = {
+const eslintDefaultOptions = {
     extensions: ["js", "jsx", "ts", "tsx"],
     exclude: [
         "node_modules",
         "wasm_src",
         "docs_website",
         "protobuf"
-    ],
-    
+    ]
 };
 
 export default defineConfig({
     plugins: [
         pluginReact(),
-        pluginEslint({ eslintPluginOptions: defaultOptions }),
+        pluginEslint({ eslintPluginOptions: eslintDefaultOptions }),
         pluginSass(),
         pluginNodePolyfill(),
         pluginGlsl()
@@ -42,6 +41,15 @@ export default defineConfig({
     output: {
         distPath: {
             root: "build"
+        }
+    },
+    server: {
+        port: 3000,
+        host: "localhost"
+    },
+    performance: {
+        chunkSplit: {
+            strategy: "split-by-size"
         }
     },
     html: {
