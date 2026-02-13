@@ -114,13 +114,13 @@ export class FrameStore {
 
     public wcsInfo: AST.FrameSet;
     public readonly wcsInfoForTransformation: AST.FrameSet;
-    @observable public wcsInfoOffset: AST.FrameSet = undefined as any;
+    @observable public wcsInfoOffset: AST.FrameSet | null = null;
     public readonly wcsInfo3D: AST.FrameSet;
     public readonly validWcs: boolean = false;
     public readonly defaultWcsSystem: SystemType;
     public readonly defaultWcsEquinox: string;
     public readonly defaultWcsEpoch: string;
-    @observable public frameInfo: FrameInfo = undefined as any;
+    @observable public frameInfo!: FrameInfo;
     public readonly overlayStore: OverlayStore;
     public readonly channelMapOuterOverlayStore: ChannelMapOuterOverlayStore;
     public readonly channelMapInnerOverlayStore: ChannelMapInnerOverlayStore;
@@ -141,7 +141,7 @@ export class FrameStore {
     public pointShapeCache: CARTA.PointAnnotationShape;
 
     // Region set for the current frame. Accessed via regionSet, to take into account region sharing
-    @observable private readonly frameRegionSet: RegionSetStore = undefined as any;
+    @observable private readonly frameRegionSet!: RegionSetStore;
 
     @observable spectralType: SpectralType | null = null;
     @observable spectralUnit: SpectralUnit | null = null;
@@ -157,9 +157,9 @@ export class FrameStore {
     /**
      * View center for the relative coordinate in pixel coordinates
      */
-    @observable offsetCenter: Point2D = undefined as any;
-    @observable cursorInfo: CursorInfo = undefined as any;
-    @observable cursorValue: {position: Point2D; channel: number; value: number} = undefined as any;
+    @observable offsetCenter: Point2D | null = null;
+    @observable cursorInfo!: CursorInfo;
+    @observable cursorValue!: {position: Point2D; channel: number; value: number};
     @observable cursorMoving: boolean = false;
     @observable zoomLevel: number = 1;
     @observable stokes: number = 0;
@@ -407,7 +407,7 @@ export class FrameStore {
             if (this.spatialReference.isOffsetCoord && !this.wcsInfoOffset) {
                 this.createWcsInfoOffset();
             }
-            const wcsInfo = this.isOffsetCoord ? this.wcsInfoOffset : this.wcsInfo;
+            const wcsInfo = this.isOffsetCoord && this.wcsInfoOffset ? this.wcsInfoOffset : this.wcsInfo;
 
             this.cachedTransformedWcsInfo = AST.createTransformedFrameset(
                 wcsInfo,
@@ -2302,8 +2302,8 @@ export class FrameStore {
                 if (centerInRad) {
                     this.wcsInfoOffset = AST.createOffsetFrameset(this.wcsInfo, centerInRad.x, centerInRad.y, this.offsetCenter.x, this.offsetCenter.y);
                     for (const frame of this.secondarySpatialImages) {
-                        const frameCenterInRad = getUnformattedWCSPoint(frame.wcsInfo, frame.offsetCenter);
-                        if (frame.isOffsetCoord && frameCenterInRad && frame.spatialTransform) {
+                        const frameCenterInRad = frame.offsetCenter ? getUnformattedWCSPoint(frame.wcsInfo, frame.offsetCenter) : null;
+                        if (frame.isOffsetCoord && frameCenterInRad && frame.offsetCenter && frame.spatialTransform) {
                             frame.wcsInfoOffset = AST.createOffsetFrameset(
                                 frame.wcsInfo,
                                 frameCenterInRad.x,
@@ -2331,7 +2331,7 @@ export class FrameStore {
         if (!this.wcsInfoOffset) {
             return {x: "NaN", y: "NaN"};
         }
-        return getFormattedWCSPoint(this.wcsInfoForTransformation, this.offsetCenter) ?? {x: "NaN", y: "NaN"};
+        return this.offsetCenter ? (getFormattedWCSPoint(this.wcsInfoForTransformation, this.offsetCenter) ?? {x: "NaN", y: "NaN"}) : {x: "NaN", y: "NaN"};
     }
 
     /**

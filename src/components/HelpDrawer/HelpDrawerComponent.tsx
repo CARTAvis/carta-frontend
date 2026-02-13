@@ -129,6 +129,7 @@ export class HelpDrawerComponent extends React.Component {
     render() {
         const helpStore = HelpStore.Instance;
         const className = classNames("help-drawer", {[Classes.DARK]: AppStore.Instance.darkTheme});
+        const helpContentUrl = helpStore.type ? (HELP_CONTENT_MAP.get(helpStore.type) ?? "") : "";
 
         const drawerProps: DrawerProps = {
             className: className,
@@ -144,7 +145,7 @@ export class HelpDrawerComponent extends React.Component {
         return (
             <Drawer {...drawerProps}>
                 <div className={Classes.DRAWER_BODY}>
-                    <iframe src={HELP_CONTENT_MAP.get(helpStore.type) ?? ""} loading="eager" allow="camera 'none'; microphone 'none'; geolocation 'none'" title={helpStore.type ?? ""}></iframe>
+                    <iframe src={helpContentUrl} loading="eager" allow="camera 'none'; microphone 'none'; geolocation 'none'" title={helpStore.type ?? ""}></iframe>
                 </div>
             </Drawer>
         );
