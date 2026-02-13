@@ -120,7 +120,7 @@ export class FrameStore {
     public readonly defaultWcsSystem: SystemType;
     public readonly defaultWcsEquinox: string;
     public readonly defaultWcsEpoch: string;
-    @observable public frameInfo!: FrameInfo;
+    @observable public frameInfo: FrameInfo;
     public readonly overlayStore: OverlayStore;
     public readonly channelMapOuterOverlayStore: ChannelMapOuterOverlayStore;
     public readonly channelMapInnerOverlayStore: ChannelMapInnerOverlayStore;
@@ -141,7 +141,7 @@ export class FrameStore {
     public pointShapeCache: CARTA.PointAnnotationShape;
 
     // Region set for the current frame. Accessed via regionSet, to take into account region sharing
-    @observable private readonly frameRegionSet!: RegionSetStore;
+    @observable private readonly frameRegionSet: RegionSetStore;
 
     @observable spectralType: SpectralType | null = null;
     @observable spectralUnit: SpectralUnit | null = null;
@@ -158,8 +158,8 @@ export class FrameStore {
      * View center for the relative coordinate in pixel coordinates
      */
     @observable offsetCenter: Point2D | null = null;
-    @observable cursorInfo!: CursorInfo;
-    @observable cursorValue!: {position: Point2D; channel: number; value: number};
+    @observable cursorInfo: CursorInfo;
+    @observable cursorValue: {position: Point2D; channel: number; value: number};
     @observable cursorMoving: boolean = false;
     @observable zoomLevel: number = 1;
     @observable stokes: number = 0;
