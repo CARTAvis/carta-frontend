@@ -1,4 +1,5 @@
 // Color variables (appears count calculates by raw css)
+@use "sass:color";
 @import "~@blueprintjs/core/lib/scss/variables.scss";
 
 $pane-background: $light-gray5;
@@ -157,7 +158,7 @@ $custom-pane-controls-color-dark: white;
 .lm_tab {
     &:hover {
         background: $tab-background;
-        color: mix($inactive-title-color, $title-color, 75%);
+        color: color.mix($inactive-title-color, $title-color, 75%);
     }
     &.lm_active // If Tab is active, so if it's in foreground
     {
@@ -396,7 +397,7 @@ $custom-pane-controls-color-dark: white;
     .lm_tab {
         &:hover {
             background: $tab-background-dark;
-            color: mix($inactive-title-color-dark, $title-color-dark, 75%);
+            color: color.mix($inactive-title-color-dark, $title-color-dark, 75%);
         }
         &.lm_active // If Tab is active, so if it's in foreground
         {

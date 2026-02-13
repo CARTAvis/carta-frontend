@@ -1,7 +1,7 @@
+import type {CSSProperties} from "react";
 import * as React from "react";
-import {CSSProperties} from "react";
 import {Cell, Column, RenderMode, RowHeaderCell, SelectionModes, Table2} from "@blueprintjs/table";
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
 export class SimpleTableComponentProps {
@@ -58,7 +58,7 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
 
         table.columnHeaders?.forEach(header => {
             const columnIndex = header.columnIndex;
-            let dataArray = tableData.get(columnIndex)?.data;
+            const dataArray = tableData.get(columnIndex)?.data;
             const column = this.renderDataColumn(header.name, dataArray);
             tableColumns.push(column);
         });

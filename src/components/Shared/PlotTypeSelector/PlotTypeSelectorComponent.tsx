@@ -1,11 +1,7 @@
 import * as React from "react";
 import {AnchorButton, ButtonGroup, Tooltip} from "@blueprintjs/core";
 
-export enum PlotType {
-    STEPS = "Steps",
-    LINES = "Lines",
-    POINTS = "Points"
-}
+import {PlotType} from "enums";
 
 interface PlotTypeSelectComponentProps {
     value: PlotType;

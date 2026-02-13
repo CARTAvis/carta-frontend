@@ -1,40 +1,38 @@
 import * as React from "react";
 import {FormGroup, InputGroup} from "@blueprintjs/core";
-import * as AST from "ast_wrapper";
+import type * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {computed} from "mobx";
 import {observer} from "mobx-react";
 
-import {CoordinateComponent, CoordNumericInput, ImageCoordNumericInput, InputType} from "components/Shared";
+import {CoordinateComponent, CoordNumericInput, ImageCoordNumericInput} from "components/Shared";
+import {CoordinateMode, InputType} from "enums";
 import {isValidWcsPoint, Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
-import {CoordinateMode, FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
+import {type FrameStore, type RegionStore, WCS_PRECISION} from "stores/Frame";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid, length2D} from "utilities";
 
 import "./LineRegionForm.scss";
 
 @observer
 export class LineRegionForm extends React.Component<{region: RegionStore; frame: FrameStore; wcsInfo: AST.FrameSet}> {
-    @computed get startPoint(): Point2D {
+    get startPoint(): Point2D {
         const region = this.props.region;
         if (!region || region.controlPoints.length !== 2) {
             return {x: NaN, y: NaN};
         }
-
         return {x: region.controlPoints[0].x, y: region.controlPoints[0].y};
     }
 
-    @computed get endPoint(): Point2D {
+    get endPoint(): Point2D {
         const region = this.props.region;
         if (!region || region.controlPoints.length !== 2) {
             return {x: NaN, y: NaN};
         }
-
         return {x: region.controlPoints[1].x, y: region.controlPoints[1].y};
     }
 
     // size determined by reference frame
-    @computed get lengthWCS(): string | null {
+    get lengthWCS(): string | null {
         const region = this.props.region;
         if (!region || region.controlPoints.length !== 2 || !region.size || !this.props.frame) {
             return null;
@@ -47,7 +45,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         return null;
     }
 
-    @computed get centerWCS(): WCSPoint2D | null {
+    get centerWCS(): WCSPoint2D | null {
         const region = this.props.region;
         if (!region || !this.props.wcsInfo) {
             return null;
@@ -55,7 +53,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         return getFormattedWCSPoint(this.props.wcsInfo, region.center);
     }
 
-    @computed get startWCS(): WCSPoint2D | null {
+    get startWCS(): WCSPoint2D | null {
         const region = this.props.region;
         if (!region || !this.props.wcsInfo) {
             return null;
@@ -63,7 +61,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         return getFormattedWCSPoint(this.props.wcsInfo, this.startPoint);
     }
 
-    @computed get endWCS(): WCSPoint2D | null {
+    get endWCS(): WCSPoint2D | null {
         const region = this.props.region;
         if (!region || !this.props.wcsInfo) {
             return null;

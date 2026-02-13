@@ -31,8 +31,8 @@ import {
     StokesAnalysisComponent,
     StokesAnalysisSettingsPanelComponent
 } from "components";
-import {ImageType} from "models";
-import {AppStore, CatalogStore, WidgetConfig, WidgetsStore} from "stores";
+import {ImageType} from "enums";
+import {AppStore, CatalogStore, type WidgetConfig, WidgetsStore} from "stores";
 
 @observer
 export class FloatingWidgetManagerComponent extends React.Component {
@@ -195,7 +195,7 @@ export class FloatingWidgetManagerComponent extends React.Component {
                     const showPinButton = this.showPin(w);
                     const id = w.componentId ? w.componentId : w.id;
 
-                    let zIndex = zIndexManager.findIndex(id);
+                    const zIndex = zIndexManager.findIndex(id);
                     const numFloatingObjs = zIndexManager.floatingObjsNum;
 
                     return (

@@ -1,16 +1,10 @@
 import * as AST from "ast_wrapper";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
-import {CatalogSystemType, Point2D} from "models";
-import {CatalogDatabase} from "services";
-import {AppStore, NumberFormatType, SystemType} from "stores";
-import {ASTSettingsString, clamp, getPixelValueFromWCS, setAstSystem, transformPoint, VizierResource} from "utilities";
-
-export enum RadiusUnits {
-    DEGREES = "deg",
-    ARCMINUTES = "arcmin",
-    ARCSECONDS = "arcsec"
-}
+import {CatalogDatabase, CatalogSystemType, NumberFormatType, RadiusUnits, SystemType} from "enums";
+import {type Point2D} from "models";
+import {AppStore} from "stores";
+import {ASTSettingsString, clamp, getPixelValueFromWCS, setAstSystem, transformPoint, type VizierResource} from "utilities";
 
 export type VizierItem = {name: string | null; description: string | null};
 
@@ -21,49 +15,31 @@ export class CatalogOnlineQueryConfigStore {
     public static readonly OBJECT_SIZE = 1000;
     public static readonly QUERY_DEG_PRECISION = "10";
 
-    @observable isQuerying: boolean;
-    @observable catalogDB: CatalogDatabase;
-    @observable searchRadius: number;
-    @observable coordsType: CatalogSystemType;
-    @observable coordsFormat: NumberFormatType;
-    @observable centerPixelCoord: {x: string | undefined; y: string | undefined};
-    @observable maxObject: number;
-    @observable enablePointSelection: boolean;
-    @observable radiusUnits: RadiusUnits;
-    @observable objectName: string;
-    @observable isObjectQuerying: boolean;
+    @observable isQuerying: boolean = false;
+    @observable catalogDB: CatalogDatabase = CatalogDatabase.SIMBAD;
+    @observable searchRadius: number = 1;
+    @observable coordsType: CatalogSystemType = CatalogSystemType.ICRS;
+    @observable coordsFormat: NumberFormatType = NumberFormatType.Degrees;
+    @observable centerPixelCoord: {x: string | undefined; y: string | undefined} = {x: undefined, y: undefined};
+    @observable maxObject: number = CatalogOnlineQueryConfigStore.OBJECT_SIZE;
+    @observable enablePointSelection: boolean = false;
+    @observable radiusUnits: RadiusUnits = RadiusUnits.DEGREES;
+    @observable objectName: string = "";
+    @observable isObjectQuerying: boolean = false;
     //Vizier
-    @observable vizierResource: Map<string, VizierResource>;
-    @observable vizierSelectedTableName: VizierItem[];
-    @observable vizierKeyWords: string;
+    @observable vizierResource: Map<string, VizierResource> = new Map();
+    @observable vizierSelectedTableName: VizierItem[] = [];
+    @observable vizierKeyWords: string = "";
 
     constructor() {
         makeObservable(this);
-        this.isQuerying = false;
-        this.catalogDB = CatalogDatabase.SIMBAD;
-        this.searchRadius = 1;
-        // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system
-        this.coordsType = CatalogSystemType.ICRS;
-        this.centerPixelCoord = {x: undefined, y: undefined};
-        this.maxObject = CatalogOnlineQueryConfigStore.OBJECT_SIZE;
-        this.enablePointSelection = false;
-        this.radiusUnits = RadiusUnits.DEGREES;
-        this.coordsFormat = NumberFormatType.Degrees;
-        this.objectName = "";
-        this.isObjectQuerying = false;
-        this.vizierSelectedTableName = [];
-        this.vizierResource = new Map();
-        this.vizierKeyWords = "";
-
         this.resetSearchRadius();
-
         reaction(
             () => AppStore.Instance.activeFrame,
             () => {
                 this.resetSearchRadius();
             }
         );
-
         reaction(
             () => AppStore.Instance.cursorFrozen,
             cursorFrozen => {
@@ -330,7 +306,7 @@ export class CatalogOnlineQueryConfigStore {
         if (frame && overlay) {
             const format = `${NumberFormatType.Degrees}.${this.getEffectivePrecision(precision)}`;
             const wcsCopy = AST.copy(frame.wcsInfo);
-            let astString = new ASTSettingsString();
+            const astString = new ASTSettingsString();
             const sys = system ? system : overlay.global.explicitSystem ? overlay.global.explicitSystem : SystemType.ICRS;
             if (frame.isXY || frame.isYX) {
                 setAstSystem(wcsCopy, sys, overlay.global);

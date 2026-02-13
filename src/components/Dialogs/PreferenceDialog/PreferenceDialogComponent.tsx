@@ -1,6 +1,6 @@
 import * as React from "react";
-import {ColorResult} from "react-color";
-import {AnchorButton, Button, Callout, Checkbox, Classes, Collapse, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
+import {type ColorResult} from "react-color";
+import {AnchorButton, Button, Callout, Checkbox, Classes, Collapse, type DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -11,10 +11,10 @@ import tinycolor from "tinycolor2";
 
 import {DraggableDialogComponent, LayoutMappingComponent, VectorOverlayDialogComponent} from "components/Dialogs";
 import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, ScrollShadow, SuccessToast} from "components/Shared";
-import {CompressionQuality, ConvertToGB, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
-import {TelemetryMode} from "services";
-import {AppStore, BeamType, DialogId, HelpType, PreferenceKeys, PreferenceStore} from "stores";
-import {ContourGeneratorType, FrameScaling, RegionStore, RenderConfigStore} from "stores/Frame";
+import {BeamType, ContourGeneratorType, ConvertToGB, CursorInfoVisibility, DialogId, FileFilterMode, FrameScaling, HelpType, PreferenceKeys, TelemetryMode} from "enums";
+import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
+import {AppStore, PreferenceStore} from "stores";
+import {RegionStore, RenderConfigStore} from "stores/Frame";
 import {copyToClipboard, SWATCH_COLORS} from "utilities";
 
 import "./PreferenceDialogComponent.scss";
@@ -152,7 +152,7 @@ export class PreferenceDialogComponent extends React.Component {
             await copyToClipboard(appStore.telemetryService.decodedUserId);
             AppToaster.show(SuccessToast("clipboard", "Copied user ID to clipboard."));
         } catch (err) {
-            console.log(err);
+            console.error(err);
         }
     };
 
@@ -535,7 +535,7 @@ export class PreferenceDialogComponent extends React.Component {
             </React.Fragment>
         );
 
-        let regionTypes: JSX.Element[] = [];
+        const regionTypes: JSX.Element[] = [];
         RegionStore.AVAILABLE_REGION_TYPES.forEach((name, regionType) => {
             regionTypes.push(
                 <option key={regionType} value={regionType}>
@@ -628,7 +628,7 @@ export class PreferenceDialogComponent extends React.Component {
             </React.Fragment>
         );
 
-        let annotationTypes: JSX.Element[] = [];
+        const annotationTypes: JSX.Element[] = [];
         RegionStore.AVAILABLE_ANNOTATION_TYPES.forEach((name, annotationType) => {
             annotationTypes.push(
                 <option key={annotationType} value={annotationType}>
@@ -958,7 +958,7 @@ export class PreferenceDialogComponent extends React.Component {
                         <Tab id={PreferenceDialogTabs.REGION} title="Region" panel={<ScrollShadow>{regionSettingsPanel}</ScrollShadow>} />
                         <Tab id={PreferenceDialogTabs.ANNOTATION} title="Annotation" panel={<ScrollShadow>{annotationSettingsPanel}</ScrollShadow>} />
                         <Tab id={PreferenceDialogTabs.PERFORMANCE} title="Performance" panel={<ScrollShadow>{performancePanel}</ScrollShadow>} />
-                        {process.env.REACT_APP_SKIP_TELEMETRY !== "true" && <Tab id={PreferenceDialogTabs.TELEMETRY} title="Telemetry" panel={<ScrollShadow>{telemetryPanel}</ScrollShadow>} />}
+                        {process.env.PUBLIC_REACT_APP_SKIP_TELEMETRY !== "true" && <Tab id={PreferenceDialogTabs.TELEMETRY} title="Telemetry" panel={<ScrollShadow>{telemetryPanel}</ScrollShadow>} />}
                         <Tab id={PreferenceDialogTabs.COMPATIBILITY} title="Compatibility" panel={<ScrollShadow>{compatibilityPanel}</ScrollShadow>} />
                         <Tab id={PreferenceDialogTabs.LOG_EVENT} title="Log Events" panel={<ScrollShadow>{logEventsPanel}</ScrollShadow>} />
                     </Tabs>

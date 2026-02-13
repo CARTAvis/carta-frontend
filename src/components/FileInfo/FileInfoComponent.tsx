@@ -1,28 +1,19 @@
 import * as React from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
 import {FixedSizeList as List} from "react-window";
-import {Button, ButtonGroup, Classes, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, NonIdealState, OptionProps, Popover, PopoverInteractionKind, Position, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
-import {CARTA} from "carta-protobuf";
+import {Button, ButtonGroup, Classes, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, NonIdealState, type OptionProps, Popover, PopoverInteractionKind, Position, Pre, Spinner, Tab, type TabId, Tabs, Text} from "@blueprintjs/core";
+import {type CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ImageSaveComponent, RegionSelectComponent} from "components/Dialogs";
-import {SimpleTableComponent, SimpleTableComponentProps} from "components/Shared";
+import {SimpleTableComponent, type SimpleTableComponentProps} from "components/Shared";
+import {FileInfoType} from "enums";
 import {AppStore} from "stores";
 import {exportTxtFile} from "utilities";
 
 import "./FileInfoComponent.scss";
-
-export enum FileInfoType {
-    IMAGE_FILE = "image-file",
-    IMAGE_HEADER = "image-header",
-    SAVE_IMAGE = "save-image",
-    REGION_FILE = "region-file",
-    SELECT_REGION = "select-region",
-    CATALOG_FILE = "catalog-file",
-    CATALOG_HEADER = "catalog-header"
-}
 
 @observer
 export class FileInfoComponent extends React.Component<{
@@ -140,7 +131,7 @@ export class FileInfoComponent extends React.Component<{
             this.matchedLocationArray = [];
 
             this.props.fileInfoExtended?.headerEntries?.forEach((entriesValue, index) => {
-                let splitString = entriesValue.name !== "END" ? `${entriesValue.name} = ${entriesValue.value}${entriesValue.comment && " / " + entriesValue.comment}`.split(searchStringRegExp) : entriesValue.name.split(searchStringRegExp);
+                const splitString = entriesValue.name !== "END" ? `${entriesValue.name} = ${entriesValue.value}${entriesValue.comment && " / " + entriesValue.comment}`.split(searchStringRegExp) : entriesValue.name.split(searchStringRegExp);
                 this.splitLengthArray.push(splitString.map(value => value.length));
                 this.matchedTotal += splitString.length - 1;
                 if (splitString.length > 1) {
@@ -167,7 +158,7 @@ export class FileInfoComponent extends React.Component<{
             clearTimeout(this.clickMatchedTimerStart);
             clearInterval(this.clickMatchedTimer);
         } else {
-            let clickMatched = () => {
+            const clickMatched = () => {
                 if (mode === -1 || mode === -99) {
                     this.minusMatchedIter();
                 } else {
@@ -293,13 +284,13 @@ export class FileInfoComponent extends React.Component<{
 
         const splitLength = this.splitLengthArray[index];
         const nameValueLength = name.length + 3 + (value?.length ?? 0);
-        let highlightedString: React.ReactNode[] = [];
+        const highlightedString: React.ReactNode[] = [];
         let keyIter = 0; // add unique keys to span to avoid warning
         let highlightClassName = "";
         let typeClassName = "header-name";
         let usedLength = 0;
 
-        let addHighlightedString = (sliceStart: number, sliceEnd: number) => {
+        const addHighlightedString = (sliceStart: number, sliceEnd: number) => {
             if (!isFinite(sliceStart) || !isFinite(sliceEnd)) {
                 return;
             }

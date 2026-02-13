@@ -1,7 +1,7 @@
 import * as React from "react";
 import {Circle, Layer, Rect, Stage} from "react-konva";
 import {Button, Colors, FormGroup} from "@blueprintjs/core";
-import Konva from "konva";
+import type Konva from "konva";
 import {observer} from "mobx-react";
 
 import {SafeNumericInput} from "components/Shared";

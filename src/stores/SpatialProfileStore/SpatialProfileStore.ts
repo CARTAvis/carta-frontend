@@ -1,24 +1,23 @@
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
 import {action, makeObservable, observable} from "mobx";
 
-import {ProcessedSpatialProfile, ProtobufProcessing} from "utilities";
+import {type ProcessedSpatialProfile, ProtobufProcessing} from "utilities";
 
 type Coordinate = string | null | undefined; // combination of I/Q/U/V stokes & x/y spatial axis, e.g. "Ix", "Qy"
 
 export class SpatialProfileStore {
     readonly regionId: number;
     readonly fileId: number;
-    @observable channel: number | null | undefined;
-    @observable value: number | null | undefined;
-    @observable x: number | null | undefined;
-    @observable y: number | null | undefined;
-    @observable profiles: Map<Coordinate, ProcessedSpatialProfile>;
+    @observable channel: number | null | undefined = undefined;
+    @observable value: number | null | undefined = undefined;
+    @observable x: number | null | undefined = undefined;
+    @observable y: number | null | undefined = undefined;
+    @observable profiles: Map<Coordinate, ProcessedSpatialProfile> = new Map<Coordinate, ProcessedSpatialProfile>();
 
     constructor(fileId: number = 0, regionId: number = 0) {
         makeObservable(this);
         this.fileId = fileId;
         this.regionId = regionId;
-        this.profiles = new Map<Coordinate, ProcessedSpatialProfile>();
     }
 
     public getProfile = (coordinate: Coordinate): ProcessedSpatialProfile | undefined => {

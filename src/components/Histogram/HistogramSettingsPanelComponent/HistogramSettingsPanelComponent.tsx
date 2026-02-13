@@ -2,11 +2,12 @@ import * as React from "react";
 import {Tab, Tabs} from "@blueprintjs/core";
 import {autorun, computed} from "mobx";
 import {observer} from "mobx-react";
+import type {LineKey} from "models";
 
-import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScrollShadow} from "components/Shared";
-import {LineKey} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {HistogramWidgetStore} from "stores/Widgets";
+import {LinePlotSettingsPanelComponent, type LinePlotSettingsPanelComponentProps, ScrollShadow} from "components/Shared";
+import {HelpType, HistogramSettingsTabs} from "enums";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {type HistogramWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 
 import {HistogramConfigPanelComponent} from "./HistogramConfigPanelComponent";
@@ -15,13 +16,11 @@ import "./HistogramSettingsPanelComponent.scss";
 
 const KEYCODE_ENTER = 13;
 
-export enum HistogramSettingsTabs {
-    STYLING,
-    CONFIG
-}
-
 @observer
 export class HistogramSettingsPanelComponent extends React.Component<WidgetProps> {
+    private widgetId: string;
+    private floatingSettingsId: string | undefined;
+
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "histogram-floating-settings",
@@ -41,7 +40,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
     @computed get widgetStore(): HistogramWidgetStore | undefined {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.histogramWidgets) {
-            const widgetStore = widgetsStore.histogramWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.histogramWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -52,6 +51,8 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
 
     constructor(props: WidgetProps) {
         super(props);
+        this.widgetId = props.id;
+        this.floatingSettingsId = props.floatingSettingsId;
 
         // Update widget title when region or coordinate changes
         autorun(() => {
@@ -69,9 +70,13 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
                     }
                 }
                 const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                this.props.floatingSettingsId && appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Histogram Settings: ${regionString} ${selectedString}`);
+                if (this.floatingSettingsId) {
+                    appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Histogram Settings: ${regionString} ${selectedString}`);
+                }
             } else {
-                this.props.floatingSettingsId && appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Histogram Settings`);
+                if (this.floatingSettingsId) {
+                    appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Histogram Settings`);
+                }
             }
         });
     }

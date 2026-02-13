@@ -3,8 +3,9 @@ import {NonIdealState} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {CursorInfo, ImageType} from "models";
-import {AppStore, FrameStore} from "stores";
+import {ImageType} from "enums";
+import {type CursorInfo} from "models";
+import {AppStore, type FrameStore} from "stores";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
 import {ColorbarComponent} from "../Colorbar/ColorbarComponent";
@@ -253,9 +254,9 @@ const ChannelMapInnerOverlayComponent = observer(({frame, docked}: {frame: Frame
             ctx.clearRect(0, 0, destCanvas.width, destCanvas.height);
             ctx.imageSmoothingEnabled = false;
 
-            let x = 0,
-                y = 0,
-                w = sourceWidth,
+            let x = 0;
+            const y = 0;
+            let w = sourceWidth,
                 h = sourceHeight;
             if (overlayType === "left") {
                 h -= innerPaddingBottom;

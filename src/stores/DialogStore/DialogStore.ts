@@ -1,29 +1,9 @@
-import {TabId} from "@blueprintjs/core";
+import type {TabId} from "@blueprintjs/core";
 import {action, makeObservable, observable} from "mobx";
 
-import {FileInfoType} from "components";
-import {WorkspaceDialogMode} from "components/Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
-import {Snippet} from "models";
+import {DialogId, FileInfoType, WorkspaceDialogMode} from "enums";
+import {type Snippet} from "models";
 import {AppStore, SnippetStore} from "stores";
-
-export enum DialogId {
-    About = "about-dialog",
-    OnlineDataQuery = "online-data-query-dialog",
-    Snippet = "snippet-dialog",
-    Contour = "contour-dialog",
-    ExternalPage = "external-page-dialog",
-    FileBrowser = "file-browser-dialog",
-    FileInfo = "file-info-dialog",
-    Fitting = "fitting-dialog",
-    Layout = "layout-dialog",
-    Preference = "preference-dialog",
-    Region = "region-dialog",
-    Stokes = "stokes-dialog",
-    Vector = "vector-dialog",
-    Workspace = "workspace-dialog",
-    ShareWorkspace = "share-work-dialog",
-    Hotkey = "hotkey-dialog"
-}
 
 interface showDialogOptions {
     mode?: WorkspaceDialogMode;
@@ -37,11 +17,11 @@ interface showDialogOptions {
 export class DialogStore {
     private static staticInstance: DialogStore;
 
-    @observable workspaceDialogMode = WorkspaceDialogMode.Hidden;
+    @observable workspaceDialogMode: WorkspaceDialogMode = WorkspaceDialogMode.Hidden;
     @observable selectedFileInfoDialogTab: TabId = FileInfoType.IMAGE_HEADER;
-    @observable externalPageDialogUrl: string;
-    @observable externalPageDialogTitle: string;
-    @observable dialogVisible = new Map<string, boolean>();
+    @observable externalPageDialogUrl: string = "";
+    @observable externalPageDialogTitle: string = "";
+    @observable dialogVisible: Map<string, boolean> = new Map();
 
     constructor() {
         makeObservable(this);

@@ -1,17 +1,9 @@
+import {CatalogTextureType} from "enums";
 import {createTextureFromArray, getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
 
 import allMaps from "../static/allmaps.png";
 
 import {catalogShaders} from "./GLSL";
-
-export enum CatalogTextureType {
-    Position,
-    Size,
-    Color,
-    Orientation,
-    SelectedSource,
-    SizeMinor
-}
 
 interface ShaderUniforms {
     LineThickness: WebGLUniformLocation | null;

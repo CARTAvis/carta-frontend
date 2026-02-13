@@ -1,13 +1,14 @@
 import * as React from "react";
 import {FormGroup, InputGroup} from "@blueprintjs/core";
-import * as AST from "ast_wrapper";
+import type * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
-import {CoordinateComponent, CoordNumericInput, InputType, SafeNumericInput} from "components/Shared";
+import {CoordinateComponent, CoordNumericInput, SafeNumericInput} from "components/Shared";
+import {CoordinateMode, InputType} from "enums";
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
-import {CompassAnnotationStore, CoordinateMode, RegionStore} from "stores/Frame";
+import {type CompassAnnotationStore, type RegionStore} from "stores/Frame";
 import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
 const KEYCODE_ENTER = 13;
@@ -54,19 +55,27 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                 if (isX && isWCSStringFormatValid(value, appStore.overlaySettings.numbers.formatTypeX)) {
                     if (finish) {
                         const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, x: value});
-                        finishPixelFromWCS && region?.setControlPoint(1, finishPixelFromWCS);
+                        if (finishPixelFromWCS) {
+                            region?.setControlPoint(1, finishPixelFromWCS);
+                        }
                     } else {
                         const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, x: value});
-                        startPixelFromWCS && region?.setControlPoint(0, startPixelFromWCS);
+                        if (startPixelFromWCS) {
+                            region?.setControlPoint(0, startPixelFromWCS);
+                        }
                     }
                     return true;
                 } else if (!isX && isWCSStringFormatValid(value, appStore.overlaySettings.numbers.formatTypeY)) {
                     if (finish) {
                         const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, y: value});
-                        finishPixelFromWCS && region?.setControlPoint(1, finishPixelFromWCS);
+                        if (finishPixelFromWCS) {
+                            region?.setControlPoint(1, finishPixelFromWCS);
+                        }
                     } else {
                         const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, y: value});
-                        startPixelFromWCS && region?.setControlPoint(0, startPixelFromWCS);
+                        if (startPixelFromWCS) {
+                            region?.setControlPoint(0, startPixelFromWCS);
+                        }
                     }
                     return true;
                 }

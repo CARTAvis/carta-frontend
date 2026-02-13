@@ -1,5 +1,5 @@
 import * as React from "react";
-import {ColorResult, RGBColor, SketchPicker} from "react-color";
+import {type ColorResult, type RGBColor, SketchPicker} from "react-color";
 import {Button, Classes, Popover, PopoverPosition} from "@blueprintjs/core";
 import classNames from "classnames";
 import * as _ from "lodash";
@@ -21,7 +21,7 @@ interface ColorPickerComponentProps {
 export class ColorPickerComponent extends React.Component<ColorPickerComponentProps> {
     private static readonly CHANGE_DELAY = 100;
 
-    @observable displayColorPicker: boolean;
+    @observable displayColorPicker: boolean = false;
 
     constructor(props: ColorPickerComponentProps) {
         super(props);
@@ -43,7 +43,7 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
     }, ColorPickerComponent.CHANGE_DELAY);
 
     public render() {
-        let popoverClassName = classNames("color-picker-popup", {[Classes.DARK]: this.props.darkTheme});
+        const popoverClassName = classNames("color-picker-popup", {[Classes.DARK]: this.props.darkTheme});
         const buttonColor = tinycolor(this.props.color).toString();
 
         return (

@@ -1,7 +1,7 @@
 import * as React from "react";
-import {Classes, NumericInput, NumericInputProps} from "@blueprintjs/core";
+import {Classes, NumericInput, type NumericInputProps} from "@blueprintjs/core";
 import classNames from "classnames";
-import {action, makeObservable, observable, reaction} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 export interface SafeNumericInputProps extends NumericInputProps {
@@ -39,15 +39,13 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
     constructor(props) {
         super(props);
         makeObservable(this);
+    }
 
-        reaction(
-            () => this.props.value,
-            value => {
-                if (!this.isFocused) {
-                    this.setValueString(value?.toString() ?? "");
-                }
-            }
-        );
+    componentDidUpdate(prevProps: SafeNumericInputProps) {
+        // Update valueString when props.value changes and component is not focused
+        if (prevProps.value !== this.props.value && !this.isFocused) {
+            this.setValueString(this.props.value?.toString() ?? "");
+        }
     }
 
     @action setFocused(value: boolean) {

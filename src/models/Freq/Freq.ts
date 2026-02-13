@@ -1,4 +1,4 @@
-import {FrequencyUnit} from "models";
+import {FrequencyUnit} from "enums";
 
 export class Freq {
     value: number;

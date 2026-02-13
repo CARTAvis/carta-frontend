@@ -1,7 +1,7 @@
 import {computed, makeObservable} from "mobx";
 
 import {OverlaySettings} from "stores";
-import {FrameStore} from "stores/Frame";
+import {type FrameStore} from "stores/Frame";
 import {clamp} from "utilities";
 
 const COLORBAR_TICK_NUM_MIN = 3;
@@ -44,7 +44,7 @@ export class ColorbarStore {
             roundBase = Math.pow(10, precision);
             const min = Math.round(scaleMinVal * roundBase) / roundBase;
 
-            let numbers: number[] = [];
+            const numbers: number[] = [];
             let val = min > scaleMinVal ? min : Math.round((min + dy) * roundBase) / roundBase;
             while (val < scaleMaxVal) {
                 numbers.push(val);

@@ -1,6 +1,6 @@
 import {SplatalogueService} from "services";
 
-let mockAxiosPost = jest.fn();
+const mockAxiosPost = jest.fn();
 jest.mock("axios", () => {
     return {
         create: () => {

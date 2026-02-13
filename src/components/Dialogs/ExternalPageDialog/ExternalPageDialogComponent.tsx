@@ -1,11 +1,12 @@
 import * as React from "react";
 import Iframe from "react-iframe";
-import {Classes, DialogProps} from "@blueprintjs/core";
+import {Classes, type DialogProps} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore, DialogId} from "stores";
+import {DialogId} from "enums";
+import {AppStore} from "stores";
 
 import "./ExternalPageDialogComponent.scss";
 

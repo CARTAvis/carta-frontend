@@ -1,47 +1,37 @@
 import * as GSL from "gsl_wrapper";
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {LinePlotInsideBoxMarker, LinePlotInsideTextMarker} from "components/Shared/LinePlot/LinePlotComponent";
-import {Point2D} from "models";
-import {SpectralProfileWidgetStore} from "stores/Widgets";
+import type {LinePlotInsideBoxMarker, LinePlotInsideTextMarker} from "components/Shared/LinePlot/LinePlotComponent";
+import {FittingContinuum, FittingFunction} from "enums";
+import {type Point2D} from "models";
+import {type SpectralProfileWidgetStore} from "stores/Widgets";
 import {autoDetecting, gaussian, getColorForTheme, lorentzian, toFixed} from "utilities";
 
-export enum FittingFunction {
-    GAUSSIAN = 0,
-    LORENTZIAN = 1
-}
-
-export enum FittingContinuum {
-    NONE = -1,
-    ZEROTH_ORDER = 0,
-    FIRST_ORDER = 1
-}
-
 export class ProfileFittingStore {
-    @observable function: FittingFunction;
-    @observable components: ProfileFittingIndividualStore[];
-    @observable continuum: FittingContinuum;
-    @observable yIntercept: number;
-    @observable slope: number;
-    @observable lockedYIntercept: boolean;
-    @observable lockedSlope: boolean;
-    @observable resultYIntercept: number;
-    @observable resultSlope: number;
-    @observable resultYInterceptError: number;
-    @observable resultSlopeError: number;
-    @observable selectedIndex: number;
-    @observable hasResult: boolean;
-    @observable resultLog: string;
-    @observable resultResidual: Float32Array | Float64Array;
-    @observable isCursorSelectingYIntercept: boolean;
-    @observable isCursorSelectingSlope: boolean;
-    @observable isCursorSelectingComponent: boolean;
-    @observable isAutoDetectWithCont: boolean;
-    @observable isAutoDetectWithFitting: boolean;
-    @observable hasAutoDetectResult: boolean;
-    @observable detectedComponentN: number;
-    @observable enableResidual: boolean;
-    @observable originData: {x: number[]; y: Float32Array | Float64Array};
+    @observable function: FittingFunction = FittingFunction.GAUSSIAN;
+    @observable components: ProfileFittingIndividualStore[] = [new ProfileFittingIndividualStore()];
+    @observable continuum: FittingContinuum = FittingContinuum.NONE;
+    @observable yIntercept: number = 0;
+    @observable slope: number = 0;
+    @observable lockedYIntercept: boolean = false;
+    @observable lockedSlope: boolean = false;
+    @observable resultYIntercept: number = 0;
+    @observable resultSlope: number = 0;
+    @observable resultYInterceptError: number = 0;
+    @observable resultSlopeError: number = 0;
+    @observable selectedIndex: number = 0;
+    @observable hasResult: boolean = false;
+    @observable resultLog: string = "";
+    @observable resultResidual: Float32Array | Float64Array = new Float32Array();
+    @observable isCursorSelectingYIntercept: boolean = false;
+    @observable isCursorSelectingSlope: boolean = false;
+    @observable isCursorSelectingComponent: boolean = false;
+    @observable isAutoDetectWithCont: boolean = false;
+    @observable isAutoDetectWithFitting: boolean = false;
+    @observable hasAutoDetectResult: boolean = false;
+    @observable detectedComponentN: number = 0;
+    @observable enableResidual: boolean = true;
+    @observable originData: {x: number[]; y: Float32Array | Float64Array} = {x: [], y: new Float32Array()};
 
     private readonly widgetStore: SpectralProfileWidgetStore;
 
@@ -88,7 +78,7 @@ export class ProfileFittingStore {
             let x = this.widgetStore.plotData.fittingData.x;
             let y = this.widgetStore.plotData.fittingData.y;
             if (y) {
-                let nonNaNIndex = y.findIndex(yi => !isNaN(yi));
+                const nonNaNIndex = y.findIndex(yi => !isNaN(yi));
                 if (nonNaNIndex > 0) {
                     x = x.slice(nonNaNIndex, x.length - nonNaNIndex);
                     y = y.slice(nonNaNIndex, y.length - nonNaNIndex);
@@ -99,7 +89,7 @@ export class ProfileFittingStore {
         return null;
     }
 
-    @computed get componentPlottingBoxes(): LinePlotInsideBoxMarker[] {
+    get componentPlottingBoxes(): LinePlotInsideBoxMarker[] {
         const boxes: LinePlotInsideBoxMarker[] = [];
         if (this.components) {
             for (let i = 0; i < this.components.length; i++) {
@@ -125,7 +115,7 @@ export class ProfileFittingStore {
         return boxes;
     }
 
-    @computed get componentResultNumber(): LinePlotInsideTextMarker[] {
+    get componentResultNumber(): LinePlotInsideTextMarker[] {
         const texts: LinePlotInsideTextMarker[] = [];
         if (this.components && this.hasResult) {
             for (let i = 0; i < this.components.length; i++) {
@@ -259,7 +249,7 @@ export class ProfileFittingStore {
             const x = this.originData.x;
             const individualModelPoint2DArrays = new Array<Point2D[]>();
             for (const component of this.components) {
-                let individualResultPoint2DArray: Point2D[] = [];
+                const individualResultPoint2DArray: Point2D[] = [];
                 for (let i = 0; i < x.length; i++) {
                     const yi =
                         this.function === FittingFunction.GAUSSIAN ? gaussian(x[i], component.resultAmp, component.resultCenter, component.resultFwhm) : lorentzian(x[i], component.resultAmp, component.resultCenter, component.resultFwhm);
@@ -373,15 +363,6 @@ export class ProfileFittingStore {
     constructor(widgetStore: SpectralProfileWidgetStore) {
         makeObservable(this);
         this.widgetStore = widgetStore;
-        this.function = FittingFunction.GAUSSIAN;
-        this.components = [new ProfileFittingIndividualStore()];
-        this.continuum = FittingContinuum.NONE;
-        this.yIntercept = 0;
-        this.slope = 0;
-        this.selectedIndex = 0;
-        this.isAutoDetectWithCont = false;
-        this.isAutoDetectWithFitting = false;
-        this.enableResidual = true;
     }
 
     @action setFunction = (val: FittingFunction) => {
@@ -478,12 +459,12 @@ export class ProfileFittingStore {
 }
 
 export class ProfileFittingIndividualStore {
-    @observable center: number;
-    @observable amp: number;
-    @observable fwhm: number;
-    @observable lockedCenter: boolean;
-    @observable lockedAmp: boolean;
-    @observable lockedFwhm: boolean;
+    @observable center: number = 0;
+    @observable amp: number = 0;
+    @observable fwhm: number = 0;
+    @observable lockedCenter: boolean = false;
+    @observable lockedAmp: boolean = false;
+    @observable lockedFwhm: boolean = false;
     @observable resultCenter: number;
     @observable resultAmp: number;
     @observable resultFwhm: number;
@@ -499,12 +480,6 @@ export class ProfileFittingIndividualStore {
 
     constructor() {
         makeObservable(this);
-        this.center = 0;
-        this.amp = 0;
-        this.fwhm = 0;
-        this.lockedCenter = false;
-        this.lockedAmp = false;
-        this.lockedFwhm = false;
     }
 
     @action setCenter = (val: number) => {

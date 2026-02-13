@@ -1,6 +1,6 @@
 import {Classes} from "@blueprintjs/core";
 import classNames from "classnames";
-import * as GoldenLayout from "golden-layout";
+import type * as GoldenLayout from "golden-layout";
 import $ from "jquery";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
@@ -34,13 +34,12 @@ import {
     // setting Panel
     StokesAnalysisSettingsPanelComponent
 } from "components";
-import {ImagePanelMode, ImageType} from "models";
-import {AppStore, CatalogStore, HelpStore, HelpType, LayoutStore, PreferenceKeys, PreferenceStore} from "stores";
+import {CatalogPlotType, HelpType, ImagePanelMode, ImageType, PreferenceKeys, WidgetType} from "enums";
+import {AppStore, CatalogStore, HelpStore, LayoutStore, PreferenceStore} from "stores";
 import {
     ACTIVE_FILE_ID,
-    CatalogPlotType,
     CatalogPlotWidgetStore,
-    CatalogPlotWidgetStoreProps,
+    type CatalogPlotWidgetStoreProps,
     CatalogWidgetStore,
     EmptyWidgetStore,
     HistogramWidgetStore,
@@ -54,24 +53,6 @@ import {
     StatsWidgetStore,
     StokesAnalysisWidgetStore
 } from "stores/Widgets";
-
-export enum WidgetType {
-    Region = "Region List Widget",
-    Log = "Log Widget",
-    SpatialProfiler = "Spatial Profiler",
-    SpectralProfiler = "Spectral Profiler",
-    Statistics = "Statistics Widget",
-    Histogram = "Histogram Widget",
-    Animator = "Animator Widget",
-    RenderConfig = "Render Configuration Widget",
-    StokesAnalysis = "Stokes Analysis Widget",
-    ImageList = "Image List Widget",
-    Catalog = "Catalog Widget",
-    SpectralLineQuery = "Spectral Line Query Widget",
-    CursorInfo = "Cursor Info Widget",
-    PvGenerator = "PV Generator",
-    ChannelMapControl = "Channel Map Control"
-}
 
 export interface DefaultWidgetConfig {
     id: string;
@@ -117,8 +98,6 @@ export class WidgetConfig implements DefaultWidgetConfig {
     };
 
     constructor(id: string, defaultConfig: DefaultWidgetConfig) {
-        makeObservable(this);
-
         this.id = id;
         this.type = defaultConfig.type;
         this.minWidth = defaultConfig.minWidth;
@@ -133,6 +112,7 @@ export class WidgetConfig implements DefaultWidgetConfig {
         this.parentType = defaultConfig.parentType;
         this.helpType = defaultConfig.helpType;
         this.componentId = defaultConfig.componentId;
+        makeObservable(this);
     }
 }
 
@@ -153,25 +133,25 @@ export class WidgetsStore {
     }
 
     // Floating widgets
-    @observable floatingWidgets: WidgetConfig[];
+    @observable floatingWidgets: WidgetConfig[] = [];
     // Widget Stores
-    @observable renderConfigWidgets: Map<string, RenderConfigWidgetStore>;
-    @observable spatialProfileWidgets: Map<string, SpatialProfileWidgetStore>;
-    @observable spectralProfileWidgets: Map<string, SpectralProfileWidgetStore>;
-    @observable statsWidgets: Map<string, StatsWidgetStore>;
-    @observable histogramWidgets: Map<string, HistogramWidgetStore>;
-    @observable layerListWidgets: Map<string, LayerListWidgetStore>;
-    @observable logWidgets: Map<string, EmptyWidgetStore>;
-    @observable regionListWidgets: Map<string, EmptyWidgetStore>;
-    @observable animatorWidgets: Map<string, EmptyWidgetStore>;
-    @observable channelMapControlWidgets: Map<string, EmptyWidgetStore>;
-    @observable stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore>;
-    @observable floatingSettingsWidgets: Map<string, string>;
-    @observable catalogWidgets: Map<string, CatalogWidgetStore>;
-    @observable catalogPlotWidgets: Map<string, CatalogPlotWidgetStore>;
-    @observable spectralLineQueryWidgets: Map<string, SpectralLineQueryWidgetStore>;
-    @observable cursorInfoWidgets: Map<string, EmptyWidgetStore>;
-    @observable pvGeneratorWidgets: Map<string, PvGeneratorWidgetStore>;
+    @observable renderConfigWidgets: Map<string, RenderConfigWidgetStore> = new Map<string, RenderConfigWidgetStore>();
+    @observable spatialProfileWidgets: Map<string, SpatialProfileWidgetStore> = new Map<string, SpatialProfileWidgetStore>();
+    @observable spectralProfileWidgets: Map<string, SpectralProfileWidgetStore> = new Map<string, SpectralProfileWidgetStore>();
+    @observable statsWidgets: Map<string, StatsWidgetStore> = new Map<string, StatsWidgetStore>();
+    @observable histogramWidgets: Map<string, HistogramWidgetStore> = new Map<string, HistogramWidgetStore>();
+    @observable layerListWidgets: Map<string, LayerListWidgetStore> = new Map<string, LayerListWidgetStore>();
+    @observable logWidgets: Map<string, EmptyWidgetStore> = new Map<string, EmptyWidgetStore>();
+    @observable regionListWidgets: Map<string, EmptyWidgetStore> = new Map<string, EmptyWidgetStore>();
+    @observable animatorWidgets: Map<string, EmptyWidgetStore> = new Map<string, EmptyWidgetStore>();
+    @observable channelMapControlWidgets: Map<string, EmptyWidgetStore> = new Map<string, EmptyWidgetStore>();
+    @observable stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore> = new Map<string, StokesAnalysisWidgetStore>();
+    @observable floatingSettingsWidgets: Map<string, string> = new Map<string, string>();
+    @observable catalogWidgets: Map<string, CatalogWidgetStore> = new Map<string, CatalogWidgetStore>();
+    @observable catalogPlotWidgets: Map<string, CatalogPlotWidgetStore> = new Map<string, CatalogPlotWidgetStore>();
+    @observable spectralLineQueryWidgets: Map<string, SpectralLineQueryWidgetStore> = new Map<string, SpectralLineQueryWidgetStore>();
+    @observable cursorInfoWidgets: Map<string, EmptyWidgetStore> = new Map<string, EmptyWidgetStore>();
+    @observable pvGeneratorWidgets: Map<string, PvGeneratorWidgetStore> = new Map<string, PvGeneratorWidgetStore>();
 
     private widgetsMap: Map<string, Map<string, any>>;
     private defaultFloatingWidgetOffset: number;
@@ -366,23 +346,6 @@ export class WidgetsStore {
 
     private constructor() {
         makeObservable(this);
-        this.spatialProfileWidgets = new Map<string, SpatialProfileWidgetStore>();
-        this.spectralProfileWidgets = new Map<string, SpectralProfileWidgetStore>();
-        this.statsWidgets = new Map<string, StatsWidgetStore>();
-        this.histogramWidgets = new Map<string, HistogramWidgetStore>();
-        this.renderConfigWidgets = new Map<string, RenderConfigWidgetStore>();
-        this.animatorWidgets = new Map<string, EmptyWidgetStore>();
-        this.channelMapControlWidgets = new Map<string, EmptyWidgetStore>();
-        this.layerListWidgets = new Map<string, LayerListWidgetStore>();
-        this.logWidgets = new Map<string, EmptyWidgetStore>();
-        this.regionListWidgets = new Map<string, EmptyWidgetStore>();
-        this.stokesAnalysisWidgets = new Map<string, StokesAnalysisWidgetStore>();
-        this.catalogWidgets = new Map<string, CatalogWidgetStore>();
-        this.floatingSettingsWidgets = new Map<string, string>();
-        this.catalogPlotWidgets = new Map<string, CatalogPlotWidgetStore>();
-        this.spectralLineQueryWidgets = new Map<string, SpectralLineQueryWidgetStore>();
-        this.cursorInfoWidgets = new Map<string, EmptyWidgetStore>();
-        this.pvGeneratorWidgets = new Map<string, PvGeneratorWidgetStore>();
 
         this.widgetsMap = new Map<string, Map<string, any>>([
             [SpatialProfilerComponent.WIDGET_CONFIG.type, this.spatialProfileWidgets],
@@ -403,7 +366,6 @@ export class WidgetsStore {
             [PvGeneratorComponent.WIDGET_CONFIG.type, this.pvGeneratorWidgets]
         ]);
 
-        this.floatingWidgets = [];
         this.defaultFloatingWidgetOffset = 100;
 
         reaction(() => this.imageViewWidgetTitle, this.updateImageWidgetTitle);
@@ -655,7 +617,7 @@ export class WidgetsStore {
                 savedConfigId = savedConfig.plotType;
             }
             const id = this.addWidgetByType(savedConfigId, savedConfig.widgetSettings);
-            let config = new WidgetConfig(id, WidgetsStore.GetDefaultWidgetConfig(savedConfig.id));
+            const config = new WidgetConfig(id, WidgetsStore.GetDefaultWidgetConfig(savedConfig.id));
             config.setDefaultSize(savedConfig.defaultWidth || config.defaultWidth, savedConfig.defaultHeight || config.defaultHeight);
             if (config.componentId) {
                 config.componentId = config.id;
@@ -849,7 +811,7 @@ export class WidgetsStore {
         const defaultConfig = WidgetsStore.GetDefaultWidgetSettingsConfig(parentType);
         const id = this.addFloatingSettingsWidget(null, parentId, defaultConfig.type);
         if (id !== null) {
-            let widgetConfig = new WidgetConfig(id, defaultConfig);
+            const widgetConfig = new WidgetConfig(id, defaultConfig);
             widgetConfig.title = parentType === "image-view" ? "Image View Settings" : parentTitle + " Settings";
             widgetConfig.parentId = parentId;
             widgetConfig.parentType = parentType;
@@ -871,7 +833,7 @@ export class WidgetsStore {
         }
 
         // Get widget type from config
-        let widgetConfig = new WidgetConfig(id, WidgetsStore.GetDefaultWidgetConfig(type));
+        const widgetConfig = new WidgetConfig(id, WidgetsStore.GetDefaultWidgetConfig(type));
         widgetConfig.title = title;
 
         if (type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
@@ -908,7 +870,7 @@ export class WidgetsStore {
         const itemConfig = item.config as GoldenLayout.ReactComponentConfig;
         const type = itemConfig.component;
         // Get widget config from type
-        let widgetConfig = WidgetsStore.GetDefaultWidgetConfig(type);
+        const widgetConfig = WidgetsStore.GetDefaultWidgetConfig(type);
         const container = item["container"] as GoldenLayout.Container;
         let centerX = 0;
         if (container && container.width) {
@@ -1250,7 +1212,7 @@ export class WidgetsStore {
     private getNextComponentId = (config: DefaultWidgetConfig) => {
         // Find the next appropriate ID
         let nextIndex = 0;
-        let componentIds: string[] = [];
+        const componentIds: string[] = [];
 
         if (config.type === CatalogPlotComponent.WIDGET_CONFIG.type) {
             CatalogStore.Instance.catalogPlots.forEach((catalogWidgetMap, componentId) => {
@@ -1274,7 +1236,7 @@ export class WidgetsStore {
     createFloatingCatalogWidget = (catalogFileId: number): {widgetStoreId: string | null; widgetComponentId: string} => {
         const widgetStoreId = this.addCatalogWidget(catalogFileId);
         const widgetComponentId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
-        let config = new WidgetConfig(widgetComponentId, CatalogOverlayComponent.WIDGET_CONFIG);
+        const config = new WidgetConfig(widgetComponentId, CatalogOverlayComponent.WIDGET_CONFIG);
         config.componentId = widgetComponentId;
         this.addFloatingWidget(config);
         return {widgetStoreId: widgetStoreId, widgetComponentId: widgetComponentId};
@@ -1284,7 +1246,7 @@ export class WidgetsStore {
         const appStore = AppStore.Instance;
         const catalogFileNum = appStore.catalogNum;
         const componentId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
-        let config = new WidgetConfig(componentId, CatalogOverlayComponent.WIDGET_CONFIG);
+        const config = new WidgetConfig(componentId, CatalogOverlayComponent.WIDGET_CONFIG);
         config.componentId = componentId;
         if (catalogFileNum) {
             CatalogStore.Instance.catalogProfiles.set(componentId, catalogFileNum);

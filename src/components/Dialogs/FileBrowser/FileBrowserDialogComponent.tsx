@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Alert, AnchorButton, Breadcrumb, BreadcrumbProps, Breadcrumbs, Button, ButtonGroup, Classes, DialogProps, Icon, InputGroup, Intent, Menu, MenuItem, Popover, Position, TabId, Tooltip} from "@blueprintjs/core";
+import {Alert, AnchorButton, Breadcrumb, type BreadcrumbProps, Breadcrumbs, Button, ButtonGroup, Classes, type DialogProps, Icon, InputGroup, Intent, Menu, MenuItem, Popover, Position, type TabId, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import * as _ from "lodash";
@@ -7,11 +7,11 @@ import {action, computed, flow, makeObservable, observable, runInAction} from "m
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
-import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
-import {AppToaster, ErrorToast, SimpleTableComponentProps} from "components/Shared";
-import {ImageType} from "models";
-import {AppStore, BrowserMode, CatalogProfileStore, DialogId, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
-import {FrameStore} from "stores/Frame";
+import {FileInfoComponent} from "components/FileInfo/FileInfoComponent";
+import {AppToaster, ErrorToast, type SimpleTableComponentProps} from "components/Shared";
+import {BrowserMode, DialogId, FileFilteringType, FileInfoType, HelpType, ImageType, PreferenceKeys} from "enums";
+import {AppStore, CatalogProfileStore, FileBrowserStore, type ISelectedFile, PreferenceStore} from "stores";
+import {type FrameStore} from "stores/Frame";
 
 import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
 
@@ -19,7 +19,7 @@ import "./FileBrowserDialogComponent.scss";
 
 @observer
 export class FileBrowserDialogComponent extends React.Component {
-    @observable overwriteExistingFileAlertVisible: boolean;
+    @observable overwriteExistingFileAlertVisible: boolean = false;
     @observable fileFilterString: string = "";
     @observable debouncedFilterString: string = "";
     @observable enableImageArithmetic: boolean = false;
@@ -35,8 +35,8 @@ export class FileBrowserDialogComponent extends React.Component {
 
     constructor(props: any) {
         super(props);
-        makeObservable(this);
         this.imageArithmeticInputRef = React.createRef<HTMLInputElement>();
+        makeObservable(this);
     }
 
     private handleTabChange = (newId: TabId) => {
@@ -102,7 +102,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 try {
                     await this.loadFile(fileBrowserStore.selectedFiles[i], i > 0);
                 } catch (err) {
-                    console.log(err);
+                    console.error(err);
                 }
             }
             appStore.setLoadingMultipleFiles(false);
@@ -672,7 +672,7 @@ export class FileBrowserDialogComponent extends React.Component {
             </Popover>
         );
 
-        let sideMenu = (
+        const sideMenu = (
             <div>
                 {fileTypeMenu}
                 {coordinateTypeMenu}
@@ -839,7 +839,7 @@ export class FileBrowserDialogComponent extends React.Component {
         const actionButton = this.renderActionButton(fileBrowserStore.browserMode, fileBrowserStore.appendingFrame);
 
         let fileInput: React.ReactNode;
-        let paneClassName = "file-panes";
+        const paneClassName = "file-panes";
 
         if (fileBrowserStore.browserMode === BrowserMode.SaveFile) {
             fileInput = this.renderSaveFilenameInput();
@@ -1018,7 +1018,7 @@ export class FileBrowserDialogComponent extends React.Component {
 
     @computed get pathItems() {
         const fileBrowserStore = FileBrowserStore.Instance;
-        let pathItems: BreadcrumbProps[] = [
+        const pathItems: BreadcrumbProps[] = [
             {
                 icon: "desktop",
                 onClick: () => this.handleBreadcrumbClicked("")

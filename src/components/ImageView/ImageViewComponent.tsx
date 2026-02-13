@@ -1,24 +1,19 @@
 import * as React from "react";
 import {NonIdealState, Spinner} from "@blueprintjs/core";
 import $ from "jquery";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector} from "components/Shared";
-import {ImageType, Point2D, Zoom} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, Padding, WidgetProps} from "stores";
+import {HelpType, ImageType} from "enums";
+import {type Point2D, Zoom} from "models";
+import {AppStore, type DefaultWidgetConfig, type Padding, type WidgetProps} from "stores";
 import {toFixed} from "utilities";
 
 import {ChannelMapViewComponent} from "./ChannelMapView/ChannelMapViewComponent";
 import {ImagePanelComponent} from "./ImagePanel/ImagePanelComponent";
 
 import "./ImageViewComponent.scss";
-
-export enum ImageViewLayer {
-    RegionCreating = "regionCreating",
-    Catalog = "catalog",
-    RegionMoving = "regionMoving"
-}
 
 export function getImageViewCanvas(padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
     const appStore = AppStore.Instance;
@@ -212,8 +207,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         makeObservable(this);
 
         this.imagePanelRefs = [];
-        const appStore = AppStore.Instance;
 
+        const appStore = AppStore.Instance;
         autorun(() => {
             const visibleFrames = appStore.imageViewConfigStore.visibleFrames;
             if (!visibleFrames.length) {
@@ -244,7 +239,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         this.imagePanelRefs.push(ref);
     };
 
-    @computed get panels() {
+    get panels() {
         const appStore = AppStore.Instance;
         const config = appStore.imageViewConfigStore;
         const visibleImages = config.visibleImages;

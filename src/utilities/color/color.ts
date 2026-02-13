@@ -181,7 +181,7 @@ function initContextWithSize(width: number, height: number) {
     const canvas = document.createElement("canvas") as HTMLCanvasElement;
     canvas.width = width;
     canvas.height = height;
-    return canvas.getContext("2d");
+    return canvas.getContext("2d", {willReadFrequently: true});
 }
 
 let colormapContext: CanvasRenderingContext2D | null;
