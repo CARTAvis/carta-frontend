@@ -32,12 +32,16 @@ export default defineConfig({
             'process.env.BUILD_DATE': JSON.stringify(new Date().toISOString()),
         },
     },
+    dev: {
+        lazyCompilation: false,
+    },
     output: {
         distPath: {
             root: "build"
         }
     },
     server: {
+        open: true,
         port: 3000,
         host: "localhost"
     },
@@ -47,8 +51,8 @@ export default defineConfig({
         }
     },
     html: {
-        favicon: "./public/carta_icon_128px.png",
-        title: "CARTA"
+        template: "./public/index.html",
+        title: "CARTA",
     },
     tools: {
         rspack: {
