@@ -5,21 +5,20 @@ import {pluginReact} from "@rsbuild/plugin-react";
 import {pluginSass} from "@rsbuild/plugin-sass";
 import {pluginGlsl} from "rsbuild-plugin-glsl";
 
-const defaultOptions = {
+const eslintDefaultOptions = {
     extensions: ["js", "jsx", "ts", "tsx"],
     exclude: [
         "node_modules",
         "wasm_src",
         "docs_website",
         "protobuf"
-    ],
-    
+    ]
 };
 
 export default defineConfig({
     plugins: [
         pluginReact(),
-        pluginEslint({ eslintPluginOptions: defaultOptions, enable: process.env.NODE_ENV === "production" }),
+        pluginEslint({ eslintPluginOptions: eslintDefaultOptions }),
         pluginSass(),
         pluginNodePolyfill(),
         pluginGlsl()
@@ -38,6 +37,15 @@ export default defineConfig({
             root: "build"
         }
     },
+    server: {
+        port: 3000,
+        host: "localhost"
+    },
+    performance: {
+        chunkSplit: {
+            strategy: "split-by-size"
+        }
+    },
     html: {
         favicon: "./public/carta_icon_128px.png",
         title: "CARTA"
@@ -50,7 +58,7 @@ export default defineConfig({
             },
             resolveLoader: {
                 alias: {
-                    "worker-loader": require.resolve("worker-rspack-loader"),
+                    "worker-loader": "worker-rspack-loader",
                 },
             },
             module: {
