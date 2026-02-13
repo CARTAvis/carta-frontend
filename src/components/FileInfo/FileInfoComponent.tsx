@@ -1,6 +1,6 @@
 import * as React from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
-import {FixedSizeList as List} from "react-window";
+import {List} from "react-window";
 import {Button, ButtonGroup, Classes, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, NonIdealState, type OptionProps, Popover, PopoverInteractionKind, Position, Pre, Spinner, Tab, type TabId, Tabs, Text} from "@blueprintjs/core";
 import {type CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -99,16 +99,10 @@ export class FileInfoComponent extends React.Component<{
     // calculate the correct positions and use scrollTo() instead
     private scrollToPosition = () => {
         const listRefCurrent = this.listRef.current;
-        if (!listRefCurrent) {
+        if (!listRefCurrent || !isFinite(this.matchedIterLocation.line) || this.matchedIterLocation.line < 0) {
             return;
         }
-        const origOffset = listRefCurrent.state.scrollOffset;
-        const height = listRefCurrent.props.height;
-        const itemSize = listRefCurrent.props.itemSize;
-        const targetPosition = 10 + this.matchedIterLocation.line * itemSize;
-        if (targetPosition > origOffset + height - itemSize || targetPosition < origOffset) {
-            this.listRef.current.scrollTo(targetPosition - height / 2);
-        }
+        this.listRef.current.scrollToRow({index: this.matchedIterLocation.line, align: "center"});
     };
 
     private handleSearchPanelClicked = (opened: boolean) => {
@@ -379,9 +373,16 @@ export class FileInfoComponent extends React.Component<{
         return (
             <AutoSizer>
                 {({height, width}) => (
-                    <List className={classNames("header-list", Classes.CODE_BLOCK)} itemCount={numHeaders} itemSize={18} height={height} width={width} ref={this.listRef}>
-                        {renderHeaderRow}
-                    </List>
+                    <List
+                        className={classNames("header-list", Classes.CODE_BLOCK)}
+                        rowCount={numHeaders}
+                        rowHeight={18}
+                        defaultHeight={height}
+                        style={{height, width}}
+                        listRef={this.listRef}
+                        rowComponent={renderHeaderRow}
+                        rowProps={{} as any}
+                    />
                 )}
             </AutoSizer>
         );

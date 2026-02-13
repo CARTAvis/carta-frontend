@@ -866,11 +866,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             plot_bgcolor: themeColor,
             hovermode: "closest",
             xaxis: {
-                title: widgetStore.xColumnName,
-                titlefont: {
-                    family: fontFamily,
-                    size: 12 * ratio,
-                    color: lableColor
+                title: {
+                    text: widgetStore.xColumnName,
+                    font: {
+                        family: fontFamily,
+                        size: 12 * ratio,
+                        color: lableColor
+                    }
                 },
                 showticklabels: true,
                 tickfont: {
@@ -893,10 +895,12 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 spikethickness: 1 * ratio
             },
             yaxis: {
-                titlefont: {
-                    family: fontFamily,
-                    size: 12 * ratio,
-                    color: lableColor
+                title: {
+                    font: {
+                        family: fontFamily,
+                        size: 12 * ratio,
+                        color: lableColor
+                    }
                 },
                 showticklabels: true,
                 tickfont: {
@@ -982,7 +986,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             if (border && layout.xaxis && layout.yaxis) {
                 layout.xaxis.range = [border.xMin, border.xMax];
                 layout.yaxis.range = [border.yMin, border.yMax];
-                layout.yaxis.title = widgetStore.yColumnName;
+                layout.yaxis.title = {text: widgetStore.yColumnName};
                 layout.xaxis.tickformat = this.formatTickValues([border.xMin, border.xMax]);
                 layout.yaxis.tickformat = this.formatTickValues([border.yMin, border.yMax]);
             }
@@ -1002,7 +1006,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 // autorange will trigger y axis range change
                 layout.yaxis.autorange = true;
                 layout.yaxis.rangemode = "tozero";
-                layout.yaxis.title = "Count";
+                layout.yaxis.title = {text: "Count"};
                 if (widgetStore.logScaleY) {
                     layout.yaxis.type = "log";
                 }

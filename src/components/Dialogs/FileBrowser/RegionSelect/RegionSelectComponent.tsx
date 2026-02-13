@@ -1,6 +1,6 @@
 import * as React from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
-import {FixedSizeList as List} from "react-window";
+import {List} from "react-window";
 import {Checkbox, Icon, type IconName} from "@blueprintjs/core";
 import {computed, makeObservable} from "mobx";
 import {Observer, observer} from "mobx-react";
@@ -148,9 +148,7 @@ export class RegionSelectComponent extends React.Component {
             <div className="region-list">
                 <AutoSizer>
                     {({height, width}) => (
-                        <List itemSize={24} itemCount={fileBrowserStore.exportRegionOptions.length} width={width} height={height}>
-                            {this.renderRegionOptions}
-                        </List>
+                        <List rowHeight={24} rowCount={fileBrowserStore.exportRegionOptions.length} defaultHeight={height} style={{height, width}} rowComponent={this.renderRegionOptions} rowProps={{} as any} />
                     )}
                 </AutoSizer>
             </div>
