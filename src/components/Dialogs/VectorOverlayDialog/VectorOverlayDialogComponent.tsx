@@ -1,6 +1,6 @@
 import * as React from "react";
-import {ColorResult} from "react-color";
-import {AnchorButton, Button, Classes, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
+import {type ColorResult} from "react-color";
+import {AnchorButton, Button, Classes, type DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
@@ -8,10 +8,10 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput, ScrollShadow} from "components/Shared";
+import {DialogId, HelpType, POLARIZATIONS, VectorOverlaySource} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
-import {POLARIZATIONS} from "models";
-import {AppStore, DialogId, HelpType} from "stores";
-import {FrameStore, VectorOverlaySource} from "stores/Frame";
+import {AppStore} from "stores";
+import {type FrameStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 
 import "./VectorOverlayDialogComponent.scss";
@@ -26,18 +26,18 @@ const DataSourceSelect = Select<FrameStore>;
 @observer
 export class VectorOverlayDialogComponent extends React.Component {
     @observable currentTab: VectorOverlayDialogTabs = VectorOverlayDialogTabs.Configuration;
-    @observable angularSource: VectorOverlaySource;
-    @observable intensitySource: VectorOverlaySource;
+    @observable angularSource: VectorOverlaySource = VectorOverlaySource.Current;
+    @observable intensitySource: VectorOverlaySource = VectorOverlaySource.Current;
     /**
      * Pixel width for boxcar averaging the vector overlay. Must be an integer. 1 means no averaging.
      */
-    @observable pixelAveraging: number;
-    @observable thresholdEnabled: boolean;
-    @observable threshold: number;
-    @observable fractionalIntensity: boolean;
-    @observable debiasing: boolean;
-    @observable qError: number;
-    @observable uError: number;
+    @observable pixelAveraging: number = 1;
+    @observable thresholdEnabled: boolean = false;
+    @observable threshold: number = 0;
+    @observable fractionalIntensity: boolean = false;
+    @observable debiasing: boolean = false;
+    @observable qError: number = 0;
+    @observable uError: number = 0;
     @observable thresholdOption: CARTA.PolarizationType.I | CARTA.PolarizationType.Plinear;
 
     private static readonly DefaultWidth = 500;
@@ -61,8 +61,8 @@ export class VectorOverlayDialogComponent extends React.Component {
 
     constructor(props: {appStore: AppStore}) {
         super(props);
-        makeObservable(this);
         this.setDefaultVectorOverlayParameters();
+        makeObservable(this);
     }
 
     @action setDefaultVectorOverlayParameters = () => {

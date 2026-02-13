@@ -1,14 +1,15 @@
 import * as React from "react";
 import {Alignment, Button, FormGroup, HTMLSelect, MenuDivider, MenuItem, PopoverPosition, Tab, Tabs, Text} from "@blueprintjs/core";
-import {ItemRendererProps, Select} from "@blueprintjs/select";
+import {type ItemRendererProps, Select} from "@blueprintjs/select";
 import classNames from "classnames";
 import {computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent} from "components/Shared";
-import {FrequencyUnit, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, SpectralType} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {LayerListSettingsTabs, LayerListWidgetStore} from "stores/Widgets";
+import {FrequencyUnit, HelpType, LayerListSettingsTabs, type SpectralType} from "enums";
+import {SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING} from "models";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {type LayerListWidgetStore} from "stores/Widgets";
 
 import "./LayerListSettingsPanelComponent.scss";
 

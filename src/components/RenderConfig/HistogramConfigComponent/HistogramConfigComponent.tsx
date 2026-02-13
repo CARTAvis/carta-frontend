@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 
 import {SCALING_POPOVER_PROPS} from "components/Shared";
 import {AppStore} from "stores";
-import {RenderConfigStore} from "stores/Frame";
+import {type RenderConfigStore} from "stores/Frame";
 
 const HistogramSelect = Select<boolean>;
 
@@ -23,7 +23,7 @@ interface HistogramConfigProps {
 
 @observer
 export class HistogramConfigComponent extends React.Component<HistogramConfigProps> {
-    @observable showCubeHistogramAlert: boolean;
+    @observable showCubeHistogramAlert: boolean = false;
 
     constructor(props: any) {
         super(props);

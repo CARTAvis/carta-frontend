@@ -1,38 +1,23 @@
-import {OptionProps} from "@blueprintjs/core";
+import type {OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
+import {RegionId, RegionsType} from "enums";
 import {AppStore} from "stores";
-import {FrameStore, RegionStore} from "stores/Frame";
+import {type FrameStore, type RegionStore} from "stores/Frame";
 
 export const ACTIVE_FILE_ID = -1;
 
-export enum RegionId {
-    NONE = -4,
-    ACTIVE = -3,
-    IMAGE = -1,
-    CURSOR = 0
-}
-
-export enum RegionsType {
-    CLOSED,
-    CLOSED_AND_POINT,
-    POINT_AND_LINES,
-    LINE
-}
-
 export class RegionWidgetStore {
     protected readonly appStore: AppStore;
-    @observable fileId: number;
-    @observable regionIdMap: Map<number, number>;
+    @observable fileId: number = ACTIVE_FILE_ID;
+    @observable regionIdMap: Map<number, number> = new Map<number, number>();
     @observable type: RegionsType;
 
     constructor(type: RegionsType) {
-        makeObservable(this);
         this.appStore = AppStore.Instance;
-        this.fileId = ACTIVE_FILE_ID;
         this.type = type;
-        this.regionIdMap = new Map<number, number>();
+        makeObservable(this);
     }
 
     @action clearFrameEntry = (fileId: number) => {

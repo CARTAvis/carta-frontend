@@ -1,23 +1,10 @@
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
+import type {ProcessedColumnData} from "utilities";
 
-import {AbstractCatalogProfileStore, CatalogInfo, CatalogSystemType, CatalogType} from "models";
+import {CatalogSystemType, CatalogType, CatalogUpdateMode} from "enums";
+import {AbstractCatalogProfileStore, type CatalogInfo} from "models";
 import {PreferenceStore} from "stores";
-import {ProcessedColumnData} from "utilities";
-
-export enum CatalogCoordinate {
-    X = "X",
-    Y = "Y",
-    PlotSize = "Size",
-    PlotShape = "Shape",
-    NONE = "None"
-}
-
-export enum CatalogUpdateMode {
-    TableUpdate = "TableUpdate",
-    ViewUpdate = "ViewUpdate",
-    PlotsUpdate = "PlotsUpdate"
-}
 
 export type ControlHeader = {columnIndex: number | undefined; dataIndex: number | undefined; display: boolean | undefined; filter: string; columnWidth: number | null | undefined};
 
@@ -38,11 +25,8 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
 
     constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.CatalogHeader>, catalogData: Map<number, ProcessedColumnData>, catalogType: CatalogType = CatalogType.FILE) {
         super(catalogType, catalogData);
-        makeObservable(this);
         this.catalogInfo = catalogInfo;
-        this.catalogHeader = catalogHeader.sort((a, b) => {
-            return a.columnIndex - b.columnIndex;
-        });
+        this.catalogHeader = catalogHeader.sort((a, b) => a.columnIndex - b.columnIndex);
         this.catalogControlHeader = this.initCatalogControlHeader;
         this.catalogFilterRequest = this.initCatalogFilterRequest;
         this.updatingDataStream = false;
@@ -50,9 +34,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         this.selectedPointIndices = [];
         this.filterDataSize = undefined;
         this.maxRows = catalogInfo.dataSize;
-
         const coordinateSystem = catalogInfo.fileInfo.coosys?.[0];
-
         if (coordinateSystem) {
             const system = AbstractCatalogProfileStore.getCatalogSystem(coordinateSystem.system);
             this.catalogCoordinateSystem = {
@@ -69,7 +51,6 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
                 coordinate: this.systemCoordinateMap.get(CatalogSystemType.ICRS)
             };
         }
-
         const initTableRows = CatalogProfileStore.InitTableRows;
         if (catalogInfo.dataSize < initTableRows) {
             this.numVisibleRows = catalogInfo.dataSize;
@@ -78,6 +59,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
             this.numVisibleRows = initTableRows;
             this.subsetEndIndex = initTableRows;
         }
+        makeObservable(this);
     }
 
     @action setUserFilter(catalogFilterRequest: CARTA.CatalogFilterRequest) {
@@ -112,7 +94,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
     }
 
     @action updateCatalogData(catalogFilter: CARTA.CatalogFilterResponse, catalogData: Map<number, ProcessedColumnData>) {
-        let subsetDataSize = catalogFilter.subsetDataSize;
+        const subsetDataSize = catalogFilter.subsetDataSize;
         const subsetEndIndex = catalogFilter.subsetEndIndex;
         const startIndex = subsetEndIndex - subsetDataSize;
 
@@ -120,9 +102,9 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         this.filterDataSize = catalogFilter.filterDataSize;
 
         if (this.subsetEndIndex <= this.filterDataSize) {
-            let numVisibleRows = this.isUpdateColumnMode ? this.numVisibleRows : this.numVisibleRows + subsetDataSize;
+            const numVisibleRows = this.isUpdateColumnMode ? this.numVisibleRows : this.numVisibleRows + subsetDataSize;
             catalogData.forEach((newData, key) => {
-                let currentData = this.catalogData.get(key);
+                const currentData = this.catalogData.get(key);
                 if (!currentData) {
                     this.catalogData.set(key, newData);
                 } else {
@@ -201,7 +183,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
                 if (index < PreferenceStore.Instance.catalogDisplayedColumnSize) {
                     display = true;
                 }
-                let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, filter: "", columnWidth: null};
+                const controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, filter: "", columnWidth: null};
                 controlHeaders.set(header.name, controlHeader);
             }
         }
@@ -214,8 +196,8 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
     }
 
     @computed get initCatalogFilterRequest(): CARTA.ICatalogFilterRequest {
-        let catalogFilter: CARTA.ICatalogFilterRequest = new CARTA.CatalogFilterRequest();
-        let imageBounds: CARTA.CatalogImageBounds = new CARTA.CatalogImageBounds();
+        const catalogFilter: CARTA.ICatalogFilterRequest = new CARTA.CatalogFilterRequest();
+        const imageBounds: CARTA.CatalogImageBounds = new CARTA.CatalogImageBounds();
         let previewDatasize = CatalogProfileStore.InitTableRows;
         catalogFilter.fileId = this.catalogInfo.fileId;
         catalogFilter.filterConfigs = null;
@@ -268,7 +250,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
     }
 
     @computed get columnIndices(): Array<number> {
-        let indices: number[] = [];
+        const indices: number[] = [];
         this.catalogControlHeader.forEach((value, key) => {
             if (value.display && value.columnIndex !== undefined) {
                 indices.push(value.columnIndex);

@@ -1,13 +1,14 @@
 import * as React from "react";
 import {FormGroup, InputGroup} from "@blueprintjs/core";
-import * as AST from "ast_wrapper";
+import type * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
-import {CoordinateComponent, CoordNumericInput, ImageCoordNumericInput, InputType} from "components/Shared";
+import {CoordinateComponent, CoordNumericInput, ImageCoordNumericInput} from "components/Shared";
+import {CoordinateMode, InputType} from "enums";
 import {isValidWcsPoint, Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
-import {CoordinateMode, FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
+import {type FrameStore, type RegionStore, WCS_PRECISION} from "stores/Frame";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid, length2D} from "utilities";
 
 import "./LineRegionForm.scss";

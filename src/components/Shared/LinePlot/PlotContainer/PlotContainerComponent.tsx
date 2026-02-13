@@ -1,20 +1,14 @@
 import * as React from "react";
 import {Scatter} from "react-chartjs-2";
 import {Colors} from "@blueprintjs/core";
-import {Chart, ChartArea, ChartDataset, ChartOptions, Legend, LinearScale, LineElement, LogarithmicScale, Plugin, PointElement, Scale, Tick} from "chart.js";
+import {Chart, type ChartArea, type ChartDataset, type ChartOptions, Legend, LinearScale, LineElement, LogarithmicScale, type Plugin, PointElement, type Scale, type Tick} from "chart.js";
 import * as _ from "lodash";
 import tinycolor from "tinycolor2";
 
-import {PlotType} from "components/Shared";
+import {PlotType, TickType} from "enums";
 import {clamp, toExponential, toFixed} from "utilities";
 
 Chart.register(Legend, LinearScale, LineElement, LogarithmicScale, PointElement);
-
-export enum TickType {
-    Automatic,
-    Scientific,
-    Integer
-}
 
 export class PlotContainerProps {
     width?: number;
@@ -367,7 +361,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         }
 
         // ChartJS plot
-        let plotOptions: ChartOptions<"scatter"> = {
+        const plotOptions: ChartOptions<"scatter"> = {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
@@ -453,7 +447,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             plotOptions.scales.y.type = "linear";
         }
 
-        let plotData: ChartDataset<"scatter">[] = [];
+        const plotData: ChartDataset<"scatter">[] = [];
         if (this.props.data?.length) {
             const datasetConfig: ChartDataset<"scatter"> = {
                 label: "LineGraph",
@@ -508,7 +502,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 }
 
                 let currentLineColor = props.borderColor ? props.borderColor : lineColor;
-                let currentOpacity = clamp((props.opacity ? props.opacity : opacity) || 1.0, 0, 1);
+                const currentOpacity = clamp((props.opacity ? props.opacity : opacity) || 1.0, 0, 1);
                 if (currentOpacity < 1.0) {
                     currentLineColor = tinycolor(currentLineColor).setAlpha(currentOpacity).toRgbString();
                 }
@@ -539,8 +533,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     }
                 }
 
-                let currentPointRadius = props.pointRadius ? props.pointRadius : this.props.pointRadius;
-                let currentLineWidth = props.borderWidth ? props.borderWidth : this.props.borderWidth;
+                const currentPointRadius = props.pointRadius ? props.pointRadius : this.props.pointRadius;
+                const currentLineWidth = props.borderWidth ? props.borderWidth : this.props.borderWidth;
 
                 if (props.type === PlotType.POINTS) {
                     multiPlotDatasetConfig.pointStyle = "circle";
@@ -563,7 +557,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             });
         }
 
-        let plugins: Plugin[] = [
+        const plugins: Plugin[] = [
             {
                 id: "afterLayout",
                 afterLayout: this.afterChartLayout

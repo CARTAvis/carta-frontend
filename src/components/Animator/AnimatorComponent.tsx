@@ -1,11 +1,12 @@
 import * as React from "react";
-import {AnchorButton, Button, ButtonGroup, Classes, ControlGroup, HTMLSelect, IconName, Menu, MenuItem, NonIdealState, NumberRange, Popover, Position, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, ButtonGroup, Classes, ControlGroup, HTMLSelect, type IconName, Menu, MenuItem, NonIdealState, type NumberRange, Popover, Position, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
-import {AnimationMode, AnimatorStore, AppStore, DefaultWidgetConfig, HelpType, PlayMode, WidgetProps} from "stores";
+import {AnimationMode, HelpType, PlayMode} from "enums";
+import {AnimatorStore, AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 
 import "./AnimatorComponent.scss";
 
@@ -30,14 +31,13 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         };
     }
 
-    @observable width: number;
-    @observable height: number;
-    @observable numericInputType: NumericInputType;
+    @observable width: number = 650;
+    @observable height: number = 200;
+    @observable numericInputType: NumericInputType = NumericInputType.FrameRate;
 
     constructor(props: any) {
         super(props);
         makeObservable(this);
-        this.numericInputType = NumericInputType.FrameRate;
     }
 
     @action onResize = (width: number, height: number) => {

@@ -2,8 +2,8 @@ import * as React from "react";
 import {HTMLSelect, Radio, RadioGroup} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
-import {AppStore, SystemType} from "stores";
-import {CoordinateMode} from "stores/Frame";
+import {CoordinateMode, SystemType} from "enums";
+import {AppStore} from "stores";
 
 import "./CoordinateComponent.scss";
 

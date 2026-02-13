@@ -1,6 +1,6 @@
 import * as React from "react";
 import Editor from "react-simple-code-editor";
-import {AnchorButton, Classes, DialogProps, Intent} from "@blueprintjs/core";
+import {AnchorButton, Classes, type DialogProps, Intent} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -8,8 +8,9 @@ import * as prism from "prismjs";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppToaster, WarningToast} from "components/Shared";
+import {DialogId} from "enums";
 import {Snippet} from "models";
-import {AppStore, DialogId, SnippetStore} from "stores";
+import {AppStore, SnippetStore} from "stores";
 
 import {SaveSnippetDialogComponent} from "./SaveSnippetDialog/SaveSnippetDialogComponent";
 import {ThemeProvider} from "./ThemeProvider";

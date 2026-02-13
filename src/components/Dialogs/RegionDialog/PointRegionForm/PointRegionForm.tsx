@@ -1,14 +1,17 @@
 import * as React from "react";
 import {FormGroup, InputGroup} from "@blueprintjs/core";
-import * as AST from "ast_wrapper";
+import type * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
-import {CoordinateComponent, CoordNumericInput, InputType} from "components/Shared";
-import {Point2D, WCSPoint2D} from "models";
+import {CoordinateComponent, CoordNumericInput} from "components/Shared";
+import {CoordinateMode, InputType} from "enums";
+import {Point2D} from "models";
 import {AppStore} from "stores";
-import {CoordinateMode, PointAnnotationStore, RegionStore} from "stores/Frame";
+import {type PointAnnotationStore, type RegionStore} from "stores/Frame";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
+
+import {WCSPoint2D} from "../../../../models/Point2D/Point2D";
 
 @observer
 export class PointRegionForm extends React.Component<{region: RegionStore; wcsInfo: AST.FrameSet}> {

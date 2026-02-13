@@ -1,23 +1,23 @@
 import {action, makeObservable, observable} from "mobx";
 
-import {BeamType, PreferenceStore} from "stores";
+import {type BeamType} from "enums";
+import {PreferenceStore} from "stores";
 
 export class OverlayBeamStore {
     @observable visible: boolean;
     @observable color: string;
     @observable type: BeamType;
     @observable width: number;
-    @observable shiftX: number;
-    @observable shiftY: number;
+    @observable shiftX: number = 0;
+    @observable shiftY: number = 0;
 
     constructor() {
-        makeObservable(this);
         const preference = PreferenceStore.Instance;
         this.visible = preference.beamVisible;
         this.color = preference.beamColor;
         this.type = preference.beamType;
         this.width = preference.beamWidth;
-        this.shiftX = this.shiftY = 0;
+        makeObservable(this);
     }
 
     @action setVisible = (visible: boolean) => {

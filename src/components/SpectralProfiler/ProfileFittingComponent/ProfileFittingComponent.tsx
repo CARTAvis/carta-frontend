@@ -4,8 +4,9 @@ import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {SafeNumericInput} from "components/Shared";
-import {AppStore, FittingContinuum, FittingFunction, ProfileFittingStore} from "stores";
-import {SpectralProfileWidgetStore} from "stores/Widgets";
+import {FittingContinuum, FittingFunction} from "enums";
+import {AppStore, type ProfileFittingStore} from "stores";
+import {type SpectralProfileWidgetStore} from "stores/Widgets";
 import {exportTxtFile, getTimestamp} from "utilities";
 
 import "./ProfileFittingComponent.scss";
@@ -17,8 +18,8 @@ export interface ProfileFittingComponentProps {
 
 @observer
 export class ProfileFittingComponent extends React.Component<ProfileFittingComponentProps> {
-    @observable isShowingLog: boolean;
-    @observable isShowingResultButton: boolean;
+    @observable isShowingLog: boolean = false;
+    @observable isShowingResultButton: boolean = false;
     private fittingStore: ProfileFittingStore;
     private widgetStore: SpectralProfileWidgetStore;
 
@@ -191,10 +192,11 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
 
     constructor(props: ProfileFittingComponentProps) {
         super(props);
-        this.isShowingLog = false;
+        makeObservable(this);
+
         this.fittingStore = props.fittingStore;
         this.widgetStore = props.widgetStore;
-        makeObservable(this);
+
         autorun(() => {
             // clear fitting data when the profile data changed
             if (this.widgetStore?.profileSelectionStore?.profiles[0]) {

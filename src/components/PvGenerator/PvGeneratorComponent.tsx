@@ -6,12 +6,18 @@ import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
-import {Point2D, SpectralSystem} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
-import {PVAxis, PvGeneratorWidgetStore, RegionId} from "stores/Widgets";
+import {HelpType, RegionId, type SpectralSystem} from "enums";
+import {type Point2D} from "models";
+import {AppStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps, WidgetsStore} from "stores";
+import {PvGeneratorWidgetStore} from "stores/Widgets";
 import {toFixed} from "utilities";
 
 import "./PvGeneratorComponent.scss";
+
+enum PVAxis {
+    SPATIAL = "Spatial",
+    SPECTRAL = "Spectral"
+}
 
 @observer
 export class PvGeneratorComponent extends React.Component<WidgetProps> {
@@ -60,7 +66,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
 
             // check if image corners are on the same side of the line region. from https://stackoverflow.com/a/1560510
             let sideValue = 0;
-            for (let corner of imageCorners) {
+            for (const corner of imageCorners) {
                 sideValue = sideValue + Math.sign((endPoint.x - startPoint.x) * (corner.y - startPoint.y) - (endPoint.y - startPoint.y) * (corner.x - startPoint.x));
             }
 
@@ -158,6 +164,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                 appStore.widgetsStore.pvGeneratorWidgets.set(this.widgetId, new PvGeneratorWidgetStore());
             }
         }
+        makeObservable(this);
     }
 
     @action setisValidSpectralRange = (bool: boolean) => {

@@ -19,16 +19,20 @@ export class SnippetStore {
 
     public static readonly ToasterTimeout = 1500;
 
-    @observable snippets: Map<string, Snippet>;
-    @observable activeSnippet: Snippet;
-    @observable activeSnippetName: string | undefined;
-    @observable isExecuting: boolean;
+    @observable snippets: Map<string, Snippet> = new Map<string, Snippet>();
+    @observable activeSnippet: Snippet = {
+        code: "",
+        frontendVersion: undefined as any,
+        snippetVersion: undefined as any,
+        categories: []
+    };
+    @observable activeSnippetName: string | undefined = "";
+    @observable isExecuting: boolean = false;
 
     private constructor() {
         makeObservable(this);
         this.setDefaultSnippets();
         this.clearActiveSnippet();
-        this.isExecuting = false;
     }
 
     public snippetExists = (name: string): boolean => {
@@ -72,7 +76,7 @@ export class SnippetStore {
             }
         } catch (err) {
             AlertStore.Instance.showAlert("Loading user-defined snippets failed!");
-            console.log(err);
+            console.error(err);
         }
     }
 
@@ -93,6 +97,7 @@ export class SnippetStore {
                 f = new AsyncFunction(this.activeSnippet.code);
             } catch (e) {
                 f = undefined;
+                console.error(e);
             }
             return f;
         }
@@ -148,6 +153,7 @@ export class SnippetStore {
             }
         } catch (err) {
             AlertStore.Instance.showAlert(`Saving snippet ${name} failed!`);
+            console.error(err);
             return false;
         }
     }
@@ -168,6 +174,7 @@ export class SnippetStore {
             }
         } catch (err) {
             AlertStore.Instance.showAlert(`Deleting snippet ${name} failed!`);
+            console.error(err);
             return false;
         }
     }

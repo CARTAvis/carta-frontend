@@ -1,12 +1,12 @@
 import React from "react";
 import {Arrow, Group, Line, Text} from "react-konva";
 import * as AST from "ast_wrapper";
-import Konva from "konva";
+import type Konva from "konva";
 import {observer} from "mobx-react";
 
-import {Point2D} from "models";
+import {type Point2D} from "models";
 import {AppStore} from "stores";
-import {CompassAnnotationStore, FrameStore, RegionStore, RulerAnnotationStore} from "stores/Frame";
+import {type CompassAnnotationStore, type FrameStore, type RegionStore, type RulerAnnotationStore} from "stores/Frame";
 import {add2D, pointDistance, subtract2D, transformPoint} from "utilities";
 
 import {Anchor} from "./InvariantShapes";
@@ -209,7 +209,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
 
     React.useEffect(() => {
         updateOffset();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line
     }, []);
 
     const generateProps = (north: boolean) => {

@@ -1,6 +1,7 @@
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {Freq, FrequencyUnit} from "models";
+import {type FrequencyUnit} from "enums";
+import {Freq} from "models";
 
 export class RestFreqStore {
     readonly headerRestFreq: Freq;
@@ -26,10 +27,10 @@ export class RestFreqStore {
     }
 
     constructor(headerRestFreq: number) {
-        makeObservable(this);
         const defaultRestFreq = Freq.convertUnitFromHz(headerRestFreq);
         this.headerRestFreq = defaultRestFreq;
         this.customRestFreq = defaultRestFreq;
+        makeObservable(this);
     }
 
     /**

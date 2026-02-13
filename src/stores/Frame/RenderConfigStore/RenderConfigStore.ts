@@ -1,21 +1,11 @@
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
+import type {WorkspaceRenderConfig} from "models";
 
-import {WorkspaceRenderConfig} from "models";
-import {AppStore, PreferenceStore} from "stores";
-import {FrameStore} from "stores/Frame";
+import {FrameScaling} from "enums";
+import {AppStore, type PreferenceStore} from "stores";
+import {type FrameStore} from "stores/Frame";
 import {clamp, COLOR_MAPS_ALL, COLOR_MAPS_MONO, COLOR_MAPS_SELECTED, getColorsForValues, getColorsFromHex, getPercentiles, scaleValueInverse} from "utilities";
-
-export enum FrameScaling {
-    LINEAR = 0,
-    LOG = 1,
-    SQRT = 2,
-    SQUARE = 3,
-    POWER = 4,
-    GAMMA = 5,
-    EXP = 6,
-    CUSTOM = 7
-}
 
 export class RenderConfigStore {
     static readonly SCALING_TYPES = new Map<FrameScaling, string>([
@@ -43,23 +33,23 @@ export class RenderConfigStore {
     static readonly CONTRAST_MAX = 2;
 
     @observable scaling: FrameScaling;
-    @observable colorMapIndex: number;
-    @observable bias: number;
-    @observable contrast: number;
+    @observable colorMapIndex: number = 0;
+    @observable bias: number = 0;
+    @observable contrast: number = 1;
     @observable gamma: number;
     @observable alpha: number;
-    @observable inverted: boolean;
-    @observable channelHistogram: CARTA.IHistogram;
-    @observable cubeHistogram: CARTA.IHistogram | null;
-    @observable useCubeHistogram: boolean;
-    @observable useCubeHistogramContours: boolean;
-    @observable cubeHistogramProgress: number;
+    @observable inverted: boolean = false;
+    @observable channelHistogram: CARTA.IHistogram = undefined as any;
+    @observable cubeHistogram: CARTA.IHistogram | null = null;
+    @observable useCubeHistogram: boolean = false;
+    @observable useCubeHistogramContours: boolean = false;
+    @observable cubeHistogramProgress: number = 0;
     @observable selectedPercentile: number[];
-    @observable histChannel: number;
-    @observable stokesIndex: number;
+    @observable histChannel: number = 0;
+    @observable stokesIndex: number = 0;
     @observable scaleMin: number[];
     @observable scaleMax: number[];
-    @observable visible: boolean;
+    @observable visible: boolean = true;
     @observable previewHistogramMax: number | null = null;
     @observable previewHistogramMin: number | null = null;
     @observable customColormapHexEnd: string;
@@ -71,25 +61,19 @@ export class RenderConfigStore {
         readonly preference: PreferenceStore,
         frame: FrameStore
     ) {
-        makeObservable(this);
         this.frame = frame;
         const stokesLength = this.frame.polarizations.length !== 0 ? this.frame.polarizations.length : 1;
         const percentile = preference.percentile;
         this.selectedPercentile = new Array<number>(stokesLength).fill(percentile);
-        this.bias = 0;
-        this.contrast = 1;
         this.alpha = preference.scalingAlpha;
         this.gamma = preference.scalingGamma;
         this.scaling = preference.scaling;
-        this.inverted = false;
-        this.cubeHistogramProgress = 0;
         this.setColorMap(preference.colormap);
-        this.stokesIndex = 0;
         this.scaleMin = new Array<number>(stokesLength).fill(0);
         this.scaleMax = new Array<number>(stokesLength).fill(1);
-        this.visible = true;
         this.customColormapHexEnd = preference.colormapHex;
         this.customColormapHexStart = preference.colormapHexStart;
+        makeObservable(this);
     }
 
     public static IsScalingValid(scaling: FrameScaling): boolean {
@@ -139,10 +123,10 @@ export class RenderConfigStore {
         }
         const indexArray = Array.from(Array(colorsForValues.size).keys()).map(x => (this.inverted ? 1 - x / colorsForValues.size : x / colorsForValues.size));
         const scaledArray = indexArray.map(x => 1.0 - scaleValueInverse(x, this.scaling, this.alpha, this.gamma, this.bias, this.contrast, AppStore.Instance?.preferenceStore?.useSmoothedBiasContrast));
-        let rbgString = (index: number): string => `rgb(${colorsForValues!.color[index * 4]}, ${colorsForValues!.color[index * 4 + 1]}, ${colorsForValues!.color[index * 4 + 2]}, ${colorsForValues!.color[index * 4 + 3]})`;
+        const rbgString = (index: number): string => `rgb(${colorsForValues!.color[index * 4]}, ${colorsForValues!.color[index * 4 + 1]}, ${colorsForValues!.color[index * 4 + 2]}, ${colorsForValues!.color[index * 4 + 3]})`;
 
         // Fix: Explicitly type colorscale as (number | string)[]
-        let colorscale: (number | string)[] = [];
+        const colorscale: (number | string)[] = [];
         if (this.contrast === 0) {
             for (let i = 0; i < colorsForValues.size; i++) {
                 if (scaledArray[i] === (this.inverted ? 1 : 0)) {

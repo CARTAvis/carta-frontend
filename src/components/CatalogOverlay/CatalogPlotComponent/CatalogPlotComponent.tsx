@@ -1,19 +1,20 @@
 import * as React from "react";
 import Plot from "react-plotly.js";
 import {AnchorButton, Button, Classes, Colors, FormGroup, Intent, MenuItem, NonIdealState, PopoverPosition, Switch, Tooltip} from "@blueprintjs/core";
-import {ItemPredicate, ItemRendererProps, Select} from "@blueprintjs/select";
+import {type ItemPredicate, type ItemRendererProps, Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
 import * as GSL from "gsl_wrapper";
 import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable, reaction, runInAction} from "mobx";
 import {observer} from "mobx-react";
-import * as Plotly from "plotly.js";
+import type * as Plotly from "plotly.js";
 
 import {ClearableNumericInputComponent, ProfilerInfoComponent, ResizeDetector} from "components/Shared";
-import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, CatalogUpdateMode, DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
-import {Border, CatalogPlotType, CatalogPlotWidgetStore, CatalogPlotWidgetStoreProps, CatalogWidgetStore, DragMode, XBorder} from "stores/Widgets";
-import {minMaxArray, toFixed, TypedArray} from "utilities";
+import {CatalogPlotType, CatalogUpdateMode} from "enums";
+import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {type Border, type CatalogPlotWidgetStore, type CatalogPlotWidgetStoreProps, type CatalogWidgetStore, type DragMode, type XBorder} from "stores/Widgets";
+import {minMaxArray, toFixed, type TypedArray} from "utilities";
 
 import "./CatalogPlotComponent.scss";
 
@@ -21,11 +22,11 @@ const DEFAULT_NUM_BINS = 10; // default fallback
 
 @observer
 export class CatalogPlotComponent extends React.Component<WidgetProps> {
-    @observable width: number;
-    @observable height: number;
-    @observable profileId: string;
-    @observable catalogFileId: number;
-    @observable componentId: string;
+    @observable width: number = 680;
+    @observable height: number = 400;
+    @observable profileId: string = "";
+    @observable catalogFileId: number = 0;
+    @observable componentId: string = "";
     private plotType: CatalogPlotType;
     private histogramY: {yMin?: number; yMax?: number};
     private static emptyColumn = "None";
@@ -41,7 +42,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             minWidth: 320,
             minHeight: 400,
             defaultWidth: 680,
-            defaultHeight: 350,
+            defaultHeight: 400,
             title: "Catalog Plot",
             isCloseable: true,
             componentId: "catalog-plot-component"
@@ -50,7 +51,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
-        makeObservable(this);
 
         this.widgetId = props.id;
         this.histogramY = {yMin: undefined, yMax: undefined};
@@ -58,6 +58,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         this.componentId = catalogPlot.catalogPlotComponentId;
         this.catalogFileId = catalogPlot.catalogFileId;
         this.catalogFileNames = new Map<number, string>();
+
+        makeObservable(this);
+
         autorun(() => {
             const profileStore = this.profileStore;
             const widgetStore = this.widgetStore;
@@ -265,8 +268,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const numVisibleRows = profileStore.numVisibleRows;
         /* eslint-enable @typescript-eslint/no-unused-vars */
         const coords = profileStore.get2DPlotData(widgetStore.xColumnName, widgetStore.yColumnName, profileStore.catalogData);
-        let scatterDatasets: Plotly.Data[] = [];
-        let data: Partial<Plotly.PlotData> = {};
+        const scatterDatasets: Plotly.Data[] = [];
+        const data: Partial<Plotly.PlotData> = {};
         data.type = "scattergl";
         data.mode = "markers";
         data.marker = {
@@ -297,8 +300,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const numVisibleRows = profileStore.numVisibleRows;
         /* eslint-enable @typescript-eslint/no-unused-vars */
         const coords = profileStore.get1DPlotData(widgetStore.xColumnName);
-        let histogramDatasets: Plotly.Data[] = [];
-        let data: Partial<Plotly.PlotData> = {};
+        const histogramDatasets: Plotly.Data[] = [];
+        const data: Partial<Plotly.PlotData> = {};
         if (!coords.wcsData) {
             return {data: histogramDatasets, border: undefined};
         }
@@ -377,7 +380,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!coords.wcsData) {
             return;
         }
-        let data: number[] = [];
+        const data: number[] = [];
         let size = coords.wcsData.length;
         let count = size;
         const selectedSize = selectedPointIndices.length;
@@ -546,7 +549,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (profileStore?.shouldUpdateData) {
             profileStore.setUpdateMode(CatalogUpdateMode.PlotsUpdate);
             profileStore.setUpdatingDataStream(true);
-            let catalogFilter = profileStore.updateRequestDataSize;
+            const catalogFilter = profileStore.updateRequestDataSize;
             appStore.sendCatalogFilter(catalogFilter);
         }
     };
@@ -659,7 +662,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     private renderFilePopOver = (fileId: number, itemProps: ItemRendererProps) => {
         const fileName = this.catalogFileNames.get(fileId);
-        let text = `${fileId}: ${fileName}`;
+        const text = `${fileId}: ${fileName}`;
         return <MenuItem key={fileId} text={text} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
@@ -673,7 +676,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!coords.wcsX || !coords.wcsY) {
             return;
         }
-        let x: number[] = [],
+        const x: number[] = [],
             y: number[] = [];
         if (selectedPointIndices.length === 0) {
             for (let index = 0; index < coords.wcsX.length; index++) {
@@ -739,9 +742,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         let gridColor = Colors.LIGHT_GRAY1;
         let markerColor = Colors.GRAY2;
         let spikeLineClass = "catalog-plotly";
-        let catalogScatterClass = "catalog-scatter";
+        const catalogScatterClass = "catalog-scatter";
 
-        let catalogFileItems: number[] = [];
+        const catalogFileItems: number[] = [];
         catalogFileIds.forEach(value => {
             catalogFileItems.push(value);
         });
@@ -856,7 +859,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             spikeLineClass = "catalog-plotly-dark";
         }
 
-        let layout: Partial<Plotly.Layout> = {
+        const layout: Partial<Plotly.Layout> = {
             width: this.width * ratio,
             height: (this.height - 110) * ratio,
             paper_bgcolor: themeColor,
@@ -965,7 +968,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
 
         let data;
-        let catalogDataIndex = 0;
+        const catalogDataIndex = 0;
         if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
             const scatter = this.scatterData;
             data = scatter.data;
@@ -1007,7 +1010,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
 
         const selectedPointIndices = profileStore.getSortedIndices(profileStore.selectedPointIndices);
-        let scatterDataMarker = data[catalogDataIndex].marker;
+        const scatterDataMarker = data[catalogDataIndex].marker;
         if (selectedPointIndices.length > 0) {
             data[catalogDataIndex]["selectedpoints"] = selectedPointIndices;
             data[catalogDataIndex]["selected"] = {marker: {color: Colors.RED2}};

@@ -2,11 +2,12 @@ import * as React from "react";
 import {Tab, Tabs} from "@blueprintjs/core";
 import {autorun, computed} from "mobx";
 import {observer} from "mobx-react";
+import type {LineKey} from "models";
 
-import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScrollShadow} from "components/Shared";
-import {LineKey} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {HistogramWidgetStore} from "stores/Widgets";
+import {LinePlotSettingsPanelComponent, type LinePlotSettingsPanelComponentProps, ScrollShadow} from "components/Shared";
+import {HelpType, HistogramSettingsTabs} from "enums";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {type HistogramWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 
 import {HistogramConfigPanelComponent} from "./HistogramConfigPanelComponent";
@@ -14,11 +15,6 @@ import {HistogramConfigPanelComponent} from "./HistogramConfigPanelComponent";
 import "./HistogramSettingsPanelComponent.scss";
 
 const KEYCODE_ENTER = 13;
-
-export enum HistogramSettingsTabs {
-    STYLING,
-    CONFIG
-}
 
 @observer
 export class HistogramSettingsPanelComponent extends React.Component<WidgetProps> {

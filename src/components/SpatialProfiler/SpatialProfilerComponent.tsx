@@ -2,19 +2,20 @@ import * as React from "react";
 import {Colors, FormGroup, HTMLSelect, NonIdealState} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {Tick} from "chart.js";
+import type {Tick} from "chart.js";
 import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, ResizeDetector, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
-import {Point2D, POLARIZATIONS} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
-import {FrameStore} from "stores/Frame";
-import {RegionId, SpatialProfileWidgetStore} from "stores/Widgets";
+import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent, RegionSelectorComponent, ResizeDetector, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {HelpType, PlotType, POLARIZATIONS, RegionId, SmoothingType, TickType} from "enums";
+import {type Point2D} from "models";
+import {AppStore, type DefaultWidgetConfig, type SpatialProfileStore, type WidgetProps, WidgetsStore} from "stores";
+import {type FrameStore} from "stores/Frame";
+import {SpatialProfileWidgetStore} from "stores/Widgets";
 import {ASTSettingsString, binarySearchByX, clamp, formattedExponential, getColorForTheme, setAstStringSystem, toFixed, transformPoint} from "utilities";
 
-import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {type MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
 import "./SpatialProfilerComponent.scss";
 
@@ -40,12 +41,12 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     private cachedFormattedCoordinates: string[];
     private widgetId: string;
 
-    @observable width: number;
-    @observable height: number;
+    @observable width: number = 650;
+    @observable height: number = 250;
 
     // auto-scaling range
-    @observable autoScaleHorizontalMin: number;
-    @observable autoScaleHorizontalMax: number;
+    @observable autoScaleHorizontalMin: number = 0;
+    @observable autoScaleHorizontalMax: number = 1;
 
     @computed get widgetStore(): SpatialProfileWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
@@ -145,7 +146,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 N = coordinateData.values.length;
                 values = new Array(N);
                 fullResolutionValues = new Array(N);
-                let xArray: number[] = new Array(N);
+                const xArray: number[] = new Array(N);
                 const numPixels = this.width;
                 const decimationFactor = Math.round(N / numPixels);
                 let startIndex: number | undefined;
@@ -196,7 +197,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             } else {
                 N = Math.floor(Math.min(xMax - xMin + 1, coordinateData.values.length));
                 if (N > 0) {
-                    let xArray: number[] = new Array(coordinateData.values.length);
+                    const xArray: number[] = new Array(coordinateData.values.length);
                     for (let i = 0; i < coordinateData.values.length; i++) {
                         xArray[i] = i;
                     }
@@ -399,7 +400,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             return;
         }
 
-        let astString = new ASTSettingsString();
+        const astString = new ASTSettingsString();
         const global = AppStore.Instance.overlaySettings.global;
         setAstStringSystem(astString, global.explicitSystem, global);
 
@@ -441,7 +442,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         // Start trimming from the next digit of pointInfo to avoid offset between pointInfo and upper wcs axis value
         const initialTrimLength = this.cachedFormattedCoordinates[0].length - decimalIndex - 1 - (pointInfoPrecision + 1);
         for (let trim = initialTrimLength; trim > 0; trim--) {
-            let trimmedArray = this.cachedFormattedCoordinates.slice();
+            const trimmedArray = this.cachedFormattedCoordinates.slice();
             for (let i = 0; i < trimmedArray.length; i++) {
                 trimmedArray[i] = trimmedArray[i].slice(0, -trim);
             }
@@ -480,7 +481,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     };
 
     private genProfilerInfo = (): string[] => {
-        let profilerInfo: string[] = [];
+        const profilerInfo: string[] = [];
         if (this.plotData) {
             if (this.widgetStore.isMouseMoveIntoLinePlots) {
                 // handle the value when cursor is in profiler
@@ -562,7 +563,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         const xLabel = this.lineAxis ? `${this.lineAxis.label} (${this.lineAxis.unit ?? ""})` : `${isXProfile ? "X" : "Y"} coordinate`;
         const imageName = appStore.activeFrame ? appStore.activeFrame.filename : undefined;
         const plotName = `${this.lineAxis ? "" : isXProfile ? "X " : "Y "}profile`;
-        let linePlotProps: LinePlotComponentProps = {
+        const linePlotProps: LinePlotComponentProps = {
             xLabel: xLabel,
             yLabel: "Value",
             darkMode: appStore.darkTheme,
@@ -611,7 +612,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     linePlotProps.fullResolutionData = currentPlotData.fullResolutionValues;
 
                     // set line color
-                    let primaryLineColor = getColorForTheme(widgetStore.primaryLineColor);
+                    const primaryLineColor = getColorForTheme(widgetStore.primaryLineColor);
                     linePlotProps.lineColor = primaryLineColor;
                     const smoothingStore = widgetStore.smoothingStore;
                     if (smoothingStore.type !== SmoothingType.NONE && currentPlotData?.smoothingValues) {
@@ -619,7 +620,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                             linePlotProps.lineColor = "#00000000";
                         }
 
-                        let smoothingPlotProps: MultiPlotProps = {
+                        const smoothingPlotProps: MultiPlotProps = {
                             imageName: imageName || "Unknown",
                             plotName: `${plotName}-smoothed`,
                             data: currentPlotData.smoothingValues,

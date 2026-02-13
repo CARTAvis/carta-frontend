@@ -1,14 +1,15 @@
+import type {CSSProperties} from "react";
 import * as React from "react";
-import {CSSProperties} from "react";
-import {AnchorButton, ButtonGroup, Classes, Collapse, DialogProps, FormGroup, HTMLSelect, HTMLTable, InputGroup, Intent, Position, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Classes, Collapse, type DialogProps, FormGroup, HTMLSelect, HTMLTable, InputGroup, Intent, Position, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, computed, flow, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScrollShadow} from "components/Shared";
+import {DialogId, HelpType, LayoutDialogMode, PreferenceKeys} from "enums";
 import {CtypeAbbrToName, PresetLayout} from "models";
-import {AppStore, DialogId, FrameStore, HelpType, INITIAL_LAYOUT_ITEM, LayoutDialogMode, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, type FrameStore, INITIAL_LAYOUT_ITEM, PreferenceStore} from "stores";
 
 import "./LayoutDialogComponent.scss";
 

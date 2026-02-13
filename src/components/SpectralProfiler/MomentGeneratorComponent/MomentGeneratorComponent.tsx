@@ -1,15 +1,16 @@
 import * as React from "react";
 import {AnchorButton, Button, Classes, Divider, FormGroup, HTMLSelect, MenuItem, Position, Switch, Tooltip} from "@blueprintjs/core";
-import {ItemPredicate, ItemRenderer, MultiSelect} from "@blueprintjs/select";
+import {type ItemPredicate, type ItemRenderer, MultiSelect} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
-import {FrequencyUnit, MOMENT_TEXT} from "models";
-import {AppStore, FrameStore} from "stores";
-import {MomentSelectingMode, SpectralProfileWidgetStore} from "stores/Widgets";
+import {FrequencyUnit, MomentSelectingMode} from "enums";
+import {MOMENT_TEXT} from "models";
+import {AppStore, type FrameStore} from "stores";
+import {type SpectralProfileWidgetStore} from "stores/Widgets";
 
 import "./MomentGeneratorComponent.scss";
 

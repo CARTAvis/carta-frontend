@@ -7,8 +7,9 @@ import {observer} from "mobx-react";
 
 import {RegionSelectorComponent, ResizeDetector} from "components/Shared";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
-import {FULL_POLARIZATIONS, POLARIZATIONS} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {HelpType, POLARIZATIONS} from "enums";
+import {FULL_POLARIZATIONS} from "models";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
 import {StatsWidgetStore} from "stores/Widgets";
 import {exportTsvFile, pixelToFluxDensityUnit, toExponential} from "utilities";
 
@@ -32,8 +33,8 @@ export class StatsComponent extends React.Component<WidgetProps> {
         };
     }
 
-    @observable width: number = 0;
-    @observable height: number = 0;
+    @observable width: number = 490;
+    @observable height: number = 325;
     @observable isMouseEntered = false;
 
     @computed get widgetStore(): StatsWidgetStore {
@@ -51,9 +52,9 @@ export class StatsComponent extends React.Component<WidgetProps> {
     @computed get statsData(): CARTA.RegionStatsData | null {
         const appStore = AppStore.Instance;
         if (this.widgetStore.effectiveFrame) {
-            let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
-            let regionId = this.widgetStore.effectiveRegionId;
-            let coordinate = this.widgetStore.coordinate;
+            const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+            const regionId = this.widgetStore.effectiveRegionId;
+            const coordinate = this.widgetStore.coordinate;
 
             const frameMap = appStore.regionStats.get(fileId);
             if (!frameMap || !regionId) {
@@ -212,9 +213,9 @@ export class StatsComponent extends React.Component<WidgetProps> {
             } else {
                 regionInfo += "# full image\n";
             }
-            let channelInfo = frame.channelInfo ? `# channel: ${frame.spectralInfo.channel}\n` : "";
-            let stokesInfo = frame.hasStokes ? `# stokes: ${frame.requiredPolarizationInfo}\n` : "";
-            let comment = `${channelInfo}${stokesInfo}${regionInfo}`;
+            const channelInfo = frame.channelInfo ? `# channel: ${frame.spectralInfo.channel}\n` : "";
+            const stokesInfo = frame.hasStokes ? `# stokes: ${frame.requiredPolarizationInfo}\n` : "";
+            const comment = `${channelInfo}${stokesInfo}${regionInfo}`;
 
             const header = "# Statistic\tValue\tUnit\n";
 
@@ -258,7 +259,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             // stretch value column to cover width
             const valueWidth = Math.max(0, this.width - StatsComponent.NAME_COLUMN_WIDTH);
 
-            let rows: JSX.Element[] = [];
+            const rows: JSX.Element[] = [];
             StatsComponent.STATS_NAME_MAP.forEach((name, type) => {
                 if (this.statsData?.statistics) {
                     const index = this.statsData.statistics.findIndex(s => s.statsType === type);

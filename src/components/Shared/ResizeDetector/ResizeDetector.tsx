@@ -1,5 +1,5 @@
 import React from "react";
-import {ResizeEntry, ResizeSensor} from "@blueprintjs/core";
+import {type ResizeEntry, ResizeSensor} from "@blueprintjs/core";
 import * as _ from "lodash";
 
 interface ResizeDetectorProps {

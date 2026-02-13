@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Button, Classes, Icon, Label, NonIdealState, Spinner} from "@blueprintjs/core";
-import {Cell, Column, ColumnHeaderCell, Region, Regions, RenderMode, SelectionModes, Table2, TableLoadingOption} from "@blueprintjs/table";
+import {Cell, Column, ColumnHeaderCell, type Region, Regions, RenderMode, SelectionModes, Table2, TableLoadingOption} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import FuzzySearch from "fuzzy-search";
@@ -9,8 +9,8 @@ import {action, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
 import moment from "moment";
 
-import {FileFilterMode} from "models";
-import {AppStore, BrowserFileList, BrowserMode, FileBrowserStore, FileFilteringType, ISelectedFile} from "stores";
+import {BrowserMode, FileFilteringType, FileFilterMode} from "enums";
+import {AppStore, type BrowserFileList, FileBrowserStore, type ISelectedFile} from "stores";
 import {toFixed} from "utilities";
 
 import "./FileListTableComponent.scss";
@@ -49,7 +49,7 @@ export interface FileListTableComponentProps {
 
 @observer
 export class FileListTableComponent extends React.Component<FileListTableComponentProps> {
-    @observable selectedRegions: Region[];
+    @observable selectedRegions: Region[] = [];
     @observable columnWidths = [360, 80, 90, 106];
 
     private static readonly RowHeight = 22;

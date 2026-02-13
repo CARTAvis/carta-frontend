@@ -3,9 +3,9 @@ import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {ImageViewLayer} from "components";
-import {CursorInfo, CursorInfoVisibility, ImageItem, ImageType, Zoom} from "models";
-import {AnimationMode, AppStore, ColorBlendingStore, type FrameStore} from "stores";
+import {AnimationMode, CursorInfoVisibility, ImageType, ImageViewLayer} from "enums";
+import {type CursorInfo, type ImageItem, Zoom} from "models";
+import {AppStore, type ColorBlendingStore, type FrameStore} from "stores";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
 import {CatalogViewGLComponent} from "../CatalogView/CatalogViewGLComponent";
@@ -135,7 +135,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
             const isColorBlending = this.props.image?.type === ImageType.COLOR_BLENDING;
             const className = classNames("image-panel-div", {active: isActive});
 
-            let style: React.CSSProperties = {
+            const style: React.CSSProperties = {
                 width: frame.overlayStore.viewWidth,
                 height: frame.overlayStore.viewHeight
             };

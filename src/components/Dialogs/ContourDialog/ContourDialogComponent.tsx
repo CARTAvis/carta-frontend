@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Alert, AnchorButton, Button, Classes, Colors, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Tab, Tabs, TagInput, Tooltip} from "@blueprintjs/core";
+import {Alert, AnchorButton, Button, Classes, Colors, type DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Tab, Tabs, TagInput, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -8,11 +8,12 @@ import {action, autorun, computed, makeObservable, observable, runInAction} from
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
-import {LinePlotComponent, LinePlotComponentProps, SafeNumericInput, SCALING_POPOVER_PROPS, ScrollShadow} from "components/Shared";
+import {LinePlotComponent, type LinePlotComponentProps, SafeNumericInput, SCALING_POPOVER_PROPS, ScrollShadow} from "components/Shared";
+import {DialogId, HelpType} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
-import {Point2D} from "models";
-import {AppStore, DialogId, HelpType} from "stores";
-import {FrameStore} from "stores/Frame";
+import {type Point2D} from "models";
+import {AppStore} from "stores";
+import {type FrameStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
 import {clamp, getColorForTheme, toExponential, toFixed} from "utilities";
 
@@ -32,11 +33,11 @@ const HistogramSelect = Select<boolean>;
 
 @observer
 export class ContourDialogComponent extends React.Component {
-    @observable showCubeHistogramAlert: boolean;
+    @observable showCubeHistogramAlert: boolean = false;
     @observable currentTab: ContourDialogTabs = ContourDialogTabs.Levels;
-    @observable levels: number[];
-    @observable smoothingMode: CARTA.SmoothingMode;
-    @observable smoothingFactor: number;
+    @observable levels: number[] = [];
+    @observable smoothingMode: CARTA.SmoothingMode = CARTA.SmoothingMode.NoSmoothing;
+    @observable smoothingFactor: number = 0;
 
     private static readonly DefaultWidth = 600;
     private static readonly DefaultHeight = 700;
@@ -49,10 +50,11 @@ export class ContourDialogComponent extends React.Component {
 
     constructor(props: {appStore: AppStore}) {
         super(props);
-        makeObservable(this);
 
         this.widgetStore = new RenderConfigWidgetStore();
         this.setDefaultContourParameters();
+
+        makeObservable(this);
 
         autorun(() => {
             const appStore = AppStore.Instance;
@@ -163,8 +165,8 @@ export class ContourDialogComponent extends React.Component {
             maxIndex = clamp(maxIndex, 0, histogram.bins.length - 1);
         }
 
-        let xMin = histogram.firstBinCenter + histogram.binWidth * minIndex;
-        let xMax = histogram.firstBinCenter + histogram.binWidth * maxIndex;
+        const xMin = histogram.firstBinCenter + histogram.binWidth * minIndex;
+        const xMax = histogram.firstBinCenter + histogram.binWidth * maxIndex;
         let yMin = histogram.bins[minIndex];
         let yMax = yMin;
 
@@ -365,7 +367,7 @@ export class ContourDialogComponent extends React.Component {
         const currentPlotData = this.plotData;
         if (currentPlotData) {
             // set line color
-            let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
+            const primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
             linePlotProps.lineColor = primaryLineColor;
 
             // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
@@ -433,7 +435,7 @@ export class ContourDialogComponent extends React.Component {
             });
         }
 
-        let sortedLevels = this.levels
+        const sortedLevels = this.levels
             .slice()
             .sort((a, b) => a - b)
             .map(level => (Math.abs(level) < 0.1 ? toExponential(level, 2) : toFixed(level, 2)));

@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Classes, NumericInput, NumericInputProps} from "@blueprintjs/core";
+import {Classes, NumericInput, type NumericInputProps} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";

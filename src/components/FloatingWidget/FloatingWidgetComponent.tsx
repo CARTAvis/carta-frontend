@@ -2,12 +2,12 @@ import * as React from "react";
 import {Rnd} from "react-rnd";
 import {Classes, Icon, Position, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
-import * as GoldenLayout from "golden-layout";
+import type * as GoldenLayout from "golden-layout";
 import {observer} from "mobx-react";
 
 import {PlaceholderComponent, PvPreviewComponent, RenderConfigComponent} from "components";
-import {ImageType} from "models";
-import {AppStore, CatalogStore, HelpStore, HelpType, LayoutStore, WidgetConfig} from "stores";
+import {HelpType, ImageType} from "enums";
+import {AppStore, CatalogStore, HelpStore, LayoutStore, type WidgetConfig} from "stores";
 
 import "./FloatingWidgetComponent.scss";
 
@@ -64,9 +64,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
             }
 
             // Render config widget
-            let itemConfig: GoldenLayout.ItemConfigType;
-
-            itemConfig = {
+            const itemConfig: GoldenLayout.ItemConfigType = {
                 type: "react-component",
                 component: this.props.widgetConfig.type,
                 title: this.props.widgetConfig.title,

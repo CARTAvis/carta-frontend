@@ -2,39 +2,38 @@ import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
-import {HistogramSettingsTabs} from "components";
-import {LineSettings, PlotType} from "components/Shared";
-import {POLARIZATIONS, VALID_COORDINATES} from "models";
+import {HistogramSettingsTabs, LineSettings, PlotType, POLARIZATIONS, RegionsType} from "enums";
+import {VALID_COORDINATES} from "models";
 import {closeTo, isAutoColor} from "utilities";
 
-import {RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
+import {RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
 export class HistogramWidgetStore extends RegionWidgetStore {
-    @observable settingsTabId: HistogramSettingsTabs;
+    @observable settingsTabId: HistogramSettingsTabs = HistogramSettingsTabs.CONFIG;
 
-    @observable coordinate: string;
-    @observable minX: number | undefined;
-    @observable maxX: number | undefined;
-    @observable minY: number | undefined;
-    @observable maxY: number | undefined;
-    @observable cursorX: number;
-    @observable isMouseMoveIntoLinePlots: boolean;
+    @observable coordinate: string = "z";
+    @observable minX: number | undefined = undefined;
+    @observable maxX: number | undefined = undefined;
+    @observable minY: number | undefined = undefined;
+    @observable maxY: number | undefined = undefined;
+    @observable cursorX: number = 0;
+    @observable isMouseMoveIntoLinePlots: boolean = false;
 
     // settings
-    @observable logScaleY: boolean;
-    @observable plotType: PlotType;
-    @observable primaryLineColor: string;
-    @observable lineWidth: number;
-    @observable linePlotPointSize: number;
-    @observable meanRmsVisible: boolean;
-    @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number};
+    @observable logScaleY: boolean = true;
+    @observable plotType: PlotType = PlotType.STEPS;
+    @observable primaryLineColor: string = "auto-blue";
+    @observable lineWidth: number = 1;
+    @observable linePlotPointSize: number = 1.5;
+    @observable meanRmsVisible: boolean = false;
+    @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number} = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
 
     // Current config settings
-    @observable currentAutoBounds: boolean;
-    @observable currentMinPix: number | undefined;
-    @observable currentMaxPix: number | undefined;
-    @observable currentAutoBins: boolean;
-    @observable currentNumBins: number | null | undefined;
+    @observable currentAutoBounds: boolean = true;
+    @observable currentMinPix: number | undefined = undefined;
+    @observable currentMaxPix: number | undefined = undefined;
+    @observable currentAutoBins: boolean = true;
+    @observable currentNumBins: number | null | undefined = null;
 
     // Maximum number of histogram bins on the slider
     @observable maxNumBins: number;
@@ -178,7 +177,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
 
     @action resetNumBins = () => {
         if (this.cachedNumBins === undefined) {
-            this.currentNumBins = this.effectiveFrame?.renderConfig.histogram.numBins;
+            this.currentNumBins = this.effectiveFrame?.renderConfig.histogram?.numBins;
         } else {
             this.currentNumBins = this.cachedNumBins;
         }
@@ -228,7 +227,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                 const minPix = widgetStore.minPix;
                 const maxPix = widgetStore.maxPix;
 
-                let histogramConfig = regionRequirements.histograms.find(
+                const histogramConfig = regionRequirements.histograms.find(
                     config =>
                         config.coordinate === coordinate &&
                         config.fixedNumBins === fixedNumBins &&
@@ -280,13 +279,13 @@ export class HistogramWidgetStore extends RegionWidgetStore {
 
         // Go through updated requirements entries and find differences
         updatedRequirements.forEach((updatedFrameRequirements, fileId) => {
-            let frameRequirements = originalRequirements.get(fileId);
+            const frameRequirements = originalRequirements.get(fileId);
             if (!frameRequirements) {
                 // If there are no existing requirements for this fileId, all entries for this file are new
                 updatedFrameRequirements.forEach(regionRequirements => diffList.push(regionRequirements));
             } else {
                 updatedFrameRequirements.forEach((updatedRegionRequirements, regionId) => {
-                    let regionRequirements = frameRequirements?.get(regionId);
+                    const regionRequirements = frameRequirements?.get(regionId);
                     if (!regionRequirements) {
                         // If there are no existing requirements for this regionId, this is a new entry
                         diffList.push(updatedRegionRequirements);
@@ -332,30 +331,17 @@ export class HistogramWidgetStore extends RegionWidgetStore {
 
     constructor() {
         super(RegionsType.CLOSED);
-        makeObservable(this);
-        this.logScaleY = true;
-        this.plotType = PlotType.STEPS;
-        this.primaryLineColor = "auto-blue";
-        this.linePlotPointSize = 1.5;
-        this.lineWidth = 1;
-        this.linePlotInitXYBoundaries = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
-        this.coordinate = "z";
-
-        // Initialize current config values
-        this.currentAutoBounds = true;
         this.resetBounds();
-        this.currentAutoBins = true;
         this.resetNumBins();
 
-        // Initialize config settings in the protobuf message
         this.fixedNumBins = false;
         this.numBins = -1;
         this.fixedBounds = false;
         this.minPix = 0;
         this.maxPix = 0;
+        this.maxNumBins = (this.effectiveFrame?.renderConfig.histogram?.numBins ?? NaN) * 2;
 
-        // Initialize the maximum number of histogram bins on the slider
-        this.maxNumBins = (this.effectiveFrame?.renderConfig.histogram.numBins ?? NaN) * 2;
+        makeObservable(this);
 
         autorun(() => {
             // Update the config parameters

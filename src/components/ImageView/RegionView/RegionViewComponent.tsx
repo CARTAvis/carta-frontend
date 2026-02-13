@@ -2,15 +2,15 @@ import * as React from "react";
 import {Layer, Line, Stage} from "react-konva";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
-import Konva from "konva";
+import type Konva from "konva";
 import * as _ from "lodash";
 import {action, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
-import {ImageViewLayer} from "components";
-import {CursorInfo, Point2D, ZoomPoint} from "models";
-import {AppStore, DialogId, PreferenceStore} from "stores";
-import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
+import {DialogId, ImageViewLayer, RegionMode} from "enums";
+import {type CursorInfo, type Point2D, ZoomPoint} from "models";
+import {AppStore, PreferenceStore} from "stores";
+import {type FrameStore, type RegionStore} from "stores/Frame";
 import {add2D, average2D, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
 
 import {CompassAnnotation, RulerAnnotation} from "./CompassAndRulerAnnotationComponent";
@@ -40,8 +40,8 @@ const KEYCODE_ESC = 27;
 
 @observer
 export class RegionViewComponent extends React.Component<RegionViewComponentProps> {
-    @observable creatingRegion: RegionStore | null;
-    @observable currentCursorPos: Point2D;
+    @observable creatingRegion: RegionStore | null = null;
+    @observable currentCursorPos: Point2D = {x: 0, y: 0};
     @observable private frame: FrameStore;
 
     private stageRef;
@@ -59,11 +59,12 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     constructor(props: any) {
         super(props);
-        makeObservable(this);
 
         this.frame = props.frame;
         this.stageRef = React.createRef();
         this.stageResizeOffset = {x: 0, y: 0};
+
+        makeObservable(this);
 
         // Sync stage when matched, tracking frame's spatialReference only.
         this.disposers.push(

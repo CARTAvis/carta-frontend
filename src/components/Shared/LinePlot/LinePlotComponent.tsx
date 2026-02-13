@@ -1,40 +1,21 @@
 import * as React from "react";
 import {Arrow, Group, Layer, Line, Rect, Stage, Text} from "react-konva";
 import {Colors} from "@blueprintjs/core";
-import {Chart, ChartArea, Tick} from "chart.js";
-import Konva from "konva";
+import {type Chart, type ChartArea, type Tick} from "chart.js";
+import type Konva from "konva";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {PlotType, ResizeDetector} from "components/Shared";
-import {Point2D} from "models";
+import {ResizeDetector} from "components/Shared";
+import {InteractionMode, LinePlotSelectingMode, type PlotType, TickType, ZoomMode} from "enums";
+import {type Point2D} from "models";
 import {AppStore} from "stores";
 import {clamp, exportTsvFile, getTimestamp, toExponential} from "utilities";
 
-import {MultiPlotProps, PlotContainerComponent, TickType} from "./PlotContainer/PlotContainerComponent";
+import {type MultiPlotProps, PlotContainerComponent} from "./PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 
 import "./LinePlotComponent.scss";
-
-export enum ZoomMode {
-    NONE,
-    X,
-    Y,
-    XY
-}
-
-export enum InteractionMode {
-    NONE,
-    SELECTING,
-    PANNING
-}
-
-export enum LinePlotSelectingMode {
-    BOX,
-    HORIZONTAL,
-    VERTICAL,
-    LINE
-}
 
 export interface LineMarker {
     value: number;
@@ -384,24 +365,24 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 this.stageClickStartX = undefined;
                 this.stageClickStartY = undefined;
                 if (this.isSelecting && this.props.setSelectedLine && this.props.selectingMode === LinePlotSelectingMode.LINE) {
-                    let startX = this.getValueForPixelX(this.selectionBoxStart.x);
-                    let endX = this.getValueForPixelX(this.selectionBoxEnd.x);
-                    let startY = this.getValueForPixelY(this.selectionBoxStart.y, this.props.logY);
-                    let endY = this.getValueForPixelY(this.selectionBoxEnd.y, this.props.logY);
+                    const startX = this.getValueForPixelX(this.selectionBoxStart.x);
+                    const endX = this.getValueForPixelX(this.selectionBoxEnd.x);
+                    const startY = this.getValueForPixelY(this.selectionBoxStart.y, this.props.logY);
+                    const endY = this.getValueForPixelY(this.selectionBoxEnd.y, this.props.logY);
                     if (startX !== undefined && endX !== undefined && startY !== undefined && endY !== undefined) {
                         this.props.setSelectedLine(startX, endX, startY, endY);
                     }
                 } else if (this.isSelecting && this.zoomMode !== ZoomMode.NONE) {
                     let minCanvasSpace = Math.min(this.selectionBoxStart.x, this.selectionBoxEnd.x);
                     let maxCanvasSpace = Math.max(this.selectionBoxStart.x, this.selectionBoxEnd.x);
-                    let minX = this.getValueForPixelX(minCanvasSpace);
-                    let maxX = this.getValueForPixelX(maxCanvasSpace);
+                    const minX = this.getValueForPixelX(minCanvasSpace);
+                    const maxX = this.getValueForPixelX(maxCanvasSpace);
 
                     minCanvasSpace = Math.min(this.selectionBoxStart.y, this.selectionBoxEnd.y);
                     maxCanvasSpace = Math.max(this.selectionBoxStart.y, this.selectionBoxEnd.y);
                     // Canvas space y-axis is inverted, so min/max are switched when transforming to graph space
-                    let minY = this.getValueForPixelY(maxCanvasSpace, this.props.logY);
-                    let maxY = this.getValueForPixelY(minCanvasSpace, this.props.logY);
+                    const minY = this.getValueForPixelY(maxCanvasSpace, this.props.logY);
+                    const maxY = this.getValueForPixelY(minCanvasSpace, this.props.logY);
 
                     if (this.props.setSelectedRange && this.props.selectingMode === LinePlotSelectingMode.HORIZONTAL && minX !== undefined && maxX !== undefined) {
                         this.props.setSelectedRange(minX, maxX);
@@ -445,8 +426,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         if (this.props.data || (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0)) {
             const mouseEvent: MouseEvent = ev.evt;
             const chartArea = this.chartArea;
-            let mousePosX = clamp(mouseEvent.offsetX, chartArea.left - 1, chartArea.right + 1);
-            let mousePosY = clamp(mouseEvent.offsetY, chartArea.top - 1, chartArea.bottom + 1);
+            const mousePosX = clamp(mouseEvent.offsetX, chartArea.left - 1, chartArea.right + 1);
+            const mousePosY = clamp(mouseEvent.offsetY, chartArea.top - 1, chartArea.bottom + 1);
             if (this.isSelecting) {
                 this.updateSelection(mousePosX, mousePosY);
             } else if (this.isPanning && this.props.graphZoomedX) {
@@ -711,7 +692,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 return;
             }
 
-            let rows: string[] = [];
+            const rows: string[] = [];
             const plotName = multiPlotProp.imageName;
             const imageName = multiPlotProp.plotName;
             let comment = `# ${imageName} ${plotName}`;
@@ -851,9 +832,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 const thickness2 = this.getPixelForValueX(marker.value - marker.width / 2.0);
                 if (thickness1 !== undefined && thickness2 !== undefined) {
                     const thickness = thickness1 - thickness2;
-                    let lowerBound = clamp(valueCanvasSpace - thickness, chartArea.left, chartArea.right);
-                    let upperBound = clamp(valueCanvasSpace + thickness, chartArea.left, chartArea.right);
-                    let croppedThickness = upperBound - lowerBound;
+                    const lowerBound = clamp(valueCanvasSpace - thickness, chartArea.left, chartArea.right);
+                    const upperBound = clamp(valueCanvasSpace + thickness, chartArea.left, chartArea.right);
+                    const croppedThickness = upperBound - lowerBound;
                     lineSegments = [<Rect listening={false} key={0} x={lowerBound - valueCanvasSpace} y={chartArea.top} width={croppedThickness} height={lineHeight} fill={markerColor} opacity={markerOpacity} />];
                 }
             } else {
@@ -893,7 +874,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         const chartArea = this.chartArea;
         const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
 
-        let lines: JSX.Element[] = [];
+        const lines: JSX.Element[] = [];
         if (this.props.markers && this.props.markers.length && chartArea) {
             // TODO: refactoring to pull out this logic from horizontal lines
             const chartAreaWidth = Math.abs(chartArea.right - chartArea.left);
@@ -904,7 +885,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 const markerColor = marker.color || (this.props.darkMode ? Colors.RED4 : Colors.RED2);
                 const markerOpacity = marker.isMouseMove && (!this.isMouseEntered || this.isMarkerDragging) ? 0 : marker.opacity || 1;
                 if (marker.horizontal) {
-                    let valueCanvasSpace = this.getCanvasSpaceY(marker.value);
+                    const valueCanvasSpace = this.getCanvasSpaceY(marker.value);
                     if (isNaN(valueCanvasSpace)) {
                         continue;
                     }
@@ -913,7 +894,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                         lines.push(line);
                     }
                 } else {
-                    let valueCanvasSpace = this.getCanvasSpaceX(marker.value);
+                    const valueCanvasSpace = this.getCanvasSpaceX(marker.value);
                     if (isNaN(valueCanvasSpace)) {
                         continue;
                     }
@@ -1022,7 +1003,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     private genInsideBoxes = () => {
         const chartArea = this.chartArea;
-        let insideBoxes: JSX.Element[] = [];
+        const insideBoxes: JSX.Element[] = [];
         if (this.props.insideBoxes && chartArea) {
             for (let i = 0; i < this.props.insideBoxes.length; i++) {
                 const box = this.props.insideBoxes[i];
@@ -1049,7 +1030,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     private genInsideTexts = () => {
         const chartArea = this.chartArea;
-        let insideTexts: JSX.Element[] = [];
+        const insideTexts: JSX.Element[] = [];
         if (this.props.insideTexts && chartArea) {
             for (let i = 0; i < this.props.insideTexts.length; i++) {
                 const insideText = this.props.insideTexts[i];
@@ -1086,7 +1067,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         mean?: {color: string; dash: number[]; y: number; xLeft: number; xRight: number};
         RMS?: {color: string; opacity: number; xLeft: number; yTop: number; width: number; height: number};
     } => {
-        let meanRMS: {
+        const meanRMS: {
             mean?: {color: string; dash: number[]; y: number; xLeft: number; xRight: number};
             RMS?: {color: string; opacity: number; xLeft: number; yTop: number; width: number; height: number};
         } = {};
@@ -1122,7 +1103,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     private genSpectralLinesForPngPlot = (devicePixelRatio: number): {color: string; text: string; x: number; yBottom: number; yTop: number}[] => {
-        let spectralLines: {color: string; text: string; x: number; yBottom: number; yTop: number}[] = [];
+        const spectralLines: {color: string; text: string; x: number; yBottom: number; yTop: number}[] = [];
         const chartArea = this.chartArea;
         if (chartArea) {
             this.props.markers?.forEach(marker => {

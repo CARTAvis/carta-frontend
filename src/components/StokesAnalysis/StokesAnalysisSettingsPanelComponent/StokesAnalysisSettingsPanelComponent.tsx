@@ -2,28 +2,22 @@ import * as React from "react";
 import {Tab, Tabs} from "@blueprintjs/core";
 import {autorun, makeObservable} from "mobx";
 import {observer} from "mobx-react";
+import type {LineKey} from "models";
 
 import {
     LinePlotSettingsPanelComponent,
-    LinePlotSettingsPanelComponentProps,
+    type LinePlotSettingsPanelComponentProps,
     ScatterPlotSettingsPanelComponent,
-    ScatterPlotSettingsPanelComponentProps,
+    type ScatterPlotSettingsPanelComponentProps,
     ScrollShadow,
     SmoothingSettingsComponent,
     SpectralSettingsComponent
 } from "components/Shared";
-import {LineKey} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {StokesAnalysisWidgetStore} from "stores/Widgets";
+import {HelpType, StokesAnalysisSettingsTabs} from "enums";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {type StokesAnalysisWidgetStore} from "stores/Widgets";
 
 import "./StokesAnalysisSettingsPanelComponent.scss";
-
-export enum StokesAnalysisSettingsTabs {
-    CONVERSION,
-    LINE_PLOT_STYLING,
-    SCATTER_PLOT_STYLING,
-    SMOOTHING
-}
 
 @observer
 export class StokesAnalysisSettingsPanelComponent extends React.Component<WidgetProps> {

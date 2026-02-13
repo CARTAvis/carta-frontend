@@ -1,18 +1,17 @@
 import * as React from "react";
 import {NonIdealState} from "@blueprintjs/core";
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import {autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
-import {Point2D, POLARIZATIONS} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {FrameStore} from "stores/Frame";
+import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
+import {HelpType, POLARIZATIONS, TickType} from "enums";
+import {type Point2D} from "models";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {type FrameStore} from "stores/Frame";
 import {HistogramWidgetStore} from "stores/Widgets";
 import {binarySearchByX, clamp, closeTo, getColorForTheme, toExponential, toFixed} from "utilities";
-
-import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
 import {HistogramToolbarComponent} from "./HistogramToolbarComponent/HistogramToolbarComponent";
 
@@ -89,8 +88,8 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                 maxIndex = clamp(maxIndex, 0, histogram.bins.length - 1);
             }
 
-            let xMin = histogram.firstBinCenter + histogram.binWidth * minIndex;
-            let xMax = histogram.firstBinCenter + histogram.binWidth * maxIndex;
+            const xMin = histogram.firstBinCenter + histogram.binWidth * minIndex;
+            const xMax = histogram.firstBinCenter + histogram.binWidth * maxIndex;
             let yMin = histogram.bins[minIndex] ?? 0;
             let yMax = yMin;
 
@@ -124,7 +123,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
     }
 
     @computed get exportHeaders(): string[] {
-        let headerString: string[] = [];
+        const headerString: string[] = [];
 
         // region info
         const frame = this.widgetStore.effectiveFrame;
@@ -141,7 +140,6 @@ export class HistogramComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
-        makeObservable(this);
 
         this.widgetId = props.id ?? "";
         const appStore = AppStore.Instance;
@@ -160,6 +158,9 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                 appStore.widgetsStore.histogramWidgets.set(widgetId, new HistogramWidgetStore());
             }
         }
+
+        makeObservable(this);
+
         // Update widget title when region or coordinate changes
         autorun(() => {
             if (this.widgetStore && this.widgetStore.effectiveFrame) {
@@ -203,7 +204,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
     }, 100);
 
     private genProfilerInfo = (unit: string): string[] => {
-        let profilerInfo: string[] = [];
+        const profilerInfo: string[] = [];
         if (this.plotData) {
             if (this.widgetStore.isMouseMoveIntoLinePlots) {
                 const nearest = binarySearchByX(this.plotData.values, this.widgetStore.cursorX);
@@ -284,7 +285,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         const plotName = `channel ${frame.channel} histogram`;
 
         if (this.isTargetData || !this.currentLinePlotProps) {
-            let linePlotProps: LinePlotComponentProps = {
+            const linePlotProps: LinePlotComponentProps = {
                 xLabel: unit ? `Value (${unit})` : "Value",
                 yLabel: "Count",
                 darkMode: appStore.darkTheme,

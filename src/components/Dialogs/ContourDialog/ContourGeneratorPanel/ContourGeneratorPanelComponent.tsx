@@ -5,7 +5,8 @@ import {action, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, SafeNumericInput, SCALING_POPOVER_PROPS, ScalingSelectComponent} from "components/Shared";
-import {ContourGeneratorType, FrameScaling, FrameStore, PreferenceStore} from "stores";
+import {ContourGeneratorType, FrameScaling} from "enums";
+import {type FrameStore, PreferenceStore} from "stores";
 import {getPercentiles, scaleValue} from "utilities";
 
 import "./ContourGeneratorPanelComponent.scss";
@@ -23,8 +24,8 @@ export class ContourGeneratorPanelComponent extends React.Component<{
     @observable numLevels: number = PreferenceStore.Instance.contourNumLevels;
 
     // region min-max-scaling
-    @observable enteredMinValue: number | undefined;
-    @observable enteredMaxValue: number | undefined;
+    @observable enteredMinValue: number | undefined = undefined;
+    @observable enteredMaxValue: number | undefined = undefined;
     @observable scalingType: FrameScaling = FrameScaling.LINEAR;
 
     get minValue(): number {
@@ -104,8 +105,8 @@ export class ContourGeneratorPanelComponent extends React.Component<{
     // endregion
 
     // region start-step-multiplier
-    @observable enteredStartValue: number | undefined;
-    @observable enteredStepValue: number | undefined;
+    @observable enteredStartValue: number | undefined = undefined;
+    @observable enteredStepValue: number | undefined = undefined;
     @observable multiplierValue: number = 1;
 
     get startValue(): number {
@@ -183,7 +184,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
     // endregion
 
     // region percentages-ref
-    @observable enteredRefValue: number | undefined;
+    @observable enteredRefValue: number | undefined = undefined;
     @observable lowerPercentage: number = 20;
     @observable upperPercentage: number = 100;
 
@@ -247,8 +248,8 @@ export class ContourGeneratorPanelComponent extends React.Component<{
     // endregion
 
     // region mean-sigma-list
-    @observable enteredMeanValue: number | undefined;
-    @observable enteredSigmaValue: number | undefined;
+    @observable enteredMeanValue: number | undefined = undefined;
+    @observable enteredSigmaValue: number | undefined = undefined;
     @observable sigmaLevels: number[] = [-5, 5, 9, 13, 17];
 
     get meanValue(): number {

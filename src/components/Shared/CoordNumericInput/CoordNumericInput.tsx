@@ -1,17 +1,11 @@
 import {Position, Tooltip} from "@blueprintjs/core";
 
+import {CoordinateMode, InputType} from "enums";
 import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
-import {CoordinateMode} from "stores/Frame";
 
 import {SafeNumericInput} from "..";
 
 const KEYCODE_ENTER = 13;
-
-export enum InputType {
-    XCoord = "XCoord",
-    YCoord = "YCoord",
-    Size = "Size"
-}
 
 type WcsCoordNumericInputProps = {
     inputType: InputType;

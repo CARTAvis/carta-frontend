@@ -1,8 +1,7 @@
 import * as AST from "ast_wrapper";
 
-import {CatalogSystemType} from "models";
-import {SystemType} from "stores";
-import {OverlayGlobalSettings} from "stores/OverlayStore/OverlayStore";
+import {CatalogSystemType, SystemType} from "enums";
+import {type OverlayGlobalSettings} from "stores/OverlayStore/OverlayStore";
 
 export class ASTSettingsString {
     stringList: Array<string>;
@@ -13,7 +12,7 @@ export class ASTSettingsString {
 
     add(name: string, value: any, storeIf: boolean = true) {
         if (value !== undefined && storeIf) {
-            let storedValue = typeof value === "boolean" ? (value ? 1 : 0) : value;
+            const storedValue = typeof value === "boolean" ? (value ? 1 : 0) : value;
             this.stringList.push(`${name}=${storedValue}`);
         }
     }

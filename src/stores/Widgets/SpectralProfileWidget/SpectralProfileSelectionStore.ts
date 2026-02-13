@@ -1,19 +1,12 @@
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
 
-import {GetIntensityOptions, IntensityConfig, LineKey, LineOption, POLARIZATION_LABELS, POLARIZATIONS, STATISTICS_TEXT, StatsTypeString, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES} from "models";
+import {MultiProfileCategory, POLARIZATIONS, RegionId} from "enums";
+import {GetIntensityOptions, type IntensityConfig, type LineKey, type LineOption, POLARIZATION_LABELS, STATISTICS_TEXT, StatsTypeString, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES} from "models";
 import {AppStore} from "stores";
-import {FrameStore} from "stores/Frame";
-import {ACTIVE_FILE_ID, RegionId, SpectralProfileWidgetStore} from "stores/Widgets";
-import {genColorFromIndex, ProcessedSpectralProfile} from "utilities";
-
-export enum MultiProfileCategory {
-    NONE = "None", // Single profile mode: allow only 1 profile displayed in widget
-    IMAGE = "Image",
-    REGION = "Region",
-    STATISTIC = "Statistic",
-    STOKES = "Polarization"
-}
+import {type FrameStore} from "stores/Frame";
+import {ACTIVE_FILE_ID, SpectralProfileWidgetStore} from "stores/Widgets";
+import {genColorFromIndex, type ProcessedSpectralProfile} from "utilities";
 
 interface ProfileConfig {
     fileId: number | undefined;
@@ -47,11 +40,11 @@ type Profile = {
 
 export class SpectralProfileSelectionStore {
     // profile selection
-    @observable activeProfileCategory: MultiProfileCategory;
-    @observable selectedFileIds: number[];
-    @observable selectedRegionIds: number[];
-    @observable selectedStatsTypes: CARTA.StatsType[];
-    @observable selectedCoordinates: string[];
+    @observable activeProfileCategory: MultiProfileCategory = MultiProfileCategory.NONE;
+    @observable selectedFileIds: number[] = [];
+    @observable selectedRegionIds: number[] = [];
+    @observable selectedStatsTypes: CARTA.StatsType[] = [];
+    @observable selectedCoordinates: string[] = [];
 
     private readonly widgetStore: SpectralProfileWidgetStore;
     private readonly DEFAULT_COORDINATE: string;
@@ -60,11 +53,11 @@ export class SpectralProfileSelectionStore {
     // and SpectralConfig is specially for CalculateRequirementsMap in SpectralProfileWidgetStore.
     // P.S. this.profileConfigs has the key statType & SpectralConfig has the key statsType's'
     public getFormattedSpectralConfigs = (): SpectralConfig[] => {
-        let formattedSpectralConfigs: SpectralConfig[] = [];
+        const formattedSpectralConfigs: SpectralConfig[] = [];
         const profileConfigs = this.profileConfigs;
         if (profileConfigs?.length > 0) {
             if (this.activeProfileCategory === MultiProfileCategory.STATISTIC) {
-                let statsTypes: CARTA.StatsType[] = [];
+                const statsTypes: CARTA.StatsType[] = [];
                 profileConfigs.forEach(profileConfig => statsTypes.push(profileConfig.statsType));
                 formattedSpectralConfigs.push({
                     fileId: profileConfigs[0].fileId,
@@ -94,7 +87,7 @@ export class SpectralProfileSelectionStore {
     };
 
     @computed private get profileConfigs(): ProfileConfig[] {
-        let profileConfigs: ProfileConfig[] = [];
+        const profileConfigs: ProfileConfig[] = [];
         if (this.selectedFrame && this.selectedRegionIds?.length > 0 && this.selectedStatsTypes?.length > 0 && this.selectedCoordinates?.length > 0) {
             if (this.activeProfileCategory === MultiProfileCategory.NONE || this.activeProfileCategory === MultiProfileCategory.IMAGE) {
                 const region = this.widgetStore.effectiveRegion;
@@ -190,7 +183,7 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get profiles(): Profile[] {
-        let profiles: Profile[] = [];
+        const profiles: Profile[] = [];
         this.profileConfigs?.forEach(profileConfig => {
             const appStore = AppStore.Instance;
             const frame = appStore.getFrame(profileConfig.fileId ?? NaN);
@@ -351,7 +344,7 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get coordinateOptions(): LineOption[] {
-        let options = [{value: "z", label: "Current"}];
+        const options = [{value: "z", label: "Current"}];
         if (this.selectedFrame?.hasStokes) {
             this.selectedFrame.polarizationInfo?.forEach(polarization => options.push({value: `${polarization.replace("Stokes ", "")}z`, label: polarization}));
         }
@@ -700,6 +693,7 @@ export class SpectralProfileSelectionStore {
 
     constructor(widgetStore: SpectralProfileWidgetStore, coordinate: string) {
         makeObservable(this);
+
         this.widgetStore = widgetStore;
         this.DEFAULT_COORDINATE = coordinate;
         this.initSingleMode();

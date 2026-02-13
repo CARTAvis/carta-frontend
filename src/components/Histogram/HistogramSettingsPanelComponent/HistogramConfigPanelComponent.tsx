@@ -3,7 +3,7 @@ import {Button, Divider, FormGroup, Intent, Slider, Switch, Tooltip} from "@blue
 import {observer} from "mobx-react";
 
 import {SafeNumericInput} from "components/Shared";
-import {HistogramWidgetStore} from "stores/Widgets";
+import {type HistogramWidgetStore} from "stores/Widgets";
 
 @observer
 export class HistogramConfigPanelComponent extends React.Component<{widgetStore: HistogramWidgetStore}> {

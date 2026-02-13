@@ -1,11 +1,12 @@
 // Based on code from https://github.com/palantir/blueprint/issues/336
 import * as React from "react";
 import {createRoot} from "react-dom/client";
-import {ResizeEnable, Rnd} from "react-rnd";
-import {Button, Classes, Dialog, DialogProps} from "@blueprintjs/core";
+import {type ResizeEnable, Rnd} from "react-rnd";
+import {Button, Classes, Dialog, type DialogProps} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
-import {AppStore, HelpStore, HelpType} from "stores";
+import {type HelpType} from "enums";
+import {AppStore, HelpStore} from "stores";
 
 import "./DraggableDialogComponent.scss";
 

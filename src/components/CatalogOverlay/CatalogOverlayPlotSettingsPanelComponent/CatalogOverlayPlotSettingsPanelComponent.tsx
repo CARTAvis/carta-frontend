@@ -1,15 +1,15 @@
 import * as React from "react";
 import {AnchorButton, Button, ButtonGroup, Classes, Collapse, Colors, FormGroup, Icon, MenuItem, PopoverPosition, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
-import {ItemPredicate, ItemRendererProps, Select} from "@blueprintjs/select";
+import {type ItemPredicate, type ItemRendererProps, Select} from "@blueprintjs/select";
 import FuzzySearch from "fuzzy-search";
 import {action, autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {CatalogOverlayComponent} from "components";
 import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingSelectComponent, ScrollShadow} from "components/Shared";
-import {AngularSizeUnit, CatalogOverlay} from "models";
-import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogSizeUnits, CatalogStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {CatalogDisplayMode, CatalogOverlayShape, CatalogSettingsTabs, CatalogWidgetStore, ValueClip} from "stores/Widgets";
+import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogSettingsTabs, CatalogSizeUnits, HelpType} from "enums";
+import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {CatalogWidgetStore, type ValueClip} from "stores/Widgets";
 import {getColorForTheme, SWATCH_COLORS} from "utilities";
 
 import "./CatalogOverlayPlotSettingsPanelComponent.scss";
@@ -89,7 +89,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
     @computed get axisOption() {
         const profileStore = this.profileStore;
-        let axisOptions: string[] = [];
+        const axisOptions: string[] = [];
         axisOptions.push(CatalogOverlay.NONE);
         profileStore?.catalogControlHeader?.forEach((header, columnName) => {
             if (header.dataIndex !== undefined) {
@@ -110,6 +110,9 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
         const appStore = AppStore.Instance;
         this.catalogFileNames = new Map<number, string>();
+
+        makeObservable(this);
+
         autorun(() => {
             const catalogStore = CatalogStore.Instance;
             const catalogFileId = this.catalogFileId;
@@ -150,7 +153,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         const catalogStore = CatalogStore.Instance;
         const catalogFileIds = catalogStore.activeCatalogFiles;
 
-        let catalogFileItems: number[] = [];
+        const catalogFileItems: number[] = [];
         catalogFileIds.forEach(value => {
             catalogFileItems.push(value);
         });
@@ -796,7 +799,11 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             case "size-min":
                 if (isFinite(val) && val !== pointSize.min && val < pointSize.max && val >= CatalogWidgetStore.SizeMapMin) {
                     const inputVal = val;
-                    widgetStore.sizeAxisTabId === CatalogSettingsTabs.SIZE_MINOR ? widgetStore.setMinorSizeMin(inputVal) : widgetStore.setSizeMin(inputVal);
+                    if (widgetStore.sizeAxisTabId === CatalogSettingsTabs.SIZE_MINOR) {
+                        widgetStore.setMinorSizeMin(inputVal);
+                    } else {
+                        widgetStore.setSizeMin(inputVal);
+                    }
                 } else {
                     ev.currentTarget.value = pointSize.min.toString();
                 }
@@ -804,7 +811,11 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
             case "size-max":
                 if (isFinite(val) && val !== pointSize.max && val > pointSize.min && val <= widgetStore.maxPointSizebyType) {
                     const inputVal = val;
-                    widgetStore.sizeAxisTabId === CatalogSettingsTabs.SIZE_MINOR ? widgetStore.setMinorSizeMax(inputVal) : widgetStore.setSizeMax(inputVal);
+                    if (widgetStore.sizeAxisTabId === CatalogSettingsTabs.SIZE_MINOR) {
+                        widgetStore.setMinorSizeMax(inputVal);
+                    } else {
+                        widgetStore.setSizeMax(inputVal);
+                    }
                 } else {
                     ev.currentTarget.value = pointSize.max.toString();
                 }
@@ -830,7 +841,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
     private renderFileIdPopOver = (fileId: number, itemProps: ItemRendererProps) => {
         const fileName = this.catalogFileNames.get(fileId);
-        let text = `${fileId}: ${fileName}`;
+        const text = `${fileId}: ${fileName}`;
         return <MenuItem key={fileId} text={text} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 

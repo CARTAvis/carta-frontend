@@ -4,9 +4,10 @@ import {Colors} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {Point2D} from "models";
-import {AppStore, BeamType} from "stores";
-import {FrameStore} from "stores/Frame";
+import {BeamType} from "enums";
+import {type Point2D} from "models";
+import {AppStore} from "stores";
+import {type FrameStore} from "stores/Frame";
 import {getColorForTheme} from "utilities";
 
 import "./BeamProfileOverlayComponent.scss";
