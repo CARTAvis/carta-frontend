@@ -1,9 +1,10 @@
-import {Classes, DialogProps, Tab, Tabs} from "@blueprintjs/core";
+import {Classes, type DialogProps, Tab, Tabs} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore, DialogId, HelpType} from "stores";
+import {DialogId, HelpType} from "enums";
+import {AppStore} from "stores";
 
 import {CatalogQueryComponent} from "./CatalogOnlineQueryComponent";
 import {HipsQueryComponent} from "./HipsQueryComponent";
@@ -29,7 +30,7 @@ export const OnlineDataQueryDialogComponent = observer(() => {
         backdropClassName: "minimal-dialog-backdrop",
         canOutsideClickClose: false,
         lazy: true,
-        isOpen: appStore.dialogStore.dialogVisible.get(DialogId.OnlineDataQuery),
+        isOpen: appStore.dialogStore.dialogVisible.get(DialogId.OnlineDataQuery) || false,
         title: "Online Data Query"
     };
 

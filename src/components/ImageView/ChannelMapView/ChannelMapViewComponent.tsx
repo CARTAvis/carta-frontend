@@ -3,8 +3,9 @@ import {NonIdealState} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {CursorInfo, ImageType} from "models";
-import {AppStore, FrameStore} from "stores";
+import {ImageType} from "enums";
+import {type CursorInfo} from "models";
+import {AppStore, type FrameStore} from "stores";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
 import {ColorbarComponent} from "../Colorbar/ColorbarComponent";
@@ -76,6 +77,10 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
 
     if (image?.type === ImageType.COLOR_BLENDING) {
         return <NonIdealState icon={"error"} title={"Not supported"} description={"Color blending images in channel map view is not supported"} />;
+    }
+
+    if (!image) {
+        return <NonIdealState icon={"folder-open"} title={"No image available"} description={"No image data to display"} />;
     }
 
     const overlayComponents = channelMapStore.channelArray.map((channel, index) => {
@@ -155,7 +160,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
             />
             <CursorOverlayComponent
                 cursorInfo={frame.cursorInfo}
-                cursorValue={frame.cursorInfo.isInsideImage ? frame.cursorValue.value : undefined}
+                cursorValue={frame.cursorInfo.isInsideImage ? (frame.cursorValue.value ?? 0) : 0}
                 isValueCurrent={frame.isCursorValueCurrent}
                 spectralInfo={frame.spectralInfo}
                 width={outerViewWidth}
@@ -210,7 +215,7 @@ const ChannelMapInnerOverlayComponent = observer(({frame, docked}: {frame: Frame
     const gapX = frame.channelMapInnerOverlayStore.gapX;
     const gapY = frame.channelMapInnerOverlayStore.gapY;
 
-    const canvasRef = React.useRef(null);
+    const canvasRef = React.useRef<Map<number, {overlayType: "left" | "bottom" | "inner"; node: HTMLCanvasElement}> | null>(null);
     const getCanvasRefMap = (): Map<number, {overlayType: "left" | "bottom" | "inner"; node: HTMLCanvasElement}> => {
         if (!canvasRef.current) {
             canvasRef.current = new Map();
@@ -249,9 +254,9 @@ const ChannelMapInnerOverlayComponent = observer(({frame, docked}: {frame: Frame
             ctx.clearRect(0, 0, destCanvas.width, destCanvas.height);
             ctx.imageSmoothingEnabled = false;
 
-            let x = 0,
-                y = 0,
-                w = sourceWidth,
+            let x = 0;
+            const y = 0;
+            let w = sourceWidth,
                 h = sourceHeight;
             if (overlayType === "left") {
                 h -= innerPaddingBottom;

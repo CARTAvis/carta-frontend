@@ -1,9 +1,4 @@
-export enum AngularSizeUnit {
-    MILLIARCSEC = "milliarcsec",
-    ARCSEC = "arcsec",
-    ARCMIN = "arcmin",
-    DEG = "deg"
-}
+import {AngularSizeUnit} from "enums";
 
 export const FACTOR_TO_ARCSEC = new Map<AngularSizeUnit, number>([
     [AngularSizeUnit.DEG, 3600.0],

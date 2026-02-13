@@ -1,9 +1,9 @@
-import {RGBColor} from "react-color";
-import {CARTA} from "carta-protobuf";
+import type {RGBColor} from "react-color";
+import {type CARTA} from "carta-protobuf";
 
-import {ContourDashMode, FrameScaling, VectorOverlaySource} from "stores/Frame";
+import {type ContourDashMode, type FrameScaling, type VectorOverlaySource} from "enums";
 
-import {Point2D} from "./Point2D/Point2D";
+import {type Point2D} from "./Point2D/Point2D";
 
 export interface WorkspaceRenderConfig {
     scaling?: FrameScaling;
@@ -41,7 +41,6 @@ export interface WorkspaceVectorOverlayConfig {
     angularSource: VectorOverlaySource;
     intensitySource: VectorOverlaySource;
     fractionalIntensity: boolean;
-    pixelAveragingEnabled: boolean;
     pixelAveraging: number;
     thresholdEnabled: boolean;
     threshold: number;

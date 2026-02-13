@@ -1,6 +1,6 @@
 import * as React from "react";
-import {ColorResult} from "react-color";
-import {AnchorButton, Button, Classes, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
+import {type ColorResult} from "react-color";
+import {AnchorButton, Button, Classes, type DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
@@ -8,10 +8,10 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput, ScrollShadow} from "components/Shared";
+import {DialogId, HelpType, POLARIZATIONS, VectorOverlaySource} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
-import {POLARIZATIONS} from "models";
-import {AppStore, DialogId, HelpType} from "stores";
-import {FrameStore, VectorOverlaySource} from "stores/Frame";
+import {AppStore} from "stores";
+import {type FrameStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 
 import "./VectorOverlayDialogComponent.scss";
@@ -26,24 +26,30 @@ const DataSourceSelect = Select<FrameStore>;
 @observer
 export class VectorOverlayDialogComponent extends React.Component {
     @observable currentTab: VectorOverlayDialogTabs = VectorOverlayDialogTabs.Configuration;
-    @observable angularSource: VectorOverlaySource;
-    @observable intensitySource: VectorOverlaySource;
-    @observable pixelAveragingEnabled: boolean;
-    @observable pixelAveraging: number;
-    @observable thresholdEnabled: boolean;
-    @observable threshold: number;
-    @observable fractionalIntensity: boolean;
-    @observable debiasing: boolean;
-    @observable qError: number;
-    @observable uError: number;
+    @observable angularSource: VectorOverlaySource = VectorOverlaySource.Current;
+    @observable intensitySource: VectorOverlaySource = VectorOverlaySource.Current;
+    /**
+     * Pixel width for boxcar averaging the vector overlay. Must be an integer. 1 means no averaging.
+     */
+    @observable pixelAveraging: number = 1;
+    @observable thresholdEnabled: boolean = false;
+    @observable threshold: number = 0;
+    @observable fractionalIntensity: boolean = false;
+    @observable debiasing: boolean = false;
+    @observable qError: number = 0;
+    @observable uError: number = 0;
     @observable thresholdOption: CARTA.PolarizationType.I | CARTA.PolarizationType.Plinear;
 
     private static readonly DefaultWidth = 500;
     private static readonly DefaultHeight = 720;
     private static readonly MinWidth = 425;
     private static readonly MinHeight = 400;
+    /**
+     * The maximum pixel width for averaging the vector overlay.
+     */
+    public static readonly MAX_PIXEL_AVERAGING = 64;
 
-    private cachedFrame: FrameStore;
+    private cachedFrame: FrameStore | null = null;
 
     componentDidUpdate() {
         const appStore = AppStore.Instance;
@@ -55,8 +61,8 @@ export class VectorOverlayDialogComponent extends React.Component {
 
     constructor(props: {appStore: AppStore}) {
         super(props);
-        makeObservable(this);
         this.setDefaultVectorOverlayParameters();
+        makeObservable(this);
     }
 
     @action setDefaultVectorOverlayParameters = () => {
@@ -66,7 +72,6 @@ export class VectorOverlayDialogComponent extends React.Component {
         if (config) {
             this.angularSource = config.angularSource;
             this.intensitySource = config.intensitySource;
-            this.pixelAveragingEnabled = config.pixelAveragingEnabled;
             this.pixelAveraging = config.pixelAveraging;
             this.fractionalIntensity = config.fractionalIntensity;
             this.threshold = config.threshold;
@@ -77,7 +82,6 @@ export class VectorOverlayDialogComponent extends React.Component {
             this.angularSource = VectorOverlaySource.Current;
             this.intensitySource = VectorOverlaySource.Current;
             this.pixelAveraging = preferences.vectorOverlayPixelAveraging;
-            this.pixelAveragingEnabled = preferences.vectorOverlayPixelAveraging > 0;
             this.fractionalIntensity = preferences.vectorOverlayFractionalIntensity;
             this.thresholdEnabled = false;
             this.threshold = 0;
@@ -92,7 +96,6 @@ export class VectorOverlayDialogComponent extends React.Component {
             if (
                 config.angularSource !== this.angularSource ||
                 config.intensitySource !== this.intensitySource ||
-                config.pixelAveragingEnabled !== this.pixelAveragingEnabled ||
                 config.pixelAveraging !== this.pixelAveraging ||
                 config.thresholdEnabled !== this.thresholdEnabled ||
                 config.debiasing !== this.debiasing ||
@@ -124,7 +127,6 @@ export class VectorOverlayDialogComponent extends React.Component {
             dataSource.vectorOverlayConfig.setVectorOverlayConfiguration(
                 this.angularSource,
                 this.intensitySource,
-                this.pixelAveragingEnabled,
                 this.pixelAveraging,
                 this.fractionalIntensity,
                 this.thresholdEnabled,
@@ -150,12 +152,12 @@ export class VectorOverlayDialogComponent extends React.Component {
         this.intensitySource = parseInt(ev.currentTarget.value) as VectorOverlaySource;
     };
 
-    @action private handlePixelAveragingEnabledChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
-        this.pixelAveragingEnabled = ev.currentTarget.checked;
+    @action private handlePixelAveragingChanged = (value: number) => {
+        this.pixelAveraging = Math.round(value);
     };
 
-    @action private handlePixelAveragingChanged = (value: number) => {
-        this.pixelAveraging = Math.floor(value * 0.5) * 2.0;
+    @action private handlePixelAveragingBlurred = (ev: React.FocusEvent<HTMLInputElement>) => {
+        ev.currentTarget.value = this.pixelAveraging.toString();
     };
 
     @action private handleThresholdEnabledChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
@@ -194,29 +196,51 @@ export class VectorOverlayDialogComponent extends React.Component {
         }
 
         const config = frame.vectorOverlayConfig;
-        const intensityMin = isFinite(config.intensityMin) ? config.intensityMin : frame.vectorOverlayStore.intensityMin;
-        const intensityMax = isFinite(config.intensityMax) ? config.intensityMax : frame.vectorOverlayStore.intensityMax;
+        const intensityMin = config.intensityMin !== undefined && isFinite(config.intensityMin) ? config.intensityMin : frame.vectorOverlayStore.intensityMin;
+        const intensityMax = config.intensityMax !== undefined && isFinite(config.intensityMax) ? config.intensityMax : frame.vectorOverlayStore.intensityMax;
 
         return (
             <FormGroup label="Intensity" labelInfo={config.fractionalIntensity ? "(%)" : frame.headerUnit ? `(${frame.headerUnit})` : ""} inline={true}>
                 <div className="parameter-container">
                     <div className="parameter-line parameter-intensity">
-                        <ClearableNumericInputComponent
-                            label="Min"
-                            value={intensityMin}
-                            placeholder="Automatic"
-                            onValueChanged={val => config.setIntensityRange(val, config.intensityMax)}
-                            onValueCleared={() => config.setIntensityRange(undefined, config.intensityMax)}
-                            displayExponential={true}
-                        />
-                        <ClearableNumericInputComponent
-                            label="Max"
-                            value={intensityMax}
-                            placeholder="Automatic"
-                            onValueChanged={val => config.setIntensityRange(config.intensityMin, val)}
-                            onValueCleared={() => config.setIntensityRange(config.intensityMin, undefined)}
-                            displayExponential={true}
-                        />
+                        {intensityMin !== undefined ? (
+                            <ClearableNumericInputComponent
+                                label="Min"
+                                value={intensityMin}
+                                placeholder="Automatic"
+                                onValueChanged={val => config.setIntensityRange(val, config.intensityMax)}
+                                onValueCleared={() => config.setIntensityRange(undefined, config.intensityMax)}
+                                displayExponential={true}
+                            />
+                        ) : (
+                            <ClearableNumericInputComponent
+                                label="Min"
+                                value={0}
+                                placeholder="Automatic"
+                                onValueChanged={val => config.setIntensityRange(val, config.intensityMax)}
+                                onValueCleared={() => config.setIntensityRange(undefined, config.intensityMax)}
+                                displayExponential={true}
+                            />
+                        )}
+                        {intensityMax !== undefined ? (
+                            <ClearableNumericInputComponent
+                                label="Max"
+                                value={intensityMax}
+                                placeholder="Automatic"
+                                onValueChanged={val => config.setIntensityRange(config.intensityMin, val)}
+                                onValueCleared={() => config.setIntensityRange(config.intensityMin, undefined)}
+                                displayExponential={true}
+                            />
+                        ) : (
+                            <ClearableNumericInputComponent
+                                label="Max"
+                                value={1}
+                                placeholder="Automatic"
+                                onValueChanged={val => config.setIntensityRange(config.intensityMin, val)}
+                                onValueCleared={() => config.setIntensityRange(config.intensityMin, undefined)}
+                                displayExponential={true}
+                            />
+                        )}
                     </div>
                 </div>
             </FormGroup>
@@ -258,7 +282,7 @@ export class VectorOverlayDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Vector),
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Vector) ?? false,
             className: "vector-overlay-dialog",
             canEscapeKeyClose: true,
             title: "Vector Overlay Configuration"
@@ -314,19 +338,16 @@ export class VectorOverlayDialogComponent extends React.Component {
                         )}
                     </HTMLSelect>
                 </FormGroup>
-                <FormGroup inline={true} label="Pixel averaging">
-                    <Switch checked={this.pixelAveragingEnabled} onChange={this.handlePixelAveragingEnabledChanged} data-testid="vector-field-averaging-toggle" />
-                </FormGroup>
-                <FormGroup inline={true} label="Averaging width" labelInfo="(px)" disabled={!this.pixelAveragingEnabled}>
+                <FormGroup inline={true} label="Averaging width" labelInfo="(px)" className="averaging-width-input">
                     <SafeNumericInput
-                        placeholder="Width (px)"
-                        min={2}
-                        max={64}
+                        min={1}
+                        max={VectorOverlayDialogComponent.MAX_PIXEL_AVERAGING}
                         value={this.pixelAveraging}
+                        stepSize={1}
                         majorStepSize={2}
-                        stepSize={2}
+                        minorStepSize={1}
                         onValueChange={this.handlePixelAveragingChanged}
-                        disabled={!this.pixelAveragingEnabled}
+                        onBlur={this.handlePixelAveragingBlurred}
                         data-testid="vector-field-averaging-width-input"
                     />
                 </FormGroup>

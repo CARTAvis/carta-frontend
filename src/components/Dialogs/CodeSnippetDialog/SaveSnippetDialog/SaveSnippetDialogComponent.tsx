@@ -54,11 +54,15 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
 
     @computed get validInput() {
         const snippetStore = SnippetStore.Instance;
-        return snippetStore.activeSnippetName?.length > 0 && snippetStore.activeSnippet?.categories;
+        return (snippetStore.activeSnippetName?.length ?? 0) > 0 && snippetStore.activeSnippet?.categories;
     }
 
     saveSnippet = async () => {
         const snippetStore = SnippetStore.Instance;
+
+        if (!snippetStore.activeSnippetName || !snippetStore.activeSnippet?.categories) {
+            return;
+        }
 
         if (snippetStore.snippets.has(snippetStore.activeSnippetName)) {
             const confirmed = await AlertStore.Instance.showInteractiveAlert(`Are you sure to overwrite the existing snippet ${snippetStore.activeSnippetName}?`);

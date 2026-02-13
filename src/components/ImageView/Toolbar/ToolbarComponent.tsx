@@ -1,16 +1,16 @@
+import type {CSSProperties} from "react";
 import * as React from "react";
-import {CSSProperties} from "react";
-import {AnchorButton, Button, ButtonGroup, Classes, Collapse, FormGroup, IconName, Menu, MenuDivider, MenuItem, Popover, PopoverInteractionKind, PopoverPosition, Position, Switch, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, ButtonGroup, Classes, Collapse, FormGroup, type IconName, Menu, MenuDivider, MenuItem, Popover, PopoverInteractionKind, type PopoverPosition, Position, Switch, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {ImageViewComponent, ImageViewLayer} from "components";
+import {ImageViewComponent} from "components";
 import {AnnotationMenuComponent, ExportImageMenuComponent} from "components/Shared";
-import {CustomIcon, CustomIconName} from "icons/CustomIcons";
+import {ImageViewLayer, RegionMode, SystemType} from "enums";
+import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
 import {AppStore} from "stores";
-import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
-import {SystemType} from "stores/OverlayStore/OverlayStore";
+import {type FrameStore, RegionStore} from "stores/Frame";
 import {toFixed} from "utilities";
 
 import "./ToolbarComponent.scss";
@@ -165,7 +165,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             </Menu>
         );
 
-        let coordinateSystem = overlay.global.system;
+        const coordinateSystem = overlay.global.system;
 
         const coordinateSystemMenu = (
             <Menu>
@@ -195,7 +195,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const canEnableSpatialMatching = appStore.spatialReference !== frame;
         const canEnableSpectralMatching = appStore.spectralReference && appStore.spectralReference !== frame && frame.frameInfo.fileInfoExtended.depth > 1;
         const wcsButtonSuperscript = (spatialMatchingEnabled ? "x" : "") + (spectralMatchingEnabled ? "z" : "");
-        const wcsButtonTooltipEntries = [];
+        const wcsButtonTooltipEntries: string[] = [];
         if (spectralMatchingEnabled) {
             wcsButtonTooltipEntries.push(`Spectral (${appStore.spectralMatchingType})`);
         }
@@ -238,8 +238,9 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         const handleDistanceMeasuringClicked = () => {
             this.handleActiveLayerClicked(ImageViewLayer.RegionCreating);
-            appStore.activeFrame.regionSet.setNewRegionType(CARTA.RegionType.ANNRULER);
-            appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
+            const activeFrame = appStore.activeFrame;
+            activeFrame?.regionSet.setNewRegionType(CARTA.RegionType.ANNRULER);
+            activeFrame?.regionSet.setMode(RegionMode.CREATING);
         };
 
         return (
@@ -284,8 +285,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                                 <span>
                                                     Create{" "}
                                                     {frame.regionSet.isNewRegionAnnotation
-                                                        ? `${RegionStore.AVAILABLE_ANNOTATION_TYPES.get(frame.regionSet.newRegionType).toLowerCase()} annotation`
-                                                        : `${RegionStore.AVAILABLE_REGION_TYPES.get(frame.regionSet.newRegionType).toLowerCase()} region`}
+                                                        ? `${RegionStore.AVAILABLE_ANNOTATION_TYPES.get(frame.regionSet.newRegionType)?.toLowerCase() ?? "unknown"} annotation`
+                                                        : `${RegionStore.AVAILABLE_REGION_TYPES.get(frame.regionSet.newRegionType)?.toLowerCase() ?? "unknown"} region`}
                                                     <br />
                                                     <i>
                                                         <small>Click to select region or annotation type</small>
@@ -295,7 +296,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                         >
                                             <AnchorButton
                                                 icon={frame.regionSet.isNewRegionAnnotation ? "annotation" : regionIcon}
-                                                active={appStore.activeLayer === ImageViewLayer.RegionCreating || appStore.activeFrame.regionSet.mode === RegionMode.CREATING}
+                                                active={appStore.activeLayer === ImageViewLayer.RegionCreating || appStore.activeFrame?.regionSet.mode === RegionMode.CREATING}
                                                 onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)}
                                             />
                                         </Tooltip>
@@ -308,8 +309,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                             <span>
                                                 Create{" "}
                                                 {frame.regionSet.isNewRegionAnnotation
-                                                    ? `${RegionStore.AVAILABLE_ANNOTATION_TYPES.get(frame.regionSet.newRegionType).toLowerCase()} annotation`
-                                                    : `${RegionStore.AVAILABLE_REGION_TYPES.get(frame.regionSet.newRegionType).toLowerCase()} region`}
+                                                    ? `${RegionStore.AVAILABLE_ANNOTATION_TYPES.get(frame.regionSet.newRegionType)?.toLowerCase() ?? "unknown"} annotation`
+                                                    : `${RegionStore.AVAILABLE_REGION_TYPES.get(frame.regionSet.newRegionType)?.toLowerCase() ?? "unknown"} region`}
                                                 <br />
                                                 <i>
                                                     <small>

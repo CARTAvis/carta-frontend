@@ -1,6 +1,6 @@
 import * as React from "react";
 import Editor from "react-simple-code-editor";
-import {AnchorButton, Classes, DialogProps, Intent} from "@blueprintjs/core";
+import {AnchorButton, Classes, type DialogProps, Intent} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -8,8 +8,9 @@ import * as prism from "prismjs";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppToaster, WarningToast} from "components/Shared";
+import {DialogId} from "enums";
 import {Snippet} from "models";
-import {AppStore, DialogId, SnippetStore} from "stores";
+import {AppStore, SnippetStore} from "stores";
 
 import {SaveSnippetDialogComponent} from "./SaveSnippetDialog/SaveSnippetDialogComponent";
 import {ThemeProvider} from "./ThemeProvider";
@@ -86,9 +87,10 @@ export class CodeSnippetDialogComponent extends React.Component {
 
     handleDeleteClicked = async () => {
         const appStore = AppStore.Instance;
+        const activeSnippetName = appStore.snippetStore.activeSnippetName;
         const confirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete this snippet?");
-        if (confirmed) {
-            await appStore.snippetStore.deleteSnippet(appStore.snippetStore.activeSnippetName);
+        if (confirmed && activeSnippetName) {
+            await appStore.snippetStore.deleteSnippet(activeSnippetName);
             appStore.snippetStore.clearActiveSnippet();
         }
     };
@@ -121,7 +123,7 @@ export class CodeSnippetDialogComponent extends React.Component {
             className: className,
             canEscapeKeyClose: !this.saveDialogOpen,
             canOutsideClickClose: false,
-            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Snippet),
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Snippet) ?? false,
             isCloseButtonShown: true,
             title: "Edit Code Snippet"
         };

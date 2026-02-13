@@ -1,21 +1,15 @@
-import {NumberRange, OptionProps} from "@blueprintjs/core";
+import type {NumberRange, OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable, override, reaction} from "mobx";
 import tinycolor from "tinycolor2";
 
-import {SpectralProfilerSettingsTabs} from "components";
-import {LineSettings, PlotType, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
-import {GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, IntensityConfig, IsIntensitySupported, LineKey, Point2D, POLARIZATIONS, SpectralSystem} from "models";
-import {TelemetryAction, TelemetryService} from "services";
+import {VERTICAL_RANGE_PADDING} from "components/Shared";
+import {LineSettings, MomentSelectingMode, MultiProfileCategory, PlotType, POLARIZATIONS, RegionId, RegionsType, SmoothingType, SpectralProfilerSettingsTabs, type SpectralSystem, TelemetryAction} from "enums";
+import {GetCommonIntensityOptions, GetIntensityConversion, GetIntensityOptions, type IntensityConfig, IsIntensitySupported, type LineKey, type Point2D} from "models";
+import {TelemetryService} from "services";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
-import {MultiProfileCategory, RegionId, RegionsType, RegionWidgetStore, SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
+import {RegionWidgetStore, type SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
 import {clamp, genColorFromIndex, getColorForTheme, isAutoColor, pixelToFluxDensityUnit} from "utilities";
-
-export enum MomentSelectingMode {
-    NONE = 1,
-    CHANNEL,
-    MASK
-}
 
 type XBound = {xMin: number | undefined; xMax: number | undefined};
 type YBound = {yMin: number; yMax: number};
@@ -41,43 +35,43 @@ export type MultiPlotData = {
 };
 
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
-    @observable minX: number | undefined;
-    @observable maxX: number | undefined;
-    @observable minY: number | undefined;
-    @observable maxY: number | undefined;
-    @observable cursorX: number;
-    @observable channel: number;
-    @observable markerTextVisible: boolean;
-    @observable isMouseMoveIntoLinePlots: boolean;
-    @observable isStreamingData: boolean;
-    @observable isHighlighted: boolean;
-    @observable private spectralLinesMHz: SpectralLine[];
-    @observable intensityUnit: string | undefined;
+    @observable minX: number | undefined = undefined;
+    @observable maxX: number | undefined = undefined;
+    @observable minY: number | undefined = undefined;
+    @observable maxY: number | undefined = undefined;
+    @observable cursorX: number = 0;
+    @observable channel: number = 0;
+    @observable markerTextVisible: boolean = false;
+    @observable isMouseMoveIntoLinePlots: boolean = false;
+    @observable isStreamingData: boolean = false;
+    @observable isHighlighted: boolean = false;
+    @observable private spectralLinesMHz: SpectralLine[] = [];
+    @observable intensityUnit: string | undefined = undefined;
 
     // style settings
-    @observable plotType: PlotType;
-    @observable meanRmsVisible: boolean;
-    @observable primaryLineColor: string;
-    @observable lineColorMap: Map<LineKey, string>;
-    @observable lineWidth: number;
-    @observable linePlotPointSize: number;
-    @observable linePlotInitXYBoundaries: {minXVal: number | undefined; maxXVal: number | undefined; minYVal: number | undefined; maxYVal: number | undefined};
-    @observable settingsTabId: SpectralProfilerSettingsTabs;
+    @observable plotType: PlotType = PlotType.STEPS;
+    @observable meanRmsVisible: boolean = false;
+    @observable primaryLineColor: string = genColorFromIndex(0); // default auto-blue color in Hex code
+    @observable lineColorMap: Map<LineKey, string> = new Map<LineKey, string>([[SpectralProfileWidgetStore.PRIMARY_LINE_KEY, genColorFromIndex(0)]]);
+    @observable lineWidth: number = 1;
+    @observable linePlotPointSize: number = 1.5;
+    @observable linePlotInitXYBoundaries: {minXVal: number | undefined; maxXVal: number | undefined; minYVal: number | undefined; maxYVal: number | undefined} = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
+    @observable settingsTabId: SpectralProfilerSettingsTabs = SpectralProfilerSettingsTabs.CONVERSION;
 
-    @observable secondaryAxisCursorInfoVisible: boolean;
+    @observable secondaryAxisCursorInfoVisible: boolean = false;
 
-    @observable keep: boolean;
+    @observable keep: boolean = false;
 
     // line key will be "Primary" in single line mode
     public static readonly PRIMARY_LINE_KEY = "Primary";
 
     // moment settings
-    @observable momentRegionId: number;
-    @observable selectingMode: MomentSelectingMode;
-    @observable channelValueRange: NumberRange;
-    @observable momentMask: CARTA.MomentMask;
-    @observable maskRange: NumberRange;
-    @observable selectedMoments: CARTA.Moment[];
+    @observable momentRegionId: number = RegionId.ACTIVE;
+    @observable selectingMode: MomentSelectingMode = MomentSelectingMode.NONE;
+    @observable channelValueRange: NumberRange = [0, 0];
+    @observable momentMask: CARTA.MomentMask = CARTA.MomentMask.None;
+    @observable maskRange: NumberRange = [0, 1];
+    @observable selectedMoments: CARTA.Moment[] = [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM];
 
     readonly smoothingStore: ProfileSmoothingStore;
     readonly profileSelectionStore: SpectralProfileSelectionStore;
@@ -366,33 +360,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     constructor(coordinate: string = "z") {
         super(RegionsType.CLOSED_AND_POINT);
         makeObservable<SpectralProfileWidgetStore, "spectralLinesMHz" | "updateRanges">(this);
-        this.isStreamingData = false;
-        this.isHighlighted = false;
-        this.spectralLinesMHz = [];
-
-        // Describes how the data is visualised
-        this.plotType = PlotType.STEPS;
-        this.meanRmsVisible = false;
-        this.secondaryAxisCursorInfoVisible = false;
-        this.markerTextVisible = false;
-        this.primaryLineColor = genColorFromIndex(0); // default auto-blue color in Hex code
-        this.lineColorMap = new Map<LineKey, string>([[SpectralProfileWidgetStore.PRIMARY_LINE_KEY, this.primaryLineColor]]);
-        this.linePlotPointSize = 1.5;
-        this.lineWidth = 1;
-        this.linePlotInitXYBoundaries = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
 
         this.smoothingStore = new ProfileSmoothingStore();
         this.fittingStore = new ProfileFittingStore(this);
         this.profileSelectionStore = new SpectralProfileSelectionStore(this, coordinate);
-        this.selectingMode = MomentSelectingMode.NONE;
-        this.momentRegionId = RegionId.ACTIVE;
-        this.channelValueRange = [0, 0];
-        this.momentMask = CARTA.MomentMask.None;
-        this.maskRange = [0, 1];
-        this.selectedMoments = [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM];
-        this.settingsTabId = SpectralProfilerSettingsTabs.CONVERSION;
-        this.keep = false;
-
         this.setMultiProfileIntensityUnit(this.effectiveFrame?.headerUnit);
 
         reaction(
@@ -493,18 +464,18 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
         // Determine points/smoothingPoints/colors/yBound/progress
         let numProfiles = 0;
-        let data: Point2D[][] = [];
-        let secondaryXData: number[][] = [];
-        let smoothedData: Point2D[][] = [];
-        let colors: (string | undefined)[] = [];
-        let labels: {image: string | undefined; plot: string}[] = [];
-        let comments: string[][] = [];
-        let xBound = {xMin: Number.MAX_VALUE, xMax: -Number.MAX_VALUE};
-        let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
+        const data: Point2D[][] = [];
+        const secondaryXData: number[][] = [];
+        const smoothedData: Point2D[][] = [];
+        const colors: (string | undefined)[] = [];
+        const labels: {image: string | undefined; plot: string}[] = [];
+        const comments: string[][] = [];
+        const xBound = {xMin: Number.MAX_VALUE, xMax: -Number.MAX_VALUE};
+        const yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
         let yMean: number | undefined;
         let yRms: number | undefined;
         let progressSum: number = 0;
-        let dataIndexes: {startIndex: number; endIndex: number}[] = [];
+        const dataIndexes: {startIndex: number; endIndex: number}[] = [];
         const wantMeanRms = profiles.length === 1;
         const profileColorMap = this.lineColorMap;
         const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
@@ -699,7 +670,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         // 2. showing multiple profiles of different images in radio/optical velocity.(observation sources are not aligned now)
         const disablePlot = frame?.isCoordChannel || (frame?.isCoordVelocity && this.profileSelectionStore.isShowingProfilesOfMultiImages);
 
-        let transformedSpectralLines: SpectralLine[] = [];
+        const transformedSpectralLines: SpectralLine[] = [];
         if (frame && !disablePlot) {
             this.spectralLinesMHz?.forEach(spectralLine => {
                 const transformedValue = frame.convertFreqMHzToSettingWCS(spectralLine?.value);
@@ -772,7 +743,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 if (!regionRequirements.spectralProfiles) {
                     regionRequirements.spectralProfiles = [];
                 }
-                let existingSpectralConfig = regionRequirements.spectralProfiles.find(profiles => profiles.coordinate === spectralConfig.coordinate);
+                const existingSpectralConfig = regionRequirements.spectralProfiles.find(profiles => profiles.coordinate === spectralConfig.coordinate);
                 if (!existingSpectralConfig) {
                     // create new spectral config
                     regionRequirements.spectralProfiles.push({coordinate: spectralConfig.coordinate, statsTypes: spectralConfig.statsTypes});
@@ -817,13 +788,13 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
         // Go through updated requirements entries and find differences
         updatedRequirements.forEach((updatedFrameRequirements, fileId) => {
-            let frameRequirements = originalRequirements.get(fileId);
+            const frameRequirements = originalRequirements.get(fileId);
             if (!frameRequirements) {
                 // If there are no existing requirements for this fileId, all entries for this file are new
                 updatedFrameRequirements.forEach(regionRequirements => diffList.push(regionRequirements));
             } else {
                 updatedFrameRequirements.forEach((updatedRegionRequirements, regionId) => {
-                    let regionRequirements = frameRequirements?.get(regionId);
+                    const regionRequirements = frameRequirements?.get(regionId);
                     if (!regionRequirements) {
                         // If there are no existing requirements for this regionId, this is a new entry
                         diffList.push(updatedRegionRequirements);
@@ -1003,10 +974,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
               ySmoothedRms: number | undefined;
           }
         | undefined => {
-        let points: Point2D[] = [];
+        const points: Point2D[] = [];
         let smoothedPoints: Point2D[] = [];
-        let xBound = this.getBoundX(frameChannelValues);
-        let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
+        const xBound = this.getBoundX(frameChannelValues);
+        const yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
         let yMean: number | undefined;
         let yRms: number | undefined;
         let ySmoothedMean: number | undefined;

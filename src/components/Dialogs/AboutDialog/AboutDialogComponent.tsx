@@ -1,11 +1,12 @@
 import * as React from "react";
-import {Button, Classes, Collapse, DialogProps} from "@blueprintjs/core";
+import {Button, Classes, Collapse, type DialogProps} from "@blueprintjs/core";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
+import {DialogId} from "enums";
 import {CARTA_INFO} from "models";
-import {DialogId, DialogStore} from "stores";
+import {DialogStore} from "stores";
 
 import "./AboutDialogComponent.scss";
 
@@ -40,7 +41,7 @@ export class AboutDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: true,
             lazy: true,
-            isOpen: dialogStore.dialogVisible.get(DialogId.About),
+            isOpen: dialogStore.dialogVisible.get(DialogId.About) ?? false,
             className: "about-dialog",
             canEscapeKeyClose: true,
             title: "About CARTA"

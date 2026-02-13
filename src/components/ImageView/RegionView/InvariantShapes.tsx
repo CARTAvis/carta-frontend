@@ -1,6 +1,6 @@
 import {Group, Shape} from "react-konva";
 import {CARTA} from "carta-protobuf";
-import Konva from "konva";
+import type Konva from "konva";
 
 import {AppStore} from "stores";
 
@@ -15,7 +15,12 @@ const DEFAULT_POINT_WIDTH = 6;
 const POINT_HOVER_DIST = 7;
 
 const HandlePointShapeDraw = (ctx: Konva.Context, shape: Konva.Shape, width: number, pointShape?: CARTA.PointAnnotationShape) => {
-    const inverseScale = 1 / shape.getStage().scaleX();
+    const stage = shape.getStage();
+    if (!stage) {
+        return;
+    }
+
+    const inverseScale = 1 / stage.scaleX();
     const offset = -width * 0.5 * inverseScale;
     const squareSize = width * inverseScale;
     ctx.beginPath();
@@ -81,7 +86,7 @@ export const Point = (props: PointProps) => {
         HandlePointShapeDraw(ctx, shape, POINT_HOVER_DIST + pointWidth);
     };
 
-    const fill = props.pointShape === CARTA.PointAnnotationShape.BOX || props.pointShape === CARTA.PointAnnotationShape.CIRCLE_LINED || props.pointShape === CARTA.PointAnnotationShape.DIAMOND_LINED ? null : props.color;
+    const fill = props.pointShape === CARTA.PointAnnotationShape.BOX || props.pointShape === CARTA.PointAnnotationShape.CIRCLE_LINED || props.pointShape === CARTA.PointAnnotationShape.DIAMOND_LINED ? undefined : props.color;
 
     return (
         <Group>
@@ -130,7 +135,12 @@ export const Anchor = (props: AnchorProps) => {
     };
 
     const handleCircleDraw = (ctx, shape) => {
-        const inverseScale = 1 / shape.getStage().scaleX();
+        const stage = shape.getStage();
+        if (!stage) {
+            return;
+        }
+
+        const inverseScale = 1 / stage.scaleX();
         const radius = CIRCLE_ANCHOR_RADIUS * inverseScale;
         const offsetY = props.isLineRegion ? 0 : -ROTATOR_ANCHOR_HEIGHT * inverseScale;
         ctx.beginPath();
@@ -188,7 +198,12 @@ export const CursorMarker = (props: CursorMarkerProps) => {
     };
 
     const handleCrossDraw = (ctx, shape) => {
-        const inverseScale = 1 / shape.getStage().scaleX();
+        const stage = shape.getStage();
+        if (!stage) {
+            return;
+        }
+
+        const inverseScale = 1 / stage.scaleX();
         const offset = -CURSOR_CROSS_CENTER_SQUARE * 0.5 * inverseScale;
         const crossWidth = CURSOR_CROSS_LENGTH * inverseScale;
         const crossHeight = CURSOR_CROSS_THICKNESS_WIDE * inverseScale;

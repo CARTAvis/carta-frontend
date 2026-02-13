@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, FormGroup, NumericInput, NumericInputProps, Placement, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, FormGroup, NumericInput, type NumericInputProps, type Placement, Tooltip} from "@blueprintjs/core";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 

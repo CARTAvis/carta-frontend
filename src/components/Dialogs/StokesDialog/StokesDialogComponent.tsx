@@ -1,6 +1,6 @@
 import * as React from "react";
-import {AnchorButton, Button, Classes, DialogProps, Intent, MenuItem, PopoverPosition} from "@blueprintjs/core";
-import {ItemRendererProps, Select} from "@blueprintjs/select";
+import {AnchorButton, Button, Classes, type DialogProps, Intent, MenuItem, PopoverPosition} from "@blueprintjs/core";
+import {type ItemRendererProps, Select} from "@blueprintjs/select";
 import {Cell, Column, SelectionModes, Table2} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -8,8 +8,9 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
+import {BrowserMode, DialogId, HelpType} from "enums";
 import {HyperCubeCtypeTransform, POLARIZATION_LABELS} from "models";
-import {AppStore, BrowserMode, DialogId, HelpType, PreferenceStore} from "stores";
+import {AppStore, PreferenceStore} from "stores";
 
 import "./StokesDialogComponent.scss";
 
@@ -20,29 +21,32 @@ export class StokesDialogComponent extends React.Component {
     private static readonly MinWidth = 300;
     private static readonly MinHeight = 250;
 
-    @observable stokes: Map<string, CARTA.IStokesFile>;
-    @observable stokesHeader: Map<string, CARTA.IFileInfoExtended>;
+    @observable stokes: Map<string, CARTA.IStokesFile> = new Map();
+    @observable stokesHeader: Map<string, CARTA.IFileInfoExtended> = new Map();
 
     @action updateStokesType = (fileName: string, type: CARTA.PolarizationType) => {
-        let currentStoke = this.stokes.get(fileName);
-        if (currentStoke.polarizationType !== type) {
+        const currentStoke = this.stokes.get(fileName);
+        if (currentStoke && currentStoke.polarizationType !== type) {
             this.stokes.forEach((stokeFile, stokeFileName) => {
                 if (stokeFileName !== fileName && stokeFile.polarizationType === type) {
-                    this.stokes.get(stokeFileName).polarizationType = CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
+                    const stokesToUpdate = this.stokes.get(stokeFileName);
+                    if (stokesToUpdate) {
+                        stokesToUpdate.polarizationType = CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
+                    }
                 }
             });
-            const stoke: CARTA.IStokesFile = {
+            const stokes: CARTA.IStokesFile = {
                 directory: currentStoke.directory,
                 file: currentStoke.file,
                 hdu: currentStoke.hdu,
                 polarizationType: type
             };
-            this.stokes.set(fileName, stoke);
+            this.stokes.set(fileName, stokes);
         }
     };
 
-    @action setStokes = (fileName: string, stoke: CARTA.IStokesFile) => {
-        this.stokes.set(fileName, stoke);
+    @action setStokes = (fileName: string, stokes: CARTA.IStokesFile) => {
+        this.stokes.set(fileName, stokes);
     };
 
     @action setStokesHeader = (fileName: string, fileInfoExtended: CARTA.IFileInfoExtended) => {
@@ -50,7 +54,7 @@ export class StokesDialogComponent extends React.Component {
     };
 
     @computed get fileNames(): string[] {
-        let files = [];
+        const files: string[] = [];
         this.stokes.forEach((type, file) => {
             files.push(file);
         });
@@ -58,7 +62,7 @@ export class StokesDialogComponent extends React.Component {
     }
 
     @computed get stokesDialogVisible(): boolean {
-        return AppStore.Instance.dialogStore.dialogVisible.get(DialogId.Stokes);
+        return AppStore.Instance.dialogStore.dialogVisible.get(DialogId.Stokes) ?? false;
     }
 
     @computed get noneType(): boolean {
@@ -74,8 +78,6 @@ export class StokesDialogComponent extends React.Component {
     constructor(props) {
         super(props);
         makeObservable(this);
-        this.stokes = new Map();
-        this.stokesHeader = new Map();
 
         reaction(
             () => this.stokesDialogVisible,
@@ -84,9 +86,11 @@ export class StokesDialogComponent extends React.Component {
                     const fileBrowserStore = AppStore.Instance.fileBrowserStore;
                     this.stokes = new Map();
                     fileBrowserStore.selectedFiles.forEach(async file => {
-                        const stokes = await fileBrowserStore.getStokesFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
-                        if (stokes) {
-                            this.setStokes(file.fileInfo.name, stokes);
+                        if (fileBrowserStore.fileList?.directory && file.fileInfo?.name && file.hdu !== undefined) {
+                            const stokes = await fileBrowserStore.getStokesFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
+                            if (stokes) {
+                                this.setStokes(file.fileInfo.name, stokes);
+                            }
                         }
                     });
                 }
@@ -121,19 +125,23 @@ export class StokesDialogComponent extends React.Component {
                 name={"Polarization"}
                 cellRenderer={rowIndex => {
                     const file = files[rowIndex];
+                    const stokes = this.stokes.get(file);
+                    if (!stokes) {
+                        return <Cell className="cell-dropdown-menu" key={`cell_drop_down_${rowIndex}`} interactive={true} />;
+                    }
                     return (
                         <Cell className="cell-dropdown-menu" key={`cell_drop_down_${rowIndex}`} interactive={true}>
                             <Select
                                 filterable={false}
                                 items={stokesItems}
-                                activeItem={this.stokes.get(file).polarizationType}
+                                activeItem={stokes.polarizationType}
                                 onItemSelect={type => this.updateStokesType(file, type)}
                                 itemRenderer={this.renderPopOver}
                                 popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                             >
                                 <Button
                                     className={classNames(Classes.MINIMAL, "catalog-represent-as-select-button")}
-                                    text={this.getLabelFromValue(this.stokes.get(file).polarizationType)}
+                                    text={this.getLabelFromValue(stokes.polarizationType ?? CARTA.PolarizationType.POLARIZATION_TYPE_NONE)}
                                     rightIcon="double-caret-vertical"
                                     data-testid={"stokes-table-dropdown-" + rowIndex}
                                 />
@@ -150,11 +158,11 @@ export class StokesDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Stokes),
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Stokes) ?? false,
             title: "Merging polarization hypercube"
         };
 
-        const rerenderCheck = [];
+        const rerenderCheck: (CARTA.PolarizationType | null | undefined)[] = [];
         this.stokes.forEach(stoke => rerenderCheck.push(stoke.polarizationType));
 
         return (
@@ -181,7 +189,7 @@ export class StokesDialogComponent extends React.Component {
                         columnWidths={[440, 120]}
                         enableRowResizing={false}
                         cellRendererDependencies={[rerenderCheck]}
-                        getCellClipboardData={null}
+                        getCellClipboardData={undefined}
                     >
                         {[fileName, stokesDropDown]}
                     </Table2>
@@ -204,9 +212,9 @@ export class StokesDialogComponent extends React.Component {
     private loadSelectedFiles = async () => {
         const {activeFrame, dynamicLayoutStore, fileBrowserStore, layoutStore} = AppStore.Instance;
 
-        let stokeFiles = [];
+        const stokesFiles: CARTA.IStokesFile[] = [];
         this.stokes.forEach(file => {
-            stokeFiles.push(file);
+            stokesFiles.push(file);
         });
 
         if (PreferenceStore.Instance.dynamicLayoutEnable) {
@@ -217,9 +225,9 @@ export class StokesDialogComponent extends React.Component {
             }
         }
 
-        await this.loadFile(stokeFiles)
+        await this.loadFile(stokesFiles as CARTA.StokesFile[])
             .then(() => {
-                activeFrame?.setStokesFiles(stokeFiles);
+                activeFrame?.setStokesFiles(stokesFiles as CARTA.StokesFile[]);
             })
             .catch(() => {
                 activeFrame?.setStokesFiles([]);
@@ -237,10 +245,12 @@ export class StokesDialogComponent extends React.Component {
 
         if (fileBrowserStore.browserMode === BrowserMode.File) {
             const frames = appStore.frames;
-            if (!fileBrowserStore.appendingFrame || !frames.length) {
-                await appStore.openConcatFile(files, fileBrowserStore.fileList.directory, files[0].hdu);
-            } else {
-                await appStore.appendConcatFile(files, fileBrowserStore.fileList.directory, files[0].hdu);
+            if (fileBrowserStore.fileList?.directory) {
+                if (!fileBrowserStore.appendingFrame || !frames.length) {
+                    await appStore.openConcatFile(files, fileBrowserStore.fileList.directory, files[0].hdu);
+                } else {
+                    await appStore.appendConcatFile(files, fileBrowserStore.fileList.directory, files[0].hdu);
+                }
             }
         }
 

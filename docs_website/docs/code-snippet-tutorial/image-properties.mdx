@@ -50,9 +50,7 @@ file.zoomToSizeYWcs('[size in y direction, ex: 2.56"]');
 file.setChannel([channel]);
 ```
 
-<ApiLink path="/.-stores/class/FrameStore/#setStokes">`setStokes`</ApiLink> and <ApiLink path="/.-stores/class/FrameStore/#setStokesByIndex">`setStokesByIndex`</ApiLink> change the stokes of the image using <ApiLink path="/.-models/enum/POLARIZATIONS">
-    `POLARIZATIONS`
-</ApiLink> enum or the index.
+<ApiLink path="/.-stores/class/FrameStore/#setStokes">`setStokes`</ApiLink> and <ApiLink path="/.-stores/class/FrameStore/#setStokesByIndex">`setStokesByIndex`</ApiLink> change the stokes of the image using the polarization enum or the index.
 
 ```javascript
 file.setStokes(2); // Stokes Q
@@ -70,7 +68,7 @@ file.renderConfig.setCustomScale([clip min], [clip max]);
 file.renderConfig.setPercentileRank(90); // Change to 90%
 ```
 
-<ApiLink path="/.-stores/class/RenderConfigStore/#setScaling">`setScaling`</ApiLink> changes the scaling functions using <ApiLink path="/.-stores/enum/FrameScaling">`FrameScaling`</ApiLink> enum.
+<ApiLink path="/.-stores/class/RenderConfigStore/#setScaling">`setScaling`</ApiLink> changes the scaling functions using the FrameScaling enum.
 
 ```javascript
 file.renderConfig.setScaling(1); // Log

@@ -1,6 +1,6 @@
+import type {CSSProperties} from "react";
 import * as React from "react";
-import {CSSProperties} from "react";
-import {FixedSizeList, ListOnItemsRenderedProps} from "react-window";
+import {FixedSizeList, type ListOnItemsRenderedProps} from "react-window";
 import {AnchorButton, ButtonGroup, Classes, Icon, NonIdealState, Position, Spinner, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -8,9 +8,10 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector} from "components/Shared";
+import {BrowserMode, DialogId, HelpType, RegionsOpacity} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
-import {AppStore, BrowserMode, DefaultWidgetConfig, DialogId, DialogStore, FileBrowserStore, HelpType, WidgetProps} from "stores";
-import {FrameStore, RegionsOpacity, RegionStore, WCS_PRECISION} from "stores/Frame";
+import {AppStore, type DefaultWidgetConfig, DialogStore, FileBrowserStore, type WidgetProps} from "stores";
+import {type FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {clamp, formattedArcsec, getFormattedWCSPoint, length2D, toFixed} from "utilities";
 
 import "./RegionListComponent.scss";
@@ -75,7 +76,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         reaction(
             () => AppStore.Instance.activeFrame?.regionSet?.selectedRegion?.regionId,
             id => {
-                if (id > 0) {
+                if (id && id > 0) {
                     const validRegionId = this.validRegions.map(el => el.regionId);
                     this.scrollToSelected(validRegionId.findIndex(element => element === id));
                 }
@@ -103,7 +104,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     };
 
     private syncRegionsLocked = () => {
-        AppStore.Instance.activeFrame.regionSet.setLocked(this.regionsLock);
+        AppStore.Instance.activeFrame?.regionSet.setLocked(this.regionsLock);
     };
 
     private handleRegionLockClicked = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>, region: RegionStore) => {
@@ -119,13 +120,14 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
     private handleToggleHideClicked = () => {
         return (ev: React.MouseEvent<HTMLElement, MouseEvent>) => {
-            if (this.regionsLock !== AppStore.Instance.activeFrame.regionSet.locked) {
+            const activeFrame = AppStore.Instance.activeFrame;
+            if (this.regionsLock !== activeFrame?.regionSet.locked) {
                 this.syncRegionsLocked();
             }
             this.toggleRegionVisibility();
-            AppStore.Instance.activeFrame.regionSet.setOpacity(this.regionsVisibility);
+            activeFrame?.regionSet.setOpacity(this.regionsVisibility);
             if (this.regionsVisibility === RegionsOpacity.Invisible) {
-                AppStore.Instance.activeFrame.regionSet.setLocked(true);
+                activeFrame?.regionSet.setLocked(true);
             }
             ev.stopPropagation();
         };
@@ -344,7 +346,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     if (frame.validWcs) {
                         sizeContent =
                             region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.ANNLINE || region.regionType === CARTA.RegionType.ANNVECTOR || region.regionType === CARTA.RegionType.ANNRULER ? (
-                                formattedArcsec(region.wcsSize ? length2D(region.wcsSize) : undefined, WCS_PRECISION)
+                                formattedArcsec(region.wcsSize && length2D(region.wcsSize), WCS_PRECISION)
                             ) : (
                                 <React.Fragment>
                                     {formattedArcsec(region.wcsSize?.x, WCS_PRECISION)}
@@ -353,7 +355,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                                 </React.Fragment>
                             );
                     } else {
-                        sizeContent = region.regionType === CARTA.RegionType.LINE ? toFixed(region.size ? length2D(region.size) : undefined, 1) : `(${toFixed(region.size.x, 1)}, ${toFixed(region.size.y, 1)})`;
+                        sizeContent = region.regionType === CARTA.RegionType.LINE ? toFixed(region.size && length2D(region.size), 1) : `(${toFixed(region.size.x, 1)}, ${toFixed(region.size.y, 1)})`;
                     }
                 }
                 let tooltipContent = "";
@@ -391,13 +393,10 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     <div
                         className="cell"
                         style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}
-                        onClick={regionSet.locked || this.regionsVisibility === RegionsOpacity.Invisible ? () => {} : ev => this.handleRegionLockClicked(ev, region)}
+                        onClick={regionSet?.locked || this.regionsVisibility === RegionsOpacity.Invisible ? () => {} : ev => this.handleRegionLockClicked(ev, region)}
                         data-testid={"region-list-table-row-" + (props.index + 1) + "-lock-cell"}
                     >
-                        <Icon
-                            icon={region.locked ? "lock" : this.regionsVisibility === RegionsOpacity.Invisible ? "lock" : "unlock"}
-                            style={{opacity: regionSet.locked ? 0.3 : this.regionsVisibility === RegionsOpacity.Invisible ? 0.3 : 1}}
-                        />
+                        <Icon icon={region.locked ? "lock" : this.regionsVisibility === RegionsOpacity.Invisible ? "lock" : "unlock"} style={{opacity: regionSet?.locked || this.regionsVisibility === RegionsOpacity.Invisible ? 0.3 : 1}} />
                     </div>
                 );
             } else {

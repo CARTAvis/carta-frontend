@@ -1,10 +1,10 @@
 import * as React from "react";
-import {Classes, Drawer, DrawerProps} from "@blueprintjs/core";
+import {Classes, Drawer, type DrawerProps} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
+import {HelpType} from "enums";
 import {AppStore, HelpStore} from "stores";
-import {HelpType} from "stores/HelpStore/HelpStore";
 
 import "./HelpDrawerComponent.scss";
 
@@ -66,7 +66,7 @@ const PV_GENERATOR_HELP_CONTENT_URL = `${url_prefix}/pv_generator.html`;
 const CURSOR_INFO_HELP_CONTENT_URL = `${url_prefix}/cursor_info.html`;
 const CHANNEL_MAP_CONTROL_HELP_CONTENT_URL = `${url_prefix}/channel_map_control.html`;
 
-const HELP_CONTENT_MAP = new Map<HelpType, string>([
+const HELP_CONTENT_MAP = new Map<HelpType, string | undefined>([
     // Dialog
     [HelpType.CONTOUR, CONTOUR_HELP_CONTENT_URL],
     [HelpType.FILE_BROWSER, FILE_BROWSER_HELP_CONTENT_URL],

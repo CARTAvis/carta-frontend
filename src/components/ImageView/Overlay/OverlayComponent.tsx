@@ -4,8 +4,9 @@ import classNames from "classnames";
 import * as _ from "lodash";
 import {observer} from "mobx-react";
 
-import {ImageItem, ImageType, SPECTRAL_TYPE_STRING} from "models";
-import {AppStore, OverlaySettings, OverlayStore, PreferenceStore} from "stores";
+import {ImageType} from "enums";
+import {type ImageItem, SPECTRAL_TYPE_STRING} from "models";
+import {AppStore, OverlaySettings, type OverlayStore, PreferenceStore} from "stores";
 import {setAstSystem} from "utilities";
 
 import "./OverlayComponent.scss";
@@ -55,7 +56,11 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const appStore = AppStore.Instance;
         const padding = this.props.overlayStore.padding;
 
-        const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoShifted : frame.wcsInfo;
+        if (!frame) {
+            return;
+        }
+
+        const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoOffset : frame.wcsInfo;
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
         const frameView = this.props.unscaled
             ? {
@@ -183,6 +188,11 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     render() {
         const frame = this.props.image?.type === ImageType.COLOR_BLENDING ? this.props.image.store?.baseFrame : this.props.image?.store;
+
+        if (!frame) {
+            return null;
+        }
+
         const refFrame = frame.spatialReference ?? frame;
         // changing the frame view, padding or width/height triggers a re-render
 
@@ -219,7 +229,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const channelMapNumRows = AppStore.Instance.channelMapStore.numRows;
         const channelMapChannelNum = AppStore.Instance.channelMapStore.numChannels;
         const offsetCoord = frame.isOffsetCoord;
-        const offsetWcs = frame.wcsInfoShifted;
+        const offsetWcs = frame.wcsInfoOffset;
 
         if (frame.isSwappedZ) {
             const requiredChannel = frame.requiredChannel;

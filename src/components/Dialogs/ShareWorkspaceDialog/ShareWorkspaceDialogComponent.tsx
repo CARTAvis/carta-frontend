@@ -1,8 +1,9 @@
-import {ReactNode, useEffect, useState} from "react";
-import {AnchorButton, Checkbox, Classes, Dialog, DialogProps, InputGroup, Intent, Tooltip} from "@blueprintjs/core";
+import {type ReactNode, useEffect, useState} from "react";
+import {AnchorButton, Checkbox, Classes, Dialog, type DialogProps, InputGroup, Intent, Tooltip} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
-import {AppStore, DialogId} from "stores";
+import {DialogId} from "enums";
+import {AppStore} from "stores";
 import {copyToClipboard} from "utilities";
 
 import {AppToaster, WarningToast} from "../../Shared";
@@ -16,7 +17,7 @@ export const ShareWorkspaceDialogComponent = observer(() => {
     const appStore = AppStore.Instance;
 
     // Reset the dialog when the active workspace changes
-    let shareWorkspaceDialogVisible = appStore.dialogStore.dialogVisible.get(DialogId.ShareWorkspace);
+    const shareWorkspaceDialogVisible = appStore.dialogStore.dialogVisible.get(DialogId.ShareWorkspace);
     useEffect(() => {
         setShareKey("");
         setIsGeneratingLink(false);
@@ -31,7 +32,7 @@ export const ShareWorkspaceDialogComponent = observer(() => {
         canOutsideClickClose: true,
         lazy: true,
         canEscapeKeyClose: true,
-        isOpen: shareWorkspaceDialogVisible,
+        isOpen: shareWorkspaceDialogVisible ?? false,
         onClose: () => appStore.dialogStore.hideDialog(DialogId.ShareWorkspace),
         title: `Share Workspace: ${activeWorkspace?.name ?? ""}`
     };
@@ -48,9 +49,9 @@ export const ShareWorkspaceDialogComponent = observer(() => {
                 await appStore.saveWorkspace(activeWorkspace.name);
             }
             const shareKey = await appStore.apiService.getSharedWorkspaceKey(activeWorkspace.id);
-            setShareKey(shareKey);
+            setShareKey(shareKey ?? "");
         } catch (err) {
-            console.log(err);
+            console.error(err);
             AppToaster.show(WarningToast("Could not generate a sharing link."));
         }
     };

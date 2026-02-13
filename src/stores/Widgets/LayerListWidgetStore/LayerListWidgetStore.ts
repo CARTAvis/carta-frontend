@@ -1,13 +1,8 @@
-import {TabId} from "@blueprintjs/core";
+import type {TabId} from "@blueprintjs/core";
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {ImageType} from "models";
+import {ImageType, LayerListSettingsTabs} from "enums";
 import {AppStore} from "stores";
-
-export enum LayerListSettingsTabs {
-    MATCHING,
-    REST_FREQ
-}
 
 export class LayerListWidgetStore {
     @observable settingsTabId: TabId = LayerListSettingsTabs.MATCHING;
@@ -27,7 +22,7 @@ export class LayerListWidgetStore {
 
     @computed get restFreqFrameOptions() {
         const appStore = AppStore.Instance;
-        let options = [
+        const options = [
             {
                 label: "Active",
                 frameIndex: -1,

@@ -1,57 +1,39 @@
-import {RGBColor} from "react-color";
-import {CARTA} from "carta-protobuf";
+import type {RGBColor} from "react-color";
+import {type CARTA} from "carta-protobuf";
 import {action, makeObservable, observable} from "mobx";
+import type {WorkspaceContourConfig} from "models";
 import tinycolor from "tinycolor2";
 
-import {WorkspaceContourConfig} from "models";
-import {PreferenceStore} from "stores";
-
-export enum ContourGeneratorType {
-    StartStepMultiplier = "start-step-multiplier",
-    MinMaxNScaling = "min-max-scaling",
-    PercentagesRefValue = "percentages-ref.value",
-    MeanSigmaList = "mean-sigma-list"
-}
-
-export enum ContourDashMode {
-    None = "None",
-    Dashed = "Dashed",
-    NegativeOnly = "Negative only"
-}
+import {ContourDashMode} from "enums";
+import {type PreferenceStore} from "stores";
 
 export class ContourConfigStore {
-    @observable enabled: boolean;
-    @observable levels: number[];
+    @observable enabled: boolean = false;
+    @observable levels: number[] = [];
     @observable smoothingMode: CARTA.SmoothingMode;
     @observable smoothingFactor: number;
 
     @observable color: RGBColor;
-    @observable colormapEnabled: boolean;
+    @observable colormapEnabled: boolean = false;
     @observable colormap: string;
-    @observable colormapContrast: number;
-    @observable colormapBias: number;
-    @observable dashMode: ContourDashMode;
+    @observable colormapContrast: number = 1.0;
+    @observable colormapBias: number = 0.0;
+    @observable dashMode: ContourDashMode = ContourDashMode.NegativeOnly;
     @observable thickness: number;
-    @observable visible: boolean;
+    @observable visible: boolean = true;
 
     private readonly preferenceStore: PreferenceStore;
 
     constructor(preferenceStore: PreferenceStore) {
-        makeObservable(this);
         this.preferenceStore = preferenceStore;
-        this.enabled = false;
-        this.levels = [];
         this.smoothingMode = this.preferenceStore.contourSmoothingMode;
         this.smoothingFactor = this.preferenceStore.contourSmoothingFactor;
 
         this.color = tinycolor(this.preferenceStore.contourColor).toRgb();
         this.colormapEnabled = this.preferenceStore.contourColormapEnabled;
         this.colormap = this.preferenceStore.contourColormap;
-        this.colormapBias = 0.0;
-        this.colormapContrast = 1.0;
         this.thickness = this.preferenceStore.contourThickness;
-        this.dashMode = ContourDashMode.NegativeOnly;
-        this.visible = true;
+        makeObservable(this);
     }
 
     @action setEnabled(val: boolean) {

@@ -1,14 +1,15 @@
 import * as React from "react";
-import {AnchorButton, Classes, DialogProps, Intent, NonIdealState, Tab, Tabs, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Classes, type DialogProps, Intent, NonIdealState, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScrollShadow} from "components/Shared";
+import {DialogId, HelpType} from "enums";
 import {CustomIcon} from "icons/CustomIcons";
-import {AppStore, DialogId, HelpType} from "stores";
-import {RegionStore} from "stores/Frame";
+import {AppStore} from "stores";
+import {type RegionStore} from "stores/Frame";
 
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
 import {CompassRulerRegionForm} from "./CompassRulerRegionForm/CompassRulerRegionForm";
@@ -54,7 +55,12 @@ export class RegionDialogComponent extends React.Component {
         }
     };
 
-    private handleFocusClicked = () => AppStore.Instance.activeFrame.regionSet.selectedRegion.focusCenter();
+    private handleFocusClicked = () => {
+        const regionSet = AppStore.Instance.activeFrame?.regionSet;
+        if (regionSet?.selectedRegion) {
+            regionSet.selectedRegion.focusCenter();
+        }
+    };
 
     public render() {
         const appStore = AppStore.Instance;
@@ -64,14 +70,14 @@ export class RegionDialogComponent extends React.Component {
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: true,
             lazy: true,
-            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Region),
+            isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Region) ?? false,
             className: "region-dialog",
             canEscapeKeyClose: true,
             title: "No region selected"
         };
 
         let bodyContent, configurationPanel;
-        let region: RegionStore;
+        let region: RegionStore | null = null;
         let editableRegion = false;
         if (!appStore.activeFrame || !appStore.activeFrame.regionSet.selectedRegion) {
             bodyContent = RegionDialogComponent.MissingRegionNode;
@@ -130,7 +136,7 @@ export class RegionDialogComponent extends React.Component {
             }
         }
 
-        let tooltips = region && region.regionId !== 0 && (
+        const tooltips = region && region.regionId !== 0 && (
             <React.Fragment>
                 <Tooltip content={`Region is ${region.locked ? "locked" : "unlocked"}`}>
                     <AnchorButton intent={Intent.WARNING} minimal={true} icon={region.locked ? "lock" : "unlock"} onClick={region.toggleLock} />
