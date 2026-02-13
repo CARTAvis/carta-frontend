@@ -537,7 +537,7 @@ export class RootMenuComponent extends React.Component {
 
     private handleDocumentationClicked = (url: string) => {
         window.open(url, "_blank", "width=1024");
-        if (process.env.REACT_APP_TARGET !== "linux" && process.env.REACT_APP_TARGET !== "darwin") {
+        if (process.env.PUBLIC_REACT_APP_TARGET !== "linux" && process.env.PUBLIC_REACT_APP_TARGET !== "darwin") {
             this.documentationAlertVisible = true;
             clearTimeout(this.documentationAlertTimeoutHandle);
             this.documentationAlertTimeoutHandle = setTimeout(() => (this.documentationAlertVisible = false), 10000);

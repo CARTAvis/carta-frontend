@@ -958,7 +958,7 @@ export class PreferenceDialogComponent extends React.Component {
                         <Tab id={PreferenceDialogTabs.REGION} title="Region" panel={<ScrollShadow>{regionSettingsPanel}</ScrollShadow>} />
                         <Tab id={PreferenceDialogTabs.ANNOTATION} title="Annotation" panel={<ScrollShadow>{annotationSettingsPanel}</ScrollShadow>} />
                         <Tab id={PreferenceDialogTabs.PERFORMANCE} title="Performance" panel={<ScrollShadow>{performancePanel}</ScrollShadow>} />
-                        {process.env.REACT_APP_SKIP_TELEMETRY !== "true" && <Tab id={PreferenceDialogTabs.TELEMETRY} title="Telemetry" panel={<ScrollShadow>{telemetryPanel}</ScrollShadow>} />}
+                        {process.env.PUBLIC_REACT_APP_SKIP_TELEMETRY !== "true" && <Tab id={PreferenceDialogTabs.TELEMETRY} title="Telemetry" panel={<ScrollShadow>{telemetryPanel}</ScrollShadow>} />}
                         <Tab id={PreferenceDialogTabs.COMPATIBILITY} title="Compatibility" panel={<ScrollShadow>{compatibilityPanel}</ScrollShadow>} />
                         <Tab id={PreferenceDialogTabs.LOG_EVENT} title="Log Events" panel={<ScrollShadow>{logEventsPanel}</ScrollShadow>} />
                     </Tabs>

@@ -345,9 +345,9 @@ export class AppStore {
         // - OSX/iOS use '⌘'
         // - Windows/Linux uses 'Ctrl + '
         // - Browser uses 'alt +' for compatibility reasons
-        if (process.env.REACT_APP_TARGET === "linux") {
+        if (process.env.PUBLIC_REACT_APP_TARGET === "linux") {
             return "ctrl + ";
-        } else if (process.env.REACT_APP_TARGET === "darwin") {
+        } else if (process.env.PUBLIC_REACT_APP_TARGET === "darwin") {
             return "cmd +";
         }
         return "alt + ";
