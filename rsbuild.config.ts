@@ -19,7 +19,7 @@ const defaultOptions = {
 export default defineConfig({
     plugins: [
         pluginReact(),
-        pluginEslint({ eslintPluginOptions: defaultOptions, enable: process.env.NODE_ENV === "production" }),
+        pluginEslint({ eslintPluginOptions: defaultOptions }),
         pluginSass(),
         pluginNodePolyfill(),
         pluginGlsl()
@@ -50,7 +50,7 @@ export default defineConfig({
             },
             resolveLoader: {
                 alias: {
-                    "worker-loader": require.resolve("worker-rspack-loader"),
+                    "worker-loader": "worker-rspack-loader",
                 },
             },
             module: {
