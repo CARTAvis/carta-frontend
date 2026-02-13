@@ -2,7 +2,7 @@ import {FloatingObjzIndexManager} from "./zindex";
 
 describe("FloatingObjzIndexManager", () => {
     test("returns expected z indexes", () => {
-        let zIndexManager = new FloatingObjzIndexManager();
+        const zIndexManager = new FloatingObjzIndexManager();
 
         // test methods assignIndex, floatingObjsNum and findIndex by adding four objects
         const mockObjsId = ["testId1", "testId2", "testId3", "testId4"];

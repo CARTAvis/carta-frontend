@@ -2,21 +2,16 @@ import * as React from "react";
 import SplitPane, {Pane} from "react-split-pane";
 import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay2, Popover, Position, Spinner, Switch, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {FilterableTableComponent, FilterableTableComponentProps, ResizeDetector, SafeNumericInput} from "components/Shared";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {RedshiftType, SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit, SpectralLineQueryWidgetStore} from "stores/Widgets";
+import {FilterableTableComponent, type FilterableTableComponentProps, ResizeDetector, SafeNumericInput} from "components/Shared";
+import {HeaderTableColumnName, HelpType, RedshiftType, type SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "enums";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {type SpectralLineQueryWidgetStore} from "stores/Widgets";
 
 import "./SpectralLineQueryComponent.scss";
-
-enum HeaderTableColumnName {
-    Name = "Name",
-    Description = "Description",
-    Display = "Display"
-}
 
 const KEYCODE_ENTER = 13;
 const MINIMUM_WIDTH = 450;
@@ -24,10 +19,10 @@ const PLOT_LINES_LIMIT = 1000;
 
 @observer
 export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
-    @observable width: number;
-    @observable height: number;
-    @observable widgetId: string;
-    @observable headerTableColumnWidths: Array<number>;
+    @observable width: number = 750;
+    @observable height: number = 600;
+    @observable headerTableColumnWidths: Array<number> = [150, 70, 300];
+    private widgetId: string;
     private headerTableRef: Table2 | undefined;
     private resultTableRef: Table2 | undefined;
     private scrollToTopHandle;
@@ -49,14 +44,13 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
-
-        this.headerTableColumnWidths = [150, 70, 300];
+        this.widgetId = props.id;
     }
 
     @computed get widgetStore(): SpectralLineQueryWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.spectralLineQueryWidgets) {
-            const widgetStore = widgetsStore.spectralLineQueryWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.spectralLineQueryWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }

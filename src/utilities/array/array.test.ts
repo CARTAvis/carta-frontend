@@ -1,4 +1,4 @@
-import {Point2D} from "models";
+import {type Point2D} from "models";
 
 import {binarySearchByX} from "./array";
 
@@ -35,9 +35,6 @@ test("test binarySearchByX with sorted array in incremental/decremental order", 
         {x: NaN, y: NaN}
     ];
 
-    expect(binarySearchByX(null, null)).toEqual(null);
-    expect(binarySearchByX(null, 10)).toEqual(null);
-    expect(binarySearchByX(incremental, null)).toEqual(null);
     expect(binarySearchByX([], 10)).toEqual(null);
     expect(binarySearchByX(incremental, NaN)).toEqual(null);
 

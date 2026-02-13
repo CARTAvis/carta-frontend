@@ -22,7 +22,11 @@ export function getEventList(list: number[], value: number[] | number): number[]
     const valueList = typeof value === "number" ? [value] : value;
 
     valueList.forEach(x => {
-        list.includes(x) ? (list = list.filter(e => e !== x)) : list.push(x);
+        if (list.includes(x)) {
+            list = list.filter(e => e !== x);
+        } else {
+            list.push(x);
+        }
     });
 
     return list;

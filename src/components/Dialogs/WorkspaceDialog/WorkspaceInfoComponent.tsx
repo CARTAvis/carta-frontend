@@ -1,10 +1,10 @@
 import * as React from "react";
 import {useCallback, useEffect, useState} from "react";
 import {Callout, NonIdealState, Spinner} from "@blueprintjs/core";
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
+import type {Workspace, WorkspaceFile, WorkspaceListItem} from "models";
 import {useMap} from "usehooks-ts";
 
-import {Workspace, WorkspaceFile, WorkspaceListItem} from "models";
 import {AppStore} from "stores";
 
 import "./WorkspaceInfoComponent.scss";
@@ -48,7 +48,7 @@ export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceList
                     await fetchFileInfo(res);
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
                 setErrorMessage(err);
             }
             setIsFetchingWorkspace(false);
@@ -60,7 +60,7 @@ export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceList
         if (workspaceListItem) {
             fetchWorkspace(workspaceListItem.name);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line
     }, [workspaceListItem]);
 
     if (!workspaceListItem) {

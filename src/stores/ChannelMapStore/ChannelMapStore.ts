@@ -1,9 +1,10 @@
 import {debounce, throttle} from "lodash";
 import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
 
-import {ImageType, ImageViewItem} from "models";
+import {ImageType} from "enums";
+import {type ImageViewItem} from "models";
 import {TileService} from "services";
-import {AppStore, FrameStore} from "stores";
+import {AppStore, type FrameStore} from "stores";
 
 export class ChannelMapStore {
     private static staticInstance: ChannelMapStore;

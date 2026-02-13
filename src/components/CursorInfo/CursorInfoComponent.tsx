@@ -5,9 +5,9 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector, SimpleTableComponent} from "components/Shared";
-import {ImageType} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
-import {FrameStore} from "stores/Frame";
+import {HelpType, ImageType} from "enums";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
+import {type FrameStore} from "stores/Frame";
 import {formattedExponential, toFixed} from "utilities";
 
 import "./CursorInfoComponent.scss";
@@ -106,7 +106,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
 
     private genZCoordContent = (frame: FrameStore): React.ReactNode => {
         if (frame?.spectralInfo?.spectralString) {
-            let zCoordString: React.ReactNode[] = [];
+            const zCoordString: React.ReactNode[] = [];
             zCoordString.push(frame.spectralInfo.spectralString.replace(/\w+\s\(/, "")?.replace(/\):\s/, "\u000A"));
             if (frame.spectralInfo?.freqString) {
                 zCoordString.push(<br key={0} />);

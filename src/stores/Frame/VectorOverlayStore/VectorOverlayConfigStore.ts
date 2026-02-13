@@ -1,77 +1,58 @@
-import {RGBColor} from "react-color";
+import type {RGBColor} from "react-color";
 import {CARTA} from "carta-protobuf";
 import {action, makeObservable, observable} from "mobx";
+import type {WorkspaceVectorOverlayConfig} from "models";
 import tinycolor from "tinycolor2";
 
-import {WorkspaceVectorOverlayConfig} from "models";
-import {PreferenceStore} from "stores";
-import {FrameStore} from "stores/Frame";
-
-export enum VectorOverlaySource {
-    None = -1,
-    Current = 0,
-    Computed = 1
-}
+import {VectorOverlaySource} from "enums";
+import {type PreferenceStore} from "stores";
+import {type FrameStore} from "stores/Frame";
 
 export class VectorOverlayConfigStore {
     // Generator config
-    @observable enabled: boolean;
-    @observable angularSource: VectorOverlaySource;
-    @observable intensitySource: VectorOverlaySource;
-    @observable fractionalIntensity: boolean;
-    @observable pixelAveragingEnabled: boolean;
-    @observable pixelAveraging: number;
-    @observable thresholdEnabled: boolean;
-    @observable threshold: number;
-    @observable debiasing: boolean;
-    @observable qError: number;
-    @observable uError: number;
-    @observable thresholdOption: CARTA.PolarizationType.I | CARTA.PolarizationType.Plinear;
+    @observable enabled: boolean = false;
+    @observable angularSource: VectorOverlaySource = VectorOverlaySource.Current;
+    @observable intensitySource: VectorOverlaySource = VectorOverlaySource.Current;
+    @observable fractionalIntensity: boolean = false;
+    @observable pixelAveraging: number = 0;
+    @observable thresholdEnabled: boolean = false;
+    @observable threshold: number = 0;
+    @observable debiasing: boolean = false;
+    @observable qError: number = 0;
+    @observable uError: number = 0;
+    @observable thresholdOption: CARTA.PolarizationType.I | CARTA.PolarizationType.Plinear = CARTA.PolarizationType.I;
 
     // Appearance
-    @observable visible: boolean;
-    @observable thickness: number;
-    @observable colormapEnabled: boolean;
-    @observable color: RGBColor;
-    @observable colormap: string;
-    @observable colormapContrast: number;
-    @observable colormapBias: number;
-    @observable lengthMin: number;
-    @observable lengthMax: number;
-    @observable intensityMin: number | undefined;
-    @observable intensityMax: number | undefined;
-    @observable rotationOffset: number;
+    @observable visible: boolean = true;
+    @observable thickness: number = 1;
+    @observable colormapEnabled: boolean = false;
+    @observable color: RGBColor = {r: 0, g: 0, b: 0, a: 1};
+    @observable colormap: string = "";
+    @observable colormapContrast: number = 1.0;
+    @observable colormapBias: number = 0.0;
+    @observable lengthMin: number = VectorOverlayConfigStore.DefaultLengthMin;
+    @observable lengthMax: number = VectorOverlayConfigStore.DefaultLengthMax;
+    @observable intensityMin: number | undefined = undefined;
+    @observable intensityMax: number | undefined = undefined;
+    @observable rotationOffset: number = 0;
 
     private readonly preferenceStore: PreferenceStore;
     public static DefaultLengthMin = 0;
     public static DefaultLengthMax = 20;
 
     constructor(preferenceStore: PreferenceStore, frame: FrameStore) {
-        makeObservable(this);
         this.preferenceStore = preferenceStore;
-        this.enabled = false;
         this.angularSource = frame.hasLinearStokes ? VectorOverlaySource.Computed : VectorOverlaySource.Current;
         this.intensitySource = frame.hasLinearStokes ? VectorOverlaySource.Computed : VectorOverlaySource.Current;
         this.fractionalIntensity = this.preferenceStore.vectorOverlayFractionalIntensity;
         this.pixelAveraging = this.preferenceStore.vectorOverlayPixelAveraging;
-        this.pixelAveragingEnabled = this.preferenceStore.vectorOverlayPixelAveraging > 0;
-        this.threshold = 0;
-        this.thresholdEnabled = false;
-        this.debiasing = false;
         this.thresholdOption = frame.hasLinearStokes ? CARTA.PolarizationType.Plinear : CARTA.PolarizationType.I;
 
         this.color = tinycolor(this.preferenceStore.vectorOverlayColor).toRgb();
         this.colormapEnabled = this.preferenceStore.vectorOverlayColormapEnabled;
         this.colormap = this.preferenceStore.vectorOverlayColormap;
-        this.colormapBias = 0.0;
-        this.colormapContrast = 1.0;
         this.thickness = this.preferenceStore.vectorOverlayThickness;
-        this.lengthMin = VectorOverlayConfigStore.DefaultLengthMin;
-        this.lengthMax = VectorOverlayConfigStore.DefaultLengthMax;
-        this.intensityMin = undefined;
-        this.intensityMax = undefined;
-        this.rotationOffset = 0;
-        this.visible = true;
+        makeObservable(this);
     }
 
     @action setEnabled(val: boolean) {
@@ -89,7 +70,6 @@ export class VectorOverlayConfigStore {
     @action setVectorOverlayConfiguration = (
         angularSource: VectorOverlaySource,
         intensitySource: VectorOverlaySource,
-        pixelAveragingEnabled: boolean,
         pixelAveraging: number,
         fractionalIntensity: boolean,
         thresholdEnabled: boolean,
@@ -101,7 +81,6 @@ export class VectorOverlayConfigStore {
     ) => {
         this.angularSource = angularSource;
         this.intensitySource = intensitySource;
-        this.pixelAveragingEnabled = pixelAveragingEnabled;
         this.pixelAveraging = pixelAveraging;
         this.fractionalIntensity = fractionalIntensity;
         this.thresholdEnabled = thresholdEnabled;
@@ -165,7 +144,6 @@ export class VectorOverlayConfigStore {
     @action updateFromWorkspace = (config: WorkspaceVectorOverlayConfig) => {
         this.angularSource = config.angularSource;
         this.intensitySource = config.intensitySource;
-        this.pixelAveragingEnabled = config.pixelAveragingEnabled;
         this.pixelAveraging = config.pixelAveraging;
         this.fractionalIntensity = config.fractionalIntensity;
         this.thresholdEnabled = config.thresholdEnabled;

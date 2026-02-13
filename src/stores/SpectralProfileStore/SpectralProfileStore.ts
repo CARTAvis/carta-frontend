@@ -1,24 +1,22 @@
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
 import {action, makeObservable, observable, ObservableMap} from "mobx";
-
-import {ProcessedSpectralProfile} from "utilities";
+import type {ProcessedSpectralProfile} from "utilities";
 
 type Coordinate = string;
 
 export class SpectralProfileStore {
     readonly fileId: number;
     readonly regionId: number;
-    @observable profiles: Map<Coordinate, ObservableMap<CARTA.StatsType, ProcessedSpectralProfile>>;
+    @observable profiles: Map<Coordinate, ObservableMap<CARTA.StatsType, ProcessedSpectralProfile>> = new Map<Coordinate, ObservableMap<CARTA.StatsType, ProcessedSpectralProfile>>();
 
     constructor(fileId: number = 0, regionId: number = 0) {
         makeObservable(this);
         this.fileId = fileId;
         this.regionId = regionId;
-        this.profiles = new Map<Coordinate, ObservableMap<CARTA.StatsType, ProcessedSpectralProfile>>();
     }
 
     public getProfile = (coordinate: Coordinate, statsType: CARTA.StatsType): ProcessedSpectralProfile | null | undefined => {
-        let coordinateMap = this.profiles.get(coordinate);
+        const coordinateMap = this.profiles.get(coordinate);
         if (coordinateMap) {
             return coordinateMap.get(statsType);
         }

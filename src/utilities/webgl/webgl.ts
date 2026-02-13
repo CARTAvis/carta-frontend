@@ -8,7 +8,7 @@ export function getShaderFromString(gl: WebGL2RenderingContext, shaderScript: st
         return null;
     }
 
-    let shader = gl.createShader(type);
+    const shader = gl.createShader(type);
 
     if (shader) {
         gl.shaderSource(shader, shaderScript);
@@ -26,10 +26,10 @@ export function getShaderProgram(gl: WebGL2RenderingContext, vertexShaderString:
         return null;
     }
 
-    let vertexShader = getShaderFromString(gl, vertexShaderString, GL2.VERTEX_SHADER);
-    let fragmentShader = getShaderFromString(gl, pixelShaderString, GL2.FRAGMENT_SHADER);
+    const vertexShader = getShaderFromString(gl, vertexShaderString, GL2.VERTEX_SHADER);
+    const fragmentShader = getShaderFromString(gl, pixelShaderString, GL2.FRAGMENT_SHADER);
 
-    let shaderProgram = gl.createProgram();
+    const shaderProgram = gl.createProgram();
     if (shaderProgram && vertexShader && fragmentShader) {
         gl.attachShader(shaderProgram, vertexShader);
         gl.attachShader(shaderProgram, fragmentShader);
@@ -122,8 +122,8 @@ export function createTextureFromArray(gl: WebGL2RenderingContext, data: Float32
     }
 
     // Attempt to make a square texture by default
-    let width = Math.ceil(Math.sqrt(numPoints));
-    let height = Math.ceil(numPoints / width);
+    const width = Math.ceil(Math.sqrt(numPoints));
+    const height = Math.ceil(numPoints / width);
 
     let paddedData;
     const UIn8 = getBufferElementType(data) === "UIn8";

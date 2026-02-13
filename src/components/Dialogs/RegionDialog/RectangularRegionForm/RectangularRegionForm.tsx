@@ -1,21 +1,21 @@
 import * as React from "react";
 import {FormGroup, InputGroup, TextArea} from "@blueprintjs/core";
-import * as AST from "ast_wrapper";
+import type * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {computed} from "mobx";
 import {observer} from "mobx-react";
 
-import {CoordinateComponent, CoordNumericInput, ImageCoordNumericInput, InputType} from "components/Shared";
+import {CoordinateComponent, CoordNumericInput, ImageCoordNumericInput} from "components/Shared";
+import {CoordinateMode, InputType} from "enums";
 import {isValidWcsPoint, Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
-import {CoordinateMode, FrameStore, RegionStore, TextAnnotationStore, WCS_PRECISION} from "stores/Frame";
+import {type FrameStore, type RegionStore, type TextAnnotationStore, WCS_PRECISION} from "stores/Frame";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid, scale2D} from "utilities";
 
 import "./RectangularRegionForm.scss";
 
 @observer
 export class RectangularRegionForm extends React.Component<{region: RegionStore; frame: FrameStore; wcsInfo: AST.FrameSet}> {
-    @computed get topRightPoint(): Point2D {
+    get topRightPoint(): Point2D {
         const region = this.props.region;
         if (!region || region.controlPoints.length !== 2) {
             return {x: NaN, y: NaN};
@@ -26,7 +26,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         return {x: centerPoint.x + sizeDims.x / 2.0, y: centerPoint.y + sizeDims.y / 2.0};
     }
 
-    @computed get bottomLeftPoint(): Point2D {
+    get bottomLeftPoint(): Point2D {
         const region = this.props.region;
         if (!region || region.controlPoints.length !== 2) {
             return {x: NaN, y: NaN};
@@ -38,7 +38,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
     }
 
     // size determined by reference frame
-    @computed get sizeWCS(): WCSPoint2D | null {
+    get sizeWCS(): WCSPoint2D | null {
         const region = this.props.region;
         if (!region || region.controlPoints.length !== 2 || !region.size || !this.props.frame) {
             return null;
@@ -55,7 +55,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         return null;
     }
 
-    @computed get centerWCS(): WCSPoint2D | null {
+    get centerWCS(): WCSPoint2D | null {
         const region = this.props.region;
         if (!region || !this.props.wcsInfo) {
             return null;
@@ -63,7 +63,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         return getFormattedWCSPoint(this.props.wcsInfo, region.center);
     }
 
-    @computed get topRightWCS(): WCSPoint2D | null {
+    get topRightWCS(): WCSPoint2D | null {
         const region = this.props.region;
         if (!region || !this.props.wcsInfo) {
             return null;
@@ -71,7 +71,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         return getFormattedWCSPoint(this.props.wcsInfo, this.topRightPoint);
     }
 
-    @computed get bottomLeftWCS(): WCSPoint2D | null {
+    get bottomLeftWCS(): WCSPoint2D | null {
         const region = this.props.region;
         if (!region || !this.props.wcsInfo) {
             return null;

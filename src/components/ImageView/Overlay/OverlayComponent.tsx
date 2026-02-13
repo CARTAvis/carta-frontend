@@ -4,8 +4,9 @@ import classNames from "classnames";
 import * as _ from "lodash";
 import {observer} from "mobx-react";
 
-import {ImageItem, ImageType, SPECTRAL_TYPE_STRING} from "models";
-import {AppStore, OverlaySettings, OverlayStore, PreferenceStore} from "stores";
+import {ImageType} from "enums";
+import {type ImageItem, SPECTRAL_TYPE_STRING} from "models";
+import {AppStore, OverlaySettings, type OverlayStore, PreferenceStore} from "stores";
 import {setAstSystem} from "utilities";
 
 import "./OverlayComponent.scss";
@@ -59,7 +60,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             return;
         }
 
-        const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoShifted : frame.wcsInfo;
+        const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoOffset : frame.wcsInfo;
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
         const frameView = this.props.unscaled
             ? {
@@ -228,7 +229,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const channelMapNumRows = AppStore.Instance.channelMapStore.numRows;
         const channelMapChannelNum = AppStore.Instance.channelMapStore.numChannels;
         const offsetCoord = frame.isOffsetCoord;
-        const offsetWcs = frame.wcsInfoShifted;
+        const offsetWcs = frame.wcsInfoOffset;
 
         if (frame.isSwappedZ) {
             const requiredChannel = frame.requiredChannel;

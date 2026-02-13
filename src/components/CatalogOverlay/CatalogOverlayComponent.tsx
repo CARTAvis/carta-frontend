@@ -1,7 +1,7 @@
 import * as React from "react";
 import SplitPane, {Pane} from "react-split-pane";
 import {AnchorButton, Button, ButtonGroup, Classes, FormGroup, Intent, MenuItem, NonIdealState, PopoverPosition, Switch, Tooltip} from "@blueprintjs/core";
-import {ItemPredicate, ItemRendererProps, Select} from "@blueprintjs/select";
+import {type ItemPredicate, type ItemRendererProps, Select} from "@blueprintjs/select";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
 import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
 import {CARTA} from "carta-protobuf";
@@ -9,33 +9,25 @@ import FuzzySearch from "fuzzy-search";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {ImageViewLayer} from "components";
-import {ClearableNumericInputComponent, FilterableTableComponent, FilterableTableComponentProps, ResizeDetector} from "components/Shared";
-import {AbstractCatalogProfileStore, CatalogOverlay, CatalogSystemType} from "models";
-import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, CatalogUpdateMode, DefaultWidgetConfig, HelpType, PreferenceKeys, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
-import {RegionMode} from "stores/Frame";
-import {CatalogPlotType, CatalogPlotWidgetStoreProps, CatalogSettingsTabs, CatalogWidgetStore} from "stores/Widgets";
-import {clamp, ProcessedColumnData, toFixed} from "utilities";
+import {ClearableNumericInputComponent, FilterableTableComponent, type FilterableTableComponentProps, ResizeDetector} from "components/Shared";
+import {CatalogOverlay, CatalogPlotType, CatalogSettingsTabs, CatalogSystemType, CatalogUpdateMode, HeaderTableColumnName, HelpType, ImageViewLayer, PreferenceKeys, RegionMode} from "enums";
+import {AbstractCatalogProfileStore} from "models";
+import {AppStore, type CatalogOnlineQueryProfileStore, type CatalogProfileStore, CatalogStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps, WidgetsStore} from "stores";
+import {type CatalogPlotWidgetStoreProps, CatalogWidgetStore} from "stores/Widgets";
+import {clamp, type ProcessedColumnData, toFixed} from "utilities";
 
 import "./CatalogOverlayComponent.scss";
-
-enum HeaderTableColumnName {
-    Name = "Name",
-    Unit = "Unit",
-    Type = "Type",
-    Display = "Display",
-    Description = "Description"
-}
 
 @observer
 export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @observable private catalogTableRef: Table2 | undefined = undefined;
-    @observable private height: number;
-    @observable private width: number;
+    @observable private height: number = 600;
+    @observable private width: number = 720;
 
     @observable private isShowHeader: boolean = true;
     private prevPosition: number = 60;
     private static readonly ExpectedColumnCount: number = 5; // Name, Unit, Type, Display, Description
+    private widgetId: string;
 
     private catalogHeaderTableRef: Table2 | undefined = undefined;
     private catalogFileNames: Map<number, string>;
@@ -68,7 +60,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     @computed get catalogFileId() {
-        return CatalogStore.Instance.catalogProfiles?.get(this.props.id);
+        return CatalogStore.Instance.catalogProfiles?.get(this.widgetId);
     }
 
     @computed get widgetStore(): CatalogWidgetStore | undefined {
@@ -83,7 +75,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     @action handleCatalogFileChange = (fileId: number) => {
-        CatalogStore.Instance.catalogProfiles.set(this.props.id, fileId);
+        CatalogStore.Instance.catalogProfiles.set(this.widgetId, fileId);
     };
 
     @action handleFileCloseClick = () => {
@@ -95,7 +87,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             if (!widgetId) {
                 return;
             }
-            appStore.removeCatalog(catalogFileId, widgetId, this.props.id);
+            appStore.removeCatalog(catalogFileId, widgetId, this.widgetId);
             catalogWidgetStore?.resetMaps();
         }
     };
@@ -152,11 +144,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
+        this.widgetId = props.id;
 
-        if (!CatalogStore.Instance.catalogProfiles.has(this.props.id)) {
-            CatalogStore.Instance.catalogProfiles.set(this.props.id, 1);
+        if (!CatalogStore.Instance.catalogProfiles.has(this.widgetId)) {
+            CatalogStore.Instance.catalogProfiles.set(this.widgetId, 1);
         }
         this.catalogFileNames = new Map<number, string>();
+
+        makeObservable(this);
 
         autorun(() => {
             const appStore = AppStore.Instance;
@@ -173,12 +168,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 }
 
                 if (frame && catalogFileIds?.length) {
-                    WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog : ${fileName} ${progressString}`);
+                    WidgetsStore.Instance.setWidgetComponentTitle(this.widgetId, `Catalog : ${fileName} ${progressString}`);
                 } else {
-                    WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog`);
+                    WidgetsStore.Instance.setWidgetComponentTitle(this.widgetId, `Catalog`);
                 }
             } else {
-                WidgetsStore.Instance.setWidgetComponentTitle(this.props.id, `Catalog`);
+                WidgetsStore.Instance.setWidgetComponentTitle(this.widgetId, `Catalog`);
             }
         });
     }
@@ -487,7 +482,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             if (profileStore.isFileBasedCatalog) {
                 profileStore.updateTableStatus(false);
                 profileStore.resetFilterRequest();
-                let filter = profileStore.updateRequestDataSize;
+                const filter = profileStore.updateRequestDataSize;
                 if (filter.imageBounds) {
                     filter.imageBounds.xColumnName = catalogWidgetStore.xAxis;
                     filter.imageBounds.yColumnName = catalogWidgetStore.yAxis;
@@ -513,7 +508,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             profileStore.setSortingInfo(columnName, sortingType);
             if (profileStore.isFileBasedCatalog) {
                 profileStore.resetFilterRequest();
-                let filter = profileStore.updateRequestDataSize;
+                const filter = profileStore.updateRequestDataSize;
                 filter.sortColumn = columnName;
                 filter.sortingType = sortingType;
                 appStore.sendCatalogFilter(filter);
@@ -598,7 +593,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 }
                 if (profileStore.shouldUpdateData) {
                     profileStore.setUpdatingDataStream(true);
-                    let catalogFilter = profileStore.updateRequestDataSize;
+                    const catalogFilter = profileStore.updateRequestDataSize;
                     appStore.sendCatalogFilter(catalogFilter);
                 }
                 break;
@@ -656,7 +651,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private renderFileIdPopOver = (fileId: number, itemProps: ItemRendererProps) => {
         const fileName = this.catalogFileNames.get(fileId);
-        let text = `${fileId}: ${fileName}`;
+        const text = `${fileId}: ${fileName}`;
         return <MenuItem key={fileId} text={text} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
@@ -666,7 +661,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     @action private handleSplitChange = (newSize: number) => {
         // 130 is from 132, the height of widget excluding the header and table, subtracting 2 for the split bar width(?)
-        let position = clamp((newSize / (this.height - 130)) * 100, CatalogWidgetStore.MinTableSeparatorPosition, CatalogWidgetStore.MaxTableSeparatorPosition);
+        const position = clamp((newSize / (this.height - 130)) * 100, CatalogWidgetStore.MinTableSeparatorPosition, CatalogWidgetStore.MaxTableSeparatorPosition);
         if (position) {
             this.isShowHeader = position === 100 ? false : true;
             this.prevPosition = position < 60 ? position : 60;
@@ -716,7 +711,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private shortcutoOnClick = (type: CatalogSettingsTabs) => {
         this.widgetStore?.setSettingsTabId(type);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WIDGET_CONFIG.title ?? "", this.props.id, CatalogOverlayComponent.WIDGET_CONFIG.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WIDGET_CONFIG.title ?? "", this.widgetId, CatalogOverlayComponent.WIDGET_CONFIG.type);
     };
 
     private onCompleteRender = () => {
@@ -826,13 +821,13 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             </tr>
         ) : null;
 
-        let catalogFileItems: number[] = [];
+        const catalogFileItems: number[] = [];
         catalogFileIds.forEach(value => {
             catalogFileItems.push(value);
         });
         this.catalogFileNames = CatalogStore.Instance.getCatalogFileNames(catalogFileIds);
 
-        let systemOptions: CatalogSystemType[] = [];
+        const systemOptions: CatalogSystemType[] = [];
         AbstractCatalogProfileStore.CoordinateSystemName.forEach((value, key) => {
             systemOptions.push(key);
         });

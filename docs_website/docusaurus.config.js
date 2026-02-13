@@ -2,18 +2,21 @@
 // Note: type annotations allow type checking and IDEs autocompletion
 
 const {themes} = require('prism-react-renderer');
+const path = require("path");
+const versions = require('./versions.json');
+const packageJson = require('../package.json');
+
 
 const lightCodeTheme = themes.github;
 const darkCodeTheme = themes.dracula;
-const path = require("path");
-const versions = require('./versions.json');
+const devVersion = packageJson.version;
 
 const apiOnClick = `
     const versionLink = document.querySelector('.navbar__item.dropdown.dropdown--hoverable.dropdown--right .navbar__link');
     const currentVersion = versionLink?.textContent;
     let version = '';
     if (currentVersion) {
-        if (currentVersion === 'Next') {
+        if (currentVersion === 'Next' || currentVersion === '${devVersion}') {
             version = '/next';
         } else if (currentVersion !== '${versions?.[0]}') {
             version = '/' + currentVersion;
@@ -70,9 +73,12 @@ const config = {
             ({
                 docs: {
                     versions: {
+                        "current": {
+                            label: devVersion,
+                        },
                         "5.0.0": {
                             banner: "none",
-                        }
+                        },
                     },
                     sidebarPath: require.resolve("./sidebars.js")
                 },
@@ -141,6 +147,7 @@ const config = {
                             components: {path: "src/components/index.ts", entry: ".", label: "Components"},
                             "components/Dialogs": { path: "src/components/Dialogs/index.ts", entry: ".", label: "Components - Dialogs" },
                             "components/Shared": {path: "src/components/Shared/index.ts", entry: ".", label: "Components - Shared"},
+                            enums: {path: "src/enums/index.ts", entry: ".", label: "Enums"},
                             models: {path: "src/models/index.ts", entry: ".", label: "Models"},
                             services: {path: "src/services/index.ts", entry: ".", label: "Services"},
                             stores: {path: "src/stores/index.ts", entry: ".", label: "Stores"},
@@ -149,7 +156,7 @@ const config = {
                     }
                 ],
                 readmes: true,
-                readmeName: "docs_website/api/api.md", // api overview page
+                readmeName: "docs_website/api/api.md",
                 changelogs: true,
                 tsconfigName: "tsconfig.json"
             }

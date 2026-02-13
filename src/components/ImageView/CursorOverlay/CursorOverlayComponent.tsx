@@ -1,9 +1,9 @@
+import type {CSSProperties} from "react";
 import * as React from "react";
-import {CSSProperties} from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
+import type {CursorInfo, SpectralInfo} from "models";
 
-import {CursorInfo, SpectralInfo} from "models";
 import {formattedExponential, toFixed} from "utilities";
 
 import "./CursorOverlayComponent.scss";
@@ -31,7 +31,7 @@ class CursorOverlayProps {
 export class CursorOverlayComponent extends React.Component<CursorOverlayProps> {
     render() {
         const cursorInfo = this.props.cursorInfo;
-        let infoStrings: string[] = [];
+        const infoStrings: string[] = [];
         if (cursorInfo.infoWCS) {
             infoStrings.push(`WCS: (${cursorInfo.infoWCS.x}, ${cursorInfo.infoWCS.y})`);
         }
@@ -67,7 +67,7 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
 
         const height = this.props.height !== undefined && this.props.height >= 0 ? this.props.height : 20;
 
-        let styleProps: CSSProperties = {
+        const styleProps: CSSProperties = {
             lineHeight: height + "px"
         };
 

@@ -1,15 +1,15 @@
+import type {CSSProperties} from "react";
 import * as React from "react";
-import {CSSProperties} from "react";
 import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState, Tooltip} from "@blueprintjs/core";
-import {Cell, Column, ColumnHeaderCell, MenuContext, RowHeaderCell, SelectionModes, Table2} from "@blueprintjs/table";
+import {Cell, Column, ColumnHeaderCell, type MenuContext, RowHeaderCell, SelectionModes, Table2} from "@blueprintjs/table";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector} from "components/Shared";
-import {ImageItem, ImageType} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
-import {LayerListSettingsTabs} from "stores/Widgets";
+import {HelpType, ImageType, LayerListSettingsTabs} from "enums";
+import {type ImageItem} from "models";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 
 import "./LayerListComponent.scss";
 
@@ -29,8 +29,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         };
     }
 
-    @observable width: number = 0;
-    @observable height: number = 0;
+    @observable width: number = 650;
+    @observable height: number = 180;
     @observable columnWidths = [132, 97, 110, 75, 95];
 
     constructor(props: any) {

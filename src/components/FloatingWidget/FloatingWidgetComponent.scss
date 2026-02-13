@@ -1,3 +1,4 @@
+@use "sass:color";
 @import "~@blueprintjs/core/lib/scss/variables.scss";
 
 $title-height: 25px;
@@ -30,18 +31,18 @@ $shadow-color: rgba($blue2, 0.1);
     .floating-header {
         width: 100%;
         height: $title-height;
-        background-color: darken($widget-background, 5%);
+        background-color: color.adjust($widget-background, $lightness: -5%);
         color: $title-color;
         border-bottom: 1px solid $border-color;
         &.#{$ns}-dark {
-            background-color: lighten($widget-background-dark, 10%);
+            background-color: color.adjust($widget-background-dark, $lightness: 10%);
             border-bottom: 1px solid $border-color-dark;
         }
 
         &.selected {
-            background-color: darken($widget-background, 10%);
+            background-color: color.adjust($widget-background, $lightness: -10%);
             &.#{$ns}-dark {
-                background-color: lighten($widget-background-dark, 15%);
+                background-color: color.adjust($widget-background-dark, $lightness: 15%);
                 border-bottom: 1px solid $border-color-dark;
             }
         }
@@ -76,7 +77,7 @@ $shadow-color: rgba($blue2, 0.1);
             opacity: 0.4;
             color: black;
             &.#{$ns}-dark {
-                background-color: lighten($widget-background-dark, 10%);
+                background-color: color.adjust($widget-background-dark, $lightness: 10%);
                 color: white;
             }
             &:hover {

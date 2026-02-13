@@ -5,7 +5,8 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {AutoColorPickerComponent, fontSelect, ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
+import {HelpType} from "enums";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
 import {clamp, SWATCH_COLORS} from "utilities";
 
 import "./ChannelMapControlComponent.scss";
@@ -26,8 +27,8 @@ export class ChannelMapControlComponent extends React.Component<WidgetProps> {
         };
     }
 
-    @observable width: number;
-    @observable height: number;
+    @observable width: number = 490;
+    @observable height: number = 600;
 
     constructor(props: any) {
         super(props);

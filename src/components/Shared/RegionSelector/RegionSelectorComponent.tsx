@@ -1,11 +1,12 @@
 import * as React from "react";
-import {FormGroup, HTMLSelect, OptionProps} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, type OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
+import {RegionId, RegionsType} from "enums";
 import {AppStore} from "stores";
-import {FrameStore, RegionStore} from "stores/Frame";
-import {ACTIVE_FILE_ID, RegionId, RegionsType, RegionWidgetStore} from "stores/Widgets";
+import {type FrameStore, type RegionStore} from "stores/Frame";
+import {ACTIVE_FILE_ID, type RegionWidgetStore} from "stores/Widgets";
 
 import "./RegionSelectorComponent.scss";
 
@@ -62,7 +63,7 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
             }
 
             let fiteredRegions: RegionStore[];
-            let regions = widgetStore.effectiveFrame.regionSet.regions;
+            const regions = widgetStore.effectiveFrame.regionSet.regions;
 
             switch (widgetStore.type) {
                 case RegionsType.CLOSED:

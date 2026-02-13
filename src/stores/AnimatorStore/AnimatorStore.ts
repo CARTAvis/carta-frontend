@@ -1,23 +1,11 @@
 import {CARTA} from "carta-protobuf";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
-import {FrameView, Point2D} from "models";
+import {AnimationMode, PlayMode} from "enums";
+import {type FrameView, type Point2D} from "models";
 import {AppStore, PreferenceStore} from "stores";
-import {FrameStore} from "stores/Frame";
+import {type FrameStore} from "stores/Frame";
 import {clamp, GetRequiredTiles, getTransformedChannelList, mapToObject} from "utilities";
-
-export enum AnimationMode {
-    CHANNEL = 0,
-    STOKES = 1,
-    FRAME = 2
-}
-
-export enum PlayMode {
-    FORWARD = 0,
-    BACKWARD = 1,
-    BOUNCING = 2,
-    BLINK = 3
-}
 
 export class AnimatorStore {
     private static staticInstance: AnimatorStore;
@@ -29,15 +17,15 @@ export class AnimatorStore {
         return AnimatorStore.staticInstance;
     }
 
-    @observable frameRate: number;
-    @observable maxFrameRate: number;
-    @observable minFrameRate: number;
-    @observable step: number;
-    @observable maxStep: number;
-    @observable minStep: number;
-    @observable animationMode: AnimationMode;
-    @observable animationActive: boolean;
-    @observable playMode: PlayMode;
+    @observable frameRate: number = 5;
+    @observable maxFrameRate: number = 15;
+    @observable minFrameRate: number = 1;
+    @observable step: number = 1;
+    @observable maxStep: number = 50;
+    @observable minStep: number = 1;
+    @observable animationMode: AnimationMode = AnimationMode.CHANNEL;
+    @observable animationActive: boolean = false;
+    @observable playMode: PlayMode = PlayMode.FORWARD;
 
     @action setAnimationMode = (val: AnimationMode) => {
         // Prevent animation mode changes during playback
@@ -134,7 +122,7 @@ export class AnimatorStore {
             appStore.tileService.setAnimationEnabled(true);
             console.log("Animation started successfully");
         } catch (err) {
-            console.log(err);
+            console.error(err);
             appStore.tileService.setAnimationEnabled(false);
         }
         if (this.stopHandle !== undefined) {
@@ -195,17 +183,8 @@ export class AnimatorStore {
 
     constructor() {
         makeObservable(this);
-        this.frameRate = 5;
-        this.maxFrameRate = 15;
-        this.minFrameRate = 1;
-        this.step = 1;
-        this.maxStep = 50;
-        this.minStep = 1;
-        this.animationMode = AnimationMode.CHANNEL;
-        this.animationActive = false;
         this.animateHandle = undefined;
         this.stopHandle = undefined;
-        this.playMode = PlayMode.FORWARD;
     }
 
     @computed get frameInterval() {
@@ -252,7 +231,7 @@ export class AnimatorStore {
             return undefined;
         }
 
-        let startFrame: CARTA.IAnimationFrame = {
+        const startFrame: CARTA.IAnimationFrame = {
             channel: frame.channel,
             stokes: frame.requiredPolarizationIndex
         };

@@ -1,9 +1,10 @@
-import {Classes, DialogProps, Tab, Tabs} from "@blueprintjs/core";
+import {Classes, type DialogProps, Tab, Tabs} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore, DialogId, HelpType} from "stores";
+import {DialogId, HelpType} from "enums";
+import {AppStore} from "stores";
 
 import {CatalogQueryComponent} from "./CatalogOnlineQueryComponent";
 import {HipsQueryComponent} from "./HipsQueryComponent";

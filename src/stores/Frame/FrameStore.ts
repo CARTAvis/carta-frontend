@@ -1,58 +1,42 @@
-import {NumberRange} from "@blueprintjs/core";
+import type {NumberRange} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
 
+import {POLARIZATIONS, RegionId, SpectralSystem, SpectralType, SpectralUnit, SystemType} from "enums";
 import {
     CatalogControlMap,
-    ChannelInfo,
+    type ChannelInfo,
     COMPUTED_POLARIZATIONS,
     ControlMap,
-    CursorInfo,
+    type CursorInfo,
     FileCtypeInfo,
-    FrameView,
+    type FrameView,
     FULL_POLARIZATIONS,
     GenCoordinateLabel,
     GetFreqInGHz,
-    IntensityConfig,
+    type IntensityConfig,
     IsSpectralSystemSupported,
     IsSpectralTypeSupported,
     IsSpectralUnitSupported,
-    Point2D,
+    type Point2D,
     POLARIZATION_LABELS,
-    POLARIZATIONS,
     SPECTRAL_COORDS_SUPPORTED,
     SPECTRAL_DEFAULT_UNIT,
     SPECTRAL_TYPE_STRING,
-    SpectralInfo,
-    SpectralSystem,
-    SpectralType,
-    SpectralTypeSet,
-    SpectralUnit,
+    type SpectralInfo,
+    type SpectralTypeSet,
     STANDARD_POLARIZATIONS,
     STANDARD_SPECTRAL_TYPE_SETS,
-    TileCoordinate,
+    type TileCoordinate,
     Transform2D,
-    WCSPoint2D,
+    type WCSPoint2D,
     ZoomPoint
 } from "models";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE, TileService} from "services";
-import {AnimatorStore, AppStore, ChannelMapInnerOverlayStore, ChannelMapOuterOverlayStore, ImageViewOverlayStore, INITIAL_LAYOUT_ITEM, LogStore, OverlayStore, PreferenceStore, PvPreviewOverlayStore, SystemType} from "stores";
-import {
-    CENTER_POINT_INDEX,
-    ColorbarStore,
-    ContourConfigStore,
-    ContourStore,
-    OverlayBeamStore,
-    RegionSetStore,
-    RegionStore,
-    RenderConfigStore,
-    RestFreqStore,
-    SIZE_POINT_INDEX,
-    VectorOverlayConfigStore,
-    VectorOverlayStore
-} from "stores/Frame";
-import {PvGeneratorWidgetStore, RegionId} from "stores/Widgets";
+import {AnimatorStore, AppStore, ChannelMapInnerOverlayStore, ChannelMapOuterOverlayStore, ImageViewOverlayStore, INITIAL_LAYOUT_ITEM, LogStore, type OverlayStore, PreferenceStore, PvPreviewOverlayStore} from "stores";
+import {CENTER_POINT_INDEX, ColorbarStore, ContourConfigStore, ContourStore, type RegionStore, RenderConfigStore, RestFreqStore, SIZE_POINT_INDEX, VectorOverlayConfigStore, VectorOverlayStore} from "stores/Frame";
+import {type PvGeneratorWidgetStore} from "stores/Widgets";
 import {
     ASTSettingsString,
     clamp,
@@ -83,6 +67,9 @@ import {
     trimFitsComment
 } from "utilities";
 
+import {OverlayBeamStore} from "./OverlayBeamStore/OverlayBeamStore";
+import {RegionSetStore} from "./Region/RegionSetStore";
+
 export interface FrameInfo {
     fileId: number;
     directory: string;
@@ -96,11 +83,6 @@ export interface FrameInfo {
     generated: boolean;
     preview?: boolean;
     previewSourceFileId?: number;
-}
-
-export enum CoordinateMode {
-    Image = "Image",
-    World = "World"
 }
 
 export const WCS_PRECISION = 10;
@@ -132,13 +114,13 @@ export class FrameStore {
 
     public wcsInfo: AST.FrameSet;
     public readonly wcsInfoForTransformation: AST.FrameSet;
-    @observable public wcsInfoShifted: AST.FrameSet;
+    @observable public wcsInfoOffset: AST.FrameSet = undefined as any;
     public readonly wcsInfo3D: AST.FrameSet;
     public readonly validWcs: boolean = false;
     public readonly defaultWcsSystem: SystemType;
     public readonly defaultWcsEquinox: string;
     public readonly defaultWcsEpoch: string;
-    @observable public frameInfo: FrameInfo;
+    @observable public frameInfo: FrameInfo = undefined as any;
     public readonly overlayStore: OverlayStore;
     public readonly channelMapOuterOverlayStore: ChannelMapOuterOverlayStore;
     public readonly channelMapInnerOverlayStore: ChannelMapInnerOverlayStore;
@@ -159,7 +141,7 @@ export class FrameStore {
     public pointShapeCache: CARTA.PointAnnotationShape;
 
     // Region set for the current frame. Accessed via regionSet, to take into account region sharing
-    @observable private readonly frameRegionSet: RegionSetStore;
+    @observable private readonly frameRegionSet: RegionSetStore = undefined as any;
 
     @observable spectralType: SpectralType | null = null;
     @observable spectralUnit: SpectralUnit | null = null;
@@ -175,9 +157,9 @@ export class FrameStore {
     /**
      * View center for the relative coordinate in pixel coordinates
      */
-    @observable offsetCenter: Point2D;
-    @observable cursorInfo: CursorInfo;
-    @observable cursorValue: {position: Point2D; channel: number; value: number};
+    @observable offsetCenter: Point2D = undefined as any;
+    @observable cursorInfo: CursorInfo = undefined as any;
+    @observable cursorValue: {position: Point2D; channel: number; value: number} = undefined as any;
     @observable cursorMoving: boolean = false;
     @observable zoomLevel: number = 1;
     @observable stokes: number = 0;
@@ -191,8 +173,8 @@ export class FrameStore {
     @observable moving: boolean = false;
     @observable zooming: boolean = false;
 
-    @observable colorbarLabelCustomText: string;
-    @observable titleCustomText: string;
+    @observable colorbarLabelCustomText: string = "arbitrary units";
+    @observable titleCustomText: string = "";
     @observable overlayBeamSettings: OverlayBeamStore = new OverlayBeamStore();
     @observable spatialReference: FrameStore | null = null;
     @observable spectralReference: FrameStore | null = null;
@@ -422,10 +404,10 @@ export class FrameStore {
                 AST.deleteObject(this.cachedTransformedWcsInfo);
             }
 
-            if (this.spatialReference.isOffsetCoord && !this.wcsInfoShifted) {
-                this.createWcsInfoShifted();
+            if (this.spatialReference.isOffsetCoord && !this.wcsInfoOffset) {
+                this.createWcsInfoOffset();
             }
-            const wcsInfo = this.isOffsetCoord ? this.wcsInfoShifted : this.wcsInfo;
+            const wcsInfo = this.isOffsetCoord ? this.wcsInfoOffset : this.wcsInfo;
 
             this.cachedTransformedWcsInfo = AST.createTransformedFrameset(
                 wcsInfo,
@@ -643,7 +625,7 @@ export class FrameStore {
     }
 
     @computed get intensityConfig(): IntensityConfig {
-        let config: IntensityConfig = {nativeIntensityUnit: this.headerUnit ?? ""};
+        const config: IntensityConfig = {nativeIntensityUnit: this.headerUnit ?? ""};
         const beams = this.beamAllChannels;
         if (beams?.length) {
             config["bmaj"] = beams.map(b => b.majorAxis ?? 0);
@@ -808,9 +790,9 @@ export class FrameStore {
 
     @computed
     private get isProjDistort(): boolean {
-        let checkPoints = [1, 2, Math.floor(this.dirAxisSize / 2), this.dirAxisSize];
-        let wcsValues = [0, 0, 0, 0];
-        let coord = [0, 0];
+        const checkPoints = [1, 2, Math.floor(this.dirAxisSize / 2), this.dirAxisSize];
+        const wcsValues = [0, 0, 0, 0];
+        const coord = [0, 0];
         for (let i = 0; i < checkPoints.length; i++) {
             coord[this.dirAxis - 1] = checkPoints[i];
             const value = AST.transform3DPoint(this.wcsInfo3D, coord[0], coord[1], this.requiredChannel, true);
@@ -849,7 +831,7 @@ export class FrameStore {
         AST.set(this.wcsInfo3D, `Format(3)=${this.depthAxisFormat}`);
 
         // Lambda function for WCS transformation
-        let wcs = (channel: number): string => {
+        const wcs = (channel: number): string => {
             const wcs = AST.transform3DPoint(this.wcsInfo3D, 0, 0, channel, true);
             // The range of depth axis is 0 ~ 360 for RA/longitude, or -90 ~ +90 for DEC/latitude
             const wcsVal = this.dirX > this.dirY && wcs.z < 0 ? wcs.z + 2 * Math.PI : wcs.z;
@@ -861,7 +843,7 @@ export class FrameStore {
 
         // Only show effective digit number
         let endPos = wcs1.length;
-        let len = wcs1.length;
+        const len = wcs1.length;
         for (let i = len - WCS_PRECISION - 1; i < len; i++) {
             if (wcs1.charAt(i) !== wcs2.charAt(i)) {
                 endPos = i + 2 < len ? i + 2 : len;
@@ -1025,7 +1007,7 @@ export class FrameStore {
 
     @computed get spectralSiblings(): FrameStore[] {
         if (this.spectralReference) {
-            let siblings: FrameStore[] = [];
+            const siblings: FrameStore[] = [];
             siblings.push(this.spectralReference);
             siblings.push(...this.spectralReference.secondarySpectralImages.slice().filter(f => f !== this));
             return siblings;
@@ -1036,7 +1018,7 @@ export class FrameStore {
 
     @computed get spatialSiblings(): FrameStore[] {
         if (this.spatialReference) {
-            let siblings: FrameStore[] = [];
+            const siblings: FrameStore[] = [];
             siblings.push(this.spatialReference);
             siblings.push(...this.spatialReference.secondarySpatialImages.slice().filter(f => f !== this));
             return siblings;
@@ -1047,7 +1029,7 @@ export class FrameStore {
 
     @computed get renderConfigSiblings(): FrameStore[] {
         if (this.rasterScalingReference) {
-            let siblings: FrameStore[] = [];
+            const siblings: FrameStore[] = [];
             siblings.push(this.rasterScalingReference);
             siblings.push(...this.rasterScalingReference.secondaryRasterScalingImages.slice().filter(f => f !== this));
             return siblings;
@@ -1111,7 +1093,7 @@ export class FrameStore {
     }
 
     @computed get stokesOptions(): {value: number; label: string}[] {
-        let stokesOptions: {value: number; label: string}[] = [];
+        const stokesOptions: {value: number; label: string}[] = [];
         if (this.frameInfo && this.frameInfo.fileInfoExtended && this.frameInfo.fileInfoExtended.headerEntries) {
             const ctype = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.value?.toUpperCase() === "STOKES");
             if (ctype && ctype.name?.indexOf("CTYPE") !== -1) {
@@ -1253,7 +1235,6 @@ export class FrameStore {
     }
 
     constructor(frameInfo: FrameInfo, pvGeneratorWidget?: PvGeneratorWidgetStore) {
-        makeObservable(this);
         this.logStore = LogStore.Instance;
         this.backendService = BackendService.Instance;
         const preferenceStore = PreferenceStore.Instance;
@@ -1550,6 +1531,8 @@ export class FrameStore {
                 }
             }
         );
+
+        makeObservable(this);
     }
 
     updateWcsSystem = (formatStringX: string | undefined, formatStyingY: string | undefined, explicitSystem: SystemType | undefined) => {
@@ -1558,9 +1541,9 @@ export class FrameStore {
                 if (explicitSystem === SystemType.Image) {
                     // Use base frame for image coordinates
                     AST.setI(this.wcsInfo, "Current", 1);
-                    if (this.wcsInfoShifted) {
-                        // Use third frame for shifted image coordinates
-                        AST.setI(this.wcsInfoShifted, "Current", 3);
+                    if (this.wcsInfoOffset) {
+                        // Use third frame for offset image coordinates
+                        AST.setI(this.wcsInfoOffset, "Current", 3);
                     }
                 } else {
                     const global = AppStore.Instance.overlaySettings.global;
@@ -1568,10 +1551,10 @@ export class FrameStore {
                     AST.set(this.wcsInfo, `Format(${this.dirX})=${formatStringX}, Format(${this.dirY})=${formatStyingY}`);
                     setAstSystem(this.wcsInfo, explicitSystem, global);
 
-                    if (this.wcsInfoShifted) {
-                        AST.setI(this.wcsInfoShifted, "Current", 2);
-                        AST.set(this.wcsInfoShifted, `Format(${this.dirX})=${formatStringX}, Format(${this.dirY})=${formatStyingY}`);
-                        setAstSystem(this.wcsInfoShifted, explicitSystem, global);
+                    if (this.wcsInfoOffset) {
+                        AST.setI(this.wcsInfoOffset, "Current", 2);
+                        AST.set(this.wcsInfoOffset, `Format(${this.dirX})=${formatStringX}, Format(${this.dirY})=${formatStyingY}`);
+                        setAstSystem(this.wcsInfoOffset, explicitSystem, global);
                     }
                 }
             }
@@ -1685,7 +1668,7 @@ export class FrameStore {
         let system = "";
         let epoch = "";
 
-        for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
+        for (const entry of this.frameInfo.fileInfoExtended.headerEntries) {
             let name = entry.name;
             if (name?.match(regOtherAxes) || name?.match(regStokesNumber) || name === "HISTORY") {
                 continue;
@@ -1754,7 +1737,7 @@ export class FrameStore {
         let system = "";
         let epoch = "";
 
-        for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
+        for (const entry of this.frameInfo.fileInfoExtended.headerEntries) {
             let name = entry.name;
 
             if (name?.match(regOtherAxes) || name?.match(regStokesNumber) || name?.match(regSpectralNumber) || name === "HISTORY") {
@@ -1823,7 +1806,7 @@ export class FrameStore {
         let system = "";
         let epoch = "";
 
-        for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
+        for (const entry of this.frameInfo.fileInfoExtended.headerEntries) {
             let name = entry.name;
 
             if (name?.match(regOtherAxes) || name?.match(regStokesNumber) || name === "HISTORY") {
@@ -1892,7 +1875,7 @@ export class FrameStore {
         let system = "";
         let epoch = "";
 
-        for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
+        for (const entry of this.frameInfo.fileInfoExtended.headerEntries) {
             let name = entry.name;
 
             if (name?.match(regOtherAxes) || name?.match(regStokesNumber) || name === "HISTORY") {
@@ -1965,7 +1948,7 @@ export class FrameStore {
         // Get rendered and hidden direction axes formats
         const entries = this.frameInfo.fileInfoExtended.headerEntries;
         const axisName = entries.find(entry => entry.name?.includes(`CTYPE${this.dirAxis}`));
-        let axisValue = axisName?.value ?? "Unknown";
+        const axisValue = axisName?.value ?? "Unknown";
         if (axisValue.match(/^GLON/) || axisValue.match(/^GLAT/)) {
             this.dirAxisFormat = "d.*";
             this.depthAxisFormat = `d.${WCS_PRECISION}`;
@@ -2067,15 +2050,15 @@ export class FrameStore {
             const normalizedNeighbourhood = cursorNeighbourhood.map(pos => AST.normalizeCoordinates(this.wcsInfo, pos.x, pos.y));
 
             while (precisionX < FrameStore.CursorInfoMaxPrecision && precisionY < FrameStore.CursorInfoMaxPrecision) {
-                let astString = new ASTSettingsString();
+                const astString = new ASTSettingsString();
                 const overlaySettings = AppStore.Instance.overlaySettings;
                 const system = this.isNormalImage ? (overlaySettings.global.explicitSystem ?? SystemType.Image) : SystemType.Image;
                 astString.add(`Format(${this.dirX})`, this.isNormalImage ? overlaySettings.numbers.cursorFormatStringX(precisionX) : undefined);
                 astString.add(`Format(${this.dirY})`, this.isNormalImage ? overlaySettings.numbers.cursorFormatStringY(precisionY) : undefined);
                 setAstStringSystem(astString, system, overlaySettings.global);
 
-                let formattedNeighbourhood = normalizedNeighbourhood.map(pos => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString(), true));
-                let [p, n1, n2] = formattedNeighbourhood;
+                const formattedNeighbourhood = normalizedNeighbourhood.map(pos => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString(), true));
+                const [p, n1, n2] = formattedNeighbourhood;
                 if (!p.x || !p.y || p.x === "<bad>" || p.y === "<bad>") {
                     cursorPosFormatted = null;
                     break;
@@ -2210,7 +2193,7 @@ export class FrameStore {
     };
 
     public getRegionProperties(regionId: number): string[] {
-        let propertyString: string[] = [];
+        const propertyString: string[] = [];
         const region = this.getRegion(regionId);
         if (region) {
             propertyString.push(region.regionProperties);
@@ -2305,23 +2288,23 @@ export class FrameStore {
         this.setIsOffsetCoord(!this.isOffsetCoord);
     };
 
-    @action private createWcsInfoShifted = () => {
+    @action private createWcsInfoOffset = () => {
         if (this.spatialReference) {
-            this.spatialReference.createWcsInfoShifted();
+            this.spatialReference.createWcsInfoOffset();
         } else {
             if (this.wcsInfo && this.offsetCenter) {
-                if (this.wcsInfoShifted) {
-                    AST.deleteObject(this.wcsInfoShifted);
+                if (this.wcsInfoOffset) {
+                    AST.deleteObject(this.wcsInfoOffset);
                 }
 
                 const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.offsetCenter);
 
                 if (centerInRad) {
-                    this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, centerInRad.x, centerInRad.y, this.offsetCenter.x, this.offsetCenter.y);
+                    this.wcsInfoOffset = AST.createOffsetFrameset(this.wcsInfo, centerInRad.x, centerInRad.y, this.offsetCenter.x, this.offsetCenter.y);
                     for (const frame of this.secondarySpatialImages) {
                         const frameCenterInRad = getUnformattedWCSPoint(frame.wcsInfo, frame.offsetCenter);
                         if (frame.isOffsetCoord && frameCenterInRad && frame.spatialTransform) {
-                            frame.wcsInfoShifted = AST.createShiftmapFrameset(
+                            frame.wcsInfoOffset = AST.createOffsetFrameset(
                                 frame.wcsInfo,
                                 frameCenterInRad.x,
                                 frameCenterInRad.y,
@@ -2345,7 +2328,7 @@ export class FrameStore {
         // re-calculate with different wcs system
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const system = AppStore.Instance.overlaySettings.global.explicitSystem;
-        if (!this.wcsInfoShifted) {
+        if (!this.wcsInfoOffset) {
             return {x: "NaN", y: "NaN"};
         }
         return getFormattedWCSPoint(this.wcsInfoForTransformation, this.offsetCenter) ?? {x: "NaN", y: "NaN"};
@@ -2380,7 +2363,7 @@ export class FrameStore {
             }
         }
 
-        this.createWcsInfoShifted();
+        this.createWcsInfoOffset();
 
         return true;
     };
@@ -2951,7 +2934,7 @@ export class FrameStore {
                 yMin: 0,
                 yMax: this.frameInfo.fileInfoExtended.height
             },
-            smoothingFactor: config.pixelAveragingEnabled ? config.pixelAveraging : 1,
+            smoothingFactor: config.pixelAveraging,
             fractional: config.fractionalIntensity,
             threshold: config.thresholdEnabled ? config.threshold : NaN,
             thresholdOption: config.thresholdEnabled ? config.thresholdOption : NaN,
@@ -3006,11 +2989,11 @@ export class FrameStore {
 
         this.isOffsetCoord = frame.isOffsetCoord;
 
-        // initialize wcsInfoShifted if it is not existed
-        if (this.isOffsetCoord && !this.wcsInfoShifted && this.offsetCenter) {
+        // initialize wcsInfoOffset if it is not existed
+        if (this.isOffsetCoord && !this.wcsInfoOffset && this.offsetCenter) {
             const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.center);
             if (centerInRad) {
-                this.wcsInfoShifted = AST.createShiftmapFrameset(this.wcsInfo, centerInRad.x, centerInRad.y, this.offsetCenter.x, this.offsetCenter.y);
+                this.wcsInfoOffset = AST.createOffsetFrameset(this.wcsInfo, centerInRad.x, centerInRad.y, this.offsetCenter.x, this.offsetCenter.y);
             }
         }
 

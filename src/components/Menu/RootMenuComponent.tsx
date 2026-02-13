@@ -1,19 +1,18 @@
 import * as React from "react";
 import {Alert, AnchorButton, Button, Classes, Icon, Intent, Menu, MenuDivider, MenuItem, Popover, Position, Switch, Tooltip} from "@blueprintjs/core";
-import {IconName} from "@blueprintjs/icons";
+import type {IconName} from "@blueprintjs/icons";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {AppToaster, ExportImageMenuComponent, SuccessToast} from "components/Shared";
-import {CustomIcon, CustomIconName} from "icons/CustomIcons";
-import {CARTA_INFO, ImageType, ImageViewItem, Snippet} from "models";
-import {ApiService, ConnectionStatus} from "services";
-import {AppStore, BrowserMode, DialogId, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
+import {BrowserMode, ConnectionStatus, DialogId, ImageType, PreferenceKeys, WidgetType, WorkspaceDialogMode} from "enums";
+import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
+import {CARTA_INFO, type ImageViewItem, type Snippet} from "models";
+import {ApiService} from "services";
+import {AppStore, SnippetStore, WidgetsStore} from "stores";
 import {copyToClipboard, toFixed} from "utilities";
-
-import {WorkspaceDialogMode} from "../Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
 
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 
@@ -21,7 +20,7 @@ import "./RootMenuComponent.scss";
 
 @observer
 export class RootMenuComponent extends React.Component {
-    @observable documentationAlertVisible: boolean;
+    @observable documentationAlertVisible: boolean = false;
     @observable disableCheckRelease: boolean = false;
 
     @action toggleDisableCheckRelease = () => {
@@ -175,7 +174,7 @@ export class RootMenuComponent extends React.Component {
         const modString = appStore.modifierString;
         const connectionStatus = appStore.backendService.connectionStatus;
 
-        let serverMenu: React.ReactNode[] = [];
+        const serverMenu: React.ReactNode[] = [];
 
         const apiService = appStore.apiService;
         if (apiService.authenticated && ApiService.RuntimeConfig.dashboardAddress) {
@@ -196,7 +195,7 @@ export class RootMenuComponent extends React.Component {
                         await copyToClipboard(appStore.backendService.sessionId.toString());
                         AppToaster.show(SuccessToast("clipboard", "Session ID copied!"));
                     } catch (err) {
-                        console.log(err);
+                        console.error(err);
                     }
                 }}
             />
@@ -219,7 +218,7 @@ export class RootMenuComponent extends React.Component {
                         }
                         AppToaster.show(SuccessToast("clipboard", "Session URL copied!"));
                     } catch (err) {
-                        console.log(err);
+                        console.error(err);
                     }
                 }}
             />
@@ -376,7 +375,7 @@ export class RootMenuComponent extends React.Component {
         const contoursLoading = appStore.activeFrame && appStore.activeFrame.contourProgress >= 0 && appStore.activeFrame.contourProgress < 1;
         const vectorOverlayLoading = appStore.activeFrame && appStore.activeFrame.vectorOverlayStore.progress >= 0 && appStore.activeFrame.vectorOverlayStore.progress < 1;
         let loadingTooltipFragment;
-        let loadingIndicatorClass = "contour-loading-icon";
+        const loadingIndicatorClass = "contour-loading-icon";
         let showLoadingIndicator = false;
 
         if (tilesLoading || contoursLoading || vectorOverlayLoading) {
@@ -538,7 +537,7 @@ export class RootMenuComponent extends React.Component {
 
     private handleDocumentationClicked = (url: string) => {
         window.open(url, "_blank", "width=1024");
-        if (process.env.REACT_APP_TARGET !== "linux" && process.env.REACT_APP_TARGET !== "darwin") {
+        if (process.env.PUBLIC_REACT_APP_TARGET !== "linux" && process.env.PUBLIC_REACT_APP_TARGET !== "darwin") {
             this.documentationAlertVisible = true;
             clearTimeout(this.documentationAlertTimeoutHandle);
             this.documentationAlertTimeoutHandle = setTimeout(() => (this.documentationAlertVisible = false), 10000);

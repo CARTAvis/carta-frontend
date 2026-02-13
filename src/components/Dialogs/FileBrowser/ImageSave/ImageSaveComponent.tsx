@@ -1,11 +1,11 @@
 import * as React from "react";
-import {FormGroup, HTMLSelect, Intent, Label, NonIdealState, OptionProps, Switch, Text} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, Intent, Label, NonIdealState, type OptionProps, Switch, Text} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
-import {FrequencyUnit, ImageType, SpectralSystem} from "models";
+import {FrequencyUnit, ImageType, type SpectralSystem} from "enums";
 import {AppStore, FileBrowserStore} from "stores";
 
 import "./ImageSaveComponent.scss";
@@ -75,11 +75,11 @@ export class ImageSaveComponent extends React.Component {
     }
 
     /// Generate options for stokes via string
-    @computed get stokesOptions(): OptionProps[] {
+    get stokesOptions(): OptionProps[] {
         const stokesInfo = AppStore.Instance.activeFrame?.stokesInfo;
 
         if (stokesInfo) {
-            let options: OptionProps[] = [];
+            const options: OptionProps[] = [];
             const addOption = (value: number, stokesInfoList: string[]) => {
                 options.push({value: value, label: stokesInfoList.join(", ").replace(/, Stokes/g, ", ")});
             };

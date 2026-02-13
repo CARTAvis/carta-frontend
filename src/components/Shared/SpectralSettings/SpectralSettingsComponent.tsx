@@ -1,9 +1,10 @@
 import * as React from "react";
-import {FormGroup, HTMLSelect, OptionProps} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, type OptionProps} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
-import {SPECTRAL_TYPE_STRING, SpectralSystem, SpectralType} from "models";
-import {FrameStore} from "stores/Frame";
+import {type SpectralSystem, SpectralType} from "enums";
+import {SPECTRAL_TYPE_STRING} from "models";
+import {type FrameStore} from "stores/Frame";
 
 @observer
 export class SpectralSettingsComponent extends React.Component<{
