@@ -2,7 +2,7 @@ diff --git a/node_modules/@docusaurus/core/lib/client/exports/ComponentCreator.j
 index 1234567..abcdefg 100644
 --- a/node_modules/@docusaurus/core/lib/client/exports/ComponentCreator.js
 +++ b/node_modules/@docusaurus/core/lib/client/exports/ComponentCreator.js
-@@ -80,9 +80,16 @@ export default function ComponentCreator(path, hash) {
+@@ -80,9 +80,13 @@ export default function ComponentCreator(path, hash) {
                  if (typeof chunk === 'object' || typeof chunk === 'function') {
                      Object.keys(loadedModule)
                          .filter((k) => k !== 'default')
@@ -13,10 +13,7 @@ index 1234567..abcdefg 100644
 +                            chunk[nonDefaultKey] =
 +                                loadedModule[nonDefaultKey];
 +                        } catch (e) {
-+                            // Ignore read-only property errors (e.g., function.name in strict mode)
-+                            if (!(e instanceof TypeError && (e.message.includes('read only') || e.message.includes('readonly') || e.message.includes('read-only')))) {
-+                                throw e;
-+                            }
++                            // Skip assignment errors regardless of message content
 +                        }
                      });
                  }
