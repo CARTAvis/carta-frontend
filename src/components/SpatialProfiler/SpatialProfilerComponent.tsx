@@ -63,8 +63,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     @computed get profileStore(): SpatialProfileStore | undefined {
         const widgetStore = this.widgetStore;
         if (widgetStore.effectiveFrame) {
-            const fileId = widgetStore.effectiveFrame.frameInfo?.fileId;
-            if (fileId) {
+            const fileId = widgetStore.effectiveFrame.frameInfo.fileId;
+            if (fileId !== undefined) {
                 const profileKey = `${fileId}-${widgetStore.effectiveRegionId}`;
                 return AppStore.Instance.spatialProfiles.get(profileKey);
             }

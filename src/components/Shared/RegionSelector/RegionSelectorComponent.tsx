@@ -19,8 +19,8 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
             const selectedFileId = parseInt(changeEvent.target.value);
             widgetStore.setFileId(selectedFileId);
             if (widgetStore.effectiveFrame) {
-                const fileId = widgetStore.effectiveFrame.frameInfo?.fileId;
-                if (fileId) {
+                const fileId = widgetStore.effectiveFrame.frameInfo.fileId;
+                if (fileId !== undefined) {
                     widgetStore.setRegionId(fileId, RegionId.ACTIVE);
                     if (this.props.onFrameChanged) {
                         this.props.onFrameChanged(widgetStore.effectiveFrame);
@@ -34,8 +34,8 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
         const appStore = AppStore.Instance;
         const widgetStore = this.props.widgetStore;
         if (appStore.activeFrame && widgetStore.effectiveFrame) {
-            const fileId = widgetStore.effectiveFrame.frameInfo?.fileId;
-            if (fileId) {
+            const fileId = widgetStore.effectiveFrame.frameInfo.fileId;
+            if (fileId !== undefined) {
                 widgetStore.setFileId(fileId);
                 widgetStore.setRegionId(fileId, parseInt(changeEvent.target.value));
             }
@@ -89,8 +89,8 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
                 regionOptions = regionOptions.concat([{value: RegionId.CURSOR, label: "Cursor"}]);
             }
 
-            const fileId = widgetStore.effectiveFrame.frameInfo?.fileId;
-            selectedValue = fileId ? (widgetStore.regionIdMap.get(fileId) ?? RegionId.ACTIVE) : RegionId.ACTIVE;
+            const fileId = widgetStore.effectiveFrame.frameInfo.fileId;
+            selectedValue = fileId !== undefined ? (widgetStore.regionIdMap.get(fileId) ?? RegionId.ACTIVE) : RegionId.ACTIVE;
             enableRegionSelect = true;
         }
 

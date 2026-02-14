@@ -25,7 +25,7 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
     };
 
     private handleFrameChanged = (newFrame: FrameStore) => {
-        if (newFrame && newFrame.regionSet && !((newFrame.frameInfo?.fileInfoExtended?.stokes ?? 0) > 1)) {
+        if (newFrame && newFrame.regionSet && !(newFrame.frameInfo.fileInfoExtended.stokes > 1)) {
             this.props.widgetStore.setFractionalPolVisible(false);
         }
     };

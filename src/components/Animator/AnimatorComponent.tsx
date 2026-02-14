@@ -52,24 +52,22 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     onChannelChanged = (val: number) => {
         const frame = AppStore.Instance.activeFrame;
         if (frame) {
-            const depth = frame.frameInfo?.fileInfoExtended?.depth;
-            if (depth !== undefined) {
-                if (val < 0) {
-                    val += depth;
-                }
-                if (val >= depth) {
-                    val = 0;
-                }
-                frame.setChannel(val);
+            const depth = frame.frameInfo.fileInfoExtended.depth;
+            if (val < 0) {
+                val += depth;
             }
+            if (val >= depth) {
+                val = 0;
+            }
+            frame.setChannel(val);
         }
     };
 
     onRangeChanged = (range: NumberRange) => {
         const frame = AppStore.Instance.activeFrame;
         if (range && range.length === 2 && frame) {
-            const depth = frame.frameInfo?.fileInfoExtended?.depth;
-            if (depth !== undefined && range[0] >= 0 && range[0] < range[1] && range[1] < depth) {
+            const depth = frame.frameInfo.fileInfoExtended.depth;
+            if (range[0] >= 0 && range[0] < range[1] && range[1] < depth) {
                 frame.setAnimationRange(range);
             }
         }
@@ -133,16 +131,12 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 appStore.setActiveImageByIndex(appStore.imageViewConfigStore.imageNum - 1);
                 break;
             case AnimationMode.CHANNEL:
-                const depth = frame.frameInfo?.fileInfoExtended?.depth;
-                if (depth !== undefined) {
-                    frame.setChannels(depth - 1, frame.stokes, true);
-                }
+                const depth = frame.frameInfo.fileInfoExtended.depth;
+                frame.setChannels(depth - 1, frame.stokes, true);
                 break;
             case AnimationMode.STOKES:
-                const stokes = frame.frameInfo?.fileInfoExtended?.stokes;
-                if (stokes !== undefined) {
-                    frame.setChannels(frame.channel, stokes < frame.polarizations.length ? frame.polarizations[frame.polarizations.length - 1] : stokes - 1, true);
-                }
+                const stokes = frame.frameInfo.fileInfoExtended.stokes;
+                frame.setChannels(frame.channel, stokes < frame.polarizations.length ? frame.polarizations[frame.polarizations.length - 1] : stokes - 1, true);
                 break;
             default:
                 break;

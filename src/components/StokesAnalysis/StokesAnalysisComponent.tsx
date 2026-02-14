@@ -69,8 +69,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     @computed get profileStore(): SpectralProfileStore | null {
         const appStore = AppStore.Instance;
         if (this.widgetStore.effectiveFrame) {
-            const fileId = this.widgetStore.effectiveFrame.frameInfo?.fileId;
-            if (!fileId) {
+            const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+            if (fileId === undefined) {
                 return null;
             }
             const regionId = this.widgetStore.effectiveRegionId;

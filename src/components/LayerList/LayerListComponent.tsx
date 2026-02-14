@@ -247,7 +247,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         }
 
         let spectralMatchingButton: React.ReactNode;
-        if ((frame.frameInfo?.fileInfoExtended?.depth ?? 0) > 1 && appStore.spectralReference) {
+        if (frame.frameInfo.fileInfoExtended.depth > 1 && appStore.spectralReference) {
             let tooltipSubtitle: string;
             if (frame === appStore.spectralReference) {
                 tooltipSubtitle = `${frame.filename} is the current spectral reference`;

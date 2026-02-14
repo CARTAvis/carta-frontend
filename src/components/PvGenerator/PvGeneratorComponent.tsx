@@ -175,8 +175,8 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         if (this.widgetStore.effectiveFrame) {
             const selectedFileId = parseInt(changeEvent.target.value);
             this.widgetStore.setFileId(selectedFileId);
-            const fileId = this.widgetStore.effectiveFrame.frameInfo?.fileId;
-            if (fileId) {
+            const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+            if (fileId !== undefined) {
                 this.widgetStore.setRegionId(fileId, RegionId.NONE);
             }
         }
@@ -184,8 +184,8 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
 
     private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         if (this.widgetStore.effectiveFrame) {
-            const fileId = this.widgetStore.effectiveFrame.frameInfo?.fileId;
-            if (fileId) {
+            const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+            if (fileId !== undefined) {
                 this.widgetStore.setFileId(fileId);
                 this.widgetStore.setRegionId(fileId, parseInt(changeEvent.target.value));
             }
@@ -212,8 +212,8 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
 
     private onGenerateButtonClicked = () => {
         if (this.widgetStore.effectiveFrame && this.widgetStore.effectiveRegionId) {
-            const fileId = this.widgetStore.effectiveFrame.frameInfo?.fileId;
-            if (!fileId) {
+            const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+            if (fileId === undefined) {
                 return;
             }
             this.widgetStore.setFileId(fileId);

@@ -47,7 +47,7 @@ export class RegionWidgetStore {
         if (!this.effectiveFrame) {
             return false;
         }
-        return this.appStore.activeFrame?.frameInfo?.fileId === this.effectiveFrame.frameInfo?.fileId;
+        return this.appStore.activeFrame?.frameInfo.fileId === this.effectiveFrame.frameInfo.fileId;
     }
 
     @computed get effectiveRegionId(): number | null {

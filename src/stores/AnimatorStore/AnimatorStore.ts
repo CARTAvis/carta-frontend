@@ -206,11 +206,11 @@ export class AnimatorStore {
             return true;
         }
 
-        if (this.animationMode === AnimationMode.CHANNEL && (frame.frameInfo?.fileInfoExtended?.depth ?? 0) <= 1) {
+        if (this.animationMode === AnimationMode.CHANNEL && frame.frameInfo.fileInfoExtended.depth <= 1) {
             return true;
         }
 
-        if (this.animationMode === AnimationMode.STOKES && (frame.frameInfo?.fileInfoExtended?.stokes ?? 0) <= 1) {
+        if (this.animationMode === AnimationMode.STOKES && frame.frameInfo.fileInfoExtended.stokes <= 1) {
             return true;
         }
 

@@ -52,8 +52,8 @@ export class StatsComponent extends React.Component<WidgetProps> {
     @computed get statsData(): CARTA.RegionStatsData | null {
         const appStore = AppStore.Instance;
         if (this.widgetStore.effectiveFrame) {
-            const fileId = this.widgetStore.effectiveFrame.frameInfo?.fileId;
-            if (!fileId) {
+            const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+            if (fileId === undefined) {
                 return null;
             }
             const regionId = this.widgetStore.effectiveRegionId;
@@ -68,7 +68,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
                 return null;
             }
             const stokesIndex = this.widgetStore.effectiveFrame.polarizationInfo.findIndex(polarization => polarization.replace("Stokes ", "") === coordinate.slice(0, coordinate.length - 1));
-            const stokes = stokesIndex >= (this.widgetStore.effectiveFrame.frameInfo?.fileInfoExtended?.stokes ?? 0) ? this.widgetStore.effectiveFrame.polarizations[stokesIndex] : stokesIndex;
+            const stokes = stokesIndex >= this.widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes ? this.widgetStore.effectiveFrame.polarizations[stokesIndex] : stokesIndex;
             return regionMap.get(stokes === -1 ? this.widgetStore.effectiveFrame.requiredStokes : stokes) || null;
         }
         return null;
