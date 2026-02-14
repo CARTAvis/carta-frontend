@@ -14,7 +14,7 @@ index 1234567..abcdefg 100644
 +                                loadedModule[nonDefaultKey];
 +                        } catch (e) {
 +                            // Ignore read-only property errors (e.g., function.name in strict mode)
-+                            if (!(e instanceof TypeError && (e.message.includes('read only') || e.message.includes('readonly')))) {
++                            if (!(e instanceof TypeError && (e.message.includes('read only') || e.message.includes('readonly') || e.message.includes('read-only')))) {
 +                                throw e;
 +                            }
 +                        }
