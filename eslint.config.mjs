@@ -3,6 +3,7 @@ import tsParser from "@typescript-eslint/parser";
 import importPlugin from "eslint-plugin-import";
 import simpleImportSort from "eslint-plugin-simple-import-sort";
 import tsdocPlugin from "eslint-plugin-tsdoc";
+import bpEslintPlugin from "@blueprintjs/eslint-plugin";
 
 export default [
     {
@@ -18,7 +19,8 @@ export default [
             "@typescript-eslint": tsPlugin,
             import: importPlugin,
             "simple-import-sort": simpleImportSort,
-            tsdoc: tsdocPlugin
+            tsdoc: tsdocPlugin,
+            "@blueprintjs": bpEslintPlugin
         },
         rules: {
             "@typescript-eslint/no-unused-expressions": "error",
@@ -73,7 +75,9 @@ export default [
             "import/newline-after-import": "error",
             "import/no-duplicates": "error",
             "tsdoc/syntax": "error",
-            "prefer-const": "error"
+            "prefer-const": "error",
+            "@blueprintjs/classes-constants": "error",
+            "@blueprintjs/html-components": "error"
         }
     }
 ];
