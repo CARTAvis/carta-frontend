@@ -4,7 +4,7 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import type {Tick} from "chart.js";
 import * as _ from "lodash";
-import {action, autorun, computed, IReactionDisposer, makeObservable, observable} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent, RegionSelectorComponent, ResizeDetector, VERTICAL_RANGE_PADDING} from "components/Shared";

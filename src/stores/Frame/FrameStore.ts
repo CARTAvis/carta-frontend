@@ -1,7 +1,7 @@
 import type {NumberRange} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {action, autorun, computed, IReactionDisposer, makeObservable, observable, reaction} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
 import {POLARIZATIONS, RegionId, SpectralSystem, SpectralType, SpectralUnit, SystemType} from "enums";
 import {

@@ -1,6 +1,6 @@
 import * as React from "react";
 import {AnchorButton, Button, FormGroup, HTMLSelect, Intent, Popover, Pre, Slider, Switch, Text, Tooltip} from "@blueprintjs/core";
-import {action, autorun, IReactionDisposer, makeObservable, observable} from "mobx";
+import {action, autorun, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {SafeNumericInput} from "components/Shared";

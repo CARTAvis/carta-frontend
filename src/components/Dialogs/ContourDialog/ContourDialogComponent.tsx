@@ -4,7 +4,7 @@ import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import * as _ from "lodash";
-import {action, autorun, computed, IReactionDisposer, makeObservable, observable, runInAction} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";

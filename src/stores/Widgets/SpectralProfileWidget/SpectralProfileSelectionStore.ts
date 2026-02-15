@@ -1,5 +1,5 @@
 import {CARTA} from "carta-protobuf";
-import {action, autorun, computed, IReactionDisposer, makeObservable, observable, reaction} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
 import {MultiProfileCategory, POLARIZATIONS, RegionId} from "enums";
 import {GetIntensityOptions, type IntensityConfig, type LineKey, type LineOption, POLARIZATION_LABELS, STATISTICS_TEXT, StatsTypeString, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES} from "models";

@@ -1,6 +1,6 @@
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
-import {action, autorun, computed, IReactionDisposer, makeObservable, observable, override} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, override} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {LineSettings, PlotType, POLARIZATIONS, RegionId, RegionsType, SpatialProfilerSettingsTabs} from "enums";

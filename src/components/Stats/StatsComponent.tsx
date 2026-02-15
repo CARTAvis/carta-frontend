@@ -2,7 +2,7 @@ import * as React from "react";
 import {FormGroup, HTMLSelect, HTMLTable, NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
-import {action, autorun, computed, IReactionDisposer, makeObservable, observable} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {RegionSelectorComponent, ResizeDetector} from "components/Shared";

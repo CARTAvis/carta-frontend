@@ -6,7 +6,7 @@ import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@bluepr
 import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
 import {CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
-import {action, autorun, computed, IReactionDisposer, makeObservable, observable} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, FilterableTableComponent, type FilterableTableComponentProps, ResizeDetector} from "components/Shared";

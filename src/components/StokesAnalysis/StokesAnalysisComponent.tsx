@@ -3,7 +3,7 @@ import {Colors, NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import type {ChartArea} from "chart.js";
 import * as _ from "lodash";
-import {action, autorun, computed, IReactionDisposer, makeObservable, observable} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent, ResizeDetector, ScatterPlotComponent, type ScatterPlotComponentProps, VERTICAL_RANGE_PADDING} from "components/Shared";

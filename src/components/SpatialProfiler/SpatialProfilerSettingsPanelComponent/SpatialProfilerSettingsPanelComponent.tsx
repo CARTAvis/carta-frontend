@@ -1,7 +1,7 @@
 import * as React from "react";
 import {FormGroup, Tab, Tabs} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {autorun, IReactionDisposer} from "mobx";
+import {autorun, type IReactionDisposer} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotSettingsPanelComponent, type LinePlotSettingsPanelComponentProps, SafeNumericInput, ScrollShadow, SmoothingSettingsComponent} from "components/Shared";
@@ -69,7 +69,7 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
                     } else {
                         appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `X Spatial Profile Settings: Cursor`);
                     }
-            }
+                }
             })
         );
     }

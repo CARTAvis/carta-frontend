@@ -4,7 +4,7 @@ import {FixedSizeList, type ListOnItemsRenderedProps} from "react-window";
 import {AnchorButton, ButtonGroup, Classes, Icon, NonIdealState, Position, Spinner, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
-import {action, computed, IReactionDisposer, makeObservable, observable, reaction} from "mobx";
+import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector} from "components/Shared";

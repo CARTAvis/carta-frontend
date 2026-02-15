@@ -1,7 +1,7 @@
 import * as React from "react";
 import {FormGroup, HTMLSelect, Intent, Label, NonIdealState, type OptionProps, Switch, Text} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {action, autorun, computed, IReactionDisposer, makeObservable} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";

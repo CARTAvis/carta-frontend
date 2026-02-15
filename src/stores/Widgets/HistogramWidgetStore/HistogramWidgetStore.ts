@@ -1,5 +1,5 @@
 import {CARTA} from "carta-protobuf";
-import {action, autorun, computed, IReactionDisposer, makeObservable, observable} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {HistogramSettingsTabs, LineSettings, PlotType, POLARIZATIONS, RegionsType} from "enums";

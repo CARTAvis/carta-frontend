@@ -3,14 +3,14 @@ import SplitPane, {Pane} from "react-split-pane";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import classNames from "classnames";
 import * as _ from "lodash";
-import {autorun, computed, IReactionDisposer, makeObservable} from "mobx";
+import {autorun, computed, type IReactionDisposer, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {type LineMarker, LinePlotComponent, type LinePlotComponentProps} from "components/Shared";
 import {FittingContinuum, HelpType, LinePlotSelectingMode, PlotType, SmoothingType, SpectralType, TickType} from "enums";
 import {type Point2D} from "models";
-import {AnimatorStore, AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
-import {type MultiPlotData, SpectralProfileWidgetStore} from "stores/Widgets";
+import {AnimatorStore, AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
+import {type MultiPlotData, type SpectralProfileWidgetStore} from "stores/Widgets";
 import {binarySearchByX, clamp, formattedExponential, getColorForTheme, toExponential, toFixed, toFormattedNotationByDiff} from "utilities";
 
 import {type MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";

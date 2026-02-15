@@ -6,7 +6,7 @@ import {CARTA} from "carta-protobuf";
 import FuzzySearch from "fuzzy-search";
 import * as GSL from "gsl_wrapper";
 import * as _ from "lodash";
-import {action, autorun, computed, IReactionDisposer, makeObservable, observable, reaction, runInAction} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction, runInAction} from "mobx";
 import {observer} from "mobx-react";
 import type * as Plotly from "plotly.js";
 

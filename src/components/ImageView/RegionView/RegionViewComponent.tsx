@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import type Konva from "konva";
 import * as _ from "lodash";
-import {action, IReactionDisposer, makeObservable, observable, reaction} from "mobx";
+import {action, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DialogId, ImageViewLayer, RegionMode} from "enums";

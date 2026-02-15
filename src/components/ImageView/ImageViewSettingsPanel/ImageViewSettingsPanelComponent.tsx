@@ -1,7 +1,7 @@
 import * as React from "react";
 import {Button, Classes, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, Position, Switch, Tab, type TabId, Tabs, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
-import {action, autorun, IReactionDisposer, makeObservable, observable} from "mobx";
+import {action, autorun, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, fontSelect, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";

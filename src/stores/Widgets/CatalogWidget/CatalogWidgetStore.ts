@@ -1,6 +1,6 @@
 import {Colors} from "@blueprintjs/core";
 import * as CARTACompute from "carta_computation";
-import {action, computed, IReactionDisposer, makeObservable, observable, reaction} from "mobx";
+import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
 import {AngularSizeUnit, CatalogDisplayMode, CatalogOverlay, CatalogOverlayShape, CatalogPlotType, CatalogSettingsTabs, CatalogSizeUnits, CatalogTextureType, FrameScaling} from "enums";
 import {FACTOR_TO_ARCSEC} from "models";

@@ -2,7 +2,7 @@ import * as React from "react";
 import {Button, ButtonGroup, Colors, FormGroup, HTMLSelect, NonIdealState, type OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
-import {action, autorun, IReactionDisposer, makeObservable, observable} from "mobx";
+import {action, autorun, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";

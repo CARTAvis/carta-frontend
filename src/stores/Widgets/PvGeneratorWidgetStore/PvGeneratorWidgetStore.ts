@@ -1,6 +1,6 @@
 import type {OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {action, computed, IReactionDisposer, makeObservable, observable, reaction} from "mobx";
+import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
 import {PreferenceKeys, RegionId, RegionsType, type SpectralSystem, TelemetryAction} from "enums";
 import {TelemetryService} from "services";

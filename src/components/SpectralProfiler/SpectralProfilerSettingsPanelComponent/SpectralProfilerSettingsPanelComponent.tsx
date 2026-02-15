@@ -1,6 +1,6 @@
 import * as React from "react";
 import {FormGroup, HTMLSelect, Switch, Tab, Tabs} from "@blueprintjs/core";
-import {autorun, IReactionDisposer} from "mobx";
+import {autorun, type IReactionDisposer} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotSettingsPanelComponent, type LinePlotSettingsPanelComponentProps, ScrollShadow, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";

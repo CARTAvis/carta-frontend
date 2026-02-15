@@ -1,7 +1,7 @@
 import type {NumberRange} from "@blueprintjs/core";
 import {type Table2} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
-import {action, autorun, computed, flow, IReactionDisposer, makeObservable, observable} from "mobx";
+import {action, autorun, computed, flow, type IReactionDisposer, makeObservable, observable} from "mobx";
 
 import {RedshiftType, SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "enums";
 import {SplatalogueService} from "services";

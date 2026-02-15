@@ -1,6 +1,6 @@
 import type {NumberRange, OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {action, autorun, computed, IReactionDisposer, makeObservable, observable, override, reaction} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, override, reaction} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {VERTICAL_RANGE_PADDING} from "components/Shared";
@@ -487,7 +487,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const smoothedData: Point2D[][] = [];
         const colors: (string | undefined)[] = [];
         const labels: {image: string | undefined; plot: string}[] = [];
-        const comments: string[][] = [];
         const xBound = {xMin: Number.MAX_VALUE, xMax: -Number.MAX_VALUE};
         const yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
         let yMean: number | undefined;
@@ -599,7 +598,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             return [];
         }
 
-        let comments: string[][] = [];
+        const comments: string[][] = [];
         profiles.forEach(profile => {
             if (profile?.data) {
                 const frame = AppStore.Instance.getFrame(profile.fileId ?? NaN);

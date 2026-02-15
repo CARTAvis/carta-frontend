@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Tab, Tabs} from "@blueprintjs/core";
-import {autorun, IReactionDisposer, makeObservable} from "mobx";
+import {autorun, type IReactionDisposer, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 import type {LineKey} from "models";
 

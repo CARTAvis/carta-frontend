@@ -2,7 +2,7 @@ import * as React from "react";
 import {NonIdealState} from "@blueprintjs/core";
 import {type CARTA} from "carta-protobuf";
 import * as _ from "lodash";
-import {autorun, computed, IReactionDisposer, makeObservable} from "mobx";
+import {autorun, computed, type IReactionDisposer, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";

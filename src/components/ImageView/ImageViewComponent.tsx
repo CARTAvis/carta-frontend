@@ -1,7 +1,7 @@
 import * as React from "react";
 import {NonIdealState, Spinner} from "@blueprintjs/core";
 import $ from "jquery";
-import {action, autorun, IReactionDisposer, makeObservable, observable} from "mobx";
+import {action, autorun, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector} from "components/Shared";
