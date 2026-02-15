@@ -3,7 +3,7 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - gh_page_workflow
+      - kuanchou/gh_page_workflow
 
 jobs:
   deploy:
