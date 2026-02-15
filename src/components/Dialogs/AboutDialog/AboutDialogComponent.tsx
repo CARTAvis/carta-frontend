@@ -1,12 +1,13 @@
 import * as React from "react";
 import {Button, Classes, Collapse, type DialogProps} from "@blueprintjs/core";
+import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {DialogId} from "enums";
 import {CARTA_INFO} from "models";
-import {DialogStore} from "stores";
+import {AppStore, DialogStore} from "stores";
 
 import "./AboutDialogComponent.scss";
 
@@ -35,6 +36,7 @@ export class AboutDialogComponent extends React.Component {
 
     public render() {
         const dialogStore = DialogStore.Instance;
+        const className = classNames("about-dialog", {[Classes.DARK]: AppStore.Instance.darkTheme});
 
         const dialogProps: DialogProps = {
             icon: "info-sign",
@@ -42,7 +44,7 @@ export class AboutDialogComponent extends React.Component {
             canOutsideClickClose: true,
             lazy: true,
             isOpen: dialogStore.dialogVisible.get(DialogId.About) ?? false,
-            className: "about-dialog",
+            className: className,
             canEscapeKeyClose: true,
             title: "About CARTA"
         };

@@ -1,6 +1,6 @@
 import * as React from "react";
 import {List} from "react-window";
-import {Checkbox, Icon, type IconName,Pre} from "@blueprintjs/core";
+import {Checkbox, Icon, type IconName, Pre} from "@blueprintjs/core";
 import {computed, makeObservable} from "mobx";
 import {Observer, observer} from "mobx-react";
 

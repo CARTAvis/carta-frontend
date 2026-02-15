@@ -1,6 +1,7 @@
 import * as React from "react";
 import {AnchorButton, Classes, type DialogProps, Intent, NonIdealState, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
+import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
@@ -64,6 +65,7 @@ export class RegionDialogComponent extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
+        const className = classNames("region-dialog", {[Classes.DARK]: appStore.darkTheme});
 
         const dialogProps: DialogProps = {
             icon: "info-sign",
@@ -71,7 +73,7 @@ export class RegionDialogComponent extends React.Component {
             canOutsideClickClose: true,
             lazy: true,
             isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Region) ?? false,
-            className: "region-dialog",
+            className: className,
             canEscapeKeyClose: true,
             title: "No region selected"
         };

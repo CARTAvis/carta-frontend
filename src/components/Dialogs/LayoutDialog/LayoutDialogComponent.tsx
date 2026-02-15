@@ -246,11 +246,12 @@ export class LayoutDialogComponent extends React.Component {
 
     render() {
         const appStore = AppStore.Instance;
+        const className = classNames("layout-dialog", {[Classes.DARK]: appStore.darkTheme});
 
         const dialogProps: DialogProps = {
             icon: "page-layout",
             backdropClassName: "minimal-dialog-backdrop",
-            className: "layout-dialog",
+            className: className,
             canOutsideClickClose: false,
             lazy: true,
             isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Layout) || false,

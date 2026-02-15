@@ -738,9 +738,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const ratio = isScatterPlot ? devicePixelRatio : 1;
         const fontFamily = "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif";
         let themeColor = Colors.LIGHT_GRAY5;
-        let lableColor = Colors.GRAY1;
+        let labelColor = Colors.DARK_GRAY5;
         let gridColor = Colors.LIGHT_GRAY1;
-        let markerColor = Colors.GRAY2;
+        let markerColor = Colors.BLUE2;
         let spikeLineClass = "catalog-plotly";
         const catalogScatterClass = "catalog-scatter";
 
@@ -853,9 +853,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
         if (AppStore.Instance.darkTheme) {
             gridColor = Colors.DARK_GRAY5;
-            lableColor = Colors.LIGHT_GRAY5;
+            labelColor = Colors.LIGHT_GRAY5;
             themeColor = Colors.DARK_GRAY1;
-            markerColor = Colors.GRAY4;
+            markerColor = Colors.BLUE2;
             spikeLineClass = "catalog-plotly-dark";
         }
 
@@ -871,14 +871,14 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     font: {
                         family: fontFamily,
                         size: 12 * ratio,
-                        color: lableColor
+                        color: labelColor
                     }
                 },
                 showticklabels: true,
                 tickfont: {
                     family: fontFamily,
                     size: 12 * ratio,
-                    color: lableColor
+                    color: labelColor
                 },
                 tickcolor: gridColor,
                 gridcolor: gridColor,
@@ -899,14 +899,14 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     font: {
                         family: fontFamily,
                         size: 12 * ratio,
-                        color: lableColor
+                        color: labelColor
                     }
                 },
                 showticklabels: true,
                 tickfont: {
                     family: fontFamily,
                     size: 12 * ratio,
-                    color: lableColor
+                    color: labelColor
                 },
                 tickcolor: gridColor,
                 gridcolor: gridColor,
@@ -986,7 +986,14 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             if (border && layout.xaxis && layout.yaxis) {
                 layout.xaxis.range = [border.xMin, border.xMax];
                 layout.yaxis.range = [border.yMin, border.yMax];
-                layout.yaxis.title = {text: widgetStore.yColumnName};
+                layout.yaxis.title = {
+                    text: widgetStore.yColumnName,
+                    font: {
+                        family: fontFamily,
+                        size: 12 * ratio,
+                        color: labelColor
+                    }
+                };
                 layout.xaxis.tickformat = this.formatTickValues([border.xMin, border.xMax]);
                 layout.yaxis.tickformat = this.formatTickValues([border.yMin, border.yMax]);
             }
@@ -1006,7 +1013,14 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 // autorange will trigger y axis range change
                 layout.yaxis.autorange = true;
                 layout.yaxis.rangemode = "tozero";
-                layout.yaxis.title = {text: "Count"};
+                layout.yaxis.title = {
+                    text: "Count",
+                    font: {
+                        family: fontFamily,
+                        size: 12 * ratio,
+                        color: labelColor
+                    }
+                };
                 if (widgetStore.logScaleY) {
                     layout.yaxis.type = "log";
                 }
