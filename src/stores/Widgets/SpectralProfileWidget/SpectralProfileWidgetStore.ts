@@ -434,7 +434,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     public dispose = () => {
         this.disposers.forEach(disposer => disposer());
         this.disposers.length = 0;
-        this.profileSelectionStore.dispose?.();
+        this.profileSelectionStore.dispose();
     };
 
     @computed private get intensityConfig(): IntensityConfig | undefined {
