@@ -102,16 +102,16 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         );
     }
 
-    componentWillUnmount() {
-        this.disposers.forEach(disposer => disposer());
-        this.disposers.length = 0;
-    }
-
     componentDidMount() {
         const frame = this.frame?.spatialReference ?? this.frame;
         if (frame) {
             this.syncStage(frame.centerMovement, frame.zoomLevel);
         }
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     @action componentDidUpdate(prevProps) {
