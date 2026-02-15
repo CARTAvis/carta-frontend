@@ -131,6 +131,7 @@ export class FrameStore {
     public spatialTransformAST: AST.Mapping | null = null;
     private cursorMovementHandle: NodeJS.Timeout | undefined = undefined;
     private readonly disposers: IReactionDisposer[] = [];
+    private isDisposed = false;
 
     public restFreqStore: RestFreqStore;
 
@@ -403,6 +404,7 @@ export class FrameStore {
             adjTranslation = rotate2D(adjTranslation, -this.spatialTransform.rotation);
             if ((this.cachedTransformedWcsInfo as number) > 0) {
                 AST.deleteObject(this.cachedTransformedWcsInfo);
+                this.cachedTransformedWcsInfo = -1;
             }
 
             if (this.spatialReference.isOffsetCoord && !this.wcsInfoOffset) {
@@ -1551,10 +1553,34 @@ export class FrameStore {
     }
 
     public dispose = () => {
+        if (this.isDisposed) {
+            return;
+        }
+        this.isDisposed = true;
+
         this.disposers.forEach(disposer => disposer());
         this.disposers.length = 0;
         clearTimeout(this.zoomTimeoutHandler);
         clearTimeout(this.cursorMovementHandle);
+
+        // Release AST handles owned by this frame to avoid leaking objects in the WASM heap.
+        const astHandles = [
+            this.spectralFrame,
+            this.wcsInfo,
+            this.wcsInfo3D,
+            this.wcsInfoForTransformation,
+            this.wcsInfoOffset,
+            this.spatialTransformAST,
+            this.spectralTransformAST,
+            this.cachedTransformedWcsInfo
+        ] as unknown[];
+        const deletedHandles = new Set<number>();
+        astHandles.forEach(handle => {
+            if (typeof handle === "number" && handle > 0 && !deletedHandles.has(handle)) {
+                AST.deleteObject(handle as unknown as AST.AstObject);
+                deletedHandles.add(handle);
+            }
+        });
     };
 
     updateWcsSystem = (formatStringX: string | undefined, formatStyingY: string | undefined, explicitSystem: SystemType | undefined) => {
@@ -1957,6 +1983,9 @@ export class FrameStore {
 
     public updateSpectralVsDirectionWcs = () => {
         if (this.wcsInfo3D) {
+            if (this.wcsInfo && this.wcsInfo !== this.wcsInfo3D) {
+                AST.deleteObject(this.wcsInfo);
+            }
             this.wcsInfo = AST.makeSwappedFrameSet(this.wcsInfo3D, this.dirAxis, this.spectral, this.requiredChannel, this.dirAxisSize);
             AST.set(this.wcsInfo, `Format(${this.dirAxis})=${this.dirAxisFormat}, Unit(${this.dirAxis})=""`);
         }
@@ -2317,6 +2346,7 @@ export class FrameStore {
             if (this.wcsInfo && this.offsetCenter) {
                 if (this.wcsInfoOffset) {
                     AST.deleteObject(this.wcsInfoOffset);
+                    this.wcsInfoOffset = undefined as any;
                 }
 
                 const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.offsetCenter);
@@ -2326,6 +2356,9 @@ export class FrameStore {
                     for (const frame of this.secondarySpatialImages) {
                         const frameCenterInRad = getUnformattedWCSPoint(frame.wcsInfo, frame.offsetCenter);
                         if (frame.isOffsetCoord && frameCenterInRad && frame.spatialTransform) {
+                            if (frame.wcsInfoOffset) {
+                                AST.deleteObject(frame.wcsInfoOffset);
+                            }
                             frame.wcsInfoOffset = AST.createOffsetFrameset(
                                 frame.wcsInfo,
                                 frameCenterInRad.x,
@@ -3019,6 +3052,10 @@ export class FrameStore {
             }
         }
 
+        if (this.spatialTransformAST) {
+            AST.deleteObject(this.spatialTransformAST);
+            this.spatialTransformAST = null;
+        }
         this.spatialTransformAST = AST.getSpatialMapping(this.wcsInfo, frame.wcsInfo);
 
         if (!this.spatialTransformAST) {
@@ -3150,6 +3187,10 @@ export class FrameStore {
         }
         AST.invert(copySrc);
         AST.invert(copyDest);
+        if (this.spectralTransformAST) {
+            AST.deleteObject(this.spectralTransformAST);
+            this.spectralTransformAST = null;
+        }
         this.spectralTransformAST = AST.convert(copySrc, copyDest, "");
         AST.deleteObject(copySrc);
         AST.deleteObject(copyDest);
@@ -3360,6 +3401,12 @@ export class FrameStore {
         // Update wcsInfo
         const astFrameSet = this.initPVFrame();
         if (astFrameSet) {
+            if (this.spectralFrame) {
+                AST.deleteObject(this.spectralFrame);
+            }
+            if (this.wcsInfo && this.wcsInfo !== this.wcsInfo3D) {
+                AST.deleteObject(this.wcsInfo);
+            }
             this.spectralFrame = AST.getSpectralFrame(astFrameSet);
             this.wcsInfo = AST.copy(astFrameSet);
             AST.deleteObject(astFrameSet);

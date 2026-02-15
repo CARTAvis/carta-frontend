@@ -944,8 +944,6 @@ export class AppStore {
                 f.clearSpectralReference();
             }
 
-            frame.dispose?.();
-
             const removedFrameIsSpatialReference = frame === this.spatialReference;
             const removedFrameIsSpectralReference = frame === this.spectralReference;
             const removedFrameIsRasterScalingReference = frame === this.rasterScalingReference;
@@ -1047,6 +1045,8 @@ export class AppStore {
                         CatalogStore.Instance.resetActiveCatalogFile(firstFrame.frameInfo.fileId);
                     }
                 }
+
+                frame.dispose?.();
             }
         }
     };
@@ -1069,6 +1069,7 @@ export class AppStore {
                 this.widgetsStore.removeFloatingWidget(key);
             });
             this.frames.forEach(frame => {
+                frame.dispose?.();
                 frame.clearContours(false);
                 const fileId = frame.frameInfo.fileId;
                 this.telemetryService.addFileCloseEntry(fileId);
@@ -1088,6 +1089,8 @@ export class AppStore {
      * @param previewId - The file id of the image cube from which the PV preview was created.
      */
     @action removePreviewFrame = (previewId: number) => {
+        const previewFrame = this.previewFrames.get(previewId);
+        previewFrame?.dispose?.();
         if (this.previewFrames.delete(previewId)) {
             this.backendService.closePvPreview(previewId);
             this.setActiveImage(this.imageViewConfigStore.visibleImages[0]);
