@@ -32,7 +32,7 @@ module.exports = {
     
     // Transform ignore patterns
     transformIgnorePatterns: [
-        'node_modules/(?!(konva|@blueprintjs|axios|usehooks-ts))'
+        'node_modules/(?!(konva|@blueprintjs|axios|usehooks-ts|uuid))'
     ],
     
     // Module name mapping
