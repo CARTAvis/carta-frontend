@@ -151,8 +151,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
         this.catalogFileNames = new Map<number, string>();
 
-        makeObservable(this);
-
         autorun(() => {
             const appStore = AppStore.Instance;
             const frame = appStore.activeFrame;
