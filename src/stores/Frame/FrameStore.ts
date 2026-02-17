@@ -1564,16 +1564,7 @@ export class FrameStore {
         clearTimeout(this.cursorMovementHandle);
 
         // Release AST handles owned by this frame to avoid leaking objects in the WASM heap.
-        const astHandles = [
-            this.spectralFrame,
-            this.wcsInfo,
-            this.wcsInfo3D,
-            this.wcsInfoForTransformation,
-            this.wcsInfoOffset,
-            this.spatialTransformAST,
-            this.spectralTransformAST,
-            this.cachedTransformedWcsInfo
-        ] as unknown[];
+        const astHandles = [this.spectralFrame, this.wcsInfo, this.wcsInfo3D, this.wcsInfoForTransformation, this.wcsInfoOffset, this.spatialTransformAST, this.spectralTransformAST, this.cachedTransformedWcsInfo] as unknown[];
         const deletedHandles = new Set<number>();
         astHandles.forEach(handle => {
             if (typeof handle === "number" && handle > 0 && !deletedHandles.has(handle)) {
