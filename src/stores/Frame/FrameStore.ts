@@ -2005,7 +2005,7 @@ export class FrameStore {
     };
 
     public convertToNativeWCS = (value: number): number | undefined => {
-        if (!this.spectralFrame || !isFinite(value) || !this.spectralType || !this.spectralUnit) {
+        if (!this.spectralFrame || !isFinite(value)) {
             return undefined;
         }
         return AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, value, false);
@@ -2182,7 +2182,7 @@ export class FrameStore {
             } else {
                 if ((this.spectralAxis && !this.spectralAxis.valid) || this.isSpectralPropsEqual) {
                     return this.channelInfo.getChannelIndexWCS(x);
-                } else if (this.spectralFrame && this.spectralType && this.spectralUnit) {
+                } else {
                     // invert x in selected widget wcs to frame's default wcs
                     const tx = AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, x, false);
                     return this.channelInfo.getChannelIndexWCS(tx);

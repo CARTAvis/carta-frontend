@@ -88,8 +88,11 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minX = parseNumber(widgetStore?.minX ?? 0, widgetStore?.linePlotInitXYBoundaries.minXVal ?? 0);
-        const maxX = parseNumber(widgetStore?.maxX ?? 0, widgetStore?.linePlotInitXYBoundaries.maxXVal ?? 0);
+        const minX = parseNumber(widgetStore?.minX, widgetStore?.linePlotInitXYBoundaries.minXVal);
+        const maxX = parseNumber(widgetStore?.maxX, widgetStore?.linePlotInitXYBoundaries.maxXVal);
+        if (minX === undefined || maxX === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== minX && val < maxX) {
             widgetStore?.setXBounds(val, maxX);
         } else {
@@ -104,8 +107,11 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minX = parseNumber(widgetStore?.minX ?? 0, widgetStore?.linePlotInitXYBoundaries.minXVal ?? 0);
-        const maxX = parseNumber(widgetStore?.maxX ?? 0, widgetStore?.linePlotInitXYBoundaries.maxXVal ?? 0);
+        const minX = parseNumber(widgetStore?.minX, widgetStore?.linePlotInitXYBoundaries.minXVal);
+        const maxX = parseNumber(widgetStore?.maxX, widgetStore?.linePlotInitXYBoundaries.maxXVal);
+        if (minX === undefined || maxX === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== maxX && val > minX) {
             widgetStore?.setXBounds(minX, val);
         } else {
@@ -120,8 +126,11 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minY = parseNumber(widgetStore?.minY ?? 0, widgetStore?.linePlotInitXYBoundaries.minYVal ?? 0);
-        const maxY = parseNumber(widgetStore?.maxY ?? 0, widgetStore?.linePlotInitXYBoundaries.maxYVal ?? 0);
+        const minY = parseNumber(widgetStore?.minY, widgetStore?.linePlotInitXYBoundaries.minYVal);
+        const maxY = parseNumber(widgetStore?.maxY, widgetStore?.linePlotInitXYBoundaries.maxYVal);
+        if (minY === undefined || maxY === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== minY && val < maxY) {
             widgetStore?.setYBounds(val, maxY);
         } else {
@@ -136,8 +145,11 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minY = parseNumber(widgetStore?.minY ?? 0, widgetStore?.linePlotInitXYBoundaries.minYVal ?? 0);
-        const maxY = parseNumber(widgetStore?.maxY ?? 0, widgetStore?.linePlotInitXYBoundaries.maxYVal ?? 0);
+        const minY = parseNumber(widgetStore?.minY, widgetStore?.linePlotInitXYBoundaries.minYVal);
+        const maxY = parseNumber(widgetStore?.maxY, widgetStore?.linePlotInitXYBoundaries.maxYVal);
+        if (minY === undefined || maxY === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== maxY && val > minY) {
             widgetStore?.setYBounds(minY, val);
         } else {
@@ -171,13 +183,13 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             isAutoScaledX: widgetStore.isAutoScaledX,
             isAutoScaledY: widgetStore.isAutoScaledY,
             clearXYBounds: widgetStore.clearXYBounds,
-            xMinVal: parseNumber(widgetStore.minX ?? 0, widgetStore.linePlotInitXYBoundaries.minXVal ?? 0),
+            xMinVal: parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal),
             handleXMinChange: this.handleXMinChange,
-            xMaxVal: parseNumber(widgetStore.maxX ?? 0, widgetStore.linePlotInitXYBoundaries.maxXVal ?? 0),
+            xMaxVal: parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal),
             handleXMaxChange: this.handleXMaxChange,
-            yMinVal: parseNumber(widgetStore.minY ?? 0, widgetStore.linePlotInitXYBoundaries.minYVal ?? 0),
+            yMinVal: parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal),
             handleYMinChange: this.handleYMinChange,
-            yMaxVal: parseNumber(widgetStore.maxY ?? 0, widgetStore.linePlotInitXYBoundaries.maxYVal ?? 0),
+            yMaxVal: parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal),
             handleYMaxChange: this.handleYMaxChange
         };
 
