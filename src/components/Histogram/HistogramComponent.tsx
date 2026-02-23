@@ -236,6 +236,9 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         }
 
         const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+        if (fileId === undefined) {
+            return null;
+        }
         const regionId = this.widgetStore.effectiveRegionId;
         const coordinate = this.widgetStore.coordinate;
         const appStore = AppStore.Instance;
@@ -306,7 +309,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                 zeroLineWidth: 2
             };
 
-            if (frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
+            if (frame.renderConfig?.histogram?.bins?.length) {
                 const currentPlotData = this.plotData;
                 if (currentPlotData) {
                     linePlotProps.data = currentPlotData.values;

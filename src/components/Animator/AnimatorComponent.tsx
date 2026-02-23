@@ -52,10 +52,11 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     onChannelChanged = (val: number) => {
         const frame = AppStore.Instance.activeFrame;
         if (frame) {
+            const depth = frame.frameInfo.fileInfoExtended.depth;
             if (val < 0) {
-                val += frame.frameInfo.fileInfoExtended.depth;
+                val += depth;
             }
-            if (val >= frame.frameInfo.fileInfoExtended.depth) {
+            if (val >= depth) {
                 val = 0;
             }
             frame.setChannel(val);
@@ -65,7 +66,8 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     onRangeChanged = (range: NumberRange) => {
         const frame = AppStore.Instance.activeFrame;
         if (range && range.length === 2 && frame) {
-            if (range[0] >= 0 && range[0] < range[1] && range[1] < frame.frameInfo.fileInfoExtended.depth) {
+            const depth = frame.frameInfo.fileInfoExtended.depth;
+            if (range[0] >= 0 && range[0] < range[1] && range[1] < depth) {
                 frame.setAnimationRange(range);
             }
         }
@@ -129,10 +131,12 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 appStore.setActiveImageByIndex(appStore.imageViewConfigStore.imageNum - 1);
                 break;
             case AnimationMode.CHANNEL:
-                frame.setChannels(frame.frameInfo.fileInfoExtended.depth - 1, frame.stokes, true);
+                const depth = frame.frameInfo.fileInfoExtended.depth;
+                frame.setChannels(depth - 1, frame.stokes, true);
                 break;
             case AnimationMode.STOKES:
-                frame.setChannels(frame.channel, frame.frameInfo.fileInfoExtended.stokes < frame.polarizations.length ? frame.polarizations[frame.polarizations.length - 1] : frame.frameInfo.fileInfoExtended.stokes - 1, true);
+                const stokes = frame.frameInfo.fileInfoExtended.stokes;
+                frame.setChannels(frame.channel, stokes < frame.polarizations.length ? frame.polarizations[frame.polarizations.length - 1] : stokes - 1, true);
                 break;
             default:
                 break;

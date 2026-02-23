@@ -171,15 +171,15 @@ export class TileService {
         for (let i = 0; i < this.workers.length; i++) {
             this.workers[i] = new ZFPWorker();
             this.workers[i].onmessage = (event: MessageEvent) => {
-                if (event.data[0] === "ready") {
+                if (event.data?.[0] === "ready") {
                     this.setWorkerReady(i);
-                } else if (event.data[0] === "decompress") {
+                } else if (event.data?.[0] === "decompress") {
                     const buffer = event.data[1];
                     const eventArgs = event.data[2] as TileMessageArgs;
                     const length = (eventArgs.width ?? NaN) * (eventArgs.subsetHeight ?? NaN);
                     const resultArray = new Float32Array(buffer, 0, length);
                     this.updateStream(eventArgs.fileId, eventArgs.channel, eventArgs.stokes, resultArray, eventArgs.width, eventArgs.subsetHeight, eventArgs.layer, eventArgs.tileCoordinate, eventArgs.syncId);
-                } else if (event.data[0] === "preview decompress") {
+                } else if (event.data?.[0] === "preview decompress") {
                     const buffer = event.data[1];
                     const eventArgs = event.data[2];
                     const frame = AppStore.Instance.previewFrames.get(eventArgs.previewId);
