@@ -650,7 +650,7 @@ export class FrameStore {
     getFreqWithChannel(channel: number) {
         const result: {spectralString: string; velocityString: string; freqString: string} = {spectralString: "", velocityString: "", freqString: ""};
         const spectralType = this.spectralAxis?.type;
-        if (!spectralType || !this.channelInfo || !this.spectralSystem) {
+        if (!spectralType || !this.channelInfo) {
             return {spectralString: "", velocityString: "", freqString: ""};
         }
         result.spectralString = `${spectralType.name} (${this.spectralAxis?.specsys ?? ""}): ${toFixed(this.channelInfo.values[channel], 4)} ${spectralType.unit ?? ""}`;
@@ -1637,7 +1637,7 @@ export class FrameStore {
 
     private convertSpectralSecondary = (values: Array<number>): Array<number> => {
         const N = values?.length;
-        if (!N || !this.spectralFrame || !this.spectralTypeSecondary || !this.spectralUnitSecondary || !this.spectralSystem) {
+        if (!N || !this.spectralFrame || !this.spectralTypeSecondary || !this.spectralUnitSecondary) {
             return [];
         }
 
@@ -1645,7 +1645,7 @@ export class FrameStore {
         return Array.from(convertedArray);
     };
 
-    private astSpectralTransform = (type: SpectralType, unit: SpectralUnit, system: SpectralSystem, value: number): number | undefined => {
+    private astSpectralTransform = (type: SpectralType, unit: SpectralUnit, system: SpectralSystem | null, value: number): number | undefined => {
         if (!this.spectralFrame || !isFinite(value)) {
             return undefined;
         }
@@ -2005,14 +2005,14 @@ export class FrameStore {
     };
 
     public convertToNativeWCS = (value: number): number | undefined => {
-        if (!this.spectralFrame || !isFinite(value) || !this.spectralType || !this.spectralUnit || !this.spectralSystem) {
+        if (!this.spectralFrame || !isFinite(value) || !this.spectralType || !this.spectralUnit) {
             return undefined;
         }
         return AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, value, false);
     };
 
     public convertFreqMHzToSettingWCS = (value: number): number | undefined => {
-        if (!this.spectralFrame || !isFinite(value) || !this.spectralType || !this.spectralUnit || !this.spectralSystem) {
+        if (!this.spectralFrame || !isFinite(value) || !this.spectralType || !this.spectralUnit) {
             return undefined;
         }
 
