@@ -2005,7 +2005,7 @@ export class FrameStore {
     };
 
     public convertToNativeWCS = (value: number): number | undefined => {
-        if (!this.spectralFrame || !isFinite(value) || !this.spectralType || !this.spectralUnit) {
+        if (!this.spectralFrame || !isFinite(value)) {
             return undefined;
         }
         return AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, value, false);
