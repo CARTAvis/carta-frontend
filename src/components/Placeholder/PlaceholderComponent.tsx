@@ -1,5 +1,5 @@
 import * as React from "react";
-import {H1} from "@blueprintjs/core";
+import {H2} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
 import {HelpType} from "enums";
@@ -32,7 +32,7 @@ export class PlaceholderComponent extends React.Component<PlaceholderComponentPr
     render() {
         return (
             <div className="placeholder-container">
-                <H1>{this.props.label}</H1>
+                <H2>{this.props.label}</H2>
             </div>
         );
     }
