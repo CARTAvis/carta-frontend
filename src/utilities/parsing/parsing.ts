@@ -22,8 +22,8 @@ export function parseBoolean(value: string, defaultValue: boolean): boolean {
     }
 }
 
-export function parseNumber(val: number, initVal: number): number {
-    if (isFinite(val)) {
+export function parseNumber(val: number | undefined, initVal: number | undefined): number | undefined {
+    if (val !== undefined && isFinite(val)) {
         return val;
     } else {
         return initVal;

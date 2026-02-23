@@ -61,8 +61,11 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minX = parseNumber(widgetStore.minX ?? widgetStore.linePlotInitXYBoundaries.minXVal ?? 0, widgetStore.linePlotInitXYBoundaries.minXVal ?? 0);
-        const maxX = parseNumber(widgetStore.maxX ?? widgetStore.linePlotInitXYBoundaries.maxXVal ?? 1, widgetStore.linePlotInitXYBoundaries.maxXVal ?? 1);
+        const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
+        const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
+        if (minX === undefined || maxX === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== minX && val < maxX) {
             widgetStore.setXBounds(val, maxX);
         } else {
@@ -77,8 +80,11 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minX = parseNumber(widgetStore.minX ?? widgetStore.linePlotInitXYBoundaries.minXVal ?? 0, widgetStore.linePlotInitXYBoundaries.minXVal ?? 0);
-        const maxX = parseNumber(widgetStore.maxX ?? widgetStore.linePlotInitXYBoundaries.maxXVal ?? 1, widgetStore.linePlotInitXYBoundaries.maxXVal ?? 1);
+        const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
+        const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
+        if (minX === undefined || maxX === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== maxX && val > minX) {
             widgetStore.setXBounds(minX, val);
         } else {
@@ -93,8 +99,11 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minY = parseNumber(widgetStore.minY ?? widgetStore.linePlotInitXYBoundaries.minYVal ?? 0, widgetStore.linePlotInitXYBoundaries.minYVal ?? 0);
-        const maxY = parseNumber(widgetStore.maxY ?? widgetStore.linePlotInitXYBoundaries.maxYVal ?? 1, widgetStore.linePlotInitXYBoundaries.maxYVal ?? 1);
+        const minY = parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
+        const maxY = parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
+        if (minY === undefined || maxY === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== minY && val < maxY) {
             widgetStore.setYBounds(val, maxY);
         } else {
@@ -109,8 +118,11 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minY = parseNumber(widgetStore.minY ?? widgetStore.linePlotInitXYBoundaries.minYVal ?? 0, widgetStore.linePlotInitXYBoundaries.minYVal ?? 0);
-        const maxY = parseNumber(widgetStore.maxY ?? widgetStore.linePlotInitXYBoundaries.maxYVal ?? 1, widgetStore.linePlotInitXYBoundaries.maxYVal ?? 1);
+        const minY = parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
+        const maxY = parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
+        if (minY === undefined || maxY === undefined) {
+            return;
+        }
         if (isFinite(val) && val !== maxY && val > minY) {
             widgetStore.setYBounds(minY, val);
         } else {
@@ -139,13 +151,13 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
             handleMarkerTextChanged: this.handleMarkerTextChanged,
             meanRmsVisible: widgetStore.meanRmsVisible,
             handleMeanRmsChanged: this.handleMeanRmsChanged,
-            xMinVal: parseNumber(widgetStore.minX ?? widgetStore.linePlotInitXYBoundaries.minXVal ?? 0, widgetStore.linePlotInitXYBoundaries.minXVal ?? 0),
+            xMinVal: parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal),
             handleXMinChange: this.handleXMinChange,
-            xMaxVal: parseNumber(widgetStore.maxX ?? widgetStore.linePlotInitXYBoundaries.maxXVal ?? 1, widgetStore.linePlotInitXYBoundaries.maxXVal ?? 1),
+            xMaxVal: parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal),
             handleXMaxChange: this.handleXMaxChange,
-            yMinVal: parseNumber(widgetStore.minY ?? widgetStore.linePlotInitXYBoundaries.minYVal ?? 0, widgetStore.linePlotInitXYBoundaries.minYVal ?? 0),
+            yMinVal: parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal),
             handleYMinChange: this.handleYMinChange,
-            yMaxVal: parseNumber(widgetStore.maxY ?? widgetStore.linePlotInitXYBoundaries.maxYVal ?? 1, widgetStore.linePlotInitXYBoundaries.maxYVal ?? 1),
+            yMaxVal: parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal),
             handleYMaxChange: this.handleYMaxChange
         };
 
