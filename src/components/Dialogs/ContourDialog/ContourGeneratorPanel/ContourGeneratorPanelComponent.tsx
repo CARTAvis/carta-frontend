@@ -111,7 +111,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
 
     get startValue(): number {
         const contourHistogram = this.props.frame.renderConfig.contourHistogram;
-        if (this.enteredStartValue === undefined && contourHistogram.mean && contourHistogram.stdDev && contourHistogram.stdDev > 0) {
+        if (this.enteredStartValue === undefined && contourHistogram?.mean && contourHistogram?.stdDev && contourHistogram?.stdDev > 0) {
             return contourHistogram.mean + 5.0 * contourHistogram.stdDev;
         } else {
             return this.enteredStartValue ?? 0;
@@ -120,7 +120,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
 
     get stepValue(): number {
         const contourHistogram = this.props.frame.renderConfig.contourHistogram;
-        if (this.enteredStepValue === undefined && contourHistogram.stdDev && contourHistogram.stdDev > 0) {
+        if (this.enteredStepValue === undefined && contourHistogram?.stdDev && contourHistogram?.stdDev > 0) {
             return 4.0 * contourHistogram.stdDev;
         } else {
             return this.enteredStepValue ?? 1;
@@ -254,7 +254,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
 
     get meanValue(): number {
         const contourHistogram = this.props.frame.renderConfig.contourHistogram;
-        if (this.enteredMeanValue === undefined && contourHistogram.stdDev && contourHistogram.stdDev > 0) {
+        if (this.enteredMeanValue === undefined && contourHistogram?.stdDev && contourHistogram?.stdDev > 0) {
             return contourHistogram.mean ?? NaN;
         } else {
             return this.enteredMeanValue ?? NaN;
@@ -263,7 +263,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
 
     get sigmaValue(): number {
         const contourHistogram = this.props.frame.renderConfig.contourHistogram;
-        if (this.enteredSigmaValue === undefined && contourHistogram.stdDev && contourHistogram.stdDev > 0) {
+        if (this.enteredSigmaValue === undefined && contourHistogram?.stdDev && contourHistogram?.stdDev > 0) {
             return contourHistogram.stdDev;
         } else {
             return this.enteredSigmaValue ?? NaN;

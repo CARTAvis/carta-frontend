@@ -54,6 +54,9 @@ export class StatsComponent extends React.Component<WidgetProps> {
         const appStore = AppStore.Instance;
         if (this.widgetStore.effectiveFrame) {
             const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+            if (fileId === undefined) {
+                return null;
+            }
             const regionId = this.widgetStore.effectiveRegionId;
             const coordinate = this.widgetStore.coordinate;
 

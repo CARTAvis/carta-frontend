@@ -556,7 +556,7 @@ export class SpectralLineQueryWidgetStore {
         // update selected spectral profiler when currently selected is closed
         this.disposers.push(
             autorun(() => {
-                if (!this.selectedSpectralProfilerID || AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(this.selectedSpectralProfilerID)) {
+                if (!this.selectedSpectralProfilerID || !AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(this.selectedSpectralProfilerID)) {
                     this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ? AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
                 }
             })

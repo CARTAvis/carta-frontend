@@ -251,7 +251,19 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     @action updateChart = (chartArea: ChartArea) => {
+        const wasUndefined = this.chartArea === undefined;
         this.chartArea = chartArea;
+        if (wasUndefined) {
+            // Ensure the component re-renders after chartArea is first set.
+            // This addresses a timing issue where the MobX-triggered forceUpdate
+            // may be batched by React 18 when chartArea is set during the initial
+            // mount sequence (inside a useEffect callback from react-chartjs-2).
+            // Scheduling a forceUpdate in the next macrotask ensures the re-render
+            // is processed and markers are drawn.
+            setTimeout(() => {
+                this.forceUpdate();
+            }, 0);
+        }
     };
 
     @action resize = (w, h) => {
