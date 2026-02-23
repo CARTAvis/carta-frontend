@@ -102,8 +102,8 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
 
         // Find percentage of selected channel range
         const imageDepth = frame.frameInfo.fileInfoExtended.depth;
-        const channelIndexMin = frame.findChannelIndexByValue(this.widgetStore.range?.min);
-        const channelIndexMax = frame.findChannelIndexByValue(this.widgetStore.range?.max);
+        const channelIndexMin = frame.findChannelIndexByValue(this.widgetStore.range.min);
+        const channelIndexMax = frame.findChannelIndexByValue(this.widgetStore.range.max);
 
         if (channelIndexMin === undefined || channelIndexMax === undefined) {
             return undefined;
@@ -130,7 +130,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         const regionBoundSize = region?.regionId === -1 ? null : (region?.boundingBoxArea ?? 0) * bytePix * imageDepth;
 
         // Calculate estimated size using selected range of channels and rebin values
-        const estimatedSize = ((regionBoundSize || imageSize) * channelRangePercentage) / (this.widgetStore.xyRebin * this.widgetStore.zRebin);
+        const estimatedSize = ((regionBoundSize || imageSize) * channelRangePercentage) / (this.widgetStore.xyRebin * this.widgetStore.xyRebin * this.widgetStore.zRebin);
 
         if (region?.regionType !== CARTA.RegionType.RECTANGLE && !estimatedSize) {
             return undefined;
