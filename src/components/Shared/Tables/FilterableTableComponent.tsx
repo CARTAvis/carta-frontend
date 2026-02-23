@@ -1,17 +1,16 @@
 import * as React from "react";
 import {Checkbox, Classes, Icon, InputGroup, Label, Position, Tooltip} from "@blueprintjs/core";
-import {IconName} from "@blueprintjs/icons";
-import {Cell, Column, ColumnHeaderCell, Region, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
-import {RowIndices} from "@blueprintjs/table/lib/esm/common/grid";
+import type {IconName} from "@blueprintjs/icons";
+import {Cell, Column, ColumnHeaderCell, type Region, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
+import type {RowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
+import type {ProcessedColumnData} from "utilities";
 
-import {CatalogType} from "models";
+import {CatalogType, SpectralLineHeaders} from "enums";
 import {CatalogApiService} from "services";
-import {AppStore, ControlHeader} from "stores";
-import {SpectralLineHeaders} from "stores/Widgets";
-import {ProcessedColumnData} from "utilities";
+import {AppStore, type ControlHeader} from "stores";
 
 import "./FilterableTableComponent.scss";
 
@@ -313,7 +312,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
 
     private onRowIndexSelection = (selectedRegions: Region[]) => {
         if (selectedRegions.length > 0) {
-            let selectedDataIndex: number[] = [];
+            const selectedDataIndex: number[] = [];
             for (let i = 0; i < selectedRegions.length; i++) {
                 const region = selectedRegions[i];
                 if (region.rows && region.rows.length >= 2) {
@@ -340,7 +339,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         table.columnHeaders?.forEach(header => {
             const columnIndex = header.columnIndex;
             if (columnIndex != null) {
-                let dataArray = tableData.get(columnIndex)?.data;
+                const dataArray = tableData.get(columnIndex)?.data;
                 const column = header.name === SpectralLineHeaders.LineSelection && this.props.flipRowSelection ? this.renderCheckboxColumn(header, dataArray) : this.renderDataColumnWithFilter(header, dataArray ?? []);
                 tableColumns.push(column);
                 if (header.name === SpectralLineHeaders.LineSelection) {

@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
+import type {ControlHeader} from "stores";
 
-import {ControlHeader} from "stores";
-import {ColumnArray, getComparisonOperatorAndValue, ProcessedColumnData} from "utilities";
+import {type ColumnArray, getComparisonOperatorAndValue, type ProcessedColumnData} from "utilities";
 
 export function getDataTypeString(dataType: CARTA.ColumnType | null | undefined): string {
     switch (dataType) {
@@ -115,7 +115,7 @@ export function numericFiltering(columnData: Array<number>, dataIndexes: number[
         return [];
     }
 
-    let filteredDataIndexes: number[] = [];
+    const filteredDataIndexes: number[] = [];
     dataIndexes.forEach(dataIndex => {
         if (dataIndex >= 0 && dataIndex < columnData.length && compareFunction !== undefined && compareFunction(columnData[dataIndex])) {
             filteredDataIndexes.push(dataIndex);
@@ -129,7 +129,7 @@ export function booleanFiltering(columnData: Array<boolean>, dataIndexes: number
         return [];
     }
 
-    let filteredDataIndexes: number[] = [];
+    const filteredDataIndexes: number[] = [];
     const trimmedLowercase = filterString?.trim()?.toLowerCase();
     if (trimmedLowercase === "t" || trimmedLowercase === "true") {
         dataIndexes.forEach(dataIndex => {
@@ -152,7 +152,7 @@ export function stringFiltering(columnData: Array<string>, dataIndexes: number[]
         return [];
     }
 
-    let filteredDataIndexes: number[] = [];
+    const filteredDataIndexes: number[] = [];
     dataIndexes.forEach(dataIndex => {
         if (dataIndex >= 0 && dataIndex < columnData.length && columnData[dataIndex]?.includes(filterString)) {
             filteredDataIndexes.push(dataIndex);

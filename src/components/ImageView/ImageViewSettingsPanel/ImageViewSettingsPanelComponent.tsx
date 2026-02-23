@@ -1,13 +1,13 @@
 import * as React from "react";
-import {Button, Classes, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, Position, Switch, Tab, TabId, Tabs, Tooltip} from "@blueprintjs/core";
+import {Button, Classes, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, Position, Switch, Tab, type TabId, Tabs, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, fontSelect, InputType, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
-import {ImagePanelMode} from "models";
-import {AppStore, BeamType, DefaultWidgetConfig, HelpType, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
-import {ColorbarStore, CoordinateMode} from "stores/Frame";
+import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, fontSelect, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
+import {BeamType, CoordinateMode, HelpType, ImagePanelMode, InputType, LabelType, NumberFormatType, PreferenceKeys, SystemType} from "enums";
+import {AppStore, type DefaultWidgetConfig, NUMBER_FORMAT_LABEL, type WidgetProps} from "stores";
+import {ColorbarStore} from "stores/Frame";
 import {SWATCH_COLORS, toFixed} from "utilities";
 
 import "./ImageViewSettingsPanelComponent.scss";

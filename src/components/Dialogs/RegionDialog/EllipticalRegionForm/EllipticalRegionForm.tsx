@@ -1,22 +1,24 @@
 import * as React from "react";
 import {FormGroup, InputGroup} from "@blueprintjs/core";
-import * as AST from "ast_wrapper";
+import type * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {computed} from "mobx";
 import {observer} from "mobx-react";
 
-import {CoordinateComponent, CoordNumericInput, ImageCoordNumericInput, InputType} from "components/Shared";
-import {isValidWcsPoint, Point2D, WCSPoint2D} from "models";
+import {CoordinateComponent, CoordNumericInput, ImageCoordNumericInput} from "components/Shared";
+import {CoordinateMode, InputType} from "enums";
+import {isValidWcsPoint, Point2D} from "models";
 import {AppStore} from "stores";
-import {CoordinateMode, FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
+import {type FrameStore, type RegionStore, WCS_PRECISION} from "stores/Frame";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
+
+import {WCSPoint2D} from "../../../../models/Point2D/Point2D";
 
 @observer
 export class EllipticalRegionForm extends React.Component<{region: RegionStore; frame: FrameStore; wcsInfo: AST.FrameSet}> {
     private static readonly REGION_PIXEL_EPS = 1.0e-3;
 
     // size determined by reference frame
-    @computed get sizeWCS(): WCSPoint2D | null {
+    get sizeWCS(): WCSPoint2D | null {
         const region = this.props.region;
         if (!region || region.controlPoints.length !== 2 || !region.size || !this.props.frame) {
             return null;
@@ -33,7 +35,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
         return null;
     }
 
-    @computed get centerWCS(): WCSPoint2D | null {
+    get centerWCS(): WCSPoint2D | null {
         const region = this.props.region;
         if (!region || !this.props.wcsInfo) {
             return null;

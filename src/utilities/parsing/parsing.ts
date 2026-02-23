@@ -1,8 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 
-// order matters, since ... and .. both having .. (same for < and <=, > and >=)
-export enum ComparisonOperator {
+enum ComparisonOperator {
     Equal = "==",
     NotEqual = "!=",
     LessorOrEqual = "<=",
@@ -23,8 +22,8 @@ export function parseBoolean(value: string, defaultValue: boolean): boolean {
     }
 }
 
-export function parseNumber(val: number, initVal: number): number {
-    if (isFinite(val)) {
+export function parseNumber(val: number | undefined, initVal: number | undefined): number | undefined {
+    if (val !== undefined && isFinite(val)) {
         return val;
     } else {
         return initVal;
@@ -72,7 +71,7 @@ function getNumberFromFilterString(filterString: string): number | undefined {
 
 export function getComparisonOperatorAndValue(filterString: string): {operator: CARTA.ComparisonOperator; values: number[]} {
     const filter = filterString.replace(/\s/g, "");
-    let result: {operator: number; values: number[]} = {operator: -1, values: []};
+    const result: {operator: number; values: number[]} = {operator: -1, values: []};
     // order matters, since ... and .. both include .. (same for < and <=, > and >=)
     for (const key of Object.keys(ComparisonOperator)) {
         const operator = ComparisonOperator[key];

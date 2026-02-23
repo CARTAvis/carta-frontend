@@ -2,10 +2,10 @@ import * as React from "react";
 import {fonts} from "ast_wrapper";
 import classNames from "classnames";
 import {observer} from "mobx-react";
+import type {ImageItem} from "models";
 
 import {Font} from "components/Shared";
-import {ImageItem} from "models";
-import {AppStore, ChannelMapStore, OverlaySettings} from "stores";
+import {AppStore, ChannelMapStore, type OverlaySettings} from "stores";
 import {getColorForTheme} from "utilities";
 
 export class ChannelMapLabelComponentProps {

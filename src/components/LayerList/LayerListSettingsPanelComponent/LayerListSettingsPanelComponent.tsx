@@ -1,14 +1,15 @@
 import * as React from "react";
 import {Alignment, Button, FormGroup, HTMLSelect, MenuDivider, MenuItem, PopoverPosition, Tab, Tabs, Text} from "@blueprintjs/core";
-import {ItemRendererProps, Select} from "@blueprintjs/select";
+import {type ItemRendererProps, Select} from "@blueprintjs/select";
 import classNames from "classnames";
 import {computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent} from "components/Shared";
-import {FrequencyUnit, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, SpectralType} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {LayerListSettingsTabs, LayerListWidgetStore} from "stores/Widgets";
+import {FrequencyUnit, HelpType, LayerListSettingsTabs, type SpectralType} from "enums";
+import {SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING} from "models";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {type LayerListWidgetStore} from "stores/Widgets";
 
 import "./LayerListSettingsPanelComponent.scss";
 
@@ -16,6 +17,8 @@ const FILENAME_END_LEN = 15;
 
 @observer
 export class LayerListSettingsPanelComponent extends React.Component<WidgetProps> {
+    private widgetId: string;
+
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "layer-list-settings",
@@ -35,7 +38,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
     @computed get widgetStore(): LayerListWidgetStore | null {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.layerListWidgets) {
-            const widgetStore = widgetsStore.layerListWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.layerListWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -47,6 +50,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
     constructor(props) {
         super(props);
         makeObservable(this);
+        this.widgetId = props.id;
     }
 
     private renderFrameOptions = (val: number, itemProps: ItemRendererProps) => {

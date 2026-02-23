@@ -1,10 +1,10 @@
 import * as React from "react";
-import {ColorResult, SketchPicker} from "react-color";
+import {type ColorResult, SketchPicker} from "react-color";
 import {Button, Classes, MenuItem, Popover, PopoverPosition} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import classNames from "classnames";
 import * as _ from "lodash";
-import {computed, makeObservable, observable} from "mobx";
+import {makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {AppStore} from "stores";
@@ -26,9 +26,9 @@ const CUSTOM_COLOR_OPTION = "custom-color";
 @observer
 export class AutoColorPickerComponent extends React.Component<AutoColorPickerComponentProps> {
     private static readonly CHANGE_DELAY = 100;
-    @observable displayColorPicker: boolean;
+    @observable displayColorPicker: boolean = false;
 
-    @computed get autoColor(): string {
+    get autoColor(): string {
         return getColorForTheme(this.props.color);
     }
 
@@ -39,7 +39,7 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
     }, AutoColorPickerComponent.CHANGE_DELAY);
 
     private renderColorBlock = (color: string) => {
-        let className = "dropdown-color";
+        const className = "dropdown-color";
         return (
             <div className={className} style={{backgroundColor: color, opacity: this.props.disabled ? 0.5 : 1}}>
                 &nbsp;

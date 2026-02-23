@@ -1,25 +1,25 @@
 import {action, computed, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
-import {LineSettings, PlotType} from "components/Shared";
+import {LineSettings, PlotType} from "enums";
 import {isAutoColor} from "utilities";
 
 export class RenderConfigWidgetStore {
-    @observable minX: number | undefined;
-    @observable maxX: number | undefined;
-    @observable minY: number | undefined;
-    @observable maxY: number | undefined;
-    @observable cursorX: number;
+    @observable minX: number | undefined = undefined;
+    @observable maxX: number | undefined = undefined;
+    @observable minY: number | undefined = undefined;
+    @observable maxY: number | undefined = undefined;
+    @observable cursorX: number = 0;
 
     // settings
-    @observable plotType: PlotType;
-    @observable primaryLineColor: string;
-    @observable lineWidth: number;
-    @observable linePlotPointSize: number;
-    @observable logScaleY: boolean;
-    @observable markerTextVisible: boolean;
-    @observable meanRmsVisible: boolean;
-    @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number};
+    @observable plotType: PlotType = PlotType.STEPS;
+    @observable primaryLineColor: string = "auto-blue";
+    @observable lineWidth: number = 1;
+    @observable linePlotPointSize: number = 1.5;
+    @observable logScaleY: boolean = true;
+    @observable markerTextVisible: boolean = true;
+    @observable meanRmsVisible: boolean = true;
+    @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number} = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
 
     @action setXBounds = (minVal: number, maxVal: number) => {
         this.minX = minVal;
@@ -77,14 +77,6 @@ export class RenderConfigWidgetStore {
 
     constructor() {
         makeObservable(this);
-        this.logScaleY = true;
-        this.plotType = PlotType.STEPS;
-        this.markerTextVisible = true;
-        this.meanRmsVisible = true;
-        this.primaryLineColor = "auto-blue";
-        this.linePlotPointSize = 1.5;
-        this.lineWidth = 1;
-        this.linePlotInitXYBoundaries = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
     }
 
     @computed get isAutoScaledX() {

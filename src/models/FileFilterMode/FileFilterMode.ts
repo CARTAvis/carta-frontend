@@ -1,10 +1,6 @@
 import {CARTA} from "carta-protobuf";
 
-export enum FileFilterMode {
-    Content = "content",
-    Extension = "extension",
-    All = "all"
-}
+import {FileFilterMode} from "enums";
 
 export function ToFileListFilterMode(mode: FileFilterMode): CARTA.FileListFilterMode {
     switch (mode) {

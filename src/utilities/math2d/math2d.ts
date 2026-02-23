@@ -1,4 +1,4 @@
-import {Point2D} from "models";
+import {type Point2D} from "models";
 
 type Point3D = {x: number; y: number; z?: number};
 
@@ -84,8 +84,8 @@ export function scaleAndRotateAboutPoint2D(point: Point2D, origin: Point2D, scal
 }
 
 export function minMax2D(points: Point2D[]): {maxPoint: Point2D; minPoint: Point2D} {
-    let maxPoint = {x: -Number.MAX_VALUE, y: -Number.MAX_VALUE};
-    let minPoint = {x: Number.MAX_VALUE, y: Number.MAX_VALUE};
+    const maxPoint = {x: -Number.MAX_VALUE, y: -Number.MAX_VALUE};
+    const minPoint = {x: Number.MAX_VALUE, y: Number.MAX_VALUE};
 
     for (const point of points) {
         if (!point || isNaN(point.x) || isNaN(point.y)) {
@@ -200,8 +200,8 @@ export function simplePolygonPointTest(points: Point2D[], pointIndex: number) {
         return true;
     }
 
-    let a = points[(pointIndex + points.length) % points.length];
-    let b = points[(pointIndex + points.length + 1) % points.length];
+    const a = points[(pointIndex + points.length) % points.length];
+    const b = points[(pointIndex + points.length + 1) % points.length];
     for (let j = 1; j < points.length; j++) {
         const c = points[(j + pointIndex) % points.length];
         const d = points[(j + pointIndex + 1) % points.length];

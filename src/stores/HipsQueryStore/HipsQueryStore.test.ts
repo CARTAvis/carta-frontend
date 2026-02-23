@@ -1,4 +1,6 @@
-import {HipsCoord, HipsProjection, HipsQueryStore} from "./HipsQueryStore";
+import {HipsCoord, HipsProjection} from "enums";
+
+import {HipsQueryStore} from "./HipsQueryStore";
 
 const mockLoadRemoteFile = jest.fn();
 jest.mock("stores", () => ({

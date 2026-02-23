@@ -1,6 +1,6 @@
-import {IconName, OptionProps} from "@blueprintjs/core";
+import type {IconName, OptionProps} from "@blueprintjs/core";
 
-import {CustomIconName} from "icons/CustomIcons";
+import type {CustomIconName} from "icons/CustomIcons";
 
 export type FileId = number;
 export type RegionId = number;

@@ -1,14 +1,15 @@
 import * as React from "react";
 import {AnchorButton, Button, Classes, FormGroup, Icon, InputGroup, Intent, MenuItem, NonIdealState, Overlay2, PopoverPosition, Position, Spinner, Tooltip} from "@blueprintjs/core";
-import {ItemRendererProps, MultiSelect, Select} from "@blueprintjs/select";
+import {type ItemRendererProps, MultiSelect, Select} from "@blueprintjs/select";
 import FuzzySearch from "fuzzy-search";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent, SafeNumericInput, ScrollShadow} from "components/Shared";
-import {Point2D, WCSPoint2D} from "models";
-import {CatalogApiService, CatalogDatabase} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, NUMBER_FORMAT_LABEL, RadiusUnits, SystemType, VizierItem} from "stores";
+import {CatalogDatabase, RadiusUnits, SystemType} from "enums";
+import {type Point2D, type WCSPoint2D} from "models";
+import {CatalogApiService} from "services";
+import {AppStore, CatalogOnlineQueryConfigStore, NUMBER_FORMAT_LABEL, type VizierItem} from "stores";
 import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
 import "./CatalogOnlineQueryComponent.scss";
@@ -17,14 +18,12 @@ const KEYCODE_ENTER = 13;
 
 @observer
 export class CatalogQueryComponent extends React.Component {
-    @observable resultSize: number | undefined;
-    @observable objectSize: number | undefined;
+    @observable resultSize: number | undefined = undefined;
+    @observable objectSize: number | undefined = undefined;
 
     constructor(props: any) {
         super(props);
         makeObservable(this);
-        this.resultSize = undefined;
-        this.objectSize = undefined;
     }
 
     @action setResultSize(resultSize: number | undefined) {

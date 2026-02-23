@@ -6,17 +6,24 @@ import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
-import {Point2D, SpectralSystem} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
-import {PVAxis, PvGeneratorWidgetStore, RegionId} from "stores/Widgets";
+import {HelpType, RegionId, type SpectralSystem} from "enums";
+import {type Point2D} from "models";
+import {AppStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps, WidgetsStore} from "stores";
+import {PvGeneratorWidgetStore} from "stores/Widgets";
 import {toFixed} from "utilities";
 
 import "./PvGeneratorComponent.scss";
+
+enum PVAxis {
+    SPATIAL = "Spatial",
+    SPECTRAL = "Spectral"
+}
 
 @observer
 export class PvGeneratorComponent extends React.Component<WidgetProps> {
     axesOrder = {};
     @observable isValidSpectralRange: boolean = true;
+    private widgetId: string;
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -35,7 +42,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     @computed get widgetStore(): PvGeneratorWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.pvGeneratorWidgets) {
-            const widgetStore = widgetsStore.pvGeneratorWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.pvGeneratorWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -59,7 +66,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
 
             // check if image corners are on the same side of the line region. from https://stackoverflow.com/a/1560510
             let sideValue = 0;
-            for (let corner of imageCorners) {
+            for (const corner of imageCorners) {
                 sideValue = sideValue + Math.sign((endPoint.x - startPoint.x) * (corner.y - startPoint.y) - (endPoint.y - startPoint.y) * (corner.x - startPoint.x));
             }
 
@@ -95,10 +102,10 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
 
         // Find percentage of selected channel range
         const imageDepth = frame.frameInfo.fileInfoExtended.depth;
-        const channelIndexMin = frame.findChannelIndexByValue(this.widgetStore.range?.min);
-        const channelIndexMax = frame.findChannelIndexByValue(this.widgetStore.range?.max);
+        const channelIndexMin = frame.findChannelIndexByValue(this.widgetStore.range.min);
+        const channelIndexMax = frame.findChannelIndexByValue(this.widgetStore.range.max);
 
-        if (!channelIndexMin || !channelIndexMax) {
+        if (channelIndexMin === undefined || channelIndexMax === undefined) {
             return undefined;
         }
 
@@ -123,7 +130,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         const regionBoundSize = region?.regionId === -1 ? null : (region?.boundingBoxArea ?? 0) * bytePix * imageDepth;
 
         // Calculate estimated size using selected range of channels and rebin values
-        const estimatedSize = ((regionBoundSize || imageSize) * channelRangePercentage) / (this.widgetStore.xyRebin * this.widgetStore.zRebin);
+        const estimatedSize = ((regionBoundSize || imageSize) * channelRangePercentage) / (this.widgetStore.xyRebin * this.widgetStore.xyRebin * this.widgetStore.zRebin);
 
         if (region?.regionType !== CARTA.RegionType.RECTANGLE && !estimatedSize) {
             return undefined;
@@ -140,6 +147,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
+        this.widgetId = props.id;
         this.genAxisOptions();
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
@@ -148,13 +156,15 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             const id = appStore.widgetsStore.addPvGeneratorWidget();
             if (id) {
                 appStore.widgetsStore.changeWidgetId(props.id, id);
+                this.widgetId = id; // Update the stored widget ID
             }
         } else {
-            if (!appStore.widgetsStore.pvGeneratorWidgets.has(this.props.id)) {
-                console.log(`can't find store for widget with id=${this.props.id}`);
-                appStore.widgetsStore.pvGeneratorWidgets.set(this.props.id, new PvGeneratorWidgetStore());
+            if (!appStore.widgetsStore.pvGeneratorWidgets.has(this.widgetId)) {
+                console.log(`can't find store for widget with id=${this.widgetId}`);
+                appStore.widgetsStore.pvGeneratorWidgets.set(this.widgetId, new PvGeneratorWidgetStore());
             }
         }
+        makeObservable(this);
     }
 
     @action setisValidSpectralRange = (bool: boolean) => {
@@ -165,15 +175,20 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         if (this.widgetStore.effectiveFrame) {
             const selectedFileId = parseInt(changeEvent.target.value);
             this.widgetStore.setFileId(selectedFileId);
-            this.widgetStore.setRegionId(this.widgetStore.effectiveFrame.frameInfo.fileId, RegionId.NONE);
+            const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+            if (fileId !== undefined) {
+                this.widgetStore.setRegionId(fileId, RegionId.NONE);
+            }
         }
     };
 
     private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         if (this.widgetStore.effectiveFrame) {
             const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
-            this.widgetStore.setFileId(fileId);
-            this.widgetStore.setRegionId(fileId, parseInt(changeEvent.target.value));
+            if (fileId !== undefined) {
+                this.widgetStore.setFileId(fileId);
+                this.widgetStore.setRegionId(fileId, parseInt(changeEvent.target.value));
+            }
         }
     };
 
@@ -192,12 +207,15 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     };
 
     private onPreviewButtonClicked = () => {
-        this.widgetStore.requestPV(true, this.props.id);
+        this.widgetStore.requestPV(true, this.widgetId);
     };
 
     private onGenerateButtonClicked = () => {
         if (this.widgetStore.effectiveFrame && this.widgetStore.effectiveRegionId) {
             const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+            if (fileId === undefined) {
+                return;
+            }
             this.widgetStore.setFileId(fileId);
             this.widgetStore.setRegionId(fileId, this.widgetStore.effectiveRegionId);
             this.widgetStore.requestPV();
@@ -236,7 +254,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         const channelIndexMin = frame.findChannelIndexByValue(this.widgetStore.range?.min);
         const channelIndexMax = frame.findChannelIndexByValue(this.widgetStore.range?.max);
 
-        if (!channelIndexMin || !channelIndexMax) {
+        if (channelIndexMin === undefined || channelIndexMax === undefined) {
             this.setisValidSpectralRange(false);
             return;
         }
@@ -440,7 +458,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                         progress={frame?.requestingPVProgress ?? 0}
                         timeRemaining={appStore.estimatedTaskRemainingTime ?? 0}
                         cancellable={true}
-                        onCancel={this.widgetStore.requestingPVCancelled(this.props.id)}
+                        onCancel={this.widgetStore.requestingPVCancelled(this.widgetId)}
                         text={"Generating PV"}
                         isCancelling={!!frame?.isRequestPVCancelling}
                     />

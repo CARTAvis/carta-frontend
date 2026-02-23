@@ -6,15 +6,16 @@ import * as _ from "lodash";
 import {autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
-import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, PlotType, SmoothingType} from "components/Shared";
-import {Point2D, SpectralType} from "models";
-import {AnimatorStore, AppStore, DefaultWidgetConfig, FittingContinuum, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {MultiPlotData, SpectralProfileWidgetStore} from "stores/Widgets";
+import {type LineMarker, LinePlotComponent, type LinePlotComponentProps} from "components/Shared";
+import {FittingContinuum, HelpType, LinePlotSelectingMode, PlotType, SmoothingType, SpectralType, TickType} from "enums";
+import {type Point2D} from "models";
+import {AnimatorStore, AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {type MultiPlotData, SpectralProfileWidgetStore} from "stores/Widgets";
 import {binarySearchByX, clamp, formattedExponential, getColorForTheme, toExponential, toFixed, toFormattedNotationByDiff} from "utilities";
 
-import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {type MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
-import {ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfoComponent/SpectralProfilerInfoComponent";
+import {type ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfoComponent/SpectralProfilerInfoComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 
 import "./SpectralProfilerComponent.scss";
@@ -23,6 +24,8 @@ const INFO_HEIGHT_MIN = 28;
 const INFO_HEIGHT_MAX = 100;
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
+    private widgetId: string;
+
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "spectral-profiler",
@@ -40,7 +43,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     @computed get widgetStore(): SpectralProfileWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.spectralProfileWidgets) {
-            const widgetStore = widgetsStore.spectralProfileWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.spectralProfileWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -62,6 +65,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         super(props);
         makeObservable(this);
 
+        this.widgetId = props.id;
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === SpectralProfilerComponent.WIDGET_CONFIG.type) {
@@ -69,11 +73,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             const id = appStore.widgetsStore.addSpectralProfileWidget();
             if (id) {
                 appStore.widgetsStore.changeWidgetId(props.id, id);
+                this.widgetId = id;
             }
         } else {
-            if (!appStore.widgetsStore.spectralProfileWidgets.has(this.props.id)) {
-                console.log(`can't find store for widget with id=${this.props.id}`);
-                appStore.widgetsStore.addSpectralProfileWidget(this.props.id);
+            if (!appStore.widgetsStore.spectralProfileWidgets.has(this.widgetId)) {
+                console.log(`can't find store for widget with id=${this.widgetId}`);
+                appStore.widgetsStore.addSpectralProfileWidget(this.widgetId);
             }
         }
 
@@ -90,7 +95,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     this.widgetStore.updateStreamingDataStatus(false);
                 }
             }
-            appStore.widgetsStore.setWidgetTitle(this.props.id, title);
+            appStore.widgetsStore.setWidgetTitle(this.widgetId, title);
         });
     }
 
@@ -206,7 +211,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     };
 
     private genProfilerInfo = (): ProfileInfo[] => {
-        let profilerInfo: ProfileInfo[] = [];
+        const profilerInfo: ProfileInfo[] = [];
         const frame = this.widgetStore.effectiveFrame;
         if (frame && this.plotData && this.plotData.numProfiles > 0 && this.plotData.data) {
             const isCursorInsideLinePlots = this.widgetStore.isMouseMoveIntoLinePlots;
@@ -278,7 +283,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     };
 
     private fillVisibleSpectralLines = (): LineMarker[] => {
-        let spectralLineMarkers: LineMarker[] = [];
+        const spectralLineMarkers: LineMarker[] = [];
         const spectralLines = this.widgetStore.transformedSpectralLines;
         if (spectralLines?.length > 0) {
             // find x range
@@ -311,7 +316,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"} />;
         }
 
-        let linePlotProps: LinePlotComponentProps = {
+        const linePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
             darkMode: appStore.darkTheme,
@@ -394,12 +399,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 linePlotProps.opacity = currentPlotData.progress < 1.0 ? 0.15 + currentPlotData.progress / 4.0 : 1.0;
 
                 // set line color
-                let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
+                const primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
                 linePlotProps.lineColor = primaryLineColor;
 
                 if (this.widgetStore.profileNum === 1) {
                     if (fittingStore.continuum !== FittingContinuum.NONE && !fittingStore.hasResult) {
-                        let fittingPlotProps: MultiPlotProps = {
+                        const fittingPlotProps: MultiPlotProps = {
                             imageName: currentPlotData.plotName.image,
                             plotName: currentPlotData.plotName.plot,
                             data: fittingStore.baseLinePoint2DArray,
@@ -414,7 +419,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         linePlotProps.multiPlotPropsMap.set("fittingBaseline", fittingPlotProps);
                     }
                     if (fittingStore.hasResult) {
-                        let fittingPlotProps: MultiPlotProps = {
+                        const fittingPlotProps: MultiPlotProps = {
                             imageName: currentPlotData.plotName?.image ?? "",
                             plotName: currentPlotData.plotName?.plot ?? "",
                             data: fittingStore.modelPoint2DArray,
@@ -446,7 +451,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         }
 
                         if (fittingStore.enableResidual) {
-                            let fittingResidualPlotProps: MultiPlotProps = {
+                            const fittingResidualPlotProps: MultiPlotProps = {
                                 imageName: currentPlotData.plotName?.image ?? "",
                                 plotName: currentPlotData.plotName?.plot ?? "",
                                 data: fittingStore.residualPoint2DArray,
@@ -554,7 +559,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             <div className={className}>
                 <div className="profile-container">
                     <div className="profile-toolbar">
-                        <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} id={this.props.id} />
+                        <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} id={this.widgetId} />
                     </div>
                     <SplitPane
                         className="body-split-pane"

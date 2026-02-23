@@ -1,19 +1,20 @@
 import * as React from "react";
-import {Button, ButtonGroup, Colors, FormGroup, HTMLSelect, NonIdealState, OptionProps} from "@blueprintjs/core";
+import {Button, ButtonGroup, Colors, FormGroup, HTMLSelect, NonIdealState, type OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
-import {ImageType, Point2D} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {FrameStore, RenderConfigStore} from "stores/Frame";
+import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent, ResizeDetector, SafeNumericInput, ScrollShadow} from "components/Shared";
+import {HelpType, ImageType, PlotType} from "enums";
+import {type Point2D} from "models";
+import {AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {type FrameStore, RenderConfigStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
 import {clamp, getColorForTheme, scaleValue, toExponential, toFixed} from "utilities";
 
-import {MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {type MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
 import {ColorBlendingConfigComponent} from "./ColorBlendingConfigComponent/ColorBlendingConfigComponent";
 import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
@@ -42,14 +43,15 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
     private cachedFrame: FrameStore;
     private cachedHistogram: CARTA.IHistogram;
+    private widgetId: string;
 
-    @observable width: number;
-    @observable height: number;
+    @observable width: number = 650;
+    @observable height: number = 225;
 
-    @computed get widgetStore(): RenderConfigWidgetStore {
+    get widgetStore(): RenderConfigWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.renderConfigWidgets) {
-            const widgetStore = widgetsStore.renderConfigWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.renderConfigWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -58,7 +60,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         return new RenderConfigWidgetStore();
     }
 
-    @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} | null {
+    get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} | null {
         const frame = AppStore.Instance.activeFrame;
         if (frame) {
             const histogram = frame.renderConfig.histogram;
@@ -84,8 +86,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 maxIndex = clamp(maxIndex, 0, bins.length - 1);
             }
 
-            let xMin = firstBinCenter + binWidth * minIndex;
-            let xMax = firstBinCenter + binWidth * maxIndex;
+            const xMin = firstBinCenter + binWidth * minIndex;
+            const xMax = firstBinCenter + binWidth * maxIndex;
             let yMin = bins[minIndex];
             let yMax = yMin;
 
@@ -109,6 +111,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         super(props);
         makeObservable(this);
 
+        this.widgetId = props.id;
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === RenderConfigComponent.WIDGET_CONFIG.type) {
@@ -116,11 +119,12 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             const id = appStore.widgetsStore.addRenderConfigWidget();
             if (id) {
                 appStore.widgetsStore.changeWidgetId(props.id, id);
+                this.widgetId = id;
             }
         } else {
-            if (!appStore.widgetsStore.renderConfigWidgets.has(this.props.id)) {
-                console.log(`can't find store for widget with id=${this.props.id}`);
-                appStore.widgetsStore.renderConfigWidgets.set(this.props.id, new RenderConfigWidgetStore());
+            if (!appStore.widgetsStore.renderConfigWidgets.has(this.widgetId)) {
+                console.log(`can't find store for widget with id=${this.widgetId}`);
+                appStore.widgetsStore.renderConfigWidgets.set(this.widgetId, new RenderConfigWidgetStore());
             }
         }
 
@@ -237,7 +241,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     }, 100);
 
     private genProfilerInfo = (): string[] => {
-        let profilerInfo: string[] = [];
+        const profilerInfo: string[] = [];
         if (this.widgetStore.cursorX !== undefined) {
             let numberString;
             // Switch between standard and scientific notation
@@ -286,7 +290,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
         const imageName = frame.filename;
         const plotName = `channel ${frame.channel} histogram`;
-        let linePlotProps: LinePlotComponentProps = {
+        const linePlotProps: LinePlotComponentProps = {
             xLabel: unitString,
             darkMode: appStore.darkTheme,
             imageName: imageName,
@@ -317,7 +321,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         if (histogram && histogram.bins && histogram.bins.length) {
             const currentPlotData = this.plotData;
             if (currentPlotData) {
-                let histogramProps: MultiPlotProps = {
+                const histogramProps: MultiPlotProps = {
                     imageName: imageName,
                     plotName: plotName,
                     data: currentPlotData.values,
@@ -405,7 +409,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     colormapScalingY = colormapScalingY.map(x => linePlotProps.yMin! + x * (linePlotProps.yMax! - linePlotProps.yMin!));
                 }
 
-                let colormapScalingData: {x: number; y: number}[] = [];
+                const colormapScalingData: {x: number; y: number}[] = [];
                 for (let i = 0; i < COLORSCALE_LENGTH; i++) {
                     colormapScalingData.push({x: colormapScalingX[i], y: colormapScalingY[i]});
                 }

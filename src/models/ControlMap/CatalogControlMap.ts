@@ -1,7 +1,7 @@
-import * as AST from "ast_wrapper";
+import type * as AST from "ast_wrapper";
 
 import {CatalogStore} from "stores";
-import {FrameStore} from "stores/Frame";
+import {type FrameStore} from "stores/Frame";
 
 import {ControlMap} from "./ControlMap";
 

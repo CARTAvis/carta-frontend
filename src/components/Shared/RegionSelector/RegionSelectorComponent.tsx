@@ -1,11 +1,12 @@
 import * as React from "react";
-import {FormGroup, HTMLSelect, OptionProps} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, type OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
+import {RegionId, RegionsType} from "enums";
 import {AppStore} from "stores";
-import {FrameStore, RegionStore} from "stores/Frame";
-import {ACTIVE_FILE_ID, RegionId, RegionsType, RegionWidgetStore} from "stores/Widgets";
+import {type FrameStore, type RegionStore} from "stores/Frame";
+import {ACTIVE_FILE_ID, type RegionWidgetStore} from "stores/Widgets";
 
 import "./RegionSelectorComponent.scss";
 
@@ -18,9 +19,12 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
             const selectedFileId = parseInt(changeEvent.target.value);
             widgetStore.setFileId(selectedFileId);
             if (widgetStore.effectiveFrame) {
-                widgetStore.setRegionId(widgetStore.effectiveFrame.frameInfo.fileId, RegionId.ACTIVE);
-                if (this.props.onFrameChanged) {
-                    this.props.onFrameChanged(widgetStore.effectiveFrame);
+                const fileId = widgetStore.effectiveFrame.frameInfo.fileId;
+                if (fileId !== undefined) {
+                    widgetStore.setRegionId(fileId, RegionId.ACTIVE);
+                    if (this.props.onFrameChanged) {
+                        this.props.onFrameChanged(widgetStore.effectiveFrame);
+                    }
                 }
             }
         }
@@ -31,8 +35,10 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
         const widgetStore = this.props.widgetStore;
         if (appStore.activeFrame && widgetStore.effectiveFrame) {
             const fileId = widgetStore.effectiveFrame.frameInfo.fileId;
-            widgetStore.setFileId(fileId);
-            widgetStore.setRegionId(fileId, parseInt(changeEvent.target.value));
+            if (fileId !== undefined) {
+                widgetStore.setFileId(fileId);
+                widgetStore.setRegionId(fileId, parseInt(changeEvent.target.value));
+            }
         }
     };
 
@@ -57,7 +63,7 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
             }
 
             let fiteredRegions: RegionStore[];
-            let regions = widgetStore.effectiveFrame.regionSet.regions;
+            const regions = widgetStore.effectiveFrame.regionSet.regions;
 
             switch (widgetStore.type) {
                 case RegionsType.CLOSED:
@@ -83,7 +89,8 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
                 regionOptions = regionOptions.concat([{value: RegionId.CURSOR, label: "Cursor"}]);
             }
 
-            selectedValue = widgetStore.regionIdMap.get(widgetStore.effectiveFrame.frameInfo.fileId) ?? RegionId.ACTIVE;
+            const fileId = widgetStore.effectiveFrame.frameInfo.fileId;
+            selectedValue = fileId !== undefined ? (widgetStore.regionIdMap.get(fileId) ?? RegionId.ACTIVE) : RegionId.ACTIVE;
             enableRegionSelect = true;
         }
 

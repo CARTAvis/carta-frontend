@@ -1,11 +1,12 @@
 import * as React from "react";
-import {Button, Classes, Collapse, DialogProps} from "@blueprintjs/core";
+import {Button, Classes, Collapse, type DialogProps} from "@blueprintjs/core";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
+import {DialogId} from "enums";
 import {CARTA_INFO} from "models";
-import {DialogId, DialogStore} from "stores";
+import {DialogStore} from "stores";
 
 import "./AboutDialogComponent.scss";
 
@@ -112,7 +113,7 @@ export class AboutDialogComponent extends React.Component {
                             </li>
                             <li>
                                 Documentation is available{" "}
-                                <a href="https://carta.readthedocs.io/en/5.0" rel="noopener noreferrer" target="_blank">
+                                <a href={`https://carta.readthedocs.io/en/${CARTA_INFO.docsVersion}`} rel="noopener noreferrer" target="_blank">
                                     online
                                 </a>
                             </li>

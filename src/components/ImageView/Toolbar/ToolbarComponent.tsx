@@ -1,16 +1,16 @@
+import type {CSSProperties} from "react";
 import * as React from "react";
-import {CSSProperties} from "react";
-import {AnchorButton, Button, ButtonGroup, Classes, Collapse, FormGroup, IconName, Menu, MenuDivider, MenuItem, Popover, PopoverInteractionKind, PopoverPosition, Position, Switch, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, ButtonGroup, Classes, Collapse, FormGroup, type IconName, Menu, MenuDivider, MenuItem, Popover, PopoverInteractionKind, type PopoverPosition, Position, Switch, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {ImageViewComponent, ImageViewLayer} from "components";
+import {ImageViewComponent} from "components";
 import {AnnotationMenuComponent, ExportImageMenuComponent} from "components/Shared";
-import {CustomIcon, CustomIconName} from "icons/CustomIcons";
+import {ImageViewLayer, RegionMode, SystemType} from "enums";
+import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
 import {AppStore} from "stores";
-import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
-import {SystemType} from "stores/OverlayStore/OverlayStore";
+import {type FrameStore, RegionStore} from "stores/Frame";
 import {toFixed} from "utilities";
 
 import "./ToolbarComponent.scss";
@@ -165,7 +165,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             </Menu>
         );
 
-        let coordinateSystem = overlay.global.system;
+        const coordinateSystem = overlay.global.system;
 
         const coordinateSystemMenu = (
             <Menu>

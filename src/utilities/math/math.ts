@@ -1,7 +1,7 @@
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
+import type {TypedArray} from "utilities";
 
-import {FrameScaling} from "stores/Frame";
-import {TypedArray} from "utilities";
+import {FrameScaling} from "enums";
 
 export function smoothStepOffset(val: number, edge0: number, edge1: number, level0: number, level1: number) {
     const stepVal = smoothStep(val, edge0, edge1);
@@ -55,7 +55,7 @@ export function getPercentiles(histogram: CARTA.IHistogram, ranks: number[]): nu
     const minVal = (histogram.firstBinCenter ?? NaN) - (histogram.binWidth ?? NaN) / 2.0;
     const dx = histogram.binWidth ?? NaN;
     const vals = histogram.bins;
-    let remainingRanks = ranks.slice();
+    const remainingRanks = ranks.slice();
     let cumulativeSum = 0;
 
     let totalSum = 0;
@@ -67,7 +67,7 @@ export function getPercentiles(histogram: CARTA.IHistogram, ranks: number[]): nu
         return [];
     }
 
-    let calculatedPercentiles: number[] = [];
+    const calculatedPercentiles: number[] = [];
 
     for (let i = 0; i < vals.length && remainingRanks.length; i++) {
         const currentFraction = cumulativeSum / totalSum;

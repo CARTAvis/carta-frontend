@@ -5,7 +5,7 @@ import {ContourWebGLService} from "services";
 import {GL2} from "utilities";
 
 export class ContourStore {
-    @observable progress: number = 0;
+    @observable progress: number;
     @observable numGeneratedVertices: number[] = [];
     @observable vertexCount: number = 0;
     @observable chunkCount: number = 0;

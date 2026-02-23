@@ -30,10 +30,10 @@ describe("ExportImageMenuComponent", () => {
         render(<ExportImageMenuComponent />);
 
         fireEvent.click(screen.getByText(/Normal /));
-        expect(mockExportImage).toBeCalledWith(1);
+        expect(mockExportImage).toHaveBeenCalledWith(1);
         fireEvent.click(screen.getByText(/High /));
-        expect(mockExportImage).toBeCalledWith(2);
+        expect(mockExportImage).toHaveBeenCalledWith(2);
         fireEvent.click(screen.getByText(/Highest /));
-        expect(mockExportImage).toBeCalledWith(4);
+        expect(mockExportImage).toHaveBeenCalledWith(4);
     });
 });

@@ -1,16 +1,16 @@
 import * as React from "react";
 import {AnchorButton, ButtonGroup, Classes, Menu, Popover, Position, Tooltip} from "@blueprintjs/core";
-import {IconName} from "@blueprintjs/icons";
+import type {IconName} from "@blueprintjs/icons";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {ImageViewLayer} from "components";
 import {AnnotationMenuComponent} from "components/Shared";
-import {CustomIcon, CustomIconName} from "icons/CustomIcons";
+import {DialogId, ImageViewLayer, RegionMode, WidgetType} from "enums";
+import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
 import {RegionCreationMode} from "models";
-import {AppStore, DialogId, WidgetsStore, WidgetType} from "stores";
-import {RegionMode, RegionStore} from "stores/Frame";
+import {AppStore, WidgetsStore} from "stores";
+import {RegionStore} from "stores/Frame";
 
 import "./ToolbarMenuComponent.scss";
 
