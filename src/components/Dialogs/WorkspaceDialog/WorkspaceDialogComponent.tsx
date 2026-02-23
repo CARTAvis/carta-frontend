@@ -1,5 +1,4 @@
-import * as React from "react";
-import {useCallback, useEffect, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import {AnchorButton, Classes, type DialogProps, InputGroup, Intent, NonIdealState, Spinner} from "@blueprintjs/core";
 import {Cell, Column, type Region, RenderMode, SelectionModes, Table2, TableLoadingOption} from "@blueprintjs/table";
 import classNames from "classnames";
