@@ -105,7 +105,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         const channelIndexMin = frame.findChannelIndexByValue(this.widgetStore.range?.min);
         const channelIndexMax = frame.findChannelIndexByValue(this.widgetStore.range?.max);
 
-        if (!channelIndexMin || !channelIndexMax) {
+        if (channelIndexMin === undefined || channelIndexMax === undefined) {
             return undefined;
         }
 
@@ -246,7 +246,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         const channelIndexMin = frame.findChannelIndexByValue(this.widgetStore.range?.min);
         const channelIndexMax = frame.findChannelIndexByValue(this.widgetStore.range?.max);
 
-        if (!channelIndexMin || !channelIndexMax) {
+        if (channelIndexMin === undefined || channelIndexMax === undefined) {
             this.setisValidSpectralRange(false);
             return;
         }
