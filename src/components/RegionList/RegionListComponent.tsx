@@ -163,7 +163,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
     @action private onListRendered = (_visibleRows: {startIndex: number; stopIndex: number}, allRows: {startIndex: number; stopIndex: number}) => {
         // Update view bounds
-        if (allRows && this.firstVisibleRow !== allRows.startIndex && this.lastVisibleRow !== allRows.stopIndex) {
+        if (allRows && (this.firstVisibleRow !== allRows.startIndex || this.lastVisibleRow !== allRows.stopIndex)) {
             this.firstVisibleRow = allRows.startIndex;
             this.lastVisibleRow = allRows.stopIndex;
         }

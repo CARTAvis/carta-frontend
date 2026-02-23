@@ -264,9 +264,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             return {data: [], border: undefined};
         }
         // dummy values to trigger update, since profileStore.catalogData is not observable
-        /* eslint-disable @typescript-eslint/no-unused-vars */
+         
         const numVisibleRows = profileStore.numVisibleRows;
-        /* eslint-enable @typescript-eslint/no-unused-vars */
+         
         const coords = profileStore.get2DPlotData(widgetStore.xColumnName, widgetStore.yColumnName, profileStore.catalogData);
         const scatterDatasets: Plotly.Data[] = [];
         const data: Partial<Plotly.PlotData> = {};
@@ -296,9 +296,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             return {data: [], border: undefined};
         }
         // dummy values to trigger update, since profileStore.catalogData is not observable
-        /* eslint-disable @typescript-eslint/no-unused-vars */
+         
         const numVisibleRows = profileStore.numVisibleRows;
-        /* eslint-enable @typescript-eslint/no-unused-vars */
+         
         const coords = profileStore.get1DPlotData(widgetStore.xColumnName);
         const histogramDatasets: Plotly.Data[] = [];
         const data: Partial<Plotly.PlotData> = {};

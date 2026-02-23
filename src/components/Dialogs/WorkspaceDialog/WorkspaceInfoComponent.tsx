@@ -60,7 +60,7 @@ export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceList
         if (workspaceListItem) {
             fetchWorkspace(workspaceListItem.name);
         }
-        // eslint-disable-next-line
+         
     }, [workspaceListItem]);
 
     if (!workspaceListItem) {

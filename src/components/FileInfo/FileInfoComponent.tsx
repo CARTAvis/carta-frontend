@@ -98,7 +98,8 @@ export class FileInfoComponent extends React.Component<{
     // calculate the correct positions and use scrollTo() instead
     private scrollToPosition = () => {
         const listRefCurrent = this.listRef.current;
-        if (!listRefCurrent || !isFinite(this.matchedIterLocation.line) || this.matchedIterLocation.line < 0) {
+        const rowCount = this.props.fileInfoExtended?.headerEntries?.length ?? 0;
+        if (!listRefCurrent || !isFinite(this.matchedIterLocation.line) || this.matchedIterLocation.line < 0 || this.matchedIterLocation.line >= rowCount) {
             return;
         }
         this.listRef.current.scrollToRow({index: this.matchedIterLocation.line, align: "center"});
