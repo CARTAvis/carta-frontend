@@ -22,7 +22,7 @@ interface TaskProgressDialogComponentProps {
 @observer
 export class TaskProgressDialogComponent extends React.Component<TaskProgressDialogComponentProps> {
     // for doc-website reference
-     
+
     constructor(props: TaskProgressDialogComponentProps) {
         super(props);
     }

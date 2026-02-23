@@ -60,7 +60,6 @@ export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceList
         if (workspaceListItem) {
             fetchWorkspace(workspaceListItem.name);
         }
-         
     }, [workspaceListItem]);
 
     if (!workspaceListItem) {

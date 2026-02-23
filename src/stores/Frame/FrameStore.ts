@@ -602,7 +602,7 @@ export class FrameStore {
             const spectralType = this.spectralAxis?.type;
             const channelInfo = this.channelInfo;
             const restFreq = this.restFreqStore.restFreqInHz;
-             
+
             const {spectralString, velocityString, freqString} = this.getFreqWithChannel(spectralInfo.channel);
             spectralInfo.spectralString = spectralString;
             spectralInfo.velocityString = velocityString;

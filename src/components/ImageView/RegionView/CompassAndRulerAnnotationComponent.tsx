@@ -209,7 +209,6 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
 
     React.useEffect(() => {
         updateOffset();
-         
     }, []);
 
     const generateProps = (north: boolean) => {
