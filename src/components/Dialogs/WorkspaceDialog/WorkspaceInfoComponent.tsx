@@ -1,4 +1,5 @@
-import React, {useCallback, useEffect, useState} from "react";
+import * as React from "react";
+import {useCallback, useEffect, useState} from "react";
 import {Callout, NonIdealState, Spinner} from "@blueprintjs/core";
 import {type CARTA} from "carta-protobuf";
 import type {Workspace, WorkspaceFile, WorkspaceListItem} from "models";
