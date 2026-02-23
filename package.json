@@ -143,7 +143,7 @@
             "prettier --write --ignore-unknown"
         ],
         "docs_website/**/*.{js,jsx,ts,tsx,md,mdx,json,css,scss,yml,yaml}": [
-            "prettier --write --ignore-unknown"
+            "docs_website/node_modules/.bin/prettier --write --ignore-unknown"
         ]
     },
     "eslintConfig": {
