@@ -146,18 +146,6 @@
             "prettier --write --ignore-unknown"
         ]
     },
-    "lint-staged": {
-        "src/**/*.{js,jsx,ts,tsx}": [
-            "prettier --write --ignore-unknown",
-            "eslint --fix"
-        ],
-        "src/**/*.{scss,css,json,md,mdx,yml,yaml}": [
-            "prettier --write --ignore-unknown"
-        ],
-        "docs_website/**/*.{js,jsx,ts,tsx,md,mdx,json,css,scss,yml,yaml}": [
-            "prettier --write --ignore-unknown"
-        ]
-    },
     "eslintConfig": {
         "parser": "@typescript-eslint/parser",
         "plugins": [
