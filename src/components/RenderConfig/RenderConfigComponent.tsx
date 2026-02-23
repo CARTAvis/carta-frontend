@@ -47,6 +47,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
     @observable width: number = 650;
     @observable height: number = 225;
+    @observable linePlotProps: LinePlotComponentProps = {};
 
     get widgetStore(): RenderConfigWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
@@ -290,7 +291,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
         const imageName = frame.filename;
         const plotName = `channel ${frame.channel} histogram`;
-        const linePlotProps: LinePlotComponentProps = {
+        this.linePlotProps = {
             xLabel: unitString,
             darkMode: appStore.darkTheme,
             imageName: imageName,
@@ -328,33 +329,33 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     type: this.widgetStore.plotType,
                     borderColor: primaryLineColor
                 };
-                linePlotProps.multiPlotPropsMap?.set("histogram", histogramProps);
+                this.linePlotProps.multiPlotPropsMap?.set("histogram", histogramProps);
 
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
                 if (this.widgetStore.isAutoScaledX) {
-                    linePlotProps.xMin = currentPlotData.xMin;
-                    linePlotProps.xMax = currentPlotData.xMax;
+                    this.linePlotProps.xMin = currentPlotData.xMin;
+                    this.linePlotProps.xMax = currentPlotData.xMax;
                 } else {
-                    linePlotProps.xMin = this.widgetStore.minX;
-                    linePlotProps.xMax = this.widgetStore.maxX;
+                    this.linePlotProps.xMin = this.widgetStore.minX;
+                    this.linePlotProps.xMax = this.widgetStore.maxX;
                 }
 
                 if (this.widgetStore.isAutoScaledY) {
-                    linePlotProps.yMin = currentPlotData.yMin;
-                    linePlotProps.yMax = currentPlotData.yMax;
+                    this.linePlotProps.yMin = currentPlotData.yMin;
+                    this.linePlotProps.yMax = currentPlotData.yMax;
                 } else {
-                    linePlotProps.yMin = this.widgetStore.minY;
-                    linePlotProps.yMax = this.widgetStore.maxY;
+                    this.linePlotProps.yMin = this.widgetStore.minY;
+                    this.linePlotProps.yMax = this.widgetStore.maxY;
                 }
                 // Fix log plot min bounds for entries with zeros in them
-                if (this.widgetStore.logScaleY && linePlotProps.yMin !== undefined && linePlotProps.yMin <= 0) {
-                    linePlotProps.yMin = 0.5;
+                if (this.widgetStore.logScaleY && this.linePlotProps.yMin !== undefined && this.linePlotProps.yMin <= 0) {
+                    this.linePlotProps.yMin = 0.5;
                 }
             }
         }
 
         if (frame.renderConfig) {
-            linePlotProps.markers = [
+            this.linePlotProps.markers = [
                 {
                     value: scaleMinVal,
                     id: "marker-min",
@@ -376,7 +377,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             ];
 
             if (this.widgetStore.meanRmsVisible && histogram && histogram.stdDev != null && histogram.stdDev > 0 && histogram.mean != null) {
-                linePlotProps.markers.push({
+                this.linePlotProps.markers.push({
                     value: histogram.mean,
                     id: "marker-mean",
                     draggable: false,
@@ -385,7 +386,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     dash: [5]
                 });
 
-                linePlotProps.markers.push({
+                this.linePlotProps.markers.push({
                     value: histogram.mean,
                     id: "marker-rms",
                     draggable: false,
@@ -403,10 +404,10 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     scaleValue(x, frame.renderConfig.scaling, frame.renderConfig.alpha, frame.renderConfig.gamma, frame.renderConfig.bias, frame.renderConfig.contrast, appStore.preferenceStore?.useSmoothedBiasContrast)
                 );
                 // fit to the histogram y axis
-                if (linePlotProps.logY) {
-                    colormapScalingY = colormapScalingY.map(x => Math.pow(10, Math.log10(linePlotProps.yMin!) + x * (Math.log10(linePlotProps.yMax!) - Math.log10(linePlotProps.yMin!))));
+                if (this.linePlotProps.logY) {
+                    colormapScalingY = colormapScalingY.map(x => Math.pow(10, Math.log10(this.linePlotProps.yMin!) + x * (Math.log10(this.linePlotProps.yMax!) - Math.log10(this.linePlotProps.yMin!))));
                 } else {
-                    colormapScalingY = colormapScalingY.map(x => linePlotProps.yMin! + x * (linePlotProps.yMax! - linePlotProps.yMin!));
+                    colormapScalingY = colormapScalingY.map(x => this.linePlotProps.yMin! + x * (this.linePlotProps.yMax! - this.linePlotProps.yMin!));
                 }
 
                 const colormapScalingData: {x: number; y: number}[] = [];
@@ -423,7 +424,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     opacity: 0.5,
                     noExport: true
                 };
-                linePlotProps.multiPlotPropsMap?.set("colormapScaling", colormapScalingProps);
+                this.linePlotProps.multiPlotPropsMap?.set("colormapScaling", colormapScalingProps);
             }
         }
 
@@ -466,7 +467,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                         <div className="histogram-container">
                             {displayRankButtons ? percentileButtonsDiv : percentileSelectDiv}
                             <div className="histogram-plot">
-                                <LinePlotComponent {...linePlotProps} />
+                                <LinePlotComponent {...this.linePlotProps} />
                                 {this.width >= histogramCutoff && <ProfilerInfoComponent info={this.genProfilerInfo()} />}
                             </div>
                         </div>
