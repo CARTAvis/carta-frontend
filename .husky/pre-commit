@@ -2,5 +2,15 @@
 
 set -e
 
+docs_prettier="docs_website/node_modules/.bin/prettier"
+
+if git diff --cached --name-only --diff-filter=ACMR | grep -q '^docs_website/'; then
+    if [ ! -e "$docs_prettier" ]; then
+        echo "[pre-commit] docs_website changes detected but docs dependencies are missing."
+        echo "[pre-commit] Run: npm --prefix docs_website install"
+        exit 1
+    fi
+fi
+
 echo "[pre-commit] Running lint-staged..."
 npx lint-staged

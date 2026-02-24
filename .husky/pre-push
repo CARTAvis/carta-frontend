@@ -4,6 +4,7 @@ set -e
 
 zero_hash="0000000000000000000000000000000000000000"
 docs_changed=0
+docs_prettier="docs_website/node_modules/.bin/prettier"
 
 echo "[pre-push] Running root checks..."
 npm run check-eslint
@@ -28,6 +29,12 @@ while read -r local_ref local_sha remote_ref remote_sha; do
 done
 
 if [ "$docs_changed" -eq 1 ]; then
+    if [ ! -e "$docs_prettier" ]; then
+        echo "[pre-push] docs_website changes detected but docs dependencies are missing."
+        echo "[pre-push] Run: npm --prefix docs_website install"
+        exit 1
+    fi
+
     echo "[pre-push] docs_website changes detected. Running docs checkformat..."
     npm --prefix docs_website run checkformat
 else
