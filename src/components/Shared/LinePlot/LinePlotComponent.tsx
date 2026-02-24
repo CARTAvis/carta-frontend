@@ -130,7 +130,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     private stageClickStartY?: number;
     private panPrevious: number;
     private previousClickTime: number;
-    private pendingClickHandle;
+    private pendingClickHandle: ReturnType<typeof setTimeout> | undefined;
 
     @observable chartArea: ChartArea;
     @observable hoveredMarker: LineMarker;
@@ -479,8 +479,11 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         if (delta < DOUBLE_CLICK_THRESHOLD) {
             this.onStageDoubleClick();
             clearTimeout(this.pendingClickHandle);
+            this.pendingClickHandle = undefined;
             return;
         } else {
+            clearTimeout(this.pendingClickHandle);
+            this.pendingClickHandle = undefined;
             this.pendingClickHandle = setTimeout(() => {
                 // Ignore click-drags for click handling
                 const mouseMoveDist = {x: Math.abs(mousePoint.x - (this.stageClickStartX ?? 0)), y: Math.abs(mousePoint.y - (this.stageClickStartY ?? 0))};

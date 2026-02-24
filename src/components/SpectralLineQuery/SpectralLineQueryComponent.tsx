@@ -25,7 +25,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     private widgetId: string;
     private headerTableRef: Table2 | undefined;
     private resultTableRef: Table2 | undefined;
-    private scrollToTopHandle;
+    private scrollToTopHandle: ReturnType<typeof setTimeout> | undefined;
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -218,12 +218,14 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         }
         this.widgetStore.filter();
         clearTimeout(this.scrollToTopHandle);
+        this.scrollToTopHandle = undefined;
         this.scrollToTopHandle = setTimeout(() => this.resultTableRef?.scrollToRegion(Regions.row(0)), 20);
     };
 
     private handleResetFilter = () => {
         this.widgetStore.resetFilter();
         clearTimeout(this.scrollToTopHandle);
+        this.scrollToTopHandle = undefined;
         this.scrollToTopHandle = setTimeout(() => this.resultTableRef?.scrollToRegion(Regions.row(0)), 20);
     };
 

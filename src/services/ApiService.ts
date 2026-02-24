@@ -51,7 +51,7 @@ export class ApiService {
 
     @observable private _accessToken: string | undefined;
     private _tokenLifetime: number;
-    private _tokenExpiryHandler: any;
+    private _tokenExpiryHandler: ReturnType<typeof setTimeout> | undefined;
     private axiosInstance: AxiosInstance;
 
     @action setToken = (tokenString: string, tokenLifetime: number = Number.MAX_VALUE) => {
@@ -102,6 +102,7 @@ export class ApiService {
 
     private onTokenExpired = async () => {
         clearTimeout(this._tokenExpiryHandler);
+        this._tokenExpiryHandler = undefined;
         const tokenRefreshed = await this.refreshAccessToken();
         if (tokenRefreshed) {
             console.debug("Authenticated");
@@ -113,7 +114,13 @@ export class ApiService {
         }
     };
 
+    public dispose = () => {
+        clearTimeout(this._tokenExpiryHandler);
+        this._tokenExpiryHandler = undefined;
+    };
+
     private handleAuthLost = () => {
+        this.dispose();
         if (ApiService.RuntimeConfig.dashboardAddress) {
             this.clearToken();
             const redirectParams = btoa(window.location.search);
@@ -147,6 +154,7 @@ export class ApiService {
     };
 
     public logout = async () => {
+        this.dispose();
         // An existing login session will be assumed to exists if this is found in local storage
         localStorage.removeItem("authenticationType");
         window.open(ApiService.RuntimeConfig.logoutAddress, "_self");

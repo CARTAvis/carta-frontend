@@ -181,7 +181,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     }
 
     private imagePanelRefs: any[];
-    private ratioIndicatorTimeoutHandle;
+    private ratioIndicatorTimeoutHandle: ReturnType<typeof setTimeout> | undefined;
     private cachedImageSize: Point2D;
     private cachedGridSize: Point2D;
     private readonly disposers: IReactionDisposer[] = [];
@@ -232,6 +232,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     this.cachedImageSize = imageSize;
                     this.cachedGridSize = imageGridSize;
                     clearTimeout(this.ratioIndicatorTimeoutHandle);
+                    this.ratioIndicatorTimeoutHandle = undefined;
                     this.setRatioIndicatorVisible(true);
                     this.ratioIndicatorTimeoutHandle = setTimeout(() => this.setRatioIndicatorVisible(false), 1000);
                 }
@@ -243,6 +244,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         this.disposers.forEach(disposer => disposer());
         this.disposers.length = 0;
         clearTimeout(this.ratioIndicatorTimeoutHandle);
+        this.ratioIndicatorTimeoutHandle = undefined;
     }
 
     private collectImagePanelRef = ref => {

@@ -103,7 +103,7 @@ export class FrameStore {
 
     private spectralTransformAST: AST.FrameSet | null = null;
     private cachedTransformedWcsInfo: AST.FrameSet = -1;
-    private zoomTimeoutHandler;
+    private zoomTimeoutHandler: ReturnType<typeof setTimeout> | undefined;
 
     private dirAxis: number = -1;
     private dirAxisSize: number = -1;
@@ -129,7 +129,7 @@ export class FrameStore {
     public spectralCoordsSupported: Map<string | undefined, {type: SpectralType | null; unit: SpectralUnit | null}> | null = null;
     public spectralSystemsSupported: Array<SpectralSystem> | null = null;
     public spatialTransformAST: AST.Mapping | null = null;
-    private cursorMovementHandle: NodeJS.Timeout | undefined = undefined;
+    private cursorMovementHandle: ReturnType<typeof setTimeout> | undefined = undefined;
     private readonly disposers: IReactionDisposer[] = [];
     private isDisposed = false;
 
@@ -1561,7 +1561,9 @@ export class FrameStore {
         this.disposers.forEach(disposer => disposer());
         this.disposers.length = 0;
         clearTimeout(this.zoomTimeoutHandler);
+        this.zoomTimeoutHandler = undefined;
         clearTimeout(this.cursorMovementHandle);
+        this.cursorMovementHandle = undefined;
 
         // Release AST handles owned by this frame to avoid leaking objects in the WASM heap.
         const astHandles = [this.spectralFrame, this.wcsInfo, this.wcsInfo3D, this.wcsInfoForTransformation, this.wcsInfoOffset, this.spatialTransformAST, this.spectralTransformAST, this.cachedTransformedWcsInfo] as unknown[];
@@ -2009,10 +2011,8 @@ export class FrameStore {
     }
 
     private replaceZoomTimeoutHandler = () => {
-        if (this.zoomTimeoutHandler) {
-            clearTimeout(this.zoomTimeoutHandler);
-        }
-
+        clearTimeout(this.zoomTimeoutHandler);
+        this.zoomTimeoutHandler = undefined;
         this.zoomTimeoutHandler = setTimeout(this.endZoom, FrameStore.ZoomInertiaDuration);
     };
 
@@ -2826,6 +2826,7 @@ export class FrameStore {
         }
         this.cursorMoving = true;
         clearTimeout(this.cursorMovementHandle);
+        this.cursorMovementHandle = undefined;
         this.cursorMovementHandle = setTimeout(this.endCursorMove, FrameStore.CursorMovementDuration);
     };
 

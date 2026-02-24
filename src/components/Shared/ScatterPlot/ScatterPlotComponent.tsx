@@ -84,7 +84,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     private markerOpacity = 0.8;
     private plotRef: Chart;
     private previousClickTime: number;
-    private pendingClickHandle: NodeJS.Timeout;
+    private pendingClickHandle: ReturnType<typeof setTimeout> | undefined;
     private stageClickStartX: number;
     private stageClickStartY: number;
     private panPrevious: {x: number; y: number};
@@ -113,6 +113,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     componentWillUnmount() {
         clearTimeout(this.pendingClickHandle);
+        this.pendingClickHandle = undefined;
     }
 
     onPlotRefUpdated = plotRef => {
@@ -486,8 +487,11 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         if (delta < DOUBLE_CLICK_THRESHOLD) {
             this.onStageDoubleClick();
             clearTimeout(this.pendingClickHandle);
+            this.pendingClickHandle = undefined;
             return;
         } else {
+            clearTimeout(this.pendingClickHandle);
+            this.pendingClickHandle = undefined;
             this.pendingClickHandle = setTimeout(() => {
                 // Ignore click-drags for click handling
                 const mouseMoveDist = {x: Math.abs(mousePoint.x - this.stageClickStartX), y: Math.abs(mousePoint.y - this.stageClickStartY)};

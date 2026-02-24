@@ -37,7 +37,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
     @observable hoverIntersection: Point2D | null = null;
 
     private previousCursorStyle: string;
-    private addControlPointTimer;
+    private addControlPointTimer: ReturnType<typeof setTimeout> | undefined;
 
     constructor(props: any) {
         super(props);
@@ -59,6 +59,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
 
     private handleDoubleClick = () => {
         clearTimeout(this.addControlPointTimer);
+        this.addControlPointTimer = undefined;
         this.props.onDoubleClick?.(this.props.region);
     };
 
@@ -82,6 +83,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 currentControlPoints.splice(this.hoverIndex + 1, 0, this.hoverIntersection);
                 // Skip SET_REGION update, since the new control point lies on the line between two existing points
                 clearTimeout(this.addControlPointTimer);
+                this.addControlPointTimer = undefined;
                 this.addControlPointTimer = setTimeout(() => {
                     region.setControlPoints(currentControlPoints, true, false);
                     this.hoverIntersection = null;

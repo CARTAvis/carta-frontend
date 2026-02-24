@@ -159,7 +159,7 @@ export class AppStore {
     private appContainer: HTMLElement | null = null;
     private fileCounter = 0;
     private previousConnectionStatus: ConnectionStatus;
-    private canvasUpdatedTimer;
+    private canvasUpdatedTimer: ReturnType<typeof setTimeout> | undefined;
 
     public getAppContainer = (): HTMLElement | null => {
         return this.appContainer;
@@ -3467,6 +3467,7 @@ export class AppStore {
 
     setCanvasUpdated = () => {
         clearTimeout(this.canvasUpdatedTimer);
+        this.canvasUpdatedTimer = undefined;
         this.canvasUpdatedTimer = setTimeout(() => this.setIsCanvasUpdated(true), EXPORT_IMAGE_DELAY);
     };
 
