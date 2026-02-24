@@ -317,6 +317,27 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return spectralLineMarkers;
     };
 
+    private getExportComments = (plotKey: string): string[] => {
+        const match = plotKey.match(/^(profile|smoothedProfile)(\d+)$/);
+        if (!match) {
+            return [];
+        }
+
+        const seriesType = match[1];
+        const profileIndex = parseInt(match[2], 10);
+        const profile = this.widgetStore.profileSelectionStore.profiles?.[profileIndex];
+        if (!profile) {
+            return [];
+        }
+
+        const frame = AppStore.Instance.getFrame(profile.fileId ?? NaN);
+        const regionComments = frame ? frame.getRegionProperties(profile.regionId ?? NaN) : [];
+        if (seriesType === "smoothedProfile") {
+            return [...regionComments, ...this.widgetStore.smoothingStore.comments];
+        }
+        return regionComments;
+    };
+
     render() {
         const appStore = AppStore.Instance;
         if (!this.widgetStore) {
@@ -348,7 +369,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             insideTexts: this.widgetStore.fittingStore.componentResultNumber,
             zeroLineWidth: 2,
             order: 1,
-            multiPlotPropsMap: new Map<string, MultiPlotProps>()
+            multiPlotPropsMap: new Map<string, MultiPlotProps>(),
+            exportCommentsGenerator: this.getExportComments
         };
 
         const frame = this.widgetStore.effectiveFrame;
@@ -378,7 +400,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                             data: currentPlotData.data[i],
                             type: this.widgetStore.plotType,
                             borderColor: currentPlotData.colors?.[i],
-                            comments: this.widgetStore.profileComments?.[i],
                             order: 1,
                             hidden: smoothingStore.type !== SmoothingType.NONE && !smoothingStore.isOverlayOn,
                             followingData: this.widgetStore.profileNum === 1 && fittingStore.hasResult && smoothingStore.type === SmoothingType.NONE ? ["fittingModel", "fittingResidual"] : undefined
@@ -396,7 +417,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                             borderWidth: currentPlotData.numProfiles > 1 ? this.widgetStore.lineWidth + 1 : smoothingStore.lineWidth,
                             pointRadius: smoothingStore.pointRadius,
                             order: 0,
-                            comments: [...(this.widgetStore.profileComments?.[i] ?? []), ...smoothingStore.comments],
                             followingData: this.widgetStore.profileNum === 1 && fittingStore.hasResult ? ["fittingModel", "fittingResidual"] : undefined
                         });
                     }

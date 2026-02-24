@@ -106,6 +106,7 @@ export class LinePlotComponentProps {
     order?: number;
     multiPlotPropsMap?: Map<string, MultiPlotProps>;
     fullResolutionData?: Point2D[];
+    exportCommentsGenerator?: (plotKey: string, plot: MultiPlotProps) => string[] | undefined;
 }
 
 // Maximum time between double clicks
@@ -725,7 +726,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             if (this.props.comments && this.props.comments.length > 0) {
                 comment += "\n" + this.props.comments.map(c => "# " + c).join("\n");
             }
-            multiPlotProp.comments?.forEach(comment => rows.push(`# ${comment}\t`));
+            const commentsForExport = this.props.exportCommentsGenerator?.(key, multiPlotProp) ?? multiPlotProp.comments;
+            commentsForExport?.forEach(comment => rows.push(`# ${comment}\t`));
 
             // data part
             let columnsHeader = "# x\ty";

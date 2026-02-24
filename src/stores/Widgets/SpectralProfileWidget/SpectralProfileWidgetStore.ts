@@ -592,22 +592,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         };
     }
 
-    @computed get profileComments(): string[][] {
-        const profiles = this.profileSelectionStore.profiles;
-        if (!(profiles?.length > 0)) {
-            return [];
-        }
-
-        const comments: string[][] = [];
-        profiles.forEach(profile => {
-            if (profile?.data) {
-                const frame = AppStore.Instance.getFrame(profile.fileId ?? NaN);
-                comments.push(frame ? frame.getRegionProperties(profile.regionId ?? NaN) : []);
-            }
-        });
-        return comments;
-    }
-
     @computed get isAutoScaledX() {
         return this.minX === undefined || this.maxX === undefined;
     }
