@@ -309,6 +309,7 @@ export class ContourDialogComponent extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
+        const className = classNames("contour-dialog", {[Classes.DARK]: appStore.darkTheme});
 
         const dialogProps: DialogProps = {
             icon: <CustomIcon icon="contour" size={CustomIcon.SIZE_LARGE} />,
@@ -316,7 +317,7 @@ export class ContourDialogComponent extends React.Component {
             canOutsideClickClose: false,
             lazy: true,
             isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Contour) ?? false,
-            className: "contour-dialog",
+            className: className,
             canEscapeKeyClose: true,
             title: "Contour Configuration"
         };

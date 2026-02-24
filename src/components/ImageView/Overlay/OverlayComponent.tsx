@@ -199,7 +199,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const w = this.props.overlayStore.viewWidth;
         const h = this.props.overlayStore.viewHeight;
         // Dummy variables for triggering re-render
-        /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
+        /* eslint-disable @typescript-eslint/no-unused-vars */
         const styleString = this.props.overlayStore.styleString;
         const frameView = refFrame.requiredFrameView;
         const framePadding = this.props.overlayStore.padding;
@@ -234,7 +234,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         if (frame.isSwappedZ) {
             const requiredChannel = frame.requiredChannel;
         }
-        /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
+        /* eslint-enable @typescript-eslint/no-unused-vars */
         // Trigger switching AST overlay axis for PV image
         const spectralAxisSetting =
             `${frame.spectralType ? `System(${frame.spectral})=${frame.spectralType},` : ""}` +

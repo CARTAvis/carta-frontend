@@ -1,5 +1,6 @@
 import {type ReactNode, useEffect, useState} from "react";
 import {AnchorButton, Checkbox, Classes, Dialog, type DialogProps, InputGroup, Intent, Tooltip} from "@blueprintjs/core";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {DialogId} from "enums";
@@ -25,10 +26,11 @@ export const ShareWorkspaceDialogComponent = observer(() => {
     }, [appStore.activeWorkspace, shareWorkspaceDialogVisible]);
 
     const {activeWorkspace} = appStore;
+    const className = classNames("share-workspace-dialog", {[Classes.DARK]: appStore.darkTheme});
 
     const dialogProps: DialogProps = {
         icon: "share",
-        className: "share-workspace-dialog",
+        className: className,
         canOutsideClickClose: true,
         lazy: true,
         canEscapeKeyClose: true,

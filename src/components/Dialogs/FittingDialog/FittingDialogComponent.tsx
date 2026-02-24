@@ -106,10 +106,11 @@ export class FittingDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const fittingStore = appStore.imageFittingStore;
         const component = fittingStore.components[fittingStore.selectedComponentIndex];
+        const className = classNames("fitting-dialog", {[Classes.DARK]: appStore.darkTheme});
 
         const dialogProps: DialogProps = {
             icon: <CustomIcon icon="imageFitting" size={CustomIcon.SIZE_LARGE} />,
-            className: "fitting-dialog",
+            className: className,
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,

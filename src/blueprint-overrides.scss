@@ -1,0 +1,175 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+// Blueprint 6 Spacing Overrides
+// Restores BP5 spacing values to preserve existing layout after BP6 upgrade
+// BP6 migrated from 10px base to 4px base spacing system
+
+// ── Buttons ──
+// Restore BP5 button background colors (BP6 shifted one shade darker)
+.#{$ns}-dark .#{$ns}-button:not([class*="#{$ns}-intent-"]):not(.#{$ns}-minimal) {
+    background-color: $dark-gray4;
+
+    &:hover {
+        background-color: $dark-gray3;
+    }
+
+    &:active {
+        background-color: $dark-gray2;
+    }
+
+    &.#{$ns}-active {
+        background-color: $dark-gray2;
+    }
+
+    &:disabled,
+    &.#{$ns}-disabled {
+        background-color: rgba(64, 72, 84, 0.5);
+    }
+
+    &:disabled.#{$ns}-active,
+    &.#{$ns}-disabled.#{$ns}-active {
+        background-color: rgba(64, 72, 84, 0.7);
+    }
+}
+
+.#{$ns}-button {
+    padding: 5px 10px;
+}
+
+.#{$ns}-button.#{$ns}-small {
+    padding: 2px 7px;
+}
+
+.#{$ns}-button.#{$ns}-large {
+    padding: 5px 15px;
+}
+
+.#{$ns}-button.#{$ns}-minimal {
+    padding: 0 7px;
+}
+
+// ── Inputs ──
+.#{$ns}-input {
+    padding: 0 10px;
+}
+
+.#{$ns}-input.#{$ns}-small {
+    padding: 0 8px;
+}
+
+.#{$ns}-input.#{$ns}-large {
+    padding: 0 15px;
+}
+
+// ── Form Groups ──
+.#{$ns}-form-group {
+    margin: 0 0 15px;
+}
+
+// ── Dialogs ──
+.#{$ns}-dialog-body {
+    margin: 15px;
+}
+
+.#{$ns}-dialog-footer {
+    margin: 0 15px 15px;
+}
+
+.#{$ns}-dialog-header {
+    padding: 5px 5px 5px 15px;
+    min-height: 40px;
+}
+
+// ── Menus ──
+.#{$ns}-menu {
+    padding: 5px;
+}
+
+.#{$ns}-menu-item {
+    padding: 5px 7px;
+}
+
+// Restore BP5 menuitem line-height (BP6 increased from 20px to 22px)
+[role="menuitem"] {
+    line-height: 20px !important;
+    height: 30px !important;
+}
+
+// ── Navbar ──
+.#{$ns}-navbar {
+    padding: 0 15px;
+}
+
+.#{$ns}-navbar-group {
+    height: 50px;
+}
+
+// ── Popover ──
+.#{$ns}-popover .#{$ns}-popover-content {
+    border-radius: 2px;
+}
+
+// ── Control Group ──
+.#{$ns}-control-group > .#{$ns}-input-group {
+    border-radius: 2px;
+}
+
+// ── Tabs ──
+.#{$ns}-tab-list > .#{$ns}-tab {
+    padding: 0;
+}
+
+// ── Tag ──
+.#{$ns}-tag {
+    padding: 2px 6px;
+}
+
+// ── Table Cells ──
+.#{$ns}-table-cell {
+    padding: 0 10px;
+}
+
+// ── Border Radius ──
+// Restore BP5's 2px border radius (BP6 uses 4px)
+.#{$ns}-input,
+.#{$ns}-tag,
+.#{$ns}-button,
+.#{$ns}-menu,
+.#{$ns}-card {
+    border-radius: 2px;
+}
+
+// ── HTML Select ──
+// Restore BP5 select styling
+.#{$ns}-html-select select {
+    padding: 0 30px 0 10px;
+    &.#{$ns}-dark {
+        background-color: rgba(64, 72, 84, 0.5) !important;
+    }
+    border-radius: 2px;
+}
+
+// ── Menu Bar ──
+// Restore BP5 menu bar height (BP6 increased from 40px to 42px)
+.root-menu {
+    height: 40px !important;
+
+    ul > li {
+        height: 30px !important;
+    }
+}
+
+// ── Breadcrumbs ──
+// Fix breadcrumb nav wrapper alignment
+// BP6 added a <nav> wrapper around breadcrumbs that has display: block by default
+// BP5 had breadcrumbs directly in the parent container with display: flex
+.file-path > nav {
+    display: flex;
+}
+
+// ── Switch Controls ──
+// Restore BP5 switch background color (BP6 changed to lighter gray)
+// Only apply to unchecked switches - checked switches should keep the blue color
+.#{$ns}-dark .#{$ns}-switch input:not(:checked) ~ .#{$ns}-control-indicator {
+    background-color: rgba(17, 20, 24, 0.5) !important;
+}

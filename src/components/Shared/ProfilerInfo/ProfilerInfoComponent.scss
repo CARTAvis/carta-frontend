@@ -1,9 +1,18 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .profiler-info {
     position: absolute;
     bottom: 0;
     left: 5px;
     margin: 0 0 0 0;
     user-select: none;
+
+    .#{$ns}-code-block {
+        font-family: monospace;
+        box-shadow: none;
+        background: none;
+        padding: 0;
+    }
 
     .pre {
         font-size: x-small;

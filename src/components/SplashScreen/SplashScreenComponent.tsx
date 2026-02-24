@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Classes, Intent, Overlay2, Spinner} from "@blueprintjs/core";
+import {Classes, H2, Intent, Overlay2, Spinner} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
@@ -22,9 +22,9 @@ export class SplashScreenComponent extends React.Component {
                         <img src="carta_logo.png" width={150} />
                     </div>
                     <div className={"app-info-div"}>
-                        <h1>
+                        <H2>
                             {CARTA_INFO.acronym} {CARTA_INFO.version} ({CARTA_INFO.date})
-                        </h1>
+                        </H2>
                         <p>{CARTA_INFO.fullName}</p>
                     </div>
                     <Spinner intent={Intent.PRIMARY} size={30} />
