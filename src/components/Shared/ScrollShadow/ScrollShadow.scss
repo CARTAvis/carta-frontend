@@ -1,5 +1,8 @@
 @import "~@blueprintjs/core/lib/scss/variables.scss";
 
+// Override BP6 dark background color to match BP5
+$pt-dark-app-background-color: $dark-gray2;
+
 @mixin scroll-shadow-background($highlight-color) {
     width: 100%;
     height: 100%;

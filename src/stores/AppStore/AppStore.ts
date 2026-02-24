@@ -1,4 +1,4 @@
-import {Classes, Colors, type OptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
+import {Colors, type OptionProps} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import axios from "axios";
 import * as CARTACompute from "carta_computation";
@@ -1933,8 +1933,6 @@ export class AppStore {
         // Adjust document background when theme changes
         autorun(() => {
             document.body.style.backgroundColor = this.darkTheme ? Colors.DARK_GRAY4 : Colors.WHITE;
-            const className = this.darkTheme ? Classes.DARK : "";
-            setHotkeysDialogProps({className});
         });
 
         // Watch for system theme preference changes

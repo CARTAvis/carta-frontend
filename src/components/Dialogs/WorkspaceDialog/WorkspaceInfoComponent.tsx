@@ -1,6 +1,6 @@
 import * as React from "react";
 import {useCallback, useEffect, useState} from "react";
-import {Callout, NonIdealState, Spinner} from "@blueprintjs/core";
+import {Callout, HTMLTable, NonIdealState, Spinner} from "@blueprintjs/core";
 import {type CARTA} from "carta-protobuf";
 import type {Workspace, WorkspaceFile, WorkspaceListItem} from "models";
 import {useMap} from "usehooks-ts";
@@ -60,7 +60,6 @@ export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceList
         if (workspaceListItem) {
             fetchWorkspace(workspaceListItem.name);
         }
-        // eslint-disable-next-line
     }, [workspaceListItem]);
 
     if (!workspaceListItem) {
@@ -88,7 +87,7 @@ export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceList
         <div className="workspace-info">
             <Callout className="workspace-thumbnail">{workspace.thumbnail ? <img src={workspace.thumbnail} /> : <NonIdealState icon="media" title="No thumbnail" />}</Callout>
             <Callout className="workspace-properties">
-                <table className="info-table">
+                <HTMLTable className="info-table">
                     <tbody>
                         <tr className="entry">
                             <td className="entry-title">Name</td>
@@ -129,7 +128,7 @@ export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceList
                             </td>
                         </tr>
                     </tbody>
-                </table>
+                </HTMLTable>
             </Callout>
         </div>
     );

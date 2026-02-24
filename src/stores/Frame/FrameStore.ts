@@ -605,7 +605,7 @@ export class FrameStore {
             const spectralType = this.spectralAxis?.type;
             const channelInfo = this.channelInfo;
             const restFreq = this.restFreqStore.restFreqInHz;
-            /* eslint-disable @typescript-eslint/no-unused-vars */
+
             const {spectralString, velocityString, freqString} = this.getFreqWithChannel(spectralInfo.channel);
             spectralInfo.spectralString = spectralString;
             spectralInfo.velocityString = velocityString;

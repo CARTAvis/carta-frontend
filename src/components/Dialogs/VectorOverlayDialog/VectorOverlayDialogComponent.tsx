@@ -3,6 +3,7 @@ import {type ColorResult} from "react-color";
 import {AnchorButton, Button, Classes, type DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
+import classNames from "classnames";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
@@ -276,6 +277,7 @@ export class VectorOverlayDialogComponent extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
+        const className = classNames("vector-overlay-dialog", {[Classes.DARK]: appStore.darkTheme});
 
         const dialogProps: DialogProps = {
             icon: <CustomIcon icon="vectorOverlay" size={CustomIcon.SIZE_LARGE} />,
@@ -283,7 +285,7 @@ export class VectorOverlayDialogComponent extends React.Component {
             canOutsideClickClose: false,
             lazy: true,
             isOpen: appStore.dialogStore.dialogVisible.get(DialogId.Vector) ?? false,
-            className: "vector-overlay-dialog",
+            className: className,
             canEscapeKeyClose: true,
             title: "Vector Overlay Configuration"
         };

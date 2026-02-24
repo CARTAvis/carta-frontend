@@ -1,24 +1,20 @@
 import {defineConfig} from "@rsbuild/core";
-import {pluginEslint} from '@rsbuild/plugin-eslint';
+import {pluginEslint} from "@rsbuild/plugin-eslint";
 import {pluginNodePolyfill} from "@rsbuild/plugin-node-polyfill";
 import {pluginReact} from "@rsbuild/plugin-react";
 import {pluginSass} from "@rsbuild/plugin-sass";
 import {pluginGlsl} from "rsbuild-plugin-glsl";
 
-const eslintDefaultOptions = {
-    extensions: ["js", "jsx", "ts", "tsx"],
-    exclude: [
-        "node_modules",
-        "wasm_src",
-        "docs_website",
-        "protobuf"
-    ]
-};
-
 export default defineConfig({
     plugins: [
+        pluginEslint({
+            enable: true,
+            eslintPluginOptions: {
+                cache: false,
+                configType: "flat",
+            },
+        }),
         pluginReact(),
-        pluginEslint({ eslintPluginOptions: eslintDefaultOptions }),
         pluginSass(),
         pluginNodePolyfill(),
         pluginGlsl()

@@ -165,12 +165,12 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
     }
 
     // Dummy variables for triggering re-render
-    /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
+    /* eslint-disable @typescript-eslint/no-unused-vars */
     const system = AppStore.Instance.overlaySettings.global.explicitSystem;
     const darktheme = AppStore.Instance.darkTheme;
     const title = frame.titleCustomText;
     const pixelRatio = AppStore.Instance.pixelRatio;
-    /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
+    /* eslint-enable @typescript-eslint/no-unused-vars */
 
     const updateOffset = () => {
         const northDiffX = northPointArray[northPointArray.length - 4] - northPointArray[northPointArray.length - 2];
@@ -209,7 +209,6 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
 
     React.useEffect(() => {
         updateOffset();
-        // eslint-disable-next-line
     }, []);
 
     const generateProps = (north: boolean) => {
@@ -451,12 +450,12 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     const distanceText = getDistanceText(wcsInfo, secondaryImagePointStart, secondaryImagePointFinish);
 
     // Dummy variables for triggering re-render
-    /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
+    /* eslint-disable @typescript-eslint/no-unused-vars */
     const system = AppStore.Instance.overlaySettings.global.explicitSystem;
     const darktheme = AppStore.Instance.darkTheme;
     const title = frame.titleCustomText;
     const pixelRatio = AppStore.Instance.pixelRatio;
-    /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
+    /* eslint-enable @typescript-eslint/no-unused-vars */
 
     const [textOffsetX, setTextOffsetX] = React.useState(0);
     const [xTextOffsetX, setXTextOffsetX] = React.useState(0);

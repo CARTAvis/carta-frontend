@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Button, Classes, FormGroup, Icon, InputGroup, Intent, MenuItem, NonIdealState, Overlay2, PopoverPosition, Position, Spinner, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, FormGroup, Icon, InputGroup, Intent, MenuItem, NonIdealState, Overlay2, PopoverPosition, Position, Pre, Spinner, Tooltip} from "@blueprintjs/core";
 import {type ItemRendererProps, MultiSelect, Select} from "@blueprintjs/select";
 import FuzzySearch from "fuzzy-search";
 import {action, computed, makeObservable, observable} from "mobx";
@@ -72,9 +72,9 @@ export class CatalogQueryComponent extends React.Component {
         }
 
         if (objectSize === 0) {
-            sourceIndicater = <Icon icon="cross" intent="warning" iconSize={30} />;
+            sourceIndicater = <Icon icon="cross" intent="warning" size={30} />;
         } else if (objectSize === 1) {
-            sourceIndicater = <Icon icon="tick" intent="success" iconSize={30} />;
+            sourceIndicater = <Icon icon="tick" intent="success" size={30} />;
         }
 
         const frame = appStore.activeFrame.spatialReference ?? appStore.activeFrame;
@@ -219,7 +219,7 @@ export class CatalogQueryComponent extends React.Component {
             </div>
         );
 
-        const tableInfo = <pre>{this.resultInfo}</pre>;
+        const tableInfo = <Pre>{this.resultInfo}</Pre>;
 
         return (
             <div className="catalog-query-panel">

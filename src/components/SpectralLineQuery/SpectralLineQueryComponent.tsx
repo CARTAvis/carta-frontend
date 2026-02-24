@@ -1,6 +1,6 @@
 import * as React from "react";
 import SplitPane, {Pane} from "react-split-pane";
-import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay2, Popover, Position, Spinner, Switch, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay2, Popover, Position, Pre, Spinner, Switch, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
 import {type CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
@@ -436,7 +436,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                     </div>
                     <div className={Classes.DIALOG_FOOTER}>
                         <div className="result-table-info" data-testid="spectral-line-query-result-info">
-                            <pre>{widgetStore.resultTableInfo}</pre>
+                            <Pre>{widgetStore.resultTableInfo}</Pre>
                         </div>
                         <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                             <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral profiler"}>
