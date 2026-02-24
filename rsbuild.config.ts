@@ -1,4 +1,5 @@
 import {defineConfig} from "@rsbuild/core";
+import {pluginEslint} from "@rsbuild/plugin-eslint";
 import {pluginNodePolyfill} from "@rsbuild/plugin-node-polyfill";
 import {pluginReact} from "@rsbuild/plugin-react";
 import {pluginSass} from "@rsbuild/plugin-sass";
@@ -6,6 +7,13 @@ import {pluginGlsl} from "rsbuild-plugin-glsl";
 
 export default defineConfig({
     plugins: [
+        pluginEslint({
+            enable: process.env.NODE_ENV === "production",
+            eslintPluginOptions: {
+                configType: "flat",
+                eslintPath: "eslint/use-at-your-own-risk",
+            },
+        }),
         pluginReact(),
         pluginSass(),
         pluginNodePolyfill(),
