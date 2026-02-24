@@ -1,11 +1,10 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
-const {themes} = require('prism-react-renderer');
+const {themes} = require("prism-react-renderer");
 const path = require("path");
-const versions = require('./versions.json');
-const packageJson = require('../package.json');
-
+const versions = require("./versions.json");
+const packageJson = require("../package.json");
 
 const lightCodeTheme = themes.github;
 const darkCodeTheme = themes.dracula;
@@ -73,12 +72,12 @@ const config = {
             ({
                 docs: {
                     versions: {
-                        "current": {
-                            label: devVersion,
+                        current: {
+                            label: devVersion
                         },
                         "5.0.0": {
-                            banner: "none",
-                        },
+                            banner: "none"
+                        }
                     },
                     sidebarPath: require.resolve("./sidebars.js")
                 },
@@ -110,12 +109,12 @@ const config = {
                         type: "html",
                         position: "left",
                         value: apiButton,
-                        className: "navbar__link",
+                        className: "navbar__link"
                     },
                     {
-                        type: 'docsVersionDropdown',
-                        position: 'right',
-                        dropdownActiveClassDisabled: true,
+                        type: "docsVersionDropdown",
+                        position: "right",
+                        dropdownActiveClassDisabled: true
                     },
                     {
                         href: "https://github.com/CARTAvis/carta-frontend",
@@ -145,7 +144,7 @@ const config = {
                         entry: {
                             index: {path: "src/index.tsx", entry: "."}, // index.tsx has no exports; work-around for displaying the overview page
                             components: {path: "src/components/index.ts", entry: ".", label: "Components"},
-                            "components/Dialogs": { path: "src/components/Dialogs/index.ts", entry: ".", label: "Components - Dialogs" },
+                            "components/Dialogs": {path: "src/components/Dialogs/index.ts", entry: ".", label: "Components - Dialogs"},
                             "components/Shared": {path: "src/components/Shared/index.ts", entry: ".", label: "Components - Shared"},
                             enums: {path: "src/enums/index.ts", entry: ".", label: "Enums"},
                             models: {path: "src/models/index.ts", entry: ".", label: "Models"},
