@@ -36,7 +36,7 @@ export class ChannelMapStore {
                 const zoomLevel = this.displayedFrame.zoomLevel;
                 const spatialReference = this.displayedFrame.spatialReference;
                 const channel = this.displayedFrame.channel;
-                /* eslint-disable @typescript-eslint/no-unused-vars */
+
                 this.throttledRequestChannels(this.displayedFrame);
             }
         });

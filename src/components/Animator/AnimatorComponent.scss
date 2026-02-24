@@ -122,4 +122,14 @@
             }
         }
     }
+
+    .#{$ns}-code-block {
+        font-family: monospace;
+        box-shadow: none;
+        background: none;
+        font-size: 10px;
+        padding: 0;
+        margin: 10px 0 10px 0;
+        line-height: 12.8581px;
+    }
 }

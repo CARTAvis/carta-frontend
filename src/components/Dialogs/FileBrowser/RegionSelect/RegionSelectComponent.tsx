@@ -1,7 +1,6 @@
 import * as React from "react";
-import AutoSizer from "react-virtualized-auto-sizer";
-import {FixedSizeList as List} from "react-window";
-import {Checkbox, Icon, type IconName} from "@blueprintjs/core";
+import {List} from "react-window";
+import {Checkbox, Icon, type IconName, Pre} from "@blueprintjs/core";
 import {computed, makeObservable} from "mobx";
 import {Observer, observer} from "mobx-react";
 
@@ -99,7 +98,7 @@ export class RegionSelectComponent extends React.Component {
             default:
                 status = `Selected ${fileBrowserStore.exportRegionNum} / ${fileBrowserStore.regionOptionNum} elements.`;
         }
-        return <pre className="select-status">{status}</pre>;
+        return <Pre className="select-status">{status}</Pre>;
     };
 
     private renderSelectAll = (mode: SelectionMode) => {
@@ -146,13 +145,7 @@ export class RegionSelectComponent extends React.Component {
         const fileBrowserStore = FileBrowserStore.Instance;
         return (
             <div className="region-list">
-                <AutoSizer>
-                    {({height, width}) => (
-                        <List itemSize={24} itemCount={fileBrowserStore.exportRegionOptions.length} width={width} height={height}>
-                            {this.renderRegionOptions}
-                        </List>
-                    )}
-                </AutoSizer>
+                <List rowComponent={this.renderRegionOptions} rowCount={fileBrowserStore.exportRegionOptions.length} rowHeight={24} rowProps={{} as any} />
             </div>
         );
     };
@@ -175,7 +168,7 @@ export class RegionSelectComponent extends React.Component {
                         {this.renderVirtualizedRegions()}
                     </React.Fragment>
                 ) : (
-                    <pre className="select-status">No regions/annotations in the active image.</pre>
+                    <Pre className="select-status">No regions/annotations in the active image.</Pre>
                 )}
             </div>
         );

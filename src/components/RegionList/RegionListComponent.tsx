@@ -1,6 +1,6 @@
 import type {CSSProperties} from "react";
 import * as React from "react";
-import {FixedSizeList, type ListOnItemsRenderedProps} from "react-window";
+import {List} from "react-window";
 import {AnchorButton, ButtonGroup, Classes, Icon, NonIdealState, Position, Spinner, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -61,11 +61,10 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
     private scrollToSelected = (selected: any) => {
         const listRefCurrent = this.listRef.current;
-        const height = listRefCurrent?.props.height;
-        if (!listRefCurrent || height < 0) {
+        if (!listRefCurrent || !isFinite(selected) || selected < 0) {
             return;
         } else {
-            this.listRef.current.scrollToItem(selected, "smart");
+            this.listRef.current.scrollToRow({index: selected, align: "smart"});
         }
     };
 
@@ -162,11 +161,11 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         }
     };
 
-    @action private onListRendered = (view: ListOnItemsRenderedProps) => {
+    @action private onListRendered = (_visibleRows: {startIndex: number; stopIndex: number}, allRows: {startIndex: number; stopIndex: number}) => {
         // Update view bounds
-        if (view && this.firstVisibleRow !== view.overscanStopIndex && this.lastVisibleRow !== view.overscanStopIndex) {
-            this.firstVisibleRow = view.overscanStartIndex;
-            this.lastVisibleRow = view.overscanStopIndex;
+        if (allRows && (this.firstVisibleRow !== allRows.startIndex || this.lastVisibleRow !== allRows.stopIndex)) {
+            this.firstVisibleRow = allRows.startIndex;
+            this.lastVisibleRow = allRows.stopIndex;
         }
     };
 
@@ -458,19 +457,25 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             <ResizeDetector onResize={this.onResize}>
                 <div className="region-list-widget">
                     <div className={classNames("region-list-table", {[Classes.DARK]: darkTheme})} data-testid="region-list-table">
-                        <FixedSizeList itemSize={RegionListComponent.HEADER_ROW_HEIGHT} height={RegionListComponent.HEADER_ROW_HEIGHT} itemCount={1} width="100%" className="list-header">
-                            {headerRenderer(this.regionsVisibility, this.regionsLock)}
-                        </FixedSizeList>
-                        <FixedSizeList
-                            onItemsRendered={this.onListRendered}
-                            height={tableHeight - RegionListComponent.HEADER_ROW_HEIGHT - padding * 2}
-                            itemCount={this.validRegions.length}
-                            itemSize={RegionListComponent.ROW_HEIGHT}
-                            width="100%"
-                            ref={this.listRef}
-                        >
-                            {rowRenderer}
-                        </FixedSizeList>
+                        <List
+                            rowHeight={RegionListComponent.HEADER_ROW_HEIGHT}
+                            defaultHeight={RegionListComponent.HEADER_ROW_HEIGHT}
+                            rowCount={1}
+                            style={{height: RegionListComponent.HEADER_ROW_HEIGHT, width: "100%"}}
+                            className="list-header"
+                            rowComponent={headerRenderer(this.regionsVisibility, this.regionsLock)}
+                            rowProps={{} as any}
+                        />
+                        <List
+                            onRowsRendered={this.onListRendered}
+                            defaultHeight={tableHeight - RegionListComponent.HEADER_ROW_HEIGHT - padding * 2}
+                            rowCount={this.validRegions.length}
+                            rowHeight={RegionListComponent.ROW_HEIGHT}
+                            style={{height: tableHeight - RegionListComponent.HEADER_ROW_HEIGHT - padding * 2, width: "100%"}}
+                            listRef={this.listRef}
+                            rowComponent={rowRenderer}
+                            rowProps={{} as any}
+                        />
                     </div>
                     {floatRenderer()}
                 </div>

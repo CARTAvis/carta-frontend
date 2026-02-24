@@ -2,6 +2,9 @@
 @use "sass:color";
 @import "~@blueprintjs/core/lib/scss/variables.scss";
 
+// Restore BP5 dark background color (BP6 changed #252a31 → #1c2127)
+$pt-dark-app-background-color: $dark-gray2;
+
 $pane-background: $light-gray5;
 $tab-background: $light-gray5;
 $inactive-tab-background: $light-gray4;
