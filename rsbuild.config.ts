@@ -8,7 +8,7 @@ import {pluginGlsl} from "rsbuild-plugin-glsl";
 export default defineConfig({
     plugins: [
         pluginEslint({
-            enable: process.env.NODE_ENV === "production",
+            enable: true,
             eslintPluginOptions: {
                 configType: "flat",
                 eslintPath: "eslint/use-at-your-own-risk",
