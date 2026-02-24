@@ -10,8 +10,8 @@ export default defineConfig({
         pluginEslint({
             enable: true,
             eslintPluginOptions: {
+                cache: false,
                 configType: "flat",
-                eslintPath: "eslint/use-at-your-own-risk",
             },
         }),
         pluginReact(),
