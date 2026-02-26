@@ -9,8 +9,8 @@ import {observer} from "mobx-react";
 import {type LineMarker, LinePlotComponent, type LinePlotComponentProps} from "components/Shared";
 import {FittingContinuum, HelpType, LinePlotSelectingMode, PlotType, SmoothingType, SpectralType, TickType} from "enums";
 import {type Point2D} from "models";
-import {AnimatorStore, AppStore, type DefaultWidgetConfig, type WidgetProps} from "stores";
-import {type MultiPlotData, type SpectralProfileWidgetStore} from "stores/Widgets";
+import {AnimatorStore, AppStore, type DefaultWidgetConfig, type WidgetProps, WidgetsStore} from "stores";
+import {type MultiPlotData, SpectralProfileWidgetStore} from "stores/Widgets";
 import {binarySearchByX, clamp, formattedExponential, getColorForTheme, toExponential, toFixed, toFormattedNotationByDiff} from "utilities";
 
 import {type MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
@@ -25,7 +25,6 @@ const INFO_HEIGHT_MAX = 100;
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     private widgetId: string;
-    private readonly widgetStoreRef: SpectralProfileWidgetStore;
     private readonly disposers: IReactionDisposer[] = [];
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
@@ -43,7 +42,15 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     }
 
     @computed get widgetStore(): SpectralProfileWidgetStore {
-        return this.widgetStoreRef;
+        const widgetsStore = WidgetsStore.Instance;
+        if (widgetsStore.spectralProfileWidgets) {
+            const widgetStore = widgetsStore.spectralProfileWidgets.get(this.widgetId);
+            if (widgetStore) {
+                return widgetStore;
+            }
+        }
+        console.log("can't find store for widget");
+        return new SpectralProfileWidgetStore();
     }
 
     @computed get plotData(): MultiPlotData | null {
@@ -75,12 +82,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 appStore.widgetsStore.addSpectralProfileWidget(this.widgetId);
             }
         }
-
-        const widgetStore = appStore.widgetsStore.spectralProfileWidgets.get(this.widgetId);
-        if (!widgetStore) {
-            throw new Error(`Can't find SpectralProfileWidgetStore for widget id=${this.widgetId}`);
-        }
-        this.widgetStoreRef = widgetStore;
 
         // Update widget title
         this.disposers.push(
