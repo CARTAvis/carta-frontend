@@ -15,7 +15,8 @@ export default [
             parser: tsParser,
             parserOptions: {
                 ecmaVersion: "latest",
-                sourceType: "module"
+                sourceType: "module",
+                project: true
             }
         },
         plugins: {
@@ -26,6 +27,83 @@ export default [
             "@blueprintjs": bpEslintPlugin
         },
         rules: {
+            "@typescript-eslint/naming-convention": [
+                "error",
+                {
+                    selector: "default",
+                    format: ["camelCase", "PascalCase", "UPPER_CASE"],
+                    leadingUnderscore: "allow",
+                    trailingUnderscore: "forbid"
+                },
+                {
+                    selector: [
+                        "enumMember",
+                        "objectLiteralProperty",
+                        "typeProperty",
+                        "objectLiteralMethod",
+                        "typeMethod"
+                    ],
+                    format: null
+                },
+                {
+                    selector: ["classicAccessor"],
+                    modifiers: ["static"],
+                    format: ["PascalCase"],
+                },
+                {
+                    selector: ["property"],
+                    modifiers: ["public", "static", "readonly"],
+                    format: ["UPPER_CASE"],
+                },
+                {
+                    selector: ["property"],
+                    modifiers: ["private", "static", "readonly"],
+                    format: ["PascalCase"],
+                },
+                {
+                    selector: ["property"],
+                    modifiers: ["public", "static"],
+                    format: ["PascalCase"],
+                },
+                {
+                    selector: ["variable", "parameter", "property", "accessor"],
+                    types: ["boolean"],
+                    format: ["PascalCase"],
+                    prefix: ["is", "should", "has", "can", "did", "will"]
+                },
+                {
+                    selector: ["typeLike", "enum", "interface", "class", "typeAlias"],
+                    format: ["PascalCase"]
+                },
+                {
+                    selector: ["variable", "function", "parameter", "property", "accessor", "method", "classMethod"],
+                    format: ["camelCase"],
+                    leadingUnderscore: "allow"
+                },
+                {
+                    selector: ["classMethod"],
+                    modifiers: ["public", "static"],
+                    types: ["function"],
+                    format: ["PascalCase"]
+                },
+                {
+                    selector: ["variable"],
+                    modifiers: ["global"],
+                    types: ["number", "string", "boolean", "array"],
+                    format: ["UPPER_CASE"]
+                },
+                {
+                    selector: ["variable"],
+                    modifiers: ["global", "exported"],
+                    format: ["UPPER_CASE"]
+                },
+                {
+                    selector: ["variable"],
+                    modifiers: ["global"],
+                    types: ["function"],
+                    format: ["PascalCase"]
+                }
+            ],
             "@typescript-eslint/no-unused-expressions": "error",
             "@typescript-eslint/consistent-type-imports": [
                 "error",
