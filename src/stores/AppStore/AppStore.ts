@@ -2088,10 +2088,10 @@ export class AppStore {
             }
         );
 
-        // Update image panel page buttons
+        // Update image panel page buttons (now handled reactively via onRenderTab in FlexLayout)
         autorun(() => {
             if (this.activeFrame && this.imageViewConfigStore.imagesPerPage) {
-                this.widgetsStore.updateImagePanelPageButtons();
+                // FlexLayout re-renders tab buttons automatically via onRenderTab
             }
         });
 

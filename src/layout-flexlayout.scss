@@ -1,0 +1,203 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+// Restore BP5 dark background color
+$pt-dark-app-background-color: #252a31;
+
+// =====================================================
+// FlexLayout overrides to match CARTA's visual style
+// =====================================================
+
+// --- Layout container ---
+.layout-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+
+    .flexlayout__layout {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+    }
+}
+
+// --- Tab strip (header bar of each tabset) ---
+.flexlayout__tabset_header {
+    background-color: $light-gray4;
+    border-bottom: 1px solid $gray4;
+}
+
+.flexlayout__tab_button {
+    padding: 3px 8px;
+    font-size: 12px;
+    color: $dark-gray5;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+
+    &--selected {
+        background-color: white;
+        color: $dark-gray1;
+        border-bottom: 2px solid $blue3;
+    }
+
+    &:hover {
+        background-color: $light-gray2;
+    }
+}
+
+// --- Tab content area ---
+.flexlayout__tab {
+    background-color: white;
+    overflow: auto;
+    position: relative;
+}
+
+// --- Splitter bars ---
+.flexlayout__splitter {
+    background-color: $light-gray3;
+
+    &:hover {
+        background-color: $blue3;
+    }
+}
+
+// --- Tabset (stack) borders ---
+.flexlayout__tabset {
+    border: 1px solid $light-gray1;
+    overflow: hidden;
+}
+
+// --- Custom tab header buttons ---
+.flexlayout-tab-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    margin: 0 1px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: $gray1;
+    opacity: 0.7;
+
+    &:hover {
+        opacity: 1;
+        color: $dark-gray1;
+    }
+
+    span {
+        font-size: 14px;
+    }
+}
+
+// --- Drag proxy ---
+.flexlayout__drag_rect {
+    background-color: rgba($blue3, 0.3);
+    border: 2px solid $blue3;
+}
+
+// --- Drop indicator ---
+.flexlayout__outline_rect {
+    border: 2px dashed $blue3;
+}
+
+// --- Maximize button ---
+.flexlayout__tab_toolbar_button-max {
+    &::before {
+        content: "";
+    }
+}
+
+// --- Close button on tabs ---
+.flexlayout__tab_button_trailing {
+    margin-left: 4px;
+    opacity: 0.5;
+    cursor: pointer;
+
+    &:hover {
+        opacity: 1;
+    }
+}
+
+// --- Overflow button ---
+.flexlayout__tab_button_overflow {
+    font-size: 12px;
+    color: $gray1;
+}
+
+// =====================================================
+// Dark theme overrides
+// =====================================================
+.layout-container.dark-theme {
+    .flexlayout__tabset_header {
+        background-color: $dark-gray4;
+        border-bottom: 1px solid $dark-gray2;
+    }
+
+    .flexlayout__tab_button {
+        color: $light-gray4;
+
+        &--selected {
+            background-color: $dark-gray3;
+            color: white;
+            border-bottom-color: $blue4;
+        }
+
+        &:hover {
+            background-color: $dark-gray2;
+        }
+    }
+
+    .flexlayout__tab {
+        background-color: $pt-dark-app-background-color;
+        color: $light-gray5;
+    }
+
+    .flexlayout__splitter {
+        background-color: $dark-gray2;
+
+        &:hover {
+            background-color: $blue4;
+        }
+    }
+
+    .flexlayout__tabset {
+        border-color: $dark-gray2;
+    }
+
+    .flexlayout-tab-button {
+        color: $light-gray3;
+
+        &:hover {
+            color: white;
+        }
+    }
+
+    .flexlayout__drag_rect {
+        background-color: rgba($blue4, 0.3);
+        border-color: $blue4;
+    }
+
+    .flexlayout__outline_rect {
+        border-color: $blue4;
+    }
+
+    .flexlayout__tab_button_trailing {
+        color: $light-gray3;
+    }
+
+    .flexlayout__tab_button_overflow {
+        color: $light-gray3;
+    }
+}
+
+// =====================================================
+// PV Generator overflow fix (was .lm_content:has(.pv-generator-widget))
+// =====================================================
+.flexlayout__tab:has(.pv-generator-widget) {
+    overflow: auto;
+}

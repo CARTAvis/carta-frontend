@@ -92,7 +92,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     };
 
-    // overwrite scrollToRegion to avoid crush when viewportRect is undefined (unpin action with goldenLayout)
+    // overwrite scrollToRegion to avoid crush when viewportRect is undefined (unpin action with flexlayout)
     // https://github.com/palantir/blueprint/blob/841b2e12fec1970704b754f7794c683c735d0439/packages/table/src/table.tsx#L761
     scrollToRegion = (ref, region) => {
         if (ref) {

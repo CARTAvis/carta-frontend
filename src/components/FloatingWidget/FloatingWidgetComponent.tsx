@@ -2,7 +2,6 @@ import * as React from "react";
 import {Rnd} from "react-rnd";
 import {Classes, Icon, Position, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
-import type * as GoldenLayout from "golden-layout";
 import {observer} from "mobx-react";
 
 import {PlaceholderComponent, PvPreviewComponent, RenderConfigComponent} from "components";
@@ -27,17 +26,13 @@ class FloatingWidgetComponentProps {
 export class FloatingWidgetComponent extends React.Component<FloatingWidgetComponentProps> {
     private static readonly HeaderHeight = 25;
     private static readonly RootMenuHeight = 40;
-    private pinElementRef: HTMLElement | null = null;
     private rnd: Rnd | null = null;
 
     componentDidMount() {
-        this.updateDragSource();
         this.updatePositionAndSize();
     }
 
     componentDidUpdate(prevProps: FloatingWidgetComponentProps) {
-        this.updateDragSource();
-
         const prevConfig = prevProps.widgetConfig;
         const currConfig = this.props.widgetConfig;
 
@@ -52,36 +47,34 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         }
     }
 
-    updateDragSource() {
+    private handlePinDragStart = (e: React.DragEvent) => {
         const layoutStore = LayoutStore.Instance;
-        if (layoutStore.dockedLayout && this.pinElementRef) {
-            // Check for existing drag sources
-            const layout = layoutStore.dockedLayout;
-            const matchingSources = layout["_dragSources"].filter(d => d._itemConfig.id === this.props.widgetConfig.id);
-            const existingSource = matchingSources.find(d => d._element[0] === this.pinElementRef);
-            if (existingSource) {
-                return;
-            }
+        const layoutRef = layoutStore.layoutRef;
+        const widgetConfig = this.props.widgetConfig;
 
-            // Render config widget
-            const itemConfig: GoldenLayout.ItemConfigType = {
-                type: "react-component",
-                component: this.props.widgetConfig.type,
-                title: this.props.widgetConfig.title,
-                id: this.props.widgetConfig.id,
-                isClosable: this.props.widgetConfig.isCloseable,
-                props: {id: this.props.widgetConfig.type === PvPreviewComponent.WIDGET_CONFIG.type ? this.props.widgetConfig.parentId : this.props.widgetConfig.id, docked: true}
+        if (layoutRef?.current) {
+            const tabJson: any = {
+                type: "tab",
+                component: widgetConfig.type,
+                name: widgetConfig.title || widgetConfig.type,
+                id: widgetConfig.id
             };
 
-            if (this.props.widgetConfig.type === PlaceholderComponent.WIDGET_CONFIG.type) {
-                itemConfig.props.label = this.props.widgetConfig.title;
+            if (widgetConfig.type === PlaceholderComponent.WIDGET_CONFIG.type) {
+                tabJson.config = {id: widgetConfig.id, label: widgetConfig.title};
+            } else if (widgetConfig.type === PvPreviewComponent.WIDGET_CONFIG.type) {
+                tabJson.config = {id: widgetConfig.parentId};
+            } else {
+                tabJson.config = {id: widgetConfig.id};
             }
 
-            if (this.pinElementRef && itemConfig) {
-                layout.createDragSource(this.pinElementRef, itemConfig);
-            }
+            layoutRef.current.addTabWithDragAndDrop(e.nativeEvent, tabJson, node => {
+                if (node) {
+                    AppStore.Instance.widgetsStore.removeFloatingWidget(widgetConfig.id, true);
+                }
+            });
         }
-    }
+    };
 
     private updatePositionAndSize = () => {
         const widgetConfig = this.props.widgetConfig;
@@ -171,15 +164,13 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 dragGrid={[25, 25]}
                 minWidth={widgetConfig.minWidth}
                 minHeight={widgetConfig.minHeight + headerHeight}
-                bounds={".gl-container-app"}
+                bounds={".layout-container"}
                 dragHandleClassName={"floating-title"}
                 onMouseDown={this.props.onSelected}
                 onDragStop={(e, data) => {
                     widgetConfig.setDefaultPosition(data.lastX, data.lastY);
                 }}
                 onResizeStop={(e, direction, element, delta, position) => {
-                    // manually add the height of the root-menu div to position y
-                    // work-around for the change of the position definition from react-rnd v9 (absolute position) to v10 (relative position from the bounds)
                     const absPosition = {x: position.x, y: position.y + FloatingWidgetComponent.RootMenuHeight};
                     widgetConfig.setDefaultPosition(absPosition.x, absPosition.y);
                     widgetConfig.setDefaultSize(widgetConfig.defaultWidth + delta.width, widgetConfig.defaultHeight + delta.height);
@@ -208,7 +199,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                         </div>
                     )}
                     {this.props.showPinButton && (
-                        <div className={buttonClass} ref={ref => (this.pinElementRef = ref)} onClick={() => console.log("pin!")} data-testid={this.props.widgetConfig?.id + "-header-dock-button"}>
+                        <div className={buttonClass} draggable onDragStart={this.handlePinDragStart} data-testid={this.props.widgetConfig?.id + "-header-dock-button"}>
                             <Tooltip content="Drag pin to dock this widget" position={Position.BOTTOM_RIGHT}>
                                 <Icon icon={"pin"} />
                             </Tooltip>

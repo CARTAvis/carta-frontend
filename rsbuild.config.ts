@@ -23,7 +23,6 @@ export default defineConfig({
         decorators: {
             version: "legacy",
         },
-        preEntry: "./src/setupGoldenLayout.ts",
         define: {
             'process.env.BUILD_DATE': JSON.stringify(new Date().toISOString()),
         },
