@@ -25,7 +25,7 @@ const INFO_HEIGHT_MAX = 100;
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     private widgetId: string;
-    private widgetStoreRef!: SpectralProfileWidgetStore;
+    private readonly widgetStoreRef: SpectralProfileWidgetStore;
     private readonly disposers: IReactionDisposer[] = [];
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
