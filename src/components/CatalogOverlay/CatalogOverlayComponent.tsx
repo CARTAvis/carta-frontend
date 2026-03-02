@@ -1,5 +1,5 @@
 import * as React from "react";
-import SplitPane, {Pane} from "react-split-pane";
+import {Pane, SplitPane} from "react-split-pane";
 import {AnchorButton, Button, ButtonGroup, Classes, FormGroup, HTMLTable, Intent, MenuItem, NonIdealState, PopoverPosition, Pre, Switch, Tooltip} from "@blueprintjs/core";
 import {type ItemPredicate, type ItemRendererProps, Select} from "@blueprintjs/select";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
@@ -657,7 +657,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return <MenuItem key={plotType} text={plotType} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
-    @action private handleSplitChange = (newSize: number) => {
+    @action private handleSplitChange = (sizes: number[]) => {
+        const newSize = sizes[1]; // second pane (data table) size
         // 130 is from 132, the height of widget excluding the header and table, subtracting 2 for the split bar width(?)
         const position = clamp((newSize / (this.height - 130)) * 100, CatalogWidgetStore.MinTableSeparatorPosition, CatalogWidgetStore.MaxTableSeparatorPosition);
         if (position) {
@@ -882,18 +883,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             <AnchorButton onClick={() => this.shortcutoOnClick(CatalogSettingsTabs.ORIENTATION)}>Orientation</AnchorButton>
                         </ButtonGroup>
                     </div>
-                    <SplitPane
-                        className="catalog-table"
-                        split="horizontal"
-                        primary={"second"}
-                        minSize={`${CatalogWidgetStore.MinTableSeparatorPosition}%`}
-                        maxSize={`${CatalogWidgetStore.MaxTableSeparatorPosition}%`}
-                        size={catalogWidgetStore.tableSeparatorPosition}
-                        onDragFinished={this.handleSplitChange}
-                        onResizerDoubleClick={this.handleHideHeader}
-                    >
+                    <SplitPane className="catalog-table" direction="vertical" onResizeEnd={this.handleSplitChange}>
                         <Pane className={"catalog-overlay-column-header-container"}>{this.createHeaderTable()}</Pane>
-                        <Pane className={"catalog-overlay-data-container"}>
+                        <Pane
+                            className={"catalog-overlay-data-container"}
+                            minSize={`${CatalogWidgetStore.MinTableSeparatorPosition}%`}
+                            maxSize={`${CatalogWidgetStore.MaxTableSeparatorPosition}%`}
+                            size={catalogWidgetStore.tableSeparatorPosition}
+                        >
                             <FilterableTableComponent {...dataTableProps} />
                         </Pane>
                     </SplitPane>

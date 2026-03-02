@@ -1,5 +1,5 @@
 import * as React from "react";
-import SplitPane, {Pane} from "react-split-pane";
+import {Pane, SplitPane} from "react-split-pane";
 import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay2, Popover, Position, Pre, Spinner, Switch, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
 import {type CARTA} from "carta-protobuf";
@@ -421,9 +421,9 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                 <div className="spectral-line-query-widget">
                     <div className={Classes.DIALOG_BODY}>
                         {queryPanel}
-                        <SplitPane className="body-split-pane" split="horizontal" primary={"second"} defaultSize={"60%"} minSize={"5%"} onChange={this.onTableResize}>
+                        <SplitPane className="body-split-pane" direction="vertical" onResize={this.onTableResize}>
                             <Pane className={"header-table-container"}>{this.width > 0 && this.createHeaderTable()}</Pane>
-                            <Pane className={"result-table-container"}>
+                            <Pane className={"result-table-container"} defaultSize={"60%"} minSize={"5%"}>
                                 {redshiftPanel}
                                 <div className="result-table">{this.width > 0 && <FilterableTableComponent {...queryResultTableProps} />}</div>
                             </Pane>
