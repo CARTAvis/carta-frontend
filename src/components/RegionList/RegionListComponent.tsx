@@ -4,7 +4,7 @@ import {List} from "react-window";
 import {AnchorButton, ButtonGroup, Classes, Icon, NonIdealState, Position, Spinner, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
-import {action, computed, makeObservable, observable, reaction} from "mobx";
+import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector} from "components/Shared";
@@ -58,6 +58,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     @observable lastVisibleRow: number = 0;
     @observable regionsVisibility: RegionsOpacity = RegionsOpacity.Visible;
     @observable regionsLock: boolean = false;
+    private readonly disposers: IReactionDisposer[] = [];
 
     private scrollToSelected = (selected: any) => {
         const listRefCurrent = this.listRef.current;
@@ -72,15 +73,22 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         super(props);
         makeObservable(this);
 
-        reaction(
-            () => AppStore.Instance.activeFrame?.regionSet?.selectedRegion?.regionId,
-            id => {
-                if (id && id > 0) {
-                    const validRegionId = this.validRegions.map(el => el.regionId);
-                    this.scrollToSelected(validRegionId.findIndex(element => element === id));
+        this.disposers.push(
+            reaction(
+                () => AppStore.Instance.activeFrame?.regionSet?.selectedRegion?.regionId,
+                id => {
+                    if (id && id > 0) {
+                        const validRegionId = this.validRegions.map(el => el.regionId);
+                        this.scrollToSelected(validRegionId.findIndex(element => element === id));
+                    }
                 }
-            }
+            )
         );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     @action private onResize = (width: number, height: number) => {

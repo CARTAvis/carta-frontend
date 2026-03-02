@@ -79,7 +79,7 @@ export class FileBrowserStore {
     @observable saveRestFreq: Freq = {value: 0, unit: FrequencyUnit.MHZ};
     @observable shouldDropDegenerateAxes: boolean = false;
 
-    private extendedDelayHandle: any;
+    private extendedDelayHandle: ReturnType<typeof setTimeout> | undefined;
 
     constructor() {
         makeObservable(this);
@@ -170,10 +170,8 @@ export class FileBrowserStore {
     }
 
     private clearExtendedDelayTimer(resetState: boolean = false) {
-        if (this.extendedDelayHandle) {
-            clearTimeout(this.extendedDelayHandle);
-            this.extendedDelayHandle = null;
-        }
+        clearTimeout(this.extendedDelayHandle);
+        this.extendedDelayHandle = undefined;
         if (resetState) {
             this.setExtendedLoading(false);
         }

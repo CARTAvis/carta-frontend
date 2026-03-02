@@ -27,11 +27,16 @@ export class RootMenuComponent extends React.Component {
         this.disableCheckRelease = !this.disableCheckRelease;
     };
 
-    private documentationAlertTimeoutHandle;
+    private documentationAlertTimeoutHandle: ReturnType<typeof setTimeout> | undefined;
 
     constructor(props: any) {
         super(props);
         makeObservable(this);
+    }
+
+    componentWillUnmount() {
+        clearTimeout(this.documentationAlertTimeoutHandle);
+        this.documentationAlertTimeoutHandle = undefined;
     }
 
     private handleDashboardClicked = () => {
@@ -540,6 +545,7 @@ export class RootMenuComponent extends React.Component {
         if (process.env.PUBLIC_REACT_APP_TARGET !== "linux" && process.env.PUBLIC_REACT_APP_TARGET !== "darwin") {
             this.documentationAlertVisible = true;
             clearTimeout(this.documentationAlertTimeoutHandle);
+            this.documentationAlertTimeoutHandle = undefined;
             this.documentationAlertTimeoutHandle = setTimeout(() => (this.documentationAlertVisible = false), 10000);
         }
     };

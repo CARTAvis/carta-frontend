@@ -1,7 +1,7 @@
 import type {NumberRange} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
 import {POLARIZATIONS, RegionId, SpectralSystem, SpectralType, SpectralUnit, SystemType} from "enums";
 import {
@@ -103,7 +103,7 @@ export class FrameStore {
 
     private spectralTransformAST: AST.FrameSet | null = null;
     private cachedTransformedWcsInfo: AST.FrameSet = -1;
-    private zoomTimeoutHandler;
+    private zoomTimeoutHandler: ReturnType<typeof setTimeout> | undefined;
 
     private dirAxis: number = -1;
     private dirAxisSize: number = -1;
@@ -129,7 +129,9 @@ export class FrameStore {
     public spectralCoordsSupported: Map<string | undefined, {type: SpectralType | null; unit: SpectralUnit | null}> | null = null;
     public spectralSystemsSupported: Array<SpectralSystem> | null = null;
     public spatialTransformAST: AST.Mapping | null = null;
-    private cursorMovementHandle: NodeJS.Timeout | undefined = undefined;
+    private cursorMovementHandle: ReturnType<typeof setTimeout> | undefined = undefined;
+    private readonly disposers: IReactionDisposer[] = [];
+    private isDisposed = false;
 
     public restFreqStore: RestFreqStore;
 
@@ -402,6 +404,7 @@ export class FrameStore {
             adjTranslation = rotate2D(adjTranslation, -this.spatialTransform.rotation);
             if ((this.cachedTransformedWcsInfo as number) > 0) {
                 AST.deleteObject(this.cachedTransformedWcsInfo);
+                this.cachedTransformedWcsInfo = -1;
             }
 
             if (this.spatialReference.isOffsetCoord && !this.wcsInfoOffset) {
@@ -1435,105 +1438,143 @@ export class FrameStore {
         this.cursorValue = {position: {x: NaN, y: NaN}, channel: 0, value: NaN};
         this.cursorMoving = false;
 
-        reaction(
-            () => this.restFreqStore.restFreqInHz,
-            restFreq => {
-                if (this.restFreqStore.inValidInput || !restFreq || !isFinite(restFreq)) {
-                    return;
-                }
+        this.disposers.push(
+            reaction(
+                () => this.restFreqStore.restFreqInHz,
+                restFreq => {
+                    if (this.restFreqStore.inValidInput || !restFreq || !isFinite(restFreq)) {
+                        return;
+                    }
 
-                if (this.wcsInfo3D) {
-                    AST.set(this.wcsInfo3D, `RestFreq=${restFreq} Hz`);
-                }
-                if (this.spectralFrame) {
-                    AST.set(this.spectralFrame, `RestFreq=${restFreq} Hz`);
-                }
+                    if (this.wcsInfo3D) {
+                        AST.set(this.wcsInfo3D, `RestFreq=${restFreq} Hz`);
+                    }
+                    if (this.spectralFrame) {
+                        AST.set(this.spectralFrame, `RestFreq=${restFreq} Hz`);
+                    }
 
-                if (this.spectralReference) {
-                    const spectralReference = this.spectralReference;
-                    this.clearSpectralReference();
-                    this.setSpectralReference(spectralReference);
-                } else if (this.secondarySpectralImages.length > 0) {
-                    for (const frame of this.secondarySpectralImages) {
-                        frame.clearSpectralReference();
-                        frame.setSpectralReference(this);
+                    if (this.spectralReference) {
+                        const spectralReference = this.spectralReference;
+                        this.clearSpectralReference();
+                        this.setSpectralReference(spectralReference);
+                    } else if (this.secondarySpectralImages.length > 0) {
+                        for (const frame of this.secondarySpectralImages) {
+                            frame.clearSpectralReference();
+                            frame.setSpectralReference(this);
+                        }
                     }
                 }
-            }
+            )
         );
 
-        autorun(() => {
-            const overlaySettings = AppStore.Instance.overlaySettings;
-            const formatStringX = overlaySettings?.numbers?.formatStringX;
-            const formatStyingY = overlaySettings?.numbers?.formatStringY;
-            const explicitSystem = overlaySettings?.global?.explicitSystem;
-            this.updateWcsSystem(formatStringX, formatStyingY, explicitSystem);
-        });
+        this.disposers.push(
+            autorun(() => {
+                const overlaySettings = AppStore.Instance.overlaySettings;
+                const formatStringX = overlaySettings?.numbers?.formatStringX;
+                const formatStyingY = overlaySettings?.numbers?.formatStringY;
+                const explicitSystem = overlaySettings?.global?.explicitSystem;
+                this.updateWcsSystem(formatStringX, formatStyingY, explicitSystem);
+            })
+        );
 
         // requiredFrameViewForRegionRender is a copy of requiredFrameView in non-observable version,
         // to avoid triggering wasted render() in PointRegionComponent/SimpleShapeRegionComponent/LineSegmentRegionComponent
-        autorun(() => {
-            if (this.requiredFrameView) {
-                this.requiredFrameViewForRegionRender = this.requiredFrameView;
-            }
-        });
-
-        autorun(() => {
-            // update zoomLevel when image viewer is available for drawing
-            if (this.isRenderable && this.zoomLevel <= 0) {
-                this.setZoom(this.zoomLevelForFit);
-            }
-        });
-
-        autorun(() => {
-            const type = this.spectralType;
-            const unit = this.spectralUnit;
-            /* eslint-disable @typescript-eslint/no-unused-vars */
-            const specsys = this.spectralSystem;
-            const restFreq = this.restFreqStore.restFreqInHz;
-            /* eslint-enable @typescript-eslint/no-unused-vars */
-            if (this.channelInfo) {
-                if (!type && !unit) {
-                    this.setChannelValues(this.channelInfo.values);
-                } else if (this.isCoordChannel) {
-                    this.setChannelValues(this.channelInfo.indexes);
-                } else {
-                    this.setChannelValues(this.isSpectralPropsEqual ? this.channelInfo.values : this.convertSpectral(this.channelInfo.values));
+        this.disposers.push(
+            autorun(() => {
+                if (this.requiredFrameView) {
+                    this.requiredFrameViewForRegionRender = this.requiredFrameView;
                 }
-            }
-        });
+            })
+        );
 
-        autorun(() => {
-            const typeSecondary = this.spectralTypeSecondary;
-            const unitSecondary = this.spectralUnitSecondary;
-            /* eslint-disable @typescript-eslint/no-unused-vars */
-            const specsys = this.spectralSystem;
-            const restFreq = this.restFreqStore.restFreqInHz;
-            /* eslint-enable @typescript-eslint/no-unused-vars */
-            if (this.channelInfo) {
-                if (!typeSecondary && !unitSecondary) {
-                    this.setChannelSecondaryValues(this.channelInfo.values);
-                } else if (this.isCoordChannelSecondary) {
-                    this.setChannelSecondaryValues(this.channelInfo.indexes);
-                } else {
-                    this.setChannelSecondaryValues(this.isSecondarySpectralPropsEqual ? this.channelInfo.values : this.convertSpectralSecondary(this.channelInfo.values));
+        this.disposers.push(
+            autorun(() => {
+                // update zoomLevel when image viewer is available for drawing
+                if (this.isRenderable && this.zoomLevel <= 0) {
+                    this.setZoom(this.zoomLevelForFit);
                 }
-            }
-        });
+            })
+        );
+
+        this.disposers.push(
+            autorun(() => {
+                const type = this.spectralType;
+                const unit = this.spectralUnit;
+                /* eslint-disable @typescript-eslint/no-unused-vars */
+                const specsys = this.spectralSystem;
+                const restFreq = this.restFreqStore.restFreqInHz;
+                /* eslint-enable @typescript-eslint/no-unused-vars */
+                if (this.channelInfo) {
+                    if (!type && !unit) {
+                        this.setChannelValues(this.channelInfo.values);
+                    } else if (this.isCoordChannel) {
+                        this.setChannelValues(this.channelInfo.indexes);
+                    } else {
+                        this.setChannelValues(this.isSpectralPropsEqual ? this.channelInfo.values : this.convertSpectral(this.channelInfo.values));
+                    }
+                }
+            })
+        );
+
+        this.disposers.push(
+            autorun(() => {
+                const typeSecondary = this.spectralTypeSecondary;
+                const unitSecondary = this.spectralUnitSecondary;
+                /* eslint-disable @typescript-eslint/no-unused-vars */
+                const specsys = this.spectralSystem;
+                const restFreq = this.restFreqStore.restFreqInHz;
+                /* eslint-enable @typescript-eslint/no-unused-vars */
+                if (this.channelInfo) {
+                    if (!typeSecondary && !unitSecondary) {
+                        this.setChannelSecondaryValues(this.channelInfo.values);
+                    } else if (this.isCoordChannelSecondary) {
+                        this.setChannelSecondaryValues(this.channelInfo.indexes);
+                    } else {
+                        this.setChannelSecondaryValues(this.isSecondarySpectralPropsEqual ? this.channelInfo.values : this.convertSpectralSecondary(this.channelInfo.values));
+                    }
+                }
+            })
+        );
 
         // Update the image view raster tiles in channel map mode
-        reaction(
-            () => this.stokes,
-            () => {
-                const channelMapStore = AppStore.Instance.channelMapStore;
-                if (this.requiredFrameView && channelMapStore.channelMapEnabled) {
-                    channelMapStore.handlePolarizationChanged(this);
+        this.disposers.push(
+            reaction(
+                () => this.stokes,
+                () => {
+                    const channelMapStore = AppStore.Instance.channelMapStore;
+                    if (this.requiredFrameView && channelMapStore.channelMapEnabled) {
+                        channelMapStore.handlePolarizationChanged(this);
+                    }
                 }
-            }
+            )
         );
 
         makeObservable(this);
     }
+
+    public dispose = () => {
+        if (this.isDisposed) {
+            return;
+        }
+        this.isDisposed = true;
+
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
+        clearTimeout(this.zoomTimeoutHandler);
+        this.zoomTimeoutHandler = undefined;
+        clearTimeout(this.cursorMovementHandle);
+        this.cursorMovementHandle = undefined;
+
+        // Release AST handles owned by this frame to avoid leaking objects in the WASM heap.
+        const astHandles = [this.spectralFrame, this.wcsInfo, this.wcsInfo3D, this.wcsInfoForTransformation, this.wcsInfoOffset, this.spatialTransformAST, this.spectralTransformAST, this.cachedTransformedWcsInfo] as unknown[];
+        const deletedHandles = new Set<number>();
+        astHandles.forEach(handle => {
+            if (typeof handle === "number" && handle > 0 && !deletedHandles.has(handle)) {
+                AST.deleteObject(handle as unknown as AST.AstObject);
+                deletedHandles.add(handle);
+            }
+        });
+    };
 
     updateWcsSystem = (formatStringX: string | undefined, formatStyingY: string | undefined, explicitSystem: SystemType | undefined) => {
         if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined) {
@@ -1935,6 +1976,9 @@ export class FrameStore {
 
     public updateSpectralVsDirectionWcs = () => {
         if (this.wcsInfo3D) {
+            if (this.wcsInfo && this.wcsInfo !== this.wcsInfo3D) {
+                AST.deleteObject(this.wcsInfo);
+            }
             this.wcsInfo = AST.makeSwappedFrameSet(this.wcsInfo3D, this.dirAxis, this.spectral, this.requiredChannel, this.dirAxisSize);
             AST.set(this.wcsInfo, `Format(${this.dirAxis})=${this.dirAxisFormat}, Unit(${this.dirAxis})=""`);
         }
@@ -1967,10 +2011,8 @@ export class FrameStore {
     }
 
     private replaceZoomTimeoutHandler = () => {
-        if (this.zoomTimeoutHandler) {
-            clearTimeout(this.zoomTimeoutHandler);
-        }
-
+        clearTimeout(this.zoomTimeoutHandler);
+        this.zoomTimeoutHandler = undefined;
         this.zoomTimeoutHandler = setTimeout(this.endZoom, FrameStore.ZoomInertiaDuration);
     };
 
@@ -2295,6 +2337,7 @@ export class FrameStore {
             if (this.wcsInfo && this.offsetCenter) {
                 if (this.wcsInfoOffset) {
                     AST.deleteObject(this.wcsInfoOffset);
+                    this.wcsInfoOffset = undefined as any;
                 }
 
                 const centerInRad = getUnformattedWCSPoint(this.wcsInfo, this.offsetCenter);
@@ -2304,6 +2347,9 @@ export class FrameStore {
                     for (const frame of this.secondarySpatialImages) {
                         const frameCenterInRad = getUnformattedWCSPoint(frame.wcsInfo, frame.offsetCenter);
                         if (frame.isOffsetCoord && frameCenterInRad && frame.spatialTransform) {
+                            if (frame.wcsInfoOffset) {
+                                AST.deleteObject(frame.wcsInfoOffset);
+                            }
                             frame.wcsInfoOffset = AST.createOffsetFrameset(
                                 frame.wcsInfo,
                                 frameCenterInRad.x,
@@ -2780,6 +2826,7 @@ export class FrameStore {
         }
         this.cursorMoving = true;
         clearTimeout(this.cursorMovementHandle);
+        this.cursorMovementHandle = undefined;
         this.cursorMovementHandle = setTimeout(this.endCursorMove, FrameStore.CursorMovementDuration);
     };
 
@@ -2997,6 +3044,10 @@ export class FrameStore {
             }
         }
 
+        if (this.spatialTransformAST) {
+            AST.deleteObject(this.spatialTransformAST);
+            this.spatialTransformAST = null;
+        }
         this.spatialTransformAST = AST.getSpatialMapping(this.wcsInfo, frame.wcsInfo);
 
         if (!this.spatialTransformAST) {
@@ -3128,6 +3179,10 @@ export class FrameStore {
         }
         AST.invert(copySrc);
         AST.invert(copyDest);
+        if (this.spectralTransformAST) {
+            AST.deleteObject(this.spectralTransformAST);
+            this.spectralTransformAST = null;
+        }
         this.spectralTransformAST = AST.convert(copySrc, copyDest, "");
         AST.deleteObject(copySrc);
         AST.deleteObject(copyDest);
@@ -3338,6 +3393,12 @@ export class FrameStore {
         // Update wcsInfo
         const astFrameSet = this.initPVFrame();
         if (astFrameSet) {
+            if (this.spectralFrame) {
+                AST.deleteObject(this.spectralFrame);
+            }
+            if (this.wcsInfo && this.wcsInfo !== this.wcsInfo3D) {
+                AST.deleteObject(this.wcsInfo);
+            }
             this.spectralFrame = AST.getSpectralFrame(astFrameSet);
             this.wcsInfo = AST.copy(astFrameSet);
             AST.deleteObject(astFrameSet);

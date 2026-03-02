@@ -159,7 +159,7 @@ export class AppStore {
     private appContainer: HTMLElement | null = null;
     private fileCounter = 0;
     private previousConnectionStatus: ConnectionStatus;
-    private canvasUpdatedTimer;
+    private canvasUpdatedTimer: ReturnType<typeof setTimeout> | undefined;
 
     public getAppContainer = (): HTMLElement | null => {
         return this.appContainer;
@@ -1045,6 +1045,8 @@ export class AppStore {
                         CatalogStore.Instance.resetActiveCatalogFile(firstFrame.frameInfo.fileId);
                     }
                 }
+
+                frame.dispose?.();
             }
         }
     };
@@ -1067,6 +1069,7 @@ export class AppStore {
                 this.widgetsStore.removeFloatingWidget(key);
             });
             this.frames.forEach(frame => {
+                frame.dispose?.();
                 frame.clearContours(false);
                 const fileId = frame.frameInfo.fileId;
                 this.telemetryService.addFileCloseEntry(fileId);
@@ -1086,6 +1089,8 @@ export class AppStore {
      * @param previewId - The file id of the image cube from which the PV preview was created.
      */
     @action removePreviewFrame = (previewId: number) => {
+        const previewFrame = this.previewFrames.get(previewId);
+        previewFrame?.dispose?.();
         if (this.previewFrames.delete(previewId)) {
             this.backendService.closePvPreview(previewId);
             this.setActiveImage(this.imageViewConfigStore.visibleImages[0]);
@@ -3462,6 +3467,7 @@ export class AppStore {
 
     setCanvasUpdated = () => {
         clearTimeout(this.canvasUpdatedTimer);
+        this.canvasUpdatedTimer = undefined;
         this.canvasUpdatedTimer = setTimeout(() => this.setIsCanvasUpdated(true), EXPORT_IMAGE_DELAY);
     };
 

@@ -122,6 +122,10 @@ export class WidgetProps {
     floatingSettingsId?: string;
 }
 
+interface Disposable {
+    dispose(): void;
+}
+
 export class WidgetsStore {
     private static staticInstance: WidgetsStore;
 
@@ -504,11 +508,23 @@ export class WidgetsStore {
         return this.defaultFloatingWidgetOffset;
     };
 
+    private static isDisposable = (store: unknown): store is Disposable => {
+        return typeof (store as Disposable | undefined)?.dispose === "function";
+    };
+
     public removeWidget = (widgetId: string, widgetType: string) => {
         const widgets = this.widgetsMap.get(widgetType);
         if (widgets) {
             // remove associated floating settings according current widgetId
             this.removeAssociatedFloatingSetting(widgetId);
+            const store = widgets.get(widgetId) as unknown;
+            if (WidgetsStore.isDisposable(store)) {
+                try {
+                    store.dispose();
+                } catch (err) {
+                    console.error(`Failed to dispose widget store (type=${widgetType}, id=${widgetId})`, err);
+                }
+            }
             widgets.delete(widgetId);
         }
         // remove floating settings according floating settings Id

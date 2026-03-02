@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed incorrect colormap–name pairing ([#2628](https://github.com/CARTAvis/carta-frontend/issues/2628)).
 * Fixed vector overlay not updating after session resume ([#2217](https://github.com/CARTAvis/carta-frontend/issues/2217)).
 * Fixed the inconsistent input of vector overlay pixel averaging between the vector overlay dialog and preferences dialog ([#2612](https://github.com/CARTAvis/carta-frontend/issues/2612)).
+* Improved region dragging performance after toggling the spectral profile widget several times ([#2637](https://github.com/CARTAvis/carta-frontend/issues/2637)).
 ### Changed
 * Set the default aspect ratio to unity when images lacked valid WCS information ([#2604](https://github.com/CARTAvis/carta-frontend/issues/2604)).
 * Changed to retrieve all columns instead of default columns from vizier ([#1958](https://github.com/CARTAvis/carta-frontend/issues/1958)).
