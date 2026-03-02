@@ -2,7 +2,7 @@ import * as React from "react";
 import {NonIdealState} from "@blueprintjs/core";
 import {type CARTA} from "carta-protobuf";
 import * as _ from "lodash";
-import {autorun, computed, makeObservable} from "mobx";
+import {autorun, computed, type IReactionDisposer, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
@@ -20,6 +20,7 @@ import "./HistogramComponent.scss";
 @observer
 export class HistogramComponent extends React.Component<WidgetProps> {
     private widgetId: string;
+    private readonly disposers: IReactionDisposer[] = [];
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -162,32 +163,39 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         makeObservable(this);
 
         // Update widget title when region or coordinate changes
-        autorun(() => {
-            if (this.widgetStore && this.widgetStore.effectiveFrame) {
-                let regionString = "Unknown";
-                const regionId = this.widgetStore.effectiveRegionId;
+        this.disposers.push(
+            autorun(() => {
+                if (this.widgetStore && this.widgetStore.effectiveFrame) {
+                    let regionString = "Unknown";
+                    const regionId = this.widgetStore.effectiveRegionId;
 
-                if (regionId === -1) {
-                    regionString = "Image";
-                } else if (this.widgetStore.effectiveFrame.regionSet) {
-                    const region = this.widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
-                    if (region) {
-                        regionString = region.nameString;
+                    if (regionId === -1) {
+                        regionString = "Image";
+                    } else if (this.widgetStore.effectiveFrame.regionSet) {
+                        const region = this.widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
+                        if (region) {
+                            regionString = region.nameString;
+                        }
+                    }
+                    const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
+                    appStore.widgetsStore.setWidgetTitle(this.widgetId, `Histogram: ${regionString} ${selectedString}`);
+                } else {
+                    appStore.widgetsStore.setWidgetTitle(this.widgetId, `Histogram`);
+                }
+                const widgetStore = this.widgetStore;
+                if (widgetStore) {
+                    const currentData = this.plotData;
+                    if (currentData) {
+                        widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
                     }
                 }
-                const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                appStore.widgetsStore.setWidgetTitle(this.widgetId, `Histogram: ${regionString} ${selectedString}`);
-            } else {
-                appStore.widgetsStore.setWidgetTitle(this.widgetId, `Histogram`);
-            }
-            const widgetStore = this.widgetStore;
-            if (widgetStore) {
-                const currentData = this.plotData;
-                if (currentData) {
-                    widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
-                }
-            }
-        });
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     componentDidUpdate() {

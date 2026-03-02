@@ -2,7 +2,7 @@ import * as React from "react";
 import {AnchorButton, Button, ButtonGroup, Classes, Collapse, Colors, FormGroup, Icon, MenuItem, PopoverPosition, Switch, Tab, Tabs, Tooltip} from "@blueprintjs/core";
 import {type ItemPredicate, type ItemRendererProps, Select} from "@blueprintjs/select";
 import FuzzySearch from "fuzzy-search";
-import {action, autorun, computed, makeObservable} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {CatalogOverlayComponent} from "components";
@@ -41,6 +41,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     private catalogFileNames: Map<number, string>;
     private widgetId: string;
     private floatingSettingsId: string | undefined;
+    private readonly disposers: IReactionDisposer[] = [];
     private catalogOverlayShape: Array<CatalogOverlayShape> = [
         CatalogOverlayShape.BOX_LINED,
         CatalogOverlayShape.CIRCLE_FILLED,
@@ -113,28 +114,35 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
 
         makeObservable(this);
 
-        autorun(() => {
-            const catalogStore = CatalogStore.Instance;
-            const catalogFileId = this.catalogFileId;
-            if (catalogFileId !== undefined) {
-                const catalogWidgetStoreId = catalogStore.catalogWidgets.get(catalogFileId);
-                const activeFiles = catalogStore.activeCatalogFiles;
-                if (!catalogWidgetStoreId) {
-                    WidgetsStore.Instance.addCatalogWidget(catalogFileId);
-                }
+        this.disposers.push(
+            autorun(() => {
+                const catalogStore = CatalogStore.Instance;
+                const catalogFileId = this.catalogFileId;
+                if (catalogFileId !== undefined) {
+                    const catalogWidgetStoreId = catalogStore.catalogWidgets.get(catalogFileId);
+                    const activeFiles = catalogStore.activeCatalogFiles;
+                    if (!catalogWidgetStoreId) {
+                        WidgetsStore.Instance.addCatalogWidget(catalogFileId);
+                    }
 
-                if (activeFiles?.includes(catalogFileId)) {
-                    const fileName = catalogStore.getCatalogFileNames([catalogFileId]).get(catalogFileId);
-                    if (fileName && this.floatingSettingsId) {
-                        appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Catalog Settings: ${fileName}`);
-                    }
-                } else {
-                    if (this.floatingSettingsId) {
-                        appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Catalog Settings`);
+                    if (activeFiles?.includes(catalogFileId)) {
+                        const fileName = catalogStore.getCatalogFileNames([catalogFileId]).get(catalogFileId);
+                        if (fileName && this.floatingSettingsId) {
+                            appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Catalog Settings: ${fileName}`);
+                        }
+                    } else {
+                        if (this.floatingSettingsId) {
+                            appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Catalog Settings`);
+                        }
                     }
                 }
-            }
-        });
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     @action handleCatalogFileChange = (fileId: number) => {

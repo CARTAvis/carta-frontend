@@ -106,6 +106,7 @@ export class LinePlotComponentProps {
     order?: number;
     multiPlotPropsMap?: Map<string, MultiPlotProps>;
     fullResolutionData?: Point2D[];
+    exportCommentsGenerator?: (plotKey: string, plot: MultiPlotProps) => string[] | undefined;
 }
 
 // Maximum time between double clicks
@@ -130,7 +131,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     private stageClickStartY?: number;
     private panPrevious: number;
     private previousClickTime: number;
-    private pendingClickHandle;
+    private pendingClickHandle: ReturnType<typeof setTimeout> | undefined;
 
     @observable chartArea: ChartArea;
     @observable hoveredMarker: LineMarker;
@@ -149,6 +150,11 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     @computed get isPanning() {
         return this.interactionMode === InteractionMode.PANNING;
+    }
+
+    componentWillUnmount() {
+        clearTimeout(this.pendingClickHandle);
+        this.pendingClickHandle = undefined;
     }
 
     get zoomMode(): ZoomMode {
@@ -474,8 +480,11 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         if (delta < DOUBLE_CLICK_THRESHOLD) {
             this.onStageDoubleClick();
             clearTimeout(this.pendingClickHandle);
+            this.pendingClickHandle = undefined;
             return;
         } else {
+            clearTimeout(this.pendingClickHandle);
+            this.pendingClickHandle = undefined;
             this.pendingClickHandle = setTimeout(() => {
                 // Ignore click-drags for click handling
                 const mouseMoveDist = {x: Math.abs(mousePoint.x - (this.stageClickStartX ?? 0)), y: Math.abs(mousePoint.y - (this.stageClickStartY ?? 0))};
@@ -717,7 +726,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             if (this.props.comments && this.props.comments.length > 0) {
                 comment += "\n" + this.props.comments.map(c => "# " + c).join("\n");
             }
-            multiPlotProp.comments?.forEach(comment => rows.push(`# ${comment}\t`));
+            const commentsForExport = this.props.exportCommentsGenerator?.(key, multiPlotProp) ?? multiPlotProp.comments;
+            commentsForExport?.forEach(comment => rows.push(`# ${comment}\t`));
 
             // data part
             let columnsHeader = "# x\ty";

@@ -27,10 +27,11 @@ interface BiasContrastSelectComponentProps {
 
 @observer
 export class BiasContrastSelectComponent extends React.Component<BiasContrastSelectComponentProps> {
-    private updateValuesTimer;
+    private updateValuesTimer: ReturnType<typeof setTimeout> | undefined;
 
     private updateValues = (x: number, y: number, interval: number) => {
         clearTimeout(this.updateValuesTimer);
+        this.updateValuesTimer = undefined;
         this.updateValuesTimer = setTimeout(() => {
             const bias = (clamp(x, 0, this.props.boardWidth) / this.props.boardWidth) * (this.props.biasMax - this.props.biasMin) + this.props.biasMin;
             const contrast = this.props.contrastMax - (clamp(y, 0, this.props.boardHeight) / this.props.boardHeight) * (this.props.contrastMax - this.props.contrastMin);
@@ -41,6 +42,7 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
 
     private handleDoubleClick = () => {
         clearTimeout(this.updateValuesTimer);
+        this.updateValuesTimer = undefined;
         this.props.resetBias();
         this.props.resetContrast();
     };
@@ -61,6 +63,11 @@ export class BiasContrastSelectComponent extends React.Component<BiasContrastSel
     private resetButton = handleClick => {
         return <Button icon={"refresh"} minimal={true} small={true} onClick={handleClick} />;
     };
+
+    componentWillUnmount() {
+        clearTimeout(this.updateValuesTimer);
+        this.updateValuesTimer = undefined;
+    }
 
     render() {
         const twoDimensionBoard = (

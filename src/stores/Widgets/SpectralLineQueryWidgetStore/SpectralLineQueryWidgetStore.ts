@@ -1,7 +1,7 @@
 import type {NumberRange} from "@blueprintjs/core";
 import {type Table2} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
-import {action, autorun, computed, flow, makeObservable, observable} from "mobx";
+import {action, autorun, computed, flow, type IReactionDisposer, makeObservable, observable} from "mobx";
 
 import {RedshiftType, SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "enums";
 import {SplatalogueService} from "services";
@@ -90,6 +90,7 @@ export class SpectralLineQueryWidgetStore {
     @observable controlHeader: Map<string, ControlHeader> = new Map<string, ControlHeader>();
     @observable sortingInfo: {columnName: string | null; sortingType: CARTA.SortingType | null} = {columnName: null, sortingType: null};
     @observable sortedIndexMap: Array<number> = [];
+    private readonly disposers: IReactionDisposer[] = [];
 
     // raw copy of the shifted frequency column, does not apply shifting factor
     private shiftedFreqColumnRawData: Array<number>;
@@ -553,10 +554,17 @@ export class SpectralLineQueryWidgetStore {
         this.initSortedIndexMap();
 
         // update selected spectral profiler when currently selected is closed
-        autorun(() => {
-            if (!this.selectedSpectralProfilerID || !AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(this.selectedSpectralProfilerID)) {
-                this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ? AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
-            }
-        });
+        this.disposers.push(
+            autorun(() => {
+                if (!this.selectedSpectralProfilerID || !AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(this.selectedSpectralProfilerID)) {
+                    this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ? AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
+                }
+            })
+        );
     }
+
+    public dispose = () => {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
+    };
 }
