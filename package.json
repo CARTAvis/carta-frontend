@@ -63,7 +63,7 @@
         "konva": "^9.3.16",
         "lint-staged": "^16.2.7",
         "lodash": "^4.17.15",
-        "mnemonist": "^0.39.8",
+        "mnemonist": "^0.40.3",
         "mobx": "^6.13.1",
         "mobx-react": "^9.1.1",
         "moment": "^2.30.1",
