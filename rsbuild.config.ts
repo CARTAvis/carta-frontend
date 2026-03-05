@@ -34,7 +34,8 @@ export default defineConfig({
     output: {
         distPath: {
             root: "build"
-        }
+        },
+        assetPrefix: "./"
     },
     server: {
         open: true,
