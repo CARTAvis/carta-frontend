@@ -49,8 +49,8 @@ export class ApiService {
     private static PreferenceValidator = new Ajv({strictTypes: false, allErrors: true}).compile(preferencesSchema);
     private static SnippetValidator = new Ajv({strictTypes: false, allErrors: true}).compile(snippetSchema);
 
-    @observable private _accessToken: string | undefined;
-    private _tokenLifetime: number;
+    @observable private _accessToken: string | undefined = "no_auth_configured";
+    @observable private _tokenLifetime: number = Number.MAX_VALUE;
     private _tokenExpiryHandler: ReturnType<typeof setTimeout> | undefined;
     private axiosInstance: AxiosInstance;
 
@@ -90,14 +90,11 @@ export class ApiService {
     }
 
     constructor() {
+        makeObservable(this);
         this.axiosInstance = axios.create();
         if (localStorage.getItem("authenticationType") || ApiService.RuntimeConfig.tokenRefreshAddress) {
             this.onTokenExpired();
-        } else {
-            this._accessToken = "no_auth_configured";
-            this._tokenLifetime = Number.MAX_VALUE;
         }
-        makeObservable(this);
     }
 
     private onTokenExpired = async () => {
