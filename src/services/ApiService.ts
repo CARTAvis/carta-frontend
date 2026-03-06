@@ -345,14 +345,12 @@ export class ApiService {
                 }
             } catch (err) {
                 console.error(err);
-                console.error(err);
                 return undefined;
             }
         } else {
             try {
                 savedLayouts = JSON.parse(localStorage.getItem("savedLayouts") ?? "{}");
             } catch (err) {
-                console.error(err);
                 console.error(err);
                 return undefined;
             }
