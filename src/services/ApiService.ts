@@ -49,9 +49,9 @@ export class ApiService {
     private static PreferenceValidator = new Ajv({strictTypes: false, allErrors: true}).compile(preferencesSchema);
     private static SnippetValidator = new Ajv({strictTypes: false, allErrors: true}).compile(snippetSchema);
 
-    @observable private _accessToken: string | undefined;
-    private _tokenLifetime: number;
-    private _tokenExpiryHandler: any;
+    @observable private _accessToken: string | undefined = "";
+    @observable private _tokenLifetime: number = 0;
+    private _tokenExpiryHandler: ReturnType<typeof setTimeout> | undefined;
     private axiosInstance: AxiosInstance;
 
     @action setToken = (tokenString: string, tokenLifetime: number = Number.MAX_VALUE) => {
@@ -90,6 +90,7 @@ export class ApiService {
     }
 
     constructor() {
+        makeObservable(this);
         this.axiosInstance = axios.create();
         if (localStorage.getItem("authenticationType") || ApiService.RuntimeConfig.tokenRefreshAddress) {
             this.onTokenExpired();
@@ -97,11 +98,11 @@ export class ApiService {
             this._accessToken = "no_auth_configured";
             this._tokenLifetime = Number.MAX_VALUE;
         }
-        makeObservable(this);
     }
 
     private onTokenExpired = async () => {
         clearTimeout(this._tokenExpiryHandler);
+        this._tokenExpiryHandler = undefined;
         const tokenRefreshed = await this.refreshAccessToken();
         if (tokenRefreshed) {
             console.debug("Authenticated");
@@ -113,7 +114,13 @@ export class ApiService {
         }
     };
 
+    public dispose = () => {
+        clearTimeout(this._tokenExpiryHandler);
+        this._tokenExpiryHandler = undefined;
+    };
+
     private handleAuthLost = () => {
+        this.dispose();
         if (ApiService.RuntimeConfig.dashboardAddress) {
             this.clearToken();
             const redirectParams = btoa(window.location.search);
@@ -147,6 +154,7 @@ export class ApiService {
     };
 
     public logout = async () => {
+        this.dispose();
         // An existing login session will be assumed to exists if this is found in local storage
         localStorage.removeItem("authenticationType");
         window.open(ApiService.RuntimeConfig.logoutAddress, "_self");
@@ -337,14 +345,12 @@ export class ApiService {
                 }
             } catch (err) {
                 console.error(err);
-                console.error(err);
                 return undefined;
             }
         } else {
             try {
                 savedLayouts = JSON.parse(localStorage.getItem("savedLayouts") ?? "{}");
             } catch (err) {
-                console.error(err);
                 console.error(err);
                 return undefined;
             }

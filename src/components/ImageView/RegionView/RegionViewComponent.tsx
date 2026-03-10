@@ -5,7 +5,7 @@ import classNames from "classnames";
 import type Konva from "konva";
 import {DD} from "konva/lib/DragAndDrop";
 import * as _ from "lodash";
-import {action, makeObservable, observable, reaction} from "mobx";
+import {action, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DialogId, ImageViewLayer, RegionMode} from "enums";
@@ -45,6 +45,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     @observable currentCursorPos: Point2D = {x: 0, y: 0};
     @observable private frame: FrameStore;
 
+    private readonly disposers: IReactionDisposer[] = [];
     private stageRef;
     private stageResizeOffset: Point2D;
     private regionStartPoint: Point2D;
@@ -56,7 +57,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private initialPinchZoom: number;
     private initialPinchDistance: number;
     private layerRef = React.createRef<any>();
-    private disposers: Array<() => void> = [];
     private popoutDragCleanup: (() => void) | null = null;
 
     constructor(props: any) {
@@ -112,6 +112,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         this.setupPopoutDragListeners();
     }
 
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
+    }
+
     @action componentDidUpdate(prevProps) {
         // Update observable frame when props change
         if (prevProps.frame !== this.props.frame) {
@@ -135,11 +140,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 }
             }
         }
-    }
-
-    componentWillUnmount() {
-        this.cleanupPopoutDragListeners();
-        this.disposers.forEach(dispose => dispose());
     }
 
     updateCursorPos = _.throttle((x: number, y: number) => {

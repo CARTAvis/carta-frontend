@@ -4,7 +4,7 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import type {Tick} from "chart.js";
 import * as _ from "lodash";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, autorun, computed, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {LinePlotComponent, type LinePlotComponentProps, ProfilerInfoComponent, RegionSelectorComponent, ResizeDetector, VERTICAL_RANGE_PADDING} from "components/Shared";
@@ -40,6 +40,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
     private cachedFormattedCoordinates: string[];
     private widgetId: string;
+    private readonly disposers: IReactionDisposer[] = [];
 
     @observable width: number = 650;
     @observable height: number = 250;
@@ -351,38 +352,47 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             }
         }
         // Update widget title when region or coordinate changes
-        autorun(() => {
-            if (this.widgetStore) {
-                const coordinate = this.widgetStore.coordinate;
-                const currentData = this.plotData;
-                if (appStore && coordinate) {
-                    const coordinateString = this.widgetStore.isLineOrPolyline ? "" : coordinate.toUpperCase();
-                    const regionString = this.widgetStore.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
-                    appStore.widgetsStore.setWidgetTitle(this.widgetId, `${coordinateString} Profile: ${regionString}`);
-                }
-                if (currentData) {
-                    this.widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
-                }
-            } else {
-                appStore.widgetsStore.setWidgetTitle(this.widgetId, `X Profile: Cursor`);
-            }
-        });
-
-        autorun(
-            () => {
-                if (!this.frame || !this.width) {
-                    return;
-                }
-                if (this.lineAxis) {
-                    this.setAutoScaleBounds(this.lineAxis.min, this.lineAxis.max);
-                } else if (this.widgetStore.isXProfile) {
-                    this.setAutoScaleBounds(clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width), clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width));
+        this.disposers.push(
+            autorun(() => {
+                if (this.widgetStore) {
+                    const coordinate = this.widgetStore.coordinate;
+                    const currentData = this.plotData;
+                    if (appStore && coordinate) {
+                        const coordinateString = this.widgetStore.isLineOrPolyline ? "" : coordinate.toUpperCase();
+                        const regionString = this.widgetStore.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
+                        appStore.widgetsStore.setWidgetTitle(this.widgetId, `${coordinateString} Profile: ${regionString}`);
+                    }
+                    if (currentData) {
+                        this.widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
+                    }
                 } else {
-                    this.setAutoScaleBounds(clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height), clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height));
+                    appStore.widgetsStore.setWidgetTitle(this.widgetId, `X Profile: Cursor`);
                 }
-            },
-            {delay: AUTOSCALE_THROTTLE_TIME}
+            })
         );
+
+        this.disposers.push(
+            autorun(
+                () => {
+                    if (!this.frame || !this.width) {
+                        return;
+                    }
+                    if (this.lineAxis) {
+                        this.setAutoScaleBounds(this.lineAxis.min, this.lineAxis.max);
+                    } else if (this.widgetStore.isXProfile) {
+                        this.setAutoScaleBounds(clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width), clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width));
+                    } else {
+                        this.setAutoScaleBounds(clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height), clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height));
+                    }
+                },
+                {delay: AUTOSCALE_THROTTLE_TIME}
+            )
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     @action private setAutoScaleBounds = (min: number, max: number) => {

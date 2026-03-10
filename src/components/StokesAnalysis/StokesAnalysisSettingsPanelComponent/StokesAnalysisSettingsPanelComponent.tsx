@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Tab, Tabs} from "@blueprintjs/core";
-import {autorun, makeObservable} from "mobx";
+import {autorun, type IReactionDisposer, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 import type {LineKey} from "models";
 
@@ -23,6 +23,7 @@ import "./StokesAnalysisSettingsPanelComponent.scss";
 export class StokesAnalysisSettingsPanelComponent extends React.Component<WidgetProps> {
     private widgetId: string;
     private floatingSettingsId: string | undefined;
+    private readonly disposers: IReactionDisposer[] = [];
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -59,17 +60,24 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
         this.widgetId = props.id;
         this.floatingSettingsId = props.floatingSettingsId;
 
-        autorun(() => {
-            if (this.widgetStore && this.floatingSettingsId) {
-                const frame = this.widgetStore.effectiveFrame;
-                if (frame) {
-                    const regionId = this.widgetStore.effectiveRegionId;
-                    const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                    const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                    appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Stokes Analysis Settings: ${regionString} ${selectedString}`);
+        this.disposers.push(
+            autorun(() => {
+                if (this.widgetStore && this.floatingSettingsId) {
+                    const frame = this.widgetStore.effectiveFrame;
+                    if (frame) {
+                        const regionId = this.widgetStore.effectiveRegionId;
+                        const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
+                        const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
+                        appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Stokes Analysis Settings: ${regionString} ${selectedString}`);
+                    }
                 }
-            }
-        });
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     handleEqualAxesValuesChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {

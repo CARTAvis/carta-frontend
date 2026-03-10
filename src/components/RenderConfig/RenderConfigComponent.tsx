@@ -2,7 +2,7 @@ import * as React from "react";
 import {Button, ButtonGroup, Colors, FormGroup, HTMLSelect, NonIdealState, type OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
-import {action, autorun, makeObservable, observable} from "mobx";
+import {action, autorun, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";
@@ -27,6 +27,8 @@ const COLORSCALE_LENGTH = 2048;
 
 @observer
 export class RenderConfigComponent extends React.Component<WidgetProps> {
+    private readonly disposers: IReactionDisposer[] = [];
+
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "render-config",
@@ -128,22 +130,29 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             }
         }
 
-        autorun(() => {
-            if (appStore.activeFrame) {
-                const newHist = appStore.activeFrame.renderConfig.histogram;
-                if (newHist !== this.cachedHistogram) {
-                    this.cachedHistogram = newHist;
-                    this.widgetStore.clearXYBounds();
+        this.disposers.push(
+            autorun(() => {
+                if (appStore.activeFrame) {
+                    const newHist = appStore.activeFrame.renderConfig.histogram;
+                    if (newHist !== this.cachedHistogram) {
+                        this.cachedHistogram = newHist;
+                        this.widgetStore.clearXYBounds();
+                    }
                 }
-            }
-            const widgetStore = this.widgetStore;
-            if (widgetStore) {
-                const currentData = this.plotData;
-                if (currentData) {
-                    widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
+                const widgetStore = this.widgetStore;
+                if (widgetStore) {
+                    const currentData = this.plotData;
+                    if (currentData) {
+                        widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
+                    }
                 }
-            }
-        });
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     componentDidUpdate() {
