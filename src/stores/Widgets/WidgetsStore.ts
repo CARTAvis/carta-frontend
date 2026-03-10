@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Classes} from "@blueprintjs/core";
+import {Classes, HotkeysProvider, OverlaysProvider, PortalProvider} from "@blueprintjs/core";
 import classNames from "classnames";
 import {Actions, type ITabRenderValues, type ITabSetRenderValues, type TabNode, type TabSetNode} from "flexlayout-react";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
@@ -543,7 +543,23 @@ export class WidgetsStore {
             docked: true,
             floatingSettingsId: config.floatingSettingsId
         };
-        return React.createElement(ComponentClass, props);
+        const element = React.createElement(ComponentClass, props);
+
+        // Wrap popped-out tabs with Blueprint providers so overlays render in the popout window
+        if (node.isPoppedOut()) {
+            const popoutWindow = node.getWindow();
+            if (popoutWindow) {
+                const popoutBody = popoutWindow.document.body;
+                // Apply theme class to popout body
+                if (AppStore.Instance.darkTheme) {
+                    popoutBody.classList.add(Classes.DARK);
+                } else {
+                    popoutBody.classList.remove(Classes.DARK);
+                }
+                return React.createElement(PortalProvider, {portalContainer: popoutBody}, React.createElement(OverlaysProvider, null, React.createElement(HotkeysProvider, null, element)));
+            }
+        }
+        return element;
     };
 
     onRenderTab = (node: TabNode, renderValues: ITabRenderValues) => {
