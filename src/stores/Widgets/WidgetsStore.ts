@@ -397,6 +397,20 @@ export class WidgetsStore {
         return typeof (store as Disposable | undefined)?.dispose === "function";
     };
 
+    private static copyStylesToPopoutWindow(popoutWindow: Window): void {
+        const popoutDoc = popoutWindow.document;
+        // Guard: only copy once per popout window
+        if (popoutDoc.documentElement.dataset.stylesCopied === "true") {
+            return;
+        }
+        // Copy all <style> and <link rel="stylesheet"> from main document
+        const nodes = document.head.querySelectorAll("style, link[rel='stylesheet']");
+        nodes.forEach(node => {
+            popoutDoc.head.appendChild(node.cloneNode(true));
+        });
+        popoutDoc.documentElement.dataset.stylesCopied = "true";
+    }
+
     public removeWidget = (widgetId: string, widgetType: string) => {
         const widgets = this.widgetsMap.get(widgetType);
         if (widgets) {
@@ -572,6 +586,7 @@ export class WidgetsStore {
                 } else {
                     popoutBody.classList.remove(Classes.DARK);
                 }
+                WidgetsStore.copyStylesToPopoutWindow(popoutWindow);
                 return React.createElement(PortalProvider, {portalContainer: popoutBody}, React.createElement(OverlaysProvider, null, React.createElement(HotkeysProvider, null, element)));
             }
         }
