@@ -31,10 +31,14 @@ export class LayoutConfig {
                     {
                         type: "column",
                         width: 60,
-                        content: [{type: "component", id: "image-view"}, config.leftBottomContent]
+                        content: [
+                            {type: "component", id: "image-view", height: 60},
+                            {...config.leftBottomContent, height: 40}
+                        ]
                     },
                     {
                         type: "column",
+                        width: 40,
                         content: config.rightColumnContent
                     }
                 ]
