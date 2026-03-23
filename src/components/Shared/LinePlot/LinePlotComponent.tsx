@@ -602,7 +602,12 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         const plotName = this.props.plotName || "unknown";
         const imageName = this.props.imageName || "unknown";
 
-        const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
+        // Use the canvas's own document/window so that cross-document compositing
+        // works correctly when the widget is in a FlexLayout popout window.
+        const ownerDoc = canvas.ownerDocument;
+        const ownerWindow = ownerDoc.defaultView ?? window;
+
+        const composedCanvas = ownerDoc.createElement("canvas") as HTMLCanvasElement;
         composedCanvas.width = canvas.width;
         composedCanvas.height = canvas.height;
 
@@ -625,7 +630,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         }
 
         // plot Mean/RMS
-        const devicePixelRatio = window.devicePixelRatio || 1;
+        const devicePixelRatio = ownerWindow.devicePixelRatio || 1;
         const meanRMS = this.genMeanRMSForPngPlot(devicePixelRatio);
         if (meanRMS?.mean) {
             // plot mean
@@ -667,11 +672,11 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
         composedCanvas.toBlob(blob => {
             if (blob) {
-                const link = document.createElement("a") as HTMLAnchorElement;
+                const link = ownerDoc.createElement("a") as HTMLAnchorElement;
                 // Trim filename before timestamp to 200 characters to prevent browser errors
                 link.download = `${imageName}-${plotName.replace(" ", "-")}`.substring(0, 200) + `-${getTimestamp()}.png`;
-                link.href = URL.createObjectURL(blob);
-                link.dispatchEvent(new MouseEvent("click"));
+                link.href = ownerWindow.URL.createObjectURL(blob);
+                link.dispatchEvent(new ownerWindow.MouseEvent("click"));
             }
         }, "image/png");
 

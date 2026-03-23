@@ -7,12 +7,38 @@ import {ResizeDetector} from "components/Shared";
 import {HelpType, ImageType} from "enums";
 import {type Point2D, Zoom} from "models";
 import {AppStore, type DefaultWidgetConfig, type Padding, type WidgetProps} from "stores";
+import {LayoutStore} from "stores";
 import {toFixed} from "utilities";
 
 import {ChannelMapViewComponent} from "./ChannelMapView/ChannelMapViewComponent";
 import {ImagePanelComponent} from "./ImagePanel/ImagePanelComponent";
 
 import "./ImageViewComponent.scss";
+
+/**
+ * Search for an element by id in the main document and all FlexLayout popout
+ * windows' documents. This is needed because when a widget is rendered in a
+ * FlexLayout popout the DOM lives in a different document from the main window.
+ */
+function findElementInAllDocuments(id: string): HTMLElement | null {
+    const el = document.getElementById(id);
+    if (el) {
+        return el;
+    }
+    const model = LayoutStore.Instance.layoutModel;
+    if (model) {
+        for (const [, layoutWindow] of model.getwindowsMap()) {
+            const win = layoutWindow.window;
+            if (win && !win.closed) {
+                const found = win.document.getElementById(id);
+                if (found) {
+                    return found;
+                }
+            }
+        }
+    }
+    return null;
+}
 
 export function getImageViewCanvas(padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
     const appStore = AppStore.Instance;
@@ -46,10 +72,14 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
 }
 
 export function getPanelCanvas(column: number, row: number, viewWidth: number, viewHeight: number, padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
-    const panelElement = document.getElementById(`image-panel-${column}-${row}`);
+    const panelElement = findElementInAllDocuments(`image-panel-${column}-${row}`);
     if (!panelElement) {
         return null;
     }
+    // Derive the document from the panel element so that the composited canvas is
+    // created in the same browsing context as the source canvases (important when
+    // the image viewer is rendered in a FlexLayout popout window).
+    const ownerDoc = panelElement.ownerDocument;
     const rasterCanvas = panelElement.querySelector(".raster-canvas") as HTMLCanvasElement;
     const contourCanvas = panelElement.querySelector(".contour-canvas") as HTMLCanvasElement;
     const overlayCanvasArray = panelElement.querySelectorAll(".overlay-canvas") as NodeListOf<HTMLCanvasElement>;
@@ -66,7 +96,7 @@ export function getPanelCanvas(column: number, row: number, viewWidth: number, v
     const channelMapLabelArray = panelElement.querySelectorAll(".channel-map-label-span") as NodeListOf<HTMLSpanElement>;
 
     const appStore = AppStore.Instance;
-    const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
+    const composedCanvas = ownerDoc.createElement("canvas") as HTMLCanvasElement;
     composedCanvas.width = viewWidth;
     composedCanvas.height = viewHeight;
 
