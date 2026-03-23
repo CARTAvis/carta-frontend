@@ -663,7 +663,10 @@ export class WidgetsStore {
         }
 
         if (component === "image-view") {
-            const imagePanelMode = AppStore.Instance.imageViewConfigStore.imagePanelMode;
+            const config = AppStore.Instance.imageViewConfigStore;
+            const imagePanelMode = config.imagePanelMode;
+            const hasPrevious = config.currentImagePage > 0;
+            const hasNext = config.imageNum > (config.currentImagePage + 1) * config.imagesPerPage;
 
             buttons.push(
                 React.createElement(
@@ -672,6 +675,7 @@ export class WidgetsStore {
                         key: "prev-page-" + nodeId,
                         className: "flexlayout-tab-button flexlayout-tab-button-image-panel-previous",
                         title: imagePanelMode === ImagePanelMode.None ? "previous image" : "previous page",
+                        disabled: !hasPrevious,
                         onClick: (e: React.MouseEvent) => {
                             e.stopPropagation();
                             this.onPreviousPageClick();
@@ -699,6 +703,7 @@ export class WidgetsStore {
                         key: "next-page-" + nodeId,
                         className: "flexlayout-tab-button flexlayout-tab-button-image-panel-next",
                         title: imagePanelMode === ImagePanelMode.None ? "next image" : "next page",
+                        disabled: !hasNext,
                         onClick: (e: React.MouseEvent) => {
                             e.stopPropagation();
                             this.onNextPageClick();

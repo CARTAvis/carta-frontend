@@ -88,6 +88,11 @@ $pt-dark-app-background-color: #252a31;
         color: $dark-gray1;
     }
 
+    &:disabled {
+        opacity: 0.3;
+        cursor: default;
+    }
+
     span {
         font-size: 14px;
     }
