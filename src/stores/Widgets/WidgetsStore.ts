@@ -1,7 +1,7 @@
 import * as React from "react";
 import {Classes, HotkeysProvider, OverlaysProvider, PortalProvider} from "@blueprintjs/core";
 import classNames from "classnames";
-import {Actions, type ITabRenderValues, type ITabSetRenderValues, type TabNode, type TabSetNode} from "flexlayout-react";
+import {Actions, type BorderNode, type ITabRenderValues, type ITabSetRenderValues, type TabNode, type TabSetNode} from "flexlayout-react";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {
@@ -594,10 +594,17 @@ export class WidgetsStore {
     };
 
     onRenderTab = (node: TabNode, renderValues: ITabRenderValues) => {
-        const component = node.getComponent() || "";
-        const nodeId = node.getId();
         renderValues.content = renderValues.content || node.getName();
+    };
 
+    onRenderTabSet = (tabSetNode: TabSetNode | BorderNode, renderValues: ITabSetRenderValues) => {
+        const selectedNode = tabSetNode.getSelectedNode() as TabNode | undefined;
+        if (!selectedNode) {
+            return;
+        }
+
+        const component = selectedNode.getComponent() || "";
+        const nodeId = selectedNode.getId();
         const buttons: React.ReactNode[] = [];
 
         if (component !== "image-view") {
@@ -610,7 +617,7 @@ export class WidgetsStore {
                         title: "detach",
                         onClick: (e: React.MouseEvent) => {
                             e.stopPropagation();
-                            this.unpinWidget(node);
+                            this.unpinWidget(selectedNode);
                         }
                     },
                     React.createElement("span", {className: classNames(Classes.ICON_STANDARD, Classes.iconClass("unpin"))})
@@ -628,7 +635,7 @@ export class WidgetsStore {
                         title: "help",
                         onClick: (e: React.MouseEvent) => {
                             e.stopPropagation();
-                            this.onHelpPinedClick(e, node);
+                            this.onHelpPinedClick(e, selectedNode);
                         }
                     },
                     React.createElement("span", {className: classNames(Classes.ICON_STANDARD, Classes.iconClass("help"))})
@@ -647,7 +654,7 @@ export class WidgetsStore {
                         "data-testid": nodeId + "-header-settings-button",
                         onClick: (e: React.MouseEvent) => {
                             e.stopPropagation();
-                            this.onCogPinedClick(node);
+                            this.onCogPinedClick(selectedNode);
                         }
                     },
                     React.createElement("span", {className: classNames(Classes.ICON_STANDARD, Classes.iconClass("cog"))})
@@ -716,11 +723,9 @@ export class WidgetsStore {
         }
 
         if (buttons.length > 0) {
-            renderValues.buttons = [...(renderValues.buttons || []), ...buttons];
+            renderValues.buttons = [...buttons, ...(renderValues.buttons || [])];
         }
     };
-
-    onRenderTabSet = (_node: TabSetNode, _renderValues: ITabSetRenderValues) => {};
 
     onModelChange = () => {};
 
