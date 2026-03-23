@@ -8,11 +8,9 @@ $pt-dark-app-background-color: #252a31;
 // =====================================================
 
 // --- Layout container ---
+// Note: .layout-container positioning (top: 48px for menu bar, etc.)
+// is defined in App.scss. Only nest the flexlayout__layout override here.
 .layout-container {
-    position: relative;
-    width: 100%;
-    height: 100%;
-
     .flexlayout__layout {
         position: absolute;
         top: 0;
@@ -52,6 +50,7 @@ $pt-dark-app-background-color: #252a31;
     background-color: white;
     overflow: auto;
     position: relative;
+    height: 100%;
 }
 
 // --- Splitter bars ---
