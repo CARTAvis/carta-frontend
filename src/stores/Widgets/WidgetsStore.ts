@@ -2,6 +2,7 @@ import * as React from "react";
 import {Classes, HotkeysProvider, OverlaysProvider, PortalProvider} from "@blueprintjs/core";
 import classNames from "classnames";
 import {Actions, type BorderNode, DockLocation, type ITabRenderValues, type ITabSetRenderValues, Orientation, type TabNode, type TabSetNode} from "flexlayout-react";
+import {PopoutKeyboardForwarder} from "HotkeyWrapper";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {
@@ -604,7 +605,11 @@ export class WidgetsStore {
                     popoutBody.classList.remove(Classes.DARK);
                 }
                 WidgetsStore.copyStylesToPopoutWindow(popoutWindow);
-                return React.createElement(PortalProvider, {portalContainer: popoutBody}, React.createElement(OverlaysProvider, null, React.createElement(HotkeysProvider, null, element)));
+                return React.createElement(
+                    PortalProvider,
+                    {portalContainer: popoutBody},
+                    React.createElement(OverlaysProvider, null, React.createElement(HotkeysProvider, null, React.createElement(PopoutKeyboardForwarder, {popoutWindow: popoutWindow}), element))
+                );
             }
         }
         return element;

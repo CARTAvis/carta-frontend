@@ -289,3 +289,50 @@ export function HotkeysRegistrar() {
 
     return null;
 }
+
+/**
+ * Forwards keyboard events from a popout window to the main window's document,
+ * so that hotkeys registered on the main document (via Blueprint's useHotkeys
+ * and manual listeners) also work in pop-out widgets.
+ */
+export function PopoutKeyboardForwarder({popoutWindow}: {popoutWindow: Window}) {
+    React.useEffect(() => {
+        const popoutDoc = popoutWindow.document;
+
+        const forwardEvent = (event: KeyboardEvent) => {
+            const target = event.target as Element;
+            if (target?.closest("input, textarea, [contenteditable]")) {
+                return;
+            }
+
+            const forwarded = new KeyboardEvent(event.type, {
+                key: event.key,
+                code: event.code,
+                keyCode: event.keyCode,
+                which: event.which,
+                ctrlKey: event.ctrlKey,
+                altKey: event.altKey,
+                shiftKey: event.shiftKey,
+                metaKey: event.metaKey,
+                repeat: event.repeat,
+                bubbles: true,
+                cancelable: true
+            });
+
+            const wasHandled = !document.dispatchEvent(forwarded);
+            if (wasHandled) {
+                event.preventDefault();
+            }
+        };
+
+        popoutDoc.addEventListener("keydown", forwardEvent, true);
+        popoutDoc.addEventListener("keyup", forwardEvent, true);
+
+        return () => {
+            popoutDoc.removeEventListener("keydown", forwardEvent, true);
+            popoutDoc.removeEventListener("keyup", forwardEvent, true);
+        };
+    }, [popoutWindow]);
+
+    return null;
+}
