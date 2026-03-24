@@ -97,6 +97,7 @@ export class LayoutStore {
         const appStore = AppStore.Instance;
         // clear floating widgets
         appStore.widgetsStore.removeFloatingWidgets();
+        appStore.widgetsStore.clearPopoutPositions();
 
         // generate docked config & collect docked components
         const dockedConfig = {

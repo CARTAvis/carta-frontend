@@ -1,7 +1,7 @@
 import * as React from "react";
 import {Classes, HotkeysProvider, OverlaysProvider, PortalProvider} from "@blueprintjs/core";
 import classNames from "classnames";
-import {Actions, type BorderNode, type ITabRenderValues, type ITabSetRenderValues, type TabNode, type TabSetNode} from "flexlayout-react";
+import {Actions, type BorderNode, DockLocation, type ITabRenderValues, type ITabSetRenderValues, Orientation, type TabNode, type TabSetNode} from "flexlayout-react";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {
@@ -125,6 +125,18 @@ interface Disposable {
     dispose(): void;
 }
 
+interface PopoutPositionInfo {
+    parentTabsetId: string;
+    tabIndex: number;
+    wasAlone: boolean;
+    grandparentId: string;
+    tabsetIndexInParent: number;
+    tabsetWeight: number;
+    siblingTabsetId?: string;
+    wasBeforeSibling?: boolean;
+    grandparentOrientation: string;
+}
+
 export class WidgetsStore {
     private static staticInstance: WidgetsStore;
 
@@ -157,6 +169,7 @@ export class WidgetsStore {
     private widgetsMap: Map<string, Map<string, any>>;
     private defaultFloatingWidgetOffset: number;
     private beingUnpinned: Set<string> = new Set();
+    private popoutPositions: Map<string, PopoutPositionInfo> = new Map();
 
     private static readonly showCogWidgets = ["image-view", "spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes", "catalog-overlay", "layer-list"];
     private static readonly hideHelpButtonWidgets = ["pv-preview"];
@@ -514,6 +527,10 @@ export class WidgetsStore {
         }
     };
 
+    public clearPopoutPositions = () => {
+        this.popoutPositions.clear();
+    };
+
     createFloatingWidget = (savedConfig: any) => {
         if (savedConfig.id) {
             let savedConfigId = savedConfig.id;
@@ -740,9 +757,134 @@ export class WidgetsStore {
             return action;
         }
 
+        if (action.type === "FlexLayout_PopoutTab") {
+            const nodeId = action.data?.node;
+            if (nodeId) {
+                const node = layoutModel.getNodeById(nodeId);
+                if (node && node.getType() === "tab") {
+                    const tabNode = node as TabNode;
+                    const parent = tabNode.getParent();
+                    if (parent && parent.getType() === "tabset") {
+                        const tabsetNode = parent as TabSetNode;
+                        const grandparent = tabsetNode.getParent();
+                        if (grandparent) {
+                            const tabsetIndex = grandparent.getChildren().indexOf(tabsetNode);
+                            const nearestSibling = tabsetIndex > 0 ? grandparent.getChildren()[tabsetIndex - 1] : grandparent.getChildren()[tabsetIndex + 1];
+                            this.popoutPositions.set(tabNode.getId(), {
+                                parentTabsetId: tabsetNode.getId(),
+                                tabIndex: tabsetNode.getChildren().indexOf(tabNode),
+                                wasAlone: tabsetNode.getChildren().length === 1,
+                                grandparentId: grandparent.getId(),
+                                tabsetIndexInParent: tabsetIndex,
+                                tabsetWeight: tabsetNode.getWeight(),
+                                siblingTabsetId: nearestSibling?.getId(),
+                                wasBeforeSibling: nearestSibling ? tabsetIndex < grandparent.getChildren().indexOf(nearestSibling) : undefined,
+                                grandparentOrientation: grandparent.getOrientation().getName()
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        if (action.type === "FlexLayout_PopoutTabset") {
+            const nodeId = action.data?.node;
+            if (nodeId) {
+                const node = layoutModel.getNodeById(nodeId);
+                if (node && node.getType() === "tabset") {
+                    const tabsetNode = node as TabSetNode;
+                    const grandparent = tabsetNode.getParent();
+                    if (grandparent) {
+                        const tabsetIndex = grandparent.getChildren().indexOf(tabsetNode);
+                        const nearestSibling = tabsetIndex > 0 ? grandparent.getChildren()[tabsetIndex - 1] : grandparent.getChildren()[tabsetIndex + 1];
+                        for (const child of tabsetNode.getChildren()) {
+                            this.popoutPositions.set(child.getId(), {
+                                parentTabsetId: tabsetNode.getId(),
+                                tabIndex: tabsetNode.getChildren().indexOf(child),
+                                wasAlone: true,
+                                grandparentId: grandparent.getId(),
+                                tabsetIndexInParent: tabsetIndex,
+                                tabsetWeight: tabsetNode.getWeight(),
+                                siblingTabsetId: nearestSibling?.getId(),
+                                wasBeforeSibling: nearestSibling ? tabsetIndex < grandparent.getChildren().indexOf(nearestSibling) : undefined,
+                                grandparentOrientation: grandparent.getOrientation().getName()
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        if (action.type === "FlexLayout_CloseWindow") {
+            const windowId = action.data?.windowId;
+            const windowsMap = layoutModel.getwindowsMap();
+            const closingWindow = windowsMap.get(windowId);
+            if (closingWindow) {
+                const tabNodes: TabNode[] = [];
+                closingWindow.visitNodes((node, _level) => {
+                    if (node.getType() === "tab") {
+                        tabNodes.push(node as TabNode);
+                    }
+                });
+
+                const allHavePositions = tabNodes.length > 0 && tabNodes.every(t => this.popoutPositions.has(t.getId()));
+                if (allHavePositions) {
+                    for (const tabNode of tabNodes) {
+                        const tabId = tabNode.getId();
+                        const savedPos = this.popoutPositions.get(tabId)!;
+
+                        if (!savedPos.wasAlone) {
+                            const originalTabset = layoutModel.getNodeById(savedPos.parentTabsetId);
+                            if (originalTabset) {
+                                const clampedIndex = Math.min(savedPos.tabIndex, originalTabset.getChildren().length);
+                                layoutModel.doAction(Actions.moveNode(tabId, savedPos.parentTabsetId, DockLocation.CENTER, clampedIndex));
+                                this.popoutPositions.delete(tabId);
+                                continue;
+                            }
+                        }
+
+                        const grandparentRow = layoutModel.getNodeById(savedPos.grandparentId);
+                        if (grandparentRow) {
+                            const clampedIndex = Math.min(savedPos.tabsetIndexInParent, grandparentRow.getChildren().length);
+                            layoutModel.doAction(Actions.moveNode(tabId, savedPos.grandparentId, DockLocation.CENTER, clampedIndex));
+                            this.popoutPositions.delete(tabId);
+                            continue;
+                        }
+
+                        // Sibling fallback: grandparent row was tidied away, find sibling and place next to it
+                        if (savedPos.siblingTabsetId) {
+                            const siblingNode = layoutModel.getNodeById(savedPos.siblingTabsetId);
+                            if (siblingNode) {
+                                const isVertical = savedPos.grandparentOrientation === Orientation.VERT.getName();
+                                let location: DockLocation;
+                                if (isVertical) {
+                                    location = savedPos.wasBeforeSibling ? DockLocation.TOP : DockLocation.BOTTOM;
+                                } else {
+                                    location = savedPos.wasBeforeSibling ? DockLocation.LEFT : DockLocation.RIGHT;
+                                }
+                                layoutModel.doAction(Actions.moveNode(tabId, savedPos.siblingTabsetId, location, -1));
+                                this.popoutPositions.delete(tabId);
+                                continue;
+                            }
+                        }
+
+                        // Fallback: move to root
+                        const root = layoutModel.getRoot();
+                        if (root) {
+                            layoutModel.doAction(Actions.moveNode(tabId, root.getId(), DockLocation.CENTER, -1));
+                        }
+                        this.popoutPositions.delete(tabId);
+                    }
+                    return undefined;
+                }
+            }
+        }
+
         if (action.type === "FlexLayout_DeleteTab") {
             const nodeId = action.data?.node;
             if (nodeId) {
+                this.popoutPositions.delete(nodeId);
+
                 const node = layoutModel.getNodeById(nodeId);
                 if (node && node.getType() === "tab") {
                     const tabNode = node as TabNode;
