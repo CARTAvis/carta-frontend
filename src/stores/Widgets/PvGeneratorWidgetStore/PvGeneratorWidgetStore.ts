@@ -1,32 +1,29 @@
-import {OptionProps} from "@blueprintjs/core";
+import type {OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {action, computed, makeObservable, observable, reaction} from "mobx";
+import {action, computed, type IReactionDisposer, makeObservable, observable, reaction} from "mobx";
 
-import {SpectralSystem} from "models";
-import {TelemetryAction, TelemetryService} from "services";
-import {AppStore, PreferenceKeys, PreferenceStore} from "stores";
-import {FrameStore} from "stores/Frame";
+import {PreferenceKeys, RegionId, RegionsType, type SpectralSystem, TelemetryAction} from "enums";
+import {TelemetryService} from "services";
+import {AppStore, PreferenceStore} from "stores";
+import {type FrameStore} from "stores/Frame";
 import {length2D} from "utilities";
 
-import {ACTIVE_FILE_ID, RegionId, RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
-
-export enum PVAxis {
-    SPATIAL = "Spatial",
-    SPECTRAL = "Spectral"
-}
+import {ACTIVE_FILE_ID, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
 export class PvGeneratorWidgetStore extends RegionWidgetStore {
-    @observable width: number;
-    @observable reverse: boolean;
-    @observable keep: boolean;
+    @observable width: number = 3;
+    @observable reverse: boolean = PreferenceStore.Instance.isPVAxesOrderReverse;
+    @observable keep: boolean = false;
     @observable range: CARTA.IIntBounds = {min: this.effectiveFrame?.channelValueBounds?.min, max: this.effectiveFrame?.channelValueBounds?.max};
     @observable xyRebin: number = 1;
     @observable zRebin: number = 1;
-    @observable previewRegionId: number;
-    @observable previewFrame: FrameStore | null;
-    @observable pvCutRegionId: number | null;
+    @observable previewRegionId: number = RegionId.NONE;
+    @observable previewFrame: FrameStore | null = null;
+    @observable pvCutRegionId: number | null = null;
     @observable previewFullViewWidth: number = 1;
     @observable previewFullViewHeight: number = 1;
+
+    private readonly disposers: IReactionDisposer[] = [];
 
     @computed get regionOptions(): OptionProps[] {
         const appStore = AppStore.Instance;
@@ -207,18 +204,23 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     constructor() {
         super(RegionsType.LINE);
         makeObservable(this);
-        this.width = 3;
-        this.reverse = PreferenceStore.Instance.isPVAxesOrderReverse;
-        this.keep = false;
+
         this.regionIdMap.set(ACTIVE_FILE_ID, RegionId.NONE);
 
-        reaction(
-            () => this.effectiveFrame?.channelValueBounds,
-            channelValueBounds => {
-                if (channelValueBounds) {
-                    this.setSpectralRange(channelValueBounds);
+        this.disposers.push(
+            reaction(
+                () => this.effectiveFrame?.channelValueBounds,
+                channelValueBounds => {
+                    if (channelValueBounds) {
+                        this.setSpectralRange(channelValueBounds);
+                    }
                 }
-            }
+            )
         );
     }
+
+    public dispose = () => {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
+    };
 }

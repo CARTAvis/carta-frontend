@@ -1,35 +1,14 @@
-import {OptionProps, TabId} from "@blueprintjs/core";
+import type {OptionProps, TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, flow, makeObservable, observable} from "mobx";
 
-import {FileInfoType} from "components";
 import {AppToaster, ErrorToast} from "components/Shared";
-import {FileCtypeInfo, FileFilterMode, Freq, FrequencyUnit, ImageType, LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
+import {BrowserMode, DialogId, FileFilterMode, FileInfoType, FrequencyUnit, ImageType, PreferenceKeys, RegionId, SelectionMode} from "enums";
+import {FileCtypeInfo, Freq, type LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
 import {BackendService} from "services";
-import {AppStore, DialogId, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, DialogStore, PreferenceStore} from "stores";
 import {RegionStore} from "stores/Frame";
-import {RegionId} from "stores/Widgets";
-import {getDataTypeString, getHeaderNumericValue, ProcessedColumnData} from "utilities";
-
-export enum BrowserMode {
-    File,
-    SaveFile,
-    RegionImport,
-    RegionExport,
-    Catalog
-}
-
-export enum FileFilteringType {
-    Fuzzy = "fuzzy",
-    Unix = "unix",
-    Regex = "regex"
-}
-
-export enum SelectionMode {
-    All,
-    Annotation,
-    Region
-}
+import {getDataTypeString, getHeaderNumericValue, type ProcessedColumnData} from "utilities";
 
 export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.DS9_REG;
 export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.FileType.HDF5 | CARTA.FileType.MIRIAD;
@@ -63,31 +42,31 @@ export class FileBrowserStore {
     private static readonly ExtendedLoadingDelay = 500;
 
     @observable browserMode: BrowserMode = BrowserMode.File;
-    @observable appendingFrame = false;
-    @observable fileList: BrowserFileList | null;
-    @observable selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo | null | undefined;
-    @observable selectedHDU: string | null;
-    @observable HDUfileInfoExtended: {[k: string]: CARTA.IFileInfoExtended} | null;
-    @observable regionFileInfo: string[] | null;
+    @observable appendingFrame: boolean = false;
+    @observable fileList: CARTA.IFileListResponse | null = null;
+    @observable selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo | null | undefined = undefined;
+    @observable selectedHDU: string | null = null;
+    @observable HDUfileInfoExtended: {[k: string]: CARTA.IFileInfoExtended} | null = null;
+    @observable regionFileInfo: string[] | null = null;
     @observable selectedTab: TabId = FileInfoType.IMAGE_FILE;
-    @observable loadingList = false;
-    @observable isImportingRegions = false;
+    @observable loadingList: boolean = false;
+    @observable isImportingRegions: boolean = false;
     @observable hasReceivedImportRegionAck = false;
-    @observable extendedLoading = false;
-    @observable loadingInfo = false;
-    @observable fileInfoResp = false;
+    @observable extendedLoading: boolean = false;
+    @observable loadingInfo: boolean = false;
+    @observable fileInfoResp: boolean = false;
     @observable responseErrorMessage: string = "";
     @observable startingDirectory: string | null | undefined = "$BASE";
-    @observable exportFilename: string | null | undefined;
-    @observable exportCoordinateType: CARTA.CoordinateType;
-    @observable exportFileType: RegionFileType;
+    @observable exportFilename: string | null | undefined = undefined;
+    @observable exportCoordinateType: CARTA.CoordinateType = CARTA.CoordinateType.WORLD;
+    @observable exportFileType: RegionFileType = CARTA.FileType.CRTF;
     @observable exportRegionIndexes: number[] = [];
-    @observable selectedFilesCtypes: {ctype: string[]; rank: number[]};
+    @observable selectedFilesCtypes: {ctype: string[]; rank: number[]} = {ctype: [], rank: []};
 
-    @observable catalogFileList: BrowserFileList | null;
-    @observable selectedCatalogFile: CARTA.ICatalogFileInfo;
-    @observable catalogFileInfo: CARTA.ICatalogFileInfo | null;
-    @observable catalogHeaders: Array<CARTA.ICatalogHeader>;
+    @observable catalogFileList: BrowserFileList | null = null;
+    @observable selectedCatalogFile: CARTA.ICatalogFileInfo = undefined as any;
+    @observable catalogFileInfo: CARTA.ICatalogFileInfo | null = null;
+    @observable catalogHeaders: Array<CARTA.ICatalogHeader> = [];
 
     // Save image
     @observable saveFilename: string | null | undefined = "";
@@ -95,17 +74,15 @@ export class FileBrowserStore {
     @observable saveSpectralStart: number = 0;
     @observable saveSpectralEnd: number = 0;
     @observable saveSpectralStride: number = 1;
-    @observable saveStokesOption: number;
-    @observable saveRegionId: number;
+    @observable saveStokesOption: number = 0;
+    @observable saveRegionId: number = 0;
     @observable saveRestFreq: Freq = {value: 0, unit: FrequencyUnit.MHZ};
-    @observable shouldDropDegenerateAxes: boolean;
+    @observable shouldDropDegenerateAxes: boolean = false;
 
-    private extendedDelayHandle: any;
+    private extendedDelayHandle: ReturnType<typeof setTimeout> | undefined;
 
     constructor() {
         makeObservable(this);
-        this.exportCoordinateType = CARTA.CoordinateType.WORLD;
-        this.exportFileType = CARTA.FileType.CRTF;
 
         autorun(() => {
             const activeFrame = AppStore.Instance.activeFrame;
@@ -123,12 +100,12 @@ export class FileBrowserStore {
         });
     }
 
-    @observable selectedFiles: ISelectedFile[];
+    @observable selectedFiles: ISelectedFile[] = [];
 
-    @observable isLoadingDialogOpen: boolean;
-    @observable loadingProgress: number;
-    @observable loadingCheckedCount: number;
-    @observable loadingTotalCount: number;
+    @observable isLoadingDialogOpen: boolean = false;
+    @observable loadingProgress: number = 0;
+    @observable loadingCheckedCount: number = 0;
+    @observable loadingTotalCount: number = 0;
 
     @action setImportingRegions = (isImportingRegions: boolean) => {
         this.isImportingRegions = isImportingRegions;
@@ -193,10 +170,8 @@ export class FileBrowserStore {
     }
 
     private clearExtendedDelayTimer(resetState: boolean = false) {
-        if (this.extendedDelayHandle) {
-            clearTimeout(this.extendedDelayHandle);
-            this.extendedDelayHandle = null;
-        }
+        clearTimeout(this.extendedDelayHandle);
+        this.extendedDelayHandle = undefined;
         if (resetState) {
             this.setExtendedLoading(false);
         }
@@ -255,7 +230,7 @@ export class FileBrowserStore {
                 }
             }
         } catch (err) {
-            console.log(err);
+            console.error(err);
             AppToaster.show(ErrorToast(`Error loading file list for directory ${directory}`));
         }
         this.loadingList = false;
@@ -308,7 +283,7 @@ export class FileBrowserStore {
             }
             this.fileInfoResp = true;
         } catch (err) {
-            console.log(err);
+            console.error(err);
             this.responseErrorMessage = err;
             this.fileInfoResp = false;
             this.HDUfileInfoExtended = null;
@@ -333,7 +308,7 @@ export class FileBrowserStore {
             }
             this.fileInfoResp = true;
         } catch (err) {
-            console.log(err);
+            console.error(err);
             this.responseErrorMessage = err;
             this.fileInfoResp = false;
             this.regionFileInfo = null;
@@ -361,7 +336,7 @@ export class FileBrowserStore {
             }
             this.fileInfoResp = true;
         } catch (err) {
-            console.log(err);
+            console.error(err);
             this.responseErrorMessage = err;
             this.fileInfoResp = false;
             this.catalogFileInfo = null;
@@ -413,7 +388,7 @@ export class FileBrowserStore {
                 polarizationType: FileBrowserStore.GetStokesType(response.info?.[k], response.file)
             };
         } catch (err) {
-            console.log(err);
+            console.error(err);
             return undefined;
         }
     };
@@ -681,7 +656,7 @@ export class FileBrowserStore {
         const backendService = BackendService.Instance;
 
         const filesCtype: string[] = [];
-        let filesCtypeRank: number[] = [];
+        const filesCtypeRank: number[] = [];
 
         for (let i = 0; i < this.selectedFiles.length; i++) {
             const res = yield backendService.getFileInfo(this.fileList?.directory, this.selectedFiles[i].fileInfo?.name, this.selectedFiles[i].hdu);
@@ -824,7 +799,14 @@ export class FileBrowserStore {
             case BrowserMode.Catalog:
                 return this.catalogFileList;
             default:
-                return this.fileList;
+                return this.fileList
+                    ? {
+                          directory: this.fileList.directory,
+                          parent: this.fileList.parent,
+                          files: this.fileList.files,
+                          subdirectories: this.fileList.subdirectories
+                      }
+                    : null;
         }
     }
 
@@ -900,7 +882,7 @@ export class FileBrowserStore {
     }
 
     @computed get exportRegionOptions(): LineOption[] {
-        let options: LineOption[] = [];
+        const options: LineOption[] = [];
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         if (frame?.regionSet?.regions) {

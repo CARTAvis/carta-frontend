@@ -1,7 +1,8 @@
 import {Utils} from "@blueprintjs/table";
 import {action, computed, makeAutoObservable, observable} from "mobx";
 
-import {ImagePanelMode, ImageType, ImageViewItem} from "models";
+import {ImagePanelMode, ImageType} from "enums";
+import {type ImageViewItem} from "models";
 import {AppStore, ColorBlendingStore, FrameStore, PreferenceStore} from "stores";
 import {clamp} from "utilities";
 
@@ -190,7 +191,7 @@ export class ImageViewConfigStore {
 
     /** The frames visible on the current page, including the loaded images and the layers of the color blended images. */
     @computed get visibleFrames(): FrameStore[] {
-        let frames: Set<FrameStore> = new Set();
+        const frames: Set<FrameStore> = new Set();
         this.visibleImages.forEach(imageItem => {
             if (imageItem?.type === ImageType.FRAME) {
                 const frame = imageItem?.store;

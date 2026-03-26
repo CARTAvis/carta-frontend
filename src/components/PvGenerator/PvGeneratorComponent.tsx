@@ -6,17 +6,24 @@ import {observer} from "mobx-react";
 
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
-import {Point2D, SpectralSystem} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
-import {PVAxis, PvGeneratorWidgetStore, RegionId} from "stores/Widgets";
+import {HelpType, RegionId, type SpectralSystem} from "enums";
+import {type Point2D} from "models";
+import {AppStore, type DefaultWidgetConfig, PreferenceStore, type WidgetProps, WidgetsStore} from "stores";
+import {PvGeneratorWidgetStore} from "stores/Widgets";
 import {toFixed} from "utilities";
 
 import "./PvGeneratorComponent.scss";
+
+enum PVAxis {
+    SPATIAL = "Spatial",
+    SPECTRAL = "Spectral"
+}
 
 @observer
 export class PvGeneratorComponent extends React.Component<WidgetProps> {
     axesOrder = {};
     @observable isValidSpectralRange: boolean = true;
+    private widgetId: string;
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -35,7 +42,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     @computed get widgetStore(): PvGeneratorWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.pvGeneratorWidgets) {
-            const widgetStore = widgetsStore.pvGeneratorWidgets.get(this.props.id);
+            const widgetStore = widgetsStore.pvGeneratorWidgets.get(this.widgetId);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -45,7 +52,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     }
 
     @computed get isLineIntersectedWithImage(): boolean {
-        if (this.widgetStore.effectiveRegion) {
+        if (this.widgetStore.effectiveRegion && this.widgetStore.effectiveFrame?.frameInfo?.fileInfoExtended) {
             const startPoint = this.widgetStore.effectiveRegion.controlPoints[0];
             const endPoint = this.widgetStore.effectiveRegion.controlPoints[1];
             const width = this.widgetStore.effectiveFrame.frameInfo.fileInfoExtended.width;
@@ -59,7 +66,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
 
             // check if image corners are on the same side of the line region. from https://stackoverflow.com/a/1560510
             let sideValue = 0;
-            for (let corner of imageCorners) {
+            for (const corner of imageCorners) {
                 sideValue = sideValue + Math.sign((endPoint.x - startPoint.x) * (corner.y - startPoint.y) - (endPoint.y - startPoint.y) * (corner.x - startPoint.x));
             }
 
@@ -86,35 +93,44 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         return false;
     }
 
-    @computed get estimatedCubeSize(): number {
+    @computed get estimatedCubeSize(): number | undefined {
         const frame = this.widgetStore?.effectiveFrame;
 
-        if (!frame) {
-            return 0;
+        if (!frame?.frameInfo.fileInfoExtended) {
+            return undefined;
         }
 
         // Find percentage of selected channel range
-        const imageDepth = frame?.frameInfo.fileInfoExtended.depth;
-        const channelIndexMin = frame?.findChannelIndexByValue(this.widgetStore.range?.min);
-        const channelIndexMax = frame?.findChannelIndexByValue(this.widgetStore.range?.max);
+        const imageDepth = frame.frameInfo.fileInfoExtended.depth;
+        const channelIndexMin = frame.findChannelIndexByValue(this.widgetStore.range.min);
+        const channelIndexMax = frame.findChannelIndexByValue(this.widgetStore.range.max);
+
+        if (channelIndexMin === undefined || channelIndexMax === undefined) {
+            return undefined;
+        }
+
         const channelRangePercentage = Math.abs(channelIndexMax - channelIndexMin + 1) / imageDepth;
 
         // Find byte per image pixel
-        const bytePix = Math.abs(frame?.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.match("BITPIX")).numericValue) / 8;
+        const bitPixEntry = frame.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name?.match("BITPIX"));
+        if (!bitPixEntry?.numericValue) {
+            return undefined;
+        }
+        const bytePix = Math.abs(bitPixEntry.numericValue) / 8;
 
         // Get rectangular region if exists
-        const region = frame?.getRegion(this.widgetStore.effectivePreviewRegionId);
+        const region = frame.getRegion(this.widgetStore.effectivePreviewRegionId);
 
-        const fileInfoExtended = frame?.frameInfo.fileInfoExtended;
+        const fileInfoExtended = frame.frameInfo.fileInfoExtended;
 
         // Get size of entire cube
         const imageSize = fileInfoExtended.width * fileInfoExtended.height * fileInfoExtended.depth * bytePix;
 
         // Get size of pixels bounded by the rectangular region
-        const regionBoundSize = region?.regionId === -1 ? null : region?.boundingBoxArea * bytePix * imageDepth;
+        const regionBoundSize = region?.regionId === -1 ? null : (region?.boundingBoxArea ?? 0) * bytePix * imageDepth;
 
         // Calculate estimated size using selected range of channels and rebin values
-        const estimatedSize = ((regionBoundSize || imageSize) * channelRangePercentage) / (this.widgetStore.xyRebin * this.widgetStore.zRebin);
+        const estimatedSize = ((regionBoundSize || imageSize) * channelRangePercentage) / (this.widgetStore.xyRebin * this.widgetStore.xyRebin * this.widgetStore.zRebin);
 
         if (region?.regionType !== CARTA.RegionType.RECTANGLE && !estimatedSize) {
             return undefined;
@@ -125,25 +141,30 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     }
 
     @computed get isCubeSizeBelowLimit(): boolean {
-        return this.estimatedCubeSize <= PreferenceStore.Instance.pvPreviewCubeSizeLimit;
+        return (this.estimatedCubeSize ?? 0) <= PreferenceStore.Instance.pvPreviewCubeSizeLimit;
     }
 
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
+        this.widgetId = props.id;
         this.genAxisOptions();
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === PvGeneratorComponent.WIDGET_CONFIG.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addPvGeneratorWidget();
-            appStore.widgetsStore.changeWidgetId(props.id, id);
+            if (id) {
+                appStore.widgetsStore.changeWidgetId(props.id, id);
+                this.widgetId = id; // Update the stored widget ID
+            }
         } else {
-            if (!appStore.widgetsStore.pvGeneratorWidgets.has(this.props.id)) {
-                console.log(`can't find store for widget with id=${this.props.id}`);
-                appStore.widgetsStore.pvGeneratorWidgets.set(this.props.id, new PvGeneratorWidgetStore());
+            if (!appStore.widgetsStore.pvGeneratorWidgets.has(this.widgetId)) {
+                console.log(`can't find store for widget with id=${this.widgetId}`);
+                appStore.widgetsStore.pvGeneratorWidgets.set(this.widgetId, new PvGeneratorWidgetStore());
             }
         }
+        makeObservable(this);
     }
 
     @action setisValidSpectralRange = (bool: boolean) => {
@@ -154,15 +175,20 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         if (this.widgetStore.effectiveFrame) {
             const selectedFileId = parseInt(changeEvent.target.value);
             this.widgetStore.setFileId(selectedFileId);
-            this.widgetStore.setRegionId(this.widgetStore.effectiveFrame.frameInfo.fileId, RegionId.NONE);
+            const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+            if (fileId !== undefined) {
+                this.widgetStore.setRegionId(fileId, RegionId.NONE);
+            }
         }
     };
 
     private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         if (this.widgetStore.effectiveFrame) {
             const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
-            this.widgetStore.setFileId(fileId);
-            this.widgetStore.setRegionId(fileId, parseInt(changeEvent.target.value));
+            if (fileId !== undefined) {
+                this.widgetStore.setFileId(fileId);
+                this.widgetStore.setRegionId(fileId, parseInt(changeEvent.target.value));
+            }
         }
     };
 
@@ -181,14 +207,19 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     };
 
     private onPreviewButtonClicked = () => {
-        this.widgetStore.requestPV(true, this.props.id);
+        this.widgetStore.requestPV(true, this.widgetId);
     };
 
     private onGenerateButtonClicked = () => {
-        const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
-        this.widgetStore.setFileId(fileId);
-        this.widgetStore.setRegionId(fileId, this.widgetStore.effectiveRegionId);
-        this.widgetStore.requestPV();
+        if (this.widgetStore.effectiveFrame && this.widgetStore.effectiveRegionId) {
+            const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+            if (fileId === undefined) {
+                return;
+            }
+            this.widgetStore.setFileId(fileId);
+            this.widgetStore.setRegionId(fileId, this.widgetStore.effectiveRegionId);
+            this.widgetStore.requestPV();
+        }
     };
 
     private genAxisOptions = () => {
@@ -215,16 +246,32 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         }
 
         const frame = this.widgetStore.effectiveFrame;
-        let channelIndexMin = frame.findChannelIndexByValue(this.widgetStore.range?.min);
-        let channelIndexMax = frame.findChannelIndexByValue(this.widgetStore.range?.max);
-
-        if (channelIndexMin > channelIndexMax) {
-            const holder = channelIndexMax;
-            channelIndexMax = channelIndexMin;
-            channelIndexMin = holder;
+        if (!frame) {
+            this.setisValidSpectralRange(false);
+            return;
         }
 
-        if (isFinite(this.widgetStore.range?.min) && isFinite(this.widgetStore.range?.max) && channelIndexMin < channelIndexMax && channelIndexMax < frame.numChannels) {
+        const channelIndexMin = frame.findChannelIndexByValue(this.widgetStore.range?.min);
+        const channelIndexMax = frame.findChannelIndexByValue(this.widgetStore.range?.max);
+
+        if (channelIndexMin === undefined || channelIndexMax === undefined) {
+            this.setisValidSpectralRange(false);
+            return;
+        }
+
+        let adjustedMin = channelIndexMin;
+        let adjustedMax = channelIndexMax;
+
+        if (adjustedMin > adjustedMax) {
+            const holder = adjustedMax;
+            adjustedMax = adjustedMin;
+            adjustedMin = holder;
+        }
+
+        const minValue = this.widgetStore.range?.min;
+        const maxValue = this.widgetStore.range?.max;
+
+        if (typeof minValue === "number" && typeof maxValue === "number" && isFinite(minValue) && isFinite(maxValue) && adjustedMin < adjustedMax && adjustedMax < frame.numChannels) {
             this.setisValidSpectralRange(true);
         } else {
             this.setisValidSpectralRange(false);
@@ -239,7 +286,8 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
 
         let selectedValue = RegionId.NONE;
         if (this.widgetStore.effectiveFrame?.regionSet) {
-            selectedValue = this.widgetStore.regionIdMap.get(this.widgetStore.effectiveFrame.frameInfo.fileId);
+            const regionId = this.widgetStore.regionIdMap.get(this.widgetStore.effectiveFrame.frameInfo.fileId);
+            selectedValue = regionId ?? RegionId.NONE;
         }
 
         const isAbleToGenerate = this.widgetStore.effectiveRegion && !appStore.animatorStore.animationActive && this.isLineIntersectedWithImage && !this.isLineInOnePixel && this.isValidSpectralRange;
@@ -305,26 +353,38 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                 <FormGroup inline={true} label="Average width">
                     <SafeNumericInput min={1} max={20} stepSize={1} value={this.widgetStore.width} onValueChange={value => this.widgetStore.setWidth(value)} />
                 </FormGroup>
-                <SpectralSettingsComponent
-                    frame={frame}
-                    onSpectralCoordinateChange={coord => {
-                        this.setisValidSpectralRange(true);
-                        this.widgetStore.setSpectralCoordinate(coord);
-                    }}
-                    onSpectralSystemChange={sys => {
-                        this.setisValidSpectralRange(true);
-                        this.widgetStore.setSpectralSystem(sys as SpectralSystem);
-                    }}
-                    disable={frame?.isPVImage || !frame?.isSpectralChannel}
-                />
+                {frame && (
+                    <SpectralSettingsComponent
+                        frame={frame}
+                        onSpectralCoordinateChange={coord => {
+                            this.setisValidSpectralRange(true);
+                            this.widgetStore.setSpectralCoordinate(coord);
+                        }}
+                        onSpectralSystemChange={sys => {
+                            this.setisValidSpectralRange(true);
+                            this.widgetStore.setSpectralSystem(sys as SpectralSystem);
+                        }}
+                        disable={frame.isPVImage || !frame.isSpectralChannel}
+                    />
+                )}
                 {frame && frame.numChannels > 1 && (
                     <FormGroup label="Range" inline={true} labelInfo={`(${frame.spectralUnit})`}>
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
-                                <SafeNumericInput value={this.widgetStore.range?.min} buttonPosition="none" onValueChange={value => this.handleSpectralRangeChanged(value, false)} data-testid="pv-generator-spectral-range-from-input" />
+                                <SafeNumericInput
+                                    value={this.widgetStore.range?.min ?? undefined}
+                                    buttonPosition="none"
+                                    onValueChange={value => this.handleSpectralRangeChanged(value, false)}
+                                    data-testid="pv-generator-spectral-range-from-input"
+                                />
                             </FormGroup>
                             <FormGroup label="To" inline={true}>
-                                <SafeNumericInput value={this.widgetStore.range?.max} buttonPosition="none" onValueChange={value => this.handleSpectralRangeChanged(value, true)} data-testid="pv-generator-spectral-range-to-input" />
+                                <SafeNumericInput
+                                    value={this.widgetStore.range?.max ?? undefined}
+                                    buttonPosition="none"
+                                    onValueChange={value => this.handleSpectralRangeChanged(value, true)}
+                                    data-testid="pv-generator-spectral-range-to-input"
+                                />
                             </FormGroup>
                         </div>
                     </FormGroup>
@@ -350,7 +410,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                         <FormGroup inline={true} label={"XY"}>
                             <SafeNumericInput
                                 min={1}
-                                max={Math.ceil(Math.max(this.widgetStore.effectiveFrame?.frameInfo.fileInfoExtended.height, this.widgetStore.effectiveFrame?.frameInfo.fileInfoExtended.width) / 2) || 1}
+                                max={Math.ceil(Math.max(this.widgetStore.effectiveFrame?.frameInfo?.fileInfoExtended?.height ?? 1, this.widgetStore.effectiveFrame?.frameInfo?.fileInfoExtended?.width ?? 1) / 2) || 1}
                                 stepSize={1}
                                 value={this.widgetStore.xyRebin}
                                 onValueChange={value => this.widgetStore.setXYRebin(value)}
@@ -360,7 +420,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                         <FormGroup inline={true} label={"Z"}>
                             <SafeNumericInput
                                 min={1}
-                                max={Math.ceil(this.widgetStore.effectiveFrame?.frameInfo.fileInfoExtended.depth / 2) || 1}
+                                max={Math.ceil((this.widgetStore.effectiveFrame?.frameInfo?.fileInfoExtended?.depth ?? 2) / 2) || 1}
                                 stepSize={1}
                                 value={this.widgetStore.zRebin}
                                 onValueChange={value => this.widgetStore.setZRebin(value)}
@@ -394,13 +454,13 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                 <div className="pv-generator-widget">
                     <div className="pv-generator-panel">{pvImagePanel}</div>
                     <TaskProgressDialogComponent
-                        isOpen={frame?.isRequestingPV && frame.requestingPVProgress < 1}
-                        progress={frame ? frame.requestingPVProgress : 0}
-                        timeRemaining={appStore.estimatedTaskRemainingTime}
+                        isOpen={!!frame?.isRequestingPV && (frame.requestingPVProgress ?? 0) < 1}
+                        progress={frame?.requestingPVProgress ?? 0}
+                        timeRemaining={appStore.estimatedTaskRemainingTime ?? 0}
                         cancellable={true}
-                        onCancel={this.widgetStore.requestingPVCancelled(this.props.id)}
+                        onCancel={this.widgetStore.requestingPVCancelled(this.widgetId)}
                         text={"Generating PV"}
-                        isCancelling={frame?.isRequestPVCancelling}
+                        isCancelling={!!frame?.isRequestPVCancelling}
                     />
                 </div>
             </ScrollShadow>

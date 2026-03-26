@@ -1,6 +1,6 @@
 import * as React from "react";
 import {SketchPicker} from "react-color";
-import {Button, Classes, MenuItem, Popover, PopoverPosition, PopoverProps} from "@blueprintjs/core";
+import {Button, Classes, MenuItem, Popover, PopoverPosition, type PopoverProps} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import classNames from "classnames";
 import * as _ from "lodash";
@@ -43,7 +43,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = props => {
             const popoverClassName = classNames("color-picker-popup", {[Classes.DARK]: AppStore.Instance.darkTheme});
 
             const handleColorChange = _.throttle((color: any) => {
-                props.onCustomColorSelect(color.hex);
+                props.onCustomColorSelect?.(color.hex);
                 props.onColormapSelect(RenderConfigStore.COLOR_MAPS_CUSTOM);
             }, changeDelay);
 

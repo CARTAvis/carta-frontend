@@ -3,9 +3,8 @@ import {Classes, Dialog, Hotkey, Hotkeys, useHotkeys} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {ImageViewLayer} from "components";
-import {AppStore, BrowserMode, DialogId} from "stores";
-import {RegionMode} from "stores/Frame";
+import {BrowserMode, DialogId, ImageViewLayer, RegionMode} from "enums";
+import {AppStore} from "stores";
 
 import "./HotkeyWrapper.scss";
 

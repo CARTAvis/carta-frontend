@@ -1,13 +1,13 @@
 import * as React from "react";
-import {Button, Classes, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, Position, Switch, Tab, TabId, Tabs, Tooltip} from "@blueprintjs/core";
+import {Button, Classes, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, Position, Switch, Tab, type TabId, Tabs, Tooltip} from "@blueprintjs/core";
 import classNames from "classnames";
-import {action, autorun, makeObservable, observable} from "mobx";
+import {action, autorun, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, fontSelect, InputType, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
-import {ImagePanelMode} from "models";
-import {AppStore, BeamType, DefaultWidgetConfig, HelpType, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
-import {ColorbarStore, CoordinateMode} from "stores/Frame";
+import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, fontSelect, SafeNumericInput, ScrollShadow, SpectralSettingsComponent} from "components/Shared";
+import {BeamType, CoordinateMode, HelpType, ImagePanelMode, InputType, LabelType, NumberFormatType, PreferenceKeys, SystemType} from "enums";
+import {AppStore, type DefaultWidgetConfig, NUMBER_FORMAT_LABEL, type WidgetProps} from "stores";
+import {ColorbarStore} from "stores/Frame";
 import {SWATCH_COLORS, toFixed} from "utilities";
 
 import "./ImageViewSettingsPanelComponent.scss";
@@ -31,6 +31,7 @@ enum ImageViewSettingsPanelTabs {
 export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps> {
     @observable selectedTab: TabId = ImageViewSettingsPanelTabs.PAN_AND_ZOOM;
     @observable panAndZoomCoord: CoordinateMode = CoordinateMode.World;
+    private readonly disposers: IReactionDisposer[] = [];
 
     @action private setSelectedTab = (tab: TabId) => {
         this.selectedTab = tab;
@@ -44,11 +45,18 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         super(props);
         makeObservable(this);
 
-        autorun(() => {
-            if (!AppStore.Instance.activeFrame?.isPVImage && this.selectedTab === ImageViewSettingsPanelTabs.CONVERSION) {
-                this.selectedTab = ImageViewSettingsPanelTabs.GLOBAL;
-            }
-        });
+        this.disposers.push(
+            autorun(() => {
+                if (!AppStore.Instance.activeFrame?.isPVImage && this.selectedTab === ImageViewSettingsPanelTabs.CONVERSION) {
+                    this.selectedTab = ImageViewSettingsPanelTabs.GLOBAL;
+                }
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
     }
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
@@ -105,51 +113,51 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <CoordNumericInput
                         coord={this.panAndZoomCoord}
                         inputType={InputType.XCoord}
-                        value={frame?.center?.x}
-                        onChange={val => frame?.setCenter(val, frame?.center?.y)}
+                        value={frame?.center?.x ?? 0}
+                        onChange={val => frame?.setCenter(val, frame?.center?.y ?? 0) ?? false}
                         valueWcs={frame?.centerWCS?.x ?? null}
-                        onChangeWcs={val => frame?.setCenterWcs(val, frame?.centerWCS?.y ?? null)}
+                        onChangeWcs={val => frame?.setCenterWcs(val, frame?.centerWCS?.y ?? null) ?? false}
                         wcsDisabled={isPVImage}
                     />
-                    <span className="info-string">{getInfoString(frame?.center?.x, frame?.centerWCS?.x ?? undefined)}</span>
+                    <span className="info-string">{getInfoString(frame?.center?.x ?? 0, frame?.centerWCS?.x ?? undefined)}</span>
                 </FormGroup>
                 <FormGroup inline={true} label="Center (Y)" labelInfo={fovLabelInfo}>
                     <CoordNumericInput
                         coord={this.panAndZoomCoord}
                         inputType={InputType.YCoord}
-                        value={frame?.center?.y}
-                        onChange={val => frame?.setCenter(frame?.center?.x, val)}
+                        value={frame?.center?.y ?? 0}
+                        onChange={val => frame?.setCenter(frame?.center?.x ?? 0, val) ?? false}
                         valueWcs={frame?.centerWCS?.y ?? null}
-                        onChangeWcs={val => frame?.setCenterWcs(frame?.centerWCS?.x ?? null, val)}
+                        onChangeWcs={val => frame?.setCenterWcs(frame?.centerWCS?.x ?? null, val) ?? false}
                         wcsDisabled={isPVImage}
                     />
-                    <span className="info-string">{getInfoString(frame?.center?.y, frame?.centerWCS?.y ?? undefined)}</span>
+                    <span className="info-string">{getInfoString(frame?.center?.y ?? 0, frame?.centerWCS?.y ?? undefined)}</span>
                 </FormGroup>
                 <FormGroup inline={true} label="Size (X)" labelInfo={fovLabelInfo}>
                     <CoordNumericInput
                         coord={this.panAndZoomCoord}
                         inputType={InputType.Size}
-                        value={frame?.fovSize?.x}
-                        onChange={frame?.zoomToSizeX}
-                        valueWcs={frame?.fovSizeWCS?.x}
-                        onChangeWcs={frame?.zoomToSizeXWcs}
+                        value={frame?.fovSize?.x ?? 0}
+                        onChange={val => frame?.zoomToSizeX(val) ?? false}
+                        valueWcs={frame?.fovSizeWCS?.x ?? null}
+                        onChangeWcs={val => frame?.zoomToSizeXWcs(val) ?? false}
                         wcsDisabled={isPVImage}
                         customPlaceholder="Width"
                     />
-                    <span className="info-string">{getInfoString(frame?.fovSize?.x, frame?.fovSizeWCS?.x)}</span>
+                    <span className="info-string">{getInfoString(frame?.fovSize?.x ?? 0, frame?.fovSizeWCS?.x)}</span>
                 </FormGroup>
                 <FormGroup inline={true} label="Size (Y)" labelInfo={fovLabelInfo}>
                     <CoordNumericInput
                         coord={this.panAndZoomCoord}
                         inputType={InputType.Size}
-                        value={frame?.fovSize?.y}
-                        onChange={frame?.zoomToSizeY}
-                        valueWcs={frame?.fovSizeWCS?.y}
-                        onChangeWcs={frame?.zoomToSizeYWcs}
+                        value={frame?.fovSize?.y ?? 0}
+                        onChange={val => frame?.zoomToSizeY(val) ?? false}
+                        valueWcs={frame?.fovSizeWCS?.y ?? null}
+                        onChangeWcs={val => frame?.zoomToSizeYWcs(val) ?? false}
                         wcsDisabled={isPVImage}
                         customPlaceholder="Height"
                     />
-                    <span className="info-string">{getInfoString(frame?.fovSize?.y, frame?.fovSizeWCS?.y)}</span>
+                    <span className="info-string">{getInfoString(frame?.fovSize?.y ?? 0, frame?.fovSizeWCS?.y)}</span>
                 </FormGroup>
                 <FormGroup inline={true} label="Offset coordinates">
                     <Switch checked={frame?.isOffsetCoord} disabled={frame?.isPVImage || frame?.isSwappedZ || frame?.isUVImage} onChange={frame?.toggleOffsetCoord} />
@@ -164,25 +172,25 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         <CoordNumericInput
                             coord={this.panAndZoomCoord}
                             inputType={InputType.XCoord}
-                            value={frame?.offsetCenter?.x}
-                            onChange={val => frame?.setOffsetCenter(val, frame?.offsetCenter?.y)}
+                            value={frame?.offsetCenter?.x ?? 0}
+                            onChange={val => frame?.setOffsetCenter(val, frame?.offsetCenter?.y ?? 0) ?? false}
                             valueWcs={frame?.offsetCenterWCS?.x ?? null}
-                            onChangeWcs={val => frame?.setOffsetCenterWcs(val, frame?.offsetCenterWCS?.y ?? null)}
+                            onChangeWcs={val => frame?.setOffsetCenterWcs(val, frame?.offsetCenterWCS?.y ?? null) ?? false}
                             wcsDisabled={isPVImage}
                         />
-                        <span className="info-string">{getInfoString(frame?.offsetCenter?.x, frame?.offsetCenterWCS?.x ?? undefined)}</span>
+                        <span className="info-string">{getInfoString(frame?.offsetCenter?.x ?? 0, frame?.offsetCenterWCS?.x ?? undefined)}</span>
                     </FormGroup>
                     <FormGroup inline={true} label="Offset center (Y)" labelInfo={fovLabelInfo}>
                         <CoordNumericInput
                             coord={this.panAndZoomCoord}
                             inputType={InputType.YCoord}
-                            value={frame?.offsetCenter?.y}
-                            onChange={val => frame?.setOffsetCenter(frame?.offsetCenter?.x, val)}
+                            value={frame?.offsetCenter?.y ?? 0}
+                            onChange={val => frame?.setOffsetCenter(frame?.offsetCenter?.x ?? 0, val) ?? false}
                             valueWcs={frame?.offsetCenterWCS?.y ?? null}
-                            onChangeWcs={val => frame?.setOffsetCenterWcs(frame?.offsetCenterWCS?.x ?? null, val)}
+                            onChangeWcs={val => frame?.setOffsetCenterWcs(frame?.offsetCenterWCS?.x ?? null, val) ?? false}
                             wcsDisabled={isPVImage}
                         />
-                        <span className="info-string">{getInfoString(frame?.offsetCenter?.y, frame?.offsetCenterWCS?.y ?? undefined)}</span>
+                        <span className="info-string">{getInfoString(frame?.offsetCenter?.y ?? 0, frame?.offsetCenterWCS?.y ?? undefined)}</span>
                     </FormGroup>
                 </Collapse>
             </div>
@@ -695,62 +703,64 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
             </div>
         );
 
-        const beamPanel = beam.isSelectedFrameValid ? (
-            <div className="panel-container">
-                <FormGroup inline={true} label="Image">
-                    <HTMLSelect options={appStore.frameNames} value={beam.selectedFileId} onChange={(event: React.FormEvent<HTMLSelectElement>) => beam.setSelectedFrame(parseInt(event.currentTarget.value))} />
-                </FormGroup>
-                <FormGroup inline={true} label="Visible">
-                    <Switch checked={beamSettings.visible} onChange={ev => beamSettings.setVisible(ev.currentTarget.checked)} />
-                </FormGroup>
-                <FormGroup inline={true} label="Color">
-                    <AutoColorPickerComponent color={beamSettings.color} presetColors={SWATCH_COLORS} setColor={beamSettings.setColor} disableAlpha={true} />
-                </FormGroup>
-                <FormGroup inline={true} label="Type">
-                    <HTMLSelect
-                        options={Object.keys(BeamType).map(key => ({label: key, value: BeamType[key]}))}
-                        value={beamSettings.type}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => beamSettings.setType(event.currentTarget.value as BeamType)}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Width" labelInfo="(px)">
-                    <SafeNumericInput placeholder="Width" min={0.5} max={10} value={beamSettings.width} stepSize={0.5} minorStepSize={0.1} majorStepSize={1} onValueChange={(value: number) => beamSettings.setWidth(value)} />
-                </FormGroup>
-                <FormGroup inline={true} label="Position (X)" labelInfo="(px)">
-                    <SafeNumericInput
-                        placeholder="Position (X)"
-                        min={0}
-                        max={AppStore.Instance.activeFrame?.renderWidth}
-                        value={beamSettings.shiftX}
-                        stepSize={5}
-                        minorStepSize={1}
-                        majorStepSize={10}
-                        onValueChange={(value: number) => beamSettings.setShiftX(value)}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Position (Y)" labelInfo="(px)">
-                    <SafeNumericInput
-                        placeholder="Position (Y)"
-                        min={0}
-                        max={AppStore.Instance.activeFrame?.renderHeight}
-                        value={beamSettings.shiftY}
-                        stepSize={5}
-                        minorStepSize={1}
-                        majorStepSize={10}
-                        onValueChange={(value: number) => beamSettings.setShiftY(value)}
-                    />
-                </FormGroup>
-            </div>
-        ) : null;
+        const beamPanel =
+            beam.isSelectedFrameValid && beamSettings ? (
+                <div className="panel-container">
+                    <FormGroup inline={true} label="Image">
+                        <HTMLSelect options={appStore.frameNames} value={beam.selectedFileId} onChange={(event: React.FormEvent<HTMLSelectElement>) => beam.setSelectedFrame(parseInt(event.currentTarget.value))} />
+                    </FormGroup>
+                    <FormGroup inline={true} label="Visible">
+                        <Switch checked={beamSettings.visible} onChange={ev => beamSettings.setVisible(ev.currentTarget.checked)} />
+                    </FormGroup>
+                    <FormGroup inline={true} label="Color">
+                        <AutoColorPickerComponent color={beamSettings.color} presetColors={SWATCH_COLORS} setColor={beamSettings.setColor} disableAlpha={true} />
+                    </FormGroup>
+                    <FormGroup inline={true} label="Type">
+                        <HTMLSelect
+                            options={Object.keys(BeamType).map(key => ({label: key, value: BeamType[key]}))}
+                            value={beamSettings.type}
+                            onChange={(event: React.FormEvent<HTMLSelectElement>) => beamSettings.setType(event.currentTarget.value as BeamType)}
+                        />
+                    </FormGroup>
+                    <FormGroup inline={true} label="Width" labelInfo="(px)">
+                        <SafeNumericInput placeholder="Width" min={0.5} max={10} value={beamSettings.width} stepSize={0.5} minorStepSize={0.1} majorStepSize={1} onValueChange={(value: number) => beamSettings.setWidth(value)} />
+                    </FormGroup>
+                    <FormGroup inline={true} label="Position (X)" labelInfo="(px)">
+                        <SafeNumericInput
+                            placeholder="Position (X)"
+                            min={0}
+                            max={AppStore.Instance.activeFrame?.renderWidth}
+                            value={beamSettings.shiftX}
+                            stepSize={5}
+                            minorStepSize={1}
+                            majorStepSize={10}
+                            onValueChange={(value: number) => beamSettings.setShiftX(value)}
+                        />
+                    </FormGroup>
+                    <FormGroup inline={true} label="Position (Y)" labelInfo="(px)">
+                        <SafeNumericInput
+                            placeholder="Position (Y)"
+                            min={0}
+                            max={AppStore.Instance.activeFrame?.renderHeight}
+                            value={beamSettings.shiftY}
+                            stepSize={5}
+                            minorStepSize={1}
+                            majorStepSize={10}
+                            onValueChange={(value: number) => beamSettings.setShiftY(value)}
+                        />
+                    </FormGroup>
+                </div>
+            ) : null;
 
-        const spectralPanel = isPVImage ? (
-            <div className="panel-container">
-                <p>For spatial-spectral image</p>
-                <Divider />
-                <p>Spectral axis</p>
-                <SpectralSettingsComponent frame={appStore.activeFrame} onSpectralCoordinateChange={frame.setSpectralCoordinate} onSpectralSystemChange={frame.setSpectralSystem} disable={!isPVImage} disableChannelOption={true} />
-            </div>
-        ) : null;
+        const spectralPanel =
+            isPVImage && frame ? (
+                <div className="panel-container">
+                    <p>For spatial-spectral image</p>
+                    <Divider />
+                    <p>Spectral axis</p>
+                    <SpectralSettingsComponent frame={frame} onSpectralCoordinateChange={frame.setSpectralCoordinate} onSpectralSystemChange={frame.setSpectralSystem} disable={!isPVImage} disableChannelOption={true} />
+                </div>
+            ) : null;
 
         const className = classNames("image-view-settings", {[Classes.DARK]: appStore.darkTheme});
 

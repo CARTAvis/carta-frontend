@@ -32,17 +32,17 @@ export class ColorBlendingStore {
     static readonly DefaultLayerLimit = 10;
 
     /** The custom title shown in the image view overlay. */
-    @observable titleCustomText: string;
+    @observable titleCustomText: string = "";
     /** The frames from the layers excluding the base layer. */
     @observable selectedFrames: FrameStore[];
     /** The alpha values of all the layers */
     @observable alpha: number[];
     /** The visibility of the blended raster image. */
-    @observable rasterVisible = true;
+    @observable rasterVisible: boolean = true;
     /** The visibility of all the contours. */
-    @observable contourVisible = true;
+    @observable contourVisible: boolean = true;
     /** The visibility of all the vector overlays. */
-    @observable vectorOverlayVisible = true;
+    @observable vectorOverlayVisible: boolean = true;
 
     /**
      * Sets the custom title shown in the image view overlay.

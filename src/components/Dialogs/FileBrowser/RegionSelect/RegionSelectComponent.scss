@@ -10,6 +10,14 @@
     display: flex;
     flex-direction: column;
 
+    .#{$ns}-code-block {
+        font-family: monospace;
+        box-shadow: none;
+        background: none;
+        padding: 0;
+        margin: 0 0 14px 0;
+    }
+
     .select-status {
         margin-top: 0;
     }

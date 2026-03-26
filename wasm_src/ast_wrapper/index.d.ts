@@ -56,7 +56,7 @@ export function addFrame(frameSet: FrameSet, index: number, map: Mapping, frame:
 export function setI(obj: AstObject, attrib: string, value: number): void;
 export function setD(obj: AstObject, attrib: string, value: number): void;
 export function createTransformedFrameset(frameSet: FrameSet, offsetX: number, offsetY: number, angle: number, originX: number, originY: number, scaleX: number, scaleY: number);
-export function createShiftmapFrameset(frameSet: FrameSet, offsetX: number, offsetY: number, pixelOffsetX: number, pixelOffsetY: number);
+export function createOffsetFrameset(frameSet: FrameSet, offsetX: number, offsetY: number, pixelOffsetX: number, pixelOffsetY: number);
 // Not exported fillTransformGrid()
 export function makeSwappedFrameSet(originFrameSet: FrameSet, dirAxis: number, spectralAxis: number, pixelZ: number, nsample: number): FrameSet;
 
@@ -69,7 +69,7 @@ export function getGeodesicPointArray(frameSet: FrameSet, npoint: number, start:
 export function getAxisPointArray(frameSet: FrameSet, npoint: number, axis: number, x: number, y: number, dist: number);
 export function transform3DPoint(frameSet: FrameSet, x: number, y: number, z: number, forward?: boolean): {x: number, y: number, z: number};
 export function transformSpectralPoint(specFrame: SpecFrame | null, specType: string | null, specUnit: string | null, specSys: string | null, z: number, forward?: boolean);
-export function transformSpectralPointArray(specFrame: SpecFrame, specType: string, specUnit: string, specSys: string, zIn: Float64Array | Array<number>, forward?: boolean): Float64Array;
+export function transformSpectralPointArray(specFrame: SpecFrame | null, specType: string | null, specUnit: string | null, specSys: string | null, zIn: Float64Array | Array<number>, forward?: boolean): Float64Array;
 export function normalizeCoordinates(frameSet: FrameSet, x: number, y: number): {x: number; y: number};
 export function getTransformGrid(transformFrameSet: FrameSet, xMin: number, xMax: number, numX: number, yMin: number, yMax: number, numY: number, forward: boolean);
 export function transform3DPointArrays(frameSet: FrameSet, xIn: Float64Array, yIn: Float64Array, zIn: Float64Array, forward?: boolean): {x: Float64Array, y: Float64Array, z: Float64Array};

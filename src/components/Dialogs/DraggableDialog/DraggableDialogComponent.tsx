@@ -1,11 +1,12 @@
 // Based on code from https://github.com/palantir/blueprint/issues/336
 import * as React from "react";
 import {createRoot} from "react-dom/client";
-import {ResizeEnable, Rnd} from "react-rnd";
-import {Button, Classes, Dialog, DialogProps} from "@blueprintjs/core";
+import {type ResizeEnable, Rnd} from "react-rnd";
+import {Button, Classes, Dialog, type DialogProps} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
-import {AppStore, HelpStore, HelpType} from "stores";
+import {type HelpType} from "enums";
+import {AppStore, HelpStore} from "stores";
 
 import "./DraggableDialogComponent.scss";
 
@@ -25,9 +26,13 @@ export class ResizableDialogComponentProps {
 @observer
 export class DraggableDialogComponent extends React.Component<ResizableDialogComponentProps> {
     private dd = React.createRef<HTMLDivElement>();
-    private rnd: Rnd;
+    private rnd: Rnd | null = null;
 
     private onOpening = () => {
+        if (!this.dd.current) {
+            return;
+        }
+
         // workaround for the blue focus box suppressed to the top after blueprintjs v4 upgrade.
         const focusTrap = this.dd.current.getElementsByClassName(Classes.OVERLAY_START_FOCUS_TRAP)[0] as HTMLDivElement;
         const container = this.dd.current.getElementsByClassName(Classes.DIALOG_CONTAINER)[0] as HTMLDivElement;
@@ -66,8 +71,10 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
     };
 
     private onClickHelpButton = () => {
-        const centerX = (this.rnd.draggable.state as any).x + this.rnd.resizable.size.width * 0.5;
-        HelpStore.Instance.showHelpDrawer(this.props.helpType, centerX);
+        if (this.props.helpType && this.rnd) {
+            const centerX = (this.rnd.draggable.state as any).x + this.rnd.resizable.size.width * 0.5;
+            HelpStore.Instance.showHelpDrawer(this.props.helpType, centerX);
+        }
     };
 
     private onResizeStop = (e, direction, elementRef: HTMLDivElement) => {

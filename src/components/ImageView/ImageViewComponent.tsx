@@ -1,24 +1,19 @@
 import * as React from "react";
 import {NonIdealState, Spinner} from "@blueprintjs/core";
 import $ from "jquery";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {action, autorun, type IReactionDisposer, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ResizeDetector} from "components/Shared";
-import {ImageType, Point2D, Zoom} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, Padding, WidgetProps} from "stores";
+import {HelpType, ImageType} from "enums";
+import {type Point2D, Zoom} from "models";
+import {AppStore, type DefaultWidgetConfig, type Padding, type WidgetProps} from "stores";
 import {toFixed} from "utilities";
 
 import {ChannelMapViewComponent} from "./ChannelMapView/ChannelMapViewComponent";
 import {ImagePanelComponent} from "./ImagePanel/ImagePanelComponent";
 
 import "./ImageViewComponent.scss";
-
-export enum ImageViewLayer {
-    RegionCreating = "regionCreating",
-    Catalog = "catalog",
-    RegionMoving = "regionMoving"
-}
 
 export function getImageViewCanvas(padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
     const appStore = AppStore.Instance;
@@ -28,10 +23,16 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
     imageViewCanvas.width = appStore.fullViewWidth * appStore.pixelRatio;
     imageViewCanvas.height = appStore.fullViewHeight * appStore.pixelRatio;
     const ctx = imageViewCanvas.getContext("2d");
+    if (!ctx) {
+        return imageViewCanvas;
+    }
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, imageViewCanvas.width, imageViewCanvas.height);
     config.visibleImages.forEach((image, index) => {
         const frame = image?.type === ImageType.COLOR_BLENDING ? image.store?.baseFrame : image?.store;
+        if (!frame) {
+            return;
+        }
         const column = index % config.numImageColumns;
         const row = Math.floor(index / config.numImageColumns);
         const viewWidth = (appStore.channelMapStore.channelMapEnabled ? frame.channelMapOuterOverlayStore.viewWidth : frame.overlayStore.viewWidth) * appStore.pixelRatio;
@@ -71,6 +72,9 @@ export function getPanelCanvas(column: number, row: number, viewWidth: number, v
     composedCanvas.height = viewHeight;
 
     const ctx = composedCanvas.getContext("2d");
+    if (!ctx) {
+        return null;
+    }
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
     ctx.drawImage(rasterCanvas, padding.left * appStore.pixelRatio, padding.top * appStore.pixelRatio);
@@ -151,7 +155,9 @@ export function getPanelCanvas(column: number, row: number, viewWidth: number, v
     if (regionDivArray?.length) {
         for (const regionDiv of regionDivArray) {
             const regionCanvas = regionDiv?.children[0]?.querySelector("canvas");
-            ctx.drawImage(regionCanvas, regionDiv.offsetLeft * appStore.pixelRatio, regionDiv.offsetTop * appStore.pixelRatio);
+            if (regionCanvas) {
+                ctx.drawImage(regionCanvas, regionDiv.offsetLeft * appStore.pixelRatio, regionDiv.offsetTop * appStore.pixelRatio);
+            }
         }
     }
 
@@ -175,9 +181,10 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     }
 
     private imagePanelRefs: any[];
-    private ratioIndicatorTimeoutHandle;
+    private ratioIndicatorTimeoutHandle: ReturnType<typeof setTimeout> | undefined;
     private cachedImageSize: Point2D;
     private cachedGridSize: Point2D;
+    private readonly disposers: IReactionDisposer[] = [];
 
     @observable showRatioIndicator: boolean = false;
 
@@ -201,39 +208,50 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         makeObservable(this);
 
         this.imagePanelRefs = [];
+
         const appStore = AppStore.Instance;
 
-        autorun(() => {
-            const visibleFrames = appStore.imageViewConfigStore.visibleFrames;
-            if (!visibleFrames.length) {
-                return;
-            }
+        this.disposers.push(
+            autorun(() => {
+                const visibleFrames = appStore.imageViewConfigStore.visibleFrames;
+                if (!visibleFrames.length) {
+                    return;
+                }
 
-            const firstFrame = visibleFrames[0];
-            if (!firstFrame) {
-                return;
-            }
+                const firstFrame = visibleFrames[0];
+                if (!firstFrame) {
+                    return;
+                }
 
-            const imageSize = {x: firstFrame.overlayStore.renderWidth, y: firstFrame.overlayStore.renderHeight};
-            const imageGridSize = {x: appStore.imageViewConfigStore.numImageColumns, y: appStore.imageViewConfigStore.numImageRows};
-            // Compare to cached image size to prevent duplicate events when changing frames
-            const imageSizeChanged = !this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y;
-            const gridSizeChanged = !this.cachedGridSize || this.cachedGridSize.x !== imageGridSize.x || this.cachedGridSize.y !== imageGridSize.y;
-            if (imageSizeChanged || gridSizeChanged) {
-                this.cachedImageSize = imageSize;
-                this.cachedGridSize = imageGridSize;
-                clearTimeout(this.ratioIndicatorTimeoutHandle);
-                this.setRatioIndicatorVisible(true);
-                this.ratioIndicatorTimeoutHandle = setTimeout(() => this.setRatioIndicatorVisible(false), 1000);
-            }
-        });
+                const imageSize = {x: firstFrame.overlayStore.renderWidth, y: firstFrame.overlayStore.renderHeight};
+                const imageGridSize = {x: appStore.imageViewConfigStore.numImageColumns, y: appStore.imageViewConfigStore.numImageRows};
+                // Compare to cached image size to prevent duplicate events when changing frames
+                const imageSizeChanged = !this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y;
+                const gridSizeChanged = !this.cachedGridSize || this.cachedGridSize.x !== imageGridSize.x || this.cachedGridSize.y !== imageGridSize.y;
+                if (imageSizeChanged || gridSizeChanged) {
+                    this.cachedImageSize = imageSize;
+                    this.cachedGridSize = imageGridSize;
+                    clearTimeout(this.ratioIndicatorTimeoutHandle);
+                    this.ratioIndicatorTimeoutHandle = undefined;
+                    this.setRatioIndicatorVisible(true);
+                    this.ratioIndicatorTimeoutHandle = setTimeout(() => this.setRatioIndicatorVisible(false), 1000);
+                }
+            })
+        );
+    }
+
+    componentWillUnmount() {
+        this.disposers.forEach(disposer => disposer());
+        this.disposers.length = 0;
+        clearTimeout(this.ratioIndicatorTimeoutHandle);
+        this.ratioIndicatorTimeoutHandle = undefined;
     }
 
     private collectImagePanelRef = ref => {
         this.imagePanelRefs.push(ref);
     };
 
-    @computed get panels() {
+    get panels() {
         const appStore = AppStore.Instance;
         const config = appStore.imageViewConfigStore;
         const visibleImages = config.visibleImages;

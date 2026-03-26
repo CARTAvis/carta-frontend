@@ -49,6 +49,14 @@
     .#{$ns}-input-group .#{$ns}-input {
         width: auto;
     }
+
+    .#{$ns}-code-block {
+        font-family: monospace;
+        box-shadow: none;
+        background: none;
+        padding: 0 10px 0 10px;
+        margin: 0 5px 0 5px;
+    }
 }
 
 .vizier-mulit-select {

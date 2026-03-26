@@ -1,16 +1,16 @@
 import * as React from "react";
 import {AnchorButton, ButtonGroup, Classes, Menu, Popover, Position, Tooltip} from "@blueprintjs/core";
-import {IconName} from "@blueprintjs/icons";
+import type {IconName} from "@blueprintjs/icons";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {ImageViewLayer} from "components";
 import {AnnotationMenuComponent} from "components/Shared";
-import {CustomIcon, CustomIconName} from "icons/CustomIcons";
+import {DialogId, ImageViewLayer, RegionMode, WidgetType} from "enums";
+import {CustomIcon, type CustomIconName} from "icons/CustomIcons";
 import {RegionCreationMode} from "models";
-import {AppStore, DialogId, WidgetsStore, WidgetType} from "stores";
-import {RegionMode, RegionStore} from "stores/Frame";
+import {AppStore, WidgetsStore} from "stores";
+import {RegionStore} from "stores/Frame";
 
 import "./ToolbarMenuComponent.scss";
 
@@ -19,13 +19,13 @@ export class ToolbarMenuComponent extends React.Component {
     handleRegionTypeClicked = (type: CARTA.RegionType) => {
         const appStore = AppStore.Instance;
         appStore.updateActiveLayer(ImageViewLayer.RegionCreating);
-        appStore.activeFrame.regionSet.setNewRegionType(type);
-        appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
+        appStore.activeFrame?.regionSet.setNewRegionType(type);
+        appStore.activeFrame?.regionSet.setMode(RegionMode.CREATING);
     };
 
     regionTooltip = (type: CARTA.RegionType) => {
         const regionModeIsCenter = AppStore.Instance.preferenceStore.regionCreationMode === RegionCreationMode.CENTER;
-        let tooltip = null;
+        let tooltip: JSX.Element | null = null;
         switch (type) {
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ELLIPSE:
@@ -129,13 +129,21 @@ export class ToolbarMenuComponent extends React.Component {
                             }
                             position={Position.BOTTOM}
                         >
-                            <AnchorButton icon={"annotation"} disabled={regionButtonsDisabled} active={isRegionCreating === true && appStore.activeFrame.regionSet.isNewRegionAnnotation === true} data-testid="annotation-shortcut-dropdown" />
+                            <AnchorButton
+                                icon={"annotation"}
+                                disabled={regionButtonsDisabled}
+                                active={isRegionCreating === true && appStore.activeFrame?.regionSet.isNewRegionAnnotation === true}
+                                data-testid="annotation-shortcut-dropdown"
+                            />
                         </Tooltip>
                     </Popover>
                 </ButtonGroup>
                 <ButtonGroup className={className}>
                     {Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).map(widgetType => {
                         const widgetConfig = WidgetsStore.Instance.CARTAWidgets.get(widgetType);
+                        if (!widgetConfig) {
+                            return null;
+                        }
                         const trimmedStr = widgetType?.replace(/\s+/g, "");
                         const lowerCaseStart = widgetType === WidgetType.PvGenerator ? 2 : 1;
                         const widgetTypeTooltip = widgetType?.slice(0, lowerCaseStart) + widgetType?.slice(lowerCaseStart)?.toLowerCase();

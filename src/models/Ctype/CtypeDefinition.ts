@@ -1,4 +1,4 @@
-import {CARTA} from "carta-protobuf";
+import {type CARTA} from "carta-protobuf";
 
 const ctypeSpatial = ["RA", "DEC", "GLON", "GLAT", "ELON", "ELAT", "OFFSET", "DISTANCE"];
 const ctypeSpectral = ["VRAD", "VOPT", "FREQ", "WAVE", "AWAV", "CHANNEL", "NATIVE", "ENER", "WAVN", "ZOPT", "VELO", "BETA"];
@@ -43,7 +43,7 @@ export const CtypeName = new Map<string, string>([
 ]);
 
 export function CtypeAbbrToName(ctypes: string): string {
-    let ctypeName: string[] = [];
+    const ctypeName: string[] = [];
 
     ctypes.split(",").forEach(ctype => {
         ctypeName.push(CtypeName.has(ctype) ? (CtypeName.get(ctype) as string) : ctype);
@@ -58,8 +58,8 @@ export function FileCtypeInfo(headerEntries: CARTA.IFileInfoExtended | CARTA.IHe
         return {ctype: "", rank: 0};
     }
 
-    let tempCtypes = {};
-    let tempNaxes = {};
+    const tempCtypes = {};
+    const tempNaxes = {};
     let ctypes: any[] = [];
 
     (headerEntries as any[]).forEach(header => {

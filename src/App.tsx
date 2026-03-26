@@ -6,8 +6,9 @@ import {observer} from "mobx-react";
 import {FloatingWidgetManagerComponent, UIControllerComponent} from "components";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {ResizeDetector} from "components/Shared";
+import {AlertType} from "enums";
 import {ApiService} from "services";
-import {AlertStore, AlertType, AppStore} from "stores";
+import {type AlertStore, AppStore} from "stores";
 
 import {HotkeyService, HotkeysRegistrar} from "./HotkeyWrapper";
 
@@ -94,7 +95,7 @@ export class App extends React.Component {
                 <UIControllerComponent />
                 {alertComponent}
                 <TaskProgressDialogComponent
-                    progress={undefined}
+                    progress={0}
                     timeRemaining={0}
                     isOpen={appStore.resumingSession || appStore.loadingWorkspace}
                     cancellable={false}

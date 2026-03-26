@@ -47,6 +47,7 @@ async function fetchConfig() {
         ApiService.SetRuntimeConfig(res?.data);
     } catch (e) {
         console.log("No runtime config provided. Using default configuration");
+        console.error(e);
         ApiService.SetRuntimeConfig({});
     }
 

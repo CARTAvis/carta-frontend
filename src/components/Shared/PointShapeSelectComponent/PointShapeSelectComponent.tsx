@@ -1,6 +1,6 @@
 import React from "react";
 import {Button, Classes, Icon, MenuItem, PopoverPosition} from "@blueprintjs/core";
-import {ItemRendererProps, Select} from "@blueprintjs/select";
+import {type ItemRendererProps, Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 

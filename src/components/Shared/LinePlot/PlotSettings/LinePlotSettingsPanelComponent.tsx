@@ -1,9 +1,10 @@
 import * as React from "react";
 import {Button, FormGroup, HTMLSelect, Switch} from "@blueprintjs/core";
 import {observer} from "mobx-react";
+import type {LineKey, LineOption} from "models";
 
-import {AutoColorPickerComponent, PlotType, PlotTypeSelectorComponent, SafeNumericInput} from "components/Shared";
-import {LineKey, LineOption} from "models";
+import {AutoColorPickerComponent, PlotTypeSelectorComponent, SafeNumericInput} from "components/Shared";
+import {LineSettings, PlotType} from "enums";
 import {DEFAULT_COLOR, SWATCH_COLORS} from "utilities";
 
 import "./LinePlotSettingsPanelComponent.scss";
@@ -46,18 +47,9 @@ export class LinePlotSettingsPanelComponentProps {
     handleYMaxChange?: (ev: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>) => void;
 }
 
-export enum LineSettings {
-    MIN_WIDTH = 0.5,
-    MAX_WIDTH = 10,
-    MIN_POINT_SIZE = 0.5,
-    MAX_POINT_SIZE = 10,
-    POINT_SIZE_STEP_SIZE = 0.5,
-    LINE_WIDTH_STEP_SIZE = 0.5
-}
-
 @observer
 export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSettingsPanelComponentProps> {
-    private getLineColorSelectors = (): JSX.Element => {
+    private getLineColorSelectors = (): JSX.Element | null => {
         const lineColorMap = this.props.lineColorMap;
         const setLineColor = this.props.setLineColor;
         if (lineColorMap && setLineColor) {
