@@ -137,6 +137,33 @@ $pt-dark-app-background-color: #252a31;
 // Dark theme overrides
 // =====================================================
 .layout-container.dark-theme {
+    // Override FlexLayout CSS custom properties for dark mode
+    .flexlayout__layout {
+        --color-text: #{$light-gray5};
+        --color-background: #{$pt-dark-app-background-color};
+        --color-1: #{$dark-gray3};
+        --color-2: #{$dark-gray2};
+        --color-3: #{$dark-gray3};
+        --color-4: #{$dark-gray2};
+        --color-5: #{$dark-gray1};
+        --color-6: #{$dark-gray1};
+        --color-tabset-background: #{$dark-gray4};
+        --color-tabset-background-selected: #{$dark-gray3};
+        --color-tabset-background-maximized: #{$dark-gray2};
+        --color-tabset-divider-line: #{$dark-gray2};
+        --color-tabset-header-background: #{$dark-gray4};
+        --color-tabset-header: #{$light-gray5};
+        --color-tab-content: #{$pt-dark-app-background-color};
+        --color-tab-selected: white;
+        --color-tab-selected-background: #{$dark-gray2};
+        --color-tab-unselected: #{$light-gray4};
+        --color-tab-unselected-background: transparent;
+        --color-overflow: #{$light-gray3};
+        --color-icon: #{$light-gray3};
+        --color-drag1: #{$blue4};
+        --color-drag1-background: rgba(#{$blue4}, 0.1);
+    }
+
     .flexlayout__tabset_header {
         background-color: $dark-gray4;
         border-bottom: 1px solid $dark-gray2;
