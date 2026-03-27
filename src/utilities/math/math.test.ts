@@ -7,14 +7,14 @@ jest.mock("stores/Frame", () => ({
         SQUARE: 3,
         POWER: 4,
         GAMMA: 5,
-        SINH: 8,
-        ASINH: 9
+        SINH: 7,
+        ASINH: 8
     }
 }));
 
 const TEST_SAMPLES = Array.from({length: 101}, (_, index) => index / 100);
-const SINH_SCALING = 8;
-const ASINH_SCALING = 9;
+const SINH_SCALING = 7;
+const ASINH_SCALING = 8;
 const SCALING_TYPES = [SINH_SCALING, ASINH_SCALING];
 const ANCHOR_SAMPLES = [
     {
