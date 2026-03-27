@@ -28,14 +28,14 @@ $pt-dark-app-background-color: #252a31;
 
 .flexlayout__tab_button {
     padding: 3px 8px;
-    font-size: 12px;
+    font-size: 14px;
     color: $dark-gray5;
     border: none;
-    background: transparent;
+    // background: transparent;
     cursor: pointer;
 
     &--selected {
-        background-color: white;
+        background-color: $light-gray5;
         color: $dark-gray1;
         border-bottom: 2px solid $blue3;
     }
@@ -43,11 +43,15 @@ $pt-dark-app-background-color: #252a31;
     &:hover {
         background-color: $light-gray2;
     }
+
+    &_content {
+        color: $blue2;
+    }
 }
 
 // --- Tab content area ---
 .flexlayout__tab {
-    background-color: white;
+    background-color: $light_gray5;
     overflow: auto;
     position: relative;
     height: 100%;
@@ -55,7 +59,7 @@ $pt-dark-app-background-color: #252a31;
 
 // --- Splitter bars ---
 .flexlayout__splitter {
-    background-color: $light-gray3;
+    background-color: white;
 
     &:hover {
         background-color: $blue3;
@@ -66,6 +70,10 @@ $pt-dark-app-background-color: #252a31;
 .flexlayout__tabset {
     border: 1px solid $light-gray1;
     overflow: hidden;
+
+    &-selected {
+        background-color: $white;
+    }
 }
 
 // --- Custom tab header buttons ---
@@ -94,7 +102,7 @@ $pt-dark-app-background-color: #252a31;
     }
 
     span {
-        font-size: 14px;
+        font-size: 16px;
     }
 }
 
@@ -181,6 +189,10 @@ $pt-dark-app-background-color: #252a31;
         &:hover {
             background-color: $dark-gray2;
         }
+
+        &_content {
+            color: $blue5;
+        }
     }
 
     .flexlayout__tab {
@@ -189,7 +201,7 @@ $pt-dark-app-background-color: #252a31;
     }
 
     .flexlayout__splitter {
-        background-color: $dark-gray2;
+        background-color: $dark-gray4;
 
         &:hover {
             background-color: $blue4;
@@ -198,6 +210,10 @@ $pt-dark-app-background-color: #252a31;
 
     .flexlayout__tabset {
         border-color: $dark-gray2;
+
+        &-selected {
+            background-color: $dark-gray4;
+        }
     }
 
     .flexlayout-tab-button {
