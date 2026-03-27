@@ -38,8 +38,7 @@ typedef enum {
 
 const float MiterLimit = 1.5f;
 const int VertexDataElements = 8;
-const double Ds9SinhNormalizer = sinh(3.0);
-const double Ds9AsinhNormalizer = asinh(10.0);
+
 
 extern "C" {
 
@@ -267,9 +266,9 @@ float scaleValue(float x, int scaling, float alpha, float gamma) {
         case GAMMA:
             return pow(x, gamma);
         case SINH:
-            return sinh(3.0 * x) / Ds9SinhNormalizer;
+            return sinh(x / alpha) / sinh(1.0 / alpha);
         case ASINH:
-            return asinh(10.0 * x) / Ds9AsinhNormalizer;
+            return asinh(x / alpha) / asinh(1.0 / alpha);
         default:
             return x;
     }

@@ -52,9 +52,7 @@ float sinhScale(float x) {
     return (exp(x) - exp(-x)) / 2.0;
 }
 
-// DS9-compatible normalizers used by SINH/ASINH scales.
-const float DS9_SINH_NORMALIZER = 10.01787493; // sinh(3.0)
-const float DS9_ASINH_NORMALIZER = 2.99822295; // asinh(10.0)
+
 
 void main(void) {
     // Tile border
@@ -104,10 +102,10 @@ void main(void) {
         x = pow(x, uGamma);
     }
     else if (uScaleType == SINH) {
-        x = sinhScale(3.0 * x) / DS9_SINH_NORMALIZER;
+        x = sinhScale(x / uAlpha) / sinhScale(1.0 / uAlpha);
     }
     else if (uScaleType == ASINH) {
-        x = asinhScale(10.0 * x) / DS9_ASINH_NORMALIZER;
+        x = asinhScale(x / uAlpha) / asinhScale(1.0 / uAlpha);
     }
 
     if (uUseSmoothedBiasContrast > 0) {

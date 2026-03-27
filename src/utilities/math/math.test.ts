@@ -19,18 +19,18 @@ const SCALING_TYPES = [SINH_SCALING, ASINH_SCALING];
 const ANCHOR_SAMPLES = [
     {
         x: 0.25,
-        sinh: 0.08208494694677107,
-        asinh: 0.5494024872991484
+        sinh: 0.24999996093750443,
+        asinh: 0.25000003906248786
     },
     {
         x: 0.5,
-        sinh: 0.2125480174711402,
-        asinh: 0.7712696419200371
+        sinh: 0.49999993750000654,
+        asinh: 0.5000000624999753
     },
     {
         x: 0.75,
-        sinh: 0.4682797838754033,
-        asinh: 0.9046909953493529
+        sinh: 0.7499999453125048,
+        asinh: 0.7500000546874708
     }
 ];
 
@@ -64,7 +64,7 @@ describe("sinh/asinh scaling", () => {
         }
     });
 
-    test("scaleValue matches ds9 anchor values for sinh/asinh", () => {
+    test("scaleValue matches anchor values for sinh/asinh with default alpha", () => {
         for (const sample of ANCHOR_SAMPLES) {
             expect(scaleValue(sample.x, SINH_SCALING as any)).toBeCloseTo(sample.sinh, 12);
             expect(scaleValue(sample.x, ASINH_SCALING as any)).toBeCloseTo(sample.asinh, 12);
@@ -144,6 +144,65 @@ describe("sinh/asinh scaling", () => {
             expect(scaleValueInverse(2, scaling as any, 1000, 1.5, 0, 1, false)).toBeCloseTo(1, 12);
             expect(scaleValueInverse(-1, scaling as any, 1000, 1.5, 0, 1, true)).toBeCloseTo(0, 12);
             expect(scaleValueInverse(2, scaling as any, 1000, 1.5, 0, 1, true)).toBeCloseTo(1, 12);
+        }
+    });
+
+    test("scaleValue with alpha=0.1 matches expected values", () => {
+        const alpha = 0.1;
+        const expected = [
+            {x: 0.25, sinh: 0.0005493577181080656, asinh: 0.5494024872991484},
+            {x: 0.5, sinh: 0.006737641110652278, asinh: 0.7712696419200371},
+            {x: 0.75, sinh: 0.08208497368309699, asinh: 0.9046909953493529}
+        ];
+        for (const sample of expected) {
+            expect(scaleValue(sample.x, SINH_SCALING as any, alpha)).toBeCloseTo(sample.sinh, 12);
+            expect(scaleValue(sample.x, ASINH_SCALING as any, alpha)).toBeCloseTo(sample.asinh, 12);
+        }
+    });
+
+    test("scaleValue with alpha=1/3 matches expected values", () => {
+        const alpha = 1 / 3;
+        const expected = [
+            {x: 0.25, sinh: 0.08208494694677107, asinh: 0.38117546823603626},
+            {x: 0.5, sinh: 0.2125480174711402, asinh: 0.6570241379510618},
+            {x: 0.75, sinh: 0.4682797838754033, asinh: 0.8524627981203784}
+        ];
+        for (const sample of expected) {
+            expect(scaleValue(sample.x, SINH_SCALING as any, alpha)).toBeCloseTo(sample.sinh, 12);
+            expect(scaleValue(sample.x, ASINH_SCALING as any, alpha)).toBeCloseTo(sample.asinh, 12);
+        }
+    });
+
+    test("scaleValue endpoints hold for various alpha values", () => {
+        for (const alpha of [0.1, 0.5, 1, 10, 1000]) {
+            for (const scaling of SCALING_TYPES) {
+                expect(scaleValue(0, scaling as any, alpha)).toBeCloseTo(0, 12);
+                expect(scaleValue(1, scaling as any, alpha)).toBeCloseTo(1, 12);
+            }
+        }
+    });
+
+    test("scaleValue is monotonic for various alpha values", () => {
+        for (const alpha of [0.1, 1, 100]) {
+            for (const scaling of SCALING_TYPES) {
+                let prev = -Number.MAX_VALUE;
+                for (const x of TEST_SAMPLES) {
+                    const val = scaleValue(x, scaling as any, alpha);
+                    expect(val).toBeGreaterThanOrEqual(prev);
+                    prev = val;
+                }
+            }
+        }
+    });
+
+    test("scaleValueInverse inverts scaleValue for various alpha values", () => {
+        for (const alpha of [0.1, 1, 100]) {
+            for (const x of TEST_SAMPLES) {
+                const sinhScaled = scaleValue(x, SINH_SCALING as any, alpha);
+                const asinhScaled = scaleValue(x, ASINH_SCALING as any, alpha);
+                expect(scaleValueInverse(sinhScaled, SINH_SCALING as any, alpha)).toBeCloseTo(x, 6);
+                expect(scaleValueInverse(asinhScaled, ASINH_SCALING as any, alpha)).toBeCloseTo(x, 6);
+            }
         }
     });
 });

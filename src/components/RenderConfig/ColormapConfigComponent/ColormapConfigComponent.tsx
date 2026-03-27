@@ -102,7 +102,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 <FormGroup label={"Invert colormap"} inline={true}>
                     <Switch checked={renderConfig.inverted} onChange={this.handleInvertedChanged} />
                 </FormGroup>
-                {(renderConfig.scaling === FrameScaling.LOG || renderConfig.scaling === FrameScaling.POWER) && (
+                {(renderConfig.scaling === FrameScaling.LOG || renderConfig.scaling === FrameScaling.POWER || renderConfig.scaling === FrameScaling.SINH || renderConfig.scaling === FrameScaling.ASINH) && (
                     <FormGroup label={"Alpha"} inline={true}>
                         <SafeNumericInput min={RenderConfigStore.ALPHA_MIN} max={RenderConfigStore.ALPHA_MAX} buttonPosition={"none"} value={renderConfig.alpha} onValueChange={renderConfig.setAlpha} />
                     </FormGroup>

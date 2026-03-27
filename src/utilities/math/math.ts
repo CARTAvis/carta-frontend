@@ -108,11 +108,6 @@ function getSmoothedValue(bias: number, contrast: number) {
     return {bias: smoothedBias, contrast: smoothedContrast, offset: offset, denominator: denominator};
 }
 
-const DS9_SINH_FACTOR = 3;
-const DS9_ASINH_FACTOR = 10;
-const DS9_SINH_NORMALIZER = Math.sinh(DS9_SINH_FACTOR);
-const DS9_ASINH_NORMALIZER = Math.asinh(DS9_ASINH_FACTOR);
-
 export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1, useSmoothedBiasContrast: boolean = true) {
     let scaleValue;
     switch (scaling) {
@@ -132,10 +127,10 @@ export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 100
             scaleValue = Math.pow(x, gamma);
             break;
         case FrameScaling.SINH:
-            scaleValue = Math.sinh(DS9_SINH_FACTOR * x) / DS9_SINH_NORMALIZER;
+            scaleValue = Math.sinh(x / alpha) / Math.sinh(1.0 / alpha);
             break;
         case FrameScaling.ASINH:
-            scaleValue = Math.asinh(DS9_ASINH_FACTOR * x) / DS9_ASINH_NORMALIZER;
+            scaleValue = Math.asinh(x / alpha) / Math.asinh(1.0 / alpha);
             break;
         default:
             scaleValue = x;
@@ -187,9 +182,9 @@ export function scaleValueInverse(x: number, scaling: FrameScaling, alpha: numbe
         case FrameScaling.GAMMA:
             return Math.pow(scaleValue, 1.0 / gamma);
         case FrameScaling.SINH:
-            return Math.asinh(scaleValue * DS9_SINH_NORMALIZER) / DS9_SINH_FACTOR;
+            return alpha * Math.asinh(scaleValue * Math.sinh(1.0 / alpha));
         case FrameScaling.ASINH:
-            return Math.sinh(scaleValue * DS9_ASINH_NORMALIZER) / DS9_ASINH_FACTOR;
+            return alpha * Math.sinh(scaleValue * Math.asinh(1.0 / alpha));
         default:
             return scaleValue;
     }

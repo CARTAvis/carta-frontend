@@ -43,8 +43,8 @@ EQUATION_LATEX: dict[str, str] = {
     "squared": equation(r"x^2"),
     "gamma": equation(r"x^{\gamma}"),
     "power": equation(r"(\alpha^x-1)/(\alpha-1)"),
-    "sinh": equation(r"\sinh(3x)/\sinh(3)"),
-    "asinh": equation(r"\operatorname{asinh}(10x)/\operatorname{asinh}(10)"),
+    "sinh": equation(r"\sinh(x/\alpha)/\sinh(1/\alpha)"),
+    "asinh": equation(r"\operatorname{asinh}(x/\alpha)/\operatorname{asinh}(1/\alpha)"),
 }
 
 

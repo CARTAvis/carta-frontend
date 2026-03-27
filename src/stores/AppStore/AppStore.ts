@@ -2891,14 +2891,17 @@ export class AppStore {
             }
 
             // Render config (TODO: A more extensible way of saving/loading state for simple stores)
-            const {scaling, colorMap, bias, contrast, gamma, alpha, inverted, useCubeHistogram, useCubeHistogramContours, selectedPercentile, scaleMin, scaleMax, visible} = frame.renderConfig;
+            const {scaling, colorMap, bias, contrast, gamma, alphaLog, alphaPower, alphaSinh, alphaAsinh, inverted, useCubeHistogram, useCubeHistogramContours, selectedPercentile, scaleMin, scaleMax, visible} = frame.renderConfig;
             workspaceFile.renderConfig = {
                 scaling,
                 colorMap,
                 bias,
                 contrast,
                 gamma,
-                alpha,
+                alphaLog,
+                alphaPower,
+                alphaSinh,
+                alphaAsinh,
                 inverted,
                 useCubeHistogram,
                 useCubeHistogramContours,

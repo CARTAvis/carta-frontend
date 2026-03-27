@@ -41,7 +41,10 @@ const DEFAULTS = {
         colormapHex: "#FFFFFF",
         colormapHexStart: "#000000",
         percentile: 99.9,
-        scalingAlpha: 1000,
+        scalingAlphaLog: 1000,
+        scalingAlphaPower: 1000,
+        scalingAlphaSinh: 1 / 3,
+        scalingAlphaAsinh: 0.1,
         scalingGamma: 1,
         nanColorHex: "#137CBD",
         nanAlpha: 1,
@@ -250,8 +253,20 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.RENDER_CONFIG_PERCENTILE) ?? DEFAULTS.RENDER_CONFIG.percentile;
     }
 
-    @computed get scalingAlpha(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA) ?? DEFAULTS.RENDER_CONFIG.scalingAlpha;
+    @computed get scalingAlphaLog(): number {
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG) ?? DEFAULTS.RENDER_CONFIG.scalingAlphaLog;
+    }
+
+    @computed get scalingAlphaPower(): number {
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER) ?? DEFAULTS.RENDER_CONFIG.scalingAlphaPower;
+    }
+
+    @computed get scalingAlphaSinh(): number {
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_SINH) ?? DEFAULTS.RENDER_CONFIG.scalingAlphaSinh;
+    }
+
+    @computed get scalingAlphaAsinh(): number {
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH) ?? DEFAULTS.RENDER_CONFIG.scalingAlphaAsinh;
     }
 
     @computed get scalingGamma(): number {
@@ -718,7 +733,10 @@ export class PreferenceStore {
             PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
             PreferenceKeys.RENDER_CONFIG_PERCENTILE,
             PreferenceKeys.RENDER_CONFIG_SCALING,
-            PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA,
+            PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_LOG,
+            PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_POWER,
+            PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_SINH,
+            PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA_ASINH,
             PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA,
             PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST
         ]);

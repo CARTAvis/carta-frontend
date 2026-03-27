@@ -13,7 +13,10 @@ export interface WorkspaceRenderConfig {
     bias?: number;
     contrast?: number;
     gamma?: number;
-    alpha?: number;
+    alphaLog?: number;
+    alphaPower?: number;
+    alphaSinh?: number;
+    alphaAsinh?: number;
     inverted?: boolean;
     useCubeHistogram?: boolean;
     useCubeHistogramContours?: boolean;

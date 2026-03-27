@@ -39,7 +39,10 @@ export class RenderConfigStore {
     @observable bias: number = 0;
     @observable contrast: number = 1;
     @observable gamma: number;
-    @observable alpha: number;
+    @observable alphaLog: number;
+    @observable alphaPower: number;
+    @observable alphaSinh: number;
+    @observable alphaAsinh: number;
     @observable inverted: boolean = false;
     @observable channelHistogram: CARTA.IHistogram = undefined as any;
     @observable cubeHistogram: CARTA.IHistogram | null = null;
@@ -67,7 +70,10 @@ export class RenderConfigStore {
         const stokesLength = this.frame.polarizations.length !== 0 ? this.frame.polarizations.length : 1;
         const percentile = preference.percentile;
         this.selectedPercentile = new Array<number>(stokesLength).fill(percentile);
-        this.alpha = preference.scalingAlpha;
+        this.alphaLog = preference.scalingAlphaLog;
+        this.alphaPower = preference.scalingAlphaPower;
+        this.alphaSinh = preference.scalingAlphaSinh;
+        this.alphaAsinh = preference.scalingAlphaAsinh;
         this.gamma = preference.scalingGamma;
         this.scaling = preference.scaling;
         this.setColorMap(preference.colormap);
@@ -92,6 +98,21 @@ export class RenderConfigStore {
 
     public static IsPercentileValid(percentile: number): boolean {
         return RenderConfigStore.PERCENTILE_RANKS.includes(percentile);
+    }
+
+    @computed get alpha(): number {
+        switch (this.scaling) {
+            case FrameScaling.LOG:
+                return this.alphaLog;
+            case FrameScaling.POWER:
+                return this.alphaPower;
+            case FrameScaling.SINH:
+                return this.alphaSinh;
+            case FrameScaling.ASINH:
+                return this.alphaAsinh;
+            default:
+                return this.alphaLog;
+        }
     }
 
     @computed get colorMap() {
@@ -383,12 +404,25 @@ export class RenderConfigStore {
     };
 
     /**
-     * Set the alpha value for the scaling type Power.
+     * Set the alpha value for the current scaling type.
      *
-     * @param alpha - The alpha value of the scaling type Power.
+     * @param alpha - The alpha value.
      */
     @action setAlpha = (alpha: number) => {
-        this.alpha = alpha;
+        switch (this.scaling) {
+            case FrameScaling.LOG:
+                this.alphaLog = alpha;
+                break;
+            case FrameScaling.POWER:
+                this.alphaPower = alpha;
+                break;
+            case FrameScaling.SINH:
+                this.alphaSinh = alpha;
+                break;
+            case FrameScaling.ASINH:
+                this.alphaAsinh = alpha;
+                break;
+        }
         this.updateSiblings();
     };
 
@@ -475,7 +509,10 @@ export class RenderConfigStore {
 
     @action updateFrom = (other: RenderConfigStore) => {
         this.scaling = other.scaling;
-        this.alpha = other.alpha;
+        this.alphaLog = other.alphaLog;
+        this.alphaPower = other.alphaPower;
+        this.alphaSinh = other.alphaSinh;
+        this.alphaAsinh = other.alphaAsinh;
         this.gamma = other.gamma;
         this.bias = other.bias;
         this.contrast = other.contrast;
@@ -499,7 +536,10 @@ export class RenderConfigStore {
         this.bias = config.bias ?? this.bias;
         this.contrast = config.contrast ?? this.contrast;
         this.gamma = config.gamma ?? this.gamma;
-        this.alpha = config.alpha ?? this.alpha;
+        this.alphaLog = config.alphaLog ?? this.alphaLog;
+        this.alphaPower = config.alphaPower ?? this.alphaPower;
+        this.alphaSinh = config.alphaSinh ?? this.alphaSinh;
+        this.alphaAsinh = config.alphaAsinh ?? this.alphaAsinh;
         this.inverted = config.inverted ?? this.inverted;
         this.visible = config.visible ?? this.visible;
         this.scaleMin = config.scaleMin ?? this.scaleMin;
