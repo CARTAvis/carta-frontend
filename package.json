@@ -89,7 +89,7 @@
         "react-rnd": "^10.4.11",
         "react-scroll-to-bottom": "^4.2.0",
         "react-simple-code-editor": "^0.14.1",
-        "react-split-pane": "^0.1.91",
+        "react-split-pane": "^3.2.0",
         "react-virtualized-auto-sizer": "^1.0.24",
         "react-window": "^2.0.0",
         "rsbuild-plugin-glsl": "^1.0.1",
