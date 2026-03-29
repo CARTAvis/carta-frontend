@@ -124,6 +124,19 @@ $pt-dark-app-background-color: #252a31;
     }
 }
 
+// --- Built-in toolbar buttons (popout, maximize) ---
+// Match the hover style of custom widget buttons (.flexlayout-tab-button)
+.flexlayout__tab_toolbar_button {
+    color: $gray1;
+    opacity: 0.7;
+
+    &:hover {
+        opacity: 1;
+        color: $dark-gray1;
+        background-color: transparent;
+    }
+}
+
 // --- Close button on tabs ---
 .flexlayout__tab_button_trailing {
     margin-left: 4px;
@@ -221,6 +234,15 @@ $pt-dark-app-background-color: #252a31;
 
         &:hover {
             color: white;
+        }
+    }
+
+    .flexlayout__tab_toolbar_button {
+        color: $light-gray3;
+
+        &:hover {
+            color: white;
+            background-color: transparent;
         }
     }
 
