@@ -25,7 +25,9 @@ export const ResizeDetector = ({onResize, throttleTime, targetRef, children}: Re
 
     React.useEffect(() => {
         const element = activeRef.current;
-        if (!element) return;
+        if (!element) {
+            return undefined;
+        }
         // Use the element's own window's ResizeObserver so that this works correctly
         // when the element is in a cross-document React portal (e.g. FlexLayout popout window).
         // Using the global ResizeObserver (from the main window) may not observe elements
