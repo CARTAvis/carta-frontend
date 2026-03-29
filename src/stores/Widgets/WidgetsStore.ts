@@ -630,60 +630,8 @@ export class WidgetsStore {
         const nodeId = selectedNode.getId();
         const buttons: React.ReactNode[] = [];
 
-        if (component !== "image-view") {
-            buttons.push(
-                React.createElement(
-                    "button",
-                    {
-                        key: "unpin-" + nodeId,
-                        className: "flexlayout-tab-button flexlayout-tab-button-unpin",
-                        title: "detach",
-                        onClick: (e: React.MouseEvent) => {
-                            e.stopPropagation();
-                            this.unpinWidget(selectedNode);
-                        }
-                    },
-                    React.createElement("span", {className: classNames(Classes.ICON_STANDARD, Classes.iconClass("unpin"))})
-                )
-            );
-        }
-
-        if (!WidgetsStore.hideHelpButtonWidgets.includes(component)) {
-            buttons.push(
-                React.createElement(
-                    "button",
-                    {
-                        key: "help-" + nodeId,
-                        className: "flexlayout-tab-button flexlayout-tab-button-help",
-                        title: "help",
-                        onClick: (e: React.MouseEvent) => {
-                            e.stopPropagation();
-                            this.onHelpPinedClick(e, selectedNode);
-                        }
-                    },
-                    React.createElement("span", {className: classNames(Classes.ICON_STANDARD, Classes.iconClass("help"))})
-                )
-            );
-        }
-
-        if (WidgetsStore.showCogWidgets.includes(component)) {
-            buttons.push(
-                React.createElement(
-                    "button",
-                    {
-                        key: "cog-" + nodeId,
-                        className: "flexlayout-tab-button flexlayout-tab-button-settings",
-                        title: "settings",
-                        "data-testid": nodeId + "-header-settings-button",
-                        onClick: (e: React.MouseEvent) => {
-                            e.stopPropagation();
-                            this.onCogPinedClick(selectedNode);
-                        }
-                    },
-                    React.createElement("span", {className: classNames(Classes.ICON_STANDARD, Classes.iconClass("cog"))})
-                )
-            );
-        }
+        // Button order from left to right: channel-map, previous, multi-panel, next, settings, help, detach
+        // (built-in popout and maximize are appended by FlexLayout after these)
 
         if (component === "image-view") {
             const config = AppStore.Instance.imageViewConfigStore;
@@ -692,6 +640,19 @@ export class WidgetsStore {
             const hasNext = config.imageNum > (config.currentImagePage + 1) * config.imagesPerPage;
 
             buttons.push(
+                React.createElement(
+                    "button",
+                    {
+                        key: "channel-map-" + nodeId,
+                        className: "flexlayout-tab-button flexlayout-tab-button-channel-map",
+                        title: "enable/disable channel map",
+                        onClick: (e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            this.onChannelMapButtonClick();
+                        }
+                    },
+                    React.createElement("span", {className: classNames(Classes.ICON_STANDARD, Classes.iconClass("heat-grid"))})
+                ),
                 React.createElement(
                     "button",
                     {
@@ -733,19 +694,61 @@ export class WidgetsStore {
                         }
                     },
                     React.createElement("span", {className: classNames(Classes.ICON_STANDARD, Classes.iconClass("step-forward"))})
-                ),
+                )
+            );
+        }
+
+        if (WidgetsStore.showCogWidgets.includes(component)) {
+            buttons.push(
                 React.createElement(
                     "button",
                     {
-                        key: "channel-map-" + nodeId,
-                        className: "flexlayout-tab-button flexlayout-tab-button-channel-map",
-                        title: "enable/disable channel map",
+                        key: "cog-" + nodeId,
+                        className: "flexlayout-tab-button flexlayout-tab-button-settings",
+                        title: "settings",
+                        "data-testid": nodeId + "-header-settings-button",
                         onClick: (e: React.MouseEvent) => {
                             e.stopPropagation();
-                            this.onChannelMapButtonClick();
+                            this.onCogPinedClick(selectedNode);
                         }
                     },
-                    React.createElement("span", {className: classNames(Classes.ICON_STANDARD, Classes.iconClass("heat-grid"))})
+                    React.createElement("span", {className: classNames(Classes.ICON_STANDARD, Classes.iconClass("cog"))})
+                )
+            );
+        }
+
+        if (!WidgetsStore.hideHelpButtonWidgets.includes(component)) {
+            buttons.push(
+                React.createElement(
+                    "button",
+                    {
+                        key: "help-" + nodeId,
+                        className: "flexlayout-tab-button flexlayout-tab-button-help",
+                        title: "help",
+                        onClick: (e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            this.onHelpPinedClick(e, selectedNode);
+                        }
+                    },
+                    React.createElement("span", {className: classNames(Classes.ICON_STANDARD, Classes.iconClass("help"))})
+                )
+            );
+        }
+
+        if (component !== "image-view") {
+            buttons.push(
+                React.createElement(
+                    "button",
+                    {
+                        key: "unpin-" + nodeId,
+                        className: "flexlayout-tab-button flexlayout-tab-button-unpin",
+                        title: "detach",
+                        onClick: (e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            this.unpinWidget(selectedNode);
+                        }
+                    },
+                    React.createElement("span", {className: classNames(Classes.ICON_STANDARD, Classes.iconClass("unpin"))})
                 )
             );
         }
