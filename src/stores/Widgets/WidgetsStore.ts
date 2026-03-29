@@ -599,11 +599,12 @@ export class WidgetsStore {
             const popoutWindow = node.getWindow();
             if (popoutWindow) {
                 const popoutBody = popoutWindow.document.body;
-                // Apply theme class to popout body
+                // Apply theme classes to popout body so CSS selectors match
                 if (AppStore.Instance.darkTheme) {
-                    popoutBody.classList.add(Classes.DARK);
+                    popoutBody.classList.add(Classes.DARK, "layout-container", "dark-theme");
                 } else {
-                    popoutBody.classList.remove(Classes.DARK);
+                    popoutBody.classList.remove(Classes.DARK, "dark-theme");
+                    popoutBody.classList.add("layout-container");
                 }
                 WidgetsStore.copyStylesToPopoutWindow(popoutWindow);
                 return React.createElement(
