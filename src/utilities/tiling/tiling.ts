@@ -2,7 +2,7 @@ import type {FrameView} from "models/FrameView/FrameView";
 import {type Point2D} from "models/Point2D/Point2D";
 import {TileCoordinate} from "models/Tile/TileCoordinate";
 
-export function tileSort(a: TileCoordinate, b: TileCoordinate) {
+export function TileSort(a: TileCoordinate, b: TileCoordinate) {
     if (a.layer !== b.layer) {
         return a.layer - b.layer;
     } else if (a.x !== b.x) {
@@ -14,12 +14,12 @@ export function tileSort(a: TileCoordinate, b: TileCoordinate) {
 
 // Comparison function which compares tile coordinates based on their encoded coordinate.
 // This is equivalent to sorting first by layer, then by y coordinate, and finally by x
-export function tileSortEncoded(a: TileCoordinate, b: TileCoordinate) {
+export function TileSortEncoded(a: TileCoordinate, b: TileCoordinate) {
     return TileCoordinate.EncodeCoordinate(a) - TileCoordinate.EncodeCoordinate(b);
 }
 
 // Converts from downsampling factor (MIP) to the tile layer using conventional tiling coordinates
-export function mipToLayer(mip: number, imageSize: Point2D, tileSize: Point2D): number {
+export function MipToLayer(mip: number, imageSize: Point2D, tileSize: Point2D): number {
     const totalTilesX = Math.ceil(imageSize.x / tileSize.x);
     const totalTilesY = Math.ceil(imageSize.y / tileSize.y);
     const maxMip = Math.max(totalTilesX, totalTilesY);
@@ -28,7 +28,7 @@ export function mipToLayer(mip: number, imageSize: Point2D, tileSize: Point2D): 
 }
 
 // Converts from tile layer using conventional tiling coordinates to the appropriate downsampling factor (MIP)
-export function layerToMip(layer: number, imageSize: Point2D, tileSize: Point2D): number {
+export function LayerToMip(layer: number, imageSize: Point2D, tileSize: Point2D): number {
     const totalTilesX = Math.ceil(imageSize.x / tileSize.x);
     const totalTilesY = Math.ceil(imageSize.y / tileSize.y);
     const maxMip = Math.max(totalTilesX, totalTilesY);
@@ -36,7 +36,7 @@ export function layerToMip(layer: number, imageSize: Point2D, tileSize: Point2D)
     return Math.pow(2.0, totalLayers - layer);
 }
 
-export function getRequiredTiles(frameView: FrameView, imageSize: Point2D, tileSize: Point2D): TileCoordinate[] {
+export function GetRequiredTiles(frameView: FrameView, imageSize: Point2D, tileSize: Point2D): TileCoordinate[] {
     // Validate FrameView object
     if (!frameView || !isFinite(frameView.xMin) || !isFinite(frameView.xMax) || !isFinite(frameView.yMin) || !isFinite(frameView.yMax) || !isFinite(frameView.mip)) {
         return [];
@@ -62,7 +62,7 @@ export function getRequiredTiles(frameView: FrameView, imageSize: Point2D, tileS
         return [];
     }
 
-    const layer = mipToLayer(frameView.mip, imageSize, tileSize);
+    const layer = MipToLayer(frameView.mip, imageSize, tileSize);
     if (layer < 0) {
         return [new TileCoordinate(0, 0, 0)];
     }

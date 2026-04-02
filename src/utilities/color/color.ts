@@ -37,7 +37,8 @@ const SUPPORTED_COLORS = [...SELECTABLE_COLORS, "white", "black"];
 
 // Supported auto colors are in pattern "auto-blue", "auto-orange", "auto-green"...etc
 // Validate with regex ^auto-(blue|orange|green...)$
-const supportedAutoColorsRegex = new RegExp(`^auto-(${SUPPORTED_COLORS.join("|")})$`);
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const SUPPORTED_AUTO_COLORS_REGEX = new RegExp(`^auto-(${SUPPORTED_COLORS.join("|")})$`);
 
 /**
  * All provided colormaps.
@@ -193,7 +194,7 @@ imageObj.onload = () => {
 };
 
 // return color map as Uint8ClampedArray according colorMap
-export function getColorsForValues(colorMap: string): {color: Uint8ClampedArray; size: number} {
+export function GetColorsForValues(colorMap: string): {color: Uint8ClampedArray; size: number} {
     const colorMapIndex = COLOR_MAPS_ALL.indexOf(colorMap);
 
     if (colormapContext) {
@@ -203,22 +204,22 @@ export function getColorsForValues(colorMap: string): {color: Uint8ClampedArray;
     return {color: new Uint8ClampedArray([0, 0, 0, 0]), size: 1};
 }
 
-export function getColorsFromHex(colorHex: string, startColorHex: string = "#000000", steps: number = 1024): {color: Uint8ClampedArray; size: number} {
+export function GetColorsFromHex(colorHex: string, startColorHex: string = "#000000", steps: number = 1024): {color: Uint8ClampedArray; size: number} {
     const gradientColors = new Uint8ClampedArray(generateColorGradientArray(colorHex, startColorHex, steps));
     return {color: gradientColors, size: steps};
 }
 
-export function isAutoColor(color: string): boolean {
-    return supportedAutoColorsRegex.test(color);
+export function IsAutoColor(color: string): boolean {
+    return SUPPORTED_AUTO_COLORS_REGEX.test(color);
 }
 
-export function genColorFromIndex(index: number) {
+export function GenColorFromIndex(index: number) {
     const selectedColor = Number.isInteger(index) && index >= 0 ? SELECTABLE_COLORS[index % SELECTABLE_COLORS.length] : SELECTABLE_COLORS[0];
     return Colors[`${selectedColor.toUpperCase()}${AppStore.Instance.isDarkTheme ? "4" : "2"}`];
 }
 
-export function getColorForTheme(color: string): string {
-    if (!isAutoColor(color)) {
+export function GetColorForTheme(color: string): string {
+    if (!IsAutoColor(color)) {
         return color;
     }
 

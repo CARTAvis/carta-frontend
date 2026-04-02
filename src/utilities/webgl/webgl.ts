@@ -3,7 +3,7 @@ import {TEMPLATE_NODES} from "utilities";
 
 export const GL2 = WebGL2RenderingContext;
 
-export function getShaderFromString(gl: WebGL2RenderingContext, shaderScript: string, type: number) {
+export function GetShaderFromString(gl: WebGL2RenderingContext, shaderScript: string, type: number) {
     if (!gl || !shaderScript || !(type === GL2.VERTEX_SHADER || type === GL2.FRAGMENT_SHADER)) {
         return null;
     }
@@ -21,13 +21,13 @@ export function getShaderFromString(gl: WebGL2RenderingContext, shaderScript: st
     return shader;
 }
 
-export function getShaderProgram(gl: WebGL2RenderingContext, vertexShaderString: string, pixelShaderString: string) {
+export function GetShaderProgram(gl: WebGL2RenderingContext, vertexShaderString: string, pixelShaderString: string) {
     if (!gl) {
         return null;
     }
 
-    const vertexShader = getShaderFromString(gl, vertexShaderString, GL2.VERTEX_SHADER);
-    const fragmentShader = getShaderFromString(gl, pixelShaderString, GL2.FRAGMENT_SHADER);
+    const vertexShader = GetShaderFromString(gl, vertexShaderString, GL2.VERTEX_SHADER);
+    const fragmentShader = GetShaderFromString(gl, pixelShaderString, GL2.FRAGMENT_SHADER);
 
     const shaderProgram = gl.createProgram();
     if (shaderProgram && vertexShader && fragmentShader) {
@@ -42,7 +42,7 @@ export function getShaderProgram(gl: WebGL2RenderingContext, vertexShaderString:
     }
     return shaderProgram;
 }
-export function loadImageTexture(gl: WebGL2RenderingContext, url: string, texIndex: number): Promise<WebGLTexture> {
+export function LoadImageTexture(gl: WebGL2RenderingContext, url: string, texIndex: number): Promise<WebGLTexture> {
     return new Promise<WebGLTexture>((resolve, reject) => {
         if (!gl) {
             reject();
@@ -67,7 +67,7 @@ export function loadImageTexture(gl: WebGL2RenderingContext, url: string, texInd
     });
 }
 
-export function createFP32Texture(gl: WebGL2RenderingContext | null, width: number, height: number, texIndex: number, filtering: number = GL2.NEAREST) {
+export function CreateFP32Texture(gl: WebGL2RenderingContext | null, width: number, height: number, texIndex: number, filtering: number = GL2.NEAREST) {
     if (!gl) {
         return null;
     }
@@ -82,7 +82,7 @@ export function createFP32Texture(gl: WebGL2RenderingContext | null, width: numb
     return texture;
 }
 
-export function copyToFP32Texture(gl: WebGL2RenderingContext | null, texture: WebGLTexture, data: Float32Array, texIndex: number, dataWidth: number, dataHeight: number, xOffset: number, yOffset: number) {
+export function CopyToFP32Texture(gl: WebGL2RenderingContext | null, texture: WebGLTexture, data: Float32Array, texIndex: number, dataWidth: number, dataHeight: number, xOffset: number, yOffset: number) {
     if (!gl) {
         return;
     }
@@ -95,7 +95,7 @@ export function copyToFP32Texture(gl: WebGL2RenderingContext | null, texture: We
     gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_T, GL2.CLAMP_TO_EDGE);
 }
 
-export function initWebGL() {
+export function InitWebGL() {
     const gl = document.createElement("canvas").getContext("webgl");
     const floatExtension = gl?.getExtension("OES_texture_float");
     if (!gl || !floatExtension) {
@@ -105,7 +105,7 @@ export function initWebGL() {
     return gl;
 }
 
-export function initWebGL2() {
+export function InitWebGL2() {
     const gl = document.createElement("canvas").getContext("webgl2");
     if (!gl) {
         AlertStore.Instance.showAlert(TEMPLATE_NODES.WebGL2ErrorMessage, "issue");
@@ -114,7 +114,7 @@ export function initWebGL2() {
     return gl;
 }
 
-export function createTextureFromArray(gl: WebGL2RenderingContext, data: Float32Array | Uint8Array, texIndex: number = WebGL2RenderingContext.TEXTURE0, components: number = 1): WebGLTexture | null {
+export function CreateTextureFromArray(gl: WebGL2RenderingContext, data: Float32Array | Uint8Array, texIndex: number = WebGL2RenderingContext.TEXTURE0, components: number = 1): WebGLTexture | null {
     const numPoints = data.length / components;
     if (data.length % components !== 0) {
         console.error(`Invalid data size (${data.length} for number of components ${components}`);

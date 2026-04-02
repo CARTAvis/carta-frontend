@@ -63,7 +63,7 @@ function getEquinoxEpochForSystem(system: SystemType | CatalogSystemType): {equi
  * @param system - The coordinate system to set and to use for Equinox/Epoch values
  * @param overlayGlobalSettings - The overlay global settings containing defaults
  */
-export function setAstStringSystem(astString: ASTSettingsString, system: SystemType | CatalogSystemType | undefined, overlayGlobalSettings: OverlayGlobalSettings): void {
+export function SetAstStringSystem(astString: ASTSettingsString, system: SystemType | CatalogSystemType | undefined, overlayGlobalSettings: OverlayGlobalSettings): void {
     if (system === undefined) {
         return;
     }
@@ -107,9 +107,9 @@ export function setAstStringSystem(astString: ASTSettingsString, system: SystemT
  * @param system - The coordinate system to set and to use for Equinox/Epoch values
  * @param overlayGlobalSettings - The overlay global settings containing defaults
  */
-export function setAstSystem(astTransform: AST.FrameSet, system: SystemType | CatalogSystemType, overlayGlobalSettings: OverlayGlobalSettings): void {
+export function SetAstSystem(astTransform: AST.FrameSet, system: SystemType | CatalogSystemType, overlayGlobalSettings: OverlayGlobalSettings): void {
     const astString = new ASTSettingsString();
-    setAstStringSystem(astString, system, overlayGlobalSettings);
+    SetAstStringSystem(astString, system, overlayGlobalSettings);
     if (astString.toString().length > 0) {
         AST.set(astTransform, astString.toString());
     }

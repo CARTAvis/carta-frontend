@@ -3,28 +3,28 @@ import type {TypedArray} from "utilities";
 
 import {FrameScaling} from "enums";
 
-export function smoothStepOffset(val: number, edge0: number, edge1: number, level0: number, level1: number) {
-    const stepVal = smoothStep(val, edge0, edge1);
+export function SmoothStepOffset(val: number, edge0: number, edge1: number, level0: number, level1: number) {
+    const stepVal = SmoothStep(val, edge0, edge1);
     return level0 + (level1 - level0) * stepVal;
 }
 
 // Based on AMD OpenCL reference implementation
-export function smoothStep(val: number, edge0: number, edge1: number) {
+export function SmoothStep(val: number, edge0: number, edge1: number) {
     // Scale, bias and saturate val to 0..1 range
-    val = clamp((val - edge0) / (edge1 - edge0), 0.0, 1.0);
+    val = Clamp((val - edge0) / (edge1 - edge0), 0.0, 1.0);
     // Evaluate polynomial
     return val * val * (3 - 2 * val);
 }
 
-export function clamp(val: number, minVal: number, maxVal: number) {
+export function Clamp(val: number, minVal: number, maxVal: number) {
     return Math.min(maxVal, Math.max(minVal, val));
 }
 
-export function closeTo(a: number, b: number, limit: number = 1.0e-6) {
+export function CloseTo(a: number, b: number, limit: number = 1.0e-6) {
     return Math.abs(a - b) < limit;
 }
 
-export function equalIfBothFinite(a: number | undefined, b: number | undefined) {
+export function EqualIfBothFinite(a: number | undefined, b: number | undefined) {
     if (!Number.isFinite(a) || !Number.isFinite(b)) {
         return true;
     }
@@ -33,21 +33,21 @@ export function equalIfBothFinite(a: number | undefined, b: number | undefined) 
 }
 
 // sqrt(q^2 + u^2)
-export function polarizedIntensity(q: number, u: number) {
+export function PolarizedIntensity(q: number, u: number) {
     return Math.sqrt(Math.pow(q, 2) + Math.pow(u, 2));
 }
 
 // 0.5 * Math.atan2(U, Q) * 180 / Math.pi
-export function polarizationAngle(q: number, u: number) {
+export function PolarizationAngle(q: number, u: number) {
     return (0.5 * Math.atan2(u, q) * 180) / Math.PI;
 }
 
 // normalising a by b
-export function normalising(a: number, b: number) {
+export function Normalising(a: number, b: number) {
     return (a / b) * 100;
 }
 
-export function getPercentiles(histogram: CARTA.IHistogram, ranks: number[]): number[] {
+export function GetPercentiles(histogram: CARTA.IHistogram, ranks: number[]): number[] {
     if (!ranks || !ranks.length || !histogram || !histogram.bins?.length) {
         return [];
     }
@@ -108,7 +108,7 @@ function getSmoothedValue(bias: number, contrast: number) {
     return {bias: smoothedBias, contrast: smoothedContrast, offset: offset, denominator: denominator};
 }
 
-export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1, shouldUseSmoothedBiasContrast: boolean = true) {
+export function ScaleValue(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1, shouldUseSmoothedBiasContrast: boolean = true) {
     let scaleValue;
     switch (scaling) {
         case FrameScaling.SQUARE:
@@ -133,19 +133,19 @@ export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 100
     if (shouldUseSmoothedBiasContrast) {
         if (contrast <= 1) {
             const smoothedBias = 0.5 - bias / 2; // [-1, 1] map to [1, 0]
-            scaleValue = clamp((scaleValue - smoothedBias) * contrast + smoothedBias, 0, 1);
+            scaleValue = Clamp((scaleValue - smoothedBias) * contrast + smoothedBias, 0, 1);
         } else {
             const smoothedValue = getSmoothedValue(bias, contrast);
             scaleValue = (errorFunction(scaleValue, smoothedValue.contrast, smoothedValue.bias) - smoothedValue.offset) / smoothedValue.denominator;
         }
     } else {
-        scaleValue = clamp(scaleValue - bias, 0, 1);
-        scaleValue = clamp((scaleValue - 0.5) * contrast + 0.5, 0, 1);
+        scaleValue = Clamp(scaleValue - bias, 0, 1);
+        scaleValue = Clamp((scaleValue - 0.5) * contrast + 0.5, 0, 1);
     }
     return scaleValue;
 }
 
-export function scaleValueInverse(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1, shouldUseSmoothedBiasContrast: boolean = true) {
+export function ScaleValueInverse(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1, shouldUseSmoothedBiasContrast: boolean = true) {
     let scaleValue;
     if (shouldUseSmoothedBiasContrast) {
         if (contrast <= 1) {
@@ -153,15 +153,15 @@ export function scaleValueInverse(x: number, scaling: FrameScaling, alpha: numbe
             if (x === 0 && smoothedBias === 0 && contrast === 0) {
                 scaleValue = 1;
             } else {
-                scaleValue = clamp((x - smoothedBias) / contrast + smoothedBias, 0, 1);
+                scaleValue = Clamp((x - smoothedBias) / contrast + smoothedBias, 0, 1);
             }
         } else {
             const smoothedValue = getSmoothedValue(bias, contrast);
-            scaleValue = clamp(errorFunctionInverse(x * smoothedValue.denominator + smoothedValue.offset, smoothedValue.contrast, smoothedValue.bias), 0, 1);
+            scaleValue = Clamp(errorFunctionInverse(x * smoothedValue.denominator + smoothedValue.offset, smoothedValue.contrast, smoothedValue.bias), 0, 1);
         }
     } else {
         scaleValue = (x - 0.5) / contrast + 0.5;
-        scaleValue = clamp(scaleValue + bias, 0, 1);
+        scaleValue = Clamp(scaleValue + bias, 0, 1);
     }
 
     switch (scaling) {
@@ -180,19 +180,19 @@ export function scaleValueInverse(x: number, scaling: FrameScaling, alpha: numbe
     }
 }
 
-export function roundToPower(val: number, power: number) {
+export function RoundToPower(val: number, power: number) {
     return Math.pow(power, Math.round(Math.log(val) / Math.log(power)));
 }
 
-export function ceilToPower(val: number, power: number) {
+export function CeilToPower(val: number, power: number) {
     return Math.pow(power, Math.ceil(Math.log(val) / Math.log(power)));
 }
 
-export function floorToPower(val: number, power: number) {
+export function FloorToPower(val: number, power: number) {
     return Math.pow(power, Math.floor(Math.log(val) / Math.log(power)));
 }
 
-export function minMaxArray(data: Array<number> | TypedArray): {minVal: number; maxVal: number} {
+export function MinMaxArray(data: Array<number> | TypedArray): {minVal: number; maxVal: number} {
     if (data && data.length) {
         let maxVal = -Number.MAX_VALUE;
         let minVal = Number.MAX_VALUE;
@@ -217,11 +217,11 @@ export function minMaxArray(data: Array<number> | TypedArray): {minVal: number; 
     return {minVal: NaN, maxVal: NaN};
 }
 
-export function gaussian(x: number, amp: number, center: number, fwhm: number) {
+export function Gaussian(x: number, amp: number, center: number, fwhm: number) {
     const z = (x - center) / fwhm;
     return amp * Math.exp(-4 * Math.log(2) * z * z);
 }
 
-export function lorentzian(x: number, amp: number, center: number, fwhm: number) {
+export function Lorentzian(x: number, amp: number, center: number, fwhm: number) {
     return (amp * 0.25 * Math.pow(fwhm, 2)) / (Math.pow(x - center, 2) + 0.25 * Math.pow(fwhm, 2));
 }

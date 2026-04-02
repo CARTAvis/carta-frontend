@@ -5,9 +5,9 @@ import {NumberFormatType, SpectralType} from "enums";
 import {type Point2D, SPECTRAL_DEFAULT_UNIT, type WCSPoint2D} from "models";
 import {OverlaySettings} from "stores";
 import {type FrameStore} from "stores/Frame";
-import {add2D, magDir2D, polygonPerimeter, rotate2D, scale2D, subtract2D, trimFitsComment} from "utilities";
+import {Add2D, MagDir2D, PolygonPerimeter, Rotate2D, Scale2D, Subtract2D, TrimFitsComment} from "utilities";
 
-export function isWCSStringFormatValid(wcsString: string | null, format: NumberFormatType | undefined): boolean {
+export function IsWCSStringFormatValid(wcsString: string | null, format: NumberFormatType | undefined): boolean {
     if (!wcsString || !format) {
         return false;
     }
@@ -22,7 +22,7 @@ export function isWCSStringFormatValid(wcsString: string | null, format: NumberF
     return decimalRegExp.test(wcsString);
 }
 
-export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry | undefined): number {
+export function GetHeaderNumericValue(headerEntry: CARTA.IHeaderEntry | undefined): number {
     if (!headerEntry) {
         return NaN;
     }
@@ -30,17 +30,17 @@ export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry | undefine
     if (headerEntry.entryType === CARTA.EntryType.FLOAT || headerEntry.entryType === CARTA.EntryType.INT) {
         return headerEntry.numericValue ?? NaN;
     } else {
-        return parseFloat(trimFitsComment(headerEntry.value));
+        return parseFloat(TrimFitsComment(headerEntry.value));
     }
 }
 
-export function transformPoint(astTransform: AST.FrameSet | AST.Mapping, point: Point2D, isForward: boolean = true) {
+export function TransformPoint(astTransform: AST.FrameSet | AST.Mapping, point: Point2D, isForward: boolean = true) {
     return AST.transformPoint(astTransform, point.x, point.y, isForward);
 }
 
-export function getReferencePixel(frame: FrameStore): Point2D {
-    const x = getHeaderNumericValue(frame?.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === "CRPIX1"));
-    const y = getHeaderNumericValue(frame.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === "CRPIX2"));
+export function GetReferencePixel(frame: FrameStore): Point2D {
+    const x = GetHeaderNumericValue(frame?.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === "CRPIX1"));
+    const y = GetHeaderNumericValue(frame.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === "CRPIX2"));
     return {x, y};
 }
 
@@ -53,13 +53,13 @@ export function getReferencePixel(frame: FrameStore): Point2D {
  *                   If omitted, raw (unrounded) arcsecond values are returned.
  * @returns An object with `{ x, y }` pixel sizes in arcseconds; `NaN` values if they cannot be determined
  */
-export function getPixelSizes(frame: FrameStore, rounding?: number): {x: number; y: number} {
+export function GetPixelSizes(frame: FrameStore, rounding?: number): {x: number; y: number} {
     const crpixX = frame?.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name === `CRPIX${frame.dirXNumber}`);
     const crpixY = frame?.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name === `CRPIX${frame.dirYNumber}`);
 
     if (crpixX && crpixY) {
-        const crpixXVal = getHeaderNumericValue(crpixX);
-        const crpixYVal = getHeaderNumericValue(crpixY);
+        const crpixXVal = GetHeaderNumericValue(crpixX);
+        const crpixYVal = GetHeaderNumericValue(crpixY);
         const xPixelSizeArcsec = AST.geodesicDistance(frame.wcsInfo, crpixXVal - 0.5, crpixYVal, crpixXVal + 0.5, crpixYVal);
         const yPixelSizeArcsec = AST.geodesicDistance(frame.wcsInfo, crpixXVal, crpixYVal - 0.5, crpixXVal, crpixYVal + 0.5);
 
@@ -79,9 +79,9 @@ export function getPixelSizes(frame: FrameStore, rounding?: number): {x: number;
     return {x: NaN, y: NaN};
 }
 
-export function getFormattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: Point2D) {
+export function GetFormattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: Point2D) {
     if (astTransform) {
-        const pointWCS = transformPoint(astTransform, pixelCoords);
+        const pointWCS = TransformPoint(astTransform, pixelCoords);
         const normVals = AST.normalizeCoordinates(astTransform, pointWCS.x, pointWCS.y);
         const wcsCoords = AST.getFormattedCoordinates(astTransform, normVals.x, normVals.y);
         if (wcsCoords) {
@@ -91,14 +91,14 @@ export function getFormattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: Po
     return null;
 }
 
-export function getUnformattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: Point2D) {
+export function GetUnformattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: Point2D) {
     if (astTransform) {
         if (OverlaySettings.Instance.isImgCoordinates) {
             // need second frame(WCS frame) in the frame to get WCS point
             AST.setI(astTransform, "Current", 2);
         }
 
-        const pointWCS = transformPoint(astTransform, pixelCoords);
+        const pointWCS = TransformPoint(astTransform, pixelCoords);
         const normVals = AST.normalizeCoordinates(astTransform, pointWCS.x, pointWCS.y);
 
         if (OverlaySettings.Instance.isImgCoordinates) {
@@ -112,15 +112,15 @@ export function getUnformattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: 
     return null;
 }
 
-export function getPixelValueFromWCS(astTransform: AST.FrameSet, formattedWCSPoint: WCSPoint2D): Point2D | null {
+export function GetPixelValueFromWCS(astTransform: AST.FrameSet, formattedWCSPoint: WCSPoint2D): Point2D | null {
     if (astTransform) {
         const pointWCS = AST.getWCSValueFromFormattedString(astTransform, formattedWCSPoint);
-        return transformPoint(astTransform, pointWCS, false);
+        return TransformPoint(astTransform, pointWCS, false);
     }
     return null;
 }
 
-export function getTransformedChannel(srcTransform: AST.FrameSet, destTransform: AST.FrameSet, matchingType: SpectralType, srcChannel: number) {
+export function GetTransformedChannel(srcTransform: AST.FrameSet, destTransform: AST.FrameSet, matchingType: SpectralType, srcChannel: number) {
     if (matchingType === SpectralType.CHANNEL) {
         return srcChannel;
     }
@@ -157,7 +157,7 @@ export function getTransformedChannel(srcTransform: AST.FrameSet, destTransform:
     return destPixelValue.z;
 }
 
-export function getTransformedChannelList(srcTransform: AST.FrameSet, destTransform: AST.FrameSet, matchingType: SpectralType, firstChannel: number, lastChannel: number) {
+export function GetTransformedChannelList(srcTransform: AST.FrameSet, destTransform: AST.FrameSet, matchingType: SpectralType, firstChannel: number, lastChannel: number) {
     if (matchingType === SpectralType.CHANNEL || firstChannel > lastChannel) {
         return [];
     }
@@ -181,14 +181,14 @@ export function getTransformedChannelList(srcTransform: AST.FrameSet, destTransf
     for (let i = 0; i < n; i++) {
         // Get spectral value from forward transform
         const sourceSpectralValue = AST.transform3DPoint(copySrc, 1, 1, firstChannel + i, true);
-        if (!sourceSpectralValue || !isFinite(sourceSpectralValue.z) || isAstBad(sourceSpectralValue.z)) {
+        if (!sourceSpectralValue || !isFinite(sourceSpectralValue.z) || IsAstBad(sourceSpectralValue.z)) {
             destChannels[i] = NaN;
             continue;
         }
 
         // Get pixel value from destination transform (reverse)
         const destPixelValue = AST.transform3DPoint(copyDest, dummySpectralValue.x, dummySpectralValue.y, sourceSpectralValue.z, false);
-        if (!destPixelValue || !isFinite(destPixelValue.z) || isAstBad(sourceSpectralValue.z)) {
+        if (!destPixelValue || !isFinite(destPixelValue.z) || IsAstBad(sourceSpectralValue.z)) {
             destChannels[i] = NaN;
             continue;
         }
@@ -201,22 +201,22 @@ export function getTransformedChannelList(srcTransform: AST.FrameSet, destTransf
     return destChannels;
 }
 
-export function isAstBad(value: number) {
+export function IsAstBad(value: number) {
     return !isFinite(value) || value === -Number.MAX_VALUE;
 }
 
-export function isAstBadPoint(point: Point2D) {
-    return !point || isAstBad(point.x) || isAstBad(point.y);
+export function IsAstBadPoint(point: Point2D) {
+    return !point || IsAstBad(point.x) || IsAstBad(point.y);
 }
 
-export function getApproximateEllipsePoints(astTransform: AST.FrameSet, centerReferenceImage: Point2D, radA: number, radB: number, rotation: number, targetVertexCount: number): Point2D[] {
+export function GetApproximateEllipsePoints(astTransform: AST.FrameSet, centerReferenceImage: Point2D, radA: number, radB: number, rotation: number, targetVertexCount: number): Point2D[] {
     const dTheta = (2.0 * Math.PI) / targetVertexCount;
     const xCoords = new Float64Array(targetVertexCount);
     const yCoords = new Float64Array(targetVertexCount);
 
     for (let i = 0; i < targetVertexCount; i++) {
         const theta = i * dTheta;
-        const p = add2D(centerReferenceImage, rotate2D({x: radA * Math.cos(theta), y: radB * Math.sin(theta)}, (rotation * Math.PI) / 180.0));
+        const p = Add2D(centerReferenceImage, Rotate2D({x: radA * Math.cos(theta), y: radB * Math.sin(theta)}, (rotation * Math.PI) / 180.0));
         xCoords[i] = p.x;
         yCoords[i] = p.y;
     }
@@ -229,8 +229,8 @@ export function getApproximateEllipsePoints(astTransform: AST.FrameSet, centerRe
     return approximatePoints;
 }
 
-export function getApproximatePolygonPoints(astTransform: AST.FrameSet, controlPoints: Point2D[], targetVertexCount: number, isClosed: boolean = true): Point2D[] {
-    const totalLength = polygonPerimeter(controlPoints, isClosed);
+export function GetApproximatePolygonPoints(astTransform: AST.FrameSet, controlPoints: Point2D[], targetVertexCount: number, isClosed: boolean = true): Point2D[] {
+    const totalLength = PolygonPerimeter(controlPoints, isClosed);
     const idealSubdivisionLength = totalLength / targetVertexCount;
 
     const m = controlPoints.length + (isClosed ? 1 : 0);
@@ -238,12 +238,12 @@ export function getApproximatePolygonPoints(astTransform: AST.FrameSet, controlP
     for (let i = 1; i < m; i++) {
         const p1 = controlPoints[i % controlPoints.length];
         const p0 = controlPoints[i - 1];
-        const {mag, dir} = magDir2D(subtract2D(p1, p0));
+        const {mag, dir} = MagDir2D(Subtract2D(p1, p0));
         const subdivisionCount = Math.round(mag / idealSubdivisionLength);
         const segmentSubdivisionLength = mag / subdivisionCount;
         approxPointsOriginalSpace.push(p0);
         for (let j = 1; j < subdivisionCount; j++) {
-            const p = add2D(p0, scale2D(dir, j * segmentSubdivisionLength));
+            const p = Add2D(p0, Scale2D(dir, j * segmentSubdivisionLength));
             approxPointsOriginalSpace.push(p);
         }
         if (i === m - 1 && !isClosed) {

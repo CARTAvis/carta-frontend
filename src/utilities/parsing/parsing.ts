@@ -12,7 +12,7 @@ enum ComparisonOperator {
     RangeOpen = ".."
 }
 
-export function parseBoolean(value: string, isDefaultValue: boolean): boolean {
+export function ParseBoolean(value: string, isDefaultValue: boolean): boolean {
     if (value === "true") {
         return true;
     } else if (value === "false") {
@@ -22,7 +22,7 @@ export function parseBoolean(value: string, isDefaultValue: boolean): boolean {
     }
 }
 
-export function parseNumber(val: number | undefined, initVal: number | undefined): number | undefined {
+export function ParseNumber(val: number | undefined, initVal: number | undefined): number | undefined {
     if (val !== undefined && isFinite(val)) {
         return val;
     } else {
@@ -30,7 +30,7 @@ export function parseNumber(val: number | undefined, initVal: number | undefined
     }
 }
 
-export function trimFitsComment(val: string | null | undefined): string {
+export function TrimFitsComment(val: string | null | undefined): string {
     if (!val) {
         return "";
     }
@@ -39,7 +39,7 @@ export function trimFitsComment(val: string | null | undefined): string {
     return val.replace(/\s\/\s?.*$/, "");
 }
 
-export function mapToObject<K, T>(map: Map<K, T>) {
+export function MapToObject<K, T>(map: Map<K, T>) {
     const obj: {[k: string]: T} = {};
     map.forEach((value, key) => {
         if (key !== null && key !== undefined) {
@@ -49,13 +49,13 @@ export function mapToObject<K, T>(map: Map<K, T>) {
     return obj;
 }
 
-export function findDeep(obj: any, pred: (obj: any) => boolean) {
+export function FindDeep(obj: any, pred: (obj: any) => boolean) {
     if (pred(obj)) {
         return [obj];
     }
     return _.flatten(
         _.map(obj, child => {
-            return typeof child === "object" ? findDeep(child, pred) : [];
+            return typeof child === "object" ? FindDeep(child, pred) : [];
         })
     );
 }
@@ -69,7 +69,7 @@ function getNumberFromFilterString(filterString: string): number | undefined {
     return undefined;
 }
 
-export function getComparisonOperatorAndValue(filterString: string): {operator: CARTA.ComparisonOperator; values: number[]} {
+export function GetComparisonOperatorAndValue(filterString: string): {operator: CARTA.ComparisonOperator; values: number[]} {
     const filter = filterString.replace(/\s/g, "");
     const result: {operator: number; values: number[]} = {operator: -1, values: []};
     // order matters, since ... and .. both include .. (same for < and <=, > and >=)

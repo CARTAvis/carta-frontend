@@ -1,28 +1,28 @@
 import html2canvas from "html2canvas";
 import moment from "moment";
 
-export function getTimestamp(format: string = "YYYY-MM-DD-HH-mm-ss") {
+export function GetTimestamp(format: string = "YYYY-MM-DD-HH-mm-ss") {
     return moment(new Date()).format(format);
 }
 
-export function getUnixTimestamp() {
+export function GetUnixTimestamp() {
     return +moment(new Date());
 }
 
-export function exportTsvFile(imageName: string, plotName: string, content: string) {
+export function ExportTsvFile(imageName: string, plotName: string, content: string) {
     const tsvData = `data:text/tab-separated-values;charset=utf-8,${content}\n`.trim();
     const dataURL = encodeURI(tsvData).replace(/#/g, "%23");
 
     const a = document.createElement("a") as HTMLAnchorElement;
     a.href = dataURL;
 
-    a.download = `${imageName.replaceAll(" ", "__")}-${plotName.replaceAll(" ", "-")}-${getTimestamp()}.tsv`;
+    a.download = `${imageName.replaceAll(" ", "__")}-${plotName.replaceAll(" ", "-")}-${GetTimestamp()}.tsv`;
     a.dispatchEvent(new MouseEvent("click"));
 
     return null;
 }
 
-export function exportTxtFile(fileName: string, content: string) {
+export function ExportTxtFile(fileName: string, content: string) {
     const txtData = `data:text/plain;charset=utf-8,${content}\n`.trim();
     const dataURL = encodeURI(txtData).replace(/#/g, "%23");
 
@@ -35,7 +35,7 @@ export function exportTxtFile(fileName: string, content: string) {
     return null;
 }
 
-export async function exportScreenshot(isImageOnly = true, maxWidth = 512, format = "image/jpeg", quality = 0.85) {
+export async function ExportScreenshot(isImageOnly = true, maxWidth = 512, format = "image/jpeg", quality = 0.85) {
     try {
         // Screenshot of
         const element = (isImageOnly ? document.getElementsByClassName("image-view-div")?.[0] : document.body) as HTMLElement;
@@ -65,7 +65,7 @@ export async function exportScreenshot(isImageOnly = true, maxWidth = 512, forma
     return undefined;
 }
 
-export async function copyToClipboard(value: string) {
+export async function CopyToClipboard(value: string) {
     if (navigator.clipboard) {
         await navigator.clipboard.writeText(value);
     } else {

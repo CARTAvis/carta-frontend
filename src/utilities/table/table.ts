@@ -1,9 +1,9 @@
 import {CARTA} from "carta-protobuf";
 import type {ControlHeader} from "stores";
 
-import {type ColumnArray, getComparisonOperatorAndValue, type ProcessedColumnData} from "utilities";
+import {type ColumnArray, GetComparisonOperatorAndValue, type ProcessedColumnData} from "utilities";
 
-export function getDataTypeString(dataType: CARTA.ColumnType | null | undefined): string {
+export function GetDataTypeString(dataType: CARTA.ColumnType | null | undefined): string {
     switch (dataType) {
         case CARTA.ColumnType.String:
             return "string";
@@ -34,7 +34,7 @@ export function getDataTypeString(dataType: CARTA.ColumnType | null | undefined)
     }
 }
 
-export function filterProcessedColumnData(columnData: ProcessedColumnData, selectedIndices: Array<number>): ProcessedColumnData {
+export function FilterProcessedColumnData(columnData: ProcessedColumnData, selectedIndices: Array<number>): ProcessedColumnData {
     const n = selectedIndices.length;
     let data: ColumnArray;
 
@@ -64,12 +64,12 @@ export function filterProcessedColumnData(columnData: ProcessedColumnData, selec
     return {dataType: columnData.dataType, data};
 }
 
-export function numericFiltering(columnData: Array<number>, dataIndexes: number[], filterString: string): number[] {
+export function NumericFiltering(columnData: Array<number>, dataIndexes: number[], filterString: string): number[] {
     if (columnData?.length <= 0 || dataIndexes?.length <= 0 || !filterString) {
         return [];
     }
 
-    const filter = getComparisonOperatorAndValue(filterString);
+    const filter = GetComparisonOperatorAndValue(filterString);
     if (filter?.operator === undefined || filter?.values.length <= 0) {
         return [];
     }
@@ -124,7 +124,7 @@ export function numericFiltering(columnData: Array<number>, dataIndexes: number[
     return filteredDataIndexes;
 }
 
-export function booleanFiltering(columnData: Array<boolean>, dataIndexes: number[], filterString: string): number[] {
+export function BooleanFiltering(columnData: Array<boolean>, dataIndexes: number[], filterString: string): number[] {
     if (columnData?.length <= 0 || dataIndexes?.length <= 0 || !filterString) {
         return [];
     }
@@ -147,7 +147,7 @@ export function booleanFiltering(columnData: Array<boolean>, dataIndexes: number
     return filteredDataIndexes;
 }
 
-export function stringFiltering(columnData: Array<string>, dataIndexes: number[], filterString: string): number[] {
+export function StringFiltering(columnData: Array<string>, dataIndexes: number[], filterString: string): number[] {
     if (columnData?.length <= 0 || dataIndexes?.length <= 0 || !filterString) {
         return [];
     }
@@ -161,7 +161,7 @@ export function stringFiltering(columnData: Array<string>, dataIndexes: number[]
     return filteredDataIndexes;
 }
 
-export function getHasFilter(controlHeader: Map<string, ControlHeader>, queryResult: Map<number, ProcessedColumnData>): boolean {
+export function GetHasFilter(controlHeader: Map<string, ControlHeader>, queryResult: Map<number, ProcessedColumnData>): boolean {
     const trueRegex = /^[tTyY].*$/;
     const falseRegex = /^[fFnN].*$/;
 
@@ -174,7 +174,7 @@ export function getHasFilter(controlHeader: Map<string, ControlHeader>, queryRes
             } else if (column?.dataType === CARTA.ColumnType.Bool) {
                 hasFilter = (value.filter.match(trueRegex) ?? []).length > 0 || (value.filter.match(falseRegex) ?? []).length > 0;
             } else {
-                const {operator, values} = getComparisonOperatorAndValue(value.filter);
+                const {operator, values} = GetComparisonOperatorAndValue(value.filter);
                 if (operator >= 0 && values.length) {
                     hasFilter = true;
                 }

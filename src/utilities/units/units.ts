@@ -3,31 +3,31 @@ import {AngularSize} from "models";
 
 export const SPEED_OF_LIGHT = 299792458;
 
-export function velocityFromFrequency(freq: number, refFreq: number): number {
+export function VelocityFromFrequency(freq: number, refFreq: number): number {
     return SPEED_OF_LIGHT * (1.0 - freq / refFreq);
 }
 
-export function velocityStringFromFrequency(freq: number, refFreq: number): string | null {
+export function VelocityStringFromFrequency(freq: number, refFreq: number): string | null {
     if (isFinite(refFreq)) {
-        const velocityVal = velocityFromFrequency(freq, refFreq);
-        return `Velocity:\u00a0${toFixed(velocityVal * 1e-3, 4)}\u00a0km/s`;
+        const velocityVal = VelocityFromFrequency(freq, refFreq);
+        return `Velocity:\u00a0${ToFixed(velocityVal * 1e-3, 4)}\u00a0km/s`;
     }
     return null;
 }
 
-export function frequencyFromVelocity(velocity: number, refFreq: number): number {
+export function FrequencyFromVelocity(velocity: number, refFreq: number): number {
     return refFreq * (1.0 - velocity / SPEED_OF_LIGHT);
 }
 
-export function frequencyStringFromVelocity(velocity: number, refFreq: number): string | null {
+export function FrequencyStringFromVelocity(velocity: number, refFreq: number): string | null {
     if (isFinite(refFreq)) {
-        const frequencyVal = frequencyFromVelocity(velocity, refFreq);
-        return `Frequency:\u00a0${toFixed(frequencyVal * 1e-9, 4)}\u00a0GHz`;
+        const frequencyVal = FrequencyFromVelocity(velocity, refFreq);
+        return `Frequency:\u00a0${ToFixed(frequencyVal * 1e-9, 4)}\u00a0GHz`;
     }
     return null;
 }
 
-export function toExponential(val: number, decimals: number = 0): string {
+export function ToExponential(val: number, decimals: number = 0): string {
     if (isFinite(val) && isFinite(decimals) && decimals >= 0 && decimals <= 20) {
         return val.toExponential(decimals);
     }
@@ -36,7 +36,7 @@ export function toExponential(val: number, decimals: number = 0): string {
 }
 
 // According to MDN, toFixed only works for up to 20 decimals
-export function toFixed(val: number, decimals: number = 0): string {
+export function ToFixed(val: number, decimals: number = 0): string {
     if (isFinite(val) && isFinite(decimals) && decimals >= 0 && decimals <= 20) {
         return val.toFixed(decimals);
     }
@@ -44,11 +44,11 @@ export function toFixed(val: number, decimals: number = 0): string {
     return String(val);
 }
 
-export function trimTrailingDecimals(value: string): string {
+export function TrimTrailingDecimals(value: string): string {
     return value.replace(/^(\d+?\.\d+?)0+$/, "$1");
 }
 
-export function getVariablePrecision(value: number): number {
+export function GetVariablePrecision(value: number): number {
     // Estimates the precision of input tick value. Input provides
     // delta between neighboring tick values and iterates through
     // up to 14 decimal places to determine the approxmiate
@@ -68,23 +68,23 @@ export function getVariablePrecision(value: number): number {
     return precision;
 }
 
-export function toFormattedNotationByDiff(value: number, delta: number): string | null {
+export function ToFormattedNotationByDiff(value: number, delta: number): string | null {
     if (value === null || isNaN(value)) {
         return null;
     }
-    const precision = getVariablePrecision(Math.abs(delta));
-    return trimTrailingDecimals(value.toFixed(precision));
+    const precision = GetVariablePrecision(Math.abs(delta));
+    return TrimTrailingDecimals(value.toFixed(precision));
 }
 
-export function formattedNotation(value: number): string | null {
+export function FormattedNotation(value: number): string | null {
     if (value === null || isNaN(value)) {
         return null;
     }
-    return value < 1e-2 ? toExponential(value, 2) : toFixed(value, 2);
+    return value < 1e-2 ? ToExponential(value, 2) : ToFixed(value, 2);
 }
 
-export function formattedExponential(val: number, digits: number, unit: string = "", shouldTrim: boolean = true, shouldPad: boolean = false) {
-    let valString = toExponential(val, digits);
+export function FormattedExponential(val: number, digits: number, unit: string = "", shouldTrim: boolean = true, shouldPad: boolean = false) {
+    let valString = ToExponential(val, digits);
     if (shouldTrim) {
         // remove unnecessary trailing decimals
         valString = valString.replace(/0+e/, "e");
@@ -102,34 +102,34 @@ export function formattedExponential(val: number, digits: number, unit: string =
     return valString;
 }
 
-export function formattedFrequency(freqGHz: number): string | null {
+export function FormattedFrequency(freqGHz: number): string | null {
     if (!isFinite(freqGHz)) {
         return null;
     }
 
     let freqString = "";
     if (freqGHz < 3) {
-        freqString = `${toFixed(freqGHz * 1000, 4)} MHz`;
+        freqString = `${ToFixed(freqGHz * 1000, 4)} MHz`;
     } else if (freqGHz >= 3 && freqGHz < 1000) {
-        freqString = `${toFixed(freqGHz, 4)} GHz`;
+        freqString = `${ToFixed(freqGHz, 4)} GHz`;
     } else {
-        freqString = `${toFixed(freqGHz / 1000, 4)} THz`;
+        freqString = `${ToFixed(freqGHz / 1000, 4)} THz`;
     }
     return freqString;
 }
 
-export function getAngleInRad(arcsec: number): number {
+export function GetAngleInRad(arcsec: number): number {
     return isFinite(arcsec) ? (arcsec * Math.PI) / 648000 : NaN;
 }
 
 // TODO: possibly move to region class since they are the only callers
-export function formattedArcsec(arcsec: number, decimals: number = -1): string | null {
+export function FormattedArcsec(arcsec: number, decimals: number = -1): string | null {
     if (!isFinite(arcsec) || !isFinite(decimals)) {
         return null;
     }
 
     const angularSize = AngularSize.ConvertFromArcsec(arcsec);
-    let arcString = decimals < 0 ? toFixed(angularSize.value, 6) : toFixed(angularSize.value, decimals);
+    let arcString = decimals < 0 ? ToFixed(angularSize.value, 6) : ToFixed(angularSize.value, decimals);
     switch (angularSize.unit) {
         case AngularSizeUnit.ARCSEC:
             arcString += '"';
@@ -146,7 +146,7 @@ export function formattedArcsec(arcsec: number, decimals: number = -1): string |
     return arcString;
 }
 
-export function wavelengthToFrequency(meter: number) {
+export function WavelengthToFrequency(meter: number) {
     // return in Hz
     if (!isFinite(meter) || meter === 0 || meter === null) {
         return undefined;
@@ -154,7 +154,7 @@ export function wavelengthToFrequency(meter: number) {
     return SPEED_OF_LIGHT / meter;
 }
 
-export function getValueFromArcsecString(formattedString: string): number | null {
+export function GetValueFromArcsecString(formattedString: string): number | null {
     const trimmedString = formattedString?.trim();
     if (!trimmedString) {
         return null;
@@ -173,7 +173,7 @@ export function getValueFromArcsecString(formattedString: string): number | null
     return null;
 }
 
-export function pixelToFluxDensityUnit(pixelUnit: string): string {
+export function PixelToFluxDensityUnit(pixelUnit: string): string {
     if (pixelUnit === "K") {
         return "K*arcsec^2";
     }

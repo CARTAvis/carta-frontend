@@ -4,7 +4,7 @@ import * as _ from "lodash";
 import {FittingFunction} from "enums";
 import {ProfileFittingIndividualStore} from "stores";
 
-export function hanningSmoothing(data: number[]) {
+export function HanningSmoothing(data: number[]) {
     // hanning width = 3
     const smoothedData: number[] = [];
     smoothedData.push(data[0]);
@@ -16,7 +16,7 @@ export function hanningSmoothing(data: number[]) {
     return smoothedData;
 }
 
-export function binning(data: number[], binWidth: number) {
+export function Binning(data: number[], binWidth: number) {
     const binnedData: number[] = [];
     for (let i = 0; i < data.length - binWidth; i = i + binWidth) {
         binnedData.push(_.mean(data.slice(i, i + binWidth > data.length ? data.length : i + binWidth)));
@@ -24,7 +24,7 @@ export function binning(data: number[], binWidth: number) {
     return binnedData;
 }
 
-export function getIndexByValue(values: number[], targetValue: number) {
+export function GetIndexByValue(values: number[], targetValue: number) {
     // const deltaVelocity = Math.abs(values[1] - values[0]);
     for (let i = 0; i < values.length - 1; i++) {
         if (values[i] <= targetValue && targetValue < values[i + 1]) {
@@ -38,10 +38,10 @@ export function getIndexByValue(values: number[], targetValue: number) {
     return null;
 }
 
-export function profilePreprocessing(data: number[]) {
-    let dataProcessed = binning(data, Math.floor(data.length / 128) + 1);
-    dataProcessed = hanningSmoothing(dataProcessed);
-    dataProcessed = hanningSmoothing(dataProcessed); // seems necessary from testing
+export function ProfilePreprocessing(data: number[]) {
+    let dataProcessed = Binning(data, Math.floor(data.length / 128) + 1);
+    dataProcessed = HanningSmoothing(dataProcessed);
+    dataProcessed = HanningSmoothing(dataProcessed); // seems necessary from testing
     return dataProcessed;
 }
 
@@ -52,7 +52,7 @@ export function profilePreprocessing(data: number[]) {
  * @param binN - Defines the number of equal-width bins in the given range.
  * @returns The values of the histogram and the bin edges.
  */
-export function histogram(data: number[], binN: number): {hist: number[]; binEdges: number[]} {
+export function Histogram(data: number[], binN: number): {hist: number[]; binEdges: number[]} {
     if (isFinite(binN) && binN > 0) {
     }
     const binEdges: number[] = [];
@@ -83,8 +83,8 @@ export function histogram(data: number[], binN: number): {hist: number[]; binEdg
     return {hist, binEdges};
 }
 
-export function histogramGaussianFit(y: number[], bins: number) {
-    const histResult = histogram(y, bins);
+export function HistogramGaussianFit(y: number[], bins: number) {
+    const histResult = Histogram(y, bins);
 
     // padding 0 to both sides of the histogram
     const histY: number[] = [0, ...histResult.hist, 0];
@@ -109,12 +109,12 @@ export function histogramGaussianFit(y: number[], bins: number) {
     return {center: intensitySmoothedMean, stddev: intensitySmoothedStddev};
 }
 
-export function getEstimatedPoints(xInput: number[], yInput: number[]): {x: number; y: number}[] {
+export function GetEstimatedPoints(xInput: number[], yInput: number[]): {x: number; y: number}[] {
     const yDataFlippedSum = yInput.map((value, i) => {
         return value + yInput[yInput.length - 1 - i];
     });
 
-    const fitHistogramResult = histogramGaussianFit(yDataFlippedSum, Math.floor(Math.sqrt(yDataFlippedSum.length)));
+    const fitHistogramResult = HistogramGaussianFit(yDataFlippedSum, Math.floor(Math.sqrt(yDataFlippedSum.length)));
     const flippedSumMean = fitHistogramResult.center;
     const flippedSumStddev = fitHistogramResult.stddev;
 
@@ -155,7 +155,7 @@ export function getEstimatedPoints(xInput: number[], yInput: number[]): {x: numb
     ];
 }
 
-export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: {order: number; yIntercept: number; slope: number} | null): {components: ProfileFittingIndividualStore[]; order: number; yIntercept: number; slope: number} {
+export function AutoDetecting(xInput: number[], yInput: number[], orderInputs?: {order: number; yIntercept: number; slope: number} | null): {components: ProfileFittingIndividualStore[]; order: number; yIntercept: number; slope: number} {
     // This part of codes tries to analyze the input spectrum and guesses where spectral and continuum features are, then sets up a set of initial solution for the GSL profile fitter. The procedure is outlined below.
 
     // On the GUI, there is a toggle 'w/ cont.' which sets a flag to the guesser if continuum needs to be taken into account or not.
@@ -191,7 +191,7 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
     let slope;
     let yIntercept;
 
-    const estimatedPoints = getEstimatedPoints(x, y);
+    const estimatedPoints = GetEstimatedPoints(x, y);
     const startPoint = estimatedPoints[0];
     const endPoint = estimatedPoints[1];
 
@@ -211,12 +211,12 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
     });
 
     // pre-processing data based on number of channels
-    const xSmoothed = profilePreprocessing(x);
-    const ySmoothed = profilePreprocessing(y);
+    const xSmoothed = ProfilePreprocessing(x);
+    const ySmoothed = ProfilePreprocessing(y);
 
     // fit a gaussian to the intensity histogram as an estimate of continuum level and noise level
     const bins = Math.floor(Math.sqrt(y.length));
-    const fitHistogramResult = histogramGaussianFit(ySmoothed, bins <= 8 ? 8 : bins);
+    const fitHistogramResult = HistogramGaussianFit(ySmoothed, bins <= 8 ? 8 : bins);
     const intensitySmoothedMean = fitHistogramResult.center;
     const intensitySmoothedStddev = fitHistogramResult.stddev;
 
@@ -258,8 +258,8 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
         } else if (value < ceiling && value > floor && isSwitchFrom === true) {
             toIndex = i - 1;
             isSwitchFrom = false;
-            fromIndexOri = getIndexByValue(x, xSmoothed[fromIndex]);
-            toIndexOri = getIndexByValue(x, xSmoothed[toIndex]);
+            fromIndexOri = GetIndexByValue(x, xSmoothed[fromIndex]);
+            toIndexOri = GetIndexByValue(x, xSmoothed[toIndex]);
             if (
                 toIndexOri - fromIndexOri + 1 >= signalChCountThreshold &&
                 (_.mean(ySmoothed.slice(fromIndex, toIndex + 1)) > intensitySmoothedMean + 3 * intensitySmoothedStddev || _.mean(ySmoothed.slice(fromIndex, toIndex + 1)) < intensitySmoothedMean - 3 * intensitySmoothedStddev)
@@ -268,8 +268,8 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
             }
         } else if ((value > ceiling || value < floor) && isSwitchFrom === true && i === ySmoothed.length - 1) {
             toIndex = i;
-            fromIndexOri = getIndexByValue(x, xSmoothed[fromIndex]);
-            toIndexOri = getIndexByValue(x, xSmoothed[toIndex]);
+            fromIndexOri = GetIndexByValue(x, xSmoothed[fromIndex]);
+            toIndexOri = GetIndexByValue(x, xSmoothed[toIndex]);
             if (
                 toIndexOri - fromIndexOri + 1 >= signalChCountThreshold &&
                 (_.mean(ySmoothed.slice(fromIndex, toIndex + 1)) > intensitySmoothedMean + 3 * intensitySmoothedStddev || _.mean(ySmoothed.slice(fromIndex, toIndex + 1)) < intensitySmoothedMean - 3 * intensitySmoothedStddev)
@@ -308,12 +308,12 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
                     return data.index;
                 });
                 if ((sortedArg[3] === 0 && sortedArg[4] === 4) || (sortedArg[3] === 4 && sortedArg[4] === 0)) {
-                    dividerLocalMinIndex.push(getIndexByValue(x, xSmoothed[j + 2]) ?? NaN);
+                    dividerLocalMinIndex.push(GetIndexByValue(x, xSmoothed[j + 2]) ?? NaN);
                     dividerLocalMinValue.push(ySmoothed[j + 2]);
                 }
 
                 if ((sortedArg[0] === 0 && sortedArg[1] === 4) || (sortedArg[0] === 4 && sortedArg[1] === 0)) {
-                    dividerLocalMaxIndex.push(getIndexByValue(x, xSmoothed[j + 2]) ?? NaN);
+                    dividerLocalMaxIndex.push(GetIndexByValue(x, xSmoothed[j + 2]) ?? NaN);
                     dividerLocalMaxValue.push(ySmoothed[j + 2]);
                 }
             }
@@ -456,8 +456,8 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
             for (let d = 0; d < dividerIndex.length - 1; d++) {
                 const fromIndexOri = dividerIndex[d];
                 const toIndexOri = dividerIndex[d + 1];
-                const fromIndex = getIndexByValue(xSmoothed, x[dividerIndex[d]]);
-                const toIndex = getIndexByValue(xSmoothed, x[dividerIndex[d + 1]]);
+                const fromIndex = GetIndexByValue(xSmoothed, x[dividerIndex[d]]);
+                const toIndex = GetIndexByValue(xSmoothed, x[dividerIndex[d + 1]]);
                 lineBoxsFinal.push({fromIndexOri, toIndexOri, fromIndex, toIndex});
             }
         } else {
