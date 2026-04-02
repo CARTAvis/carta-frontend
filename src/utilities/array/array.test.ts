@@ -1,8 +1,8 @@
 import {type Point2D} from "models";
 
-import {binarySearchByX} from "./array";
+import {BinarySearchByX} from "./array";
 
-test("test binarySearchByX with sorted array in incremental/decremental order", () => {
+test("test BinarySearchByX with sorted array in incremental/decremental order", () => {
     const incremental: Point2D[] = [
         {x: -1, y: 0},
         {x: 134, y: 0},
@@ -35,21 +35,21 @@ test("test binarySearchByX with sorted array in incremental/decremental order", 
         {x: NaN, y: NaN}
     ];
 
-    expect(binarySearchByX([], 10)).toEqual(null);
-    expect(binarySearchByX(incremental, NaN)).toEqual(null);
+    expect(BinarySearchByX([], 10)).toEqual(null);
+    expect(BinarySearchByX(incremental, NaN)).toEqual(null);
 
-    expect(binarySearchByX(incremental, -99)).toEqual({point: {x: -1, y: 0}, index: 0});
-    expect(binarySearchByX(incremental, 0)).toEqual({point: {x: -1, y: 0}, index: 0});
-    expect(binarySearchByX(incremental, 453)).toEqual({point: {x: 587, y: 0}, index: 4});
-    expect(binarySearchByX(incremental, 2048)).toEqual({point: {x: 1074, y: 0}, index: 9});
+    expect(BinarySearchByX(incremental, -99)).toEqual({point: {x: -1, y: 0}, index: 0});
+    expect(BinarySearchByX(incremental, 0)).toEqual({point: {x: -1, y: 0}, index: 0});
+    expect(BinarySearchByX(incremental, 453)).toEqual({point: {x: 587, y: 0}, index: 4});
+    expect(BinarySearchByX(incremental, 2048)).toEqual({point: {x: 1074, y: 0}, index: 9});
 
-    expect(binarySearchByX(decremental, 999)).toEqual({point: {x: 20, y: 0}, index: 0});
-    expect(binarySearchByX(decremental, 5)).toEqual({point: {x: 4, y: 0}, index: 5});
-    expect(binarySearchByX(decremental, 0)).toEqual({point: {x: 1, y: 0}, index: 8});
-    expect(binarySearchByX(decremental, -33)).toEqual({point: {x: -15, y: 0}, index: 9});
+    expect(BinarySearchByX(decremental, 999)).toEqual({point: {x: 20, y: 0}, index: 0});
+    expect(BinarySearchByX(decremental, 5)).toEqual({point: {x: 4, y: 0}, index: 5});
+    expect(BinarySearchByX(decremental, 0)).toEqual({point: {x: 1, y: 0}, index: 8});
+    expect(BinarySearchByX(decremental, -33)).toEqual({point: {x: -15, y: 0}, index: 9});
 
-    expect(binarySearchByX(empty, 999)).toEqual(null);
-    expect(binarySearchByX(empty, -33)).toEqual(null);
-    expect(binarySearchByX(empty, 5)).toEqual(null);
-    expect(binarySearchByX(empty, 0)).toEqual(null);
+    expect(BinarySearchByX(empty, 999)).toEqual(null);
+    expect(BinarySearchByX(empty, -33)).toEqual(null);
+    expect(BinarySearchByX(empty, 5)).toEqual(null);
+    expect(BinarySearchByX(empty, 0)).toEqual(null);
 });

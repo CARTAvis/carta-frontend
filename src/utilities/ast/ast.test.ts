@@ -2,7 +2,7 @@ import * as AST from "ast_wrapper";
 
 import {CatalogSystemType, SystemType} from "../../enums";
 
-import {ASTSettingsString, setAstStringSystem, setAstSystem} from "./ast";
+import {ASTSettingsString, SetAstStringSystem, SetAstSystem} from "./ast";
 
 const Gs = (defaultSystem: SystemType, defaultEquinox: string, defaultEpoch: string) =>
     ({
@@ -13,7 +13,7 @@ const Gs = (defaultSystem: SystemType, defaultEquinox: string, defaultEpoch: str
 
 const AstOut = (system: SystemType | CatalogSystemType, global: any) => {
     const s = new ASTSettingsString();
-    setAstStringSystem(s, system, global);
+    SetAstStringSystem(s, system, global);
     return s.toString();
 };
 
@@ -103,7 +103,7 @@ describe("ASTSettingsString", () => {
     });
 });
 
-describe("setAstStringSystem", () => {
+describe("SetAstStringSystem", () => {
     test.each([
         ["FK4 equinox and epoch", SystemType.FK4, "System=FK4, Equinox=B1950.0, Epoch=B1953.2"],
         ["FK5 equinox and epoch", SystemType.FK5, "System=FK5, Equinox=J2000.0, Epoch=J2000.0"],
@@ -189,7 +189,7 @@ describe("setAstStringSystem", () => {
     });
 });
 
-describe("setAstSystem", () => {
+describe("SetAstSystem", () => {
     const frameSet = {} as AST.FrameSet;
 
     beforeEach(() => {
@@ -197,7 +197,7 @@ describe("setAstSystem", () => {
     });
 
     test("calls AST.set with correct settings string for a standard system", () => {
-        setAstSystem(frameSet, SystemType.Galactic, defaultFK5);
+        SetAstSystem(frameSet, SystemType.Galactic, defaultFK5);
 
         const mockSet = AST.set as jest.Mock;
         expect(mockSet).toHaveBeenCalledTimes(1);
@@ -205,7 +205,7 @@ describe("setAstSystem", () => {
     });
 
     test("calls AST.set for Image system", () => {
-        setAstSystem(frameSet, SystemType.Image, defaultFK5);
+        SetAstSystem(frameSet, SystemType.Image, defaultFK5);
 
         const mockSet = AST.set as jest.Mock;
         expect(mockSet).toHaveBeenCalledTimes(1);
@@ -213,7 +213,7 @@ describe("setAstSystem", () => {
     });
 
     test("calls AST.set for catalog systems", () => {
-        setAstSystem(frameSet, CatalogSystemType.ICRS, defaultFK5);
+        SetAstSystem(frameSet, CatalogSystemType.ICRS, defaultFK5);
 
         const mockSet = AST.set as jest.Mock;
         expect(mockSet).toHaveBeenCalledTimes(1);

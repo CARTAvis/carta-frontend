@@ -1,8 +1,8 @@
-import {getInitIndexMap} from "./sorting";
+import {GetInitIndexMap} from "./sorting";
 
-describe("getInitIndexMap", () => {
+describe("GetInitIndexMap", () => {
     test("returns the correct indexes", () => {
         const rowNumber: number = 4;
-        expect(getInitIndexMap(rowNumber)).toEqual([0, 1, 2, 3]);
+        expect(GetInitIndexMap(rowNumber)).toEqual([0, 1, 2, 3]);
     });
 });
