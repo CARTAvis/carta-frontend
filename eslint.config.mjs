@@ -16,7 +16,7 @@ export default [
             parserOptions: {
                 ecmaVersion: "latest",
                 sourceType: "module",
-                project: true
+                project: ["./tsconfig.eslint.json"]
             }
         },
         plugins: {
