@@ -3,23 +3,23 @@ import {AngularSizeUnit} from "enums";
 import {AngularSize, FACTOR_TO_ARCSEC} from "./AngularSize";
 
 describe("AngularSize", () => {
-    describe("convertValueFromArcsec", () => {
+    describe("ConvertValueFromArcsec", () => {
         test("returns values with required unit", () => {
-            expect(AngularSize.convertValueFromArcsec(1, AngularSizeUnit.ARCSEC)).toEqual(1);
-            expect(AngularSize.convertValueFromArcsec(120, AngularSizeUnit.ARCMIN)).toEqual(2);
-            expect(AngularSize.convertValueFromArcsec(7200, AngularSizeUnit.DEG)).toEqual(2);
-            expect(AngularSize.convertValueFromArcsec(0.001, AngularSizeUnit.MILLIARCSEC)).toEqual(1);
+            expect(AngularSize.ConvertValueFromArcsec(1, AngularSizeUnit.ARCSEC)).toEqual(1);
+            expect(AngularSize.ConvertValueFromArcsec(120, AngularSizeUnit.ARCMIN)).toEqual(2);
+            expect(AngularSize.ConvertValueFromArcsec(7200, AngularSizeUnit.DEG)).toEqual(2);
+            expect(AngularSize.ConvertValueFromArcsec(0.001, AngularSizeUnit.MILLIARCSEC)).toEqual(1);
         });
 
         test("returns nan if input arcsec is not finite", () => {
-            expect(AngularSize.convertValueFromArcsec(NaN, AngularSizeUnit.ARCSEC)).toBeNaN();
+            expect(AngularSize.ConvertValueFromArcsec(NaN, AngularSizeUnit.ARCSEC)).toBeNaN();
         });
     });
 
-    describe("convertFromArcsec", () => {
+    describe("ConvertFromArcsec", () => {
         let mockConvertValueFromArcsec: jest.SpyInstance;
         beforeAll(() => {
-            mockConvertValueFromArcsec = jest.spyOn(AngularSize, "convertValueFromArcsec");
+            mockConvertValueFromArcsec = jest.spyOn(AngularSize, "ConvertValueFromArcsec");
         });
 
         test("returns values with required unit", () => {
@@ -28,17 +28,17 @@ describe("AngularSize", () => {
                 .mockImplementationOnce(() => 2)
                 .mockImplementationOnce(() => 2);
 
-            let size = AngularSize.convertFromArcsec(1);
+            let size = AngularSize.ConvertFromArcsec(1);
             expect(mockConvertValueFromArcsec).toHaveBeenCalledWith(1, AngularSizeUnit.ARCSEC);
             expect(size?.value).toEqual(1);
             expect(size?.unit).toEqual(AngularSizeUnit.ARCSEC);
 
-            size = AngularSize.convertFromArcsec(120);
+            size = AngularSize.ConvertFromArcsec(120);
             expect(mockConvertValueFromArcsec).toHaveBeenCalledWith(120, AngularSizeUnit.ARCMIN);
             expect(size?.value).toEqual(2);
             expect(size?.unit).toEqual(AngularSizeUnit.ARCMIN);
 
-            size = AngularSize.convertFromArcsec(7200);
+            size = AngularSize.ConvertFromArcsec(7200);
             expect(mockConvertValueFromArcsec).toHaveBeenCalledWith(7200, AngularSizeUnit.DEG);
             expect(size?.value).toEqual(2);
             expect(size?.unit).toEqual(AngularSizeUnit.DEG);
@@ -47,19 +47,19 @@ describe("AngularSize", () => {
         test("converts to milliarsec when needed", () => {
             mockConvertValueFromArcsec.mockImplementationOnce(() => 1).mockImplementationOnce(() => 0.001);
 
-            let size = AngularSize.convertFromArcsec(0.001, true);
+            let size = AngularSize.ConvertFromArcsec(0.001, true);
             expect(mockConvertValueFromArcsec).toHaveBeenCalledWith(0.001, AngularSizeUnit.MILLIARCSEC);
             expect(size?.value).toEqual(1);
             expect(size?.unit).toEqual(AngularSizeUnit.MILLIARCSEC);
 
-            size = AngularSize.convertFromArcsec(0.001, false);
+            size = AngularSize.ConvertFromArcsec(0.001, false);
             expect(mockConvertValueFromArcsec).toHaveBeenCalledWith(0.001, AngularSizeUnit.ARCSEC);
             expect(size?.value).toEqual(0.001);
             expect(size?.unit).toEqual(AngularSizeUnit.ARCSEC);
         });
 
         test("returns nan if input arcsec is not finite", () => {
-            const size = AngularSize.convertFromArcsec(NaN);
+            const size = AngularSize.ConvertFromArcsec(NaN);
             expect(size?.value).toBeNaN();
             expect(size?.unit).toEqual(AngularSizeUnit.ARCSEC);
         });

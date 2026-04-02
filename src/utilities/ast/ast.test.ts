@@ -4,22 +4,22 @@ import {CatalogSystemType, SystemType} from "../../enums";
 
 import {ASTSettingsString, setAstStringSystem, setAstSystem} from "./ast";
 
-const gs = (defaultSystem: SystemType, defaultEquinox: string, defaultEpoch: string) =>
+const Gs = (defaultSystem: SystemType, defaultEquinox: string, defaultEpoch: string) =>
     ({
         defaultSystem,
         defaultEquinox,
         defaultEpoch
     }) as any;
 
-const astOut = (system: SystemType | CatalogSystemType, global: any) => {
+const AstOut = (system: SystemType | CatalogSystemType, global: any) => {
     const s = new ASTSettingsString();
     setAstStringSystem(s, system, global);
     return s.toString();
 };
 
-const defaultFK4 = gs(SystemType.FK4, "B1950.0", "B1953.2");
-const defaultFK5 = gs(SystemType.FK5, "J2012.0", "J2000.0");
-const defaultICRS = gs(SystemType.ICRS, "J2000.0", "J2000.0");
+const defaultFK4 = Gs(SystemType.FK4, "B1950.0", "B1953.2");
+const defaultFK5 = Gs(SystemType.FK5, "J2012.0", "J2000.0");
+const defaultICRS = Gs(SystemType.ICRS, "J2000.0", "J2000.0");
 
 jest.mock("ast_wrapper", () => ({
     __esModule: true,
@@ -111,7 +111,7 @@ describe("setAstStringSystem", () => {
         ["Galactic equinox and epoch", SystemType.Galactic, "System=GALACTIC, Equinox=J2000.0, Epoch=J2000.0"],
         ["Ecliptic equinox and epoch", SystemType.Ecliptic, "System=ECLIPTIC, Equinox=J2000.0, Epoch=J2000.0"]
     ] as Array<[string, SystemType, string]>)("applies FK4 overlay defaults for %s", (_description, system, expected) => {
-        expect(astOut(system, defaultFK4)).toBe(expected);
+        expect(AstOut(system, defaultFK4)).toBe(expected);
     });
 
     test.each([
@@ -121,7 +121,7 @@ describe("setAstStringSystem", () => {
         ["Galactic equinox and epoch", SystemType.Galactic, "System=GALACTIC, Equinox=J2000.0, Epoch=J2000.0"],
         ["Ecliptic equinox and epoch", SystemType.Ecliptic, "System=ECLIPTIC, Equinox=J2000.0, Epoch=J2000.0"]
     ] as Array<[string, SystemType, string]>)("applies FK5 overlay defaults for %s", (_description, system, expected) => {
-        expect(astOut(system, defaultFK5)).toBe(expected);
+        expect(AstOut(system, defaultFK5)).toBe(expected);
     });
 
     test.each([
@@ -131,7 +131,7 @@ describe("setAstStringSystem", () => {
         ["Galactic equinox and epoch", SystemType.Galactic, "System=GALACTIC, Equinox=J2000.0, Epoch=J2000.0"],
         ["Ecliptic equinox and epoch", SystemType.Ecliptic, "System=ECLIPTIC, Equinox=J2000.0, Epoch=J2000.0"]
     ] as Array<[string, SystemType, string]>)("applies ICRS overlay defaults and fallback for %s", (_description, system, expected) => {
-        expect(astOut(system, defaultICRS)).toBe(expected);
+        expect(AstOut(system, defaultICRS)).toBe(expected);
     });
 
     test.each([
@@ -141,8 +141,8 @@ describe("setAstStringSystem", () => {
         [SystemType.Galactic, "J2000.0", "J2000.0", "System=GALACTIC, Equinox=J2000.0, Epoch=J2000.0"],
         [SystemType.Ecliptic, "J2020.0", "J2000.0", "System=ECLIPTIC, Equinox=J2020.0, Epoch=J2000.0"]
     ] as Array<[SystemType, string, string, string]>)("uses overlay defaults when defaultSystem=%s and system matches default", (defaultSystem, defaultEquinox, defaultEpoch, expected) => {
-        const customGlobalSettings = gs(defaultSystem, defaultEquinox, defaultEpoch);
-        expect(astOut(defaultSystem, customGlobalSettings)).toBe(expected);
+        const customGlobalSettings = Gs(defaultSystem, defaultEquinox, defaultEpoch);
+        expect(AstOut(defaultSystem, customGlobalSettings)).toBe(expected);
     });
 
     test.each([
@@ -150,8 +150,8 @@ describe("setAstStringSystem", () => {
         ["ICRS with FK4 defaultSystem (fallback)", SystemType.ICRS, SystemType.FK4, "B1975.0", "B1975.0", "System=ICRS, Equinox=J2000.0, Epoch=J2000.0"],
         ["FK4 matches defaultSystem with custom values", SystemType.FK4, SystemType.FK4, "B1975.0", "B1975.0", "System=FK4, Equinox=B1975.0, Epoch=B1975.0"]
     ] as Array<[string, SystemType, SystemType, string, string, string]>)("%s", (_desc, system, defaultSys, equinox, epoch, expected) => {
-        const customGlobalSettings = gs(defaultSys, equinox, epoch);
-        expect(astOut(system, customGlobalSettings)).toBe(expected);
+        const customGlobalSettings = Gs(defaultSys, equinox, epoch);
+        expect(AstOut(system, customGlobalSettings)).toBe(expected);
     });
 
     test.each([
@@ -159,7 +159,7 @@ describe("setAstStringSystem", () => {
         ["Catalog Pixel0", CatalogSystemType.Pixel0, "System=Pixel0"],
         ["Catalog Pixel1", CatalogSystemType.Pixel1, "System=Pixel1"]
     ] as Array<[string, SystemType | CatalogSystemType, string]>)("%s system adds only System and no equinox/epoch", (_desc, system, expected) => {
-        expect(astOut(system, defaultFK5)).toBe(expected);
+        expect(AstOut(system, defaultFK5)).toBe(expected);
     });
 
     test.each([
@@ -169,15 +169,15 @@ describe("setAstStringSystem", () => {
         ["Galactic", CatalogSystemType.Galactic, defaultFK5, "System=GALACTIC, Equinox=J2000.0, Epoch=J2000.0"],
         ["Ecliptic", CatalogSystemType.Ecliptic, defaultFK4, "System=ECLIPTIC, Equinox=J2000.0, Epoch=J2000.0"]
     ] as Array<[string, CatalogSystemType, any, string]>)("Catalog %s system uses standard equinox and epoch", (_desc, system, globalSettings, expected) => {
-        expect(astOut(system, globalSettings)).toBe(expected);
+        expect(AstOut(system, globalSettings)).toBe(expected);
     });
 
     test.each([
         ["Ecliptic", SystemType.Ecliptic, "J2025.0", "System=ECLIPTIC, Equinox=J2025.0, Epoch=J2000.0"],
         ["FK5", SystemType.FK5, "J2030.0", "System=FK5, Equinox=J2030.0, Epoch=J2000.0"]
     ] as Array<[string, SystemType, string, string]>)("%s uses custom equinox and standard epoch when it is the default system", (_desc, system, customEquinox, expected) => {
-        const customSettings = gs(system, customEquinox, "J2000.0");
-        expect(astOut(system, customSettings)).toBe(expected);
+        const customSettings = Gs(system, customEquinox, "J2000.0");
+        expect(AstOut(system, customSettings)).toBe(expected);
     });
 
     test.each([
@@ -185,7 +185,7 @@ describe("setAstStringSystem", () => {
         ["FK5", SystemType.FK5, defaultFK4, "System=FK5, Equinox=J2000.0, Epoch=J2000.0"],
         ["Galactic", SystemType.Galactic, defaultFK5, "System=GALACTIC, Equinox=J2000.0, Epoch=J2000.0"]
     ] as Array<[string, SystemType, any, string]>)("%s system uses standard values when defaultSystem is different", (_desc, system, globalSettings, expected) => {
-        expect(astOut(system, globalSettings)).toBe(expected);
+        expect(AstOut(system, globalSettings)).toBe(expected);
     });
 });
 
@@ -201,7 +201,7 @@ describe("setAstSystem", () => {
 
         const mockSet = AST.set as jest.Mock;
         expect(mockSet).toHaveBeenCalledTimes(1);
-        expect(mockSet).toHaveBeenCalledWith(frameSet, astOut(SystemType.Galactic, defaultFK5));
+        expect(mockSet).toHaveBeenCalledWith(frameSet, AstOut(SystemType.Galactic, defaultFK5));
     });
 
     test("calls AST.set for Image system", () => {
@@ -217,6 +217,6 @@ describe("setAstSystem", () => {
 
         const mockSet = AST.set as jest.Mock;
         expect(mockSet).toHaveBeenCalledTimes(1);
-        expect(mockSet).toHaveBeenCalledWith(frameSet, astOut(CatalogSystemType.ICRS, defaultFK5));
+        expect(mockSet).toHaveBeenCalledWith(frameSet, AstOut(CatalogSystemType.ICRS, defaultFK5));
     });
 });

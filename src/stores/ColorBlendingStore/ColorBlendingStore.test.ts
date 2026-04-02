@@ -1,7 +1,7 @@
 import {action, observable} from "mobx";
 
 jest.mock("components/Shared", () => ({
-    AppToaster: {show: jest.fn()}
+    APP_TOASTER: {show: jest.fn()}
 }));
 
 import * as colorUtils from "../../utilities/color/color";
@@ -47,9 +47,9 @@ describe("ColorBlendingStore", () => {
         expect(colorBlendingStore.titleCustomText).toBe("Color Blending 1");
         expect(colorBlendingStore.selectedFrames).toEqual([mockMatchedFrame1, mockMatchedFrame2]);
         expect(colorBlendingStore.alpha).toEqual([1, 1, 1]);
-        expect(colorBlendingStore.rasterVisible).toBe(true);
-        expect(colorBlendingStore.contourVisible).toBe(true);
-        expect(colorBlendingStore.vectorOverlayVisible).toBe(true);
+        expect(colorBlendingStore.isRasterVisible).toBe(true);
+        expect(colorBlendingStore.isContourVisible).toBe(true);
+        expect(colorBlendingStore.isVectorOverlayVisible).toBe(true);
     });
 
     it("removes a selected frame when it's unmatched", () => {
@@ -162,27 +162,27 @@ describe("ColorBlendingStore", () => {
     describe("toggleRasterVisible", () => {
         it("toggles the visibility correctly", () => {
             colorBlendingStore.toggleRasterVisible();
-            expect(colorBlendingStore.rasterVisible).toBe(false);
+            expect(colorBlendingStore.isRasterVisible).toBe(false);
             colorBlendingStore.toggleRasterVisible();
-            expect(colorBlendingStore.rasterVisible).toBe(true);
+            expect(colorBlendingStore.isRasterVisible).toBe(true);
         });
     });
 
     describe("toggleContourVisible", () => {
         it("toggles the visibility correctly", () => {
             colorBlendingStore.toggleContourVisible();
-            expect(colorBlendingStore.contourVisible).toBe(false);
+            expect(colorBlendingStore.isContourVisible).toBe(false);
             colorBlendingStore.toggleContourVisible();
-            expect(colorBlendingStore.contourVisible).toBe(true);
+            expect(colorBlendingStore.isContourVisible).toBe(true);
         });
     });
 
     describe("toggleVectorOverlayVisible", () => {
         it("toggles the visibility correctly", () => {
             colorBlendingStore.toggleVectorOverlayVisible();
-            expect(colorBlendingStore.vectorOverlayVisible).toBe(false);
+            expect(colorBlendingStore.isVectorOverlayVisible).toBe(false);
             colorBlendingStore.toggleVectorOverlayVisible();
-            expect(colorBlendingStore.vectorOverlayVisible).toBe(true);
+            expect(colorBlendingStore.isVectorOverlayVisible).toBe(true);
         });
     });
 
