@@ -1,4 +1,4 @@
-import {getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
+import {GetShaderProgram, GL2, InitWebGL2, LoadImageTexture} from "utilities";
 
 import allMaps from "../static/allmaps.png";
 
@@ -57,7 +57,7 @@ export class ContourWebGLService {
         if (!this.gl) {
             return;
         }
-        const shaderProgram = getShaderProgram(this.gl, CONTOUR_SHADERS.vertexShader, CONTOUR_SHADERS.fragmentShader);
+        const shaderProgram = GetShaderProgram(this.gl, CONTOUR_SHADERS.vertexShader, CONTOUR_SHADERS.fragmentShader);
         this.gl.useProgram(shaderProgram);
 
         if (shaderProgram) {
@@ -95,13 +95,13 @@ export class ContourWebGLService {
     }
 
     private constructor() {
-        this.gl = initWebGL2();
+        this.gl = InitWebGL2();
         if (!this.gl) {
             return;
         }
 
         this.initShaders();
-        loadImageTexture(this.gl, allMaps, GL2.TEXTURE0).then(texture => {
+        LoadImageTexture(this.gl, allMaps, GL2.TEXTURE0).then(texture => {
             this.cmapTexture = texture;
         });
     }

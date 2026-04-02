@@ -6,7 +6,7 @@ import {Subject} from "rxjs";
 import {type Point2D, TileCoordinate} from "models";
 import {BackendService, TileWebGLService} from "services";
 import {AppStore, type FrameStore, PREVIEW_PV_FILEID} from "stores";
-import {clamp, copyToFP32Texture, createFP32Texture, GL2} from "utilities";
+import {Clamp, CopyToFP32Texture, CreateFP32Texture, GL2} from "utilities";
 
 import ZFPWorker from "!worker-loader!zfp_wrapper";
 
@@ -126,8 +126,8 @@ export class TileService {
         this.workers[0].postMessage(["preview decompress", compressedView.buffer, eventArgs, previewData], [compressedView.buffer, nanEncodings32.buffer]);
     }
 
-    public setAnimationEnabled = (isVal: boolean) => {
-        this.isAnimationEnabled = isVal;
+    public setAnimationEnabled = (isEnabled: boolean) => {
+        this.isAnimationEnabled = isEnabled;
     };
 
     public setCache = (lruCapacityGPU: number, lruCapacitySystem: number) => {
@@ -166,7 +166,7 @@ export class TileService {
         this.tileStream = new Subject<TileStreamDetails>();
         this.backendService.rasterTileStream.subscribe(this.handleStreamedTiles);
         this.backendService.rasterSyncStream.subscribe(this.handleStreamSync);
-        this.workers = new Array<Worker>(clamp(Math.ceil((navigator.hardwareConcurrency || 6) * MAX_TILE_WORKERS_PER_CORE), MIN_TILE_WORKERS, MAX_TILE_WORKERS));
+        this.workers = new Array<Worker>(Clamp(Math.ceil((navigator.hardwareConcurrency || 6) * MAX_TILE_WORKERS_PER_CORE), MIN_TILE_WORKERS, MAX_TILE_WORKERS));
         this.workersReady = new Array<boolean>(this.workers.length);
 
         for (let i = 0; i < this.workers.length; i++) {
@@ -502,14 +502,14 @@ export class TileService {
         const textureSizeMb = (TEXTURE_SIZE * TEXTURE_SIZE * 4) / 1024 / 1024;
         console.log(`Creating ${this.textureArray.length} tile textures of size ${textureSizeMb} MB each (${textureSizeMb * this.textureArray.length} MB total)`);
         for (let i = 0; i < this.textureArray.length; i++) {
-            this.textureArray[i] = createFP32Texture(this.gl, TEXTURE_SIZE, TEXTURE_SIZE, GL2.TEXTURE0);
+            this.textureArray[i] = CreateFP32Texture(this.gl, TEXTURE_SIZE, TEXTURE_SIZE, GL2.TEXTURE0);
         }
     }
 
     uploadTileToGPU(tile: RasterTile) {
         const textureParameters = this.getTileTextureParameters(tile);
         if (textureParameters.texture && tile.width && tile.height && tile.data) {
-            copyToFP32Texture(this.gl, textureParameters.texture, tile.data, GL2.TEXTURE0, tile.width, tile.height, textureParameters.offset.x, textureParameters.offset.y);
+            CopyToFP32Texture(this.gl, textureParameters.texture, tile.data, GL2.TEXTURE0, tile.width, tile.height, textureParameters.offset.x, textureParameters.offset.y);
         }
     }
 

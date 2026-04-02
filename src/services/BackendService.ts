@@ -6,7 +6,7 @@ import {ConnectionStatus, TelemetryAction} from "enums";
 import {ApiService, TelemetryService} from "services";
 import {AppStore, PreferenceStore} from "stores";
 import {type RegionStore} from "stores/Frame";
-import {mapToObject} from "utilities";
+import {MapToObject} from "utilities";
 
 export const INVALID_ANIMATION_ID = -1;
 
@@ -357,12 +357,11 @@ export class BackendService {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    async exportRegion(directory: string, file: string, type: CARTA.FileType, coordType: CARTA.CoordinateType, fileId: number, regionStyles: Map<number, CARTA.IRegionStyle>, overwrite: boolean = false): Promise<CARTA.IExportRegionAck> {
+    async exportRegion(directory: string, file: string, type: CARTA.FileType, coordType: CARTA.CoordinateType, fileId: number, regionStyles: Map<number, CARTA.IRegionStyle>, isOverwrite: boolean = false): Promise<CARTA.IExportRegionAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
-            const message = CARTA.ExportRegion.create({directory, file, type, fileId, regionStyles: mapToObject(regionStyles), coordType, overwrite});
+            const message = CARTA.ExportRegion.create({directory, file, type, fileId, regionStyles: MapToObject(regionStyles), coordType, overwrite: isOverwrite});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.EXPORT_REGION, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.EXPORT_REGION, CARTA.ExportRegion.encode(message).finish())) {
@@ -459,16 +458,14 @@ export class BackendService {
         regionId?: number,
         channels?: number[],
         stokes?: number[],
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        keepDegenerate?: boolean,
+        isKeepDegenerate?: boolean,
         restFreq?: number,
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        overwrite: boolean = false
+        isOverwrite: boolean = false
     ): Promise<CARTA.ISaveFileAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
-            const message = CARTA.SaveFile.create({fileId, outputFileDirectory, outputFileName, outputFileType, regionId, channels, stokes, keepDegenerate, restFreq, overwrite});
+            const message = CARTA.SaveFile.create({fileId, outputFileDirectory, outputFileName, outputFileType, regionId, channels, stokes, keepDegenerate: isKeepDegenerate, restFreq, overwrite: isOverwrite});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.SAVE_FILE, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.SAVE_FILE, CARTA.SaveFile.encode(message).finish())) {

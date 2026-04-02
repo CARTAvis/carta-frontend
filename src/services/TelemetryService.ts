@@ -8,7 +8,7 @@ import {v1 as uuidv1} from "uuid";
 import {PreferenceKeys, TelemetryAction, TelemetryMode} from "enums";
 import {CARTA_INFO} from "models";
 import {PreferenceStore} from "stores";
-import {getUnixTimestamp} from "utilities";
+import {GetUnixTimestamp} from "utilities";
 
 export interface TelemetryMessage {
     timestamp: number;
@@ -145,7 +145,7 @@ export class TelemetryService {
         await preferences.setPreference(PreferenceKeys.TELEMETRY_MODE, mode);
 
         const entry: TelemetryMessage = {
-            timestamp: getUnixTimestamp(),
+            timestamp: GetUnixTimestamp(),
             id: uuidv1(),
             sessionId: this.sessionId,
             version: CARTA_INFO.version,
@@ -167,7 +167,7 @@ export class TelemetryService {
 
         const entry: TelemetryMessage = {
             id: uuidv1(),
-            timestamp: getUnixTimestamp(),
+            timestamp: GetUnixTimestamp(),
             sessionId: this.sessionId,
             version: CARTA_INFO.version,
             action: TelemetryAction.OptOut
@@ -197,7 +197,7 @@ export class TelemetryService {
             if (isIncludeEndSession) {
                 const endSessionEntry: TelemetryMessage = {
                     id: uuidv1(),
-                    timestamp: getUnixTimestamp(),
+                    timestamp: GetUnixTimestamp(),
                     sessionId: this.sessionId,
                     version: CARTA_INFO.version,
                     action: TelemetryAction.EndSession,
@@ -276,7 +276,7 @@ export class TelemetryService {
         const preferences = PreferenceStore.Instance;
         const isLoggingEnabled = preferences.isTelemetryLogging;
         const loggingPrefix = `[Telemetry] [uuid=${this.uuid}, sessionId=${this.sessionId}]`;
-        const timestamp = getUnixTimestamp();
+        const timestamp = GetUnixTimestamp();
 
         const isEntryAllowed = this.effectiveTelemetryMode === TelemetryMode.Usage || (!isUsageEntry && this.effectiveTelemetryMode === TelemetryMode.Minimal);
         if (isEntryAllowed) {

@@ -1,5 +1,5 @@
 import {CatalogTextureType} from "enums";
-import {createTextureFromArray, getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
+import {CreateTextureFromArray, GetShaderProgram, GL2, InitWebGL2, LoadImageTexture} from "utilities";
 
 import allMaps from "../static/allmaps.png";
 
@@ -103,22 +103,22 @@ export class CatalogWebGLService {
         // colorMap is texture0, controlMap is texture1
         switch (textureType) {
             case CatalogTextureType.Position:
-                this.positionTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE2, 2));
+                this.positionTextures.set(fileId, CreateTextureFromArray(this.gl, dataPoints, GL2.TEXTURE2, 2));
                 break;
             case CatalogTextureType.Size:
-                this.sizeTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE3, 1));
+                this.sizeTextures.set(fileId, CreateTextureFromArray(this.gl, dataPoints, GL2.TEXTURE3, 1));
                 break;
             case CatalogTextureType.Color:
-                this.colorTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE4, 1));
+                this.colorTextures.set(fileId, CreateTextureFromArray(this.gl, dataPoints, GL2.TEXTURE4, 1));
                 break;
             case CatalogTextureType.Orientation:
-                this.orientationTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE5, 1));
+                this.orientationTextures.set(fileId, CreateTextureFromArray(this.gl, dataPoints, GL2.TEXTURE5, 1));
                 break;
             case CatalogTextureType.SelectedSource:
-                this.selectedSourceTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE6, 1));
+                this.selectedSourceTextures.set(fileId, CreateTextureFromArray(this.gl, dataPoints, GL2.TEXTURE6, 1));
                 break;
             case CatalogTextureType.SizeMinor:
-                this.sizeMinorTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE7, 1));
+                this.sizeMinorTextures.set(fileId, CreateTextureFromArray(this.gl, dataPoints, GL2.TEXTURE7, 1));
                 break;
             default:
                 break;
@@ -158,7 +158,7 @@ export class CatalogWebGLService {
         if (!this.gl) {
             return;
         }
-        const shaderProgram = getShaderProgram(this.gl, CATALOG_SHADERS.vertexShader, CATALOG_SHADERS.fragmentShader);
+        const shaderProgram = GetShaderProgram(this.gl, CATALOG_SHADERS.vertexShader, CATALOG_SHADERS.fragmentShader);
         this.gl.useProgram(shaderProgram);
 
         if (shaderProgram) {
@@ -215,13 +215,13 @@ export class CatalogWebGLService {
     }
 
     private constructor() {
-        this.gl = initWebGL2();
+        this.gl = InitWebGL2();
         if (!this.gl) {
             return;
         }
 
         this.initShaders();
-        loadImageTexture(this.gl, allMaps, GL2.TEXTURE0).then(texture => {
+        LoadImageTexture(this.gl, allMaps, GL2.TEXTURE0).then(texture => {
             this.cmapTexture = texture;
         });
     }

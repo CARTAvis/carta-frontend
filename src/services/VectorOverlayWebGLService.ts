@@ -1,4 +1,4 @@
-import {getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
+import {GetShaderProgram, GL2, InitWebGL2, LoadImageTexture} from "utilities";
 
 import allMaps from "../static/allmaps.png";
 
@@ -60,7 +60,7 @@ export class VectorOverlayWebGLService {
         if (!this.gl) {
             return;
         }
-        const shaderProgram = getShaderProgram(this.gl, VECTOR_OVERLAY_SHADERS.vertexShader, VECTOR_OVERLAY_SHADERS.fragmentShader);
+        const shaderProgram = GetShaderProgram(this.gl, VECTOR_OVERLAY_SHADERS.vertexShader, VECTOR_OVERLAY_SHADERS.fragmentShader);
 
         if (shaderProgram) {
             this.gl.useProgram(shaderProgram);
@@ -101,13 +101,13 @@ export class VectorOverlayWebGLService {
     }
 
     private constructor() {
-        this.gl = initWebGL2();
+        this.gl = InitWebGL2();
         if (!this.gl) {
             return;
         }
 
         this.initShaders();
-        loadImageTexture(this.gl, allMaps, GL2.TEXTURE2).then(texture => {
+        LoadImageTexture(this.gl, allMaps, GL2.TEXTURE2).then(texture => {
             this.cmapTexture = texture;
         });
     }

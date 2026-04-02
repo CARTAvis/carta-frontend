@@ -156,7 +156,7 @@ export class ScriptingService {
         try {
             let response: any;
             if (entry.isAsync) {
-                // If entry is asynchronous, don't wait for it to complete before isMoving to the next entry
+                // If entry is asynchronous, don't wait for it to complete before moving to the next entry
                 response = entry.execute();
             } else {
                 response = await entry.execute();
@@ -190,7 +190,7 @@ export class ScriptingService {
         for (const entry of executionEntries) {
             try {
                 if (entry.isAsync) {
-                    // If entry is asynchronous, don't wait for it to complete before isMoving to the next entry
+                    // If entry is asynchronous, don't wait for it to complete before moving to the next entry
                     entry.execute();
                 } else {
                     await entry.execute();

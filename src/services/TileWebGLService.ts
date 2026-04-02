@@ -2,7 +2,7 @@ import allMaps from "static/allmaps.png";
 import tinycolor from "tinycolor2";
 
 import {TEXTURE_SIZE, TILE_SIZE} from "services";
-import {getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
+import {GetShaderProgram, GL2, InitWebGL2, LoadImageTexture} from "utilities";
 
 import {RASTER_SHADERS} from "./GLSL";
 
@@ -21,7 +21,7 @@ interface ShaderUniforms {
     DataTexture: WebGLUniformLocation | null;
     CmapTexture: WebGLUniformLocation | null;
     CmapCustomGradientEnd: WebGLUniformLocation | null;
-    cmapCustomGradientStart: WebGLUniformLocation | null;
+    CmapCustomGradientStart: WebGLUniformLocation | null;
     NumCmaps: WebGLUniformLocation | null;
     CmapIndex: WebGLUniformLocation | null;
     CanvasWidth: WebGLUniformLocation | null;
@@ -78,7 +78,7 @@ export class TileWebGLService {
         if (!this.gl) {
             return;
         }
-        this.shaderProgram = getShaderProgram(this.gl, RASTER_SHADERS.vertexShader, RASTER_SHADERS.fragmentShader);
+        this.shaderProgram = GetShaderProgram(this.gl, RASTER_SHADERS.vertexShader, RASTER_SHADERS.fragmentShader);
         if (this.shaderProgram) {
             this.gl.useProgram(this.shaderProgram);
 
@@ -102,7 +102,7 @@ export class TileWebGLService {
                 DataTexture: this.gl.getUniformLocation(this.shaderProgram, "uDataTexture"),
                 CmapTexture: this.gl.getUniformLocation(this.shaderProgram, "uCmapTexture"),
                 CmapCustomGradientEnd: this.gl.getUniformLocation(this.shaderProgram, "uCmapCustomGradientEnd"),
-                cmapCustomGradientStart: this.gl.getUniformLocation(this.shaderProgram, "uCmapCustomGradientStart"),
+                CmapCustomGradientStart: this.gl.getUniformLocation(this.shaderProgram, "uCmapCustomGradientStart"),
                 NumCmaps: this.gl.getUniformLocation(this.shaderProgram, "uNumCmaps"),
                 CmapIndex: this.gl.getUniformLocation(this.shaderProgram, "uCmapIndex"),
                 CanvasWidth: this.gl.getUniformLocation(this.shaderProgram, "uCanvasWidth"),
@@ -127,7 +127,7 @@ export class TileWebGLService {
         this.gl.uniform1i(this.shaderUniforms.DataTexture, 0);
         this.gl.uniform1i(this.shaderUniforms.CmapTexture, 1);
         this.gl.uniform3f(this.shaderUniforms.CmapCustomGradientEnd, 0, 0, 0);
-        this.gl.uniform3f(this.shaderUniforms.cmapCustomGradientStart, 1, 1, 1);
+        this.gl.uniform3f(this.shaderUniforms.CmapCustomGradientStart, 1, 1, 1);
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);
         this.gl.uniform1i(this.shaderUniforms.CmapIndex, 2);
         this.gl.uniform1f(this.shaderUniforms.MinVal, 3.4);
@@ -174,18 +174,18 @@ export class TileWebGLService {
             const rgb = tinycolor(hex).toRgb();
             this.gl.uniform3f(this.shaderUniforms.CmapCustomGradientEnd, rgb.r / 255, rgb.g / 255, rgb.b / 255);
             const cmapCustomGradientStart = tinycolor(startHex).getFormat() === "hex" ? tinycolor(startHex).toRgb() : tinycolor("#000000").toRgb();
-            this.gl.uniform3f(this.shaderUniforms.cmapCustomGradientStart, cmapCustomGradientStart.r / 255, cmapCustomGradientStart.g / 255, cmapCustomGradientStart.b / 255);
+            this.gl.uniform3f(this.shaderUniforms.CmapCustomGradientStart, cmapCustomGradientStart.r / 255, cmapCustomGradientStart.g / 255, cmapCustomGradientStart.b / 255);
         }
     }
 
     protected constructor() {
-        this.gl = initWebGL2();
+        this.gl = InitWebGL2();
         if (!this.gl) {
             return;
         }
         this.initShaders();
         this.initBuffers();
-        loadImageTexture(this.gl, allMaps, GL2.TEXTURE1).then(texture => {
+        LoadImageTexture(this.gl, allMaps, GL2.TEXTURE1).then(texture => {
             this.cmapTexture = texture;
         });
     }

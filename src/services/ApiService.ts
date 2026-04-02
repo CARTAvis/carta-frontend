@@ -2,7 +2,7 @@ import Ajv from "ajv";
 import axios, {type AxiosInstance} from "axios";
 import {action, computed, makeObservable, observable} from "mobx";
 
-import {APP_TOASTER} from "components/Shared";
+import {AppToaster} from "components/Shared";
 import {ConvertToGB, PreferenceKeys} from "enums";
 import {LayoutConfig, type Snippet, type Workspace, type WorkspaceListItem} from "models";
 import {AppStore} from "stores";
@@ -120,7 +120,7 @@ export class ApiService {
             window.open(`${ApiService.RuntimeConfig.dashboardAddress}?redirectParams=${redirectParams}`, "_self");
         } else {
             this.clearToken();
-            APP_TOASTER.show({icon: "warning-sign", message: "Could not authenticate with server", intent: "danger", timeout: 3000});
+            AppToaster.show({icon: "warning-sign", message: "Could not authenticate with server", intent: "danger", timeout: 3000});
         }
     };
 
@@ -158,7 +158,7 @@ export class ApiService {
                 const url = `${ApiService.RuntimeConfig.apiAddress}/server/stop`;
                 await this.axiosInstance.post(url);
             } catch (err) {
-                APP_TOASTER.show({icon: "warning-sign", message: "Could not stop CARTA server", intent: "danger", timeout: 3000});
+                AppToaster.show({icon: "warning-sign", message: "Could not stop CARTA server", intent: "danger", timeout: 3000});
                 console.error(err);
             }
         }
@@ -187,10 +187,9 @@ export class ApiService {
         if (preferences) {
             this.upgradePreferences(preferences);
             console.log(preferences);
-            // eslint-disable-next-line @typescript-eslint/naming-convention
-            const valid = ApiService.preferenceValidator(preferences);
+            const isValid = ApiService.preferenceValidator(preferences);
             const deletedKeys: string[] = [];
-            if (!valid) {
+            if (!isValid) {
                 for (const error of ApiService.preferenceValidator.errors ?? []) {
                     if (error.instancePath) {
                         console.log(`Removing invalid preference ${error.instancePath}`);
@@ -286,9 +285,8 @@ export class ApiService {
                     obj[key] = preferences[key];
                 }
 
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                const valid = ApiService.preferenceValidator(obj);
-                if (!valid) {
+                const isValid = ApiService.preferenceValidator(obj);
+                if (!isValid) {
                     console.log(ApiService.preferenceValidator.errors);
                 }
 
@@ -339,14 +337,12 @@ export class ApiService {
                 }
             } catch (err) {
                 console.error(err);
-                console.error(err);
                 return undefined;
             }
         } else {
             try {
                 savedLayouts = JSON.parse(localStorage.getItem("savedLayouts") ?? "{}");
             } catch (err) {
-                console.error(err);
                 console.error(err);
                 return undefined;
             }
@@ -356,9 +352,8 @@ export class ApiService {
             for (const layoutName of Object.keys(savedLayouts)) {
                 const layout = savedLayouts[layoutName];
                 LayoutConfig.UpgradeLayout(layout);
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                const valid = LayoutConfig.LayoutValidator(layout);
-                if (!valid) {
+                const isValid = LayoutConfig.LayoutValidator(layout);
+                if (!isValid) {
                     console.log(LayoutConfig.LayoutValidator.errors);
                 } else {
                     validLayouts[layoutName] = layout;
@@ -443,9 +438,8 @@ export class ApiService {
             const validSnippets = new Map<string, Snippet>();
             for (const snippetName of Object.keys(savedSnippets)) {
                 const snippet = savedSnippets[snippetName];
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                const valid = ApiService.snippetValidator(snippet);
-                if (!valid) {
+                const isValid = ApiService.snippetValidator(snippet);
+                if (!isValid) {
                     console.log(ApiService.snippetValidator.errors);
                 } else {
                     validSnippets.set(snippetName, snippet);
@@ -557,9 +551,8 @@ export class ApiService {
                 const existingWorkspaces = JSON.parse(localStorage.getItem("savedWorkspaces") ?? "{}");
                 const workspace = existingWorkspaces?.[name];
                 if (workspace) {
-                    // eslint-disable-next-line @typescript-eslint/naming-convention
-                    const valid = true; // TODO: ApiService.WorkspaceValidator(workspace);
-                    if (valid) {
+                    const isValid = true; // TODO: ApiService.WorkspaceValidator(workspace);
+                    if (isValid) {
                         return workspace;
                     } else {
                         //console.log(ApiService.WorkspaceValidator.errors);
@@ -580,7 +573,7 @@ export class ApiService {
                 if (res.data?.workspace?.id) {
                     workspace.id = res.data?.workspace?.id;
                 }
-                return {...workspace, editable: res.data?.workspace?.editable, name: workspaceName};
+                return {...workspace, isEditable: res.data?.workspace?.editable, name: workspaceName};
             } catch (err) {
                 console.error(err);
                 return undefined;

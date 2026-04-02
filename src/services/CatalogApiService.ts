@@ -2,7 +2,7 @@ import axios, {type AxiosInstance, type AxiosResponse, type CancelTokenSource} f
 import {CARTA} from "carta-protobuf";
 import {action} from "mobx";
 
-import {APP_TOASTER, errorToast, warningToast} from "components/Shared";
+import {AppToaster, ErrorToast, WarningToast} from "components/Shared";
 import {CatalogDatabase, CatalogType, DialogId, RadiusUnits, SystemType, TelemetryAction} from "enums";
 import {type CatalogInfo, type WCSPoint2D} from "models";
 import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore} from "stores";
@@ -75,11 +75,11 @@ export class CatalogApiService {
         } catch (error) {
             if (axios.isCancel(error)) {
                 if (error?.message) {
-                    APP_TOASTER.show(warningToast(error?.message));
+                    AppToaster.show(WarningToast(error?.message));
                 }
                 CatalogApiService.Instance.resetCancelTokenSource(CatalogDatabase.VIZIER);
             } else if (error?.message) {
-                APP_TOASTER.show(errorToast(error.message));
+                AppToaster.show(ErrorToast(error.message));
             } else {
                 console.log("Vizier Resource Error: " + error);
             }
@@ -106,11 +106,11 @@ export class CatalogApiService {
         } catch (error) {
             if (axios.isCancel(error)) {
                 if (error?.message) {
-                    APP_TOASTER.show(warningToast(error?.message));
+                    AppToaster.show(WarningToast(error?.message));
                 }
                 CatalogApiService.Instance.resetCancelTokenSource(CatalogDatabase.VIZIER);
             } else if (error?.message) {
-                APP_TOASTER.show(errorToast(error.message));
+                AppToaster.show(ErrorToast(error.message));
             } else {
                 console.log("VizieR Table Error: " + error);
             }
@@ -145,7 +145,7 @@ export class CatalogApiService {
     @action loadCatalog = (fileId: number, catalogInfo: CatalogInfo, headers: CARTA.CatalogHeader[], columnData: Map<number, ProcessedColumnData>, type: CatalogType) => {
         const appStore = AppStore.Instance;
         if (!appStore.activeFrame) {
-            APP_TOASTER.show(errorToast("Please load an image file"));
+            AppToaster.show(ErrorToast("Please load an image file"));
             return;
         }
         const catalogWidgetId = appStore.updateCatalogProfile(fileId, appStore.activeFrame);
@@ -174,7 +174,7 @@ export class CatalogApiService {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         if (!frame) {
-            APP_TOASTER.show(errorToast("Please load an image file"));
+            AppToaster.show(ErrorToast("Please load an image file"));
             throw new Error("No image file");
         }
 
@@ -207,11 +207,11 @@ export class CatalogApiService {
         } catch (error) {
             if (axios.isCancel(error)) {
                 if (error?.message) {
-                    APP_TOASTER.show(warningToast(error?.message));
+                    AppToaster.show(WarningToast(error?.message));
                 }
                 CatalogApiService.Instance.resetCancelTokenSource(CatalogDatabase.SIMBAD);
             } else if (error?.message) {
-                APP_TOASTER.show(errorToast(error.message));
+                AppToaster.show(ErrorToast(error.message));
             } else {
                 console.log("Append Simbad Error: " + error);
             }
