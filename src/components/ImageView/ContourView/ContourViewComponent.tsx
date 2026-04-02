@@ -11,7 +11,7 @@ import {ceilToPower, COLOR_MAPS_ALL, GL2, rotate2D, scale2D, subtract2D} from "u
 import "./ContourViewComponent.scss";
 
 export interface ContourViewComponentProps {
-    docked: boolean;
+    isDocked: boolean;
     frame: FrameStore;
     row: number;
     column: number;
@@ -46,9 +46,9 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     private triggerUpdate = () => {
         const animatorStore = AnimatorStore.Instance;
         const contourFrames = AppStore.Instance.contourFrames.get(this.props.frame);
-        if (contourFrames?.every(frame => frame?.contourProgress === 1) && animatorStore.serverAnimationActive) {
+        if (contourFrames?.every(frame => frame?.contourProgress === 1) && animatorStore.isServerAnimationActive) {
             requestAnimationFrame(this.updateCanvas);
-        } else if (!animatorStore.serverAnimationActive) {
+        } else if (!animatorStore.isServerAnimationActive) {
             requestAnimationFrame(this.updateCanvas);
         }
     };
@@ -78,7 +78,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         }
         // Otherwise just clear it
         const xOffset = this.props.column * frame.renderWidth * appStore.pixelRatio;
-        // y-axis is inverted
+        // y-axis is isInverted
         const yOffset = (appStore.imageViewConfigStore.numImageRows - 1 - this.props.row) * frame.renderHeight * appStore.pixelRatio;
         this.gl.viewport(xOffset, yOffset, frame.renderWidth * appStore.pixelRatio, frame.renderHeight * appStore.pixelRatio);
         this.gl.clearColor(0, 0, 0, 0);
@@ -188,8 +188,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
         this.gl.uniform1f(this.contourWebGLService.shaderUniforms.LineThickness, lineThickness);
         this.gl.uniform1f(this.contourWebGLService.shaderUniforms.PixelRatio, frame.aspectRatio);
-        this.gl.uniform1i(this.contourWebGLService.shaderUniforms.CmapEnabled, frame.contourConfig.colormapEnabled ? 1 : 0);
-        if (frame.contourConfig.colormapEnabled) {
+        this.gl.uniform1i(this.contourWebGLService.shaderUniforms.CmapEnabled, frame.contourConfig.isColormapEnabled ? 1 : 0);
+        if (frame.contourConfig.isColormapEnabled) {
             this.gl.uniform1i(this.contourWebGLService.shaderUniforms.CmapIndex, COLOR_MAPS_ALL.indexOf(frame.contourConfig.colormap));
             this.gl.uniform1f(this.contourWebGLService.shaderUniforms.Bias, frame.contourConfig.colormapBias);
             this.gl.uniform1f(this.contourWebGLService.shaderUniforms.Contrast, frame.contourConfig.colormapContrast);
@@ -209,7 +209,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             }
 
             frame.contourStores.forEach((contourStore, level) => {
-                if (frame.contourConfig.colormapEnabled) {
+                if (frame.contourConfig.isColormapEnabled) {
                     let levelFraction: number;
                     if (minVal !== maxVal) {
                         levelFraction = (level - minVal) / (maxVal - minVal);
@@ -254,7 +254,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             for (const frame of contourFrames) {
                 const config = frame.contourConfig;
                 const thickness = config.thickness;
-                const color = config.colormapEnabled ? config.colormap : config.color;
+                const color = config.isColormapEnabled ? config.colormap : config.color;
                 const dashMode = config.dashMode;
                 const bias = config.colormapBias;
                 const contrast = config.colormapContrast;
@@ -266,7 +266,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
         const padding = baseFrame.overlayStore.padding;
-        const className = classNames("contour-div", {docked: this.props.docked});
+        const className = classNames("contour-div", {isDocked: this.props.isDocked});
 
         return (
             <div className={className}>

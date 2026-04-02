@@ -17,7 +17,7 @@ import "./FileInfoComponent.scss";
 @observer
 export class FileInfoComponent extends React.Component<{
     infoTypes: FileInfoType[];
-    HDUOptions?: {HDUList: OptionProps[]; handleSelectedHDUChange: (hdu: string) => void};
+    HDUOptions?: {hduList: OptionProps[]; handleSelectedHDUChange: (hdu: string) => void};
     fileInfoExtended: CARTA.IFileInfoExtended | null;
     regionFileInfo: string;
     catalogFileInfo: CARTA.ICatalogFileInfo | null;
@@ -105,8 +105,8 @@ export class FileInfoComponent extends React.Component<{
         this.listRef.current.scrollToRow({index: this.matchedIterLocation.line, align: "center"});
     };
 
-    private handleSearchPanelClicked = (opened: boolean) => {
-        this.isSearchOpened = opened ? true : false;
+    private handleSearchPanelClicked = (isOpened: boolean) => {
+        this.isSearchOpened = isOpened ? true : false;
         this.resetSearchString();
         this.resetMatchedIter();
         this.matchedTotal = 0;
@@ -210,11 +210,11 @@ export class FileInfoComponent extends React.Component<{
     };
 
     private renderHDUList = () => {
-        return this.props.HDUOptions && this.props.HDUOptions.HDUList?.length > 1 ? (
+        return this.props.HDUOptions && this.props.HDUOptions.hduList?.length > 1 ? (
             <ControlGroup vertical={false}>
                 <Divider />
                 <FormGroup inline={true} label="HDU">
-                    <HTMLSelect options={this.props.HDUOptions.HDUList} onChange={ev => this.props.HDUOptions?.handleSelectedHDUChange(ev.currentTarget.value)} />
+                    <HTMLSelect options={this.props.HDUOptions.hduList} onChange={ev => this.props.HDUOptions?.handleSelectedHDUChange(ev.currentTarget.value)} />
                 </FormGroup>
             </ControlGroup>
         ) : undefined;

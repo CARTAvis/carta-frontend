@@ -14,7 +14,7 @@ import "./CursorInfoComponent.scss";
 
 @observer
 export class CursorInfoComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "cursor-info",
             type: "cursor-info",
@@ -186,7 +186,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
                             numVisibleRows={imageNum}
                             columnWidths={this.columnWidths}
                             onColumnWidthChanged={this.onColumnWidthChanged}
-                            enableGhostCells={false}
+                            isEnableGhostCells={false}
                             defaultRowHeight={40}
                             isIndexZero={true}
                             boldIndex={[appStore.activeImageIndex]}

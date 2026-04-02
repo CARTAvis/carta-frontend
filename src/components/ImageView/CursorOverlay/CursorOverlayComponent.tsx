@@ -13,7 +13,7 @@ class CursorOverlayProps {
     cursorValue: number;
     isValueCurrent: boolean;
     spectralInfo: SpectralInfo;
-    docked: boolean;
+    isDocked: boolean;
     width: number;
     top?: number;
     bottom?: number;
@@ -22,9 +22,9 @@ class CursorOverlayProps {
     height?: number;
     unit?: string;
     currentStokes?: string;
-    cursorValueToPercentage?: boolean;
+    isCursorValueToPercentage?: boolean;
     isPreview?: boolean;
-    visible?: boolean;
+    isVisible?: boolean;
 }
 
 @observer
@@ -39,7 +39,7 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
             infoStrings.push(`Image: (${toFixed(cursorInfo.posImageSpace.x)}, ${toFixed(cursorInfo.posImageSpace.y)})`);
         }
         if (this.props.cursorValue !== undefined) {
-            let valueString = `Value: ${this.props.cursorValueToPercentage ? toFixed(this.props.cursorValue, 1) + " %" : formattedExponential(this.props.cursorValue, 5, this.props.unit, true, true)}`;
+            let valueString = `Value: ${this.props.isCursorValueToPercentage ? toFixed(this.props.cursorValue, 1) + " %" : formattedExponential(this.props.cursorValue, 5, this.props.unit, true, true)}`;
             if (isNaN(this.props.cursorValue)) {
                 valueString = "NaN";
             }
@@ -85,10 +85,10 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
             styleProps.left = this.props.left;
         }
 
-        const className = classNames("cursor-overlay-div", {docked: this.props.docked});
+        const className = classNames("cursor-overlay-div", {isDocked: this.props.isDocked});
 
         return (
-            <div className={className} style={{...styleProps, visibility: this.props.visible === false ? "hidden" : "visible"}} data-testid="viewer-cursor-info-bar">
+            <div className={className} style={{...styleProps, visibility: this.props.isVisible === false ? "hidden" : "visible"}} data-testid="viewer-cursor-info-bar">
                 {infoStrings.length ? (
                     infoStrings.map((info, index) => (
                         <span key={index} className="cursor-info-item">

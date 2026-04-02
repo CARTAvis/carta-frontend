@@ -10,13 +10,13 @@ import "./PvPreviewComponent.scss";
 
 interface PVPreviewDialogProps {
     id: string;
-    docked: boolean;
+    isDocked: boolean;
     floatingSettingsId?: string;
 }
 
 @observer
 export class PvPreviewComponent extends React.Component<PVPreviewDialogProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "pv-preview",
             type: "pv-preview",
@@ -37,7 +37,7 @@ export class PvPreviewComponent extends React.Component<PVPreviewDialogProps> {
 
         return (
             <ResizeDetector onResize={onResizeCallback || (() => {})} throttleTime={33}>
-                <div className="pv-preview-widget">{frame && <ImagePanelComponent key={this.props.id} docked={false} image={{type: ImageType.PV_PREVIEW, store: frame}} row={0} column={0} />}</div>
+                <div className="pv-preview-widget">{frame && <ImagePanelComponent key={this.props.id} isDocked={false} image={{type: ImageType.PV_PREVIEW, store: frame}} row={0} column={0} />}</div>
             </ResizeDetector>
         );
     }

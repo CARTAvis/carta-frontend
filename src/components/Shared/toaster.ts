@@ -13,7 +13,7 @@ const toaster = OverlayToaster.create(
     }
 );
 
-export const AppToaster = {
+export const APP_TOASTER = {
     show: async (toast: ToastProps) => {
         (await toaster).show(toast);
     },
@@ -22,7 +22,7 @@ export const AppToaster = {
     }
 };
 
-export function SuccessToast(icon: IconName, message: string, timeout?: number): ToastProps {
+export function successToast(icon: IconName, message: string, timeout?: number): ToastProps {
     return {
         icon: icon,
         intent: "success",
@@ -31,7 +31,7 @@ export function SuccessToast(icon: IconName, message: string, timeout?: number):
     };
 }
 
-export function ErrorToast(message: string): ToastProps {
+export function errorToast(message: string): ToastProps {
     return {
         icon: "error",
         intent: "danger",
@@ -44,7 +44,7 @@ export function ErrorToast(message: string): ToastProps {
     };
 }
 
-export function WarningToast(message: string): ToastProps {
+export function warningToast(message: string): ToastProps {
     return {
         icon: "warning-sign",
         intent: "warning",

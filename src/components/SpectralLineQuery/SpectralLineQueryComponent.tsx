@@ -27,7 +27,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     private resultTableRef: Table2 | undefined;
     private scrollToTopHandle;
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "spectral-line-query",
             type: "spectral-line-query",
@@ -63,21 +63,21 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         this.width = width;
         this.height = height;
 
-        // fixed bug from blueprintjs, only display 4 rows.
+        // fixed bug from blueprintjs, only isDisplay 4 rows.
         if (this.headerTableRef) {
-            this.updateTableSize(this.headerTableRef, this.props.docked);
+            this.updateTableSize(this.headerTableRef, this.props.isDocked);
         }
         if (this.resultTableRef) {
-            this.updateTableSize(this.resultTableRef, this.props.docked);
+            this.updateTableSize(this.resultTableRef, this.props.isDocked);
         }
     };
 
-    private updateTableSize(ref: any, docked: boolean) {
+    private updateTableSize(ref: any, isDocked: boolean) {
         const viewportRect = ref.locator.getViewportRect();
         ref.updateViewportRect(viewportRect);
         // fixed bug for blueprint table, first column overlap with row index
         // triger table update
-        if (docked) {
+        if (isDocked) {
             ref.scrollToRegion(Regions.column(0));
         }
     }
@@ -129,14 +129,14 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
 
     private renderSwitchButtonCell(rowIndex: number, columnName: SpectralLineHeaders) {
         const widgetStore = this.widgetStore;
-        const display = widgetStore.controlHeader?.get(columnName)?.display;
+        const isDisplay = widgetStore.controlHeader?.get(columnName)?.isDisplay;
         return (
             <Cell className="header-table-cell" key={`cell_switch_${rowIndex}`}>
                 <React.Fragment>
                     <Switch
                         className="cell-switch-button"
                         key={`cell_switch_button_${rowIndex}`}
-                        checked={display ?? false}
+                        checked={isDisplay ?? false}
                         onChange={ev => widgetStore.setHeaderDisplay(ev.currentTarget.checked, columnName)}
                         data-testid={"catalog-header-table-switch-" + rowIndex}
                     />
@@ -254,7 +254,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         /* eslint-disable @typescript-eslint/no-unused-vars */
         // trigger re-render of SpectralLineQueryComponent while reset filter string
         const filters = widgetStore.filters;
-        const darkTheme = appStore.darkTheme;
+        const isDarkTheme = appStore.isDarkTheme;
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
         const inputByRange = (
@@ -311,9 +311,9 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                     </FormGroup>
                     <ControlGroup className="intensity-limit">
                         <FormGroup label={"Intensity limit"} inline={true}>
-                            <Switch checked={widgetStore.intensityLimitEnabled} onChange={() => widgetStore.toggleIntensityLimit()} />
+                            <Switch checked={widgetStore.isIntensityLimitEnabled} onChange={() => widgetStore.toggleIntensityLimit()} />
                         </FormGroup>
-                        {widgetStore.intensityLimitEnabled && (
+                        {widgetStore.isIntensityLimitEnabled && (
                             <Tooltip content="CDMS/JPL intensity (log)" position={Position.BOTTOM}>
                                 <SafeNumericInput value={widgetStore.intensityLimitValue} buttonPosition="none" onValueChange={val => widgetStore.setIntensityLimitValue(val)} />
                             </Tooltip>
@@ -388,7 +388,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                 columnName: widgetStore.sortingInfo.columnName ?? "",
                 sortingType: widgetStore.sortingInfo.sortingType
             },
-            disableSort: false,
+            isDisableSort: false,
             updateColumnFilter: widgetStore.setColumnFilter,
             columnWidths: widgetStore.resultTableColumnWidths?.filter((width): width is number => width !== undefined),
             updateTableColumnWidth: widgetStore.setResultTableColumnWidth,

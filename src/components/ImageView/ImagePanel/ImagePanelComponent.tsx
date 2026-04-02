@@ -21,7 +21,7 @@ import {VectorOverlayViewComponent} from "../VectorOverlayView/VectorOverlayView
 import "./ImagePanelComponent.scss";
 
 interface ImagePanelComponentProps {
-    docked: boolean;
+    isDocked: boolean;
     image: ImageItem;
     row: number;
     column: number;
@@ -30,7 +30,7 @@ interface ImagePanelComponentProps {
 @observer
 export class ImagePanelComponent extends React.Component<ImagePanelComponentProps> {
     @observable pixelHighlightValue: number = NaN;
-    @observable imageToolbarVisible: boolean = false;
+    @observable isImageToolbarVisible: boolean = false;
 
     private regionViewRef: RegionViewComponent;
 
@@ -87,11 +87,11 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
     };
 
     @action onMouseEnter = () => {
-        this.imageToolbarVisible = true;
+        this.isImageToolbarVisible = true;
     };
 
     @action onMouseLeave = () => {
-        this.imageToolbarVisible = false;
+        this.isImageToolbarVisible = false;
     };
 
     onMouseDown = ev => {
@@ -110,7 +110,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         }
     };
 
-    get cursorInfoRequired() {
+    get isCursorInfoRequired() {
         const appStore = AppStore.Instance;
         switch (appStore.preferenceStore.cursorInfoVisible) {
             case CursorInfoVisibility.Always:
@@ -130,7 +130,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
 
         const frame = this.frame;
         const overlaySettings = appStore.overlaySettings;
-        if (frame?.isRenderable && appStore.astReady) {
+        if (frame?.isRenderable && appStore.isAstReady) {
             const isActive = appStore.isActiveImage(this.props.image) && (appStore.imageViewConfigStore.imagesPerPage > 1 || appStore.previewFrames.size > 0);
             const isColorBlending = this.props.image?.type === ImageType.COLOR_BLENDING;
             const className = classNames("image-panel-div", {active: isActive});
@@ -159,17 +159,17 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                 }
             }
 
-            const showRaster = !isColorBlending || (isColorBlending && (this.props.image.store as ColorBlendingStore).rasterVisible);
-            const showContour = !isColorBlending || (isColorBlending && (this.props.image.store as ColorBlendingStore).contourVisible);
-            const showVector = !isColorBlending || (isColorBlending && (this.props.image.store as ColorBlendingStore).vectorOverlayVisible);
+            const isShowRaster = !isColorBlending || (isColorBlending && (this.props.image.store as ColorBlendingStore).isRasterVisible);
+            const isShowContour = !isColorBlending || (isColorBlending && (this.props.image.store as ColorBlendingStore).isContourVisible);
+            const isShowVector = !isColorBlending || (isColorBlending && (this.props.image.store as ColorBlendingStore).isVectorOverlayVisible);
 
             return (
                 <div id={`image-panel-${this.props.column}-${this.props.row}`} className={className} style={style} onWheel={this.onMouseWheel} onMouseDown={this.onMouseDown} onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-                    {showRaster && <RasterViewComponent image={this.props.image} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} row={this.props.row} column={this.props.column} />}
-                    {showContour && <ContourViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />}
-                    {showVector && <VectorOverlayViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />}
-                    {appStore.overlaySettings?.visible && <OverlayComponent image={this.props.image} overlaySettings={overlaySettings} overlayStore={frame.overlayStore} docked={this.props.docked} />}
-                    {this.cursorInfoRequired && frame.cursorInfo && !isColorBlending && (
+                    {isShowRaster && <RasterViewComponent image={this.props.image} isDocked={this.props.isDocked} pixelHighlightValue={this.pixelHighlightValue} row={this.props.row} column={this.props.column} />}
+                    {isShowContour && <ContourViewComponent frame={frame} isDocked={this.props.isDocked} row={this.props.row} column={this.props.column} />}
+                    {isShowVector && <VectorOverlayViewComponent frame={frame} isDocked={this.props.isDocked} row={this.props.row} column={this.props.column} />}
+                    {appStore.overlaySettings?.isVisible && <OverlayComponent image={this.props.image} overlaySettings={overlaySettings} overlayStore={frame.overlayStore} isDocked={this.props.isDocked} />}
+                    {this.isCursorInfoRequired && frame.cursorInfo && !isColorBlending && (
                         <CursorOverlayComponent
                             cursorInfo={frame.cursorInfo}
                             cursorValue={frame.cursorInfo.isInsideImage ? ((frame.isPreview && frame.previewCursorValue ? frame.previewCursorValue.value : frame.cursorValue.value) ?? 0) : 0}
@@ -178,17 +178,17 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                             width={frame.overlayStore.viewWidth}
                             left={frame.overlayStore.padding.left}
                             right={frame.overlayStore.padding.right}
-                            docked={this.props.docked}
+                            isDocked={this.props.isDocked}
                             unit={frame.requiredUnit}
                             top={frame.overlayStore.padding.top}
                             currentStokes={appStore.activeFrame?.requiredPolarizationInfo}
-                            cursorValueToPercentage={frame.requiredUnit === "%"}
+                            isCursorValueToPercentage={frame.requiredUnit === "%"}
                             isPreview={frame.isPreview}
                         />
                     )}
-                    {appStore.overlaySettings.colorbar.visible && !isColorBlending && <ColorbarComponent frame={frame} onCursorHoverValueChanged={this.setPixelHighlightValue} />}
-                    {!isColorBlending && <BeamProfileOverlayComponent frame={frame} top={frame.overlayStore.padding.top} left={frame.overlayStore.padding.left} docked={this.props.docked} padding={10} />}
-                    <CatalogViewGLComponent frame={frame} docked={this.props.docked} />
+                    {appStore.overlaySettings.colorbar.isVisible && !isColorBlending && <ColorbarComponent frame={frame} onCursorHoverValueChanged={this.setPixelHighlightValue} />}
+                    {!isColorBlending && <BeamProfileOverlayComponent frame={frame} top={frame.overlayStore.padding.top} left={frame.overlayStore.padding.left} isDocked={this.props.isDocked} padding={10} />}
+                    <CatalogViewGLComponent frame={frame} isDocked={this.props.isDocked} />
                     <RegionViewComponent
                         ref={this.getRegionViewRef}
                         frame={frame}
@@ -197,13 +197,13 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                         top={frame.overlayStore.padding.top}
                         left={frame.overlayStore.padding.left}
                         onClickToCenter={this.onClickToCenter}
-                        dragPanningEnabled={appStore.preferenceStore.dragPanning}
-                        docked={this.props.docked && activeLayer !== ImageViewLayer.Catalog}
+                        dragPanningEnabled={appStore.preferenceStore.isDragPanning}
+                        isDocked={this.props.isDocked && activeLayer !== ImageViewLayer.Catalog}
                     />
-                    {!(appStore.animatorStore.animationActive && appStore.animatorStore.animationMode === AnimationMode.FRAME) && (
+                    {!(appStore.animatorStore.isAnimationActive && appStore.animatorStore.animationMode === AnimationMode.FRAME) && (
                         <ToolbarComponent
-                            docked={this.props.docked}
-                            visible={this.imageToolbarVisible}
+                            isDocked={this.props.isDocked}
+                            isVisible={this.isImageToolbarVisible}
                             frame={frame}
                             activeLayer={activeLayer}
                             onActiveLayerChange={appStore.updateActiveLayer}

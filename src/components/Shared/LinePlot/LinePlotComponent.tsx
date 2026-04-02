@@ -61,16 +61,16 @@ export class LinePlotComponentProps {
     yMax?: number;
     xLabel?: string;
     yLabel?: string;
-    logY?: boolean;
+    isLogY?: boolean;
     lineColor?: string;
     opacity?: number;
-    darkMode?: boolean;
+    isDarkMode?: boolean;
     imageName?: string;
     plotName?: string;
     tickTypeX?: TickType;
     tickTypeY?: TickType;
     markers?: LineMarker[];
-    showTopAxis?: boolean;
+    shouldShowTopAxis?: boolean;
     topAxisTickFormatter?: (value: number, index: number, values: Tick[]) => string | number;
     graphClicked?: (x: number) => void;
     graphRightClicked?: (x: number) => void;
@@ -79,17 +79,17 @@ export class LinePlotComponentProps {
     graphZoomedXY?: (xMin: number, xMax: number, yMin: number, yMax: number) => void;
     graphZoomReset?: () => void;
     graphCursorMoved?: (x: number) => void;
-    scrollZoom?: boolean;
-    showXAxisTicks?: boolean;
-    showXAxisLabel?: boolean;
-    showYAxisTicks?: boolean;
-    showYAxisLabel?: boolean;
+    isScrollZoom?: boolean;
+    shouldShowXAxisTicks?: boolean;
+    shouldShowXAxisLabel?: boolean;
+    shouldShowYAxisTicks?: boolean;
+    shouldShowYAxisLabel?: boolean;
     yZeroLineColor?: string;
-    showLegend?: boolean;
+    shouldShowLegend?: boolean;
     xTickMarkLength?: number;
     plotType?: PlotType;
     isGroupSubPlot?: boolean;
-    zIndex?: boolean;
+    isZIndex?: boolean;
     pointRadius?: number;
     zeroLineWidth?: number;
     mouseEntered?: (value: boolean) => void;
@@ -195,11 +195,11 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return fraction * (this.props.xMax - this.props.xMin) + this.props.xMin;
     }
 
-    private getValueForPixelY(pixel: number, logScale: boolean = false) {
+    private getValueForPixelY(pixel: number, isLogScale: boolean = false) {
         if (!this.chartArea || this.props.yMin === undefined || this.props.yMax === undefined) {
             return undefined;
         }
-        if (logScale) {
+        if (isLogScale) {
             let value = this.chartArea.bottom - pixel;
             value /= this.chartArea.bottom - this.chartArea.top;
             value *= Math.log10(this.props.yMax / this.props.yMin);
@@ -218,12 +218,12 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return fraction * (this.chartArea.right - this.chartArea.left) + this.chartArea.left;
     }
 
-    private getPixelForValueY(value: number, logScale: boolean = false) {
+    private getPixelForValueY(value: number, isLogScale: boolean = false) {
         if (!this.chartArea || !this.props.yMin || !this.props.yMax) {
             return undefined;
         }
         let fraction;
-        if (logScale) {
+        if (isLogScale) {
             fraction = (Math.log(this.props.yMax) - Math.log(value)) / (Math.log(this.props.yMax) - Math.log(this.props.yMin));
         } else {
             fraction = (this.props.yMax - value) / (this.props.yMax - this.props.yMin);
@@ -237,7 +237,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     private getCanvasSpaceY(y: number) {
-        const pixelValue = this.getPixelForValueY(y, this.props.logY);
+        const pixelValue = this.getPixelForValueY(y, this.props.isLogY);
         return pixelValue !== undefined ? Math.floor(pixelValue) + 0.5 * devicePixelRatio : 0;
     }
 
@@ -246,9 +246,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     @action updateChart = (chartArea: ChartArea) => {
-        const wasUndefined = this.chartArea === undefined;
+        const isWasUndefined = this.chartArea === undefined;
         this.chartArea = chartArea;
-        if (wasUndefined) {
+        if (isWasUndefined) {
             // Ensure the component re-renders after chartArea is first set.
             // This addresses a timing issue where the MobX-triggered forceUpdate
             // may be batched by React 18 when chartArea is set during the initial
@@ -317,7 +317,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             if (marker && marker.dragMove) {
                 let newPositionDataSpace;
                 if (marker.horizontal) {
-                    newPositionDataSpace = this.getValueForPixelY(ev.target.getAbsolutePosition().y, this.props.logY);
+                    newPositionDataSpace = this.getValueForPixelY(ev.target.getAbsolutePosition().y, this.props.isLogY);
                 } else {
                     newPositionDataSpace = this.getValueForPixelX(ev.target.getAbsolutePosition().x);
                 }
@@ -354,10 +354,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         const mouseEvent: MouseEvent = ev.evt;
         this.stageClickStartX = mouseEvent.offsetX;
         this.stageClickStartY = mouseEvent.offsetY;
-        const modifierPressed = mouseEvent.ctrlKey || mouseEvent.shiftKey || mouseEvent.altKey;
-        if (this.hoveredMarker === undefined && !modifierPressed) {
+        const isModifierPressed = mouseEvent.ctrlKey || mouseEvent.shiftKey || mouseEvent.altKey;
+        if (this.hoveredMarker === undefined && !isModifierPressed) {
             this.startSelection(mouseEvent.offsetX, mouseEvent.offsetY);
-        } else if (modifierPressed) {
+        } else if (isModifierPressed) {
             this.startPanning(mouseEvent.offsetX);
         }
     };
@@ -379,8 +379,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 if (this.isSelecting && this.props.setSelectedLine && this.props.selectingMode === LinePlotSelectingMode.LINE) {
                     const startX = this.getValueForPixelX(this.selectionBoxStart.x);
                     const endX = this.getValueForPixelX(this.selectionBoxEnd.x);
-                    const startY = this.getValueForPixelY(this.selectionBoxStart.y, this.props.logY);
-                    const endY = this.getValueForPixelY(this.selectionBoxEnd.y, this.props.logY);
+                    const startY = this.getValueForPixelY(this.selectionBoxStart.y, this.props.isLogY);
+                    const endY = this.getValueForPixelY(this.selectionBoxEnd.y, this.props.isLogY);
                     if (startX !== undefined && endX !== undefined && startY !== undefined && endY !== undefined) {
                         this.props.setSelectedLine(startX, endX, startY, endY);
                     }
@@ -392,9 +392,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
                     minCanvasSpace = Math.min(this.selectionBoxStart.y, this.selectionBoxEnd.y);
                     maxCanvasSpace = Math.max(this.selectionBoxStart.y, this.selectionBoxEnd.y);
-                    // Canvas space y-axis is inverted, so min/max are switched when transforming to graph space
-                    const minY = this.getValueForPixelY(maxCanvasSpace, this.props.logY);
-                    const maxY = this.getValueForPixelY(minCanvasSpace, this.props.logY);
+                    // Canvas space y-axis is isInverted, so min/max are switched when transforming to graph space
+                    const minY = this.getValueForPixelY(maxCanvasSpace, this.props.isLogY);
+                    const maxY = this.getValueForPixelY(minCanvasSpace, this.props.isLogY);
 
                     if (this.props.setSelectedRange && this.props.selectingMode === LinePlotSelectingMode.HORIZONTAL && minX !== undefined && maxX !== undefined) {
                         this.props.setSelectedRange(minX, maxX);
@@ -518,7 +518,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     onStageWheel = ev => {
         if (
             (this.props.data || (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0)) &&
-            this.props.scrollZoom &&
+            this.props.isScrollZoom &&
             this.props.graphZoomedX &&
             this.chartArea &&
             this.props.xMin !== undefined &&
@@ -561,19 +561,19 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         this.hideMouseEnterWidget();
     };
 
-    private exportSubPlotImage(visible: boolean) {
+    private exportSubPlotImage(isVisible: boolean) {
         const scatterChart = this.plotRef;
-        scatterChart.config["_config"].options.scales["x"].ticks.display = visible;
+        scatterChart.config["_config"].options.scales["x"].ticks.display = isVisible;
         let tickMarkLength = 10;
-        if (!visible) {
+        if (!isVisible) {
             tickMarkLength = 0;
         }
         scatterChart.config["_config"].options.scales["x"].grid.tickLength = tickMarkLength;
-        scatterChart.config["_config"].options.scales["x"].title.display = visible;
+        scatterChart.config["_config"].options.scales["x"].title.display = isVisible;
         scatterChart.update();
     }
 
-    private showPlotxAxes() {
+    private isShowPlotxAxes() {
         const scatterChart = this.plotRef;
         if (this.props.isGroupSubPlot === true) {
             if (scatterChart && scatterChart.config["_config"].options.scales["x"].ticks.display === false) {
@@ -585,8 +585,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     exportImage = () => {
         const scatter = this.plotRef;
-        const showPlotxAxes = this.showPlotxAxes();
-        if (showPlotxAxes) {
+        const isShowPlotxAxes = this.isShowPlotxAxes();
+        if (isShowPlotxAxes) {
             this.exportSubPlotImage(true);
         }
         const canvas = scatter.canvas;
@@ -601,7 +601,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         if (!ctx) {
             return;
         }
-        ctx.fillStyle = AppStore.Instance.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0.0)" : this.props.darkMode ? Colors.DARK_GRAY1 : Colors.LIGHT_GRAY5;
+        ctx.fillStyle = AppStore.Instance.preferenceStore.isTransparentImageBackground ? "rgba(255, 255, 255, 0.0)" : this.props.isDarkMode ? Colors.DARK_GRAY1 : Colors.LIGHT_GRAY5;
         ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
         ctx.drawImage(canvas, 0, 0);
 
@@ -609,7 +609,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         const chartBorder = this.genChartBorder();
         if (chartBorder) {
             ctx.beginPath();
-            ctx.strokeStyle = this.props.darkMode ? Colors.DARK_GRAY5 : Colors.LIGHT_GRAY1;
+            ctx.strokeStyle = this.props.isDarkMode ? Colors.DARK_GRAY5 : Colors.LIGHT_GRAY1;
             ctx.lineWidth = 1;
             ctx.rect(chartBorder.x, chartBorder.y, chartBorder.width, chartBorder.height);
             ctx.stroke();
@@ -666,7 +666,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             }
         }, "image/png");
 
-        if (showPlotxAxes) {
+        if (isShowPlotxAxes) {
             this.exportSubPlotImage(false);
         }
     };
@@ -690,17 +690,17 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
             // data part
             rows.push("# x\ty");
-            const useScientificForm = plotName === "histogram" || this.props.tickTypeX === TickType.Scientific;
+            const isUseScientificForm = plotName === "histogram" || this.props.tickTypeX === TickType.Scientific;
             const data = this.props.fullResolutionData?.some(data => data !== undefined) ? this.props.fullResolutionData : this.props.data;
             if (data) {
-                rows = rows.concat(data.map(o => (useScientificForm ? `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}` : `${o.x}\t${toExponential(o.y, 10)}`)));
+                rows = rows.concat(data.map(o => (isUseScientificForm ? `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}` : `${o.x}\t${toExponential(o.y, 10)}`)));
             }
 
             exportTsvFile(imageName, plotName, `${comment}\n${rows.join("\n")}\n`);
         }
 
         this.props.multiPlotPropsMap?.forEach((multiPlotProp, key) => {
-            if (multiPlotProp.noExport) {
+            if (multiPlotProp.isNoExport) {
                 return;
             }
 
@@ -755,8 +755,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             return undefined;
         }
         const chartArea = this.chartArea;
-        const thickness1 = this.getPixelForValueY(marker.value - marker.width / 2.0, this.props.logY);
-        const thickness2 = this.getPixelForValueY(marker.value + marker.width / 2.0, this.props.logY);
+        const thickness1 = this.getPixelForValueY(marker.value - marker.width / 2.0, this.props.isLogY);
+        const thickness2 = this.getPixelForValueY(marker.value + marker.width / 2.0, this.props.isLogY);
         if (!thickness1 || !thickness2) {
             return undefined;
         }
@@ -894,7 +894,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             const isShowingVerticalLabels = verticalLabelsTotalWidth / 2 < chartAreaWidth;
             for (let i = 0; i < this.props.markers.length; i++) {
                 const marker = this.props.markers[i];
-                const markerColor = marker.color || (this.props.darkMode ? Colors.RED4 : Colors.RED2);
+                const markerColor = marker.color || (this.props.isDarkMode ? Colors.RED4 : Colors.RED2);
                 const markerOpacity = marker.isMouseMove && (!this.isMouseEntered || this.isMarkerDragging) ? 0 : marker.opacity || 1;
                 if (marker.horizontal) {
                     const valueCanvasSpace = this.getCanvasSpaceY(marker.value);
@@ -1005,7 +1005,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     width={Math.ceil(chartArea.right - chartArea.left + 1)}
                     height={Math.ceil(chartArea.bottom - chartArea.top + 1)}
                     listening={false}
-                    stroke={this.props.darkMode ? Colors.DARK_GRAY5 : Colors.LIGHT_GRAY1}
+                    stroke={this.props.isDarkMode ? Colors.DARK_GRAY5 : Colors.LIGHT_GRAY1}
                     strokeWidth={1}
                 />
             );
@@ -1033,7 +1033,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 const yEnd = Math.min(yMin, chartArea.bottom);
                 insideBoxes.push(<Rect key={i} x={xStart} y={yStart} width={xEnd - xStart} height={yEnd - yStart} fill={box.color} opacity={box.opacity} stroke={box.strokeColor || undefined} strokeWidth={1} />);
                 if (box.text) {
-                    insideBoxes.push(<Text key={i + "-text"} text={box.text} x={xStart} y={(yStart + yEnd) / 2} width={xEnd - xStart} align={"center"} fill={this.props.darkMode ? Colors.LIGHT_GRAY4 : Colors.GRAY1} />);
+                    insideBoxes.push(<Text key={i + "-text"} text={box.text} x={xStart} y={(yStart + yEnd) / 2} width={xEnd - xStart} align={"center"} fill={this.props.isDarkMode ? Colors.LIGHT_GRAY4 : Colors.GRAY1} />);
                 }
             }
         }
@@ -1064,7 +1064,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                         y={y}
                         width={insideText.text.length * fontSize}
                         align={"center"}
-                        fill={insideText.color ? insideText.color : this.props.darkMode ? Colors.LIGHT_GRAY4 : Colors.GRAY1}
+                        fill={insideText.color ? insideText.color : this.props.isDarkMode ? Colors.LIGHT_GRAY4 : Colors.GRAY1}
                         opacity={insideText.opacity}
                     />
                 );
@@ -1170,7 +1170,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                         </Stage>
                     )}
                     {(this.props.data !== undefined || (this.props.multiPlotPropsMap?.size ?? 0) > 0) && (
-                        <ToolbarComponent darkMode={this.props.darkMode ?? false} visible={this.isMouseEntered ?? false} exportImage={this.exportImage} exportData={this.exportData} />
+                        <ToolbarComponent isDarkMode={this.props.isDarkMode ?? false} isVisible={this.isMouseEntered ?? false} exportImage={this.exportImage} exportData={this.exportData} />
                     )}
                 </div>
             </ResizeDetector>

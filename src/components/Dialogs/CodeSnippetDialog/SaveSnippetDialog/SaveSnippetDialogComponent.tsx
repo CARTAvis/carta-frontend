@@ -52,7 +52,7 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
         }
     };
 
-    @computed get validInput() {
+    @computed get isValidInput() {
         const snippetStore = SnippetStore.Instance;
         return (snippetStore.activeSnippetName?.length ?? 0) > 0 && snippetStore.activeSnippet?.categories;
     }
@@ -65,8 +65,8 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
         }
 
         if (snippetStore.snippets.has(snippetStore.activeSnippetName)) {
-            const confirmed = await AlertStore.Instance.showInteractiveAlert(`Are you sure to overwrite the existing snippet ${snippetStore.activeSnippetName}?`);
-            if (!confirmed) {
+            const isConfirmed = await AlertStore.Instance.showInteractiveAlert(`Are you sure to overwrite the existing snippet ${snippetStore.activeSnippetName}?`);
+            if (!isConfirmed) {
                 return;
             }
         }
@@ -77,7 +77,7 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
         const appStore = AppStore.Instance;
         const snippetStore = appStore.snippetStore;
         const snippet = snippetStore.activeSnippet;
-        const className = classNames("snippet-save-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("snippet-save-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
         return (
             <Dialog
@@ -110,7 +110,7 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton intent={Intent.PRIMARY} onClick={this.saveSnippet} text="Save" disabled={!this.validInput} />
+                        <AnchorButton intent={Intent.PRIMARY} onClick={this.saveSnippet} text="Save" disabled={!this.isValidInput} />
                     </div>
                 </div>
             </Dialog>

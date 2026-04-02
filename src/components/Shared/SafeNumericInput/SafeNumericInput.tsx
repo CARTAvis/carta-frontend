@@ -5,7 +5,7 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 export interface SafeNumericInputProps extends NumericInputProps {
-    intOnly?: boolean;
+    isIntOnly?: boolean;
     onBlur?(ev: React.FocusEvent<HTMLInputElement>): void;
     onKeyDown?(ev: React.KeyboardEvent<HTMLInputElement>): void;
 }
@@ -48,8 +48,8 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
         }
     }
 
-    @action setFocused(value: boolean) {
-        this.isFocused = value;
+    @action setFocused(isValue: boolean) {
+        this.isFocused = isValue;
     }
 
     handleOnFocus = () => {
@@ -65,7 +65,7 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
     };
 
     safeHandleValueChanged = (valueAsNumber: number, valueAsString: string, inputElement: HTMLInputElement) => {
-        if (this.props.intOnly) {
+        if (this.props.isIntOnly) {
             const roundValue = Math.ceil(valueAsNumber);
             if (isFinite(roundValue)) {
                 valueAsNumber = roundValue;
@@ -80,13 +80,13 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
     };
 
     render() {
-        const {onBlur, intOnly, ...otherProps} = this.props;
+        const {onBlur, isIntOnly, ...otherProps} = this.props;
 
         return (
             <NumericInput
                 {...otherProps}
                 asyncControl={true}
-                minorStepSize={this.props.minorStepSize ? this.props.minorStepSize : intOnly ? 1 : SafeNumericInput.minorStepSize}
+                minorStepSize={this.props.minorStepSize ? this.props.minorStepSize : isIntOnly ? 1 : SafeNumericInput.minorStepSize}
                 onValueChange={this.safeHandleValueChanged}
                 value={onBlur || this.props.onKeyDown ? this.props.value : this.valueString}
                 onBlur={onBlur ?? this.handleOnBlur}

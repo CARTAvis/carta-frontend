@@ -7,26 +7,26 @@ import {DialogId} from "enums";
 import {AppStore} from "stores";
 import {copyToClipboard} from "utilities";
 
-import {AppToaster, WarningToast} from "../../Shared";
+import {APP_TOASTER, warningToast} from "../../Shared";
 
 import "./ShareWorkspaceDialogComponent.scss";
 
 export const ShareWorkspaceDialogComponent = observer(() => {
     const [shareKey, setShareKey] = useState<string>("");
     const [isGeneratingLink, setIsGeneratingLink] = useState<boolean>(false);
-    const [saveBeforeShare, setSaveBeforeShare] = useState<boolean>(false);
+    const [isSaveBeforeShare, setSaveBeforeShare] = useState<boolean>(false);
     const appStore = AppStore.Instance;
 
     // Reset the dialog when the active workspace changes
-    const shareWorkspaceDialogVisible = appStore.dialogStore.dialogVisible.get(DialogId.ShareWorkspace);
+    const isShareWorkspaceDialogVisible = appStore.dialogStore.dialogVisible.get(DialogId.ShareWorkspace);
     useEffect(() => {
         setShareKey("");
         setIsGeneratingLink(false);
         setSaveBeforeShare(false);
-    }, [appStore.activeWorkspace, shareWorkspaceDialogVisible]);
+    }, [appStore.activeWorkspace, isShareWorkspaceDialogVisible]);
 
     const {activeWorkspace} = appStore;
-    const className = classNames("share-workspace-dialog", {[Classes.DARK]: appStore.darkTheme});
+    const className = classNames("share-workspace-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
     const dialogProps: DialogProps = {
         icon: "share",
@@ -34,7 +34,7 @@ export const ShareWorkspaceDialogComponent = observer(() => {
         canOutsideClickClose: true,
         lazy: true,
         canEscapeKeyClose: true,
-        isOpen: shareWorkspaceDialogVisible ?? false,
+        isOpen: isShareWorkspaceDialogVisible ?? false,
         onClose: () => appStore.dialogStore.hideDialog(DialogId.ShareWorkspace),
         title: `Share Workspace: ${activeWorkspace?.name ?? ""}`
     };
@@ -47,14 +47,14 @@ export const ShareWorkspaceDialogComponent = observer(() => {
         setIsGeneratingLink(true);
 
         try {
-            if (activeWorkspace.name && saveBeforeShare) {
+            if (activeWorkspace.name && isSaveBeforeShare) {
                 await appStore.saveWorkspace(activeWorkspace.name);
             }
             const shareKey = await appStore.apiService.getSharedWorkspaceKey(activeWorkspace.id);
             setShareKey(shareKey ?? "");
         } catch (err) {
             console.error(err);
-            AppToaster.show(WarningToast("Could not generate a sharing link."));
+            APP_TOASTER.show(warningToast("Could not generate a sharing link."));
         }
     };
 
@@ -67,7 +67,7 @@ export const ShareWorkspaceDialogComponent = observer(() => {
         footer = <InputGroup fill={true} intent={Intent.SUCCESS} readOnly={true} defaultValue={link} rightElement={copyButton} />;
     } else {
         const isReadOnly = !activeWorkspace?.editable || !activeWorkspace.name;
-        const saveCheckbox = <Checkbox label="Save workspace before sharing" disabled={isReadOnly} checked={saveBeforeShare} onChange={() => setSaveBeforeShare(!saveBeforeShare)} />;
+        const saveCheckbox = <Checkbox label="Save workspace before sharing" disabled={isReadOnly} checked={isSaveBeforeShare} onChange={() => setSaveBeforeShare(!isSaveBeforeShare)} />;
         const readOnlyTooltip = (
             <span>
                 Workspace is not editable

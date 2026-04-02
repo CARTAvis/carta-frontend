@@ -15,6 +15,7 @@ type WcsCoordNumericInputProps = {
     customPlaceholder?: string;
 };
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled = false, customPlaceholder = ""}: WcsCoordNumericInputProps) => {
     const handleChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
@@ -80,6 +81,7 @@ interface ImageCoordNumericInputProps {
     customPlaceholder?: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export const ImageCoordNumericInput = ({inputType, value, onChange, disabled = false, customPlaceholder = ""}: ImageCoordNumericInputProps) => {
     const handleChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
@@ -123,6 +125,7 @@ interface CoordNumericInputProps {
     customPlaceholder?: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export const CoordNumericInput = ({coord, inputType, value, onChange, valueWcs, onChangeWcs, disabled = false, wcsDisabled = false, customPlaceholder = ""}: CoordNumericInputProps) => {
     const isImgCoordinates = AppStore.Instance.overlaySettings.isImgCoordinates;
     if (coord === CoordinateMode.Image) {

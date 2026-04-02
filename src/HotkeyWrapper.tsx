@@ -20,7 +20,7 @@ enum HotkeyGroup {
 export class HotkeyService extends React.Component<{}> {
     public render() {
         const appStore = AppStore.Instance;
-        const className = classNames(Classes.HOTKEY_DIALOG, {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames(Classes.HOTKEY_DIALOG, {[Classes.DARK]: appStore.isDarkTheme});
 
         return (
             <Dialog
@@ -68,7 +68,7 @@ export class HotkeyService extends React.Component<{}> {
 
     static ToggleDarkTheme = () => {
         const appStore = AppStore.Instance;
-        if (appStore.darkTheme) {
+        if (appStore.isDarkTheme) {
             appStore.setLightTheme();
         } else {
             appStore.setDarkTheme();
@@ -259,7 +259,7 @@ export class HotkeyService extends React.Component<{}> {
     }
 }
 
-export function HotkeysRegistrar() {
+export const HotkeysRegistrar = () => {
     const hotkeys = React.useMemo(() => [...HotkeyService.FrameControlHotkeys(), ...HotkeyService.FrameControlHiddenHotkeys(), ...HotkeyService.RegionHotkeys(), ...HotkeyService.FileControlHotkeys(), ...HotkeyService.OtherHotkeys()], []);
 
     useHotkeys(hotkeys);
@@ -288,4 +288,4 @@ export function HotkeysRegistrar() {
     }, []);
 
     return null;
-}
+};

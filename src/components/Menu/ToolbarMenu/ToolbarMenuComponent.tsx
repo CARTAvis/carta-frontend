@@ -18,13 +18,13 @@ import "./ToolbarMenuComponent.scss";
 export class ToolbarMenuComponent extends React.Component {
     handleRegionTypeClicked = (type: CARTA.RegionType) => {
         const appStore = AppStore.Instance;
-        appStore.updateActiveLayer(ImageViewLayer.RegionCreating);
+        appStore.updateActiveLayer(ImageViewLayer.regionCreating);
         appStore.activeFrame?.regionSet.setNewRegionType(type);
         appStore.activeFrame?.regionSet.setMode(RegionMode.CREATING);
     };
 
     regionTooltip = (type: CARTA.RegionType) => {
-        const regionModeIsCenter = AppStore.Instance.preferenceStore.regionCreationMode === RegionCreationMode.CENTER;
+        const isRegionModeIsCenter = AppStore.Instance.preferenceStore.regionCreationMode === RegionCreationMode.CENTER;
         let tooltip: JSX.Element | null = null;
         switch (type) {
             case CARTA.RegionType.RECTANGLE:
@@ -32,9 +32,9 @@ export class ToolbarMenuComponent extends React.Component {
             case CARTA.RegionType.LINE:
                 tooltip = (
                     <small>
-                        Click-and-drag to define a region ({regionModeIsCenter ? "center to corner" : "corner to corner"}).
+                        Click-and-drag to define a region ({isRegionModeIsCenter ? "center to corner" : "corner to corner"}).
                         <br />
-                        Hold Ctrl/Cmd to define a region ({regionModeIsCenter ? "corner to corner" : "center to corner"}).
+                        Hold Ctrl/Cmd to define a region ({isRegionModeIsCenter ? "corner to corner" : "center to corner"}).
                         <br />
                         Change the default creation mode in Preferences.
                         <br />
@@ -75,12 +75,12 @@ export class ToolbarMenuComponent extends React.Component {
         const appStore = AppStore.Instance;
         const dialogStore = appStore.dialogStore;
 
-        const className = classNames("toolbar-menu", {[Classes.DARK]: appStore.darkTheme});
-        const dialogClassName = classNames("dialog-toolbar-menu", {[Classes.DARK]: appStore.darkTheme});
-        const actionsClassName = classNames("actions-toolbar-menu", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("toolbar-menu", {[Classes.DARK]: appStore.isDarkTheme});
+        const dialogClassName = classNames("dialog-toolbar-menu", {[Classes.DARK]: appStore.isDarkTheme});
+        const actionsClassName = classNames("actions-toolbar-menu", {[Classes.DARK]: appStore.isDarkTheme});
         const isRegionCreating = appStore.activeFrame ? appStore.activeFrame.regionSet.mode === RegionMode.CREATING : false;
         const newRegionType = appStore.activeFrame ? appStore.activeFrame.regionSet.newRegionType : CARTA.RegionType.RECTANGLE;
-        const regionButtonsDisabled = !appStore.activeFrame || appStore.activeLayer === ImageViewLayer.Catalog;
+        const isRegionButtonsDisabled = !appStore.activeFrame || appStore.activeLayer === ImageViewLayer.Catalog;
 
         const commonTooltip = (
             <span>
@@ -113,14 +113,14 @@ export class ToolbarMenuComponent extends React.Component {
                                     icon={regionIcon}
                                     onClick={() => this.handleRegionTypeClicked(type)}
                                     active={isRegionCreating && newRegionType === type}
-                                    disabled={regionButtonsDisabled}
+                                    disabled={isRegionButtonsDisabled}
                                     data-testid={typeString.toLowerCase() + "-region-shortcut-button"}
                                 />
                             </Tooltip>
                         );
                     })}
 
-                    <Popover content={annotationMenu} position={Position.BOTTOM_LEFT} minimal={true} disabled={regionButtonsDisabled}>
+                    <Popover content={annotationMenu} position={Position.BOTTOM_LEFT} minimal={true} disabled={isRegionButtonsDisabled}>
                         <Tooltip
                             content={
                                 <span>
@@ -131,7 +131,7 @@ export class ToolbarMenuComponent extends React.Component {
                         >
                             <AnchorButton
                                 icon={"annotation"}
-                                disabled={regionButtonsDisabled}
+                                disabled={isRegionButtonsDisabled}
                                 active={isRegionCreating === true && appStore.activeFrame?.regionSet.isNewRegionAnnotation === true}
                                 data-testid="annotation-shortcut-dropdown"
                             />
@@ -139,8 +139,8 @@ export class ToolbarMenuComponent extends React.Component {
                     </Popover>
                 </ButtonGroup>
                 <ButtonGroup className={className}>
-                    {Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).map(widgetType => {
-                        const widgetConfig = WidgetsStore.Instance.CARTAWidgets.get(widgetType);
+                    {Array.from(WidgetsStore.Instance.cartaWidgets.keys()).map(widgetType => {
+                        const widgetConfig = WidgetsStore.Instance.cartaWidgets.get(widgetType);
                         if (!widgetConfig) {
                             return null;
                         }
@@ -209,7 +209,7 @@ export class ToolbarMenuComponent extends React.Component {
                     <Tooltip content={<span>Online data query</span>} position={Position.BOTTOM}>
                         <AnchorButton icon="geosearch" onClick={() => dialogStore.showDialog(DialogId.OnlineDataQuery)} active={dialogStore.dialogVisible.get(DialogId.OnlineDataQuery)} data-testid={DialogId.OnlineDataQuery + "-button"} />
                     </Tooltip>
-                    {appStore.preferenceStore.codeSnippetsEnabled && (
+                    {appStore.preferenceStore.isCodeSnippetsEnabled && (
                         <Tooltip
                             content={
                                 <span>

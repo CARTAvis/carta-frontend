@@ -21,7 +21,7 @@ import "./HistogramComponent.scss";
 export class HistogramComponent extends React.Component<WidgetProps> {
     private widgetId: string;
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "histogram",
             type: "histogram",
@@ -57,7 +57,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         }
 
         // Check whether the histogram data matches the widget's configuration
-        if (regionHistogramData.config.fixedNumBins !== this.widgetStore.fixedNumBins || regionHistogramData.config.fixedBounds !== this.widgetStore.fixedBounds) {
+        if (regionHistogramData.config.fixedNumBins !== this.widgetStore.isFixedNumBins || regionHistogramData.config.fixedBounds !== this.widgetStore.isFixedBounds) {
             return false;
         }
         if (regionHistogramData.config.fixedNumBins && regionHistogramData.config.numBins !== this.widgetStore.numBins) {
@@ -94,20 +94,20 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             let yMax = yMin;
 
             // Cache automatic settings for histogram min and max values
-            if (this.widgetStore.currentAutoBounds) {
+            if (this.widgetStore.isCurrentAutoBounds) {
                 this.widgetStore.cacheBounds(xMin, xMax);
                 this.widgetStore.resetBounds();
             }
 
             // Cache automatic setting for the number of histogram bins
-            if (this.widgetStore.currentAutoBins) {
+            if (this.widgetStore.isCurrentAutoBins) {
                 this.widgetStore.cacheNumBins(histogram.bins.length);
                 this.widgetStore.resetNumBins();
             }
 
             let values: Array<{x: number; y: number}> = [];
-            const N = maxIndex - minIndex;
-            if (N > 0 && !isNaN(N)) {
+            const n = maxIndex - minIndex;
+            if (n > 0 && !isNaN(n)) {
                 values = new Array(maxIndex - minIndex);
 
                 for (let i = minIndex; i <= maxIndex; i++) {
@@ -144,7 +144,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         this.widgetId = props.id ?? "";
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.docked && props.id === HistogramComponent.WIDGET_CONFIG.type) {
+        if (!props.isDocked && props.id === HistogramComponent.WidgetConfig.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addHistogramWidget();
             if (id) {
@@ -175,7 +175,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                         regionString = region.nameString;
                     }
                 }
-                const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
+                const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
                 appStore.widgetsStore.setWidgetTitle(this.widgetId, `Histogram: ${regionString} ${selectedString}`);
             } else {
                 appStore.widgetsStore.setWidgetTitle(this.widgetId, `Histogram`);
@@ -291,10 +291,10 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             const linePlotProps: LinePlotComponentProps = {
                 xLabel: unit ? `Value (${unit})` : "Value",
                 yLabel: "Count",
-                darkMode: appStore.darkTheme,
+                isDarkMode: appStore.isDarkTheme,
                 imageName: imageName,
                 plotName: plotName,
-                logY: this.widgetStore.logScaleY,
+                isLogY: this.widgetStore.isLogScaleY,
                 plotType: this.widgetStore.plotType,
                 tickTypeY: TickType.Scientific,
                 graphZoomedX: this.widgetStore.setXBounds,
@@ -302,7 +302,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                 graphZoomedXY: this.widgetStore.setXYBounds,
                 graphZoomReset: this.widgetStore.clearXYBounds,
                 graphCursorMoved: this.onGraphCursorMoved,
-                scrollZoom: true,
+                isScrollZoom: true,
                 mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
                 borderWidth: this.widgetStore.lineWidth,
                 pointRadius: this.widgetStore.linePlotPointSize,
@@ -334,7 +334,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                         linePlotProps.yMax = this.widgetStore.maxY;
                     }
                     // Fix log plot min bounds for entries with zeros in them
-                    if (this.widgetStore.logScaleY && linePlotProps.yMin !== undefined && linePlotProps.yMin <= 0) {
+                    if (this.widgetStore.isLogScaleY && linePlotProps.yMin !== undefined && linePlotProps.yMin <= 0) {
                         linePlotProps.yMin = 0.5;
                     }
                 }

@@ -11,7 +11,7 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {DialogId, HelpType, WorkspaceDialogMode} from "enums";
 import {AlertStore, AppStore} from "stores";
 
-import {AppToaster, ErrorToast, SuccessToast} from "../../Shared";
+import {APP_TOASTER, errorToast, successToast} from "../../Shared";
 
 import {WorkspaceInfoComponent} from "./WorkspaceInfoComponent";
 
@@ -72,14 +72,14 @@ export const WorkspaceDialogComponent = observer(() => {
             try {
                 const res = await appStore.saveWorkspace(name);
                 if (res) {
-                    AppToaster.show(SuccessToast("floppy-disk", "Workspace saved"));
+                    APP_TOASTER.show(successToast("floppy-disk", "Workspace saved"));
                     handleCloseClicked();
                     return;
                 }
             } catch (err) {
                 console.error(err);
             }
-            AppToaster.show(ErrorToast("Error saving workspace"));
+            APP_TOASTER.show(errorToast("Error saving workspace"));
             setIsFetching(false);
         },
         [appStore, handleCloseClicked]
@@ -95,7 +95,7 @@ export const WorkspaceDialogComponent = observer(() => {
             try {
                 const res = await appStore.loadWorkspace(name);
                 if (res) {
-                    AppToaster.show(SuccessToast("floppy-disk", "Workspace loaded"));
+                    APP_TOASTER.show(successToast("floppy-disk", "Workspace loaded"));
                     handleCloseClicked();
                     return;
                 }
@@ -118,8 +118,8 @@ export const WorkspaceDialogComponent = observer(() => {
         if (!selectedWorkspace) {
             return;
         }
-        const confirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete this workspace?");
-        if (confirmed) {
+        const isConfirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete this workspace?");
+        if (isConfirmed) {
             await appStore.deleteWorkspace(selectedWorkspace.name);
             await fetchWorkspaces();
         }
@@ -141,7 +141,7 @@ export const WorkspaceDialogComponent = observer(() => {
         }
     }, [mode, fetchWorkspaces]);
 
-    const className = classNames("workspace-dialog", {[Classes.DARK]: appStore.darkTheme});
+    const className = classNames("workspace-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
     const dialogProps: DialogProps = {
         icon: "control",
@@ -236,7 +236,7 @@ export const WorkspaceDialogComponent = observer(() => {
     } else {
         tableContent = (
             <Table2
-                className={classNames("workspace-table", {[Classes.DARK]: appStore.darkTheme})}
+                className={classNames("workspace-table", {[Classes.DARK]: appStore.isDarkTheme})}
                 enableRowReordering={false}
                 renderMode={RenderMode.NONE}
                 selectionModes={SelectionModes.ROWS_ONLY}
@@ -258,7 +258,7 @@ export const WorkspaceDialogComponent = observer(() => {
     }
 
     return (
-        <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.WORKSPACE} defaultWidth={750} defaultHeight={550} minWidth={750} minHeight={550} enableResizing={true} dialogId={DialogId.Workspace}>
+        <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.WORKSPACE} defaultWidth={750} defaultHeight={550} minWidth={750} minHeight={550} isEnableResizing={true} dialogId={DialogId.Workspace}>
             <div className={Classes.DIALOG_BODY}>
                 <div className="workspace-container">
                     <div className="workspace-table-container">{tableContent}</div>

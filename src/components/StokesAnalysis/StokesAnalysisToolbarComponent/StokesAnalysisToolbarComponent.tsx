@@ -21,7 +21,7 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
 
     private smoothingShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(StokesAnalysisSettingsTabs.SMOOTHING);
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(StokesAnalysisComponent.WIDGET_CONFIG.title ?? "", this.props.id, StokesAnalysisComponent.WIDGET_CONFIG.type);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(StokesAnalysisComponent.WidgetConfig.title ?? "", this.props.id, StokesAnalysisComponent.WidgetConfig.type);
     };
 
     private handleFrameChanged = (newFrame: FrameStore) => {
@@ -33,25 +33,25 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
     public render() {
         const widgetStore = this.props.widgetStore;
         const appStore = AppStore.Instance;
-        let enableFractionalPol = false;
+        let isEnableFractionalPol = false;
 
         if (appStore?.activeFrame?.stokesFiles?.length) {
             appStore.activeFrame.stokesFiles.forEach(file => {
                 if (file.polarizationType === CARTA.PolarizationType.I) {
-                    enableFractionalPol = true;
+                    isEnableFractionalPol = true;
                 }
             });
         } else {
             if (widgetStore.effectiveFrame?.regionSet) {
-                enableFractionalPol = widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes > 1;
+                isEnableFractionalPol = widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes > 1;
             }
         }
 
         return (
             <div className="stokes-analysis-toolbar">
                 <RegionSelectorComponent widgetStore={this.props.widgetStore} onFrameChanged={this.handleFrameChanged} />
-                <FormGroup label={"Frac. Pol."} inline={true} disabled={!enableFractionalPol}>
-                    <Switch checked={widgetStore.fractionalPolVisible} onChange={this.handleFractionalPolChanged} disabled={!enableFractionalPol} />
+                <FormGroup label={"Frac. Pol."} inline={true} disabled={!isEnableFractionalPol}>
+                    <Switch checked={widgetStore.isFractionalPolVisible} onChange={this.handleFractionalPolChanged} disabled={!isEnableFractionalPol} />
                 </FormGroup>
                 <ButtonGroup className="profile-buttons">
                     <Tooltip content="Smoothing">

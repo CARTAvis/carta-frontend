@@ -15,10 +15,10 @@ export class OverlayComponentProps {
     overlaySettings: OverlaySettings;
     overlayStore: OverlayStore;
     image: ImageItem;
-    docked: boolean;
+    isDocked: boolean;
     top?: number;
     left?: number;
-    unscaled?: boolean;
+    isUnscaled?: boolean;
     channelMapDrawFunction?: (canvas: HTMLCanvasElement) => void;
 }
 
@@ -36,7 +36,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     updateImage() {
         AppStore.Instance.resetImageRatio();
-        if (PreferenceStore.Instance.limitOverlayRedraw) {
+        if (PreferenceStore.Instance.shouldLimitOverlayRedraw) {
             this.throttledRenderCanvas();
         } else {
             requestAnimationFrame(this.renderCanvas);
@@ -62,7 +62,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         const wcsInfoSelected = frame.isOffsetCoord ? frame.wcsInfoOffset : frame.wcsInfo;
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : wcsInfoSelected;
-        const frameView = this.props.unscaled
+        const frameView = this.props.isUnscaled
             ? {
                   xMin: padding.left * appStore.pixelRatio,
                   xMax: this.props.overlayStore.viewWidth * appStore.pixelRatio - padding.right * appStore.pixelRatio,
@@ -110,14 +110,14 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 }
 
                 // disable unit labels when custom labels on
-                if (settings.labels.customText) {
+                if (settings.labels.hasCustomText) {
                     AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)="", Unit(2)=""`);
                 } else {
                     AST.set(tempWcsInfo, `Format(1)=${format}, Format(2)=${format}, Unit(1)=${unit}, Unit(2)=${unit}`);
                 }
             }
 
-            if (settings.labels.customText) {
+            if (settings.labels.hasCustomText) {
                 // Disable the PV image labels when custom labels are set
                 AST.set(tempWcsInfo, `Unit(1)="", Unit(2)=""`);
             }
@@ -142,17 +142,17 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             let currentStyleString = this.props.overlayStore.styleString(frame);
 
             // Override the AST tolerance during motion
-            if (frame.moving) {
+            if (frame.isMoving) {
                 const tolVal = Math.max((settings.global.tolerance * 2) / 100.0, 0.1);
                 currentStyleString += `, Tol=${tolVal}`;
             }
 
-            if (!frame.validWcs) {
+            if (!frame.isValidWcs) {
                 //Remove system and format entries
                 currentStyleString = currentStyleString.replace(/System=.*?,/, "").replaceAll(/Format\(\d\)=.*?,/g, "");
             }
 
-            if (!settings.title.customText) {
+            if (!settings.title.hasCustomText) {
                 currentStyleString += `, Title="${this.props.image?.store?.filename.replace(/%/g, "%%%%").replace(/"/g, "”")}"`;
             } else if (this.props.image?.store?.titleCustomText?.length) {
                 currentStyleString += `, Title="${this.props.image?.store?.titleCustomText.replace(/%/g, "%%%%").replace(/"/g, "”")}"`;
@@ -203,7 +203,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const styleString = this.props.overlayStore.styleString;
         const frameView = refFrame.requiredFrameView;
         const framePadding = this.props.overlayStore.padding;
-        const moving = frame.moving;
+        const isMoving = frame.isMoving;
         const system = this.props.overlaySettings.global.system;
         const globalColor = this.props.overlaySettings.global.color;
         const titleColor = this.props.overlaySettings.title.color;
@@ -213,10 +213,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const axesColor = this.props.overlaySettings.axes.color;
         const numbersColor = this.props.overlaySettings.numbers.color;
         const labelsColor = this.props.overlaySettings.labels.color;
-        const darktheme = AppStore.Instance.darkTheme;
-        const title = this.props.overlaySettings.title.customText ? this.props.image?.store?.titleCustomText : this.props.image?.store?.filename;
+        const isDarkTheme = AppStore.Instance.isDarkTheme;
+        const title = this.props.overlaySettings.title.hasCustomText ? this.props.image?.store?.titleCustomText : this.props.image?.store?.filename;
         const ratio = AppStore.Instance.imageRatio;
-        const raDecReference = this.props.overlaySettings.labels.raDecReference;
+        const isRaDecReference = this.props.overlaySettings.labels.isRaDecReference;
         const titleStyleString = this.props.overlaySettings.title.styleString;
         const gridStyleString = this.props.overlaySettings.grid.styleString;
         const borderStyleString = this.props.overlaySettings.border.styleString;
@@ -228,7 +228,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const channelMapNumColumns = AppStore.Instance.channelMapStore.numColumns;
         const channelMapNumRows = AppStore.Instance.channelMapStore.numRows;
         const channelMapChannelNum = AppStore.Instance.channelMapStore.numChannels;
-        const offsetCoord = frame.isOffsetCoord;
+        const isOffsetCoord = frame.isOffsetCoord;
         const offsetWcs = frame.wcsInfoOffset;
 
         if (frame.isSwappedZ) {
@@ -251,13 +251,13 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             const formatStringX = this.props.overlaySettings.numbers.formatStringX;
             const formatStyingY = this.props.overlaySettings.numbers.formatStringY;
             const explicitSystem = this.props.overlaySettings.global.explicitSystem;
-            if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined && OverlaySettings.Instance.isWcsCoordinates && frame.validWcs) {
+            if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined && OverlaySettings.Instance.isWcsCoordinates && frame.isValidWcs) {
                 AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY},` + dirAxesSetting);
                 setAstSystem(frame.wcsInfo, explicitSystem, this.props.overlaySettings.global);
             }
         }
 
-        const className = classNames("overlay-canvas", {docked: this.props.docked});
+        const className = classNames("overlay-canvas", {isDocked: this.props.isDocked});
 
         return <canvas className={className} style={{top: this.props.top || 0, left: this.props.left || 0, width: w, height: h}} id="overlay-canvas" ref={this.getRef} key={`overlay-canvas-${frame.frameInfo.fileId}`} />;
     }

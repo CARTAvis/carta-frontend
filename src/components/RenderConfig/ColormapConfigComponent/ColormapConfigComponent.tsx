@@ -17,10 +17,10 @@ interface ColormapConfigProps {
 
 @observer
 export class ColormapConfigComponent extends React.Component<ColormapConfigProps> {
-    @observable extendBiasContrast: boolean = false;
+    @observable isExtendBiasContrast: boolean = false;
 
     @action switchExtendBiasContrast = () => {
-        this.extendBiasContrast = !this.extendBiasContrast;
+        this.isExtendBiasContrast = !this.isExtendBiasContrast;
     };
 
     constructor(props) {
@@ -48,7 +48,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 </FormGroup>
                 <FormGroup label={"Colormap"} inline={true}>
                     <ColormapComponent
-                        inverted={renderConfig.inverted}
+                        isInverted={renderConfig.isInverted}
                         selectedColormap={renderConfig.colorMap}
                         onColormapSelect={renderConfig.setColorMap}
                         enableAdditionalColor={true}
@@ -58,7 +58,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                     />
                 </FormGroup>
                 <FormGroup label={"Invert colormap"} inline={true}>
-                    <Switch checked={renderConfig.inverted} onChange={this.handleInvertedChanged} />
+                    <Switch checked={renderConfig.isInverted} onChange={this.handleInvertedChanged} />
                 </FormGroup>
                 {(renderConfig.scaling === FrameScaling.LOG || renderConfig.scaling === FrameScaling.POWER) && (
                     <FormGroup label={"Alpha"} inline={true}>
@@ -80,11 +80,11 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                     </FormGroup>
                 )}
                 <FormGroup inline={true}>
-                    <Button minimal={true} className={"bias-contrast-button"} rightIcon={this.extendBiasContrast ? "double-chevron-up" : "double-chevron-down"} alignText={"right"} small={true} onClick={this.switchExtendBiasContrast}>
+                    <Button minimal={true} className={"bias-contrast-button"} rightIcon={this.isExtendBiasContrast ? "double-chevron-up" : "double-chevron-down"} alignText={"right"} small={true} onClick={this.switchExtendBiasContrast}>
                         {"Bias / Contrast"}
                     </Button>
                 </FormGroup>
-                <Collapse isOpen={this.extendBiasContrast}>
+                <Collapse isOpen={this.isExtendBiasContrast}>
                     <BiasContrastSelectComponent
                         bias={renderConfig.bias}
                         contrast={renderConfig.contrast}
@@ -109,7 +109,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                             preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, color.rgb.a);
                         }}
                         disableAlpha={false}
-                        darkTheme={appStore.darkTheme}
+                        isDarkTheme={appStore.isDarkTheme}
                     />
                 </FormGroup>
             </React.Fragment>

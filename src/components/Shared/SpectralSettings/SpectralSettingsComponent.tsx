@@ -14,7 +14,7 @@ export class SpectralSettingsComponent extends React.Component<{
     onSpectralSystemChange: (system: string) => void;
     disable: boolean;
     disableChannelOption?: boolean;
-    secondaryAxisCursorInfoVisible?: boolean;
+    isSecondaryAxisCursorInfoVisible?: boolean;
     customLabel?: string;
 }> {
     render() {
@@ -34,24 +34,24 @@ export class SpectralSettingsComponent extends React.Component<{
                       return {value: system, label: system, key: system};
                   })
                 : [{value: frame?.spectralAxis?.specsys ?? "", label: frame?.spectralAxis?.specsys ?? ""}];
-        const disableCoordinateSetting = this.props.disable;
-        const disableSystemSetting = this.props.disable || !frame || !frame.isSpectralSystemConvertible;
+        const isDisableCoordinateSetting = this.props.disable;
+        const isDisableSystemSetting = this.props.disable || !frame || !frame.isSpectralSystemConvertible;
 
         return (
             <React.Fragment>
-                <FormGroup label={this.props.customLabel ? this.props.customLabel : "Coordinate"} inline={true} disabled={disableCoordinateSetting}>
+                <FormGroup label={this.props.customLabel ? this.props.customLabel : "Coordinate"} inline={true} disabled={isDisableCoordinateSetting}>
                     <HTMLSelect
-                        disabled={disableCoordinateSetting}
+                        disabled={isDisableCoordinateSetting}
                         value={frame && frame.spectralCoordinate ? frame.spectralCoordinate : ""}
                         options={spectralCoordinateOptions}
                         onChange={event => this.props.onSpectralCoordinateChange(event.currentTarget.value as string)}
                         data-testid="spectral-profiler-coordinate-dropdown"
                     />
                 </FormGroup>
-                {this.props.secondaryAxisCursorInfoVisible && (
-                    <FormGroup label={"Secondary coordinate"} inline={true} disabled={disableCoordinateSetting}>
+                {this.props.isSecondaryAxisCursorInfoVisible && (
+                    <FormGroup label={"Secondary coordinate"} inline={true} disabled={isDisableCoordinateSetting}>
                         <HTMLSelect
-                            disabled={disableCoordinateSetting}
+                            disabled={isDisableCoordinateSetting}
                             value={frame && frame.spectralCoordinateSecondary ? frame.spectralCoordinateSecondary : ""}
                             options={spectralCoordinateOptions}
                             onChange={event => this.props.onSpectralCoordinateChangeSecondary?.(event.currentTarget.value as string)}
@@ -59,9 +59,9 @@ export class SpectralSettingsComponent extends React.Component<{
                     </FormGroup>
                 )}
 
-                <FormGroup label={"System"} inline={true} disabled={disableSystemSetting}>
+                <FormGroup label={"System"} inline={true} disabled={isDisableSystemSetting}>
                     <HTMLSelect
-                        disabled={disableSystemSetting}
+                        disabled={isDisableSystemSetting}
                         value={frame && frame.spectralSystem ? frame.spectralSystem : ""}
                         options={spectralSystemOptions}
                         onChange={event => this.props.onSpectralSystemChange(event.currentTarget.value as SpectralSystem)}

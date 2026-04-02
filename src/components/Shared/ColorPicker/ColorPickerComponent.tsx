@@ -12,16 +12,16 @@ import "./ColorPickerComponent.scss";
 interface ColorPickerComponentProps {
     color: string | RGBColor;
     presetColors: string[];
-    darkTheme: boolean;
+    isDarkTheme: boolean;
     disableAlpha: boolean;
     disabled?: boolean;
     setColor: (color: ColorResult) => void;
 }
 @observer
 export class ColorPickerComponent extends React.Component<ColorPickerComponentProps> {
-    private static readonly CHANGE_DELAY = 100;
+    private static readonly ChangeDelay = 100;
 
-    @observable displayColorPicker: boolean = false;
+    @observable isDisplayColorPicker: boolean = false;
 
     constructor(props: ColorPickerComponentProps) {
         super(props);
@@ -29,26 +29,26 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
     }
 
     @action private handleColorClick = () => {
-        this.displayColorPicker = true;
+        this.isDisplayColorPicker = true;
     };
 
     @action private handleColorClose = () => {
-        this.displayColorPicker = false;
+        this.isDisplayColorPicker = false;
     };
 
     private handleColorChange = _.throttle((newColor: ColorResult) => {
         if (this.props.setColor) {
             this.props.setColor(newColor);
         }
-    }, ColorPickerComponent.CHANGE_DELAY);
+    }, ColorPickerComponent.ChangeDelay);
 
     public render() {
-        const popoverClassName = classNames("color-picker-popup", {[Classes.DARK]: this.props.darkTheme});
+        const popoverClassName = classNames("color-picker-popup", {[Classes.DARK]: this.props.isDarkTheme});
         const buttonColor = tinycolor(this.props.color).toString();
 
         return (
             <Popover
-                isOpen={this.displayColorPicker}
+                isOpen={this.isDisplayColorPicker}
                 onClose={this.handleColorClose}
                 position={PopoverPosition.RIGHT}
                 popoverClassName={popoverClassName}

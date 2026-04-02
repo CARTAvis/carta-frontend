@@ -19,7 +19,7 @@ export class ExternalPageDialogComponent extends React.Component {
 
     render() {
         const appStore = AppStore.Instance;
-        const className = classNames("iframe-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("iframe-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
         const dialogProps: DialogProps = {
             icon: "info-sign",
@@ -38,7 +38,7 @@ export class ExternalPageDialogComponent extends React.Component {
                 defaultHeight={ExternalPageDialogComponent.DefaultHeight}
                 minWidth={ExternalPageDialogComponent.MinWidth}
                 minHeight={ExternalPageDialogComponent.MinHeight}
-                enableResizing={true}
+                isEnableResizing={true}
                 dialogId={DialogId.ExternalPage}
             >
                 <div className={Classes.DIALOG_BODY}>

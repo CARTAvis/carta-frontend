@@ -24,7 +24,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
     private widgetId: string;
     private floatingSettingsId: string | undefined;
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "stokes-floating-settings",
             type: "floating-settings",
@@ -65,7 +65,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
                 if (frame) {
                     const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                    const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
+                    const selectedString = this.widgetStore.isMatchingSelectedRegion ? "(Active)" : "";
                     appStore.widgetsStore.setWidgetTitle(this.floatingSettingsId, `Stokes Analysis Settings: ${regionString} ${selectedString}`);
                 }
             }
@@ -118,14 +118,14 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             colorMap: widgetStore.colorMap,
             scatterPlotPointSize: widgetStore.scatterPlotPointSize,
             pointTransparency: widgetStore.pointTransparency,
-            equalAxes: widgetStore.equalAxes,
+            hasEqualAxes: widgetStore.hasEqualAxes,
             setPointTransparency: widgetStore.setPointTransparency,
             setScatterPlotPointSize: widgetStore.setScatterPlotPointSize,
             setColormap: widgetStore.setColormap,
             handleEqualAxesValuesChanged: this.handleEqualAxesValuesChanged,
-            invertedColorMap: widgetStore.invertedColorMap,
+            isInvertedColorMap: widgetStore.isInvertedColorMap,
             handleInvertedColorMapChanged: this.handleInvertedColorMapChanged,
-            showReferenceAxes: widgetStore.showReferenceAxes,
+            shouldShowReferenceAxes: widgetStore.shouldShowReferenceAxes,
             referenceAxesThickness: widgetStore.referenceAxesThickness,
             referenceAxesColor: widgetStore.referenceAxesColor,
             setShowReferenceAxes: widgetStore.setShowReferenceAxes

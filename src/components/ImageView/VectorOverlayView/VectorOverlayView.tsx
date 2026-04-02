@@ -11,7 +11,7 @@ import {COLOR_MAPS_ALL, GL2, rotate2D, scale2D, subtract2D} from "utilities";
 import "./VectorOverlayView.scss";
 
 export interface VectorOverlayViewComponentProps {
-    docked: boolean;
+    isDocked: boolean;
     frame: FrameStore;
     row: number;
     column: number;
@@ -72,7 +72,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         }
         // Otherwise just clear it
         const xOffset = this.props.column * frame.renderWidth * appStore.pixelRatio;
-        // y-axis is inverted
+        // y-axis is isInverted
         const yOffset = (appStore.imageViewConfigStore.numImageRows - 1 - this.props.row) * frame.renderHeight * appStore.pixelRatio;
         this.gl.viewport(xOffset, yOffset, frame.renderWidth * appStore.pixelRatio, frame.renderHeight * appStore.pixelRatio);
         this.gl.clearColor(0, 0, 0, 0);
@@ -208,8 +208,8 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
 
         // TODO: support non-uniform pixel ratios
         // this.gl.uniform1f(shaderUniforms.PixelRatio, frame.aspectRatio);
-        this.gl.uniform1i(shaderUniforms.CmapEnabled, frame.vectorOverlayConfig.colormapEnabled ? 1 : 0);
-        if (frame.vectorOverlayConfig.colormapEnabled) {
+        this.gl.uniform1i(shaderUniforms.CmapEnabled, frame.vectorOverlayConfig.isColormapEnabled ? 1 : 0);
+        if (frame.vectorOverlayConfig.isColormapEnabled) {
             this.gl.uniform1i(shaderUniforms.CmapIndex, COLOR_MAPS_ALL.indexOf(frame.vectorOverlayConfig.colormap));
             this.gl.uniform1f(shaderUniforms.Bias, frame.vectorOverlayConfig.colormapBias);
             this.gl.uniform1f(shaderUniforms.Contrast, frame.vectorOverlayConfig.colormapContrast);
@@ -247,7 +247,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         const overlayFrames = appStore.vectorOverlayFrames.get(baseFrame);
         if (overlayFrames) {
             for (const frame of overlayFrames) {
-                // let {angularSource, intensitySource, thickness, rotationOffset, color, colormapBias, colormapContrast, colormapEnabled, colormap, intensityMin, intensityMax, lengthMin, lengthMax} = frame.vectorOverlayConfig;
+                // let {angularSource, intensitySource, thickness, rotationOffset, color, colormapBias, colormapContrast, isColormapEnabled, colormap, intensityMin, intensityMax, lengthMin, lengthMax} = frame.vectorOverlayConfig;
                 const config = frame.vectorOverlayConfig;
                 config.intensityMin = isFinite(config.intensityMin ?? NaN) ? config.intensityMin : frame.vectorOverlayStore.intensityMin;
                 config.intensityMax = isFinite(config.intensityMax ?? NaN) ? config.intensityMax : frame.vectorOverlayStore.intensityMax;
@@ -260,7 +260,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
         const padding = baseFrame.overlayStore.padding;
-        const className = classNames("vector-overlay-div", {docked: this.props.docked});
+        const className = classNames("vector-overlay-div", {isDocked: this.props.isDocked});
 
         return (
             <div className={className}>

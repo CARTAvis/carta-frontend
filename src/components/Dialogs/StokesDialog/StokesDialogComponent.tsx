@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {BrowserMode, DialogId, HelpType} from "enums";
-import {HyperCubeCtypeTransform, POLARIZATION_LABELS} from "models";
+import {hyperCubeCtypeTransform, POLARIZATION_LABELS} from "models";
 import {AppStore, PreferenceStore} from "stores";
 
 import "./StokesDialogComponent.scss";
@@ -61,18 +61,18 @@ export class StokesDialogComponent extends React.Component {
         return files;
     }
 
-    @computed get stokesDialogVisible(): boolean {
+    @computed get isStokesDialogVisible(): boolean {
         return AppStore.Instance.dialogStore.dialogVisible.get(DialogId.Stokes) ?? false;
     }
 
-    @computed get noneType(): boolean {
-        let load = true;
+    @computed get isNoneType(): boolean {
+        let isLoad = true;
         this.stokes.forEach(file => {
             if (file.polarizationType === CARTA.PolarizationType.POLARIZATION_TYPE_NONE) {
-                load = false;
+                isLoad = false;
             }
         });
-        return load;
+        return isLoad;
     }
 
     constructor(props) {
@@ -80,9 +80,9 @@ export class StokesDialogComponent extends React.Component {
         makeObservable(this);
 
         reaction(
-            () => this.stokesDialogVisible,
-            stokesDialogVisible => {
-                if (stokesDialogVisible) {
+            () => this.isStokesDialogVisible,
+            isStokesDialogVisible => {
+                if (isStokesDialogVisible) {
                     const fileBrowserStore = AppStore.Instance.fileBrowserStore;
                     this.stokes = new Map();
                     fileBrowserStore.selectedFiles.forEach(async file => {
@@ -101,7 +101,7 @@ export class StokesDialogComponent extends React.Component {
     render() {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
-        const className = classNames("stokes-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("stokes-dialog", {[Classes.DARK]: appStore.isDarkTheme});
         const stokesItems = Object.values(CARTA.PolarizationType) as CARTA.PolarizationType[];
         const files = this.fileNames;
 
@@ -173,7 +173,7 @@ export class StokesDialogComponent extends React.Component {
                 minHeight={StokesDialogComponent.MinHeight}
                 defaultWidth={StokesDialogComponent.DefaultWidth}
                 defaultHeight={StokesDialogComponent.DefaultHeight}
-                enableResizing={true}
+                isEnableResizing={true}
                 dialogId={DialogId.Stokes}
             >
                 <div className={Classes.DIALOG_BODY}>
@@ -198,10 +198,10 @@ export class StokesDialogComponent extends React.Component {
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
-                            disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !this.noneType}
+                            disabled={appStore.isFileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.isFileInfoResp || fileBrowserStore.isLoadingInfo || !this.isNoneType}
                             onClick={this.loadSelectedFiles}
                             text={"Load"}
-                            data-testid="load-hypercube-button"
+                            data-testid="isLoad-hypercube-button"
                         />
                     </div>
                 </div>
@@ -217,8 +217,8 @@ export class StokesDialogComponent extends React.Component {
             stokesFiles.push(file);
         });
 
-        if (PreferenceStore.Instance.dynamicLayoutEnable) {
-            const hyperCubeCtype = HyperCubeCtypeTransform(fileBrowserStore.selectedFilesCtypes);
+        if (PreferenceStore.Instance.isDynamicLayoutEnabled) {
+            const hyperCubeCtype = hyperCubeCtypeTransform(fileBrowserStore.selectedFilesCtypes);
             dynamicLayoutStore.matchLayoutMapping(hyperCubeCtype);
             if (dynamicLayoutStore.dynamicLayoutName && layoutStore.layoutExists(dynamicLayoutStore.dynamicLayoutName)) {
                 layoutStore.applyLayout(dynamicLayoutStore.dynamicLayoutName);
@@ -238,7 +238,7 @@ export class StokesDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
 
-        // Ignore load if in export mode
+        // Ignore isLoad if in export mode
         if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
             return;
         }
@@ -246,7 +246,7 @@ export class StokesDialogComponent extends React.Component {
         if (fileBrowserStore.browserMode === BrowserMode.File) {
             const frames = appStore.frames;
             if (fileBrowserStore.fileList?.directory) {
-                if (!fileBrowserStore.appendingFrame || !frames.length) {
+                if (!fileBrowserStore.isAppendingFrame || !frames.length) {
                     await appStore.openConcatFile(files, fileBrowserStore.fileList.directory, files[0].hdu);
                 } else {
                     await appStore.appendConcatFile(files, fileBrowserStore.fileList.directory, files[0].hdu);

@@ -27,7 +27,7 @@ const COLORSCALE_LENGTH = 2048;
 
 @observer
 export class RenderConfigComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "render-config",
             type: "render-config",
@@ -92,8 +92,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             let yMax = yMin;
 
             let values: Array<{x: number; y: number}> = [];
-            const N = maxIndex - minIndex;
-            if (N > 0 && !isNaN(N)) {
+            const n = maxIndex - minIndex;
+            if (n > 0 && !isNaN(n)) {
                 values = new Array(maxIndex - minIndex);
 
                 for (let i = minIndex; i <= maxIndex; i++) {
@@ -114,7 +114,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         this.widgetId = props.id;
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.docked && props.id === RenderConfigComponent.WIDGET_CONFIG.type) {
+        if (!props.isDocked && props.id === RenderConfigComponent.WidgetConfig.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addRenderConfigWidget();
             if (id) {
@@ -292,13 +292,13 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         const plotName = `channel ${frame.channel} histogram`;
         const linePlotProps: LinePlotComponentProps = {
             xLabel: unitString,
-            darkMode: appStore.darkTheme,
+            isDarkMode: appStore.isDarkTheme,
             imageName: imageName,
             plotName: plotName,
-            logY: this.widgetStore.logScaleY,
+            isLogY: this.widgetStore.isLogScaleY,
             plotType: this.widgetStore.plotType,
-            showYAxisTicks: false,
-            showYAxisLabel: false,
+            shouldShowYAxisTicks: false,
+            shouldShowYAxisLabel: false,
             graphClicked: this.onMinMoved,
             graphRightClicked: this.onMaxMoved,
             graphZoomedX: this.widgetStore.setXBounds,
@@ -306,7 +306,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             graphZoomedXY: this.widgetStore.setXYBounds,
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
-            scrollZoom: true,
+            isScrollZoom: true,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
             zeroLineWidth: 2,
@@ -347,7 +347,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     linePlotProps.yMax = this.widgetStore.maxY;
                 }
                 // Fix log plot min bounds for entries with zeros in them
-                if (this.widgetStore.logScaleY && linePlotProps.yMin !== undefined && linePlotProps.yMin <= 0) {
+                if (this.widgetStore.isLogScaleY && linePlotProps.yMin !== undefined && linePlotProps.yMin <= 0) {
                     linePlotProps.yMin = 0.5;
                 }
             }
@@ -358,7 +358,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 {
                     value: scaleMinVal,
                     id: "marker-min",
-                    label: this.widgetStore.markerTextVisible ? "Min" : undefined,
+                    label: this.widgetStore.isMarkerTextVisible ? "Min" : undefined,
                     draggable: true,
                     dragCustomBoundary: {xMax: scaleMaxVal},
                     dragMove: this.onMinMoved,
@@ -367,7 +367,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 {
                     value: scaleMaxVal,
                     id: "marker-max",
-                    label: this.widgetStore.markerTextVisible ? "Max" : undefined,
+                    label: this.widgetStore.isMarkerTextVisible ? "Max" : undefined,
                     draggable: true,
                     dragCustomBoundary: {xMin: scaleMinVal},
                     dragMove: this.onMaxMoved,
@@ -375,13 +375,13 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 }
             ];
 
-            if (this.widgetStore.meanRmsVisible && histogram && histogram.stdDev != null && histogram.stdDev > 0 && histogram.mean != null) {
+            if (this.widgetStore.isMeanRmsVisible && histogram && histogram.stdDev != null && histogram.stdDev > 0 && histogram.mean != null) {
                 linePlotProps.markers.push({
                     value: histogram.mean,
                     id: "marker-mean",
                     draggable: false,
                     horizontal: false,
-                    color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
+                    color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2,
                     dash: [5]
                 });
 
@@ -392,7 +392,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     horizontal: false,
                     width: histogram.stdDev,
                     opacity: 0.2,
-                    color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                    color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2
                 });
             }
 
@@ -400,10 +400,10 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 const colormapScalingX = Array.from(Array(COLORSCALE_LENGTH).keys()).map(x => scaleMinVal + (x / (COLORSCALE_LENGTH - 1)) * (scaleMaxVal - scaleMinVal));
                 let colormapScalingY = Array.from(Array(COLORSCALE_LENGTH).keys()).map(x => x / (COLORSCALE_LENGTH - 1));
                 colormapScalingY = colormapScalingY.map(x =>
-                    scaleValue(x, frame.renderConfig.scaling, frame.renderConfig.alpha, frame.renderConfig.gamma, frame.renderConfig.bias, frame.renderConfig.contrast, appStore.preferenceStore?.useSmoothedBiasContrast)
+                    scaleValue(x, frame.renderConfig.scaling, frame.renderConfig.alpha, frame.renderConfig.gamma, frame.renderConfig.bias, frame.renderConfig.contrast, appStore.preferenceStore?.shouldUseSmoothedBiasContrast)
                 );
                 // fit to the histogram y axis
-                if (linePlotProps.logY) {
+                if (linePlotProps.isLogY) {
                     colormapScalingY = colormapScalingY.map(x => Math.pow(10, Math.log10(linePlotProps.yMin!) + x * (Math.log10(linePlotProps.yMax!) - Math.log10(linePlotProps.yMin!))));
                 } else {
                     colormapScalingY = colormapScalingY.map(x => linePlotProps.yMin! + x * (linePlotProps.yMax! - linePlotProps.yMin!));
@@ -418,10 +418,10 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     plotName: plotName,
                     data: colormapScalingData,
                     type: PlotType.LINES,
-                    borderColor: appStore.darkTheme ? Colors.GRAY5 : Colors.GRAY1,
+                    borderColor: appStore.isDarkTheme ? Colors.GRAY5 : Colors.GRAY1,
                     borderWidth: 0.5,
                     opacity: 0.5,
-                    noExport: true
+                    isNoExport: true
                 };
                 linePlotProps.multiPlotPropsMap?.set("colormapScaling", colormapScalingProps);
             }
@@ -429,9 +429,9 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
         const percentileButtonCutoff = 600;
         const histogramCutoff = 430;
-        const displayRankButtons = this.width > percentileButtonCutoff;
+        const isDisplayRankButtons = this.width > percentileButtonCutoff;
         let percentileButtonsDiv, percentileSelectDiv;
-        if (displayRankButtons) {
+        if (isDisplayRankButtons) {
             const percentileRankButtons = RenderConfigStore.PERCENTILE_RANKS.map(rank => (
                 <Button small={true} key={rank} onClick={() => this.handlePercentileRankClick(rank)} active={frame.renderConfig.selectedPercentileVal === rank} data-testid={"clip-button-" + rank}>
                     {`${rank}%`}
@@ -464,7 +464,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 <div className="render-config-container">
                     {this.width > histogramCutoff && (
                         <div className="histogram-container">
-                            {displayRankButtons ? percentileButtonsDiv : percentileSelectDiv}
+                            {isDisplayRankButtons ? percentileButtonsDiv : percentileSelectDiv}
                             <div className="histogram-plot">
                                 <LinePlotComponent {...linePlotProps} />
                                 {this.width >= histogramCutoff && <ProfilerInfoComponent info={this.genProfilerInfo()} />}
@@ -475,11 +475,11 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                         <ScrollShadow>
                             <div className="options-form">
                                 <HistogramConfigComponent
-                                    darkTheme={appStore.darkTheme}
+                                    isDarkTheme={appStore.isDarkTheme}
                                     renderConfig={frame.renderConfig}
                                     onCubeHistogramSelected={this.handleCubeHistogramSelected}
                                     showHistogramSelect={frame.frameInfo.fileInfoExtended.depth > 1}
-                                    disableHistogramSelect={appStore.animatorStore.animationActive}
+                                    disableHistogramSelect={appStore.animatorStore.isAnimationActive}
                                     warnOnCubeHistogram={(frame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) === 0}
                                 />
                                 <FormGroup label={"Clip min"} inline={true}>
@@ -508,7 +508,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                         </ScrollShadow>
                     </div>
                     <TaskProgressDialogComponent
-                        isOpen={frame.renderConfig.useCubeHistogram && frame.renderConfig.cubeHistogramProgress < 1.0}
+                        isOpen={frame.renderConfig.shouldUseCubeHistogram && frame.renderConfig.cubeHistogramProgress < 1.0}
                         progress={frame.renderConfig.cubeHistogramProgress}
                         timeRemaining={appStore.estimatedTaskRemainingTime || 0}
                         cancellable={true}

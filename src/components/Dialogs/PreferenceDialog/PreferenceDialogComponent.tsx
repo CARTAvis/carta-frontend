@@ -10,7 +10,7 @@ import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
 import {DraggableDialogComponent, LayoutMappingComponent, VectorOverlayDialogComponent} from "components/Dialogs";
-import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, ScrollShadow, SuccessToast} from "components/Shared";
+import {APP_TOASTER, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, ScrollShadow, successToast} from "components/Shared";
 import {BeamType, ContourGeneratorType, ConvertToGB, CursorInfoVisibility, DialogId, FileFilterMode, FrameScaling, HelpType, PreferenceKeys, TelemetryMode} from "enums";
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {AppStore, PreferenceStore} from "stores";
@@ -35,6 +35,7 @@ enum PreferenceDialogTabs {
     COMPATIBILITY
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const PercentileSelect = Select<string>;
 
 const PV_PREVIEW_CUBE_SIZE_LIMIT = 2; //in unit of GB
@@ -150,7 +151,7 @@ export class PreferenceDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         try {
             await copyToClipboard(appStore.telemetryService.decodedUserId);
-            AppToaster.show(SuccessToast("clipboard", "Copied user ID to clipboard."));
+            APP_TOASTER.show(successToast("clipboard", "Copied user ID to clipboard."));
         } catch (err) {
             console.error(err);
         }
@@ -171,10 +172,10 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Enable code snippets">
-                    <Switch checked={preference.codeSnippetsEnabled} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED, ev.currentTarget.checked)} />
+                    <Switch checked={preference.isCodeSnippetsEnabled} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Auto-launch file browser">
-                    <Switch checked={preference.autoLaunch} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_AUTOLAUNCH, ev.currentTarget.checked)} />
+                    <Switch checked={preference.isAutoLaunch} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_AUTOLAUNCH, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="File list">
                     <HTMLSelect value={preference.fileFilterMode} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_FILE_FILTER_MODE, ev.currentTarget.value)}>
@@ -202,7 +203,7 @@ export class PreferenceDialogComponent extends React.Component {
                     </RadioGroup>
                 </FormGroup>
                 <FormGroup inline={true} label="Enable drag-to-pan">
-                    <Switch checked={preference.dragPanning} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_DRAG_PANNING, ev.currentTarget.checked)} />
+                    <Switch checked={preference.isDragPanning} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_DRAG_PANNING, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Matching on append">
                     {WCSMatching.MATCHING_TYPES.map(matchingType => (
@@ -210,7 +211,7 @@ export class PreferenceDialogComponent extends React.Component {
                             className="wcs-matching"
                             key={matchingType}
                             checked={preference.isWCSMatchingEnabled(matchingType)}
-                            label={WCSMatching.getNameFromType(matchingType)}
+                            label={WCSMatching.GetNameFromType(matchingType)}
                             onChange={() => preference.setPreference(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, matchingType)}
                         />
                     ))}
@@ -225,10 +226,10 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Transparent image background">
-                    <Switch checked={preference.transparentImageBackground} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND, ev.currentTarget.checked)} />
+                    <Switch checked={preference.isTransparentImageBackground} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Save last used directory">
-                    <Switch checked={preference.keepLastUsedFolder} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_KEEP_LAST_USED_FOLDER, ev.currentTarget.checked)} />
+                    <Switch checked={preference.shouldKeepLastUsedFolder} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_KEEP_LAST_USED_FOLDER, ev.currentTarget.checked)} />
                 </FormGroup>
             </React.Fragment>
         );
@@ -240,7 +241,7 @@ export class PreferenceDialogComponent extends React.Component {
                 </FormGroup>
                 <FormGroup inline={true} label="Default colormap">
                     <ColormapComponent
-                        inverted={false}
+                        isInverted={false}
                         selectedColormap={preference.colormap}
                         onColormapSelect={selected => preference.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP, selected)}
                         enableAdditionalColor={true}
@@ -294,11 +295,11 @@ export class PreferenceDialogComponent extends React.Component {
                             preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, color.rgb.a);
                         }}
                         disableAlpha={false}
-                        darkTheme={appStore.darkTheme}
+                        isDarkTheme={appStore.isDarkTheme}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Smoothed bias/contrast">
-                    <Switch checked={preference.useSmoothedBiasContrast} onChange={ev => preference.setPreference(PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST, ev.currentTarget.checked)} />
+                    <Switch checked={preference.shouldUseSmoothedBiasContrast} onChange={ev => preference.setPreference(PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST, ev.currentTarget.checked)} />
                 </FormGroup>
             </React.Fragment>
         );
@@ -359,7 +360,7 @@ export class PreferenceDialogComponent extends React.Component {
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Default color mode">
-                    <HTMLSelect value={preference.contourColormapEnabled ? 1 : 0} onChange={ev => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_ENABLED, parseInt(ev.currentTarget.value) > 0)}>
+                    <HTMLSelect value={preference.isContourColormapEnabled ? 1 : 0} onChange={ev => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_ENABLED, parseInt(ev.currentTarget.value) > 0)}>
                         <option key={0} value={0}>
                             Constant color
                         </option>
@@ -369,7 +370,7 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Default colormap">
-                    <ColormapComponent inverted={false} selectedColormap={preference.contourColormap} onColormapSelect={selected => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLORMAP, selected)} />
+                    <ColormapComponent isInverted={false} selectedColormap={preference.contourColormap} onColormapSelect={selected => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLORMAP, selected)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Default color">
                     <ColorPickerComponent
@@ -377,7 +378,7 @@ export class PreferenceDialogComponent extends React.Component {
                         presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLOR, color.hex)}
                         disableAlpha={true}
-                        darkTheme={appStore.darkTheme}
+                        isDarkTheme={appStore.isDarkTheme}
                     />
                 </FormGroup>
             </React.Fragment>
@@ -399,7 +400,7 @@ export class PreferenceDialogComponent extends React.Component {
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Use fractional intensity">
-                    <Switch checked={preference.vectorOverlayFractionalIntensity} onChange={ev => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_FRACTIONAL_INTENSITY, ev.currentTarget.checked)} />
+                    <Switch checked={preference.isVectorOverlayFractionalIntensity} onChange={ev => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_FRACTIONAL_INTENSITY, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Thickness">
                     <SafeNumericInput
@@ -413,7 +414,7 @@ export class PreferenceDialogComponent extends React.Component {
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Default color mode">
-                    <HTMLSelect value={preference.vectorOverlayColormapEnabled ? 1 : 0} onChange={ev => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_ENABLED, parseInt(ev.currentTarget.value) > 0)}>
+                    <HTMLSelect value={preference.isVectorOverlayColormapEnabled ? 1 : 0} onChange={ev => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_ENABLED, parseInt(ev.currentTarget.value) > 0)}>
                         <option key={0} value={0}>
                             Constant color
                         </option>
@@ -423,7 +424,7 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Default colormap">
-                    <ColormapComponent inverted={false} selectedColormap={preference.vectorOverlayColormap} onColormapSelect={selected => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLORMAP, selected)} />
+                    <ColormapComponent isInverted={false} selectedColormap={preference.vectorOverlayColormap} onColormapSelect={selected => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLORMAP, selected)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Default color">
                     <ColorPickerComponent
@@ -431,7 +432,7 @@ export class PreferenceDialogComponent extends React.Component {
                         presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLOR, color.hex)}
                         disableAlpha={true}
-                        darkTheme={appStore.darkTheme}
+                        isDarkTheme={appStore.isDarkTheme}
                     />
                 </FormGroup>
             </React.Fragment>
@@ -443,10 +444,10 @@ export class PreferenceDialogComponent extends React.Component {
                     <AutoColorPickerComponent color={preference.astColor} presetColors={SWATCH_COLORS} setColor={(color: string) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_AST_COLOR, color)} disableAlpha={true} />
                 </FormGroup>
                 <FormGroup inline={true} label="WCS grid visible">
-                    <Switch checked={preference.astGridVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, ev.currentTarget.checked)} />
+                    <Switch checked={preference.isAstGridVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Labels visible">
-                    <Switch checked={preference.astLabelsVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, ev.currentTarget.checked)} />
+                    <Switch checked={preference.isAstLabelsVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Cursor info visible">
                     <HTMLSelect value={preference.cursorInfoVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_CURSOR_INFO, ev.currentTarget.value)}>
@@ -464,10 +465,10 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Colorbar visible">
-                    <Switch checked={preference.colorbarVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_VISIBLE, ev.currentTarget.checked)} />
+                    <Switch checked={preference.isColorbarVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_VISIBLE, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Colorbar interactive">
-                    <Switch checked={preference.colorbarInteractive} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_INTERACTIVE, ev.currentTarget.checked)} />
+                    <Switch checked={preference.isColorbarInteractive} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_INTERACTIVE, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Colorbar position">
                     <HTMLSelect value={preference.colorbarPosition} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_POSITION, ev.currentTarget.value)}>
@@ -485,7 +486,7 @@ export class PreferenceDialogComponent extends React.Component {
                         stepSize={1}
                         minorStepSize={1}
                         majorStepSize={2}
-                        intOnly={true}
+                        isIntOnly={true}
                         onValueChange={(value: number) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH, value)}
                     />
                 </FormGroup>
@@ -502,10 +503,10 @@ export class PreferenceDialogComponent extends React.Component {
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Colorbar label visible">
-                    <Switch checked={preference.colorbarLabelVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_LABEL_VISIBLE, ev.currentTarget.checked)} />
+                    <Switch checked={preference.isColorbarLabelVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_LABEL_VISIBLE, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Beam visible">
-                    <Switch checked={preference.beamVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE, ev.currentTarget.checked)} />
+                    <Switch checked={preference.isBeamVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Beam color">
                     <AutoColorPickerComponent color={preference.beamColor} presetColors={SWATCH_COLORS} setColor={(color: string) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, color)} disableAlpha={true} />
@@ -557,10 +558,10 @@ export class PreferenceDialogComponent extends React.Component {
                 </FormGroup>
                 <FormGroup inline={true} label="Dynamic layout">
                     <Tooltip content={"Apply a linked layout when loaded images based on data type"}>
-                        <Switch checked={preference.dynamicLayoutEnable} onChange={() => preference.setPreference(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT_ENABLE, !preference.dynamicLayoutEnable)} />
+                        <Switch checked={preference.isDynamicLayoutEnabled} onChange={() => preference.setPreference(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT_ENABLE, !preference.isDynamicLayoutEnabled)} />
                     </Tooltip>
                 </FormGroup>
-                <Collapse isOpen={preference.dynamicLayoutEnable}>
+                <Collapse isOpen={preference.isDynamicLayoutEnabled}>
                     <FormGroup inline={true} label="Higher dimension priority">
                         <Tooltip content={"When disable, the dynamic layout will depend on the last selected file among multiple selected files."}>
                             <Switch checked={preference.isHighDimPriority} onChange={() => preference.setPreference(PreferenceKeys.LAYOUT_IS_HIGH_DIM_PRIORITY, !preference.isHighDimPriority)} />
@@ -581,7 +582,7 @@ export class PreferenceDialogComponent extends React.Component {
                         presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.REGION_COLOR, color.hex)}
                         disableAlpha={true}
-                        darkTheme={appStore.darkTheme}
+                        isDarkTheme={appStore.isDarkTheme}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Line width" labelInfo="(px)">
@@ -645,7 +646,7 @@ export class PreferenceDialogComponent extends React.Component {
                         presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.ANNOTATION_COLOR, color.hex)}
                         disableAlpha={true}
-                        darkTheme={appStore.darkTheme}
+                        isDarkTheme={appStore.isDarkTheme}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Line width" labelInfo="(px)">
@@ -687,10 +688,10 @@ export class PreferenceDialogComponent extends React.Component {
         const performancePanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Low bandwidth mode">
-                    <Switch checked={preference.lowBandwidthMode} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, ev.currentTarget.checked)} />
+                    <Switch checked={preference.isLowBandwidthMode} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Limit overlay redraw">
-                    <Switch checked={preference.limitOverlayRedraw} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW, ev.currentTarget.checked)} />
+                    <Switch checked={preference.shouldLimitOverlayRedraw} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Compression quality" labelInfo={"(Images)"}>
                     <SafeNumericInput
@@ -795,7 +796,7 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Stream image tiles while zooming">
-                    <Switch checked={preference.streamContoursWhileZooming} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, ev.currentTarget.checked)} />
+                    <Switch checked={preference.shouldStreamContoursWhileZooming} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Stop animation playback in">
                     <HTMLSelect value={preference.stopAnimationPlaybackMinutes} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES, parseInt(ev.currentTarget.value))}>
@@ -846,12 +847,12 @@ export class PreferenceDialogComponent extends React.Component {
                     <Checkbox label="Select all" checked={preference.isSelectingAllLogEvents} indeterminate={preference.isSelectingIndeterminateLogEvents} onChange={() => preference.selectAllLogEvents()} />
                 </FormGroup>
                 <FormGroup inline={false} className="log-event-list">
-                    {Event.EVENT_TYPES.sort((a, b) => Event.getNameFromType(a).localeCompare(Event.getNameFromType(b))).map(eventType => (
+                    {Event.EVENT_TYPES.sort((a, b) => Event.GetNameFromType(a).localeCompare(Event.GetNameFromType(b))).map(eventType => (
                         <Checkbox
                             className="log-event-checkbox"
                             key={eventType}
                             checked={preference.isEventLoggingEnabled(eventType)}
-                            label={Event.getNameFromType(eventType)}
+                            label={Event.GetNameFromType(eventType)}
                             onChange={() => preference.setPreference(PreferenceKeys.LOG_EVENT, eventType)}
                         />
                     ))}
@@ -910,7 +911,7 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Log telemetry output">
-                    <Switch checked={preference.telemetryLogging} onChange={ev => preference.setPreference(PreferenceKeys.TELEMETRY_LOGGING, ev.currentTarget.checked)} />
+                    <Switch checked={preference.isTelemetryLogging} onChange={ev => preference.setPreference(PreferenceKeys.TELEMETRY_LOGGING, ev.currentTarget.checked)} />
                 </FormGroup>
             </div>
         );
@@ -918,12 +919,12 @@ export class PreferenceDialogComponent extends React.Component {
         const compatibilityPanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="AIPS cube beam support">
-                    <Switch checked={preference.aipsBeamSupport} onChange={ev => preference.setPreference(PreferenceKeys.COMPATIBILITY_AIPS_BEAM_SUPPORT, ev.currentTarget.checked)} />
+                    <Switch checked={preference.hasAipsBeamSupport} onChange={ev => preference.setPreference(PreferenceKeys.COMPATIBILITY_AIPS_BEAM_SUPPORT, ev.currentTarget.checked)} />
                 </FormGroup>
             </div>
         );
 
-        const className = classNames("preference-dialog", {[Classes.DARK]: appStore.darkTheme});
+        const className = classNames("preference-dialog", {[Classes.DARK]: appStore.isDarkTheme});
 
         const dialogProps: DialogProps = {
             icon: "wrench",
@@ -943,7 +944,7 @@ export class PreferenceDialogComponent extends React.Component {
                 minHeight={PreferenceDialogComponent.MinHeight}
                 defaultWidth={PreferenceDialogComponent.DefaultWidth}
                 defaultHeight={PreferenceDialogComponent.DefaultHeight}
-                enableResizing={true}
+                isEnableResizing={true}
                 dialogId={DialogId.Preference}
             >
                 <div className={Classes.DIALOG_BODY}>

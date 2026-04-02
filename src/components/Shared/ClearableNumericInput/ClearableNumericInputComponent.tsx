@@ -54,8 +54,8 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
         makeObservable(this);
     }
 
-    @action setFocused(value: boolean) {
-        this.isFocused = value;
+    @action setFocused(isValue: boolean) {
+        this.isFocused = isValue;
     }
 
     handleChange = ev => {

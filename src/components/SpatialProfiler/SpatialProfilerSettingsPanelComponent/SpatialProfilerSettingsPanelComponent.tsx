@@ -20,7 +20,7 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
     private widgetId: string;
     private floatingSettingsId: string | undefined;
 
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "spatial-profiler-floating-settings",
             type: "floating-settings",
@@ -203,14 +203,14 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
             lineWidth: widgetStore.lineWidth,
             plotType: widgetStore.plotType,
             linePlotPointSize: widgetStore.linePlotPointSize,
-            showWCSAxis: widgetStore.wcsAxisVisible,
-            disableShowWCSAxis: this.widgetStore.effectiveRegion ? this.widgetStore.effectiveRegion.regionType !== CARTA.RegionType.POINT : false,
+            shouldShowWCSAxis: widgetStore.isWcsAxisVisible,
+            isDisableShowWCSAxis: this.widgetStore.effectiveRegion ? this.widgetStore.effectiveRegion.regionType !== CARTA.RegionType.POINT : false,
             setLineColor: (lineKey: LineKey, color: string) => widgetStore.setPrimaryLineColor(color),
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
             handleWcsAxisChanged: this.handleWcsAxisChanged,
             setPlotType: widgetStore.setPlotType,
-            meanRmsVisible: widgetStore.meanRmsVisible,
+            isMeanRmsVisible: widgetStore.isMeanRmsVisible,
             handleMeanRmsChanged: this.handleMeanRmsChanged,
             isAutoScaledX: widgetStore.isAutoScaledX,
             isAutoScaledY: widgetStore.isAutoScaledY,

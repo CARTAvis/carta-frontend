@@ -13,7 +13,7 @@ import {getColorForTheme} from "utilities";
 import "./BeamProfileOverlayComponent.scss";
 
 interface BeamProfileOverlayComponentProps {
-    docked: boolean;
+    isDocked: boolean;
     frame: FrameStore;
     top: number;
     left: number;
@@ -141,7 +141,7 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
             }
         });
 
-        const className = classNames("beam-profile-stage", {docked: this.props.docked});
+        const className = classNames("beam-profile-stage", {isDocked: this.props.isDocked});
 
         return (
             <Stage className={className} width={baseFrame.renderWidth} height={baseFrame.renderHeight} style={{left: this.props.left, top: this.props.top}}>

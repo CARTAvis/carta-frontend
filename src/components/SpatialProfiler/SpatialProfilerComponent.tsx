@@ -24,7 +24,7 @@ const AUTOSCALE_THROTTLE_TIME = 100;
 
 @observer
 export class SpatialProfilerComponent extends React.Component<WidgetProps> {
-    public static get WIDGET_CONFIG(): DefaultWidgetConfig {
+    public static get WidgetConfig(): DefaultWidgetConfig {
         return {
             id: "spatial-profiler",
             type: "spatial-profiler",
@@ -143,18 +143,18 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             let values: Array<Point2D> = [];
             let fullResolutionValues: Array<Point2D> = [];
             let smoothingValues: Array<{x: number; y: number}> = [];
-            let N: number;
+            let n: number;
 
             if (this.lineAxis) {
-                N = coordinateData.values.length;
-                values = new Array(N);
-                fullResolutionValues = new Array(N);
-                const xArray: number[] = new Array(N);
+                n = coordinateData.values.length;
+                values = new Array(n);
+                fullResolutionValues = new Array(n);
+                const xArray: number[] = new Array(n);
                 const numPixels = this.width;
-                const decimationFactor = Math.round(N / numPixels);
+                const decimationFactor = Math.round(n / numPixels);
                 let startIndex: number | undefined;
                 let endIndex: number | undefined;
-                for (let i = 0; i < N; i++) {
+                for (let i = 0; i < n; i++) {
                     const y = coordinateData.values[i];
                     const x =
                         this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE && coordinateData.lineAxis
@@ -183,9 +183,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 }
                 smoothingValues = this.widgetStore.smoothingStore.getSmoothingPoint2DArray(xArray, coordinateData.values);
             } else if ((coordinateData.mip ?? 0) > 1 || (coordinateData.start ?? 0) > 0 || (coordinateData.end ?? xMax) < xMax) {
-                N = coordinateData.values.length;
-                values = new Array(N);
-                for (let i = 0; i < N; i++) {
+                n = coordinateData.values.length;
+                values = new Array(n);
+                for (let i = 0; i < n; i++) {
                     const y = coordinateData.values[i];
                     const x = (coordinateData.start ?? 0) + i * (coordinateData.mip ?? 1);
                     if (x >= xMin && x <= xMax && isFinite(y)) {
@@ -198,19 +198,19 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     values[i] = {x, y};
                 }
             } else {
-                N = Math.floor(Math.min(xMax - xMin + 1, coordinateData.values.length));
-                if (N > 0) {
+                n = Math.floor(Math.min(xMax - xMin + 1, coordinateData.values.length));
+                if (n > 0) {
                     const xArray: number[] = new Array(coordinateData.values.length);
                     for (let i = 0; i < coordinateData.values.length; i++) {
                         xArray[i] = i;
                     }
                     const numPixels = this.width;
-                    const decimationFactor = Math.round(N / numPixels);
+                    const decimationFactor = Math.round(n / numPixels);
 
                     if (decimationFactor <= 1 || this.widgetStore.plotType === PlotType.POINTS) {
                         // full resolution data
-                        values = new Array(N);
-                        for (let i = 0; i < N; i++) {
+                        values = new Array(n);
+                        for (let i = 0; i < n; i++) {
                             const y = coordinateData.values[i + xMin];
                             const x = (coordinateData.start ?? 0) + i + xMin;
                             if (x >= xMin && x <= xMax && isFinite(y)) {
@@ -224,8 +224,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         }
                     } else {
                         // Decimated data
-                        fullResolutionValues = new Array(N);
-                        for (let i = 0; i < N; i++) {
+                        fullResolutionValues = new Array(n);
+                        for (let i = 0; i < n; i++) {
                             const val = coordinateData.values[i + xMin];
                             const x = (coordinateData.start ?? 0) + i + xMin;
                             if (isFinite(val)) {
@@ -337,7 +337,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         this.widgetId = props.id;
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.docked && props.id === SpatialProfilerComponent.WIDGET_CONFIG.type) {
+        if (!props.isDocked && props.id === SpatialProfilerComponent.WidgetConfig.type) {
             // Assign the next unique ID
             const id = appStore.widgetsStore.addSpatialProfileWidget();
             if (id) {
@@ -521,7 +521,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     }
                 }
             }
-            if (this.widgetStore.meanRmsVisible) {
+            if (this.widgetStore.isMeanRmsVisible) {
                 if (this.widgetStore.smoothingStore.type === SmoothingType.NONE) {
                     profilerInfo.push(` Mean/RMS: ${formattedExponential(this.plotData.yMean, 2) + " / " + formattedExponential(this.plotData.yRms, 2)}`);
                 } else if (!this.widgetStore.smoothingStore.isOverlayOn) {
@@ -569,7 +569,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         const linePlotProps: LinePlotComponentProps = {
             xLabel: xLabel,
             yLabel: "Value",
-            darkMode: appStore.darkTheme,
+            isDarkMode: appStore.isDarkTheme,
             imageName: imageName,
             plotName: plotName,
             plotType: widgetStore.plotType,
@@ -579,7 +579,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             graphZoomedXY: widgetStore.setXYBounds,
             graphZoomReset: widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
-            scrollZoom: true,
+            isScrollZoom: true,
             mouseEntered: widgetStore.setMouseMoveIntoLinePlots,
             zeroLineWidth: 2,
             borderWidth: widgetStore.lineWidth,
@@ -603,8 +603,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 }
 
                 if (!this.widgetStore.isLineOrPolyline) {
-                    linePlotProps.showTopAxis = true;
-                    if (this.frame.validWcs && widgetStore.wcsAxisVisible) {
+                    linePlotProps.shouldShowTopAxis = true;
+                    if (this.frame.isValidWcs && widgetStore.isWcsAxisVisible) {
                         linePlotProps.topAxisTickFormatter = this.formatProfileAst;
                     }
                 }
@@ -680,19 +680,19 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     id: "marker-profiler-cursor",
                     draggable: false,
                     horizontal: false,
-                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
+                    color: appStore.isDarkTheme ? Colors.GRAY4 : Colors.GRAY2,
                     opacity: 0.8,
                     isMouseMove: true
                 });
 
-                if (widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
+                if (widgetStore.isMeanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
                     if (this.widgetStore.smoothingStore.type === SmoothingType.NONE) {
                         linePlotProps.markers.push({
                             value: currentPlotData.yMean,
                             id: "marker-mean",
                             draggable: false,
                             horizontal: true,
-                            color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
+                            color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2,
                             dash: [5]
                         });
 
@@ -703,7 +703,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                             horizontal: true,
                             width: currentPlotData.yRms,
                             opacity: 0.2,
-                            color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                            color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2
                         });
                     } else if (!this.widgetStore.smoothingStore.isOverlayOn) {
                         linePlotProps.markers.push({
@@ -711,7 +711,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                             id: "marker-smoothed-mean",
                             draggable: false,
                             horizontal: true,
-                            color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
+                            color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2,
                             dash: [5]
                         });
 
@@ -722,7 +722,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                             horizontal: true,
                             width: currentPlotData.ySmoothedRms,
                             opacity: 0.2,
-                            color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                            color: appStore.isDarkTheme ? Colors.GREEN4 : Colors.GREEN2
                         });
                     }
                 }

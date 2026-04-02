@@ -19,7 +19,7 @@ export class ImageSaveComponent extends React.Component {
         autorun(() => {
             const appStore = AppStore.Instance;
             const numChannels = appStore.activeFrame?.numChannels;
-            if ((numChannels !== undefined && numChannels <= 1) || (this.validSaveSpectralRangeStart && this.validSaveSpectralRangeEnd)) {
+            if ((numChannels !== undefined && numChannels <= 1) || (this.isValidSaveSpectralRangeStart && this.isValidSaveSpectralRangeEnd)) {
                 appStore.endFileSaving();
             } else {
                 appStore.startFileSaving();
@@ -27,13 +27,13 @@ export class ImageSaveComponent extends React.Component {
         });
     }
 
-    @computed get validSaveSpectralRangeStart() {
+    @computed get isValidSaveSpectralRangeStart() {
         const fileBrowser = FileBrowserStore.Instance;
         const min = AppStore.Instance.activeFrame?.channelValueBounds?.min;
         return min !== undefined && min <= fileBrowser.saveSpectralStart && fileBrowser.saveSpectralStart <= fileBrowser.saveSpectralEnd;
     }
 
-    @computed get validSaveSpectralRangeEnd() {
+    @computed get isValidSaveSpectralRangeEnd() {
         const fileBrowser = FileBrowserStore.Instance;
         const max = AppStore.Instance.activeFrame?.channelValueBounds?.max;
         return max !== undefined && fileBrowser.saveSpectralStart <= fileBrowser.saveSpectralEnd && fileBrowser.saveSpectralEnd <= max;
@@ -192,7 +192,7 @@ export class ImageSaveComponent extends React.Component {
                                                 stepSize={majorStepSize}
                                                 minorStepSize={null}
                                                 selectAllOnIncrement={true}
-                                                intent={this.validSaveSpectralRangeStart ? Intent.NONE : Intent.DANGER}
+                                                intent={this.isValidSaveSpectralRangeStart ? Intent.NONE : Intent.DANGER}
                                             />
                                             <Label>{activeFrame.spectralUnit ? `(${activeFrame.spectralUnit})` : ""}</Label>
                                         </FormGroup>
@@ -206,7 +206,7 @@ export class ImageSaveComponent extends React.Component {
                                                 stepSize={majorStepSize}
                                                 minorStepSize={null}
                                                 selectAllOnIncrement={true}
-                                                intent={this.validSaveSpectralRangeEnd ? Intent.NONE : Intent.DANGER}
+                                                intent={this.isValidSaveSpectralRangeEnd ? Intent.NONE : Intent.DANGER}
                                             />
                                             <Label>{activeFrame.spectralUnit ? `(${activeFrame.spectralUnit})` : ""}</Label>
                                         </FormGroup>
@@ -229,7 +229,7 @@ export class ImageSaveComponent extends React.Component {
                                         selectAllOnFocus={true}
                                         onValueChanged={fileBrowser.setSaveRestFreqVal}
                                         onValueCleared={fileBrowser.resetSaveRestFreq}
-                                        resetDisabled={activeFrame.restFreqStore.resetDisable}
+                                        resetDisabled={activeFrame.restFreqStore.isResetDisable}
                                         tooltipContent={activeFrame.restFreqStore.defaultInfo}
                                         tooltipPlacement={"bottom"}
                                     />
