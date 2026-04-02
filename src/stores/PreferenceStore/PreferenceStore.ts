@@ -6,33 +6,33 @@ import {BeamType, ContourGeneratorType, CursorInfoVisibility, FileFilteringType,
 import {CARTA_INFO, CompressionQuality, CursorPosition, Event, getEventList, PresetLayout, RegionCreationMode, Theme, TileCache, WCSMatching, WCSType, Zoom, ZoomPoint} from "models";
 import {ApiService} from "services";
 
-const DEFAULTS = {
+const defaults = {
     SILENT: {
         fileSortingString: "-date",
         fileFilteringType: FileFilteringType.Fuzzy,
-        pixelGridVisible: false,
+        isPixelGridVisible: false,
         pixelGridColor: "#ffffff",
-        imageMultiPanelEnabled: false,
+        isImageMultiPanelEnabled: false,
         imagePanelMode: ImagePanelMode.Dynamic,
         imagePanelColumns: 2,
         imagePanelRows: 2,
-        checkNewRelease: true,
+        shouldCheckNewRelease: true,
         latestRelease: "v" + CARTA_INFO.version,
         pvAxesOrderReverse: false
     },
     GLOBAL: {
         theme: Theme.AUTO,
-        autoLaunch: true,
+        isAutoLaunch: true,
         fileFilterMode: FileFilterMode.Content,
         cursorPosition: CursorPosition.TRACKING,
         zoomMode: Zoom.FIT,
         zoomPoint: ZoomPoint.CURSOR,
-        dragPanning: true,
+        isDragPanning: true,
         spectralMatchingType: SpectralType.VRAD,
         autoWCSMatching: WCSMatchingType.NONE,
-        transparentImageBackground: false,
-        codeSnippetsEnabled: false,
-        keepLastUsedFolder: false,
+        isTransparentImageBackground: false,
+        isCodeSnippetsEnabled: false,
+        shouldKeepLastUsedFolder: false,
         lastUsedFolder: ""
     },
     RENDER_CONFIG: {
@@ -45,7 +45,7 @@ const DEFAULTS = {
         scalingGamma: 1,
         nanColorHex: "#137CBD",
         nanAlpha: 1,
-        useSmoothedBiasContrast: true
+        shouldUseSmoothedBiasContrast: true
     },
     CONTOUR_CONFIG: {
         contourGeneratorType: ContourGeneratorType.StartStepMultiplier,
@@ -53,30 +53,30 @@ const DEFAULTS = {
         contourSmoothingFactor: 4,
         contourNumLevels: 5,
         contourThickness: 1,
-        contourColormapEnabled: false,
+        isContourColormapEnabled: false,
         contourColor: Colors.GREEN3,
         contourColormap: "viridis"
     },
     VECTOR_OVERLAY: {
         vectorOverlayPixelAveraging: 4,
-        vectorOverlayFractionalIntensity: false,
+        isVectorOverlayFractionalIntensity: false,
         vectorOverlayThickness: 1,
-        vectorOverlayColormapEnabled: false,
+        isVectorOverlayColormapEnabled: false,
         vectorOverlayColor: Colors.GREEN3,
         vectorOverlayColormap: "viridis"
     },
     WCS_OVERLAY: {
         astColor: "auto-blue",
-        astGridVisible: false,
-        astLabelsVisible: true,
+        isAstGridVisible: false,
+        isAstLabelsVisible: true,
         wcsType: WCSType.AUTOMATIC,
-        colorbarVisible: true,
-        colorbarInteractive: true,
+        isColorbarVisible: true,
+        isColorbarInteractive: true,
         colorbarPosition: "right",
         colorbarWidth: 15,
         colorbarTicksDensity: 1,
-        colorbarLabelVisible: false,
-        beamVisible: true,
+        isColorbarLabelVisible: false,
+        isBeamVisible: true,
         beamColor: "auto-gray",
         beamType: BeamType.Open,
         beamWidth: 1,
@@ -84,7 +84,7 @@ const DEFAULTS = {
     },
     LAYOUT: {
         layout: PresetLayout.DEFAULT,
-        dynamicLayoutEnable: false,
+        isDynamicLayoutEnabled: false,
         isHighDimPriority: true,
         existLayoutMapping: {}
     },
@@ -114,10 +114,10 @@ const DEFAULTS = {
         contourCompressionLevel: 8,
         contourChunkSize: 100000,
         contourControlMapWidth: 256,
-        streamContoursWhileZooming: false,
-        lowBandwidthMode: false,
+        shouldStreamContoursWhileZooming: false,
+        isLowBandwidthMode: false,
         stopAnimationPlaybackMinutes: 5,
-        limitOverlayRedraw: true,
+        shouldLimitOverlayRedraw: true,
         pvPreviewCubeSizeLimit: 1
     },
     LOG_EVENT: {
@@ -128,16 +128,16 @@ const DEFAULTS = {
         catalogTableSeparatorPosition: "60%"
     },
     STATS_PANEL: {
-        statsPanelEnabled: false,
+        isStatsPanelEnabled: false,
         statsPanelMode: 0
     },
     TELEMETRY: {
-        telemetryConsentShown: false,
+        isTelemetryConsentShown: false,
         telemetryMode: TelemetryMode.Usage,
-        telemetryLogging: false
+        isTelemetryLogging: false
     },
     COMPATIBILITY: {
-        aipsBeamSupport: false
+        hasAipsBeamSupport: false
     }
 };
 
@@ -159,337 +159,337 @@ export class PreferenceStore {
     /**
      * Whether the preference data is initialized from the preference file or localStorage.
      */
-    @observable preferenceReady: boolean = false;
+    @observable isPreferenceReady: boolean = false;
 
     // getters for global settings
     @computed get theme(): string {
-        return this.preferences.get(PreferenceKeys.GLOBAL_THEME) ?? DEFAULTS.GLOBAL.theme;
+        return this.preferences.get(PreferenceKeys.GLOBAL_THEME) ?? defaults.GLOBAL.theme;
     }
 
-    @computed get autoLaunch(): boolean {
-        return this.preferences.get(PreferenceKeys.GLOBAL_AUTOLAUNCH) ?? DEFAULTS.GLOBAL.autoLaunch;
+    @computed get isAutoLaunch(): boolean {
+        return this.preferences.get(PreferenceKeys.GLOBAL_AUTOLAUNCH) ?? defaults.GLOBAL.isAutoLaunch;
     }
 
     @computed get fileFilterMode(): FileFilterMode {
-        return this.preferences.get(PreferenceKeys.GLOBAL_FILE_FILTER_MODE) ?? DEFAULTS.GLOBAL.fileFilterMode;
+        return this.preferences.get(PreferenceKeys.GLOBAL_FILE_FILTER_MODE) ?? defaults.GLOBAL.fileFilterMode;
     }
 
     @computed get fileSortingString(): string {
-        return this.preferences.get(PreferenceKeys.SILENT_FILE_SORTING_STRING) ?? DEFAULTS.SILENT.fileSortingString;
+        return this.preferences.get(PreferenceKeys.SILENT_FILE_SORTING_STRING) ?? defaults.SILENT.fileSortingString;
     }
 
     @computed get fileFilteringType(): FileFilteringType {
-        return this.preferences.get(PreferenceKeys.SILENT_FILE_FILTERING_TYPE) ?? DEFAULTS.SILENT.fileFilteringType;
+        return this.preferences.get(PreferenceKeys.SILENT_FILE_FILTERING_TYPE) ?? defaults.SILENT.fileFilteringType;
     }
 
     @computed get cursorPosition(): string {
-        return this.preferences.get(PreferenceKeys.GLOBAL_CURSOR_POSITION) ?? DEFAULTS.GLOBAL.cursorPosition;
+        return this.preferences.get(PreferenceKeys.GLOBAL_CURSOR_POSITION) ?? defaults.GLOBAL.cursorPosition;
     }
 
     @computed get zoomMode(): string {
-        return this.preferences.get(PreferenceKeys.GLOBAL_ZOOM_MODE) ?? DEFAULTS.GLOBAL.zoomMode;
+        return this.preferences.get(PreferenceKeys.GLOBAL_ZOOM_MODE) ?? defaults.GLOBAL.zoomMode;
     }
 
     @computed get zoomPoint(): string {
-        return this.preferences.get(PreferenceKeys.GLOBAL_ZOOM_POINT) ?? DEFAULTS.GLOBAL.zoomPoint;
+        return this.preferences.get(PreferenceKeys.GLOBAL_ZOOM_POINT) ?? defaults.GLOBAL.zoomPoint;
     }
 
-    @computed get dragPanning(): boolean {
-        return this.preferences.get(PreferenceKeys.GLOBAL_DRAG_PANNING) ?? DEFAULTS.GLOBAL.dragPanning;
+    @computed get isDragPanning(): boolean {
+        return this.preferences.get(PreferenceKeys.GLOBAL_DRAG_PANNING) ?? defaults.GLOBAL.isDragPanning;
     }
 
     @computed get spectralMatchingType(): SpectralType {
-        return this.preferences.get(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE) ?? DEFAULTS.GLOBAL.spectralMatchingType;
+        return this.preferences.get(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE) ?? defaults.GLOBAL.spectralMatchingType;
     }
 
     @computed get autoWCSMatching(): WCSMatchingType {
-        return this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING) ?? DEFAULTS.GLOBAL.autoWCSMatching;
+        return this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING) ?? defaults.GLOBAL.autoWCSMatching;
     }
 
     public isWCSMatchingEnabled = (matchingType: WCSMatchingType): boolean => {
-        if (WCSMatching.isTypeValid(matchingType) && matchingType & this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING)) {
+        if (WCSMatching.IsTypeValid(matchingType) && matchingType & this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING)) {
             return true;
         }
         return false;
     };
 
-    @computed get transparentImageBackground(): boolean {
-        return this.preferences.get(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND) ?? DEFAULTS.GLOBAL.transparentImageBackground;
+    @computed get isTransparentImageBackground(): boolean {
+        return this.preferences.get(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND) ?? defaults.GLOBAL.isTransparentImageBackground;
     }
 
-    @computed get codeSnippetsEnabled(): boolean {
-        return this.preferences.get(PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED) ?? DEFAULTS.GLOBAL.codeSnippetsEnabled;
+    @computed get isCodeSnippetsEnabled(): boolean {
+        return this.preferences.get(PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED) ?? defaults.GLOBAL.isCodeSnippetsEnabled;
     }
 
-    @computed get keepLastUsedFolder(): boolean {
-        return this.preferences.get(PreferenceKeys.GLOBAL_KEEP_LAST_USED_FOLDER) ?? DEFAULTS.GLOBAL.keepLastUsedFolder;
+    @computed get shouldKeepLastUsedFolder(): boolean {
+        return this.preferences.get(PreferenceKeys.GLOBAL_KEEP_LAST_USED_FOLDER) ?? defaults.GLOBAL.shouldKeepLastUsedFolder;
     }
 
     @computed get lastUsedFolder(): string {
-        return this.preferences.get(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER) ?? DEFAULTS.GLOBAL.lastUsedFolder;
+        return this.preferences.get(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER) ?? defaults.GLOBAL.lastUsedFolder;
     }
 
     // getters for render config
     @computed get scaling(): FrameScaling {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING) ?? DEFAULTS.RENDER_CONFIG.scaling;
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING) ?? defaults.RENDER_CONFIG.scaling;
     }
 
     @computed get colormap(): string {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP) ?? DEFAULTS.RENDER_CONFIG.colormap;
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP) ?? defaults.RENDER_CONFIG.colormap;
     }
 
     @computed get colormapHex(): string {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX) ?? DEFAULTS.RENDER_CONFIG.colormapHex;
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX) ?? defaults.RENDER_CONFIG.colormapHex;
     }
 
     @computed get colormapHexStart(): string {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX_START) ?? DEFAULTS.RENDER_CONFIG.colormapHexStart;
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_COLORMAP_HEX_START) ?? defaults.RENDER_CONFIG.colormapHexStart;
     }
 
     @computed get percentile(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_PERCENTILE) ?? DEFAULTS.RENDER_CONFIG.percentile;
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_PERCENTILE) ?? defaults.RENDER_CONFIG.percentile;
     }
 
     @computed get scalingAlpha(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA) ?? DEFAULTS.RENDER_CONFIG.scalingAlpha;
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA) ?? defaults.RENDER_CONFIG.scalingAlpha;
     }
 
     @computed get scalingGamma(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA) ?? DEFAULTS.RENDER_CONFIG.scalingGamma;
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA) ?? defaults.RENDER_CONFIG.scalingGamma;
     }
 
     @computed get nanColorHex(): string {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX) ?? DEFAULTS.RENDER_CONFIG.nanColorHex;
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX) ?? defaults.RENDER_CONFIG.nanColorHex;
     }
 
     @computed get nanAlpha(): number {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA) ?? DEFAULTS.RENDER_CONFIG.nanAlpha;
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA) ?? defaults.RENDER_CONFIG.nanAlpha;
     }
 
-    @computed get useSmoothedBiasContrast(): boolean {
-        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST) ?? DEFAULTS.RENDER_CONFIG.useSmoothedBiasContrast;
+    @computed get shouldUseSmoothedBiasContrast(): boolean {
+        return this.preferences.get(PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST) ?? defaults.RENDER_CONFIG.shouldUseSmoothedBiasContrast;
     }
 
     // getters for Contour Config
     @computed get contourGeneratorType(): ContourGeneratorType {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_GENERATOR_TYPE) ?? DEFAULTS.CONTOUR_CONFIG.contourGeneratorType;
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_GENERATOR_TYPE) ?? defaults.CONTOUR_CONFIG.contourGeneratorType;
     }
 
-    @computed get contourColormapEnabled(): boolean {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_ENABLED) ?? DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled;
+    @computed get isContourColormapEnabled(): boolean {
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_ENABLED) ?? defaults.CONTOUR_CONFIG.isContourColormapEnabled;
     }
 
     @computed get contourColormap(): string {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORMAP) ?? DEFAULTS.CONTOUR_CONFIG.contourColormap;
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORMAP) ?? defaults.CONTOUR_CONFIG.contourColormap;
     }
 
     @computed get contourColor(): string {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLOR) ?? DEFAULTS.CONTOUR_CONFIG.contourColor;
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLOR) ?? defaults.CONTOUR_CONFIG.contourColor;
     }
 
     @computed get contourSmoothingMode(): CARTA.SmoothingMode {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_MODE) ?? DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode;
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_MODE) ?? defaults.CONTOUR_CONFIG.contourSmoothingMode;
     }
 
     @computed get contourSmoothingFactor(): number {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_FACTOR) ?? DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor;
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_FACTOR) ?? defaults.CONTOUR_CONFIG.contourSmoothingFactor;
     }
 
     @computed get contourNumLevels(): number {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_NUM_LEVELS) ?? DEFAULTS.CONTOUR_CONFIG.contourNumLevels;
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_NUM_LEVELS) ?? defaults.CONTOUR_CONFIG.contourNumLevels;
     }
 
     @computed get contourThickness(): number {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_THICKNESS) ?? DEFAULTS.CONTOUR_CONFIG.contourThickness;
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_THICKNESS) ?? defaults.CONTOUR_CONFIG.contourThickness;
     }
 
     @computed get contourDecimation(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION) ?? DEFAULTS.PERFORMANCE.contourDecimation;
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION) ?? defaults.PERFORMANCE.contourDecimation;
     }
 
     @computed get contourCompressionLevel(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL) ?? DEFAULTS.PERFORMANCE.contourCompressionLevel;
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL) ?? defaults.PERFORMANCE.contourCompressionLevel;
     }
 
     @computed get contourChunkSize(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE) ?? DEFAULTS.PERFORMANCE.contourChunkSize;
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE) ?? defaults.PERFORMANCE.contourChunkSize;
     }
 
     // getters for vector overlay
     @computed get vectorOverlayPixelAveraging(): number {
-        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayPixelAveraging;
+        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING) ?? defaults.VECTOR_OVERLAY.vectorOverlayPixelAveraging;
     }
 
-    @computed get vectorOverlayFractionalIntensity(): boolean {
-        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_FRACTIONAL_INTENSITY) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayFractionalIntensity;
+    @computed get isVectorOverlayFractionalIntensity(): boolean {
+        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_FRACTIONAL_INTENSITY) ?? defaults.VECTOR_OVERLAY.isVectorOverlayFractionalIntensity;
     }
 
     @computed get vectorOverlayThickness(): number {
-        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_THICKNESS) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayThickness;
+        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_THICKNESS) ?? defaults.VECTOR_OVERLAY.vectorOverlayThickness;
     }
 
-    @computed get vectorOverlayColormapEnabled(): boolean {
-        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_ENABLED) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColormapEnabled;
+    @computed get isVectorOverlayColormapEnabled(): boolean {
+        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_ENABLED) ?? defaults.VECTOR_OVERLAY.isVectorOverlayColormapEnabled;
     }
 
     @computed get vectorOverlayColor(): string {
-        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLOR) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColor;
+        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLOR) ?? defaults.VECTOR_OVERLAY.vectorOverlayColor;
     }
 
     @computed get vectorOverlayColormap(): string {
-        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLORMAP) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColormap;
+        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLORMAP) ?? defaults.VECTOR_OVERLAY.vectorOverlayColormap;
     }
 
     // getters for WCS overlay
     @computed get astColor(): string {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_COLOR) ?? DEFAULTS.WCS_OVERLAY.astColor;
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_COLOR) ?? defaults.WCS_OVERLAY.astColor;
     }
 
-    @computed get astGridVisible(): boolean {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.astGridVisible;
+    @computed get isAstGridVisible(): boolean {
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE) ?? defaults.WCS_OVERLAY.isAstGridVisible;
     }
 
-    @computed get astLabelsVisible(): boolean {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.astLabelsVisible;
+    @computed get isAstLabelsVisible(): boolean {
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE) ?? defaults.WCS_OVERLAY.isAstLabelsVisible;
     }
 
     @computed get wcsType(): string {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_WCS_TYPE) ?? DEFAULTS.WCS_OVERLAY.wcsType;
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_WCS_TYPE) ?? defaults.WCS_OVERLAY.wcsType;
     }
 
-    @computed get colorbarVisible(): boolean {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.colorbarVisible;
+    @computed get isColorbarVisible(): boolean {
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_VISIBLE) ?? defaults.WCS_OVERLAY.isColorbarVisible;
     }
 
-    @computed get colorbarInteractive(): boolean {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_INTERACTIVE) ?? DEFAULTS.WCS_OVERLAY.colorbarInteractive;
+    @computed get isColorbarInteractive(): boolean {
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_INTERACTIVE) ?? defaults.WCS_OVERLAY.isColorbarInteractive;
     }
 
     @computed get colorbarPosition(): "right" | "top" | "bottom" {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_POSITION) ?? DEFAULTS.WCS_OVERLAY.colorbarPosition;
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_POSITION) ?? defaults.WCS_OVERLAY.colorbarPosition;
     }
 
     @computed get colorbarWidth(): number {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH) ?? DEFAULTS.WCS_OVERLAY.colorbarWidth;
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH) ?? defaults.WCS_OVERLAY.colorbarWidth;
     }
 
     @computed get colorbarTicksDensity(): number {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY) ?? DEFAULTS.WCS_OVERLAY.colorbarTicksDensity;
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY) ?? defaults.WCS_OVERLAY.colorbarTicksDensity;
     }
 
-    @computed get colorbarLabelVisible(): boolean {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_LABEL_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.colorbarLabelVisible;
+    @computed get isColorbarLabelVisible(): boolean {
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_LABEL_VISIBLE) ?? defaults.WCS_OVERLAY.isColorbarLabelVisible;
     }
 
-    @computed get beamVisible(): boolean {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.beamVisible;
+    @computed get isBeamVisible(): boolean {
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE) ?? defaults.WCS_OVERLAY.isBeamVisible;
     }
 
     @computed get beamColor(): string {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_COLOR) ?? DEFAULTS.WCS_OVERLAY.beamColor;
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_COLOR) ?? defaults.WCS_OVERLAY.beamColor;
     }
 
     @computed get beamType(): BeamType {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_TYPE) ?? DEFAULTS.WCS_OVERLAY.beamType;
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_TYPE) ?? defaults.WCS_OVERLAY.beamType;
     }
 
     @computed get beamWidth(): number {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH) ?? DEFAULTS.WCS_OVERLAY.beamWidth;
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH) ?? defaults.WCS_OVERLAY.beamWidth;
     }
 
     @computed get cursorInfoVisible(): string {
-        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_CURSOR_INFO) ?? DEFAULTS.WCS_OVERLAY.cursorInfoVisible;
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_CURSOR_INFO) ?? defaults.WCS_OVERLAY.cursorInfoVisible;
     }
 
     // getters for region
     @computed get regionColor(): string {
-        return this.preferences.get(PreferenceKeys.REGION_COLOR) ?? DEFAULTS.REGION.regionColor;
+        return this.preferences.get(PreferenceKeys.REGION_COLOR) ?? defaults.REGION.regionColor;
     }
 
     @computed get regionLineWidth(): number {
-        return this.preferences.get(PreferenceKeys.REGION_LINE_WIDTH) ?? DEFAULTS.REGION.regionLineWidth;
+        return this.preferences.get(PreferenceKeys.REGION_LINE_WIDTH) ?? defaults.REGION.regionLineWidth;
     }
 
     @computed get regionDashLength(): number {
-        return this.preferences.get(PreferenceKeys.REGION_DASH_LENGTH) ?? DEFAULTS.REGION.regionDashLength;
+        return this.preferences.get(PreferenceKeys.REGION_DASH_LENGTH) ?? defaults.REGION.regionDashLength;
     }
 
     @computed get regionType(): CARTA.RegionType {
-        return this.preferences.get(PreferenceKeys.REGION_TYPE) ?? DEFAULTS.REGION.regionType;
+        return this.preferences.get(PreferenceKeys.REGION_TYPE) ?? defaults.REGION.regionType;
     }
 
     @computed get regionCreationMode(): string {
-        return this.preferences.get(PreferenceKeys.REGION_CREATION_MODE) ?? DEFAULTS.REGION.regionCreationMode;
+        return this.preferences.get(PreferenceKeys.REGION_CREATION_MODE) ?? defaults.REGION.regionCreationMode;
     }
 
     @computed get regionSize(): number {
-        return this.preferences.get(PreferenceKeys.REGION_SIZE) ?? DEFAULTS.REGION.regionSize;
+        return this.preferences.get(PreferenceKeys.REGION_SIZE) ?? defaults.REGION.regionSize;
     }
 
     // getters for annotation
     @computed get annotationColor(): string {
-        return this.preferences.get(PreferenceKeys.ANNOTATION_COLOR) ?? DEFAULTS.ANNOTATION.annotationColor;
+        return this.preferences.get(PreferenceKeys.ANNOTATION_COLOR) ?? defaults.ANNOTATION.annotationColor;
     }
 
     @computed get annotationLineWidth(): number {
-        return this.preferences.get(PreferenceKeys.ANNOTATION_LINE_WIDTH) ?? DEFAULTS.ANNOTATION.annotationLineWidth;
+        return this.preferences.get(PreferenceKeys.ANNOTATION_LINE_WIDTH) ?? defaults.ANNOTATION.annotationLineWidth;
     }
 
     @computed get annotationDashLength(): number {
-        return this.preferences.get(PreferenceKeys.ANNOTATION_DASH_LENGTH) ?? DEFAULTS.ANNOTATION.annotationDashLength;
+        return this.preferences.get(PreferenceKeys.ANNOTATION_DASH_LENGTH) ?? defaults.ANNOTATION.annotationDashLength;
     }
 
     @computed get pointAnnotationShape(): CARTA.PointAnnotationShape {
-        return this.preferences.get(PreferenceKeys.POINT_ANNOTATION_SHAPE) ?? DEFAULTS.ANNOTATION.pointAnnotationShape;
+        return this.preferences.get(PreferenceKeys.POINT_ANNOTATION_SHAPE) ?? defaults.ANNOTATION.pointAnnotationShape;
     }
 
     @computed get pointAnnotationWidth(): number {
-        return this.preferences.get(PreferenceKeys.POINT_ANNOTATION_WIDTH) ?? DEFAULTS.ANNOTATION.pointAnnotationWidth;
+        return this.preferences.get(PreferenceKeys.POINT_ANNOTATION_WIDTH) ?? defaults.ANNOTATION.pointAnnotationWidth;
     }
 
     @computed get textAnnotationLineWidth(): number {
-        return this.preferences.get(PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH) ?? DEFAULTS.ANNOTATION.textAnnotationLineWidth;
+        return this.preferences.get(PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH) ?? defaults.ANNOTATION.textAnnotationLineWidth;
     }
 
     // getters for performance
     @computed get imageCompressionQuality(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY) ?? DEFAULTS.PERFORMANCE.imageCompressionQuality;
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY) ?? defaults.PERFORMANCE.imageCompressionQuality;
     }
 
     @computed get animationCompressionQuality(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY) ?? DEFAULTS.PERFORMANCE.animationCompressionQuality;
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY) ?? defaults.PERFORMANCE.animationCompressionQuality;
     }
 
     @computed get gpuTileCache(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE) ?? DEFAULTS.PERFORMANCE.GPUTileCache;
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE) ?? defaults.PERFORMANCE.GPUTileCache;
     }
 
     @computed get systemTileCache(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE) ?? DEFAULTS.PERFORMANCE.systemTileCache;
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE) ?? defaults.PERFORMANCE.systemTileCache;
     }
 
     @computed get contourControlMapWidth(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH) ?? DEFAULTS.PERFORMANCE.contourControlMapWidth;
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH) ?? defaults.PERFORMANCE.contourControlMapWidth;
     }
 
-    @computed get streamContoursWhileZooming(): boolean {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING) ?? DEFAULTS.PERFORMANCE.streamContoursWhileZooming;
+    @computed get shouldStreamContoursWhileZooming(): boolean {
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING) ?? defaults.PERFORMANCE.shouldStreamContoursWhileZooming;
     }
 
-    @computed get lowBandwidthMode(): boolean {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE) ?? DEFAULTS.PERFORMANCE.lowBandwidthMode;
+    @computed get isLowBandwidthMode(): boolean {
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE) ?? defaults.PERFORMANCE.isLowBandwidthMode;
     }
 
     @computed get stopAnimationPlaybackMinutes(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES) ?? DEFAULTS.PERFORMANCE.stopAnimationPlaybackMinutes;
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES) ?? defaults.PERFORMANCE.stopAnimationPlaybackMinutes;
     }
 
     @computed get pvPreviewCubeSizeLimit(): number {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT) ?? DEFAULTS.PERFORMANCE.pvPreviewCubeSizeLimit;
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT) ?? defaults.PERFORMANCE.pvPreviewCubeSizeLimit;
     }
 
     @computed get isPVAxesOrderReverse(): boolean {
-        return this.preferences.get(PreferenceKeys.SILENT_PV_AXES_ORDER_REVERSE) ?? DEFAULTS.SILENT.pvAxesOrderReverse;
+        return this.preferences.get(PreferenceKeys.SILENT_PV_AXES_ORDER_REVERSE) ?? defaults.SILENT.pvAxesOrderReverse;
     }
 
     @computed get isSelectingAllLogEvents(): boolean {
@@ -502,7 +502,7 @@ export class PreferenceStore {
     }
 
     public isEventLoggingEnabled = (eventType: CARTA.EventType): boolean => {
-        if (Event.isTypeValid(eventType)) {
+        if (Event.IsTypeValid(eventType)) {
             const logEvents = this.preferences.get(PreferenceKeys.LOG_EVENT);
             if (logEvents && Array.isArray(logEvents)) {
                 return logEvents.includes(eventType);
@@ -528,60 +528,60 @@ export class PreferenceStore {
     }
 
     @computed get catalogDisplayedColumnSize(): number {
-        return this.preferences.get(PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE) ?? DEFAULTS.CATALOG.catalogDisplayedColumnSize;
+        return this.preferences.get(PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE) ?? defaults.CATALOG.catalogDisplayedColumnSize;
     }
 
     @computed get catalogTableSeparatorPosition(): string {
-        return this.preferences.get(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION) ?? DEFAULTS.CATALOG.catalogTableSeparatorPosition;
+        return this.preferences.get(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION) ?? defaults.CATALOG.catalogTableSeparatorPosition;
     }
 
-    @computed get pixelGridVisible(): boolean {
-        return this.preferences.get(PreferenceKeys.PIXEL_GRID_VISIBLE) ?? DEFAULTS.SILENT.pixelGridVisible;
+    @computed get isPixelGridVisible(): boolean {
+        return this.preferences.get(PreferenceKeys.PIXEL_GRID_VISIBLE) ?? defaults.SILENT.isPixelGridVisible;
     }
 
     @computed get pixelGridColor(): string {
-        return this.preferences.get(PreferenceKeys.PIXEL_GRID_COLOR) ?? DEFAULTS.SILENT.pixelGridColor;
+        return this.preferences.get(PreferenceKeys.PIXEL_GRID_COLOR) ?? defaults.SILENT.pixelGridColor;
     }
 
-    @computed get limitOverlayRedraw(): boolean {
-        return this.preferences.get(PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW) ?? DEFAULTS.PERFORMANCE.limitOverlayRedraw;
+    @computed get shouldLimitOverlayRedraw(): boolean {
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW) ?? defaults.PERFORMANCE.shouldLimitOverlayRedraw;
     }
 
-    @computed get imageMultiPanelEnabled(): boolean {
-        return this.preferences.get(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED) ?? DEFAULTS.SILENT.imagePanelMode;
+    @computed get isImageMultiPanelEnabled(): boolean {
+        return this.preferences.get(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED) ?? defaults.SILENT.imagePanelMode;
     }
 
     @computed get imagePanelMode(): ImagePanelMode {
-        return this.preferences.get(PreferenceKeys.IMAGE_PANEL_MODE) ?? DEFAULTS.SILENT.imagePanelMode;
+        return this.preferences.get(PreferenceKeys.IMAGE_PANEL_MODE) ?? defaults.SILENT.imagePanelMode;
     }
 
     @computed get imagePanelColumns(): number {
-        return this.preferences.get(PreferenceKeys.IMAGE_PANEL_COLUMNS) ?? DEFAULTS.SILENT.imagePanelColumns;
+        return this.preferences.get(PreferenceKeys.IMAGE_PANEL_COLUMNS) ?? defaults.SILENT.imagePanelColumns;
     }
 
     @computed get imagePanelRows(): number {
-        return this.preferences.get(PreferenceKeys.IMAGE_PANEL_ROWS) ?? DEFAULTS.SILENT.imagePanelRows;
+        return this.preferences.get(PreferenceKeys.IMAGE_PANEL_ROWS) ?? defaults.SILENT.imagePanelRows;
     }
 
-    @computed get statsPanelEnabled(): boolean {
-        return this.preferences.get(PreferenceKeys.STATS_PANEL_ENABLED) ?? DEFAULTS.STATS_PANEL.statsPanelEnabled;
+    @computed get isStatsPanelEnabled(): boolean {
+        return this.preferences.get(PreferenceKeys.STATS_PANEL_ENABLED) ?? defaults.STATS_PANEL.isStatsPanelEnabled;
     }
 
     @computed get statsPanelMode(): number {
-        return this.preferences.get(PreferenceKeys.STATS_PANEL_MODE) ?? DEFAULTS.STATS_PANEL.statsPanelMode;
+        return this.preferences.get(PreferenceKeys.STATS_PANEL_MODE) ?? defaults.STATS_PANEL.statsPanelMode;
     }
 
     // getters for telemetry
-    @computed get telemetryConsentShown(): boolean {
-        return this.preferences.get(PreferenceKeys.TELEMETRY_CONSENT_SHOWN) ?? DEFAULTS.TELEMETRY.telemetryConsentShown;
+    @computed get isTelemetryConsentShown(): boolean {
+        return this.preferences.get(PreferenceKeys.TELEMETRY_CONSENT_SHOWN) ?? defaults.TELEMETRY.isTelemetryConsentShown;
     }
 
     @computed get telemetryMode(): TelemetryMode {
-        return this.preferences.get(PreferenceKeys.TELEMETRY_MODE) ?? DEFAULTS.TELEMETRY.telemetryMode;
+        return this.preferences.get(PreferenceKeys.TELEMETRY_MODE) ?? defaults.TELEMETRY.telemetryMode;
     }
 
-    @computed get telemetryLogging(): boolean {
-        return this.preferences.get(PreferenceKeys.TELEMETRY_LOGGING) ?? DEFAULTS.TELEMETRY.telemetryLogging;
+    @computed get isTelemetryLogging(): boolean {
+        return this.preferences.get(PreferenceKeys.TELEMETRY_LOGGING) ?? defaults.TELEMETRY.isTelemetryLogging;
     }
 
     @computed get telemetryUuid(): string {
@@ -589,36 +589,36 @@ export class PreferenceStore {
     }
 
     // getters for compatibility
-    @computed get aipsBeamSupport(): boolean {
-        return this.preferences.get(PreferenceKeys.COMPATIBILITY_AIPS_BEAM_SUPPORT) ?? DEFAULTS.COMPATIBILITY.aipsBeamSupport;
+    @computed get hasAipsBeamSupport(): boolean {
+        return this.preferences.get(PreferenceKeys.COMPATIBILITY_AIPS_BEAM_SUPPORT) ?? defaults.COMPATIBILITY.hasAipsBeamSupport;
     }
 
     // getters for showing new release
-    @computed get checkNewRelease(): boolean {
-        return this.preferences.get(PreferenceKeys.CHECK_NEW_RELEASE) ?? DEFAULTS.SILENT.checkNewRelease;
+    @computed get shouldCheckNewRelease(): boolean {
+        return this.preferences.get(PreferenceKeys.CHECK_NEW_RELEASE) ?? defaults.SILENT.shouldCheckNewRelease;
     }
 
     @computed get latestRelease(): string {
-        return this.preferences.get(PreferenceKeys.LATEST_RELEASE) ?? DEFAULTS.SILENT.latestRelease;
+        return this.preferences.get(PreferenceKeys.LATEST_RELEASE) ?? defaults.SILENT.latestRelease;
     }
 
     @computed get layout(): string {
-        return this.preferences.get(PreferenceKeys.LAYOUT) ?? DEFAULTS.LAYOUT.layout;
+        return this.preferences.get(PreferenceKeys.LAYOUT) ?? defaults.LAYOUT.layout;
     }
 
     // getter for dynamic layout setting
-    @computed get dynamicLayoutEnable(): boolean {
-        return this.preferences.get(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT_ENABLE) ?? DEFAULTS.LAYOUT.dynamicLayoutEnable;
+    @computed get isDynamicLayoutEnabled(): boolean {
+        return this.preferences.get(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT_ENABLE) ?? defaults.LAYOUT.isDynamicLayoutEnabled;
     }
 
     // getter for file priority for dynamic layout setting
     @computed get isHighDimPriority(): boolean {
-        return this.preferences.get(PreferenceKeys.LAYOUT_IS_HIGH_DIM_PRIORITY) ?? DEFAULTS.LAYOUT.isHighDimPriority;
+        return this.preferences.get(PreferenceKeys.LAYOUT_IS_HIGH_DIM_PRIORITY) ?? defaults.LAYOUT.isHighDimPriority;
     }
 
     // getter for file priority for dynamic layout setting
     @computed get existLayoutMapping(): {[key: string]: string} {
-        return this.preferences.get(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT) ?? DEFAULTS.LAYOUT.existLayoutMapping;
+        return this.preferences.get(PreferenceKeys.LAYOUT_DYNAMIC_LAYOUT) ?? defaults.LAYOUT.existLayoutMapping;
     }
 
     /**
@@ -636,14 +636,14 @@ export class PreferenceStore {
 
         // set preference in variable
         if (key === PreferenceKeys.LOG_EVENT) {
-            if (!Event.isTypeValid(value)) {
+            if (!Event.IsTypeValid(value)) {
                 return false;
             }
             const eventList = getEventList(this.preferences.get(PreferenceKeys.LOG_EVENT), value);
             this.preferences.set(PreferenceKeys.LOG_EVENT, eventList);
             return yield ApiService.Instance.setPreference(PreferenceKeys.LOG_EVENT, eventList);
         } else if (key === PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING) {
-            if (!WCSMatching.isTypeValid(value)) {
+            if (!WCSMatching.IsTypeValid(value)) {
                 return false;
             }
             let binaryNumber = this.preferences.get(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING);
@@ -878,7 +878,7 @@ export class PreferenceStore {
                 this.preferences.set(key as PreferenceKeys, val);
             }
         }
-        this.preferenceReady = true;
+        this.isPreferenceReady = true;
     }
 
     private constructor() {
